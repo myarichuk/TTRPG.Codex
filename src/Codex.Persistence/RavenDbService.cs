@@ -20,6 +20,7 @@ public class RavenDbService : IDisposable
         // This is a workaround for RavenDB embedded trying to launch with '10.0.2' runtime instead of '10.0.0'
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
         // Create runtimeconfig.json for raven to force 10.0.0
         var configJson = @"{
   ""runtimeOptions"": {
