@@ -1,0 +1,44 @@
+@page "/campaigns"
+@using Codex.Persistence
+@inject ICampaignRepository CampaignRepo
+
+<PageTitle>Campaigns</PageTitle>
+
+<h1>Campaigns</h1>
+
+@if (campaigns == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <ul>
+        @foreach (var campaign in campaigns)
+        {
+            <li>@campaign.Name (@campaign.System)</li>
+        }
+    </ul>
+
+    <button @onclick="CreateCampaign">Create New Campaign</button>
+}
+
+@code {
+    private IEnumerable<CampaignDocument>? campaigns;
+
+    protected override async Task OnInitializedAsync()
+    {
+        campaigns = await CampaignRepo.GetAllAsync();
+    }
+
+    private async Task CreateCampaign()
+    {
+        var doc = new CampaignDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "New Campaign",
+            System = "DnD5e"
+        };
+        await CampaignRepo.SaveAsync(doc);
+        campaigns = await CampaignRepo.GetAllAsync();
+    }
+}

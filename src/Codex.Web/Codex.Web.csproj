@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
+    <ProjectReference Include="..\Codex.Persistence\Codex.Persistence.csproj" />
+    <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\Codex.Systems.DnD5e\Codex.Systems.DnD5e.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+</Project>
