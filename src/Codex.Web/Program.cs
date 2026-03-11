@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Components.Web;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 // Configure Codex
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
@@ -62,8 +61,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAntiforgery();
 
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 
 app.Run();
