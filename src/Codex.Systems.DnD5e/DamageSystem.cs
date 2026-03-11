@@ -9,12 +9,8 @@ public struct DamageEvent
 }
 
 [With(typeof(HitPointsComponent), typeof(DamageEvent))]
-public sealed class DamageSystem : AEntitySetSystem<float>
+public sealed class DamageSystem(World world) : AEntitySetSystem<float>(world)
 {
-    public DamageSystem(World world) : base(world)
-    {
-    }
-
     protected override void Update(float state, in Entity entity)
     {
         ref var hp = ref entity.Get<HitPointsComponent>();
