@@ -14,8 +14,10 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ ! "${{ github.event.pull_request.title }}" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?: .*$ ]]; then
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?:[[:space:]].*$ ]]; then
             echo "::error::PR title does not follow conventional commits. It must match ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?: .*$"
             exit 1
           fi
@@ -33,6 +35,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
 
       - name: Restore dependencies
         run: dotnet restore
@@ -41,4 +44,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
+        env:
+          DOTNET_ROLL_FORWARD: "LatestMajor"
+          DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX: "2"
         run: dotnet test --configuration Release --no-build --verbosity normal
