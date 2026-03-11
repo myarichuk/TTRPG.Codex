@@ -36,7 +36,14 @@ public class RavenDbService : IDisposable
         File.WriteAllText(Path.Combine(serverDir, "Raven.Server.runtimeconfig.json"), configJson);
 
 
-        EmbeddedServer.Instance.StartServer(options);
+        try
+        {
+            EmbeddedServer.Instance.StartServer(options);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("The server was already started"))
+        {
+            // Ignore if already started (for xUnit parallel tests)
+        }
 
         _store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions("Campaigns"));
         _store.Initialize();

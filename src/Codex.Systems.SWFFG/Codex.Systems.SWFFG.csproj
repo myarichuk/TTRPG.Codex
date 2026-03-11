@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="mkdir -p $(SolutionDir)plugins&#xA;cp $(TargetDir)$(TargetName).dll $(SolutionDir)plugins/" />
+    <Exec Command="mkdir -p &quot;$(MSBuildProjectDirectory)/../../plugins&quot;&#xA;cp &quot;$(TargetDir)$(TargetName).dll&quot; &quot;$(MSBuildProjectDirectory)/../../plugins/&quot;" />
   </Target>
 
 </Project>
