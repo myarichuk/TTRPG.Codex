@@ -1,0 +1,69 @@
+using Codex.Core;
+using Codex.Persistence;
+using Codex.Plugin.Abstractions;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+
+// Configure Codex
+var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
+var pluginsDir = builder.Configuration["Codex:PluginsDirectory"] ?? "plugins";
+
+builder.Services.AddSingleton(sp => new RavenDbService(dataDir));
+builder.Services.AddSingleton<ICampaignRepository, RavenCampaignRepository>();
+builder.Services.AddSingleton<ICharacterRepository, RavenCharacterRepository>();
+
+builder.Services.AddSingleton<ComponentRegistry>();
+builder.Services.AddSingleton<PluginLoader>();
+builder.Services.AddSingleton<CodexWorld>();
+
+// Add SignalR explicitly (already added by AddServerSideBlazor, but doing it for clarity)
+builder.Services.AddSignalR();
+
+var app = builder.Build();
+
+// Initialize everything on startup
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Server running at: http://localhost:5000");
+
+    var dbService = scope.ServiceProvider.GetRequiredService<RavenDbService>();
+    // Store is initialized in constructor
+    logger.LogInformation("RavenDB initialized at {DataDir}", dataDir);
+
+    var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
+    var registry = scope.ServiceProvider.GetRequiredService<ComponentRegistry>();
+    var world = scope.ServiceProvider.GetRequiredService<CodexWorld>();
+
+    var absolutePluginsDir = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, pluginsDir));
+    logger.LogInformation("Loading plugins from: {PluginsDir}", absolutePluginsDir);
+
+    var plugins = loader.LoadPlugins(absolutePluginsDir);
+    loader.InitializePlugins(plugins, world);
+    logger.LogInformation("Loaded {Count} plugins", plugins.Count);
+}
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
+
+app.Run();

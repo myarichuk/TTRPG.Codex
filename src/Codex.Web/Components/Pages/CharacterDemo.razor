@@ -1,0 +1,46 @@
+@page "/demo"
+@using Codex.Core
+@using DefaultEcs
+@using Codex.Systems.DnD5e
+@using Codex.Plugin.Abstractions
+@inject CodexWorld World
+
+<PageTitle>Character Demo</PageTitle>
+
+<h1>Character Demo</h1>
+
+<button @onclick="CreateTestEntity">Create Test Entity</button>
+<br/><br/>
+
+@if (entity.IsAlive)
+{
+    @if (entity.Has<HitPointsComponent>())
+    {
+        var hp = entity.Get<HitPointsComponent>();
+        <p>Current HP: @hp.Current / @hp.Maximum</p>
+        <button @onclick="TakeDamage">Take 1 Damage</button>
+    }
+}
+else
+{
+    <p>No entity created yet.</p>
+}
+
+@code {
+    private Entity entity;
+
+    private void CreateTestEntity()
+    {
+        entity = World.CreateEntity();
+        entity.Set(new HitPointsComponent { Current = 10, Maximum = 10 });
+    }
+
+    private void TakeDamage()
+    {
+        if (entity.IsAlive)
+        {
+            entity.Set(new DamageEvent { Amount = 1 });
+            World.Tick(0.016f);
+        }
+    }
+}
