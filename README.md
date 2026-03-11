@@ -29,3 +29,17 @@ dotnet test
 
 ## Deployment
 Use the scripts in `/scripts` to create single-file executables for Windows, Linux, and MacOS.
+
+## Development & Releases
+This project follows conventional commits and uses GitVersion to automatically version the application.
+- `feat: <message>` to trigger a minor version bump
+- `fix: <message>` to trigger a patch version bump
+- `chore: <message>`, `docs: <message>`, `test: <message>`, etc. for changes that don't affect the compiled artifact.
+
+Releases are automated via GitHub Actions. By pushing a tag (e.g. `v0.1.0`), a pipeline triggers which calculates Semantic Versioning (SemVer), compiles binaries for Windows, Linux, and MacOS, and creates a GitHub Release linking these artifacts alongside an automatically generated changelog.
+
+You can calculate the version locally by installing the GitVersion tool:
+```sh
+dotnet tool install --global GitVersion.Tool
+dotnet-gitversion
+```
