@@ -14,7 +14,7 @@ public class RavenDbService : IDisposable
         var options = new ServerOptions
         {
             DataDirectory = dataDirectory,
-            FrameworkVersion = "10.0.0"
+            FrameworkVersion = "10.0.4"
         };
 
         // This is a workaround for RavenDB embedded trying to launch with '10.0.2' runtime instead of '10.0.0'
@@ -26,7 +26,7 @@ public class RavenDbService : IDisposable
     ""tfm"": ""net10.0"",
     ""framework"": {
       ""name"": ""Microsoft.AspNetCore.App"",
-      ""version"": ""10.0.0""
+      ""version"": ""10.0.4""
     },
     ""rollForward"": ""LatestMajor""
   }
