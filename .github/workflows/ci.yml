@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  commit-lint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check PR title
+        run: |
+          if [[ ! "${{ github.event.pull_request.title }}" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?: .*$ ]]; then
+            echo "::error::PR title does not follow conventional commits. It must match ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?: .*$"
+            exit 1
+          fi
+
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
