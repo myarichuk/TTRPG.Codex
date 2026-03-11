@@ -11,8 +11,13 @@
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="mkdir -p &quot;$(MSBuildProjectDirectory)/../../plugins&quot;&#xA;cp &quot;$(TargetDir)$(TargetName).dll&quot; &quot;$(MSBuildProjectDirectory)/../../plugins/&quot;" />
+  <PropertyGroup>
+    <PluginOutputDir>$(MSBuildProjectDirectory)\..\..\plugins\</PluginOutputDir>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="Build">
+    <MakeDir Directories="$(PluginOutputDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" />
   </Target>
 
 </Project>
