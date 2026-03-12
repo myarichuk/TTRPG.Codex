@@ -17,3 +17,11 @@ public class CharacterDocument
     public string Name { get; set; } = string.Empty;
     public JsonObject State { get; set; } = new();
 }
+
+public class UserDocument
+{
+    public string Id { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public List<string> Roles { get; set; } = new();
+}

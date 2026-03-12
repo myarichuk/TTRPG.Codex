@@ -3,11 +3,25 @@ using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("DM", policy => policy.RequireRole("DM"));
+});
+builder.Services.AddHttpContextAccessor();
 
 // Configure Codex
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
@@ -16,6 +30,7 @@ var pluginsDir = builder.Configuration["Codex:PluginsDirectory"] ?? "plugins";
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir));
 builder.Services.AddSingleton<ICampaignRepository, RavenCampaignRepository>();
 builder.Services.AddSingleton<ICharacterRepository, RavenCharacterRepository>();
+builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<PluginLoader>();
@@ -61,6 +76,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();

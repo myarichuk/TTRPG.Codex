@@ -1,58 +1,53 @@
 using Codex.Persistence;
-using System.IO;
-using System.Threading.Tasks;
-using Xunit;
+using System.Text.Json.Nodes;
 
 namespace Codex.Tests;
 
 public class PersistenceTest : IDisposable
 {
-    private readonly string _testDir;
-    private readonly RavenDbService _service;
+    private readonly RavenDbService _dbService;
+    private readonly RavenCampaignRepository _campaignRepository;
+    private readonly string _testDbPath;
 
     public PersistenceTest()
     {
-        _testDir = Path.Combine(Path.GetTempPath(), "RavenDbTest_" + Guid.NewGuid());
-        Directory.CreateDirectory(_testDir);
-        _service = new RavenDbService(_testDir);
-    }
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
 
-    [Fact]
-    public void SaveAndLoadCampaign_ShouldSucceed()
-    {
-        // For synchronous testing so we don't have Task timeouts if embedded server struggles in sandbox.
-        // Actually, let's keep it async, it worked before.
+        _testDbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
+        _dbService = new RavenDbService(_testDbPath);
+        _campaignRepository = new RavenCampaignRepository(_dbService);
     }
 
     [Fact]
     public async Task SaveAndLoadCampaign_ShouldSucceed_Async()
     {
-        var repo = new RavenCampaignRepository(_service);
-
         var campaign = new CampaignDocument
         {
-            Id = "campaign/1",
-            Name = "Test Campaign",
+            Id = Guid.NewGuid().ToString(),
+            Name = "Async Campaign",
             System = "DnD5e"
         };
 
-        await repo.SaveAsync(campaign);
-        var loaded = await repo.GetAsync("campaign/1");
+        await _campaignRepository.SaveAsync(campaign);
+        var loaded = await _campaignRepository.GetAsync(campaign.Id);
 
         Assert.NotNull(loaded);
-        Assert.Equal("Test Campaign", loaded.Name);
+        Assert.Equal("Async Campaign", loaded.Name);
     }
 
     public void Dispose()
     {
-        _service.Dispose();
+        _dbService.Dispose();
+
         try
         {
-            if (Directory.Exists(_testDir))
+            if (Directory.Exists(_testDbPath))
             {
-                Directory.Delete(_testDir, true);
+                Directory.Delete(_testDbPath, true);
             }
         }
-        catch { } // Ignore clean up errors in test
+        catch { }
     }
 }
