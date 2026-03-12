@@ -7,6 +7,7 @@ public class PersistenceTest : IDisposable
 {
     private readonly RavenDbService _dbService;
     private readonly RavenCampaignRepository _campaignRepository;
+    private readonly string _testDbPath;
 
     public PersistenceTest()
     {
@@ -14,7 +15,8 @@ public class PersistenceTest : IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
 
-        _dbService = new RavenDbService("TestRavenData_" + Guid.NewGuid());
+        _testDbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
+        _dbService = new RavenDbService(_testDbPath);
         _campaignRepository = new RavenCampaignRepository(_dbService);
     }
 
@@ -38,5 +40,14 @@ public class PersistenceTest : IDisposable
     public void Dispose()
     {
         _dbService.Dispose();
+
+        try
+        {
+            if (Directory.Exists(_testDbPath))
+            {
+                Directory.Delete(_testDbPath, true);
+            }
+        }
+        catch { }
     }
 }
