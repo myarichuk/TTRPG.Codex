@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Identity
 @using Codex.Persistence
 @inject IUserRepository UserRepository
 @inject NavigationManager NavManager
@@ -31,6 +32,9 @@
         </div>
 
         <button type="submit" class="btn btn-primary">Log in</button>
+        <div class="mt-3">
+            <a href="/register">Create an account</a>
+        </div>
     </EditForm>
 </div>
 
@@ -58,26 +62,23 @@
 
         var user = await UserRepository.GetUserByUsernameAsync(Model.Username);
 
-        // Simple check for demo purposes - replace with real password hashing/verification!
-        // if user doesn't exist but password is 'password', we just create it to make demo easier
-        if (user == null && Model.Password == "password")
+        if (user == null)
         {
-            user = new UserDocument
-            {
-                Id = Guid.NewGuid().ToString(),
-                Username = Model.Username,
-                PasswordHash = "password", // DO NOT DO THIS IN PROD
-                Roles = new List<string> { "Player" }
-            };
-            if (Model.Username.ToLower() == "dm")
-            {
-                user.Roles.Add("DM");
-            }
-            await UserRepository.CreateUserAsync(user);
+            ErrorMessage = "Invalid username or password.";
+            return;
         }
 
-        if (user != null && user.PasswordHash == Model.Password)
+        var hasher = new PasswordHasher<UserDocument>();
+        var result = hasher.VerifyHashedPassword(user, user.PasswordHash, Model.Password);
+
+        if (result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded)
         {
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                user.PasswordHash = hasher.HashPassword(user, Model.Password);
+                await UserRepository.UpdateUserAsync(user);
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
