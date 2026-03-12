@@ -1,0 +1,110 @@
+@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Codex.Persistence
+@inject IUserRepository UserRepository
+@inject NavigationManager NavManager
+
+<PageTitle>Login</PageTitle>
+
+<div class="login-container">
+    <h2>Login</h2>
+    <hr />
+
+    <EditForm Model="@Model" OnValidSubmit="HandleLogin" FormName="LoginForm">
+        <DataAnnotationsValidator />
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger">@ErrorMessage</div>
+        }
+
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <InputText id="username" class="form-control" @bind-Value="Model!.Username" />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <InputText id="password" type="password" class="form-control" @bind-Value="Model!.Password" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Log in</button>
+    </EditForm>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    public LoginModel? Model { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Model ??= new();
+    }
+
+    public string? ErrorMessage { get; set; }
+
+    private async Task HandleLogin()
+    {
+        if (HttpContext == null || Model == null)
+        {
+            ErrorMessage = "HttpContext is not available. Please ensure you are logging in from a static rendered page.";
+            return;
+        }
+
+        var user = await UserRepository.GetUserByUsernameAsync(Model.Username);
+
+        // Simple check for demo purposes - replace with real password hashing/verification!
+        // if user doesn't exist but password is 'password', we just create it to make demo easier
+        if (user == null && Model.Password == "password")
+        {
+            user = new UserDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                Username = Model.Username,
+                PasswordHash = "password", // DO NOT DO THIS IN PROD
+                Roles = new List<string> { "Player" }
+            };
+            if (Model.Username.ToLower() == "dm")
+            {
+                user.Roles.Add("DM");
+            }
+            await UserRepository.CreateUserAsync(user);
+        }
+
+        if (user != null && user.PasswordHash == Model.Password)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
+            };
+
+            foreach (var role in user.Roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            NavManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            ErrorMessage = "Invalid username or password.";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}
