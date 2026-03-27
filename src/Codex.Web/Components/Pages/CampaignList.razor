@@ -4,23 +4,30 @@
 
 <PageTitle>Campaigns</PageTitle>
 
-<h1>Campaigns</h1>
+<div class="container mt-4">
+    <h1 class="mb-4">Campaigns</h1>
 
-@if (campaigns == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <ul>
-        @foreach (var campaign in campaigns)
-        {
-            <li>@campaign.Name (@campaign.System)</li>
-        }
-    </ul>
+    @if (campaigns == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var campaign in campaigns)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 h-100">
+                        <h5>@campaign.Name</h5>
+                        <h6 class="text-muted mb-0">@campaign.System</h6>
+                    </div>
+                </div>
+            }
+        </div>
 
-    <button @onclick="CreateCampaign">Create New Campaign</button>
-}
+        <button class="btn btn-primary mt-3" @onclick="CreateCampaign">Create New Campaign</button>
+    }
+</div>
 
 @code {
     private IEnumerable<CampaignDocument>? campaigns;
