@@ -14,18 +14,20 @@ public class RavenDbService : IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
+        Environment.SetEnvironmentVariable("RAVEN_Server_FrameworkVersion", "10.0.0");
 
         // Use the currently executing framework version dynamically
         var version = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
             .Replace(".NET ", "")
             .Split(' ')[0];
 
-        // Or we hardcode 10.0.0 because memory strictly says FrameworkVersion="10.0.0"
         var options = new ServerOptions
         {
             DataDirectory = dataDirectory,
-            FrameworkVersion = "10.0.0"
+            FrameworkVersion = version,
+            ServerUrl = "http://127.0.0.1:0"
         };
+        options.CommandLineArgs.Add("--Setup.Mode=None");
 
         try
         {

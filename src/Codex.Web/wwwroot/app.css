@@ -3,13 +3,13 @@
     --bg-color-surface: #1e1e1e;
     --text-primary: #e0e0e0;
     --text-secondary: #aaaaaa;
-    --accent-color: #bb86fc;
-    --accent-hover: #9b5de5;
+    --accent-color: #e40712;
+    --accent-hover: #b3060e;
     --danger-color: #cf6679;
 }
 
 html, body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-color-main);
     color: var(--text-primary);
 }
@@ -45,6 +45,29 @@ a:hover, .btn-link:hover {
 
 h1, h2, h3, h4, h5, h6 {
     color: #ffffff;
+    font-family: 'Roboto Slab', serif;
+}
+
+.card {
+    background-color: var(--bg-color-surface);
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.btn-outline-danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.btn-outline-danger:hover {
+    color: #fff;
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
 }
 
 h1:focus {
@@ -71,6 +94,7 @@ h1:focus {
     background-color: var(--bg-color-surface);
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    border: 1px solid #333;
 }
 
 .form-control {
