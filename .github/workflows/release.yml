@@ -51,7 +51,7 @@ jobs:
         run: cd dist/macos && zip -r ../TTRPG.Codex-osx-arm64-${{ steps.gitversion.outputs.semVer }}.zip .
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ steps.gitversion.outputs.semVer }}
