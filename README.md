@@ -1,5 +1,7 @@
 # TTRPG.Codex
 
+> ⚠️ **WORK IN PROGRESS:** This project is currently under active development. Features and APIs are subject to change.
+
 **Modular tabletop RPG campaign and character management system.**
 
 A lightweight digital companion for tabletop play that replaces paper sheets while preserving the tabletop feel.
