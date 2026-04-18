@@ -11,6 +11,10 @@ public class RavenDbFixture : IDisposable
 
     public RavenDbFixture()
     {
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
+
         DbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
         DbName = "Campaigns_" + Guid.NewGuid().ToString();
     }
@@ -40,10 +44,6 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
     public PersistenceTest(RavenDbFixture fixture)
     {
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
-
         _dbService = new RavenDbService(fixture.DbPath, fixture.DbName);
         _campaignRepository = new RavenCampaignRepository(_dbService);
         _characterRepository = new RavenCharacterRepository(_dbService);
