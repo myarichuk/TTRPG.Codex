@@ -2,51 +2,52 @@
 
 <nav class="sidebar">
     <div class="d-flex align-items-center gap-3 mb-5 px-3">
-        <div style="width: 28px; height: 28px; background: var(--accent-color); border-radius: 6px;"></div>
-        <span style="font-weight: 700; font-size: 1.1rem; letter-spacing: -0.5px;">CODEX</span>
+        <div style="width: 32px; height: 32px; background: var(--accent-color); border-radius: 8px; display: grid; place-items: center;">
+            <LucideIcon IconName="scroll" Size="18" Class="text-white" />
+        </div>
+        <span style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px;">CODEX</span>
     </div>
     
-    <div class="mb-4">
-        <p class="text-tertiary small px-3 mb-2" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">Library</p>
-        <NavLink href="" class="nav-link" Match="NavLinkMatch.All">
-            <LucideIcon IconName="compass" />
-            <span>Overview</span>
-        </NavLink>
-        <AuthorizeView>
-            <Authorized>
-                <NavLink href="campaigns" class="nav-link">
-                    <LucideIcon IconName="swords" />
-                    <span>Campaigns</span>
-                </NavLink>
-            </Authorized>
-        </AuthorizeView>
-        <NavLink href="grimoire" class="nav-link">
-            <LucideIcon IconName="book-marked" />
-            <span>Grimoire</span>
-        </NavLink>
-    </div>
+    <div class="nav-section-label">Library</div>
+    <NavLink href="" class="nav-link" Match="NavLinkMatch.All">
+        <LucideIcon IconName="layout-grid" Size="18" />
+        <span>Overview</span>
+    </NavLink>
+    <AuthorizeView>
+        <Authorized>
+            <NavLink href="campaigns" class="nav-link">
+                <LucideIcon IconName="map" Size="18" />
+                <span>Campaigns</span>
+            </NavLink>
+        </Authorized>
+    </AuthorizeView>
+    <NavLink href="grimoire" class="nav-link">
+        <LucideIcon IconName="book-open" Size="18" />
+        <span>Grimoire</span>
+    </NavLink>
 
-    <div>
-        <p class="text-tertiary small px-3 mb-2" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">System</p>
-        <NavLink href="demo" class="nav-link">
-            <LucideIcon IconName="users-2" />
-            <span>Players</span>
-        </NavLink>
-        <AuthorizeView>
-            <Authorized>
-                <NavLink href="settings" class="nav-link">
-                    <LucideIcon IconName="settings-2" />
-                    <span>Configuration</span>
-                </NavLink>
-            </Authorized>
-            <NotAuthorized>
-                <a href="/login" class="nav-link mt-4 text-primary opacity-75">
-                    <LucideIcon IconName="log-in" />
-                    <span>Sign In</span>
+
+    <div class="nav-section-label">System</div>
+    <NavLink href="players" class="nav-link">
+        <LucideIcon IconName="users" Size="18" />
+        <span>Players</span>
+    </NavLink>
+    <AuthorizeView>
+        <Authorized>
+            <NavLink href="settings" class="nav-link">
+                <LucideIcon IconName="settings" Size="18" />
+                <span>Configuration</span>
+            </NavLink>
+        </Authorized>
+        <NotAuthorized>
+            <div class="mt-auto">
+                <a href="/login" class="btn-accent w-100 justify-content-center text-decoration-none mx-3 mb-4">
+                    <LucideIcon IconName="log-in" Size="18" />
+                    <span>Enter Grimoire</span>
                 </a>
-            </NotAuthorized>
-        </AuthorizeView>
-    </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
 
     <div class="mt-auto px-3 pb-4">
         <AuthorizeView>
@@ -68,6 +69,7 @@
             </Authorized>
         </AuthorizeView>
     </div>
+
 </nav>
 
 @code {

@@ -1,0 +1,221 @@
+/* Header Layout */
+.search-container {
+    flex: 1;
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    background: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: var(--transition-base);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: var(--fluent-surface-secondary);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+}
+
+/* Action Buttons */
+.action-group {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-add {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-base);
+}
+
+.btn-add:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.ai-sparkle-btn {
+    background: var(--fluent-surface-secondary);
+    border: 1px solid var(--fluent-border-strong);
+    color: var(--text-primary);
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-base);
+}
+
+.ai-sparkle-btn ::deep svg {
+    background: linear-gradient(135deg, #4f6bed, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    stroke: url(#sparkle-gradient); /* We will need a gradient definition, or just color */
+}
+
+/* Fix for gradient on svg */
+/* Actually, CSS background-clip: text doesn't work well on SVG stroke/fill in all browsers.
+   For Lucide icon, it's easier to just give it a solid color like #a855f7 or similar,
+   but we can keep the user's styling, applied to the element.
+   Using stroke directly might be better. Let's make it a solid purple-ish color for simplicity if gradient fails. */
+.ai-sparkle-btn ::deep svg {
+    stroke: #a855f7;
+}
+
+
+.ai-sparkle-btn:hover {
+    background: var(--fluent-surface-hover);
+    border-color: #a855f7;
+    color: #a855f7;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    margin: 2rem 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.category-chip {
+    background: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: var(--transition-base);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.category-chip.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+.featured-lore {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.lore-card {
+    background: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lore-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--fluent-border-strong);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    background: var(--fluent-surface-secondary);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--accent-color);
+}
+
+.lore-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.lore-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.lore-table-wrapper {
+    background: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--fluent-surface-hover);
+}
+
+.table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    padding: 1.25rem 1.5rem;
+    background: rgba(255,255,255,0.01);
+    border: none;
+}
+
+.table td {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--fluent-border);
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.tag-pill {
+    background: var(--fluent-surface-secondary);
+    color: var(--text-tertiary);
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.btn-action {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    padding: 4px;
+    transition: var(--transition-base);
+}
+
+.btn-action:hover {
+    color: var(--text-primary);
+}

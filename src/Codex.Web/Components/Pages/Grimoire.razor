@@ -1,0 +1,108 @@
+@page "/grimoire"
+@using Codex.Web.Components.Layout
+
+<PageTitle>Grimoire | TTRPG.Codex</PageTitle>
+
+<!-- Updated Header with Action Group -->
+<header class="d-flex justify-content-between align-items-center mb-4">
+    <div class="search-container me-4">
+        <LucideIcon IconName="search" Size="18" Class="search-icon" />
+        <input type="text" class="search-input" placeholder="Search spells, artifacts, or lore...">
+    </div>
+    <div class="action-group">
+        <button class="ai-sparkle-btn" title="AI Generate Lore">
+            <LucideIcon IconName="sparkles" Size="16" />
+            Generate
+        </button>
+        <button class="btn-add">
+            <LucideIcon IconName="plus" Size="18" />
+            Add Entry
+        </button>
+    </div>
+</header>
+
+<div class="filter-bar">
+    <div class="category-chip active"><LucideIcon IconName="layers" Size="14" /> All Entry</div>
+    <div class="category-chip"><LucideIcon IconName="flame" Size="14" /> Spells</div>
+    <div class="category-chip"><LucideIcon IconName="gem" Size="14" /> Artifacts</div>
+    <div class="category-chip"><LucideIcon IconName="map-pin" Size="14" /> Locations</div>
+    <div class="category-chip"><LucideIcon IconName="skull" Size="14" /> Bestiary</div>
+</div>
+
+<h2 class="h6 text-tertiary mb-3 fw-bold text-uppercase" style="letter-spacing: 0.1em;">Pinned Chronicles</h2>
+<div class="featured-lore">
+    <div class="lore-card">
+        <div class="icon-box"><LucideIcon IconName="gem" Size="20" /></div>
+        <h3 class="lore-title">Obsidian Scepter</h3>
+        <p class="lore-desc">An artifact of the Old Kings. Drains light from its surroundings and whispers in Draconic.</p>
+        <div class="mt-auto d-flex justify-content-between align-items-center">
+            <span class="tag-pill">Legendary</span>
+            <button class="btn-action"><LucideIcon IconName="external-link" Size="14" /></button>
+        </div>
+    </div>
+    <div class="lore-card">
+        <div class="icon-box"><LucideIcon IconName="flame" Size="20" /></div>
+        <h3 class="lore-title">Meteor Swarm</h3>
+        <p class="lore-desc">Blazing orbs of fire plummet to the ground. Evocation magic at its peak destructive power.</p>
+        <div class="mt-auto d-flex justify-content-between align-items-center">
+            <span class="tag-pill">Level 9</span>
+            <button class="btn-action"><LucideIcon IconName="external-link" Size="14" /></button>
+        </div>
+    </div>
+    <div class="lore-card">
+        <div class="icon-box"><LucideIcon IconName="map-pin" Size="20" /></div>
+        <h3 class="lore-title">Iron Peak Citadel</h3>
+        <p class="lore-desc">The primary stronghold of the Northern Dwarves. Built directly into the living granite.</p>
+        <div class="mt-auto d-flex justify-content-between align-items-center">
+            <span class="tag-pill">Major City</span>
+            <button class="btn-action"><LucideIcon IconName="external-link" Size="14" /></button>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-end mb-3">
+    <h2 class="h6 text-tertiary mb-0 fw-bold text-uppercase" style="letter-spacing: 0.1em;">Recent Lore Entries</h2>
+    <a href="#" class="text-accent small text-decoration-none">View Full Library →</a>
+</div>
+
+<div class="lore-table-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Date Created</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="fw-medium text-white">The Blacksmith's Secret</td>
+                <td><span class="text-secondary small">Plot Hook</span></td>
+                <td><span class="text-tertiary small">Apr 12, 2026</span></td>
+                <td class="text-end">
+                    <button class="btn-action mx-1"><LucideIcon IconName="edit-3" Size="16" /></button>
+                    <button class="btn-action mx-1"><LucideIcon IconName="trash-2" Size="16" /></button>
+                </td>
+            </tr>
+            <tr>
+                <td class="fw-medium text-white">Misty Step</td>
+                <td><span class="text-secondary small">Spell (Conjuration)</span></td>
+                <td><span class="text-tertiary small">Apr 10, 2026</span></td>
+                <td class="text-end">
+                    <button class="btn-action mx-1"><LucideIcon IconName="edit-3" Size="16" /></button>
+                    <button class="btn-action mx-1"><LucideIcon IconName="trash-2" Size="16" /></button>
+                </td>
+            </tr>
+            <tr>
+                <td class="fw-medium text-white">Ancient Dragonborn Lore</td>
+                <td><span class="text-secondary small">History</span></td>
+                <td><span class="text-tertiary small">Apr 08, 2026</span></td>
+                <td class="text-end">
+                    <button class="btn-action mx-1"><LucideIcon IconName="edit-3" Size="16" /></button>
+                    <button class="btn-action mx-1"><LucideIcon IconName="trash-2" Size="16" /></button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

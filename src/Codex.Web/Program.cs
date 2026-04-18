@@ -77,6 +77,7 @@ builder.Services.AddSingleton<CodexWorld>();
 
 // Add SignalR explicitly (already added by AddServerSideBlazor, but doing it for clarity)
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 

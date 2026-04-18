@@ -1,0 +1,161 @@
+/* Header Layout */
+.search-container {
+    flex: 1;
+    position: relative;
+    max-width: 400px;
+}
+
+.search-input {
+    width: 100%;
+    background: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: var(--transition-base);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+}
+
+/* Player Cards Grid */
+.player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.player-card {
+    background-color: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.player-card:hover {
+    border-color: var(--fluent-border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-avatar {
+    width: 48px;
+    height: 48px;
+    background: var(--fluent-surface-secondary);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: 1px solid var(--fluent-border);
+}
+
+.player-info h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.player-info p {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin: 0;
+}
+
+/* Character Chips (The Many-to-One visualization) */
+.character-section {
+    background: rgba(255,255,255,0.02);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--fluent-border);
+}
+
+.character-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.character-chip {
+    background: var(--fluent-surface-secondary);
+    border: 1px solid var(--fluent-border);
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+
+.character-chip:hover {
+    background: var(--fluent-surface-hover);
+    border-color: var(--text-tertiary);
+}
+
+.char-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.char-class {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.btn-add-player {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-sparkle-btn {
+    background: var(--fluent-surface-secondary);
+    border: 1px solid var(--fluent-border-strong);
+    color: var(--text-primary);
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-base);
+}
+
+.ai-sparkle-btn:hover {
+    border-color: #a855f7;
+    color: #a855f7;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
