@@ -26,8 +26,16 @@ public class UserDocument
 {
     public string Id { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
+    public List<ExternalLogin> ExternalLogins { get; set; } = new();
+}
+
+public class ExternalLogin
+{
+    public string Provider { get; set; } = string.Empty;
+    public string ProviderKey { get; set; } = string.Empty;
 }
 
 public class SessionDocument

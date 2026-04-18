@@ -287,3 +287,176 @@ h1 { font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
     width: 100%;
     z-index: 2000;
 }
+
+/* Auth Cards */
+.auth-card {
+    background-color: var(--bg-color-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+.btn-surface {
+    background: var(--fluent-surface-secondary);
+    border: 1px solid var(--fluent-border);
+    color: var(--text-primary);
+    transition: var(--transition-base);
+}
+.btn-surface:hover {
+    background: var(--fluent-surface-hover);
+    border-color: var(--fluent-border-strong);
+    color: white;
+}
+
+.form-control {
+    background-color: var(--fluent-surface-secondary);
+    border: 1px solid var(--fluent-border);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    transition: var(--transition-base);
+}
+.form-control:focus {
+    background-color: var(--fluent-surface-secondary);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* Auth Layout (Login / Register) */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-color-main);
+    background-image: radial-gradient(circle at 50% -20%, #1a1a1a 0%, #080808 100%);
+    padding: 2rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(18, 18, 18, 0.6);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-lg);
+    padding: 3.5rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.brand-anchor {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logo-mark {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--accent-color) 0%, #106ebe 100%);
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 1rem auto;
+    box-shadow: 0 8px 24px rgba(0, 120, 212, 0.4);
+    transition: var(--transition-base);
+    color: white;
+}
+
+.logo-mark:hover {
+    transform: scale(1.05) rotate(-2deg);
+}
+
+.brand-name {
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin-top: 1rem;
+}
+
+.oauth-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.oauth-btn {
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: var(--transition-base);
+    text-decoration: none;
+}
+
+.oauth-btn:hover {
+    filter: brightness(0.9);
+    color: #000;
+}
+
+.oauth-btn.apple {
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.oauth-btn.apple:hover {
+    color: #fff;
+}
+
+.auth-divider {
+    position: relative;
+    text-align: center;
+    margin: 2.25rem 0;
+}
+
+.auth-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--fluent-border);
+}
+
+.auth-divider-text {
+    position: relative;
+    background: #141414;
+    padding: 0 12px;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+
+.footer-links {
+    text-align: center;
+    margin-top: 2.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.text-accent {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+}
