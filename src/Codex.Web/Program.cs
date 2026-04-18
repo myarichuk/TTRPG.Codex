@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Codex.Core.AI;
+using Microsoft.Extensions.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +82,22 @@ builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<PluginLoader>();
 builder.Services.AddSingleton<CodexWorld>();
+
+// Configure AI services
+var aiConfig = new AIConfiguration();
+builder.Configuration.GetSection("AI").Bind(aiConfig);
+builder.Services.AddSingleton(aiConfig);
+
+var chatClient = AIClientFactory.CreateClient(aiConfig);
+if (chatClient != null)
+{
+    builder.Services.AddSingleton<IChatClient>(chatClient);
+}
+
+builder.Services.AddSingleton<LoreGenerator>(sp => {
+    var chatClient = sp.GetService<IChatClient>();
+    return new LoreGenerator(chatClient);
+});
 
 // Add SignalR explicitly (already added by AddServerSideBlazor, but doing it for clarity)
 builder.Services.AddSignalR();
