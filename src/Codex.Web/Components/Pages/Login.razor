@@ -4,37 +4,74 @@
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.AspNetCore.Identity
 @using Codex.Persistence
+@using Codex.Web.Components.Layout
+@layout AuthLayout
 @inject IUserRepository UserRepository
 @inject NavigationManager NavManager
+@inject IAuthenticationSchemeProvider SchemeProvider
 
-<PageTitle>Login</PageTitle>
+<PageTitle>Login | TTRPG.Codex</PageTitle>
 
-<div class="login-container">
-    <h2 class="mb-4">Login</h2>
+<div class="login-card">
+    <div class="brand-anchor">
+        <div class="logo-mark">
+            <LucideIcon IconName="scroll" Size="32" />
+        </div>
+        <div class="brand-name">Codex</div>
+    </div>
 
     <EditForm Model="@Model" OnValidSubmit="HandleLogin" FormName="LoginForm">
         <DataAnnotationsValidator />
 
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
-            <div class="alert alert-danger">@ErrorMessage</div>
+            <div class="alert alert-danger small p-2 mb-3 rounded" style="background-color: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.2); color: #ff6b6b;">@ErrorMessage</div>
         }
 
-        <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <InputText id="username" class="form-control" @bind-Value="Model!.Username" />
+        <div class="mb-3 text-start">
+            <label for="username" class="form-label small text-secondary">Account Username</label>
+            <InputText id="username" class="form-control w-100" placeholder="dm" @bind-Value="Model!.Username" />
         </div>
 
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <InputText id="password" type="password" class="form-control" @bind-Value="Model!.Password" />
+        <div class="mb-4 text-start">
+            <div class="d-flex justify-content-between">
+                <label for="password" class="form-label small text-secondary">Secret Key</label>
+            </div>
+            <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••" @bind-Value="Model!.Password" />
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2 py-2">Log in</button>
-        <div class="mt-3 text-center">
-            <a href="/register">Create an account</a>
-        </div>
+        <button type="submit" class="btn-accent w-100 mt-2">Enter Grimoire</button>
     </EditForm>
+
+    @if (ExternalSchemes.Any())
+    {
+        <div class="auth-divider">
+            <span class="auth-divider-text">Unified Auth</span>
+        </div>
+
+        <div class="oauth-container">
+            @if (ExternalSchemes.Any(s => s.Name == "Google"))
+            {
+                <a href="/login/external?provider=Google&returnUrl=/" class="oauth-btn google">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-google" viewBox="0 0 16 16">
+                        <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/>
+                    </svg>
+                    Continue with Google
+                </a>
+            }
+            @if (ExternalSchemes.Any(s => s.Name == "Apple"))
+            {
+                <a href="/login/external?provider=Apple&returnUrl=/" class="oauth-btn apple">
+                    <LucideIcon IconName="apple" Size="18" />
+                    Continue with Apple
+                </a>
+            }
+        </div>
+    }
+
+    <div class="footer-links">
+        New Storyteller? <a href="/register" class="text-accent">Initiate Account</a>
+    </div>
 </div>
 
 @code {
@@ -44,9 +81,21 @@
     [SupplyParameterFromForm]
     public LoginModel? Model { get; set; }
 
-    protected override void OnInitialized()
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? QueryError { get; set; }
+
+    public IEnumerable<AuthenticationScheme> ExternalSchemes { get; set; } = Array.Empty<AuthenticationScheme>();
+
+    protected override async Task OnInitializedAsync()
     {
         Model ??= new();
+        var allSchemes = await SchemeProvider.GetAllSchemesAsync();
+        ExternalSchemes = allSchemes.Where(s => s.DisplayName != null || s.Name == "Google" || s.Name == "Apple").ToList();
+
+        if (!string.IsNullOrEmpty(QueryError))
+        {
+            ErrorMessage = QueryError;
+        }
     }
 
     public string? ErrorMessage { get; set; }

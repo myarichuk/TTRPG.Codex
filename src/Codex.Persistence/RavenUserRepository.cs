@@ -17,6 +17,18 @@ public class RavenUserRepository : IUserRepository
         return await session.Query<UserDocument>().FirstOrDefaultAsync(u => u.Username == username);
     }
 
+    public async Task<UserDocument?> GetUserByEmailAsync(string email)
+    {
+        using var session = _dbService.Store.OpenAsyncSession();
+        return await session.Query<UserDocument>().FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<UserDocument?> GetUserByExternalLoginAsync(string provider, string providerKey)
+    {
+        using var session = _dbService.Store.OpenAsyncSession();
+        return await session.Query<UserDocument>().FirstOrDefaultAsync(u => u.ExternalLogins.Any(e => e.Provider == provider && e.ProviderKey == providerKey));
+    }
+
     public async Task<UserDocument?> GetUserByIdAsync(string id)
     {
         using var session = _dbService.Store.OpenAsyncSession();

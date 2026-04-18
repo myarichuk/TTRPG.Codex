@@ -38,10 +38,6 @@
                     <LucideIcon IconName="settings-2" />
                     <span>Configuration</span>
                 </NavLink>
-                <a href="/logout" class="nav-link mt-4 text-danger opacity-75">
-                    <LucideIcon IconName="log-out" />
-                    <span>Sign Out</span>
-                </a>
             </Authorized>
             <NotAuthorized>
                 <a href="/login" class="nav-link mt-4 text-primary opacity-75">
@@ -51,4 +47,37 @@
             </NotAuthorized>
         </AuthorizeView>
     </div>
+
+    <div class="mt-auto px-3 pb-4">
+        <AuthorizeView>
+            <Authorized>
+                @{
+                    var email = context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                    var username = context.User.Identity?.Name ?? "User";
+                    var gravatarUrl = string.IsNullOrEmpty(email)
+                        ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(username)}&background=0D8ABC&color=fff&rounded=true"
+                        : $"https://www.gravatar.com/avatar/{GetMd5Hash(email.Trim().ToLowerInvariant())}?d=identicon&s=40";
+                }
+                <div class="d-flex align-items-center gap-3 p-3 rounded" style="background-color: var(--fluent-surface-secondary); border: 1px solid var(--fluent-border); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <img src="@gravatarUrl" alt="User Avatar" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--fluent-border-strong);" />
+                    <div class="d-flex flex-column text-truncate flex-grow-1">
+                        <span class="small fw-semibold text-truncate" style="color: var(--text-primary);">@username</span>
+                        <a href="/logout" class="text-danger small text-decoration-none opacity-75 hover-opacity-100" style="font-size: 0.75rem; transition: var(--transition-base);">Sign Out</a>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
 </nav>
+
+@code {
+    private static string GetMd5Hash(string input)
+    {
+        using (var md5 = System.Security.Cryptography.MD5.Create())
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(input);
+            var hash = md5.ComputeHash(bytes);
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+    }
+}

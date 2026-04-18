@@ -7,6 +7,11 @@
     <ProjectReference Include="..\Codex.Systems.DnD5e\Codex.Systems.DnD5e.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.Apple" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.6" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
