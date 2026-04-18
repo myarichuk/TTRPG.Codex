@@ -1,40 +1,64 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TTRPG.Codex</a>
+<div class="fluent-ribbon">
+    <div class="ribbon-tabs">
+        <div class="ribbon-tab active">Home</div>
     </div>
-</div>
+    <div class="ribbon-content">
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
+                    <span>Home</span>
+                </NavLink>
+                <AuthorizeView>
+                    <Authorized>
+                        <NavLink class="nav-link" href="campaigns">
+                            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
+                            <span>Campaigns</span>
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+            <div class="ribbon-group-title">Navigation</div>
         </div>
 
         <AuthorizeView>
             <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="campaigns">
-                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Campaigns
-                    </NavLink>
-                </div>
-
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="demo">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Character Demo
-                    </NavLink>
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <NavLink class="nav-link" href="demo">
+                            <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span>
+                            <span>Demo</span>
+                        </NavLink>
+                    </div>
+                    <div class="ribbon-group-title">Modules</div>
                 </div>
             </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="login">
-                        <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
         </AuthorizeView>
-    </nav>
+
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="ribbon-btn user-info">
+                            <span class="bi bi-person-fill" aria-hidden="true"></span>
+                            <span>@context.User.Identity?.Name</span>
+                        </div>
+                        <a href="/logout" class="ribbon-btn">
+                            <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
+                            <span>Log out</span>
+                        </a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/login" class="ribbon-btn">
+                            <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span>
+                            <span>Log in</span>
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+            <div class="ribbon-group-title">Account</div>
+        </div>
+
+    </div>
 </div>

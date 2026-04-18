@@ -10,18 +10,18 @@
 <div class="container mt-4">
     <h1 class="mb-4">Character Demo</h1>
 
-    <button class="btn btn-primary" @onclick="CreateTestEntity">Create Test Entity</button>
+    <button class="btn btn-primary px-4 shadow-sm" @onclick="CreateTestEntity">Create Test Entity</button>
     <br/><br/>
 
     @if (entity.IsAlive)
     {
-        <div class="card p-4 mt-3" style="max-width: 400px;">
+        <div class="card p-4 mt-3 shadow-sm border-0" style="max-width: 400px;">
             @if (entity.Has<HitPointsComponent>())
             {
                 var hp = entity.Get<HitPointsComponent>();
                 <h5 class="mb-3">Entity Status</h5>
                 <p><strong>Current HP:</strong> @hp.Current / @hp.Maximum</p>
-                <button class="btn btn-danger mt-2" @onclick="TakeDamage">Take 1 Damage</button>
+                <button class="btn btn-danger px-4 shadow-sm mt-2" @onclick="TakeDamage">Take 1 Damage</button>
             }
         </div>
     }

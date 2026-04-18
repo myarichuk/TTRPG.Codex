@@ -17,7 +17,7 @@
             @foreach (var campaign in campaigns)
             {
                 <div class="col-md-4 mb-3">
-                    <div class="card p-3 h-100">
+                    <div class="card p-3 h-100 shadow-sm border-0">
                         <h5>@campaign.Name</h5>
                         <h6 class="text-muted mb-0">@campaign.System</h6>
                     </div>
@@ -25,7 +25,7 @@
             }
         </div>
 
-        <button class="btn btn-primary mt-3" @onclick="CreateCampaign">Create New Campaign</button>
+        <button class="btn btn-primary mt-3 px-4 shadow-sm" @onclick="CreateCampaign">Create New Campaign</button>
     }
 </div>
 
