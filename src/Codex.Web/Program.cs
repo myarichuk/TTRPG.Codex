@@ -3,6 +3,7 @@ using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -58,6 +59,11 @@ if (!string.IsNullOrEmpty(builder.Configuration["Authentication:Apple:ClientId"]
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("DM", policy => policy.RequireRole("DM"));
+
+    // Require authentication by default, and explicitly allow anonymous on login/register/etc.
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 });
 builder.Services.AddHttpContextAccessor();
 
@@ -96,7 +102,11 @@ var world = app.Services.GetRequiredService<CodexWorld>();
 var absolutePluginsDir = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, pluginsDir));
 logger.LogInformation("Loading plugins from: {PluginsDir}", absolutePluginsDir);
 
-_ = loader.LoadAndInitializeAsync(absolutePluginsDir, world);
+// Don't block app startup on plugin loading; start it only once the web server is already serving.
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    _ = loader.LoadAndInitializeAsync(absolutePluginsDir, world);
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -115,6 +125,13 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+// Robust sign-out: do it on a normal HTTP request so cookies can be cleared reliably.
+app.MapGet("/logout", async (HttpContext ctx) =>
+{
+    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/login");
+});
 
 app.MapGet("/login/external", (string provider, string? returnUrl) =>
 {

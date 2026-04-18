@@ -1,4 +1,5 @@
 @page "/login"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
@@ -84,6 +85,9 @@
     [SupplyParameterFromQuery(Name = "error")]
     public string? QueryError { get; set; }
 
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
     public IEnumerable<AuthenticationScheme> ExternalSchemes { get; set; } = Array.Empty<AuthenticationScheme>();
 
     protected override async Task OnInitializedAsync()
@@ -143,7 +147,9 @@
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            NavManager.NavigateTo("/", forceLoad: true);
+            // Force a full reload so the auth cookie is applied to a fresh HTTP request.
+            var dest = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+            NavManager.NavigateTo(dest, forceLoad: true);
         }
         else
         {

@@ -5,7 +5,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RavenDB.Embedded" Version="7.0.1" />
+    <PackageReference Include="RavenDB.Embedded" Version="*" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="*" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -12,11 +12,6 @@ public class RavenDbService : IDisposable
 
     public RavenDbService(string dataDirectory, string databaseName = "Campaigns")
     {
-        // Force aggressive roll-forward for the RavenDB child process
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "Major");
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
-
         var options = new ServerOptions
         {
             DataDirectory = dataDirectory,

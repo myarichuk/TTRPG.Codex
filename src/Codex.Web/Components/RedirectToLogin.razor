@@ -4,6 +4,10 @@
 @code {
     protected override void OnInitialized()
     {
-        NavigationManager.NavigateTo("/login", true);
+        // Avoid full page reloads; they re-show the boot splash and can cause "loading" flashes.
+        // Include a returnUrl so login can send the user back to where they intended to go.
+        var relative = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var returnUrl = string.IsNullOrWhiteSpace(relative) ? "/" : "/" + relative;
+        NavigationManager.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
     }
 }

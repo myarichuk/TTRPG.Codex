@@ -4,29 +4,42 @@ using Microsoft.Extensions.Logging;
 
 namespace Codex.Core;
 
-public class PluginLoader
+public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry registry)
 {
-    private readonly ILogger<PluginLoader> _logger;
-    private readonly ComponentRegistry _registry;
-
     public bool IsLoaded { get; private set; }
+    public bool IsLoading { get; private set; }
+    public Exception? LoadException { get; private set; }
     public event Action? OnPluginsLoaded;
-
-    public PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry registry)
-    {
-        _logger = logger;
-        _registry = registry;
-    }
 
     public async Task LoadAndInitializeAsync(string pluginsDirectory, CodexWorld world)
     {
-        await Task.Run(() =>
+        if (IsLoaded || IsLoading)
         {
-            var plugins = LoadPlugins(pluginsDirectory);
-            InitializePlugins(plugins, world);
-            IsLoaded = true;
+            return;
+        }
+
+        IsLoading = true;
+        LoadException = null;
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                var plugins = LoadPlugins(pluginsDirectory);
+                InitializePlugins(plugins, world);
+            });
+        }
+        catch (Exception ex)
+        {
+            LoadException = ex;
+            logger.LogError(ex, "Plugin loading failed.");
+        }
+        finally
+        {
+            IsLoaded = true; // "Done attempting" so the UI doesn't get stuck on a perpetual loading screen.
+            IsLoading = false;
             OnPluginsLoaded?.Invoke();
-        });
+        }
     }
 
     public List<ICodexSystemPlugin> LoadPlugins(string pluginsDirectory)
@@ -35,7 +48,7 @@ public class PluginLoader
 
         if (!Directory.Exists(pluginsDirectory))
         {
-            _logger.LogWarning("Plugins directory '{PluginsDirectory}' does not exist.", pluginsDirectory);
+            logger.LogWarning("Plugins directory '{PluginsDirectory}' does not exist.", pluginsDirectory);
             return plugins;
         }
 
@@ -53,14 +66,14 @@ public class PluginLoader
                 {
                     if (Activator.CreateInstance(type) is ICodexSystemPlugin plugin)
                     {
-                        _logger.LogInformation("Loaded plugin: {SystemId}", plugin.SystemId);
+                        logger.LogInformation("Loaded plugin: {SystemId}", plugin.SystemId);
                         plugins.Add(plugin);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to load plugin from {File}", file);
+                logger.LogError(ex, "Failed to load plugin from {File}", file);
             }
         }
 
@@ -71,8 +84,8 @@ public class PluginLoader
     {
         foreach (var plugin in plugins)
         {
-            _logger.LogInformation("Initializing plugin: {SystemId}", plugin.SystemId);
-            plugin.RegisterComponents(_registry);
+            logger.LogInformation("Initializing plugin: {SystemId}", plugin.SystemId);
+            plugin.RegisterComponents(registry);
             plugin.RegisterSystems(world);
         }
     }
