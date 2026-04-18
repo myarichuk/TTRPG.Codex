@@ -10,7 +10,7 @@ public class RavenDbService : IDisposable
 
     public IDocumentStore Store => _store;
 
-    public RavenDbService(string dataDirectory, string databaseName = "Campaigns")
+    public RavenDbService(string dataDirectory, string databaseName = "Campaigns", bool runInMemory = false)
     {
         var options = new ServerOptions
         {
@@ -19,6 +19,10 @@ public class RavenDbService : IDisposable
             FrameworkVersion = null // Allow RavenDB to auto-resolve the available runtime
         };
         options.CommandLineArgs.Add("--Setup.Mode=None");
+        if (runInMemory)
+        {
+            options.CommandLineArgs.Add("--RunInMemory=True");
+        }
 
         try
         {

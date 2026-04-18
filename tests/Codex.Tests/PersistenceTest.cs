@@ -1,5 +1,4 @@
 using Codex.Persistence;
-using System.Text.Json.Nodes;
 using Raven.Client.Documents;
 
 namespace Codex.Tests;
@@ -38,15 +37,15 @@ public class RavenDbFixture : IDisposable
 public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 {
     private readonly RavenDbService _dbService;
-    private readonly RavenCampaignRepository _campaignRepository;
-    private readonly RavenCharacterRepository _characterRepository;
+    private readonly CampaignRepository _campaignRepository;
+    private readonly CharacterRepository _characterRepository;
     private readonly RavenUserRepository _userRepository;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, fixture.DbName);
-        _campaignRepository = new RavenCampaignRepository(_dbService);
-        _characterRepository = new RavenCharacterRepository(_dbService);
+        _dbService = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _campaignRepository = new CampaignRepository(_dbService);
+        _characterRepository = new CharacterRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
     }
 

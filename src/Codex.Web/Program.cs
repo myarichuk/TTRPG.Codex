@@ -74,8 +74,8 @@ var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
 var pluginsDir = builder.Configuration["Codex:PluginsDirectory"] ?? "plugins";
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir));
-builder.Services.AddSingleton<ICampaignRepository, RavenCampaignRepository>();
-builder.Services.AddSingleton<ICharacterRepository, RavenCharacterRepository>();
+builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
+builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 
@@ -177,7 +177,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     if (string.IsNullOrEmpty(provider) || string.IsNullOrEmpty(providerKey))
     {
-         return Results.Redirect("/login?error=" + Uri.EscapeDataString("Invalid external authentication response."));
+        return Results.Redirect("/login?error=" + Uri.EscapeDataString("Invalid external authentication response."));
     }
 
     var user = await userRepository.GetUserByExternalLoginAsync(provider, providerKey);
