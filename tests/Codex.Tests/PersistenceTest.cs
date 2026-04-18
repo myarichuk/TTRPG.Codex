@@ -1,15 +1,18 @@
 using Codex.Persistence;
 using System.Text.Json.Nodes;
+using Raven.Client.Documents;
 
 namespace Codex.Tests;
 
 public class RavenDbFixture : IDisposable
 {
     public string DbPath { get; }
+    public string DbName { get; }
 
     public RavenDbFixture()
     {
         DbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
+        DbName = "Campaigns_" + Guid.NewGuid().ToString();
     }
 
     public void Dispose()
@@ -41,7 +44,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
 
-        _dbService = new RavenDbService(fixture.DbPath);
+        _dbService = new RavenDbService(fixture.DbPath, fixture.DbName);
         _campaignRepository = new RavenCampaignRepository(_dbService);
         _characterRepository = new RavenCharacterRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
@@ -98,7 +101,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         await _characterRepository.SaveAsync(char3);
 
         // Wait for RavenDB indexes to process (since we use a query)
-        await Task.Delay(100);
+        using var session = _dbService.Store.OpenAsyncSession();
+        await session.Query<CharacterDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
 
         var loaded = await _characterRepository.GetAllForCampaignAsync(campaignId);
 
@@ -141,7 +145,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         await _userRepository.CreateUserAsync(user);
 
         // Wait for RavenDB indexes to process (since we use a query)
-        await Task.Delay(100);
+        using var session = _dbService.Store.OpenAsyncSession();
+        await session.Query<UserDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
 
         var loaded = await _userRepository.GetUserByUsernameAsync("uniqueuser123");
 
