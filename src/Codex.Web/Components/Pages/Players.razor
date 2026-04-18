@@ -20,74 +20,92 @@
         </div>
     </header>
 
-    <div class="player-grid">
-        <!-- Player Card 1 -->
-        <div class="player-card">
-            <div class="player-header">
-                <div class="player-avatar">JD</div>
-                <div class="player-info">
-                    <h3>John Doe</h3>
-                    <p>j.doe@discord</p>
-                </div>
+    @if (players == null || !players.Any())
+    {
+        <div class="empty-state-card">
+            <div class="empty-icon-wrapper">
+                <LucideIcon IconName="users" Size="48" />
             </div>
+            <h3>Your Table is Empty</h3>
+            <p>No players have been invited to your grimoire yet. Add your first player to start building your party.</p>
+            <button class="btn-add-player mt-4" @onclick="AddFirstPlayer">
+                <LucideIcon IconName="user-plus" Size="18" />
+                Invite Player
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="player-grid">
+            @foreach (var player in players)
+            {
+                <div class="player-card">
+                    <div class="player-header">
+                        <div class="player-avatar">@player.Initials</div>
+                        <div class="player-info">
+                            <h3>@player.Name</h3>
+                            <p>@player.Email</p>
+                        </div>
+                    </div>
 
-            <div class="character-section">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-tertiary small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Characters (2)</span>
-                    <LucideIcon IconName="plus" Size="14" Class="text-tertiary cursor-pointer" />
+                    <div class="character-section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-tertiary small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Characters (@player.Characters.Count)</span>
+                            <LucideIcon IconName="plus" Size="14" Class="text-tertiary cursor-pointer" />
+                        </div>
+                        <div class="character-list">
+                            @foreach (var character in player.Characters)
+                            {
+                                <div class="character-chip">
+                                    <div>
+                                        <div class="char-name">@character.Name</div>
+                                        <div class="char-class">Level @character.Level @character.Class</div>
+                                    </div>
+                                    <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
-                <div class="character-list">
-                    <div class="character-chip">
-                        <div>
-                            <div class="char-name">Valerius</div>
-                            <div class="char-class">Level 8 Paladin</div>
-                        </div>
-                        <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
-                    </div>
-                    <div class="character-chip">
-                        <div>
-                            <div class="char-name">Zorn the Bold</div>
-                            <div class="char-class">Level 3 Barbarian</div>
-                        </div>
-                        <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
-                    </div>
+            }
+
+            <!-- Add Player Button Card -->
+            <div class="player-card add-card" @onclick="AddFirstPlayer">
+                <div class="p-4">
+                    <div class="mb-3 text-tertiary"><LucideIcon IconName="user-plus" Size="32" /></div>
+                    <p class="text-secondary small">Invite a new player to the Codex</p>
                 </div>
             </div>
         </div>
-
-        <!-- Player Card 2 -->
-        <div class="player-card">
-            <div class="player-header">
-                <div class="player-avatar" style="background: #e67e2222; color: #e67e22;">SK</div>
-                <div class="player-info">
-                    <h3>Sarah Knight</h3>
-                    <p>knight_sarah@gmail.com</p>
-                </div>
-            </div>
-
-            <div class="character-section">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-tertiary small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Characters (1)</span>
-                    <LucideIcon IconName="plus" Size="14" Class="text-tertiary cursor-pointer" />
-                </div>
-                <div class="character-list">
-                    <div class="character-chip">
-                        <div>
-                            <div class="char-name">Elara Moonwhisper</div>
-                            <div class="char-class">Level 12 Wizard</div>
-                        </div>
-                        <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Empty State Add Player -->
-        <div class="player-card" style="border-style: dashed; background: transparent; display: grid; place-items: center; text-align: center; cursor: pointer;">
-            <div class="p-4">
-                <div class="mb-3 text-tertiary"><LucideIcon IconName="user-plus" Size="32" /></div>
-                <p class="text-secondary small">Invite a new player to the Codex</p>
-            </div>
-        </div>
-    </div>
+    }
 </div>
+
+@code {
+    private List<PlayerInfo>? players;
+
+    protected override void OnInitialized()
+    {
+        // Start with an empty list to represent a clean state.
+        players = new List<PlayerInfo>();
+    }
+
+    private void AddFirstPlayer()
+    {
+        // Placeholder for add player logic
+    }
+
+    public class PlayerInfo
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Initials => string.Concat(Name.Split(' ').Select(n => n.FirstOrDefault()));
+        public List<CharacterSummary> Characters { get; set; } = new();
+    }
+
+    public class CharacterSummary
+    {
+        public string Name { get; set; } = "";
+        public int Level { get; set; }
+        public string Class { get; set; } = "";
+    }
+}
