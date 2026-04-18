@@ -1,5 +1,3 @@
-using System.Text.Json.Nodes;
-
 namespace Codex.Persistence;
 
 public class CampaignDocument
