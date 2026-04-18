@@ -1,45 +1,54 @@
 @page "/register"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.AspNetCore.Identity
 @using Codex.Persistence
+@using Codex.Web.Components.Layout
+@layout AuthLayout
 @inject IUserRepository UserRepository
 @inject NavigationManager NavManager
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Register | TTRPG.Codex</PageTitle>
 
-<div class="login-container">
-    <h2 class="mb-4">Register</h2>
+<div class="login-card">
+    <div class="brand-anchor">
+        <div class="logo-mark">
+            <LucideIcon IconName="scroll" Size="32" />
+        </div>
+        <div class="brand-name">Codex</div>
+    </div>
 
     <EditForm Model="@Model" OnValidSubmit="HandleRegister" FormName="RegisterForm">
         <DataAnnotationsValidator />
 
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
-            <div class="alert alert-danger">@ErrorMessage</div>
+            <div class="alert alert-danger small p-2 mb-3 rounded" style="background-color: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.2); color: #ff6b6b;">@ErrorMessage</div>
         }
 
-        <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <InputText id="username" class="form-control" @bind-Value="Model!.Username" />
+        <div class="mb-3 text-start">
+            <label for="username" class="form-label small text-secondary">Account Username</label>
+            <InputText id="username" class="form-control w-100" placeholder="dm" @bind-Value="Model!.Username" />
         </div>
 
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <InputText id="password" type="password" class="form-control" @bind-Value="Model!.Password" />
+        <div class="mb-3 text-start">
+            <label for="password" class="form-label small text-secondary">Secret Key</label>
+            <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••" @bind-Value="Model!.Password" />
         </div>
 
-        <div class="mb-3">
-            <label for="confirmPassword" class="form-label">Confirm Password</label>
-            <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="Model!.ConfirmPassword" />
+        <div class="mb-4 text-start">
+            <label for="confirmPassword" class="form-label small text-secondary">Confirm Secret Key</label>
+            <InputText id="confirmPassword" type="password" class="form-control w-100" placeholder="••••••••" @bind-Value="Model!.ConfirmPassword" />
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2 py-2">Register</button>
-        <div class="mt-3 text-center">
-            <a href="/login">Already have an account? Log in</a>
-        </div>
+        <button type="submit" class="btn-accent w-100 mt-2">Initiate Account</button>
     </EditForm>
+
+    <div class="footer-links">
+        Already a Storyteller? <a href="/login" class="text-accent">Enter Grimoire</a>
+    </div>
 </div>
 
 @code {
@@ -48,6 +57,9 @@
 
     [SupplyParameterFromForm]
     public RegisterModel? Model { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
 
     protected override void OnInitialized()
     {
@@ -118,7 +130,9 @@
 
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-        NavManager.NavigateTo("/", forceLoad: true);
+        // Force a full reload so the auth cookie is applied to a fresh HTTP request.
+        var dest = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+        NavManager.NavigateTo(dest, forceLoad: true);
     }
 
     public class RegisterModel

@@ -5,7 +5,7 @@
      height="@Size" 
      viewBox="0 0 24 24" 
      fill="none" 
-     stroke="currentColor" 
+     stroke="@(string.IsNullOrEmpty(Color) ? "currentColor" : Color)"
      stroke-width="@StrokeWidth" 
      stroke-linecap="round" 
      stroke-linejoin="round" 
@@ -104,4 +104,5 @@
     [Parameter] public int Size { get; set; } = 20;
     [Parameter] public double StrokeWidth { get; set; } = 2.0;
     [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Color { get; set; }
 }

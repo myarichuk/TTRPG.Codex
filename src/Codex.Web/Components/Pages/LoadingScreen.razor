@@ -1,0 +1,68 @@
+@page "/loading"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using System.Threading
+@implements IDisposable
+
+<div class="loading-screen-backdrop">
+    <div class="loading-container">
+        <div class="logo-anchor">
+            <LucideIcon IconName="scroll" Color="white" Size="32" />
+        </div>
+
+        <div class="brand-name">Codex</div>
+
+        <div class="status-container">
+            <div id="status" class="status-text @(_isActive ? "active" : "")">@_currentMessage</div>
+        </div>
+
+        <div class="progress-wrapper">
+            <div class="progress-bar-inner"></div>
+        </div>
+
+        <div class="version-tag">Core Engine v2.5.0-wasm</div>
+    </div>
+</div>
+
+@code {
+    private string[] _messages = new[]
+    {
+        "Inscribing the Grimoire...",
+        "Loading D&D 5E Plugin...",
+        "Tuning the FFG Force Dice...",
+        "Scribing NPC Archetypes...",
+        "Synchronizing with the Weave...",
+        "Opening the Vaults...",
+        "Polishing the Dice..."
+    };
+
+    private int _index = 0;
+    private string _currentMessage = "Initializing Systems...";
+    private bool _isActive = true;
+    private Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(CycleStatus, null, 2500, 2500);
+    }
+
+    private void CycleStatus(object? state)
+    {
+        InvokeAsync(async () =>
+        {
+            _isActive = false;
+            StateHasChanged();
+
+            await Task.Delay(500);
+
+            _currentMessage = _messages[_index];
+            _isActive = true;
+            _index = (_index + 1) % _messages.Length;
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
