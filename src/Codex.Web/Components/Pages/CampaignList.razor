@@ -5,26 +5,37 @@
 
 <PageTitle>Campaigns</PageTitle>
 
-<div class="campaign-list-header d-flex justify-content-between align-items-center mb-5">
-    <div>
-        <h1 class="mb-1">Campaigns</h1>
-        <p class="text-tertiary">All your active adventures in one place.</p>
-    </div>
-    <button class="btn btn-primary d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating">
-        @if (isCreating)
-        {
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>Creating...</span>
-        }
-        else
-        {
-            <LucideIcon IconName="plus" Size="20" />
-            <span>New Campaign</span>
-        }
-    </button>
-</div>
+<div class="app-container">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Campaigns</h1>
+        <div class="d-flex gap-3 align-items-center" style="flex: 1; justify-content: flex-end;">
+            <div class="search-wrapper">
+                <LucideIcon IconName="search" Size="16" Class="search-icon" />
+                <input type="text" class="search-input" placeholder="Search chronicles...">
+            </div>
+            <button class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating" style="white-space: nowrap;">
+                @if (isCreating)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <LucideIcon IconName="plus" Size="18" />
+                }
+                New
+            </button>
+        </div>
+    </header>
 
-@if (campaigns == null)
+    <div class="filter-ribbon">
+        <div class="filter-chip active">All Adventures</div>
+        <div class="filter-chip">D&D 5E</div>
+        <div class="filter-chip">Pathfinder</div>
+        <div class="filter-chip">Cyberpunk</div>
+        <div class="filter-chip">Archived</div>
+    </div>
+
+    @if (campaigns == null)
 {
     <div class="d-flex justify-content-center my-5 py-5">
         <div class="spinner-border text-accent" role="status">
@@ -47,34 +58,46 @@ else if (!campaigns.Any())
 }
 else
 {
-    <div class="row g-4">
+    <div class="campaign-grid">
         @foreach (var campaign in campaigns)
         {
-            var gradientClass = campaigns.ToList().IndexOf(campaign) % 2 == 0 ? "gradient-1" : "gradient-2";
-            <div class="col-md-6 col-lg-4">
-                <div class="campaign-card">
-                    <div class="art-preview">
-                        <div class="art-overlay">
-                            <span class="badge-glass">@campaign.System</span>
-                            <button class="btn btn-sm p-0 text-white opacity-50"><LucideIcon IconName="more-vertical" Size="16" /></button>
-                        </div>
-                        <div class="w-100 h-100 @gradientClass d-flex align-items-center justify-content-center">
-                            <LucideIcon IconName="@(campaign.System.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
-                        </div>
+            var isDnd = campaign.System.Contains("DnD") || campaign.System == "D&D 5E";
+            var artUrl = isDnd ? "https://images.unsplash.com/photo-1519074063912-ad2fe3f51904?auto=format&fit=crop&q=80&w=800" : "https://images.unsplash.com/photo-1605806616949-1e87b487fc2f?auto=format&fit=crop&q=80&w=800";
+            <div class="campaign-card">
+                <div class="art-container">
+                    <span class="system-badge">@campaign.System</span>
+                    <img src="@artUrl" alt="@campaign.Name">
+                </div>
+                <div class="card-content">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h3 class="card-title mb-0">@campaign.Name</h3>
+                        <button class="btn-sparkle" title="Oracle Insights"><LucideIcon IconName="sparkles" Size="14" /></button>
                     </div>
-                    <div class="card-content">
-                        <h3 class="h5 mb-2">@campaign.Name</h3>
-                        <p class="text-secondary small mb-4">A custom adventure in the @campaign.System universe.</p>
-                        <div class="mt-auto d-flex gap-2">
-                            <button class="btn btn-fluent flex-grow-1">Open Realm</button>
-                            <button class="btn btn-fluent"><LucideIcon IconName="settings" Size="18" /></button>
-                        </div>
+                    <div class="card-meta">
+                        <span class="meta-item"><LucideIcon IconName="users" Size="12" /> 5 Players</span>
+                        <span class="meta-item"><LucideIcon IconName="calendar" Size="12" /> Weekly</span>
+                    </div>
+                    <p class="card-text small text-secondary">A custom adventure in the @campaign.System universe.</p>
+                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-center border-top border-secondary border-opacity-10">
+                        <span class="text-tertiary small">Last session: 2d ago</span>
+                        <button class="btn btn-sm btn-outline-secondary px-3" style="font-size: 0.75rem;">Manage</button>
                     </div>
                 </div>
             </div>
         }
+
+        <div class="campaign-card" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="CreateCampaign">
+            <div class="text-center p-5">
+                <div style="background: var(--fluent-surface-secondary); width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 1rem auto;">
+                    <LucideIcon IconName="plus" Size="24" Class="text-secondary" />
+                </div>
+                <h4 class="h6 text-secondary">Initiate New Story</h4>
+                <p class="small text-tertiary">Select a template or start blank.</p>
+            </div>
+        </div>
     </div>
-}
+    }
+</div>
 
 @code {
     private IEnumerable<CampaignDocument>? campaigns;
