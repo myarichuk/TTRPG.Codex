@@ -12,19 +12,16 @@ public class RavenDbService : IDisposable
 
     public RavenDbService(string dataDirectory, string databaseName = "Campaigns")
     {
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
+        // Force aggressive roll-forward for the RavenDB child process
+        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "Major");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
-
-        var version = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
-            .Replace(".NET ", "")
-            .Split(' ')[0];
 
         var options = new ServerOptions
         {
             DataDirectory = dataDirectory,
             ServerUrl = "http://127.0.0.1:0",
-            FrameworkVersion = version // Use dynamic framework version to avoid 10.0.0-rc.2 etc mismatches
+            FrameworkVersion = null // Allow RavenDB to auto-resolve the available runtime
         };
         options.CommandLineArgs.Add("--Setup.Mode=None");
 

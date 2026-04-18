@@ -1,11 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RavenDB.Embedded" Version="7.2.0" />
+    <PackageReference Include="RavenDB.Embedded" Version="7.0.1" />
   </ItemGroup>
 
   <PropertyGroup>
