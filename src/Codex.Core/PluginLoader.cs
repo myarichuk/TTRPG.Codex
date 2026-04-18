@@ -21,6 +21,9 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
         IsLoading = true;
         LoadException = null;
 
+        // Ensure the high-fidelity loading screen is visible to the user as requested.
+        await Task.Delay(1500);
+
         try
         {
             await Task.Run(() =>
