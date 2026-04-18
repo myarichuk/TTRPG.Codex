@@ -44,26 +44,21 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 
 // Initialize everything on startup
-using (var scope = app.Services.CreateScope())
-{
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Server running at: http://localhost:5000");
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Server running at: http://localhost:5000");
 
-    var dbService = scope.ServiceProvider.GetRequiredService<RavenDbService>();
-    // Store is initialized in constructor
-    logger.LogInformation("RavenDB initialized at {DataDir}", dataDir);
+var dbService = app.Services.GetRequiredService<RavenDbService>();
+// Store is initialized in constructor
+logger.LogInformation("RavenDB initialized at {DataDir}", dataDir);
 
-    var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
-    var registry = scope.ServiceProvider.GetRequiredService<ComponentRegistry>();
-    var world = scope.ServiceProvider.GetRequiredService<CodexWorld>();
+var loader = app.Services.GetRequiredService<PluginLoader>();
+var registry = app.Services.GetRequiredService<ComponentRegistry>();
+var world = app.Services.GetRequiredService<CodexWorld>();
 
-    var absolutePluginsDir = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, pluginsDir));
-    logger.LogInformation("Loading plugins from: {PluginsDir}", absolutePluginsDir);
+var absolutePluginsDir = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, pluginsDir));
+logger.LogInformation("Loading plugins from: {PluginsDir}", absolutePluginsDir);
 
-    var plugins = loader.LoadPlugins(absolutePluginsDir);
-    loader.InitializePlugins(plugins, world);
-    logger.LogInformation("Loaded {Count} plugins", plugins.Count);
-}
+_ = loader.LoadAndInitializeAsync(absolutePluginsDir, world);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

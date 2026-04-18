@@ -9,10 +9,24 @@ public class PluginLoader
     private readonly ILogger<PluginLoader> _logger;
     private readonly ComponentRegistry _registry;
 
+    public bool IsLoaded { get; private set; }
+    public event Action? OnPluginsLoaded;
+
     public PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry registry)
     {
         _logger = logger;
         _registry = registry;
+    }
+
+    public async Task LoadAndInitializeAsync(string pluginsDirectory, CodexWorld world)
+    {
+        await Task.Run(() =>
+        {
+            var plugins = LoadPlugins(pluginsDirectory);
+            InitializePlugins(plugins, world);
+            IsLoaded = true;
+            OnPluginsLoaded?.Invoke();
+        });
     }
 
     public List<ICodexSystemPlugin> LoadPlugins(string pluginsDirectory)
