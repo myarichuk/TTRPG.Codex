@@ -27,14 +27,12 @@ public class RavenCharacterRepository : ICharacterRepository
         
         if (sortByCreated)
         {
-            query = query.OrderByDescending(c => c.CreatedAt);
+            return await query.OrderByDescending(c => c.CreatedAt).Take(limit).ToListAsync();
         }
         else
         {
-            query = query.OrderByDescending(c => c.UpdatedAt);
+            return await query.OrderByDescending(c => c.UpdatedAt).Take(limit).ToListAsync();
         }
-
-        return await query.Take(limit).ToListAsync();
     }
 
     public async Task<CharacterDocument?> GetAsync(string characterId)

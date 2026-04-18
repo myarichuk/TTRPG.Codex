@@ -1,8 +1,10 @@
 @page "/"
 @using Codex.Persistence
 @using Codex.Web.Components.Layout
+@using System.Net.Http.Json
 @inject ICampaignRepository CampaignRepo
 @inject ICharacterRepository CharacterRepo
+@inject HttpClient Http
 
 <PageTitle>Dashboard | TTRPG.Codex</PageTitle>
 
@@ -17,55 +19,40 @@
 else
 {
     <div class="animate-fade">
-        <header class="d-flex justify-content-between align-items-center mb-5">
+        <header class="d-flex justify-content-between align-items-start">
             <div>
-                <h1 class="mb-1">Your Worlds</h1>
-                <p class="text-muted small">Welcome back. @campaigns.Count() campaigns are active.</p>
+                <h1>Your Worlds</h1>
+                <p class="page-subtitle">Welcome back. @campaigns.Count() campaigns are currently active.</p>
             </div>
             <button class="btn btn-accent d-flex align-items-center gap-2">
-                <LucideIcon IconName="plus" Size="18" />
+                <LucideIcon IconName="plus" Size="20" />
                 <span>Create Adventure</span>
             </button>
         </header>
 
-        <div class="row g-4 mb-5">
+        <div class="dashboard-grid">
             @foreach (var campaign in campaigns.Take(3))
             {
-                var gradientClass = campaigns.ToList().IndexOf(campaign) % 2 == 0 ? "gradient-1" : "gradient-2";
-                <div class="col-lg-4">
-                    <div class="campaign-card">
-                        <div class="art-preview">
-                            <div class="art-overlay">
-                                <span class="badge-glass">@campaign.System</span>
-                                <button class="btn btn-sm p-0 text-white opacity-50"><LucideIcon IconName="more-vertical" Size="16" /></button>
-                            </div>
-                            <div class="w-100 h-100 @gradientClass d-flex align-items-center justify-content-center">
-                                <LucideIcon IconName="@(campaign.System.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3 class="h5 mb-2">@campaign.Name</h3>
-                            <p class="text-secondary small mb-4">A custom adventure in the @campaign.System universe.</p>
-                            <div class="mt-auto d-flex gap-2">
-                                <button class="btn btn-fluent flex-grow-1">Launch Session</button>
-                                <button class="btn btn-fluent"><LucideIcon IconName="files" Size="18" /></button>
-                            </div>
-                        </div>
+                <div class="campaign-card">
+                    <div class="art-preview">
+                        <LucideIcon IconName="@(campaign.System.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-title">@campaign.Name</h3>
+                        <p class="card-text">A custom adventure in the @campaign.System universe.</p>
                     </div>
                 </div>
             }
 
             @if (campaigns.Count() < 3)
             {
-                <div class="col-lg-4">
-                    <div class="campaign-card" style="background: transparent; border: 2px dashed var(--fluent-border);">
-                        <div class="card-content align-items-center justify-content-center text-center p-5">
-                            <div class="mb-3 text-tertiary">
-                                <LucideIcon IconName="sparkles" Size="32" />
-                            </div>
-                            <h4 class="h6 mb-2">New Storyline</h4>
-                            <p class="text-tertiary small mb-4">Start with a blank canvas or a template.</p>
-                            <button class="btn btn-fluent">Browse Hub</button>
+                <div class="campaign-card card-empty" @onclick="ExpandAI">
+                    <div class="card-body">
+                        <LucideIcon IconName="sparkles" Size="32" Class="sparkle-icon" />
+                        <h3 class="card-title">New Storyline</h3>
+                        <p class="card-text">Start with a blank canvas or let the Oracle suggest a spark.</p>
+                        <div class="mt-4">
+                            <span class="btn btn-sm btn-outline-secondary px-4" style="border-radius: 20px; font-size: 0.75rem;">Browse Hub</span>
                         </div>
                     </div>
                 </div>
@@ -73,20 +60,14 @@ else
         </div>
 
         <section>
-            <div class="d-flex justify-content-between align-items-end mb-4">
-                <div class="d-flex align-items-center gap-3">
-                    <h2 class="h5 mb-0">Recent Archives</h2>
-                    <div class="btn-group btn-group-sm" role="group" style="background: var(--fluent-surface-secondary); border-radius: 6px; padding: 2px;">
-                        <button type="button" class="btn btn-sm @(!sortByCreated ? "btn-accent" : "text-tertiary")" 
-                                style="font-size: 0.65rem; padding: 2px 8px; border: none;"
-                                @onclick="() => SetSort(false)">Modified</button>
-                        <button type="button" class="btn btn-sm @(sortByCreated ? "btn-accent" : "text-tertiary")" 
-                                style="font-size: 0.65rem; padding: 2px 8px; border: none;"
-                                @onclick="() => SetSort(true)">Newest</button>
-                    </div>
+            <div class="section-header">
+                <h2 class="h5 mb-0 fw-bold">Recent Archives</h2>
+                <div class="archive-controls">
+                    <button class="control-btn @(!sortByCreated ? "active" : "")" @onclick="() => SetSort(false)">Modified</button>
+                    <button class="control-btn @(sortByCreated ? "active" : "")" @onclick="() => SetSort(true)">Newest</button>
                 </div>
-                <a href="demo" class="text-accent small text-decoration-none">View all lore</a>
             </div>
+
             <div class="fluent-table-wrapper">
                 <table class="table table-hover">
                     <thead>
@@ -94,23 +75,63 @@ else
                             <th>Title</th>
                             <th>Subject</th>
                             <th>Last Modified</th>
-                            <th></th>
+                            <th style="width: 40px;"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var character in characters)
+                        @if (characters.Any())
+                        {
+                            @foreach (var character in characters)
+                            {
+                                <tr>
+                                    <td>@character.Name</td>
+                                    <td>Character</td>
+                                    <td>@character.UpdatedAt.ToString("MMM dd, yyyy")</td>
+                                    <td><LucideIcon IconName="chevron-right" Size="16" Class="text-tertiary" /></td>
+                                </tr>
+                            }
+                        }
+                        else
                         {
                             <tr>
-                                <td class="fw-medium text-white">@character.Name</td>
-                                <td><span class="text-secondary small">Character</span></td>
-                                <td><span class="text-secondary small">@character.UpdatedAt.ToString("MMM dd, yyyy")</span></td>
-                                <td class="text-end"><LucideIcon IconName="chevron-right" Size="16" Class="text-tertiary" /></td>
+                                <td colspan="4" class="text-center py-5 opacity-25" style="font-style: italic;">
+                                    Your grimoire is empty. Begin an adventure to see history here.
+                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
+            <div class="mt-3 text-end">
+                <a href="demo" class="text-accent small text-decoration-none fw-600">View all lore →</a>
+            </div>
         </section>
+    </div>
+
+    <!-- AI Toast Interaction -->
+    <div id="ai-toast" style="display: @(showToast ? "block" : "none")">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="small fw-bold text-accent d-flex align-items-center gap-2">
+                <LucideIcon IconName="sparkles" Size="14" /> Oracle Suggestion
+            </span>
+            <button class="btn-close btn-close-white" style="font-size: 0.6rem;" @onclick="HideToast"></button>
+        </div>
+        <div class="small text-secondary mb-4" style="line-height: 1.6;">
+            @if (isConsulting)
+            {
+                <div class="d-flex align-items-center gap-2 opacity-50">
+                    <div class="spinner-border spinner-border-sm" role="status"></div> Consulting the archives...
+                </div>
+            }
+            else
+            {
+                @toastContent
+            }
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm w-100 btn-outline-secondary" style="font-size: 0.75rem;" @onclick="HideToast">Dismiss</button>
+            <button class="btn btn-sm w-100 btn-accent" style="font-size: 0.75rem;" @onclick="HideToast">Use This</button>
+        </div>
     </div>
 }
 
@@ -118,6 +139,10 @@ else
     private IEnumerable<CampaignDocument>? campaigns;
     private IEnumerable<CharacterDocument>? characters;
     private bool sortByCreated = false;
+
+    private bool showToast = false;
+    private bool isConsulting = false;
+    private string toastContent = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,5 +161,66 @@ else
     {
         characters = null; // Show spinner
         characters = await CharacterRepo.GetAllAsync(5, sortByCreated);
+    }
+
+    private async Task ExpandAI()
+    {
+        showToast = true;
+        isConsulting = true;
+        toastContent = "";
+        StateHasChanged();
+
+        var apiKey = ""; // Keep empty as in user prompt, or configure it elsewhere
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={apiKey}";
+
+        try
+        {
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = "Give me a 1-sentence mysterious TTRPG campaign hook." }
+                        }
+                    }
+                },
+                systemInstruction = new
+                {
+                    parts = new[]
+                    {
+                        new { text = "You are a creative TTRPG storyteller. Be brief and punchy." }
+                    }
+                }
+            };
+
+            var response = await Http.PostAsJsonAsync(url, requestBody);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                toastContent = result.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString() ?? "The weave is silent today.";
+            }
+            else
+            {
+                toastContent = "The weave is silent today.";
+            }
+        }
+        catch
+        {
+            toastContent = "Connection to the Oracle lost.";
+        }
+        finally
+        {
+            isConsulting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void HideToast()
+    {
+        showToast = false;
     }
 }
