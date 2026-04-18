@@ -1,5 +1,6 @@
 using Raven.Client.Documents;
 using Raven.Embedded;
+using System.Reflection;
 
 namespace Codex.Persistence;
 
@@ -14,34 +15,14 @@ public class RavenDbService : IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
-        Environment.SetEnvironmentVariable("RAVEN_Server_FrameworkVersion", "10.0.0");
 
         var options = new ServerOptions
         {
             DataDirectory = dataDirectory,
-            FrameworkVersion = "10.0.0",
             ServerUrl = "http://127.0.0.1:0",
-            DotNetPath = "dotnet"
+            FrameworkVersion = "10.0.0" // Re-adding FrameworkVersion due to RavenDB embedded matcher failing to find 10.0.2+ without explicit configuration.
         };
         options.CommandLineArgs.Add("--Setup.Mode=None");
-
-        // This forces RavenDB embedded server to use roll forward since it demands 10.0.2 but only 10.0.0 is available
-        Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
-
-        // Explicitly rewrite the runtimeconfig.json file for the embedded server
-        // This is a known workaround for RavenDB embedded forcing a specific preview patch version
-        var ravenServerDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RavenDBServer");
-        var runtimeConfigPath = Path.Combine(ravenServerDir, "Raven.Server.runtimeconfig.json");
-
-        if (File.Exists(runtimeConfigPath))
-        {
-            var configContent = File.ReadAllText(runtimeConfigPath);
-            if (configContent.Contains("10.0.2"))
-            {
-                configContent = configContent.Replace("10.0.2", "10.0.0");
-                File.WriteAllText(runtimeConfigPath, configContent);
-            }
-        }
 
         try
         {

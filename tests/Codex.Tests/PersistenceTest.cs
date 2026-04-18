@@ -3,23 +3,45 @@ using System.Text.Json.Nodes;
 
 namespace Codex.Tests;
 
-public class PersistenceTest : IDisposable
+public class RavenDbFixture : IDisposable
+{
+    public string DbPath { get; }
+
+    public RavenDbFixture()
+    {
+        DbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
+    }
+
+    public void Dispose()
+    {
+        // Give RavenDB a moment to release file handles
+        Task.Delay(1000).Wait();
+
+        try
+        {
+            if (Directory.Exists(DbPath))
+            {
+                Directory.Delete(DbPath, true);
+            }
+        }
+        catch { }
+    }
+}
+
+public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 {
     private readonly RavenDbService _dbService;
     private readonly RavenCampaignRepository _campaignRepository;
     private readonly RavenCharacterRepository _characterRepository;
     private readonly RavenUserRepository _userRepository;
-    private readonly string _testDbPath;
 
-    public PersistenceTest()
+    public PersistenceTest(RavenDbFixture fixture)
     {
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
-        Environment.SetEnvironmentVariable("RAVEN_Server_FrameworkVersion", "10.0.0");
 
-        _testDbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
-        _dbService = new RavenDbService(_testDbPath);
+        _dbService = new RavenDbService(fixture.DbPath);
         _campaignRepository = new RavenCampaignRepository(_dbService);
         _characterRepository = new RavenCharacterRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
@@ -153,17 +175,5 @@ public class PersistenceTest : IDisposable
     public void Dispose()
     {
         _dbService.Dispose();
-
-        // Give RavenDB a moment to release file handles
-        Task.Delay(1000).Wait();
-
-        try
-        {
-            if (Directory.Exists(_testDbPath))
-            {
-                Directory.Delete(_testDbPath, true);
-            }
-        }
-        catch { }
     }
 }
