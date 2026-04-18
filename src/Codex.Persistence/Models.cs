@@ -7,7 +7,7 @@ public class CampaignDocument
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string System { get; set; } = string.Empty;
-    public JsonObject WorldState { get; set; } = new();
+    public Dictionary<string, object> WorldState { get; set; } = new();
 }
 
 public class CharacterDocument
@@ -15,7 +15,7 @@ public class CharacterDocument
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public JsonObject State { get; set; } = new();
+    public Dictionary<string, object> State { get; set; } = new();
 }
 
 public class UserDocument
