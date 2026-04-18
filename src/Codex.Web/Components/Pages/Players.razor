@@ -1,0 +1,93 @@
+@page "/players"
+
+<PageTitle>Players | TTRPG.Codex</PageTitle>
+
+<div class="app-container">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div class="search-container">
+            <LucideIcon IconName="search" Size="18" Class="search-icon" />
+            <input type="text" class="search-input" placeholder="Search players or characters...">
+        </div>
+        <div class="d-flex gap-3">
+            <button class="ai-sparkle-btn">
+                <LucideIcon IconName="sparkles" Size="16" />
+                Analyze Party
+            </button>
+            <button class="btn-add-player">
+                <LucideIcon IconName="user-plus" Size="18" />
+                Add Player
+            </button>
+        </div>
+    </header>
+
+    <div class="player-grid">
+        <!-- Player Card 1 -->
+        <div class="player-card">
+            <div class="player-header">
+                <div class="player-avatar">JD</div>
+                <div class="player-info">
+                    <h3>John Doe</h3>
+                    <p>j.doe@discord</p>
+                </div>
+            </div>
+
+            <div class="character-section">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-tertiary small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Characters (2)</span>
+                    <LucideIcon IconName="plus" Size="14" Class="text-tertiary cursor-pointer" />
+                </div>
+                <div class="character-list">
+                    <div class="character-chip">
+                        <div>
+                            <div class="char-name">Valerius</div>
+                            <div class="char-class">Level 8 Paladin</div>
+                        </div>
+                        <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
+                    </div>
+                    <div class="character-chip">
+                        <div>
+                            <div class="char-name">Zorn the Bold</div>
+                            <div class="char-class">Level 3 Barbarian</div>
+                        </div>
+                        <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Card 2 -->
+        <div class="player-card">
+            <div class="player-header">
+                <div class="player-avatar" style="background: #e67e2222; color: #e67e22;">SK</div>
+                <div class="player-info">
+                    <h3>Sarah Knight</h3>
+                    <p>knight_sarah@gmail.com</p>
+                </div>
+            </div>
+
+            <div class="character-section">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-tertiary small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Characters (1)</span>
+                    <LucideIcon IconName="plus" Size="14" Class="text-tertiary cursor-pointer" />
+                </div>
+                <div class="character-list">
+                    <div class="character-chip">
+                        <div>
+                            <div class="char-name">Elara Moonwhisper</div>
+                            <div class="char-class">Level 12 Wizard</div>
+                        </div>
+                        <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State Add Player -->
+        <div class="player-card" style="border-style: dashed; background: transparent; display: grid; place-items: center; text-align: center; cursor: pointer;">
+            <div class="p-4">
+                <div class="mb-3 text-tertiary"><LucideIcon IconName="user-plus" Size="32" /></div>
+                <p class="text-secondary small">Invite a new player to the Codex</p>
+            </div>
+        </div>
+    </div>
+</div>
