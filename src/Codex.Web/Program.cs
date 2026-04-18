@@ -31,6 +31,7 @@ builder.Services.AddSingleton(sp => new RavenDbService(dataDir));
 builder.Services.AddSingleton<ICampaignRepository, RavenCampaignRepository>();
 builder.Services.AddSingleton<ICharacterRepository, RavenCharacterRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
+builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<PluginLoader>();

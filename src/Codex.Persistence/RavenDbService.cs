@@ -1,6 +1,7 @@
 using Raven.Client.Documents;
 using Raven.Embedded;
 
+
 namespace Codex.Persistence;
 
 public class RavenDbService : IDisposable
@@ -9,14 +10,12 @@ public class RavenDbService : IDisposable
 
     public IDocumentStore Store => _store;
 
-    public RavenDbService(string dataDirectory)
+    public RavenDbService(string dataDirectory, string databaseName = "Campaigns")
     {
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
-        Environment.SetEnvironmentVariable("RAVEN_Server_FrameworkVersion", "10.0.0");
 
-        // Use the currently executing framework version dynamically
         var version = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
             .Replace(".NET ", "")
             .Split(' ')[0];
@@ -24,8 +23,8 @@ public class RavenDbService : IDisposable
         var options = new ServerOptions
         {
             DataDirectory = dataDirectory,
-            FrameworkVersion = version,
-            ServerUrl = "http://127.0.0.1:0"
+            ServerUrl = "http://127.0.0.1:0",
+            FrameworkVersion = version // Use dynamic framework version to avoid 10.0.0-rc.2 etc mismatches
         };
         options.CommandLineArgs.Add("--Setup.Mode=None");
 
@@ -38,7 +37,9 @@ public class RavenDbService : IDisposable
             // Ignore if already started (for xUnit parallel tests)
         }
 
-        _store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions("Campaigns"));
+        var databaseOptions = new DatabaseOptions(databaseName);
+
+        _store = EmbeddedServer.Instance.GetDocumentStore(databaseOptions);
         _store.Initialize();
     }
 
