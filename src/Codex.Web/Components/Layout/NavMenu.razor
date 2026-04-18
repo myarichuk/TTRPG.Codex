@@ -1,64 +1,54 @@
-<div class="fluent-ribbon">
-    <div class="ribbon-tabs">
-        <div class="ribbon-tab active">Home</div>
+@using Codex.Web.Components.Layout
+
+<nav class="sidebar">
+    <div class="d-flex align-items-center gap-3 mb-5 px-3">
+        <div style="width: 28px; height: 28px; background: var(--accent-color); border-radius: 6px;"></div>
+        <span style="font-weight: 700; font-size: 1.1rem; letter-spacing: -0.5px;">CODEX</span>
     </div>
-    <div class="ribbon-content">
-
-        <div class="ribbon-group">
-            <div class="ribbon-group-content">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                    <span>Home</span>
-                </NavLink>
-                <AuthorizeView>
-                    <Authorized>
-                        <NavLink class="nav-link" href="campaigns">
-                            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
-                            <span>Campaigns</span>
-                        </NavLink>
-                    </Authorized>
-                </AuthorizeView>
-            </div>
-            <div class="ribbon-group-title">Navigation</div>
-        </div>
-
+    
+    <div class="mb-4">
+        <p class="text-tertiary small px-3 mb-2" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">Library</p>
+        <NavLink href="" class="nav-link" Match="NavLinkMatch.All">
+            <LucideIcon IconName="compass" />
+            <span>Overview</span>
+        </NavLink>
         <AuthorizeView>
             <Authorized>
-                <div class="ribbon-group">
-                    <div class="ribbon-group-content">
-                        <NavLink class="nav-link" href="demo">
-                            <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span>
-                            <span>Demo</span>
-                        </NavLink>
-                    </div>
-                    <div class="ribbon-group-title">Modules</div>
-                </div>
+                <NavLink href="campaigns" class="nav-link">
+                    <LucideIcon IconName="swords" />
+                    <span>Campaigns</span>
+                </NavLink>
             </Authorized>
         </AuthorizeView>
-
-        <div class="ribbon-group">
-            <div class="ribbon-group-content">
-                <AuthorizeView>
-                    <Authorized>
-                        <div class="ribbon-btn user-info">
-                            <span class="bi bi-person-fill" aria-hidden="true"></span>
-                            <span>@context.User.Identity?.Name</span>
-                        </div>
-                        <a href="/logout" class="ribbon-btn">
-                            <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
-                            <span>Log out</span>
-                        </a>
-                    </Authorized>
-                    <NotAuthorized>
-                        <a href="/login" class="ribbon-btn">
-                            <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span>
-                            <span>Log in</span>
-                        </a>
-                    </NotAuthorized>
-                </AuthorizeView>
-            </div>
-            <div class="ribbon-group-title">Account</div>
-        </div>
-
+        <NavLink href="grimoire" class="nav-link">
+            <LucideIcon IconName="book-marked" />
+            <span>Grimoire</span>
+        </NavLink>
     </div>
-</div>
+
+    <div>
+        <p class="text-tertiary small px-3 mb-2" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">System</p>
+        <NavLink href="demo" class="nav-link">
+            <LucideIcon IconName="users-2" />
+            <span>Players</span>
+        </NavLink>
+        <AuthorizeView>
+            <Authorized>
+                <NavLink href="settings" class="nav-link">
+                    <LucideIcon IconName="settings-2" />
+                    <span>Configuration</span>
+                </NavLink>
+                <a href="/logout" class="nav-link mt-4 text-danger opacity-75">
+                    <LucideIcon IconName="log-out" />
+                    <span>Sign Out</span>
+                </a>
+            </Authorized>
+            <NotAuthorized>
+                <a href="/login" class="nav-link mt-4 text-primary opacity-75">
+                    <LucideIcon IconName="log-in" />
+                    <span>Sign In</span>
+                </a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</nav>

@@ -1,72 +1,80 @@
 @page "/campaigns"
 @using Codex.Persistence
+@using Codex.Web.Components.Layout
 @inject ICampaignRepository CampaignRepo
 
 <PageTitle>Campaigns</PageTitle>
 
-<div class="container mt-4">
-    <h1 class="mb-4">Campaigns</h1>
+<div class="campaign-list-header d-flex justify-content-between align-items-center mb-5">
+    <div>
+        <h1 class="mb-1">Campaigns</h1>
+        <p class="text-tertiary">All your active adventures in one place.</p>
+    </div>
+    <button class="btn btn-primary d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating">
+        @if (isCreating)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Creating...</span>
+        }
+        else
+        {
+            <LucideIcon IconName="plus" Size="20" />
+            <span>New Campaign</span>
+        }
+    </button>
+</div>
 
-    @if (campaigns == null)
-    {
-        <div class="d-flex justify-content-center my-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+@if (campaigns == null)
+{
+    <div class="d-flex justify-content-center my-5 py-5">
+        <div class="spinner-border text-accent" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
-    }
-    else if (!campaigns.Any())
-    {
-        <div class="card p-5 text-center mb-4">
-            <div class="mb-3">
-                <span class="bi bi-journal-plus" style="font-size: 3rem; color: var(--text-secondary);" aria-hidden="true"></span>
-            </div>
-            <h3 class="mb-3">No Campaigns Found</h3>
-            <p class="text-muted mb-4">It looks like you don't have any campaigns yet. Let's get your adventure started!</p>
-            <div>
-                <button class="btn btn-primary btn-lg" @onclick="CreateCampaign" disabled="@isCreating">
-                    @if (isCreating)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        <span>Creating...</span>
-                    }
-                    else
-                    {
-                        <span class="bi bi-plus-circle me-2" aria-hidden="true"></span>
-                        <span>Create Your First Campaign</span>
-                    }
-                </button>
-            </div>
+    </div>
+}
+else if (!campaigns.Any())
+{
+    <div class="empty-state text-center py-5">
+        <div class="mb-4">
+            <LucideIcon IconName="sparkles" Size="48" Class="text-tertiary" />
         </div>
-    }
-    else
-    {
-        <div class="row">
-            @foreach (var campaign in campaigns)
-            {
-                <div class="col-md-4 mb-3">
-                    <div class="card p-3 h-100 shadow-sm border-0">
-                        <h5>@campaign.Name</h5>
-                        <h6 class="text-muted mb-0">@campaign.System</h6>
+        <h3 class="mb-3">No Campaigns Found</h3>
+        <p class="text-tertiary mb-5">It looks like you don't have any campaigns yet. Let's get your adventure started!</p>
+        <button class="btn btn-accent px-5" @onclick="CreateCampaign" disabled="@isCreating">
+            Create Your First Campaign
+        </button>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var campaign in campaigns)
+        {
+            var gradientClass = campaigns.ToList().IndexOf(campaign) % 2 == 0 ? "gradient-1" : "gradient-2";
+            <div class="col-md-6 col-lg-4">
+                <div class="campaign-card">
+                    <div class="art-preview">
+                        <div class="art-overlay">
+                            <span class="badge-glass">@campaign.System</span>
+                            <button class="btn btn-sm p-0 text-white opacity-50"><LucideIcon IconName="more-vertical" Size="16" /></button>
+                        </div>
+                        <div class="w-100 h-100 @gradientClass d-flex align-items-center justify-content-center">
+                            <LucideIcon IconName="@(campaign.System.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="h5 mb-2">@campaign.Name</h3>
+                        <p class="text-secondary small mb-4">A custom adventure in the @campaign.System universe.</p>
+                        <div class="mt-auto d-flex gap-2">
+                            <button class="btn btn-fluent flex-grow-1">Open Realm</button>
+                            <button class="btn btn-fluent"><LucideIcon IconName="settings" Size="18" /></button>
+                        </div>
                     </div>
                 </div>
-            }
-        </div>
-
-        <button class="btn btn-primary mt-3" @onclick="CreateCampaign" disabled="@isCreating">
-            @if (isCreating)
-            {
-                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                <span>Creating...</span>
-            }
-            else
-            {
-                <span class="bi bi-plus-circle me-2" aria-hidden="true"></span>
-                <span>Create New Campaign</span>
-            }
-        </button>
-    }
-</div>
+            </div>
+        }
+    </div>
+}
 
 @code {
     private IEnumerable<CampaignDocument>? campaigns;

@@ -1,14 +1,11 @@
 @inherits LayoutComponentBase
 
-<div class="page">
-    <header class="app-header px-3"><span class="app-title">TTRPG.Codex</span></header>
+<div class="page-wrapper">
     <NavMenu />
-    <main class="app-main">
-        <article class="content px-4">
-            <div class="container-fluid">
-                @Body
-            </div>
-        </article>
+    <main class="main-content">
+        <div class="app-container">
+            @Body
+        </div>
     </main>
 </div>
 

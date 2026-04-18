@@ -1,15 +1,140 @@
 @page "/"
+@using Codex.Persistence
+@using Codex.Web.Components.Layout
+@inject ICampaignRepository CampaignRepo
+@inject ICharacterRepository CharacterRepo
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard | TTRPG.Codex</PageTitle>
 
-<div class="container mt-4">
-    <div class="card p-4 mb-4 shadow-sm border-0">
-        <h1 class="mb-3">TTRPG.Codex</h1>
-        <p class="lead text-muted">Welcome to TTRPG.Codex!</p>
-
-        <div class="mt-4">
-            <a href="/campaigns" class="btn btn-primary px-4 me-2">View Campaigns</a>
-            <a href="/demo" class="btn btn-outline-secondary px-4">Character Demo</a>
+@if (campaigns == null || characters == null)
+{
+    <div class="d-flex justify-content-center my-5 py-5">
+        <div class="spinner-border text-accent" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
-</div>
+}
+else
+{
+    <div class="animate-fade">
+        <header class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h1 class="mb-1">Your Worlds</h1>
+                <p class="text-muted small">Welcome back. @campaigns.Count() campaigns are active.</p>
+            </div>
+            <button class="btn btn-accent d-flex align-items-center gap-2">
+                <LucideIcon IconName="plus" Size="18" />
+                <span>Create Adventure</span>
+            </button>
+        </header>
+
+        <div class="row g-4 mb-5">
+            @foreach (var campaign in campaigns.Take(3))
+            {
+                var gradientClass = campaigns.ToList().IndexOf(campaign) % 2 == 0 ? "gradient-1" : "gradient-2";
+                <div class="col-lg-4">
+                    <div class="campaign-card">
+                        <div class="art-preview">
+                            <div class="art-overlay">
+                                <span class="badge-glass">@campaign.System</span>
+                                <button class="btn btn-sm p-0 text-white opacity-50"><LucideIcon IconName="more-vertical" Size="16" /></button>
+                            </div>
+                            <div class="w-100 h-100 @gradientClass d-flex align-items-center justify-content-center">
+                                <LucideIcon IconName="@(campaign.System.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="h5 mb-2">@campaign.Name</h3>
+                            <p class="text-secondary small mb-4">A custom adventure in the @campaign.System universe.</p>
+                            <div class="mt-auto d-flex gap-2">
+                                <button class="btn btn-fluent flex-grow-1">Launch Session</button>
+                                <button class="btn btn-fluent"><LucideIcon IconName="files" Size="18" /></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (campaigns.Count() < 3)
+            {
+                <div class="col-lg-4">
+                    <div class="campaign-card" style="background: transparent; border: 2px dashed var(--fluent-border);">
+                        <div class="card-content align-items-center justify-content-center text-center p-5">
+                            <div class="mb-3 text-tertiary">
+                                <LucideIcon IconName="sparkles" Size="32" />
+                            </div>
+                            <h4 class="h6 mb-2">New Storyline</h4>
+                            <p class="text-tertiary small mb-4">Start with a blank canvas or a template.</p>
+                            <button class="btn btn-fluent">Browse Hub</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <section>
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <h2 class="h5 mb-0">Recent Archives</h2>
+                    <div class="btn-group btn-group-sm" role="group" style="background: var(--fluent-surface-secondary); border-radius: 6px; padding: 2px;">
+                        <button type="button" class="btn btn-sm @(!sortByCreated ? "btn-accent" : "text-tertiary")" 
+                                style="font-size: 0.65rem; padding: 2px 8px; border: none;"
+                                @onclick="() => SetSort(false)">Modified</button>
+                        <button type="button" class="btn btn-sm @(sortByCreated ? "btn-accent" : "text-tertiary")" 
+                                style="font-size: 0.65rem; padding: 2px 8px; border: none;"
+                                @onclick="() => SetSort(true)">Newest</button>
+                    </div>
+                </div>
+                <a href="demo" class="text-accent small text-decoration-none">View all lore</a>
+            </div>
+            <div class="fluent-table-wrapper">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Subject</th>
+                            <th>Last Modified</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var character in characters)
+                        {
+                            <tr>
+                                <td class="fw-medium text-white">@character.Name</td>
+                                <td><span class="text-secondary small">Character</span></td>
+                                <td><span class="text-secondary small">@character.UpdatedAt.ToString("MMM dd, yyyy")</span></td>
+                                <td class="text-end"><LucideIcon IconName="chevron-right" Size="16" Class="text-tertiary" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private IEnumerable<CampaignDocument>? campaigns;
+    private IEnumerable<CharacterDocument>? characters;
+    private bool sortByCreated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        campaigns = await CampaignRepo.GetAllAsync();
+        await LoadCharacters();
+    }
+
+    private async Task SetSort(bool newestFirst)
+    {
+        if (sortByCreated == newestFirst) return;
+        sortByCreated = newestFirst;
+        await LoadCharacters();
+    }
+
+    private async Task LoadCharacters()
+    {
+        characters = null; // Show spinner
+        characters = await CharacterRepo.GetAllAsync(5, sortByCreated);
+    }
+}
