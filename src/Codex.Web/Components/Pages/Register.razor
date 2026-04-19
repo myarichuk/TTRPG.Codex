@@ -88,6 +88,18 @@
             return;
         }
 
+        if (Model.Password.Length < 8)
+        {
+            ErrorMessage = "Password must be at least 8 characters long.";
+            return;
+        }
+
+        if (!Model.Password.Any(char.IsUpper) || !Model.Password.Any(char.IsLower) || !Model.Password.Any(char.IsDigit))
+        {
+            ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, and one number.";
+            return;
+        }
+
         var existingUser = await UserRepository.GetUserByUsernameAsync(Model.Username);
 
         if (existingUser != null)
