@@ -122,7 +122,10 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         // Wait for RavenDB indexes to process (since we use a query)
         using var session = _dbService.Store.OpenAsyncSession();
-        await session.Query<SessionDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        await session.Query<SessionDocument>()
+            .Customize(x => x.WaitForNonStaleResults())
+            .Where(x => x.CampaignId == campaignId)
+            .ToListAsync();
 
         var loaded = await _sessionRepository.GetAllForCampaignAsync(campaignId);
 
