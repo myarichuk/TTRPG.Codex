@@ -17,14 +17,16 @@
 <div class="login-card">
     <div class="brand-anchor">
         <div class="logo-mark">
-            <LucideIcon IconName="gem" Size="32" />
+            <LucideIcon IconName="scroll" Size="64" />
         </div>
         <div class="brand-name">TTRPG.Codex</div>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
-        <div class="alert alert-danger small p-2 mb-3 rounded" style="background-color: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.2); color: #ff6b6b;">@ErrorMessage</div>
+        <div class="alert alert-danger small p-2 mb-3 rounded"
+            style="background-color: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.2); color: #ff6b6b;">
+            @ErrorMessage</div>
     }
 
     @if (EnableLocalLogin)
@@ -41,10 +43,11 @@
                 <div class="d-flex justify-content-between">
                     <label for="password" class="form-label small text-secondary">Secret Key</label>
                 </div>
-                <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••" @bind-Value="Model!.Password" />
+                <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••"
+                @bind-Value="Model!.Password" />
             </div>
 
-            <button type="submit" class="btn-accent w-100 mt-2">Enter Grimoire</button>
+            <button type="submit" class="btn-accent w-100 mt-2">Enter Codex</button>
         </EditForm>
     }
 
@@ -59,11 +62,14 @@
         @foreach (var scheme in ExternalSchemes)
         {
             var providerClass = scheme.Name.ToLowerInvariant();
-            <a href="/login/external?provider=@scheme.Name&returnUrl=@Uri.EscapeDataString(ReturnUrl ?? "/")" class="oauth-btn @providerClass">
+            <a href="/login/external?provider=@scheme.Name&returnUrl=@Uri.EscapeDataString(ReturnUrl ?? "/")"
+                class="oauth-btn @providerClass">
                 @if (scheme.Name == "Google")
                 {
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-google" viewBox="0 0 16 16">
-                        <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-google"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z" />
                     </svg>
                 }
                 else if (scheme.Name == "Apple")
@@ -157,10 +163,10 @@
             }
 
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
-            };
+{
+new Claim(ClaimTypes.Name, user.Username),
+new Claim(ClaimTypes.NameIdentifier, user.Id)
+};
 
             foreach (var role in user.Roles)
             {

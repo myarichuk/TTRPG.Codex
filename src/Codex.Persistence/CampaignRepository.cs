@@ -32,4 +32,11 @@ public class CampaignRepository(RavenDbService dbService) : ICampaignRepository
         await session.StoreAsync(campaign);
         await session.SaveChangesAsync();
     }
+
+    public async Task DeleteAsync(string campaignId)
+    {
+        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+        session.Delete(campaignId);
+        await session.SaveChangesAsync();
+    }
 }

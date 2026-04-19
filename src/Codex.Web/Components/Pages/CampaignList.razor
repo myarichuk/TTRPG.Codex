@@ -27,13 +27,16 @@
         </div>
     </header>
 
-    <div class="filter-ribbon">
-        <div class="filter-chip active">All Adventures</div>
-        <div class="filter-chip">D&D 5E</div>
-        <div class="filter-chip">Pathfinder</div>
-        <div class="filter-chip">Cyberpunk</div>
-        <div class="filter-chip">Archived</div>
-    </div>
+    @if (availableSystems != null && availableSystems.Any())
+    {
+        <div class="filter-ribbon">
+            <div class="filter-chip @(selectedSystem == null ? "active" : "")" @onclick="() => SelectSystem(null)">All Adventures</div>
+            @foreach (var system in availableSystems)
+            {
+                <div class="filter-chip @(selectedSystem == system ? "active" : "")" @onclick="() => SelectSystem(system)">@system</div>
+            }
+        </div>
+    }
 
     @if (campaigns == null)
 {
@@ -65,8 +68,11 @@ else
             var artUrl = isDnd ? "https://images.unsplash.com/photo-1519074063912-ad2fe3f51904?auto=format&fit=crop&q=80&w=800" : "https://images.unsplash.com/photo-1605806616949-1e87b487fc2f?auto=format&fit=crop&q=80&w=800";
             <div class="campaign-card">
                 <div class="art-container">
+                    <div class="art-fallback">
+                        <LucideIcon IconName="@(isDnd ? "swords" : "anchor")" Size="32" />
+                    </div>
                     <span class="system-badge">@campaign.System</span>
-                    <img src="@artUrl" alt="@campaign.Name">
+                    <img src="@artUrl" alt="" loading="lazy">
                 </div>
                 <div class="card-content">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -76,10 +82,31 @@ else
                     <div class="card-meta">
                         <span class="meta-item"><LucideIcon IconName="calendar" Size="12" /> Active</span>
                     </div>
-                    <p class="card-text small text-secondary">A custom adventure in the @campaign.System universe.</p>
-                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-center border-top border-secondary border-opacity-10">
-                        <span class="text-tertiary small">Last modified: @campaign.UpdatedAt.ToString("MMM dd")</span>
-                        <button class="btn btn-sm btn-outline-secondary px-3" style="font-size: 0.75rem;">Manage</button>
+                    <p class="card-text small text-secondary">
+                        @if (!string.IsNullOrWhiteSpace(campaign.Description))
+                        {
+                            @campaign.Description
+                        }
+                        else
+                        {
+                            <span class="opacity-50 italic">No chronicle notes scribed yet.</span>
+                        }
+                    </p>
+                    <div class="mt-auto pt-3 border-top border-secondary border-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-tertiary small">Last session: @campaign.UpdatedAt.ToString("MMM dd")</span>
+                            <button class="btn-manage-fluence d-flex align-items-center gap-2" @onclick="() => DeleteCampaign(campaign.Id)" title="Delete Campaign" style="color: var(--bs-danger);">
+                                <LucideIcon IconName="trash-2" Size="14" />
+                            </button>
+                            <button class="btn-manage-fluence" aria-label="Manage @campaign.Name">
+                                <LucideIcon IconName="settings" Size="14" Class="anim-rotate" />
+                                <span>Manage</span>
+                            </button>
+                        </div>
+                        <button class="btn-session-fluence w-100" @onclick:stopPropagation="true">
+                            <LucideIcon IconName="dices" Size="16" Class="anim-pulse" />
+                            <span>New Session</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -100,11 +127,40 @@ else
 
 @code {
     private IEnumerable<CampaignDocument>? campaigns;
+    private List<string>? availableSystems;
+    private string? selectedSystem;
     private bool isCreating = false;
 
     protected override async Task OnInitializedAsync()
     {
-        campaigns = await CampaignRepo.GetAllAsync();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var all = await CampaignRepo.GetAllAsync();
+        availableSystems = all.Select(c => c.System).Distinct().OrderBy(s => s).ToList();
+        
+        if (selectedSystem != null)
+        {
+            campaigns = all.Where(c => c.System == selectedSystem);
+        }
+        else
+        {
+            campaigns = all;
+        }
+    }
+
+    private async Task SelectSystem(string? system)
+    {
+        selectedSystem = system;
+        await LoadData();
+    }
+
+    private async Task DeleteCampaign(string id)
+    {
+        await CampaignRepo.DeleteAsync(id);
+        await LoadData();
     }
 
     private async Task CreateCampaign()
@@ -115,11 +171,12 @@ else
             var doc = new CampaignDocument
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = "New Campaign",
-                System = "DnD5e"
+                Name = "Unnamed Legend",
+                System = "D&D 5E",
+                UpdatedAt = DateTime.UtcNow
             };
             await CampaignRepo.SaveAsync(doc);
-            campaigns = await CampaignRepo.GetAllAsync();
+            await LoadData();
         }
         finally
         {

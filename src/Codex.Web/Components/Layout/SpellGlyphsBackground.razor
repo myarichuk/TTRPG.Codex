@@ -1,0 +1,45 @@
+@using Codex.Web.Components.Layout
+
+<div class="magic-background">
+    @foreach (var glyph in _glyphs)
+    {
+        <div class="rune-glyph rune-@glyph.Type" 
+             style="top: @glyph.Top%; left: @glyph.Left%; animation-delay: -@glyph.Delay; animation-duration: @glyph.Duration; width: @(glyph.Size)px; height: @(glyph.Size)px; --op: @glyph.Opacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);">
+        </div>
+    }
+    
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+</div>
+
+@code {
+    private List<GlyphState> _glyphs = new();
+    private Random _rng = new();
+
+    protected override void OnInitialized()
+    {
+        for (int i = 0; i < 24; i++)
+        {
+            _glyphs.Add(new GlyphState {
+                Type = _rng.Next(0, 12),
+                Top = _rng.Next(5, 88),
+                Left = _rng.Next(2, 93),
+                Delay = (_rng.NextDouble() * 45).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "s",
+                Duration = _rng.Next(28, 60).ToString() + "s",
+                // Size varies between 32px and 56px — no separate scale() needed
+                Size = _rng.Next(32, 56),
+                Opacity = 0.08 + (_rng.NextDouble() * 0.18)
+            });
+        }
+    }
+
+    private class GlyphState {
+        public int Type { get; set; }
+        public int Top { get; set; }
+        public int Left { get; set; }
+        public string Delay { get; set; } = "0s";
+        public string Duration { get; set; } = "30s";
+        public int Size { get; set; } = 48;
+        public double Opacity { get; set; }
+    }
+}
