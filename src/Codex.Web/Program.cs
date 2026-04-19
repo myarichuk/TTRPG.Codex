@@ -224,7 +224,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
     await context.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, newPrincipal);
     await context.SignOutAsync("External");
 
-    if (string.IsNullOrEmpty(returnUrl) || !Uri.IsWellFormedUriString(returnUrl, UriKind.Relative))
+    if (!Codex.Web.UrlHelper.IsLocalUrl(returnUrl))
     {
         returnUrl = "/";
     }

@@ -131,7 +131,7 @@
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
         // Force a full reload so the auth cookie is applied to a fresh HTTP request.
-        var dest = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+        var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
         NavManager.NavigateTo(dest, forceLoad: true);
     }
 
