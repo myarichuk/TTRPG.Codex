@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Codex.Persistence\Codex.Persistence.csproj" />
     <ProjectReference Include="..\..\src\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Codex.Systems.DnD5e\Codex.Systems.DnD5e.csproj" />
+    <ProjectReference Include="..\..\src\Codex.Systems.SWFFG\Codex.Systems.SWFFG.csproj" />
     <ProjectReference Include="..\..\src\Codex.Web\Codex.Web.csproj" />
   </ItemGroup>
 
