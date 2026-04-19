@@ -1,157 +1,154 @@
+/* Visibility Logic */
 .components-reconnect-first-attempt-visible,
 .components-reconnect-repeated-attempt-visible,
 .components-reconnect-failed-visible,
 .components-pause-visible,
-.components-resume-failed-visible,
-.components-rejoining-animation {
+.components-resume-failed-visible {
     display: none;
 }
 
 #components-reconnect-modal.components-reconnect-show .components-reconnect-first-attempt-visible,
-#components-reconnect-modal.components-reconnect-show .components-rejoining-animation,
 #components-reconnect-modal.components-reconnect-paused .components-pause-visible,
 #components-reconnect-modal.components-reconnect-resume-failed .components-resume-failed-visible,
-#components-reconnect-modal.components-reconnect-retrying,
 #components-reconnect-modal.components-reconnect-retrying .components-reconnect-repeated-attempt-visible,
-#components-reconnect-modal.components-reconnect-retrying .components-rejoining-animation,
-#components-reconnect-modal.components-reconnect-failed,
 #components-reconnect-modal.components-reconnect-failed .components-reconnect-failed-visible {
     display: block;
 }
 
-
+/* Modal Styling */
 #components-reconnect-modal {
-    background-color: white;
-    width: 20rem;
-    margin: 20vh auto;
-    padding: 2rem;
-    border: 0;
-    border-radius: 0.5rem;
-    box-shadow: 0 3px 6px 2px rgba(0, 0, 0, 0.3);
+    background: transparent;
+    border: none;
+    padding: 0;
+    max-width: 450px;
+    width: 90%;
+    margin: auto;
+    position: fixed;
+    inset: 0; /* Centering for fixed dialogs */
     opacity: 0;
-    transition: display 0.5s allow-discrete, overlay 0.5s allow-discrete;
-    animation: components-reconnect-modal-fadeOutOpacity 0.5s both;
-    &[open]
-
-{
-    animation: components-reconnect-modal-slideUp 1.5s cubic-bezier(.05, .89, .25, 1.02) 0.3s, components-reconnect-modal-fadeInOpacity 0.5s ease-in-out 0.3s;
-    animation-fill-mode: both;
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10000;
 }
 
-}
-
-#components-reconnect-modal::backdrop {
-    background-color: rgba(0, 0, 0, 0.4);
-    animation: components-reconnect-modal-fadeInOpacity 0.5s ease-in-out;
+#components-reconnect-modal[open] {
     opacity: 1;
 }
 
-@keyframes components-reconnect-modal-slideUp {
-    0% {
-        transform: translateY(30px) scale(0.95);
-    }
-
-    100% {
-        transform: translateY(0);
-    }
+#components-reconnect-modal::backdrop {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
 }
 
-@keyframes components-reconnect-modal-fadeInOpacity {
-    0% {
-        opacity: 0;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
-@keyframes components-reconnect-modal-fadeOutOpacity {
-    0% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-    }
-}
-
-.components-reconnect-container {
+.reconnect-card {
+    background: rgba(22, 22, 22, 0.85);
+    backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(79, 107, 237, 0.15);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 1rem;
 }
 
-#components-reconnect-modal p {
+.reconnect-header {
+    background: linear-gradient(to right, rgba(79, 107, 237, 0.1), transparent);
+    padding: 24px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reconnect-header h3 {
     margin: 0;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    color: #4f6bed;
+    text-shadow: 0 0 15px rgba(79, 107, 237, 0.5);
+}
+
+.reconnect-visual {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.reconnect-visual img {
+    max-width: 180px;
+    height: auto;
+    border-radius: 12px;
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.5));
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+}
+
+.reconnect-body {
+    padding: 32px;
     text-align: center;
 }
 
-#components-reconnect-modal button {
-    border: 0;
-    background-color: #6b9ed2;
+.reconnect-status p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+}
+
+.reconnect-status .text-danger {
+    color: #ff4d4d !important;
+}
+
+.reconnect-actions {
+    margin-top: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #4f6bed;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
-    padding: 4px 24px;
-    border-radius: 4px;
+    box-shadow: 0 8px 20px rgba(79, 107, 237, 0.3);
 }
 
-    #components-reconnect-modal button:hover {
-        background-color: #3b6ea2;
-    }
-
-    #components-reconnect-modal button:active {
-        background-color: #6b9ed2;
-    }
-
-.components-rejoining-animation {
-    position: relative;
-    width: 80px;
-    height: 80px;
+.btn-primary:hover {
+    background: #3a57d3;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 107, 237, 0.4);
 }
 
-    .components-rejoining-animation div {
-        position: absolute;
-        border: 3px solid #0087ff;
-        opacity: 1;
-        border-radius: 50%;
-        animation: components-rejoining-animation 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-    }
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
 
-        .components-rejoining-animation div:nth-child(2) {
-            animation-delay: -0.5s;
-        }
+.btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.4);
+}
 
-@keyframes components-rejoining-animation {
-    0% {
-        top: 40px;
-        left: 40px;
-        width: 0;
-        height: 0;
-        opacity: 0;
-    }
-
-    4.9% {
-        top: 40px;
-        left: 40px;
-        width: 0;
-        height: 0;
-        opacity: 0;
-    }
-
-    5% {
-        top: 40px;
-        left: 40px;
-        width: 0;
-        height: 0;
-        opacity: 1;
-    }
-
-    100% {
-        top: 0px;
-        left: 0px;
-        width: 80px;
-        height: 80px;
-        opacity: 0;
-    }
+#components-seconds-to-next-attempt {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #4f6bed;
 }

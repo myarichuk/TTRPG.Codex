@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Codex.Core.AI;
 using Microsoft.Extensions.AI;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
@@ -109,19 +109,9 @@ var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Server running at: http://localhost:5000");
 
-var dbService = app.Services.GetRequiredService<RavenDbService>();
-// Store is initialized in constructor
-logger.LogInformation("RavenDB initialized at {DataDir}", dataDir);
-
-var loader = app.Services.GetRequiredService<PluginLoader>();
-var registry = app.Services.GetRequiredService<ComponentRegistry>();
-var world = app.Services.GetRequiredService<CodexWorld>();
-
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -229,7 +219,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
         returnUrl = "/";
     }
 
-    return Results.Redirect(returnUrl);
+    return Results.Redirect(returnUrl ?? "/");
 });
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
