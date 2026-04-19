@@ -534,3 +534,24 @@ h1 { font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
     text-decoration: none;
     font-weight: 600;
 }
+
+/* Custom Dark Scrollbars */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color-main);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--fluent-surface-hover);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--bg-color-main);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--fluent-surface-hover) var(--bg-color-main);
+}
