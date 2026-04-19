@@ -25,9 +25,6 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
             IsLoading = true;
             LoadException = null;
 
-            // Ensure the high-fidelity loading screen is visible to the user as requested.
-            await Task.Delay(1500);
-
             try
             {
                 await Task.Run(() =>
@@ -39,11 +36,11 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
             catch (Exception ex)
             {
                 LoadException = ex;
-                logger.LogError(ex, "Plugin loading failed.");
+                logger.LogError(ex, "Plugin loading failed");
             }
             finally
             {
-                IsLoaded = true; // "Done attempting" so the UI doesn't get stuck on a perpetual loading screen.
+                IsLoaded = true; // "Done attempting"
                 IsLoading = false;
                 OnPluginsLoaded?.Invoke();
             }
@@ -60,7 +57,7 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
 
         if (!Directory.Exists(pluginsDirectory))
         {
-            logger.LogWarning("Plugins directory '{PluginsDirectory}' does not exist.", pluginsDirectory);
+            logger.LogWarning("Plugins directory '{PluginsDirectory}' does not exist", pluginsDirectory);
             return plugins;
         }
 
@@ -72,7 +69,12 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
             {
                 var assembly = Assembly.LoadFrom(file);
                 var pluginTypes = assembly.GetTypes()
-                    .Where(t => typeof(ICodexSystemPlugin).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+                    .Where(t => typeof(ICodexSystemPlugin).IsAssignableFrom(t) &&
+                                t is
+                                {
+                                    IsInterface: false,
+                                    IsAbstract: false
+                                });
 
                 foreach (var type in pluginTypes)
                 {

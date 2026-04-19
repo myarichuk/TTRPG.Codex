@@ -7,66 +7,120 @@
     <base href="/" />
     <ResourcePreloader />
     <style>
-        /* Pre-Blazor boot splash: shown immediately to avoid a blank/flash during cold start. */
+        :root {
+            --bg-color-main: #080808;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a1;
+            --text-tertiary: #404040;
+            --accent-color: #4f6bed;
+            --accent-glow: rgba(79, 107, 237, 0.3);
+            --radius-md: 8px;
+            --transition-slow: 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         #boot-splash {
             position: fixed;
             inset: 0;
+            background-color: var(--bg-color-main);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(circle at 50% 50%, #121212 0%, #080808 100%);
-            color: #ffffff;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #121212 0%, #080808 100%);
             z-index: 99999;
-            font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-        #boot-splash .boot-inner {
-            width: 100%;
-            max-width: 320px;
+
+        .loading-container {
             text-align: center;
-            padding: 24px;
+            width: 100%;
+            max-width: 300px;
+            animation: fadeIn 1s ease-out;
         }
-        #boot-splash .boot-mark {
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-anchor {
             width: 64px;
             height: 64px;
+            background: var(--accent-color);
             border-radius: 14px;
-            margin: 0 auto 18px auto;
             display: grid;
             place-items: center;
-            background: #4f6bed;
-            box-shadow: 0 0 30px rgba(79, 107, 237, 0.35);
+            margin: 0 auto 2.5rem auto;
+            box-shadow: 0 0 30px var(--accent-glow);
+            position: relative;
+            animation: pulse 3s infinite ease-in-out;
         }
-        #boot-splash .boot-brand {
+
+        @@keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--accent-glow); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px var(--accent-glow); }
+        }
+
+        .brand-name-loading {
             font-weight: 800;
+            font-size: 1.1rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
-            font-size: 0.95rem;
-            opacity: 0.95;
-            margin-bottom: 14px;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
         }
-        #boot-splash .boot-status {
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            opacity: 0.7;
-            margin-bottom: 14px;
-        }
-        #boot-splash .boot-bar {
+
+        .progress-wrapper {
+            width: 100%;
             height: 4px;
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 2px;
-            background: rgba(255, 255, 255, 0.06);
             overflow: hidden;
+            margin-bottom: 1.5rem;
         }
-        #boot-splash .boot-bar > div {
+
+        .progress-bar-inner {
             height: 100%;
             width: 40%;
-            background: #4f6bed;
-            box-shadow: 0 0 10px rgba(79, 107, 237, 0.75);
-            animation: bootSlide 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--accent-color);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-color);
+            animation: slide 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
         }
-        @@keyframes bootSlide {
+
+        @@keyframes slide {
             0% { transform: translateX(-150%); }
             100% { transform: translateX(250%); }
+        }
+
+        .status-container-loading {
+            height: 20px;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-text-loading {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .status-text-loading.active {
+            opacity: 1;
+        }
+
+        .version-tag {
+            font-size: 0.65rem;
+            color: var(--text-tertiary);
+            margin-top: 3rem;
+            font-family: monospace;
         }
     </style>
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
@@ -78,42 +132,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
+    <script src="https://unpkg.com/lucide@latest"></script>
     <HeadOutlet />
 </head>
 
 <body>
     <div id="boot-splash" aria-label="Loading application">
-        <div class="boot-inner">
-            <div class="boot-mark" aria-hidden="true"></div>
-            <div class="boot-brand">Codex</div>
-            <div class="boot-status">Starting up...</div>
-            <div class="boot-bar" aria-hidden="true"><div></div></div>
+        <div class="loading-container">
+            <div class="logo-anchor">
+                <i data-lucide="scroll" color="white" size="32"></i>
+            </div>
+
+            <div class="brand-name-loading">TTRPG.Codex</div>
+
+            <div class="status-container-loading">
+                <div id="status" class="status-text-loading">Initializing Systems...</div>
+            </div>
+
+            <div class="progress-wrapper">
+                <div class="progress-bar-inner"></div>
+            </div>
+
+            <div class="version-tag">Core Engine v2.5.0-wasm</div>
         </div>
     </div>
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]" autostart="false"></script>
-    <script>
-        (function () {
-            function removeSplash() {
-                var el = document.getElementById("boot-splash");
-                if (!el) return;
-                el.parentNode && el.parentNode.removeChild(el);
-            }
-
-            // Make boot splash removal independent of Blazor JS interop and component render timing.
-            try {
-                Blazor.start().then(removeSplash).catch(removeSplash);
-            } catch (e) {
-                removeSplash();
-            }
-
-            // Last resort: never let it hang forever.
-            window.addEventListener("load", function () {
-                setTimeout(removeSplash, 8000);
-            });
-        })();
-    </script>
+    <script src="js/app-startup.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

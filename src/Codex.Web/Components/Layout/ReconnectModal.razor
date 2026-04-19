@@ -1,31 +1,45 @@
-﻿<script type="module" src="@Assets["Components/Layout/ReconnectModal.razor.js"]"></script>
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
 
 <dialog id="components-reconnect-modal" data-nosnippet>
-    <div class="components-reconnect-container">
-        <div class="components-rejoining-animation" aria-hidden="true">
-            <div></div>
-            <div></div>
+    <div class="reconnect-card">
+        <div class="reconnect-header">
+            <h3>WEAVE DISRUPTED</h3>
         </div>
-        <p class="components-reconnect-first-attempt-visible">
-            Rejoining the server...
-        </p>
-        <p class="components-reconnect-repeated-attempt-visible">
-            Rejoin failed... trying again in <span id="components-seconds-to-next-attempt"></span> seconds.
-        </p>
-        <p class="components-reconnect-failed-visible">
-            Failed to rejoin.<br />Please retry or reload the page.
-        </p>
-        <button id="components-reconnect-button" class="components-reconnect-failed-visible">
-            Retry
-        </button>
-        <p class="components-pause-visible">
-            The session has been paused by the server.
-        </p>
-        <button id="components-resume-button" class="components-pause-visible">
-            Resume
-        </button>
-        <p class="components-resume-failed-visible">
-            Failed to resume the session.<br />Please reload the page.
-        </p>
+        
+        <div class="reconnect-visual">
+            <img src='@Config["Codex:ConnectionLostImage"]' alt="Connection lost illustration" />
+        </div>
+
+        <div class="reconnect-body">
+            <div class="reconnect-status">
+                <p class="components-reconnect-first-attempt-visible">
+                    Retrying connection to the Leyline...
+                </p>
+                <p class="components-reconnect-repeated-attempt-visible">
+                    Connection unstable. Retrying in <span id="components-seconds-to-next-attempt"></span>s...
+                </p>
+                <p class="components-reconnect-failed-visible text-danger">
+                    The link to the world has severed.
+                </p>
+                <p class="components-pause-visible">
+                    Chronos has paused the session.
+                </p>
+                <p class="components-resume-failed-visible text-danger">
+                    Ancient magic failed to restore the link.
+                </p>
+            </div>
+
+            <div class="reconnect-actions">
+                <button id="components-reconnect-button" class="btn btn-primary components-reconnect-failed-visible">
+                    Re-establish Link
+                </button>
+                <button id="components-resume-button" class="btn btn-primary components-pause-visible">
+                    Resume Saga
+                </button>
+                <button class="btn btn-outline-secondary components-reconnect-failed-visible" onclick="location.reload()">
+                    Reload Page
+                </button>
+            </div>
+        </div>
     </div>
 </dialog>

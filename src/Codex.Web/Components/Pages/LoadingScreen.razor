@@ -9,7 +9,7 @@
             <LucideIcon IconName="scroll" Color="white" Size="32" />
         </div>
 
-        <div class="brand-name">Codex</div>
+        <div class="brand-name">TTRPG.Codex</div>
 
         <div class="status-container">
             <div id="status" class="status-text @(_isActive ? "active" : "")">@_currentMessage</div>
@@ -57,7 +57,10 @@
             _currentMessage = _messages[_index];
             _isActive = true;
             _index = (_index + 1) % _messages.Length;
-            StateHasChanged();
+            if (_timer != null) // Check if still alive
+            {
+                StateHasChanged();
+            }
         });
     }
 

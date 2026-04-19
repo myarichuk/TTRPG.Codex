@@ -1,8 +1,8 @@
 @inherits LayoutComponentBase
-@inject Codex.Core.PluginLoader Loader
-@inject Codex.Core.CodexWorld World
-@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
-@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@inject Core.PluginLoader Loader
+@inject Core.CodexWorld World
+@inject IWebHostEnvironment Env
+@inject IConfiguration Config
 
 <div class="page-wrapper">
     <NavMenu />
@@ -13,11 +13,6 @@
     </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
 
 @code {
     protected override async Task OnInitializedAsync()
