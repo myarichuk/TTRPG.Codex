@@ -117,15 +117,6 @@ var loader = app.Services.GetRequiredService<PluginLoader>();
 var registry = app.Services.GetRequiredService<ComponentRegistry>();
 var world = app.Services.GetRequiredService<CodexWorld>();
 
-var absolutePluginsDir = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, pluginsDir));
-logger.LogInformation("Loading plugins from: {PluginsDir}", absolutePluginsDir);
-
-// Don't block app startup on plugin loading; start it only once the web server is already serving.
-app.Lifetime.ApplicationStarted.Register(() =>
-{
-    _ = loader.LoadAndInitializeAsync(absolutePluginsDir, world);
-});
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
