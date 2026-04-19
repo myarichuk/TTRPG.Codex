@@ -6,6 +6,7 @@ namespace Codex.Core;
 
 public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry registry)
 {
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     public bool IsLoaded { get; private set; }
     public bool IsLoading { get; private set; }
     public Exception? LoadException { get; private set; }
@@ -13,35 +14,43 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
 
     public async Task LoadAndInitializeAsync(string pluginsDirectory, CodexWorld world)
     {
-        if (IsLoaded || IsLoading)
-        {
-            return;
-        }
-
-        IsLoading = true;
-        LoadException = null;
-
-        // Ensure the high-fidelity loading screen is visible to the user as requested.
-        await Task.Delay(1500);
-
+        await _semaphore.WaitAsync();
         try
         {
-            await Task.Run(() =>
+            if (IsLoaded || IsLoading)
             {
-                var plugins = LoadPlugins(pluginsDirectory);
-                InitializePlugins(plugins, world);
-            });
-        }
-        catch (Exception ex)
-        {
-            LoadException = ex;
-            logger.LogError(ex, "Plugin loading failed.");
+                return;
+            }
+
+            IsLoading = true;
+            LoadException = null;
+
+            // Ensure the high-fidelity loading screen is visible to the user as requested.
+            await Task.Delay(1500);
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    var plugins = LoadPlugins(pluginsDirectory);
+                    InitializePlugins(plugins, world);
+                });
+            }
+            catch (Exception ex)
+            {
+                LoadException = ex;
+                logger.LogError(ex, "Plugin loading failed.");
+            }
+            finally
+            {
+                IsLoaded = true; // "Done attempting" so the UI doesn't get stuck on a perpetual loading screen.
+                IsLoading = false;
+                OnPluginsLoaded?.Invoke();
+            }
         }
         finally
         {
-            IsLoaded = true; // "Done attempting" so the UI doesn't get stuck on a perpetual loading screen.
-            IsLoading = false;
-            OnPluginsLoaded?.Invoke();
+            _semaphore.Release();
         }
     }
 

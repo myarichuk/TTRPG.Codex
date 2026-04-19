@@ -1,4 +1,8 @@
 @inherits LayoutComponentBase
+@inject Codex.Core.PluginLoader Loader
+@inject Codex.Core.CodexWorld World
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
 
 <div class="page-wrapper">
     <NavMenu />
@@ -14,3 +18,12 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var pluginsDir = Config["Codex:PluginsDirectory"] ?? "plugins";
+        var absolutePluginsDir = Path.GetFullPath(Path.Combine(Env.ContentRootPath, pluginsDir));
+        await Loader.LoadAndInitializeAsync(absolutePluginsDir, World);
+    }
+}
