@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Fireball",
+    "level": 3,
+    "school": "Evocation",
+    "description": "A bright streak flashes from your pointing finger to a point you choose..."
+  },
+  {
+    "name": "Magic Missile",
+    "level": 1,
+    "school": "Evocation",
+    "description": "You create three glowing darts of magical force."
+  }
+]
