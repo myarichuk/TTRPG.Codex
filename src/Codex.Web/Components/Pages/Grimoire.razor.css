@@ -21,12 +21,13 @@
     background: var(--fluent-surface-secondary);
 }
 
-.search-icon {
+::deep .search-icon {
     position: absolute;
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-tertiary);
+    z-index: 2;
 }
 
 /* Action Buttons */

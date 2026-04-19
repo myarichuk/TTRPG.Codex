@@ -1,10 +1,7 @@
 @inherits LayoutComponentBase
-@inject Core.PluginLoader Loader
-@inject Core.CodexWorld World
-@inject IWebHostEnvironment Env
-@inject IConfiguration Config
 
 <div class="page-wrapper">
+    <SpellGlyphsBackground />
     <NavMenu />
     <main class="main-content">
         <div class="app-container">
@@ -13,12 +10,5 @@
     </main>
 </div>
 
-
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        var pluginsDir = Config["Codex:PluginsDirectory"] ?? "plugins";
-        var absolutePluginsDir = Path.GetFullPath(Path.Combine(Env.ContentRootPath, pluginsDir));
-        await Loader.LoadAndInitializeAsync(absolutePluginsDir, World);
-    }
 }

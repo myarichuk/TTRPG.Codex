@@ -4,13 +4,14 @@
     max-width: 400px;
 }
 
-.search-icon {
+::deep .search-icon {
     position: absolute;
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-tertiary);
     pointer-events: none;
+    z-index: 2;
 }
 
 .search-input {
@@ -84,13 +85,6 @@
     overflow: hidden;
 }
 
-.art-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: brightness(0.8);
-    transition: var(--transition-base);
-}
 
 .campaign-card:hover .art-container img { filter: brightness(1); scale: 1.05; }
 
@@ -106,6 +100,26 @@
     font-weight: 700;
     color: white;
     border: 1px solid rgba(255,255,255,0.1);
+    z-index: 3;
+}
+
+.art-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: rgba(255,255,255,0.15);
+    z-index: 1;
+}
+
+.art-container img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.8);
+    transition: var(--transition-base);
+    z-index: 2;
 }
 
 .card-content { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
@@ -135,4 +149,76 @@
     border-radius: var(--radius-md);
     font-weight: 600;
     font-size: 0.85rem;
+    transition: var(--transition-base);
+}
+
+.btn-primary-fluent:hover {
+    background: #5b79f0;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn-manage-fluence {
+    background: transparent;
+    border: 1px solid var(--fluent-border);
+    color: var(--text-secondary);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-base);
+}
+
+.btn-manage-fluence:hover {
+    background: var(--fluent-surface-secondary);
+    border-color: var(--fluent-border-strong);
+    color: var(--text-primary);
+}
+
+.btn-manage-fluence:hover ::deep .anim-rotate {
+    transform: rotate(45deg);
+}
+
+.btn-session-fluence {
+    background: var(--fluent-surface-secondary);
+    border: 1px solid var(--fluent-border);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition-base);
+}
+
+.btn-session-fluence:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn-session-fluence:hover ::deep .anim-pulse {
+    animation: microPulse 0.4s ease-in-out infinite alternate;
+}
+
+::deep .anim-rotate {
+    transition: transform 0.3s ease;
+}
+
+@keyframes microPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+}
+
+.empty-state {
+    background: var(--bg-color-surface);
+    border: 1px dashed var(--fluent-border);
+    border-radius: var(--radius-lg);
+    margin-top: 2rem;
 }

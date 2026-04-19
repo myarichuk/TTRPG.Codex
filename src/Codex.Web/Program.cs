@@ -15,7 +15,13 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+
+// Configure authentication and cookies using a single AuthenticationBuilder.
+var authBuilder = builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
     .AddCookie(options =>
     {
         options.LoginPath = "/login";
@@ -27,33 +33,49 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
     });
 
-var authBuilder = builder.Services.AddAuthentication();
-
-if (!string.IsNullOrEmpty(builder.Configuration["Authentication:Google:ClientId"]))
+// Register external providers conditionally based on configuration.
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
 {
     authBuilder.AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
         options.SignInScheme = "External";
     });
 }
 
-if (!string.IsNullOrEmpty(builder.Configuration["Authentication:Apple:ClientId"]))
+var appleClientId = builder.Configuration["Authentication:Apple:ClientId"];
+var appleTeamId = builder.Configuration["Authentication:Apple:TeamId"];
+var appleKeyId = builder.Configuration["Authentication:Apple:KeyId"];
+var applePrivateKey = builder.Configuration["Authentication:Apple:PrivateKey"];
+if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) && !string.IsNullOrEmpty(appleKeyId) && !string.IsNullOrEmpty(applePrivateKey))
 {
     authBuilder.AddApple(options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Apple:ClientId"]!;
-        options.KeyId = builder.Configuration["Authentication:Apple:KeyId"]!;
-        options.TeamId = builder.Configuration["Authentication:Apple:TeamId"]!;
-        // The private key should be passed according to the provider docs
-        var privateKeyContent = builder.Configuration["Authentication:Apple:PrivateKey"];
-        if (!string.IsNullOrEmpty(privateKeyContent))
+        options.ClientId = appleClientId;
+        options.KeyId = appleKeyId;
+        options.TeamId = appleTeamId;
+        
+        // Handle private key: can be a file path or PEM content
+        if (System.IO.File.Exists(applePrivateKey))
         {
+            // Treat as file path
             options.UsePrivateKey(
-                (keyId) => new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Directory.GetCurrentDirectory()).GetFileInfo(privateKeyContent)
+                (keyId) => new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetDirectoryName(applePrivateKey) ?? ".").GetFileInfo(Path.GetFileName(applePrivateKey))
             );
         }
+        else if (applePrivateKey.Contains("-----BEGIN") || applePrivateKey.Contains("-----END"))
+        {
+            // Treat as PEM content, write to temp file
+            var tmpPath = Path.Combine(Path.GetTempPath(), $"apple_key_{Guid.NewGuid()}.p8");
+            System.IO.File.WriteAllText(tmpPath, applePrivateKey);
+            options.UsePrivateKey(
+                (keyId) => new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetDirectoryName(tmpPath)!).GetFileInfo(Path.GetFileName(tmpPath))
+            );
+        }
+        
         options.SignInScheme = "External";
     });
 }
@@ -105,9 +127,23 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Initialize everything on startup
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Server running at: http://localhost:5000");
+
+// Initialize Plugins and World once at startup
+using (var scope = app.Services.CreateScope())
+{
+    var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
+    var world = scope.ServiceProvider.GetRequiredService<CodexWorld>();
+    var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    
+    var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
+    var absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
+    
+    logger.LogInformation("Loading plugins from: {Path}", absolutePluginsDir);
+    await loader.LoadAndInitializeAsync(absolutePluginsDir, world);
+}
 
 if (!app.Environment.IsDevelopment())
 {
@@ -151,8 +187,12 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
     }
 
     var principal = authenticateResult.Principal;
-    var provider = authenticateResult.Properties?.Items["LoginProvider"] ?? principal.Identities.FirstOrDefault()?.AuthenticationType;
-    var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var provider = authenticateResult.Properties?.Items["LoginProvider"]
+                   ?? authenticateResult.Properties?.Items[".AuthScheme"]
+                   ?? principal.Identities.FirstOrDefault()?.AuthenticationType;
+    var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                      ?? principal.FindFirst("sub")?.Value
+                      ?? principal.FindFirst("id")?.Value;
     var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
     var name = principal.Identity?.Name ?? email;
 
@@ -178,7 +218,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
         user = new UserDocument
         {
             Id = Guid.NewGuid().ToString(),
-            Username = name ?? "User" + Guid.NewGuid().ToString().Substring(0, 8),
+            Username = !string.IsNullOrEmpty(name) ? name : ("User" + Guid.NewGuid().ToString().Substring(0, 8)),
             Email = email ?? "",
             Roles = new List<string> { "Player" },
             ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
