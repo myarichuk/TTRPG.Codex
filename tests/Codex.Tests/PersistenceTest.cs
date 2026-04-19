@@ -40,6 +40,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly CampaignRepository _campaignRepository;
     private readonly CharacterRepository _characterRepository;
     private readonly RavenUserRepository _userRepository;
+    private readonly RavenSessionRepository _sessionRepository;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
@@ -47,6 +48,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _campaignRepository = new CampaignRepository(_dbService);
         _characterRepository = new CharacterRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
+        _sessionRepository = new RavenSessionRepository(_dbService);
     }
 
     [Fact]
@@ -84,6 +86,51 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.NotNull(loaded);
         Assert.Equal("Test Character", loaded.Name);
         Assert.Equal(10, Convert.ToInt32(loaded.State["HP"]?.ToString()));
+    }
+
+    [Fact]
+    public async Task SaveAndLoadSession_ShouldSucceed_Async()
+    {
+        var sessionDoc = new SessionDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = Guid.NewGuid().ToString(),
+            Title = "Test Session",
+            Recap = "This is a recap."
+        };
+
+        await _sessionRepository.SaveAsync(sessionDoc);
+        var loaded = await _sessionRepository.GetAsync(sessionDoc.Id);
+
+        Assert.NotNull(loaded);
+        Assert.Equal("Test Session", loaded.Title);
+        Assert.Equal("This is a recap.", loaded.Recap);
+    }
+
+    [Fact]
+    public async Task GetAllSessionsForCampaign_ShouldReturnCorrect_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+
+        var session1 = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Title = "Session 1" };
+        var session2 = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Title = "Session 2" };
+        var session3 = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = Guid.NewGuid().ToString(), Title = "Other Campaign Session" };
+
+        await _sessionRepository.SaveAsync(session1);
+        await _sessionRepository.SaveAsync(session2);
+        await _sessionRepository.SaveAsync(session3);
+
+        // Wait for RavenDB indexes to process (since we use a query)
+        using var session = _dbService.Store.OpenAsyncSession();
+        await session.Query<SessionDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+
+        var loaded = await _sessionRepository.GetAllForCampaignAsync(campaignId);
+
+        Assert.NotNull(loaded);
+        var list = loaded.ToList();
+        Assert.Equal(2, list.Count);
+        Assert.Contains(list, s => s.Title == "Session 1");
+        Assert.Contains(list, s => s.Title == "Session 2");
     }
 
     [Fact]
