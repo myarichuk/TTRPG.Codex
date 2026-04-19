@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Fighter",
+    "hit_die": 10,
+    "primary_ability": "Strength or Dexterity",
+    "saves": ["Strength", "Constitution"]
+  },
+  {
+    "name": "Wizard",
+    "hit_die": 6,
+    "primary_ability": "Intelligence",
+    "saves": ["Intelligence", "Wisdom"]
+  }
+]
