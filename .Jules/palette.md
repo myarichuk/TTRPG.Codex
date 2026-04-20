@@ -5,3 +5,7 @@
 ## 2025-04-18 - [Icon-Only Buttons missing aria-labels]
 **Learning:** Found an accessibility issue pattern across this app's components where icon-only buttons (like edit, delete, external link, or close buttons) lack `aria-label` attributes. Without these, screen readers announce nothing useful for the action.
 **Action:** When creating or reviewing UI elements, always ensure buttons containing only icons include an `aria-label` attribute describing the action they perform.
+
+## 2026-04-20 - [Destructive Action Confirmations]
+**Learning:** Found a pattern where destructive actions (like deleting items from a list) lacked confirmation dialogs, leading to potentially frustrating accidental deletions.
+**Action:** Always add a confirmation step (like a native browser confirm or custom dialog) for destructive actions.

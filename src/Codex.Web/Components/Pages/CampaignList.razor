@@ -2,6 +2,7 @@
 @using Codex.Persistence
 @using Codex.Web.Components.Layout
 @inject ICampaignRepository CampaignRepo
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Campaigns</PageTitle>
 
@@ -11,7 +12,7 @@
         <div class="d-flex gap-3 align-items-center" style="flex: 1; justify-content: flex-end;">
             <div class="search-wrapper">
                 <LucideIcon IconName="search" Size="16" Class="search-icon" />
-                <input type="text" class="search-input" placeholder="Search chronicles...">
+                <input type="text" class="search-input" placeholder="Search chronicles..." aria-label="Search chronicles">
             </div>
             <button class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating" style="white-space: nowrap;">
                 @if (isCreating)
@@ -95,7 +96,7 @@ else
                     <div class="mt-auto pt-3 border-top border-secondary border-opacity-10">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-tertiary small">Last session: @campaign.UpdatedAt.ToString("MMM dd")</span>
-                            <button class="btn-manage-fluence d-flex align-items-center gap-2" @onclick="() => DeleteCampaign(campaign.Id)" title="Delete Campaign" style="color: var(--bs-danger);">
+                            <button class="btn-manage-fluence d-flex align-items-center gap-2" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Delete Campaign" style="color: var(--bs-danger);">
                                 <LucideIcon IconName="trash-2" Size="14" />
                             </button>
                             <button class="btn-manage-fluence" aria-label="Manage @campaign.Name">
@@ -157,8 +158,11 @@ else
         await LoadData();
     }
 
-    private async Task DeleteCampaign(string id)
+    private async Task DeleteCampaign(string id, string name)
     {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
+        if (!confirm) return;
+
         await CampaignRepo.DeleteAsync(id);
         await LoadData();
     }

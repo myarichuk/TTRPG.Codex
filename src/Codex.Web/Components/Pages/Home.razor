@@ -5,6 +5,7 @@
 @inject ICampaignRepository CampaignRepo
 @inject ICharacterRepository CharacterRepo
 @inject HttpClient Http
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Dashboard | TTRPG.Codex</PageTitle>
 
@@ -40,7 +41,7 @@ else
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h3 class="card-title mb-0">@campaign.Name</h3>
-                            <button class="btn-delete-fluence" @onclick="() => DeleteCampaign(campaign.Id)" title="Destroy Chronicle">
+                            <button class="btn-delete-fluence" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Destroy Chronicle">
                                 <LucideIcon IconName="trash-2" Size="14" />
                             </button>
                         </div>
@@ -68,8 +69,8 @@ else
             <div class="section-header">
                 <h2 class="h5 mb-0 fw-bold">Recent Archives</h2>
                 <div class="archive-controls">
-                    <button class="control-btn @(!sortByCreated ? "active" : "")" @onclick="() => SetSort(false)">Modified</button>
-                    <button class="control-btn @(sortByCreated ? "active" : "")" @onclick="() => SetSort(true)">Newest</button>
+                    <button class="control-btn @(!sortByCreated ? "active" : "")" aria-pressed="@(!sortByCreated ? "true" : "false")" @onclick="() => SetSort(false)">Modified</button>
+                    <button class="control-btn @(sortByCreated ? "active" : "")" aria-pressed="@(sortByCreated ? "true" : "false")" @onclick="() => SetSort(true)">Newest</button>
                 </div>
             </div>
 
@@ -168,8 +169,11 @@ else
         characters = await CharacterRepo.GetAllAsync(5, sortByCreated);
     }
 
-    private async Task DeleteCampaign(string id)
+    private async Task DeleteCampaign(string id, string name)
     {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
+        if (!confirm) return;
+
         await CampaignRepo.DeleteAsync(id);
         campaigns = await CampaignRepo.GetAllAsync();
         StateHasChanged();
