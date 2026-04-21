@@ -6,6 +6,7 @@ public interface IAbilityDefinition
 {
     string Id { get; }
     string SystemId { get; }
+    string PackId { get; }
     string Name { get; }
     string? Description { get; }
     string? IconPath { get; }
