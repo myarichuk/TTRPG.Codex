@@ -51,7 +51,6 @@ public class YamlAbilityPackLoader : IAbilityPackLoader
             foreach (var file in Directory.GetFiles(fullPath, "*.yaml", SearchOption.AllDirectories))
             {
                 var yaml = await File.ReadAllTextAsync(file);
-                // Support both single ability and list of abilities in one file
                 try
                 {
                     var loaded = _yamlDeserializer.Deserialize<List<AbilityDefinition>>(yaml);
@@ -68,6 +67,7 @@ public class YamlAbilityPackLoader : IAbilityPackLoader
         foreach (var ability in abilities)
         {
             ability.SystemId = manifest.SystemId;
+            ability.PackId = manifest.Id;
 
             if (!string.IsNullOrEmpty(ability.Inherits))
             {
