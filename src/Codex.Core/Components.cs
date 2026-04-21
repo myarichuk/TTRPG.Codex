@@ -25,4 +25,9 @@ public struct DurationComponent
     {
         RoundsRemaining = (float)roundsRemaining;
     }
+
+    public DurationComponent(int roundsRemaining)
+    {
+        RoundsRemaining = (float)roundsRemaining;
+    }
 }
