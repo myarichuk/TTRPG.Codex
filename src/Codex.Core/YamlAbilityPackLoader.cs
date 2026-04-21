@@ -11,12 +11,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace Codex.Core;
 
-public class YamlAbilityPackLoader : IAbilityPackLoader
+public class YamlContentPackLoader : IContentPackLoader
 {
-    private readonly IAbilityRegistry _registry;
+    private readonly IContentRegistry _registry;
     private readonly IDeserializer _yamlDeserializer;
 
-    public YamlAbilityPackLoader(IAbilityRegistry registry)
+    public YamlContentPackLoader(IContentRegistry registry)
     {
         _registry = registry;
         _yamlDeserializer = new DeserializerBuilder()
@@ -36,51 +36,74 @@ public class YamlAbilityPackLoader : IAbilityPackLoader
                ?? throw new InvalidOperationException("Failed to deserialize manifest.");
     }
 
-    public async Task<IEnumerable<IAbilityDefinition>> LoadPackAsync(string packDirectoryPath)
+    public async Task LoadPackAsync(string packDirectoryPath)
     {
         var manifest = await ReadManifestAsync(packDirectoryPath);
-        var abilities = new List<AbilityDefinition>();
 
-        var contentPaths = manifest.ContentPaths ?? new[] { "abilities" };
-
-        foreach (var relativePath in contentPaths)
+        // Load Abilities
+        await LoadContentSubfolder<AbilityDefinition>(packDirectoryPath, manifest, "abilities", (item, prio) =>
         {
-            var fullPath = Path.Combine(packDirectoryPath, relativePath);
-            if (!Directory.Exists(fullPath)) continue;
-
-            foreach (var file in Directory.GetFiles(fullPath, "*.yaml", SearchOption.AllDirectories))
+            if (!string.IsNullOrEmpty(item.Inherits))
             {
-                var yaml = await File.ReadAllTextAsync(file);
-                try
+                var baseAbility = _registry.GetAbility(item.Inherits);
+                if (baseAbility != null) item.MergeFrom(baseAbility);
+            }
+            _registry.RegisterAbility(item, prio);
+        });
+
+        // Load NPCs
+        await LoadContentSubfolder<NpcDefinition>(packDirectoryPath, manifest, "npcs", (item, prio) =>
+        {
+            _registry.RegisterNpc(item, prio);
+        });
+
+        // Load Locations
+        await LoadContentSubfolder<LocationDefinition>(packDirectoryPath, manifest, "locations", (item, prio) =>
+        {
+            _registry.RegisterLocation(item, prio);
+        });
+    }
+
+    private async Task LoadContentSubfolder<T>(string packDirectoryPath, PackManifest manifest, string defaultSubfolder, Action<T, int> registerAction) where T : class
+    {
+        var contentPath = Path.Combine(packDirectoryPath, defaultSubfolder);
+        if (!Directory.Exists(contentPath)) return;
+
+        foreach (var file in Directory.GetFiles(contentPath, "*.yaml", SearchOption.AllDirectories))
+        {
+            var yaml = await File.ReadAllTextAsync(file);
+
+            // Try as list first
+            try
+            {
+                var loadedList = _yamlDeserializer.Deserialize<List<T>>(yaml);
+                if (loadedList != null)
                 {
-                    var loaded = _yamlDeserializer.Deserialize<List<AbilityDefinition>>(yaml);
-                    if (loaded != null) abilities.AddRange(loaded);
-                }
-                catch
-                {
-                    var loaded = _yamlDeserializer.Deserialize<AbilityDefinition>(yaml);
-                    if (loaded != null) abilities.Add(loaded);
+                    foreach (var item in loadedList)
+                    {
+                        ApplyMetadata(item, manifest);
+                        registerAction(item, manifest.Priority);
+                    }
+                    continue;
                 }
             }
-        }
+            catch { /* Not a list */ }
 
-        foreach (var ability in abilities)
-        {
-            ability.SystemId = manifest.SystemId;
-            ability.PackId = manifest.Id;
-
-            if (!string.IsNullOrEmpty(ability.Inherits))
+            // Try as single item
+            var loaded = _yamlDeserializer.Deserialize<T>(yaml);
+            if (loaded != null)
             {
-                var baseAbility = _registry.GetAbility(ability.Inherits);
-                if (baseAbility != null)
-                {
-                    ability.MergeFrom(baseAbility);
-                }
+                ApplyMetadata(loaded, manifest);
+                registerAction(loaded, manifest.Priority);
             }
-
-            _registry.Register(ability, manifest.Priority);
         }
+    }
 
-        return abilities;
+    private void ApplyMetadata(object item, PackManifest manifest)
+    {
+        // Use reflection to set SystemId and PackId if properties exist
+        var type = item.GetType();
+        type.GetProperty("SystemId")?.SetValue(item, manifest.SystemId);
+        type.GetProperty("PackId")?.SetValue(item, manifest.Id);
     }
 }
