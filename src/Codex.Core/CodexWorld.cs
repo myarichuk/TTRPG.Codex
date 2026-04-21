@@ -44,6 +44,11 @@ public sealed class CodexWorld : IDisposable
         entity.Set(new DurationComponent(durationRounds));
     }
 
+    public void AddStatus(Entity entity, string effectId, string packId, double durationRounds)
+    {
+        AddStatus(entity, effectId, packId, (float)durationRounds);
+    }
+
     public void Dispose()
     {
         _systems?.Dispose();
