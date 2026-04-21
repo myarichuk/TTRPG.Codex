@@ -1,6 +1,7 @@
 using DefaultEcs;
 using DefaultEcs.System;
 using System.Collections.Generic;
+using Codex.Core.Systems;
 
 namespace Codex.Core;
 
@@ -15,6 +16,8 @@ public sealed class CodexWorld : IDisposable
     public CodexWorld()
     {
         _world = new World();
+        // Core systems
+        AddSystem(new DurationSystem(_world));
     }
 
     public void AddSystem(ISystem<float> system)
