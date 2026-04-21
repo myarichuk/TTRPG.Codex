@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DynamicExpresso;
 using DefaultEcs;
 using Codex.Plugin.Abstractions;
+using Codex.Core.Components;
 
 namespace Codex.Core.Scripting;
 
@@ -22,9 +23,13 @@ public class ScriptEvaluator
         _interpreter = new Interpreter()
             .Reference(typeof(Entity))
             .Reference(typeof(CodexWorld))
-            .Reference(typeof(IAbilityEffect));
+            .Reference(typeof(IAbilityEffect))
+            .Reference(typeof(DurationComponent))
+            .Reference(typeof(StatusEffectComponent));
 
-        // You can add more global functions or types here as needed
+        // Use shorter names for ease of scripting
+        _interpreter.Reference(typeof(DurationComponent), "Duration");
+        _interpreter.Reference(typeof(StatusEffectComponent), "Status");
     }
 
     public void Execute(string script, AbilityContext context)
@@ -42,7 +47,6 @@ public class ScriptEvaluator
         }
         catch (Exception ex)
         {
-            // In a real system, you'd log this properly and perhaps surface it to the DM
             Console.WriteLine($"Script execution failed: {ex.Message}");
         }
     }
