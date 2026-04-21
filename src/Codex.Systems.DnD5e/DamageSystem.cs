@@ -12,7 +12,7 @@ public struct DamageEvent
 public sealed class DamageSystem : AEntitySetSystem<float>
 {
     public DamageSystem(World world)
-        : base(world.GetEntities().With<DamageEvent>().AsSet())
+        : base(world.GetEntities().With<DamageEvent>().With<ResourcePoolComponent>().AsSet())
     {
     }
 
@@ -21,18 +21,9 @@ public sealed class DamageSystem : AEntitySetSystem<float>
         foreach (ref readonly var entity in entities)
         {
             var damage = entity.Get<DamageEvent>();
+            var pool = entity.Get<ResourcePoolComponent>();
 
-            if (entity.Has<ResourcePoolComponent>())
-            {
-                var pool = entity.Get<ResourcePoolComponent>();
-                pool.Modify("HP", -damage.Amount);
-            }
-            // Backward compatibility for obsolete component
-            else if (entity.Has<HitPointsComponent>())
-            {
-                ref var hp = ref entity.Get<HitPointsComponent>();
-                hp.Current -= damage.Amount;
-            }
+            pool.Modify("HP", -damage.Amount);
 
             entity.Remove<DamageEvent>();
         }
