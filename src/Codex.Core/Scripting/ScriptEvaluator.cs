@@ -27,7 +27,6 @@ public class ScriptEvaluator
             .Reference(typeof(DurationComponent))
             .Reference(typeof(StatusEffectComponent));
 
-        // Use shorter names for ease of scripting
         _interpreter.Reference(typeof(DurationComponent), "Duration");
         _interpreter.Reference(typeof(StatusEffectComponent), "Status");
     }
@@ -43,7 +42,9 @@ public class ScriptEvaluator
             _interpreter.SetVariable("target", context.Target);
             _interpreter.SetVariable("world", context.World);
 
-            _interpreter.Eval(script);
+            // Handle float literals correctly for components
+            var scriptWithFloats = script.Replace(".0 ", ".0f ").Replace(".0)", ".0f)");
+            _interpreter.Eval(scriptWithFloats);
         }
         catch (Exception ex)
         {
