@@ -14,14 +14,19 @@ public class EcsWorldTest
         world.AddSystem(new DamageSystem(world.InnerWorld));
 
         var entity = world.CreateEntity();
-        entity.Set(new HitPointsComponent { Current = 15, Maximum = 20 });
 
-        Assert.Equal(15, entity.Get<HitPointsComponent>().Current);
+        // Use the new generic pool
+        var pool = new ResourcePoolComponent();
+        pool.Set("HP", 15);
+        pool.Set("HP_Max", 20);
+        entity.Set(pool);
+
+        Assert.Equal(15, entity.Get<ResourcePoolComponent>().Get("HP"));
 
         entity.Set(new DamageEvent { Amount = 5 });
         world.Tick(0.1f);
 
-        Assert.Equal(10, entity.Get<HitPointsComponent>().Current);
+        Assert.Equal(10, entity.Get<ResourcePoolComponent>().Get("HP"));
         Assert.False(entity.Has<DamageEvent>());
     }
 
