@@ -11,10 +11,6 @@
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="SrdData\*.json" />
-  </ItemGroup>
-
   <PropertyGroup>
     <PluginOutputDir>$(MSBuildProjectDirectory)\..\..\plugins\</PluginOutputDir>
   </PropertyGroup>
