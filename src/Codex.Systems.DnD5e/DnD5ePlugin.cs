@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Components;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Systems.DnD5e;
@@ -10,7 +11,8 @@ public class DnD5ePlugin : ICodexSystemPlugin
     public void RegisterComponents(ComponentRegistry registry)
     {
         registry.Register<AbilityScoresComponent>();
-        registry.Register<HitPointsComponent>();
+        registry.Register<ResourcePoolComponent>();
+        registry.Register<StatModifierComponent>();
         registry.Register<ConditionComponent>();
     }
 
