@@ -4,7 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Codex.Core;
 
-public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry registry)
+public class PluginLoader(
+    ILogger<PluginLoader> logger,
+    ComponentRegistry registry,
+    IAbilityPackLoader abilityPackLoader)
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     public bool IsLoaded { get; private set; }
@@ -27,11 +30,11 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
 
             try
             {
-                await Task.Run(() =>
-                {
-                    var plugins = LoadPlugins(pluginsDirectory);
-                    InitializePlugins(plugins, world);
-                });
+                var plugins = await Task.Run(() => LoadPlugins(pluginsDirectory));
+                InitializePlugins(plugins, world);
+
+                // Load Content Packs after systems are initialized
+                await LoadContentPacksAsync(pluginsDirectory, plugins.Select(p => p.SystemId).ToHashSet());
             }
             catch (Exception ex)
             {
@@ -40,7 +43,7 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
             }
             finally
             {
-                IsLoaded = true; // "Done attempting"
+                IsLoaded = true;
                 IsLoading = false;
                 OnPluginsLoaded?.Invoke();
             }
@@ -48,6 +51,39 @@ public class PluginLoader(ILogger<PluginLoader> logger, ComponentRegistry regist
         finally
         {
             _semaphore.Release();
+        }
+    }
+
+    private async Task LoadContentPacksAsync(string pluginsDirectory, HashSet<string> activeSystemIds)
+    {
+        if (!Directory.Exists(pluginsDirectory)) return;
+
+        var manifests = Directory.GetFiles(pluginsDirectory, "manifest.json", SearchOption.AllDirectories);
+
+        foreach (var manifestPath in manifests)
+        {
+            var packDir = Path.GetDirectoryName(manifestPath);
+            if (packDir == null) continue;
+
+            try
+            {
+                var manifest = await abilityPackLoader.ReadManifestAsync(packDir);
+                if (activeSystemIds.Contains(manifest.SystemId))
+                {
+                    logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
+                        manifest.Name, manifest.Id, manifest.SystemId);
+                    await abilityPackLoader.LoadPackAsync(packDir);
+                }
+                else
+                {
+                    logger.LogWarning("Skipping content pack {PackId} because system {SystemId} is not loaded",
+                        manifest.Id, manifest.SystemId);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to load content pack from {Directory}", packDir);
+            }
         }
     }
 
