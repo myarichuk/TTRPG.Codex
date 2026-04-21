@@ -8,6 +8,7 @@ namespace Codex.Core;
 public class AbilityRegistry : IAbilityRegistry
 {
     private readonly Dictionary<string, Dictionary<string, (IAbilityDefinition Ability, int Priority)>> _storage = new();
+    private readonly HashSet<string> _loadedPacks = new();
 
     public void Register(IAbilityDefinition ability)
     {
@@ -25,6 +26,7 @@ public class AbilityRegistry : IAbilityRegistry
         if (!systemAbilities.TryGetValue(ability.Id, out var existing) || priority >= existing.Priority)
         {
             systemAbilities[ability.Id] = (ability, priority);
+            _loadedPacks.Add(ability.PackId);
         }
     }
 
@@ -53,5 +55,10 @@ public class AbilityRegistry : IAbilityRegistry
         }
 
         return Enumerable.Empty<IAbilityDefinition>();
+    }
+
+    public IEnumerable<string> GetLoadedPacks()
+    {
+        return _loadedPacks;
     }
 }
