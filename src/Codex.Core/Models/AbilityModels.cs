@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Core.Models;
@@ -13,8 +14,11 @@ public class AbilityDefinition : IAbilityDefinition
     public TriggerType Trigger { get; set; }
     public string? Inherits { get; set; }
     public Dictionary<string, int>? Costs { get; set; }
-    public List<IAbilityEffect>? Effects { get; set; }
+    public List<AbilityEffect>? Effects { get; set; }
     public Dictionary<string, object>? Metadata { get; set; }
+
+    // Explicit implementation to satisfy interface while allowing concrete list for YAML
+    List<IAbilityEffect>? IAbilityDefinition.Effects => Effects?.Cast<IAbilityEffect>().ToList();
 
     public void MergeFrom(IAbilityDefinition baseAbility)
     {
@@ -34,8 +38,16 @@ public class AbilityDefinition : IAbilityDefinition
 
         if (baseAbility.Effects != null)
         {
-            Effects ??= new List<IAbilityEffect>();
-            Effects.AddRange(baseAbility.Effects);
+            Effects ??= new List<AbilityEffect>();
+            foreach (var effect in baseAbility.Effects)
+            {
+                Effects.Add(new AbilityEffect
+                {
+                    Type = effect.Type,
+                    Script = effect.Script,
+                    Params = effect.Params != null ? new Dictionary<string, object>(effect.Params) : null
+                });
+            }
         }
 
         if (baseAbility.Metadata != null)
