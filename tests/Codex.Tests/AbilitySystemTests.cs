@@ -53,6 +53,7 @@ public class AbilitySystemTests : IDisposable
         registry.Register(overrideAbility, 10);
         var retrieved = registry.GetAbility("core:strike");
 
+        Assert.NotNull(retrieved);
         Assert.Equal("Better Strike", retrieved.Name);
     }
 
@@ -72,6 +73,7 @@ public class AbilitySystemTests : IDisposable
         var loader = new YamlAbilityPackLoader(registry);
         var manifest = await loader.ReadManifestAsync(_tempPath);
 
+        Assert.NotNull(manifest);
         Assert.Equal("test-pack", manifest.Id);
         Assert.Equal("dnd5e", manifest.SystemId);
         Assert.Equal(5, manifest.Priority);
@@ -124,7 +126,9 @@ effects:
         Assert.NotNull(fireball);
         Assert.Equal("Fireball", fireball.Name);
         Assert.Equal("Base Description", fireball.Description); // Inherited
+        Assert.NotNull(fireball.Costs);
         Assert.Equal(10, fireball.Costs["Mana"]); // Overridden
+        Assert.NotNull(fireball.Effects);
         Assert.Single(fireball.Effects);
     }
 }
