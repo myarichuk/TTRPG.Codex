@@ -67,3 +67,26 @@ public class AbilityEffect : IAbilityEffect
     public string? Script { get; set; }
     public Dictionary<string, object>? Params { get; set; }
 }
+
+public class NpcDefinition : INpcDefinition
+{
+    public string Id { get; set; } = string.Empty;
+    public string SystemId { get; set; } = string.Empty;
+    public string PackId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public Dictionary<string, int> Resources { get; set; } = new();
+    public List<string> Abilities { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = new();
+}
+
+public class LocationDefinition : ILocationDefinition
+{
+    public string Id { get; set; } = string.Empty;
+    public string SystemId { get; set; } = string.Empty;
+    public string PackId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<string> Tags { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = new();
+}
