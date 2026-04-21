@@ -8,6 +8,7 @@ public class AbilityDefinition : IAbilityDefinition
 {
     public string Id { get; set; } = string.Empty;
     public string SystemId { get; set; } = string.Empty;
+    public string PackId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? IconPath { get; set; }
@@ -17,7 +18,6 @@ public class AbilityDefinition : IAbilityDefinition
     public List<AbilityEffect>? Effects { get; set; }
     public Dictionary<string, object>? Metadata { get; set; }
 
-    // Explicit implementation to satisfy interface while allowing concrete list for YAML
     List<IAbilityEffect>? IAbilityDefinition.Effects => Effects?.Cast<IAbilityEffect>().ToList();
 
     public void MergeFrom(IAbilityDefinition baseAbility)
