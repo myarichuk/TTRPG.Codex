@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Microsoft.AspNetCore.Components;
@@ -101,6 +102,7 @@ builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
+builder.Services.AddSingleton<ScriptEvaluator>();
 builder.Services.AddSingleton<IAbilityRegistry, AbilityRegistry>();
 builder.Services.AddSingleton<IAbilityPackLoader, YamlAbilityPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
