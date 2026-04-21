@@ -1,26 +1,15 @@
-# TTRPG.Codex
+# TTRPG.Codex Design Specification
 
 **Modular tabletop RPG campaign and character management system.**
 
-A lightweight digital companion for tabletop play that replaces paper sheets while preserving the tabletop feel.  
-Supports multiple TTRPG systems via plugins and uses an **Entity Component System (ECS)** runtime to model living character state.
+A high-performance digital companion for tabletop play. Built on an **Entity Component System (ECS)** for live state and **RavenDB** for pragmatic, document-oriented persistence.
 
 ---
 
-## Goals
-
-### Primary Goals
-- Replace paper character sheets with synchronized digital state
-- Provide a real-time DM dashboard for party overview
-- Support multiple TTRPG systems (and homebrew) via plugins
-- Enable user-defined rules without code changes
-- Work seamlessly on phones (players) and tablets/laptops (DM)
-- Run fully locally (LAN) or self-hosted in the cloud
-
-### Non-Goals
-- Virtual tabletop (maps, tokens, grids)
-- Full automation of every single rule
-- Official rulebook replacement or content distribution
+## Architectural Philosophy (The Ayende Way)
+- **Pragmatism over Purity**: We don't build complex class hierarchies. We build data-driven systems that are fast and maintainable.
+- **Data Locality**: We store related data together in documents to minimize IO and maximize cache efficiency.
+- **ECS for Live State**: Characters aren't "objects" with methods; they are collections of components processed by high-performance systems.
 
 ---
 
@@ -29,248 +18,75 @@ Supports multiple TTRPG systems via plugins and uses an **Entity Component Syste
 ```
 Client Devices (Phones / Tablets / Desktop)
           ↓
-   Blazor Server Application
+   Blazor Server Application (SignalR)
           ↓
-     Codex Core Engine
+     Codex Core Engine (Business Logic)
           ↓
-   ECS Runtime (DefaultEcs)
+   ECS Runtime (DefaultEcs - In-memory state)
           ↓
-      System Plugins
+   Content Packs (YAML/Scripts - Data-driven rules)
           ↓
- Persistence (RavenDB Embedded)
-```
-
-All state lives on the server; clients are thin real-time views.
-
----
-
-## Technology Stack
-
-**Backend**  
-- ASP.NET Core + Blazor Server + SignalR
-
-**Runtime Model**  
-- DefaultEcs (fast, lightweight .NET ECS)
-
-**Persistence**  
-- RavenDB Embedded (document DB, zero-config)
-
-**Deployment**  
-- Self-hosted (Windows/Mac/Linux)  
-- Local LAN (zero internet)  
-- Optional Docker/cloud
-
----
-
-## Core Concepts
-
-### Entity
-A game object (Character, NPC, Creature, Effect, Item, etc.).
-
-### Component
-Pure data. No behavior.
-
-**Examples:**
-```csharp
-NameComponent { string Name; }
-HealthComponent { int Current, int Maximum; }
-ConditionComponent { List<ActiveCondition> Conditions; }
-InventoryComponent { List<ItemEntry> Items; }
-PlayerOwnerComponent { string PlayerId; }
-```
-
-### System
-Processes entities that match a component query. Runs on update cycles or events.
-
-**Examples:**
-- `DamageSystem`
-- `ConditionExpirationSystem`
-- `ResourceConsumptionSystem`
-
----
-
-## ECS Runtime Model
-
-Entities are just IDs + attached components.
-
-**Example Character:**
-```
-CharacterEntity
-├── NameComponent
-├── HealthComponent
-├── AbilityScoresComponent
-├── ConditionComponent
-├── InventoryComponent
-└── (any plugin-specific components)
-```
-
-**Query example:**
-```csharp
-var query = world.GetEntities()
-    .With<HealthComponent>()
-    .With<ConditionComponent>()
-    .AsEnumerable();
-```
-
-Used by the DM dashboard for live party status.
-
----
-
-## Persistence Model
-
-RavenDB document-per-campaign.  
-ECS state is **derived** on load (hydrate) and periodically flushed back.
-
-```
-RavenDB
-   ↓
-Campaign Document (JSON)
-   ↓
-Hydrate → ECS World
-   ↓
-Live gameplay (DamageSystem etc.)
-   ↓
-Periodic save
+ Persistence (RavenDB Embedded - Document Store)
 ```
 
 ---
 
-## Campaign Document Example
-```json
-{
-  "campaignId": "abc123",
-  "name": "Curse of the Black Tower",
-  "system": "DnD5e",
-  "characters": [ ... ],
-  "sessions": [ ... ],
-  "notes": [ ... ],
-  "worldState": { ... }  // any extra plugin data
-}
-```
+## Core Engine: Entity Component System (ECS)
+
+Entities are IDs with attached components. We avoid hardcoded components for specific stats to keep the engine system-agnostic and flexible.
+
+### Generic Components
+- **ResourcePoolComponent**: `Dictionary<string, int>`. Tracks dynamic values like "HP", "Mana", "Shield", "Strain".
+- **StatModifierComponent**: `List<Modifier>`. Tracks temporary or permanent adjustments (e.g., `+2 AC from Shield spell`).
+- **StatusEffectComponent**: Tracks active conditions (e.g., "Poisoned", "Stunned") tied to a `PackId`.
+- **DurationComponent**: Tracks remaining rounds for effects.
+
+### Systems
+- **DurationSystem**: Ticks every round, decrements durations, and removes expired components.
+- **DamageSystem**: Processes `DamageEvent` entities, accounting for modifiers and resource pools (e.g., draining "Shield" before "HP").
+- **PeriodicEffectSystem**: Listens for turn events to trigger "ticks" (DOTs/HOTs) defined in scripts.
 
 ---
 
-## Plugin Architecture
+## Content Pack & Ability System
 
-Everything system-specific lives in plugins.
+Content (spells, NPCs, items) is defined in **Content Packs** (YAML + Scripts), not C# code.
 
-```
-Codex.Core
-├── Codex.Systems.DnD5e
-├── Codex.Systems.SWFFG
-└── (your homebrew plugin)
-```
+### Pack Structure
+- `manifest.json`: Metadata (Id, SystemId, Priority, Dependencies).
+- `abilities/`: YAML definitions for spells and feats.
+- `entities/`: Blueprints for NPCs and Monsters.
+- `scripts/`: Complex logic evaluated via **DynamicExpresso**.
 
-Plugins register components, systems, templates, and UI schemas at startup.
-
----
-
-## Plugin Interface
-```csharp
-public interface ICodexSystemPlugin
-{
-    string SystemId { get; }
-    void RegisterComponents(ComponentRegistry registry);
-    void RegisterSystems(World world);
-    CharacterTemplate GetDefaultCharacterTemplate();
-    // Optional: UI schemas, dice parsers, etc.
-}
-```
+### Inheritance & Overrides
+Abilities support an `inherits` field. The loader performs a deep-merge of the base ability, allowing "Homebrew" packs to easily override "SRD" content by having a higher priority.
 
 ---
 
-## Example Plugin: DnD 5e (SRD-only)
+## Scene Management
 
-**Components**
-- `AbilityScoresComponent`
-- `HitPointsComponent`
-- `SpellSlotsComponent`
-- `ConditionComponent`
-- `ProficiencyComponent`
-- `ConcentrationComponent` (new in v1.1 — see recommendation below)
+A **Scene** is a temporal and spatial boundary. It is the aggregate root for live gameplay.
 
-**Systems**
-- `DamageSystem` → `CurrentHP -= Damage`
-- `ConcentrationSystem` → triggers on damage events
-- `SpellSlotSystem` → consume on cast
+- **SceneDocument (RavenDB)**: Persistent state of the scene (Location, Participants, Initiative).
+- **CodexWorld (ECS)**: When a scene starts, we load only the relevant entities into a fresh ECS world.
+- **Contextual Execution**: Scripts have access to the `AbilityContext` containing the `Caster`, `Target`, and the current `World`.
 
 ---
 
-## Example Plugin: Star Wars FFG (mechanics only)
+## Persistence: RavenDB
 
-**Components**
-- `CharacteristicsComponent`
-- `WoundComponent`
-- `StrainComponent`
-- `ObligationComponent`
-- `DicePoolComponent`
+We use RavenDB for its superior handling of complex, nested data and its ability to scale without the "impedance mismatch" of relational databases.
 
-**Systems**
-- `WoundSystem`
-- `StrainRecoverySystem`
-- `DicePoolSystem` (builds pools from characteristics + skills)
+- **CharacterDocument**: Fully serialized ECS state.
+- **CampaignDocument**: The container for all scenes, lore, and history.
+- **Map-Reduce Indexes**: Used for fast lookups (e.g., "What facts does this NPC know?").
 
 ---
 
-## UI Design
+## Interaction Model
 
-**Player View (Mobile)**
-- Clean sheet: HP bar, conditions, resources, abilities, notes
-- Big tap targets, portrait-first
-
-**DM Dashboard (Tablet/Laptop)**
-- Party overview (HP bars + color coding)
-- Active conditions + concentration flags
-- Initiative list (sortable)
-- Real-time updates via SignalR
-
----
-
-## Networking Model
-
-Blazor Server + SignalR = single source of truth.
-
-```
-Player taps "Take 8 damage" (phone)
-          ↓
-Server ECS updated instantly
-          ↓
-DM dashboard + all other clients refresh
-```
-
-Reconnects automatically with full state.
-
----
-
-## Plugin Loading
-Plugins dropped in `/plugins` folder.  
-Loaded via reflection at startup:
-
-```csharp
-foreach (var plugin in LoadAssemblies("plugins"))
-    plugin.Register(...);
-```
-
-Zero rebuild needed.
-
----
-
-## Security
-- Campaign owner = DM (full control)
-- Roles: DM / Player / Observer
-- Players can only edit their own entities
-- SignalR authentication via simple tokens
-
----
-
-## Known Risks & Mitigations
-
-- **Connection drop mid-session** → Add localStorage cache + "Reconnect" button (5 lines of JS interop).
-- **Too many entities** → DefaultEcs handles 1000+ easily; add a soft limit warning at 200.
-- **Plugin conflicts** → Namespace components (e.g. `Dnd5e.HealthComponent`).
-- **Forgetting to save** → Auto-save every 30 s + manual "Backup Campaign" zip button.
-
-## Design Philosophy
-
-TTRPG.Codex models characters as **evolving state machines**, exactly like the table does.  
-ECS + plugins = a flexible engine that grows with your campaigns instead of fighting them.
+1. **Player/DM Action**: Triggered via UI (e.g., clicking "Use Fireball").
+2. **Registry Lookup**: Engine finds the `IAbilityDefinition` in the `AbilityRegistry`.
+3. **Script Execution**: `ScriptEvaluator` runs the associated script within the `AbilityContext`.
+4. **ECS Update**: Components are modified (e.g., `AddStatus` or `DealDamage`).
+5. **Real-time Sync**: Blazor/SignalR pushes the updated state to all connected clients.
