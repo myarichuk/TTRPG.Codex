@@ -1,24 +1,40 @@
 using DefaultEcs;
 using DefaultEcs.System;
+using Codex.Core.Components;
 
 namespace Codex.Systems.DnD5e;
 
 public struct DamageEvent
 {
-    public int Amount;
+    public int Amount { get; set; }
 }
 
-[With(typeof(HitPointsComponent), typeof(DamageEvent))]
-public sealed class DamageSystem(World world) : AEntitySetSystem<float>(world)
+public sealed class DamageSystem : AEntitySetSystem<float>
 {
-    protected override void Update(float state, in Entity entity)
+    public DamageSystem(World world)
+        : base(world.GetEntities().With<DamageEvent>().AsSet())
     {
-        ref var hp = ref entity.Get<HitPointsComponent>();
-        var damage = entity.Get<DamageEvent>();
+    }
 
-        hp.Current -= damage.Amount;
-        if (hp.Current < 0) hp.Current = 0;
+    protected override void Update(float deltaTime, ReadOnlySpan<Entity> entities)
+    {
+        foreach (ref readonly var entity in entities)
+        {
+            var damage = entity.Get<DamageEvent>();
 
-        entity.Remove<DamageEvent>();
+            if (entity.Has<ResourcePoolComponent>())
+            {
+                var pool = entity.Get<ResourcePoolComponent>();
+                pool.Modify("HP", -damage.Amount);
+            }
+            // Backward compatibility for obsolete component
+            else if (entity.Has<HitPointsComponent>())
+            {
+                ref var hp = ref entity.Get<HitPointsComponent>();
+                hp.Current -= damage.Amount;
+            }
+
+            entity.Remove<DamageEvent>();
+        }
     }
 }
