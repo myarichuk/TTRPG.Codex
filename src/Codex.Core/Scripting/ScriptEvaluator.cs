@@ -42,9 +42,7 @@ public class ScriptEvaluator
             _interpreter.SetVariable("target", context.Target);
             _interpreter.SetVariable("world", context.World);
 
-            // Handle float literals correctly for components
-            var scriptWithFloats = script.Replace(".0 ", ".0f ").Replace(".0)", ".0f)");
-            _interpreter.Eval(scriptWithFloats);
+            _interpreter.Eval(script);
         }
         catch (Exception ex)
         {
