@@ -3,6 +3,7 @@ using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
 using System.Reflection;
+using NSubstitute;
 using Xunit;
 
 namespace Codex.Tests;
@@ -15,7 +16,8 @@ public class PluginLoadTest
         // Arrange
         var logger = NullLogger<PluginLoader>.Instance;
         var registry = new ComponentRegistry();
-        var loader = new PluginLoader(logger, registry);
+        var abilityLoader = Substitute.For<IAbilityPackLoader>();
+        var loader = new PluginLoader(logger, registry, abilityLoader);
 
         // We will just point it to the output directory of the tests, which should have the plugin dlls copied.
         var pluginsDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
