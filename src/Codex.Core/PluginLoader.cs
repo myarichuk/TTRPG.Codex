@@ -7,7 +7,7 @@ namespace Codex.Core;
 public class PluginLoader(
     ILogger<PluginLoader> logger,
     ComponentRegistry registry,
-    IAbilityPackLoader abilityPackLoader)
+    IContentPackLoader contentPackLoader)
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     public bool IsLoaded { get; private set; }
@@ -67,12 +67,12 @@ public class PluginLoader(
 
             try
             {
-                var manifest = await abilityPackLoader.ReadManifestAsync(packDir);
+                var manifest = await contentPackLoader.ReadManifestAsync(packDir);
                 if (activeSystemIds.Contains(manifest.SystemId))
                 {
                     logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
                         manifest.Name, manifest.Id, manifest.SystemId);
-                    await abilityPackLoader.LoadPackAsync(packDir);
+                    await contentPackLoader.LoadPackAsync(packDir);
                 }
                 else
                 {
