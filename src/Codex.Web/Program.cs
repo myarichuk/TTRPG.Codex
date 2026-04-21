@@ -103,8 +103,8 @@ builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<ScriptEvaluator>();
-builder.Services.AddSingleton<IAbilityRegistry, AbilityRegistry>();
-builder.Services.AddSingleton<IAbilityPackLoader, YamlAbilityPackLoader>();
+builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
+builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
 builder.Services.AddSingleton<CodexWorld>();
 
