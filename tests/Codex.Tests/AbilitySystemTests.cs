@@ -151,7 +151,7 @@ effects:
                 new AbilityEffect
                 {
                     Type = "script",
-                    Script = "target.Set(new Duration { RoundsRemaining = 5.0f })"
+                    Script = "target.Set(new Duration(5))"
                 }
             }
         };
