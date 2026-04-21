@@ -151,7 +151,7 @@ effects:
                 new AbilityEffect
                 {
                     Type = "script",
-                    Script = "target.Set(new Duration(5))"
+                    Script = "world.AddStatus(target, \"stunned\", \"core\", 5)"
                 }
             }
         };
@@ -168,5 +168,7 @@ effects:
         // Assert
         Assert.True(target.Has<Codex.Core.Components.DurationComponent>());
         Assert.Equal(5.0f, target.Get<Codex.Core.Components.DurationComponent>().RoundsRemaining);
+        Assert.True(target.Has<Codex.Core.Components.StatusEffectComponent>());
+        Assert.Equal("stunned", target.Get<Codex.Core.Components.StatusEffectComponent>().EffectId);
     }
 }
