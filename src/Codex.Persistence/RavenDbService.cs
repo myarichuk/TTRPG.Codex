@@ -2,6 +2,7 @@ using Raven.Client.Documents;
 using Raven.Embedded;
 using Raven.Client.Documents.Indexes;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace Codex.Persistence;
 
@@ -11,7 +12,7 @@ public class RavenDbService : IDisposable
 
     public IDocumentStore Store => _store.Value;
 
-    public RavenDbService(string dataDirectory, string databaseName = "Campaigns", bool runInMemory = false)
+    public RavenDbService(string dataDirectory, string databaseName = "Campaigns", bool runInMemory = false, ILogger<RavenDbService>? logger = null)
     {
         _store = new Lazy<IDocumentStore>(() =>
         {
@@ -33,6 +34,7 @@ public class RavenDbService : IDisposable
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("The server was already started"))
             {
+                logger?.LogDebug(ex, "RavenDB server was already started.");
             }
 
             var databaseOptions = new DatabaseOptions(databaseName);
