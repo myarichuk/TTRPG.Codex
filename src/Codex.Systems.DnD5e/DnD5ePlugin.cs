@@ -7,6 +7,9 @@ namespace Codex.Systems.DnD5e;
 public class DnD5ePlugin : ICodexSystemPlugin
 {
     public string SystemId => "DnD5e";
+    public string Name => "Dungeons & Dragons 5e";
+    public string Description => "The world's greatest roleplaying game.";
+    public string ThumbnailPath => "dnd5e_logo.png"; // Placeholder
 
     public void RegisterComponents(ComponentRegistry registry)
     {

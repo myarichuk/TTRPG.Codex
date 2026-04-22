@@ -6,6 +6,9 @@ namespace Codex.Systems.SWFFG;
 public class SwffgPlugin : ICodexSystemPlugin
 {
     public string SystemId => "SWFFG";
+    public string Name => "Star Wars: Fantasy Flight Games";
+    public string Description => "A narrative dice system for Star Wars roleplaying.";
+    public string ThumbnailPath => "swffg_logo.png"; // Placeholder
 
     public void RegisterComponents(ComponentRegistry registry)
     {

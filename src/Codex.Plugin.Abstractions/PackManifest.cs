@@ -7,6 +7,8 @@ public record PackManifest(
     string Name,
     string Version,
     string SystemId,
+    string? Description = null,
+    string? ThumbnailPath = null,
     string MinAppVersion = "1.0.0",
     int Priority = 0,
     string[]? ContentPaths = null,

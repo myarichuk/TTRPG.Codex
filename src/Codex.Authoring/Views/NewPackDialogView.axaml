@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Codex.Authoring.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             x:Class="Codex.Authoring.Views.NewPackDialogView"
+             x:DataType="vm:NewPackDialogViewModel"
+             Width="600" Height="450">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+        <!-- Header -->
+        <TextBlock Text="Create New Pack" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+        <!-- Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,20,*">
+
+            <!-- Left Column: Pack Details -->
+            <StackPanel Grid.Column="0" Spacing="15">
+                <TextBlock Text="Pack Details" FontWeight="SemiBold"/>
+
+                <TextBox Watermark="Pack Name"
+                         Text="{Binding PackName}"
+                         UseFloatingWatermark="True"/>
+
+                <TextBox Watermark="Description"
+                         Text="{Binding PackDescription}"
+                         AcceptsReturn="True"
+                         Height="100"
+                         UseFloatingWatermark="True"/>
+
+                <TextBox Watermark="Thumbnail Path (optional)"
+                         Text="{Binding ThumbnailPath}"
+                         UseFloatingWatermark="True"/>
+            </StackPanel>
+
+            <!-- Right Column: System Selection -->
+            <StackPanel Grid.Column="2" Spacing="15">
+                <TextBlock Text="Select Game System" FontWeight="SemiBold"/>
+
+                <ListBox ItemsSource="{Binding AvailableSystems}"
+                         SelectedItem="{Binding SelectedSystem}"
+                         Height="250"
+                         CornerRadius="4"
+                         Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="Auto,*" Margin="5">
+                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="4" Background="{DynamicResource AccentFillColorDefaultBrush}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ThumbnailPath}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" TextWrapping="Wrap"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Opacity="0.8"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

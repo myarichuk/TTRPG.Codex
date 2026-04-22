@@ -20,5 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\Codex.Systems.DnD5e\Codex.Systems.DnD5e.csproj" />
+    <ProjectReference Include="..\Codex.Systems.SWFFG\Codex.Systems.SWFFG.csproj" />
   </ItemGroup>
 </Project>
