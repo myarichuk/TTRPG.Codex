@@ -3,6 +3,7 @@
 @using DefaultEcs
 @using Codex.Systems.DnD5e
 @using Codex.Plugin.Abstractions
+@using Codex.Core.Components
 @inject CodexWorld World
 
 <PageTitle>Character Demo</PageTitle>
@@ -16,11 +17,11 @@
     @if (entity.IsAlive)
     {
         <div class="card p-4 mt-3 shadow-sm border-0" style="max-width: 400px;">
-            @if (entity.Has<HitPointsComponent>())
+            @if (entity.Has<ResourcePoolComponent>())
             {
-                var hp = entity.Get<HitPointsComponent>();
+                var pool = entity.Get<ResourcePoolComponent>();
                 <h5 class="mb-3">Entity Status</h5>
-                <p><strong>Current HP:</strong> @hp.Current / @hp.Maximum</p>
+                <p><strong>Current HP:</strong> @pool.Get("HP") / @pool.Get("HP_Max")</p>
                 <button class="btn btn-danger px-4 shadow-sm mt-2" @onclick="TakeDamage">Take 1 Damage</button>
             }
         </div>
@@ -37,7 +38,10 @@
     private void CreateTestEntity()
     {
         entity = World.CreateEntity();
-        entity.Set(new HitPointsComponent { Current = 10, Maximum = 10 });
+        var pool = new ResourcePoolComponent();
+        pool.Set("HP", 10);
+        pool.Set("HP_Max", 10);
+        entity.Set(pool);
     }
 
     private void TakeDamage()
