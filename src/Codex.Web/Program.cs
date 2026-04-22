@@ -95,7 +95,7 @@ builder.Services.AddHttpContextAccessor();
 // Configure Codex
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
 
-builder.Services.AddSingleton(sp => new RavenDbService(dataDir));
+builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
