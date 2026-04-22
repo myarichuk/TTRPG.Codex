@@ -9,10 +9,10 @@ public interface IContentRegistry
     IAbilityDefinition? GetAbility(string fullId);
     IEnumerable<IAbilityDefinition> GetAbilitiesBySystem(string systemId);
 
-    // NPCs
-    void RegisterNpc(INpcDefinition npc, int priority);
-    INpcDefinition? GetNpc(string fullId);
-    IEnumerable<INpcDefinition> GetNpcsBySystem(string systemId);
+    // Actors (PCs, NPCs, Monsters)
+    void RegisterActor(IActorDefinition actor, int priority);
+    IActorDefinition? GetActor(string fullId);
+    IEnumerable<IActorDefinition> GetActorsBySystem(string systemId);
 
     // Locations
     void RegisterLocation(ILocationDefinition location, int priority);
@@ -23,16 +23,19 @@ public interface IContentRegistry
     System.Threading.Tasks.Task ExecuteAbilityAsync(string fullId, dynamic context);
 }
 
-public interface INpcDefinition
+public interface IActorDefinition
 {
     string Id { get; }
     string SystemId { get; }
     string PackId { get; }
     string Name { get; }
     string? Description { get; }
+    string? Inherits { get; }
+    List<string> Tags { get; }
     List<string> ImagePaths { get; }
     Dictionary<string, int> Resources { get; }
     List<string> Abilities { get; }
+    Dictionary<string, object> Properties { get; } // Generic bag for Attributes, Skills, etc.
     Dictionary<string, object> Metadata { get; }
 }
 
