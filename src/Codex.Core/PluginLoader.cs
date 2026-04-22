@@ -59,6 +59,7 @@ public class PluginLoader(
         if (!Directory.Exists(pluginsDirectory)) return;
 
         var manifests = Directory.GetFiles(pluginsDirectory, "manifest.json", SearchOption.AllDirectories);
+        var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
 
         foreach (var manifestPath in manifests)
         {
@@ -68,6 +69,14 @@ public class PluginLoader(
             try
             {
                 var manifest = await contentPackLoader.ReadManifestAsync(packDir);
+
+                if (!manifest.IsAppVersionCompatible(appVersion))
+                {
+                    logger.LogWarning("Skipping content pack {PackId}: Requires app version {MinAppVersion}, but current is {AppVersion}",
+                        manifest.Id, manifest.MinAppVersion, appVersion);
+                    continue;
+                }
+
                 if (activeSystemIds.Contains(manifest.SystemId))
                 {
                     logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
