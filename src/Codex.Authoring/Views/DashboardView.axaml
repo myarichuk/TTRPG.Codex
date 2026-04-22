@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Codex.Authoring.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             x:Class="Codex.Authoring.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20">
+            <TextBlock Text="Welcome to Codex Authoring" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" />
+            <TextBlock Text="Get started by creating a new content pack or opening an existing one." FontSize="16" Foreground="{DynamicResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,30,0,0">
+                <Button Content="Create New Pack" Width="180" Height="50" Classes="accent" Click="OnCreateNewPackClicked" />
+                <Button Content="Open Pack" Width="180" Height="50" Click="OnOpenPackClicked" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+
+</UserControl>
