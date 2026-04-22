@@ -63,3 +63,28 @@ public struct StatModifierComponent
         Modifiers = new List<Modifier>();
     }
 }
+
+public struct TagsComponent
+{
+    public List<string> Tags { get; init; }
+
+    public TagsComponent()
+    {
+        Tags = new List<string>();
+    }
+}
+
+// For modeling "Who knows whom" or "Where is what" in ECS
+public struct ActorReferenceComponent
+{
+    public string TargetId { get; init; }
+    public string RelationType { get; init; }
+    public Dictionary<string, object> Metadata { get; init; }
+
+    public ActorReferenceComponent()
+    {
+        TargetId = string.Empty;
+        RelationType = "Unknown";
+        Metadata = new Dictionary<string, object>();
+    }
+}
