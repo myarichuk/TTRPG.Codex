@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 namespace Codex.Plugin.Abstractions;
 
+public record TypedComponent(string Type, Dictionary<string, object>? Params = null);
+
 public interface IAbilityDefinition
 {
     string Id { get; }
@@ -10,9 +12,12 @@ public interface IAbilityDefinition
     string Name { get; }
     string? Description { get; }
     string? IconPath { get; }
-    TriggerType Trigger { get; }
     string? Inherits { get; }
-    Dictionary<string, int>? Costs { get; }
-    List<IAbilityEffect>? Effects { get; }
+
+    List<TypedComponent>? Triggers { get; }
+    List<TypedComponent>? Requires { get; }
+    List<TypedComponent>? Costs { get; }
+    List<TypedComponent>? Effects { get; }
+    
     Dictionary<string, object>? Metadata { get; }
 }

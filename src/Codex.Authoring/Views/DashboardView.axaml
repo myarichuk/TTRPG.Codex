@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:i="using:Lucide.Avalonia"
+             x:Class="Codex.Authoring.Views.DashboardView">
+    <StackPanel Spacing="24" Margin="32">
+        <TextBlock Text="Codex Dashboard" Classes="h1" FontWeight="Bold" FontSize="32" />
+        
+        <Grid ColumnDefinitions="*,*,*" HorizontalAlignment="Stretch">
+            <ui:InfoBadge Grid.Column="0" Value="0" Margin="10" />
+            <!-- Placeholder for stats cards -->
+            <Border Grid.Column="0" Classes="NodeCard" Padding="16" Margin="8">
+                <StackPanel Spacing="8">
+                    <i:LucideIcon Kind="Package" Width="24" Height="24" />
+                    <TextBlock Text="Content Packs" FontWeight="SemiBold" />
+                    <TextBlock Text="0 Loaded" FontSize="12" Opacity="0.6" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Classes="NodeCard" Padding="16" Margin="8">
+                <StackPanel Spacing="8">
+                    <i:LucideIcon Kind="Users" Width="24" Height="24" />
+                    <TextBlock Text="Total Actors" FontWeight="SemiBold" />
+                    <TextBlock Text="0 Entities" FontSize="12" Opacity="0.6" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Classes="NodeCard" Padding="16" Margin="8">
+                <StackPanel Spacing="8">
+                    <i:LucideIcon Kind="Zap" Width="24" Height="24" />
+                    <TextBlock Text="Abilities" FontWeight="SemiBold" />
+                    <TextBlock Text="0 Defined" FontSize="12" Opacity="0.6" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        
+        <TextBlock Text="Recent Packs" FontWeight="SemiBold" Margin="0,16,0,0" />
+        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="32"
+                HorizontalAlignment="Stretch">
+            <StackPanel Spacing="16" HorizontalAlignment="Center">
+                <i:LucideIcon Kind="Inbox" Width="48" Height="48" Opacity="0.4" HorizontalAlignment="Center" />
+                <TextBlock Text="No content packs loaded yet." Opacity="0.6" HorizontalAlignment="Center" />
+                <Button Content="Load Pack" Classes="accent" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>
