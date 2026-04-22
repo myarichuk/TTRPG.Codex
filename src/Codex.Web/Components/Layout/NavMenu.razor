@@ -57,7 +57,7 @@
                     var username = context.User.Identity?.Name ?? "User";
                     var gravatarUrl = string.IsNullOrEmpty(email)
                         ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(username)}&background=0D8ABC&color=fff&rounded=true"
-                        : $"https://www.gravatar.com/avatar/{GetMd5Hash(email.Trim().ToLowerInvariant())}?d=identicon&s=40";
+                        : $"https://www.gravatar.com/avatar/{GetSha256Hash(email.Trim().ToLowerInvariant())}?d=identicon&s=40";
                 }
                 <div class="d-flex align-items-center gap-3 p-3 rounded" style="background-color: var(--fluent-surface-secondary); border: 1px solid var(--fluent-border); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <img src="@gravatarUrl" alt="User Avatar" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--fluent-border-strong);" />
@@ -73,12 +73,12 @@
 </nav>
 
 @code {
-    private static string GetMd5Hash(string input)
+    private static string GetSha256Hash(string input)
     {
-        using (var md5 = System.Security.Cryptography.MD5.Create())
+        using (var sha256 = System.Security.Cryptography.SHA256.Create())
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(input);
-            var hash = md5.ComputeHash(bytes);
+            var hash = sha256.ComputeHash(bytes);
             return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
         }
     }
