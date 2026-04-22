@@ -68,17 +68,34 @@ public class AbilityEffect : IAbilityEffect
     public Dictionary<string, object>? Params { get; set; }
 }
 
-public class NpcDefinition : INpcDefinition
+public class ActorDefinition : IActorDefinition
 {
     public string Id { get; set; } = string.Empty;
     public string SystemId { get; set; } = string.Empty;
     public string PackId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Inherits { get; set; }
+    public List<string> Tags { get; set; } = new();
     public List<string> ImagePaths { get; set; } = new();
     public Dictionary<string, int> Resources { get; set; } = new();
     public List<string> Abilities { get; set; } = new();
+    public Dictionary<string, object> Properties { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
+
+    public void MergeFrom(IActorDefinition baseActor)
+    {
+        if (string.IsNullOrEmpty(Name)) Name = baseActor.Name;
+        Description ??= baseActor.Description;
+
+        foreach (var tag in baseActor.Tags) if (!Tags.Contains(tag)) Tags.Add(tag);
+        foreach (var img in baseActor.ImagePaths) if (!ImagePaths.Contains(img)) ImagePaths.Add(img);
+        foreach (var ability in baseActor.Abilities) if (!Abilities.Contains(ability)) Abilities.Add(ability);
+
+        foreach (var kvp in baseActor.Resources) if (!Resources.ContainsKey(kvp.Key)) Resources[kvp.Key] = kvp.Value;
+        foreach (var kvp in baseActor.Properties) if (!Properties.ContainsKey(kvp.Key)) Properties[kvp.Key] = kvp.Value;
+        foreach (var kvp in baseActor.Metadata) if (!Metadata.ContainsKey(kvp.Key)) Metadata[kvp.Key] = kvp.Value;
+    }
 }
 
 public class LocationDefinition : ILocationDefinition
