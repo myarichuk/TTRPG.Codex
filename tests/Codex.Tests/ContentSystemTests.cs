@@ -134,7 +134,7 @@ properties:
         Assert.Equal("Bandit", bandit.Name);
         Assert.Contains("Humanoid", bandit.Tags); // Inherited
         Assert.Contains("Hostile", bandit.Tags); // Added
-        Assert.Equal(30, bandit.Properties["Speed"]); // Inherited
-        Assert.Equal(12, (int)bandit.Properties["ArmorClass"]); // Added
+        Assert.Equal(30, Convert.ToInt32(bandit.Properties["Speed"])); // Inherited
+        Assert.Equal(12, Convert.ToInt32(bandit.Properties["ArmorClass"])); // Added
     }
 }
