@@ -100,6 +100,7 @@ builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
+builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<ScriptEvaluator>();
