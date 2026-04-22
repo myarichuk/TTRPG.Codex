@@ -1,0 +1,141 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:paz="using:Avalonia.Controls.PanAndZoom"
+             xmlns:vm="using:Codex.Authoring.ViewModels"
+             xmlns:i="using:Lucide.Avalonia"
+             x:Class="Codex.Authoring.Views.GraphEditorView"
+             x:DataType="vm:GraphViewModel">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Toolbar -->
+        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Margin="0,0,0,16"
+                Padding="8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Name="AddLocationButton" Classes="Sleek" ToolTip.Tip="Add Location">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <i:LucideIcon Kind="MapPin" Width="18" Height="18" />
+                        <TextBlock Text="Location" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Name="AddActorButton" Classes="Sleek" ToolTip.Tip="Add Actor">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <i:LucideIcon Kind="User" Width="18" Height="18" />
+                        <TextBlock Text="Actor" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                
+                <Separator Margin="8,0" />
+                
+                <Button Name="ResetZoomButton" Classes="Sleek" ToolTip.Tip="Reset Zoom">
+                    <i:LucideIcon Kind="Maximize" Width="18" Height="18" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Canvas -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" 
+                CornerRadius="12"
+                ClipToBounds="True">
+            <Panel>
+                <!-- Dot Grid Background -->
+                <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False" Opacity="0.1">
+                    <Canvas.Background>
+                        <VisualBrush TileMode="Tile" DestinationRect="0,0,40,40">
+                            <VisualBrush.Visual>
+                                <Ellipse Width="2" Height="2" Fill="White" />
+                            </VisualBrush.Visual>
+                        </VisualBrush>
+                    </Canvas.Background>
+                </Canvas>
+                
+                <paz:ZoomBorder Name="ZoomBorder" Stretch="None" ZoomSpeed="1.2"
+                               VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                               ClipToBounds="False" Focusable="True">
+                    <Canvas Name="GraphCanvas" Width="5000" Height="5000" Background="Transparent">
+                        <!-- Edges Layer -->
+                        <ItemsControl Name="EdgeList" ItemsSource="{Binding Edges}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:EdgeViewModel">
+                                    <Line Stroke="{Binding Color}" 
+                                          StrokeThickness="2"
+                                          StartPoint="{Binding Source, Converter={StaticResource NodeToPointConverter}, ConverterParameter='Center'}"
+                                          EndPoint="{Binding Target, Converter={StaticResource NodeToPointConverter}, ConverterParameter='Center'}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Nodes Layer -->
+                        <ItemsControl Name="NodeList" ItemsSource="{Binding Nodes}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerTheme>
+                                <ControlTheme TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                    <Setter Property="Transitions">
+                                        <Transitions>
+                                            <DoubleTransition Property="Canvas.Left" Duration="0:0:0.4" Easing="QuarticEaseOut" />
+                                            <DoubleTransition Property="Canvas.Top" Duration="0:0:0.4" Easing="QuarticEaseOut" />
+                                        </Transitions>
+                                    </Setter>
+                                </ControlTheme>
+                            </ItemsControl.ItemContainerTheme>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:NodeViewModel">
+                                    <Border Classes="NodeCard" 
+                                            Classes.Selected="{Binding IsSelected}"
+                                            PointerPressed="OnNodePointerPressed"
+                                            Width="200" Padding="12"
+                                            BorderBrush="{Binding Color}">
+                                        <StackPanel Spacing="8">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <i:LucideIcon Kind="{Binding Icon}" Width="16" Height="16" 
+                                                          Foreground="{Binding Color}" />
+                                                
+                                                <TextBlock Grid.Column="1" Text="{Binding Type}" 
+                                                           FontSize="10" Opacity="0.6" Margin="6,0"
+                                                           FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            </Grid>
+                                            
+                                            <TextBox Text="{Binding Name}" 
+                                                     BorderThickness="0" 
+                                                     Background="Transparent"
+                                                     Padding="0"
+                                                     FontWeight="Bold" 
+                                                     FontSize="14" />
+                                            
+                                            <!-- Quick Actions Port for Edges -->
+                                            <Ellipse Width="8" Height="8" Fill="{Binding Color}" 
+                                                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                     Margin="0,4,0,0" ToolTip.Tip="Connect" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Canvas>
+                </paz:ZoomBorder>
+            </Panel>
+        </Border>
+    </Grid>
+    
+    <UserControl.Resources>
+        <vm:StringEqualsConverter x:Key="StringEqualsConverter" />
+        <vm:NodeToPointConverter x:Key="NodeToPointConverter" />
+    </UserControl.Resources>
+</UserControl>

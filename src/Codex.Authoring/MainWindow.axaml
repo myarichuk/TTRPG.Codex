@@ -1,0 +1,67 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:views="using:Codex.Authoring.Views"
+        xmlns:i="using:Lucide.Avalonia"
+        x:Class="Codex.Authoring.MainWindow"
+        Title="Codex Authoring" Width="1100" Height="700" WindowStartupLocation="CenterScreen"
+        RequestedThemeVariant="Dark"
+        TransparencyLevelHint="Mica"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
+    
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <ui:NavigationView Name="NavView" PaneDisplayMode="LeftCompact" IsSettingsVisible="True" 
+                         Padding="0,32,0,0">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="Dashboard" Tag="Dashboard">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="Home" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                
+                <ui:NavigationViewItem Content="Entity Browser" Tag="Browser">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="List" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                
+                <ui:NavigationViewItem Content="System Editor" Tag="System">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="Edit" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+                
+                <ui:NavigationViewItemSeparator />
+                
+                <ui:NavigationViewItem Content="Graph Editor" Tag="Graph">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="Share" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+            </ui:NavigationView.MenuItems>
+            
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Name="ThemeToggleItem" Content="Toggle Theme" Tag="ThemeToggle">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:SymbolIconSource Symbol="DarkTheme" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
+            </ui:NavigationView.FooterMenuItems>
+            
+            <ui:NavigationView.Content>
+                <views:GraphEditorView Margin="16" />
+            </ui:NavigationView.Content>
+        </ui:NavigationView>
+    </Panel>
+</Window>

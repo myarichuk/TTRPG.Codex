@@ -17,18 +17,22 @@ Characters and NPCs are modeled as **Entities** in the ECS runtime, but persiste
 
 - **Standard Components**:
   - `IdentityComponent`: Name, Race, Class, Background.
-  - `ResourcePoolComponent`: Dictionary of values (e.g., `{"HP": 20, "Shield": 5, "Mana": 10}`).
-  - `StatModifierComponent`: List of active modifiers for rolls or static values.
-  - `InventoryComponent`: List of item references and their states.
-  - `AbilityComponent`: List of active/passive ability IDs from Content Packs.
+  - `ResourcePoolComponent`: Dictionary of values (e.g., `{"HP": 20, "Mana": 10}`).
+  - `AbilityComponent`: List of active/passive `AbilityId`s.
+  - `Properties`: A generic `Dictionary<string, object>` used for system-specific attributes (e.g., `Strength`, `Agility`). This ensures homebrew can add new attributes without schema migrations.
 
-## 3. Regions & Locations (Spatial Graph)
-Locations are modeled as a **Spatial Graph** within a `RegionDocument`. We avoid deep nested trees; instead, we use a flat list of nodes and edges for O(1) document loading.
+## 3. Abilities (The TRCE Format)
+Abilities are defined by their logic and resource requirements. This is a **Compositional Model**.
 
-- **RegionDocument**:
-  - `Id`: `regions/{region-id}`
-  - `Locations`: List of nodes (Name, Description, SceneTemplateId).
-  - `Paths`: List of edges (`From`, `To`, `Distance`, `TravelType`).
+- **Structure**:
+  - `Id`: `abilities/{system-id}/{ability-id}`
+  - `Triggers`: `List<TypedComponent>` (e.g., `Type: "Action"`, `Type: "OnKill"`)
+  - `Requires`: `List<TypedComponent>` (e.g., `Type: "Range"`, `Params: { "Value": 30 }`)
+  - `Costs`: `List<TypedComponent>` (e.g., `Type: "Resource"`, `Params: { "Id": "Mana", "Amount": 5 }`)
+  - `Effects`: `List<TypedComponent>` (e.g., `Type: "Damage"`, `Params: { "Dice": "2d6" }`)
+
+- **TypedComponent**: A simple structure: `{ string Type, Dictionary<string, object> Params }`.
+- **Reasoning**: This format allows the **Authoring App** to render dynamic builders (e.g., a "Cost" picker that pulls from all known resources) while keeping the engine logic isolated in C# plugins.
 
 ## 4. Lore & Facts (Knowledge Graph)
 Knowledge is tracked via `FactDocument` entries. This allows the DM to track the spread of information across the campaign.

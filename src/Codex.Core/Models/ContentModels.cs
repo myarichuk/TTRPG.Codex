@@ -12,42 +12,43 @@ public class AbilityDefinition : IAbilityDefinition
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? IconPath { get; set; }
-    public TriggerType Trigger { get; set; }
     public string? Inherits { get; set; }
-    public Dictionary<string, int>? Costs { get; set; }
-    public List<AbilityEffect>? Effects { get; set; }
-    public Dictionary<string, object>? Metadata { get; set; }
 
-    List<IAbilityEffect>? IAbilityDefinition.Effects => Effects?.Cast<IAbilityEffect>().ToList();
+    public List<TypedComponent>? Triggers { get; set; }
+    public List<TypedComponent>? Requires { get; set; }
+    public List<TypedComponent>? Costs { get; set; }
+    public List<TypedComponent>? Effects { get; set; }
+    
+    public Dictionary<string, object>? Metadata { get; set; }
 
     public void MergeFrom(IAbilityDefinition baseAbility)
     {
         if (string.IsNullOrEmpty(Name)) Name = baseAbility.Name;
         Description ??= baseAbility.Description;
         IconPath ??= baseAbility.IconPath;
-        if (Trigger == TriggerType.Passive && baseAbility.Trigger != TriggerType.Passive) Trigger = baseAbility.Trigger;
+
+        if (baseAbility.Triggers != null)
+        {
+            Triggers ??= new List<TypedComponent>();
+            Triggers.AddRange(baseAbility.Triggers);
+        }
+
+        if (baseAbility.Requires != null)
+        {
+            Requires ??= new List<TypedComponent>();
+            Requires.AddRange(baseAbility.Requires);
+        }
 
         if (baseAbility.Costs != null)
         {
-            Costs ??= new Dictionary<string, int>();
-            foreach (var kvp in baseAbility.Costs)
-            {
-                if (!Costs.ContainsKey(kvp.Key)) Costs[kvp.Key] = kvp.Value;
-            }
+            Costs ??= new List<TypedComponent>();
+            Costs.AddRange(baseAbility.Costs);
         }
 
         if (baseAbility.Effects != null)
         {
-            Effects ??= new List<AbilityEffect>();
-            foreach (var effect in baseAbility.Effects)
-            {
-                Effects.Add(new AbilityEffect
-                {
-                    Type = effect.Type,
-                    Script = effect.Script,
-                    Params = effect.Params != null ? new Dictionary<string, object>(effect.Params) : null
-                });
-            }
+            Effects ??= new List<TypedComponent>();
+            Effects.AddRange(baseAbility.Effects);
         }
 
         if (baseAbility.Metadata != null)
@@ -61,12 +62,8 @@ public class AbilityDefinition : IAbilityDefinition
     }
 }
 
-public class AbilityEffect : IAbilityEffect
-{
-    public string Type { get; set; } = string.Empty;
-    public string? Script { get; set; }
-    public Dictionary<string, object>? Params { get; set; }
-}
+// AbilityEffect class is no longer needed as we use TypedComponent
+// But I'll check if other models depend on it first.
 
 public class ActorDefinition : IActorDefinition
 {
