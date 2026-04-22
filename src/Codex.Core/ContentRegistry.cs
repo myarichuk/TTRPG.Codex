@@ -67,9 +67,12 @@ public class ContentRegistry : IContentRegistry
         {
             foreach (var effect in ability.Effects)
             {
-                if (!string.IsNullOrEmpty(effect.Script) && context is AbilityContext abilityContext)
+                if (effect.Type == "Script" && 
+                    effect.Params?.TryGetValue("Script", out var scriptObj) == true && 
+                    scriptObj is string script && 
+                    context is AbilityContext abilityContext)
                 {
-                    _scriptEvaluator.Execute(effect.Script, abilityContext);
+                    _scriptEvaluator.Execute(script, abilityContext);
                 }
             }
         }

@@ -8,6 +8,11 @@ public partial class App : Application
 {
     public override void Initialize()
     {
+        InitializeComponent();
+    }
+
+    private void InitializeComponent()
+    {
         AvaloniaXamlLoader.Load(this);
     }
 
