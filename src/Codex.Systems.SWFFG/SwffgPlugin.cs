@@ -48,8 +48,13 @@ public class SwffgPlugin : ICodexSystemPlugin
             },
             new List<GraphNodeMetadata>
             {
-                new("Planet", "Globe", "#3498db", new List<string> { "Hyperspace", "Orbit" }),
-                new("Station", "Server", "#95a5a6", new List<string> { "Dock" })
+                new("Planet", "Globe", "#3498db", new List<GraphEdgeSchema> { 
+                    new("Hyperspace", "Hyperspace Lane", "Planet", true),
+                    new("Orbit", "Orbit", "Station") 
+                }),
+                new("Station", "Server", "#95a5a6", new List<GraphEdgeSchema> { 
+                    new("Dock", "Docking Port", "Planet") 
+                })
             }
         );
     }

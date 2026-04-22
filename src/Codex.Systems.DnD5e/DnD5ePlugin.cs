@@ -49,10 +49,10 @@ public class DnD5ePlugin : ICodexSystemPlugin
             {
                 new("Level", "Spell Level", FieldType.Number, DefaultValue: 0),
                 new("School", "School of Magic", FieldType.Dropdown, Options: new List<string> { "Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation" }),
-                new("Triggers", "Triggers", FieldType.Collection, TargetEntityType = "Trigger"),
-                new("Requires", "Requirements", FieldType.Collection, TargetEntityType = "Requirement"),
-                new("Costs", "Costs", FieldType.Collection, TargetEntityType = "Cost"),
-                new("Effects", "Effects", FieldType.Collection, TargetEntityType = "Effect")
+                new("Triggers", "Triggers", FieldType.Collection, TargetEntityType: "Trigger"),
+                new("Requires", "Requirements", FieldType.Collection, TargetEntityType: "Requirement"),
+                new("Costs", "Costs", FieldType.Collection, TargetEntityType: "Cost"),
+                new("Effects", "Effects", FieldType.Collection, TargetEntityType: "Effect")
             }
         );
     }
