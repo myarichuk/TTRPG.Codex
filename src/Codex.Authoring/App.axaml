@@ -1,0 +1,45 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sty="using:FluentAvalonia.Styling"
+             x:Class="Codex.Authoring.App"
+             RequestedThemeVariant="Dark"
+             xmlns:vm="using:Codex.Authoring.ViewModels">
+    <Application.Resources>
+        <vm:FieldTypeConverter x:Key="FieldTypeConverter" />
+    </Application.Resources>
+    <Application.Styles>
+        <sty:FluentAvaloniaTheme PreferUserAccentColor="True" />
+
+        <Style Selector="Button.Sleek">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+
+        <Style Selector="Border.NodeCard">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="0 4 10 0 #22000000" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="QuarticEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.NodeCard:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        </Style>
+
+        <Style Selector="Border.NodeCard.Selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BoxShadow" Value="0 0 15 0 #440078D4" />
+        </Style>
+    </Application.Styles>
+</Application>
