@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,9 +21,13 @@ public class LoreGenerator
             return "AI integration is not configured.";
         }
 
-        string prompt = $"Based on the following session recap, generate a short descriptive lore entry for the entity named '{entityName}'.\n\nSession Recap:\n{sessionRecap}\n\nLore Entry:";
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "Based on the provided session recap and entity name, generate a short descriptive lore entry for the specified entity. Provide only the lore entry."),
+            new ChatMessage(ChatRole.User, $"Entity Name:\n{entityName}\n\nSession Recap:\n{sessionRecap}")
+        };
 
-        var response = await _chatClient.GetResponseAsync(prompt, null, cancellationToken);
+        var response = await _chatClient.GetResponseAsync(messages, null, cancellationToken);
         return response.ToString() ?? "Failed to generate lore.";
     }
 
@@ -33,9 +38,13 @@ public class LoreGenerator
             return "AI integration is not configured.";
         }
 
-        string prompt = $"Summarize the following session events into a brief recap suitable for players.\n\nSession Events:\n{sessionEvents}\n\nSession Recap:";
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "Summarize the following session events into a brief recap suitable for players. Provide only the summary."),
+            new ChatMessage(ChatRole.User, $"Session Events:\n{sessionEvents}")
+        };
 
-        var response = await _chatClient.GetResponseAsync(prompt, null, cancellationToken);
+        var response = await _chatClient.GetResponseAsync(messages, null, cancellationToken);
         return response.ToString() ?? "Failed to summarize session.";
     }
 }
