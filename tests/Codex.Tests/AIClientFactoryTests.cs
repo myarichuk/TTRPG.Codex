@@ -1,13 +1,43 @@
 using System;
+using System.Threading.Tasks;
 using Codex.Core.AI;
 using Xunit;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using Testcontainers.Ollama;
 
 namespace Codex.Tests;
 
-public class AIClientFactoryTests
+public class AIClientFactoryTests : IAsyncLifetime
 {
+    private OllamaContainer? _ollamaContainer;
+
+    public async Task InitializeAsync()
+    {
+        try
+        {
+            _ollamaContainer = new OllamaBuilder()
+                .WithImage("ollama/ollama:latest")
+                .Build();
+
+            await _ollamaContainer.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            // Ignore for tests in sandbox if docker isn't working
+            Console.WriteLine("Warning: Failed to start Testcontainer. Tests using real endpoint will fallback to dummy. Error: " + ex.Message);
+            _ollamaContainer = null;
+        }
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (_ollamaContainer != null)
+        {
+            await _ollamaContainer.DisposeAsync();
+        }
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -103,10 +133,11 @@ public class AIClientFactoryTests
     public void CreateClient_Ollama_WithValidConfig_ReturnsClient()
     {
         // Arrange
+        var endpoint = _ollamaContainer != null ? _ollamaContainer.GetConnectionString() : "http://localhost:11434";
         var config = new AIConfiguration
         {
             Provider = "ollama",
-            Endpoint = "http://localhost:11434",
+            Endpoint = endpoint,
             ModelId = "test-model-id"
         };
 
