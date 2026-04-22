@@ -35,7 +35,7 @@ public class NoteDocument
 {
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
-    public string TargetId { get; set; } // The ID of the NPC, Location, or Ability
+    public string TargetId { get; set; } = string.Empty; // The ID of the NPC, Location, or Ability
     public string AuthorId { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public CommentVisibility Visibility { get; set; } = CommentVisibility.Private;
