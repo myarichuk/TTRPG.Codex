@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Microsoft.AspNetCore.Components;
@@ -57,7 +58,7 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
         options.ClientId = appleClientId;
         options.KeyId = appleKeyId;
         options.TeamId = appleTeamId;
-        
+
         // Handle private key: can be a file path or PEM content
         if (System.IO.File.Exists(applePrivateKey))
         {
@@ -75,7 +76,7 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
                 (keyId) => new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetDirectoryName(tmpPath)!).GetFileInfo(Path.GetFileName(tmpPath))
             );
         }
-        
+
         options.SignInScheme = "External";
     });
 }
@@ -93,15 +94,18 @@ builder.Services.AddHttpContextAccessor();
 
 // Configure Codex
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
-var pluginsDir = builder.Configuration["Codex:PluginsDirectory"] ?? "plugins";
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir));
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
+builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
+builder.Services.AddSingleton<ScriptEvaluator>();
+builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
+builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
 builder.Services.AddSingleton<CodexWorld>();
 
@@ -116,7 +120,8 @@ if (chatClient != null)
     builder.Services.AddSingleton<IChatClient>(chatClient);
 }
 
-builder.Services.AddSingleton<LoreGenerator>(sp => {
+builder.Services.AddSingleton<LoreGenerator>(sp =>
+{
     var chatClient = sp.GetService<IChatClient>();
     return new LoreGenerator(chatClient);
 });
@@ -137,11 +142,11 @@ using (var scope = app.Services.CreateScope())
     var world = scope.ServiceProvider.GetRequiredService<CodexWorld>();
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    
+
     var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
     var absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
-    
-    logger.LogInformation("Loading plugins from: {Path}", absolutePluginsDir);
+
+    logger.LogInformation("Loading plugins and content packs from: {Path}", absolutePluginsDir);
     await loader.LoadAndInitializeAsync(absolutePluginsDir, world);
 }
 

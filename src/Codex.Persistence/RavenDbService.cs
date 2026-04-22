@@ -1,6 +1,7 @@
 using Raven.Client.Documents;
 using Raven.Embedded;
-
+using Raven.Client.Documents.Indexes;
+using System;
 
 namespace Codex.Persistence;
 
@@ -18,7 +19,7 @@ public class RavenDbService : IDisposable
             {
                 DataDirectory = dataDirectory,
                 ServerUrl = "http://127.0.0.1:0",
-                FrameworkVersion = null // Allow RavenDB to auto-resolve the available runtime
+                FrameworkVersion = null
             };
             options.CommandLineArgs.Add("--Setup.Mode=None");
             if (runInMemory)
@@ -32,12 +33,15 @@ public class RavenDbService : IDisposable
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("The server was already started"))
             {
-                // Ignore if already started (for xUnit parallel tests)
             }
 
             var databaseOptions = new DatabaseOptions(databaseName);
             var store = EmbeddedServer.Instance.GetDocumentStore(databaseOptions);
             store.Initialize();
+
+            // Create indexes
+            new KnowledgeIndex().Execute(store);
+
             return store;
         });
     }

@@ -1,6 +1,8 @@
 using DefaultEcs;
 using DefaultEcs.System;
 using System.Collections.Generic;
+using Codex.Core.Systems;
+using Codex.Core.Components;
 
 namespace Codex.Core;
 
@@ -15,6 +17,8 @@ public sealed class CodexWorld : IDisposable
     public CodexWorld()
     {
         _world = new World();
+        // Core systems
+        AddSystem(new DurationSystem(_world));
     }
 
     public void AddSystem(ISystem<float> system)
@@ -31,6 +35,18 @@ public sealed class CodexWorld : IDisposable
     public void Tick(float deltaTime)
     {
         _systems?.Update(deltaTime);
+    }
+
+    // Scripting helper
+    public void AddStatus(Entity entity, string effectId, string packId, float durationRounds)
+    {
+        entity.Set(new StatusEffectComponent(effectId, packId));
+        entity.Set(new DurationComponent(durationRounds));
+    }
+
+    public void AddStatus(Entity entity, string effectId, string packId, double durationRounds)
+    {
+        AddStatus(entity, effectId, packId, (float)durationRounds);
     }
 
     public void Dispose()
