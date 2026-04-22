@@ -75,6 +75,7 @@ public class NpcDefinition : INpcDefinition
     public string PackId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public List<string> ImagePaths { get; set; } = new();
     public Dictionary<string, int> Resources { get; set; } = new();
     public List<string> Abilities { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
@@ -87,6 +88,9 @@ public class LocationDefinition : ILocationDefinition
     public string PackId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? ParentId { get; set; }
+    public List<string> ImagePaths { get; set; } = new();
+    public List<LocationEdge> Connections { get; set; } = new();
     public List<string> Tags { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
 }
