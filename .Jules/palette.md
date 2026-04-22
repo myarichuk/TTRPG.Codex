@@ -9,3 +9,7 @@
 ## 2026-04-20 - [Destructive Action Confirmations]
 **Learning:** Found a pattern where destructive actions (like deleting items from a list) lacked confirmation dialogs, leading to potentially frustrating accidental deletions.
 **Action:** Always add a confirmation step (like a native browser confirm or custom dialog) for destructive actions.
+
+## 2025-02-14 - Keyboard Inaccessible Interactive Divs
+**Learning:** Found a recurring pattern in the Blazor application where `<div>` elements act as buttons (e.g., clicking to create a campaign). Screen readers and keyboard users cannot interact with these pseudo-buttons, as they don't natively receive focus or trigger via Enter/Space.
+**Action:** When adding clickable components or 'cards' that behave like buttons, always use native `<button>` tags instead of `<div>`s. This ensures built-in keyboard accessibility, supports the `disabled` state for loading operations, and works natively with screen readers. Additionally, remember to add an `aria-label` and `:focus-visible` indicator.

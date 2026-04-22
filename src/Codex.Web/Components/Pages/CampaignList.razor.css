@@ -72,10 +72,21 @@
     flex-direction: column;
 }
 
-.campaign-card:hover {
+.campaign-card:hover:not(:disabled) {
     border-color: var(--fluent-border-strong);
     transform: translateY(-4px);
     box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+button.campaign-card:focus-visible {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(79, 107, 237, 0.2);
+}
+
+button.campaign-card:disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
 }
 
 .art-container {

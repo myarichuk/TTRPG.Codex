@@ -55,8 +55,16 @@ else if (!campaigns.Any())
         </div>
         <h3 class="mb-3">No Campaigns Found</h3>
         <p class="text-tertiary mb-5">It looks like you don't have any campaigns yet. Let's get your adventure started!</p>
-        <button class="btn btn-accent px-5" @onclick="CreateCampaign" disabled="@isCreating">
-            Create Your First Campaign
+        <button class="btn btn-accent px-5 d-inline-flex align-items-center justify-content-center gap-2" @onclick="CreateCampaign" disabled="@isCreating">
+            @if (isCreating)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span>Creating...</span>
+            }
+            else
+            {
+                <span>Create Your First Campaign</span>
+            }
         </button>
     </div>
 }
@@ -113,15 +121,22 @@ else
             </div>
         }
 
-        <div class="campaign-card" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="CreateCampaign">
+        <button class="campaign-card" aria-label="Initiate New Story" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="CreateCampaign" disabled="@isCreating">
             <div class="text-center p-5">
                 <div style="background: var(--fluent-surface-secondary); width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 1rem auto;">
-                    <LucideIcon IconName="plus" Size="24" Class="text-secondary" />
+                    @if (isCreating)
+                    {
+                        <span class="spinner-border text-secondary" role="status" aria-hidden="true" style="width: 24px; height: 24px;"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon IconName="plus" Size="24" Class="text-secondary" />
+                    }
                 </div>
                 <h4 class="h6 text-secondary">Initiate New Story</h4>
                 <p class="small text-tertiary">Select a template or start blank.</p>
             </div>
-        </div>
+        </button>
     </div>
     }
 </div>
