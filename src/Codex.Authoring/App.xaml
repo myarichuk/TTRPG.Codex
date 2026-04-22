@@ -1,1 +1,0 @@
-<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2004/xaml" xmlns:sty="using:FluentAvalonia.Styling" x:Class="Codex.Authoring.App" RequestedThemeVariant="Dark"><Application.Styles><sty:FluentAvaloniaTheme PreferUserAccentColor="True" /><StyleInclude Source="avares://Lucide.Avalonia/Lucide.axaml" /></Application.Styles></Application>

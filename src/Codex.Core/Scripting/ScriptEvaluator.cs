@@ -23,7 +23,7 @@ public class ScriptEvaluator
         _interpreter = new Interpreter()
             .Reference(typeof(Entity))
             .Reference(typeof(CodexWorld))
-            .Reference(typeof(IAbilityEffect))
+            .Reference(typeof(TypedComponent))
             .Reference(typeof(DurationComponent))
             .Reference(typeof(StatusEffectComponent));
 
