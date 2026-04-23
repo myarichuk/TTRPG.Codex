@@ -13,3 +13,6 @@
 ## 2025-02-14 - Keyboard Inaccessible Interactive Divs
 **Learning:** Found a recurring pattern in the Blazor application where `<div>` elements act as buttons (e.g., clicking to create a campaign). Screen readers and keyboard users cannot interact with these pseudo-buttons, as they don't natively receive focus or trigger via Enter/Space.
 **Action:** When adding clickable components or 'cards' that behave like buttons, always use native `<button>` tags instead of `<div>`s. This ensures built-in keyboard accessibility, supports the `disabled` state for loading operations, and works natively with screen readers. Additionally, remember to add an `aria-label` and `:focus-visible` indicator.
+## 2025-04-23 - Interactive Element Refactor
+**Learning:** Found several clickable elements (like large cards or filter chips) built using `<div>` tags with `@onclick` events in the Blazor frontend. Converting them to native `<button>` tags significantly improves accessibility by making them naturally focusable and easily interpreted by screen readers.
+**Action:** Always verify that interactive elements, especially custom "cards" or "chips," use semantic `<button>` tags rather than relying on `<div>` tags, and make sure to apply appropriate text alignment utilities (like `text-start`) to overcome default button centering styles when necessary.
