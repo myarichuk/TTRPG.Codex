@@ -53,6 +53,12 @@
     transition: var(--transition-base);
 }
 
+.filter-chip:focus-visible {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(79, 107, 237, 0.2);
+}
+
 .filter-chip:hover { border-color: var(--text-secondary); color: var(--text-primary); }
 .filter-chip.active { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 

@@ -21,12 +21,12 @@
     </div>
 </header>
 
-<div class="filter-bar">
-    <div class="category-chip active"><LucideIcon IconName="layers" Size="14" /> All Entry</div>
-    <div class="category-chip"><LucideIcon IconName="flame" Size="14" /> Spells</div>
-    <div class="category-chip"><LucideIcon IconName="gem" Size="14" /> Artifacts</div>
-    <div class="category-chip"><LucideIcon IconName="map-pin" Size="14" /> Locations</div>
-    <div class="category-chip"><LucideIcon IconName="skull" Size="14" /> Bestiary</div>
+<div class="filter-bar" role="group" aria-label="Filter grimoire entries by category">
+    <button type="button" class="category-chip active" aria-pressed="true"><LucideIcon IconName="layers" Size="14" /> All Entry</button>
+    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="flame" Size="14" /> Spells</button>
+    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="gem" Size="14" /> Artifacts</button>
+    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="map-pin" Size="14" /> Locations</button>
+    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="skull" Size="14" /> Bestiary</button>
 </div>
 
 @if (loreEntries == null || !loreEntries.Any())
