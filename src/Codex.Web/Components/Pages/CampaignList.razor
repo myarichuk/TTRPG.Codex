@@ -30,11 +30,11 @@
 
     @if (availableSystems != null && availableSystems.Any())
     {
-        <div class="filter-ribbon">
-            <div class="filter-chip @(selectedSystem == null ? "active" : "")" @onclick="() => SelectSystem(null)">All Adventures</div>
+        <div class="filter-ribbon" role="group" aria-label="Filter campaigns by system">
+            <button type="button" class="filter-chip @(selectedSystem == null ? "active" : "")" aria-pressed="@(selectedSystem == null ? "true" : "false")" @onclick="() => SelectSystem(null)">All Adventures</button>
             @foreach (var system in availableSystems)
             {
-                <div class="filter-chip @(selectedSystem == system ? "active" : "")" @onclick="() => SelectSystem(system)">@system</div>
+                <button type="button" class="filter-chip @(selectedSystem == system ? "active" : "")" aria-pressed="@(selectedSystem == system ? "true" : "false")" @onclick="() => SelectSystem(system)">@system</button>
             }
         </div>
     }
