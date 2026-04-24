@@ -10,7 +10,7 @@ public class GraphTests
     public void GraphViewModel_Should_AddNodes()
     {
         var vm = new GraphViewModel();
-        vm.AddNode("Test Location", "Location", 100, 100);
+        vm.AddNode("Test Location", "Location", "Circle", "#FFFFFF", 100, 100);
 
         Assert.Single(vm.Nodes);
         Assert.Equal("Test Location", vm.Nodes[0].Name);
@@ -21,8 +21,8 @@ public class GraphTests
     public void GraphViewModel_Should_ConnectNodes()
     {
         var vm = new GraphViewModel();
-        vm.AddNode("A", "Location", 0, 0);
-        vm.AddNode("B", "Location", 100, 100);
+        vm.AddNode("A", "Location", "Circle", "#FFFFFF", 0, 0);
+        vm.AddNode("B", "Location", "Circle", "#FFFFFF", 100, 100);
 
         var nodeA = vm.Nodes[0];
         var nodeB = vm.Nodes[1];

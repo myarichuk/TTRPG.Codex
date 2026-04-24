@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:abs="using:Codex.Plugin.Abstractions"
+             x:Class="Codex.Authoring.Controls.CollectionEditorControl">
+    <StackPanel>
+        <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                        <!-- We use a basic text box that binds to the object, or property if it's TypedComponent -->
+                        <TextBox Text="{Binding Type, FallbackValue={Binding Mode=TwoWay}}" Grid.Column="0" />
+                        <Button Content="Remove" Grid.Column="1" Click="OnRemoveClick" Margin="4,0,0,0" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Content="Add Item" Click="OnAddClick" Margin="0,8,0,0" />
+    </StackPanel>
+</UserControl>

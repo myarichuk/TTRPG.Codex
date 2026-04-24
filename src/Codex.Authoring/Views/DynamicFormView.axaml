@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:vm="using:Codex.Authoring.ViewModels"
+             xmlns:abs="using:Codex.Plugin.Abstractions"
+             xmlns:ctrl="using:Codex.Authoring.Controls"
+             x:Class="Codex.Authoring.Views.DynamicFormView"
+             x:DataType="vm:GenericEntityViewModel">
+    <ScrollViewer Padding="16">
+        <StackPanel Spacing="16">
+            <TextBlock Text="{Binding Name}" Classes="h2" FontWeight="Bold" />
+            <TextBlock Text="{Binding Schema.EntityType}" Opacity="0.5" FontSize="12" Margin="0,-12,0,0" />
+
+            <Separator Margin="0,8" />
+
+            <ItemsControl ItemsSource="{Binding Fields}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FieldViewModel">
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="{Binding Label}" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+                            <!-- Logic for different field types -->
+                            <Panel>
+                                <!-- Text -->
+                                <TextBox IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='Text'}"
+                                         Text="{Binding Value, Mode=TwoWay}" />
+
+                                <!-- Long Text -->
+                                <TextBox IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='LongText'}"
+                                         Text="{Binding Value, Mode=TwoWay}"
+                                         AcceptsReturn="True" Height="100" TextWrapping="Wrap" />
+
+                                <!-- Number -->
+                                <NumericUpDown IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='Number'}"
+                                               Value="{Binding Value, Mode=TwoWay}" />
+
+                                <!-- Boolean -->
+                                <ToggleSwitch IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='Boolean'}"
+                                              IsChecked="{Binding Value, Mode=TwoWay}" />
+
+                                <!-- Dropdown -->
+                                <ComboBox IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='Dropdown'}"
+                                          ItemsSource="{Binding Definition.Options}"
+                                          SelectedItem="{Binding Value, Mode=TwoWay}"
+                                          HorizontalAlignment="Stretch" />
+
+                                <!-- Collection -->
+                                <ctrl:CollectionEditorControl IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='Collection'}"
+                                                              Items="{Binding Value, Mode=TwoWay}"
+                                                              TargetType="{Binding Definition.TargetEntityType}" />
+
+                                <!-- EntityReference -->
+                                <ctrl:EntityReferenceControl IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='EntityReference'}"
+                                                             EntityId="{Binding Value, Mode=TwoWay}"
+                                                             TargetEntityType="{Binding Definition.TargetEntityType}" />
+
+                                <!-- ImagePicker -->
+                                <ctrl:ImagePickerControl IsVisible="{Binding Definition.Type, Converter={StaticResource FieldTypeConverter}, ConverterParameter='ImagePicker'}"
+                                                         ImagePath="{Binding Value, Mode=TwoWay}" />
+                            </Panel>
+
+                            <TextBlock Text="{Binding Definition.Description}"
+                                       FontSize="11" Opacity="0.6" Margin="0,4,0,0"
+                                       IsVisible="{Binding Definition.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

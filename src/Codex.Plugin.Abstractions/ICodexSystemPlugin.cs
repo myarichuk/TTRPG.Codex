@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Codex.Plugin.Abstractions;
 
 public interface ICodexSystemPlugin
@@ -8,4 +10,6 @@ public interface ICodexSystemPlugin
 
     // Dynamic approach to break cyclic dependency
     void RegisterSystems(dynamic world);
+
+    IEnumerable<UISchema> GetUISchemas();
 }

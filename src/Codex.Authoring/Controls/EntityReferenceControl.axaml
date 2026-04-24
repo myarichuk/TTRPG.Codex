@@ -1,0 +1,11 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             x:Class="Codex.Authoring.Controls.EntityReferenceControl">
+    <Grid ColumnDefinitions="*,Auto">
+        <TextBox Text="{Binding EntityId, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                 Watermark="Search for entity..."
+                 Grid.Column="0" />
+        <Button Content="Search" Grid.Column="1" Margin="4,0,0,0" Click="OnSearchClick" />
+    </Grid>
+</UserControl>

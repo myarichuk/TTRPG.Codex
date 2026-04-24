@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             x:Class="Codex.Authoring.Controls.ImagePickerControl">
+    <StackPanel>
+        <Image Source="{Binding ImageSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
+               Height="150"
+               Stretch="Uniform"
+               IsVisible="{Binding ImageSource, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={x:Static ObjectConverters.IsNotNull}}"
+               Margin="0,0,0,8" />
+
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBox Text="{Binding ImagePath, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                     Watermark="Path to image..."
+                     Grid.Column="0" />
+            <Button Content="Browse..." Grid.Column="1" Margin="4,0,0,0" Click="OnBrowseClick" />
+        </Grid>
+    </StackPanel>
+</UserControl>

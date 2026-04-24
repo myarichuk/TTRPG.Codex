@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Codex.Core;
 using Codex.Plugin.Abstractions;
 
@@ -20,5 +21,36 @@ public class SwffgPlugin : ICodexSystemPlugin
         {
             codexWorld.AddSystem(new WoundSystem(codexWorld.InnerWorld));
         }
+    }
+
+    public IEnumerable<UISchema> GetUISchemas()
+    {
+        yield return new UISchema(
+            "Actor",
+            PreferredEditor.Form,
+            new List<FieldDefinition>
+            {
+                new("Brawn", "Brawn", FieldType.Number, DefaultValue: 2),
+                new("Agility", "Agility", FieldType.Number, DefaultValue: 2),
+                new("Intellect", "Intellect", FieldType.Number, DefaultValue: 2),
+                new("Cunning", "Cunning", FieldType.Number, DefaultValue: 2),
+                new("Willpower", "Willpower", FieldType.Number, DefaultValue: 2),
+                new("Presence", "Presence", FieldType.Number, DefaultValue: 2)
+            }
+        );
+
+        yield return new UISchema(
+            "Location",
+            PreferredEditor.Graph,
+            new List<FieldDefinition>
+            {
+                new("Type", "Planet Type", FieldType.Dropdown, Options: new List<string> { "Forest", "Desert", "City", "Ocean", "Space Station" })
+            },
+            new List<GraphNodeMetadata>
+            {
+                new("Planet", "Globe", "#3498db", new List<GraphEdgeSchema> { new("Hyperspace", "Hyperspace", "Planet"), new("Orbit", "Orbit", "Station") }),
+                new("Station", "Server", "#95a5a6", new List<GraphEdgeSchema> { new("Dock", "Dock", "Planet") })
+            }
+        );
     }
 }
