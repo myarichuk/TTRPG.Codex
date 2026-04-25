@@ -51,18 +51,20 @@
                     <div class="character-section">
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-tertiary small fw-bold text-uppercase" style="letter-spacing: 0.05em; font-size: 0.65rem;">Characters (@player.Characters.Count)</span>
-                            <LucideIcon IconName="plus" Size="14" Class="text-tertiary cursor-pointer" />
+                            <button type="button" aria-label="Add Character" style="background:none;border:none;padding:0;" class="cursor-pointer">
+                                <LucideIcon IconName="plus" Size="14" Class="text-tertiary" />
+                            </button>
                         </div>
                         <div class="character-list">
                             @foreach (var character in player.Characters)
                             {
-                                <div class="character-chip">
+                                <button type="button" class="character-chip w-100 text-start">
                                     <div>
                                         <div class="char-name">@character.Name</div>
                                         <div class="char-class">Level @character.Level @character.Class</div>
                                     </div>
                                     <LucideIcon IconName="chevron-right" Size="14" Class="text-tertiary" />
-                                </div>
+                                </button>
                             }
                         </div>
                     </div>
@@ -70,12 +72,12 @@
             }
 
             <!-- Add Player Button Card -->
-            <div class="player-card add-card" @onclick="AddFirstPlayer">
+            <button type="button" class="player-card add-card w-100 text-center" aria-label="Invite a new player" @onclick="AddFirstPlayer">
                 <div class="p-4">
                     <div class="mb-3 text-tertiary"><LucideIcon IconName="user-plus" Size="32" /></div>
                     <p class="text-secondary small">Invite a new player to the Codex</p>
                 </div>
-            </div>
+            </button>
         </div>
     }
 </div>

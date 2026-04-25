@@ -16,3 +16,6 @@
 ## 2024-04-24 - Convert Clickable Divs to Native Buttons for Interactive Chips
 **Learning:** Found a pattern in the Blazor app where `.filter-chip` and `.category-chip` elements were implemented as clickable `<div>` elements. This makes them inaccessible to keyboard users and screen readers, as they lack semantic meaning, focus states, and the ability to be activated via the Enter/Space keys.
 **Action:** Always convert interactive "chip" or "pill" components from `<div>` to `<button type="button">`. Add `aria-pressed="true|false"` when they act as toggles, and ensure `:focus-visible` styles are implemented to support keyboard navigation.
+## 2025-04-24 - Convert Clickable Divs to Native Buttons for Lists and Cards
+**Learning:** Found an accessibility issue pattern where card layouts acting as actions (like "Add Player" card, "New Storyline" empty state, or character lists) were marked up as clickable `<div>` elements. This makes them inaccessible to screen readers and keyboard users as they lack semantic meaning and standard button focus/activation behaviors.
+**Action:** When creating or fixing clickable card elements, ensure the main interaction area uses a native `<button>` element with appropriate `aria-label` tags and `:focus-visible` CSS outlines to preserve keyboard usability and screen reader accessibility.

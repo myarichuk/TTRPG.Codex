@@ -52,7 +52,7 @@ else
 
             @if (campaigns.Count() < 3)
             {
-                <div class="campaign-card card-empty" @onclick="ExpandAI">
+                <button type="button" class="campaign-card card-empty w-100 text-center" aria-label="New Storyline" @onclick="ExpandAI">
                     <div class="card-body">
                         <LucideIcon IconName="sparkles" Size="32" Class="sparkle-icon" />
                         <h3 class="card-title">New Storyline</h3>
@@ -61,7 +61,7 @@ else
                             <span class="btn btn-sm btn-outline-secondary px-4" style="border-radius: 20px; font-size: 0.75rem;">Browse Hub</span>
                         </div>
                     </div>
-                </div>
+                </button>
             }
         </div>
 
