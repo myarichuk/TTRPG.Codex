@@ -49,6 +49,11 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
+button.player-card:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .player-header {
     display: flex;
     align-items: center;
@@ -111,6 +116,11 @@
 .character-chip:hover {
     background: var(--fluent-surface-hover);
     border-color: var(--text-tertiary);
+}
+
+button.character-chip:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
 }
 
 .char-name {

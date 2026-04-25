@@ -132,6 +132,11 @@ h1 { font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
     box-shadow: 0 12px 30px rgba(0,0,0,0.4);
 }
 
+button.campaign-card:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .art-preview {
     height: 140px;
     width: 100%;
