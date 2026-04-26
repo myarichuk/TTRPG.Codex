@@ -19,3 +19,6 @@
 ## 2025-04-24 - Convert Clickable Divs to Native Buttons for Lists and Cards
 **Learning:** Found an accessibility issue pattern where card layouts acting as actions (like "Add Player" card, "New Storyline" empty state, or character lists) were marked up as clickable `<div>` elements. This makes them inaccessible to screen readers and keyboard users as they lack semantic meaning and standard button focus/activation behaviors.
 **Action:** When creating or fixing clickable card elements, ensure the main interaction area uses a native `<button>` element with appropriate `aria-label` tags and `:focus-visible` CSS outlines to preserve keyboard usability and screen reader accessibility.
+## 2024-05-18 - Semantic Auth Forms and Alert Roles
+**Learning:** Blazor `<EditForm>` inputs sometimes lack necessary attributes like `autocomplete` and `required` by default. Furthermore, conditional error messages using `.alert` classes won't be announced by screen readers without an explicit `role="alert"`.
+**Action:** Always ensure auth-related `<InputText>` fields have appropriate `autocomplete` hints (`username`, `current-password`, `new-password`), add `required` for client-side validation, and ensure dynamic error containers have `role="alert"`.
