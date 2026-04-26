@@ -25,10 +25,10 @@ else
                 <h1>Your Worlds</h1>
                 <p class="page-subtitle">Welcome back. You have <span>@campaigns.Count()</span> active @(campaigns.Count() == 1 ? "campaign" : "campaigns").</p>
             </div>
-            <button class="btn btn-accent d-flex align-items-center gap-2">
+            <a href="campaigns" class="btn btn-accent d-flex align-items-center gap-2 text-decoration-none">
                 <LucideIcon IconName="plus" Size="20" />
                 <span>Create Adventure</span>
-            </button>
+            </a>
         </header>
 
         <div class="dashboard-grid">
