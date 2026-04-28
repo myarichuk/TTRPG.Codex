@@ -19,3 +19,6 @@
 ## 2025-04-24 - Convert Clickable Divs to Native Buttons for Lists and Cards
 **Learning:** Found an accessibility issue pattern where card layouts acting as actions (like "Add Player" card, "New Storyline" empty state, or character lists) were marked up as clickable `<div>` elements. This makes them inaccessible to screen readers and keyboard users as they lack semantic meaning and standard button focus/activation behaviors.
 **Action:** When creating or fixing clickable card elements, ensure the main interaction area uses a native `<button>` element with appropriate `aria-label` tags and `:focus-visible` CSS outlines to preserve keyboard usability and screen reader accessibility.
+## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
+**Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
+**Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.

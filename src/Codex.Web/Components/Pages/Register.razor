@@ -30,17 +30,17 @@
 
         <div class="mb-3 text-start">
             <label for="username" class="form-label small text-secondary">Account Username</label>
-            <InputText id="username" class="form-control w-100" placeholder="dm" @bind-Value="Model!.Username" />
+            <InputText id="username" class="form-control w-100" placeholder="dm" autocomplete="username" required @bind-Value="Model!.Username" />
         </div>
 
         <div class="mb-3 text-start">
             <label for="password" class="form-label small text-secondary">Secret Key</label>
-            <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••" @bind-Value="Model!.Password" />
+            <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••" autocomplete="new-password" required @bind-Value="Model!.Password" />
         </div>
 
         <div class="mb-4 text-start">
             <label for="confirmPassword" class="form-label small text-secondary">Confirm Secret Key</label>
-            <InputText id="confirmPassword" type="password" class="form-control w-100" placeholder="••••••••" @bind-Value="Model!.ConfirmPassword" />
+            <InputText id="confirmPassword" type="password" class="form-control w-100" placeholder="••••••••" autocomplete="new-password" required @bind-Value="Model!.ConfirmPassword" />
         </div>
 
         <button type="submit" class="btn-accent w-100 mt-2">Initiate Account</button>
