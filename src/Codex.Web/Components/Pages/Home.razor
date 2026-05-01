@@ -9,7 +9,7 @@
 
 <PageTitle>Dashboard | TTRPG.Codex</PageTitle>
 
-@if (campaigns == null || characters == null)
+@if (campaigns == null)
 {
     <div class="d-flex justify-content-center my-5 py-5">
         <div class="spinner-border text-accent" role="status">
@@ -85,7 +85,17 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                        @if (characters.Any())
+                        @if (characters == null)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="spinner-border spinner-border-sm text-accent" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else if (characters.Any())
                         {
                             @foreach (var character in characters)
                             {
