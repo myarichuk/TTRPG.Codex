@@ -49,10 +49,6 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
-button.player-card:focus-visible {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
-}
 
 .player-header {
     display: flex;
@@ -118,10 +114,6 @@ button.player-card:focus-visible {
     border-color: var(--text-tertiary);
 }
 
-button.character-chip:focus-visible {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
-}
 
 .char-name {
     font-size: 0.85rem;

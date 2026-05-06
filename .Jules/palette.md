@@ -22,3 +22,7 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+
+## 2025-06-15 - [Global Focus-Visible Consistency]
+**Learning:** Found inconsistent and scattered `:focus-visible` styles implemented in individual component scoped CSS files (e.g., `CampaignList.razor.css`, `Players.razor.css`). This duplication risks regressions and accessibility gaps when new components are added.
+**Action:** When applying keyboard accessibility features like focus rings, centralize the styles in the global `app.css` by targeting generic semantic selectors (`button`, `a`, `input`, `[role="button"]`). This ensures a unified, app-wide accessibility baseline.
