@@ -132,10 +132,6 @@ h1 { font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
     box-shadow: 0 12px 30px rgba(0,0,0,0.4);
 }
 
-button.campaign-card:focus-visible {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
-}
 
 .art-preview {
     height: 140px;
@@ -281,6 +277,16 @@ button.campaign-card:focus-visible {
 }
 
 .table tr:hover td { color: var(--text-primary); }
+
+/* Base interactive element accessibility */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
 
 .btn-accent {
     background-color: var(--accent-color);
