@@ -13,12 +13,19 @@
 ## 2025-02-14 - Keyboard Inaccessible Interactive Divs
 **Learning:** Found a recurring pattern in the Blazor application where `<div>` elements act as buttons (e.g., clicking to create a campaign). Screen readers and keyboard users cannot interact with these pseudo-buttons, as they don't natively receive focus or trigger via Enter/Space.
 **Action:** When adding clickable components or 'cards' that behave like buttons, always use native `<button>` tags instead of `<div>`s. This ensures built-in keyboard accessibility, supports the `disabled` state for loading operations, and works natively with screen readers. Additionally, remember to add an `aria-label` and `:focus-visible` indicator.
+
 ## 2024-04-24 - Convert Clickable Divs to Native Buttons for Interactive Chips
 **Learning:** Found a pattern in the Blazor app where `.filter-chip` and `.category-chip` elements were implemented as clickable `<div>` elements. This makes them inaccessible to keyboard users and screen readers, as they lack semantic meaning, focus states, and the ability to be activated via the Enter/Space keys.
 **Action:** Always convert interactive "chip" or "pill" components from `<div>` to `<button type="button">`. Add `aria-pressed="true|false"` when they act as toggles, and ensure `:focus-visible` styles are implemented to support keyboard navigation.
+
 ## 2025-04-24 - Convert Clickable Divs to Native Buttons for Lists and Cards
 **Learning:** Found an accessibility issue pattern where card layouts acting as actions (like "Add Player" card, "New Storyline" empty state, or character lists) were marked up as clickable `<div>` elements. This makes them inaccessible to screen readers and keyboard users as they lack semantic meaning and standard button focus/activation behaviors.
 **Action:** When creating or fixing clickable card elements, ensure the main interaction area uses a native `<button>` element with appropriate `aria-label` tags and `:focus-visible` CSS outlines to preserve keyboard usability and screen reader accessibility.
+
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+
+## 2025-06-01 - Global focus-visible indicator
+**Learning:** Many interactive elements lack a clear focus indicator, making keyboard navigation difficult for users who rely on it. A global `:focus-visible` outline provides consistent and predictable feedback across the application.
+**Action:** Add a global `:focus-visible` style rule to `app.css` to ensure all interactive elements display a clear visual indicator when focused via keyboard navigation.
