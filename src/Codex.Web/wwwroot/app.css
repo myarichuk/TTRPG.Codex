@@ -580,3 +580,9 @@ button.campaign-card:focus-visible {
     scrollbar-width: thin;
     scrollbar-color: var(--fluent-surface-hover) var(--bg-color-main);
 }
+
+/* Global focus-visible accessibility outline */
+:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
