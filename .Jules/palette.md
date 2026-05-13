@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2026-05-13 - Adding aria-label to inputs with only placeholders
+**Learning:** Inputs that only use `placeholder` attributes for labels are inaccessible to screen readers. Adding an `aria-label` attribute that matches the placeholder text ensures the input's purpose is announced correctly.
+**Action:** Always check inputs in forms and search bars to ensure they have an explicit `<label>` or an `aria-label` attribute.
