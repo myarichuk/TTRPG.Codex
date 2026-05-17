@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2025-05-19 - [Adding type="button" to interactive elements]
+**Learning:** Found a recurring issue where native `<button>` elements added to Blazor forms or pages lacked explicit `type="button"` attributes. Browsers default button elements to `type="submit"`, which can cause unintended full page reloads or form submissions when the button is simply meant to trigger an interactive component or Javascript action.
+**Action:** When creating or converting clickable elements to `<button>`, always add `type="button"` unless the button is explicitly intended to submit a form.
