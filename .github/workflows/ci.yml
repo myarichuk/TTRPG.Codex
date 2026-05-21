@@ -17,8 +17,8 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ ! "$PR_TITLE" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?:[[:space:]].*$ ]]; then
-            echo "::error::PR title does not follow conventional commits. It must match ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?: .*$"
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?:[[:space:]].*$ ]] && [[ ! "$PR_TITLE" =~ ^🎨\ Palette:[[:space:]].*$ ]]; then
+            echo "::error::PR title does not follow conventional commits or the UX agent prefix. It must match ^(feat|fix|chore|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?!?: .*$ or start with '🎨 Palette: '"
             exit 1
           fi
 
