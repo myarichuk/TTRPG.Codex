@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2025-05-18 - [ARIA Labels for Search Inputs]
+**Learning:** Found an accessibility issue pattern where search inputs (like the search bar in the Players component) lacked an `aria-label`. Without this, screen readers may not announce the purpose of the input clearly, especially when there is no visible label text and only a placeholder is used.
+**Action:** When creating or reviewing input fields, particularly search bars or inputs without explicit `<label>` elements, always include an `aria-label` to describe the input's purpose to assistive technologies.
