@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2025-05-19 - [Missing aria-label on Search Inputs]
+**Learning:** Found an accessibility issue where search input elements (e.g., `<input type="text" class="search-input">`) lacked `aria-label` attributes while also not having an associated `<label>` element. This prevents screen readers from understanding the input's purpose.
+**Action:** When adding or reviewing input elements, especially standalone search bars, ensure they have a descriptive `aria-label` attribute if an explicit `<label>` element is not present.
