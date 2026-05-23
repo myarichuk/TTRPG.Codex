@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2025-05-19 - [Form Required Indicators]
+**Learning:** Found an accessibility issue pattern where required form fields (like Login and Register inputs) lacked visual indicators (e.g. asterisks) and semantic attributes (`aria-required="true"`). Without these, both sighted users and screen reader users may not know which fields are mandatory.
+**Action:** Always append a visual required indicator (`<span class="text-danger" aria-hidden="true">*</span>`) to form labels and add `aria-required="true"` to the corresponding input elements when a field is required.
