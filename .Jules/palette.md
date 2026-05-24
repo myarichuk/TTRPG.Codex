@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2025-05-24 - [Visual and ARIA Required Indicators for Forms]
+**Learning:** Adding explicit ARIA required tags (`aria-required="true"`) alongside visually obvious asterisks is essential for forms. The native HTML `required` attribute may not consistently signal requirement states to all screen readers in Blazor applications, and visual styling (like red asterisks) provides necessary context for sighted users.
+**Action:** When creating or updating form fields, always append a `<span class="text-danger" aria-hidden="true">*</span>` to the `<label>` of required inputs, and ensure the input element explicitly declares `aria-required="true"`.
