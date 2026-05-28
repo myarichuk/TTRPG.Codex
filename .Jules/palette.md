@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2024-05-28 - Add Focus Visible States
+**Learning:** Blazor components often define scoped interactive elements like `.btn-add` or `.btn-sparkle` without default `:focus-visible` states, reducing keyboard accessibility visibility. Also, adding decorative characters (like arrows) to links requires an `aria-label` to prevent screen reader clutter.
+**Action:** Always verify custom button classes include an explicit `:focus-visible` state (e.g., using `outline: 2px solid var(--accent-color); outline-offset: 2px;`) and provide clean `aria-label`s when using decorative text.

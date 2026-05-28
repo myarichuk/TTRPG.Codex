@@ -147,6 +147,11 @@ button.character-chip:focus-visible {
     gap: 8px;
 }
 
+.btn-add-player:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .ai-sparkle-btn {
     background: var(--fluent-surface-secondary);
     border: 1px solid var(--fluent-border-strong);
@@ -164,6 +169,11 @@ button.character-chip:focus-visible {
 .ai-sparkle-btn:hover {
     border-color: #a855f7;
     color: #a855f7;
+}
+
+.ai-sparkle-btn:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
 }
 
 .cursor-pointer {

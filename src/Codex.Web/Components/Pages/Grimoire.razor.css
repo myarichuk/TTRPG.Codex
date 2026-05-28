@@ -55,6 +55,11 @@
     transform: translateY(-1px);
 }
 
+.btn-add:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .ai-sparkle-btn {
     background: var(--fluent-surface-secondary);
     border: 1px solid var(--fluent-border-strong);
@@ -225,4 +230,9 @@
 
 .btn-action:hover {
     color: var(--text-primary);
+}
+
+.btn-action:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
 }
