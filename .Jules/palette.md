@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## $(date +%Y-%m-%d) - Players Page Input ARIA Label
+**Learning:** When adding generic HTML elements like `<input>` without an associated `<label>`, it is crucial to add a descriptive `aria-label` attribute (e.g., `aria-label="Search players or characters"`) so that screen readers can convey the purpose of the input. Relying solely on `placeholder` text is insufficient for accessibility.
+**Action:** When adding or modifying `<input>` elements in the UI that lack a visible label, ensure an `aria-label` is always provided.
