@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2026-06-10 - Screen reader accessibility for decorative trailing arrows
+**Learning:** Decorative characters added at the end of links (like '→') are read aloud by screen readers, creating a confusing experience. While 'aria-label' on the link overrides its text content, wrapping the decorative character in '<span aria-hidden="true">' provides a robust, explicit mechanism to hide it, ensuring it won't be announced regardless of context.
+**Action:** When adding visual indicator characters like trailing arrows to links or buttons, provide a clean 'aria-label' on the parent element and wrap the decorative character in a '<span aria-hidden="true">'.
