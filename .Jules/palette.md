@@ -22,3 +22,6 @@
 ## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
 **Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
 **Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2024-06-18 - [Global Focus Visible Indicators]
+**Learning:** Found that while some specific components (like `button.campaign-card`) had focus outlines, the application lacked a consistent, global `:focus-visible` indicator for basic interactive elements (links, standard buttons, inputs). This makes keyboard navigation difficult as users cannot consistently see where their focus is on the page.
+**Action:** Implement a global `:focus-visible` reset in the main stylesheet (`app.css`) using the design system's accent color to ensure all interactive elements have a clear, visible focus state by default.
