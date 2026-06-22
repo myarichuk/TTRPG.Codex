@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2026-06-22 - [Missing Search Input aria-label]
+**Learning:** Found an accessibility issue where search input fields lack an explicit aria-label attribute, making it difficult for screen readers to understand the field's purpose when a visual label is absent (relying solely on placeholder text is insufficient).
+**Action:** Always add a descriptive aria-label attribute to input fields that do not have an explicitly associated label element.
