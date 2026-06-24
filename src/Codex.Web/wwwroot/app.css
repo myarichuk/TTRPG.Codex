@@ -580,3 +580,14 @@ button.campaign-card:focus-visible {
     scrollbar-width: thin;
     scrollbar-color: var(--fluent-surface-hover) var(--bg-color-main);
 }
+
+/* Global Accessibility - Keyboard Navigation Focus Ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
