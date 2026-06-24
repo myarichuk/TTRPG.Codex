@@ -26,3 +26,7 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+
+## 2024-06-24 - [Global Focus-Visible Outlines]
+**Learning:** Keyboard users often lose track of their position on the page because default browser focus rings are sometimes hidden by CSS resets, inconsistent across browsers, or have poor contrast against custom themes.
+**Action:** Always include a global `:focus-visible` rule in the base stylesheet (using a highly visible color like `--accent-color` and `outline-offset`) to ensure all interactive elements naturally support robust keyboard navigation out of the box.
