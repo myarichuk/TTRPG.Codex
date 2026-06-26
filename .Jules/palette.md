@@ -26,3 +26,7 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+
+## 2025-08-01 - [Empty State UX for Tables]
+**Learning:** Found a pattern where table empty states were rendered as plain text in rows. Standardizing empty states with icons and descriptive text improves readability and user guidance.
+**Action:** When implementing tables, use a consistent empty state layout with an icon, heading, and description to guide users.
