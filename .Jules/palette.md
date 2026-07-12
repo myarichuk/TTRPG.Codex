@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2024-05-30 - Search Input Label and Button Types in Players
+**Learning:** Some custom UI search inputs rely only on placeholders without explicit screen-reader labels. Adding `aria-label` provides the missing context. Also, buttons placed loosely in Razor components should explicitly use `type="button"` to avoid defaulting to `submit` and triggering unintended postbacks if later enclosed in an `EditForm`.
+**Action:** Ensure all non-form buttons define `type="button"` and inputs without visual `<label>` elements are backed by `aria-label`.
