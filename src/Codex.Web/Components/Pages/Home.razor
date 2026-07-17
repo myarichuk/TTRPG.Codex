@@ -25,7 +25,7 @@ else
                 <h1>Your Worlds</h1>
                 <p class="page-subtitle">Welcome back. You have <span>@campaigns.Count()</span> active @(campaigns.Count() == 1 ? "campaign" : "campaigns").</p>
             </div>
-            <button class="btn btn-accent d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-accent d-flex align-items-center gap-2">
                 <LucideIcon IconName="plus" Size="20" />
                 <span>Create Adventure</span>
             </button>
@@ -120,7 +120,7 @@ else
             <span class="small fw-bold text-accent d-flex align-items-center gap-2">
                 <LucideIcon IconName="sparkles" Size="14" /> Oracle Suggestion
             </span>
-            <button class="btn-close btn-close-white" style="font-size: 0.6rem;" aria-label="Dismiss Oracle Suggestion" @onclick="HideToast"></button>
+            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" aria-label="Dismiss Oracle Suggestion" @onclick="HideToast"></button>
         </div>
         <div class="small text-secondary mb-4" style="line-height: 1.6;">
             @if (isConsulting)
@@ -135,8 +135,8 @@ else
             }
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-sm w-100 btn-outline-secondary" style="font-size: 0.75rem;" @onclick="HideToast">Dismiss</button>
-            <button class="btn btn-sm w-100 btn-accent" style="font-size: 0.75rem;" @onclick="HideToast">Use This</button>
+            <button type="button" class="btn btn-sm w-100 btn-outline-secondary" style="font-size: 0.75rem;" @onclick="HideToast">Dismiss</button>
+            <button type="button" class="btn btn-sm w-100 btn-accent" style="font-size: 0.75rem;" @onclick="HideToast">Use This</button>
         </div>
     </div>
 }
