@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2024-07-18 - Required Field Indicators in Blazor Forms
+**Learning:** When using standard HTML5 `required` attributes on `<InputText>` elements in Blazor `EditForm` components, screen readers rely heavily on implicit native behavior. Explicitly adding an aria-hidden visual indicator (like a red asterisk `<span class="text-danger" aria-hidden="true">*</span>`) to the label, coupled with an explicit `aria-required="true"` on the input field, provides a much stronger, more reliable, and universally accessible cue for both sighted and visually impaired users.
+**Action:** When indicating required form fields in the Blazor UI, append `<span class="text-danger" aria-hidden="true">*</span>` to the `<label>` and add `aria-required="true"` to the corresponding input element (e.g., `<InputText>`) to ensure consistent styling and screen reader accessibility.
