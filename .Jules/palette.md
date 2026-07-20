@@ -26,3 +26,7 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+
+## 2026-06-05 - [Table Empty States in Blazor]
+**Learning:** Found a pattern where empty states in lists or tables were represented with generic, unstyled text. Replacing them with structured layouts using a relevant icon (`LucideIcon`), a clear heading (`<h3>`), and an explanatory subtitle (`<p class="text-tertiary">`) drastically improves the visual polish. Additionally, if the required `LucideIcon` doesn't render, its SVG definition needs to be added to `src/Codex.Web/Components/Layout/LucideIcon.razor`.
+**Action:** Always upgrade plain text empty states to use the standard application layout structure, ensuring that the necessary icon is correctly defined and renders as expected.
