@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2026-07-26 - Global Focus Styles
+**Learning:** The design system lacked consistent global focus rings, relying on element-specific ones. Global focus-visible styling ensures keyboard accessibility across all components.
+**Action:** Apply global focus rings using existing CSS variables like `--accent-color` to all interactive elements.

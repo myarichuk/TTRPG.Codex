@@ -137,6 +137,16 @@ button.campaign-card:focus-visible {
     outline-offset: 2px;
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .art-preview {
     height: 140px;
     width: 100%;
