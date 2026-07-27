@@ -26,3 +26,9 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2025-05-18 - [Form Autocomplete Attributes for Authentication]
+**Learning:** Found an accessibility issue where login and registration forms lacked explicit `autocomplete` and `required` attributes. This prevents password managers from accurately identifying fields and saving/filling credentials, degrading the user experience for secure workflows.
+**Action:** Always add appropriate `autocomplete` attributes (e.g., `username`, `current-password`, `new-password`) and `required` tags to `<InputText>` or `<input>` fields in authentication forms.
+## 2026-07-26 - [Visual Required Indicators on Form Fields]
+**Learning:** Found an accessibility issue where form fields with the `required` HTML attribute lacked a visual indicator (like an asterisk) in the `<label>`, and did not explicitly convey the required state to screen readers via `aria-required`. This makes it difficult for users (both sighted and those using assistive technologies) to identify mandatory fields before submitting.
+**Action:** When creating or updating form inputs that are required, always append a visual indicator (e.g., `<span class="text-danger" aria-hidden="true">*</span>`) to the label, and ensure the input element itself has `aria-required="true"`.
