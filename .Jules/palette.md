@@ -29,4 +29,4 @@
 
 ## 2026-06-25 - [Explicit Type on Interactive Buttons]
 **Learning:** Found a recurring pattern where interactive `<button>` elements used in UI layouts (like "Analyze Party" or "Add Player") omit the `type` attribute. This defaults them to `type="submit"`, which can cause unintended page reloads or form submissions if these layouts are ever wrapped in a `<form>` context in the future.
-**Action:** When implementing non-submitting interactive buttons, always explicitly set `type="button"` to ensure resilient component design and prevent accidental default submission behaviors.
+**Action:** When implementing non-submitting interactive buttons, always explicitly set `type="button"` to ensure resilient component design and prevent accidental default submission behaviors. (Ensuring new commit tracking for CI fix.)
