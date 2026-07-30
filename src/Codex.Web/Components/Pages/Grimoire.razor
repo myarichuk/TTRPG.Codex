@@ -10,11 +10,11 @@
         <input type="text" class="search-input" placeholder="Search spells, artifacts, or lore..." aria-label="Search spells, artifacts, or lore">
     </div>
     <div class="action-group">
-        <button class="ai-sparkle-btn" title="AI Generate Lore">
+        <button type="button" class="ai-sparkle-btn" title="AI Generate Lore">
             <LucideIcon IconName="sparkles" Size="16" />
             Generate
         </button>
-        <button class="btn-add">
+        <button type="button" class="btn-add">
             <LucideIcon IconName="plus" Size="18" />
             Add Entry
         </button>
@@ -37,7 +37,7 @@
         </div>
         <h3>The Grimoire is Silent</h3>
         <p>No spells, artifacts, or chronicles have been inscribed yet. Scribe your first entry to begin your hoard of knowledge.</p>
-        <button class="btn-add mt-3" @onclick="CreateFirstEntry">
+        <button type="button" class="btn-add mt-3" @onclick="CreateFirstEntry">
             <LucideIcon IconName="plus" Size="18" />
             Scribe First Entry
         </button>
