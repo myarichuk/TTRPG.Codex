@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2025-08-03 - [Consistent Empty States in Tables]
+**Learning:** Found a pattern where some tables (like "Recent Archives" on the Dashboard) used basic italicized text (`opacity-25`) to represent empty states, which creates an inconsistent experience and poor visual hierarchy compared to the standard card-based empty states.
+**Action:** When creating or updating empty states inside tables, replace basic text rows with a full centered layout containing a `LucideIcon` (with the `.empty-state-icon` and `.mx-auto` classes), a descriptive `<h3>` heading, and an explanatory `<p class="text-tertiary">` paragraph. Wrap these in a single `<tr>` with a `<td>` spanning all columns (`colspan="..."`) and padded (`class="text-center py-5"`).
