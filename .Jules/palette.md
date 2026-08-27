@@ -26,3 +26,7 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+
+## 2025-05-19 - [Global Keyboard Focus Accessibility]
+**Learning:** Found a recurring UX/accessibility issue where various interactive elements throughout the application (like inputs, selects, links, and textareas) lacked visible focus indicators when navigated via keyboard. Relying on individual component styles often leads to missed elements.
+**Action:** Implement a global `:focus-visible` styling rule for all common interactive tags (e.g., `a`, `button`, `input`, `select`, `textarea`, and elements with `tabindex`) to ensure consistent, highly visible keyboard navigation feedback across the entire application interface.
