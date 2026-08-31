@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2025-05-18 - [Form Required Field Indicators for Authentication]
+**Learning:** Found an accessibility issue where login and registration forms lacked explicit visual indicators for required fields, forcing users to rely on trial and error to figure out what was required.
+**Action:** Always add appropriate visual indicators (e.g. `<span class="text-danger" aria-hidden="true">*</span>`) to `<label>` elements for required fields, and add `aria-required="true"` to `<input>` or `<InputText>` fields in forms.
