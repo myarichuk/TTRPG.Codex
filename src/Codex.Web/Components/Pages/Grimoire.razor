@@ -10,11 +10,11 @@
         <input type="text" class="search-input" placeholder="Search spells, artifacts, or lore..." aria-label="Search spells, artifacts, or lore">
     </div>
     <div class="action-group">
-        <button class="ai-sparkle-btn" title="AI Generate Lore">
+        <button type="button" class="ai-sparkle-btn" title="AI Generate Lore">
             <LucideIcon IconName="sparkles" Size="16" />
             Generate
         </button>
-        <button class="btn-add">
+        <button type="button" class="btn-add">
             <LucideIcon IconName="plus" Size="18" />
             Add Entry
         </button>
@@ -37,7 +37,7 @@
         </div>
         <h3>The Grimoire is Silent</h3>
         <p>No spells, artifacts, or chronicles have been inscribed yet. Scribe your first entry to begin your hoard of knowledge.</p>
-        <button class="btn-add mt-3" @onclick="CreateFirstEntry">
+        <button type="button" class="btn-add mt-3" @onclick="CreateFirstEntry">
             <LucideIcon IconName="plus" Size="18" />
             Scribe First Entry
         </button>
@@ -55,7 +55,7 @@ else
                 <p class="lore-desc">@entry.Description</p>
                 <div class="mt-auto d-flex justify-content-between align-items-center">
                     <span class="tag-pill">@entry.Tag</span>
-                    <button class="btn-action" aria-label="View details for @entry.Title" title="View details"><LucideIcon IconName="external-link" Size="14" /></button>
+                    <button type="button" class="btn-action" aria-label="View details for @entry.Title" title="View details"><LucideIcon IconName="external-link" Size="14" /></button>
                 </div>
             </div>
         }
@@ -84,8 +84,8 @@ else
                         <td><span class="text-secondary small">@entry.Category</span></td>
                         <td><span class="text-tertiary small">@entry.CreatedAt.ToString("MMM dd, yyyy")</span></td>
                         <td class="text-end">
-                            <button class="btn-action mx-1" aria-label="Edit @entry.Title" title="Edit"><LucideIcon IconName="edit-3" Size="16" /></button>
-                            <button class="btn-action mx-1" aria-label="Delete @entry.Title" title="Delete"><LucideIcon IconName="trash-2" Size="16" /></button>
+                            <button type="button" class="btn-action mx-1" aria-label="Edit @entry.Title" title="Edit"><LucideIcon IconName="edit-3" Size="16" /></button>
+                            <button type="button" class="btn-action mx-1" aria-label="Delete @entry.Title" title="Delete"><LucideIcon IconName="trash-2" Size="16" /></button>
                         </td>
                     </tr>
                 }

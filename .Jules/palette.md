@@ -26,3 +26,7 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+
+## 2025-06-25 - [Interactive Components Need Explicit Button Type]
+**Learning:** Found a recurring pattern where native `<button>` elements in interactive Blazor components lack the `type` attribute. While they may trigger click events, the browser defaults `<button>` elements to `type="submit"`. Inside forms or other interactive areas, this can cause unintended page reloads or form submissions.
+**Action:** When adding or reviewing clickable `<button>` elements, always explicitly define `type="button"` unless they are specifically meant to submit a form.
