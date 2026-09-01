@@ -11,7 +11,7 @@
 <div class="container mt-4">
     <h1 class="mb-4">Character Demo</h1>
 
-    <button class="btn btn-primary px-4 shadow-sm" @onclick="CreateTestEntity">Create Test Entity</button>
+    <button type="button" class="btn btn-primary px-4 shadow-sm" @onclick="CreateTestEntity">Create Test Entity</button>
     <br/><br/>
 
     @if (entity.IsAlive)
@@ -22,7 +22,7 @@
                 var pool = entity.Get<ResourcePoolComponent>();
                 <h5 class="mb-3">Entity Status</h5>
                 <p><strong>Current HP:</strong> @pool.Get("HP") / @pool.Get("HP_Max")</p>
-                <button class="btn btn-danger px-4 shadow-sm mt-2" @onclick="TakeDamage">Take 1 Damage</button>
+                <button type="button" class="btn btn-danger px-4 shadow-sm mt-2" @onclick="TakeDamage">Take 1 Damage</button>
             }
         </div>
     }
