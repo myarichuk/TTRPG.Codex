@@ -26,3 +26,7 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+
+## 2026-06-10 - [Empty State Consistency in Tables]
+**Learning:** Found an empty state in a data table (`Home.razor` "Recent Archives") that just used plain italic text instead of following the app's established empty state component patterns. Text-only empty states represent missed UX opportunities for visual consistency and guiding the user.
+**Action:** When updating or creating empty states in tables, always use a centered layout within a full-spanning cell (`colspan` on `<td>`), and include an `.empty-state-icon` container with a `LucideIcon`, a bold heading, and a descriptive subtitle to maintain UI consistency and better guide users.
