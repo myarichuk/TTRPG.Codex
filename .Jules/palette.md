@@ -26,3 +26,6 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2026-09-18 - Add global keyboard focus rings
+**Learning:** Found that while some specific buttons had focus indicators (like campaign cards), many interactive elements in Codex.Web lack consistent `:focus-visible` states, resulting in poor keyboard navigation.
+**Action:** Created global a11y focus rings for all interactive elements (`button`, `a`, `input`, `select`, `textarea`) in `app.css`, utilizing existing design tokens like `--accent-color`.
