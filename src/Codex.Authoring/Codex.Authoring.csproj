@@ -15,6 +15,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="FluentAvaloniaUI" Version="2.5.1" />
     <PackageReference Include="Lucide.Avalonia" Version="0.2.3" />
+    <!-- B19: pin above Avalonia's transitive 0.21.2, which carries GHSA-xrw6-gwf8-vvr9. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.95.1" />
   </ItemGroup>
 
   <ItemGroup>
