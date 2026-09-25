@@ -1,7 +1,7 @@
 # Plan: Redesign Codex.Authoring App
 
 ## Background & Motivation
-The current `Codex.Authoring` application features a basic graph editor. However, to fulfill its role as a comprehensive TTRPG content authoring tool, it needs to support convenient, intuitive, and themed (light/dark) creation of Abilities, Actors (NPCs, PCs), and Locations. Since Codex supports multiple systems (e.g., D&D 5e, SWFFG), the UI must dynamically adapt to the specific data requirements of each system without hardcoding.
+The current `Codex.Authoring` application features a basic graph editor. However, to fulfill its role as a comprehensive TTRPG content authoring tool, it needs to support convenient, intuitive, and themed (light/dark) creation of Abilities, Actors (NPCs, PCs), and Locations. Since Codex supports multiple systems (e.g., D&D 5e), the UI must dynamically adapt to the specific data requirements of each system without hardcoding.
 
 Crucially, we've identified that many data types (not just Locations) are best edited via a graph-based interface, including:
 - **Story Flows**: Narratives and quest lines.
