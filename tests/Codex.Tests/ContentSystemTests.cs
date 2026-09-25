@@ -7,6 +7,7 @@ using Codex.Core;
 using Codex.Core.Models;
 using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
 
@@ -15,7 +16,7 @@ namespace Codex.Tests;
 public class ContentSystemTests : IDisposable
 {
     private readonly string _tempPath;
-    private readonly ScriptEvaluator _evaluator = new();
+    private readonly ScriptEvaluator _evaluator = new(NullLogger<ScriptEvaluator>.Instance);
 
     public ContentSystemTests()
     {
