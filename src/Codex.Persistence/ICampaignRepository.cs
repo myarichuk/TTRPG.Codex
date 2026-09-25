@@ -31,5 +31,5 @@ public interface ICampaignRepository
     /// Redeems an invite code, adding <paramref name="userId"/> as a <see cref="CampaignRole.Player"/>
     /// member if the code resolves to a campaign and that user isn't already a member (2.4).
     /// </summary>
-    Task<CampaignJoinResult> JoinByInviteCodeAsync(string inviteCode, string userId);
+    Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId);
 }

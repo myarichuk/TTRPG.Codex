@@ -89,23 +89,23 @@ public class CampaignRepository(
         return CampaignDeleteResult.Deleted;
     }
 
-    public async Task<CampaignJoinResult> JoinByInviteCodeAsync(string inviteCode, string userId)
+    public async Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId)
     {
         using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
         var campaign = await session.Query<CampaignDocument>()
             .FirstOrDefaultAsync(c => c.InviteCode == inviteCode);
         if (campaign == null)
         {
-            return CampaignJoinResult.InvalidCode;
+            return (CampaignJoinResult.InvalidCode, null);
         }
 
         if (campaign.Members.Any(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)))
         {
-            return CampaignJoinResult.AlreadyMember;
+            return (CampaignJoinResult.AlreadyMember, campaign.Id);
         }
 
         campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
         await session.SaveChangesAsync();
-        return CampaignJoinResult.Joined;
+        return (CampaignJoinResult.Joined, campaign.Id);
     }
 }

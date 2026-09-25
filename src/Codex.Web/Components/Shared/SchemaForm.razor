@@ -1,0 +1,116 @@
+@* Schema-driven form renderer (2.2): the web-side renderer of Codex.Plugin.Abstractions.UISchema,
+   the same schema ICodexSystemPlugin.GetUISchemas() feeds the Authoring app's own renderer. One
+   schema, two renderers - this one only handles PreferredEditor.Form; Graph/Hybrid/Timeline
+   schemas say so instead of pretending to be a form. *@
+@using Codex.Plugin.Abstractions
+
+@if (Schema.PreferredEditor != PreferredEditor.Form)
+{
+    <p class="text-tertiary small fst-italic">
+        This entity's schema (@Schema.EntityType) prefers a @Schema.PreferredEditor.ToString().ToLowerInvariant() editor,
+        which isn't available here yet - use the Authoring app for it.
+    </p>
+}
+else
+{
+    @foreach (var group in Schema.Fields.GroupBy(f => f.Category ?? "General"))
+    {
+        <fieldset class="schema-form-group mb-3">
+            <legend class="h6 text-tertiary text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">@group.Key</legend>
+            @foreach (var field in group)
+            {
+                <div class="mb-2">
+                    <label class="form-label small">@field.Label @(field.IsRequired ? "*" : "")</label>
+                    @RenderField(field)
+                    @if (!string.IsNullOrWhiteSpace(field.Description))
+                    {
+                        <div class="form-text small">@field.Description</div>
+                    }
+                </div>
+            }
+        </fieldset>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public UISchema Schema { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public Dictionary<string, object> Values { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<Dictionary<string, object>> ValuesChanged { get; set; }
+
+    private object? GetValue(FieldDefinition field) =>
+        Values.TryGetValue(field.Key, out var value) ? value : field.DefaultValue;
+
+    private async Task SetValueAsync(FieldDefinition field, object? value)
+    {
+        if (value == null)
+        {
+            Values.Remove(field.Key);
+        }
+        else
+        {
+            Values[field.Key] = value;
+        }
+
+        await ValuesChanged.InvokeAsync(Values);
+    }
+
+    private RenderFragment RenderField(FieldDefinition field) => field.Type switch
+    {
+        FieldType.Number => @<input type="number" class="form-control form-control-sm"
+                                     value="@GetValue(field)"
+                                     @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString())))" />,
+
+        FieldType.Boolean => @<input type="checkbox" class="form-check-input"
+                                      checked="@(GetValue(field) is true)"
+                                      @onchange="@(e => SetValueAsync(field, (bool)(e.Value ?? false)))" />,
+
+        FieldType.Dropdown => @<select class="form-select form-select-sm"
+                                        value="@GetValue(field)?.ToString()"
+                                        @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
+            <option value="">-- Select --</option>
+            @foreach (var option in field.Options ?? new List<string>())
+            {
+                <option value="@option">@option</option>
+            }
+        </select>,
+
+        FieldType.LongText => @<textarea class="form-control form-control-sm" rows="3"
+                                          value="@GetValue(field)?.ToString()"
+                                          @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
+
+        FieldType.TagList => @<input type="text" class="form-control form-control-sm"
+                                      placeholder="Comma-separated"
+                                      value="@string.Join(", ", GetTags(field))"
+                                      @onchange="@(e => SetValueAsync(field, SplitTags(e.Value?.ToString())))" />,
+
+        FieldType.EntityReference or FieldType.Collection or FieldType.ImagePicker =>
+            @<input type="text" class="form-control form-control-sm" disabled
+                     value="@DescribeUnsupported(field)" />,
+
+        _ => @<input type="text" class="form-control form-control-sm"
+                      value="@GetValue(field)?.ToString()"
+                      @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />
+    };
+
+    private static object? ParseNumber(string? raw) =>
+        double.TryParse(raw, out var parsed) ? parsed : null;
+
+    private IEnumerable<string> GetTags(FieldDefinition field) => GetValue(field) switch
+    {
+        List<string> list => list,
+        IEnumerable<object> objects => objects.Select(o => o.ToString() ?? ""),
+        string s => SplitTags(s),
+        _ => Enumerable.Empty<string>()
+    };
+
+    private static List<string> SplitTags(string? raw) =>
+        (raw ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private string DescribeUnsupported(FieldDefinition field) =>
+        $"Edit via the Authoring app ({field.Type})";
+}

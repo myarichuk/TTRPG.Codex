@@ -1,0 +1,55 @@
+@page "/campaigns/join/{InviteCode}"
+@using System.Security.Claims
+@using Codex.Persistence
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICampaignRepository CampaignRepo
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<PageTitle>Join Campaign</PageTitle>
+
+<div class="app-container">
+    <div class="empty-state text-center py-5">
+        @if (result == null)
+        {
+            <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Joining...</span></div>
+        }
+        else if (result == CampaignJoinResult.InvalidCode)
+        {
+            <h3>Invalid invite link</h3>
+            <p class="text-tertiary">This invite code doesn't match any campaign.</p>
+            <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
+        }
+        else
+        {
+            @* Joined vs. AlreadyMember isn't a reliable distinction to show here: interactive
+               server rendering with prerendering runs OnInitializedAsync twice - once during the
+               static prerender, once for the live circuit - so a genuinely first-time join can
+               legitimately resolve as Joined on the first pass and AlreadyMember on the second.
+               Either way the membership is in place, so both get the same message. *@
+            <h3>You're in!</h3>
+            <a href="/campaigns/@joinedCampaignId" class="btn btn-accent mt-3">Go to Campaign</a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string InviteCode { get; set; } = string.Empty;
+
+    private CampaignJoinResult? result;
+    private string? joinedCampaignId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}", forceLoad: true);
+            return;
+        }
+
+        (result, joinedCampaignId) = await CampaignRepo.JoinByInviteCodeAsync(InviteCode, userId);
+    }
+}

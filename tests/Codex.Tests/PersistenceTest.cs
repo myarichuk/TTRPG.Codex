@@ -413,6 +413,113 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Null(await _sessionRepository.GetAsync(sessionDoc.Id));
     }
 
+    [Fact]
+    public async Task RegionRepository_AsPlayer_HidesUnrevealedLocations_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Sword Coast" };
+        Assert.True(await _regionRepository.SaveAsync(region, dmAccess));
+
+        var revealed = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Waterdeep", Visibility = ActorVisibility.Known };
+        var secret = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Skullport", Visibility = ActorVisibility.Hidden };
+        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, revealed, dmAccess));
+        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, secret, dmAccess));
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<RegionDocument, RegionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var forPlayer = (await _regionRepository.GetVisibleForCampaignAsync(playerAccess)).Single();
+        Assert.Single(forPlayer.Locations);
+        Assert.Equal("Waterdeep", forPlayer.Locations[0].Name);
+
+        var forDm = (await _regionRepository.GetVisibleForCampaignAsync(dmAccess)).Single();
+        Assert.Equal(2, forDm.Locations.Count);
+    }
+
+    [Fact]
+    public async Task RegionRepository_SetLocationVisibilityAsync_AsPlayer_IsRejected_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The North" };
+        await _regionRepository.SaveAsync(region, dmAccess);
+        var location = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Icewind Dale", Visibility = ActorVisibility.Hidden };
+        await _regionRepository.UpsertLocationAsync(region.Id, location, dmAccess);
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var result = await _regionRepository.SetLocationVisibilityAsync(region.Id, location.Id, ActorVisibility.Known, playerAccess);
+
+        Assert.False(result);
+        var stillHidden = (await _regionRepository.GetAsync(region.Id, dmAccess))!.Locations.Single();
+        Assert.Equal(ActorVisibility.Hidden, stillHidden.Visibility);
+    }
+
+    [Fact]
+    public async Task FactRepository_AsPlayer_SeesPublicAndOwnKnowersOnlyFacts_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        const string myActorId = "actor-mine";
+
+        var publicFact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The king is dead", Visibility = FactVisibility.Public };
+        var knownToMe = new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The killer's name",
+            Visibility = FactVisibility.KnowersOnly, KnownBy = new List<KnowerEntry> { new(myActorId, KnowledgeLevel.Full) }
+        };
+        var knownToSomeoneElse = new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "A rival's secret",
+            Visibility = FactVisibility.KnowersOnly, KnownBy = new List<KnowerEntry> { new("actor-not-mine", KnowledgeLevel.Full) }
+        };
+        var dmOnly = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The DM's plot twist", Visibility = FactVisibility.DmOnly };
+
+        foreach (var fact in new[] { publicFact, knownToMe, knownToSomeoneElse, dmOnly })
+        {
+            Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
+        }
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var visible = (await _factRepository.GetVisibleForCampaignAsync(playerAccess, new HashSet<string> { myActorId })).ToList();
+
+        Assert.Equal(2, visible.Count);
+        Assert.Contains(visible, f => f.Summary == "The king is dead");
+        Assert.Contains(visible, f => f.Summary == "The killer's name");
+        Assert.DoesNotContain(visible, f => f.Summary == "A rival's secret");
+        Assert.DoesNotContain(visible, f => f.Summary == "The DM's plot twist");
+    }
+
+    [Fact]
+    public async Task JoinByInviteCodeAsync_AddsPlayerMember_AndIsIdempotent_Async()
+    {
+        var campaign = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner-3", Name = "Curse of Strahd" };
+        await _campaignRepository.SaveAsync(campaign);
+
+        var (firstResult, firstCampaignId) = await _campaignRepository.JoinByInviteCodeAsync(campaign.InviteCode, "player-2");
+        Assert.Equal(CampaignJoinResult.Joined, firstResult);
+        Assert.Equal(campaign.Id, firstCampaignId);
+
+        var reloaded = await _campaignRepository.GetAsync(campaign.Id);
+        Assert.Contains(reloaded!.Members, m => m.UserId == "player-2" && m.Role == CampaignRole.Player);
+
+        var (secondResult, _) = await _campaignRepository.JoinByInviteCodeAsync(campaign.InviteCode, "player-2");
+        Assert.Equal(CampaignJoinResult.AlreadyMember, secondResult);
+
+        var (badResult, badCampaignId) = await _campaignRepository.JoinByInviteCodeAsync("not-a-real-code", "player-2");
+        Assert.Equal(CampaignJoinResult.InvalidCode, badResult);
+        Assert.Null(badCampaignId);
+    }
+
     public void Dispose()
     {
         _dbService.Dispose();

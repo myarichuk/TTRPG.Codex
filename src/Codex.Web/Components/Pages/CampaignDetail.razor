@@ -1,0 +1,537 @@
+@page "/campaigns/{CampaignId}"
+@using System.Security.Claims
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Codex.Web.Components.Layout
+@using Codex.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICampaignRepository CampaignRepo
+@inject IActorRepository ActorRepo
+@inject IRegionRepository RegionRepo
+@inject IFactRepository FactRepo
+@inject ISessionRepository SessionRepo
+@inject ICampaignAccessResolver AccessResolver
+@inject IContentRegistry ContentRegistry
+@inject ISystemCatalog SystemCatalog
+@inject IUserRepository UserRepo
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(campaign?.Name ?? "Campaign")</PageTitle>
+
+<div class="app-container">
+@if (loading)
+{
+    <div class="d-flex justify-content-center my-5 py-5">
+        <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
+}
+else if (campaign == null)
+{
+    <div class="empty-state text-center py-5">
+        <h3>Campaign not found</h3>
+        <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
+    </div>
+}
+else if (access == null)
+{
+    <div class="empty-state text-center py-5">
+        <h3>You're not a member of this campaign</h3>
+        <p class="text-tertiary">Ask the DM for an invite link.</p>
+        <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
+    </div>
+}
+else
+{
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">@campaign.Name</h1>
+            <span class="badge bg-secondary">@campaign.SystemId</span>
+            <span class="badge bg-info text-dark">@access.Role</span>
+        </div>
+        <a href="/campaigns" class="btn btn-outline-secondary btn-sm">Back to Campaigns</a>
+    </header>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info py-2">@statusMessage</div>
+    }
+
+    <ul class="nav nav-tabs mb-4">
+        @foreach (var tab in Tabs)
+        {
+            <li class="nav-item">
+                <button type="button" class="nav-link @(activeTab == tab ? "active" : "")" @onclick="() => activeTab = tab">@tab</button>
+            </li>
+        }
+    </ul>
+
+    @if (activeTab == "Overview")
+    {
+        @RenderOverview()
+    }
+    else if (activeTab == "Cast")
+    {
+        @RenderCast()
+    }
+    else if (activeTab == "Locations")
+    {
+        @RenderLocations()
+    }
+    else if (activeTab == "Lore")
+    {
+        @RenderLore()
+    }
+    else if (activeTab == "Sessions")
+    {
+        @RenderSessions()
+    }
+}
+</div>
+
+@code {
+    private static readonly string[] Tabs = { "Overview", "Cast", "Locations", "Lore", "Sessions" };
+
+    [Parameter]
+    public string CampaignId { get; set; } = string.Empty;
+
+    private bool loading = true;
+    private CampaignDocument? campaign;
+    private CampaignAccess? access;
+    private string? currentUserId;
+    private string activeTab = "Overview";
+    private string? statusMessage;
+
+    private IEnumerable<ActorDocument> actors = Enumerable.Empty<ActorDocument>();
+    private IEnumerable<RegionDocument> regions = Enumerable.Empty<RegionDocument>();
+    private IEnumerable<FactDocument> facts = Enumerable.Empty<FactDocument>();
+    private IEnumerable<SessionDocument> sessions = Enumerable.Empty<SessionDocument>();
+    private Dictionary<string, string> memberUsernames = new();
+
+    private string editName = "";
+    private string editDescription = "";
+    private string editSystemId = "";
+
+    private string contentSearch = "";
+    private string newActorName = "New Actor";
+    private ActorKind newActorKind = ActorKind.NonPlayerCharacter;
+    private Dictionary<string, object> newActorValues = new();
+
+    private string newRegionName = "";
+    private string newLocationName = "";
+
+    private string newFactSummary = "";
+    private FactVisibility newFactVisibility = FactVisibility.DmOnly;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        loading = true;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        campaign = await CampaignRepo.GetAsync(CampaignId);
+        if (campaign != null && currentUserId != null)
+        {
+            access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
+        }
+
+        if (campaign != null && access != null)
+        {
+            editName = campaign.Name;
+            editDescription = campaign.Description ?? "";
+            editSystemId = campaign.SystemId;
+
+            actors = await ActorRepo.GetVisibleForCampaignAsync(access);
+            regions = await RegionRepo.GetVisibleForCampaignAsync(access);
+            var ownedActorIds = actors.Where(a => a.OwnerUserId == currentUserId).Select(a => a.Id).ToHashSet();
+            facts = await FactRepo.GetVisibleForCampaignAsync(access, ownedActorIds);
+            sessions = await SessionRepo.GetAllForCampaignAsync(CampaignId);
+
+            memberUsernames.Clear();
+            foreach (var member in campaign.Members)
+            {
+                var user = await UserRepo.GetUserByIdAsync(member.UserId);
+                memberUsernames[member.UserId] = user?.Username ?? member.UserId;
+            }
+        }
+
+        loading = false;
+    }
+
+    private void Flash(string message) => statusMessage = message;
+
+    // ---- Overview (2.1, 2.4) ----
+
+    private RenderFragment RenderOverview() => @<div>
+        <div class="card p-3 mb-4">
+            <h5>Chronicle</h5>
+            @if (access!.IsDm)
+            {
+                <div class="mb-2">
+                    <label class="form-label small">Name</label>
+                    <input class="form-control" @bind="editName" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Description</label>
+                    <textarea class="form-control" rows="2" @bind="editDescription"></textarea>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">System</label>
+                    <select class="form-select" @bind="editSystemId">
+                        @foreach (var systemId in SystemCatalog.LoadedSystemIds)
+                        {
+                            <option value="@systemId">@systemId</option>
+                        }
+                    </select>
+                </div>
+                <button type="button" class="btn btn-accent btn-sm" @onclick="SaveOverviewAsync">Save</button>
+            }
+            else
+            {
+                <p>@(string.IsNullOrWhiteSpace(campaign!.Description) ? "No chronicle notes yet." : campaign.Description)</p>
+            }
+        </div>
+
+        <div class="card p-3 mb-4">
+            <h5>Members (@campaign!.Members.Count)</h5>
+            <ul class="list-unstyled mb-0">
+                @foreach (var member in campaign.Members)
+                {
+                    <li class="d-flex justify-content-between border-bottom py-1">
+                        <span>@memberUsernames.GetValueOrDefault(member.UserId, member.UserId)</span>
+                        <span class="badge bg-secondary">@member.Role</span>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        @if (access.IsDm)
+        {
+            <div class="card p-3">
+                <h5>Invite</h5>
+                <p class="text-tertiary small">Share this link to add a player to the campaign:</p>
+                <div class="input-group">
+                    <input class="form-control" readonly value="@GetInviteLink()" />
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CopyInviteLinkAsync">Copy</button>
+                </div>
+            </div>
+        }
+    </div>;
+
+    private string GetInviteLink() => $"{Nav.BaseUri}campaigns/join/{campaign!.InviteCode}";
+
+    private async Task CopyInviteLinkAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", GetInviteLink());
+        Flash("Invite link copied.");
+    }
+
+    private async Task SaveOverviewAsync()
+    {
+        campaign!.Name = editName;
+        campaign.Description = editDescription;
+        campaign.SystemId = editSystemId;
+        try
+        {
+            await CampaignRepo.SaveAsync(campaign);
+            Flash("Saved.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Flash(ex.Message);
+        }
+        await ReloadAsync();
+    }
+
+    // ---- Cast (2.2, 2.3, 2.5) ----
+
+    private RenderFragment RenderCast() => @<div>
+        <div class="row">
+            <div class="col-md-7">
+                <h5>Actors</h5>
+                @foreach (var actor in actors)
+                {
+                    <div class="card p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>@actor.Name</strong>
+                                <span class="badge bg-secondary ms-1">@actor.Kind</span>
+                                <span class="badge bg-dark ms-1">@actor.Visibility</span>
+                            </div>
+                            @if (access!.IsDm)
+                            {
+                                <div class="d-flex gap-1">
+                                    @if (actor.Visibility != ActorVisibility.Known)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => RevealActorAsync(actor)">Reveal to Party</button>
+                                    }
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => DeleteActorAsync(actor)">Delete</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                @if (!actors.Any())
+                {
+                    <p class="text-tertiary small">No actors yet.</p>
+                }
+            </div>
+            @if (access!.IsDm)
+            {
+                <div class="col-md-5">
+                    <h5>Add from Content</h5>
+                    <input class="form-control form-control-sm mb-2" placeholder="Search @campaign!.SystemId actors..." @bind="contentSearch" @bind:event="oninput" />
+                    @foreach (var definition in SearchActorBlueprints())
+                    {
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                            <span>@definition.Name</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => AddActorFromBlueprintAsync(definition)">Add to Campaign</button>
+                        </div>
+                    }
+
+                    <h5 class="mt-4">New Blank Actor</h5>
+                    <input class="form-control form-control-sm mb-1" placeholder="Name" @bind="newActorName" />
+                    <select class="form-select form-select-sm mb-2" @bind="newActorKind">
+                        @foreach (ActorKind kind in Enum.GetValues<ActorKind>())
+                        {
+                            <option value="@kind">@kind</option>
+                        }
+                    </select>
+                    @{ var actorSchema = SystemCatalog.GetUISchemas(campaign!.SystemId).FirstOrDefault(s => s.EntityType == "Actor"); }
+                    @if (actorSchema != null)
+                    {
+                        <SchemaForm Schema="actorSchema" Values="newActorValues" />
+                    }
+                    <button type="button" class="btn btn-accent btn-sm mt-2" @onclick="CreateBlankActorAsync">Create</button>
+                </div>
+            }
+        </div>
+    </div>;
+
+    private IEnumerable<IActorDefinition> SearchActorBlueprints()
+    {
+        var blueprints = ContentRegistry.GetActorsBySystem(campaign!.SystemId);
+        if (string.IsNullOrWhiteSpace(contentSearch))
+        {
+            return blueprints;
+        }
+
+        return blueprints.Where(a => a.Name.Contains(contentSearch, StringComparison.OrdinalIgnoreCase) ||
+            a.Tags.Any(t => t.Contains(contentSearch, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private async Task AddActorFromBlueprintAsync(IActorDefinition definition)
+    {
+        var actor = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Kind = ActorKind.NonPlayerCharacter,
+            BlueprintId = $"{definition.SystemId}:{definition.Id}",
+            Name = definition.Name,
+            Visibility = ActorVisibility.Hidden,
+            State = new Dictionary<string, object>(definition.Properties)
+        };
+        await ActorRepo.SaveAsync(actor);
+        Flash($"Added {definition.Name} to the campaign (Hidden).");
+        await ReloadAsync();
+    }
+
+    private async Task CreateBlankActorAsync()
+    {
+        var actor = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Kind = newActorKind,
+            Name = newActorName,
+            Visibility = ActorVisibility.Hidden,
+            State = new Dictionary<string, object>(newActorValues)
+        };
+        await ActorRepo.SaveAsync(actor);
+        newActorValues = new();
+        newActorName = "New Actor";
+        Flash($"Created {actor.Name}.");
+        await ReloadAsync();
+    }
+
+    private async Task RevealActorAsync(ActorDocument actor)
+    {
+        actor.Visibility = ActorVisibility.Known;
+        await ActorRepo.SaveAsync(actor);
+        Flash($"{actor.Name} revealed to the party.");
+        await ReloadAsync();
+    }
+
+    private async Task DeleteActorAsync(ActorDocument actor)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Delete {actor.Name}?");
+        if (!confirmed) return;
+        await ActorRepo.TryDeleteAsync(actor.Id, access!);
+        await ReloadAsync();
+    }
+
+    // ---- Locations (2.5) ----
+
+    private RenderFragment RenderLocations() => @<div>
+        @foreach (var region in regions)
+        {
+            <div class="card p-3 mb-3">
+                <h5>@region.Name</h5>
+                @foreach (var location in region.Locations)
+                {
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                        <div>
+                            <strong>@location.Name</strong>
+                            <span class="badge bg-dark ms-1">@location.Visibility</span>
+                        </div>
+                        @if (access!.IsDm && location.Visibility != ActorVisibility.Known)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => RevealLocationAsync(region.Id, location.Id)">Reveal to Party</button>
+                        }
+                    </div>
+                }
+                @if (access!.IsDm)
+                {
+                    <div class="input-group input-group-sm mt-2">
+                        <input class="form-control" placeholder="New location name" @bind="newLocationName" />
+                        <button type="button" class="btn btn-outline-primary" @onclick="() => AddLocationAsync(region.Id)">Add</button>
+                    </div>
+                }
+            </div>
+        }
+        @if (access!.IsDm)
+        {
+            <div class="input-group input-group-sm">
+                <input class="form-control" placeholder="New region name" @bind="newRegionName" />
+                <button type="button" class="btn btn-outline-primary" @onclick="CreateRegionAsync">Add Region</button>
+            </div>
+        }
+        @if (!regions.Any() && !access!.IsDm)
+        {
+            <p class="text-tertiary small">No locations have been revealed yet.</p>
+        }
+    </div>;
+
+    private async Task CreateRegionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newRegionName)) return;
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = CampaignId, Name = newRegionName };
+        await RegionRepo.SaveAsync(region, access!);
+        newRegionName = "";
+        await ReloadAsync();
+    }
+
+    private async Task AddLocationAsync(string regionId)
+    {
+        if (string.IsNullOrWhiteSpace(newLocationName)) return;
+        var location = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = newLocationName, Visibility = ActorVisibility.Hidden };
+        await RegionRepo.UpsertLocationAsync(regionId, location, access!);
+        newLocationName = "";
+        await ReloadAsync();
+    }
+
+    private async Task RevealLocationAsync(string regionId, string locationId)
+    {
+        await RegionRepo.SetLocationVisibilityAsync(regionId, locationId, ActorVisibility.Known, access!);
+        await ReloadAsync();
+    }
+
+    // ---- Lore (2.5) ----
+
+    private RenderFragment RenderLore() => @<div>
+        @foreach (var fact in facts)
+        {
+            <div class="card p-2 mb-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@fact.Summary</strong>
+                        <span class="badge bg-dark ms-1">@fact.Visibility</span>
+                    </div>
+                    @if (access!.IsDm && fact.Visibility != FactVisibility.Public)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => RevealFactAsync(fact)">Reveal to Party</button>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(fact.Details))
+                {
+                    <p class="small text-tertiary mb-0">@fact.Details</p>
+                }
+            </div>
+        }
+        @if (access!.IsDm)
+        {
+            <div class="card p-3 mt-3">
+                <h5>New Fact</h5>
+                <input class="form-control form-control-sm mb-2" placeholder="Summary" @bind="newFactSummary" />
+                <select class="form-select form-select-sm mb-2" @bind="newFactVisibility">
+                    @foreach (FactVisibility v in Enum.GetValues<FactVisibility>())
+                    {
+                        <option value="@v">@v</option>
+                    }
+                </select>
+                <button type="button" class="btn btn-accent btn-sm" @onclick="CreateFactAsync">Add Fact</button>
+            </div>
+        }
+    </div>;
+
+    private async Task CreateFactAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newFactSummary)) return;
+        var fact = new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Summary = newFactSummary,
+            Visibility = newFactVisibility
+        };
+        await FactRepo.SaveAsync(fact, access!);
+        newFactSummary = "";
+        await ReloadAsync();
+    }
+
+    private async Task RevealFactAsync(FactDocument fact)
+    {
+        await FactRepo.SetVisibilityAsync(fact.Id, FactVisibility.Public, access!);
+        await ReloadAsync();
+    }
+
+    // ---- Sessions ----
+
+    private RenderFragment RenderSessions() => @<div>
+        @foreach (var session in sessions.OrderByDescending(s => s.Date))
+        {
+            <div class="card p-2 mb-2 d-flex flex-row justify-content-between align-items-center">
+                <span>@session.Date.ToString("MMM dd, yyyy")</span>
+                <span class="badge bg-secondary">@session.Status</span>
+            </div>
+        }
+        @if (!sessions.Any())
+        {
+            <p class="text-tertiary small">No sessions yet.</p>
+        }
+        @if (access!.IsDm)
+        {
+            <button type="button" class="btn btn-accent btn-sm mt-2" @onclick="CreateSessionAsync">Plan New Session</button>
+        }
+    </div>;
+
+    private async Task CreateSessionAsync()
+    {
+        var session = new SessionDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Date = DateTime.UtcNow,
+            Status = SessionStatus.Planned
+        };
+        await SessionRepo.SaveAsync(session);
+        await ReloadAsync();
+    }
+}
