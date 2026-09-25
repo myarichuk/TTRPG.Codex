@@ -94,16 +94,28 @@ public class YamlContentPackLoader : IContentPackLoader
         {
             if (!entry.FullName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase)) continue;
 
+            // B5: ZipFile.CreateFromDirectory writes entries as "abilities/foo.yaml" (no leading
+            // slash), so matching on "/abilities/" never hit anything the exporter actually
+            // produced. Normalize separators and dispatch on the first path segment instead.
+            var normalized = entry.FullName.Replace('\\', '/').TrimStart('/');
+            var firstSegment = normalized.Split('/', 2)[0];
+
             using var stream = entry.Open();
             using var reader = new StreamReader(stream);
             var yaml = await reader.ReadToEndAsync();
 
-            if (entry.FullName.Contains("/abilities/"))
-                DeserializeAndRegister<AbilityDefinition>(yaml, manifest, RegisterAbility);
-            else if (entry.FullName.Contains("/actors/"))
-                DeserializeAndRegister<ActorDefinition>(yaml, manifest, RegisterActor);
-            else if (entry.FullName.Contains("/locations/"))
-                DeserializeAndRegister<LocationDefinition>(yaml, manifest, (item, prio) => _registry.RegisterLocation(item, prio));
+            switch (firstSegment)
+            {
+                case "abilities":
+                    DeserializeAndRegister<AbilityDefinition>(yaml, manifest, RegisterAbility);
+                    break;
+                case "actors":
+                    DeserializeAndRegister<ActorDefinition>(yaml, manifest, RegisterActor);
+                    break;
+                case "locations":
+                    DeserializeAndRegister<LocationDefinition>(yaml, manifest, (item, prio) => _registry.RegisterLocation(item, prio));
+                    break;
+            }
         }
     }
 

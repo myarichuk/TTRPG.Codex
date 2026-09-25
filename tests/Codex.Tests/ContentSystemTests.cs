@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Codex.Authoring.Services;
 using Codex.Core;
 using Codex.Core.Models;
 using Codex.Core.Scripting;
@@ -137,5 +138,28 @@ properties:
         Assert.Contains("Hostile", bandit.Tags); // Added
         Assert.Equal(30, Convert.ToInt32(bandit.Properties["Speed"])); // Inherited
         Assert.Equal(12, Convert.ToInt32(bandit.Properties["ArmorClass"])); // Added
+    }
+
+    [Fact]
+    public async Task ExportedZipPack_RoundTripsThroughLoader()
+    {
+        // B5: ContentPackExporter writes zip entries as "abilities/fireball.yaml" (no leading
+        // slash). The loader used to match on ".Contains(\"/abilities/\")", which never matched
+        // what the exporter actually produced, so nothing exported by the Authoring app ever
+        // loaded back in. Prove the round trip works end to end.
+        var manifest = new PackManifest("test-pack", "Test Pack", "1.0.0", "dnd5e");
+        var ability = new AbilityDefinition { Id = "fireball", Name = "Fireball" };
+
+        var zipPath = Path.Combine(_tempPath, "test-pack.zip");
+        var exporter = new ContentPackExporter();
+        await exporter.ExportToZipAsync(manifest, new[] { ability }, Array.Empty<ActorDefinition>(), Array.Empty<LocationDefinition>(), zipPath);
+
+        var registry = new ContentRegistry(_evaluator);
+        var loader = new YamlContentPackLoader(registry);
+        await loader.LoadPackAsync(zipPath);
+
+        var loaded = registry.GetAbility("dnd5e:fireball");
+        Assert.NotNull(loaded);
+        Assert.Equal("Fireball", loaded.Name);
     }
 }

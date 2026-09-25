@@ -58,17 +58,24 @@ public class PluginLoader(
     {
         if (!Directory.Exists(pluginsDirectory)) return;
 
-        var manifests = Directory.GetFiles(pluginsDirectory, "manifest.json", SearchOption.AllDirectories);
+        // B5: directory-based packs (manifest.json + subfolders) were the only kind ever
+        // discovered. Packs shipped as a single .zip/.cdx file directly under the plugins
+        // directory - exactly what the Authoring app's exporter produces - were never found.
+        var packPaths = Directory.GetFiles(pluginsDirectory, "manifest.json", SearchOption.AllDirectories)
+            .Select(Path.GetDirectoryName)
+            .Where(dir => dir != null)
+            .Cast<string>()
+            .Concat(Directory.GetFiles(pluginsDirectory, "*.zip"))
+            .Concat(Directory.GetFiles(pluginsDirectory, "*.cdx"))
+            .Distinct();
+
         var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
 
-        foreach (var manifestPath in manifests)
+        foreach (var packPath in packPaths)
         {
-            var packDir = Path.GetDirectoryName(manifestPath);
-            if (packDir == null) continue;
-
             try
             {
-                var manifest = await contentPackLoader.ReadManifestAsync(packDir);
+                var manifest = await contentPackLoader.ReadManifestAsync(packPath);
 
                 if (!manifest.IsAppVersionCompatible(appVersion))
                 {
@@ -81,7 +88,7 @@ public class PluginLoader(
                 {
                     logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
                         manifest.Name, manifest.Id, manifest.SystemId);
-                    await contentPackLoader.LoadPackAsync(packDir);
+                    await contentPackLoader.LoadPackAsync(packPath);
                 }
                 else
                 {
@@ -91,7 +98,7 @@ public class PluginLoader(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to load content pack from {Directory}", packDir);
+                logger.LogError(ex, "Failed to load content pack from {Path}", packPath);
             }
         }
     }
