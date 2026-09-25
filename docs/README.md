@@ -13,10 +13,10 @@ The Codex is designed to be **invisible but omnipresent**. It provides the DM wi
    - Deep dive into Sessions, Campaigns, Characters, and Lore.
 3. [**UI/UX Specification**](UI_SPECIFICATION.md)
    - Screen-by-screen breakdown and design principles.
+4. [**Review & Remediation Plan**](REVIEW_AND_REMEDIATION_PLAN.md)
+   - Current bugs, gap to a usable campaign tool, and the phased fix plan.
 
 ## Getting Started for Developers
 - High-fidelity UI is built with Blazor (Interactive Server).
 - Persistence is handled by RavenDB.
 - Modern layout uses CSS Grid and Flexbox with a Fluent-inspired design system.
-4. [**Review & Remediation Plan**](REVIEW_AND_REMEDIATION_PLAN.md)
-   - Current bugs, gap to a usable campaign tool, and the phased fix plan.
