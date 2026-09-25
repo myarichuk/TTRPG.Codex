@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Codex.Core;
 using Codex.Core.Components;
 using Codex.Plugin.Abstractions;
 
@@ -19,10 +18,9 @@ public class DnD5ePlugin : ICodexSystemPlugin
 
     public void RegisterSystems(dynamic world)
     {
-        if (world is CodexWorld codexWorld)
-        {
-            codexWorld.AddSystem(new DamageSystem(codexWorld.InnerWorld));
-        }
+        // Damage/healing are applied immediately via CodexWorld.ApplyDamage/ApplyHealing (3.4) -
+        // there is no more DamageEvent component-based system to register here. It used to let two
+        // hits in the same tick overwrite each other and never clamped HP (B7).
     }
 
     public IEnumerable<UISchema> GetUISchemas()

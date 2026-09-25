@@ -1,36 +1,37 @@
 using System.Collections.Generic;
+using DefaultEcs;
 
 namespace Codex.Core.Components;
 
-public struct StatusEffectComponent
+/// <summary>Which turn boundary an <see cref="ActiveEffect"/>'s round count ticks down on.</summary>
+public enum EffectExpiry
 {
-    public string EffectId { get; init; }
-    public string PackId { get; init; }
-
-    public StatusEffectComponent(string effectId, string packId)
-    {
-        EffectId = effectId;
-        PackId = packId;
-    }
+    StartOfTurn,
+    EndOfTurn
 }
 
-public struct DurationComponent
+/// <summary>
+/// One status effect an entity is currently under (3.4/B6). Durations are whole rounds that tick
+/// on <see cref="Codex.Core.CodexWorld.AdvanceTurn"/> - never on wall-clock time - and expire
+/// relative to a specific creature's turn (<see cref="AnchorEntity"/>), matching how conditions
+/// actually work at a table.
+/// </summary>
+public record ActiveEffect(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry, Entity AnchorEntity);
+
+/// <summary>
+/// Replaces the old single-slot <c>StatusEffectComponent</c>/<c>DurationComponent</c> pair, which
+/// could hold at most one status at a time - adding Stunned while Poisoned was active silently
+/// overwrote Poisoned (B6, confirmed: Poisoned then Stunned left only Stunned, and Stunned's
+/// expiry then also removed Poisoned's tracking). An entity can have any number of concurrent
+/// effects here, each expiring independently.
+/// </summary>
+public struct ActiveEffectsComponent
 {
-    public float RoundsRemaining { get; set; }
+    public List<ActiveEffect> Effects { get; init; }
 
-    public DurationComponent(float roundsRemaining)
+    public ActiveEffectsComponent()
     {
-        RoundsRemaining = roundsRemaining;
-    }
-
-    public DurationComponent(double roundsRemaining)
-    {
-        RoundsRemaining = (float)roundsRemaining;
-    }
-
-    public DurationComponent(int roundsRemaining)
-    {
-        RoundsRemaining = (float)roundsRemaining;
+        Effects = new List<ActiveEffect>();
     }
 }
 

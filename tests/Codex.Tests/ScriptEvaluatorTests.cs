@@ -28,7 +28,7 @@ public class ScriptEvaluatorTests : IDisposable
             "world.AddStatus(target.Value, \"burning\", \"core\", 3.0)",
             new AbilityContext(caster, firstTarget, _world));
         Assert.True(result1.Success);
-        Assert.True(firstTarget.Has<StatusEffectComponent>());
+        Assert.True(firstTarget.Has<ActiveEffectsComponent>());
 
         // A second, target-less call that dereferences target.Value must fail loudly (a null
         // Nullable<Entity> has no Value) rather than silently reuse call #1's target the way the
@@ -39,7 +39,8 @@ public class ScriptEvaluatorTests : IDisposable
         Assert.False(result2.Success);
 
         // The first target must be untouched by the second, target-less call.
-        Assert.Equal("burning", firstTarget.Get<StatusEffectComponent>().EffectId);
+        Assert.Single(firstTarget.Get<ActiveEffectsComponent>().Effects);
+        Assert.Equal("burning", firstTarget.Get<ActiveEffectsComponent>().Effects[0].EffectId);
     }
 
     [Fact]
@@ -74,7 +75,7 @@ public class ScriptEvaluatorTests : IDisposable
         _evaluator.Execute(script, new AbilityContext(caster, targetA, _world));
         _evaluator.Execute(script, new AbilityContext(caster, targetB, _world));
 
-        Assert.True(targetA.Has<StatusEffectComponent>());
-        Assert.True(targetB.Has<StatusEffectComponent>());
+        Assert.True(targetA.Has<ActiveEffectsComponent>());
+        Assert.True(targetB.Has<ActiveEffectsComponent>());
     }
 }

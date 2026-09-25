@@ -21,7 +21,13 @@ public class PluginLoader(
     public IEnumerable<UISchema> GetUISchemas(string systemId) =>
         _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetUISchemas() : Enumerable.Empty<UISchema>();
 
-    public async Task LoadAndInitializeAsync(string pluginsDirectory, CodexWorld world)
+    /// <summary>The loaded plugin ruling <paramref name="systemId"/>, or null if no such system is
+    /// loaded. Used by <c>CampaignRuntime</c> (3.1) to wire that plugin's systems onto its own,
+    /// per-campaign <see cref="CodexWorld"/> - there is no longer a shared world to register onto
+    /// at startup (B8).</summary>
+    public ICodexSystemPlugin? GetPlugin(string systemId) => _pluginsBySystemId.GetValueOrDefault(systemId);
+
+    public async Task LoadAndInitializeAsync(string pluginsDirectory)
     {
         await _semaphore.WaitAsync();
         try
@@ -37,7 +43,17 @@ public class PluginLoader(
             try
             {
                 var plugins = await Task.Run(() => LoadPlugins(pluginsDirectory));
-                InitializePlugins(plugins, world);
+
+                // Only components are registered globally at startup, into the shared
+                // ComponentRegistry. Systems are no longer registered onto a shared world here -
+                // there isn't one anymore (B8) - CampaignRuntimeManager looks the plugin up via
+                // GetPlugin and calls InitializePlugins itself, once per campaign, onto that
+                // campaign's own CodexWorld.
+                foreach (var plugin in plugins)
+                {
+                    logger.LogInformation("Initializing plugin: {SystemId}", plugin.SystemId);
+                    plugin.RegisterComponents(registry);
+                }
 
                 var activeSystemIds = plugins.Select(p => p.SystemId).ToHashSet();
                 LoadedSystemIds = activeSystemIds;

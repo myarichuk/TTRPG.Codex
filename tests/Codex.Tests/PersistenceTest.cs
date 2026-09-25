@@ -42,6 +42,15 @@ public class NoOpSystemCatalog : Codex.Plugin.Abstractions.ISystemCatalog
     public IEnumerable<Codex.Plugin.Abstractions.UISchema> GetUISchemas(string systemId) => Enumerable.Empty<Codex.Plugin.Abstractions.UISchema>();
 }
 
+/// <summary>Every test class that spins up its own embedded RavenDB instance shares this
+/// collection so xUnit never runs two of them in parallel. Different classes each racing to start
+/// (or query) the same underlying EmbeddedServer.Instance process is flaky under load - not a bug
+/// in the classes under test, just resource contention xUnit's default per-class parallelism
+/// doesn't know to avoid.</summary>
+[CollectionDefinition("RavenDb", DisableParallelization = true)]
+public class RavenDbCollection;
+
+[Collection("RavenDb")]
 public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 {
     private readonly RavenDbService _dbService;

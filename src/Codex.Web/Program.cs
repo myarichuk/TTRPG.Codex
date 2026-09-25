@@ -114,7 +114,7 @@ builder.Services.AddSingleton<ScriptEvaluator>();
 builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
 builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
-builder.Services.AddSingleton<CodexWorld>();
+builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 
 // Configure AI services
 var aiConfig = new AIConfiguration();
@@ -154,7 +154,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
 using (var scope = app.Services.CreateScope())
 {
     var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
-    var world = scope.ServiceProvider.GetRequiredService<CodexWorld>();
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
@@ -175,7 +174,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     logger.LogInformation("Loading plugins and content packs from: {Path}", absolutePluginsDir);
-    await loader.LoadAndInitializeAsync(absolutePluginsDir, world);
+    await loader.LoadAndInitializeAsync(absolutePluginsDir);
 }
 
 if (!app.Environment.IsDevelopment())
