@@ -14,7 +14,7 @@
                 <LucideIcon IconName="search" Size="16" Class="search-icon" />
                 <input type="text" class="search-input" placeholder="Search chronicles..." aria-label="Search chronicles">
             </div>
-            <button class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating" style="white-space: nowrap;">
+            <button type="button" class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating" style="white-space: nowrap;">
                 @if (isCreating)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -55,7 +55,7 @@ else if (!campaigns.Any())
         </div>
         <h3 class="mb-3">No Campaigns Found</h3>
         <p class="text-tertiary mb-5">It looks like you don't have any campaigns yet. Let's get your adventure started!</p>
-        <button class="btn btn-accent px-5 d-inline-flex align-items-center justify-content-center gap-2" @onclick="CreateCampaign" disabled="@isCreating">
+        <button type="button" class="btn btn-accent px-5 d-inline-flex align-items-center justify-content-center gap-2" @onclick="CreateCampaign" disabled="@isCreating">
             @if (isCreating)
             {
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -86,7 +86,7 @@ else
                 <div class="card-content">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h3 class="card-title mb-0">@campaign.Name</h3>
-                        <button class="btn-sparkle" aria-label="Oracle Insights for @campaign.Name" title="Oracle Insights"><LucideIcon IconName="sparkles" Size="14" /></button>
+                        <button type="button" class="btn-sparkle" aria-label="Oracle Insights for @campaign.Name" title="Oracle Insights"><LucideIcon IconName="sparkles" Size="14" /></button>
                     </div>
                     <div class="card-meta">
                         <span class="meta-item"><LucideIcon IconName="calendar" Size="12" /> Active</span>
@@ -104,15 +104,15 @@ else
                     <div class="mt-auto pt-3 border-top border-secondary border-opacity-10">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-tertiary small">Last session: @campaign.UpdatedAt.ToString("MMM dd")</span>
-                            <button class="btn-manage-fluence d-flex align-items-center gap-2" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Delete Campaign" style="color: var(--bs-danger);">
+                            <button type="button" class="btn-manage-fluence d-flex align-items-center gap-2" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Delete Campaign" style="color: var(--bs-danger);">
                                 <LucideIcon IconName="trash-2" Size="14" />
                             </button>
-                            <button class="btn-manage-fluence" aria-label="Manage @campaign.Name">
+                            <button type="button" class="btn-manage-fluence" aria-label="Manage @campaign.Name">
                                 <LucideIcon IconName="settings" Size="14" Class="anim-rotate" />
                                 <span>Manage</span>
                             </button>
                         </div>
-                        <button class="btn-session-fluence w-100" @onclick:stopPropagation="true">
+                        <button type="button" class="btn-session-fluence w-100" @onclick:stopPropagation="true">
                             <LucideIcon IconName="dices" Size="16" Class="anim-pulse" />
                             <span>New Session</span>
                         </button>
@@ -121,7 +121,7 @@ else
             </div>
         }
 
-        <button class="campaign-card" aria-label="Initiate New Story" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="CreateCampaign" disabled="@isCreating">
+        <button type="button" class="campaign-card" aria-label="Initiate New Story" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="CreateCampaign" disabled="@isCreating">
             <div class="text-center p-5">
                 <div style="background: var(--fluent-surface-secondary); width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 1rem auto;">
                     @if (isCreating)
