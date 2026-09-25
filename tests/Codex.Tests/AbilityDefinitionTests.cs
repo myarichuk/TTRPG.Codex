@@ -8,8 +8,13 @@ namespace Codex.Tests;
 
 public class AbilityDefinitionTests
 {
+    // B9: these four used to assert that a derived ability's Triggers/Requires/Costs/Effects
+    // got APPENDED to the base's - i.e. that they were expected to duplicate. That's the exact
+    // bug: a homebrew Fireball overriding "8d6" with "10d6" resolved to "10d6 + 8d6" damage
+    // instead of just "10d6". A non-empty child list now replaces the base's list outright.
+
     [Fact]
-    public void MergeFrom_Should_MergeTriggers()
+    public void MergeFrom_NonEmptyDerivedTriggers_ReplacesBase()
     {
         var baseAbility = new AbilityDefinition
         {
@@ -25,13 +30,12 @@ public class AbilityDefinitionTests
         derivedAbility.MergeFrom(baseAbility);
 
         Assert.Equal("Base Name", derivedAbility.Name);
-        Assert.Equal(2, derivedAbility.Triggers.Count);
-        Assert.Contains(derivedAbility.Triggers, t => t.Type == "BaseTrigger");
-        Assert.Contains(derivedAbility.Triggers, t => t.Type == "DerivedTrigger");
+        Assert.Single(derivedAbility.Triggers);
+        Assert.Equal("DerivedTrigger", derivedAbility.Triggers[0].Type);
     }
 
     [Fact]
-    public void MergeFrom_Should_MergeRequires()
+    public void MergeFrom_NonEmptyDerivedRequires_ReplacesBase()
     {
         var baseAbility = new AbilityDefinition
         {
@@ -45,13 +49,12 @@ public class AbilityDefinitionTests
 
         derivedAbility.MergeFrom(baseAbility);
 
-        Assert.Equal(2, derivedAbility.Requires.Count);
-        Assert.Contains(derivedAbility.Requires, r => r.Type == "BaseRequirement");
-        Assert.Contains(derivedAbility.Requires, r => r.Type == "DerivedRequirement");
+        Assert.Single(derivedAbility.Requires);
+        Assert.Equal("DerivedRequirement", derivedAbility.Requires[0].Type);
     }
 
     [Fact]
-    public void MergeFrom_Should_MergeCosts()
+    public void MergeFrom_NonEmptyDerivedCosts_ReplacesBase()
     {
         var baseAbility = new AbilityDefinition
         {
@@ -65,13 +68,12 @@ public class AbilityDefinitionTests
 
         derivedAbility.MergeFrom(baseAbility);
 
-        Assert.Equal(2, derivedAbility.Costs.Count);
-        Assert.Contains(derivedAbility.Costs, c => c.Type == "BaseCost");
-        Assert.Contains(derivedAbility.Costs, c => c.Type == "DerivedCost");
+        Assert.Single(derivedAbility.Costs);
+        Assert.Equal("DerivedCost", derivedAbility.Costs[0].Type);
     }
 
     [Fact]
-    public void MergeFrom_Should_MergeEffects()
+    public void MergeFrom_NonEmptyDerivedEffects_ReplacesBase()
     {
         var baseAbility = new AbilityDefinition
         {
@@ -85,9 +87,55 @@ public class AbilityDefinitionTests
 
         derivedAbility.MergeFrom(baseAbility);
 
-        Assert.Equal(2, derivedAbility.Effects.Count);
-        Assert.Contains(derivedAbility.Effects, e => e.Type == "BaseEffect");
-        Assert.Contains(derivedAbility.Effects, e => e.Type == "DerivedEffect");
+        Assert.Single(derivedAbility.Effects);
+        Assert.Equal("DerivedEffect", derivedAbility.Effects[0].Type);
+    }
+
+    [Fact]
+    public void MergeFrom_OverridingDamageDice_DoesNotDuplicate()
+    {
+        // The exact scenario from the bug report: homebrew Fireball overrides 8d6 with 10d6.
+        var baseFireball = new AbilityDefinition
+        {
+            Id = "fireball",
+            Effects = new List<TypedComponent>
+            {
+                new TypedComponent("Damage", new Dictionary<string, object> { ["Dice"] = "8d6" })
+            }
+        };
+
+        var homebrewFireball = new AbilityDefinition
+        {
+            Id = "fireball",
+            Effects = new List<TypedComponent>
+            {
+                new TypedComponent("Damage", new Dictionary<string, object> { ["Dice"] = "10d6" })
+            }
+        };
+
+        homebrewFireball.MergeFrom(baseFireball);
+
+        Assert.Single(homebrewFireball.Effects);
+        Assert.Equal("10d6", homebrewFireball.Effects[0].Params!["Dice"]);
+    }
+
+    [Fact]
+    public void MergeFrom_ClonesBaseComponents_MutatingChildDoesNotMutateBase()
+    {
+        var baseAbility = new AbilityDefinition
+        {
+            Effects = new List<TypedComponent>
+            {
+                new TypedComponent("Damage", new Dictionary<string, object> { ["Dice"] = "8d6" })
+            }
+        };
+
+        var derivedAbility = new AbilityDefinition();
+        derivedAbility.MergeFrom(baseAbility);
+
+        derivedAbility.Effects![0].Params!["Dice"] = "999d6";
+
+        Assert.Equal("8d6", baseAbility.Effects[0].Params!["Dice"]);
     }
 
     [Fact]

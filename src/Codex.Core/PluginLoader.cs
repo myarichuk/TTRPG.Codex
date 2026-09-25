@@ -54,7 +54,9 @@ public class PluginLoader(
         }
     }
 
-    private async Task LoadContentPacksAsync(string pluginsDirectory, HashSet<string> activeSystemIds)
+    // Internal (rather than private) so tests can exercise dependency-ordered pack loading
+    // directly, without needing a real plugin assembly on disk just to populate activeSystemIds.
+    internal async Task LoadContentPacksAsync(string pluginsDirectory, HashSet<string> activeSystemIds)
     {
         if (!Directory.Exists(pluginsDirectory)) return;
 
@@ -71,35 +73,94 @@ public class PluginLoader(
 
         var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
 
+        // Read every manifest up front so packs can be loaded in dependency order (B9) rather
+        // than whatever order the filesystem happens to enumerate them in - a pack's base has to
+        // be registered before anything that inherits from it, regardless of load order.
+        var manifestsByPath = new Dictionary<string, PackManifest>();
         foreach (var packPath in packPaths)
         {
             try
             {
-                var manifest = await contentPackLoader.ReadManifestAsync(packPath);
+                manifestsByPath[packPath] = await contentPackLoader.ReadManifestAsync(packPath);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to read manifest for content pack at {Path}", packPath);
+            }
+        }
 
-                if (!manifest.IsAppVersionCompatible(appVersion))
-                {
-                    logger.LogWarning("Skipping content pack {PackId}: Requires app version {MinAppVersion}, but current is {AppVersion}",
-                        manifest.Id, manifest.MinAppVersion, appVersion);
-                    continue;
-                }
+        foreach (var packPath in TopologicalOrder(manifestsByPath))
+        {
+            var manifest = manifestsByPath[packPath];
 
-                if (activeSystemIds.Contains(manifest.SystemId))
-                {
-                    logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
-                        manifest.Name, manifest.Id, manifest.SystemId);
-                    await contentPackLoader.LoadPackAsync(packPath);
-                }
-                else
-                {
-                    logger.LogWarning("Skipping content pack {PackId} because system {SystemId} is not loaded",
-                        manifest.Id, manifest.SystemId);
-                }
+            if (!manifest.IsAppVersionCompatible(appVersion))
+            {
+                logger.LogWarning("Skipping content pack {PackId}: Requires app version {MinAppVersion}, but current is {AppVersion}",
+                    manifest.Id, manifest.MinAppVersion, appVersion);
+                continue;
+            }
+
+            if (!activeSystemIds.Contains(manifest.SystemId))
+            {
+                logger.LogWarning("Skipping content pack {PackId} because system {SystemId} is not loaded",
+                    manifest.Id, manifest.SystemId);
+                continue;
+            }
+
+            try
+            {
+                logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
+                    manifest.Name, manifest.Id, manifest.SystemId);
+                await contentPackLoader.LoadPackAsync(packPath);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to load content pack from {Path}", packPath);
             }
+        }
+    }
+
+    /// <summary>
+    /// Orders packs so every pack's <see cref="PackManifest.Dependencies"/> load before it does.
+    /// A dependency that names a pack id not present among the discovered manifests is a load
+    /// error naming the pack (B9) - that pack is skipped rather than silently loaded out of
+    /// order, since its base content wouldn't be there to inherit from.
+    /// </summary>
+    private IEnumerable<string> TopologicalOrder(Dictionary<string, PackManifest> manifestsByPath)
+    {
+        var pathById = manifestsByPath.ToDictionary(kv => kv.Value.Id, kv => kv.Key);
+        var visited = new HashSet<string>();
+        var result = new List<string>();
+
+        foreach (var path in manifestsByPath.Keys)
+        {
+            Visit(path, new HashSet<string>());
+        }
+
+        return result;
+
+        void Visit(string path, HashSet<string> inProgress)
+        {
+            if (visited.Contains(path) || !inProgress.Add(path))
+            {
+                return;
+            }
+
+            var manifest = manifestsByPath[path];
+            foreach (var dependencyId in manifest.Dependencies ?? Array.Empty<string>())
+            {
+                if (!pathById.TryGetValue(dependencyId, out var dependencyPath))
+                {
+                    logger.LogError("Content pack {PackId} depends on {DependencyId}, which was not found among the discovered packs. It will still be loaded, but its base content may be missing.",
+                        manifest.Id, dependencyId);
+                    continue;
+                }
+
+                Visit(dependencyPath, inProgress);
+            }
+
+            visited.Add(path);
+            result.Add(path);
         }
     }
 

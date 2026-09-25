@@ -7,6 +7,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Codex.Core.Models;
 using Codex.Plugin.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -16,10 +18,12 @@ public class YamlContentPackLoader : IContentPackLoader
 {
     private readonly IContentRegistry _registry;
     private readonly IDeserializer _yamlDeserializer;
+    private readonly ILogger _logger;
 
-    public YamlContentPackLoader(IContentRegistry registry)
+    public YamlContentPackLoader(IContentRegistry registry, ILogger<YamlContentPackLoader>? logger = null)
     {
         _registry = registry;
+        _logger = logger ?? (ILogger)NullLogger.Instance;
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
@@ -70,7 +74,17 @@ public class YamlContentPackLoader : IContentPackLoader
         if (!string.IsNullOrEmpty(item.Inherits))
         {
             var baseAbility = _registry.GetAbility(item.Inherits);
-            if (baseAbility != null) item.MergeFrom(baseAbility);
+            if (baseAbility != null)
+            {
+                item.MergeFrom(baseAbility);
+            }
+            else
+            {
+                // B9: a missing inherits target used to fail silently, leaving the child with
+                // none of its base's fields and no indication why.
+                _logger.LogError("Ability {AbilityId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                    item.Id, item.PackId, item.Inherits);
+            }
         }
         _registry.RegisterAbility(item, prio);
     }
@@ -80,7 +94,15 @@ public class YamlContentPackLoader : IContentPackLoader
         if (!string.IsNullOrEmpty(item.Inherits))
         {
             var baseActor = _registry.GetActor(item.Inherits);
-            if (baseActor != null) item.MergeFrom(baseActor);
+            if (baseActor != null)
+            {
+                item.MergeFrom(baseActor);
+            }
+            else
+            {
+                _logger.LogError("Actor {ActorId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                    item.Id, item.PackId, item.Inherits);
+            }
         }
         _registry.RegisterActor(item, prio);
     }
