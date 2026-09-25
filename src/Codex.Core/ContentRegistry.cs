@@ -9,9 +9,9 @@ namespace Codex.Core;
 
 public class ContentRegistry : IContentRegistry
 {
-    private readonly Dictionary<string, Dictionary<string, (IAbilityDefinition Ability, int Priority)>> _abilities = new();
-    private readonly Dictionary<string, Dictionary<string, (IActorDefinition Actor, int Priority)>> _actors = new();
-    private readonly Dictionary<string, Dictionary<string, (ILocationDefinition Location, int Priority)>> _locations = new();
+    private readonly Dictionary<string, Dictionary<string, (IAbilityDefinition Ability, int Priority, string PackId)>> _abilities = new();
+    private readonly Dictionary<string, Dictionary<string, (IActorDefinition Actor, int Priority, string PackId)>> _actors = new();
+    private readonly Dictionary<string, Dictionary<string, (ILocationDefinition Location, int Priority, string PackId)>> _locations = new();
     private readonly HashSet<string> _loadedPacks = new();
     private readonly ScriptEvaluator _scriptEvaluator;
 
@@ -23,7 +23,7 @@ public class ContentRegistry : IContentRegistry
     #region Abilities
     public void RegisterAbility(IAbilityDefinition ability, int priority)
     {
-        RegisterInternal(_abilities, ability.SystemId, ability.Id, ability, priority);
+        RegisterInternal(_abilities, ability.SystemId, ability.Id, ability, priority, ability.PackId);
         _loadedPacks.Add(ability.PackId);
     }
 
@@ -35,7 +35,7 @@ public class ContentRegistry : IContentRegistry
     #region Actors
     public void RegisterActor(IActorDefinition actor, int priority)
     {
-        RegisterInternal(_actors, actor.SystemId, actor.Id, actor, priority);
+        RegisterInternal(_actors, actor.SystemId, actor.Id, actor, priority, actor.PackId);
         _loadedPacks.Add(actor.PackId);
     }
 
@@ -47,7 +47,7 @@ public class ContentRegistry : IContentRegistry
     #region Locations
     public void RegisterLocation(ILocationDefinition location, int priority)
     {
-        RegisterInternal(_locations, location.SystemId, location.Id, location, priority);
+        RegisterInternal(_locations, location.SystemId, location.Id, location, priority, location.PackId);
         _loadedPacks.Add(location.PackId);
     }
 
@@ -78,22 +78,28 @@ public class ContentRegistry : IContentRegistry
     }
 
     #region Helpers
-    private void RegisterInternal<T>(Dictionary<string, Dictionary<string, (T Item, int Priority)>> storage,
-        string systemId, string itemId, T item, int priority)
+    // B9 remediation: ties used to be broken by ">= existing.Priority", which meant whichever
+    // pack Directory.GetFiles() happened to enumerate last won - nondeterministic across
+    // filesystems and OSes. Ties are now broken deterministically on PackId (ordinal, highest
+    // wins) so the outcome doesn't depend on load order at all.
+    private void RegisterInternal<T>(Dictionary<string, Dictionary<string, (T Item, int Priority, string PackId)>> storage,
+        string systemId, string itemId, T item, int priority, string packId)
     {
         if (!storage.TryGetValue(systemId, out var systemItems))
         {
-            systemItems = new Dictionary<string, (T Item, int Priority)>();
+            systemItems = new Dictionary<string, (T Item, int Priority, string PackId)>();
             storage[systemId] = systemItems;
         }
 
-        if (!systemItems.TryGetValue(itemId, out var existing) || priority >= existing.Priority)
+        if (!systemItems.TryGetValue(itemId, out var existing) ||
+            priority > existing.Priority ||
+            (priority == existing.Priority && string.CompareOrdinal(packId, existing.PackId) > 0))
         {
-            systemItems[itemId] = (item, priority);
+            systemItems[itemId] = (item, priority, packId);
         }
     }
 
-    private T? GetInternal<T>(Dictionary<string, Dictionary<string, (T Item, int Priority)>> storage, string fullId)
+    private T? GetInternal<T>(Dictionary<string, Dictionary<string, (T Item, int Priority, string PackId)>> storage, string fullId)
     {
         var parts = fullId.Split(':', 2);
         if (parts.Length != 2) return default;
@@ -110,7 +116,7 @@ public class ContentRegistry : IContentRegistry
         return default;
     }
 
-    private IEnumerable<T> GetBySystemInternal<T>(Dictionary<string, Dictionary<string, (T Item, int Priority)>> storage, string systemId)
+    private IEnumerable<T> GetBySystemInternal<T>(Dictionary<string, Dictionary<string, (T Item, int Priority, string PackId)>> storage, string systemId)
     {
         if (storage.TryGetValue(systemId, out var systemItems))
         {

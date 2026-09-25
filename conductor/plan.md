@@ -34,17 +34,20 @@ We will build a dual-mode content editor. Each TTRPG system plugin will define a
 3. Add `GraphMetadata` (NodeShape, EdgeTypes, NodeCategories) to support the Generic Graph Engine.
 4. Update `ICodexSystemPlugin` to expose these schemas.
 
-### Phase 3: Dynamic Form Engine [DONE]
+### Phase 3: Dynamic Form Engine [DONE, but unreachable]
+**Not actually usable as of the 2026-09-25 review (see `docs/REVIEW_AND_REMEDIATION_PLAN.md`): `DynamicFormView` exists but is not reachable from navigation. Only the Dashboard and Graph nav items do anything.**
 1. Create `DynamicFormView` using Avalonia's `ItemsControl` to generate input elements (TextBox, NumericUpDown, ComboBox) from the `UISchema`.
 2. Bind to a `GenericEntityViewModel` that proxies the entity's underlying dictionary properties.
 
-### Phase 4: Generic Graph Engine (The "Visual Logic" Mode) [DONE]
+### Phase 4: Generic Graph Engine (The "Visual Logic" Mode) [DONE, but incomplete]
+**Not actually usable as of the 2026-09-25 review: the graph editor can't create edges or persist anything it creates.**
 1. Refactor the existing `GraphEditorView` into a `SchemaDrivenGraphEditor`.
 2. Use `Avalonia.Controls.PanAndZoom` for a high-performance, zoomable canvas.
 3. Implement node templates that dynamically adapt their visuals (icons, colors, ports) based on the `UISchema` for that node type.
 4. Support diverse graph types (e.g., hierarchical for skill trees, spatial for maps).
 
-### Phase 5: Integration & Persistence [DONE]
+### Phase 5: Integration & Persistence [DONE, but not wired up]
+**Not actually usable as of the 2026-09-25 review: nothing saves or loads. `ContentPackExporter` is never called from the UI. "Load Pack" has no handler. See `docs/REVIEW_AND_REMEDIATION_PLAN.md` Phase 6 for the recommended path (park this app, or the minimum work to make it real).**
 1. Implement a `MultiModeContentEditor` that automatically swaps between `DynamicFormView` and `SchemaDrivenGraphEditor` based on the selected entity's `PreferredEditor`.
 2. Wire save/load logic to serialize both form data and graph metadata (node positions, connections) into the content pack's YAML.
 3. Updated `YamlContentPackLoader` to support folder-per-type YAML structures and ZIP (.cdx) packaging.

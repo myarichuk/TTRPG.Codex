@@ -21,35 +21,25 @@ public class AbilityDefinition : IAbilityDefinition
 
     public Dictionary<string, object>? Metadata { get; set; }
 
+    /// <summary>
+    /// B9 remediation. A child list (Triggers/Requires/Costs/Effects) REPLACES the base's list
+    /// wholesale as soon as the child specifies anything in it - it never appends to the base.
+    /// The previous behavior appended unconditionally, so overriding Fireball's damage from 8d6
+    /// to 10d6 resolved to "10d6 + 8d6" instead of "10d6". Only a list the child left null/empty
+    /// falls back to (a deep clone of) the base's. Opt-in additive merging (e.g. a future
+    /// `merge: append` flag per field) is left for later - this is plain, predictable override
+    /// semantics, which is what every other list here already assumed it had.
+    /// </summary>
     public void MergeFrom(IAbilityDefinition baseAbility)
     {
         if (string.IsNullOrEmpty(Name)) Name = baseAbility.Name;
         Description ??= baseAbility.Description;
         IconPath ??= baseAbility.IconPath;
 
-        if (baseAbility.Triggers != null)
-        {
-            Triggers ??= new List<TypedComponent>();
-            Triggers.AddRange(baseAbility.Triggers);
-        }
-
-        if (baseAbility.Requires != null)
-        {
-            Requires ??= new List<TypedComponent>();
-            Requires.AddRange(baseAbility.Requires);
-        }
-
-        if (baseAbility.Costs != null)
-        {
-            Costs ??= new List<TypedComponent>();
-            Costs.AddRange(baseAbility.Costs);
-        }
-
-        if (baseAbility.Effects != null)
-        {
-            Effects ??= new List<TypedComponent>();
-            Effects.AddRange(baseAbility.Effects);
-        }
+        Triggers = ReplaceOrCloneBase(Triggers, baseAbility.Triggers);
+        Requires = ReplaceOrCloneBase(Requires, baseAbility.Requires);
+        Costs = ReplaceOrCloneBase(Costs, baseAbility.Costs);
+        Effects = ReplaceOrCloneBase(Effects, baseAbility.Effects);
 
         if (baseAbility.Metadata != null)
         {
@@ -59,6 +49,12 @@ public class AbilityDefinition : IAbilityDefinition
                 if (!Metadata.ContainsKey(kvp.Key)) Metadata[kvp.Key] = kvp.Value;
             }
         }
+    }
+
+    private static List<TypedComponent>? ReplaceOrCloneBase(List<TypedComponent>? child, List<TypedComponent>? baseList)
+    {
+        if (child is { Count: > 0 }) return child;
+        return baseList?.Select(c => c.Clone()).ToList();
     }
 }
 

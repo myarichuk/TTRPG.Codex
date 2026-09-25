@@ -41,14 +41,16 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly CharacterRepository _characterRepository;
     private readonly RavenUserRepository _userRepository;
     private readonly RavenSessionRepository _sessionRepository;
+    private readonly RavenNoteRepository _noteRepository;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
         _dbService = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
-        _campaignRepository = new CampaignRepository(_dbService);
         _characterRepository = new CharacterRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
+        _noteRepository = new RavenNoteRepository(_dbService);
+        _campaignRepository = new CampaignRepository(_dbService, _characterRepository, _sessionRepository, _noteRepository);
     }
 
     [Fact]
@@ -224,6 +226,53 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.NotNull(loaded);
         Assert.Equal("newhash", loaded.PasswordHash);
         Assert.Contains("DM", loaded.Roles);
+    }
+
+    [Fact]
+    public async Task DeleteCampaign_ByNonOwner_ShouldBeForbidden_Async()
+    {
+        var campaign = new CampaignDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            OwnerId = "owner-1",
+            Name = "Owned Campaign"
+        };
+        await _campaignRepository.SaveAsync(campaign);
+
+        var result = await _campaignRepository.DeleteAsync(campaign.Id, "someone-else");
+
+        Assert.Equal(CampaignDeleteResult.Forbidden, result);
+        Assert.NotNull(await _campaignRepository.GetAsync(campaign.Id));
+    }
+
+    [Fact]
+    public async Task DeleteCampaign_ByOwner_CascadesToScopedDocuments_Async()
+    {
+        var campaign = new CampaignDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            OwnerId = "owner-2",
+            Name = "Cascade Campaign"
+        };
+        await _campaignRepository.SaveAsync(campaign);
+
+        var character = new CharacterDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaign.Id, Name = "Orphan Candidate" };
+        var sessionDoc = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaign.Id, Title = "Orphan Session" };
+        await _characterRepository.SaveAsync(character);
+        await _sessionRepository.SaveAsync(sessionDoc);
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<CharacterDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<SessionDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var result = await _campaignRepository.DeleteAsync(campaign.Id, "owner-2");
+
+        Assert.Equal(CampaignDeleteResult.Deleted, result);
+        Assert.Null(await _campaignRepository.GetAsync(campaign.Id));
+        Assert.Null(await _characterRepository.GetAsync(character.Id));
+        Assert.Null(await _sessionRepository.GetAsync(sessionDoc.Id));
     }
 
     public void Dispose()

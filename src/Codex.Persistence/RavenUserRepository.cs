@@ -1,4 +1,6 @@
 using Raven.Client.Documents;
+using Raven.Client.Documents.Session;
+using Raven.Client.Exceptions;
 
 namespace Codex.Persistence;
 
@@ -40,5 +42,36 @@ public class RavenUserRepository(RavenDbService dbService) : IUserRepository
         using var session = dbService.Store.OpenAsyncSession();
         await session.StoreAsync(user);
         await session.SaveChangesAsync();
+    }
+
+    public async Task<bool> AnyUsersExistAsync()
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        return await session.Query<UserDocument>()
+            .Customize(x => x.WaitForNonStaleResults())
+            .AnyAsync();
+    }
+
+    public async Task<bool> TryReserveUsernameAsync(string username, string userId)
+    {
+        var normalized = username.Trim().ToLowerInvariant();
+
+        using var session = dbService.Store.OpenAsyncSession(new SessionOptions
+        {
+            TransactionMode = TransactionMode.ClusterWide
+        });
+
+        session.Advanced.ClusterTransaction.CreateCompareExchangeValue($"usernames/{normalized}", userId);
+
+        try
+        {
+            await session.SaveChangesAsync();
+            return true;
+        }
+        catch (ConcurrencyException)
+        {
+            // Someone else already holds the compare-exchange key for this username.
+            return false;
+        }
     }
 }

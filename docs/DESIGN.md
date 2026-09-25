@@ -1,5 +1,11 @@
 # TTRPG.Codex Design Specification
 
+> **Aspirational — this is a spec, not a status report.** As of the 2026-09-25 review
+> (`docs/REVIEW_AND_REMEDIATION_PLAN.md`), several systems described below do not exist in code:
+> `PeriodicEffectSystem`, "Shield before HP" draining, and `SceneDocument`, among others. Treat
+> anything here that isn't backed by a file/type reference in the current source as a target for
+> a future phase, not a description of what runs today.
+
 **Modular tabletop RPG campaign and character management system.**
 
 A high-performance digital companion for tabletop play. Built on an **Entity Component System (ECS)** for live state and **RavenDB** for pragmatic, document-oriented persistence.
