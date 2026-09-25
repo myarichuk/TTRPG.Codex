@@ -47,6 +47,25 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         await session.SaveChangesAsync();
     }
 
+    public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var actor = await session.LoadAsync<ActorDocument>(actorId);
+        if (actor == null || actor.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        session.Delete(actorId);
+        await session.SaveChangesAsync();
+        return true;
+    }
+
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();

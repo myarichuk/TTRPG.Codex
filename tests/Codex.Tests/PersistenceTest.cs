@@ -213,6 +213,90 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task TryDeleteAsync_AsPlayer_CannotDeleteAnything_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Someone's PC", Visibility = ActorVisibility.Known };
+        await _actorRepository.SaveAsync(actor);
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var deleted = await _actorRepository.TryDeleteAsync(actor.Id, playerAccess);
+
+        Assert.False(deleted);
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        Assert.NotNull(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
+    }
+
+    [Fact]
+    public async Task TryDeleteAsync_AsDm_DeletesActor_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Doomed NPC" };
+        await _actorRepository.SaveAsync(actor);
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var deleted = await _actorRepository.TryDeleteAsync(actor.Id, dmAccess);
+
+        Assert.True(deleted);
+        Assert.Null(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
+    }
+
+    [Fact]
+    public async Task GetNotesForTarget_AsPlayer_CannotSeeAnotherPlayersPrivateNote_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var targetId = Guid.NewGuid().ToString();
+
+        var privateFromOther = new NoteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = campaignId,
+            TargetId = targetId,
+            AuthorId = "player-2",
+            Content = "Player 2's secret theory",
+            Visibility = CommentVisibility.Private
+        };
+        var ownPrivate = new NoteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = campaignId,
+            TargetId = targetId,
+            AuthorId = "player-1",
+            Content = "My own secret theory",
+            Visibility = CommentVisibility.Private
+        };
+        var publicNote = new NoteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = campaignId,
+            TargetId = targetId,
+            AuthorId = "player-2",
+            Content = "Publicly known fact",
+            Visibility = CommentVisibility.Public
+        };
+        await _noteRepository.CreateNoteAsync(privateFromOther);
+        await _noteRepository.CreateNoteAsync(ownPrivate);
+        await _noteRepository.CreateNoteAsync(publicNote);
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<NoteDocument, NotesByTargetIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var visible = (await _noteRepository.GetNotesForTargetAsync(targetId, playerAccess)).ToList();
+
+        Assert.Equal(2, visible.Count);
+        Assert.Contains(visible, n => n.Content == "My own secret theory");
+        Assert.Contains(visible, n => n.Content == "Publicly known fact");
+        Assert.DoesNotContain(visible, n => n.Content == "Player 2's secret theory");
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmVisible = (await _noteRepository.GetNotesForTargetAsync(targetId, dmAccess)).ToList();
+        Assert.Equal(3, dmVisible.Count);
+    }
+
+    [Fact]
     public async Task SaveAndLoadUser_ShouldSucceed_Async()
     {
         var user = new UserDocument

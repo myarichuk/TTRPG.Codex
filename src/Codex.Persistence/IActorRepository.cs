@@ -25,6 +25,13 @@ public interface IActorRepository
     Task DeleteAllForCampaignAsync(string campaignId);
 
     /// <summary>
+    /// Deletes a single actor if, and only if, <paramref name="access"/> is the campaign's DM.
+    /// Returns false without deleting anything for a Player/Observer or a cross-campaign id -
+    /// there is no player-facing "delete an actor" operation in this domain (1.4).
+    /// </summary>
+    Task<bool> TryDeleteAsync(string actorId, CampaignAccess access);
+
+    /// <summary>
     /// The dashboard's "recent archives" list: a user's own actors across every campaign they're
     /// in, most-recent first. Scoped to <paramref name="ownerUserId"/> rather than every actor in
     /// the database - the previous, pre-Phase-1 implementation had no such scoping at all.
