@@ -124,4 +124,32 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         var persisted = await _sessionRepository.GetAsync(session.Id);
         Assert.Equal(2, persisted!.Events.Count);
     }
+
+    [Fact]
+    public async Task StateChanged_FiresWithAffectedActorIds_ForEachCommand_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        var broadcasts = new List<IReadOnlyCollection<string>>();
+        runtime.StateChanged += ids => broadcasts.Add(ids);
+
+        await runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 3, "goblin-sword"));
+
+        Assert.Single(broadcasts);
+        Assert.Equal(new[] { actor.Id }, broadcasts[0]);
+
+        // AdvanceTurnCommand's own AffectedActorIds is empty (it can't predict who it'll touch),
+        // but it marks every hydrated actor dirty directly - the broadcast must reflect that, not
+        // the empty declared set, since a subscriber that trusted AffectedActorIds alone would
+        // never learn this actor's effects just ticked down.
+        await runtime.EnqueueAsync(new AdvanceTurnCommand(actor.Id));
+
+        Assert.Equal(2, broadcasts.Count);
+        Assert.Equal(new[] { actor.Id }, broadcasts[1]);
+    }
 }

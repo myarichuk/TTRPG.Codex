@@ -89,6 +89,17 @@ public sealed class CampaignRuntime : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Fires after a command's dirty actors are persisted (3.3) - the runtime IS the "in-process
+    /// per-campaign hub" the plan describes, since <see cref="CampaignRuntimeManager"/> already
+    /// caches exactly one instance per live campaign. A Blazor circuit subscribes on entry (having
+    /// resolved its own <see cref="CampaignAccess"/> first) and MUST unsubscribe in its own
+    /// disposal - this event outlives any one circuit, and a component that forgets to detach leaks
+    /// for as long as the campaign stays live. The payload is the actor ids this command actually
+    /// touched, so a subscriber can re-project only what changed instead of re-rendering blind.
+    /// </summary>
+    public event Action<IReadOnlyCollection<string>>? StateChanged;
+
     /// <summary>Queues a command onto the single-writer loop and returns a task that completes once
     /// it has actually been applied and its dirty actors persisted - so a caller (the DM console)
     /// can await a definite result instead of firing and hoping.</summary>
@@ -117,9 +128,20 @@ public sealed class CampaignRuntime : IAsyncDisposable
                         _dirtyActorIds.Add(actorId);
                     }
 
+                    // Snapshot before PersistDirtyAsync clears it - this is exactly what this one
+                    // command touched, which for AdvanceTurnCommand (MarkAllHydratedActorsDirty) is
+                    // broader than its own AffectedActorIds.
+                    var affectedActorIds = _dirtyActorIds.ToArray();
+
                     await PersistDirtyAsync();
                     await AppendSessionEventAsync(queued.Command);
                     queued.Completion.TrySetResult();
+
+                    // Deliberately still inside this try: a misbehaving subscriber (e.g. a circuit
+                    // that throws while re-rendering) must not be able to take down the whole
+                    // campaign's single-writer loop - it's caught and logged below like any other
+                    // command failure, even though the command itself already succeeded.
+                    StateChanged?.Invoke(affectedActorIds);
                 }
                 catch (Exception ex)
                 {
