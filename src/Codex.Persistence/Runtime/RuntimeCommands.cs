@@ -17,6 +17,12 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
             runtime.World.ApplyDamage(e, PoolName, Amount);
         }
     }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "Damage",
+        Description = $"{runtime.GetActorName(ActorId)} took {Amount} {PoolName} damage from {SourceId}."
+    };
 }
 
 public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Amount, string SourceId) : IRuntimeCommand
@@ -31,6 +37,12 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
             runtime.World.ApplyHealing(e, PoolName, Amount);
         }
     }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "Healing",
+        Description = $"{runtime.GetActorName(ActorId)} recovered {Amount} {PoolName} from {SourceId}."
+    };
 }
 
 /// <summary>Adds a status effect without clobbering whatever else <paramref name="ActorId"/> is
@@ -49,6 +61,12 @@ public sealed record AddStatusEffectCommand(string ActorId, string EffectId, str
             runtime.World.AddStatus(e, EffectId, SourceId, Rounds, Expiry, a);
         }
     }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "StatusEffect",
+        Description = $"{runtime.GetActorName(ActorId)} gained {EffectId} for {Rounds} round(s) from {SourceId}."
+    };
 }
 
 /// <summary>Advances the turn boundary for one actor: every effect anchored to them, across every
@@ -68,4 +86,10 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
             runtime.MarkAllHydratedActorsDirty();
         }
     }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "TurnAdvance",
+        Description = $"{runtime.GetActorName(ActorId)}'s turn ended."
+    };
 }

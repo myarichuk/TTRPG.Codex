@@ -23,6 +23,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     private readonly IActorRepository _actorRepository;
     private readonly ComponentRegistry _componentRegistry;
+    private readonly ISessionRepository? _sessionRepository;
+    private readonly SessionDocument? _activeSession;
     private readonly ILogger _logger;
     private readonly Dictionary<string, Entity> _actorEntities = new();
     private readonly Dictionary<string, ActorDocument> _actorDocs = new();
@@ -32,12 +34,26 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _loop;
 
-    public CampaignRuntime(string campaignId, IActorRepository actorRepository, ComponentRegistry componentRegistry, ILogger logger)
+    /// <param name="sessionRepository">Persists <paramref name="activeSession"/>'s appended events (3.2).
+    /// Optional so a caller that only needs bare ECS mutation (e.g. a unit test exercising a single
+    /// command in isolation) doesn't have to stand up a session too; when omitted, commands still
+    /// apply but nothing is logged.</param>
+    /// <param name="activeSession">The table's live <see cref="SessionDocument"/> - every applied
+    /// command's <see cref="IRuntimeCommand.Describe"/> is appended to its <see cref="SessionDocument.Events"/>.</param>
+    public CampaignRuntime(
+        string campaignId,
+        IActorRepository actorRepository,
+        ComponentRegistry componentRegistry,
+        ILogger logger,
+        ISessionRepository? sessionRepository = null,
+        SessionDocument? activeSession = null)
     {
         CampaignId = campaignId;
         _actorRepository = actorRepository;
         _componentRegistry = componentRegistry;
         _logger = logger;
+        _sessionRepository = sessionRepository;
+        _activeSession = activeSession;
         _loop = Task.Run(RunLoopAsync);
     }
 
@@ -59,6 +75,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
     }
 
     public Entity? GetEntity(string actorId) => _actorEntities.TryGetValue(actorId, out var entity) ? entity : null;
+
+    /// <summary>Resolves an actor id to its display name for a command's <see cref="SessionEvent"/>
+    /// description; falls back to the raw id for an actor the runtime never hydrated (e.g. a source
+    /// id that names a trap or effect rather than a living actor).</summary>
+    public string GetActorName(string actorId) => _actorDocs.TryGetValue(actorId, out var doc) ? doc.Name : actorId;
 
     internal void MarkAllHydratedActorsDirty()
     {
@@ -97,6 +118,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     }
 
                     await PersistDirtyAsync();
+                    await AppendSessionEventAsync(queued.Command);
                     queued.Completion.TrySetResult();
                 }
                 catch (Exception ex)
@@ -132,6 +154,20 @@ public sealed class CampaignRuntime : IAsyncDisposable
         }
 
         _dirtyActorIds.Clear();
+    }
+
+    /// <summary>The command log is the session log (3.2): every applied command's description
+    /// becomes a <see cref="SessionEvent"/>, giving the recap raw material and an audit trail for
+    /// free rather than a bolted-on separate logging path a DM console could forget to call.</summary>
+    private async Task AppendSessionEventAsync(IRuntimeCommand command)
+    {
+        if (_sessionRepository == null || _activeSession == null)
+        {
+            return;
+        }
+
+        _activeSession.Events.Add(command.Describe(this));
+        await _sessionRepository.SaveAsync(_activeSession);
     }
 
     public async ValueTask DisposeAsync()

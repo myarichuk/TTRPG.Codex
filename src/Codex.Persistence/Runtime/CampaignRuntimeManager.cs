@@ -12,6 +12,8 @@ namespace Codex.Persistence.Runtime;
 /// </summary>
 public sealed class CampaignRuntimeManager(
     IActorRepository actorRepository,
+    ISessionRepository sessionRepository,
+    ICampaignRepository campaignRepository,
     ComponentRegistry componentRegistry,
     PluginLoader pluginLoader,
     ILoggerFactory loggerFactory) : IAsyncDisposable
@@ -36,7 +38,15 @@ public sealed class CampaignRuntimeManager(
             throw new InvalidOperationException("Only the campaign's DM can start its runtime.");
         }
 
-        var runtime = new CampaignRuntime(campaign.Id, actorRepository, componentRegistry, loggerFactory.CreateLogger<CampaignRuntime>());
+        var session = await GetOrOpenLiveSessionAsync(campaign);
+
+        var runtime = new CampaignRuntime(
+            campaign.Id,
+            actorRepository,
+            componentRegistry,
+            loggerFactory.CreateLogger<CampaignRuntime>(),
+            sessionRepository,
+            session);
 
         if (!_runtimes.TryAdd(campaign.Id, runtime))
         {
@@ -56,14 +66,60 @@ public sealed class CampaignRuntimeManager(
         return runtime;
     }
 
-    /// <summary>Stops and disposes a campaign's runtime. Nothing currently calls this on a timer -
-    /// idle eviction is wiring left for whenever the web app grows a hosted background service to
-    /// drive it, not something this class should reach for a Timer to do on its own.</summary>
+    /// <summary>Resumes the campaign's current session if it's still Live, reopens it if the DM
+    /// left it Planned/Completed, or starts a brand-new one if this campaign has never had one
+    /// (3.2 - the command log needs somewhere to append to before the first command arrives).</summary>
+    private async Task<SessionDocument> GetOrOpenLiveSessionAsync(CampaignDocument campaign)
+    {
+        var session = campaign.CurrentSessionId != null
+            ? await sessionRepository.GetAsync(campaign.CurrentSessionId)
+            : null;
+
+        if (session == null)
+        {
+            session = new SessionDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                CampaignId = campaign.Id,
+                Title = $"Session - {DateTime.UtcNow:yyyy-MM-dd}",
+                Status = SessionStatus.Live
+            };
+            await sessionRepository.SaveAsync(session);
+
+            campaign.CurrentSessionId = session.Id;
+            await campaignRepository.SaveAsync(campaign);
+        }
+        else if (session.Status != SessionStatus.Live)
+        {
+            session.Status = SessionStatus.Live;
+            await sessionRepository.SaveAsync(session);
+        }
+
+        return session;
+    }
+
+    /// <summary>Stops and disposes a campaign's runtime, and closes out its live session. Nothing
+    /// currently calls this on a timer - idle eviction is wiring left for whenever the web app
+    /// grows a hosted background service to drive it, not something this class should reach for a
+    /// Timer to do on its own.</summary>
     public async Task EvictAsync(string campaignId)
     {
-        if (_runtimes.TryRemove(campaignId, out var runtime))
+        if (!_runtimes.TryRemove(campaignId, out var runtime))
         {
-            await runtime.DisposeAsync();
+            return;
+        }
+
+        await runtime.DisposeAsync();
+
+        var campaign = await campaignRepository.GetAsync(campaignId);
+        if (campaign?.CurrentSessionId is { } sessionId)
+        {
+            var liveSession = await sessionRepository.GetAsync(sessionId);
+            if (liveSession is { Status: SessionStatus.Live })
+            {
+                liveSession.Status = SessionStatus.Completed;
+                await sessionRepository.SaveAsync(liveSession);
+            }
         }
     }
 

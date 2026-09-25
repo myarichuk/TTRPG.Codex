@@ -13,4 +13,11 @@ public interface IRuntimeCommand
     IReadOnlyCollection<string> AffectedActorIds { get; }
 
     void Apply(CampaignRuntime runtime);
+
+    /// <summary>
+    /// Turns this command into the <see cref="SessionEvent"/> appended to the live session's log
+    /// (3.2). Called after <see cref="Apply"/> succeeds, against the same runtime, so it can resolve
+    /// actor ids to names for a readable audit trail - the raw material a recap is generated from.
+    /// </summary>
+    SessionEvent Describe(CampaignRuntime runtime);
 }
