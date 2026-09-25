@@ -542,10 +542,10 @@ else
     // ---- Combat (3.5-3.7) ----
 
     private RenderFragment RenderCombat() => @<div>
-        <CombatConsole CampaignId="CampaignId"
+        <CombatConsole CampaignId="@CampaignId"
                         Campaign="campaign!"
                         Access="access!"
-                        CurrentUserId="currentUserId!"
+                        CurrentUserId="@(currentUserId!)"
                         Actors="actors"
                         OnActorAdded="ReloadAsync" />
     </div>;

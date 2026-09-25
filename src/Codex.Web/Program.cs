@@ -194,6 +194,65 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
+// Test-only seeding endpoints for the Phase 3 exit-criteria Playwright suite (and any future
+// e2e test): opt-in via config, off by default, so a stray "Codex:EnableTestSeedEndpoint=true"
+// can never leak into a real deployment's route table - the check happens once here, at startup,
+// rather than per-request inside the handler, so the routes don't even exist otherwise.
+if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
+{
+    app.MapPost("/test/seed/users", async (List<Codex.Web.TestSeedUser> users, IUserRepository userRepository) =>
+    {
+        foreach (var seed in users)
+        {
+            var user = new UserDocument { Id = seed.Id, Username = seed.Username, Roles = seed.Roles };
+            user.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().HashPassword(user, seed.Password);
+            await userRepository.TryReserveUsernameAsync(seed.Username, seed.Id);
+            await userRepository.CreateUserAsync(user);
+        }
+
+        return Results.Ok();
+    }).AllowAnonymous();
+
+    app.MapPost("/test/seed/actors", async (List<Codex.Web.TestSeedActor> actors, IActorRepository actorRepository, ComponentRegistry componentRegistry) =>
+    {
+        foreach (var seed in actors)
+        {
+            var pool = new Codex.Core.Components.ResourcePoolComponent();
+            pool.Set("HP", seed.Hp);
+            pool.Set("HP_Max", seed.HpMax);
+
+            var actor = new ActorDocument
+            {
+                Id = seed.Id,
+                CampaignId = seed.CampaignId,
+                Kind = seed.Kind,
+                OwnerUserId = seed.OwnerUserId,
+                Name = seed.Name,
+                Visibility = seed.Visibility,
+                State = componentRegistry.Snapshot(new object[] { pool })
+            };
+            await actorRepository.SaveAsync(actor);
+        }
+
+        return Results.Ok();
+    }).AllowAnonymous();
+
+    // Phase 3 exit criterion 6 ("the session log contains every command") reads this back
+    // rather than parsing it out of rendered HTML - the session log isn't shown in any UI yet
+    // (that's 4.1's recap editor), so the only faithful way to assert on it today is directly.
+    app.MapGet("/test/inspect/session-events/{campaignId}", async (string campaignId, ICampaignRepository campaignRepository, ISessionRepository sessionRepository) =>
+    {
+        var campaign = await campaignRepository.GetAsync(campaignId);
+        if (campaign?.CurrentSessionId == null)
+        {
+            return Results.Ok(Array.Empty<string>());
+        }
+
+        var session = await sessionRepository.GetAsync(campaign.CurrentSessionId);
+        return Results.Ok(session?.Events.Select(e => e.Type).ToList() ?? new List<string>());
+    }).AllowAnonymous();
+}
+
 // Robust sign-out: do it on a normal HTTP request so cookies can be cleared reliably.
 // POST + antiforgery (B11): a GET logout can be triggered cross-site by a bare <img>/<a> tag.
 app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>

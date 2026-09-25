@@ -22,7 +22,7 @@
 {
     @if (Access.IsDm)
     {
-        <button type="button" class="btn btn-accent" @onclick="StartOrJoinAsync">Start Table</button>
+        <button type="button" class="btn btn-accent" data-testid="start-table" @onclick="StartOrJoinAsync">Start Table</button>
     }
     else
     {
@@ -37,12 +37,12 @@ else
         <div class="col-md-8">
             <div class="card p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Initiative @(encounter != null ? $"- Round {encounter.Round}" : "")</h5>
+                    <h5 class="mb-0" data-testid="initiative-header">Initiative @(encounter != null ? $"- Round {encounter.Round}" : "")</h5>
                     @if (Access.IsDm && encounter is { Participants.Count: > 0 })
                     {
                         <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="PreviousTurnAsync">◀ Prev</button>
-                            <button type="button" class="btn btn-sm btn-accent" @onclick="NextTurnAsync">Next Turn ▶</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="prev-turn-btn" @onclick="PreviousTurnAsync">◀ Prev</button>
+                            <button type="button" class="btn btn-sm btn-accent" data-testid="next-turn-btn" @onclick="NextTurnAsync">Next Turn ▶</button>
                         </div>
                     }
                 </div>
@@ -58,7 +58,15 @@ else
                         var participant = encounter.Participants[i];
                         var isCurrent = i == encounter.TurnIndex;
                         var actor = ActorsById.GetValueOrDefault(participant.ActorId);
-                        <div class="card p-2 mb-2 @(isCurrent ? "border-accent" : "")">
+
+                        @* A participant this viewer can't see (a Hidden NPC, from a player's
+                           already-filtered Actors list) must not render at all - not even as an
+                           anonymous row with a banded HP badge. Rendering a row for it would leak
+                           its existence and turn position even though HpBadge already hides its
+                           exact HP; the DM sees everyone, since their Actors list is unfiltered. *@
+                        if (Access.IsDm || actor != null)
+                        {
+                        <div class="card p-2 mb-2 @(isCurrent ? "border-accent" : "")" data-testid="participant-row" data-actor-id="@participant.ActorId">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>@(actor?.Name ?? participant.ActorId)</strong>
@@ -84,7 +92,7 @@ else
 
                             @foreach (var effect in GetEffects(participant.ActorId))
                             {
-                                <span class="badge bg-dark me-1 mt-1">
+                                <span class="badge bg-dark me-1 mt-1" data-testid="condition-badge" data-effect-id="@effect.EffectId">
                                     @effect.EffectId (@effect.RoundsRemaining)
                                     @if (Access.IsDm)
                                     {
@@ -96,32 +104,41 @@ else
                             @if (Access.IsDm)
                             {
                                 <div class="d-flex gap-1 mt-2 align-items-center">
-                                    <input type="number" class="form-control form-control-sm" style="width:5rem"
+                                    <input type="number" class="form-control form-control-sm" style="width:5rem" data-testid="damage-input"
                                            value="@GetDamageInput(participant.ActorId)"
                                            @oninput="e => SetDamageInput(participant.ActorId, e.Value?.ToString())" />
-                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ApplyDamageAsync(participant.ActorId)">Damage</button>
-                                    <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => ApplyHealingAsync(participant.ActorId)">Heal</button>
-                                    <input class="form-control form-control-sm" style="width:8rem" placeholder="condition"
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-testid="damage-btn" @onclick="() => ApplyDamageAsync(participant.ActorId)">Damage</button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" data-testid="heal-btn" @onclick="() => ApplyHealingAsync(participant.ActorId)">Heal</button>
+                                    <input class="form-control form-control-sm" style="width:8rem" placeholder="condition" data-testid="condition-input"
                                            value="@GetConditionInput(participant.ActorId)"
                                            @oninput="e => SetConditionInput(participant.ActorId, e.Value?.ToString())" />
-                                    <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => AddConditionAsync(participant.ActorId)">Add</button>
+                                    <input type="number" class="form-control form-control-sm" style="width:4rem" placeholder="rounds" data-testid="condition-rounds-input"
+                                           value="@GetConditionRounds(participant.ActorId)"
+                                           @oninput="e => SetConditionRounds(participant.ActorId, e.Value?.ToString())" />
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(participant.ActorId)">Add</button>
                                 </div>
                             }
                         </div>
+                        }
                     }
                 }
 
                 @if (Access.IsDm)
                 {
                     <div class="d-flex gap-1 mt-2 align-items-center">
-                        <select class="form-select form-select-sm" style="width:auto" @bind="selectedActorId">
+                        <select class="form-select form-select-sm" style="width:auto" data-testid="add-to-initiative-select" @bind="selectedActorId">
                             <option value="">Add to initiative...</option>
                             @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
                             {
                                 <option value="@actor.Id">@actor.Name</option>
                             }
                         </select>
-                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll d20</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="roll-initiative-btn" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll d20</button>
+                        <span class="text-tertiary small">or</span>
+                        <input type="number" class="form-control form-control-sm" style="width:5rem" placeholder="enter" data-testid="manual-initiative-input"
+                               value="@GetManualInitiative(selectedActorId)"
+                               @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="set-initiative-btn" @onclick="SetInitiativeManualAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Set</button>
                     </div>
                 }
             </div>
@@ -159,7 +176,7 @@ else
                 <div style="max-height: 220px; overflow-y: auto;">
                     @foreach (var entry in VisibleRollLog())
                     {
-                        <div class="small border-bottom py-1">
+                        <div class="small border-bottom py-1" data-testid="roll-log-entry">
                             <strong>@ResolveRollerName(entry)</strong>
                             @if (entry.IsSecret)
                             {
@@ -211,6 +228,8 @@ else
     private string selectedActorId = "";
     private readonly Dictionary<string, int> damageInputs = new();
     private readonly Dictionary<string, string> conditionInputs = new();
+    private readonly Dictionary<string, int> conditionRoundsInputs = new();
+    private readonly Dictionary<string, int> manualInitiativeInputs = new();
 
     private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
 
@@ -222,12 +241,18 @@ else
     private string GetConditionInput(string actorId) => conditionInputs.GetValueOrDefault(actorId, string.Empty);
     private void SetConditionInput(string actorId, string? raw) => conditionInputs[actorId] = raw ?? string.Empty;
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
-        if (runtime == null)
+        // Only auto-attach to a table that's already running - starting a brand-new one is the
+        // DM's explicit "Start Table" click (StartOrJoinAsync below). Auto-invoking that here
+        // too would start the table the instant the DM's tab mounts, making the button
+        // unreachable dead UI and silently skipping the "DM starts a session" step entirely.
+        if (runtime == null && RuntimeManager.TryGet(CampaignId) is { } existing)
         {
-            await StartOrJoinAsync();
+            Attach(existing);
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task StartOrJoinAsync()
@@ -272,9 +297,32 @@ else
         }
 
         var result = runtime!.DiceRoller.Roll("1d20");
-        await runtime.EnqueueAsync(new SetInitiativeCommand(selectedActorId, result.Total));
+        var actorId = selectedActorId;
         selectedActorId = "";
+        await runtime.EnqueueAsync(new SetInitiativeCommand(actorId, result.Total));
     }
+
+    /// <summary>3.5 calls for "roll or enter initiative" - a DM running a system with a fixed
+    /// initiative (or correcting a misroll) needs to type the number directly, not just re-roll.</summary>
+    private async Task SetInitiativeManualAsync()
+    {
+        if (string.IsNullOrEmpty(selectedActorId))
+        {
+            return;
+        }
+
+        // Clear the picker before awaiting the command, not after: EnqueueAsync's round trip
+        // (through the single-writer loop and a RavenDB encounter save) can take long enough that
+        // a DM's next click lands before this resumes, and a reset that happens "late" clobbers
+        // whatever the DM had already selected in the meantime.
+        var actorId = selectedActorId;
+        var roll = GetManualInitiative(actorId);
+        selectedActorId = "";
+        await runtime!.EnqueueAsync(new SetInitiativeCommand(actorId, roll));
+    }
+
+    private int GetManualInitiative(string actorId) => manualInitiativeInputs.GetValueOrDefault(actorId, 0);
+    private void SetManualInitiativeInput(string actorId, string? raw) => manualInitiativeInputs[actorId] = int.TryParse(raw, out var value) ? value : 0;
 
     private Task NextTurnAsync() => runtime!.EnqueueAsync(new NextTurnCommand());
     private Task PreviousTurnAsync() => runtime!.EnqueueAsync(new PreviousTurnCommand());
@@ -303,7 +351,8 @@ else
 
         builder.OpenElement(0, "span");
         builder.AddAttribute(1, "class", "badge bg-info text-dark ms-1");
-        builder.AddContent(2, text);
+        builder.AddAttribute(2, "data-testid", "hp-badge");
+        builder.AddContent(3, text);
         builder.CloseElement();
     };
 
@@ -356,9 +405,13 @@ else
             return;
         }
 
-        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId, CurrentUserId, 1, EffectExpiry.EndOfTurn, actorId));
+        var rounds = GetConditionRounds(actorId);
         conditionInputs[actorId] = "";
+        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId, CurrentUserId, rounds, EffectExpiry.EndOfTurn, actorId));
     }
+
+    private int GetConditionRounds(string actorId) => conditionRoundsInputs.GetValueOrDefault(actorId, 1);
+    private void SetConditionRounds(string actorId, string? raw) => conditionRoundsInputs[actorId] = int.TryParse(raw, out var value) && value > 0 ? value : 1;
 
     private Task RemoveConditionAsync(string actorId, string effectId) => runtime!.EnqueueAsync(new RemoveStatusEffectCommand(actorId, effectId));
 
@@ -435,8 +488,9 @@ else
             return;
         }
 
-        await runtime!.EnqueueAsync(new AddSessionNoteCommand(CurrentUserId, noteText, noteSecret && Access.IsDm));
+        var text = noteText;
         noteText = "";
+        await runtime!.EnqueueAsync(new AddSessionNoteCommand(CurrentUserId, text, noteSecret && Access.IsDm));
     }
 
     private IEnumerable<SessionNote> VisibleNotes() =>
