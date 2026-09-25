@@ -26,6 +26,9 @@
 ## 2026-06-04 - [Screen Reader Trailing Arrow Accessibility]
 **Learning:** Found an accessibility pattern where visual indicator characters like trailing arrows (e.g., '→') are read out by screen readers in links, creating a distracting auditory experience.
 **Action:** When adding decorative characters to links or buttons, always provide a clean `aria-label` on the parent element and wrap the decorative character in a `<span aria-hidden="true">`.
+## 2026-08-15 - Prevent form submissions on interactive buttons
+**Learning:** Found that several buttons across the app lacked the `type="button"` attribute, and inputs lacked `aria-label` attributes. Blazor forms can accidentally intercept interactive clicks from components if the `<button>` default type (`submit`) is active.
+**Action:** Always explicitly set `type="button"` on any interactive element implemented as a `<button>` in Blazor unless it specifically needs to submit a form. Added `aria-label` to inputs missing explicit labels to ensure accessibility for screen readers.
 
 ## 2026-06-10 - [Empty State Consistency in Tables]
 **Learning:** Found an empty state in a data table (`Home.razor` "Recent Archives") that just used plain italic text instead of following the app's established empty state component patterns. Text-only empty states represent missed UX opportunities for visual consistency and guiding the user.
