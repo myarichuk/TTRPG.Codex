@@ -106,6 +106,7 @@ builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
 builder.Services.AddSingleton<IFactRepository, FactRepository>();
+builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 
 builder.Services.AddSingleton<ComponentRegistry>();

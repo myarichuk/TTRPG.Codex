@@ -14,6 +14,7 @@ public sealed class CampaignRuntimeManager(
     IActorRepository actorRepository,
     ISessionRepository sessionRepository,
     ICampaignRepository campaignRepository,
+    IEncounterRepository encounterRepository,
     ComponentRegistry componentRegistry,
     PluginLoader pluginLoader,
     ILoggerFactory loggerFactory) : IAsyncDisposable
@@ -39,6 +40,7 @@ public sealed class CampaignRuntimeManager(
         }
 
         var session = await GetOrOpenLiveSessionAsync(campaign);
+        var plugin = pluginLoader.GetPlugin(campaign.SystemId);
 
         var runtime = new CampaignRuntime(
             campaign.Id,
@@ -46,7 +48,9 @@ public sealed class CampaignRuntimeManager(
             componentRegistry,
             loggerFactory.CreateLogger<CampaignRuntime>(),
             sessionRepository,
-            session);
+            session,
+            encounterRepository,
+            plugin?.GetDiceRoller());
 
         if (!_runtimes.TryAdd(campaign.Id, runtime))
         {
@@ -54,7 +58,6 @@ public sealed class CampaignRuntimeManager(
             return _runtimes[campaign.Id];
         }
 
-        var plugin = pluginLoader.GetPlugin(campaign.SystemId);
         if (plugin != null)
         {
             pluginLoader.InitializePlugins(new[] { plugin }, runtime.World);

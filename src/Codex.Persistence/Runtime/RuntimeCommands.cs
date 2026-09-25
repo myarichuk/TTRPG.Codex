@@ -1,4 +1,5 @@
 using Codex.Core.Components;
+using Codex.Plugin.Abstractions.Dice;
 
 namespace Codex.Persistence.Runtime;
 
@@ -91,5 +92,249 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
     {
         Type = "TurnAdvance",
         Description = $"{runtime.GetActorName(ActorId)}'s turn ended."
+    };
+}
+
+/// <summary>Removes every instance of a status effect from an actor (3.7 "remove conditions") -
+/// the counterpart <see cref="AddStatusEffectCommand"/> never got, since B6's fix only needed
+/// "add without clobbering."</summary>
+public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var entity = runtime.GetEntity(ActorId);
+        if (entity is { } e && e.Has<ActiveEffectsComponent>())
+        {
+            e.Get<ActiveEffectsComponent>().Effects.RemoveAll(effect => effect.EffectId == EffectId);
+        }
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "StatusEffectRemoved",
+        Description = $"{runtime.GetActorName(ActorId)} lost {EffectId}."
+    };
+}
+
+/// <summary>
+/// Adds a participant to the encounter's initiative order if new, or updates their roll if
+/// already present (3.5) - the encounter is created lazily on the first roll, since a campaign
+/// spends most of its time with no combat happening at all. Ties are broken by
+/// <paramref name="TieBreak"/> (a secondary roll or stat), then by actor id for a fully
+/// deterministic order - two participants must never silently swap places between renders.
+/// </summary>
+public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, int TieBreak = 0) : IRuntimeCommand
+{
+    // Doesn't touch ActorDocument.State - initiative order lives on the EncounterDocument, which
+    // the runtime persists separately (see CampaignRuntime.PersistEncounterAsync).
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var encounter = runtime.GetOrCreateEncounter();
+        var participant = encounter.Participants.FirstOrDefault(p => p.ActorId == ActorId);
+        if (participant == null)
+        {
+            participant = new EncounterParticipant { ActorId = ActorId };
+            encounter.Participants.Add(participant);
+        }
+
+        participant.InitiativeRoll = InitiativeRoll;
+        participant.TieBreak = TieBreak;
+        CampaignRuntime.SortParticipants(encounter);
+        runtime.MarkEncounterDirty();
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "Initiative",
+        Description = $"{runtime.GetActorName(ActorId)} rolled {InitiativeRoll} for initiative."
+    };
+}
+
+/// <summary>Moves the encounter to the next participant's turn (3.5), ticking whichever effects
+/// are anchored to the participant whose turn just ended - the same duration bookkeeping
+/// <see cref="AdvanceTurnCommand"/> does, just driven by turn order instead of a bare actor id.
+/// Wraps to a new round (and resets who's acted) once every participant has gone.</summary>
+public sealed record NextTurnCommand : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var encounter = runtime.ActiveEncounter;
+        if (encounter == null || encounter.Participants.Count == 0)
+        {
+            return;
+        }
+
+        var current = encounter.Participants[encounter.TurnIndex];
+        var currentEntity = runtime.GetEntity(current.ActorId);
+        if (currentEntity is { } e)
+        {
+            runtime.World.AdvanceTurn(e);
+            runtime.MarkAllHydratedActorsDirty();
+        }
+
+        current.HasActed = true;
+        encounter.TurnIndex++;
+        if (encounter.TurnIndex >= encounter.Participants.Count)
+        {
+            encounter.TurnIndex = 0;
+            encounter.Round++;
+            foreach (var participant in encounter.Participants)
+            {
+                participant.HasActed = false;
+            }
+        }
+
+        runtime.MarkEncounterDirty();
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var encounter = runtime.ActiveEncounter;
+        var upNext = encounter is { Participants.Count: > 0 }
+            ? runtime.GetActorName(encounter.Participants[encounter.TurnIndex].ActorId)
+            : "nobody";
+        return new SessionEvent { Type = "TurnAdvance", Description = $"Turn passed to {upNext} (round {encounter?.Round ?? 1})." };
+    }
+}
+
+/// <summary>Steps the initiative pointer back one participant (3.5), for correcting a misclick -
+/// it does not un-tick durations advanced by the turn it's undoing, since effect expiry isn't
+/// reversible without risking a status coming back after its owner was already told it wore off.</summary>
+public sealed record PreviousTurnCommand : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var encounter = runtime.ActiveEncounter;
+        if (encounter == null || encounter.Participants.Count == 0)
+        {
+            return;
+        }
+
+        encounter.TurnIndex--;
+        if (encounter.TurnIndex < 0)
+        {
+            encounter.TurnIndex = encounter.Participants.Count - 1;
+            encounter.Round = Math.Max(1, encounter.Round - 1);
+        }
+
+        runtime.MarkEncounterDirty();
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var encounter = runtime.ActiveEncounter;
+        var current = encounter is { Participants.Count: > 0 }
+            ? runtime.GetActorName(encounter.Participants[encounter.TurnIndex].ActorId)
+            : "nobody";
+        return new SessionEvent { Type = "TurnAdvance", Description = $"Turn moved back to {current}." };
+    }
+}
+
+/// <summary>Marks a participant as delaying or holding a readied action (3.5), or clears that
+/// back to normal.</summary>
+public sealed record SetTurnStateCommand(string ActorId, TurnState State) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var participant = runtime.ActiveEncounter?.Participants.FirstOrDefault(p => p.ActorId == ActorId);
+        if (participant == null)
+        {
+            return;
+        }
+
+        participant.State = State;
+        runtime.MarkEncounterDirty();
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "TurnState",
+        Description = State switch
+        {
+            TurnState.Delayed => $"{runtime.GetActorName(ActorId)} delayed their turn.",
+            TurnState.Readied => $"{runtime.GetActorName(ActorId)} readied an action.",
+            _ => $"{runtime.GetActorName(ActorId)} is acting normally again."
+        }
+    };
+}
+
+/// <summary>
+/// Resolves and logs a dice roll (3.6) through whichever <see cref="IDiceRoller"/> the campaign's
+/// system plugin provides (<see cref="StandardDiceRoller"/> if it doesn't override one). Doesn't
+/// touch ECS state - the roll log lives on the live session, exactly like everything else 3.2
+/// already logs - so <see cref="AffectedActorIds"/> is empty.
+/// </summary>
+public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    // Populated by Apply, read back by Describe on the same command instance right after - a
+    // command is applied exactly once by the single-writer loop, so there's no reentrancy risk.
+    private DiceRollResult? _result;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        _result = runtime.DiceRoller.Roll(Expression);
+        runtime.RecordRoll(new RollLogEntry
+        {
+            ActorId = ActorId,
+            RollerUserId = RollerUserId,
+            Expression = Expression,
+            Result = _result.ToString(),
+            Total = _result.Total,
+            IsSecret = IsSecret
+        });
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var roller = ActorId != null ? runtime.GetActorName(ActorId) : RollerUserId;
+        var description = IsSecret
+            ? $"{roller} made a secret roll ({Expression})."
+            : $"{roller} rolled {Expression}: {_result?.Total}.";
+        return new SessionEvent { Type = "DiceRoll", Description = description };
+    }
+}
+
+/// <summary>Appends a DM/player quick note to the live session (3.7) - reuses the same
+/// <see cref="SessionDocument.Notes"/> list the recap editor (4.1) will read from, rather than a
+/// separate combat-log-only notes concept.</summary>
+public sealed record AddSessionNoteCommand(string AuthorId, string Text, bool IsSecret) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime) => runtime.AddSessionNote(new SessionNote { AuthorId = AuthorId, Text = Text, IsSecret = IsSecret });
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "Note",
+        Description = IsSecret ? $"{AuthorId} added a secret note." : $"Note: {Text}"
+    };
+}
+
+/// <summary>Hydrates an already-persisted <see cref="ActorDocument"/> into the already-running
+/// runtime (3.7 "quick-add monsters from packs") - <see cref="CampaignRuntime.Hydrate"/> itself
+/// only runs once, at startup, before any command is enqueued; a monster added mid-session has to
+/// go through the same single-writer loop as everything else.</summary>
+public sealed record HydrateActorCommand(ActorDocument Actor) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { Actor.Id };
+
+    public void Apply(CampaignRuntime runtime) => runtime.HydrateOne(Actor);
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "ActorJoined",
+        Description = $"{Actor.Name} joined the encounter."
     };
 }

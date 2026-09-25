@@ -87,11 +87,15 @@ else
     {
         @RenderSessions()
     }
+    else if (activeTab == "Combat")
+    {
+        @RenderCombat()
+    }
 }
 </div>
 
 @code {
-    private static readonly string[] Tabs = { "Overview", "Cast", "Locations", "Lore", "Sessions" };
+    private static readonly string[] Tabs = { "Overview", "Cast", "Locations", "Lore", "Sessions", "Combat" };
 
     [Parameter]
     public string CampaignId { get; set; } = string.Empty;
@@ -534,4 +538,15 @@ else
         await SessionRepo.SaveAsync(session);
         await ReloadAsync();
     }
+
+    // ---- Combat (3.5-3.7) ----
+
+    private RenderFragment RenderCombat() => @<div>
+        <CombatConsole CampaignId="CampaignId"
+                        Campaign="campaign!"
+                        Access="access!"
+                        CurrentUserId="currentUserId!"
+                        Actors="actors"
+                        OnActorAdded="ReloadAsync" />
+    </div>;
 }

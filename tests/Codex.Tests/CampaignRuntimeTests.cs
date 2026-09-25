@@ -2,6 +2,7 @@ using Codex.Core.Components;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
@@ -18,6 +19,7 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenDbService _dbService;
     private readonly ActorRepository _actorRepository;
     private readonly RavenSessionRepository _sessionRepository;
+    private readonly RavenEncounterRepository _encounterRepository;
     private readonly ComponentRegistry _componentRegistry;
 
     public CampaignRuntimeTests(RavenDbFixture fixture)
@@ -25,6 +27,7 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         _dbService = new RavenDbService(fixture.DbPath, "Runtime_" + Guid.NewGuid(), runInMemory: true);
         _actorRepository = new ActorRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
+        _encounterRepository = new RavenEncounterRepository(_dbService);
         _componentRegistry = new ComponentRegistry();
         _componentRegistry.Register<ResourcePoolComponent>();
     }
@@ -151,5 +154,137 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.Equal(2, broadcasts.Count);
         Assert.Equal(new[] { actor.Id }, broadcasts[1]);
+    }
+
+    [Fact]
+    public async Task SetInitiativeCommand_OrdersParticipantsByRollThenTieBreak_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var alice = await SeedActorAsync(campaignId, hp: 10);
+        var bob = await SeedActorAsync(campaignId, hp: 10);
+        var carol = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session, _encounterRepository);
+        runtime.Hydrate(new[] { alice, bob, carol });
+
+        // Bob and Carol tie on the roll; Carol's higher tiebreak must put her ahead of Bob, and
+        // both must still fall behind Alice's outright-higher roll (3.5).
+        await runtime.EnqueueAsync(new SetInitiativeCommand(alice.Id, 15));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(bob.Id, 10, TieBreak: 2));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(carol.Id, 10, TieBreak: 5));
+
+        var order = runtime.ActiveEncounter!.Participants.Select(p => p.ActorId).ToArray();
+        Assert.Equal(new[] { alice.Id, carol.Id, bob.Id }, order);
+
+        var persisted = await _encounterRepository.GetAsync(runtime.ActiveEncounter!.Id);
+        Assert.Equal(3, persisted!.Participants.Count);
+    }
+
+    [Fact]
+    public async Task NextTurnCommand_AdvancesThroughOrderAndWrapsToNewRound_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var alice = await SeedActorAsync(campaignId, hp: 10);
+        var bob = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session, _encounterRepository);
+        runtime.Hydrate(new[] { alice, bob });
+
+        await runtime.EnqueueAsync(new SetInitiativeCommand(alice.Id, 20));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(bob.Id, 10));
+
+        Assert.Equal(1, runtime.ActiveEncounter!.Round);
+        Assert.Equal(0, runtime.ActiveEncounter!.TurnIndex);
+
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        Assert.Equal(1, runtime.ActiveEncounter!.TurnIndex);
+        Assert.Equal(1, runtime.ActiveEncounter!.Round);
+
+        // Wrapping past the last participant starts round 2 and resets who's acted.
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        Assert.Equal(0, runtime.ActiveEncounter!.TurnIndex);
+        Assert.Equal(2, runtime.ActiveEncounter!.Round);
+        Assert.All(runtime.ActiveEncounter!.Participants, p => Assert.False(p.HasActed));
+    }
+
+    [Fact]
+    public async Task RemoveStatusEffectCommand_RemovesOnlyTheNamedEffect_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(actor.Id, "poisoned", "trap", 10, EffectExpiry.EndOfTurn, actor.Id));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(actor.Id, "stunned", "trap", 1, EffectExpiry.EndOfTurn, actor.Id));
+
+        await runtime.EnqueueAsync(new RemoveStatusEffectCommand(actor.Id, "stunned"));
+
+        var effects = runtime.GetEntity(actor.Id)!.Value.Get<ActiveEffectsComponent>().Effects;
+        Assert.Single(effects);
+        Assert.Equal("poisoned", effects[0].EffectId);
+    }
+
+    [Fact]
+    public async Task RollDiceCommand_LogsResultToSessionRollLog_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+        var diceRoller = new StandardDiceRoller(new Random(42));
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session, _encounterRepository, diceRoller);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new RollDiceCommand("2d6+3", actor.Id, "dm-user", IsSecret: false));
+        await runtime.EnqueueAsync(new RollDiceCommand("1d20", null, "dm-user", IsSecret: true));
+
+        Assert.Equal(2, session.RollLog.Count);
+        Assert.Equal(actor.Id, session.RollLog[0].ActorId);
+        Assert.False(session.RollLog[0].IsSecret);
+        Assert.True(session.RollLog[1].IsSecret);
+
+        var persisted = await _sessionRepository.GetAsync(session.Id);
+        Assert.Equal(2, persisted!.RollLog.Count);
+    }
+
+    [Fact]
+    public async Task AddSessionNoteCommand_AppendsNoteToLiveSession_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("dm-user", "The party finds a hidden door.", IsSecret: false));
+
+        Assert.Single(session.Notes);
+        Assert.Equal("The party finds a hidden door.", session.Notes[0].Text);
+    }
+
+    [Fact]
+    public async Task HydrateActorCommand_AddsANewlyPersistedActorToTheRunningRuntime_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        // A monster quick-added mid-session (3.7) is saved to Raven first, then hydrated into
+        // the already-running runtime through the same single-writer loop as every other command.
+        var goblin = await SeedActorAsync(campaignId, hp: 7);
+        Assert.Null(runtime.GetEntity(goblin.Id));
+
+        await runtime.EnqueueAsync(new HydrateActorCommand(goblin));
+
+        Assert.NotNull(runtime.GetEntity(goblin.Id));
     }
 }

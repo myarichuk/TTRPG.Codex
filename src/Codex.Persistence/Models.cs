@@ -132,6 +132,11 @@ public class SessionDocument
     public List<SessionNote> Notes { get; set; } = new();
     public List<SessionEvent> Events { get; set; } = new();
     public List<string> EncounterIds { get; set; } = new();
+
+    /// <summary>The table's shared roll log (3.6) - every roll made through the live runtime,
+    /// DM-secret ones included. Visibility filtering (a secret roll is DM-only until revealed)
+    /// happens where this is read, never by omitting the entry here.</summary>
+    public List<RollLogEntry> RollLog { get; set; } = new();
 }
 
 public class SessionNote
@@ -139,6 +144,7 @@ public class SessionNote
     public string AuthorId { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public bool IsSecret { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
 public class SessionEvent
@@ -148,11 +154,45 @@ public class SessionEvent
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>One resolved dice roll (3.6), logged regardless of secrecy so the DM always has the
+/// full record; a Player-facing projection filters <see cref="IsSecret"/> entries that aren't
+/// theirs rather than never recording them.</summary>
+public class RollLogEntry
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>The actor this roll was made for/by, if any (e.g. an attack roll) - null for a
+    /// free-standing DM roll not tied to a specific actor.</summary>
+    public string? ActorId { get; set; }
+
+    public string RollerUserId { get; set; } = string.Empty;
+    public string Expression { get; set; } = string.Empty;
+    public string Result { get; set; } = string.Empty;
+    public int Total { get; set; }
+    public bool IsSecret { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>Whether a participant is acting normally, holding their action to interrupt
+/// (readied), or has pushed their turn later in the order (delayed) (3.5).</summary>
+public enum TurnState
+{
+    Normal,
+    Delayed,
+    Readied
+}
+
 public class EncounterParticipant
 {
     public string ActorId { get; set; } = string.Empty;
     public int InitiativeRoll { get; set; }
+
+    /// <summary>Secondary roll/stat used to break an <see cref="InitiativeRoll"/> tie (e.g. a
+    /// Dexterity-based tiebreak roll); higher goes first, same as the primary roll.</summary>
+    public int TieBreak { get; set; }
+
     public bool HasActed { get; set; }
+    public TurnState State { get; set; } = TurnState.Normal;
 }
 
 /// <summary>Live combat/scene state for one encounter within a session (1.3).</summary>

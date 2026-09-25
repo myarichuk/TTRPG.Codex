@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using Codex.Core;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 using DefaultEcs;
 using Microsoft.Extensions.Logging;
 
@@ -25,14 +26,30 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly ComponentRegistry _componentRegistry;
     private readonly ISessionRepository? _sessionRepository;
     private readonly SessionDocument? _activeSession;
+    private readonly IEncounterRepository? _encounterRepository;
     private readonly ILogger _logger;
     private readonly Dictionary<string, Entity> _actorEntities = new();
     private readonly Dictionary<string, ActorDocument> _actorDocs = new();
     private readonly HashSet<string> _dirtyActorIds = new();
+    private EncounterDocument? _activeEncounter;
+    private bool _encounterDirty;
     private readonly Channel<QueuedCommand> _commands = Channel.CreateUnbounded<QueuedCommand>(
         new UnboundedChannelOptions { SingleReader = true });
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _loop;
+
+    /// <summary>This campaign system's dice roller (3.6) - <see cref="StandardDiceRoller"/> unless
+    /// the plugin overrides it (SWFFG's narrative dice, eventually).</summary>
+    public IDiceRoller DiceRoller { get; }
+
+    /// <summary>The encounter currently in progress, if any (3.5) - null until the first
+    /// initiative roll of a session creates one via <see cref="GetOrCreateEncounter"/>.</summary>
+    public EncounterDocument? ActiveEncounter => _activeEncounter;
+
+    /// <summary>The live session commands log to (3.2) and read back from - a combat console
+    /// reads <see cref="SessionDocument.RollLog"/> and <see cref="SessionDocument.Notes"/>
+    /// directly off this rather than re-querying Raven on every render.</summary>
+    public SessionDocument? ActiveSession => _activeSession;
 
     /// <param name="sessionRepository">Persists <paramref name="activeSession"/>'s appended events (3.2).
     /// Optional so a caller that only needs bare ECS mutation (e.g. a unit test exercising a single
@@ -40,13 +57,20 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// apply but nothing is logged.</param>
     /// <param name="activeSession">The table's live <see cref="SessionDocument"/> - every applied
     /// command's <see cref="IRuntimeCommand.Describe"/> is appended to its <see cref="SessionDocument.Events"/>.</param>
+    /// <param name="encounterRepository">Persists the live <see cref="ActiveEncounter"/> (3.5).
+    /// Optional for the same reason <paramref name="sessionRepository"/> is - a bare-ECS test has
+    /// no initiative tracker to persist.</param>
+    /// <param name="diceRoller">This campaign's <see cref="IDiceRoller"/> (3.6); defaults to
+    /// <see cref="StandardDiceRoller"/> when the plugin doesn't provide its own.</param>
     public CampaignRuntime(
         string campaignId,
         IActorRepository actorRepository,
         ComponentRegistry componentRegistry,
         ILogger logger,
         ISessionRepository? sessionRepository = null,
-        SessionDocument? activeSession = null)
+        SessionDocument? activeSession = null,
+        IEncounterRepository? encounterRepository = null,
+        IDiceRoller? diceRoller = null)
     {
         CampaignId = campaignId;
         _actorRepository = actorRepository;
@@ -54,6 +78,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _logger = logger;
         _sessionRepository = sessionRepository;
         _activeSession = activeSession;
+        _encounterRepository = encounterRepository;
+        DiceRoller = diceRoller ?? StandardDiceRoller.Instance;
         _loop = Task.Run(RunLoopAsync);
     }
 
@@ -63,15 +89,23 @@ public sealed class CampaignRuntime : IAsyncDisposable
     {
         foreach (var actor in actors)
         {
-            var entity = World.CreateEntity();
-            foreach (var component in _componentRegistry.Hydrate(actor.State))
-            {
-                EntityComponentSync.SetBoxed(entity, component);
-            }
-
-            _actorEntities[actor.Id] = entity;
-            _actorDocs[actor.Id] = actor;
+            HydrateOne(actor);
         }
+    }
+
+    /// <summary>Hydrates one actor into the live ECS world - the common step behind both the
+    /// startup <see cref="Hydrate"/> pass and <c>HydrateActorCommand</c> (3.7), which adds a
+    /// quick-added monster to an encounter already in progress.</summary>
+    internal void HydrateOne(ActorDocument actor)
+    {
+        var entity = World.CreateEntity();
+        foreach (var component in _componentRegistry.Hydrate(actor.State))
+        {
+            EntityComponentSync.SetBoxed(entity, component);
+        }
+
+        _actorEntities[actor.Id] = entity;
+        _actorDocs[actor.Id] = actor;
     }
 
     public Entity? GetEntity(string actorId) => _actorEntities.TryGetValue(actorId, out var entity) ? entity : null;
@@ -88,6 +122,52 @@ public sealed class CampaignRuntime : IAsyncDisposable
             _dirtyActorIds.Add(actorId);
         }
     }
+
+    /// <summary>Returns the live encounter, creating one and linking it into the active session
+    /// if this is the first initiative roll of the session (3.5).</summary>
+    internal EncounterDocument GetOrCreateEncounter()
+    {
+        if (_activeEncounter == null)
+        {
+            _activeEncounter = new EncounterDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                CampaignId = CampaignId,
+                SessionId = _activeSession?.Id ?? string.Empty
+            };
+            _activeSession?.EncounterIds.Add(_activeEncounter.Id);
+        }
+
+        return _activeEncounter;
+    }
+
+    internal void MarkEncounterDirty() => _encounterDirty = true;
+
+    /// <summary>Deterministic initiative order: highest roll first, <see cref="EncounterParticipant.TieBreak"/>
+    /// breaks a tied roll, and actor id breaks a tied tiebreak - two participants must never
+    /// silently swap places between one render and the next.</summary>
+    internal static void SortParticipants(EncounterDocument encounter)
+    {
+        encounter.Participants.Sort((a, b) =>
+        {
+            var byRoll = b.InitiativeRoll.CompareTo(a.InitiativeRoll);
+            if (byRoll != 0)
+            {
+                return byRoll;
+            }
+
+            var byTieBreak = b.TieBreak.CompareTo(a.TieBreak);
+            return byTieBreak != 0 ? byTieBreak : string.CompareOrdinal(a.ActorId, b.ActorId);
+        });
+    }
+
+    /// <summary>Appends a roll to the live session's shared roll log (3.6); a no-op when no
+    /// session is attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
+    internal void RecordRoll(RollLogEntry entry) => _activeSession?.RollLog.Add(entry);
+
+    /// <summary>Appends a quick note to the live session (3.7); a no-op when no session is
+    /// attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
+    internal void AddSessionNote(SessionNote note) => _activeSession?.Notes.Add(note);
 
     /// <summary>
     /// Fires after a command's dirty actors are persisted (3.3) - the runtime IS the "in-process
@@ -135,6 +215,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
                     await PersistDirtyAsync();
                     await AppendSessionEventAsync(queued.Command);
+                    await PersistEncounterAsync();
                     queued.Completion.TrySetResult();
 
                     // Deliberately still inside this try: a misbehaving subscriber (e.g. a circuit
@@ -190,6 +271,21 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         _activeSession.Events.Add(command.Describe(this));
         await _sessionRepository.SaveAsync(_activeSession);
+    }
+
+    /// <summary>Write-through for the initiative tracker (3.5), mirroring
+    /// <see cref="AppendSessionEventAsync"/>'s cheap-command-rate reasoning - only actually hits
+    /// Raven when a command marked the encounter dirty, so a pure-ECS command (damage, healing)
+    /// doesn't pay for a save nothing changed.</summary>
+    private async Task PersistEncounterAsync()
+    {
+        if (_encounterRepository == null || _activeEncounter == null || !_encounterDirty)
+        {
+            return;
+        }
+
+        await _encounterRepository.SaveAsync(_activeEncounter);
+        _encounterDirty = false;
     }
 
     public async ValueTask DisposeAsync()

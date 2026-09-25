@@ -77,3 +77,16 @@ public class FactsByCampaignIndex : AbstractIndexCreationTask<FactDocument>
                         };
     }
 }
+
+public class EncountersByCampaignIndex : AbstractIndexCreationTask<EncounterDocument>
+{
+    public EncountersByCampaignIndex()
+    {
+        Map = encounters => from encounter in encounters
+                             select new
+                             {
+                                 encounter.CampaignId,
+                                 encounter.SessionId
+                             };
+    }
+}
