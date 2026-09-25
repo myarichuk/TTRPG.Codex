@@ -136,7 +136,15 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Server running at: http://localhost:5000");
+
+// B18: this used to hardcode "http://localhost:5000", which hasn't been the bound port since
+// launchSettings.json moved to 5183. Log whatever Kestrel is actually bound to once it starts.
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var addresses = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
+        .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()?.Addresses;
+    logger.LogInformation("Server running at: {Addresses}", addresses is { Count: > 0 } ? string.Join(", ", addresses) : "(unknown)");
+});
 
 // Initialize Plugins and World once at startup
 using (var scope = app.Services.CreateScope())
@@ -146,8 +154,21 @@ using (var scope = app.Services.CreateScope())
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-    var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
-    var absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
+    // B10: a published, single-file app has no "../../plugins" two levels above its content
+    // root - that path only makes sense running from source under bin/Debug/net10.0/. Prefer a
+    // "plugins" folder sitting right next to the published executable; only fall back to the
+    // configured (dev-time) path if that doesn't exist.
+    var besidePublishedApp = Path.Combine(AppContext.BaseDirectory, "plugins");
+    string absolutePluginsDir;
+    if (Directory.Exists(besidePublishedApp))
+    {
+        absolutePluginsDir = besidePublishedApp;
+    }
+    else
+    {
+        var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
+        absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
+    }
 
     logger.LogInformation("Loading plugins and content packs from: {Path}", absolutePluginsDir);
     await loader.LoadAndInitializeAsync(absolutePluginsDir, world);
