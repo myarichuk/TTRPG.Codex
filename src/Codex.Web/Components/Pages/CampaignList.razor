@@ -1,8 +1,11 @@
 @page "/campaigns"
+@using System.Security.Claims
 @using Codex.Persistence
 @using Codex.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Campaigns</PageTitle>
 
@@ -173,23 +176,40 @@ else
         await LoadData();
     }
 
+    private async Task<string?> GetCurrentUserIdAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
+
     private async Task DeleteCampaign(string id, string name)
     {
         bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
         if (!confirm) return;
 
-        await CampaignRepo.DeleteAsync(id);
+        var userId = await GetCurrentUserIdAsync();
+        if (userId == null) return;
+
+        var result = await CampaignRepo.DeleteAsync(id, userId);
+        if (result == CampaignDeleteResult.Forbidden)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Only the campaign owner can delete it.");
+        }
         await LoadData();
     }
 
     private async Task CreateCampaign()
     {
+        var userId = await GetCurrentUserIdAsync();
+        if (userId == null) return;
+
         isCreating = true;
         try
         {
             var doc = new CampaignDocument
             {
                 Id = Guid.NewGuid().ToString(),
+                OwnerId = userId,
                 Name = "Unnamed Legend",
                 System = "D&D 5E",
                 UpdatedAt = DateTime.UtcNow

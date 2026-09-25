@@ -45,4 +45,19 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task DeleteAllForCampaignAsync(string campaignId)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var toDelete = await session.Query<NoteDocument>()
+            .Where(x => x.CampaignId == campaignId)
+            .ToListAsync();
+
+        foreach (var doc in toDelete)
+        {
+            session.Delete(doc.Id);
+        }
+
+        await session.SaveChangesAsync();
+    }
 }

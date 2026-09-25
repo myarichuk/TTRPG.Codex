@@ -32,20 +32,68 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v4.5.0
 
+      # B10: PublishTrimmed broke reflection-based plugin loading, YamlDotNet, DynamicExpresso,
+      # and RavenDB, and the plugins/ folder was never part of the publish output at all, so a
+      # release build shipped with zero game systems even before trimming got a chance to break
+      # anything. Trimming is dropped, and each RID's plugins/ folder is populated below.
       - name: Publish Linux (x64)
-        run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r linux-x64 -o dist/linux -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true -p:Version=${{ steps.gitversion.outputs.semVer }}
+        run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r linux-x64 -o dist/linux -p:PublishSingleFile=true -p:SelfContained=true -p:Version=${{ steps.gitversion.outputs.semVer }}
+
+      - name: Publish Windows (x64)
+        run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r win-x64 -o dist/win -p:PublishSingleFile=true -p:SelfContained=true -p:Version=${{ steps.gitversion.outputs.semVer }}
+
+      - name: Publish macOS (arm64)
+        run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r osx-arm64 -o dist/macos -p:PublishSingleFile=true -p:SelfContained=true -p:Version=${{ steps.gitversion.outputs.semVer }}
+
+      - name: Build plugins
+        run: |
+          dotnet build src/Codex.Systems.DnD5e/Codex.Systems.DnD5e.csproj -c Release -o build/plugins
+          dotnet build src/Codex.Systems.SWFFG/Codex.Systems.SWFFG.csproj -c Release -o build/plugins
+
+      - name: Populate plugins/ next to each published app
+        run: |
+          for platform in linux win macos; do
+            mkdir -p dist/$platform/plugins
+            cp build/plugins/Codex.Systems.DnD5e.dll dist/$platform/plugins/
+            cp build/plugins/Codex.Systems.SWFFG.dll dist/$platform/plugins/
+          done
+
+      # TODO(B10): embedded RavenDB still shells out to a child `dotnet Raven.Server.dll`
+      # process at runtime, so even a "self-contained" publish needs a .NET runtime installed
+      # on the host. Not addressed here - needs a decision (bundle a runtime for Raven, or
+      # document the framework-dependency explicitly). See docs/REVIEW_AND_REMEDIATION_PLAN.md.
+
+      - name: Smoke test the Linux artifact
+        run: |
+          chmod +x dist/linux/Codex.Web
+          ASPNETCORE_URLS=http://127.0.0.1:5299 ASPNETCORE_ENVIRONMENT=Production ./dist/linux/Codex.Web > smoke.log 2>&1 &
+          APP_PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://127.0.0.1:5299/login; then
+              echo "Server responded to /login"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Server never responded to /login" >&2
+              cat smoke.log
+              kill $APP_PID || true
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! grep -q "Loaded plugin" smoke.log; then
+            echo "No plugin was loaded - see smoke.log" >&2
+            cat smoke.log
+            kill $APP_PID || true
+            exit 1
+          fi
+          kill $APP_PID || true
 
       - name: Archive Linux (x64)
         run: cd dist/linux && zip -r ../TTRPG.Codex-linux-x64-${{ steps.gitversion.outputs.semVer }}.zip .
 
-      - name: Publish Windows (x64)
-        run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r win-x64 -o dist/win -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true -p:Version=${{ steps.gitversion.outputs.semVer }}
-
       - name: Archive Windows (x64)
         run: cd dist/win && zip -r ../TTRPG.Codex-win-x64-${{ steps.gitversion.outputs.semVer }}.zip .
-
-      - name: Publish macOS (arm64)
-        run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r osx-arm64 -o dist/macos -p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true -p:Version=${{ steps.gitversion.outputs.semVer }}
 
       - name: Archive macOS (arm64)
         run: cd dist/macos && zip -r ../TTRPG.Codex-osx-arm64-${{ steps.gitversion.outputs.semVer }}.zip .

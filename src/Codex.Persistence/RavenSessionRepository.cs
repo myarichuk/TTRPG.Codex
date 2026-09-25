@@ -24,4 +24,19 @@ public class RavenSessionRepository(RavenDbService dbService) : ISessionReposito
         await session.StoreAsync(sessionDocument);
         await session.SaveChangesAsync();
     }
+
+    public async Task DeleteAllForCampaignAsync(string campaignId)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var toDelete = await session.Query<SessionDocument>()
+            .Where(x => x.CampaignId == campaignId)
+            .ToListAsync();
+
+        foreach (var doc in toDelete)
+        {
+            session.Delete(doc.Id);
+        }
+
+        await session.SaveChangesAsync();
+    }
 }

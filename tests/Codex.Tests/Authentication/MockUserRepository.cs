@@ -11,6 +11,7 @@ public class MockUserRepository : IUserRepository
     private readonly Dictionary<string, UserDocument> _usersByUsername = new();
     private readonly Dictionary<string, UserDocument> _usersByEmail = new();
     private readonly Dictionary<(string provider, string key), UserDocument> _usersByExternalLogin = new();
+    private readonly HashSet<string> _reservedUsernames = new();
 
     public Task<UserDocument?> GetUserByIdAsync(string id) =>
         Task.FromResult(_usersById.TryGetValue(id, out var user) ? user : null);
@@ -70,6 +71,11 @@ public class MockUserRepository : IUserRepository
     public Task<IEnumerable<UserDocument>> GetAllUsersAsync() =>
         Task.FromResult(_usersById.Values.AsEnumerable());
 
+    public Task<bool> AnyUsersExistAsync() => Task.FromResult(_usersById.Count > 0);
+
+    public Task<bool> TryReserveUsernameAsync(string username, string userId) =>
+        Task.FromResult(_reservedUsernames.Add(username.Trim().ToLowerInvariant()));
+
     // Clear state between tests
     public void Reset()
     {
@@ -77,5 +83,6 @@ public class MockUserRepository : IUserRepository
         _usersByUsername.Clear();
         _usersByEmail.Clear();
         _usersByExternalLogin.Clear();
+        _reservedUsernames.Clear();
     }
 }

@@ -3,7 +3,11 @@ using Raven.Client.Documents.Session;
 
 namespace Codex.Persistence;
 
-public class CampaignRepository(RavenDbService dbService) : ICampaignRepository
+public class CampaignRepository(
+    RavenDbService dbService,
+    ICharacterRepository characterRepository,
+    ISessionRepository sessionRepository,
+    INoteRepository noteRepository) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -33,10 +37,27 @@ public class CampaignRepository(RavenDbService dbService) : ICampaignRepository
         await session.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(string campaignId)
+    public async Task<CampaignDeleteResult> DeleteAsync(string campaignId, string requestingUserId)
     {
         using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+        var campaign = await session.LoadAsync<CampaignDocument>(campaignId);
+        if (campaign == null)
+        {
+            return CampaignDeleteResult.NotFound;
+        }
+
+        if (!string.Equals(campaign.OwnerId, requestingUserId, StringComparison.Ordinal))
+        {
+            return CampaignDeleteResult.Forbidden;
+        }
+
+        // B13: cascade delete everything scoped to this campaign before the campaign itself.
+        await characterRepository.DeleteAllForCampaignAsync(campaignId);
+        await sessionRepository.DeleteAllForCampaignAsync(campaignId);
+        await noteRepository.DeleteAllForCampaignAsync(campaignId);
+
         session.Delete(campaignId);
         await session.SaveChangesAsync();
+        return CampaignDeleteResult.Deleted;
     }
 }

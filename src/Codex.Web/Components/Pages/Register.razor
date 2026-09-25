@@ -9,6 +9,7 @@
 @layout AuthLayout
 @inject IUserRepository UserRepository
 @inject NavigationManager NavManager
+@inject IConfiguration Configuration
 
 <PageTitle>Register | TTRPG.Codex</PageTitle>
 
@@ -115,13 +116,30 @@
             Roles = new List<string> { "Player" }
         };
 
-        if (Model.Username.ToLower() == "dm")
+        // B1 remediation: no username self-grants a role. ServerAdmin goes to a username
+        // configured via Codex:AdminUsername, or, if that isn't configured, to whoever
+        // registers the very first account. Everyone else stays "Player" until Phase 1
+        // (per-campaign DM role) lands.
+        var configuredAdmin = Configuration["Codex:AdminUsername"];
+        var grantsServerAdmin = !string.IsNullOrWhiteSpace(configuredAdmin)
+            ? string.Equals(Model.Username, configuredAdmin, StringComparison.OrdinalIgnoreCase)
+            : !await UserRepository.AnyUsersExistAsync();
+
+        if (grantsServerAdmin)
         {
-            user.Roles.Add("DM");
+            user.Roles.Add("ServerAdmin");
         }
 
         var hasher = new PasswordHasher<UserDocument>();
         user.PasswordHash = hasher.HashPassword(user, Model.Password);
+
+        // B12 remediation: reserve the username atomically via compare-exchange before creating
+        // the user document, closing the query-then-insert race between concurrent registrations.
+        if (!await UserRepository.TryReserveUsernameAsync(user.Username, user.Id))
+        {
+            ErrorMessage = "Username is already taken.";
+            return;
+        }
 
         await UserRepository.CreateUserAsync(user);
 

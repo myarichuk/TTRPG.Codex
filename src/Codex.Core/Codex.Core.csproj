@@ -5,6 +5,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Codex.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
     <PackageReference Include="DynamicExpresso.Core" Version="2.17.2" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.5.0" />

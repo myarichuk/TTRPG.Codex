@@ -7,6 +7,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Codex.Core.Models;
 using Codex.Plugin.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -16,10 +18,12 @@ public class YamlContentPackLoader : IContentPackLoader
 {
     private readonly IContentRegistry _registry;
     private readonly IDeserializer _yamlDeserializer;
+    private readonly ILogger _logger;
 
-    public YamlContentPackLoader(IContentRegistry registry)
+    public YamlContentPackLoader(IContentRegistry registry, ILogger<YamlContentPackLoader>? logger = null)
     {
         _registry = registry;
+        _logger = logger ?? (ILogger)NullLogger.Instance;
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
@@ -70,7 +74,17 @@ public class YamlContentPackLoader : IContentPackLoader
         if (!string.IsNullOrEmpty(item.Inherits))
         {
             var baseAbility = _registry.GetAbility(item.Inherits);
-            if (baseAbility != null) item.MergeFrom(baseAbility);
+            if (baseAbility != null)
+            {
+                item.MergeFrom(baseAbility);
+            }
+            else
+            {
+                // B9: a missing inherits target used to fail silently, leaving the child with
+                // none of its base's fields and no indication why.
+                _logger.LogError("Ability {AbilityId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                    item.Id, item.PackId, item.Inherits);
+            }
         }
         _registry.RegisterAbility(item, prio);
     }
@@ -80,7 +94,15 @@ public class YamlContentPackLoader : IContentPackLoader
         if (!string.IsNullOrEmpty(item.Inherits))
         {
             var baseActor = _registry.GetActor(item.Inherits);
-            if (baseActor != null) item.MergeFrom(baseActor);
+            if (baseActor != null)
+            {
+                item.MergeFrom(baseActor);
+            }
+            else
+            {
+                _logger.LogError("Actor {ActorId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                    item.Id, item.PackId, item.Inherits);
+            }
         }
         _registry.RegisterActor(item, prio);
     }
@@ -94,16 +116,28 @@ public class YamlContentPackLoader : IContentPackLoader
         {
             if (!entry.FullName.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase)) continue;
 
+            // B5: ZipFile.CreateFromDirectory writes entries as "abilities/foo.yaml" (no leading
+            // slash), so matching on "/abilities/" never hit anything the exporter actually
+            // produced. Normalize separators and dispatch on the first path segment instead.
+            var normalized = entry.FullName.Replace('\\', '/').TrimStart('/');
+            var firstSegment = normalized.Split('/', 2)[0];
+
             using var stream = entry.Open();
             using var reader = new StreamReader(stream);
             var yaml = await reader.ReadToEndAsync();
 
-            if (entry.FullName.Contains("/abilities/"))
-                DeserializeAndRegister<AbilityDefinition>(yaml, manifest, RegisterAbility);
-            else if (entry.FullName.Contains("/actors/"))
-                DeserializeAndRegister<ActorDefinition>(yaml, manifest, RegisterActor);
-            else if (entry.FullName.Contains("/locations/"))
-                DeserializeAndRegister<LocationDefinition>(yaml, manifest, (item, prio) => _registry.RegisterLocation(item, prio));
+            switch (firstSegment)
+            {
+                case "abilities":
+                    DeserializeAndRegister<AbilityDefinition>(yaml, manifest, RegisterAbility);
+                    break;
+                case "actors":
+                    DeserializeAndRegister<ActorDefinition>(yaml, manifest, RegisterActor);
+                    break;
+                case "locations":
+                    DeserializeAndRegister<LocationDefinition>(yaml, manifest, (item, prio) => _registry.RegisterLocation(item, prio));
+                    break;
+            }
         }
     }
 
