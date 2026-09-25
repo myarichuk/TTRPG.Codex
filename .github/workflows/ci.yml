@@ -43,6 +43,9 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
+      - name: Install Playwright browsers
+        run: pwsh tests/Codex.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
       - name: Test
         env:
           DOTNET_ROLL_FORWARD: "LatestMajor"

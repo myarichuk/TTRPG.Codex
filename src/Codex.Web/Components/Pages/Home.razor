@@ -5,7 +5,7 @@
 @using Codex.Web.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
-@inject ICharacterRepository CharacterRepo
+@inject IActorRepository ActorRepo
 @inject LoreGenerator LoreGenerator
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthStateProvider
@@ -39,7 +39,7 @@ else
             {
                 <div class="campaign-card">
                     <div class="art-preview">
-                        <LucideIcon IconName="@(campaign.System.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
+                        <LucideIcon IconName="@(campaign.SystemId.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -150,7 +150,8 @@ else
 
 @code {
     private IEnumerable<CampaignDocument>? campaigns;
-    private IEnumerable<CharacterDocument>? characters;
+    private IEnumerable<ActorDocument>? characters;
+    private string? currentUserId;
     private bool sortByCreated = false;
 
     private bool showToast = false;
@@ -159,6 +160,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         campaigns = await CampaignRepo.GetAllAsync();
         await LoadCharacters();
     }
@@ -173,7 +177,9 @@ else
     private async Task LoadCharacters()
     {
         characters = null; // Show spinner
-        characters = await CharacterRepo.GetAllAsync(5, sortByCreated);
+        characters = currentUserId == null
+            ? Array.Empty<ActorDocument>()
+            : await ActorRepo.GetRecentForOwnerAsync(currentUserId, 5, sortByCreated);
     }
 
     private async Task DeleteCampaign(string id, string name)

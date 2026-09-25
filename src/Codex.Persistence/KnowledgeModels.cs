@@ -20,12 +20,25 @@ public enum CommentVisibility
 
 public record KnowerEntry(string EntityId, KnowledgeLevel Level, string? Source = null, string? Notes = null);
 
+public enum FactVisibility
+{
+    /// <summary>Only the DM can see this fact exists, regardless of <see cref="FactDocument.KnownBy"/>.</summary>
+    DmOnly,
+
+    /// <summary>Visible to any player whose actor is in <see cref="FactDocument.KnownBy"/>.</summary>
+    KnowersOnly,
+
+    /// <summary>Visible to every campaign member.</summary>
+    Public
+}
+
 public class FactDocument
 {
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
     public string? Details { get; set; }
+    public FactVisibility Visibility { get; set; } = FactVisibility.DmOnly;
     public List<KnowerEntry> KnownBy { get; set; } = new();
     public List<string> RelatedEntityIds { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
@@ -44,6 +57,7 @@ public class NoteDocument
 
 public class KnowledgeEntry
 {
+    public string CampaignId { get; set; } = string.Empty;
     public string KnowerId { get; set; } = string.Empty;
     public List<string> FactIds { get; set; } = new();
 }

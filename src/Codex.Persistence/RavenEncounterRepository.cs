@@ -2,34 +2,33 @@ using Raven.Client.Documents;
 
 namespace Codex.Persistence;
 
-public class RavenSessionRepository(RavenDbService dbService) : ISessionRepository
+public class RavenEncounterRepository(RavenDbService dbService) : IEncounterRepository
 {
-    public async Task<IEnumerable<SessionDocument>> GetAllForCampaignAsync(string campaignId)
+    public async Task<IEnumerable<EncounterDocument>> GetAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        return await session.Query<SessionDocument, SessionsByCampaignIndex>()
+        return await session.Query<EncounterDocument, EncountersByCampaignIndex>()
             .Where(x => x.CampaignId == campaignId)
-            .OrderByDescending(x => x.Date)
             .ToListAsync();
     }
 
-    public async Task<SessionDocument?> GetAsync(string sessionId)
+    public async Task<EncounterDocument?> GetAsync(string encounterId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        return await session.LoadAsync<SessionDocument>(sessionId);
+        return await session.LoadAsync<EncounterDocument>(encounterId);
     }
 
-    public async Task SaveAsync(SessionDocument sessionDocument)
+    public async Task SaveAsync(EncounterDocument encounter)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        await session.StoreAsync(sessionDocument);
+        await session.StoreAsync(encounter);
         await session.SaveChangesAsync();
     }
 
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        var toDelete = await session.Query<SessionDocument, SessionsByCampaignIndex>()
+        var toDelete = await session.Query<EncounterDocument, EncountersByCampaignIndex>()
             .Where(x => x.CampaignId == campaignId)
             .ToListAsync();
 

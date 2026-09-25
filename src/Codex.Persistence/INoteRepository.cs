@@ -1,13 +1,17 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 namespace Codex.Persistence;
 
 public interface INoteRepository
 {
     Task CreateNoteAsync(NoteDocument note);
     Task DeleteNoteAsync(string id);
-    Task<IEnumerable<NoteDocument>> GetNotesForTargetAsync(string campaignId, string targetId, string currentUserId, bool isDm);
+
+    /// <summary>
+    /// Notes on a target, scoped by <paramref name="access"/>: a DM sees everything; a Player sees
+    /// Public notes plus their own Private ones, filtered in the Raven query itself so another
+    /// player's private note is never loaded into a session that isn't theirs (1.4).
+    /// </summary>
+    Task<IEnumerable<NoteDocument>> GetNotesForTargetAsync(string targetId, CampaignAccess access);
+
     Task<IEnumerable<NoteDocument>> GetNotesByAuthorAsync(string campaignId, string authorId);
 
     /// <summary>Deletes every note belonging to a campaign (B13 cascade delete).</summary>

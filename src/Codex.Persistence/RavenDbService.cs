@@ -43,6 +43,20 @@ public class RavenDbService : IDisposable
 
             // Create indexes
             new KnowledgeIndex().Execute(store);
+            new ActorsByCampaignIndex().Execute(store);
+            new NotesByTargetIndex().Execute(store);
+            new SessionsByCampaignIndex().Execute(store);
+            new RegionsByCampaignIndex().Execute(store);
+            new FactsByCampaignIndex().Execute(store);
+            new EncountersByCampaignIndex().Execute(store);
+
+            // 1.1: CampaignDocument.System was renamed to SystemId. A document written under the
+            // old schema deserializes with SystemId empty and an ignored "System" field - patch
+            // it once so existing campaigns aren't silently orphaned from their rules system.
+            store.Operations.Send(new Raven.Client.Documents.Operations.PatchByQueryOperation(
+                "from CampaignDocuments as c where c.SystemId = null and c.System != null " +
+                "update { c.SystemId = c.System; delete c.System; }"))
+                .WaitForCompletion(TimeSpan.FromSeconds(30));
 
             return store;
         });

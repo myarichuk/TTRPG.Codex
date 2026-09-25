@@ -100,17 +100,22 @@ var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
-builder.Services.AddSingleton<ICharacterRepository, CharacterRepository>();
+builder.Services.AddSingleton<IActorRepository, ActorRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
+builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
+builder.Services.AddSingleton<IFactRepository, FactRepository>();
+builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
+builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
+builder.Services.AddSingleton<ISystemCatalog>(sp => sp.GetRequiredService<PluginLoader>());
 builder.Services.AddSingleton<ScriptEvaluator>();
 builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
 builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
-builder.Services.AddSingleton<CodexWorld>();
+builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 
 // Configure AI services
 var aiConfig = new AIConfiguration();
@@ -150,7 +155,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
 using (var scope = app.Services.CreateScope())
 {
     var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
-    var world = scope.ServiceProvider.GetRequiredService<CodexWorld>();
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
@@ -171,7 +175,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     logger.LogInformation("Loading plugins and content packs from: {Path}", absolutePluginsDir);
-    await loader.LoadAndInitializeAsync(absolutePluginsDir, world);
+    await loader.LoadAndInitializeAsync(absolutePluginsDir);
 }
 
 if (!app.Environment.IsDevelopment())
@@ -189,6 +193,65 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+// Test-only seeding endpoints for the Phase 3 exit-criteria Playwright suite (and any future
+// e2e test): opt-in via config, off by default, so a stray "Codex:EnableTestSeedEndpoint=true"
+// can never leak into a real deployment's route table - the check happens once here, at startup,
+// rather than per-request inside the handler, so the routes don't even exist otherwise.
+if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
+{
+    app.MapPost("/test/seed/users", async (List<Codex.Web.TestSeedUser> users, IUserRepository userRepository) =>
+    {
+        foreach (var seed in users)
+        {
+            var user = new UserDocument { Id = seed.Id, Username = seed.Username, Roles = seed.Roles };
+            user.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().HashPassword(user, seed.Password);
+            await userRepository.TryReserveUsernameAsync(seed.Username, seed.Id);
+            await userRepository.CreateUserAsync(user);
+        }
+
+        return Results.Ok();
+    }).AllowAnonymous();
+
+    app.MapPost("/test/seed/actors", async (List<Codex.Web.TestSeedActor> actors, IActorRepository actorRepository, ComponentRegistry componentRegistry) =>
+    {
+        foreach (var seed in actors)
+        {
+            var pool = new Codex.Core.Components.ResourcePoolComponent();
+            pool.Set("HP", seed.Hp);
+            pool.Set("HP_Max", seed.HpMax);
+
+            var actor = new ActorDocument
+            {
+                Id = seed.Id,
+                CampaignId = seed.CampaignId,
+                Kind = seed.Kind,
+                OwnerUserId = seed.OwnerUserId,
+                Name = seed.Name,
+                Visibility = seed.Visibility,
+                State = componentRegistry.Snapshot(new object[] { pool })
+            };
+            await actorRepository.SaveAsync(actor);
+        }
+
+        return Results.Ok();
+    }).AllowAnonymous();
+
+    // Phase 3 exit criterion 6 ("the session log contains every command") reads this back
+    // rather than parsing it out of rendered HTML - the session log isn't shown in any UI yet
+    // (that's 4.1's recap editor), so the only faithful way to assert on it today is directly.
+    app.MapGet("/test/inspect/session-events/{campaignId}", async (string campaignId, ICampaignRepository campaignRepository, ISessionRepository sessionRepository) =>
+    {
+        var campaign = await campaignRepository.GetAsync(campaignId);
+        if (campaign?.CurrentSessionId == null)
+        {
+            return Results.Ok(Array.Empty<string>());
+        }
+
+        var session = await sessionRepository.GetAsync(campaign.CurrentSessionId);
+        return Results.Ok(session?.Events.Select(e => e.Type).ToList() ?? new List<string>());
+    }).AllowAnonymous();
+}
 
 // Robust sign-out: do it on a normal HTTP request so cookies can be cleared reliably.
 // POST + antiforgery (B11): a GET logout can be triggered cross-site by a bare <img>/<a> tag.
