@@ -1,5 +1,11 @@
 # TTRPG.Codex: Campaign Architecture & Persistence
 
+> **Aspirational — this is a spec, not a status report.** As of the 2026-09-25 review
+> (`docs/REVIEW_AND_REMEDIATION_PLAN.md`), `RegionDocument`, `SceneDocument`, scene
+> hydration/flushing, dirty flags, and the "Missing Content" warning described below do not
+> exist in code. `docs/REVIEW_AND_REMEDIATION_PLAN.md`'s Phase 1 is where the real document
+> model gets built; treat this file as the intent it should converge toward, not current state.
+
 This document outlines the **Ayende-style** pragmatic architecture for campaign management, using **RavenDB** for persistence and **ECS** for live gameplay state.
 
 ## 1. Document Design & Aggregate Roots

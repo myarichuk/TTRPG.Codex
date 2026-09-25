@@ -44,6 +44,9 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         options.ClientId = googleClientId;
         options.ClientSecret = googleClientSecret;
         options.SignInScheme = "External";
+        // Surface Google's own verification flag as a claim so the callback can decide
+        // whether it's safe to auto-link this login to an existing local account by email (B11).
+        options.ClaimActions.MapJsonKey("email_verified", "email_verified");
     });
 }
 
@@ -69,11 +72,11 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
         }
         else if (applePrivateKey.Contains("-----BEGIN") || applePrivateKey.Contains("-----END"))
         {
-            // Treat as PEM content, write to temp file
-            var tmpPath = Path.Combine(Path.GetTempPath(), $"apple_key_{Guid.NewGuid()}.p8");
-            System.IO.File.WriteAllText(tmpPath, applePrivateKey);
+            // Treat as PEM content. Hand it to the Apple handler as an in-memory file so the
+            // key material never touches disk (B11: this used to write an undeleted temp file
+            // under Path.GetTempPath() on every startup).
             options.UsePrivateKey(
-                (keyId) => new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetDirectoryName(tmpPath)!).GetFileInfo(Path.GetFileName(tmpPath))
+                (keyId) => new Codex.Web.InMemoryPemFileInfo(applePrivateKey, $"apple_key_{keyId}.p8")
             );
         }
 
@@ -133,7 +136,15 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Server running at: http://localhost:5000");
+
+// B18: this used to hardcode "http://localhost:5000", which hasn't been the bound port since
+// launchSettings.json moved to 5183. Log whatever Kestrel is actually bound to once it starts.
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var addresses = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
+        .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()?.Addresses;
+    logger.LogInformation("Server running at: {Addresses}", addresses is { Count: > 0 } ? string.Join(", ", addresses) : "(unknown)");
+});
 
 // Initialize Plugins and World once at startup
 using (var scope = app.Services.CreateScope())
@@ -143,8 +154,21 @@ using (var scope = app.Services.CreateScope())
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-    var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
-    var absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
+    // B10: a published, single-file app has no "../../plugins" two levels above its content
+    // root - that path only makes sense running from source under bin/Debug/net10.0/. Prefer a
+    // "plugins" folder sitting right next to the published executable; only fall back to the
+    // configured (dev-time) path if that doesn't exist.
+    var besidePublishedApp = Path.Combine(AppContext.BaseDirectory, "plugins");
+    string absolutePluginsDir;
+    if (Directory.Exists(besidePublishedApp))
+    {
+        absolutePluginsDir = besidePublishedApp;
+    }
+    else
+    {
+        var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
+        absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
+    }
 
     logger.LogInformation("Loading plugins and content packs from: {Path}", absolutePluginsDir);
     await loader.LoadAndInitializeAsync(absolutePluginsDir, world);
@@ -167,14 +191,32 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 // Robust sign-out: do it on a normal HTTP request so cookies can be cleared reliably.
-app.MapGet("/logout", async (HttpContext ctx) =>
+// POST + antiforgery (B11): a GET logout can be triggered cross-site by a bare <img>/<a> tag.
+app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>
 {
+    try
+    {
+        await antiforgery.ValidateRequestAsync(ctx);
+    }
+    catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
+    {
+        return Results.BadRequest("Invalid antiforgery token.");
+    }
+
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/login");
 });
 
-app.MapGet("/login/external", (string provider, string? returnUrl) =>
+app.MapGet("/login/external", async (string provider, string? returnUrl, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider) =>
 {
+    // B11: whitelist against schemes actually registered instead of handing an
+    // attacker-controlled string straight to Results.Challenge (which 500s on an unknown scheme).
+    var registeredSchemes = (await schemeProvider.GetAllSchemesAsync()).Select(s => s.Name);
+    if (!Codex.Web.ExternalLoginPolicy.IsRegisteredScheme(provider, registeredSchemes))
+    {
+        return Results.Redirect("/login?error=" + Uri.EscapeDataString("Unknown login provider."));
+    }
+
     var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
     {
         RedirectUri = $"/login/external-callback?returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}"
@@ -208,7 +250,10 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     var user = await userRepository.GetUserByExternalLoginAsync(provider, providerKey);
 
-    if (user == null && !string.IsNullOrEmpty(email))
+    // B11: only auto-link to an existing local account by email if the provider itself
+    // vouches that the email is verified. An unverified email lets an attacker who controls
+    // that mailbox at the provider take over an existing local account.
+    if (user == null && !string.IsNullOrEmpty(email) && Codex.Web.ExternalLoginPolicy.IsEmailVerified(principal))
     {
         user = await userRepository.GetUserByEmailAsync(email);
         if (user != null)
@@ -220,19 +265,27 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     if (user == null)
     {
+        var baseUsername = !string.IsNullOrEmpty(name) ? name : ("User" + Guid.NewGuid().ToString().Substring(0, 8));
         user = new UserDocument
         {
             Id = Guid.NewGuid().ToString(),
-            Username = !string.IsNullOrEmpty(name) ? name : ("User" + Guid.NewGuid().ToString().Substring(0, 8)),
+            Username = baseUsername,
             Email = email ?? "",
             Roles = new List<string> { "Player" },
             ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
         };
 
-        var existingUser = await userRepository.GetUserByUsernameAsync(user.Username);
-        if (existingUser != null)
+        // B12: reserve the username atomically, retrying with a fresh suffix on collision
+        // instead of the old query-then-insert race.
+        var attempt = 0;
+        while (!await userRepository.TryReserveUsernameAsync(user.Username, user.Id))
         {
-            user.Username = user.Username + "_" + Guid.NewGuid().ToString().Substring(0, 4);
+            attempt++;
+            user.Username = $"{baseUsername}_{Guid.NewGuid().ToString().Substring(0, 4)}";
+            if (attempt > 5)
+            {
+                return Results.Redirect("/login?error=" + Uri.EscapeDataString("Could not allocate a username. Please try again."));
+            }
         }
 
         await userRepository.CreateUserAsync(user);

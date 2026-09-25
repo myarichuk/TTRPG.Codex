@@ -10,6 +10,13 @@ public class TypedComponent
     public TypedComponent() { }
 
     public TypedComponent(string type, Dictionary<string, object>? parameters = null) { Type = type; Params = parameters; }
+
+    /// <summary>
+    /// A deep-enough copy: a fresh instance with its own Params dictionary, so mutating a child
+    /// ability/actor's inherited components can never mutate the base definition they came from
+    /// (B9 remediation - the base's TypedComponent instances used to be shared by reference).
+    /// </summary>
+    public TypedComponent Clone() => new(Type, Params == null ? null : new Dictionary<string, object>(Params));
 }
 
 public interface IAbilityDefinition

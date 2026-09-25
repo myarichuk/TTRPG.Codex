@@ -18,7 +18,7 @@ dotnet restore
 dotnet build
 dotnet run --project src/Codex.Web
 ```
-The server will start at `http://localhost:5000`.
+The server will start at `http://localhost:5183` (see `src/Codex.Web/Properties/launchSettings.json`).
 
 ## How to add plugins
 Drop compiled plugin `.dll` files implementing `ICodexSystemPlugin` into the `/plugins` directory. The engine will discover and load them on startup.
