@@ -1,4 +1,5 @@
 @using Codex.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Forms
 
 <nav class="sidebar">
     <div class="d-flex align-items-center gap-3 mb-5 px-3">
@@ -63,7 +64,10 @@
                     <img src="@gravatarUrl" alt="User Avatar" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--fluent-border-strong);" />
                     <div class="d-flex flex-column text-truncate flex-grow-1">
                         <span class="small fw-semibold text-truncate" style="color: var(--text-primary);">@username</span>
-                        <a href="/logout" class="text-danger small text-decoration-none opacity-75 hover-opacity-100" style="font-size: 0.75rem; transition: var(--transition-base);">Sign Out</a>
+                        <form method="post" action="/logout">
+                            <AntiforgeryToken />
+                            <button type="submit" class="btn btn-link p-0 border-0 text-danger small text-decoration-none opacity-75 hover-opacity-100" style="font-size: 0.75rem; transition: var(--transition-base);">Sign Out</button>
+                        </form>
                     </div>
                 </div>
             </Authorized>
