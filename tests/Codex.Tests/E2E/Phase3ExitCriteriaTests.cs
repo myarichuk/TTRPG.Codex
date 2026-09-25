@@ -257,6 +257,15 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         var select = dm.GetByTestId("add-to-initiative-select");
         var setBtn = dm.GetByTestId("set-initiative-btn");
 
+        // The dropdown is only populated once the DM's Actors list has actually loaded (after
+        // the reload + Combat-tab click a few steps up) - on a slower CI runner that round trip
+        // can still be in flight here, and SelectOptionAsync fails outright ("did not find some
+        // options") rather than waiting, since the option genuinely doesn't exist in the DOM yet.
+        // Playwright never reports a native <option> as "visible" (it's rendered by the OS's own
+        // dropdown widget, not as an ordinary DOM element) - wait for it to exist at all instead.
+        await select.Locator("option", new() { HasText = actorName })
+            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 20_000 });
+
         for (var attempt = 1; attempt <= 5; attempt++)
         {
             await select.SelectOptionAsync(new SelectOptionValue { Label = actorName });
