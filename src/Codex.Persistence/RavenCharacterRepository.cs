@@ -47,4 +47,19 @@ public class CharacterRepository(RavenDbService dbService) : ICharacterRepositor
         await session.StoreAsync(character);
         await session.SaveChangesAsync();
     }
+
+    public async Task DeleteAllForCampaignAsync(string campaignId)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var toDelete = await session.Query<CharacterDocument>()
+            .Where(c => c.CampaignId == campaignId)
+            .ToListAsync();
+
+        foreach (var doc in toDelete)
+        {
+            session.Delete(doc.Id);
+        }
+
+        await session.SaveChangesAsync();
+    }
 }

@@ -1,11 +1,14 @@
 @page "/"
+@using System.Security.Claims
 @using Codex.Persistence
 @using Codex.Web.Components.Layout
 @using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject ICharacterRepository CharacterRepo
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Dashboard | TTRPG.Codex</PageTitle>
 
@@ -174,7 +177,15 @@ else
         bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
         if (!confirm) return;
 
-        await CampaignRepo.DeleteAsync(id);
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return;
+
+        var result = await CampaignRepo.DeleteAsync(id, userId);
+        if (result == CampaignDeleteResult.Forbidden)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Only the campaign owner can delete it.");
+        }
         campaigns = await CampaignRepo.GetAllAsync();
         StateHasChanged();
     }
