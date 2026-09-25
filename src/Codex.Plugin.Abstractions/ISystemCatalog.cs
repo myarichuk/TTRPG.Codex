@@ -13,4 +13,11 @@ public interface ISystemCatalog
     bool IsLoaded { get; }
 
     IReadOnlySet<string> LoadedSystemIds { get; }
+
+    /// <summary>
+    /// The UI schemas a loaded system plugin publishes for <paramref name="systemId"/>, or empty
+    /// if that system isn't loaded. This is what the web renderer (2.2) builds its forms from -
+    /// the same <see cref="UISchema"/> the Authoring app renders, just a different client.
+    /// </summary>
+    IEnumerable<UISchema> GetUISchemas(string systemId);
 }

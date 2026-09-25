@@ -9,7 +9,9 @@ public class CampaignRepository(
     ISystemCatalog systemCatalog,
     IActorRepository actorRepository,
     ISessionRepository sessionRepository,
-    INoteRepository noteRepository) : ICampaignRepository
+    INoteRepository noteRepository,
+    IRegionRepository regionRepository,
+    IFactRepository factRepository) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -79,9 +81,31 @@ public class CampaignRepository(
         await actorRepository.DeleteAllForCampaignAsync(campaignId);
         await sessionRepository.DeleteAllForCampaignAsync(campaignId);
         await noteRepository.DeleteAllForCampaignAsync(campaignId);
+        await regionRepository.DeleteAllForCampaignAsync(campaignId);
+        await factRepository.DeleteAllForCampaignAsync(campaignId);
 
         session.Delete(campaignId);
         await session.SaveChangesAsync();
         return CampaignDeleteResult.Deleted;
+    }
+
+    public async Task<CampaignJoinResult> JoinByInviteCodeAsync(string inviteCode, string userId)
+    {
+        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+        var campaign = await session.Query<CampaignDocument>()
+            .FirstOrDefaultAsync(c => c.InviteCode == inviteCode);
+        if (campaign == null)
+        {
+            return CampaignJoinResult.InvalidCode;
+        }
+
+        if (campaign.Members.Any(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)))
+        {
+            return CampaignJoinResult.AlreadyMember;
+        }
+
+        campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
+        await session.SaveChangesAsync();
+        return CampaignJoinResult.Joined;
     }
 }

@@ -16,6 +16,11 @@ public class PluginLoader(
     public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
     public event Action? OnPluginsLoaded;
 
+    private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
+
+    public IEnumerable<UISchema> GetUISchemas(string systemId) =>
+        _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetUISchemas() : Enumerable.Empty<UISchema>();
+
     public async Task LoadAndInitializeAsync(string pluginsDirectory, CodexWorld world)
     {
         await _semaphore.WaitAsync();
@@ -36,6 +41,7 @@ public class PluginLoader(
 
                 var activeSystemIds = plugins.Select(p => p.SystemId).ToHashSet();
                 LoadedSystemIds = activeSystemIds;
+                _pluginsBySystemId = plugins.ToDictionary(p => p.SystemId);
 
                 // Load Content Packs after systems are initialized
                 await LoadContentPacksAsync(pluginsDirectory, activeSystemIds);

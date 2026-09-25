@@ -39,6 +39,7 @@ public class NoOpSystemCatalog : Codex.Plugin.Abstractions.ISystemCatalog
 {
     public bool IsLoaded => false;
     public IReadOnlySet<string> LoadedSystemIds { get; } = new HashSet<string>();
+    public IEnumerable<Codex.Plugin.Abstractions.UISchema> GetUISchemas(string systemId) => Enumerable.Empty<Codex.Plugin.Abstractions.UISchema>();
 }
 
 public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
@@ -49,6 +50,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenUserRepository _userRepository;
     private readonly RavenSessionRepository _sessionRepository;
     private readonly RavenNoteRepository _noteRepository;
+    private readonly RegionRepository _regionRepository;
+    private readonly FactRepository _factRepository;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
@@ -57,7 +60,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _userRepository = new RavenUserRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
         _noteRepository = new RavenNoteRepository(_dbService);
-        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository);
+        _regionRepository = new RegionRepository(_dbService);
+        _factRepository = new FactRepository(_dbService);
+        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository);
     }
 
     [Fact]

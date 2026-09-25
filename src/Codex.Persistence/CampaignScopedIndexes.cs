@@ -51,3 +51,29 @@ public class SessionsByCampaignIndex : AbstractIndexCreationTask<SessionDocument
                            };
     }
 }
+
+public class RegionsByCampaignIndex : AbstractIndexCreationTask<RegionDocument>
+{
+    public RegionsByCampaignIndex()
+    {
+        Map = regions => from region in regions
+                          select new
+                          {
+                              region.CampaignId,
+                              region.UpdatedAt
+                          };
+    }
+}
+
+public class FactsByCampaignIndex : AbstractIndexCreationTask<FactDocument>
+{
+    public FactsByCampaignIndex()
+    {
+        Map = facts => from fact in facts
+                        select new
+                        {
+                            fact.CampaignId,
+                            fact.Visibility
+                        };
+    }
+}

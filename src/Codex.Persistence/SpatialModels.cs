@@ -17,6 +17,9 @@ public class LocationDocument
     public string? Description { get; set; }
     public List<LocationConnection> Connections { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
+
+    /// <summary>Fog-of-war state (2.5): Hidden by default, revealed to the party via a DM action.</summary>
+    public ActorVisibility Visibility { get; set; } = ActorVisibility.Hidden;
 }
 
 /// <summary>

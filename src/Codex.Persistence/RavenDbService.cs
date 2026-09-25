@@ -46,6 +46,8 @@ public class RavenDbService : IDisposable
             new ActorsByCampaignIndex().Execute(store);
             new NotesByTargetIndex().Execute(store);
             new SessionsByCampaignIndex().Execute(store);
+            new RegionsByCampaignIndex().Execute(store);
+            new FactsByCampaignIndex().Execute(store);
 
             // 1.1: CampaignDocument.System was renamed to SystemId. A document written under the
             // old schema deserializes with SystemId empty and an ignored "System" field - patch
