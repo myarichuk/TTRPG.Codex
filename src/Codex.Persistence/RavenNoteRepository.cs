@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Raven.Client.Documents;
 
 namespace Codex.Persistence;
@@ -21,17 +18,18 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
         await session.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<NoteDocument>> GetNotesForTargetAsync(string campaignId, string targetId, string currentUserId, bool isDm)
+    public async Task<IEnumerable<NoteDocument>> GetNotesForTargetAsync(string targetId, CampaignAccess access)
     {
         using var session = dbService.Store.OpenAsyncSession();
 
-        var query = session.Query<NoteDocument>()
-            .Where(x => x.CampaignId == campaignId && x.TargetId == targetId);
+        var query = session.Query<NoteDocument, NotesByTargetIndex>()
+            .Where(x => x.CampaignId == access.CampaignId && x.TargetId == targetId);
 
-        if (!isDm)
+        if (!access.IsDm)
         {
-            // Players see public notes OR their own private notes
-            query = query.Where(x => x.Visibility == CommentVisibility.Public || x.AuthorId == currentUserId);
+            // Players see public notes OR their own private notes - filtered here, not after
+            // loading, so another player's private note never reaches this session (1.4).
+            query = query.Where(x => x.Visibility == CommentVisibility.Public || x.AuthorId == access.UserId);
         }
 
         return await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
@@ -40,7 +38,7 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
     public async Task<IEnumerable<NoteDocument>> GetNotesByAuthorAsync(string campaignId, string authorId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        return await session.Query<NoteDocument>()
+        return await session.Query<NoteDocument, NotesByTargetIndex>()
             .Where(x => x.CampaignId == campaignId && x.AuthorId == authorId)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
@@ -49,7 +47,7 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        var toDelete = await session.Query<NoteDocument>()
+        var toDelete = await session.Query<NoteDocument, NotesByTargetIndex>()
             .Where(x => x.CampaignId == campaignId)
             .ToListAsync();
 

@@ -34,11 +34,18 @@ public class RavenDbFixture : IDisposable
     }
 }
 
+/// <summary>Never rejects a SystemId - persistence tests aren't exercising plugin discovery.</summary>
+public class NoOpSystemCatalog : Codex.Plugin.Abstractions.ISystemCatalog
+{
+    public bool IsLoaded => false;
+    public IReadOnlySet<string> LoadedSystemIds { get; } = new HashSet<string>();
+}
+
 public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 {
     private readonly RavenDbService _dbService;
     private readonly CampaignRepository _campaignRepository;
-    private readonly CharacterRepository _characterRepository;
+    private readonly ActorRepository _actorRepository;
     private readonly RavenUserRepository _userRepository;
     private readonly RavenSessionRepository _sessionRepository;
     private readonly RavenNoteRepository _noteRepository;
@@ -46,11 +53,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public PersistenceTest(RavenDbFixture fixture)
     {
         _dbService = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
-        _characterRepository = new CharacterRepository(_dbService);
+        _actorRepository = new ActorRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
         _noteRepository = new RavenNoteRepository(_dbService);
-        _campaignRepository = new CampaignRepository(_dbService, _characterRepository, _sessionRepository, _noteRepository);
+        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository);
     }
 
     [Fact]
@@ -60,7 +67,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         {
             Id = Guid.NewGuid().ToString(),
             Name = "Async Campaign",
-            System = "DnD5e"
+            SystemId = "DnD5e"
         };
 
         await _campaignRepository.SaveAsync(campaign);
@@ -71,19 +78,21 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task SaveAndLoadCharacter_ShouldSucceed_Async()
+    public async Task SaveAndLoadActor_ShouldSucceed_Async()
     {
-        var character = new CharacterDocument
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument
         {
             Id = Guid.NewGuid().ToString(),
-            CampaignId = Guid.NewGuid().ToString(),
+            CampaignId = campaignId,
             Name = "Test Character"
         };
 
-        character.State["HP"] = 10;
+        actor.State["HP"] = 10;
 
-        await _characterRepository.SaveAsync(character);
-        var loaded = await _characterRepository.GetAsync(character.Id);
+        await _actorRepository.SaveAsync(actor);
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var loaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
 
         Assert.NotNull(loaded);
         Assert.Equal("Test Character", loaded.Name);
@@ -139,29 +148,68 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task GetAllCharactersForCampaign_ShouldReturnCorrect_Async()
+    public async Task GetVisibleForCampaign_AsDm_ReturnsCorrect_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
 
-        var char1 = new CharacterDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Char 1" };
-        var char2 = new CharacterDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Char 2" };
-        var char3 = new CharacterDocument { Id = Guid.NewGuid().ToString(), CampaignId = Guid.NewGuid().ToString(), Name = "Other Campaign Char" };
+        var char1 = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Char 1" };
+        var char2 = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Char 2" };
+        var char3 = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = Guid.NewGuid().ToString(), Name = "Other Campaign Char" };
 
-        await _characterRepository.SaveAsync(char1);
-        await _characterRepository.SaveAsync(char2);
-        await _characterRepository.SaveAsync(char3);
+        await _actorRepository.SaveAsync(char1);
+        await _actorRepository.SaveAsync(char2);
+        await _actorRepository.SaveAsync(char3);
 
         // Wait for RavenDB indexes to process (since we use a query)
         using var session = _dbService.Store.OpenAsyncSession();
-        await session.Query<CharacterDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        await session.Query<ActorDocument, ActorsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
 
-        var loaded = await _characterRepository.GetAllForCampaignAsync(campaignId);
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var loaded = await _actorRepository.GetVisibleForCampaignAsync(dmAccess);
 
         Assert.NotNull(loaded);
         var list = loaded.ToList();
         Assert.Equal(2, list.Count);
         Assert.Contains(list, c => c.Name == "Char 1");
         Assert.Contains(list, c => c.Name == "Char 2");
+    }
+
+    [Fact]
+    public async Task GetVisibleForCampaign_AsPlayer_HidesUnownedUnknownActors_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+
+        var known = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Known NPC", Visibility = ActorVisibility.Known };
+        var owned = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "My PC", Visibility = ActorVisibility.Hidden, OwnerUserId = "player-1" };
+        var hidden = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Secret Villain", Visibility = ActorVisibility.Hidden };
+
+        await _actorRepository.SaveAsync(known);
+        await _actorRepository.SaveAsync(owned);
+        await _actorRepository.SaveAsync(hidden);
+
+        using var session = _dbService.Store.OpenAsyncSession();
+        await session.Query<ActorDocument, ActorsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var loaded = (await _actorRepository.GetVisibleForCampaignAsync(playerAccess)).ToList();
+
+        Assert.Equal(2, loaded.Count);
+        Assert.Contains(loaded, a => a.Name == "Known NPC");
+        Assert.Contains(loaded, a => a.Name == "My PC");
+        Assert.DoesNotContain(loaded, a => a.Name == "Secret Villain");
+    }
+
+    [Fact]
+    public async Task GetVisibleAsync_AsPlayer_CannotLoadHiddenActorById_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hidden = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Secret Villain", Visibility = ActorVisibility.Hidden };
+        await _actorRepository.SaveAsync(hidden);
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var loaded = await _actorRepository.GetVisibleAsync(hidden.Id, playerAccess);
+
+        Assert.Null(loaded);
     }
 
     [Fact]
@@ -256,22 +304,23 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         };
         await _campaignRepository.SaveAsync(campaign);
 
-        var character = new CharacterDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaign.Id, Name = "Orphan Candidate" };
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaign.Id, Name = "Orphan Candidate" };
         var sessionDoc = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaign.Id, Title = "Orphan Session" };
-        await _characterRepository.SaveAsync(character);
+        await _actorRepository.SaveAsync(actor);
         await _sessionRepository.SaveAsync(sessionDoc);
 
         using (var session = _dbService.Store.OpenAsyncSession())
         {
-            await session.Query<CharacterDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
-            await session.Query<SessionDocument>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<ActorDocument, ActorsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<SessionDocument, SessionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
         }
 
         var result = await _campaignRepository.DeleteAsync(campaign.Id, "owner-2");
 
         Assert.Equal(CampaignDeleteResult.Deleted, result);
         Assert.Null(await _campaignRepository.GetAsync(campaign.Id));
-        Assert.Null(await _characterRepository.GetAsync(character.Id));
+        var dmAccess = new CampaignAccess(campaign.Id, "owner-2", CampaignRole.DM);
+        Assert.Null(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
         Assert.Null(await _sessionRepository.GetAsync(sessionDoc.Id));
     }
 

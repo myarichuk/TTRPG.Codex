@@ -7,12 +7,13 @@ namespace Codex.Core;
 public class PluginLoader(
     ILogger<PluginLoader> logger,
     ComponentRegistry registry,
-    IContentPackLoader contentPackLoader)
+    IContentPackLoader contentPackLoader) : ISystemCatalog
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     public bool IsLoaded { get; private set; }
     public bool IsLoading { get; private set; }
     public Exception? LoadException { get; private set; }
+    public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
     public event Action? OnPluginsLoaded;
 
     public async Task LoadAndInitializeAsync(string pluginsDirectory, CodexWorld world)
@@ -33,8 +34,11 @@ public class PluginLoader(
                 var plugins = await Task.Run(() => LoadPlugins(pluginsDirectory));
                 InitializePlugins(plugins, world);
 
+                var activeSystemIds = plugins.Select(p => p.SystemId).ToHashSet();
+                LoadedSystemIds = activeSystemIds;
+
                 // Load Content Packs after systems are initialized
-                await LoadContentPacksAsync(pluginsDirectory, plugins.Select(p => p.SystemId).ToHashSet());
+                await LoadContentPacksAsync(pluginsDirectory, activeSystemIds);
             }
             catch (Exception ex)
             {

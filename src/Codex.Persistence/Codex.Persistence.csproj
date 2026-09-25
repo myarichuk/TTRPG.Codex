@@ -5,6 +5,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- CampaignAccess's constructor is internal: only ICampaignAccessResolver should mint one in
+         production, but tests need to build fixtures directly without going through the resolver. -->
+    <InternalsVisibleTo Include="Codex.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="RavenDB.Embedded" Version="7.2.1" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.12" />
   </ItemGroup>

@@ -76,14 +76,14 @@ else
     <div class="campaign-grid">
         @foreach (var campaign in campaigns)
         {
-            var isDnd = campaign.System.Contains("DnD") || campaign.System == "D&D 5E";
+            var isDnd = campaign.SystemId.Contains("DnD") || campaign.SystemId == "D&D 5E";
             var artUrl = isDnd ? "https://images.unsplash.com/photo-1519074063912-ad2fe3f51904?auto=format&fit=crop&q=80&w=800" : "https://images.unsplash.com/photo-1605806616949-1e87b487fc2f?auto=format&fit=crop&q=80&w=800";
             <div class="campaign-card">
                 <div class="art-container">
                     <div class="art-fallback">
                         <LucideIcon IconName="@(isDnd ? "swords" : "anchor")" Size="32" />
                     </div>
-                    <span class="system-badge">@campaign.System</span>
+                    <span class="system-badge">@campaign.SystemId</span>
                     <img src="@artUrl" alt="" loading="lazy">
                 </div>
                 <div class="card-content">
@@ -158,11 +158,11 @@ else
     private async Task LoadData()
     {
         var all = await CampaignRepo.GetAllAsync();
-        availableSystems = all.Select(c => c.System).Distinct().OrderBy(s => s).ToList();
+        availableSystems = all.Select(c => c.SystemId).Distinct().OrderBy(s => s).ToList();
         
         if (selectedSystem != null)
         {
-            campaigns = all.Where(c => c.System == selectedSystem);
+            campaigns = all.Where(c => c.SystemId == selectedSystem);
         }
         else
         {
@@ -211,7 +211,7 @@ else
                 Id = Guid.NewGuid().ToString(),
                 OwnerId = userId,
                 Name = "Unnamed Legend",
-                System = "D&D 5E",
+                SystemId = "D&D 5E",
                 UpdatedAt = DateTime.UtcNow
             };
             await CampaignRepo.SaveAsync(doc);

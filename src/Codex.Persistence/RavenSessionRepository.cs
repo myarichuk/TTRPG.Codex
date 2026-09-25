@@ -7,8 +7,9 @@ public class RavenSessionRepository(RavenDbService dbService) : ISessionReposito
     public async Task<IEnumerable<SessionDocument>> GetAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        return await session.Query<SessionDocument>()
+        return await session.Query<SessionDocument, SessionsByCampaignIndex>()
             .Where(x => x.CampaignId == campaignId)
+            .OrderByDescending(x => x.Date)
             .ToListAsync();
     }
 
@@ -28,7 +29,7 @@ public class RavenSessionRepository(RavenDbService dbService) : ISessionReposito
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        var toDelete = await session.Query<SessionDocument>()
+        var toDelete = await session.Query<SessionDocument, SessionsByCampaignIndex>()
             .Where(x => x.CampaignId == campaignId)
             .ToListAsync();
 
