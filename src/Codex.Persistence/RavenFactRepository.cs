@@ -17,8 +17,9 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
             return facts;
         }
 
-        return facts.Where(f => f.Visibility == FactVisibility.Public ||
-            (f.Visibility == FactVisibility.KnowersOnly && f.KnownBy.Any(k => ownedActorIds.Contains(k.EntityId))));
+        return facts.Where(f => f.Status == FactStatus.Approved &&
+            (f.Visibility == FactVisibility.Public ||
+            (f.Visibility == FactVisibility.KnowersOnly && f.KnownBy.Any(k => ownedActorIds.Contains(k.EntityId)))));
     }
 
     public async Task<bool> SaveAsync(FactDocument fact, CampaignAccess access)
@@ -28,8 +29,73 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
             return false;
         }
 
+        fact.Status = FactStatus.Approved;
         using var session = dbService.Store.OpenAsyncSession();
         await session.StoreAsync(fact);
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ProposeAsync(FactDocument fact, CampaignAccess access)
+    {
+        if (fact.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        fact.AuthorId = access.UserId;
+        fact.CreatedAt = DateTime.UtcNow;
+        if (!access.IsDm)
+        {
+            fact.Status = FactStatus.Proposed;
+            fact.Visibility = FactVisibility.DmOnly;
+        }
+        else
+        {
+            fact.Status = FactStatus.Approved;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        await session.StoreAsync(fact);
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ApproveAsync(string factId, FactVisibility visibility, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var fact = await session.LoadAsync<FactDocument>(factId);
+        if (fact == null || fact.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        fact.Status = FactStatus.Approved;
+        fact.Visibility = visibility;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(string factId, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var fact = await session.LoadAsync<FactDocument>(factId);
+        if (fact == null || fact.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        session.Delete(factId);
         await session.SaveChangesAsync();
         return true;
     }
@@ -49,6 +115,7 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
         }
 
         fact.Visibility = visibility;
+        fact.Status = FactStatus.Approved;
         await session.SaveChangesAsync();
         return true;
     }

@@ -1,0 +1,11 @@
+<Project>
+  <!-- System plugins (Codex.Systems.*) self-deploy their DLL into the repo's plugins/ folder
+       on every build, so a plain `dotnet build` leaves a runnable set behind. The web project
+       deliberately does NOT reference them (5.2c) - the loader scans plugins/ at startup. -->
+  <Target Name="CopySystemPluginToRepoPlugins" AfterTargets="Build"
+          Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('Codex.Systems.'))">
+    <MakeDir Directories="$(MSBuildThisFileDirectory)plugins" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildThisFileDirectory)plugins"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>

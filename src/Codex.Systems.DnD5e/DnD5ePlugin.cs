@@ -16,7 +16,7 @@ public class DnD5ePlugin : ICodexSystemPlugin
         registry.Register<ConditionComponent>();
     }
 
-    public void RegisterSystems(dynamic world)
+    public void RegisterSystems(ISystemContext systems)
     {
         // Damage/healing are applied immediately via CodexWorld.ApplyDamage/ApplyHealing (3.4) -
         // there is no more DamageEvent component-based system to register here. It used to let two
@@ -30,6 +30,9 @@ public class DnD5ePlugin : ICodexSystemPlugin
             PreferredEditor.Form,
             new List<FieldDefinition>
             {
+                new("Level", "Level", FieldType.Number, DefaultValue: 1),
+                new("Class", "Class", FieldType.Text),
+                new("Race", "Race", FieldType.Text),
                 new("Strength", "STR", FieldType.Number, DefaultValue: 10),
                 new("Dexterity", "DEX", FieldType.Number, DefaultValue: 10),
                 new("Constitution", "CON", FieldType.Number, DefaultValue: 10),

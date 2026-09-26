@@ -36,10 +36,11 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         await _app.SeedUserAsync(player1Id, "aria_" + player1Id, playerPassword, "Player");
         await _app.SeedUserAsync(player2Id, "bram_" + player2Id, playerPassword, "Player");
 
+        var browser = await _app.GetBrowserAsync();
         var contextOptions = new BrowserNewContextOptions { BaseURL = _app.BaseUrl };
-        await using var dmContext = await _app.Browser.NewContextAsync(contextOptions);
-        await using var player1Context = await _app.Browser.NewContextAsync(contextOptions);
-        await using var player2Context = await _app.Browser.NewContextAsync(contextOptions);
+        await using var dmContext = await browser.NewContextAsync(contextOptions);
+        await using var player1Context = await browser.NewContextAsync(contextOptions);
+        await using var player2Context = await browser.NewContextAsync(contextOptions);
 
         var dm = await dmContext.NewPageAsync();
         var player1 = await player1Context.NewPageAsync();
@@ -179,12 +180,6 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         Assert.DoesNotContain(privateNote, player2Payload);
     }
 
-    private static async Task LoginAsync(IPage page, string username, string password)
-    {
-        await page.GotoAsync("/login");
-        await page.Locator("#username").FillAsync(username);
-        await page.Locator("#password").FillAsync(password);
-        await page.GetByRole(AriaRole.Button, new() { Name = "Enter Codex" }).ClickAsync();
-        await page.WaitForURLAsync(url => !url.Contains("/login"));
-    }
+    private static Task LoginAsync(IPage page, string username, string password) =>
+        LoginHelper.LoginAsync(page, username, password);
 }

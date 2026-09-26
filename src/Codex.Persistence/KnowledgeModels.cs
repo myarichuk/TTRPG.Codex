@@ -32,6 +32,15 @@ public enum FactVisibility
     Public
 }
 
+public enum FactStatus
+{
+    /// <summary>A player proposed this entry; only the DM can see it until approved.</summary>
+    Proposed,
+
+    /// <summary>Canon. Visibility rules apply normally.</summary>
+    Approved
+}
+
 public class FactDocument
 {
     public string Id { get; set; } = string.Empty;
@@ -42,6 +51,13 @@ public class FactDocument
     public List<KnowerEntry> KnownBy { get; set; } = new();
     public List<string> RelatedEntityIds { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
+
+    /// <summary>User id that authored this entry. Null for DM-authored canon predating authorship.</summary>
+    public string? AuthorId { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public FactStatus Status { get; set; } = FactStatus.Approved;
 }
 
 public class NoteDocument

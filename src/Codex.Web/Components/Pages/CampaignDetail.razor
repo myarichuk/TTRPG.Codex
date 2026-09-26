@@ -13,6 +13,7 @@
 @inject IFactRepository FactRepo
 @inject ISessionRepository SessionRepo
 @inject ICampaignAccessResolver AccessResolver
+@inject INoteRepository NoteRepo
 @inject IContentRegistry ContentRegistry
 @inject ISystemCatalog SystemCatalog
 @inject IUserRepository UserRepo
@@ -118,7 +119,6 @@ else
 
     private string editName = "";
     private string editDescription = "";
-    private string editSystemId = "";
 
     private string contentSearch = "";
     private string newActorName = "New Actor";
@@ -129,7 +129,13 @@ else
     private string newLocationName = "";
 
     private string newFactSummary = "";
+    private string newFactDetails = "";
     private FactVisibility newFactVisibility = FactVisibility.DmOnly;
+    private readonly Dictionary<string, FactVisibility> approveVisibility = new();
+
+    private List<NoteDocument> campaignNotes = new();
+    private string newNoteContent = "";
+    private CommentVisibility newNoteVisibility = CommentVisibility.Public;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -152,13 +158,13 @@ else
         {
             editName = campaign.Name;
             editDescription = campaign.Description ?? "";
-            editSystemId = campaign.SystemId;
 
             actors = await ActorRepo.GetVisibleForCampaignAsync(access);
             regions = await RegionRepo.GetVisibleForCampaignAsync(access);
             var ownedActorIds = actors.Where(a => a.OwnerUserId == currentUserId).Select(a => a.Id).ToHashSet();
             facts = await FactRepo.GetVisibleForCampaignAsync(access, ownedActorIds);
             sessions = await SessionRepo.GetAllForCampaignAsync(CampaignId);
+            campaignNotes = (await NoteRepo.GetNotesForTargetAsync(CampaignNotesTargetId, access)).ToList();
 
             memberUsernames.Clear();
             foreach (var member in campaign.Members)
@@ -172,6 +178,8 @@ else
     }
 
     private void Flash(string message) => statusMessage = message;
+
+    private string CampaignNotesTargetId => $"campaign:{CampaignId}";
 
     // ---- Overview (2.1, 2.4) ----
 
@@ -190,12 +198,7 @@ else
                 </div>
                 <div class="mb-2">
                     <label class="form-label small">System</label>
-                    <select class="form-select" @bind="editSystemId">
-                        @foreach (var systemId in SystemCatalog.LoadedSystemIds)
-                        {
-                            <option value="@systemId">@systemId</option>
-                        }
-                    </select>
+                    <div><span class="badge bg-secondary">@campaign!.SystemId</span> <span class="text-tertiary small">Locked after creation.</span></div>
                 </div>
                 <button type="button" class="btn btn-accent btn-sm" @onclick="SaveOverviewAsync">Save</button>
             }
@@ -303,7 +306,8 @@ else
     {
         campaign!.Name = editName;
         campaign.Description = editDescription;
-        campaign.SystemId = editSystemId;
+        // SystemId is intentionally never written here: the system is locked after creation
+        // because blueprints, UI schemas, and every actor's State shape hang off it.
         try
         {
             await CampaignRepo.SaveAsync(campaign);
@@ -348,6 +352,7 @@ else
                 {
                     <p class="text-tertiary small">No actors yet.</p>
                 }
+                <a href="@($"/campaigns/{CampaignId}/create")" class="btn btn-accent btn-sm mt-2" data-testid="create-character-link">Create a Character</a>
             </div>
             @if (access!.IsDm)
             {
@@ -531,7 +536,42 @@ else
         <div class="mb-3">
             <a href="@($"/campaigns/{CampaignId}/grimoire")">Open Grimoire (player view)</a>
         </div>
-        @foreach (var fact in facts)
+        @if (access!.IsDm)
+        {
+            var proposed = facts.Where(f => f.Status == FactStatus.Proposed).ToList();
+            @if (proposed.Any())
+            {
+                <h5>Proposed by Players (@proposed.Count)</h5>
+                @foreach (var fact in proposed)
+                {
+                    <div class="card p-2 mb-2 border-warning">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                            <div>
+                                <strong>@fact.Summary</strong>
+                                <span class="badge bg-warning text-dark ms-1">Proposed</span>
+                                <span class="text-tertiary small ms-1">by @memberUsernames.GetValueOrDefault(fact.AuthorId ?? "", fact.AuthorId ?? "?")</span>
+                            </div>
+                            <div class="d-flex gap-1 align-items-center">
+                                <select class="form-select form-select-sm w-auto" value="@GetApproveVisibility(fact.Id)" @onchange="e => approveVisibility[fact.Id] = Enum.Parse<FactVisibility>(e.Value?.ToString() ?? nameof(FactVisibility.Public))" aria-label="Approve visibility">
+                                    @foreach (FactVisibility v in Enum.GetValues<FactVisibility>())
+                                    {
+                                        <option value="@v">@v</option>
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => ApproveFactAsync(fact)">Approve</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => DismissFactAsync(fact)">Dismiss</button>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(fact.Details))
+                        {
+                            <p class="small text-tertiary mb-0">@fact.Details</p>
+                        }
+                    </div>
+                }
+            }
+        }
+        <h5>Canon</h5>
+        @foreach (var fact in facts.Where(f => f.Status == FactStatus.Approved))
         {
             <div class="card p-2 mb-2">
                 <div class="d-flex justify-content-between align-items-center">
@@ -550,11 +590,16 @@ else
                 }
             </div>
         }
-        @if (access!.IsDm)
-        {
-            <div class="card p-3 mt-3">
-                <h5>New Fact</h5>
-                <input class="form-control form-control-sm mb-2" placeholder="Summary" @bind="newFactSummary" />
+        <div class="card p-3 mt-3">
+            <h5>@(access!.IsDm ? "New Fact" : "Propose Lore")</h5>
+            @if (!access.IsDm)
+            {
+                <p class="text-tertiary small">Player proposals go to the DM for review before becoming canon.</p>
+            }
+            <input class="form-control form-control-sm mb-2" placeholder="Summary" @bind="newFactSummary" />
+            <textarea class="form-control form-control-sm mb-2" rows="2" placeholder="Details (optional)" @bind="newFactDetails"></textarea>
+            @if (access.IsDm)
+            {
                 <select class="form-select form-select-sm mb-2" @bind="newFactVisibility">
                     @foreach (FactVisibility v in Enum.GetValues<FactVisibility>())
                     {
@@ -562,9 +607,50 @@ else
                     }
                 </select>
                 <button type="button" class="btn btn-accent btn-sm" @onclick="CreateFactAsync">Add Fact</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-accent btn-sm" @onclick="ProposeFactAsync">Propose Lore</button>
+            }
+        </div>
+        <div class="card p-3 mt-3">
+            <h5>Campaign Notes</h5>
+            @foreach (var note in campaignNotes)
+            {
+                <div class="border-bottom py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong class="small">@memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong>
+                        <span>
+                            <span class="badge bg-dark me-1">@note.Visibility</span>
+                            <span class="text-tertiary small">@note.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                        </span>
+                    </div>
+                    <p class="small mb-1">@note.Content</p>
+                    @if (access!.IsDm)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => PromoteNoteAsync(note)">Promote to Fact</button>
+                    }
+                </div>
+            }
+            @if (!campaignNotes.Any())
+            {
+                <p class="text-tertiary small">No campaign notes yet.</p>
+            }
+            <div class="mt-3">
+                <textarea class="form-control form-control-sm mb-2" rows="2" placeholder="Add a campaign note..." @bind="newNoteContent" @bind:event="oninput"></textarea>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm w-auto" @bind="newNoteVisibility" aria-label="Note visibility">
+                        <option value="@CommentVisibility.Private">Private (you + DM)</option>
+                        <option value="@CommentVisibility.Public">Public (whole party)</option>
+                    </select>
+                    <button type="button" class="btn btn-accent btn-sm" @onclick="CreateNoteAsync">Add Note</button>
+                </div>
             </div>
-        }
+        </div>
     </div>;
+
+    private FactVisibility GetApproveVisibility(string factId) =>
+        approveVisibility.TryGetValue(factId, out var v) ? v : FactVisibility.Public;
 
     private async Task CreateFactAsync()
     {
@@ -573,17 +659,91 @@ else
         {
             Id = Guid.NewGuid().ToString(),
             CampaignId = CampaignId,
-            Summary = newFactSummary,
-            Visibility = newFactVisibility
+            Summary = newFactSummary.Trim(),
+            Details = string.IsNullOrWhiteSpace(newFactDetails) ? null : newFactDetails.Trim(),
+            Visibility = newFactVisibility,
+            AuthorId = currentUserId,
+            Status = FactStatus.Approved
         };
         await FactRepo.SaveAsync(fact, access!);
         newFactSummary = "";
+        newFactDetails = "";
+        Flash("Fact added.");
+        await ReloadAsync();
+    }
+
+    private async Task ProposeFactAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newFactSummary)) return;
+        var fact = new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Summary = newFactSummary.Trim(),
+            Details = string.IsNullOrWhiteSpace(newFactDetails) ? null : newFactDetails.Trim(),
+            Visibility = FactVisibility.DmOnly
+        };
+        await FactRepo.ProposeAsync(fact, access!);
+        newFactSummary = "";
+        newFactDetails = "";
+        Flash("Proposed - the DM will review it.");
+        await ReloadAsync();
+    }
+
+    private async Task ApproveFactAsync(FactDocument fact)
+    {
+        await FactRepo.ApproveAsync(fact.Id, GetApproveVisibility(fact.Id), access!);
+        Flash($"Approved \"{fact.Summary}\".");
+        await ReloadAsync();
+    }
+
+    private async Task DismissFactAsync(FactDocument fact)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Dismiss proposal \"{fact.Summary}\"?");
+        if (!confirmed) return;
+        await FactRepo.DeleteAsync(fact.Id, access!);
         await ReloadAsync();
     }
 
     private async Task RevealFactAsync(FactDocument fact)
     {
         await FactRepo.SetVisibilityAsync(fact.Id, FactVisibility.Public, access!);
+        await ReloadAsync();
+    }
+
+    private async Task CreateNoteAsync()
+    {
+        if (access == null || currentUserId == null || string.IsNullOrWhiteSpace(newNoteContent)) return;
+        await NoteRepo.CreateNoteAsync(new NoteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            TargetId = CampaignNotesTargetId,
+            AuthorId = currentUserId,
+            Content = newNoteContent.Trim(),
+            Visibility = newNoteVisibility
+        });
+        newNoteContent = "";
+        Flash("Note added.");
+        await ReloadAsync();
+    }
+
+    private async Task PromoteNoteAsync(NoteDocument note)
+    {
+        if (access == null || !access.IsDm) return;
+        var firstLine = note.Content.Split('\n', 2)[0].Trim();
+        var summary = firstLine.Length > 80 ? firstLine[..80] + "…" : firstLine;
+        await FactRepo.SaveAsync(new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Summary = string.IsNullOrWhiteSpace(summary) ? "Promoted note" : summary,
+            Details = note.Content,
+            Visibility = FactVisibility.Public,
+            AuthorId = note.AuthorId,
+            Status = FactStatus.Approved
+        }, access);
+        Flash($"Promoted note to canon.");
         await ReloadAsync();
     }
 

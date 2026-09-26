@@ -1,0 +1,21 @@
+/* Overview cards behave as links; keep them calm and readable. */
+.campaign-card-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.campaign-card-link:hover .card-title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.campaign-card-link:focus-visible {
+    outline: 2px solid var(--accent-color, #0d8abc);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .campaign-card-link:hover .card-title {
+        text-decoration: none;
+    }
+}
