@@ -14,6 +14,20 @@ public interface IFactRepository
     /// <summary>Creates or updates a fact. DM only - lore authoring is a DM prep-loop tool (2.1/2.5).</summary>
     Task<bool> SaveAsync(FactDocument fact, CampaignAccess access);
 
+    /// <summary>
+    /// Proposes a lore entry. Any campaign member may call this: the DM's entry is stored
+    /// approved with the requested visibility, a player's entry is stored as
+    /// <see cref="FactStatus.Proposed"/> + <see cref="FactVisibility.DmOnly"/> regardless of
+    /// what was requested, so it never leaks to other players before DM approval.
+    /// </summary>
+    Task<bool> ProposeAsync(FactDocument fact, CampaignAccess access);
+
+    /// <summary>Approves a proposed entry with the given visibility. DM only.</summary>
+    Task<bool> ApproveAsync(string factId, FactVisibility visibility, CampaignAccess access);
+
+    /// <summary>Deletes a single fact (e.g. rejecting a proposal). DM only.</summary>
+    Task<bool> DeleteAsync(string factId, CampaignAccess access);
+
     /// <summary>Sets a fact's visibility directly - backs the "Reveal to party" action (2.5). DM only.</summary>
     Task<bool> SetVisibilityAsync(string factId, FactVisibility visibility, CampaignAccess access);
 

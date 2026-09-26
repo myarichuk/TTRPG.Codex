@@ -1,0 +1,1070 @@
+@page "/campaigns/{CampaignId}/create"
+@using System.Security.Claims
+@using Codex.Core.Components
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Localization
+@inject ICampaignRepository CampaignRepo
+@inject IActorRepository ActorRepo
+@inject ICampaignAccessResolver AccessResolver
+@inject IContentRegistry ContentRegistry
+@inject ComponentRegistry Components
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IStringLocalizer<CreateCharacter> L
+
+<PageTitle>@L["Create Character"] | TTRPG.Codex</PageTitle>
+
+<div class="app-container">
+@if (loading)
+{
+    <div class="d-flex justify-content-center my-5 py-5">
+        <div class="spinner-border text-accent" role="status"><span class="visually-hidden">@L["Loading..."]</span></div>
+    </div>
+}
+else if (campaign == null || access == null)
+{
+    <div class="empty-state text-center py-5">
+        <h3>@L["Campaign not found"]</h3>
+        <p class="text-tertiary">@L["It may not exist, or you may not have access to it."]</p>
+        <a href="/campaigns" class="btn btn-accent mt-3">@L["Back to Campaigns"]</a>
+    </div>
+}
+else if (!SupportedSystem)
+{
+    <div class="empty-state text-center py-5">
+        <h3>@L["Creation unavailable"]</h3>
+        <p class="text-tertiary">@L["Guided creation isn't available for {0} yet.", campaign.SystemId]</p>
+        <a href="@($"/campaigns/{CampaignId}")" class="btn btn-accent mt-3">@L["Back to Campaign"]</a>
+    </div>
+}
+else
+{
+    <header class="mb-4">
+        <h1 class="mb-0">@L["Create Character"]</h1>
+        <p class="page-subtitle">@campaign.Name &middot; @campaign.SystemId</p>
+    </header>
+
+    <ol class="list-unstyled d-flex gap-2 flex-wrap mb-4">
+        @foreach (var (step, i) in VisibleSteps.Select((s, i) => (s, i)))
+        {
+            <li>
+                <span class="badge @(i == StepIndex ? "bg-accent" : (i < StepIndex ? "bg-success" : "bg-secondary"))">@(i + 1). @L[step.Title]</span>
+            </li>
+        }
+    </ol>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger py-2" role="alert">@error</div>
+    }
+
+    <div class="card p-3 mb-3" data-testid="wizard-step-@CurrentStep.Key">
+        @switch (CurrentStep.Key)
+        {
+            case "Name":
+                <h5>@L["Name your character"]</h5>
+                <input class="form-control" data-testid="wizard-name" placeholder="@L["Name"]"
+                       @bind="charName" @bind:event="oninput" maxlength="80" />
+                break;
+
+            case "Class":
+                <h5>@(Is5e ? L["Choose a class"] : L["Choose an ancestry"])</h5>
+                @if (Is5e)
+                {
+                    <div class="row g-2">
+                        @foreach (var cls in TrueClasses)
+                        {
+                            <div class="col-md-4">
+                                <button type="button" data-testid="class-card-@cls.Id"
+                                        class="btn w-100 text-start @(classId == cls.Id ? "btn-accent" : "btn-outline-secondary")"
+                                        @onclick="() => SelectClass(cls.Id)">
+                                    <strong>@cls.Name</strong>
+                                    <span class="d-block small opacity-75">d@(Prop(cls, "hitDie")) &middot; @L["Saves"]: @string.Join("/", StrList(Prop(cls, "savingThrows")))</span>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-2">
+                        @foreach (var ancestry in ancestries)
+                        {
+                            <div class="col-md-4">
+                                <button type="button" data-testid="ancestry-card-@ancestry.Id"
+                                        class="btn w-100 text-start @(ancestryId == ancestry.Id ? "btn-accent" : "btn-outline-secondary")"
+                                        @onclick="() => SelectAncestry(ancestry.Id)">
+                                    <strong>@ancestry.Name</strong>
+                                    <span class="d-block small opacity-75">@L["HP"]: @Prop(ancestry, "hitPoints") &middot; @Prop(ancestry, "size")</span>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    @if (SelectedAncestry != null)
+                    {
+                        <h6 class="mt-3">@L["Heritage"]</h6>
+                        <select class="form-select" data-testid="heritage-select" @bind="heritageId">
+                            <option value="">@L["Choose a heritage"]</option>
+                            @foreach (var heritage in AvailableHeritages)
+                            {
+                                <option value="@heritage.Id">@heritage.Name</option>
+                            }
+                        </select>
+                    }
+                }
+                break;
+
+            case "Subclass":
+                <h5>@L["Choose a subclass"]</h5>
+                @if (SelectedClass != null && SelectedClass.Id == "warlock")
+                {
+                    <p class="text-secondary small">@L["Your otherworldly patron shapes your expanded spell list."]</p>
+                }
+                <div class="row g-2">
+                    @foreach (var sub in AvailableSubclasses)
+                    {
+                        <div class="col-md-4">
+                            <button type="button" data-testid="subclass-card-@sub.Id"
+                                    class="btn w-100 text-start @(subclassId == sub.Id ? "btn-accent" : "btn-outline-secondary")"
+                                    @onclick="() => subclassId = sub.Id">
+                                <strong>@sub.Name</strong>
+                            </button>
+                        </div>
+                    }
+                </div>
+                break;
+
+            case "Race":
+                <h5>@L["Choose a race"]</h5>
+                <div class="row g-2">
+                    @foreach (var race in TrueRaces)
+                    {
+                        <div class="col-md-4">
+                            <button type="button" data-testid="race-card-@race.Id"
+                                    class="btn w-100 text-start @(raceId == race.Id ? "btn-accent" : "btn-outline-secondary")"
+                                    @onclick="() => SelectRace(race.Id)">
+                                <strong>@race.Name</strong>
+                                <span class="d-block small opacity-75">@L["Speed"]: @Prop(race, "speed")</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+                @if (AvailableSubraces.Any())
+                {
+                    <h6 class="mt-3">@L["Subrace"]</h6>
+                    <select class="form-select" data-testid="subrace-select" @bind="subraceId">
+                        <option value="">@L["None"]</option>
+                        @foreach (var sub in AvailableSubraces)
+                        {
+                            <option value="@sub.Id">@sub.Name</option>
+                        }
+                    </select>
+                }
+                break;
+
+            case "Background":
+                <h5>@L["Choose a background"]</h5>
+                <select class="form-select" data-testid="background-select" @bind="backgroundId">
+                    <option value="">@L["Choose a background"]</option>
+                    @foreach (var bg in backgrounds)
+                    {
+                        <option value="@bg.Id">@bg.Name</option>
+                    }
+                </select>
+                @if (SelectedBackground != null)
+                {
+                    <p class="text-secondary small mt-2">@L["Skill"]: @Prop(SelectedBackground, "skill") &middot; @L["Feat"]: @Prop(SelectedBackground, "feat")</p>
+                }
+                break;
+
+            case "Pf2eClass":
+                <h5>@L["Choose a class"]</h5>
+                <div class="row g-2">
+                    @foreach (var cls in classes)
+                    {
+                        <div class="col-md-4">
+                            <button type="button" data-testid="class-card-@cls.Id"
+                                    class="btn w-100 text-start @(classId == cls.Id ? "btn-accent" : "btn-outline-secondary")"
+                                    @onclick="() => SelectClass(cls.Id)">
+                                <strong>@cls.Name</strong>
+                                <span class="d-block small opacity-75">@L["HP"]: @Prop(cls, "hitPoints")</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+                @if (SelectedClass != null && SelectedClass.Id == "witch")
+                {
+                    <h6 class="mt-3">@L["Patron"]</h6>
+                    <select class="form-select" data-testid="patron-select" @bind="patronId">
+                        <option value="">@L["Choose a patron"]</option>
+                        @foreach (var patron in patrons)
+                        {
+                            <option value="@patron.Id">@patron.Name</option>
+                        }
+                    </select>
+                }
+                break;
+
+            case "Scores":
+                <h5>@L["Ability scores"]</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-3" data-testid="standard-array" @onclick="ApplyStandardArray">@L["Use standard array"]</button>
+                <div class="row g-2">
+                    @foreach (var score in ScoreNames)
+                    {
+                        <div class="col-md-4">
+                            <label class="form-label small">@score
+                                @if (AncestryBonus(score) != 0)
+                                {
+                                    <span class="text-success">(@L["+{0} ancestry", AncestryBonus(score)])</span>
+                                }
+                            </label>
+                            <input type="number" class="form-control" data-testid="score-@score"
+                                   min="1" max="20" @bind="scores[score]" />
+                        </div>
+                    }
+                </div>
+                @if (Is5e)
+                {
+                    <div class="mt-3">
+                        <label class="form-label small">@L["Alignment"]</label>
+                        <select class="form-select" data-testid="alignment-select" @bind="alignment" style="max-width: 12rem;">
+                            @foreach (var option in new[] { "LG", "NG", "CG", "LN", "N", "CN", "LE", "NE", "CE" })
+                            {
+                                <option value="@option">@option</option>
+                            }
+                        </select>
+                    </div>
+                }
+                break;
+
+            case "Equipment":
+                <h5>@L["Equipment"]</h5>
+                @if (Is5e && SelectedClass != null)
+                {
+                    @foreach (var item in FixedStartingEquipment)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" data-testid="equip-fixed-@Slug(item.Name)"
+                                   checked="@equipmentTaken.Contains(item.Name)"
+                                   @onchange="e => ToggleFixedEquipment(item.Name, (bool)e.Value!)" />
+                            <label class="form-check-label">@item.Name × @item.Quantity</label>
+                        </div>
+                    }
+                    @for (var g = 0; g < EquipmentChoiceGroups.Count; g++)
+                    {
+                        var group = EquipmentChoiceGroups[g];
+                        var groupIndex = g;
+                        <div class="mt-3">
+                            <div class="small text-secondary mb-1">@L["Choose {0}", group.Choose]</div>
+                            @for (var s = 0; s < group.Choose; s++)
+                            {
+                                var slotIndex = s;
+                                <select class="form-select mb-1" data-testid="equip-opt-@groupIndex-@slotIndex"
+                                        value="@EquipmentChoice(groupIndex, slotIndex)"
+                                        @onchange="e => SetEquipmentChoice(groupIndex, slotIndex, e.Value?.ToString())">
+                                    @for (var c = 0; c < group.Choices.Count; c++)
+                                    {
+                                        <option value="@c">@group.Choices[c].Label</option>
+                                    }
+                                </select>
+                            }
+                        </div>
+                    }
+                }
+                else if (!Is5e)
+                {
+                    <input class="form-control mb-2" data-testid="equip-search" style="max-width: 20rem;"
+                           placeholder="@L["Search equipment"]" @bind="equipmentSearch" @bind:event="oninput" />
+                    @foreach (var item in SearchedEquipment.Take(30))
+                    {
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                            <span>@item.Name</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-testid="equip-add-@item.Id" @onclick="() => AddPf2eEquipment(item)">@L["Add"]</button>
+                        </div>
+                    }
+                }
+                @if (FinalEquipment.Any())
+                {
+                    <h6 class="mt-3">@L["Chosen"]</h6>
+                    <ul class="list-unstyled">
+                        @foreach (var item in FinalEquipment)
+                        {
+                            <li class="small">@item.Name × @item.Quantity
+                                @if (!Is5e)
+                                {
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" @onclick="() => chosenEquipment.Remove(item)">@L["Remove"]</button>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+                break;
+
+            case "Spells":
+                <h5>@L["Spells"]</h5>
+                @if (CantripsToChoose > 0)
+                {
+                    <h6>@L["Cantrips"] (@selectedCantrips.Count / @CantripsToChoose)</h6>
+                    <div data-testid="spells-cantrips">
+                    @foreach (var spell in AvailableCantrips)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" data-testid="spell-@spell.Id"
+                                   checked="@selectedCantrips.Contains(spell.Id)"
+                                   @onchange="e => ToggleSpell(selectedCantrips, spell.Id, (bool)e.Value!)" />
+                            <label class="form-check-label">@spell.Name</label>
+                        </div>
+                    }
+                    </div>
+                }
+                @if (Level1ToChoose > 0)
+                {
+                    <h6 class="mt-3">@L["Level 1 spells"] (@selectedLevel1.Count / @Level1ToChoose)</h6>
+                    <div data-testid="spells-level1">
+                    @foreach (var spell in AvailableLevel1)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" data-testid="spell-@spell.Id"
+                                   checked="@selectedLevel1.Contains(spell.Id)"
+                                   @onchange="e => ToggleSpell(selectedLevel1, spell.Id, (bool)e.Value!)" />
+                            <label class="form-check-label">@spell.Name</label>
+                        </div>
+                    }
+                    </div>
+                }
+                break;
+
+            case "Review":
+                <h5>@L["Review"]</h5>
+                <dl class="row">
+                    <dt class="col-sm-4">@L["Name"]</dt><dd class="col-sm-8" data-testid="review-name">@charName</dd>
+                    <dt class="col-sm-4">@L["Class"]</dt><dd class="col-sm-8" data-testid="review-class">@SelectedClass?.Name</dd>
+                    @if (Is5e)
+                    {
+                        <dt class="col-sm-4">@L["Race"]</dt><dd class="col-sm-8" data-testid="review-race">@SelectedRace?.Name</dd>
+                    }
+                    else
+                    {
+                        <dt class="col-sm-4">@L["Ancestry"]</dt><dd class="col-sm-8" data-testid="review-race">@SelectedAncestry?.Name</dd>
+                    }
+                    <dt class="col-sm-4">@L["Hit points"]</dt><dd class="col-sm-8" data-testid="review-hp">@ComputedHitPoints</dd>
+                </dl>
+                break;
+        }
+    </div>
+
+    <div class="d-flex gap-2">
+        @if (StepIndex > 0)
+        {
+            <button type="button" class="btn btn-outline-secondary" data-testid="wizard-back" @onclick="Back">@L["Back"]</button>
+        }
+        @if (StepIndex < VisibleSteps.Count - 1)
+        {
+            <button type="button" class="btn btn-accent" data-testid="wizard-next" disabled="@(!CanProceed)" @onclick="Next">@L["Next"]</button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-accent" data-testid="wizard-create" disabled="@(!CanProceed || creating)" @onclick="CreateAsync">
+                @(creating ? L["Creating..."] : L["Create Character"])
+            </button>
+        }
+    </div>
+}
+</div>
+
+@code {
+    [Parameter]
+    public string CampaignId { get; set; } = string.Empty;
+
+    private record WizardStep(string Key, string Title, Func<bool> Visible);
+    private record ChosenItem(string Name, int Quantity);
+    private record EquipChoice(string Label, List<ChosenItem> Items);
+    private record EquipGroup(int Choose, List<EquipChoice> Choices);
+
+    private static readonly string[] ScoreNames =
+        { "Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma" };
+    private static readonly Dictionary<string, string> Abbr = new()
+    {
+        ["Strength"] = "str", ["Dexterity"] = "dex", ["Constitution"] = "con",
+        ["Intelligence"] = "int", ["Wisdom"] = "wis", ["Charisma"] = "cha",
+    };
+
+    private bool loading = true;
+    private bool creating;
+    private CampaignDocument? campaign;
+    private CampaignAccess? access;
+    private string? currentUserId;
+    private string? error;
+    private bool Is5e => campaign?.SystemId == "DnD5e";
+    private bool SupportedSystem => Is5e || campaign?.SystemId == "Pf2e";
+
+    private List<IRulesEntryDefinition> classes = new();
+    private List<IRulesEntryDefinition> ancestries = new();
+    private List<IRulesEntryDefinition> heritages = new();
+    private List<IRulesEntryDefinition> backgrounds = new();
+    private List<IRulesEntryDefinition> patrons = new();
+    private List<IRulesEntryDefinition> equipment = new();
+
+    private List<WizardStep> allSteps = new();
+    private int stepIndex;
+    private int StepIndex
+    {
+        get => Math.Clamp(stepIndex, 0, Math.Max(0, VisibleSteps.Count - 1));
+        set => stepIndex = value;
+    }
+    private List<WizardStep> VisibleSteps => allSteps.Where(s => s.Visible()).ToList();
+    private WizardStep CurrentStep => VisibleSteps[StepIndex];
+
+    private string charName = "";
+    private string? classId;
+    private string? subclassId;
+    private string? raceId;
+    private string? subraceId;
+    private string? ancestryId;
+    private string? heritageId;
+    private string? backgroundId;
+    private string? patronId;
+    private string alignment = "N";
+    private Dictionary<string, int> scores = ScoreNames.ToDictionary(s => s, _ => 10);
+    private HashSet<string> equipmentTaken = new();
+    private Dictionary<(int Group, int Slot), int> equipmentChoices = new();
+    private HashSet<string> selectedCantrips = new();
+    private HashSet<string> selectedLevel1 = new();
+    private string equipmentSearch = "";
+    private List<ChosenItem> chosenEquipment = new();
+
+    private IRulesEntryDefinition? SelectedClass => classes.FirstOrDefault(c => c.Id == classId);
+    private IRulesEntryDefinition? SelectedSubclass => classes.FirstOrDefault(c => c.Id == subclassId);
+    private IRulesEntryDefinition? SelectedRace => ancestries.FirstOrDefault(r => r.Id == raceId);
+    private IRulesEntryDefinition? SelectedSubrace => ancestries.FirstOrDefault(r => r.Id == subraceId);
+    private IRulesEntryDefinition? SelectedAncestry => ancestries.FirstOrDefault(a => a.Id == ancestryId);
+    private IRulesEntryDefinition? SelectedBackground => backgrounds.FirstOrDefault(b => b.Id == backgroundId);
+
+    private IEnumerable<IRulesEntryDefinition> TrueClasses =>
+        classes.Where(c => !c.Metadata.ContainsKey("subclassOf"));
+    private IEnumerable<IRulesEntryDefinition> TrueRaces =>
+        ancestries.Where(r => !r.Metadata.ContainsKey("ancestryOf"));
+    private IEnumerable<IRulesEntryDefinition> AvailableSubclasses =>
+        classes.Where(c => c.Metadata.TryGetValue("subclassOf", out var parent) && parent?.ToString() == classId);
+    private IEnumerable<IRulesEntryDefinition> AvailableSubraces =>
+        ancestries.Where(r => r.Metadata.TryGetValue("ancestryOf", out var parent) && parent?.ToString() == raceId);
+    private IEnumerable<IRulesEntryDefinition> AvailableHeritages => heritages.Where(h =>
+        !h.Properties.TryGetValue("ancestryOf", out var owner) ||
+        owner?.ToString()?.Equals(SelectedAncestry?.Name, StringComparison.OrdinalIgnoreCase) == true);
+    private IEnumerable<IRulesEntryDefinition> SearchedEquipment =>
+        string.IsNullOrWhiteSpace(equipmentSearch) ? equipment :
+        equipment.Where(e => e.Name.Contains(equipmentSearch, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        campaign = await CampaignRepo.GetAsync(CampaignId);
+        if (campaign != null && currentUserId != null)
+        {
+            access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
+        }
+
+        if (campaign != null && access != null && SupportedSystem)
+        {
+            var system = campaign.SystemId;
+            classes = ContentRegistry.GetRulesEntries(system, "class").OrderBy(c => c.Name).ToList();
+            ancestries = ContentRegistry.GetRulesEntries(system, "ancestry").OrderBy(a => a.Name).ToList();
+            heritages = ContentRegistry.GetRulesEntries(system, "heritage").OrderBy(h => h.Name).ToList();
+            backgrounds = ContentRegistry.GetRulesEntries(system, "background").OrderBy(b => b.Name).ToList();
+            patrons = ContentRegistry.GetRulesEntries(system, "patron").OrderBy(p => p.Name).ToList();
+            equipment = ContentRegistry.GetRulesEntries(system, "equipment").OrderBy(e => e.Name).ToList();
+
+            allSteps = Is5e
+                ? new()
+                {
+                    new("Name", "Name", () => true),
+                    new("Class", "Class", () => true),
+                    new("Subclass", "Subclass", () => AvailableSubclasses.Any()),
+                    new("Race", "Race", () => true),
+                    new("Scores", "Scores", () => true),
+                    new("Equipment", "Equipment", () => true),
+                    new("Spells", "Spells", () => CantripsToChoose > 0 || Level1ToChoose > 0),
+                    new("Review", "Review", () => true),
+                }
+                : new()
+                {
+                    new("Name", "Name", () => true),
+                    new("Class", "Ancestry", () => true),
+                    new("Background", "Background", () => true),
+                    new("Pf2eClass", "Class", () => true),
+                    new("Scores", "Scores", () => true),
+                    new("Equipment", "Equipment", () => true),
+                    new("Review", "Review", () => true),
+                };
+        }
+
+        loading = false;
+    }
+
+    private void SelectClass(string id)
+    {
+        if (classId != id)
+        {
+            classId = id;
+            subclassId = null;
+            patronId = null;
+            equipmentChoices.Clear();
+            selectedCantrips.Clear();
+            selectedLevel1.Clear();
+            equipmentTaken = FixedStartingEquipment.Select(f => f.Name).ToHashSet();
+        }
+    }
+
+    private void SelectRace(string id)
+    {
+        if (raceId != id)
+        {
+            raceId = id;
+            subraceId = null;
+        }
+    }
+
+    private void SelectAncestry(string id)
+    {
+        if (ancestryId != id)
+        {
+            ancestryId = id;
+            heritageId = null;
+        }
+    }
+
+    private void Next() => StepIndex++;
+    private void Back() => StepIndex--;
+
+    private bool CanProceed => CurrentStep.Key switch
+    {
+        "Name" => !string.IsNullOrWhiteSpace(charName),
+        "Class" => Is5e ? classId != null : ancestryId != null && heritageId != null,
+        "Subclass" => subclassId != null,
+        "Race" => raceId != null,
+        "Background" => backgroundId != null,
+        "Pf2eClass" => classId != null && (classId != "witch" || patronId != null),
+        "Scores" => scores.Values.All(v => v is >= 1 and <= 20),
+        "Equipment" => Is5e ? EquipmentChoiceGroups
+            .Select((g, i) => Enumerable.Range(0, g.Choose).All(s => EquipmentChoice(i, s) < g.Choices.Count))
+            .All(valid => valid) : true,
+        "Spells" => selectedCantrips.Count == CantripsToChoose && selectedLevel1.Count == Level1ToChoose,
+        "Review" => !string.IsNullOrWhiteSpace(charName) && classId != null,
+        _ => false,
+    };
+
+    // ------------------------------------------------------------------ scores
+
+    private void ApplyStandardArray()
+    {
+        var values = new[] { 15, 14, 13, 12, 10, 8 };
+        for (var i = 0; i < ScoreNames.Length; i++)
+        {
+            scores[ScoreNames[i]] = values[i];
+        }
+    }
+
+    private int AncestryBonus(string score)
+    {
+        if (!Is5e || SelectedRace == null)
+        {
+            return 0;
+        }
+
+        var total = 0;
+        foreach (var entry in new[] { SelectedRace, SelectedSubrace }.OfType<IRulesEntryDefinition>())
+        {
+            if (AsDict(Prop(entry, "abilityBonuses"))?.TryGetValue(Abbr[score], out var bonus) == true)
+            {
+                total += Int(bonus);
+            }
+        }
+
+        return total;
+    }
+
+    private int FinalScore(string score) => scores[score] + AncestryBonus(score);
+    private static int Modifier(int score) => (int)Math.Floor((score - 10) / 2.0);
+    private int ScoreModifier(string score) => Modifier(FinalScore(score));
+
+    // --------------------------------------------------------------- equipment
+
+    private record FixedItem(string Name, int Quantity);
+
+    private List<FixedItem> FixedStartingEquipment =>
+        SelectedClass == null ? new() :
+        AsList(Prop(SelectedClass, "startingEquipment"))
+            .Select(item => new FixedItem(
+                Str(AsDict(item)?.GetValueOrDefault("name")) ?? "?",
+                Int(AsDict(item)?.GetValueOrDefault("quantity"), 1)))
+            .ToList();
+
+    private List<EquipGroup> EquipmentChoiceGroups
+    {
+        get
+        {
+            var groups = new List<EquipGroup>();
+            if (SelectedClass == null)
+            {
+                return groups;
+            }
+
+            foreach (var raw in AsList(Prop(SelectedClass, "startingEquipmentOptions")))
+            {
+                var dict = AsDict(raw);
+                var choose = Int(dict?.GetValueOrDefault("choose"), 1);
+                var choices = new List<EquipChoice>();
+                if (dict?.TryGetValue("options", out var nested) == true)
+                {
+                    foreach (var option in AsList(nested))
+                    {
+                        FlattenEquipmentOption(AsDict(option), choices);
+                    }
+                }
+                else if (dict != null)
+                {
+                    // Group-level grant without an option list (cleric's holy symbol).
+                    FlattenEquipmentOption(dict, choices);
+                }
+
+                if (choices.Any())
+                {
+                    groups.Add(new EquipGroup(Math.Min(choose, choices.Count), choices));
+                }
+            }
+
+            return groups;
+        }
+    }
+
+    private void FlattenEquipmentOption(Dictionary<string, object>? option, List<EquipChoice> into)
+    {
+        if (option == null)
+        {
+            return;
+        }
+
+        if (option.TryGetValue("bundle", out var bundle))
+        {
+            var items = AsList(bundle)
+                .Select(raw => AsDict(raw))
+                .Where(item => item != null)
+                .Select(item => new ChosenItem(
+                    Str(item!.GetValueOrDefault("name")) ?? "?",
+                    Int(item.GetValueOrDefault("quantity"), 1)))
+                .ToList();
+            if (items.Any())
+            {
+                into.Add(new EquipChoice(
+                    string.Join(" + ", items.Select(i => i.Quantity > 1 ? $"{i.Name} × {i.Quantity}" : i.Name)),
+                    items));
+            }
+
+            return;
+        }
+
+        if (option.TryGetValue("name", out var name) && name?.ToString() is { } itemName)
+        {
+            into.Add(new EquipChoice(itemName, new() { new(itemName, Int(option.GetValueOrDefault("quantity"), 1)) }));
+            return;
+        }
+
+        if (option.TryGetValue("category", out var category) && category?.ToString() is { } categoryName)
+        {
+            foreach (var member in CategoryMembers(categoryName))
+            {
+                into.Add(new EquipChoice($"{member.Name} ({categoryName})", new() { new(member.Name, 1) }));
+            }
+
+            return;
+        }
+
+        if (option.TryGetValue("options", out var nested))
+        {
+            foreach (var child in AsList(nested))
+            {
+                FlattenEquipmentOption(AsDict(child), into);
+            }
+        }
+    }
+
+    private IEnumerable<IRulesEntryDefinition> CategoryMembers(string category) =>
+        equipment.Where(e => StrList(Prop(e, "categories")).Contains(category));
+
+    private int EquipmentChoice(int group, int slot)
+    {
+        // Default to the first option so the step is valid immediately; the player can change it.
+        return equipmentChoices.TryGetValue((group, slot), out var chosen) ? chosen : 0;
+    }
+
+    private void SetEquipmentChoice(int group, int slot, string? indexText)
+    {
+        if (int.TryParse(indexText, out var index))
+        {
+            equipmentChoices[(group, slot)] = index;
+        }
+    }
+
+    private void ToggleFixedEquipment(string name, bool take)
+    {
+        if (take)
+        {
+            equipmentTaken.Add(name);
+        }
+        else
+        {
+            equipmentTaken.Remove(name);
+        }
+    }
+
+    private void AddPf2eEquipment(IRulesEntryDefinition item)
+    {
+        var existing = chosenEquipment.FirstOrDefault(c => c.Name == item.Name);
+        if (existing == null)
+        {
+            chosenEquipment.Add(new ChosenItem(item.Name, 1));
+        }
+    }
+
+    private IEnumerable<ChosenItem> FinalEquipment
+    {
+        get
+        {
+            if (!Is5e)
+            {
+                return chosenEquipment;
+            }
+
+            var merged = new Dictionary<string, int>();
+            foreach (var granted in FixedStartingEquipment.Where(f => equipmentTaken.Contains(f.Name)))
+            {
+                merged[granted.Name] = merged.GetValueOrDefault(granted.Name) + granted.Quantity;
+            }
+
+            for (var g = 0; g < EquipmentChoiceGroups.Count; g++)
+            {
+                for (var s = 0; s < EquipmentChoiceGroups[g].Choose; s++)
+                {
+                    var choice = EquipmentChoiceGroups[g].Choices.ElementAtOrDefault(EquipmentChoice(g, s));
+                    if (choice == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var item in choice.Items)
+                    {
+                        merged[item.Name] = merged.GetValueOrDefault(item.Name) + item.Quantity;
+                    }
+                }
+            }
+
+            return merged.Select(kv => new ChosenItem(kv.Key, kv.Value));
+        }
+    }
+
+    // ------------------------------------------------------------------ spells
+
+    private int? SpellLevel(string spellId)
+    {
+        var level = ContentRegistry.GetAbility($"DnD5e:{spellId}")?.Metadata?.TryGetValue("level", out var v) == true ? v : null;
+        return level == null ? null : Int(level);
+    }
+
+    private List<string> ClassSpellIds =>
+        SelectedClass == null ? new() : StrList(Prop(SelectedClass, "spellList")).ToList();
+
+    private List<string> SubclassLevel1Spells
+    {
+        get
+        {
+            var ids = new List<string>();
+            if (SelectedSubclass == null)
+            {
+                return ids;
+            }
+
+            foreach (var raw in AsList(Prop(SelectedSubclass, "spells")))
+            {
+                var dict = AsDict(raw);
+                if (dict != null && dict.GetValueOrDefault("level") is { } rawLevel
+                    && Int(rawLevel) <= 1 && Str(dict.GetValueOrDefault("spell")) is { } id)
+                {
+                    ids.Add(id);
+                }
+            }
+
+            return ids;
+        }
+    }
+
+    private List<IAbilityDefinition> AvailableCantrips =>
+        ClassSpellIds.Where(id => SpellLevel(id) == 0)
+            .Select(id => ContentRegistry.GetAbility($"DnD5e:{id}")).OfType<IAbilityDefinition>()
+            .OrderBy(s => s.Name).ToList();
+
+    private List<IAbilityDefinition> AvailableLevel1 =>
+        ClassSpellIds.Concat(SubclassLevel1Spells).Distinct().Where(id => SpellLevel(id) == 1)
+            .Select(id => ContentRegistry.GetAbility($"DnD5e:{id}")).OfType<IAbilityDefinition>()
+            .OrderBy(s => s.Name).ToList();
+
+    private Dictionary<string, object>? Level1Spellcasting
+    {
+        get
+        {
+            if (SelectedClass == null)
+            {
+                return null;
+            }
+
+            foreach (var raw in AsList(Prop(SelectedClass, "levels")))
+            {
+                var dict = AsDict(raw);
+                if (dict != null && Int(dict.GetValueOrDefault("level")) == 1)
+                {
+                    return AsDict(dict.GetValueOrDefault("spellcasting"));
+                }
+            }
+
+            return null;
+        }
+    }
+
+    private int CantripsToChoose => Int(Level1Spellcasting?.GetValueOrDefault("cantrips_known"));
+    private int Level1ToChoose => Level1Spellcasting == null ? 0 :
+        Level1Spellcasting.TryGetValue("spells_known", out var known) ? Int(known) :
+        classId == "wizard" ? 6 : 0; // spellbook, or prepared caster (full list available)
+
+    private void ToggleSpell(HashSet<string> set, string id, bool take)
+    {
+        if (take)
+        {
+            set.Add(id);
+        }
+        else
+        {
+            set.Remove(id);
+        }
+    }
+
+    // ------------------------------------------------------------------ create
+
+    private int ComputedHitPoints
+    {
+        get
+        {
+            var conMod = ScoreModifier("Constitution");
+            if (Is5e)
+            {
+                return Math.Max(1, Int(SelectedClass == null ? null : Prop(SelectedClass, "hitDie"), 8) + conMod);
+            }
+
+            return Math.Max(1,
+                Int(SelectedAncestry == null ? null : Prop(SelectedAncestry, "hitPoints")) +
+                Int(SelectedClass == null ? null : Prop(SelectedClass, "hitPoints")) + conMod);
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (creating || campaign == null || access == null || currentUserId == null)
+        {
+            return;
+        }
+
+        creating = true;
+        error = null;
+        try
+        {
+            var state = new Dictionary<string, object>
+            {
+                ["Level"] = 1,
+                ["Class"] = SelectedClass?.Name ?? "?",
+            };
+            foreach (var score in ScoreNames)
+            {
+                state[score] = FinalScore(score);
+            }
+
+            if (Is5e)
+            {
+                state["Race"] = SelectedRace?.Name ?? "?";
+                state["Alignment"] = alignment;
+                if (SelectedSubclass != null)
+                {
+                    state["Subclass"] = SelectedSubclass.Name;
+                }
+            }
+            else
+            {
+                state["Ancestry"] = SelectedAncestry?.Name ?? "?";
+                state["Background"] = SelectedBackground?.Name ?? "?";
+                var heritage = heritages.FirstOrDefault(h => h.Id == heritageId);
+                if (heritage != null)
+                {
+                    state["Heritage"] = heritage.Name;
+                }
+
+                if (patronId != null && patrons.FirstOrDefault(p => p.Id == patronId) is { } patron)
+                {
+                    state["Patron"] = patron.Name;
+                }
+            }
+
+            var spells = selectedCantrips.Concat(selectedLevel1).ToList();
+            if (spells.Any())
+            {
+                state["Spells"] = spells;
+            }
+
+            var gear = FinalEquipment.ToList();
+            if (gear.Any())
+            {
+                state["Equipment"] = gear.Select(g => new Dictionary<string, object>
+                {
+                    ["name"] = g.Name,
+                    ["quantity"] = g.Quantity,
+                }).ToList<object>();
+            }
+
+            var pools = new ResourcePoolComponent();
+            pools.Set("HP", ComputedHitPoints);
+            pools.Set("HP_Max", ComputedHitPoints);
+            foreach (var (pool, amount) in StartingSlots)
+            {
+                pools.Set(pool, amount);
+            }
+
+            var modifiers = BuildModifiers();
+            foreach (var (key, json) in Components.Snapshot(new object[] { pools, modifiers }))
+            {
+                state[key] = json;
+            }
+
+            var actor = new ActorDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                CampaignId = CampaignId,
+                Kind = ActorKind.PlayerCharacter,
+                OwnerUserId = currentUserId,
+                Name = charName.Trim(),
+                Visibility = ActorVisibility.Known,
+                State = state,
+            };
+
+            if (!await ActorRepo.TrySaveAsync(actor, access))
+            {
+                error = L["Could not save this character. You may not be a member of this campaign."];
+                return;
+            }
+
+            Nav.NavigateTo($"/campaigns/{CampaignId}/actors/{actor.Id}");
+        }
+        finally
+        {
+            creating = false;
+        }
+    }
+
+    private IEnumerable<(string Pool, int Amount)> StartingSlots
+    {
+        get
+        {
+            if (!Is5e || Level1Spellcasting == null)
+            {
+                yield break;
+            }
+
+            foreach (var (key, value) in Level1Spellcasting)
+            {
+                if (key.StartsWith("spell_slots_level_") && Int(value) > 0 &&
+                    int.TryParse(key["spell_slots_level_".Length..], out var level))
+                {
+                    yield return ($"Slots{level}", Int(value));
+                }
+            }
+        }
+    }
+
+    private StatModifierComponent BuildModifiers()
+    {
+        var modifiers = new List<Modifier>();
+        if (Is5e && SelectedClass != null)
+        {
+            var proficient = new HashSet<string>(StrList(Prop(SelectedClass, "savingThrows")));
+            foreach (var score in ScoreNames)
+            {
+                var mod = ScoreModifier(score) + (proficient.Contains(Abbr[score]) ? 2 : 0);
+                modifiers.Add(new Modifier($"save:{Abbr[score]}", mod, SelectedClass.Name));
+            }
+
+            modifiers.Add(new Modifier("attack", ScoreModifier("Strength") + 2, SelectedClass.Name));
+            var casting = AsDict(Prop(SelectedClass, "spellcasting"));
+            if (casting != null && Str(casting.GetValueOrDefault("ability")) is { } ability)
+            {
+                var castingScore = ScoreNames.FirstOrDefault(s => Abbr[s] == ability) ?? "Charisma";
+                modifiers.Add(new Modifier("spellAttack", ScoreModifier(castingScore) + 2, SelectedClass.Name));
+            }
+
+            modifiers.Add(new Modifier("ac", 10 + ScoreModifier("Dexterity"), "Unarmored"));
+        }
+        else if (!Is5e && SelectedClass != null)
+        {
+            // PF2e level-1 math: proficiency rank (level 1 + 2/4/6/8) + ability modifier.
+            int Rank(object? proficiency) => Str(proficiency)?.Split(' ')[0] switch
+            {
+                "Trained" => 3,
+                "Expert" => 5,
+                "Master" => 7,
+                "Legendary" => 9,
+                _ => 0,
+            };
+            modifiers.Add(new Modifier("save:fortitude",
+                ScoreModifier("Constitution") + Rank(Prop(SelectedClass, "fortitudeProficiency")), SelectedClass.Name));
+            modifiers.Add(new Modifier("save:reflex",
+                ScoreModifier("Dexterity") + Rank(Prop(SelectedClass, "reflexProficiency")), SelectedClass.Name));
+            modifiers.Add(new Modifier("save:will",
+                ScoreModifier("Wisdom") + Rank(Prop(SelectedClass, "willProficiency")), SelectedClass.Name));
+            modifiers.Add(new Modifier("attack", ScoreModifier("Strength"), SelectedClass.Name));
+
+            var unarmored = StrList(Prop(SelectedClass, "defenseProficiency"))
+                .FirstOrDefault(s => s.Contains("unarmored", StringComparison.OrdinalIgnoreCase));
+            modifiers.Add(new Modifier("ac", 10 + ScoreModifier("Dexterity") + Rank(unarmored), "Unarmored"));
+        }
+
+        return new StatModifierComponent { Modifiers = modifiers };
+    }
+
+    // ----------------------------------------------------------------- helpers
+
+    private static object? Prop(IRulesEntryDefinition entry, string key) =>
+        entry.Properties.TryGetValue(key, out var value) ? value : null;
+
+    private static Dictionary<string, object>? AsDict(object? node) => node switch
+    {
+        Dictionary<string, object> d => d,
+        Dictionary<object, object> d => d.ToDictionary(kv => kv.Key.ToString()!, kv => kv.Value),
+        _ => null,
+    };
+
+    private static List<object> AsList(object? node) =>
+        node is System.Collections.IEnumerable e && node is not string ? e.Cast<object>().ToList() : new();
+
+    private static IEnumerable<string> StrList(object? node) => AsList(node).Select(o => o?.ToString() ?? "");
+    private static string? Str(object? node) => node?.ToString();
+
+    private static int Int(object? node, int fallback = 0) => node switch
+    {
+        int i => i,
+        long l => (int)l,
+        double d => (int)d,
+        string s when int.TryParse(s, out var n) => n,
+        _ => fallback,
+    };
+
+    private static string Slug(string name) =>
+        string.Concat(name.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-'));
+}

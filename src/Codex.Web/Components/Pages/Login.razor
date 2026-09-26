@@ -1,16 +1,15 @@
 @page "/login"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
-@using Microsoft.AspNetCore.Identity
-@using Codex.Persistence
 @using Codex.Web.Components.Layout
 @layout AuthLayout
-@inject IUserRepository UserRepository
 @inject IConfiguration Configuration
 @inject NavigationManager NavManager
 @inject IAuthenticationSchemeProvider SchemeProvider
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject PersistentComponentState AppState
+@inject IJSRuntime JS
+@implements IDisposable
 
 <PageTitle>Login | TTRPG.Codex</PageTitle>
 
@@ -31,24 +30,27 @@
 
     @if (EnableLocalLogin)
     {
-        <EditForm Model="@Model" OnValidSubmit="HandleLogin" FormName="LoginForm">
-            <DataAnnotationsValidator />
+        @* Plain HTTP post (not an interactive EditForm): cookie sign-in needs a real
+           HttpContext, which an interactive circuit doesn't have. Failures come back via
+           ?error= (see /auth/login in Program.cs). *@
+        <form method="post" action="/auth/login">
+            <input type="hidden" name="__RequestVerificationToken" value="@AntiforgeryToken" />
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
 
             <div class="mb-3 text-start">
                 <label for="username" class="form-label small text-secondary">Account Username <span class="text-danger" aria-hidden="true">*</span></label>
-                <InputText id="username" class="form-control w-100" placeholder="dm" autocomplete="username" required @bind-Value="Model!.Username" />
+                <input id="username" name="username" class="form-control w-100" placeholder="dm" autocomplete="username" required />
             </div>
 
             <div class="mb-4 text-start">
                 <div class="d-flex justify-content-between">
                     <label for="password" class="form-label small text-secondary">Secret Key <span class="text-danger" aria-hidden="true">*</span></label>
                 </div>
-                <InputText id="password" type="password" class="form-control w-100" placeholder="••••••••" autocomplete="current-password" required
-                @bind-Value="Model!.Password" />
+                <input id="password" name="password" type="password" class="form-control w-100" placeholder="••••••••" autocomplete="current-password" required />
             </div>
 
-            <button type="submit" class="btn-accent w-100 mt-2">Enter Codex</button>
-        </EditForm>
+            <button type="submit" class="btn-accent w-100 mt-2" disabled="@(AntiforgeryToken == null)">Enter Codex</button>
+        </form>
     }
 
     @if (EnableLocalLogin && ExternalSchemes.Any())
@@ -100,9 +102,6 @@
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
 
-    [SupplyParameterFromForm]
-    public LoginModel? Model { get; set; }
-
     [SupplyParameterFromQuery(Name = "error")]
     public string? QueryError { get; set; }
 
@@ -113,9 +112,27 @@
 
     public IEnumerable<AuthenticationScheme> ExternalSchemes { get; set; } = Array.Empty<AuthenticationScheme>();
 
+    private string? AntiforgeryToken { get; set; }
+    private PersistingComponentStateSubscription? _persistSubscription;
+
     protected override async Task OnInitializedAsync()
     {
-        Model ??= new();
+        // Prerendering runs this twice: once for SSR (HttpContext exists - mint the token)
+        // and once on the live circuit (no HttpContext). Without persistence the second run
+        // leaves the token null and the re-render blanks the form's hidden input, so every
+        // submit 400s. Persist the SSR-minted token across the handoff instead.
+        if (!AppState.TryTakeFromJson<string>("antiforgery", out var restored))
+        {
+            restored = HttpContext == null ? null : Antiforgery.GetAndStoreTokens(HttpContext).RequestToken;
+        }
+
+        AntiforgeryToken = restored;
+        _persistSubscription = AppState.RegisterOnPersisting(() =>
+        {
+            AppState.PersistAsJson("antiforgery", AntiforgeryToken);
+            return Task.CompletedTask;
+        });
+
         var allSchemes = await SchemeProvider.GetAllSchemesAsync();
         ExternalSchemes = allSchemes.Where(s => s.Name != "Cookies" && s.Name != "External").ToList();
 
@@ -135,62 +152,26 @@
 
     public string? ErrorMessage { get; set; }
 
-    private async Task HandleLogin()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (HttpContext == null || Model == null)
+        // In-circuit arrivals (link clicks, RedirectToLogin) never ran SSR, so no token was
+        // minted or persisted. Fetch one through the BROWSER - only a browser-issued request
+        // stores the accompanying cookie where the form post will send it back from.
+        // (OnAfterRenderAsync never runs during SSR, so this can't double-mint.)
+        if (firstRender && AntiforgeryToken == null)
         {
-            ErrorMessage = "HttpContext is not available. Please ensure you are logging in from a static rendered page.";
-            return;
-        }
-
-        var user = await UserRepository.GetUserByUsernameAsync(Model.Username);
-
-        if (user == null)
-        {
-            ErrorMessage = "Invalid username or password.";
-            return;
-        }
-
-        var hasher = new PasswordHasher<UserDocument>();
-        var result = hasher.VerifyHashedPassword(user, user.PasswordHash, Model.Password);
-
-        if (result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded)
-        {
-            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            try
             {
-                user.PasswordHash = hasher.HashPassword(user, Model.Password);
-                await UserRepository.UpdateUserAsync(user);
+                AntiforgeryToken = await JS.InvokeAsync<string>("codexAuth.getToken");
+            }
+            catch (JSException)
+            {
+                AntiforgeryToken = null;
             }
 
-            var claims = new List<Claim>
-{
-new Claim(ClaimTypes.Name, user.Username),
-new Claim(ClaimTypes.NameIdentifier, user.Id)
-};
-
-            foreach (var role in user.Roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
-            // Force a full reload so the auth cookie is applied to a fresh HTTP request.
-            var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
-            NavManager.NavigateTo(dest, forceLoad: true);
-        }
-        else
-        {
-            ErrorMessage = "Invalid username or password.";
+            StateHasChanged();
         }
     }
 
-    public class LoginModel
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-    }
+    public void Dispose() => _persistSubscription?.Dispose();
 }

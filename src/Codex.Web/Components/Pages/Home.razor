@@ -1,18 +1,17 @@
 @page "/"
 @using System.Security.Claims
-@using Codex.Core.AI
 @using Codex.Persistence
 @using Codex.Web.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
-@inject IActorRepository ActorRepo
-@inject LoreGenerator LoreGenerator
+@inject ISessionRepository SessionRepo
+@inject ICampaignAccessResolver AccessResolver
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Dashboard | TTRPG.Codex</PageTitle>
 
-@if (campaigns == null || characters == null)
+@if (campaigns == null)
 {
     <div class="d-flex justify-content-center my-5 py-5">
         <div class="spinner-border text-accent" role="status">
@@ -26,77 +25,85 @@ else
         <header class="d-flex justify-content-between align-items-start">
             <div>
                 <h1>Your Worlds</h1>
-                <p class="page-subtitle">Welcome back. You have <span>@campaigns.Count()</span> active @(campaigns.Count() == 1 ? "campaign" : "campaigns").</p>
+                <p class="page-subtitle">Welcome back. You have <span>@campaigns.Count</span> active @(campaigns.Count == 1 ? "campaign" : "campaigns").</p>
             </div>
-            <button type="button" class="btn btn-accent d-flex align-items-center gap-2">
-                <LucideIcon IconName="plus" Size="20" />
-                <span>Create Adventure</span>
-            </button>
+            <a href="/campaigns" class="btn btn-accent btn-sm text-decoration-none">New Campaign</a>
         </header>
 
         <div class="dashboard-grid">
             @foreach (var campaign in campaigns)
             {
-                <div class="campaign-card">
+                var access = accessByCampaign.GetValueOrDefault(campaign.Id);
+                var last = lastSessionByCampaign.GetValueOrDefault(campaign.Id);
+                var sessionCount = sessionCountByCampaign.GetValueOrDefault(campaign.Id, 0);
+                <a class="campaign-card campaign-card-link" href="/campaigns/@campaign.Id" aria-label="Open @campaign.Name">
                     <div class="art-preview">
                         <LucideIcon IconName="@(campaign.SystemId.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h3 class="card-title mb-0">@campaign.Name</h3>
-                            <button type="button" class="btn-delete-fluence" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Destroy Chronicle">
+                            <button type="button" class="btn-delete-fluence" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" @onclick:stopPropagation="true" @onclick:preventDefault="true" title="Destroy Chronicle">
                                 <LucideIcon IconName="trash-2" Size="14" />
                             </button>
                         </div>
+                        <div class="d-flex gap-1 flex-wrap mb-2">
+                            <span class="badge bg-secondary">@campaign.SystemId</span>
+                            @if (access != null)
+                            {
+                                <span class="badge bg-info text-dark">@access.Role</span>
+                            }
+                            <span class="badge bg-dark">@campaign.Members.Count @(campaign.Members.Count == 1 ? "member" : "members")</span>
+                        </div>
                         <p class="card-text">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description recorded." : campaign.Description)</p>
+                        <p class="small text-tertiary mb-0">
+                            @if (last != null)
+                            {
+                                <span>Last session: @(string.IsNullOrWhiteSpace(last.Title) ? last.Date.ToString("MMM dd, yyyy") : last.Title) · @sessionCount @(sessionCount == 1 ? "session" : "sessions")</span>
+                            }
+                            else
+                            {
+                                <span>No sessions yet</span>
+                            }
+                        </p>
                     </div>
-                </div>
+                </a>
             }
 
-            @if (campaigns.Count() < 3)
-            {
-                <button type="button" class="campaign-card card-empty w-100 text-center" aria-label="New Storyline" @onclick="ExpandAI">
-                    <div class="card-body">
-                        <LucideIcon IconName="sparkles" Size="32" Class="sparkle-icon" />
-                        <h3 class="card-title">New Storyline</h3>
-                        <p class="card-text">Start with a blank canvas or let the Oracle suggest a spark.</p>
-                        <div class="mt-4">
-                            <span class="btn btn-sm btn-outline-secondary px-4" style="border-radius: 20px; font-size: 0.75rem;">Browse Hub</span>
-                        </div>
-                    </div>
-                </button>
-            }
+            <a class="campaign-card card-empty text-center text-decoration-none" href="/campaigns" aria-label="Go to campaigns">
+                <div class="card-body">
+                    <LucideIcon IconName="plus" Size="32" Class="sparkle-icon" />
+                    <h3 class="card-title">New Campaign</h3>
+                    <p class="card-text">Create a campaign or browse existing ones.</p>
+                </div>
+            </a>
         </div>
 
         <section>
             <div class="section-header">
-                <h2 class="h5 mb-0 fw-bold">Recent Archives</h2>
-                <div class="archive-controls">
-                    <button type="button" class="control-btn @(!sortByCreated ? "active" : "")" aria-pressed="@(!sortByCreated ? "true" : "false")" @onclick="() => SetSort(false)">Modified</button>
-                    <button type="button" class="control-btn @(sortByCreated ? "active" : "")" aria-pressed="@(sortByCreated ? "true" : "false")" @onclick="() => SetSort(true)">Newest</button>
-                </div>
+                <h2 class="h5 mb-0 fw-bold">Recent Activity</h2>
             </div>
 
             <div class="fluent-table-wrapper">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>Subject</th>
-                            <th>Last Modified</th>
-                            <th style="width: 40px;"></th>
+                            <th>Campaign</th>
+                            <th>Session</th>
+                            <th>Recap</th>
+                            <th>Last Played</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (characters.Any())
+                        @if (recentActivity.Any())
                         {
-                            @foreach (var character in characters)
+                            @foreach (var item in recentActivity)
                             {
                                 <tr>
-                                    <td>@character.Name</td>
-                                    <td>Character</td>
-                                    <td>@character.UpdatedAt.ToString("MMM dd, yyyy")</td>
-                                    <td><LucideIcon IconName="chevron-right" Size="16" Class="text-tertiary" /></td>
+                                    <td><a href="/campaigns/@item.CampaignId">@item.CampaignName</a></td>
+                                    <td><a href="@item.Href">@item.Title</a></td>
+                                    <td class="small text-secondary">@(string.IsNullOrWhiteSpace(item.Snippet) ? "—" : item.Snippet)</td>
+                                    <td>@item.Date.ToString("MMM dd, yyyy")</td>
                                 </tr>
                             }
                         }
@@ -107,8 +114,8 @@ else
                                     <div class="empty-state-icon mx-auto mb-3" style="width: 48px; height: 48px; background: var(--fluent-surface-secondary); border-radius: 50%; display: grid; place-items: center;">
                                         <LucideIcon IconName="book-open" Size="24" Class="text-tertiary" />
                                     </div>
-                                    <h3 class="h6 fw-bold mb-2">The Archives are Empty</h3>
-                                    <p class="text-secondary small mb-0">Begin an adventure to see history here.</p>
+                                    <h3 class="h6 fw-bold mb-2">Nothing played yet</h3>
+                                    <p class="text-secondary small mb-0">Plan a session in any campaign to see history here.</p>
                                 </td>
                             </tr>
                         }
@@ -116,70 +123,78 @@ else
                 </table>
             </div>
             <div class="mt-3 text-end">
-                <a href="demo" class="text-accent small text-decoration-none fw-600" aria-label="View all lore">View all lore <span aria-hidden="true">→</span></a>
+                <a href="/grimoire" class="text-accent small text-decoration-none fw-600" aria-label="View all lore">View all lore <span aria-hidden="true">→</span></a>
             </div>
         </section>
-    </div>
-
-    <!-- AI Toast Interaction -->
-    <div id="ai-toast" style="display: @(showToast ? "block" : "none")">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="small fw-bold text-accent d-flex align-items-center gap-2">
-                <LucideIcon IconName="sparkles" Size="14" /> Oracle Suggestion
-            </span>
-            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" aria-label="Dismiss Oracle Suggestion" @onclick="HideToast"></button>
-        </div>
-        <div class="small text-secondary mb-4" style="line-height: 1.6;">
-            @if (isConsulting)
-            {
-                <div class="d-flex align-items-center gap-2 opacity-50">
-                    <div class="spinner-border spinner-border-sm" role="status"></div> Consulting the archives...
-                </div>
-            }
-            else
-            {
-                @toastContent
-            }
-        </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm w-100 btn-outline-secondary" style="font-size: 0.75rem;" @onclick="HideToast">Dismiss</button>
-            <button type="button" class="btn btn-sm w-100 btn-accent" style="font-size: 0.75rem;" @onclick="HideToast">Use This</button>
-        </div>
     </div>
 }
 
 @code {
-    private IEnumerable<CampaignDocument>? campaigns;
-    private IEnumerable<ActorDocument>? characters;
+    private List<CampaignDocument>? campaigns;
     private string? currentUserId;
-    private bool sortByCreated = false;
+    private readonly Dictionary<string, CampaignAccess?> accessByCampaign = new();
+    private readonly Dictionary<string, SessionDocument?> lastSessionByCampaign = new();
+    private readonly Dictionary<string, int> sessionCountByCampaign = new();
+    private List<ActivityItem> recentActivity = new();
 
-    private bool showToast = false;
-    private bool isConsulting = false;
-    private string toastContent = "";
+    private sealed record ActivityItem(string CampaignId, string CampaignName, string Title, string? Snippet, DateTime Date, string Href);
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        campaigns = await CampaignRepo.GetAllAsync();
-        await LoadCharacters();
+        await LoadAsync();
     }
 
-    private async Task SetSort(bool newestFirst)
+    private async Task LoadAsync()
     {
-        if (sortByCreated == newestFirst) return;
-        sortByCreated = newestFirst;
-        await LoadCharacters();
-    }
+        campaigns = null;
+        accessByCampaign.Clear();
+        lastSessionByCampaign.Clear();
+        sessionCountByCampaign.Clear();
+        recentActivity = new();
 
-    private async Task LoadCharacters()
-    {
-        characters = null; // Show spinner
-        characters = currentUserId == null
-            ? Array.Empty<ActorDocument>()
-            : await ActorRepo.GetRecentForOwnerAsync(currentUserId, 5, sortByCreated);
+        var all = await CampaignRepo.GetAllAsync();
+        var mine = (currentUserId == null
+            ? Enumerable.Empty<CampaignDocument>()
+            : all.Where(c => string.Equals(c.OwnerId, currentUserId, StringComparison.Ordinal)
+                || c.Members.Any(m => string.Equals(m.UserId, currentUserId, StringComparison.Ordinal))))
+            .OrderByDescending(c => c.UpdatedAt)
+            .ToList();
+
+        var activity = new List<ActivityItem>();
+        foreach (var campaign in mine)
+        {
+            var access = currentUserId == null
+                ? null
+                : await AccessResolver.ResolveAsync(campaign.Id, currentUserId);
+            if (access == null)
+            {
+                continue;
+            }
+
+            accessByCampaign[campaign.Id] = access;
+            var sessions = (await SessionRepo.GetAllForCampaignAsync(campaign.Id))
+                .OrderByDescending(s => s.Date)
+                .ToList();
+            sessionCountByCampaign[campaign.Id] = sessions.Count;
+            var last = sessions.FirstOrDefault();
+            lastSessionByCampaign[campaign.Id] = last;
+            if (last != null)
+            {
+                activity.Add(new ActivityItem(
+                    campaign.Id,
+                    campaign.Name,
+                    string.IsNullOrWhiteSpace(last.Title) ? last.Date.ToString("MMM dd, yyyy") : last.Title,
+                    string.IsNullOrWhiteSpace(last.Recap) ? null : (last.Recap.Length > 140 ? last.Recap[..140] + "…" : last.Recap),
+                    last.Date,
+                    $"/campaigns/{campaign.Id}/sessions/{last.Id}"));
+            }
+        }
+
+        campaigns = mine.Where(c => accessByCampaign.ContainsKey(c.Id)).ToList();
+        recentActivity = activity.OrderByDescending(a => a.Date).Take(6).ToList();
     }
 
     private async Task DeleteCampaign(string id, string name)
@@ -196,40 +211,7 @@ else
         {
             await JSRuntime.InvokeVoidAsync("alert", "Only the campaign owner can delete it.");
         }
-        campaigns = await CampaignRepo.GetAllAsync();
+        await LoadAsync();
         StateHasChanged();
-    }
-
-    private async Task ExpandAI()
-    {
-        showToast = true;
-        isConsulting = true;
-        toastContent = "";
-        StateHasChanged();
-
-        try
-        {
-            // B15: this used to call the Gemini API directly with a hardcoded empty key,
-            // bypassing the app's configured IChatClient entirely and always failing. Route it
-            // through the same LoreGenerator every other AI-touching feature uses; it already
-            // degrades gracefully ("AI integration is not configured.") when no provider is set.
-            toastContent = await LoreGenerator.GenerateLoreAsync(
-                sessionRecap: string.Empty,
-                entityName: "a one-sentence, mysterious TTRPG campaign hook");
-        }
-        catch
-        {
-            toastContent = "Connection to the Oracle lost.";
-        }
-        finally
-        {
-            isConsulting = false;
-            StateHasChanged();
-        }
-    }
-
-    private void HideToast()
-    {
-        showToast = false;
     }
 }

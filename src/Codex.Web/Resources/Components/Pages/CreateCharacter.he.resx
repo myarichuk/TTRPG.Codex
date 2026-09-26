@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <data name="Ability scores"><value>תכונות</value></data>
+  <data name="Add"><value>הוסף</value></data>
+  <data name="Alignment"><value>נטייה</value></data>
+  <data name="Ancestry"><value>מוצא</value></data>
+  <data name="Back to Campaign"><value>חזרה לקמפיין</value></data>
+  <data name="Back to Campaigns"><value>חזרה לקמפיינים</value></data>
+  <data name="Back"><value>אחורה</value></data>
+  <data name="Background"><value>רקע</value></data>
+  <data name="Campaign not found"><value>הקמפיין לא נמצא</value></data>
+  <data name="Cantrips"><value>קנטריפים</value></data>
+  <data name="Choose a background"><value>בחר רקע</value></data>
+  <data name="Choose a class"><value>בחר מקצוע</value></data>
+  <data name="Choose a heritage"><value>בחר מורשת</value></data>
+  <data name="Choose a patron"><value>בחר פטרון</value></data>
+  <data name="Choose a race"><value>בחר גזע</value></data>
+  <data name="Choose a subclass"><value>בחר תת-מקצוע</value></data>
+  <data name="Choose an ancestry"><value>בחר מוצא</value></data>
+  <data name="Choose {0}"><value>בחר {0}</value></data>
+  <data name="Chosen"><value>נבחרו</value></data>
+  <data name="Class"><value>מקצוע</value></data>
+  <data name="Could not save this character. You may not be a member of this campaign."><value>לא ניתן לשמור את הדמות. ייתכן שאינך חבר בקמפיין.</value></data>
+  <data name="Create Character"><value>צור דמות</value></data>
+  <data name="Creating..."><value>יוצר...</value></data>
+  <data name="Creation unavailable"><value>היצירה אינה זמינה</value></data>
+  <data name="Equipment"><value>ציוד</value></data>
+  <data name="Feat"><value>כשרון</value></data>
+  <data name="Guided creation isn't available for {0} yet."><value>יצירה מודרכת אינה זמינה עדיין עבור {0}.</value></data>
+  <data name="Heritage"><value>מורשת</value></data>
+  <data name="Hit points"><value>נקודות פגיעה</value></data>
+  <data name="HP"><value>נק"פ</value></data>
+  <data name="It may not exist, or you may not have access to it."><value>ייתכן שהוא אינו קיים או שאין לך גישה אליו.</value></data>
+  <data name="Level 1 spells"><value>לחשים מדרגה 1</value></data>
+  <data name="Loading..."><value>טוען...</value></data>
+  <data name="Name your character"><value>תן שם לדמות</value></data>
+  <data name="Name"><value>שם</value></data>
+  <data name="Next"><value>הבא</value></data>
+  <data name="None"><value>ללא</value></data>
+  <data name="Patron"><value>פטרון</value></data>
+  <data name="Race"><value>גזע</value></data>
+  <data name="Remove"><value>הסר</value></data>
+  <data name="Review"><value>סקירה</value></data>
+  <data name="Saves"><value>הצלות</value></data>
+  <data name="Scores"><value>תכונות</value></data>
+  <data name="Search equipment"><value>חפש ציוד</value></data>
+  <data name="Skill"><value>מיומנות</value></data>
+  <data name="Speed"><value>מהירות</value></data>
+  <data name="Spells"><value>לחשים</value></data>
+  <data name="Subclass"><value>תת-מקצוע</value></data>
+  <data name="Subrace"><value>תת-גזע</value></data>
+  <data name="Use standard array"><value>השתמש במערך הרגיל</value></data>
+  <data name="Your otherworldly patron shapes your expanded spell list."><value>הפטרון שלך מעניק לך רשימת לחשים מורחבת.</value></data>
+  <data name="+{0} ancestry"><value>+{0} מוצא</value></data>
+</root>

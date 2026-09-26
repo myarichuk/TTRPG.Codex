@@ -117,6 +117,32 @@ else
                                            @oninput="e => SetConditionRounds(participant.ActorId, e.Value?.ToString())" />
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(participant.ActorId)">Add</button>
                                 </div>
+                                @if (AbilitiesFor(participant.ActorId).Any())
+                                {
+                                    <div class="d-flex gap-1 mt-1 align-items-center">
+                                        <select class="form-select form-select-sm" style="width:auto" data-testid="ability-select"
+                                                value="@GetAbilityInput(participant.ActorId)"
+                                                @onchange="e => SetAbilityInput(participant.ActorId, e.Value?.ToString())">
+                                            <option value="">Ability...</option>
+                                            @foreach (var ability in AbilitiesFor(participant.ActorId))
+                                            {
+                                                <option value="@($"{ability.SystemId}:{ability.Id}")">@ability.Name</option>
+                                            }
+                                        </select>
+                                        <select class="form-select form-select-sm" style="width:auto" data-testid="ability-target-select"
+                                                value="@GetAbilityTargetInput(participant.ActorId)"
+                                                @onchange="e => SetAbilityTargetInput(participant.ActorId, e.Value?.ToString())">
+                                            <option value="">Target...</option>
+                                            @foreach (var other in encounter.Participants)
+                                            {
+                                                <option value="@other.ActorId">@(ActorsById.GetValueOrDefault(other.ActorId)?.Name ?? other.ActorId)</option>
+                                            }
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-outline-warning" data-testid="ability-use-btn"
+                                                disabled="@(string.IsNullOrEmpty(GetAbilityInput(participant.ActorId)) || string.IsNullOrEmpty(GetAbilityTargetInput(participant.ActorId)))"
+                                                @onclick="() => UseAbilityAsync(participant.ActorId)">Use</button>
+                                    </div>
+                                }
                             }
                         </div>
                         }
@@ -230,6 +256,8 @@ else
     private readonly Dictionary<string, string> conditionInputs = new();
     private readonly Dictionary<string, int> conditionRoundsInputs = new();
     private readonly Dictionary<string, int> manualInitiativeInputs = new();
+    private readonly Dictionary<string, string> abilityIdInputs = new();
+    private readonly Dictionary<string, string> abilityTargetInputs = new();
 
     private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
 
@@ -240,6 +268,43 @@ else
     private void SetDamageInput(string actorId, string? raw) => damageInputs[actorId] = int.TryParse(raw, out var value) ? value : 0;
     private string GetConditionInput(string actorId) => conditionInputs.GetValueOrDefault(actorId, string.Empty);
     private void SetConditionInput(string actorId, string? raw) => conditionInputs[actorId] = raw ?? string.Empty;
+    private string GetAbilityInput(string actorId) => abilityIdInputs.GetValueOrDefault(actorId, string.Empty);
+    private void SetAbilityInput(string actorId, string? raw) => abilityIdInputs[actorId] = raw ?? string.Empty;
+    private string GetAbilityTargetInput(string actorId) => abilityTargetInputs.GetValueOrDefault(actorId, string.Empty);
+    private void SetAbilityTargetInput(string actorId, string? raw) => abilityTargetInputs[actorId] = raw ?? string.Empty;
+
+    /// <summary>Abilities this participant can cast, resolved through their actor blueprint.
+    /// Empty for actors with no blueprint or a dangling one - no buttons render then.</summary>
+    private IEnumerable<IAbilityDefinition> AbilitiesFor(string actorId)
+    {
+        if (ActorsById.GetValueOrDefault(actorId)?.BlueprintId is not { } blueprint)
+        {
+            return Enumerable.Empty<IAbilityDefinition>();
+        }
+
+        var definition = ContentRegistry.GetActor(blueprint);
+        if (definition == null)
+        {
+            return Enumerable.Empty<IAbilityDefinition>();
+        }
+
+        return definition.Abilities
+            .Select(id => ContentRegistry.GetAbility(id))
+            .Where(a => a != null)
+            .Cast<IAbilityDefinition>();
+    }
+
+    private async Task UseAbilityAsync(string casterId)
+    {
+        var abilityId = GetAbilityInput(casterId);
+        var targetId = GetAbilityTargetInput(casterId);
+        if (string.IsNullOrEmpty(abilityId) || string.IsNullOrEmpty(targetId) || runtime == null)
+        {
+            return;
+        }
+
+        await runtime.EnqueueAsync(new UseAbilityByIdCommand(abilityId, casterId, targetId));
+    }
 
     protected override Task OnParametersSetAsync()
     {

@@ -9,8 +9,7 @@ public interface ICodexSystemPlugin
 
     void RegisterComponents(ComponentRegistry registry);
 
-    // Dynamic approach to break cyclic dependency
-    void RegisterSystems(dynamic world);
+    void RegisterSystems(ISystemContext systems);
 
     IEnumerable<UISchema> GetUISchemas();
 

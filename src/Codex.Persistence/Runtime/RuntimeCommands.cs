@@ -1,4 +1,6 @@
+using Codex.Core.Abilities;
 using Codex.Core.Components;
+using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 
 namespace Codex.Persistence.Runtime;
@@ -78,6 +80,8 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
     // Apply marks every affected actor dirty directly rather than trying to predict them here.
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
+    private IReadOnlyList<TriggeredAbility>? _triggered;
+
     public void Apply(CampaignRuntime runtime)
     {
         var entity = runtime.GetEntity(ActorId);
@@ -85,13 +89,20 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
         {
             runtime.World.AdvanceTurn(e);
             runtime.MarkAllHydratedActorsDirty();
+            _triggered = runtime.FireTriggers(ActorId, new TriggerEvent(TriggerEvents.OnTurnEnd));
         }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "TurnAdvance",
-        Description = $"{runtime.GetActorName(ActorId)}'s turn ended."
+        Description = $"{runtime.GetActorName(ActorId)}'s turn ended.{DescribeTriggered()}"
+    };
+
+    private string DescribeTriggered() => _triggered switch
+    {
+        { Count: > 0 } t => $" Triggered: {string.Join(", ", t.Select(x => x.Ability.Name))}.",
+        _ => string.Empty
     };
 }
 
@@ -162,6 +173,8 @@ public sealed record NextTurnCommand : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
+    private IReadOnlyList<TriggeredAbility>? _triggered;
+
     public void Apply(CampaignRuntime runtime)
     {
         var encounter = runtime.ActiveEncounter;
@@ -191,6 +204,7 @@ public sealed record NextTurnCommand : IRuntimeCommand
         }
 
         runtime.MarkEncounterDirty();
+        _triggered = runtime.FireTriggers(encounter.Participants[encounter.TurnIndex].ActorId, new TriggerEvent(TriggerEvents.OnTurnStart));
     }
 
     public SessionEvent Describe(CampaignRuntime runtime)
@@ -199,7 +213,10 @@ public sealed record NextTurnCommand : IRuntimeCommand
         var upNext = encounter is { Participants.Count: > 0 }
             ? runtime.GetActorName(encounter.Participants[encounter.TurnIndex].ActorId)
             : "nobody";
-        return new SessionEvent { Type = "TurnAdvance", Description = $"Turn passed to {upNext} (round {encounter?.Round ?? 1})." };
+        var triggered = _triggered is { Count: > 0 } t
+            ? $" Triggered: {string.Join(", ", t.Select(x => x.Ability.Name))}."
+            : string.Empty;
+        return new SessionEvent { Type = "TurnAdvance", Description = $"Turn passed to {upNext} (round {encounter?.Round ?? 1}).{triggered}" };
     }
 }
 
@@ -320,6 +337,93 @@ public sealed record AddSessionNoteCommand(string AuthorId, string Text, bool Is
         Type = "Note",
         Description = IsSecret ? $"{AuthorId} added a secret note." : $"Note: {Text}"
     };
+}
+
+/// <summary>Uses an ability through the TRCE pipeline (5.1) inside the single-writer loop, so
+/// Requires checks, Cost payment, and Effect application are one atomic step with write-through
+/// persistence and a session-log entry - never a half-paid cost with no effect.</summary>
+public sealed record UseAbilityCommand(
+    IAbilityDefinition Ability,
+    AbilityExecutor Executor,
+    string CasterActorId,
+    string? TargetActorId = null) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } =
+        TargetActorId != null ? new[] { CasterActorId, TargetActorId } : new[] { CasterActorId };
+
+    private AbilityExecutionResult? _result;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var caster = runtime.GetEntity(CasterActorId);
+        if (caster is not { } c)
+        {
+            _result = AbilityExecutionResult.Failed(AbilityExecutor.RequiresStage, $"Unknown caster '{CasterActorId}'.");
+            return;
+        }
+
+        var target = TargetActorId != null ? runtime.GetEntity(TargetActorId) : null;
+        _result = Executor.Execute(Ability, new AbilityExecutionContext(runtime.World, c, target));
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var casterName = runtime.GetActorName(CasterActorId);
+        if (_result?.Success == true)
+        {
+            var targetName = TargetActorId != null ? $" on {runtime.GetActorName(TargetActorId)}" : string.Empty;
+            return new SessionEvent { Type = "AbilityUsed", Description = $"{casterName} used {Ability.Name}{targetName}." };
+        }
+
+        return new SessionEvent { Type = "AbilityFailed", Description = $"{casterName} tried {Ability.Name} but failed: {_result?.FailureReason ?? "unknown reason"}." };
+    }
+}
+
+/// <summary>Uses an ability by full id (the combat console's "cast" buttons), resolving the
+/// definition inside the single-writer loop so the UI never touches ECS state directly. On a
+/// successful targeted use, fires <c>OnHit</c> triggers for both caster and target - once, at
+/// this level only, so triggered effects can't recurse back into another <c>OnHit</c>.</summary>
+public sealed record UseAbilityByIdCommand(string AbilityFullId, string CasterActorId, string? TargetActorId = null) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } =
+        TargetActorId != null ? new[] { CasterActorId, TargetActorId } : new[] { CasterActorId };
+
+    private AbilityExecutionResult? _result;
+    private string _abilityName = AbilityFullId;
+    private IReadOnlyList<TriggeredAbility>? _triggered;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var ability = runtime.ContentRegistry?.GetAbility(AbilityFullId);
+        if (ability != null)
+        {
+            _abilityName = ability.Name;
+        }
+
+        _result = runtime.TryExecuteAbility(AbilityFullId, CasterActorId, TargetActorId);
+        if (_result?.Success == true && TargetActorId != null)
+        {
+            var hit = new TriggerEvent(TriggerEvents.OnHit);
+            _triggered = runtime.FireTriggers(CasterActorId, hit, TargetActorId)
+                .Concat(runtime.FireTriggers(TargetActorId, hit, CasterActorId))
+                .ToList();
+        }
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var casterName = runtime.GetActorName(CasterActorId);
+        if (_result?.Success == true)
+        {
+            var targetName = TargetActorId != null ? $" on {runtime.GetActorName(TargetActorId)}" : string.Empty;
+            var triggered = _triggered is { Count: > 0 } t
+                ? $" Triggered: {string.Join(", ", t.Select(x => x.Ability.Name))}."
+                : string.Empty;
+            return new SessionEvent { Type = "AbilityUsed", Description = $"{casterName} used {_abilityName}{targetName}.{triggered}" };
+        }
+
+        return new SessionEvent { Type = "AbilityFailed", Description = $"{casterName} tried {_abilityName} but failed: {_result?.FailureReason ?? "ability pipeline is not wired for this campaign"}." };
+    }
 }
 
 /// <summary>Hydrates an already-persisted <see cref="ActorDocument"/> into the already-running

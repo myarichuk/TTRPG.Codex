@@ -24,8 +24,49 @@ public sealed class AppFixture : IAsyncLifetime
     private IPlaywright? _playwright;
 
     public string BaseUrl { get; private set; } = string.Empty;
-    public IBrowser Browser { get; private set; } = null!;
     public HttpClient Http { get; } = new();
+
+    private readonly SemaphoreSlim _browserLock = new(1, 1);
+    private IBrowser? _browser;
+
+    /// <summary>Launches headless Chromium on first use (not in <see cref="InitializeAsync"/>),
+    /// so HTTP-only tests can run on machines without Playwright browsers installed.</summary>
+    public async Task<IBrowser> GetBrowserAsync()
+    {
+        if (_browser != null)
+        {
+            return _browser;
+        }
+
+        await _browserLock.WaitAsync();
+        try
+        {
+            if (_browser != null)
+            {
+                return _browser;
+            }
+
+            _playwright = await Playwright.CreateAsync();
+            var options = new BrowserTypeLaunchOptions { Headless = true };
+
+            // This sandbox has Chromium pre-cached outside Playwright's normal revision-managed
+            // browsers folder; point at it directly rather than triggering (or requiring) a
+            // `playwright install` download. CI installs browsers the normal way (see ci.yml), so
+            // there ExecutablePath is left unset and the default resolution applies.
+            const string sandboxChromium = "/opt/pw-browsers/chromium";
+            if (File.Exists(sandboxChromium))
+            {
+                options.ExecutablePath = sandboxChromium;
+            }
+
+            _browser = await _playwright.Chromium.LaunchAsync(options);
+            return _browser;
+        }
+        finally
+        {
+            _browserLock.Release();
+        }
+    }
 
     public async Task InitializeAsync()
     {
@@ -62,21 +103,6 @@ public sealed class AppFixture : IAsyncLifetime
         _process.BeginErrorReadLine();
 
         await WaitUntilReadyAsync();
-
-        _playwright = await Playwright.CreateAsync();
-        var options = new BrowserTypeLaunchOptions { Headless = true };
-
-        // This sandbox has Chromium pre-cached outside Playwright's normal revision-managed
-        // browsers folder; point at it directly rather than triggering (or requiring) a
-        // `playwright install` download. CI installs browsers the normal way (see ci.yml), so
-        // there ExecutablePath is left unset and the default resolution applies.
-        const string sandboxChromium = "/opt/pw-browsers/chromium";
-        if (File.Exists(sandboxChromium))
-        {
-            options.ExecutablePath = sandboxChromium;
-        }
-
-        Browser = await _playwright.Chromium.LaunchAsync(options);
     }
 
     /// <summary>Seeds a user directly through the app's own repository - same password-hashing
@@ -92,7 +118,7 @@ public sealed class AppFixture : IAsyncLifetime
 
     private async Task WaitUntilReadyAsync()
     {
-        var deadline = DateTime.UtcNow.AddSeconds(90);
+        var deadline = DateTime.UtcNow.AddSeconds(180);
         Exception? lastError = null;
 
         while (DateTime.UtcNow < deadline)
@@ -105,13 +131,44 @@ public sealed class AppFixture : IAsyncLifetime
             try
             {
                 using var response = await Http.GetAsync("/login");
-                return; // Any HTTP response at all means Kestrel is up and routing works.
+                break; // Any HTTP response at all means Kestrel is up and routing works.
             }
             catch (HttpRequestException ex)
             {
                 lastError = ex;
                 await Task.Delay(500);
             }
+        }
+
+        if (DateTime.UtcNow >= deadline)
+        {
+            throw new TimeoutException($"Codex.Web never started listening at {BaseUrl}.\nLast error: {lastError}\nProcess output:\n{_output}");
+        }
+
+        // Kestrel listens before the embedded RavenDB server finishes warming (it boots on a
+        // background task after ApplicationStarted), so also wait for readiness - otherwise the
+        // first repository touch pays the warmup cost mid-scenario and timings go flaky.
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_process!.HasExited)
+            {
+                throw new InvalidOperationException($"Codex.Web exited early (code {_process.ExitCode}) before becoming ready:\n{_output}");
+            }
+
+            try
+            {
+                using var response = await Http.GetAsync("/health/ready");
+                if (response.IsSuccessStatusCode)
+                {
+                    return;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                lastError = ex;
+            }
+
+            await Task.Delay(500);
         }
 
         throw new TimeoutException($"Codex.Web never became ready at {BaseUrl}.\nLast error: {lastError}\nProcess output:\n{_output}");
@@ -142,12 +199,13 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (Browser != null)
+        if (_browser != null)
         {
-            await Browser.CloseAsync();
+            await _browser.CloseAsync();
         }
 
         _playwright?.Dispose();
+        _browserLock.Dispose();
         Http.Dispose();
 
         if (_process is { HasExited: false })

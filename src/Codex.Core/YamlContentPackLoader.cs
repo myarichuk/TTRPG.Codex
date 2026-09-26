@@ -63,10 +63,22 @@ public class YamlContentPackLoader : IContentPackLoader
 
         // Load Abilities
         await LoadContentSubfolder<AbilityDefinition>(packPath, manifest, "abilities", (item, prio) => RegisterAbility(item, prio));
+        // Spells and feats are abilities too (6.1: full SRD/ORC rules data) - separate folders
+        // keep thousand-entry generated packs navigable; kind lives in metadata.kind.
+        await LoadContentSubfolder<AbilityDefinition>(packPath, manifest, "spells", (item, prio) => RegisterAbility(item, prio));
+        await LoadContentSubfolder<AbilityDefinition>(packPath, manifest, "feats", (item, prio) => RegisterAbility(item, prio));
         // Load Actors
         await LoadContentSubfolder<ActorDefinition>(packPath, manifest, "actors", (item, prio) => RegisterActor(item, prio));
         // Load Locations
         await LoadContentSubfolder<LocationDefinition>(packPath, manifest, "locations", (item, prio) => _registry.RegisterLocation(item, prio));
+        // Rules reference entries (6.2): the folder assigns the kind, so a future system
+        // adds folders here without new definition types.
+        await LoadContentSubfolder<RulesEntryDefinition>(packPath, manifest, "classes", (item, prio) => RegisterRulesEntry(item, prio, "class"));
+        await LoadContentSubfolder<RulesEntryDefinition>(packPath, manifest, "ancestries", (item, prio) => RegisterRulesEntry(item, prio, "ancestry"));
+        await LoadContentSubfolder<RulesEntryDefinition>(packPath, manifest, "heritages", (item, prio) => RegisterRulesEntry(item, prio, "heritage"));
+        await LoadContentSubfolder<RulesEntryDefinition>(packPath, manifest, "backgrounds", (item, prio) => RegisterRulesEntry(item, prio, "background"));
+        await LoadContentSubfolder<RulesEntryDefinition>(packPath, manifest, "patrons", (item, prio) => RegisterRulesEntry(item, prio, "patron"));
+        await LoadContentSubfolder<RulesEntryDefinition>(packPath, manifest, "equipment", (item, prio) => RegisterRulesEntry(item, prio, "equipment"));
     }
 
     private void RegisterAbility(AbilityDefinition item, int prio)
@@ -107,6 +119,26 @@ public class YamlContentPackLoader : IContentPackLoader
         _registry.RegisterActor(item, prio);
     }
 
+    private void RegisterRulesEntry(RulesEntryDefinition item, int prio, string kind)
+    {
+        item.Kind = kind;
+        if (!string.IsNullOrEmpty(item.Inherits))
+        {
+            var baseEntry = _registry.GetRulesEntry(item.Inherits);
+            if (baseEntry != null)
+            {
+                item.MergeFrom(baseEntry);
+                item.Kind = kind;
+            }
+            else
+            {
+                _logger.LogError("Rules entry {EntryId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                    item.Id, item.PackId, item.Inherits);
+            }
+        }
+        _registry.RegisterRulesEntry(item, prio);
+    }
+
     private async Task LoadFromZipAsync(string zipPath)
     {
         var manifest = await ReadManifestAsync(zipPath);
@@ -129,6 +161,8 @@ public class YamlContentPackLoader : IContentPackLoader
             switch (firstSegment)
             {
                 case "abilities":
+                case "spells":
+                case "feats":
                     DeserializeAndRegister<AbilityDefinition>(yaml, manifest, RegisterAbility);
                     break;
                 case "actors":
@@ -136,6 +170,24 @@ public class YamlContentPackLoader : IContentPackLoader
                     break;
                 case "locations":
                     DeserializeAndRegister<LocationDefinition>(yaml, manifest, (item, prio) => _registry.RegisterLocation(item, prio));
+                    break;
+                case "classes":
+                    DeserializeAndRegister<RulesEntryDefinition>(yaml, manifest, (item, prio) => RegisterRulesEntry(item, prio, "class"));
+                    break;
+                case "ancestries":
+                    DeserializeAndRegister<RulesEntryDefinition>(yaml, manifest, (item, prio) => RegisterRulesEntry(item, prio, "ancestry"));
+                    break;
+                case "heritages":
+                    DeserializeAndRegister<RulesEntryDefinition>(yaml, manifest, (item, prio) => RegisterRulesEntry(item, prio, "heritage"));
+                    break;
+                case "backgrounds":
+                    DeserializeAndRegister<RulesEntryDefinition>(yaml, manifest, (item, prio) => RegisterRulesEntry(item, prio, "background"));
+                    break;
+                case "patrons":
+                    DeserializeAndRegister<RulesEntryDefinition>(yaml, manifest, (item, prio) => RegisterRulesEntry(item, prio, "patron"));
+                    break;
+                case "equipment":
+                    DeserializeAndRegister<RulesEntryDefinition>(yaml, manifest, (item, prio) => RegisterRulesEntry(item, prio, "equipment"));
                     break;
             }
         }

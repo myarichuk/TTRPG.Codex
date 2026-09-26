@@ -40,6 +40,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      # Packs are generated, not checked in - the pack-content tests and the e2e app
+      # need them (stdlib-only importers, need network). The plugins/ mirror the
+      # importers write is what the dev-time PluginLoader reads.
+      - name: Generate content packs
+        run: |
+          python3 scripts/import_srd51.py
+          python3 scripts/import_pf2e.py
+
       - name: Build
         run: dotnet build --configuration Release --no-restore
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Codex.Core.AI;
 using Microsoft.Extensions.AI;
 
@@ -16,6 +17,10 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
+
+// i18n (6.5): component string localizers resolve against Resources/; without a
+// matching .resx the key itself (English) renders, so untranslated pages keep working.
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 // Configure authentication and cookies using a single AuthenticationBuilder.
 var authBuilder = builder.Services.AddAuthentication(options =>
@@ -89,14 +94,22 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("DM", policy => policy.RequireRole("DM"));
 
     // Require authentication by default, and explicitly allow anonymous on login/register/etc.
+    // (plus the /_blazor framework endpoints - see AuthenticatedOrBlazorFramework).
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
+        .AddRequirements(new Codex.Web.AuthenticatedOrBlazorFramework())
         .Build();
 });
+builder.Services.AddSingleton<IAuthorizationHandler, Codex.Web.BlazorFrameworkEndpointHandler>();
 builder.Services.AddHttpContextAccessor();
 
 // Configure Codex
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
+if (!Path.IsPathRooted(dataDir))
+{
+    // Anchor relative paths to the content root so the database lands in a predictable
+    // place no matter which working directory the process was launched from.
+    dataDir = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, dataDir));
+}
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
@@ -143,6 +156,19 @@ var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
+// Startup diagnostics: a wrong content root (e.g. running the built DLL from the repo root
+// instead of `dotnet run --project src/Codex.Web`) leaves WebRootPath missing, every static
+// file then falls through to the auth fallback and the browser gets login HTML instead of
+// blazor.web.js - a permanently stuck loading screen. Say so loudly instead of failing silent.
+logger.LogInformation("Content root: {ContentRoot} | Web root: {WebRoot} | Data dir: {DataDir}",
+    app.Environment.ContentRootPath, app.Environment.WebRootPath ?? "(not set)", dataDir);
+if (string.IsNullOrEmpty(app.Environment.WebRootPath) || !Directory.Exists(app.Environment.WebRootPath))
+{
+    logger.LogWarning("Web root '{WebRoot}' does not exist - static files (CSS/JS) will be " +
+        "unavailable and the UI will never boot. Launch with 'dotnet run --project src/Codex.Web' " +
+        "so the content root points at the web project.", app.Environment.WebRootPath ?? "(not set)");
+}
+
 // B18: this used to hardcode "http://localhost:5000", which hasn't been the bound port since
 // launchSettings.json moved to 5183. Log whatever Kestrel is actually bound to once it starts.
 app.Lifetime.ApplicationStarted.Register(() =>
@@ -186,6 +212,14 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// i18n (6.5): culture from cookie, English default. Switching cultures reloads the page
+// (see CulturePicker), which starts a fresh circuit under the new culture.
+var supportedCultures = new[] { "en", "he" };
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture("en")
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures));
 
 app.UseStaticFiles();
 
@@ -270,6 +304,168 @@ app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/login");
 });
+
+// Local username/password sign-in and registration live here as plain HTTP posts rather than
+// interactive Blazor forms: cookie sign-in needs a real HttpContext, which an interactive
+// circuit doesn't have (Login.razor/Register.razor render plain <form> elements posting here).
+// Failures redirect back with ?error= (PRG), which both pages already render.
+static string WithAuthError(string url, string message) =>
+    url + (url.Contains('?') ? "&" : "?") + "error=" + Uri.EscapeDataString(message);
+
+// Mints an antiforgery request token for the auth forms when they were reached via in-circuit
+// navigation (no SSR ran, so no token was minted or persisted). Safe as an anonymous GET: the
+// caller only ever receives their own token, and the cookie is set on this same response.
+app.MapGet("/auth/token", (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>
+    Results.Ok(new
+    {
+        token = antiforgery.GetAndStoreTokens(ctx).RequestToken,
+    })).AllowAnonymous();
+
+app.MapPost("/auth/login", async (HttpContext ctx, IUserRepository userRepository,
+    Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>
+{
+    try
+    {
+        await antiforgery.ValidateRequestAsync(ctx);
+    }
+    catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
+    {
+        return Results.BadRequest("Invalid antiforgery token.");
+    }
+
+    var form = ctx.Request.Form;
+    var username = form["username"].ToString();
+    var password = form["password"].ToString();
+    var returnUrl = form["returnUrl"].ToString();
+    var back = "/login" + (Codex.Web.UrlHelper.IsLocalUrl(returnUrl)
+        ? "?returnUrl=" + Uri.EscapeDataString(returnUrl) : "");
+
+    var user = await userRepository.GetUserByUsernameAsync(username);
+    var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>();
+    var result = user == null
+        ? Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed
+        : hasher.VerifyHashedPassword(user, user.PasswordHash, password);
+
+    if (user == null || result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+    {
+        return Results.Redirect(WithAuthError(back, "Invalid username or password."));
+    }
+
+    if (result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.SuccessRehashNeeded)
+    {
+        user.PasswordHash = hasher.HashPassword(user, password);
+        await userRepository.UpdateUserAsync(user);
+    }
+
+    var claims = new List<System.Security.Claims.Claim>
+    {
+        new(System.Security.Claims.ClaimTypes.Name, user.Username),
+        new(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id)
+    };
+    foreach (var role in user.Roles)
+    {
+        claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
+    }
+
+    var identity = new System.Security.Claims.ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+        new System.Security.Claims.ClaimsPrincipal(identity));
+
+    return Results.Redirect(Codex.Web.UrlHelper.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+}).AllowAnonymous();
+
+app.MapPost("/auth/register", async (HttpContext ctx, IUserRepository userRepository,
+    IConfiguration configuration, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>
+{
+    try
+    {
+        await antiforgery.ValidateRequestAsync(ctx);
+    }
+    catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
+    {
+        return Results.BadRequest("Invalid antiforgery token.");
+    }
+
+    var form = ctx.Request.Form;
+    var username = form["username"].ToString();
+    var password = form["password"].ToString();
+    var confirmPassword = form["confirmPassword"].ToString();
+    var returnUrl = form["returnUrl"].ToString();
+    var back = "/register" + (Codex.Web.UrlHelper.IsLocalUrl(returnUrl)
+        ? "?returnUrl=" + Uri.EscapeDataString(returnUrl) : "");
+    IResult Fail(string message) => Results.Redirect(WithAuthError(back, message));
+
+    if (password != confirmPassword)
+    {
+        return Fail("Passwords do not match.");
+    }
+
+    if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+    {
+        return Fail("Username and Password are required.");
+    }
+
+    if (password.Length < 8)
+    {
+        return Fail("Password must be at least 8 characters long.");
+    }
+
+    if (!password.Any(char.IsUpper) || !password.Any(char.IsLower) || !password.Any(char.IsDigit))
+    {
+        return Fail("Password must contain at least one uppercase letter, one lowercase letter, and one number.");
+    }
+
+    if (await userRepository.GetUserByUsernameAsync(username) != null)
+    {
+        return Fail("Username is already taken.");
+    }
+
+    var user = new UserDocument
+    {
+        Id = Guid.NewGuid().ToString(),
+        Username = username,
+        Roles = new List<string> { "Player" }
+    };
+
+    // B1 remediation: no username self-grants a role. ServerAdmin goes to a username
+    // configured via Codex:AdminUsername, or, if that isn't configured, to whoever
+    // registers the very first account.
+    var configuredAdmin = configuration["Codex:AdminUsername"];
+    var grantsServerAdmin = !string.IsNullOrWhiteSpace(configuredAdmin)
+        ? string.Equals(username, configuredAdmin, StringComparison.OrdinalIgnoreCase)
+        : !await userRepository.AnyUsersExistAsync();
+    if (grantsServerAdmin)
+    {
+        user.Roles.Add("ServerAdmin");
+    }
+
+    user.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().HashPassword(user, password);
+
+    // B12 remediation: reserve the username atomically via compare-exchange before creating
+    // the user document, closing the query-then-insert race between concurrent registrations.
+    if (!await userRepository.TryReserveUsernameAsync(user.Username, user.Id))
+    {
+        return Fail("Username is already taken.");
+    }
+
+    await userRepository.CreateUserAsync(user);
+
+    var claims = new List<System.Security.Claims.Claim>
+    {
+        new(System.Security.Claims.ClaimTypes.Name, user.Username),
+        new(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id)
+    };
+    foreach (var role in user.Roles)
+    {
+        claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
+    }
+
+    var identity = new System.Security.Claims.ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+        new System.Security.Claims.ClaimsPrincipal(identity));
+
+    return Results.Redirect(Codex.Web.UrlHelper.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+}).AllowAnonymous();
 
 app.MapGet("/login/external", async (string provider, string? returnUrl, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider) =>
 {
@@ -384,19 +580,74 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
     return Results.Redirect(returnUrl ?? "/");
 });
 
+// Serves the fingerprinted `@Assets[]` URLs from App.razor. Explicitly anonymous: the
+// global auth fallback would otherwise 302 these to /login and the pages would load unstyled.
+// UseStaticFiles above keeps serving plain wwwroot paths.
+app.MapStaticAssets().AllowAnonymous();
+
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 
+// Machine-readable startup state: Kestrel listens before RavenDB finishes warming (see
+// below), so readiness gates on the store actually being initialized. Anonymous by design -
+// load balancers and the e2e suite poll this with no credentials.
+app.MapGet("/culture/{culture}", (string culture, HttpContext context) =>
+{
+    if (!supportedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase))
+    {
+        return Results.BadRequest("Unsupported culture.");
+    }
+
+    context.Response.Cookies.Append(
+        CookieRequestCultureProvider.DefaultCookieName,
+        CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+        new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true });
+
+    var returnUrl = context.Request.Query["returnUrl"].ToString();
+    if (string.IsNullOrEmpty(returnUrl) || !returnUrl.StartsWith('/') || returnUrl.StartsWith("//"))
+    {
+        returnUrl = "/";
+    }
+
+    return Results.Redirect(returnUrl);
+}).AllowAnonymous();
+
+app.MapGet("/health/ready", (RavenDbService raven) =>
+    raven.IsStoreInitialized
+        ? Results.Ok(new { status = "ready", ravenReady = true })
+        : Results.Json(new { status = "warming", ravenReady = false }, statusCode: 503)
+).AllowAnonymous();
+
 // 4.4: daily RavenDB backup into the data dir. Best-effort by design - a backup that can't be
-// configured must never keep the table from starting.
-try
+// configured must never keep the table from starting. Runs after Kestrel is already listening:
+// touching the store boots the whole embedded RavenDB server (seconds on a warm machine, much
+// longer on first extraction), which used to delay "Now listening on" for the entire boot.
+// The same background pass warms the store so the first real request doesn't pay for it;
+// Lazy<T> is thread-safe, so a request racing the warmup simply blocks until it finishes.
+app.Lifetime.ApplicationStarted.Register(() =>
 {
-    var backupDir = Path.GetFullPath(Path.Combine(dataDir, "Backups"));
-    using var backupScope = app.Services.CreateScope();
-    await backupScope.ServiceProvider.GetRequiredService<RavenDbService>().EnsureScheduledBackupAsync(backupDir);
-}
-catch (Exception ex)
-{
-    app.Logger.LogError(ex, "Scheduled backup configuration failed; continuing without it.");
-}
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            using var warmupScope = app.Services.CreateScope();
+            var raven = warmupScope.ServiceProvider.GetRequiredService<RavenDbService>();
+            _ = raven.Store;
+            logger.LogInformation("RavenDB ready at {DataDir}.", dataDir);
+
+            var backupDir = Path.GetFullPath(Path.Combine(dataDir, "Backups"));
+            await raven.EnsureScheduledBackupAsync(backupDir);
+        }
+        catch (Raven.Client.Exceptions.Commercial.LicenseLimitException)
+        {
+            // Unlicensed (embedded default) servers reject periodic-backup config while serving
+            // data perfectly well - a warning, not an error (and no stack trace for it).
+            logger.LogWarning("RavenDB has no license for periodic backups; continuing without a daily schedule.");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "Scheduled backup configuration failed; continuing without it.");
+        }
+    });
+});
 
 app.Run();

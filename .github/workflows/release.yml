@@ -45,15 +45,26 @@ jobs:
       - name: Publish macOS (arm64)
         run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r osx-arm64 -o dist/macos -p:PublishSingleFile=true -p:SelfContained=true -p:Version=${{ steps.gitversion.outputs.semVer }}
 
+      # Packs are generated, not checked in - a fresh clone has no packs/ directory,
+      # so regenerate both from source (stdlib-only, needs network) before packaging.
+      - name: Generate content packs
+        run: |
+          python3 scripts/import_srd51.py --no-install
+          python3 scripts/import_pf2e.py --no-install
+
       - name: Build plugins
         run: |
           dotnet build src/Codex.Systems.DnD5e/Codex.Systems.DnD5e.csproj -c Release -o build/plugins
+          dotnet build src/Codex.Systems.Pf2e/Codex.Systems.Pf2e.csproj -c Release -o build/plugins
 
       - name: Populate plugins/ next to each published app
         run: |
           for platform in linux win macos; do
             mkdir -p dist/$platform/plugins
             cp build/plugins/Codex.Systems.DnD5e.dll dist/$platform/plugins/
+            cp build/plugins/Codex.Systems.Pf2e.dll dist/$platform/plugins/
+            cp -r packs/srd51-full dist/$platform/plugins/
+            cp -r packs/pf2e-remastered dist/$platform/plugins/
           done
 
       # TODO(B10): embedded RavenDB still shells out to a child `dotnet Raven.Server.dll`
@@ -79,13 +90,20 @@ jobs:
             fi
             sleep 1
           done
-          if ! grep -q "Loaded plugin" smoke.log; then
-            echo "No plugin was loaded - see smoke.log" >&2
-            cat smoke.log
-            kill $APP_PID || true
-            exit 1
-          fi
+          for expected in "Loaded plugin: DnD5e" "Loaded plugin: Pf2e" "(srd51-full)" "(pf2e-remastered)"; do
+            if ! grep -q "$expected" smoke.log; then
+              echo "Expected '$expected' in plugin load output - see smoke.log" >&2
+              cat smoke.log
+              kill $APP_PID || true
+              exit 1
+            fi
+          done
           kill $APP_PID || true
+
+      # Proves the Dockerfile still builds (no local daemon in most dev setups to
+      # catch rot). Packs regenerate inside the image build, same as above.
+      - name: Validate Dockerfile
+        run: docker build -f Dockerfile -t ttrpg-codex:${{ steps.gitversion.outputs.semVer }} .
 
       - name: Archive Linux (x64)
         run: cd dist/linux && zip -r ../TTRPG.Codex-linux-x64-${{ steps.gitversion.outputs.semVer }}.zip .

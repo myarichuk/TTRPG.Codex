@@ -18,7 +18,8 @@
         <div class="d-flex gap-3 align-items-center" style="flex: 1; justify-content: flex-end;">
             <div class="search-wrapper">
                 <LucideIcon IconName="search" Size="16" Class="search-icon" />
-                <input type="text" class="search-input" placeholder="Search chronicles..." aria-label="Search chronicles">
+                <input type="text" class="search-input" placeholder="Search chronicles..." aria-label="Search chronicles"
+                       @bind="searchText" @bind:event="oninput" @bind:after="LoadData">
             </div>
             <button type="button" class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating" style="white-space: nowrap;">
                 @if (isCreating)
@@ -151,6 +152,7 @@ else
     private IEnumerable<CampaignDocument>? campaigns;
     private List<string>? availableSystems;
     private string? selectedSystem;
+    private string searchText = string.Empty;
     private bool isCreating = false;
 
     protected override async Task OnInitializedAsync()
@@ -162,15 +164,19 @@ else
     {
         var all = await CampaignRepo.GetAllAsync();
         availableSystems = all.Select(c => c.SystemId).Distinct().OrderBy(s => s).ToList();
-        
+
+        var filtered = all.AsEnumerable();
         if (selectedSystem != null)
         {
-            campaigns = all.Where(c => c.SystemId == selectedSystem);
+            filtered = filtered.Where(c => c.SystemId == selectedSystem);
         }
-        else
+
+        if (!string.IsNullOrWhiteSpace(searchText))
         {
-            campaigns = all;
+            filtered = filtered.Where(c => c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
         }
+
+        campaigns = filtered;
     }
 
     private async Task SelectSystem(string? system)

@@ -17,6 +17,9 @@ public class PluginLoader(
     public event Action? OnPluginsLoaded;
 
     private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
+    private readonly List<PluginLoadContext> _loadContexts = new();
+
+    internal IReadOnlyList<PluginLoadContext> LoadContexts => _loadContexts;
 
     public IEnumerable<UISchema> GetUISchemas(string systemId) =>
         _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetUISchemas() : Enumerable.Empty<UISchema>();
@@ -204,10 +207,27 @@ public class PluginLoader(
 
         foreach (var file in dllFiles)
         {
+            PluginLoadContext? context = null;
             try
             {
-                var assembly = Assembly.LoadFrom(file);
-                var pluginTypes = assembly.GetTypes()
+                // Each candidate gets its own collectible context (5.2b), kept only when it
+                // actually yields a plugin - dependency-only DLLs unload again immediately.
+                context = new PluginLoadContext(pluginsDirectory);
+                var assembly = context.LoadFromAssemblyPath(file);
+                // A stale plugin DLL (built against an older Abstractions) can fail type-load
+                // for some of its types without poisoning the rest - keep what loads.
+                Type[] pluginTypes;
+                try
+                {
+                    pluginTypes = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException ex)
+                {
+                    pluginTypes = ex.Types.Where(t => t != null).ToArray()!;
+                    logger.LogWarning(ex, "Some types in {File} failed to load and will be skipped", file);
+                }
+
+                var candidates = pluginTypes
                     .Where(t => typeof(ICodexSystemPlugin).IsAssignableFrom(t) &&
                                 t is
                                 {
@@ -215,31 +235,60 @@ public class PluginLoader(
                                     IsAbstract: false
                                 });
 
-                foreach (var type in pluginTypes)
+                var found = 0;
+                foreach (var type in candidates)
                 {
                     if (Activator.CreateInstance(type) is ICodexSystemPlugin plugin)
                     {
                         logger.LogInformation("Loaded plugin: {SystemId}", plugin.SystemId);
                         plugins.Add(plugin);
+                        found++;
                     }
                 }
+
+                if (found > 0)
+                {
+                    _loadContexts.Add(context);
+                }
+                else
+                {
+                    context.Unload();
+                }
+
+                context = null;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to load plugin from {File}", file);
+                context?.Unload();
             }
         }
 
         return plugins;
     }
 
-    public void InitializePlugins(IEnumerable<ICodexSystemPlugin> plugins, CodexWorld world)
+    /// <summary>Unloads every plugin context kept by <see cref="LoadPlugins"/> (5.2b) and forgets
+    /// the loaded systems. Callers must drop their own plugin references first - an unload only
+    /// completes once nothing outside still holds the context's instances or types.</summary>
+    public void UnloadPlugins()
+    {
+        foreach (var context in _loadContexts)
+        {
+            context.Unload();
+        }
+
+        _loadContexts.Clear();
+        _pluginsBySystemId = new Dictionary<string, ICodexSystemPlugin>();
+        LoadedSystemIds = new HashSet<string>();
+    }
+
+    public void InitializePlugins(IEnumerable<ICodexSystemPlugin> plugins, ISystemContext systems)
     {
         foreach (var plugin in plugins)
         {
             logger.LogInformation("Initializing plugin: {SystemId}", plugin.SystemId);
             plugin.RegisterComponents(registry);
-            plugin.RegisterSystems(world);
+            plugin.RegisterSystems(systems);
         }
     }
 }
