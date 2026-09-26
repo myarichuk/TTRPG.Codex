@@ -23,6 +23,7 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
         using var session = dbService.Store.OpenAsyncSession();
 
         var query = session.Query<NoteDocument, NotesByTargetIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(x => x.CampaignId == access.CampaignId && x.TargetId == targetId);
 
         if (!access.IsDm)
@@ -35,10 +36,20 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
         return await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
     }
 
+    public async Task<IEnumerable<NoteDocument>> GetAllForCampaignAsync(string campaignId)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        return await session.Query<NoteDocument, NotesByTargetIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
+            .Where(x => x.CampaignId == campaignId)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<NoteDocument>> GetNotesByAuthorAsync(string campaignId, string authorId)
     {
         using var session = dbService.Store.OpenAsyncSession();
         return await session.Query<NoteDocument, NotesByTargetIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(x => x.CampaignId == campaignId && x.AuthorId == authorId)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();

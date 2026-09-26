@@ -17,6 +17,7 @@ public class CampaignRepository(
     {
         using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
         return await session.Query<CampaignDocument>()
+            .Customize(x => x.WaitForNonStaleResults())
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync();
     }
@@ -93,6 +94,7 @@ public class CampaignRepository(
     {
         using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
         var campaign = await session.Query<CampaignDocument>()
+            .Customize(x => x.WaitForNonStaleResults())
             .FirstOrDefaultAsync(c => c.InviteCode == inviteCode);
         if (campaign == null)
         {

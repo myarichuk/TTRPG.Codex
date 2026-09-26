@@ -12,6 +12,16 @@ public interface IActorRepository
     Task SaveAsync(ActorDocument actor);
 
     /// <summary>
+    /// Saves an actor only if <paramref name="access"/> is allowed to edit it: the DM, or the
+    /// owning player of an existing actor (4.3). Players creating a new actor must own it and
+    /// place it in their own campaign; a player's save can never move an actor to another
+    /// campaign or change its owner - those fields are taken from the stored document. Returns
+    /// false without saving anything otherwise. The unguarded <see cref="SaveAsync"/> stays for
+    /// trusted server-side callers (runtime write-through, seeding).
+    /// </summary>
+    Task<bool> TrySaveAsync(ActorDocument actor, CampaignAccess access);
+
+    /// <summary>
     /// Actors in <paramref name="access"/>'s campaign that <paramref name="access"/> is allowed to
     /// see: everything for a DM; for a Player, actors that are <see cref="ActorVisibility.Known"/>
     /// or that they own, with Unknown-but-owned actors excluded because ownership without

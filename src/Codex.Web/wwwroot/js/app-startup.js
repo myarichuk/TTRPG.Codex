@@ -143,3 +143,14 @@
         init();
     }
 })();
+
+// Campaign JSON export (4.4): Blazor hands over a data URI plus filename; the temp anchor
+// triggers the browser's download UI without navigating away from the circuit.
+window.codexDownload = function (href, filename) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+};

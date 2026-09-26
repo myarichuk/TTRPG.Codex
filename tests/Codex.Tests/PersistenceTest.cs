@@ -61,6 +61,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenNoteRepository _noteRepository;
     private readonly RegionRepository _regionRepository;
     private readonly FactRepository _factRepository;
+    private readonly RavenEncounterRepository _encounterRepository;
+    private readonly CampaignExportService _exportService;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
@@ -71,7 +73,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _noteRepository = new RavenNoteRepository(_dbService);
         _regionRepository = new RegionRepository(_dbService);
         _factRepository = new FactRepository(_dbService);
+        _encounterRepository = new RavenEncounterRepository(_dbService);
         _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository);
+        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository);
     }
 
     [Fact]
@@ -253,6 +257,87 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.True(deleted);
         Assert.Null(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
+    }
+
+    [Fact]
+    public async Task TrySaveAsync_AsOwner_UpdatesOwnPc_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "My PC", OwnerUserId = "player-1", State = new Dictionary<string, object> { ["HP"] = 10 } };
+        await _actorRepository.SaveAsync(actor);
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        actor.State["HP"] = 8;
+        Assert.True(await _actorRepository.TrySaveAsync(actor, playerAccess));
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var reloaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
+        Assert.Equal(8, Convert.ToInt32(reloaded!.State["HP"]?.ToString()));
+    }
+
+    [Fact]
+    public async Task TrySaveAsync_AsNonOwner_IsRejected_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Someone's PC", OwnerUserId = "player-2", State = new Dictionary<string, object> { ["HP"] = 10 } };
+        await _actorRepository.SaveAsync(actor);
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        actor.State["HP"] = 1;
+        Assert.False(await _actorRepository.TrySaveAsync(actor, playerAccess));
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var reloaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
+        Assert.Equal(10, Convert.ToInt32(reloaded!.State["HP"]?.ToString()));
+    }
+
+    [Fact]
+    public async Task TrySaveAsync_AsPlayer_CannotStealOwnership_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Victim PC", OwnerUserId = "player-2" };
+        await _actorRepository.SaveAsync(actor);
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        actor.OwnerUserId = "player-1";
+        Assert.False(await _actorRepository.TrySaveAsync(actor, playerAccess));
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var reloaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
+        Assert.Equal("player-2", reloaded!.OwnerUserId);
+    }
+
+    [Fact]
+    public async Task TrySaveAsync_AsPlayer_CanCreateOwnPc_ButNotOthers_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+
+        var own = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "New PC", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1" };
+        Assert.True(await _actorRepository.TrySaveAsync(own, playerAccess));
+
+        var someoneElses = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Fake PC", OwnerUserId = "player-2" };
+        Assert.False(await _actorRepository.TrySaveAsync(someoneElses, playerAccess));
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        Assert.NotNull(await _actorRepository.GetVisibleAsync(own.Id, dmAccess));
+        Assert.Null(await _actorRepository.GetVisibleAsync(someoneElses.Id, dmAccess));
+    }
+
+    [Fact]
+    public async Task TrySaveAsync_AsDm_CanSaveAnythingInCampaign_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "A PC", OwnerUserId = "player-1" };
+        await _actorRepository.SaveAsync(actor);
+
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        actor.Name = "Renamed by DM";
+        Assert.True(await _actorRepository.TrySaveAsync(actor, dmAccess));
+
+        var otherCampaignAccess = new CampaignAccess(Guid.NewGuid().ToString(), "dm-user", CampaignRole.DM);
+        actor.Name = "Cross-campaign write";
+        Assert.False(await _actorRepository.TrySaveAsync(actor, otherCampaignAccess));
     }
 
     [Fact]
@@ -509,6 +594,73 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task FactRepository_AddKnower_RevealsKnowersOnlyFactToThatActorsPlayer_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The bridge is trapped", Visibility = FactVisibility.KnowersOnly };
+        Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
+
+        Assert.True(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("actor-scout", KnowledgeLevel.Full, Source: "Scouted ahead"), dmAccess));
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var scoutAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var scoutSees = (await _factRepository.GetVisibleForCampaignAsync(scoutAccess, new HashSet<string> { "actor-scout" })).ToList();
+        Assert.Contains(scoutSees, f => f.Summary == "The bridge is trapped");
+
+        var otherAccess = new CampaignAccess(campaignId, "player-2", CampaignRole.Player);
+        var otherSees = (await _factRepository.GetVisibleForCampaignAsync(otherAccess, new HashSet<string> { "actor-other" })).ToList();
+        Assert.DoesNotContain(otherSees, f => f.Summary == "The bridge is trapped");
+    }
+
+    [Fact]
+    public async Task FactRepository_AddKnower_AsPlayer_IsRejected_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The vault code", Visibility = FactVisibility.KnowersOnly };
+        Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        Assert.False(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("actor-sneaky", KnowledgeLevel.Full), playerAccess));
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var reloaded = (await _factRepository.GetVisibleForCampaignAsync(dmAccess, new HashSet<string>())).Single(f => f.Id == fact.Id);
+        Assert.Empty(reloaded.KnownBy);
+    }
+
+    [Fact]
+    public async Task FactRepository_AddKnower_ReplacesExistingEntryForSameActor_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The duke's mood", Visibility = FactVisibility.KnowersOnly };
+        Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
+
+        Assert.True(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("actor-spy", KnowledgeLevel.Rumor), dmAccess));
+        Assert.True(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("actor-spy", KnowledgeLevel.Full, Source: "Overheard"), dmAccess));
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var reloaded = (await _factRepository.GetVisibleForCampaignAsync(dmAccess, new HashSet<string>())).Single(f => f.Id == fact.Id);
+        var entry = Assert.Single(reloaded.KnownBy);
+        Assert.Equal("actor-spy", entry.EntityId);
+        Assert.Equal(KnowledgeLevel.Full, entry.Level);
+        Assert.Equal("Overheard", entry.Source);
+    }
+
+    [Fact]
     public async Task JoinByInviteCodeAsync_AddsPlayerMember_AndIsIdempotent_Async()
     {
         var campaign = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner-3", Name = "Curse of Strahd" };
@@ -527,6 +679,123 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var (badResult, badCampaignId) = await _campaignRepository.JoinByInviteCodeAsync("not-a-real-code", "player-2");
         Assert.Equal(CampaignJoinResult.InvalidCode, badResult);
         Assert.Null(badCampaignId);
+    }
+
+    [Fact]
+    public async Task CampaignExport_RoundTrip_RestoresEveryAggregate_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner-1", Name = "Export Me", SystemId = "DnD5e" };
+        await _campaignRepository.SaveAsync(campaign);
+
+        var dmAccess = new CampaignAccess(campaignId, "owner-1", CampaignRole.DM);
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Vex", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1", State = new Dictionary<string, object> { ["HP"] = 10, ["Class"] = "Rogue" } };
+        await _actorRepository.SaveAsync(actor);
+        var sessionDoc = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Title = "First Night", Recap = "Goblins!", Events = new List<SessionEvent> { new() { Type = "Combat", Description = "Ambushed" } } };
+        await _sessionRepository.SaveAsync(sessionDoc);
+        var encounter = new EncounterDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, SessionId = sessionDoc.Id, Round = 3 };
+        await _encounterRepository.SaveAsync(encounter);
+        var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The bridge is trapped", Visibility = FactVisibility.KnowersOnly, KnownBy = new List<KnowerEntry> { new(actor.Id, KnowledgeLevel.Full) } };
+        Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
+        await _noteRepository.CreateNoteAsync(new NoteDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, TargetId = $"session:{sessionDoc.Id}", AuthorId = "player-1", Content = "Don't trust the bridge", Visibility = CommentVisibility.Private });
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The North" };
+        Assert.True(await _regionRepository.SaveAsync(region, dmAccess));
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<SessionDocument, SessionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<EncounterDocument, EncountersByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<RegionDocument, RegionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var bundle = await _exportService.ExportAsync(dmAccess);
+        Assert.NotNull(bundle);
+        Assert.Equal("Export Me", bundle.Campaign!.Name);
+        Assert.Single(bundle.Actors);
+        Assert.Single(bundle.Sessions);
+        Assert.Single(bundle.Encounters);
+        Assert.Single(bundle.Facts);
+        Assert.Single(bundle.Notes);
+        Assert.Single(bundle.Regions);
+
+        var json = CampaignExportService.Serialize(bundle);
+        var restored = CampaignExportService.Deserialize(json);
+        Assert.NotNull(restored);
+
+        Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner-1"));
+        await _encounterRepository.DeleteAllForCampaignAsync(campaignId);
+        Assert.Null(await _campaignRepository.GetAsync(campaignId));
+
+        Assert.True(await _exportService.ImportAsync(restored, "owner-1"));
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<NoteDocument, NotesByTargetIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        Assert.Equal("Export Me", (await _campaignRepository.GetAsync(campaignId))!.Name);
+        var reloadedActor = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
+        Assert.Equal(10, Convert.ToInt32(reloadedActor!.State["HP"]?.ToString()));
+        Assert.Equal("Rogue", reloadedActor.State["Class"]?.ToString());
+        Assert.Equal("Goblins!", (await _sessionRepository.GetAsync(sessionDoc.Id))!.Recap);
+        Assert.Equal(3, (await _encounterRepository.GetAsync(encounter.Id))!.Round);
+        Assert.Contains(await _factRepository.GetVisibleForCampaignAsync(dmAccess, new HashSet<string>()), f => f.Summary == "The bridge is trapped");
+        Assert.Contains(await _noteRepository.GetNotesForTargetAsync($"session:{sessionDoc.Id}", dmAccess), n => n.Content == "Don't trust the bridge");
+        Assert.Equal("The North", (await _regionRepository.GetAsync(region.Id, dmAccess))!.Name);
+    }
+
+    [Fact]
+    public async Task CampaignExport_AsPlayer_ReturnsNull_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner-1", Name = "Secret" });
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        Assert.Null(await _exportService.ExportAsync(playerAccess));
+    }
+
+    [Fact]
+    public async Task CampaignImport_RejectsBadFormat_AndStrangers_Async()
+    {
+        Assert.False(await _exportService.ImportAsync(null, "owner-1"));
+        Assert.False(await _exportService.ImportAsync(new CampaignBundle { Format = "nope" }, "owner-1"));
+        Assert.False(await _exportService.ImportAsync(new CampaignBundle(), "owner-1"));
+        Assert.Null(CampaignExportService.Deserialize("not json"));
+
+        var bundle = new CampaignBundle { Campaign = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner-1", Name = "X" } };
+        Assert.False(await _exportService.ImportAsync(bundle, "stranger"));
+        Assert.True(await _exportService.ImportAsync(bundle, "owner-1"));
+        Assert.Equal("X", (await _campaignRepository.GetAsync(bundle.Campaign.Id))!.Name);
+    }
+
+    [Fact]
+    public async Task ScheduledBackup_ProducesBackupFile_AndIsIdempotent_Async()
+    {
+        var backupDir = Path.Combine(Path.GetTempPath(), "CodexBackup_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            await _campaignRepository.SaveAsync(new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner-1", Name = "Back Me Up" });
+
+            var firstTaskId = await _dbService.EnsureScheduledBackupAsync(backupDir);
+            Assert.True(firstTaskId > 0);
+            var secondTaskId = await _dbService.EnsureScheduledBackupAsync(backupDir);
+            Assert.Equal(firstTaskId, secondTaskId);
+
+            await _dbService.BackupNowAsync(firstTaskId, backupDir, TimeSpan.FromSeconds(90));
+            Assert.NotEmpty(Directory.EnumerateFiles(backupDir, "*", SearchOption.AllDirectories));
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(backupDir, true);
+            }
+            catch
+            {
+            }
+        }
     }
 
     public void Dispose()

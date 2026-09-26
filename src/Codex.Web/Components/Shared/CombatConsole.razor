@@ -440,7 +440,12 @@ else
             State = new Dictionary<string, object>(definition.Properties)
         };
 
-        await ActorRepo.SaveAsync(actor);
+        if (!await ActorRepo.TrySaveAsync(actor, Access))
+        {
+            error = "Only the DM can add monsters.";
+            return;
+        }
+
         await runtime!.EnqueueAsync(new HydrateActorCommand(actor));
 
         if (OnActorAdded.HasDelegate)

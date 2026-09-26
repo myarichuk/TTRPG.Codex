@@ -8,6 +8,7 @@ public class RavenSessionRepository(RavenDbService dbService) : ISessionReposito
     {
         using var session = dbService.Store.OpenAsyncSession();
         return await session.Query<SessionDocument, SessionsByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(x => x.CampaignId == campaignId)
             .OrderByDescending(x => x.Date)
             .ToListAsync();
