@@ -20,7 +20,13 @@ else
             @foreach (var field in group)
             {
                 <div class="mb-2">
-                    <label class="form-label small">@field.Label @(field.IsRequired ? "*" : "")</label>
+                    <label for="@field.Key" class="form-label small">
+                        @field.Label
+                        @if (field.IsRequired)
+                        {
+                            <span class="text-danger" aria-hidden="true">*</span>
+                        }
+                    </label>
                     @RenderField(field)
                     @if (!string.IsNullOrWhiteSpace(field.Description))
                     {
@@ -61,15 +67,15 @@ else
 
     private RenderFragment RenderField(FieldDefinition field) => field.Type switch
     {
-        FieldType.Number => @<input type="number" class="form-control form-control-sm"
+        FieldType.Number => @<input id="@field.Key" type="number" class="form-control form-control-sm"
                                      value="@GetValue(field)"
                                      @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString())))" />,
 
-        FieldType.Boolean => @<input type="checkbox" class="form-check-input"
+        FieldType.Boolean => @<input id="@field.Key" type="checkbox" class="form-check-input"
                                       checked="@(GetValue(field) is true)"
                                       @onchange="@(e => SetValueAsync(field, (bool)(e.Value ?? false)))" />,
 
-        FieldType.Dropdown => @<select class="form-select form-select-sm"
+        FieldType.Dropdown => @<select id="@field.Key" class="form-select form-select-sm"
                                         value="@GetValue(field)?.ToString()"
                                         @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
             <option value="">-- Select --</option>
@@ -79,20 +85,20 @@ else
             }
         </select>,
 
-        FieldType.LongText => @<textarea class="form-control form-control-sm" rows="3"
+        FieldType.LongText => @<textarea id="@field.Key" class="form-control form-control-sm" rows="3"
                                           value="@GetValue(field)?.ToString()"
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
 
-        FieldType.TagList => @<input type="text" class="form-control form-control-sm"
+        FieldType.TagList => @<input id="@field.Key" type="text" class="form-control form-control-sm"
                                       placeholder="Comma-separated"
                                       value="@string.Join(", ", GetTags(field))"
                                       @onchange="@(e => SetValueAsync(field, SplitTags(e.Value?.ToString())))" />,
 
         FieldType.EntityReference or FieldType.Collection or FieldType.ImagePicker =>
-            @<input type="text" class="form-control form-control-sm" disabled
+            @<input id="@field.Key" type="text" class="form-control form-control-sm" disabled
                      value="@DescribeUnsupported(field)" />,
 
-        _ => @<input type="text" class="form-control form-control-sm"
+        _ => @<input id="@field.Key" type="text" class="form-control form-control-sm"
                       value="@GetValue(field)?.ToString()"
                       @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />
     };
