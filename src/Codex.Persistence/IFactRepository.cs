@@ -17,6 +17,13 @@ public interface IFactRepository
     /// <summary>Sets a fact's visibility directly - backs the "Reveal to party" action (2.5). DM only.</summary>
     Task<bool> SetVisibilityAsync(string factId, FactVisibility visibility, CampaignAccess access);
 
+    /// <summary>
+    /// Records that an actor learned a fact - the per-actor reveal flow (4.2). Adds <paramref name="knower"/>
+    /// to the fact's <see cref="FactDocument.KnownBy"/>, replacing any existing entry for the same actor
+    /// so re-revealing upgrades the <see cref="KnowledgeLevel"/>. DM only.
+    /// </summary>
+    Task<bool> AddKnowerAsync(string factId, KnowerEntry knower, CampaignAccess access);
+
     /// <summary>Deletes every fact belonging to a campaign (cascade delete).</summary>
     Task DeleteAllForCampaignAsync(string campaignId);
 }

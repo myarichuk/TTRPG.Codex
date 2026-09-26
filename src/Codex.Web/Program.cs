@@ -107,6 +107,7 @@ builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
 builder.Services.AddSingleton<IFactRepository, FactRepository>();
 builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
+builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 
 builder.Services.AddSingleton<ComponentRegistry>();
@@ -384,5 +385,18 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 });
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
+
+// 4.4: daily RavenDB backup into the data dir. Best-effort by design - a backup that can't be
+// configured must never keep the table from starting.
+try
+{
+    var backupDir = Path.GetFullPath(Path.Combine(dataDir, "Backups"));
+    using var backupScope = app.Services.CreateScope();
+    await backupScope.ServiceProvider.GetRequiredService<RavenDbService>().EnsureScheduledBackupAsync(backupDir);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Scheduled backup configuration failed; continuing without it.");
+}
 
 app.Run();

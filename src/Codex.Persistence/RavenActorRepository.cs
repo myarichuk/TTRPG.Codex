@@ -1,4 +1,5 @@
 using Raven.Client.Documents;
+using Raven.Client.Documents.Session;
 
 namespace Codex.Persistence;
 
@@ -20,6 +21,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var query = session.Query<ActorDocument, ActorsByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(a => a.CampaignId == access.CampaignId);
 
         if (!access.IsDm)
@@ -45,6 +47,58 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
         await session.StoreAsync(actor);
         await session.SaveChangesAsync();
+    }
+
+    public async Task<bool> TrySaveAsync(ActorDocument actor, CampaignAccess access)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var existing = string.IsNullOrEmpty(actor.Id) ? null : await session.LoadAsync<ActorDocument>(actor.Id);
+
+        if (existing == null)
+        {
+            if (access.IsDm)
+            {
+                actor.CampaignId = access.CampaignId;
+            }
+            else if (actor.OwnerUserId != access.UserId || actor.CampaignId != access.CampaignId)
+            {
+                return false;
+            }
+
+            actor.CreatedAt = DateTime.UtcNow;
+            actor.UpdatedAt = DateTime.UtcNow;
+            await session.StoreAsync(actor);
+            await session.SaveChangesAsync();
+            return true;
+        }
+
+        if (existing.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        if (!access.IsDm && existing.OwnerUserId != access.UserId)
+        {
+            return false;
+        }
+
+        // Copy onto the tracked instance (the passed object is detached): CampaignId never
+        // moves, and only the DM can change ownership - a player's OwnerUserId is ignored.
+        existing.Name = actor.Name;
+        existing.Kind = actor.Kind;
+        existing.Visibility = actor.Visibility;
+        existing.PublicName = actor.PublicName;
+        existing.PublicDescription = actor.PublicDescription;
+        existing.BlueprintId = actor.BlueprintId;
+        existing.State = actor.State;
+        if (access.IsDm)
+        {
+            existing.OwnerUserId = actor.OwnerUserId;
+        }
+
+        existing.UpdatedAt = DateTime.UtcNow;
+        await session.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)

@@ -48,14 +48,12 @@ jobs:
       - name: Build plugins
         run: |
           dotnet build src/Codex.Systems.DnD5e/Codex.Systems.DnD5e.csproj -c Release -o build/plugins
-          dotnet build src/Codex.Systems.SWFFG/Codex.Systems.SWFFG.csproj -c Release -o build/plugins
 
       - name: Populate plugins/ next to each published app
         run: |
           for platform in linux win macos; do
             mkdir -p dist/$platform/plugins
             cp build/plugins/Codex.Systems.DnD5e.dll dist/$platform/plugins/
-            cp build/plugins/Codex.Systems.SWFFG.dll dist/$platform/plugins/
           done
 
       # TODO(B10): embedded RavenDB still shells out to a child `dotnet Raven.Server.dll`

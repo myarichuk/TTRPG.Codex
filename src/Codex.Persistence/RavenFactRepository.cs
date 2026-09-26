@@ -8,6 +8,7 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var facts = await session.Query<FactDocument, FactsByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(f => f.CampaignId == access.CampaignId)
             .ToListAsync();
 
@@ -48,6 +49,26 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
         }
 
         fact.Visibility = visibility;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> AddKnowerAsync(string factId, KnowerEntry knower, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var fact = await session.LoadAsync<FactDocument>(factId);
+        if (fact == null || fact.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        fact.KnownBy.RemoveAll(k => k.EntityId == knower.EntityId);
+        fact.KnownBy.Add(knower);
         await session.SaveChangesAsync();
         return true;
     }

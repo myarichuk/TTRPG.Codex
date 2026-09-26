@@ -8,6 +8,7 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var regions = await session.Query<RegionDocument, RegionsByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(r => r.CampaignId == access.CampaignId)
             .ToListAsync();
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Codex.Plugin.Abstractions.Dice;
@@ -46,12 +47,12 @@ public static class DiceExpressionParser
         }
         else
         {
-            count = match.Groups["count"].Success ? int.Parse(match.Groups["count"].Value) : 1;
-            sides = int.Parse(match.Groups["sides"].Value);
+            count = match.Groups["count"].Success ? int.Parse(match.Groups["count"].Value, CultureInfo.InvariantCulture) : 1;
+            sides = int.Parse(match.Groups["sides"].Value, CultureInfo.InvariantCulture);
             if (match.Groups["keepMode"].Success)
             {
                 keepMode = char.ToLowerInvariant(match.Groups["keepMode"].Value[0]);
-                keepCount = int.Parse(match.Groups["keepCount"].Value);
+                keepCount = int.Parse(match.Groups["keepCount"].Value, CultureInfo.InvariantCulture);
             }
             else
             {
@@ -77,7 +78,7 @@ public static class DiceExpressionParser
         var modifier = 0;
         if (match.Groups["modifier"].Success)
         {
-            modifier = int.Parse(match.Groups["modifier"].Value.Replace(" ", string.Empty));
+            modifier = int.Parse(match.Groups["modifier"].Value.Replace(" ", string.Empty), CultureInfo.InvariantCulture);
         }
 
         return new ParsedDiceExpression(count, sides, keepMode, keepCount, modifier);

@@ -1,6 +1,8 @@
 using Raven.Client.Documents;
 using Raven.Embedded;
 using Raven.Client.Documents.Indexes;
+using Raven.Client.Documents.Operations.Backups;
+using Raven.Client.Documents.Operations.OngoingTasks;
 using System;
 using Microsoft.Extensions.Logging;
 
@@ -9,11 +11,13 @@ namespace Codex.Persistence;
 public class RavenDbService : IDisposable
 {
     private readonly Lazy<IDocumentStore> _store;
+    private readonly ILogger<RavenDbService>? _logger;
 
     public IDocumentStore Store => _store.Value;
 
     public RavenDbService(string dataDirectory, string databaseName = "Campaigns", bool runInMemory = false, ILogger<RavenDbService>? logger = null)
     {
+        _logger = logger;
         _store = new Lazy<IDocumentStore>(() =>
         {
             var options = new ServerOptions
@@ -68,5 +72,55 @@ public class RavenDbService : IDisposable
         {
             _store.Value.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Registers (or updates, idempotently by task name) a daily full logical backup of this
+    /// database into <paramref name="backupDirectory"/> (4.4). Logical <see cref="BackupType.Backup"/>
+    /// rather than a snapshot so the file restores across RavenDB versions. Returns the server's
+    /// backup task id. Safe to call on every startup - a second call updates the same task.
+    /// </summary>
+    public async Task<long> EnsureScheduledBackupAsync(string backupDirectory)
+    {
+        var fullPath = Path.GetFullPath(backupDirectory);
+        Directory.CreateDirectory(fullPath);
+
+        var existing = await Store.Maintenance.SendAsync(new GetOngoingTaskInfoOperation("codex-daily", OngoingTaskType.Backup));
+
+        var config = new PeriodicBackupConfiguration
+        {
+            TaskId = existing?.TaskId ?? 0,
+            Name = "codex-daily",
+            BackupType = BackupType.Backup,
+            FullBackupFrequency = "0 3 * * *",
+            LocalSettings = new LocalSettings { FolderPath = fullPath }
+        };
+        var result = await Store.Maintenance.SendAsync(new UpdatePeriodicBackupOperation(config));
+        _logger?.LogInformation("Scheduled daily RavenDB backup to {BackupDirectory} (task {TaskId}).", fullPath, result.TaskId);
+        return result.TaskId;
+    }
+
+    /// <summary>
+    /// Triggers a full backup on <paramref name="taskId"/> now and waits (up to
+    /// <paramref name="timeout"/>) for a backup file to land in <paramref name="backupDirectory"/>.
+    /// Used by the startup smoke check and the backup test - not by the daily schedule itself.
+    /// </summary>
+    public async Task BackupNowAsync(long taskId, string backupDirectory, TimeSpan timeout)
+    {
+        await Store.Maintenance.SendAsync(new StartBackupOperation(true, taskId));
+
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (Directory.Exists(backupDirectory)
+                && Directory.EnumerateFiles(backupDirectory, "*", SearchOption.AllDirectories).Any())
+            {
+                return;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
+        }
+
+        throw new TimeoutException($"No backup file appeared in {backupDirectory} within {timeout}.");
     }
 }

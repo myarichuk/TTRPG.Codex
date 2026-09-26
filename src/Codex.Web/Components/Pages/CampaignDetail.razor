@@ -1,10 +1,12 @@
 @page "/campaigns/{CampaignId}"
 @using System.Security.Claims
+@using System.Text
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @using Codex.Web.Components.Layout
 @using Codex.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
 @inject ICampaignRepository CampaignRepo
 @inject IActorRepository ActorRepo
 @inject IRegionRepository RegionRepo
@@ -14,6 +16,7 @@
 @inject IContentRegistry ContentRegistry
 @inject ISystemCatalog SystemCatalog
 @inject IUserRepository UserRepo
+@inject CampaignExportService ExportService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
@@ -226,6 +229,17 @@ else
                 </div>
             </div>
         }
+        @if (access.IsDm)
+        {
+            <div class="card p-3 mt-4">
+                <h5>Backup</h5>
+                <p class="text-tertiary small">Export downloads this campaign (actors, sessions, lore, notes) as one JSON file. Import restores it, including after deletion.</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="ExportCampaignAsync">Export Campaign (JSON)</button>
+                    <label class="btn btn-outline-secondary btn-sm mb-0">Import Campaign (JSON)<InputFile OnChange="ImportCampaignAsync" accept=".json" class="d-none" /></label>
+                </div>
+            </div>
+        }
     </div>;
 
     private string GetInviteLink() => $"{Nav.BaseUri}campaigns/join/{campaign!.InviteCode}";
@@ -234,6 +248,55 @@ else
     {
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", GetInviteLink());
         Flash("Invite link copied.");
+    }
+
+    private async Task ExportCampaignAsync()
+    {
+        var bundle = await ExportService.ExportAsync(access!);
+        if (bundle == null)
+        {
+            Flash("Export failed.");
+            return;
+        }
+
+        var json = CampaignExportService.Serialize(bundle);
+        var href = "data:application/json;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+        await JSRuntime.InvokeVoidAsync("codexDownload", href, $"{campaign!.Name}-export.json");
+        Flash("Export downloaded.");
+    }
+
+    private async Task ImportCampaignAsync(InputFileChangeEventArgs e)
+    {
+        if (currentUserId == null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var stream = e.File.OpenReadStream(10 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var bundle = CampaignExportService.Deserialize(await reader.ReadToEndAsync());
+            if (bundle == null)
+            {
+                Flash("That file isn't a campaign export.");
+                return;
+            }
+
+            if (await ExportService.ImportAsync(bundle, currentUserId))
+            {
+                Flash($"Imported campaign \"{bundle.Campaign?.Name}\".");
+                await ReloadAsync();
+            }
+            else
+            {
+                Flash("Import rejected: unrecognized format or insufficient permission.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Flash($"Import failed: {ex.Message}");
+        }
     }
 
     private async Task SaveOverviewAsync()
@@ -264,7 +327,7 @@ else
                     <div class="card p-2 mb-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>@actor.Name</strong>
+                                <strong><a href="@($"/campaigns/{CampaignId}/actors/{actor.Id}")">@actor.Name</a></strong>
                                 <span class="badge bg-secondary ms-1">@actor.Kind</span>
                                 <span class="badge bg-dark ms-1">@actor.Visibility</span>
                             </div>
@@ -342,7 +405,12 @@ else
             Visibility = ActorVisibility.Hidden,
             State = new Dictionary<string, object>(definition.Properties)
         };
-        await ActorRepo.SaveAsync(actor);
+        if (!await ActorRepo.TrySaveAsync(actor, access!))
+        {
+            Flash("Only the DM can add actors.");
+            return;
+        }
+
         Flash($"Added {definition.Name} to the campaign (Hidden).");
         await ReloadAsync();
     }
@@ -358,7 +426,12 @@ else
             Visibility = ActorVisibility.Hidden,
             State = new Dictionary<string, object>(newActorValues)
         };
-        await ActorRepo.SaveAsync(actor);
+        if (!await ActorRepo.TrySaveAsync(actor, access!))
+        {
+            Flash("Only the DM can create actors.");
+            return;
+        }
+
         newActorValues = new();
         newActorName = "New Actor";
         Flash($"Created {actor.Name}.");
@@ -368,7 +441,12 @@ else
     private async Task RevealActorAsync(ActorDocument actor)
     {
         actor.Visibility = ActorVisibility.Known;
-        await ActorRepo.SaveAsync(actor);
+        if (!await ActorRepo.TrySaveAsync(actor, access!))
+        {
+            Flash("Only the DM can reveal actors.");
+            return;
+        }
+
         Flash($"{actor.Name} revealed to the party.");
         await ReloadAsync();
     }
@@ -450,6 +528,9 @@ else
     // ---- Lore (2.5) ----
 
     private RenderFragment RenderLore() => @<div>
+        <div class="mb-3">
+            <a href="@($"/campaigns/{CampaignId}/grimoire")">Open Grimoire (player view)</a>
+        </div>
         @foreach (var fact in facts)
         {
             <div class="card p-2 mb-2">
@@ -512,7 +593,7 @@ else
         @foreach (var session in sessions.OrderByDescending(s => s.Date))
         {
             <div class="card p-2 mb-2 d-flex flex-row justify-content-between align-items-center">
-                <span>@session.Date.ToString("MMM dd, yyyy")</span>
+                <a href="@($"/campaigns/{CampaignId}/sessions/{session.Id}")">@(string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToString("MMM dd, yyyy") : session.Title)</a>
                 <span class="badge bg-secondary">@session.Status</span>
             </div>
         }

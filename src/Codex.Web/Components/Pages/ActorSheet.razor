@@ -1,0 +1,180 @@
+@page "/campaigns/{CampaignId}/actors/{ActorId}"
+@using System.Security.Claims
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Codex.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICampaignRepository CampaignRepo
+@inject IActorRepository ActorRepo
+@inject ICampaignAccessResolver AccessResolver
+@inject IContentRegistry ContentRegistry
+@inject ISystemCatalog SystemCatalog
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@(actor?.Name ?? "Character Sheet") | TTRPG.Codex</PageTitle>
+
+<div class="app-container">
+@if (loading)
+{
+    <div class="d-flex justify-content-center my-5 py-5">
+        <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Loading...</span></div>
+    </div>
+}
+else if (campaign == null || actor == null || access == null)
+{
+    <div class="empty-state text-center py-5">
+        <h3>Character not found</h3>
+        <p class="text-tertiary">It may not exist, or you may not have access to it.</p>
+        <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
+    </div>
+}
+else
+{
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">@actor.Name</h1>
+            <span class="badge bg-secondary">@actor.Kind</span>
+            <span class="badge bg-dark ms-1">@actor.Visibility</span>
+        </div>
+        <a href="/campaigns/@CampaignId" class="btn btn-outline-secondary btn-sm">Back to Campaign</a>
+    </header>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info py-2">@statusMessage</div>
+    }
+
+    @if (!string.IsNullOrEmpty(actor.BlueprintId) && !BlueprintExists(actor))
+    {
+        <div class="alert alert-warning py-2">Missing Content: this character was created from "@actor.BlueprintId", which isn't in a loaded pack. The sheet below is still editable.</div>
+    }
+
+    @if (CanEdit)
+    {
+        <div class="card p-3 mb-4">
+            <div class="mb-2">
+                <label class="form-label small">Name</label>
+                <input class="form-control" @bind="editName" @bind:event="oninput" />
+            </div>
+            @if (actorSchema != null)
+            {
+                <SchemaForm Schema="actorSchema" Values="editState" />
+            }
+            else
+            {
+                <p class="text-tertiary small">No character schema for system "@campaign.SystemId" - values below are raw.</p>
+                @foreach (var entry in editState.ToList())
+                {
+                    <div class="mb-2">
+                        <label class="form-label small">@entry.Key</label>
+                        <input class="form-control form-control-sm" value="@entry.Value?.ToString()"
+                               @onchange="e => editState[entry.Key] = e.Value?.ToString() ?? string.Empty" />
+                    </div>
+                }
+            }
+            <button type="button" class="btn btn-accent btn-sm mt-2" @onclick="SaveAsync">Save Changes</button>
+        </div>
+    }
+    else
+    {
+        <div class="card p-3 mb-4">
+            <p class="text-tertiary small">Only the owner and the DM can edit this sheet.</p>
+            <dl class="row mb-0">
+                @foreach (var entry in actor.State)
+                {
+                    <dt class="col-sm-4">@entry.Key</dt>
+                    <dd class="col-sm-8">@entry.Value?.ToString()</dd>
+                }
+            </dl>
+            @if (!actor.State.Any())
+            {
+                <p class="text-tertiary small mb-0">No recorded attributes.</p>
+            }
+        </div>
+    }
+}
+</div>
+
+@code {
+    [Parameter]
+    public string CampaignId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string ActorId { get; set; } = string.Empty;
+
+    private bool loading = true;
+    private CampaignDocument? campaign;
+    private ActorDocument? actor;
+    private CampaignAccess? access;
+    private string? currentUserId;
+    private UISchema? actorSchema;
+    private string editName = "";
+    private Dictionary<string, object> editState = new();
+    private string? statusMessage;
+
+    private bool CanEdit => access != null && actor != null
+        && (access.IsDm || actor.OwnerUserId == currentUserId);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        loading = true;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        campaign = await CampaignRepo.GetAsync(CampaignId);
+        if (campaign != null && currentUserId != null)
+        {
+            access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
+        }
+
+        if (campaign != null && access != null)
+        {
+            actor = await ActorRepo.GetVisibleAsync(ActorId, access);
+            if (actor != null)
+            {
+                actorSchema = SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == "Actor");
+                editName = actor.Name;
+                editState = new Dictionary<string, object>(actor.State);
+            }
+        }
+
+        loading = false;
+    }
+
+    private bool BlueprintExists(ActorDocument target)
+    {
+        var parts = target.BlueprintId!.Split(':', 2);
+        if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        return ContentRegistry.GetActorsBySystem(parts[0]).Any(a => a.Id == parts[1]);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (actor == null || access == null)
+        {
+            return;
+        }
+
+        actor.Name = editName;
+        actor.State = new Dictionary<string, object>(editState);
+        if (await ActorRepo.TrySaveAsync(actor, access))
+        {
+            statusMessage = "Saved.";
+        }
+        else
+        {
+            statusMessage = "You don't have permission to edit this sheet.";
+        }
+
+        await ReloadAsync();
+    }
+}

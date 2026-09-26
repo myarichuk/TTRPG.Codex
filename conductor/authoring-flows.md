@@ -20,7 +20,7 @@ This updates the Authoring App's Dashboard and the core Plugin Abstractions (`Pa
 ### Phase 1: Metadata Abstraction Updates
 1. Add `Description` and `ThumbnailPath` to `PackManifest` record in `Codex.Plugin.Abstractions`.
 2. Add `Name`, `Description`, and `ThumbnailPath` to `ICodexSystemPlugin`.
-3. Update `DnD5ePlugin` and `SwffgPlugin` to supply this metadata (e.g., Placeholder text and default icons).
+3. Update `DnD5ePlugin` to supply this metadata (e.g., Placeholder text and default icons).
 
 ### Phase 2: Dashboard UI Enhancements
 1. Update `DashboardView.axaml` to replace the "Load Pack" placeholder with two prominent buttons: "Create New Pack" and "Open Pack".
@@ -33,7 +33,7 @@ This updates the Authoring App's Dashboard and the core Plugin Abstractions (`Pa
 
 ## Verification
 - Run the Authoring App and open the "Create New Pack" dialog.
-- Verify that D&D 5e and SWFFG appear as selectable options with their descriptions.
+- Verify that D&D 5e appears as selectable as a selectable option with its description.
 - Verify that finishing the wizard successfully initializes an empty pack session in the app's state.
 
 ## Migration & Rollback

@@ -1,122 +1,302 @@
 @page "/grimoire"
+@page "/campaigns/{CampaignId}/grimoire"
+@using System.Security.Claims
+@using Codex.Persistence
 @using Codex.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICampaignRepository CampaignRepo
+@inject IActorRepository ActorRepo
+@inject IFactRepository FactRepo
+@inject ICampaignAccessResolver AccessResolver
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Grimoire | TTRPG.Codex</PageTitle>
 
-<!-- Updated Header with Action Group -->
-<header class="d-flex justify-content-between align-items-center mb-4">
-    <div class="search-container me-4">
-        <LucideIcon IconName="search" Size="18" Class="search-icon" />
-        <input type="text" class="search-input" placeholder="Search spells, artifacts, or lore..." aria-label="Search spells, artifacts, or lore">
+@if (string.IsNullOrEmpty(CampaignId))
+{
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Grimoire</h1>
+    </header>
+    @if (myCampaigns == null)
+    {
+        <div class="d-flex justify-content-center my-5 py-5">
+            <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
+    }
+    else if (!myCampaigns.Any())
+    {
+        <div class="empty-state-container">
+            <div class="empty-state-icon">
+                <LucideIcon IconName="book" Size="48" />
+            </div>
+            <h3>No Campaigns Yet</h3>
+            <p>Join a campaign to read the lore your party has discovered.</p>
+            <a href="/campaigns" class="btn-add mt-3 text-decoration-none">
+                <LucideIcon IconName="map" Size="18" />
+                Browse Campaigns
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="lore-table-wrapper">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Campaign</th>
+                        <th>System</th>
+                        <th class="text-end">Lore</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var campaign in myCampaigns)
+                    {
+                        <tr>
+                            <td class="fw-medium text-white">@campaign.Name</td>
+                            <td><span class="text-secondary small">@campaign.SystemId</span></td>
+                            <td class="text-end">
+                                <a href="/campaigns/@campaign.Id/grimoire" class="btn-action text-decoration-none" aria-label="Open grimoire for @campaign.Name" title="Open grimoire"><LucideIcon IconName="external-link" Size="16" /></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else if (loading)
+{
+    <div class="d-flex justify-content-center my-5 py-5">
+        <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Loading...</span></div>
     </div>
-    <div class="action-group">
-        <button type="button" class="ai-sparkle-btn" title="AI Generate Lore">
-            <LucideIcon IconName="sparkles" Size="16" />
-            Generate
-        </button>
-        <button type="button" class="btn-add">
-            <LucideIcon IconName="plus" Size="18" />
-            Add Entry
-        </button>
-    </div>
-</header>
-
-<div class="filter-bar" role="group" aria-label="Filter grimoire entries by category">
-    <button type="button" class="category-chip active" aria-pressed="true"><LucideIcon IconName="layers" Size="14" /> All Entry</button>
-    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="flame" Size="14" /> Spells</button>
-    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="gem" Size="14" /> Artifacts</button>
-    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="map-pin" Size="14" /> Locations</button>
-    <button type="button" class="category-chip" aria-pressed="false"><LucideIcon IconName="skull" Size="14" /> Bestiary</button>
-</div>
-
-@if (loreEntries == null || !loreEntries.Any())
+}
+else if (campaign == null)
 {
     <div class="empty-state-container">
-        <div class="empty-state-icon">
-            <LucideIcon IconName="book" Size="48" />
-        </div>
-        <h3>The Grimoire is Silent</h3>
-        <p>No spells, artifacts, or chronicles have been inscribed yet. Scribe your first entry to begin your hoard of knowledge.</p>
-        <button type="button" class="btn-add mt-3" @onclick="CreateFirstEntry">
-            <LucideIcon IconName="plus" Size="18" />
-            Scribe First Entry
-        </button>
+        <h3>Campaign not found</h3>
+        <a href="/grimoire" class="btn-add mt-3 text-decoration-none">Back to Grimoire</a>
+    </div>
+}
+else if (access == null)
+{
+    <div class="empty-state-container">
+        <h3>You're not a member of this campaign</h3>
+        <p class="text-tertiary">Ask the DM for an invite link.</p>
+        <a href="/grimoire" class="btn-add mt-3 text-decoration-none">Back to Grimoire</a>
     </div>
 }
 else
 {
-    <h2 class="h6 text-tertiary mb-3 fw-bold text-uppercase" style="letter-spacing: 0.1em;">Pinned Chronicles</h2>
-    <div class="featured-lore">
-        @foreach (var entry in loreEntries.Where(e => e.IsPinned))
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div class="search-container me-4">
+            <LucideIcon IconName="search" Size="18" Class="search-icon" />
+            <input type="text" class="search-input" placeholder="Search lore..." aria-label="Search lore"
+                   @bind="searchText" @bind:event="oninput" />
+        </div>
+        <div class="action-group">
+            <a href="/campaigns/@CampaignId" class="btn-add text-decoration-none">
+                <LucideIcon IconName="arrow-left" Size="16" />
+                Campaign
+            </a>
+        </div>
+    </header>
+
+    <div class="filter-bar" role="group" aria-label="Filter grimoire entries">
+        @foreach (var chip in ChipsForRole())
         {
-            <div class="lore-card">
-                <div class="icon-box"><LucideIcon IconName="@entry.Icon" Size="20" /></div>
-                <h3 class="lore-title">@entry.Title</h3>
-                <p class="lore-desc">@entry.Description</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center">
-                    <span class="tag-pill">@entry.Tag</span>
-                    <button type="button" class="btn-action" aria-label="View details for @entry.Title" title="View details"><LucideIcon IconName="external-link" Size="14" /></button>
-                </div>
-            </div>
+            <button type="button" class="category-chip @(activeChip == chip ? "active" : "")"
+                    aria-pressed="@(activeChip == chip)" @onclick="() => activeChip = chip">@chip</button>
         }
     </div>
 
-    <div class="d-flex justify-content-between align-items-end mb-3">
-        <h2 class="h6 text-tertiary mb-0 fw-bold text-uppercase" style="letter-spacing: 0.1em;">Recent Lore Entries</h2>
-        <a href="#" class="text-accent small text-decoration-none" aria-label="View Full Library">View Full Library <span aria-hidden="true">→</span></a>
-    </div>
-
-    <div class="lore-table-wrapper">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Date Created</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var entry in loreEntries)
-                {
-                    <tr>
-                        <td class="fw-medium text-white">@entry.Title</td>
-                        <td><span class="text-secondary small">@entry.Category</span></td>
-                        <td><span class="text-tertiary small">@entry.CreatedAt.ToString("MMM dd, yyyy")</span></td>
-                        <td class="text-end">
-                            <button type="button" class="btn-action mx-1" aria-label="Edit @entry.Title" title="Edit"><LucideIcon IconName="edit-3" Size="16" /></button>
-                            <button type="button" class="btn-action mx-1" aria-label="Delete @entry.Title" title="Delete"><LucideIcon IconName="trash-2" Size="16" /></button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+    @if (!FilteredFacts().Any())
+    {
+        <div class="empty-state-container">
+            <div class="empty-state-icon">
+                <LucideIcon IconName="book" Size="48" />
+            </div>
+            <h3>The Grimoire is Silent</h3>
+            <p>@(string.IsNullOrWhiteSpace(searchText) ? "No lore has been revealed to you yet." : "No lore matches your search.")</p>
+        </div>
+    }
+    else
+    {
+        <h2 class="h6 text-tertiary mb-3 fw-bold text-uppercase" style="letter-spacing: 0.1em;">@campaign.Name — Known Lore</h2>
+        <div class="featured-lore">
+            @foreach (var fact in FilteredFacts())
+            {
+                <div class="lore-card">
+                    <div class="icon-box"><LucideIcon IconName="scroll" Size="20" /></div>
+                    <h3 class="lore-title">@fact.Summary</h3>
+                    @if (!string.IsNullOrWhiteSpace(fact.Details))
+                    {
+                        <p class="lore-desc">@fact.Details</p>
+                    }
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <span class="tag-pill">@MyKnowledgeLabel(fact)</span>
+                        @if (access.IsDm)
+                        {
+                            <span class="tag-pill">@fact.Visibility</span>
+                        }
+                    </div>
+                    @if (access.IsDm)
+                    {
+                        <div class="mt-2">
+                            <div class="small text-tertiary mb-1">Known by: @(KnowersLabel(fact))</div>
+                            @if (fact.Visibility != FactVisibility.Public)
+                            {
+                                <div class="d-flex gap-1">
+                                    <select class="form-select form-select-sm" @bind="revealActorId[fact.Id]" aria-label="Actor to reveal to">
+                                        @foreach (var actor in actors)
+                                        {
+                                            <option value="@actor.Id">@actor.Name</option>
+                                        }
+                                    </select>
+                                    <select class="form-select form-select-sm" @bind="revealLevel[fact.Id]" aria-label="Knowledge level">
+                                        @foreach (KnowledgeLevel level in Enum.GetValues<KnowledgeLevel>())
+                                        {
+                                            <option value="@level">@level</option>
+                                        }
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => RevealToActorAsync(fact)">Reveal</button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1" @onclick="() => RevealToPartyAsync(fact)">Reveal to Party</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
 }
 
 @code {
-    private List<LoreEntry>? loreEntries;
+    [Parameter]
+    public string? CampaignId { get; set; }
 
-    protected override void OnInitialized()
+    private List<CampaignDocument>? myCampaigns;
+    private bool loading = true;
+    private CampaignDocument? campaign;
+    private CampaignAccess? access;
+    private string? currentUserId;
+    private List<FactDocument> facts = new();
+    private List<ActorDocument> actors = new();
+    private HashSet<string> ownedActorIds = new();
+    private string searchText = "";
+    private string activeChip = "All";
+    private Dictionary<string, string> revealActorId = new();
+    private Dictionary<string, KnowledgeLevel> revealLevel = new();
+
+    protected override async Task OnParametersSetAsync()
     {
-        // Currently empty to represent a clean state for the user.
-        // In a real scenario, this would load from a repository.
-        loreEntries = new List<LoreEntry>();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(CampaignId))
+        {
+            var all = await CampaignRepo.GetAllAsync();
+            myCampaigns = all.Where(c => c.OwnerId == currentUserId || c.Members.Any(m => m.UserId == currentUserId)).ToList();
+            return;
+        }
+
+        loading = true;
+        campaign = await CampaignRepo.GetAsync(CampaignId);
+        if (campaign != null && currentUserId != null)
+        {
+            access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
+        }
+
+        if (campaign != null && access != null)
+        {
+            actors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
+            ownedActorIds = actors.Where(a => a.OwnerUserId == currentUserId).Select(a => a.Id).ToHashSet();
+            facts = (await FactRepo.GetVisibleForCampaignAsync(access, ownedActorIds)).ToList();
+
+            revealActorId.Clear();
+            revealLevel.Clear();
+            var firstActorId = actors.FirstOrDefault()?.Id ?? "";
+            foreach (var fact in facts)
+            {
+                revealActorId[fact.Id] = firstActorId;
+                revealLevel[fact.Id] = KnowledgeLevel.Full;
+            }
+        }
+
+        loading = false;
     }
 
-    private void CreateFirstEntry()
+    private IEnumerable<string> ChipsForRole() =>
+        access?.IsDm == true
+            ? new[] { "All", "Public", "Knowers-only", "DM-only" }
+            : new[] { "All", "Public", "Revealed to me" };
+
+    private IEnumerable<FactDocument> FilteredFacts()
     {
-        // Placeholder for creation logic
+        IEnumerable<FactDocument> result = facts;
+        if (activeChip == "Public")
+        {
+            result = result.Where(f => f.Visibility == FactVisibility.Public);
+        }
+        else if (activeChip is "Revealed to me" or "Knowers-only")
+        {
+            result = result.Where(f => f.Visibility == FactVisibility.KnowersOnly);
+        }
+        else if (activeChip == "DM-only")
+        {
+            result = result.Where(f => f.Visibility == FactVisibility.DmOnly);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            result = result.Where(f => f.Summary.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || (f.Details?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true));
+        }
+
+        return result;
     }
 
-    public class LoreEntry
+    private string MyKnowledgeLabel(FactDocument fact)
     {
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Tag { get; set; } = "";
-        public string Icon { get; set; } = "book";
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public bool IsPinned { get; set; }
+        if (fact.Visibility == FactVisibility.Public)
+        {
+            return "Public";
+        }
+
+        var mine = fact.KnownBy.Where(k => ownedActorIds.Contains(k.EntityId)).OrderByDescending(k => k.Level).FirstOrDefault();
+        return mine == null ? fact.Visibility.ToString() : $"Known: {mine.Level}";
+    }
+
+    private string KnowersLabel(FactDocument fact)
+    {
+        if (!fact.KnownBy.Any())
+        {
+            return "nobody";
+        }
+
+        var names = fact.KnownBy.Select(k => actors.FirstOrDefault(a => a.Id == k.EntityId)?.Name ?? k.EntityId);
+        return string.Join(", ", names);
+    }
+
+    private async Task RevealToActorAsync(FactDocument fact)
+    {
+        if (access == null || !revealActorId.TryGetValue(fact.Id, out var actorId) || string.IsNullOrEmpty(actorId))
+        {
+            return;
+        }
+
+        var level = revealLevel.TryGetValue(fact.Id, out var selected) ? selected : KnowledgeLevel.Full;
+        await FactRepo.AddKnowerAsync(fact.Id, new KnowerEntry(actorId, level), access);
+        await OnParametersSetAsync();
+    }
+
+    private async Task RevealToPartyAsync(FactDocument fact)
+    {
+        if (access == null)
+        {
+            return;
+        }
+
+        await FactRepo.SetVisibilityAsync(fact.Id, FactVisibility.Public, access);
+        await OnParametersSetAsync();
     }
 }

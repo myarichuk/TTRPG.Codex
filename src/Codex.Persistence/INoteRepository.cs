@@ -14,6 +14,12 @@ public interface INoteRepository
 
     Task<IEnumerable<NoteDocument>> GetNotesByAuthorAsync(string campaignId, string authorId);
 
+    /// <summary>
+    /// Every note in a campaign, regardless of target or visibility. Export/backup only -
+    /// never call this for a player-facing read; use <see cref="GetNotesForTargetAsync"/> there.
+    /// </summary>
+    Task<IEnumerable<NoteDocument>> GetAllForCampaignAsync(string campaignId);
+
     /// <summary>Deletes every note belonging to a campaign (B13 cascade delete).</summary>
     Task DeleteAllForCampaignAsync(string campaignId);
 }
