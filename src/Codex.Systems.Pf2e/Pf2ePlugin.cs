@@ -28,6 +28,21 @@ public class Pf2ePlugin : ICodexSystemPlugin
         // same as DnD5e, there is no per-tick system to register here.
     }
 
+    public CharacterCreationDefinition GetCharacterCreation() => new(
+        new[]
+        {
+            new CharacterCreationStep("Name", "Name"),
+            new CharacterCreationStep("Class", "Ancestry", Kind: "ancestry", ChildKind: "heritage", ChildLinkKey: "ancestryOf"),
+            new CharacterCreationStep("Background", "Background", Kind: "background"),
+            new CharacterCreationStep("Pf2eClass", "Class", Kind: "class", ChildKind: "patron", ChildVisibleWhenPick: "witch"),
+            new CharacterCreationStep("Scores", "Scores"),
+            new CharacterCreationStep("Equipment", "Equipment"),
+            new CharacterCreationStep("Review", "Review"),
+        },
+        CharacterCreationFallback.DefaultAbilityScores,
+        CreationEquipmentMode.SearchAdd,
+        SpellsFromClassLists: false);
+
     public IEnumerable<UISchema> GetUISchemas()
     {
         yield return new UISchema(

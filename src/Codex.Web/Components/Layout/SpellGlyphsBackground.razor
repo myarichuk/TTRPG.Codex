@@ -3,7 +3,7 @@
 
 @if (Configuration.GetValue<bool>("Visuals:EnableFloatingGlyphs"))
 {
-    <div class="magic-background">
+    <div class="magic-background" aria-hidden="true">
         @foreach (var glyph in _glyphs)
         {
             <div class="rune-glyph rune-@glyph.Type" 

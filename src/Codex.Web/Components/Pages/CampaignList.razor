@@ -6,34 +6,37 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject ISystemCatalog SystemCatalog
-@inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
 <PageTitle>Campaigns</PageTitle>
 
 <div class="app-container">
-    <header class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb small mb-2">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Campaigns</li>
+        </ol>
+    </nav>
+    <header class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <h1 class="mb-0">Campaigns</h1>
         <div class="d-flex gap-3 align-items-center" style="flex: 1; justify-content: flex-end;">
             <div class="search-wrapper">
                 <LucideIcon IconName="search" Size="16" Class="search-icon" />
-                <input type="text" class="search-input" placeholder="Search chronicles..." aria-label="Search chronicles"
+                <input type="search" class="search-input" placeholder="Search chronicles..." aria-label="Search chronicles"
                        @bind="searchText" @bind:event="oninput" @bind:after="LoadData">
             </div>
-            <button type="button" class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="CreateCampaign" disabled="@isCreating" style="white-space: nowrap;">
-                @if (isCreating)
-                {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                }
-                else
-                {
-                    <LucideIcon IconName="plus" Size="18" />
-                }
+            <button type="button" class="btn-primary-fluent d-flex align-items-center gap-2" @onclick="OpenCreateDialog" style="white-space: nowrap;">
+                <LucideIcon IconName="plus" Size="18" />
                 New
             </button>
         </div>
     </header>
+    <p class="small text-tertiary" role="status">@ResultCountText</p>
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info py-2" role="status">@statusMessage</div>
+    }
 
     @if (availableSystems != null && availableSystems.Any())
     {
@@ -62,16 +65,8 @@ else if (!campaigns.Any())
         </div>
         <h3 class="mb-3">No Campaigns Found</h3>
         <p class="text-tertiary mb-5">It looks like you don't have any campaigns yet. Let's get your adventure started!</p>
-        <button type="button" class="btn btn-accent px-5 d-inline-flex align-items-center justify-content-center gap-2" @onclick="CreateCampaign" disabled="@isCreating">
-            @if (isCreating)
-            {
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span>Creating...</span>
-            }
-            else
-            {
-                <span>Create Your First Campaign</span>
-            }
+        <button type="button" class="btn btn-accent px-5 d-inline-flex align-items-center justify-content-center gap-2" @onclick="OpenCreateDialog">
+            <span>Create Your First Campaign</span>
         </button>
     </div>
 }
@@ -81,19 +76,16 @@ else
         @foreach (var campaign in campaigns)
         {
             var isDnd = campaign.SystemId.Contains("DnD") || campaign.SystemId == "D&D 5E";
-            var artUrl = isDnd ? "https://images.unsplash.com/photo-1519074063912-ad2fe3f51904?auto=format&fit=crop&q=80&w=800" : "https://images.unsplash.com/photo-1605806616949-1e87b487fc2f?auto=format&fit=crop&q=80&w=800";
-            <div class="campaign-card">
-                <div class="art-container">
+            <article class="campaign-card" aria-labelledby="campaigns-@campaign.Id-title">
+                <div class="art-container" aria-hidden="true">
                     <div class="art-fallback">
                         <LucideIcon IconName="@(isDnd ? "swords" : "anchor")" Size="32" />
                     </div>
                     <span class="system-badge">@campaign.SystemId</span>
-                    <img src="@artUrl" alt="" loading="lazy">
                 </div>
                 <div class="card-content">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h3 class="card-title mb-0">@campaign.Name</h3>
-                        <button type="button" class="btn-sparkle" aria-label="Oracle Insights for @campaign.Name" title="Oracle Insights"><LucideIcon IconName="sparkles" Size="14" /></button>
+                        <h3 class="card-title mb-0" id="campaigns-@campaign.Id-title">@campaign.Name</h3>
                     </div>
                     <div class="card-meta">
                         <span class="meta-item"><LucideIcon IconName="calendar" Size="12" /> Active</span>
@@ -111,40 +103,88 @@ else
                     <div class="mt-auto pt-3 border-top border-secondary border-opacity-10">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-tertiary small">Last session: @campaign.UpdatedAt.ToString("MMM dd")</span>
-                            <button type="button" class="btn-manage-fluence d-flex align-items-center gap-2" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Delete Campaign" style="color: var(--bs-danger);">
-                                <LucideIcon IconName="trash-2" Size="14" />
-                            </button>
+                            @if (confirmDeleteId == campaign.Id)
+                            {
+                                <span class="inline-confirm">
+                                    <span class="small">Delete?</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCampaignConfirmed(campaign.Id)">Confirm</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => confirmDeleteId = null">Keep</button>
+                                </span>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn-manage-fluence d-flex align-items-center gap-2" aria-label="Delete @campaign.Name" @onclick="() => confirmDeleteId = campaign.Id" title="Delete Campaign">
+                                    <LucideIcon IconName="trash-2" Size="14" />
+                                </button>
+                            }
                             <a href="/campaigns/@campaign.Id" class="btn-manage-fluence" aria-label="Manage @campaign.Name">
                                 <LucideIcon IconName="settings" Size="14" Class="anim-rotate" />
                                 <span>Manage</span>
                             </a>
                         </div>
-                        <button type="button" class="btn-session-fluence w-100" @onclick="() => GoToCampaign(campaign.Id)" @onclick:stopPropagation="true">
+                        <button type="button" class="btn-session-fluence w-100" @onclick="() => GoToCampaign(campaign.Id)">
                             <LucideIcon IconName="dices" Size="16" Class="anim-pulse" />
-                            <span>New Session</span>
+                            <span>Open Campaign</span>
+                        </button>
+                    </div>
+                </div>
+            </article>
+        }
+
+        <button type="button" class="campaign-card" aria-label="Initiate New Story" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="OpenCreateDialog">
+            <div class="text-center p-5">
+                <div style="background: var(--fluent-surface-secondary); width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 1rem auto;">
+                    <LucideIcon IconName="plus" Size="24" Class="text-secondary" />
+                </div>
+                <h4 class="h6 text-secondary">Initiate New Story</h4>
+                <p class="small text-tertiary">Name your campaign and pick a system.</p>
+            </div>
+        </button>
+    </div>
+    }
+
+    @if (showCreateDialog)
+    {
+        <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="create-campaign-title">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: var(--bg-color-surface); border: 1px solid var(--fluent-border);">
+                    <div class="modal-header" style="border-color: var(--fluent-border);">
+                        <h2 class="h5 mb-0" id="create-campaign-title">New campaign</h2>
+                        <button type="button" class="btn-manage-fluence" aria-label="Close" @onclick="CloseCreateDialog">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small" for="new-campaign-name">Name</label>
+                            <input id="new-campaign-name" class="form-control" @bind="newCampaignName" placeholder="Unnamed Legend" />
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label small" for="new-campaign-system">System</label>
+                            <select id="new-campaign-system" class="form-select" @bind="newCampaignSystemId">
+                                @foreach (var system in CreateSystemOptions)
+                                {
+                                    <option value="@system">@system</option>
+                                }
+                            </select>
+                            <p class="form-text small text-tertiary">The system locks after creation.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-color: var(--fluent-border);">
+                        <button type="button" class="btn btn-surface" @onclick="CloseCreateDialog">Cancel</button>
+                        <button type="button" class="btn btn-accent" @onclick="CreateCampaignFromDialog" disabled="@isCreating">
+                            @if (isCreating)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>Creating...</span>
+                            }
+                            else
+                            {
+                                <span>Create campaign</span>
+                            }
                         </button>
                     </div>
                 </div>
             </div>
-        }
-
-        <button type="button" class="campaign-card" aria-label="Initiate New Story" style="border-style: dashed; background: transparent; cursor: pointer; justify-content: center; align-items: center; min-height: 380px;" @onclick="CreateCampaign" disabled="@isCreating">
-            <div class="text-center p-5">
-                <div style="background: var(--fluent-surface-secondary); width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 1rem auto;">
-                    @if (isCreating)
-                    {
-                        <span class="spinner-border text-secondary" role="status" aria-hidden="true" style="width: 24px; height: 24px;"></span>
-                    }
-                    else
-                    {
-                        <LucideIcon IconName="plus" Size="24" Class="text-secondary" />
-                    }
-                </div>
-                <h4 class="h6 text-secondary">Initiate New Story</h4>
-                <p class="small text-tertiary">Select a template or start blank.</p>
-            </div>
-        </button>
-    </div>
+        </div>
     }
 </div>
 
@@ -154,6 +194,21 @@ else
     private string? selectedSystem;
     private string searchText = string.Empty;
     private bool isCreating = false;
+    private bool showCreateDialog;
+    private string newCampaignName = "Unnamed Legend";
+    private string newCampaignSystemId = "";
+    private string? confirmDeleteId;
+    private string? statusMessage;
+
+    private string ResultCountText => campaigns == null
+        ? "Loading campaigns…"
+        : $"{campaigns.Count()} {(campaigns.Count() == 1 ? "campaign" : "campaigns")}";
+
+    private IEnumerable<string> CreateSystemOptions =>
+        SystemCatalog.LoadedSystemIds.OrderBy(s => s, StringComparer.Ordinal)
+            .Concat(availableSystems ?? Enumerable.Empty<string>())
+            .Distinct(StringComparer.Ordinal)
+            .DefaultIfEmpty("");
 
     protected override async Task OnInitializedAsync()
     {
@@ -191,25 +246,31 @@ else
         return authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 
-    private async Task DeleteCampaign(string id, string name)
+    private async Task DeleteCampaignConfirmed(string id)
     {
-        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
-        if (!confirm) return;
-
         var userId = await GetCurrentUserIdAsync();
         if (userId == null) return;
 
         var result = await CampaignRepo.DeleteAsync(id, userId);
-        if (result == CampaignDeleteResult.Forbidden)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Only the campaign owner can delete it.");
-        }
+        statusMessage = result == CampaignDeleteResult.Forbidden
+            ? "Only the campaign owner can delete it."
+            : "Campaign deleted.";
+        confirmDeleteId = null;
         await LoadData();
     }
 
     private void GoToCampaign(string campaignId) => Nav.NavigateTo($"/campaigns/{campaignId}");
 
-    private async Task CreateCampaign()
+    private void OpenCreateDialog()
+    {
+        newCampaignName = "Unnamed Legend";
+        newCampaignSystemId = CreateSystemOptions.FirstOrDefault() ?? "";
+        showCreateDialog = true;
+    }
+
+    private void CloseCreateDialog() => showCreateDialog = false;
+
+    private async Task CreateCampaignFromDialog()
     {
         var userId = await GetCurrentUserIdAsync();
         if (userId == null) return;
@@ -217,19 +278,19 @@ else
         isCreating = true;
         try
         {
-            // 2.1: pick a system from what's actually loaded, rather than the hardcoded "D&D 5E"
-            // this used to write - a string no plugin's SystemId ever matched, which
-            // CampaignRepository.SaveAsync now rejects outright once the catalog has loaded.
-            var systemId = SystemCatalog.LoadedSystemIds.OrderBy(s => s, StringComparer.Ordinal).FirstOrDefault() ?? "";
+            var systemId = string.IsNullOrWhiteSpace(newCampaignSystemId)
+                ? CreateSystemOptions.FirstOrDefault() ?? ""
+                : newCampaignSystemId;
             var doc = new CampaignDocument
             {
                 Id = Guid.NewGuid().ToString(),
                 OwnerId = userId,
-                Name = "Unnamed Legend",
+                Name = string.IsNullOrWhiteSpace(newCampaignName) ? "Unnamed Legend" : newCampaignName.Trim(),
                 SystemId = systemId,
                 UpdatedAt = DateTime.UtcNow
             };
             await CampaignRepo.SaveAsync(doc);
+            showCreateDialog = false;
             Nav.NavigateTo($"/campaigns/{doc.Id}");
         }
         finally

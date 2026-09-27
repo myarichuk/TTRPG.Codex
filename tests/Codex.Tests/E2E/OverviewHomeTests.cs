@@ -39,7 +39,8 @@ public class OverviewHomeTests : IClassFixture<AppFixture>
         // DM creates a campaign, then the overview must link straight to it.
         await dm.GotoAsync("/campaigns");
         await dm.GetByRole(AriaRole.Button, new() { Name = "Create Your First Campaign" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Create campaign" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).WaitForAsync();
         var campaignId = new Uri(dm.Url).Segments[^1].TrimEnd('/');
 
         await dm.GotoAsync("/");
@@ -49,7 +50,7 @@ public class OverviewHomeTests : IClassFixture<AppFixture>
         Assert.Equal("/grimoire", loreHref);
 
         await dm.Locator("a.campaign-card-link[href='/campaigns/" + campaignId + "']").ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).WaitForAsync();
 
         // System is locked: badge text, no dropdown in the Chronicle card.
         var chronicle = dm.Locator("div.card:has(h5:text('Chronicle'))");
@@ -64,7 +65,7 @@ public class OverviewHomeTests : IClassFixture<AppFixture>
 
         const string proposal = "OV Pip heard the well whispers";
         await player.GotoAsync($"/campaigns/{campaignId}");
-        await player.GetByRole(AriaRole.Button, new() { Name = "Lore" }).ClickAsync();
+        await player.GetByRole(AriaRole.Tab, new() { Name = "Lore" }).ClickAsync();
         await player.Locator("input[placeholder='Summary']").FillAsync(proposal);
         await player.GetByRole(AriaRole.Button, new() { Name = "Propose Lore" }).ClickAsync();
         await player.GetByText("Proposed - the DM will review it.").WaitForAsync();
@@ -79,7 +80,7 @@ public class OverviewHomeTests : IClassFixture<AppFixture>
         // (Re-navigate: tab switches don't re-query, so a fresh load is required to
         // pick up another circuit's writes - same as every other list on this page.)
         await dm.GotoAsync($"/campaigns/{campaignId}");
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Lore" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Lore" }).ClickAsync();
         await dm.GetByText("Proposed by Players (1)").WaitForAsync();
         await dm.GetByText(note).WaitForAsync();
         var proposalCard = dm.Locator("div.card.border-warning", new() { HasText = proposal });

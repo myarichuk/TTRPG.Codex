@@ -76,7 +76,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
 
         await dm.GotoAsync("/campaigns");
         await dm.GetByRole(AriaRole.Button, new() { Name = "Create Your First Campaign" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Create campaign" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).WaitForAsync();
         var campaignId = new Uri(dm.Url).Segments[^1].TrimEnd('/');
 
         var inviteUrl = await dm.Locator("div.card:has(h5:text('Invite')) input").InputValueAsync();
@@ -121,7 +122,7 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await player1.ReloadAsync();
         await player2.ReloadAsync();
 
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).ClickAsync();
 
         // ---- Criterion 2 (part 1): "The DM starts a session..." ----
 
@@ -134,8 +135,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         // table just started (that would need its own broadcast, which is a real gap, but not
         // this test's to fix). Opening Combat after the table exists is the realistic order
         // anyway: a DM starts the table, then players join.
-        await player1.GetByRole(AriaRole.Button, new() { Name = "Combat" }).ClickAsync();
-        await player2.GetByRole(AriaRole.Button, new() { Name = "Combat" }).ClickAsync();
+        await player1.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).ClickAsync();
+        await player2.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).ClickAsync();
         await Assertions.Expect(player1.GetByTestId("initiative-header")).ToBeVisibleAsync();
         await Assertions.Expect(player2.GetByTestId("initiative-header")).ToBeVisibleAsync();
 

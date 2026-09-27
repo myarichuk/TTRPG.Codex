@@ -69,7 +69,8 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
 
         await dm.GotoAsync("/campaigns");
         await dm.GetByRole(AriaRole.Button, new() { Name = "Create Your First Campaign" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Create campaign" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).WaitForAsync();
         var campaignId = new Uri(dm.Url).Segments[^1].TrimEnd('/');
 
         var inviteUrl = await dm.Locator("div.card:has(h5:text('Invite')) input").InputValueAsync();
@@ -90,7 +91,7 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
 
         const string revealedSummary = "P4 The Bridge Is Trapped";
         const string secretSummary = "P4 Secret Villain Plot";
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Lore" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Lore" }).ClickAsync();
         var newFactCard = dm.Locator("div.card:has(h5:text('New Fact'))");
         await newFactCard.Locator("input[placeholder='Summary']").FillAsync(revealedSummary);
         await newFactCard.Locator("select").SelectOptionAsync("KnowersOnly");

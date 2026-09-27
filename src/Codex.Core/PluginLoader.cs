@@ -24,6 +24,9 @@ public class PluginLoader(
     public IEnumerable<UISchema> GetUISchemas(string systemId) =>
         _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetUISchemas() : Enumerable.Empty<UISchema>();
 
+    public CharacterCreationDefinition? GetCharacterCreation(string systemId) =>
+        _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetCharacterCreation() : null;
+
     /// <summary>The loaded plugin ruling <paramref name="systemId"/>, or null if no such system is
     /// loaded. Used by <c>CampaignRuntime</c> (3.1) to wire that plugin's systems onto its own,
     /// per-campaign <see cref="CodexWorld"/> - there is no longer a shared world to register onto

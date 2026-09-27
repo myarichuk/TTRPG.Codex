@@ -9,6 +9,7 @@
 @inject IActorRepository ActorRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject IContentRegistry ContentRegistry
+@inject ISystemCatalog SystemCatalog
 @inject ComponentRegistry Components
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
@@ -70,8 +71,8 @@ else
                 break;
 
             case "Class":
-                <h5>@(Is5e ? L["Choose a class"] : L["Choose an ancestry"])</h5>
-                @if (Is5e)
+                <h5>@(ClassStepUsesClasses ? L["Choose a class"] : L["Choose an ancestry"])</h5>
+                @if (ClassStepUsesClasses)
                 {
                     <div class="row g-2">
                         @foreach (var cls in TrueClasses)
@@ -90,7 +91,7 @@ else
                 else
                 {
                     <div class="row g-2">
-                        @foreach (var ancestry in ancestries)
+                        @foreach (var ancestry in RootEntries(ClassStep))
                         {
                             <div class="col-md-4">
                                 <button type="button" data-testid="ancestry-card-@ancestry.Id"
@@ -102,12 +103,12 @@ else
                             </div>
                         }
                     </div>
-                    @if (SelectedAncestry != null)
+                    @if (SelectedAncestry != null && ClassStep?.ChildKind != null && ClassChildOptions.Any())
                     {
-                        <h6 class="mt-3">@L["Heritage"]</h6>
+                        <h6 class="mt-3">@(ClassStep.ChildKind == "heritage" ? L["Heritage"] : ClassStep.ChildKind)</h6>
                         <select class="form-select" data-testid="heritage-select" @bind="heritageId">
                             <option value="">@L["Choose a heritage"]</option>
-                            @foreach (var heritage in AvailableHeritages)
+                            @foreach (var heritage in ClassChildOptions)
                             {
                                 <option value="@heritage.Id">@heritage.Name</option>
                             }
@@ -182,7 +183,7 @@ else
             case "Pf2eClass":
                 <h5>@L["Choose a class"]</h5>
                 <div class="row g-2">
-                    @foreach (var cls in classes)
+                    @foreach (var cls in RootEntries(Pf2eClassStep))
                     {
                         <div class="col-md-4">
                             <button type="button" data-testid="class-card-@cls.Id"
@@ -194,12 +195,12 @@ else
                         </div>
                     }
                 </div>
-                @if (SelectedClass != null && SelectedClass.Id == "witch")
+                @if (SelectedClass != null && Pf2eClassStep?.ChildKind != null && Pf2eChildOptions.Any())
                 {
-                    <h6 class="mt-3">@L["Patron"]</h6>
+                    <h6 class="mt-3">@(Pf2eClassStep.ChildKind == "patron" ? L["Patron"] : Pf2eClassStep.ChildKind)</h6>
                     <select class="form-select" data-testid="patron-select" @bind="patronId">
                         <option value="">@L["Choose a patron"]</option>
-                        @foreach (var patron in patrons)
+                        @foreach (var patron in Pf2eChildOptions)
                         {
                             <option value="@patron.Id">@patron.Name</option>
                         }
@@ -225,7 +226,7 @@ else
                         </div>
                     }
                 </div>
-                @if (Is5e)
+                @if (creation?.SpellsFromClassLists == true)
                 {
                     <div class="mt-3">
                         <label class="form-label small">@L["Alignment"]</label>
@@ -241,7 +242,7 @@ else
 
             case "Equipment":
                 <h5>@L["Equipment"]</h5>
-                @if (Is5e && SelectedClass != null)
+                @if (creation?.EquipmentMode == CreationEquipmentMode.ClassOptions && SelectedClass != null)
                 {
                     @foreach (var item in FixedStartingEquipment)
                     {
@@ -273,7 +274,7 @@ else
                         </div>
                     }
                 }
-                else if (!Is5e)
+                else if (creation?.EquipmentMode == CreationEquipmentMode.SearchAdd)
                 {
                     <input class="form-control mb-2" data-testid="equip-search" style="max-width: 20rem;"
                            placeholder="@L["Search equipment"]" @bind="equipmentSearch" @bind:event="oninput" />
@@ -292,7 +293,7 @@ else
                         @foreach (var item in FinalEquipment)
                         {
                             <li class="small">@item.Name × @item.Quantity
-                                @if (!Is5e)
+                                @if (creation?.EquipmentMode == CreationEquipmentMode.SearchAdd)
                                 {
                                     <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" @onclick="() => chosenEquipment.Remove(item)">@L["Remove"]</button>
                                 }
@@ -340,17 +341,46 @@ else
                 <h5>@L["Review"]</h5>
                 <dl class="row">
                     <dt class="col-sm-4">@L["Name"]</dt><dd class="col-sm-8" data-testid="review-name">@charName</dd>
-                    <dt class="col-sm-4">@L["Class"]</dt><dd class="col-sm-8" data-testid="review-class">@SelectedClass?.Name</dd>
-                    @if (Is5e)
+                    <dt class="col-sm-4">@L["Class"]</dt><dd class="col-sm-8" data-testid="review-class">@(SelectedClass?.Name ?? GenericPrimaryName ?? "?")</dd>
+                    @if (SelectedRace != null)
                     {
-                        <dt class="col-sm-4">@L["Race"]</dt><dd class="col-sm-8" data-testid="review-race">@SelectedRace?.Name</dd>
+                        <dt class="col-sm-4">@L["Race"]</dt><dd class="col-sm-8" data-testid="review-race">@SelectedRace.Name</dd>
                     }
-                    else
+                    @if (SelectedAncestry != null)
                     {
-                        <dt class="col-sm-4">@L["Ancestry"]</dt><dd class="col-sm-8" data-testid="review-race">@SelectedAncestry?.Name</dd>
+                        <dt class="col-sm-4">@L["Ancestry"]</dt><dd class="col-sm-8" data-testid="review-race">@SelectedAncestry.Name</dd>
+                    }
+                    @foreach (var pick in genericPicks)
+                    {
+                        var pickStep = creation?.Steps.FirstOrDefault(s => s.Key == pick.Key);
+                        var pickEntry = EntryById(pickStep?.Kind, pick.Value);
+                        @if (pickEntry != null)
+                        {
+                            <dt class="col-sm-4">@pickStep!.Title</dt><dd class="col-sm-8">@pickEntry.Name</dd>
+                        }
                     }
                     <dt class="col-sm-4">@L["Hit points"]</dt><dd class="col-sm-8" data-testid="review-hp">@ComputedHitPoints</dd>
                 </dl>
+                break;
+
+            case string k when k.StartsWith("Pick:", StringComparison.Ordinal):
+                <h5>@CurrentStep.Title</h5>
+                <div class="row g-2">
+                    @foreach (var entry in EntriesOf(CurrentCreationStep?.Kind))
+                    {
+                        <div class="col-md-4">
+                            <button type="button" data-testid="pick-card-@entry.Id"
+                                    class="btn w-100 text-start @(IsGenericPicked(CurrentStep.Key, entry.Id) ? "btn-accent" : "btn-outline-secondary")"
+                                    @onclick="() => genericPicks[CurrentStep.Key] = entry.Id">
+                                <strong>@entry.Name</strong>
+                                @if (!string.IsNullOrWhiteSpace(entry.Description))
+                                {
+                                    <span class="d-block small opacity-75">@entry.Description</span>
+                                }
+                            </button>
+                        </div>
+                    }
+                </div>
                 break;
         }
     </div>
@@ -373,7 +403,6 @@ else
     </div>
 }
 </div>
-
 @code {
     [Parameter]
     public string CampaignId { get; set; } = string.Empty;
@@ -383,22 +412,36 @@ else
     private record EquipChoice(string Label, List<ChosenItem> Items);
     private record EquipGroup(int Choose, List<EquipChoice> Choices);
 
-    private static readonly string[] ScoreNames =
-        { "Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma" };
-    private static readonly Dictionary<string, string> Abbr = new()
-    {
-        ["Strength"] = "str", ["Dexterity"] = "dex", ["Constitution"] = "con",
-        ["Intelligence"] = "int", ["Wisdom"] = "wis", ["Charisma"] = "cha",
-    };
-
     private bool loading = true;
     private bool creating;
     private CampaignDocument? campaign;
     private CampaignAccess? access;
     private string? currentUserId;
     private string? error;
-    private bool Is5e => campaign?.SystemId == "DnD5e";
-    private bool SupportedSystem => Is5e || campaign?.SystemId == "Pf2e";
+
+    // The creation flow for this campaign's system: the plugin's own definition when it
+    // publishes one, otherwise a generic flow built from the YAML rules kinds its packs
+    // contain. Nothing below branches on the system id - every difference between systems
+    // (which kinds each step picks, equipment mode, spell lists) comes from here.
+    private CharacterCreationDefinition? creation;
+    private bool SupportedSystem => creation != null;
+    private CharacterCreationStep? Step(string key) =>
+        creation?.Steps.FirstOrDefault(s => s.Key == key);
+    private CharacterCreationStep? ClassStep => Step("Class");
+    private CharacterCreationStep? RaceStep => Step("Race");
+    private CharacterCreationStep? SubclassStep => Step("Subclass");
+    private CharacterCreationStep? BackgroundStep => Step("Background");
+    private CharacterCreationStep? Pf2eClassStep => Step("Pf2eClass");
+    private bool ClassStepUsesClasses =>
+        string.Equals(ClassStep?.Kind, "class", StringComparison.OrdinalIgnoreCase);
+
+    private string[] ScoreNames = CharacterCreationFallback.DefaultAbilityScores.ToArray();
+    private static string AbbrFor(string score) =>
+        score.Length >= 3 ? score[..3].ToLowerInvariant() : score.ToLowerInvariant();
+
+    private readonly Dictionary<string, List<IRulesEntryDefinition>> entriesByKind =
+        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> genericPicks = new();
 
     private List<IRulesEntryDefinition> classes = new();
     private List<IRulesEntryDefinition> ancestries = new();
@@ -416,6 +459,7 @@ else
     }
     private List<WizardStep> VisibleSteps => allSteps.Where(s => s.Visible()).ToList();
     private WizardStep CurrentStep => VisibleSteps[StepIndex];
+    private CharacterCreationStep? CurrentCreationStep => Step(CurrentStep.Key);
 
     private string charName = "";
     private string? classId;
@@ -427,13 +471,75 @@ else
     private string? backgroundId;
     private string? patronId;
     private string alignment = "N";
-    private Dictionary<string, int> scores = ScoreNames.ToDictionary(s => s, _ => 10);
+    private Dictionary<string, int> scores = CharacterCreationFallback.DefaultAbilityScores.ToDictionary(s => s, _ => 10);
     private HashSet<string> equipmentTaken = new();
     private Dictionary<(int Group, int Slot), int> equipmentChoices = new();
     private HashSet<string> selectedCantrips = new();
     private HashSet<string> selectedLevel1 = new();
     private string equipmentSearch = "";
     private List<ChosenItem> chosenEquipment = new();
+
+    private List<IRulesEntryDefinition> EntriesOf(string? kind) =>
+        kind != null && entriesByKind.TryGetValue(kind, out var list) ? list : new();
+
+    private IRulesEntryDefinition? EntryById(string? kind, string? id) =>
+        id == null ? null : EntriesOf(kind).FirstOrDefault(e => e.Id == id);
+
+    // Root entries for a picker step: everything of its kind except same-kind refinements
+    // (subclasses/subraces, linked via the step's metadata key) - those get their own
+    // refinement UI instead of crowding the top-level cards.
+    private IEnumerable<IRulesEntryDefinition> RootEntries(CharacterCreationStep? step)
+    {
+        var entries = EntriesOf(step?.Kind);
+        if (step?.SameKindChildLink == null)
+        {
+            return entries;
+        }
+
+        return entries.Where(e => !e.Metadata.ContainsKey(step.SameKindChildLink));
+    }
+
+    // Same-kind refinements of the picked entry (5e subclasses of a class, subraces of a
+    // race): entries whose metadata links them to the parent's id.
+    private IEnumerable<IRulesEntryDefinition> SameKindChildren(CharacterCreationStep? step, string? parentId)
+    {
+        if (step?.Kind == null || step.SameKindChildLink == null || parentId == null)
+        {
+            return Enumerable.Empty<IRulesEntryDefinition>();
+        }
+
+        return EntriesOf(step.Kind).Where(e =>
+            e.Metadata.TryGetValue(step.SameKindChildLink, out var owner) &&
+            string.Equals(owner?.ToString(), parentId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Separate-kind dropdown under a picked entry (heritages of an ancestry, patrons for a
+    // class): entries of the child kind, narrowed to the parent when the step declares a
+    // link key, and hidden entirely unless the step's gating pick matches (the witch-only
+    // patron list). An empty result means "no dropdown, nothing required".
+    private IEnumerable<IRulesEntryDefinition> StepChildOptions(CharacterCreationStep? step, IRulesEntryDefinition? parent)
+    {
+        if (step?.ChildKind == null || parent == null)
+        {
+            return Enumerable.Empty<IRulesEntryDefinition>();
+        }
+
+        if (step.ChildVisibleWhenPick != null &&
+            !string.Equals(parent.Id, step.ChildVisibleWhenPick, StringComparison.OrdinalIgnoreCase))
+        {
+            return Enumerable.Empty<IRulesEntryDefinition>();
+        }
+
+        var children = EntriesOf(step.ChildKind);
+        if (step.ChildLinkKey == null)
+        {
+            return children;
+        }
+
+        return children.Where(c =>
+            c.Properties.TryGetValue(step.ChildLinkKey, out var owner) &&
+            string.Equals(owner?.ToString(), parent.Name, StringComparison.OrdinalIgnoreCase));
+    }
 
     private IRulesEntryDefinition? SelectedClass => classes.FirstOrDefault(c => c.Id == classId);
     private IRulesEntryDefinition? SelectedSubclass => classes.FirstOrDefault(c => c.Id == subclassId);
@@ -442,17 +548,34 @@ else
     private IRulesEntryDefinition? SelectedAncestry => ancestries.FirstOrDefault(a => a.Id == ancestryId);
     private IRulesEntryDefinition? SelectedBackground => backgrounds.FirstOrDefault(b => b.Id == backgroundId);
 
-    private IEnumerable<IRulesEntryDefinition> TrueClasses =>
-        classes.Where(c => !c.Metadata.ContainsKey("subclassOf"));
-    private IEnumerable<IRulesEntryDefinition> TrueRaces =>
-        ancestries.Where(r => !r.Metadata.ContainsKey("ancestryOf"));
-    private IEnumerable<IRulesEntryDefinition> AvailableSubclasses =>
-        classes.Where(c => c.Metadata.TryGetValue("subclassOf", out var parent) && parent?.ToString() == classId);
-    private IEnumerable<IRulesEntryDefinition> AvailableSubraces =>
-        ancestries.Where(r => r.Metadata.TryGetValue("ancestryOf", out var parent) && parent?.ToString() == raceId);
-    private IEnumerable<IRulesEntryDefinition> AvailableHeritages => heritages.Where(h =>
-        !h.Properties.TryGetValue("ancestryOf", out var owner) ||
-        owner?.ToString()?.Equals(SelectedAncestry?.Name, StringComparison.OrdinalIgnoreCase) == true);
+    private IEnumerable<IRulesEntryDefinition> TrueClasses => RootEntries(ClassStepUsesClasses ? ClassStep : Pf2eClassStep);
+    private IEnumerable<IRulesEntryDefinition> TrueRaces => RootEntries(RaceStep);
+    private IEnumerable<IRulesEntryDefinition> AvailableSubclasses => SameKindChildren(SubclassStep, classId);
+    private IEnumerable<IRulesEntryDefinition> AvailableSubraces => SameKindChildren(RaceStep, raceId);
+    private IEnumerable<IRulesEntryDefinition> ClassChildOptions => StepChildOptions(ClassStep, SelectedAncestry);
+    private IEnumerable<IRulesEntryDefinition> Pf2eChildOptions => StepChildOptions(Pf2eClassStep, SelectedClass);
+    private bool ClassChildSatisfied =>
+        ClassStep?.ChildKind == null || !ClassChildOptions.Any() || heritageId != null;
+    private bool Pf2eChildSatisfied =>
+        Pf2eClassStep?.ChildKind == null || !Pf2eChildOptions.Any() || patronId != null;
+    private bool IsGenericPicked(string stepKey, string entryId) =>
+        genericPicks.TryGetValue(stepKey, out var picked) && picked == entryId;
+    private string? GenericPrimaryName
+    {
+        get
+        {
+            foreach (var (stepKey, entryId) in genericPicks)
+            {
+                var entry = EntryById(creation?.Steps.FirstOrDefault(s => s.Key == stepKey)?.Kind, entryId);
+                if (entry != null)
+                {
+                    return entry.Name;
+                }
+            }
+
+            return null;
+        }
+    }
     private IEnumerable<IRulesEntryDefinition> SearchedEquipment =>
         string.IsNullOrWhiteSpace(equipmentSearch) ? equipment :
         equipment.Where(e => e.Name.Contains(equipmentSearch, StringComparison.OrdinalIgnoreCase));
@@ -468,42 +591,66 @@ else
             access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
         }
 
-        if (campaign != null && access != null && SupportedSystem)
+        if (campaign != null && access != null)
         {
             var system = campaign.SystemId;
-            classes = ContentRegistry.GetRulesEntries(system, "class").OrderBy(c => c.Name).ToList();
-            ancestries = ContentRegistry.GetRulesEntries(system, "ancestry").OrderBy(a => a.Name).ToList();
-            heritages = ContentRegistry.GetRulesEntries(system, "heritage").OrderBy(h => h.Name).ToList();
-            backgrounds = ContentRegistry.GetRulesEntries(system, "background").OrderBy(b => b.Name).ToList();
-            patrons = ContentRegistry.GetRulesEntries(system, "patron").OrderBy(p => p.Name).ToList();
-            equipment = ContentRegistry.GetRulesEntries(system, "equipment").OrderBy(e => e.Name).ToList();
-
-            allSteps = Is5e
-                ? new()
+            creation = SystemCatalog.GetCharacterCreation(system);
+            if (creation != null)
+            {
+                foreach (var kind in creation.Steps.Select(s => s.Kind)
+                    .Concat(creation.Steps.Select(s => s.ChildKind))
+                    .Where(k => k != null)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Cast<string>())
                 {
-                    new("Name", "Name", () => true),
-                    new("Class", "Class", () => true),
-                    new("Subclass", "Subclass", () => AvailableSubclasses.Any()),
-                    new("Race", "Race", () => true),
-                    new("Scores", "Scores", () => true),
-                    new("Equipment", "Equipment", () => true),
-                    new("Spells", "Spells", () => CantripsToChoose > 0 || Level1ToChoose > 0),
-                    new("Review", "Review", () => true),
+                    entriesByKind[kind] = ContentRegistry.GetRulesEntries(system, kind).OrderBy(e => e.Name).ToList();
                 }
-                : new()
+            }
+            else
+            {
+                // No plugin-published flow: build one from whatever rules kinds the packs
+                // hold, so a YAML-only system is creatable without wizard code changes.
+                foreach (var group in ContentRegistry.GetRulesEntries(system).OrderBy(e => e.Name).GroupBy(e => e.Kind))
                 {
-                    new("Name", "Name", () => true),
-                    new("Class", "Ancestry", () => true),
-                    new("Background", "Background", () => true),
-                    new("Pf2eClass", "Class", () => true),
-                    new("Scores", "Scores", () => true),
-                    new("Equipment", "Equipment", () => true),
-                    new("Review", "Review", () => true),
-                };
+                    entriesByKind[group.Key] = group.ToList();
+                }
+
+                creation = CharacterCreationFallback.Build(entriesByKind.Keys);
+            }
+
+            if (creation != null)
+            {
+                // Search-style equipment needs the equipment kind even when no step names it.
+                if (!entriesByKind.ContainsKey("equipment"))
+                {
+                    entriesByKind["equipment"] = ContentRegistry.GetRulesEntries(system, "equipment").OrderBy(e => e.Name).ToList();
+                }
+
+                classes = EntriesOf("class");
+                ancestries = EntriesOf("ancestry");
+                heritages = EntriesOf("heritage");
+                backgrounds = EntriesOf(BackgroundStep?.Kind ?? "background");
+                patrons = EntriesOf("patron");
+                equipment = EntriesOf("equipment");
+
+                ScoreNames = (creation.AbilityScores ?? CharacterCreationFallback.DefaultAbilityScores).ToArray();
+                scores = ScoreNames.ToDictionary(s => s, _ => 10);
+
+                allSteps = creation.Steps
+                    .Select(s => new WizardStep(s.Key, s.Title, () => StepVisible(s)))
+                    .ToList();
+            }
         }
 
         loading = false;
     }
+
+    private bool StepVisible(CharacterCreationStep step) => step.Key switch
+    {
+        "Subclass" => SameKindChildren(step, classId).Any(),
+        "Spells" => CantripsToChoose > 0 || Level1ToChoose > 0,
+        _ => true,
+    };
 
     private void SelectClass(string id)
     {
@@ -543,17 +690,19 @@ else
     private bool CanProceed => CurrentStep.Key switch
     {
         "Name" => !string.IsNullOrWhiteSpace(charName),
-        "Class" => Is5e ? classId != null : ancestryId != null && heritageId != null,
+        "Class" => ClassStepUsesClasses ? classId != null && ClassChildSatisfied : ancestryId != null && ClassChildSatisfied,
         "Subclass" => subclassId != null,
         "Race" => raceId != null,
         "Background" => backgroundId != null,
-        "Pf2eClass" => classId != null && (classId != "witch" || patronId != null),
+        "Pf2eClass" => classId != null && Pf2eChildSatisfied,
         "Scores" => scores.Values.All(v => v is >= 1 and <= 20),
-        "Equipment" => Is5e ? EquipmentChoiceGroups
-            .Select((g, i) => Enumerable.Range(0, g.Choose).All(s => EquipmentChoice(i, s) < g.Choices.Count))
-            .All(valid => valid) : true,
+        "Equipment" => creation?.EquipmentMode == CreationEquipmentMode.ClassOptions
+            ? EquipmentChoiceGroups
+                .Select((g, i) => Enumerable.Range(0, g.Choose).All(s => EquipmentChoice(i, s) < g.Choices.Count))
+                .All(valid => valid) : true,
         "Spells" => selectedCantrips.Count == CantripsToChoose && selectedLevel1.Count == Level1ToChoose,
-        "Review" => !string.IsNullOrWhiteSpace(charName) && classId != null,
+        "Review" => !string.IsNullOrWhiteSpace(charName) && (classId != null || genericPicks.Count > 0),
+        var k when k.StartsWith("Pick:", StringComparison.Ordinal) => genericPicks.ContainsKey(CurrentStep.Key),
         _ => false,
     };
 
@@ -564,13 +713,13 @@ else
         var values = new[] { 15, 14, 13, 12, 10, 8 };
         for (var i = 0; i < ScoreNames.Length; i++)
         {
-            scores[ScoreNames[i]] = values[i];
+            scores[ScoreNames[i]] = values[i % values.Length];
         }
     }
 
     private int AncestryBonus(string score)
     {
-        if (!Is5e || SelectedRace == null)
+        if (SelectedRace == null)
         {
             return 0;
         }
@@ -578,7 +727,7 @@ else
         var total = 0;
         foreach (var entry in new[] { SelectedRace, SelectedSubrace }.OfType<IRulesEntryDefinition>())
         {
-            if (AsDict(Prop(entry, "abilityBonuses"))?.TryGetValue(Abbr[score], out var bonus) == true)
+            if (AsDict(Prop(entry, "abilityBonuses"))?.TryGetValue(AbbrFor(score), out var bonus) == true)
             {
                 total += Int(bonus);
             }
@@ -590,6 +739,7 @@ else
     private int FinalScore(string score) => scores[score] + AncestryBonus(score);
     private static int Modifier(int score) => (int)Math.Floor((score - 10) / 2.0);
     private int ScoreModifier(string score) => Modifier(FinalScore(score));
+    private int SafeScoreModifier(string score) => scores.ContainsKey(score) ? ScoreModifier(score) : 0;
 
     // --------------------------------------------------------------- equipment
 
@@ -734,7 +884,7 @@ else
     {
         get
         {
-            if (!Is5e)
+            if (creation?.EquipmentMode != CreationEquipmentMode.ClassOptions)
             {
                 return chosenEquipment;
             }
@@ -770,7 +920,7 @@ else
 
     private int? SpellLevel(string spellId)
     {
-        var level = ContentRegistry.GetAbility($"DnD5e:{spellId}")?.Metadata?.TryGetValue("level", out var v) == true ? v : null;
+        var level = ContentRegistry.GetAbility($"{campaign?.SystemId}:{spellId}")?.Metadata?.TryGetValue("level", out var v) == true ? v : null;
         return level == null ? null : Int(level);
     }
 
@@ -803,12 +953,12 @@ else
 
     private List<IAbilityDefinition> AvailableCantrips =>
         ClassSpellIds.Where(id => SpellLevel(id) == 0)
-            .Select(id => ContentRegistry.GetAbility($"DnD5e:{id}")).OfType<IAbilityDefinition>()
+            .Select(id => ContentRegistry.GetAbility($"{campaign?.SystemId}:{id}")).OfType<IAbilityDefinition>()
             .OrderBy(s => s.Name).ToList();
 
     private List<IAbilityDefinition> AvailableLevel1 =>
         ClassSpellIds.Concat(SubclassLevel1Spells).Distinct().Where(id => SpellLevel(id) == 1)
-            .Select(id => ContentRegistry.GetAbility($"DnD5e:{id}")).OfType<IAbilityDefinition>()
+            .Select(id => ContentRegistry.GetAbility($"{campaign?.SystemId}:{id}")).OfType<IAbilityDefinition>()
             .OrderBy(s => s.Name).ToList();
 
     private Dictionary<string, object>? Level1Spellcasting
@@ -856,15 +1006,16 @@ else
     {
         get
         {
-            var conMod = ScoreModifier("Constitution");
-            if (Is5e)
-            {
-                return Math.Max(1, Int(SelectedClass == null ? null : Prop(SelectedClass, "hitDie"), 8) + conMod);
-            }
-
-            return Math.Max(1,
-                Int(SelectedAncestry == null ? null : Prop(SelectedAncestry, "hitPoints")) +
-                Int(SelectedClass == null ? null : Prop(SelectedClass, "hitPoints")) + conMod);
+            // System-agnostic: sum every hit-die/hit-point grant on the picked entries
+            // (5e classes grant hitDie, PF2e ancestries and classes grant hitPoints),
+            // plus the Constitution modifier when this system tracks it.
+            var sources = new[] { SelectedClass, SelectedRace, SelectedAncestry }
+                .OfType<IRulesEntryDefinition>()
+                .Concat(genericPicks.Select(pick =>
+                    EntryById(creation?.Steps.FirstOrDefault(s => s.Key == pick.Key)?.Kind, pick.Value))
+                    .OfType<IRulesEntryDefinition>());
+            var baseHp = sources.Sum(e => Int(Prop(e, "hitDie")) + Int(Prop(e, "hitPoints")));
+            return Math.Max(1, baseHp + SafeScoreModifier("Constitution"));
         }
     }
 
@@ -882,25 +1033,26 @@ else
             var state = new Dictionary<string, object>
             {
                 ["Level"] = 1,
-                ["Class"] = SelectedClass?.Name ?? "?",
+                ["Class"] = SelectedClass?.Name ?? GenericPrimaryName ?? "?",
             };
             foreach (var score in ScoreNames)
             {
                 state[score] = FinalScore(score);
             }
 
-            if (Is5e)
+            if (SelectedRace != null)
             {
-                state["Race"] = SelectedRace?.Name ?? "?";
+                state["Race"] = SelectedRace.Name;
                 state["Alignment"] = alignment;
                 if (SelectedSubclass != null)
                 {
                     state["Subclass"] = SelectedSubclass.Name;
                 }
             }
-            else
+
+            if (SelectedAncestry != null)
             {
-                state["Ancestry"] = SelectedAncestry?.Name ?? "?";
+                state["Ancestry"] = SelectedAncestry.Name;
                 state["Background"] = SelectedBackground?.Name ?? "?";
                 var heritage = heritages.FirstOrDefault(h => h.Id == heritageId);
                 if (heritage != null)
@@ -911,6 +1063,16 @@ else
                 if (patronId != null && patrons.FirstOrDefault(p => p.Id == patronId) is { } patron)
                 {
                     state["Patron"] = patron.Name;
+                }
+            }
+
+            foreach (var (stepKey, entryId) in genericPicks)
+            {
+                var pickStep = creation?.Steps.FirstOrDefault(s => s.Key == stepKey);
+                var pickEntry = EntryById(pickStep?.Kind, entryId);
+                if (pickEntry != null)
+                {
+                    state[pickStep?.Title ?? stepKey] = pickEntry.Name;
                 }
             }
 
@@ -973,7 +1135,7 @@ else
     {
         get
         {
-            if (!Is5e || Level1Spellcasting == null)
+            if (creation?.SpellsFromClassLists != true || Level1Spellcasting == null)
             {
                 yield break;
             }
@@ -992,26 +1154,29 @@ else
     private StatModifierComponent BuildModifiers()
     {
         var modifiers = new List<Modifier>();
-        if (Is5e && SelectedClass != null)
+        var fiveE = creation?.SpellsFromClassLists == true
+            && SelectedClass != null
+            && SelectedClass.Properties.ContainsKey("savingThrows");
+        if (fiveE && SelectedClass != null)
         {
             var proficient = new HashSet<string>(StrList(Prop(SelectedClass, "savingThrows")));
             foreach (var score in ScoreNames)
             {
-                var mod = ScoreModifier(score) + (proficient.Contains(Abbr[score]) ? 2 : 0);
-                modifiers.Add(new Modifier($"save:{Abbr[score]}", mod, SelectedClass.Name));
+                var mod = ScoreModifier(score) + (proficient.Contains(AbbrFor(score)) ? 2 : 0);
+                modifiers.Add(new Modifier($"save:{AbbrFor(score)}", mod, SelectedClass.Name));
             }
 
-            modifiers.Add(new Modifier("attack", ScoreModifier("Strength") + 2, SelectedClass.Name));
+            modifiers.Add(new Modifier("attack", SafeScoreModifier("Strength") + 2, SelectedClass.Name));
             var casting = AsDict(Prop(SelectedClass, "spellcasting"));
             if (casting != null && Str(casting.GetValueOrDefault("ability")) is { } ability)
             {
-                var castingScore = ScoreNames.FirstOrDefault(s => Abbr[s] == ability) ?? "Charisma";
-                modifiers.Add(new Modifier("spellAttack", ScoreModifier(castingScore) + 2, SelectedClass.Name));
+                var castingScore = ScoreNames.FirstOrDefault(s => AbbrFor(s) == ability) ?? "Charisma";
+                modifiers.Add(new Modifier("spellAttack", SafeScoreModifier(castingScore) + 2, SelectedClass.Name));
             }
 
-            modifiers.Add(new Modifier("ac", 10 + ScoreModifier("Dexterity"), "Unarmored"));
+            modifiers.Add(new Modifier("ac", 10 + SafeScoreModifier("Dexterity"), "Unarmored"));
         }
-        else if (!Is5e && SelectedClass != null)
+        else if (SelectedClass != null && SelectedClass.Properties.ContainsKey("fortitudeProficiency"))
         {
             // PF2e level-1 math: proficiency rank (level 1 + 2/4/6/8) + ability modifier.
             int Rank(object? proficiency) => Str(proficiency)?.Split(' ')[0] switch
@@ -1023,16 +1188,16 @@ else
                 _ => 0,
             };
             modifiers.Add(new Modifier("save:fortitude",
-                ScoreModifier("Constitution") + Rank(Prop(SelectedClass, "fortitudeProficiency")), SelectedClass.Name));
+                SafeScoreModifier("Constitution") + Rank(Prop(SelectedClass, "fortitudeProficiency")), SelectedClass.Name));
             modifiers.Add(new Modifier("save:reflex",
-                ScoreModifier("Dexterity") + Rank(Prop(SelectedClass, "reflexProficiency")), SelectedClass.Name));
+                SafeScoreModifier("Dexterity") + Rank(Prop(SelectedClass, "reflexProficiency")), SelectedClass.Name));
             modifiers.Add(new Modifier("save:will",
-                ScoreModifier("Wisdom") + Rank(Prop(SelectedClass, "willProficiency")), SelectedClass.Name));
-            modifiers.Add(new Modifier("attack", ScoreModifier("Strength"), SelectedClass.Name));
+                SafeScoreModifier("Wisdom") + Rank(Prop(SelectedClass, "willProficiency")), SelectedClass.Name));
+            modifiers.Add(new Modifier("attack", SafeScoreModifier("Strength"), SelectedClass.Name));
 
             var unarmored = StrList(Prop(SelectedClass, "defenseProficiency"))
                 .FirstOrDefault(s => s.Contains("unarmored", StringComparison.OrdinalIgnoreCase));
-            modifiers.Add(new Modifier("ac", 10 + ScoreModifier("Dexterity") + Rank(unarmored), "Unarmored"));
+            modifiers.Add(new Modifier("ac", 10 + SafeScoreModifier("Dexterity") + Rank(unarmored), "Unarmored"));
         }
 
         return new StatModifierComponent { Modifiers = modifiers };

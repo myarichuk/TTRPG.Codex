@@ -1,6 +1,18 @@
 # Player vs. DM Modes
 
-TTRPG.Codex supports two primary user roles: **Dungeon Master (DM)** and **Player**. The system uses role-based access to determine what data is displayed and which actions are available.
+TTRPG.Codex supports two primary user roles: **Dungeon Master (DM)** and **Player** (plus **Observer** for watch-only seats). The system uses role-based access to determine what data is displayed and which actions are available.
+
+## Role Selection
+
+- **Joining**: an invite link grants Player (or Observer, if requested) - never DM. After
+  joining, the join page lets you switch your own seat between Player and Observer.
+- **Promotion**: an existing DM promotes members between DM/Player/Observer from the
+  campaign's Members list. Self-promotion to DM is always denied.
+- **Leaving/removal**: a DM can remove any non-owner member; anyone can leave. The campaign
+  owner is structurally DM and can only exit by deleting the campaign.
+- **Screens**: the dashboard splits into "Campaigns you run" (DM view) and "Campaigns you
+  play in" (player view with per-campaign character creation), plus a "My Characters"
+  table of every character you own across campaigns.
 
 ## Visibility Logic
 

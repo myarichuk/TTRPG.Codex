@@ -41,7 +41,7 @@ else
 
     @if (!string.IsNullOrEmpty(statusMessage))
     {
-        <div class="alert alert-info py-2">@statusMessage</div>
+        <div class="alert alert-info py-2" role="status">@statusMessage</div>
     }
 
     @if (!string.IsNullOrEmpty(actor.BlueprintId) && !BlueprintExists(actor))

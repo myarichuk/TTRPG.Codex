@@ -5,8 +5,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject ISessionRepository SessionRepo
+@inject IActorRepository ActorRepo
 @inject ICampaignAccessResolver AccessResolver
-@inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Dashboard | TTRPG.Codex</PageTitle>
@@ -30,54 +30,98 @@ else
             <a href="/campaigns" class="btn btn-accent btn-sm text-decoration-none">New Campaign</a>
         </header>
 
-        <div class="dashboard-grid">
-            @foreach (var campaign in campaigns)
-            {
-                var access = accessByCampaign.GetValueOrDefault(campaign.Id);
-                var last = lastSessionByCampaign.GetValueOrDefault(campaign.Id);
-                var sessionCount = sessionCountByCampaign.GetValueOrDefault(campaign.Id, 0);
-                <a class="campaign-card campaign-card-link" href="/campaigns/@campaign.Id" aria-label="Open @campaign.Name">
-                    <div class="art-preview">
-                        <LucideIcon IconName="@(campaign.SystemId.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
-                    </div>
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="alert alert-info py-2" role="status">@statusMessage</div>
+        }
+
+        @if (myCharacters.Any())
+        {
+            <section aria-labelledby="my-characters-heading">
+                <div class="section-header">
+                    <h2 class="h5 mb-0 fw-bold" id="my-characters-heading">My Characters</h2>
+                </div>
+                <div class="fluent-table-wrapper">
+                    <table class="table table-hover">
+                        <caption class="visually-hidden">Characters you own across your campaigns</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Character</th>
+                                <th scope="col">Campaign</th>
+                                <th scope="col">Kind</th>
+                                <th scope="col">Sheet</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var character in myCharacters)
+                            {
+                                <tr>
+                                    <td>@character.Name</td>
+                                    <td><a href="/campaigns/@character.CampaignId">@campaignNameById.GetValueOrDefault(character.CampaignId, character.CampaignId)</a></td>
+                                    <td><span class="badge bg-secondary">@character.Kind</span></td>
+                                    <td><a href="/campaigns/@character.CampaignId/actors/@character.Id">Open sheet</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        @if (dmCampaigns.Any())
+        {
+            <section aria-labelledby="dm-campaigns-heading">
+                <div class="section-header">
+                    <h2 class="h5 mb-0 fw-bold" id="dm-campaigns-heading">Campaigns you run</h2>
+                </div>
+                <div class="dashboard-grid">
+                    @foreach (var campaign in dmCampaigns)
+                    {
+                        @CampaignCard(campaign)
+                    }
+                </div>
+            </section>
+        }
+
+        @if (playedCampaigns.Any())
+        {
+            <section aria-labelledby="played-campaigns-heading">
+                <div class="section-header">
+                    <h2 class="h5 mb-0 fw-bold" id="played-campaigns-heading">Campaigns you play in</h2>
+                </div>
+                <div class="dashboard-grid">
+                    @foreach (var campaign in playedCampaigns)
+                    {
+                        @CampaignCard(campaign)
+                    }
+                </div>
+            </section>
+        }
+
+        @if (!dmCampaigns.Any() && !playedCampaigns.Any())
+        {
+            <div class="dashboard-grid">
+                <a class="campaign-card card-empty text-center text-decoration-none" href="/campaigns" aria-label="Go to campaigns">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h3 class="card-title mb-0">@campaign.Name</h3>
-                            <button type="button" class="btn-delete-fluence" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" @onclick:stopPropagation="true" @onclick:preventDefault="true" title="Destroy Chronicle">
-                                <LucideIcon IconName="trash-2" Size="14" />
-                            </button>
-                        </div>
-                        <div class="d-flex gap-1 flex-wrap mb-2">
-                            <span class="badge bg-secondary">@campaign.SystemId</span>
-                            @if (access != null)
-                            {
-                                <span class="badge bg-info text-dark">@access.Role</span>
-                            }
-                            <span class="badge bg-dark">@campaign.Members.Count @(campaign.Members.Count == 1 ? "member" : "members")</span>
-                        </div>
-                        <p class="card-text">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description recorded." : campaign.Description)</p>
-                        <p class="small text-tertiary mb-0">
-                            @if (last != null)
-                            {
-                                <span>Last session: @(string.IsNullOrWhiteSpace(last.Title) ? last.Date.ToString("MMM dd, yyyy") : last.Title) · @sessionCount @(sessionCount == 1 ? "session" : "sessions")</span>
-                            }
-                            else
-                            {
-                                <span>No sessions yet</span>
-                            }
-                        </p>
+                        <LucideIcon IconName="plus" Size="32" Class="sparkle-icon" />
+                        <h3 class="card-title">New Campaign</h3>
+                        <p class="card-text">Create a campaign or browse existing ones.</p>
                     </div>
                 </a>
-            }
-
-            <a class="campaign-card card-empty text-center text-decoration-none" href="/campaigns" aria-label="Go to campaigns">
-                <div class="card-body">
-                    <LucideIcon IconName="plus" Size="32" Class="sparkle-icon" />
-                    <h3 class="card-title">New Campaign</h3>
-                    <p class="card-text">Create a campaign or browse existing ones.</p>
-                </div>
-            </a>
-        </div>
+            </div>
+        }
+        else
+        {
+            <div class="dashboard-grid">
+                <a class="campaign-card card-empty text-center text-decoration-none" href="/campaigns" aria-label="Go to campaigns">
+                    <div class="card-body">
+                        <LucideIcon IconName="plus" Size="32" Class="sparkle-icon" />
+                        <h3 class="card-title">New Campaign</h3>
+                        <p class="card-text">Create a campaign or browse existing ones.</p>
+                    </div>
+                </a>
+            </div>
+        }
 
         <section>
             <div class="section-header">
@@ -86,12 +130,13 @@ else
 
             <div class="fluent-table-wrapper">
                 <table class="table table-hover">
+                    <caption class="visually-hidden">Recent session activity across your campaigns</caption>
                     <thead>
                         <tr>
-                            <th>Campaign</th>
-                            <th>Session</th>
-                            <th>Recap</th>
-                            <th>Last Played</th>
+                            <th scope="col">Campaign</th>
+                            <th scope="col">Session</th>
+                            <th scope="col">Recap</th>
+                            <th scope="col">Last Played</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -135,9 +180,73 @@ else
     private readonly Dictionary<string, CampaignAccess?> accessByCampaign = new();
     private readonly Dictionary<string, SessionDocument?> lastSessionByCampaign = new();
     private readonly Dictionary<string, int> sessionCountByCampaign = new();
+    private readonly Dictionary<string, string> campaignNameById = new();
     private List<ActivityItem> recentActivity = new();
+    private List<ActorDocument> myCharacters = new();
+    private string? confirmDeleteId;
+    private string? statusMessage;
 
     private sealed record ActivityItem(string CampaignId, string CampaignName, string Title, string? Snippet, DateTime Date, string Href);
+
+    private List<CampaignDocument> dmCampaigns =>
+        campaigns?.Where(c => accessByCampaign.GetValueOrDefault(c.Id)?.IsDm == true).ToList() ?? new();
+
+    private List<CampaignDocument> playedCampaigns =>
+        campaigns?.Where(c => accessByCampaign.GetValueOrDefault(c.Id)?.IsDm != true).ToList() ?? new();
+
+    private RenderFragment CampaignCard(CampaignDocument campaign) => @<article class="campaign-card" aria-labelledby="campaign-@campaign.Id-title">
+        <div class="art-preview" aria-hidden="true">
+            <LucideIcon IconName="@(campaign.SystemId.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h3 class="card-title mb-0" id="campaign-@campaign.Id-title">
+                    <a class="campaign-card-link text-decoration-none text-white" href="/campaigns/@campaign.Id">@campaign.Name</a>
+                </h3>
+                @if (confirmDeleteId == campaign.Id)
+                {
+                    <span class="inline-confirm">
+                        <span class="small">Delete?</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCampaignConfirmed(campaign.Id)">Confirm</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelDelete">Keep</button>
+                    </span>
+                }
+                else
+                {
+                    <button type="button" class="btn-delete-fluence" aria-label="Delete @campaign.Name" @onclick="() => confirmDeleteId = campaign.Id" title="Delete campaign">
+                        <LucideIcon IconName="trash-2" Size="14" />
+                    </button>
+                }
+            </div>
+            <div class="d-flex gap-1 flex-wrap mb-2">
+                <span class="badge bg-secondary">@campaign.SystemId</span>
+                @if (accessByCampaign.GetValueOrDefault(campaign.Id) is { } access)
+                {
+                    <span class="badge bg-info text-dark">@access.Role</span>
+                }
+                <span class="badge bg-dark">@campaign.Members.Count @(campaign.Members.Count == 1 ? "member" : "members")</span>
+            </div>
+            <p class="card-text">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description recorded." : campaign.Description)</p>
+            <p class="small text-tertiary mb-0">
+                @if (lastSessionByCampaign.GetValueOrDefault(campaign.Id) is { } last)
+                {
+                    var sessionCount = sessionCountByCampaign.GetValueOrDefault(campaign.Id, 0);
+                    <span>Last session: @(string.IsNullOrWhiteSpace(last.Title) ? last.Date.ToString("MMM dd, yyyy") : last.Title) · @sessionCount @(sessionCount == 1 ? "session" : "sessions")</span>
+                }
+                else
+                {
+                    <span>No sessions yet</span>
+                }
+            </p>
+            <p class="mt-3 mb-0 d-flex gap-2 flex-wrap">
+                <a class="btn btn-surface btn-sm text-decoration-none" href="/campaigns/@campaign.Id" aria-label="Open @campaign.Name">Open campaign</a>
+                @if (accessByCampaign.GetValueOrDefault(campaign.Id)?.IsDm != true)
+                {
+                    <a class="btn btn-outline-secondary btn-sm text-decoration-none" href="/campaigns/@campaign.Id/create">Create a Character</a>
+                }
+            </p>
+        </div>
+    </article>;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,6 +263,8 @@ else
         lastSessionByCampaign.Clear();
         sessionCountByCampaign.Clear();
         recentActivity = new();
+        myCharacters = new();
+        campaignNameById.Clear();
 
         var all = await CampaignRepo.GetAllAsync();
         var mine = (currentUserId == null
@@ -175,6 +286,7 @@ else
             }
 
             accessByCampaign[campaign.Id] = access;
+            campaignNameById[campaign.Id] = campaign.Name;
             var sessions = (await SessionRepo.GetAllForCampaignAsync(campaign.Id))
                 .OrderByDescending(s => s.Date)
                 .ToList();
@@ -194,23 +306,29 @@ else
         }
 
         campaigns = mine.Where(c => accessByCampaign.ContainsKey(c.Id)).ToList();
+
+        if (currentUserId != null)
+        {
+            var owned = await ActorRepo.GetRecentForOwnerAsync(currentUserId, 6, sortByCreated: false);
+            myCharacters = owned.Where(a => accessByCampaign.ContainsKey(a.CampaignId)).ToList();
+        }
+
         recentActivity = activity.OrderByDescending(a => a.Date).Take(6).ToList();
     }
 
-    private async Task DeleteCampaign(string id, string name)
-    {
-        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
-        if (!confirm) return;
+    private void CancelDelete() => confirmDeleteId = null;
 
+    private async Task DeleteCampaignConfirmed(string id)
+    {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null) return;
 
         var result = await CampaignRepo.DeleteAsync(id, userId);
-        if (result == CampaignDeleteResult.Forbidden)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Only the campaign owner can delete it.");
-        }
+        statusMessage = result == CampaignDeleteResult.Forbidden
+            ? "Only the campaign owner can delete it."
+            : "Campaign deleted.";
+        confirmDeleteId = null;
         await LoadAsync();
         StateHasChanged();
     }

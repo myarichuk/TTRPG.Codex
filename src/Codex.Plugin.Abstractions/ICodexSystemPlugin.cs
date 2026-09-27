@@ -20,4 +20,11 @@ public interface ICodexSystemPlugin
     /// instead of numbers) is exactly the case this exists for.
     /// </summary>
     IDiceRoller? GetDiceRoller() => null;
+
+    /// <summary>
+    /// This system's guided character-creation flow (steps + which YAML rules-entry kinds
+    /// each step picks from), or null to let the wizard build a generic flow from whatever
+    /// rules kinds the system's packs contain (<see cref="CharacterCreationFallback"/>).
+    /// </summary>
+    CharacterCreationDefinition? GetCharacterCreation() => null;
 }

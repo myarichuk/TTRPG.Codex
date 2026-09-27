@@ -41,11 +41,12 @@
     {
         <div class="lore-table-wrapper">
             <table class="table table-hover">
+                <caption class="visually-hidden">Campaigns with lore available to you</caption>
                 <thead>
                     <tr>
-                        <th>Campaign</th>
-                        <th>System</th>
-                        <th class="text-end">Lore</th>
+                        <th scope="col">Campaign</th>
+                        <th scope="col">System</th>
+                        <th scope="col" class="text-end">Lore</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,10 +88,10 @@ else if (access == null)
 }
 else
 {
-    <header class="d-flex justify-content-between align-items-center mb-4">
+    <header class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="search-container me-4">
             <LucideIcon IconName="search" Size="18" Class="search-icon" />
-            <input type="text" class="search-input" placeholder="Search lore..." aria-label="Search lore"
+            <input type="search" class="search-input" placeholder="Search lore..." aria-label="Search lore" aria-describedby="grimoire-count"
                    @bind="searchText" @bind:event="oninput" />
         </div>
         <div class="action-group">
@@ -109,10 +110,11 @@ else
         }
     </div>
 
+    <p class="small text-tertiary" id="grimoire-count" role="status">@FilteredFacts().Count() @(FilteredFacts().Count() == 1 ? "entry" : "entries")</p>
     @if (!FilteredFacts().Any())
     {
         <div class="empty-state-container">
-            <div class="empty-state-icon">
+            <div class="empty-state-icon" aria-hidden="true">
                 <LucideIcon IconName="book" Size="48" />
             </div>
             <h3>The Grimoire is Silent</h3>
@@ -122,10 +124,10 @@ else
     else
     {
         <h2 class="h6 text-tertiary mb-3 fw-bold text-uppercase" style="letter-spacing: 0.1em;">@campaign.Name — Known Lore</h2>
-        <div class="featured-lore">
+        <div class="featured-lore" role="list">
             @foreach (var fact in FilteredFacts())
             {
-                <div class="lore-card">
+                <div class="lore-card" role="listitem">
                     <div class="icon-box"><LucideIcon IconName="scroll" Size="20" /></div>
                     <h3 class="lore-title">@fact.Summary</h3>
                     @if (!string.IsNullOrWhiteSpace(fact.Details))

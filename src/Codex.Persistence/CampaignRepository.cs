@@ -90,7 +90,7 @@ public class CampaignRepository(
         return CampaignDeleteResult.Deleted;
     }
 
-    public async Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId)
+    public async Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId, CampaignRole role = CampaignRole.Player)
     {
         using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
         var campaign = await session.Query<CampaignDocument>()
@@ -106,8 +106,97 @@ public class CampaignRepository(
             return (CampaignJoinResult.AlreadyMember, campaign.Id);
         }
 
-        campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
+        // An invite link never mints a DM - that promotion belongs to an existing DM.
+        var granted = role == CampaignRole.Observer ? CampaignRole.Observer : CampaignRole.Player;
+        campaign.Members.Add(new CampaignMember { UserId = userId, Role = granted });
         await session.SaveChangesAsync();
         return (CampaignJoinResult.Joined, campaign.Id);
+    }
+
+    public async Task<bool> SetMemberRoleAsync(string campaignId, string targetUserId, CampaignRole newRole, string requestingUserId)
+    {
+        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+        var campaign = await session.LoadAsync<CampaignDocument>(campaignId);
+        if (campaign == null)
+        {
+            return false;
+        }
+
+        var target = campaign.Members.FirstOrDefault(m => string.Equals(m.UserId, targetUserId, StringComparison.Ordinal));
+        if (target == null)
+        {
+            return false;
+        }
+
+        // The owner's DM seat is structural (the access resolver treats the owner as DM
+        // regardless of the Members row), so it can never be changed here.
+        if (string.Equals(targetUserId, campaign.OwnerId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var selfSwitch = string.Equals(targetUserId, requestingUserId, StringComparison.Ordinal);
+        if (selfSwitch)
+        {
+            // Picking your own seat: Player <-> Observer only, never a self-granted DM.
+            if (newRole == CampaignRole.DM || target.Role == CampaignRole.DM)
+            {
+                return false;
+            }
+
+            target.Role = newRole;
+            await session.SaveChangesAsync();
+            return true;
+        }
+
+        var requesterIsDm = string.Equals(requestingUserId, campaign.OwnerId, StringComparison.Ordinal)
+            || campaign.Members.Any(m => string.Equals(m.UserId, requestingUserId, StringComparison.Ordinal)
+                && m.Role == CampaignRole.DM);
+        if (!requesterIsDm)
+        {
+            return false;
+        }
+
+        target.Role = newRole;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RemoveMemberAsync(string campaignId, string targetUserId, string requestingUserId)
+    {
+        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+        var campaign = await session.LoadAsync<CampaignDocument>(campaignId);
+        if (campaign == null)
+        {
+            return false;
+        }
+
+        // The owner leaves only by deleting the campaign.
+        if (string.Equals(targetUserId, campaign.OwnerId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var target = campaign.Members.FirstOrDefault(m => string.Equals(m.UserId, targetUserId, StringComparison.Ordinal));
+        if (target == null)
+        {
+            return false;
+        }
+
+        var selfLeave = string.Equals(targetUserId, requestingUserId, StringComparison.Ordinal);
+        if (!selfLeave)
+        {
+            var requesterIsDm = string.Equals(requestingUserId, campaign.OwnerId, StringComparison.Ordinal)
+                || campaign.Members.Any(m => string.Equals(m.UserId, requestingUserId, StringComparison.Ordinal)
+                    && m.Role == CampaignRole.DM);
+            if (!requesterIsDm)
+            {
+                return false;
+            }
+        }
+
+        campaign.Members.Remove(target);
+        await session.SaveChangesAsync();
+        return true;
     }
 }

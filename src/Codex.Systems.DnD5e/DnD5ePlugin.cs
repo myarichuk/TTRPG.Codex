@@ -23,6 +23,22 @@ public class DnD5ePlugin : ICodexSystemPlugin
         // hits in the same tick overwrite each other and never clamped HP (B7).
     }
 
+    public CharacterCreationDefinition GetCharacterCreation() => new(
+        new[]
+        {
+            new CharacterCreationStep("Name", "Name"),
+            new CharacterCreationStep("Class", "Class", Kind: "class", SameKindChildLink: "subclassOf"),
+            new CharacterCreationStep("Subclass", "Subclass", Kind: "class", SameKindChildLink: "subclassOf"),
+            new CharacterCreationStep("Race", "Race", Kind: "ancestry", SameKindChildLink: "ancestryOf"),
+            new CharacterCreationStep("Scores", "Scores"),
+            new CharacterCreationStep("Equipment", "Equipment"),
+            new CharacterCreationStep("Spells", "Spells"),
+            new CharacterCreationStep("Review", "Review"),
+        },
+        CharacterCreationFallback.DefaultAbilityScores,
+        CreationEquipmentMode.ClassOptions,
+        SpellsFromClassLists: true);
+
     public IEnumerable<UISchema> GetUISchemas()
     {
         yield return new UISchema(

@@ -15,7 +15,7 @@ content pack, never in C#.
 | Execution | TRCE effects + `BuiltInHandlers` | saves, attacks, areas, damage already executable; new effect types register a handler |
 | Dice | `IDiceRoller`, resolved per campaign (`CampaignRuntimeManager`) | default polyhedral roller; override for exotic dice |
 | Persistence | `CampaignDocument.SystemId` + components | campaigns, actors, sessions are system-agnostic; components snapshot to documents |
-| Creation UX | `CreateCharacter.razor` steps | step list + term queries per system (see below) |
+| Creation UX | `CharacterCreationDefinition` per plugin + `CreateCharacter.razor` step shapes | step list + kind queries per system (see below); no definition = generic flow from YAML kinds |
 | i18n | `IStringLocalizer` + `Resources/` | new pages/keys follow the wizard's pattern; Hebrew RTL already handled |
 
 ## Worked Example: Star Wars FFG
@@ -40,10 +40,12 @@ Walking it through each seam:
    {row, column, links}`). Ranked-talent effects reuse TRCE (`bonus`/`heal`-style
    effects); genuinely new mechanics (e.g. "upgrade next check") register one handler in
    the effect-handler map.
-5. **Creation wizard** - add a third branch next to `Is5e`/Pf2e: species -> career ->
-   specialization -> obligation/duty -> XP spend -> equipment. The step engine
-   (`WizardStep` list + `VisibleSteps`) is data-driven; only genuinely FFG-shaped steps
-   (talent-tree picker) need new markup.
+5. **Creation wizard** - implement `GetCharacterCreation()` on the plugin: species ->
+   career -> specialization -> obligation/duty -> XP spend -> equipment, each step naming
+   the YAML kinds it picks (`Kind`, `SameKindChildLink`, `ChildKind`). The step engine
+   (`WizardStep` list + `VisibleSteps`) renders those shapes; only genuinely FFG-shaped
+   steps (talent-tree picker) need new markup. Skip the method entirely and the wizard
+   builds a generic flow (one picker per YAML kind) automatically.
 6. **Importer** - `scripts/import_swffg.py` following `import_pf2e.py`'s shape. See the
    legal note below before writing one.
 
@@ -69,7 +71,9 @@ Walking it through each seam:
 
 ## Honest Limits
 
-- The creation wizard branches per system (`Is5e`/Pf2e `if`s). A third system is fine;
-  a sixth should graduate to per-system step providers.
+- The creation wizard renders per-system step definitions (`CharacterCreationDefinition`
+  from each plugin, generic `Pick:<kind>` fallback from YAML kinds). A sixth system with a
+  genuinely new step shape should add a renderer for that shape rather than complicating
+  the generic picker.
 - TRCE effects cover d20-style resolution well; deeply procedural subsystems (FFG
   starship combat, crafting) stay manual (dice + notes) until someone models them.

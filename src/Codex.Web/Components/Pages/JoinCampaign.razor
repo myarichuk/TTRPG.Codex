@@ -3,6 +3,7 @@
 @using Codex.Persistence
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
+@inject ICampaignAccessResolver AccessResolver
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
@@ -28,7 +29,28 @@
                legitimately resolve as Joined on the first pass and AlreadyMember on the second.
                Either way the membership is in place, so both get the same message. *@
             <h3>You're in!</h3>
-            <a href="/campaigns/@joinedCampaignId" class="btn btn-accent mt-3">Go to Campaign</a>
+            @if (myRole != null)
+            {
+                <p class="text-tertiary">You're joining as <strong>@myRole</strong>.</p>
+                <div class="d-flex gap-2 justify-content-center align-items-end flex-wrap mt-2">
+                    <div class="text-start">
+                        <label class="form-label small" for="join-role">Role</label>
+                        <select id="join-role" class="form-select form-select-sm" @bind="selectedRole" aria-label="Your role in this campaign">
+                            <option value="@CampaignRole.Player">Player - manage your own characters</option>
+                            <option value="@CampaignRole.Observer">Observer - watch, no characters</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="UpdateRoleAsync">Update role</button>
+                </div>
+                @if (!string.IsNullOrEmpty(roleMessage))
+                {
+                    <p class="small mt-2" role="status">@roleMessage</p>
+                }
+                <p class="text-tertiary small mt-2">Want to run games here? Ask an existing DM to promote you - invites never grant the DM seat.</p>
+            }
+            <div>
+                <a href="/campaigns/@joinedCampaignId" class="btn btn-accent mt-3">Go to Campaign</a>
+            </div>
         }
     </div>
 </div>
@@ -39,11 +61,15 @@
 
     private CampaignJoinResult? result;
     private string? joinedCampaignId;
+    private string? userId;
+    private CampaignRole? myRole;
+    private CampaignRole selectedRole = CampaignRole.Player;
+    private string? roleMessage;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null)
         {
             Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}", forceLoad: true);
@@ -51,5 +77,33 @@
         }
 
         (result, joinedCampaignId) = await CampaignRepo.JoinByInviteCodeAsync(InviteCode, userId);
+        await RefreshRoleAsync();
+    }
+
+    private async Task RefreshRoleAsync()
+    {
+        if (joinedCampaignId == null || userId == null)
+        {
+            return;
+        }
+
+        var access = await AccessResolver.ResolveAsync(joinedCampaignId, userId);
+        myRole = access?.Role;
+        if (myRole != null)
+        {
+            selectedRole = myRole.Value;
+        }
+    }
+
+    private async Task UpdateRoleAsync()
+    {
+        if (joinedCampaignId == null || userId == null)
+        {
+            return;
+        }
+
+        var ok = await CampaignRepo.SetMemberRoleAsync(joinedCampaignId, userId, selectedRole, userId);
+        roleMessage = ok ? $"Role updated to {selectedRole}." : "Couldn't update that role - DMs are promoted by an existing DM.";
+        await RefreshRoleAsync();
     }
 }
