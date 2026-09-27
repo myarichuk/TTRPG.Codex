@@ -20,4 +20,12 @@ public interface ISystemCatalog
     /// the same <see cref="UISchema"/> the Authoring app renders, just a different client.
     /// </summary>
     IEnumerable<UISchema> GetUISchemas(string systemId);
+
+    /// <summary>
+    /// The loaded system plugin's character-creation flow for <paramref name="systemId"/>,
+    /// or null if that system has no custom flow (the wizard then falls back to
+    /// <see cref="CharacterCreationFallback"/>). Default null so catalog doubles in tests
+    /// don't have to implement it.
+    /// </summary>
+    CharacterCreationDefinition? GetCharacterCreation(string systemId) => null;
 }

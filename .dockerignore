@@ -1,0 +1,14 @@
+# Build outputs and local-only data - the Dockerfile regenerates packs in-build.
+**/bin/
+**/obj/
+dist/
+build/
+TestResults/
+RavenData/
+packs/
+plugins/
+node_modules/
+.git/
+.vs/
+.idea/
+*.user

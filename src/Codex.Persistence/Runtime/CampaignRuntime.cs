@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using Codex.Core;
+using Codex.Core.Abilities;
 using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 using DefaultEcs;
@@ -28,6 +29,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly SessionDocument? _activeSession;
     private readonly IEncounterRepository? _encounterRepository;
     private readonly ILogger _logger;
+    private readonly AbilityExecutor? _abilityExecutor;
+    private readonly IContentRegistry? _contentRegistry;
     private readonly Dictionary<string, Entity> _actorEntities = new();
     private readonly Dictionary<string, ActorDocument> _actorDocs = new();
     private readonly HashSet<string> _dirtyActorIds = new();
@@ -62,6 +65,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// no initiative tracker to persist.</param>
     /// <param name="diceRoller">This campaign's <see cref="IDiceRoller"/> (3.6); defaults to
     /// <see cref="StandardDiceRoller"/> when the plugin doesn't provide its own.</param>
+    /// <param name="abilityExecutor">TRCE pipeline (5.1) for trigger firing. Optional so bare-ECS
+    /// tests stay dependency-free; <see cref="FireTriggers"/> is a no-op without it.</param>
+    /// <param name="contentRegistry">Ability/blueprint lookup for <see cref="FireTriggers"/>.</param>
     public CampaignRuntime(
         string campaignId,
         IActorRepository actorRepository,
@@ -70,7 +76,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
         ISessionRepository? sessionRepository = null,
         SessionDocument? activeSession = null,
         IEncounterRepository? encounterRepository = null,
-        IDiceRoller? diceRoller = null)
+        IDiceRoller? diceRoller = null,
+        AbilityExecutor? abilityExecutor = null,
+        IContentRegistry? contentRegistry = null)
     {
         CampaignId = campaignId;
         _actorRepository = actorRepository;
@@ -80,6 +88,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _activeSession = activeSession;
         _encounterRepository = encounterRepository;
         DiceRoller = diceRoller ?? StandardDiceRoller.Instance;
+        _abilityExecutor = abilityExecutor;
+        _contentRegistry = contentRegistry;
         _loop = Task.Run(RunLoopAsync);
     }
 
@@ -121,6 +131,67 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             _dirtyActorIds.Add(actorId);
         }
+    }
+
+    internal void MarkActorDirty(string actorId) => _dirtyActorIds.Add(actorId);
+
+    internal IContentRegistry? ContentRegistry => _contentRegistry;
+
+    /// <summary>Resolves an ability by full id and runs it through the TRCE pipeline. Intended
+    /// for runtime commands (which run on the single-writer loop) - callers outside the loop
+    /// must go through <see cref="EnqueueAsync"/>, never call this directly off-loop.</summary>
+    internal AbilityExecutionResult? TryExecuteAbility(string abilityFullId, string casterActorId, string? targetActorId)
+    {
+        if (_abilityExecutor == null || _contentRegistry == null)
+        {
+            return null;
+        }
+
+        var ability = _contentRegistry.GetAbility(abilityFullId);
+        if (ability == null)
+        {
+            return AbilityExecutionResult.Failed(AbilityExecutor.EffectsStage, $"Unknown ability '{abilityFullId}'.");
+        }
+
+        if (GetEntity(casterActorId) is not { } caster)
+        {
+            return AbilityExecutionResult.Failed(AbilityExecutor.RequiresStage, $"Unknown caster '{casterActorId}'.");
+        }
+
+        var target = targetActorId != null ? GetEntity(targetActorId) : null;
+        return _abilityExecutor.Execute(ability, new AbilityExecutionContext(World, caster, target));
+    }
+
+    /// <summary>Fires a trigger event (5.1d) for one actor: resolves its blueprint's abilities,
+    /// runs the ones naming this event through the TRCE pipeline, and marks the actor dirty so
+    /// trigger-applied state persists on write-through. A no-op returning empty when no executor
+    /// is wired, the actor isn't hydrated, or it has no blueprint - dangling references never throw.
+    /// <paramref name="counterpartActorId"/> becomes the effects' target (e.g. a thorns retaliation
+    /// damages the attacker); without it, effects target the actor itself.</summary>
+    public IReadOnlyList<TriggeredAbility> FireTriggers(string actorId, TriggerEvent trigger, string? counterpartActorId = null)
+    {
+        if (_abilityExecutor == null || _contentRegistry == null)
+        {
+            return Array.Empty<TriggeredAbility>();
+        }
+
+        if (GetEntity(actorId) is not { } entity
+            || !_actorDocs.TryGetValue(actorId, out var doc)
+            || doc.BlueprintId == null)
+        {
+            return Array.Empty<TriggeredAbility>();
+        }
+
+        var counterpart = counterpartActorId != null ? GetEntity(counterpartActorId) : null;
+        var abilities = TriggerDispatcher.ResolveAbilities(_contentRegistry.GetActor(doc.BlueprintId), _contentRegistry);
+        var fired = TriggerDispatcher.ExecuteForEvent(
+            abilities, trigger, new AbilityExecutionContext(World, entity, counterpart ?? entity), _abilityExecutor);
+        if (fired.Count > 0)
+        {
+            MarkActorDirty(actorId);
+        }
+
+        return fired;
     }
 
     /// <summary>Returns the live encounter, creating one and linking it into the active session

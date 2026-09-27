@@ -15,7 +15,7 @@
 
 @if (!string.IsNullOrEmpty(error))
 {
-    <div class="alert alert-danger py-2">@error</div>
+    <div class="alert alert-danger py-2" role="alert">@error</div>
 }
 
 @if (runtime == null)
@@ -41,8 +41,8 @@ else
                     @if (Access.IsDm && encounter is { Participants.Count: > 0 })
                     {
                         <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="prev-turn-btn" @onclick="PreviousTurnAsync">◀ Prev</button>
-                            <button type="button" class="btn btn-sm btn-accent" data-testid="next-turn-btn" @onclick="NextTurnAsync">Next Turn ▶</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="prev-turn-btn" aria-label="Previous turn" @onclick="PreviousTurnAsync"><span aria-hidden="true">◀</span> Prev</button>
+                            <button type="button" class="btn btn-sm btn-accent" data-testid="next-turn-btn" aria-label="Next turn" @onclick="NextTurnAsync">Next Turn <span aria-hidden="true">▶</span></button>
                         </div>
                     }
                 </div>
@@ -96,27 +96,58 @@ else
                                     @effect.EffectId (@effect.RoundsRemaining)
                                     @if (Access.IsDm)
                                     {
-                                        <a href="javascript:void(0)" class="text-white ms-1" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)">×</a>
+                                        <button type="button" class="btn btn-sm btn-link text-white ms-1 p-0" aria-label="Remove @effect.EffectId" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)"><span aria-hidden="true">×</span></button>
                                     }
                                 </span>
                             }
 
                             @if (Access.IsDm)
                             {
-                                <div class="d-flex gap-1 mt-2 align-items-center">
-                                    <input type="number" class="form-control form-control-sm" style="width:5rem" data-testid="damage-input"
+                                <div class="d-flex gap-1 mt-2 align-items-center flex-wrap">
+                                    <label class="visually-hidden" for="dmg-@participant.ActorId">Damage or healing amount</label>
+                                    <input id="dmg-@participant.ActorId" type="number" class="form-control form-control-sm" style="width:5rem" data-testid="damage-input" aria-label="Damage or healing amount"
                                            value="@GetDamageInput(participant.ActorId)"
                                            @oninput="e => SetDamageInput(participant.ActorId, e.Value?.ToString())" />
                                     <button type="button" class="btn btn-sm btn-outline-danger" data-testid="damage-btn" @onclick="() => ApplyDamageAsync(participant.ActorId)">Damage</button>
                                     <button type="button" class="btn btn-sm btn-outline-success" data-testid="heal-btn" @onclick="() => ApplyHealingAsync(participant.ActorId)">Heal</button>
-                                    <input class="form-control form-control-sm" style="width:8rem" placeholder="condition" data-testid="condition-input"
+                                    <label class="visually-hidden" for="cond-@participant.ActorId">Condition name</label>
+                                    <input id="cond-@participant.ActorId" class="form-control form-control-sm" style="width:8rem" placeholder="condition" aria-label="Condition name" data-testid="condition-input"
                                            value="@GetConditionInput(participant.ActorId)"
                                            @oninput="e => SetConditionInput(participant.ActorId, e.Value?.ToString())" />
-                                    <input type="number" class="form-control form-control-sm" style="width:4rem" placeholder="rounds" data-testid="condition-rounds-input"
+                                    <label class="visually-hidden" for="rounds-@participant.ActorId">Condition duration in rounds</label>
+                                    <input id="rounds-@participant.ActorId" type="number" class="form-control form-control-sm" style="width:4rem" placeholder="rounds" aria-label="Condition duration in rounds" data-testid="condition-rounds-input"
                                            value="@GetConditionRounds(participant.ActorId)"
                                            @oninput="e => SetConditionRounds(participant.ActorId, e.Value?.ToString())" />
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(participant.ActorId)">Add</button>
                                 </div>
+                                @if (AbilitiesFor(participant.ActorId).Any())
+                                {
+                                    <div class="d-flex gap-1 mt-1 align-items-center flex-wrap">
+                                        <label class="visually-hidden" for="ability-@participant.ActorId">Ability</label>
+                                        <select id="ability-@participant.ActorId" class="form-select form-select-sm" style="width:auto" data-testid="ability-select" aria-label="Ability"
+                                                value="@GetAbilityInput(participant.ActorId)"
+                                                @onchange="e => SetAbilityInput(participant.ActorId, e.Value?.ToString())">
+                                            <option value="">Ability...</option>
+                                            @foreach (var ability in AbilitiesFor(participant.ActorId))
+                                            {
+                                                <option value="@($"{ability.SystemId}:{ability.Id}")">@ability.Name</option>
+                                            }
+                                        </select>
+                                        <label class="visually-hidden" for="ability-target-@participant.ActorId">Ability target</label>
+                                        <select id="ability-target-@participant.ActorId" class="form-select form-select-sm" style="width:auto" data-testid="ability-target-select" aria-label="Ability target"
+                                                value="@GetAbilityTargetInput(participant.ActorId)"
+                                                @onchange="e => SetAbilityTargetInput(participant.ActorId, e.Value?.ToString())">
+                                            <option value="">Target...</option>
+                                            @foreach (var other in encounter.Participants)
+                                            {
+                                                <option value="@other.ActorId">@(ActorsById.GetValueOrDefault(other.ActorId)?.Name ?? other.ActorId)</option>
+                                            }
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-outline-warning" data-testid="ability-use-btn"
+                                                disabled="@(string.IsNullOrEmpty(GetAbilityInput(participant.ActorId)) || string.IsNullOrEmpty(GetAbilityTargetInput(participant.ActorId)))"
+                                                @onclick="() => UseAbilityAsync(participant.ActorId)">Use</button>
+                                    </div>
+                                }
                             }
                         </div>
                         }
@@ -125,8 +156,9 @@ else
 
                 @if (Access.IsDm)
                 {
-                    <div class="d-flex gap-1 mt-2 align-items-center">
-                        <select class="form-select form-select-sm" style="width:auto" data-testid="add-to-initiative-select" @bind="selectedActorId">
+                    <div class="d-flex gap-1 mt-2 align-items-center flex-wrap">
+                        <label class="visually-hidden" for="add-initiative">Actor to add to initiative</label>
+                        <select id="add-initiative" class="form-select form-select-sm" style="width:auto" data-testid="add-to-initiative-select" aria-label="Actor to add to initiative" @bind="selectedActorId">
                             <option value="">Add to initiative...</option>
                             @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
                             {
@@ -134,8 +166,9 @@ else
                             }
                         </select>
                         <button type="button" class="btn btn-sm btn-outline-primary" data-testid="roll-initiative-btn" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll d20</button>
-                        <span class="text-tertiary small">or</span>
-                        <input type="number" class="form-control form-control-sm" style="width:5rem" placeholder="enter" data-testid="manual-initiative-input"
+                        <span class="text-tertiary small" aria-hidden="true">or</span>
+                        <label class="visually-hidden" for="manual-initiative">Manual initiative value</label>
+                        <input id="manual-initiative" type="number" class="form-control form-control-sm" style="width:5rem" placeholder="enter" aria-label="Manual initiative value" data-testid="manual-initiative-input"
                                value="@GetManualInitiative(selectedActorId)"
                                @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
                         <button type="button" class="btn btn-sm btn-outline-primary" data-testid="set-initiative-btn" @onclick="SetInitiativeManualAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Set</button>
@@ -147,7 +180,8 @@ else
             {
                 <div class="card p-3 mb-3">
                     <h5>Quick-Add Monster</h5>
-                    <input class="form-control form-control-sm mb-2" placeholder="Search @Campaign.SystemId monsters..." @bind="contentSearch" @bind:event="oninput" />
+                    <label class="visually-hidden" for="monster-search">Search monsters</label>
+                    <input id="monster-search" class="form-control form-control-sm mb-2" placeholder="Search @Campaign.SystemId monsters..." aria-label="Search monsters" @bind="contentSearch" @bind:event="oninput" />
                     @foreach (var definition in SearchBlueprints())
                     {
                         <div class="d-flex justify-content-between align-items-center border-bottom py-1">
@@ -163,7 +197,8 @@ else
             <div class="card p-3 mb-3">
                 <h5>Dice</h5>
                 <div class="input-group input-group-sm mb-2">
-                    <input class="form-control" placeholder="2d6+3, 4d6kh3, adv+5..." @bind="diceExpression" />
+                    <label class="visually-hidden" for="dice-expression">Dice expression</label>
+                    <input id="dice-expression" class="form-control" placeholder="2d6+3, 4d6kh3, adv+5..." aria-label="Dice expression" @bind="diceExpression" />
                     <button type="button" class="btn btn-accent" @onclick="RollDiceAsync">Roll</button>
                 </div>
                 @if (Access.IsDm)
@@ -190,7 +225,8 @@ else
 
             <div class="card p-3">
                 <h5>Quick Notes</h5>
-                <textarea class="form-control form-control-sm mb-2" rows="2" @bind="noteText"></textarea>
+                <label class="visually-hidden" for="quick-note">Quick note</label>
+                <textarea id="quick-note" class="form-control form-control-sm mb-2" rows="2" aria-label="Quick note" @bind="noteText"></textarea>
                 @if (Access.IsDm)
                 {
                     <div class="form-check mb-2">
@@ -230,6 +266,8 @@ else
     private readonly Dictionary<string, string> conditionInputs = new();
     private readonly Dictionary<string, int> conditionRoundsInputs = new();
     private readonly Dictionary<string, int> manualInitiativeInputs = new();
+    private readonly Dictionary<string, string> abilityIdInputs = new();
+    private readonly Dictionary<string, string> abilityTargetInputs = new();
 
     private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
 
@@ -240,6 +278,43 @@ else
     private void SetDamageInput(string actorId, string? raw) => damageInputs[actorId] = int.TryParse(raw, out var value) ? value : 0;
     private string GetConditionInput(string actorId) => conditionInputs.GetValueOrDefault(actorId, string.Empty);
     private void SetConditionInput(string actorId, string? raw) => conditionInputs[actorId] = raw ?? string.Empty;
+    private string GetAbilityInput(string actorId) => abilityIdInputs.GetValueOrDefault(actorId, string.Empty);
+    private void SetAbilityInput(string actorId, string? raw) => abilityIdInputs[actorId] = raw ?? string.Empty;
+    private string GetAbilityTargetInput(string actorId) => abilityTargetInputs.GetValueOrDefault(actorId, string.Empty);
+    private void SetAbilityTargetInput(string actorId, string? raw) => abilityTargetInputs[actorId] = raw ?? string.Empty;
+
+    /// <summary>Abilities this participant can cast, resolved through their actor blueprint.
+    /// Empty for actors with no blueprint or a dangling one - no buttons render then.</summary>
+    private IEnumerable<IAbilityDefinition> AbilitiesFor(string actorId)
+    {
+        if (ActorsById.GetValueOrDefault(actorId)?.BlueprintId is not { } blueprint)
+        {
+            return Enumerable.Empty<IAbilityDefinition>();
+        }
+
+        var definition = ContentRegistry.GetActor(blueprint);
+        if (definition == null)
+        {
+            return Enumerable.Empty<IAbilityDefinition>();
+        }
+
+        return definition.Abilities
+            .Select(id => ContentRegistry.GetAbility(id))
+            .Where(a => a != null)
+            .Cast<IAbilityDefinition>();
+    }
+
+    private async Task UseAbilityAsync(string casterId)
+    {
+        var abilityId = GetAbilityInput(casterId);
+        var targetId = GetAbilityTargetInput(casterId);
+        if (string.IsNullOrEmpty(abilityId) || string.IsNullOrEmpty(targetId) || runtime == null)
+        {
+            return;
+        }
+
+        await runtime.EnqueueAsync(new UseAbilityByIdCommand(abilityId, casterId, targetId));
+    }
 
     protected override Task OnParametersSetAsync()
     {

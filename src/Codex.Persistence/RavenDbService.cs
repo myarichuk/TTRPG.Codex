@@ -15,6 +15,10 @@ public class RavenDbService : IDisposable
 
     public IDocumentStore Store => _store.Value;
 
+    /// <summary>True once the embedded server has finished booting. Read by
+    /// <c>/health/ready</c> - unlike <see cref="Store"/>, this never triggers the boot.</summary>
+    public bool IsStoreInitialized => _store.IsValueCreated;
+
     public RavenDbService(string dataDirectory, string databaseName = "Campaigns", bool runInMemory = false, ILogger<RavenDbService>? logger = null)
     {
         _logger = logger;

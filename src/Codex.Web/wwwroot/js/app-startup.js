@@ -144,6 +144,18 @@
     }
 })();
 
+// Auth forms: fetch a fresh antiforgery request token when the page was reached via
+// in-circuit navigation (no SSR ran, so no token was minted or persisted). Must run in the
+// BROWSER (not via a server-side HttpClient): the response also sets the antiforgery cookie,
+// and only a browser-issued request stores it where the form post will send it back from.
+window.codexAuth = {
+    getToken: async function () {
+        const res = await fetch('/auth/token');
+        if (!res.ok) return null;
+        return (await res.json()).token ?? null;
+    }
+};
+
 // Campaign JSON export (4.4): Blazor hands over a data URI plus filename; the temp anchor
 // triggers the browser's download UI without navigating away from the circuit.
 window.codexDownload = function (href, filename) {

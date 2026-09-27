@@ -36,10 +36,11 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         await _app.SeedUserAsync(player1Id, "aria_" + player1Id, playerPassword, "Player");
         await _app.SeedUserAsync(player2Id, "bram_" + player2Id, playerPassword, "Player");
 
+        var browser = await _app.GetBrowserAsync();
         var contextOptions = new BrowserNewContextOptions { BaseURL = _app.BaseUrl };
-        await using var dmContext = await _app.Browser.NewContextAsync(contextOptions);
-        await using var player1Context = await _app.Browser.NewContextAsync(contextOptions);
-        await using var player2Context = await _app.Browser.NewContextAsync(contextOptions);
+        await using var dmContext = await browser.NewContextAsync(contextOptions);
+        await using var player1Context = await browser.NewContextAsync(contextOptions);
+        await using var player2Context = await browser.NewContextAsync(contextOptions);
 
         var dm = await dmContext.NewPageAsync();
         var player1 = await player1Context.NewPageAsync();
@@ -68,7 +69,8 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
 
         await dm.GotoAsync("/campaigns");
         await dm.GetByRole(AriaRole.Button, new() { Name = "Create Your First Campaign" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Create campaign" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).WaitForAsync();
         var campaignId = new Uri(dm.Url).Segments[^1].TrimEnd('/');
 
         var inviteUrl = await dm.Locator("div.card:has(h5:text('Invite')) input").InputValueAsync();
@@ -89,7 +91,7 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
 
         const string revealedSummary = "P4 The Bridge Is Trapped";
         const string secretSummary = "P4 Secret Villain Plot";
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Lore" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Lore" }).ClickAsync();
         var newFactCard = dm.Locator("div.card:has(h5:text('New Fact'))");
         await newFactCard.Locator("input[placeholder='Summary']").FillAsync(revealedSummary);
         await newFactCard.Locator("select").SelectOptionAsync("KnowersOnly");
@@ -179,12 +181,6 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         Assert.DoesNotContain(privateNote, player2Payload);
     }
 
-    private static async Task LoginAsync(IPage page, string username, string password)
-    {
-        await page.GotoAsync("/login");
-        await page.Locator("#username").FillAsync(username);
-        await page.Locator("#password").FillAsync(password);
-        await page.GetByRole(AriaRole.Button, new() { Name = "Enter Codex" }).ClickAsync();
-        await page.WaitForURLAsync(url => !url.Contains("/login"));
-    }
+    private static Task LoginAsync(IPage page, string username, string password) =>
+        LoginHelper.LoginAsync(page, username, password);
 }

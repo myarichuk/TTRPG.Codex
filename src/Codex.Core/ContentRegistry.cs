@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Codex.Core.Abilities;
 using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 
@@ -12,6 +13,7 @@ public class ContentRegistry : IContentRegistry
     private readonly Dictionary<string, Dictionary<string, (IAbilityDefinition Ability, int Priority, string PackId)>> _abilities = new();
     private readonly Dictionary<string, Dictionary<string, (IActorDefinition Actor, int Priority, string PackId)>> _actors = new();
     private readonly Dictionary<string, Dictionary<string, (ILocationDefinition Location, int Priority, string PackId)>> _locations = new();
+    private readonly Dictionary<string, Dictionary<string, (IRulesEntryDefinition Entry, int Priority, string PackId)>> _rules = new();
     private readonly HashSet<string> _loadedPacks = new();
     private readonly ScriptEvaluator _scriptEvaluator;
 
@@ -56,22 +58,55 @@ public class ContentRegistry : IContentRegistry
     public IEnumerable<ILocationDefinition> GetLocationsBySystem(string systemId) => GetBySystemInternal(_locations, systemId);
     #endregion
 
+    #region Rules entries
+    public void RegisterRulesEntry(IRulesEntryDefinition entry, int priority)
+    {
+        RegisterInternal(_rules, entry.SystemId, entry.Id, entry, priority, entry.PackId);
+        _loadedPacks.Add(entry.PackId);
+    }
+
+    public IRulesEntryDefinition? GetRulesEntry(string fullId) => GetInternal(_rules, fullId);
+
+    public IEnumerable<IRulesEntryDefinition> GetRulesEntries(string systemId, string? kind = null)
+    {
+        var entries = GetBySystemInternal(_rules, systemId);
+        return kind == null
+            ? entries
+            : entries.Where(e => string.Equals(e.Kind, kind, StringComparison.OrdinalIgnoreCase));
+    }
+    #endregion
+
     public IEnumerable<string> GetLoadedPacks() => _loadedPacks;
+
+    public AbilityExecutionResult ExecuteAbility(IAbilityDefinition ability, AbilityExecutionContext context)
+    {
+        var executor = new AbilityExecutor(_scriptEvaluator);
+        return executor.Execute(ability, context);
+    }
+
+    public Task<AbilityExecutionResult> ExecuteAbilityAsync(string fullId, AbilityExecutionContext context)
+    {
+        var ability = GetAbility(fullId);
+        if (ability == null)
+        {
+            return Task.FromResult(AbilityExecutionResult.Failed(AbilityExecutor.EffectsStage, $"Unknown ability '{fullId}'."));
+        }
+
+        return Task.FromResult(ExecuteAbility(ability, context));
+    }
 
     public Task ExecuteAbilityAsync(string fullId, dynamic context)
     {
         var ability = GetAbility(fullId);
         if (ability == null) return Task.CompletedTask;
 
-        if (ability.Effects != null)
+        if (context is AbilityContext abilityContext)
         {
-            foreach (var effect in ability.Effects)
-            {
-                if (effect.Params != null && effect.Params.TryGetValue("Script", out var scriptObj) && !string.IsNullOrEmpty(scriptObj?.ToString()) && context is AbilityContext abilityContext)
-                {
-                    _scriptEvaluator.Execute(scriptObj.ToString()!, abilityContext);
-                }
-            }
+            ExecuteAbility(ability, new AbilityExecutionContext(abilityContext.World, abilityContext.Caster, abilityContext.Target, abilityContext.Params));
+        }
+        else if (context is AbilityExecutionContext executionContext)
+        {
+            ExecuteAbility(ability, executionContext);
         }
 
         return Task.CompletedTask;

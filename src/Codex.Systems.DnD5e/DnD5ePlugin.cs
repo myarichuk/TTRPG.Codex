@@ -16,12 +16,28 @@ public class DnD5ePlugin : ICodexSystemPlugin
         registry.Register<ConditionComponent>();
     }
 
-    public void RegisterSystems(dynamic world)
+    public void RegisterSystems(ISystemContext systems)
     {
         // Damage/healing are applied immediately via CodexWorld.ApplyDamage/ApplyHealing (3.4) -
         // there is no more DamageEvent component-based system to register here. It used to let two
         // hits in the same tick overwrite each other and never clamped HP (B7).
     }
+
+    public CharacterCreationDefinition GetCharacterCreation() => new(
+        new[]
+        {
+            new CharacterCreationStep("Name", "Name"),
+            new CharacterCreationStep("Class", "Class", Kind: "class", SameKindChildLink: "subclassOf"),
+            new CharacterCreationStep("Subclass", "Subclass", Kind: "class", SameKindChildLink: "subclassOf"),
+            new CharacterCreationStep("Race", "Race", Kind: "ancestry", SameKindChildLink: "ancestryOf"),
+            new CharacterCreationStep("Scores", "Scores"),
+            new CharacterCreationStep("Equipment", "Equipment"),
+            new CharacterCreationStep("Spells", "Spells"),
+            new CharacterCreationStep("Review", "Review"),
+        },
+        CharacterCreationFallback.DefaultAbilityScores,
+        CreationEquipmentMode.ClassOptions,
+        SpellsFromClassLists: true);
 
     public IEnumerable<UISchema> GetUISchemas()
     {
@@ -30,6 +46,9 @@ public class DnD5ePlugin : ICodexSystemPlugin
             PreferredEditor.Form,
             new List<FieldDefinition>
             {
+                new("Level", "Level", FieldType.Number, DefaultValue: 1),
+                new("Class", "Class", FieldType.Text),
+                new("Race", "Race", FieldType.Text),
                 new("Strength", "STR", FieldType.Number, DefaultValue: 10),
                 new("Dexterity", "DEX", FieldType.Number, DefaultValue: 10),
                 new("Constitution", "CON", FieldType.Number, DefaultValue: 10),

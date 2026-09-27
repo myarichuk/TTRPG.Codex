@@ -45,10 +45,11 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await _app.SeedUserAsync(player1Id, "aria_" + player1Id, playerPassword, "Player");
         await _app.SeedUserAsync(player2Id, "bram_" + player2Id, playerPassword, "Player");
 
+        var browser = await _app.GetBrowserAsync();
         var contextOptions = new BrowserNewContextOptions { BaseURL = _app.BaseUrl };
-        await using var dmContext = await _app.Browser.NewContextAsync(contextOptions);
-        await using var player1Context = await _app.Browser.NewContextAsync(contextOptions);
-        await using var player2Context = await _app.Browser.NewContextAsync(contextOptions);
+        await using var dmContext = await browser.NewContextAsync(contextOptions);
+        await using var player1Context = await browser.NewContextAsync(contextOptions);
+        await using var player2Context = await browser.NewContextAsync(contextOptions);
 
         var dm = await dmContext.NewPageAsync();
         var player1 = await player1Context.NewPageAsync();
@@ -75,7 +76,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
 
         await dm.GotoAsync("/campaigns");
         await dm.GetByRole(AriaRole.Button, new() { Name = "Create Your First Campaign" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Create campaign" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).WaitForAsync();
         var campaignId = new Uri(dm.Url).Segments[^1].TrimEnd('/');
 
         var inviteUrl = await dm.Locator("div.card:has(h5:text('Invite')) input").InputValueAsync();
@@ -120,7 +122,7 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await player1.ReloadAsync();
         await player2.ReloadAsync();
 
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).ClickAsync();
 
         // ---- Criterion 2 (part 1): "The DM starts a session..." ----
 
@@ -133,8 +135,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         // table just started (that would need its own broadcast, which is a real gap, but not
         // this test's to fix). Opening Combat after the table exists is the realistic order
         // anyway: a DM starts the table, then players join.
-        await player1.GetByRole(AriaRole.Button, new() { Name = "Combat" }).ClickAsync();
-        await player2.GetByRole(AriaRole.Button, new() { Name = "Combat" }).ClickAsync();
+        await player1.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).ClickAsync();
+        await player2.GetByRole(AriaRole.Tab, new() { Name = "Combat" }).ClickAsync();
         await Assertions.Expect(player1.GetByTestId("initiative-header")).ToBeVisibleAsync();
         await Assertions.Expect(player2.GetByTestId("initiative-header")).ToBeVisibleAsync();
 
@@ -181,12 +183,16 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
 
         // ---- Criterion 2 (part 2): "...and runs three rounds against three goblins." ----
         // Six participants set above; a full lap is six Next Turn clicks. Three full rounds
-        // means the round counter must read 2, 3, 4 after each successive lap.
+        // means the round counter must read 2, 3, 4 after each successive lap. Each click waits
+        // for its server-side effect (see AdvanceTurnAndWaitAsync) rather than firing 18 blind
+        // clicks in a row, where one swallowed click shorts a lap and fails pages later.
+        var turnAdvances = 0;
         for (var round = 1; round <= 3; round++)
         {
             for (var turn = 0; turn < 6; turn++)
             {
-                await dm.GetByTestId("next-turn-btn").ClickAsync();
+                turnAdvances++;
+                await AdvanceTurnAndWaitAsync(dm, campaignId, turnAdvances);
             }
 
             await Assertions.Expect(dm.GetByTestId("initiative-header")).ToHaveTextAsync($"Initiative - Round {round + 1}");
@@ -239,14 +245,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         Assert.Equal(18, events.Count(e => e == "TurnAdvance"));
     }
 
-    private static async Task LoginAsync(IPage page, string username, string password)
-    {
-        await page.GotoAsync("/login");
-        await page.Locator("#username").FillAsync(username);
-        await page.Locator("#password").FillAsync(password);
-        await page.GetByRole(AriaRole.Button, new() { Name = "Enter Codex" }).ClickAsync();
-        await page.WaitForURLAsync(url => !url.Contains("/login"));
-    }
+    private static Task LoginAsync(IPage page, string username, string password) =>
+        LoginHelper.LoginAsync(page, username, password);
 
     /// <summary>Selects an actor and sets their initiative. Retries the selection itself (belt and
     /// suspenders around ordinary SignalR round-trip jitter) rather than just waiting longer on one
@@ -289,5 +289,27 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await participantRow.GetByTestId("condition-input").FillAsync(effectId);
         await participantRow.GetByTestId("condition-rounds-input").FillAsync(rounds.ToString());
         await participantRow.GetByTestId("condition-add-btn").ClickAsync();
+    }
+
+    /// <summary>Clicks Next Turn once and waits until the server-side session log shows the
+    /// advance actually landed. A click dispatched while the button is mid-re-render can be
+    /// swallowed without error, so the loop counts applied commands, not dispatched clicks -
+    /// the single-writer loop appends exactly one TurnAdvance event per applied advance.</summary>
+    private async Task AdvanceTurnAndWaitAsync(IPage dm, string campaignId, int expectedTurnAdvances)
+    {
+        await dm.GetByTestId("next-turn-btn").ClickAsync();
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline)
+        {
+            var events = await _app.Http.GetFromJsonAsync<List<string>>($"/test/inspect/session-events/{campaignId}");
+            if (events?.Count(e => e == "TurnAdvance") >= expectedTurnAdvances)
+            {
+                return;
+            }
+
+            await Task.Delay(200);
+        }
+
+        throw new TimeoutException($"Next Turn did not land within 15s: TurnAdvance events are still below {expectedTurnAdvances}.");
     }
 }

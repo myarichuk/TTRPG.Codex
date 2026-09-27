@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using Codex.Core;
+using Codex.Core.Abilities;
+using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging;
 
@@ -17,7 +19,9 @@ public sealed class CampaignRuntimeManager(
     IEncounterRepository encounterRepository,
     ComponentRegistry componentRegistry,
     PluginLoader pluginLoader,
-    ILoggerFactory loggerFactory) : IAsyncDisposable
+    ILoggerFactory loggerFactory,
+    ScriptEvaluator scriptEvaluator,
+    IContentRegistry contentRegistry) : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, CampaignRuntime> _runtimes = new();
 
@@ -41,6 +45,15 @@ public sealed class CampaignRuntimeManager(
 
         var session = await GetOrOpenLiveSessionAsync(campaign);
         var plugin = pluginLoader.GetPlugin(campaign.SystemId);
+        var diceRoller = plugin?.GetDiceRoller();
+
+        // Wire the TRCE pipeline into the runtime so turn-boundary triggers (and any future
+        // ability use) execute for real. The executor is per-campaign because dice rollers are
+        // per-system; everything else it holds (scripts, handlers) is stateless and shared.
+        var executor = new AbilityExecutor(
+            scriptEvaluator,
+            logger: loggerFactory.CreateLogger<AbilityExecutor>(),
+            diceRoller: diceRoller);
 
         var runtime = new CampaignRuntime(
             campaign.Id,
@@ -50,7 +63,9 @@ public sealed class CampaignRuntimeManager(
             sessionRepository,
             session,
             encounterRepository,
-            plugin?.GetDiceRoller());
+            diceRoller,
+            executor,
+            contentRegistry);
 
         if (!_runtimes.TryAdd(campaign.Id, runtime))
         {

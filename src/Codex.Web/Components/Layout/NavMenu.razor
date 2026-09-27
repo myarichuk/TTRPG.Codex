@@ -1,7 +1,7 @@
 @using Codex.Web.Components.Layout
 @using Microsoft.AspNetCore.Components.Forms
 
-<nav class="sidebar">
+<nav class="sidebar" id="primary-nav" aria-label="Primary">
     <div class="d-flex align-items-center gap-3 mb-5 px-3">
         <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent-color) 0%, #106ebe 100%); border-radius: 8px; display: grid; place-items: center; box-shadow: 0 4px 12px var(--accent-glow);">
             <LucideIcon IconName="scroll" Size="32" Class="text-white" />
@@ -29,10 +29,6 @@
 
 
     <div class="nav-section-label">System</div>
-    <NavLink href="players" class="nav-link">
-        <LucideIcon IconName="users" Size="18" />
-        <span>Players</span>
-    </NavLink>
     <AuthorizeView>
         <Authorized>
             <NavLink href="settings" class="nav-link">
@@ -51,6 +47,7 @@
     </AuthorizeView>
 
     <div class="mt-auto px-3 pb-4">
+        <CulturePicker />
         <AuthorizeView>
             <Authorized>
                 @{

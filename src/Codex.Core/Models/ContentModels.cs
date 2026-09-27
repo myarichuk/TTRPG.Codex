@@ -104,3 +104,28 @@ public class LocationDefinition : ILocationDefinition
     public List<string> Tags { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
 }
+
+public class RulesEntryDefinition : IRulesEntryDefinition
+{
+    public string Id { get; set; } = string.Empty;
+    public string SystemId { get; set; } = string.Empty;
+    public string PackId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? Inherits { get; set; }
+    public List<string> Tags { get; set; } = new();
+    public Dictionary<string, object> Properties { get; set; } = new();
+    public Dictionary<string, object> Metadata { get; set; } = new();
+
+    public void MergeFrom(IRulesEntryDefinition baseEntry)
+    {
+        if (string.IsNullOrEmpty(Name)) Name = baseEntry.Name;
+        Description ??= baseEntry.Description;
+        if (string.IsNullOrEmpty(Kind)) Kind = baseEntry.Kind;
+
+        foreach (var tag in baseEntry.Tags) if (!Tags.Contains(tag)) Tags.Add(tag);
+        foreach (var kvp in baseEntry.Properties) if (!Properties.ContainsKey(kvp.Key)) Properties[kvp.Key] = kvp.Value;
+        foreach (var kvp in baseEntry.Metadata) if (!Metadata.ContainsKey(kvp.Key)) Metadata[kvp.Key] = kvp.Value;
+    }
+}

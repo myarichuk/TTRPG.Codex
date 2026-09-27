@@ -1,0 +1,26 @@
+/* Overview cards: title link underline on hover/focus; calm otherwise. */
+.campaign-card-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.card-title .campaign-card-link:hover,
+.card-title .campaign-card-link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.campaign-card-link:focus-visible {
+    outline: 2px solid var(--accent-color, #0d8abc);
+    outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-title .campaign-card-link:hover {
+        text-decoration: none;
+    }
+}

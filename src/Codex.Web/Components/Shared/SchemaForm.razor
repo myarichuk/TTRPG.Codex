@@ -25,12 +25,13 @@ else
                         @if (field.IsRequired)
                         {
                             <span class="text-danger" aria-hidden="true">*</span>
+                            <span class="visually-hidden">(required)</span>
                         }
                     </label>
                     @RenderField(field)
                     @if (!string.IsNullOrWhiteSpace(field.Description))
                     {
-                        <div class="form-text small">@field.Description</div>
+                        <div class="form-text small" id="@(field.Key)-desc">@field.Description</div>
                     }
                 </div>
             }
@@ -65,18 +66,24 @@ else
         await ValuesChanged.InvokeAsync(Values);
     }
 
+    private string DescribedBy(FieldDefinition field) =>
+        string.IsNullOrWhiteSpace(field.Description) ? string.Empty : $"{field.Key}-desc";
+
     private RenderFragment RenderField(FieldDefinition field) => field.Type switch
     {
         FieldType.Number => @<input id="@field.Key" type="number" class="form-control form-control-sm"
-                                     value="@GetValue(field)"
+                                     value="@GetValue(field)" required="@field.IsRequired" aria-required="@(field.IsRequired ? "true" : "false")"
+                                     aria-describedby="@DescribedBy(field)"
                                      @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString())))" />,
 
         FieldType.Boolean => @<input id="@field.Key" type="checkbox" class="form-check-input"
                                       checked="@(GetValue(field) is true)"
+                                      aria-describedby="@DescribedBy(field)"
                                       @onchange="@(e => SetValueAsync(field, (bool)(e.Value ?? false)))" />,
 
         FieldType.Dropdown => @<select id="@field.Key" class="form-select form-select-sm"
-                                        value="@GetValue(field)?.ToString()"
+                                        value="@GetValue(field)?.ToString()" required="@field.IsRequired" aria-required="@(field.IsRequired ? "true" : "false")"
+                                        aria-describedby="@DescribedBy(field)"
                                         @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
             <option value="">-- Select --</option>
             @foreach (var option in field.Options ?? new List<string>())
@@ -86,20 +93,24 @@ else
         </select>,
 
         FieldType.LongText => @<textarea id="@field.Key" class="form-control form-control-sm" rows="3"
+                                          required="@field.IsRequired" aria-required="@(field.IsRequired ? "true" : "false")"
+                                          aria-describedby="@DescribedBy(field)"
                                           value="@GetValue(field)?.ToString()"
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
 
         FieldType.TagList => @<input id="@field.Key" type="text" class="form-control form-control-sm"
-                                      placeholder="Comma-separated"
+                                      placeholder="Comma-separated" aria-describedby="@DescribedBy(field)"
                                       value="@string.Join(", ", GetTags(field))"
                                       @onchange="@(e => SetValueAsync(field, SplitTags(e.Value?.ToString())))" />,
 
         FieldType.EntityReference or FieldType.Collection or FieldType.ImagePicker =>
-            @<input id="@field.Key" type="text" class="form-control form-control-sm" disabled
+            @<input id="@field.Key" type="text" class="form-control form-control-sm" readonly
+                     aria-describedby="@DescribedBy(field)"
                      value="@DescribeUnsupported(field)" />,
 
         _ => @<input id="@field.Key" type="text" class="form-control form-control-sm"
-                      value="@GetValue(field)?.ToString()"
+                      value="@GetValue(field)?.ToString()" required="@field.IsRequired" aria-required="@(field.IsRequired ? "true" : "false")"
+                      aria-describedby="@DescribedBy(field)"
                       @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />
     };
 

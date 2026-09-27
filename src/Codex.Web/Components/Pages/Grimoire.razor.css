@@ -70,27 +70,14 @@
 }
 
 .ai-sparkle-btn ::deep svg {
-    background: linear-gradient(135deg, #4f6bed, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    stroke: url(#sparkle-gradient); /* We will need a gradient definition, or just color */
+    stroke: var(--accent-color);
+    color: var(--accent-color);
 }
-
-/* Fix for gradient on svg */
-/* Actually, CSS background-clip: text doesn't work well on SVG stroke/fill in all browsers.
-   For Lucide icon, it's easier to just give it a solid color like #a855f7 or similar,
-   but we can keep the user's styling, applied to the element.
-   Using stroke directly might be better. Let's make it a solid purple-ish color for simplicity if gradient fails. */
-.ai-sparkle-btn ::deep svg {
-    stroke: #a855f7;
-}
-
 
 .ai-sparkle-btn:hover {
     background: var(--fluent-surface-hover);
-    border-color: #a855f7;
-    color: #a855f7;
+    border-color: var(--accent-color);
+    color: var(--accent-color);
 }
 
 .filter-bar {
@@ -148,9 +135,13 @@
 }
 
 .lore-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     border-color: var(--fluent-border-strong);
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 640px) {
+    .featured-lore { grid-template-columns: 1fr; }
 }
 
 .icon-box {
@@ -180,8 +171,10 @@
     background: var(--bg-color-surface);
     border: 1px solid var(--fluent-border);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow-x: auto;
 }
+
+.lore-table-wrapper .table { min-width: 480px; }
 
 .table {
     margin-bottom: 0;

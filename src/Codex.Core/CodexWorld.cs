@@ -3,6 +3,7 @@ using DefaultEcs;
 using DefaultEcs.System;
 using System.Collections.Generic;
 using Codex.Core.Components;
+using Codex.Plugin.Abstractions;
 
 namespace Codex.Core;
 
@@ -13,11 +14,20 @@ namespace Codex.Core;
 /// now owns exactly one <see cref="CodexWorld"/> per live campaign; nothing outside this class and
 /// its single-writer command loop should ever touch <see cref="InnerWorld"/> directly.
 /// </summary>
-public sealed class CodexWorld : IDisposable
+public sealed class CodexWorld : IDisposable, ISystemContext
 {
     private readonly World _world;
     private ISystem<float>? _systems;
     private readonly List<ISystem<float>> _registeredSystems = new();
+
+    public void AddTickSystem(ITickSystem system) => AddSystem(new TickAdapter(system));
+
+    private sealed class TickAdapter(ITickSystem inner) : ISystem<float>
+    {
+        public bool IsEnabled { get; set; } = true;
+        public void Update(float state) => inner.Update(state);
+        public void Dispose() => (inner as IDisposable)?.Dispose();
+    }
 
     public World InnerWorld => _world;
 

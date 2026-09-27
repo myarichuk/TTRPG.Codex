@@ -42,14 +42,15 @@ else
 
     @if (!string.IsNullOrEmpty(statusMessage))
     {
-        <div class="alert alert-info py-2">@statusMessage</div>
+        <div class="alert alert-info py-2" role="status">@statusMessage</div>
     }
 
     <div class="card p-3 mb-4">
         <h5>Recap</h5>
         @if (access.IsDm)
         {
-            <textarea class="form-control form-control-sm mb-2" rows="5" placeholder="What happened this session..." @bind="editRecap" @bind:event="oninput"></textarea>
+            <label class="visually-hidden" for="session-recap">Session recap</label>
+            <textarea id="session-recap" class="form-control form-control-sm mb-2" rows="5" placeholder="What happened this session..." aria-label="Session recap" @bind="editRecap" @bind:event="oninput"></textarea>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-accent btn-sm" @onclick="SaveRecapAsync">Save Recap</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="PreFillRecap">Pre-fill from Events</button>
@@ -89,7 +90,8 @@ else
             <p class="text-tertiary small">No notes yet.</p>
         }
         <div class="mt-3">
-            <textarea class="form-control form-control-sm mb-2" rows="2" placeholder="Add a note..." @bind="newNoteContent" @bind:event="oninput"></textarea>
+            <label class="visually-hidden" for="session-note">Add a session note</label>
+            <textarea id="session-note" class="form-control form-control-sm mb-2" rows="2" placeholder="Add a note..." aria-label="Add a session note" @bind="newNoteContent" @bind:event="oninput"></textarea>
             <div class="d-flex gap-2">
                 <select class="form-select form-select-sm w-auto" @bind="newNoteVisibility" aria-label="Note visibility">
                     <option value="@CommentVisibility.Private">Private (you + DM)</option>

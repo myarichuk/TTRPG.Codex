@@ -4,7 +4,8 @@
     <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\Codex.Persistence\Codex.Persistence.csproj" />
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
-    <ProjectReference Include="..\Codex.Systems.DnD5e\Codex.Systems.DnD5e.csproj" />
+    <!-- No direct system-plugin reference (5.2c): systems load from the plugins/ directory
+         (populated by each system's post-build copy, and by release packaging). -->
   </ItemGroup>
 
   <ItemGroup>
