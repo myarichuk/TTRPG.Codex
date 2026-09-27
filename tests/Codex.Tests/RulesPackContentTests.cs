@@ -344,6 +344,63 @@ public class RulesPackContentTests : IDisposable
     }
 
     [Fact]
+    public async Task Srd51Full_Subclasses_HaveFullDisplayNames()
+    {
+        // The API's short labels ("Land", "Lore", ...) once leaked into the wizard's
+        // subclass cards. The importer maps them to the full SRD subclass names -
+        // names are short factual labels under the mechanics-only policy, no prose.
+        var registry = await LoadPackAsync("srd51-full");
+        var names = registry.GetRulesEntries("DnD5e", "class")
+            .Where(c => c.Metadata.TryGetValue("subclassOf", out _))
+            .ToDictionary(c => c.Id, c => c.Name);
+
+        Assert.Equal(new Dictionary<string, string>
+        {
+            ["berserker"] = "Path of the Berserker",
+            ["champion"] = "Champion",
+            ["devotion"] = "Oath of Devotion",
+            ["draconic"] = "Draconic Bloodline",
+            ["evocation"] = "School of Evocation",
+            ["fiend"] = "The Fiend",
+            ["hunter"] = "Hunter",
+            ["land"] = "Circle of the Land",
+            ["life"] = "Life Domain",
+            ["lore"] = "College of Lore",
+            ["open-hand"] = "Way of the Open Hand",
+            ["thief"] = "Thief",
+        }, names);
+    }
+
+    [Fact]
+    public async Task Srd51Full_Subclasses_ChoiceLevelMatchesRules()
+    {
+        // The wizard only offers level-1 subclasses at creation (domain, origin,
+        // patron); circles/traditions/archetypes unlock at 2-3. The choice level
+        // is the earliest row of each subclass's feature table.
+        var registry = await LoadPackAsync("srd51-full");
+        var minLevel = registry.GetRulesEntries("DnD5e", "class")
+            .Where(c => c.Metadata.TryGetValue("subclassOf", out _))
+            .ToDictionary(c => c.Id, c => AsList(c.Properties["levels"])!
+                .Select(row => Convert.ToInt32(AsDict(row)!["level"])).Min());
+
+        Assert.Equal(new Dictionary<string, int>
+        {
+            ["berserker"] = 3,
+            ["champion"] = 3,
+            ["devotion"] = 3,
+            ["draconic"] = 1,
+            ["evocation"] = 2,
+            ["fiend"] = 1,
+            ["hunter"] = 3,
+            ["land"] = 2,
+            ["life"] = 1,
+            ["lore"] = 3,
+            ["open-hand"] = 3,
+            ["thief"] = 3,
+        }, minLevel);
+    }
+
+    [Fact]
     public async Task Srd51Full_ElfAndLongsword_KnownGoodValues()
     {
         var registry = await LoadPackAsync("srd51-full");

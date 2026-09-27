@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -87,4 +88,47 @@ public static class CharacterCreationFallback
 
     private static string Capitalize(string kind) =>
         string.IsNullOrEmpty(kind) ? kind : char.ToUpperInvariant(kind[0]) + kind[1..];
+}
+
+/// <summary>
+/// Small pure rules helpers shared by the creation wizard. Kept free of any
+/// storage types so the rules stay unit-testable without a registry.
+/// </summary>
+public static class CreationRules
+{
+    /// <summary>Earliest feature level in a subclass's <c>levels</c> table (the
+    /// separate <c>spells</c> grant table is not consulted - callers pass only
+    /// feature rows). Null when the table is missing or has no usable level.
+    /// A level-1 character only chooses a subclass whose choice level is 1
+    /// (cleric domain, sorcerer origin, warlock patron); circles, traditions,
+    /// and archetypes unlock at 2-3 and must not be picked at creation.</summary>
+    public static int? SubclassChoiceLevel(IEnumerable<IDictionary<string, object>> levels)
+    {
+        int? min = null;
+        foreach (var row in levels)
+        {
+            if (row.TryGetValue("level", out var raw) && TryInt(raw) is { } level && level >= 1)
+            {
+                min = min is null ? level : Math.Min(min.Value, level);
+            }
+        }
+
+        return min;
+    }
+
+    /// <summary>Level-1 prepared-caster capacity (cleric, druid): ability
+    /// modifier + class level, minimum 1. Known-spell casters (bard, sorcerer,
+    /// warlock) and the wizard's spellbook use <c>spells_known</c> counts
+    /// instead and never consult this.</summary>
+    public static int PreparedSpellCapacity(int abilityModifier, int classLevel) =>
+        Math.Max(1, abilityModifier + classLevel);
+
+    private static int? TryInt(object? value) => value switch
+    {
+        int i => i,
+        long l => (int)l,
+        double d => (int)d,
+        string s when int.TryParse(s, out var n) => n,
+        _ => null,
+    };
 }

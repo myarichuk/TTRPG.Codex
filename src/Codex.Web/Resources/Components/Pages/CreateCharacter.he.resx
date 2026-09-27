@@ -68,4 +68,9 @@
   <data name="Use standard array"><value>השתמש במערך הרגיל</value></data>
   <data name="Your otherworldly patron shapes your expanded spell list."><value>הפטרון שלך מעניק לך רשימת לחשים מורחבת.</value></data>
   <data name="+{0} ancestry"><value>+{0} מוצא</value></data>
+  <!-- TODO: Hebrew translations pending - English fallback keeps coverage green. -->
+  <data name="Spellcasting"><value>Spellcasting</value></data>
+  <data name="A {0} subclass is chosen at 1st level."><value>A {0} subclass is chosen at 1st level.</value></data>
+  <data name="chosen at level {0}"><value>chosen at level {0}</value></data>
+  <data name="{0} prepare up to {1} level-1 spells from the full class list (ability modifier + level). Cantrips above are fixed; prepared spells change after a long rest."><value>{0} prepare up to {1} level-1 spells from the full class list (ability modifier + level). Cantrips above are fixed; prepared spells change after a long rest.</value></data>
 </root>

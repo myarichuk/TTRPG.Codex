@@ -83,10 +83,18 @@ else
                                         @onclick="() => SelectClass(cls.Id)">
                                     <strong>@cls.Name</strong>
                                     <span class="d-block small opacity-75">d@(Prop(cls, "hitDie")) &middot; @L["Saves"]: @string.Join("/", StrList(Prop(cls, "savingThrows")))</span>
+                                    @if (ClassSpellAbility(cls) is { } spellAbility)
+                                    {
+                                        <span class="d-block small opacity-75">@L["Spellcasting"]: @spellAbility.ToUpperInvariant()</span>
+                                    }
                                 </button>
                             </div>
                         }
                     </div>
+                    @if (SelectedClass != null && LaterSubclasses.Any())
+                    {
+                        <p class="text-secondary small mt-2" data-testid="subclass-future-note">@L["Subclass"]: @string.Join(", ", LaterSubclasses.Select(s => s.Name)) &middot; @L["chosen at level {0}", LaterSubclassLevel]</p>
+                    }
                 }
                 else
                 {
@@ -119,6 +127,10 @@ else
 
             case "Subclass":
                 <h5>@L["Choose a subclass"]</h5>
+                @if (SelectedClass != null)
+                {
+                    <p class="text-secondary small">@L["A {0} subclass is chosen at 1st level.", SelectedClass.Name]</p>
+                }
                 @if (SelectedClass != null && SelectedClass.Id == "warlock")
                 {
                     <p class="text-secondary small">@L["Your otherworldly patron shapes your expanded spell list."]</p>
@@ -190,7 +202,11 @@ else
                                     class="btn w-100 text-start @(classId == cls.Id ? "btn-accent" : "btn-outline-secondary")"
                                     @onclick="() => SelectClass(cls.Id)">
                                 <strong>@cls.Name</strong>
-                                <span class="d-block small opacity-75">@L["HP"]: @Prop(cls, "hitPoints")</span>
+                                <span class="d-block small opacity-75">@L["HP"]: @Prop(cls, "hitPoints") &middot; @string.Join("/", StrList(Prop(cls, "keyAttributes")))</span>
+                                @if (!string.IsNullOrEmpty(Pf2eTraditionsFor(cls)))
+                                {
+                                    <span class="d-block small opacity-75">@L["Spellcasting"]: @Pf2eTraditionsFor(cls)</span>
+                                }
                             </button>
                         </div>
                     }
@@ -315,7 +331,7 @@ else
                             <input class="form-check-input" type="checkbox" data-testid="spell-@spell.Id"
                                    checked="@selectedCantrips.Contains(spell.Id)"
                                    @onchange="e => ToggleSpell(selectedCantrips, spell.Id, (bool)e.Value!)" />
-                            <label class="form-check-label">@spell.Name</label>
+                            <label class="form-check-label">@spell.Name <span class="text-secondary small">@SpellMeta(spell)</span></label>
                         </div>
                     }
                     </div>
@@ -330,10 +346,14 @@ else
                             <input class="form-check-input" type="checkbox" data-testid="spell-@spell.Id"
                                    checked="@selectedLevel1.Contains(spell.Id)"
                                    @onchange="e => ToggleSpell(selectedLevel1, spell.Id, (bool)e.Value!)" />
-                            <label class="form-check-label">@spell.Name</label>
+                            <label class="form-check-label">@spell.Name <span class="text-secondary small">@SpellMeta(spell)</span></label>
                         </div>
                     }
                     </div>
+                }
+                @if (IsPreparedCaster)
+                {
+                    <p class="text-secondary small mt-3" data-testid="prepared-note">@L["{0} prepare up to {1} level-1 spells from the full class list (ability modifier + level). Cantrips above are fixed; prepared spells change after a long rest.", SelectedClass?.Name ?? "", PreparedCapacity]</p>
                 }
                 break;
 
@@ -550,7 +570,19 @@ else
 
     private IEnumerable<IRulesEntryDefinition> TrueClasses => RootEntries(ClassStepUsesClasses ? ClassStep : Pf2eClassStep);
     private IEnumerable<IRulesEntryDefinition> TrueRaces => RootEntries(RaceStep);
-    private IEnumerable<IRulesEntryDefinition> AvailableSubclasses => SameKindChildren(SubclassStep, classId);
+    private static int? SubclassMinLevel(IRulesEntryDefinition entry) =>
+        CreationRules.SubclassChoiceLevel(
+            AsList(Prop(entry, "levels")).Select(AsDict).OfType<Dictionary<string, object>>());
+    private static string? ClassSpellAbility(IRulesEntryDefinition entry)
+    {
+        var casting = AsDict(Prop(entry, "spellcasting"));
+        return casting == null ? null : Str(casting.GetValueOrDefault("ability"));
+    }
+    private IEnumerable<IRulesEntryDefinition> AvailableSubclasses =>
+        SameKindChildren(SubclassStep, classId).Where(s => (SubclassMinLevel(s) ?? 1) <= 1);
+    private IEnumerable<IRulesEntryDefinition> LaterSubclasses =>
+        SameKindChildren(SubclassStep, classId).Where(s => (SubclassMinLevel(s) ?? 1) > 1);
+    private int LaterSubclassLevel => LaterSubclasses.Min(s => SubclassMinLevel(s)) ?? 1;
     private IEnumerable<IRulesEntryDefinition> AvailableSubraces => SameKindChildren(RaceStep, raceId);
     private IEnumerable<IRulesEntryDefinition> ClassChildOptions => StepChildOptions(ClassStep, SelectedAncestry);
     private IEnumerable<IRulesEntryDefinition> Pf2eChildOptions => StepChildOptions(Pf2eClassStep, SelectedClass);
@@ -647,7 +679,10 @@ else
 
     private bool StepVisible(CharacterCreationStep step) => step.Key switch
     {
-        "Subclass" => SameKindChildren(step, classId).Any(),
+        // Level-1 characters only pick a subclass granted at 1st level (cleric
+        // domain, sorcerer origin, warlock patron). Circles, traditions, and
+        // archetypes unlock at 2-3 and are noted on the Class step instead.
+        "Subclass" => AvailableSubclasses.Any(),
         "Spells" => CantripsToChoose > 0 || Level1ToChoose > 0,
         _ => true,
     };
@@ -988,6 +1023,85 @@ else
         Level1Spellcasting.TryGetValue("spells_known", out var known) ? Int(known) :
         classId == "wizard" ? 6 : 0; // spellbook, or prepared caster (full list available)
 
+    // Prepared casters (cleric, druid) have spell slots but no spells_known: they
+    // prepare ability-modifier + level spells from the full class list instead of
+    // picking a fixed set. Paladins/rangers have no level-1 slots yet, so the slot
+    // check keeps them out.
+    private bool IsPreparedCaster =>
+        creation?.SpellsFromClassLists == true && SelectedClass != null && Level1Spellcasting != null
+        && !Level1Spellcasting.ContainsKey("spells_known") && classId != "wizard"
+        && StartingSlots.Any(s => s.Amount > 0);
+
+    private int PreparedCapacity
+    {
+        get
+        {
+            if (SelectedClass == null)
+            {
+                return 1;
+            }
+
+            var ability = ClassSpellAbility(SelectedClass) ?? "";
+            var scoreName = ScoreNames.FirstOrDefault(s => AbbrFor(s) == ability) ?? "Wisdom";
+            return CreationRules.PreparedSpellCapacity(SafeScoreModifier(scoreName), 1);
+        }
+    }
+
+    private string SpellMeta(IAbilityDefinition spell)
+    {
+        // Facts already in the pack metadata (level, school, casting time) - no prose.
+        var bits = new List<string>();
+        if (spell.Metadata != null)
+        {
+            if (spell.Metadata.TryGetValue("level", out var level))
+            {
+                bits.Add(Int(level) == 0 ? "cantrip" : $"level {Int(level)}");
+            }
+
+            if (spell.Metadata.TryGetValue("school", out var school)
+                && Str(school) is { } schoolName && !string.IsNullOrWhiteSpace(schoolName))
+            {
+                bits.Add(schoolName);
+            }
+
+            if (spell.Metadata.TryGetValue("castingTime", out var castingTime)
+                && Str(castingTime) is { } time && !string.IsNullOrWhiteSpace(time))
+            {
+                bits.Add(time);
+            }
+        }
+
+        return string.Join(" · ", bits);
+    }
+
+    private readonly Dictionary<string, string> traditionCache = new(StringComparer.OrdinalIgnoreCase);
+
+    // PF2e caster traditions are factual spell-metadata aggregates (which
+    // traditions hold spells listing this class) - no rulebook prose involved.
+    private string Pf2eTraditionsFor(IRulesEntryDefinition cls)
+    {
+        if (traditionCache.TryGetValue(cls.Id, out var cached))
+        {
+            return cached;
+        }
+
+        var result = "";
+        if (campaign != null)
+        {
+            result = string.Join("/", ContentRegistry.GetAbilitiesBySystem(campaign.SystemId)
+                .Where(a => a.Metadata != null
+                    && a.Metadata.TryGetValue("kind", out var kind) && Str(kind) == "spell"
+                    && a.Metadata.TryGetValue("classes", out var classes)
+                    && AsList(classes).Select(Str).Contains(cls.Id, StringComparer.OrdinalIgnoreCase))
+                .SelectMany(a => a.Metadata!.TryGetValue("traditions", out var traditions)
+                    ? AsList(traditions).Select(Str) : Enumerable.Empty<string>())
+                .Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s));
+        }
+
+        traditionCache[cls.Id] = result;
+        return result;
+    }
+
     private void ToggleSpell(HashSet<string> set, string id, bool take)
     {
         if (take)
@@ -1080,6 +1194,15 @@ else
             if (spells.Any())
             {
                 state["Spells"] = spells;
+            }
+
+            if (IsPreparedCaster && SelectedClass is { } preparedClass)
+            {
+                state["Spellcasting"] = new Dictionary<string, object>
+                {
+                    ["ability"] = ClassSpellAbility(preparedClass) ?? "?",
+                    ["prepared"] = PreparedCapacity,
+                };
             }
 
             var gear = FinalEquipment.ToList();

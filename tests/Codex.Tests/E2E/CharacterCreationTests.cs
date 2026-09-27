@@ -138,7 +138,8 @@ public class CharacterCreationTests : IClassFixture<AppFixture>
         await NameAndNextAsync(page, name);
 
         await PickCardAndNextAsync(page, "class-card-fighter");
-        await PickCardAndNextAsync(page, "subclass-card-champion");
+        // No subclass step at level 1: the Champion archetype unlocks at level 3
+        // (noted on the Class step instead of picked).
         await PickCardAndNextAsync(page, "race-card-human");
 
         await page.GetByTestId("standard-array").ClickAsync();
@@ -162,7 +163,8 @@ public class CharacterCreationTests : IClassFixture<AppFixture>
 
         await page.GetByTestId("class-card-wizard").ClickAsync();
         await page.GetByTestId("wizard-next").ClickAsync();
-        await PickCardAndNextAsync(page, "subclass-card-evocation");
+        // No subclass step at level 1: the School of Evocation unlocks at level 2
+        // (noted on the Class step instead of picked).
 
         await page.GetByTestId("race-card-elf").ClickAsync();
         await page.Locator("[data-testid=subrace-select]").SelectOptionAsync("high-elf");

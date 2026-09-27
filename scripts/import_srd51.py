@@ -566,7 +566,10 @@ def map_subclass(detail: dict, levels: list) -> dict:
     # SRD holds exactly one subclass per class (Fiend for warlock, Evocation for
     # wizard, ...). Stored as a class entry with subclassOf so the creation wizard
     # filters subclasses by their parent class.
-    entry: dict = {"id": detail["index"], "name": detail["name"]}
+    # The API's short names ("Land", "Lore", ...) are replaced with the full SRD
+    # subclass labels ("Circle of the Land", "College of Lore", ...) - names are
+    # short factual labels under the mechanics-only policy, no prose is copied.
+    entry: dict = {"id": detail["index"], "name": SUBCLASS_DISPLAY_NAMES.get(detail["index"], detail["name"])}
     props: dict = {"class": (detail.get("class") or {}).get("index", "?")}
     spells = []
     for spell in detail.get("spells", []):
@@ -584,6 +587,24 @@ def map_subclass(detail: dict, levels: list) -> dict:
     entry["properties"] = props
     entry["metadata"] = {"term": "subclass", "subclassOf": (detail.get("class") or {}).get("index", "?")}
     return entry
+
+
+# Full SRD 5.1 subclass labels keyed by API index. Names only - no descriptions
+# or other prose. Unknown indexes fall back to the API name.
+SUBCLASS_DISPLAY_NAMES = {
+    "berserker": "Path of the Berserker",
+    "champion": "Champion",
+    "devotion": "Oath of Devotion",
+    "draconic": "Draconic Bloodline",
+    "evocation": "School of Evocation",
+    "fiend": "The Fiend",
+    "hunter": "Hunter",
+    "land": "Circle of the Land",
+    "life": "Life Domain",
+    "lore": "College of Lore",
+    "open-hand": "Way of the Open Hand",
+    "thief": "Thief",
+}
 
 
 def map_equipment(detail: dict, categories: list) -> dict:

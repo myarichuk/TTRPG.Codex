@@ -98,4 +98,38 @@ public class CharacterCreationDefinitionTests
         Assert.Null(loader.GetCharacterCreation("Nope"));
         Assert.Null(((ISystemCatalog)new NoOpSystemCatalog()).GetCharacterCreation("Nope"));
     }
+
+    [Theory]
+    [InlineData(1)] // draconic bloodline, fiend patron, life domain
+    [InlineData(2)] // circle of the land, school of evocation
+    [InlineData(3)] // archetypes, colleges, oaths, ...
+    public void SubclassChoiceLevel_ReturnsEarliestFeatureLevel(int choiceLevel)
+    {
+        var levels = new[]
+        {
+            new Dictionary<string, object> { ["level"] = choiceLevel, ["features"] = new List<object>() },
+            new Dictionary<string, object> { ["level"] = choiceLevel + 4, ["features"] = new List<object>() },
+        };
+
+        Assert.Equal(choiceLevel, CreationRules.SubclassChoiceLevel(levels));
+    }
+
+    [Fact]
+    public void SubclassChoiceLevel_ReturnsNull_WhenTableIsMissing()
+    {
+        Assert.Null(CreationRules.SubclassChoiceLevel(Array.Empty<IDictionary<string, object>>()));
+        Assert.Null(CreationRules.SubclassChoiceLevel(new[]
+        {
+            new Dictionary<string, object> { ["features"] = new List<object>() },
+        }));
+    }
+
+    [Theory]
+    [InlineData(3, 1, 4)] // +3 Wis: cleric prepares 4 level-1 spells
+    [InlineData(-1, 1, 1)] // negative modifier still prepares 1 (minimum 1)
+    [InlineData(0, 1, 1)]
+    public void PreparedSpellCapacity_IsAbilityModPlusLevel_MinimumOne(int mod, int level, int expected)
+    {
+        Assert.Equal(expected, CreationRules.PreparedSpellCapacity(mod, level));
+    }
 }

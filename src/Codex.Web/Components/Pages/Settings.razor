@@ -1,0 +1,66 @@
+@page "/settings"
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Localization
+@using Codex.Core.AI
+@inject IConfiguration Configuration
+@inject AIConfiguration AiConfig
+@inject IStringLocalizer<Settings> L
+
+<PageTitle>@L["Configuration"] | TTRPG.Codex</PageTitle>
+
+<div class="app-container">
+    <header class="mb-4">
+        <h1 class="mb-0">@L["Configuration"]</h1>
+        <p class="page-subtitle">@L["Effective settings for this server. Secrets are never shown here."]</p>
+    </header>
+
+    <div class="card p-3 mb-3">
+        <h5>@L["Data storage"]</h5>
+        <dl class="row mb-0">
+            <dt class="col-sm-4">@L["Data directory"]</dt>
+            <dd class="col-sm-8" data-testid="settings-data-dir">@Configuration["Codex:DataDirectory"]</dd>
+            <dt class="col-sm-4">@L["Plugins directory"]</dt>
+            <dd class="col-sm-8" data-testid="settings-plugins-dir">@Configuration["Codex:PluginsDirectory"]</dd>
+        </dl>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <h5>@L["AI assistance"]</h5>
+        <dl class="row mb-0">
+            <dt class="col-sm-4">@L["Provider"]</dt>
+            <dd class="col-sm-8" data-testid="settings-ai-provider">@AiConfig.Provider</dd>
+            <dt class="col-sm-4">@L["Endpoint"]</dt>
+            <dd class="col-sm-8" data-testid="settings-ai-endpoint">@AiConfig.Endpoint</dd>
+            <dt class="col-sm-4">@L["Model"]</dt>
+            <dd class="col-sm-8" data-testid="settings-ai-model">@AiConfig.ModelId</dd>
+            <dt class="col-sm-4">@L["API key"]</dt>
+            <dd class="col-sm-8" data-testid="settings-ai-key">@(HasValue(AiConfig.ApiKey) ? L["Configured"] : L["Not configured"])</dd>
+        </dl>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <h5>@L["Authentication"]</h5>
+        <dl class="row mb-0">
+            <dt class="col-sm-4">@L["Local login"]</dt>
+            <dd class="col-sm-8" data-testid="settings-local-login">@(Configuration.GetValue<bool>("Authentication:EnableLocalLogin", true) ? L["Enabled"] : L["Disabled"])</dd>
+            <dt class="col-sm-4">Google</dt>
+            <dd class="col-sm-8" data-testid="settings-google">@(HasValue(Configuration["Authentication:Google:ClientId"]) ? L["Configured"] : L["Not configured"])</dd>
+            <dt class="col-sm-4">Apple</dt>
+            <dd class="col-sm-8" data-testid="settings-apple">@(HasValue(Configuration["Authentication:Apple:ClientId"]) ? L["Configured"] : L["Not configured"])</dd>
+        </dl>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <h5>@L["Visuals"]</h5>
+        <dl class="row mb-0">
+            <dt class="col-sm-4">@L["Floating glyphs"]</dt>
+            <dd class="col-sm-8" data-testid="settings-glyphs">@(Configuration.GetValue<bool>("Visuals:EnableFloatingGlyphs") ? L["Enabled"] : L["Disabled"])</dd>
+        </dl>
+    </div>
+
+    <p class="text-secondary small">@L["Values come from appsettings.json and environment variables. To change a secret, update server configuration and restart - it can only ever read as Configured or Not configured here."]</p>
+</div>
+
+@code {
+    private static bool HasValue(string? value) => !string.IsNullOrWhiteSpace(value);
+}
