@@ -36,3 +36,6 @@
 ## 2025-05-18 - Type missing on some interactive buttons
 **Learning:** Found several Blazor Razor components that use <button> without an explicit type attribute, running the risk of implicit form submission when these buttons appear inside forms, even if they aren't right now, leading to unpredictable UI states.
 **Action:** Adding explicit type="button" to <button> elements in Home.razor, Grimoire.razor, Players.razor, and CampaignList.razor where appropriate.
+## 2026-10-06 - [Form Input Accessibility]
+**Learning:** Found several forms across the application where `<input>` elements were not explicitly linked to their corresponding `<label>` elements via `id` and `for` attributes, or lacked an `aria-label` altogether if a visual label was missing. This makes it difficult for screen readers to properly announce the input's purpose.
+**Action:** When creating or modifying inputs in forms, always ensure they are explicitly linked to a `<label>` using `id` and `for` attributes, or provide a descriptive `aria-label` attribute if a visual label is deliberately omitted.

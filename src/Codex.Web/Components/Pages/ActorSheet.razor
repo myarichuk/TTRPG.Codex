@@ -53,8 +53,8 @@ else
     {
         <div class="card p-3 mb-4">
             <div class="mb-2">
-                <label class="form-label small">Name</label>
-                <input class="form-control" @bind="editName" @bind:event="oninput" />
+                <label for="edit-name" class="form-label small">Name</label>
+                <input id="edit-name" class="form-control" @bind="editName" @bind:event="oninput" />
             </div>
             @if (actorSchema != null)
             {
@@ -66,8 +66,8 @@ else
                 @foreach (var entry in editState.ToList())
                 {
                     <div class="mb-2">
-                        <label class="form-label small">@entry.Key</label>
-                        <input class="form-control form-control-sm" value="@entry.Value?.ToString()"
+                        <label for="@($"edit-{entry.Key}")" class="form-label small">@entry.Key</label>
+                        <input id="@($"edit-{entry.Key}")" class="form-control form-control-sm" value="@entry.Value?.ToString()"
                                @onchange="e => editState[entry.Key] = e.Value?.ToString() ?? string.Empty" />
                     </div>
                 }
