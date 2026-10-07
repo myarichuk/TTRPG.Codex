@@ -20,7 +20,7 @@ public class OAuthCallbackTests
             name: "New User");
 
         Assert.True(authResult.Succeeded);
-        var principal = authResult.Principal;
+        var principal = authResult.Principal!;
         var provider = "Google";
         var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -86,7 +86,7 @@ public class OAuthCallbackTests
             email: "existing@gmail.com",
             name: "Existing User");
 
-        var principal = authResult.Principal;
+        var principal = authResult.Principal!;
         var provider = "Google";
         var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -135,7 +135,7 @@ public class OAuthCallbackTests
             email: "user@gmail.com",
             name: "Google User");
 
-        var principal = authResult.Principal;
+        var principal = authResult.Principal!;
         var provider = "Google";
         var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -165,7 +165,7 @@ public class OAuthCallbackTests
             providerKey: "google456",
             email: "noname@example.com");
 
-        var principal = authResult.Principal;
+        var principal = authResult.Principal!;
         var provider = "Google";
         var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;

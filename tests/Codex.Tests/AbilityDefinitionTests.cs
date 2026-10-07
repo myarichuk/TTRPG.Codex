@@ -207,17 +207,17 @@ effects:
         Assert.NotNull(ability.Triggers);
         Assert.Single(ability.Triggers);
         Assert.Equal("Action", ability.Triggers[0].Type);
-        Assert.Equal("1", ability.Triggers[0].Params["Cost"]); // YamlDotNet deserializes unquoted numbers as strings when type is object sometimes
+        Assert.Equal("1", ability.Triggers[0].Params!["Cost"]); // YamlDotNet deserializes unquoted numbers as strings when type is object sometimes
 
         Assert.NotNull(ability.Requires);
         Assert.Single(ability.Requires);
         Assert.Equal("HasResource", ability.Requires[0].Type);
-        Assert.Equal("Mana", ability.Requires[0].Params["Resource"]);
+        Assert.Equal("Mana", ability.Requires[0].Params!["Resource"]);
 
         Assert.NotNull(ability.Costs);
         Assert.Single(ability.Costs);
         Assert.Equal("ConsumeResource", ability.Costs[0].Type);
-        Assert.Equal("Mana", ability.Costs[0].Params["Resource"]);
+        Assert.Equal("Mana", ability.Costs[0].Params!["Resource"]);
 
         Assert.NotNull(ability.Effects);
         Assert.Single(ability.Effects);
