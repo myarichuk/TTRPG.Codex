@@ -36,3 +36,6 @@
 ## 2025-05-18 - Type missing on some interactive buttons
 **Learning:** Found several Blazor Razor components that use <button> without an explicit type attribute, running the risk of implicit form submission when these buttons appear inside forms, even if they aren't right now, leading to unpredictable UI states.
 **Action:** Adding explicit type="button" to <button> elements in Home.razor, Grimoire.razor, Players.razor, and CampaignList.razor where appropriate.
+## 2026-10-07 - [Accessible Native Buttons and Input Labels in Inline Forms]
+**Learning:** Found an accessibility anti-pattern where inline form elements (like in `CombatConsole.razor`) lacked explicit `aria-label` attributes, and action links were implemented as `<a href="javascript:void(0)">`. This degrades the experience for screen readers and breaks native keyboard focus/activation semantics.
+**Action:** Replaced the `javascript:void(0)` link with a semantically correct `<button type="button">`, hidden the decorative icon from screen readers (`aria-hidden="true"`), and added descriptive `aria-label` attributes to all inline inputs (`<input>`, `<textarea>`, `<select>`) that lacked visible labels.

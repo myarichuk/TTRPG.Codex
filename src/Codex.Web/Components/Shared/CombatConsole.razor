@@ -96,7 +96,7 @@ else
                                     @effect.EffectId (@effect.RoundsRemaining)
                                     @if (Access.IsDm)
                                     {
-                                        <a href="javascript:void(0)" class="text-white ms-1" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)">×</a>
+                                        <button type="button" aria-label="Remove condition @effect.EffectId" class="btn btn-link text-white p-0 ms-1 text-decoration-none" style="font-size: 1.2rem; line-height: 1;" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)"><span aria-hidden="true">×</span></button>
                                     }
                                 </span>
                             }
@@ -104,15 +104,15 @@ else
                             @if (Access.IsDm)
                             {
                                 <div class="d-flex gap-1 mt-2 align-items-center">
-                                    <input type="number" class="form-control form-control-sm" style="width:5rem" data-testid="damage-input"
+                                    <input type="number" aria-label="Damage amount for @participant.ActorId" class="form-control form-control-sm" style="width:5rem" data-testid="damage-input"
                                            value="@GetDamageInput(participant.ActorId)"
                                            @oninput="e => SetDamageInput(participant.ActorId, e.Value?.ToString())" />
                                     <button type="button" class="btn btn-sm btn-outline-danger" data-testid="damage-btn" @onclick="() => ApplyDamageAsync(participant.ActorId)">Damage</button>
                                     <button type="button" class="btn btn-sm btn-outline-success" data-testid="heal-btn" @onclick="() => ApplyHealingAsync(participant.ActorId)">Heal</button>
-                                    <input class="form-control form-control-sm" style="width:8rem" placeholder="condition" data-testid="condition-input"
+                                    <input class="form-control form-control-sm" aria-label="Condition name for @participant.ActorId" style="width:8rem" placeholder="condition" data-testid="condition-input"
                                            value="@GetConditionInput(participant.ActorId)"
                                            @oninput="e => SetConditionInput(participant.ActorId, e.Value?.ToString())" />
-                                    <input type="number" class="form-control form-control-sm" style="width:4rem" placeholder="rounds" data-testid="condition-rounds-input"
+                                    <input type="number" aria-label="Condition rounds for @participant.ActorId" class="form-control form-control-sm" style="width:4rem" placeholder="rounds" data-testid="condition-rounds-input"
                                            value="@GetConditionRounds(participant.ActorId)"
                                            @oninput="e => SetConditionRounds(participant.ActorId, e.Value?.ToString())" />
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(participant.ActorId)">Add</button>
@@ -126,7 +126,7 @@ else
                 @if (Access.IsDm)
                 {
                     <div class="d-flex gap-1 mt-2 align-items-center">
-                        <select class="form-select form-select-sm" style="width:auto" data-testid="add-to-initiative-select" @bind="selectedActorId">
+                        <select class="form-select form-select-sm" aria-label="Select participant" style="width:auto" data-testid="add-to-initiative-select" @bind="selectedActorId">
                             <option value="">Add to initiative...</option>
                             @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
                             {
@@ -135,7 +135,7 @@ else
                         </select>
                         <button type="button" class="btn btn-sm btn-outline-primary" data-testid="roll-initiative-btn" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll d20</button>
                         <span class="text-tertiary small">or</span>
-                        <input type="number" class="form-control form-control-sm" style="width:5rem" placeholder="enter" data-testid="manual-initiative-input"
+                        <input type="number" aria-label="Manual initiative for @selectedActorId" class="form-control form-control-sm" style="width:5rem" placeholder="enter" data-testid="manual-initiative-input"
                                value="@GetManualInitiative(selectedActorId)"
                                @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
                         <button type="button" class="btn btn-sm btn-outline-primary" data-testid="set-initiative-btn" @onclick="SetInitiativeManualAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Set</button>
@@ -147,7 +147,7 @@ else
             {
                 <div class="card p-3 mb-3">
                     <h5>Quick-Add Monster</h5>
-                    <input class="form-control form-control-sm mb-2" placeholder="Search @Campaign.SystemId monsters..." @bind="contentSearch" @bind:event="oninput" />
+                    <input class="form-control form-control-sm mb-2" aria-label="Search monsters" placeholder="Search @Campaign.SystemId monsters..." @bind="contentSearch" @bind:event="oninput" />
                     @foreach (var definition in SearchBlueprints())
                     {
                         <div class="d-flex justify-content-between align-items-center border-bottom py-1">
@@ -163,7 +163,7 @@ else
             <div class="card p-3 mb-3">
                 <h5>Dice</h5>
                 <div class="input-group input-group-sm mb-2">
-                    <input class="form-control" placeholder="2d6+3, 4d6kh3, adv+5..." @bind="diceExpression" />
+                    <input class="form-control" aria-label="Dice expression" placeholder="2d6+3, 4d6kh3, adv+5..." @bind="diceExpression" />
                     <button type="button" class="btn btn-accent" @onclick="RollDiceAsync">Roll</button>
                 </div>
                 @if (Access.IsDm)
@@ -190,7 +190,7 @@ else
 
             <div class="card p-3">
                 <h5>Quick Notes</h5>
-                <textarea class="form-control form-control-sm mb-2" rows="2" @bind="noteText"></textarea>
+                <textarea class="form-control form-control-sm mb-2" aria-label="Session note text" rows="2" @bind="noteText"></textarea>
                 @if (Access.IsDm)
                 {
                     <div class="form-check mb-2">
