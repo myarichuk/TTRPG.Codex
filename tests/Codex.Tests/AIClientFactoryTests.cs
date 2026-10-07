@@ -16,9 +16,7 @@ public class AIClientFactoryTests : IAsyncLifetime
     {
         try
         {
-            _ollamaContainer = new OllamaBuilder()
-                .WithImage("ollama/ollama:latest")
-                .Build();
+            _ollamaContainer = new OllamaBuilder("ollama/ollama:latest").Build();
 
             await _ollamaContainer.StartAsync();
         }
