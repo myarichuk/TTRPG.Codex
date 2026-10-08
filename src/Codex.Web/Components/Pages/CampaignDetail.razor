@@ -181,16 +181,16 @@ else
             @if (access!.IsDm)
             {
                 <div class="mb-2">
-                    <label class="form-label small">Name</label>
-                    <input class="form-control" @bind="editName" />
+                    <label for="campaign-name" class="form-label small">Name</label>
+                    <input id="campaign-name" class="form-control" @bind="editName" />
                 </div>
                 <div class="mb-2">
-                    <label class="form-label small">Description</label>
-                    <textarea class="form-control" rows="2" @bind="editDescription"></textarea>
+                    <label for="campaign-description" class="form-label small">Description</label>
+                    <textarea id="campaign-description" class="form-control" rows="2" @bind="editDescription"></textarea>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label small">System</label>
-                    <select class="form-select" @bind="editSystemId">
+                    <label for="campaign-system" class="form-label small">System</label>
+                    <select id="campaign-system" class="form-select" @bind="editSystemId">
                         @foreach (var systemId in SystemCatalog.LoadedSystemIds)
                         {
                             <option value="@systemId">@systemId</option>
@@ -224,7 +224,7 @@ else
                 <h5>Invite</h5>
                 <p class="text-tertiary small">Share this link to add a player to the campaign:</p>
                 <div class="input-group">
-                    <input class="form-control" readonly value="@GetInviteLink()" />
+                    <input class="form-control" readonly value="@GetInviteLink()" aria-label="Invite link" />
                     <button type="button" class="btn btn-outline-secondary" @onclick="CopyInviteLinkAsync">Copy</button>
                 </div>
             </div>

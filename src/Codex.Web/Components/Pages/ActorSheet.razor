@@ -53,8 +53,8 @@ else
     {
         <div class="card p-3 mb-4">
             <div class="mb-2">
-                <label class="form-label small">Name</label>
-                <input class="form-control" @bind="editName" @bind:event="oninput" />
+                <label for="actor-name" class="form-label small">Name</label>
+                <input id="actor-name" class="form-control" @bind="editName" @bind:event="oninput" />
             </div>
             @if (actorSchema != null)
             {
