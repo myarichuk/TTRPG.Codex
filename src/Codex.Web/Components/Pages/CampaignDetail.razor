@@ -181,16 +181,16 @@ else
             @if (access!.IsDm)
             {
                 <div class="mb-2">
-                    <label class="form-label small">Name</label>
-                    <input class="form-control" @bind="editName" />
+                    <label for="campaignName" class="form-label small">Name</label>
+                    <input id="campaignName" class="form-control" @bind="editName" />
                 </div>
                 <div class="mb-2">
-                    <label class="form-label small">Description</label>
-                    <textarea class="form-control" rows="2" @bind="editDescription"></textarea>
+                    <label for="campaignDescription" class="form-label small">Description</label>
+                    <textarea id="campaignDescription" class="form-control" rows="2" @bind="editDescription"></textarea>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label small">System</label>
-                    <select class="form-select" @bind="editSystemId">
+                    <label for="campaignSystem" class="form-label small">System</label>
+                    <select id="campaignSystem" class="form-select" @bind="editSystemId">
                         @foreach (var systemId in SystemCatalog.LoadedSystemIds)
                         {
                             <option value="@systemId">@systemId</option>
@@ -224,7 +224,7 @@ else
                 <h5>Invite</h5>
                 <p class="text-tertiary small">Share this link to add a player to the campaign:</p>
                 <div class="input-group">
-                    <input class="form-control" readonly value="@GetInviteLink()" />
+                    <input class="form-control" readonly value="@GetInviteLink()" aria-label="Invite link" />
                     <button type="button" class="btn btn-outline-secondary" @onclick="CopyInviteLinkAsync">Copy</button>
                 </div>
             </div>
@@ -353,7 +353,7 @@ else
             {
                 <div class="col-md-5">
                     <h5>Add from Content</h5>
-                    <input class="form-control form-control-sm mb-2" placeholder="Search @campaign!.SystemId actors..." @bind="contentSearch" @bind:event="oninput" />
+                    <input class="form-control form-control-sm mb-2" placeholder="Search @campaign!.SystemId actors..." @bind="contentSearch" @bind:event="oninput" aria-label="Search actors" />
                     @foreach (var definition in SearchActorBlueprints())
                     {
                         <div class="d-flex justify-content-between align-items-center border-bottom py-1">
@@ -363,8 +363,8 @@ else
                     }
 
                     <h5 class="mt-4">New Blank Actor</h5>
-                    <input class="form-control form-control-sm mb-1" placeholder="Name" @bind="newActorName" />
-                    <select class="form-select form-select-sm mb-2" @bind="newActorKind">
+                    <input class="form-control form-control-sm mb-1" placeholder="Name" @bind="newActorName" aria-label="New actor name" />
+                    <select class="form-select form-select-sm mb-2" @bind="newActorKind" aria-label="New actor kind">
                         @foreach (ActorKind kind in Enum.GetValues<ActorKind>())
                         {
                             <option value="@kind">@kind</option>
@@ -482,7 +482,7 @@ else
                 @if (access!.IsDm)
                 {
                     <div class="input-group input-group-sm mt-2">
-                        <input class="form-control" placeholder="New location name" @bind="newLocationName" />
+                        <input class="form-control" placeholder="New location name" @bind="newLocationName" aria-label="New location name" />
                         <button type="button" class="btn btn-outline-primary" @onclick="() => AddLocationAsync(region.Id)">Add</button>
                     </div>
                 }
@@ -491,7 +491,7 @@ else
         @if (access!.IsDm)
         {
             <div class="input-group input-group-sm">
-                <input class="form-control" placeholder="New region name" @bind="newRegionName" />
+                <input class="form-control" placeholder="New region name" @bind="newRegionName" aria-label="New region name" />
                 <button type="button" class="btn btn-outline-primary" @onclick="CreateRegionAsync">Add Region</button>
             </div>
         }
@@ -554,8 +554,8 @@ else
         {
             <div class="card p-3 mt-3">
                 <h5>New Fact</h5>
-                <input class="form-control form-control-sm mb-2" placeholder="Summary" @bind="newFactSummary" />
-                <select class="form-select form-select-sm mb-2" @bind="newFactVisibility">
+                <input class="form-control form-control-sm mb-2" placeholder="Summary" @bind="newFactSummary" aria-label="New fact summary" />
+                <select class="form-select form-select-sm mb-2" @bind="newFactVisibility" aria-label="New fact visibility">
                     @foreach (FactVisibility v in Enum.GetValues<FactVisibility>())
                     {
                         <option value="@v">@v</option>
