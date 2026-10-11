@@ -162,11 +162,11 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         // Anchored to Aria's own turn (she goes first), rounds chosen so Stunned expires after
         // round 1 while Poisoned survives to expire only at round 3.
         await AddConditionAsync(ariaRowOnDm, "Poisoned", rounds: 3);
-        await AddConditionAsync(ariaRowOnDm, "Stunned", rounds: 1);
-
-        // Contains, not equals: the DM's badge also carries a trailing "x" remove link in its
-        // text content.
+        // Wait for the first condition to render before adding the second, to avoid Blazor Server
+        // overwriting the input value during a re-render while Playwright is typing.
         await Assertions.Expect(ariaRowOnDm.GetByTestId("condition-badge").Filter(new() { HasText = "Poisoned" })).ToContainTextAsync("Poisoned (3)");
+
+        await AddConditionAsync(ariaRowOnDm, "Stunned", rounds: 1);
         await Assertions.Expect(ariaRowOnDm.GetByTestId("condition-badge").Filter(new() { HasText = "Stunned" })).ToContainTextAsync("Stunned (1)");
 
         // ---- Criterion 3: "Each player sees their own HP change live." ----
@@ -187,6 +187,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
             for (var turn = 0; turn < 6; turn++)
             {
                 await dm.GetByTestId("next-turn-btn").ClickAsync();
+                // Brief delay to allow Blazor Server to process the click and avoid dropped clicks.
+                await Task.Delay(150);
             }
 
             await Assertions.Expect(dm.GetByTestId("initiative-header")).ToHaveTextAsync($"Initiative - Round {round + 1}");
