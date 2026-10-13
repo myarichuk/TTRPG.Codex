@@ -36,3 +36,7 @@
 ## 2025-05-18 - Type missing on some interactive buttons
 **Learning:** Found several Blazor Razor components that use <button> without an explicit type attribute, running the risk of implicit form submission when these buttons appear inside forms, even if they aren't right now, leading to unpredictable UI states.
 **Action:** Adding explicit type="button" to <button> elements in Home.razor, Grimoire.razor, Players.razor, and CampaignList.razor where appropriate.
+
+## 2024-10-12 - Avoid javascript:void(0) on non-semantic a tags
+**Learning:** Using `href="javascript:void(0)"` on `<a>` tags for click actions creates accessibility barriers, as screen readers may not announce them correctly and they don't behave like true buttons.
+**Action:** Use `<button type="button">` instead of `<a>` for click actions, ensuring to include an `aria-label` for screen reader clarity. Default button styling can be removed with CSS to match the visual appearance of a text link if necessary.
