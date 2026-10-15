@@ -96,7 +96,7 @@ else
                                     @effect.EffectId (@effect.RoundsRemaining)
                                     @if (Access.IsDm)
                                     {
-                                        <a href="javascript:void(0)" class="text-white ms-1" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)">×</a>
+                                        <button type="button" aria-label="Remove @effect.EffectId condition" class="text-white ms-1 cursor-pointer" style="background:none;border:none;padding:0;" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)">×</button>
                                     }
                                 </span>
                             }
