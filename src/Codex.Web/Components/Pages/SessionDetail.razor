@@ -1,14 +1,16 @@
 @page "/campaigns/{CampaignId}/sessions/{SessionId}"
 @using System.Security.Claims
+@using Codex.Core
 @using Codex.Core.AI
 @using Codex.Persistence
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject ISessionRepository SessionRepo
 @inject INoteRepository NoteRepo
+@inject IJournalRepository JournalRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject IUserRepository UserRepo
-@inject LoreGenerator Lore
+@inject AiFeatures Ai
 @inject ILogger<SessionDetail> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 
@@ -34,8 +36,9 @@ else
             <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/sessions">Sessions</a></nav>
             <h1 class="mb-0">@Title</h1>
             <div class="d-flex flex-wrap gap-1 mt-1">
-                <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
-                <span class="pill">@session.Date.ToLocalTime().ToString("dddd d MMM yyyy")</span>
+                <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@(session.Status == SessionStatus.Live ? "" : "")@session.Status</span>
+                <span class="pill"><LucideIcon IconName="calendar" Size="12" /> @session.Date.ToLocalTime().ToString("dddd d MMM yyyy")</span>
+                <span class="pill"><LucideIcon IconName="zap" Size="12" /> @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</span>
             </div>
         </div>
     </div>
@@ -47,7 +50,7 @@ else
             @if (access.IsDm)
             {
                 <section class="panel" aria-labelledby="details-heading">
-                    <div class="panel-title"><h2 id="details-heading" class="h5">Details</h2></div>
+                    <div class="panel-title"><h2 id="details-heading" class="h5"><LucideIcon IconName="edit-3" Size="16" Class="title-icon" /> Details</h2></div>
                     <div class="field-grid">
                         <div>
                             <label for="session-title" class="form-label">Title</label>
@@ -67,23 +70,29 @@ else
             }
 
             <section class="panel" aria-labelledby="recap-heading">
-                <div class="panel-title"><h2 id="recap-heading" class="h5">Recap</h2></div>
+                <div class="panel-title">
+                    <h2 id="recap-heading" class="h5"><LucideIcon IconName="book-open" Size="16" Class="title-icon" /> Recap</h2>
+                    @if (access.IsDm)
+                    {
+                        <span class="pill pill-success"><LucideIcon IconName="users" Size="12" /> Players can read this</span>
+                    }
+                </div>
                 @if (access.IsDm)
                 {
                     <label for="recap" class="visually-hidden">Recap</label>
-                    <textarea id="recap" class="form-control mb-2" rows="6" placeholder="What happened this session…" @bind="editRecap" @bind:event="oninput"></textarea>
-                    <div class="d-flex gap-2 flex-wrap">
+                    <textarea id="recap" class="form-control mb-2" rows="8" placeholder="What happened this session, as the players will read it…" @bind="editRecap" @bind:event="oninput"></textarea>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
                         <button type="button" class="btn btn-primary btn-sm" @onclick="SaveRecapAsync">Save recap</button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="PreFillRecap">Pre-fill from events</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="DraftWithAiAsync" disabled="@draftingAi" aria-describedby="ai-help">
-                            @(draftingAi ? "Drafting…" : "Draft with AI")
+                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
+                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? "Drafting…" : "Draft with AI")
                         </button>
                     </div>
-                    <p id="ai-help" class="form-text mb-0">“Draft with AI” sends the event list to the configured chat model, only when you click it.</p>
+                    <p id="ai-help" class="form-text mb-0">The player draft is built from the event log, party notes and open rolls only. Secret rolls and private notes never reach it.</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(session.Recap))
                 {
-                    <p class="mb-0" style="white-space: pre-wrap">@session.Recap</p>
+                    <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(session.Recap))</div>
                 }
                 else
                 {
@@ -91,8 +100,27 @@ else
                 }
             </section>
 
+            @if (access.IsDm)
+            {
+                <section class="panel panel-dm" aria-labelledby="dm-summary-heading">
+                    <div class="panel-title">
+                        <h2 id="dm-summary-heading" class="h5"><LucideIcon IconName="lock" Size="16" Class="title-icon" /> DM summary</h2>
+                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="12" /> Only you</span>
+                    </div>
+                    <label for="dm-summary" class="visually-hidden">DM summary</label>
+                    <textarea id="dm-summary" class="form-control mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput"></textarea>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button type="button" class="btn btn-primary btn-sm" @onclick="SaveDmSummaryAsync">Save summary</button>
+                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
+                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Dm ? "Drafting…" : "Draft with AI")
+                        </button>
+                    </div>
+                    <p class="form-text mb-0">The DM draft sees everything: secret rolls, private notes and your previous summary.</p>
+                </section>
+            }
+
             <section class="panel" aria-labelledby="notes-heading">
-                <div class="panel-title"><h2 id="notes-heading" class="h5">Notes</h2></div>
+                <div class="panel-title"><h2 id="notes-heading" class="h5"><LucideIcon IconName="message-square" Size="16" Class="title-icon" /> Table notes</h2></div>
                 @if (notes.Count == 0)
                 {
                     <p class="small-muted">No notes yet.</p>
@@ -100,6 +128,7 @@ else
                 @foreach (var note in notes)
                 {
                     <div class="list-row align-items-start">
+                        <span class="avatar avatar-sm" aria-hidden="true">@Initial(memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId))</span>
                         <div class="row-main">
                             <div class="row-sub">
                                 <strong>@memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong>
@@ -126,8 +155,26 @@ else
         </div>
 
         <div class="col-lg-4">
+            <section class="panel panel-journal" aria-labelledby="journal-heading">
+                <div class="panel-title">
+                    <h2 id="journal-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="16" Class="title-icon" /> My journal</h2>
+                    <span class="pill"><LucideIcon IconName="lock" Size="12" /> Only you</span>
+                </div>
+                <p class="small-muted">Your private notebook for this session. Nobody else, not even the DM, can read it.</p>
+                <label for="journal-body" class="visually-hidden">Journal entry</label>
+                <textarea id="journal-body" class="form-control mb-2" rows="7" placeholder="Names to remember, theories, loot you're owed…" @bind="journalBody" @bind:event="oninput" data-testid="session-journal"></textarea>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="SaveJournalAsync" data-testid="session-journal-save">Save journal</button>
+                    @if (journalSavedAt != null)
+                    {
+                        <span class="small-muted" role="status">Saved @journalSavedAt.Value.ToLocalTime().ToString("HH:mm")</span>
+                    }
+                </div>
+                <a href="/campaigns/@CampaignId/journal" class="small d-inline-block mt-2">All my journal entries</a>
+            </section>
+
             <section class="panel" aria-labelledby="events-heading">
-                <div class="panel-title"><h2 id="events-heading" class="h5">Events (@session.Events.Count)</h2></div>
+                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="16" Class="title-icon" /> Events (@session.Events.Count)</h2></div>
                 @if (session.Events.Count == 0)
                 {
                     <p class="small-muted mb-0">Nothing recorded yet. Events are written automatically while the table runs.</p>
@@ -161,9 +208,13 @@ else
     private string newNoteContent = "";
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
     private string editRecap = "";
+    private string editDmSummary = "";
     private string editTitle = "";
     private SessionStatus editStatus;
-    private bool draftingAi;
+    private AiAudience? drafting;
+    private JournalEntryDocument? journal;
+    private string journalBody = "";
+    private DateTime? journalSavedAt;
     private Flash? flash;
 
     private string NotesTargetId => $"session:{SessionId}";
@@ -187,6 +238,7 @@ else
             if (session != null)
             {
                 editRecap = session.Recap ?? "";
+                editDmSummary = access.IsDm ? session.DmSummary ?? "" : "";
                 editTitle = session.Title;
                 editStatus = session.Status;
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access)).ToList();
@@ -196,11 +248,17 @@ else
                     var user = await UserRepo.GetUserByIdAsync(member.UserId);
                     memberUsernames[member.UserId] = user?.Username ?? member.UserId;
                 }
+
+                journal = (await JournalRepo.GetMineAsync(access)).FirstOrDefault(j => j.SessionId == SessionId);
+                journalBody = journal?.Body ?? "";
+                journalSavedAt = journal?.UpdatedAt;
             }
         }
 
         loading = false;
     }
+
+    private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
     private string SerializeEvents() => string.Join("\n",
         session!.Events.OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Description}"));
@@ -229,24 +287,57 @@ else
         flash = Flash.Success("Recap saved.");
     }
 
-    private async Task DraftWithAiAsync()
+    private async Task SaveDmSummaryAsync()
     {
-        if (session == null || access == null || !access.IsDm || draftingAi) return;
+        if (session == null || access == null || !access.IsDm) return;
+        session.DmSummary = editDmSummary;
+        await SessionRepo.SaveAsync(session);
+        flash = Flash.Success("DM summary saved.");
+    }
 
-        draftingAi = true;
+    private async Task DraftAsync(AiAudience audience)
+    {
+        if (session == null || access == null || campaign == null || !access.IsDm || drafting != null) return;
+
+        drafting = audience;
         try
         {
-            editRecap = await Lore.SummarizeSessionAsync(SerializeEvents());
-            flash = Flash.Info("AI draft ready. Review and save.");
+            // The player digest is built from player-visible notes only; the DM digest from everything.
+            var allNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
+            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"));
+            if (audience == AiAudience.Players) editRecap = text; else editDmSummary = text;
+            flash = Flash.Info("AI draft ready. Review, edit and save.");
+        }
+        catch (AiNotConfiguredException)
+        {
+            flash = Flash.Error("No AI provider is set up. Add one under your account's AI settings (top right).");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "AI recap draft failed for session {SessionId}", SessionId);
-            flash = Flash.Error("The AI draft failed. The event list still works for a manual recap.");
+            Logger.LogError(ex, "AI summary failed for session {SessionId}", SessionId);
+            flash = Flash.Error("The AI draft failed: " + ex.Message);
         }
         finally
         {
-            draftingAi = false;
+            drafting = null;
+        }
+    }
+
+    private async Task SaveJournalAsync()
+    {
+        if (access == null) return;
+        var entry = journal ?? new JournalEntryDocument { CampaignId = CampaignId, SessionId = SessionId, Title = Title ?? "Session" };
+        entry.Body = journalBody;
+        entry.Title = Title ?? entry.Title;
+        if (await JournalRepo.TrySaveAsync(entry, access))
+        {
+            journal = entry;
+            journalSavedAt = entry.UpdatedAt;
+            flash = Flash.Success("Journal saved. Only you can read it.");
+        }
+        else
+        {
+            flash = Flash.Error("Could not save the journal entry.");
         }
     }
 

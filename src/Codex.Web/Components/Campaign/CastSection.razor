@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Core.AI
 @using Codex.Core.Systems
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
@@ -6,6 +7,9 @@
 @inject IContentRegistry Registry
 @inject ComponentRegistry Components
 @inject ISystemCatalog Catalog
+@inject CampaignLibrary Library
+@inject AiFeatures Ai
+@inject ILogger<CastSection> Logger
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -23,9 +27,12 @@
         <button type="button" class="btn btn-primary" @onclick="OpenCreateAsync" data-testid="create-character">
             <LucideIcon IconName="user-plus" Size="16" /> @(Ctx.IsDm ? "New character or NPC" : "Create my character")
         </button>
+        <button type="button" class="btn btn-ai" @onclick="OpenAiCreateAsync" data-testid="create-character-ai">
+            <LucideIcon IconName="sparkles" Size="16" /> Create with AI
+        </button>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/library/monster" class="btn btn-outline-secondary"><LucideIcon IconName="skull" Size="16" /> Add from library</a>
+            <a href="@Ctx.BasePath/bestiary" class="btn btn-outline-secondary"><LucideIcon IconName="paw-print" Size="16" /> Bestiary</a>
         }
     </div>
 </div>
@@ -33,7 +40,7 @@
 <div class="row g-3">
     <div class="col-lg-6">
         <section class="panel" aria-labelledby="pcs-heading">
-            <div class="panel-title"><h3 id="pcs-heading">Player characters (@pcs.Count)</h3></div>
+            <div class="panel-title"><h3 id="pcs-heading"><LucideIcon IconName="crown" Size="16" Class="title-icon" /> Player characters (@pcs.Count)</h3></div>
             @if (pcs.Count == 0)
             {
                 <p class="small-muted mb-0">No player characters yet.</p>
@@ -48,10 +55,10 @@
     </div>
     <div class="col-lg-6">
         <section class="panel" aria-labelledby="npcs-heading">
-            <div class="panel-title"><h3 id="npcs-heading">@(Ctx.IsDm ? "NPCs and monsters" : "People and creatures met") (@others.Count)</h3></div>
+            <div class="panel-title"><h3 id="npcs-heading"><LucideIcon IconName="users" Size="16" Class="title-icon" /> @(Ctx.IsDm ? "NPCs and monsters" : "People and creatures met") (@others.Count)</h3></div>
             @if (others.Count == 0)
             {
-                <p class="small-muted mb-0">@(Ctx.IsDm ? "Nobody yet. Add NPCs here or creatures from the Library." : "The party has not met anyone of note yet.")</p>
+                <p class="small-muted mb-0">@(Ctx.IsDm ? "Nobody yet. Add NPCs here or creatures from the Bestiary." : "The party has not met anyone of note yet.")</p>
             }
             <ul class="list-unstyled mb-0" data-testid="npc-list">
                 @foreach (var actor in others)
@@ -110,6 +117,38 @@
     </form>
 </dialog>
 
+<dialog id="ai-actor-dialog" class="codex-dialog" aria-labelledby="ai-actor-title">
+    <form @onsubmit="CreateWithAiAsync" @onsubmit:preventDefault="true">
+        <div class="dialog-body">
+            <h2 id="ai-actor-title"><LucideIcon IconName="sparkles" Size="20" Class="title-icon" /> Create with AI</h2>
+            <p class="small-muted">Describe the character in a line or two. The AI fills in the sheet using only classes, species and backgrounds from this campaign's Library, plus a short history you can edit afterwards.</p>
+            <div class="mb-3">
+                <label for="ai-concept" class="form-label">Concept <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <textarea id="ai-concept" class="form-control" rows="3" required @bind="aiConcept" placeholder="e.g. A retired city guard turned reluctant cleric, haunted by a riot she failed to stop. Level 3." data-testid="ai-concept"></textarea>
+            </div>
+            @if (Ctx.IsDm)
+            {
+                <div class="mb-3">
+                    <label for="ai-kind" class="form-label">Kind</label>
+                    <select id="ai-kind" class="form-select" @bind="aiKind">
+                        <option value="@ActorKind.PlayerCharacter">Player character</option>
+                        <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
+                        <option value="@ActorKind.Monster">Monster</option>
+                    </select>
+                </div>
+            }
+            @if (aiError != null)
+            {
+                <p class="text-danger mb-0 mt-2" role="alert">@aiError</p>
+            }
+        </div>
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-outline-secondary" @onclick="CloseAiCreateAsync" disabled="@aiBusy">Cancel</button>
+            <button type="submit" class="btn btn-primary" disabled="@aiBusy" data-testid="ai-create-submit">@(aiBusy ? "Generating…" : "Generate character")</button>
+        </div>
+    </form>
+</dialog>
+
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
@@ -118,8 +157,13 @@
     private ActorKind newKind = ActorKind.NonPlayerCharacter;
     private string newOwnerId = string.Empty;
     private string? createError;
+    private string aiConcept = string.Empty;
+    private ActorKind aiKind = ActorKind.PlayerCharacter;
+    private string? aiError;
+    private bool aiBusy;
 
     private RenderFragment ActorRow(ActorDocument actor) => @<li class="list-row" data-testid="actor-row" data-actor-id="@actor.Id">
+        <ActorAvatar Actor="actor" DisplayName="@DisplayName(actor)" Size="md" />
         <div class="row-main">
             <div class="row-title">
                 <a href="@Ctx.BasePath/actors/@actor.Id">@DisplayName(actor)</a>
@@ -146,6 +190,13 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => SetVisibilityAsync(actor, ActorVisibility.Hidden)" aria-label="Hide @actor.Name from players"><LucideIcon IconName="eye-off" Size="14" /> Hide</button>
                 }
                 <button type="button" class="icon-btn danger" aria-label="Delete @actor.Name" @onclick="() => DeleteAsync(actor)"><LucideIcon IconName="trash-2" Size="16" /></button>
+            </div>
+        }
+        else if (actor.Kind == ActorKind.PlayerCharacter && actor.OwnerUserId == Ctx.UserId)
+        {
+            <div class="row-actions">
+                <a href="@Ctx.BasePath/actors/@actor.Id" class="btn btn-outline-secondary btn-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit sheet</a>
+                <button type="button" class="icon-btn danger" aria-label="Retire @actor.Name" title="Retire this character" @onclick="() => DeleteAsync(actor)" data-testid="retire-character"><LucideIcon IconName="trash-2" Size="16" /></button>
             </div>
         }
     </li>;
@@ -191,22 +242,26 @@
 
     private Task CloseCreateAsync() => JS.InvokeVoidAsync("codex.closeModal", "create-actor-dialog").AsTask();
 
-    private async Task CreateAsync()
+    private async Task OpenAiCreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(newName))
-        {
-            createError = "Give them a name.";
-            return;
-        }
+        aiError = null;
+        aiKind = Ctx.IsDm ? ActorKind.NonPlayerCharacter : ActorKind.PlayerCharacter;
+        await JS.InvokeVoidAsync("codex.showModal", "ai-actor-dialog");
+        await JS.InvokeVoidAsync("codex.focus", "ai-concept");
+    }
 
-        var kind = Ctx.IsDm ? newKind : ActorKind.PlayerCharacter;
+    private Task CloseAiCreateAsync() => JS.InvokeVoidAsync("codex.closeModal", "ai-actor-dialog").AsTask();
+
+    private ActorDocument NewActor(string name, ActorKind requestedKind, string? ownerId)
+    {
+        var kind = Ctx.IsDm ? requestedKind : ActorKind.PlayerCharacter;
         var actor = new ActorDocument
         {
             Id = Guid.NewGuid().ToString(),
             CampaignId = Ctx.Campaign.Id,
             Kind = kind,
-            Name = newName.Trim(),
-            OwnerUserId = kind == ActorKind.PlayerCharacter ? (Ctx.IsDm ? (string.IsNullOrEmpty(newOwnerId) ? null : newOwnerId) : Ctx.UserId) : null,
+            Name = name.Trim(),
+            OwnerUserId = kind == ActorKind.PlayerCharacter ? (Ctx.IsDm ? (string.IsNullOrEmpty(ownerId) ? null : ownerId) : Ctx.UserId) : null,
             Visibility = kind == ActorKind.PlayerCharacter ? ActorVisibility.Known : ActorVisibility.Hidden
         };
 
@@ -220,6 +275,18 @@
             }
         }
 
+        return actor;
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            createError = "Give them a name.";
+            return;
+        }
+
+        var actor = NewActor(newName, newKind, newOwnerId);
         ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
         if (!await ActorRepo.TrySaveAsync(actor, Ctx.Access))
@@ -230,6 +297,51 @@
 
         await CloseCreateAsync();
         Nav.NavigateTo($"{Ctx.BasePath}/actors/{actor.Id}");
+    }
+
+    private async Task CreateWithAiAsync()
+    {
+        if (string.IsNullOrWhiteSpace(aiConcept) || aiBusy) return;
+        aiBusy = true;
+        aiError = null;
+        try
+        {
+            var draft = await Ai.CreateCharacterAsync(aiConcept, Ctx.IsDm ? aiKind : ActorKind.PlayerCharacter, Ctx.Campaign, Ctx.System, Ctx.UserId,
+                async type => (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList());
+
+            var actor = NewActor(draft.Name, aiKind, Ctx.IsDm ? null : Ctx.UserId);
+            foreach (var (key, value) in draft.Sheet)
+            {
+                actor.Sheet[key] = value;
+            }
+
+            actor.Biography = draft.Biography;
+            ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
+
+            if (!await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+            {
+                aiError = "You can only create a character you own.";
+                return;
+            }
+
+            await CloseAiCreateAsync();
+            aiConcept = string.Empty;
+            Ctx.Notify(Flash.Success($"{actor.Name} is ready. Check the sheet and adjust anything the AI got wrong."));
+            Nav.NavigateTo($"{Ctx.BasePath}/actors/{actor.Id}");
+        }
+        catch (AiNotConfiguredException)
+        {
+            aiError = "No AI provider is set up. Add one under AI settings (top right).";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "AI character creation failed");
+            aiError = "The AI could not produce a character: " + ex.Message;
+        }
+        finally
+        {
+            aiBusy = false;
+        }
     }
 
     private async Task SetVisibilityAsync(ActorDocument actor, ActorVisibility visibility)
@@ -244,15 +356,24 @@
 
     private async Task DeleteAsync(ActorDocument actor)
     {
-        if (!await confirm.ShowAsync($"Delete {actor.Name}?", "Their sheet and state are removed from this campaign. This cannot be undone.", "Delete", isDestructive: true))
+        var retiring = !Ctx.IsDm;
+        var ok = await confirm.ShowAsync(
+            retiring ? $"Retire {actor.Name}?" : $"Delete {actor.Name}?",
+            retiring ? "Your character and their sheet are removed from this campaign. This cannot be undone; the DM can't restore them either." : "Their sheet and state are removed from this campaign. This cannot be undone.",
+            retiring ? "Retire" : "Delete", isDestructive: true);
+        if (!ok)
         {
             return;
         }
 
         if (await ActorRepo.TryDeleteAsync(actor.Id, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Deleted {actor.Name}."));
+            Ctx.Notify(Flash.Success(retiring ? $"{actor.Name} has retired." : $"Deleted {actor.Name}."));
             await Ctx.ReloadAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error("You can only retire a character you own."));
         }
     }
 }

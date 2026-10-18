@@ -3,8 +3,8 @@
 @using Codex.Plugin.Abstractions
 @inject IHomebrewRepository Homebrew
 @inject IContentRegistry Registry
-@inject IActorRepository ActorRepo
-@inject ComponentRegistry Components
+@inject CastService Cast
+@inject HomebrewImportService Importer
 @inject ContentPackExporter Exporter
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -12,13 +12,14 @@
 <div class="page-header mb-3">
     <div>
         <h2 class="mb-0">Library</h2>
-        <p class="page-subtitle">Reference content for this campaign's system@(Ctx.IsDm ? ", plus your homebrew." : ", including the DM's homebrew.")</p>
+        <p class="page-subtitle">Reference content for this campaign's system@(Ctx.IsDm ? ", plus your homebrew: equipment, classes, subclasses, feats, spells, creatures and more." : ", including the DM's homebrew.")</p>
     </div>
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
             <button type="button" class="btn btn-primary" @onclick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="16" /> New homebrew</button>
-            <button type="button" class="btn btn-outline-secondary" @onclick="ExportHomebrewAsync" aria-label="Export this campaign's homebrew as a content pack"><LucideIcon IconName="download" Size="16" /> Export homebrew pack</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="16" /> Import from another campaign</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="ExportHomebrewAsync" aria-label="Export this campaign's homebrew as a content pack"><LucideIcon IconName="download" Size="16" /> Export pack</button>
         </div>
     }
 </div>
@@ -38,12 +39,77 @@
         {
             <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => editing = item.Homebrew" data-testid="edit-homebrew"><LucideIcon IconName="edit-3" Size="14" /> Edit</button>
         }
+        @if (Ctx.IsDm && !item.IsHomebrew)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => CloneAsHomebrew(item)" data-testid="clone-homebrew" title="Start a homebrew variant with these fields"><LucideIcon IconName="copy" Size="14" /> Homebrew copy</button>
+        }
         @if (Ctx.IsDm && IsBlueprint(item))
         {
             <button type="button" class="btn btn-primary btn-sm" @onclick="() => AddToCastAsync(item)" data-testid="add-to-cast"><LucideIcon IconName="user-plus" Size="14" /> Add to cast</button>
         }
     </DetailActions>
 </LibraryBrowser>
+
+<dialog id="import-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="import-homebrew-title">
+    <div class="dialog-body">
+        <h2 id="import-homebrew-title"><LucideIcon IconName="folder-input" Size="20" Class="title-icon" /> Import homebrew</h2>
+        @if (sourceCampaigns == null)
+        {
+            <LoadingSkeleton Rows="2" />
+        }
+        else if (sourceCampaigns.Count == 0)
+        {
+            <p class="mb-0">You don't run another campaign on this system yet. Homebrew can be imported from any campaign where you are the DM and the game system matches.</p>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label for="import-source" class="form-label">From campaign</label>
+                <select id="import-source" class="form-select" value="@sourceCampaignId" @onchange="OnSourceChangedAsync" data-testid="import-source">
+                    @foreach (var campaign in sourceCampaigns)
+                    {
+                        <option value="@campaign.Id">@campaign.Name</option>
+                    }
+                </select>
+            </div>
+            @if (sourceEntries == null)
+            {
+                <LoadingSkeleton Rows="3" />
+            }
+            else if (sourceEntries.Count == 0)
+            {
+                <p class="small-muted mb-0">That campaign has no homebrew.</p>
+            }
+            else
+            {
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small-muted">@selectedImports.Count of @sourceEntries.Count selected</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => selectedImports = sourceEntries.Select(e => e.Id).ToHashSet()">Select all</button>
+                        <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => selectedImports.Clear()">None</button>
+                    </div>
+                </div>
+                <div class="import-list">
+                    @foreach (var group in sourceEntries.GroupBy(e => e.Type))
+                    {
+                        <div class="small-muted text-uppercase fw-bold mt-2 mb-1" style="letter-spacing:.06em">@(Ctx.System?.FindType(group.Key)?.PluralOrLabel ?? CampaignLibrary.Humanize(group.Key))</div>
+                        @foreach (var entry in group)
+                        {
+                            <div class="form-check">
+                                <input id="imp-@entry.Id" type="checkbox" class="form-check-input" checked="@selectedImports.Contains(entry.Id)" @onchange="e => ToggleImport(entry.Id, (bool)(e.Value ?? false))" />
+                                <label for="imp-@entry.Id" class="form-check-label">@entry.Name <span class="small-muted">@TextFormatting.Summary(entry.Description, 70)</span></label>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+    <div class="dialog-actions">
+        <button type="button" class="btn btn-outline-secondary" @onclick="CloseImportAsync">Close</button>
+        <button type="button" class="btn btn-primary" @onclick="ImportAsync" disabled="@(selectedImports.Count == 0 || importing)" data-testid="import-confirm">@(importing ? "Importing…" : $"Import {selectedImports.Count}")</button>
+    </div>
+</dialog>
 
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
@@ -52,6 +118,11 @@
 
     private HomebrewEntryDocument? editing;
     private int version;
+    private List<CampaignDocument>? sourceCampaigns;
+    private string sourceCampaignId = string.Empty;
+    private List<HomebrewEntryDocument>? sourceEntries;
+    private HashSet<string> selectedImports = new();
+    private bool importing;
 
     private void NewHomebrew() => editing = new HomebrewEntryDocument
     {
@@ -60,6 +131,12 @@
         Type = RouteType ?? string.Empty,
         AuthorUserId = Ctx.UserId
     };
+
+    private void CloneAsHomebrew(LibraryItem item)
+    {
+        editing = HomebrewImportService.CloneFromPack(item.Entry, item.Pack, Ctx.Campaign, Ctx.Access);
+        Ctx.Notify(Flash.Info($"Editing a homebrew copy of “{item.Entry.Name}”. It stays a draft (hidden from players) until you tick “Visible to players”."));
+    }
 
     private async Task OnSavedAsync(Flash flash)
     {
@@ -87,42 +164,67 @@
         await Task.CompletedTask;
     }
 
-    private bool IsBlueprint(LibraryItem item) =>
-        !item.IsHomebrew
-            ? Registry.GetActor($"{Ctx.Campaign.SystemId}:{item.Entry.Id}") != null
-            : Ctx.System?.FindType(item.Entry.Type)?.ActorBlueprint == true;
+    private bool IsBlueprint(LibraryItem item) => Cast.Blueprint(item, Ctx.Campaign, Ctx.System) != null;
 
     private async Task AddToCastAsync(LibraryItem item)
     {
-        var type = Ctx.System?.FindType(item.Entry.Type);
-        IActorDefinition? blueprint = item.IsHomebrew
-            ? (type != null ? YamlContentPackLoader.ToActorBlueprint(item.Entry, type) : null)
-            : Registry.GetActor($"{Ctx.Campaign.SystemId}:{item.Entry.Id}");
-        if (blueprint == null)
+        var created = await Cast.AddToCastAsync(item, Ctx.Campaign, Ctx.System, Ctx.Access);
+        if (created.Count == 0)
         {
-            Ctx.Notify(Flash.Error("That entry can't be turned into a creature."));
+            Ctx.Notify(Flash.Error("That entry can't be turned into a creature, or only the DM can add creatures."));
             return;
         }
 
-        var actor = new ActorDocument
-        {
-            Id = Guid.NewGuid().ToString(),
-            CampaignId = Ctx.Campaign.Id,
-            Kind = ActorKind.Monster,
-            BlueprintId = item.IsHomebrew ? null : $"{blueprint.SystemId}:{blueprint.Id}",
-            Name = blueprint.Name,
-            Visibility = ActorVisibility.Hidden
-        };
-        ActorSheetSync.SeedFromBlueprint(actor, blueprint, Ctx.System, Components);
+        Ctx.Notify(Flash.Success($"Added {created[0].Name} to the cast (hidden from players)."));
+        await Ctx.ReloadAsync();
+    }
 
-        if (await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+    private async Task OpenImportAsync()
+    {
+        sourceCampaigns = null;
+        sourceEntries = null;
+        selectedImports.Clear();
+        await JS.InvokeVoidAsync("codex.showModal", "import-homebrew-dialog");
+        sourceCampaigns = (await Importer.SourceCampaignsAsync(Ctx.Campaign, Ctx.Access)).ToList();
+        sourceCampaignId = sourceCampaigns.FirstOrDefault()?.Id ?? string.Empty;
+        await LoadSourceEntriesAsync();
+    }
+
+    private Task CloseImportAsync() => JS.InvokeVoidAsync("codex.closeModal", "import-homebrew-dialog").AsTask();
+
+    private async Task OnSourceChangedAsync(ChangeEventArgs e)
+    {
+        sourceCampaignId = e.Value?.ToString() ?? string.Empty;
+        selectedImports.Clear();
+        await LoadSourceEntriesAsync();
+    }
+
+    private async Task LoadSourceEntriesAsync()
+    {
+        sourceEntries = string.IsNullOrEmpty(sourceCampaignId) ? new List<HomebrewEntryDocument>() : (await Importer.EntriesOfAsync(sourceCampaignId, Ctx.Access)).ToList();
+    }
+
+    private void ToggleImport(string id, bool on)
+    {
+        if (on) selectedImports.Add(id); else selectedImports.Remove(id);
+    }
+
+    private async Task ImportAsync()
+    {
+        if (importing || selectedImports.Count == 0) return;
+        importing = true;
+        try
         {
-            Ctx.Notify(Flash.Success($"Added {actor.Name} to the cast (hidden from players)."));
-            await Ctx.ReloadAsync();
+            var copied = await Importer.ImportAsync(sourceCampaignId, selectedImports, Ctx.Campaign, Ctx.Access);
+            await CloseImportAsync();
+            version++;
+            Ctx.Notify(copied == 0
+                ? Flash.Info("Nothing imported: every selected entry already exists here.")
+                : Flash.Success($"Imported {copied} entr{(copied == 1 ? "y" : "ies")}. Entries that already existed here were skipped."));
         }
-        else
+        finally
         {
-            Ctx.Notify(Flash.Error("Only the DM can add creatures."));
+            importing = false;
         }
     }
 

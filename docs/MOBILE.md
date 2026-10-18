@@ -20,7 +20,7 @@ TTRPG.Codex onto phones, and what does the server need before any mobile client 
 
 | Option | What it is | Reuse | Cost | What it buys |
 |---|---|---|---|---|
-| **A. Installable web app (PWA)** | A `manifest.webmanifest`, icons and a minimal service worker for the app shell. | Everything | Days | Home-screen icon, full-screen, correct status-bar colour. No offline, because the UI is a live circuit. |
+| **A. Installable web app (PWA)** — *done* | A `manifest.webmanifest`, icons and a minimal service worker for the app shell (`wwwroot/sw.js`). | Everything | Days | Home-screen icon, full-screen, correct status-bar colour, an offline page. No offline data, because the UI is a live circuit. |
 | **B. .NET MAUI Blazor Hybrid** | A native shell (iOS, Android, macOS, Windows) hosting the *same Razor components* in a WebView, talking to the server over HTTP and SignalR. | All Razor markup and most component logic, once components stop depending on server-only services | Weeks | Native install and updates, push notifications, biometrics, camera for pack import, an offline character sheet, a battery-friendly table that survives backgrounding. |
 | **C. Native UI** (MAUI XAML, SwiftUI, Compose) | A second UI written against the same API as B. | Server and API only | Months | The best feel, at the price of two UIs to keep in sync. |
 
@@ -110,7 +110,7 @@ New projects, in order:
 | Phase | Scope | Size |
 |---|---|---|
 | 1 | Bearer auth, read API, `TableHub` with role-filtered snapshots, end-to-end tests that drive the hub from a second client | 2 to 3 weeks |
-| 2 | PWA manifest and icons; switch web `CombatConsole` to the snapshot model | A few days |
+| 2 | ~~PWA manifest and icons~~ (shipped); switch web `CombatConsole` to the snapshot model | A few days |
 | 3 | Extract `Codex.UI` and `ICodexClient`; web app keeps the in-process implementation | 1 to 2 weeks |
 | 4 | MAUI Blazor Hybrid app: sign in, campaigns, table, sheet; TestFlight and internal Android track | 3 to 4 weeks |
 | 5 | Offline sheet and library cache, push notifications | Later |

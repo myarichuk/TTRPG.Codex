@@ -35,9 +35,9 @@ public interface IActorRepository
     Task DeleteAllForCampaignAsync(string campaignId);
 
     /// <summary>
-    /// Deletes a single actor if, and only if, <paramref name="access"/> is the campaign's DM.
-    /// Returns false without deleting anything for a Player/Observer or a cross-campaign id -
-    /// there is no player-facing "delete an actor" operation in this domain (1.4).
+    /// Deletes a single actor if <paramref name="access"/> is the campaign's DM, or is the owning
+    /// player of a <see cref="ActorKind.PlayerCharacter"/> (retiring their own character). Returns
+    /// false without deleting anything for anyone else or a cross-campaign id.
     /// </summary>
     Task<bool> TryDeleteAsync(string actorId, CampaignAccess access);
 

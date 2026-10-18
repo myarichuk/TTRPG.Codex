@@ -72,6 +72,7 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
             existing.Tags = entry.Tags;
             existing.Properties = entry.Properties;
             existing.IsPublished = entry.IsPublished;
+            existing.ImportedFrom = entry.ImportedFrom;
             existing.UpdatedAt = entry.UpdatedAt;
         }
 

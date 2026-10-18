@@ -4,8 +4,10 @@
 
 **A self-hosted companion for running tabletop role-playing campaigns.** One DM, any number of
 players, one browser tab each: a live table with initiative, hit points and conditions; campaign
-prep (cast, places, lore with per-character reveal); session recaps and notes; and a Library of rules
-content that the DM can extend with homebrew.
+prep (cast with portraits, a bestiary, places, a linked world wiki, lore with per-character
+reveal); session recaps, table notes and each player's private journal; a Library of rules content
+that the DM extends with homebrew (equipment, classes, subclasses, feats, spells, creatures) and
+carries between campaigns; and optional AI drafting on your own key.
 
 Game systems are **data**: a `system.yaml` describes attributes, the character sheet and the kinds
 of content a system has; packs of YAML files supply the content. The repository ships the
@@ -38,6 +40,36 @@ Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.j
 | `tools/Codex.ContentImport` | Converts open rules data (5e-bits SRD JSON) into packs. |
 | `content/` | Shipped systems and packs. |
 | `tests/Codex.Tests` | xUnit unit tests and Playwright end-to-end scenarios. |
+
+## AI features
+
+Every "Draft with AI" button talks to a chat model you choose under **AI settings** (click your
+name in the header). Providers are per user and OpenAI-compatible: OpenRouter is pre-selected
+(one key, most current models), with presets for OpenAI, Groq, Mistral, a local Ollama or LM
+Studio, or any custom `/v1/chat/completions` endpoint. API keys are stored encrypted with ASP.NET
+Data Protection under the server's data directory. The `AI` section of `appsettings.json` is an
+optional server-wide fallback for users who set nothing up. Nothing is sent to a model until
+someone clicks an AI button.
+
+What the AI does today:
+
+- **Session recaps**: a player-facing recap from the event log, party notes and open rolls, and a
+  separate DM summary that also sees secret rolls, private notes and the previous summary.
+  Player drafts are built only from player-visible material.
+- **Histories and bios**: write or rewrite a character's history (player-visible) or the DM's
+  private notes on an NPC, without contradicting the sheet.
+- **Level-up advice**: what the next level brings from the Library's class and subclass entries,
+  the choices it forces, and picks that fit the sheet and story.
+- **Characters from a concept**: one line of concept becomes a draft sheet using only classes,
+  species and backgrounds loaded in the campaign's Library, plus a short history.
+- **Wiki pages**: expand rough notes into a linked page.
+
+## Install on a phone
+
+The web app is installable (a PWA): open it in Safari or Chrome on a phone and choose "Add to Home
+Screen". It runs full-screen with the app icon; the live table still needs a connection, so
+offline you get a plain "you're offline" page rather than stale data. A native companion app is
+assessed in [docs/MOBILE.md](docs/MOBILE.md).
 
 ## Tests
 

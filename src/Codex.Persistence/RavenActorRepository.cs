@@ -14,7 +14,18 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
             return null;
         }
 
-        return CanSee(actor, access) ? actor : null;
+        return CanSee(actor, access) ? Redact(actor, access) : null;
+    }
+
+    /// <summary>The DM's private notes never reach a player's circuit, even for an actor they own.</summary>
+    private static ActorDocument Redact(ActorDocument actor, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            actor.DmNotes = null;
+        }
+
+        return actor;
     }
 
     public async Task<IEnumerable<ActorDocument>> GetVisibleForCampaignAsync(CampaignAccess access)
@@ -32,7 +43,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
             query = query.Where(a => a.Visibility == ActorVisibility.Known || a.OwnerUserId == access.UserId);
         }
 
-        return await query.ToListAsync();
+        return (await query.ToListAsync()).Select(a => Redact(a, access)).ToList();
     }
 
     public async Task SaveAsync(ActorDocument actor)
@@ -92,9 +103,14 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         existing.BlueprintId = actor.BlueprintId;
         existing.Sheet = actor.Sheet;
         existing.State = actor.State;
+        existing.Biography = actor.Biography;
+        existing.HasPortrait = actor.HasPortrait;
+        existing.PortraitVersion = actor.PortraitVersion;
         if (access.IsDm)
         {
             existing.OwnerUserId = actor.OwnerUserId;
+            // Only the DM writes DM notes; a player's save (where they arrive redacted as null) leaves them alone.
+            existing.DmNotes = actor.DmNotes;
         }
 
         existing.UpdatedAt = DateTime.UtcNow;
@@ -104,14 +120,16 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
     public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)
     {
-        if (!access.IsDm)
+        using var session = dbService.Store.OpenAsyncSession();
+        var actor = await session.LoadAsync<ActorDocument>(actorId);
+        if (actor == null || actor.CampaignId != access.CampaignId)
         {
             return false;
         }
 
-        using var session = dbService.Store.OpenAsyncSession();
-        var actor = await session.LoadAsync<ActorDocument>(actorId);
-        if (actor == null || actor.CampaignId != access.CampaignId)
+        // The DM deletes anything; a player may retire their own player character and nothing else.
+        var ownsPlayerCharacter = actor.Kind == ActorKind.PlayerCharacter && actor.OwnerUserId == access.UserId;
+        if (!access.IsDm && !ownsPlayerCharacter)
         {
             return false;
         }

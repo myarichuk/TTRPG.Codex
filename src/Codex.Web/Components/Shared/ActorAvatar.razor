@@ -1,0 +1,50 @@
+@using Codex.Persistence
+
+@* A portrait when one is uploaded, otherwise initials on a hue derived from the name, so every
+   actor has a stable face in lists, the cast and the live table. *@
+@if (Actor.HasPortrait)
+{
+    <img class="avatar avatar-img @SizeClass @Class" src="@MediaEndpoints.PortraitUrl(Actor)" alt="@(Alt ?? $"Portrait of {Name}")" loading="lazy" width="@Pixels" height="@Pixels" />
+}
+else
+{
+    <span class="avatar @SizeClass @Class" style="--avatar-hue:@Hue" aria-hidden="@(Alt == null ? "true" : null)" role="@(Alt == null ? null : "img")" aria-label="@Alt">@Initials</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public ActorDocument Actor { get; set; } = null!;
+
+    /// <summary>Name to show initials for; defaults to the actor's real name (callers pass the public name for Unknown actors).</summary>
+    [Parameter] public string? DisplayName { get; set; }
+
+    /// <summary>"sm" (28px), "md" (40px), "lg" (64px) or "xl" (120px).</summary>
+    [Parameter] public string Size { get; set; } = "md";
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Accessible name; null makes the avatar decorative (the name is already in the row).</summary>
+    [Parameter] public string? Alt { get; set; }
+
+    private string Name => DisplayName ?? Actor.Name;
+    private string SizeClass => "avatar-" + Size;
+    private int Pixels => Size switch { "sm" => 28, "lg" => 64, "xl" => 120, _ => 40 };
+
+    private string Initials
+    {
+        get
+        {
+            var parts = Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return "?";
+            return parts.Length == 1 ? parts[0][..1].ToUpperInvariant() : (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+        }
+    }
+
+    private int Hue
+    {
+        get
+        {
+            var hash = 0;
+            foreach (var c in Name) hash = (hash * 31 + c) & 0x7fffffff;
+            return hash % 360;
+        }
+    }
+}

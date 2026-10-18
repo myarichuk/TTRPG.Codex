@@ -44,7 +44,7 @@ else
     var tableLive = RuntimeManager.TryGet(CampaignId) != null;
 
     <div class="workspace">
-        <header class="ws-head">
+        <header class="ws-head @(campaign.HasCover ? "has-cover" : "")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
             <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>@campaign.Name</span></nav>
             <h1 data-testid="campaign-title">@campaign.Name</h1>
             <div class="pills">
@@ -54,18 +54,25 @@ else
         </header>
 
         <nav class="ws-nav" aria-label="Campaign sections">
-            @foreach (var section in Sections)
+            @foreach (var group in Groups)
             {
-                var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
-                var current = CurrentSection == section.Key ? "page" : null;
-                var testId = "section-" + section.Key;
-                <a href="@href" aria-current="@current" data-testid="@testId">
-                    <LucideIcon IconName="@section.Icon" Size="18" /><span>@section.Label</span>
-                    @if (section.Key == "table" && tableLive)
+                <div class="ws-nav-group" role="group" aria-label="@group.Label">
+                    <div class="ws-nav-label" aria-hidden="true">@group.Label</div>
+                    @foreach (var section in group.Sections)
                     {
-                        <span class="pill pill-success nav-badge" title="The table is running"><span class="live-dot" aria-hidden="true"></span>Live</span>
+                        var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
+                        var current = CurrentSection == section.Key ? "page" : null;
+                        var testId = "section-" + section.Key;
+                        var label = section.Key == "bestiary" && !access.IsDm ? "Creatures" : section.Label;
+                        <a href="@href" aria-current="@current" data-testid="@testId">
+                            <LucideIcon IconName="@section.Icon" Size="18" /><span>@label</span>
+                            @if (section.Key == "table" && tableLive)
+                            {
+                                <span class="pill pill-success nav-badge" title="The table is running"><span class="live-dot" aria-hidden="true"></span>Live</span>
+                            }
+                        </a>
                     }
-                </a>
+                </div>
             }
         </nav>
 
@@ -83,6 +90,15 @@ else
                         break;
                     case "lore":
                         <LoreSection />
+                        break;
+                    case "wiki":
+                        <WikiSection Slug="@Arg1" Action="@Arg2" />
+                        break;
+                    case "journal":
+                        <JournalSection />
+                        break;
+                    case "bestiary":
+                        <BestiarySection />
                         break;
                     case "sessions":
                         <SessionsSection />
@@ -111,17 +127,31 @@ else
     [Parameter] public string? Arg1 { get; set; }
     [Parameter] public string? Arg2 { get; set; }
 
-    private static readonly (string Key, string Label, string Icon)[] Sections =
+    private static readonly (string Label, (string Key, string Label, string Icon)[] Sections)[] Groups =
     {
-        ("overview", "Overview", "home"),
-        ("cast", "Cast", "users"),
-        ("world", "World", "map"),
-        ("lore", "Lore", "book-marked"),
-        ("sessions", "Sessions", "calendar"),
-        ("table", "Table", "dices"),
-        ("library", "Library", "book-open"),
-        ("settings", "Settings", "settings")
+        ("Play", new[]
+        {
+            ("overview", "Overview", "home"),
+            ("table", "Table", "dices"),
+            ("sessions", "Sessions", "calendar"),
+            ("journal", "My journal", "notebook-pen")
+        }),
+        ("World", new[]
+        {
+            ("cast", "Cast", "users"),
+            ("bestiary", "Bestiary", "paw-print"),
+            ("world", "Places", "map"),
+            ("wiki", "Wiki", "globe"),
+            ("lore", "Lore", "book-marked")
+        }),
+        ("Reference", new[]
+        {
+            ("library", "Library", "book-open"),
+            ("settings", "Settings", "settings")
+        })
     };
+
+    private static readonly (string Key, string Label, string Icon)[] Sections = Groups.SelectMany(g => g.Sections).ToArray();
 
     private bool loading = true;
     private CampaignDocument? campaign;

@@ -40,6 +40,13 @@ public class CampaignDocument
 
     public string? CurrentSessionId { get; set; }
 
+    /// <summary>True once a cover image is stored as the "cover" attachment; <see cref="CoverVersion"/> busts caches.</summary>
+    public bool HasCover { get; set; }
+    public int CoverVersion { get; set; }
+
+    /// <summary>The DM's shortlist of creatures for this campaign: ones in play and ones planned for later.</summary>
+    public List<BestiaryEntry> Bestiary { get; set; } = new();
+
     public Dictionary<string, object> WorldState { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -102,8 +109,33 @@ public class ActorDocument
     /// <summary>Serialized ECS component snapshot; see <see cref="Codex.Plugin.Abstractions.ComponentRegistry"/>. Runtime-owned.</summary>
     public Dictionary<string, object> State { get; set; } = new();
 
+    /// <summary>History, personality, goals: the prose the owner (or the DM) writes and the AI can polish.</summary>
+    public string? Biography { get; set; }
+
+    /// <summary>The DM's private notes on this actor. Stripped by the repository before a non-DM ever sees the document.</summary>
+    public string? DmNotes { get; set; }
+
+    /// <summary>True once a portrait is stored as the "portrait" attachment; <see cref="PortraitVersion"/> busts caches.</summary>
+    public bool HasPortrait { get; set; }
+    public int PortraitVersion { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>One creature on a campaign's bestiary shortlist: a Library entry (pack or homebrew)
+/// the DM intends to use, with a note on where, and how many.</summary>
+public class BestiaryEntry
+{
+    public string EntryType { get; set; } = "monster";
+    public string EntryId { get; set; } = string.Empty;
+    public bool IsHomebrew { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Note { get; set; }
+    public int Count { get; set; } = 1;
+    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+
+    public string Key => $"{(IsHomebrew ? "homebrew" : "pack")}:{EntryType}:{EntryId}";
 }
 
 public class UserDocument
@@ -114,6 +146,32 @@ public class UserDocument
     public string PasswordHash { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
     public List<ExternalLogin> ExternalLogins { get; set; } = new();
+
+    /// <summary>The chat-model providers this user configured (their own keys). Keys are stored
+    /// protected by ASP.NET Data Protection, never in clear text.</summary>
+    public List<AiProviderConfig> AiProviders { get; set; } = new();
+
+    /// <summary>Which of <see cref="AiProviders"/> the AI buttons use. Null falls back to the server-wide configuration.</summary>
+    public string? DefaultAiProviderId { get; set; }
+}
+
+/// <summary>One OpenAI-compatible chat endpoint a user has set up: OpenRouter, OpenAI, a local
+/// Ollama or LM Studio, or anything else that speaks the chat-completions API.</summary>
+public class AiProviderConfig
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>A preset key ("openrouter", "openai", "ollama", "custom"...). Only affects defaults and labels; the wire protocol is always OpenAI-compatible.</summary>
+    public string Kind { get; set; } = "openai-compatible";
+
+    public string BaseUrl { get; set; } = string.Empty;
+    public string ModelId { get; set; } = string.Empty;
+
+    /// <summary>The API key, protected with Data Protection. Empty for local servers that need none.</summary>
+    public string ProtectedApiKey { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class ExternalLogin
@@ -136,7 +194,12 @@ public class SessionDocument
     public string Title { get; set; } = string.Empty;
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public SessionStatus Status { get; set; } = SessionStatus.Planned;
+
+    /// <summary>The player-facing recap. Everyone in the campaign can read it.</summary>
     public string Recap { get; set; } = string.Empty;
+
+    /// <summary>The DM's own summary, drafted from everything including secret notes and rolls. Never shown to players.</summary>
+    public string DmSummary { get; set; } = string.Empty;
     public List<SessionNote> Notes { get; set; } = new();
     public List<SessionEvent> Events { get; set; } = new();
     public List<string> EncounterIds { get; set; } = new();
