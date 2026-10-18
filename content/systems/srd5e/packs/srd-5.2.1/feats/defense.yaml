@@ -6,3 +6,4 @@ tags:
 - fighting-style
 properties:
   category: fighting-style
+  minLevel: 1

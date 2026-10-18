@@ -16,3 +16,4 @@ tags:
 properties:
   category: general
   prerequisites: Level 4+; Strength or Dexterity 13+
+  minLevel: 4

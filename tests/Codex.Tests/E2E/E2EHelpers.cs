@@ -62,6 +62,13 @@ public static class E2EHelpers
 
     /// <summary>A full page load prerenders statically first; input typed before the circuit takes
     /// over is lost. MainLayout renders a marker only from the interactive circuit.</summary>
+    /// <summary>Fill a field and move focus on, so Blazor's change handler runs (number inputs commit on change, not on every keystroke).</summary>
+    public static async Task CommitAsync(this ILocator field, string value)
+    {
+        await field.FillAsync(value);
+        await field.PressAsync("Tab");
+    }
+
     public static Task WaitForInteractiveAsync(IPage page) =>
         page.Locator("[data-interactive]").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
 

@@ -14,3 +14,4 @@ tags:
 properties:
   category: epic-boon
   prerequisites: Level 19+
+  minLevel: 19

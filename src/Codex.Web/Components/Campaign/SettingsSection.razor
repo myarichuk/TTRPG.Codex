@@ -42,6 +42,19 @@
                         </select>
                         <div id="cs-system-help" class="form-text">Changing the system does not convert existing character sheets.</div>
                     </div>
+                    @if (Ctx.System?.SheetRules != null)
+                    {
+                        <div class="mb-3">
+                            <label for="cs-rules" class="form-label">House rules: sheet checks</label>
+                            <select id="cs-rules" class="form-select" @bind="rulesEnforcement" aria-describedby="cs-rules-help" data-testid="settings-rules">
+                                <option value="inherit">Use the system's setting (@Ctx.System.SheetRules.Enforcement)</option>
+                                <option value="strict">Strict: players can't save a sheet that breaks a rule</option>
+                                <option value="warn">Warn only: show problems, allow saving</option>
+                                <option value="off">Off: no checks</option>
+                            </select>
+                            <div id="cs-rules-help" class="form-text">Point buy, class spell lists, subclass and feat limits come from the system's rules. The DM can always save regardless.</div>
+                        </div>
+                    }
                     <button type="submit" class="btn btn-primary" data-testid="settings-save">Save details</button>
                 </form>
             }
@@ -187,6 +200,7 @@
     private string name = string.Empty;
     private string description = string.Empty;
     private string systemId = string.Empty;
+    private string rulesEnforcement = "inherit";
     private HashSet<string> activePacks = new();
     private readonly Dictionary<string, string> usernames = new();
 
@@ -197,6 +211,7 @@
         name = Ctx.Campaign.Name;
         description = Ctx.Campaign.Description;
         systemId = Ctx.Campaign.SystemId;
+        rulesEnforcement = string.IsNullOrWhiteSpace(Ctx.Campaign.RulesEnforcement) ? "inherit" : Ctx.Campaign.RulesEnforcement;
         activePacks = Ctx.Campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         usernames.Clear();
@@ -230,6 +245,7 @@
         Ctx.Campaign.Name = name.Trim();
         Ctx.Campaign.Description = description.Trim();
         Ctx.Campaign.SystemId = systemId;
+        Ctx.Campaign.RulesEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
         try
         {
             await CampaignRepo.SaveAsync(Ctx.Campaign);

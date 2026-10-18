@@ -145,3 +145,146 @@ properties:
   - name: Paladin Subclass
     level: 20
     description: You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.
+  casterType: half
+  spellcasting:
+  - level: 1
+    cantrips: 0
+    preparedSpells: 2
+    maxSpellLevel: 1
+    slots: 2
+  - level: 2
+    cantrips: 0
+    preparedSpells: 3
+    maxSpellLevel: 1
+    slots: 2
+  - level: 3
+    cantrips: 0
+    preparedSpells: 4
+    maxSpellLevel: 1
+    slots: 3
+  - level: 4
+    cantrips: 0
+    preparedSpells: 5
+    maxSpellLevel: 1
+    slots: 3
+  - level: 5
+    cantrips: 0
+    preparedSpells: 6
+    maxSpellLevel: 2
+    slots: 4/2
+  - level: 6
+    cantrips: 0
+    preparedSpells: 6
+    maxSpellLevel: 2
+    slots: 4/2
+  - level: 7
+    cantrips: 0
+    preparedSpells: 7
+    maxSpellLevel: 2
+    slots: 4/3
+  - level: 8
+    cantrips: 0
+    preparedSpells: 7
+    maxSpellLevel: 2
+    slots: 4/3
+  - level: 9
+    cantrips: 0
+    preparedSpells: 9
+    maxSpellLevel: 3
+    slots: 4/3/2
+  - level: 10
+    cantrips: 0
+    preparedSpells: 9
+    maxSpellLevel: 3
+    slots: 4/3/2
+  - level: 11
+    cantrips: 0
+    preparedSpells: 10
+    maxSpellLevel: 3
+    slots: 4/3/3
+  - level: 12
+    cantrips: 0
+    preparedSpells: 10
+    maxSpellLevel: 3
+    slots: 4/3/3
+  - level: 13
+    cantrips: 0
+    preparedSpells: 11
+    maxSpellLevel: 4
+    slots: 4/3/3/1
+  - level: 14
+    cantrips: 0
+    preparedSpells: 11
+    maxSpellLevel: 4
+    slots: 4/3/3/1
+  - level: 15
+    cantrips: 0
+    preparedSpells: 12
+    maxSpellLevel: 4
+    slots: 4/3/3/2
+  - level: 16
+    cantrips: 0
+    preparedSpells: 12
+    maxSpellLevel: 4
+    slots: 4/3/3/2
+  - level: 17
+    cantrips: 0
+    preparedSpells: 14
+    maxSpellLevel: 5
+    slots: 4/3/3/3/1
+  - level: 18
+    cantrips: 0
+    preparedSpells: 14
+    maxSpellLevel: 5
+    slots: 4/3/3/3/1
+  - level: 19
+    cantrips: 0
+    preparedSpells: 15
+    maxSpellLevel: 5
+    slots: 4/3/3/3/2
+  - level: 20
+    cantrips: 0
+    preparedSpells: 15
+    maxSpellLevel: 5
+    slots: 4/3/3/3/2
+  featSlots:
+  - level: 1
+    slots: 0
+  - level: 2
+    slots: 0
+  - level: 3
+    slots: 0
+  - level: 4
+    slots: 1
+  - level: 5
+    slots: 1
+  - level: 6
+    slots: 1
+  - level: 7
+    slots: 1
+  - level: 8
+    slots: 2
+  - level: 9
+    slots: 2
+  - level: 10
+    slots: 2
+  - level: 11
+    slots: 2
+  - level: 12
+    slots: 3
+  - level: 13
+    slots: 3
+  - level: 14
+    slots: 3
+  - level: 15
+    slots: 3
+  - level: 16
+    slots: 4
+  - level: 17
+    slots: 4
+  - level: 18
+    slots: 4
+  - level: 19
+    slots: 5
+  - level: 20
+    slots: 5

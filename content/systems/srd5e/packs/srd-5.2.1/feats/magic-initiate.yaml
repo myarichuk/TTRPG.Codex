@@ -13,3 +13,4 @@ tags:
 - origin
 properties:
   category: origin
+  minLevel: 1

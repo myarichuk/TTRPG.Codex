@@ -32,6 +32,10 @@ public class CampaignDocument
     /// <summary>Content pack ids active for this campaign, in load-priority order.</summary>
     public List<string> ActivePacks { get; set; } = new();
 
+    /// <summary>House rules: how strictly the system's sheet rules apply here. "inherit" (or null)
+    /// uses the system's own setting; "strict", "warn" or "off" override it for this campaign.</summary>
+    public string? RulesEnforcement { get; set; }
+
     /// <summary>Every user with access to this campaign, and what they can do here (1.4).</summary>
     public List<CampaignMember> Members { get; set; } = new();
 

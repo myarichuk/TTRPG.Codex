@@ -169,3 +169,45 @@ properties:
   - name: Body and Mind
     level: 20
     description: You have developed your body and mind to new heights. Your Dexterity and Wisdom scores increase by 4, to a maximum of 25.
+  casterType: none
+  featSlots:
+  - level: 1
+    slots: 0
+  - level: 2
+    slots: 0
+  - level: 3
+    slots: 0
+  - level: 4
+    slots: 1
+  - level: 5
+    slots: 1
+  - level: 6
+    slots: 1
+  - level: 7
+    slots: 1
+  - level: 8
+    slots: 2
+  - level: 9
+    slots: 2
+  - level: 10
+    slots: 2
+  - level: 11
+    slots: 2
+  - level: 12
+    slots: 3
+  - level: 13
+    slots: 3
+  - level: 14
+    slots: 3
+  - level: 15
+    slots: 3
+  - level: 16
+    slots: 4
+  - level: 17
+    slots: 4
+  - level: 18
+    slots: 4
+  - level: 19
+    slots: 5
+  - level: 20
+    slots: 5

@@ -903,3 +903,13 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
     .avatar-xl { width: 84px; height: 84px; font-size: 1.7rem; border-radius: 20px; }
     .card-cover { height: 96px; }
 }
+
+/* ---------------------------------------------------------------------------
+   Sheet rules: attribute boxes, bonus pickers, list pickers
+   --------------------------------------------------------------------------- */
+.attr-box.attr-invalid { border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft); }
+.attr-box .attr-total { font-size: 0.72rem; margin-top: 0.25rem; }
+.panel-warn { border-color: var(--warning); }
+.list-picker { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.75rem 0.9rem; background: var(--surface); }
+.list-picker .pill a { color: inherit; }
+.picker-results { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem 0.6rem; max-height: 260px; overflow-y: auto; background: var(--surface); }

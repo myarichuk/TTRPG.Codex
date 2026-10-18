@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data\srd521-class-tables.json" LogicalName="srd521-class-tables.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\..\src\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
   </ItemGroup>

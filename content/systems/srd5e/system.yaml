@@ -36,7 +36,7 @@ resources:
   - { key: TempHP, label: Temporary Hit Points, default: 0 }
 
 actorFields:
-  - { key: level,            label: Level,              type: Number,          defaultValue: 1, category: General }
+  - { key: level,            label: Level,              type: Number,          defaultValue: 1, min: 1, max: 20, category: General }
   - { key: class,            label: Class,              type: EntityReference, targetEntityType: class,      category: General }
   - { key: subclass,         label: Subclass,           type: EntityReference, targetEntityType: subclass,   category: General }
   - { key: species,          label: Species,            type: EntityReference, targetEntityType: species,    category: General }
@@ -46,14 +46,71 @@ actorFields:
     type: Dropdown
     category: General
     options: [Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil, Unaligned]
+  - { key: originFeat,       label: Origin Feat,        type: EntityReference, targetEntityType: feat,       category: General, description: "Your background grants a specific origin feat." }
   - { key: armorClass,       label: Armor Class,        type: Number,  defaultValue: 10, category: Combat }
   - { key: speed,            label: Speed (feet),       type: Number,  defaultValue: 30, category: Combat }
-  - { key: proficiencyBonus, label: Proficiency Bonus,  type: Number,  defaultValue: 2,  category: Combat }
   - { key: notes,            label: Notes,              type: LongText, category: Notes }
 
 conditions:
   [Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible,
    Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious]
+
+# Character-sheet rules. Every rule here is data: a homebrew system can drop, relax or replace any
+# of them, and a campaign can downgrade "strict" to "warn" or "off" under Settings > House rules.
+sheetRules:
+  enforcement: strict
+  attributes:
+    # Players choose point buy or the standard array (the SRD's "random generation" is the DM
+    # entering rolled scores by hand: the DM always has the manual method).
+    methods: [point-buy, standard-array]
+    default: point-buy
+    max: 20
+    pointBuy: { budget: 27, min: 8, max: 15, costs: { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 } }
+    standardArray: [15, 14, 13, 12, 10, 8]
+    bonuses:
+      label: Background bonuses
+      fromField: background
+      property: abilityScores
+      allocations: [[2, 1], [1, 1, 1]]
+  derived:
+    - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4", category: Combat }
+  constraints:
+    - field: subclass
+      where:
+        - { property: class, equalsField: class, message: "that subclass belongs to another class." }
+    - field: originFeat
+      where:
+        - { property: category, equals: origin, message: "only an origin feat can go here." }
+        - { property: id, equalsPropertyOfField: { field: background, property: feat }, message: "your background grants a different origin feat." }
+  lists:
+    - key: cantrips
+      label: Cantrips
+      description: Cantrips known. Only your class's cantrips, up to the number in your class table.
+      targetEntityType: spell
+      category: Spellcasting
+      where:
+        - { property: level, equals: 0, message: "that is not a cantrip." }
+        - { property: classes, containsNameOfField: class, message: "not on your class's spell list." }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: cantrips } }
+    - key: spells
+      label: Prepared spells
+      description: Spells of level 1 and up. Only your class's list, no higher than your highest spell slot, up to your prepared-spells count.
+      targetEntityType: spell
+      category: Spellcasting
+      where:
+        - { property: level, gte: 1, message: "cantrips go in the cantrips list." }
+        - { property: classes, containsNameOfField: class, message: "not on your class's spell list." }
+        - { property: level, lteLookup: { field: class, table: spellcasting, byField: level, column: maxSpellLevel }, message: "above the highest spell level you can cast." }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: preparedSpells } }
+    - key: feats
+      label: Feats
+      description: General, fighting-style and epic-boon feats gained from class features. Origin feats come from your background.
+      targetEntityType: feat
+      category: Feats
+      where:
+        - { property: category, in: [general, fighting-style, epic-boon], message: "origin feats come from your background, not from here." }
+        - { property: minLevel, lteField: level, message: "you are not high enough level for it." }
+      maxCount: { lookup: { field: class, table: featSlots, byField: level, column: slots } }
 
 dice:
   initiative: 1d20
@@ -76,7 +133,10 @@ entityTypes:
       - { key: startingEquipment,   label: Starting Equipment,      type: LongText }
       - { key: multiclassing,       label: Multiclassing,           type: LongText }
       - { key: subclasses,          label: Subclasses,              type: TagList }
+      - { key: casterType,          label: Spellcasting,            type: Text }
       - { key: features,            label: Class Features,          type: Collection, description: "One row per feature: level, name, description." }
+      - { key: spellcasting,        label: Spellcasting Table,      type: Collection, description: "One row per level: cantrips, preparedSpells, maxSpellLevel, slots." }
+      - { key: featSlots,           label: Feat Slots,              type: Collection, description: "One row per level: how many class-granted feats (ASI/boon) you have." }
 
   - type: subclass
     label: Subclass
@@ -126,6 +186,7 @@ entityTypes:
     fields:
       - { key: category,      label: Category,      type: Dropdown, options: [origin, general, fighting-style, epic-boon] }
       - { key: prerequisites, label: Prerequisites, type: Text }
+      - { key: minLevel,      label: Minimum Level, type: Number }
       - { key: repeatable,    label: Repeatable,    type: Boolean }
 
   - type: spell
