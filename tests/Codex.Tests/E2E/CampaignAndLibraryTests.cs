@@ -74,7 +74,7 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await dm.GetByTestId("homebrew-type").SelectOptionAsync("spell");
         await dm.GetByTestId("homebrew-name").FillAsync("Thunderous Yawn");
         await dm.GetByTestId("homebrew-description").FillAsync("A **very** loud yawn that stuns the rude.");
-        await dm.GetByLabel("Level", new() { Exact = true }).FillAsync("2");
+        await dm.GetByLabel("Level", new() { Exact = true }).CommitAsync("2");
         await dm.GetByLabel("School", new() { Exact = true }).SelectOptionAsync("Evocation");
         await dm.GetByTestId("homebrew-save").ClickAsync();
         await dm.GetByTestId("status-message").GetByText("Saved “Thunderous Yawn”.").WaitForAsync();
@@ -90,26 +90,115 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await Assertions.Expect(player.GetByTestId("library-type-monster")).ToHaveCountAsync(0);
         await Assertions.Expect(dm.GetByTestId("library-type-monster")).ToHaveCountAsync(1);
 
-        // ---- 4. The player creates their own character with SRD picks. ----
+        // ---- 4. The player creates their own character; the system's rules shape every pick. ----
         await E2EHelpers.GoToSectionAsync(player, campaignId, "cast");
         await player.GetByTestId("create-character").ClickAsync();
         await player.GetByTestId("create-character-name").FillAsync("Aria Stonehelm");
         await player.GetByTestId("create-character-submit").ClickAsync();
         await player.WaitForURLAsync(url => url.Contains("/actors/"));
+        await E2EHelpers.WaitForInteractiveAsync(player);
         await Assertions.Expect(player.GetByTestId("actor-name")).ToHaveTextAsync("Aria Stonehelm");
+
+        // Point buy is the default method: a fresh sheet starts at the minimum with nothing spent.
+        await Assertions.Expect(player.GetByTestId("attr-method")).ToHaveValueAsync("point-buy");
+        await Assertions.Expect(player.GetByTestId("point-buy-summary")).ToContainTextAsync("0 of 27");
 
         await player.GetByLabel("Class", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Fighter" });
         await player.GetByLabel("Species", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Dwarf" });
-        await player.GetByTestId("attr-str").FillAsync("16");
+
+        // Subclasses are narrowed to the chosen class: a Fighter sees Champion and nothing else.
+        var subclassOptions = await player.GetByLabel("Subclass", new() { Exact = true }).Locator("option").AllTextContentsAsync();
+        Assert.Contains("Champion", subclassOptions);
+        Assert.DoesNotContain("Oath of Devotion", subclassOptions);
+        Assert.DoesNotContain("Circle of the Land", subclassOptions);
+
+        // A Fighter has no spell table: both spell lists are capped at zero.
+        await Assertions.Expect(player.GetByTestId("list-spells-count")).ToHaveTextAsync("0 of 0");
+        await Assertions.Expect(player.GetByTestId("list-cantrips-count")).ToHaveTextAsync("0 of 0");
+
+        // Out-of-range point-buy score: the rules panel explains, and a player can't save (strict).
+        await player.GetByTestId("attr-str").CommitAsync("18");
+        await Assertions.Expect(player.GetByTestId("rule-violations")).ToContainTextAsync("8 to 15");
         await player.GetByTestId("sheet-save").ClickAsync();
-        await player.GetByTestId("status-message").GetByText("Saved.").WaitForAsync();
+        await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Not saved");
+
+        // A legal spread: 15/14/13/12/10/8 is exactly 27 points.
+        await player.GetByTestId("attr-str").CommitAsync("15");
+        await player.GetByTestId("attr-dex").CommitAsync("14");
+        await player.GetByTestId("attr-con").CommitAsync("13");
+        await player.GetByTestId("attr-int").CommitAsync("12");
+        await player.GetByTestId("attr-wis").CommitAsync("10");
+        await player.GetByTestId("attr-cha").CommitAsync("8");
+        await Assertions.Expect(player.GetByTestId("point-buy-summary")).ToContainTextAsync("27 of 27");
+        await Assertions.Expect(player.GetByTestId("rule-violations")).ToHaveCountAsync(0);
+
+        // Background bonuses: the Sage lists CON/INT/WIS; +2/+1 on two of them raises the totals.
+        await player.GetByLabel("Background", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Sage" });
+        await player.GetByTestId("bonus-int").SelectOptionAsync("2");
+        await player.GetByTestId("bonus-wis").SelectOptionAsync("1");
+        await Assertions.Expect(player.GetByTestId("attr-int-total")).ToHaveTextAsync("12 + 2 = 14");
+        await Assertions.Expect(player.GetByTestId("attr-wis-total")).ToHaveTextAsync("10 + 1 = 11");
+        await Assertions.Expect(player.GetByTestId("derived-proficiencyBonus")).ToHaveTextAsync("+2");
+
+        // The origin feat is narrowed to the one the background grants.
+        var originOptions = await player.GetByLabel("Origin Feat", new() { Exact = true }).Locator("option").AllTextContentsAsync();
+        Assert.Contains(originOptions, o => o.StartsWith("Magic Initiate"));
+        Assert.DoesNotContain("Alert", originOptions);
+
+        Assert.Empty(await player.GetByTestId("rule-violations").AllInnerTextsAsync());
+        await player.GetByTestId("sheet-save").ClickAsync();
+        await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Saved.");
         await Assertions.Expect(player.GetByRole(AriaRole.Link, new() { Name = "Fighter" })).ToBeVisibleAsync();
-        await Assertions.Expect(player.GetByText("+3")).ToBeVisibleAsync(); // STR 16 -> +3
+        await Assertions.Expect(player.GetByTestId("attr-int-total")).ToHaveTextAsync("12 + 2 = 14"); // persisted and reloaded
 
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "cast");
         var ariaRow = dm.GetByTestId("actor-row").Filter(new() { HasText = "Aria Stonehelm" });
         await Assertions.Expect(ariaRow).ToContainTextAsync("Dwarf");
         await Assertions.Expect(ariaRow).ToContainTextAsync("Fighter");
+
+        // ---- 4b. The DM builds a Wizard NPC: spell picks follow the class list and slot levels. ----
+        await dm.GetByTestId("create-character").ClickAsync();
+        await dm.GetByTestId("create-character-name").FillAsync("Mage of the Tower");
+        await dm.GetByTestId("create-character-submit").ClickAsync();
+        await dm.WaitForURLAsync(url => url.Contains("/actors/"));
+        await E2EHelpers.WaitForInteractiveAsync(dm);
+        await dm.GetByLabel("Class", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Wizard" });
+        await dm.GetByLabel("Level", new() { Exact = true }).CommitAsync("1");
+
+        // Fireball is a Wizard spell, but level 3 is above a level-1 Wizard's slots: not offered.
+        await dm.GetByTestId("list-spells-search").FillAsync("Fireball");
+        await Assertions.Expect(dm.GetByTestId("list-spells-options")).ToContainTextAsync("No allowed entry");
+        // Cure Wounds is never on the Wizard list.
+        await dm.GetByTestId("list-spells-search").FillAsync("Cure Wounds");
+        await Assertions.Expect(dm.GetByTestId("list-spells-options")).ToContainTextAsync("No allowed entry");
+        // Magic Missile is level 1 on the Wizard list: offered and added.
+        await dm.GetByTestId("list-spells-search").FillAsync("Magic Missile");
+        await dm.GetByTestId("list-spells-options").GetByRole(AriaRole.Button, new() { Name = "Add Magic Missile" }).ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("list-spells-count")).ToHaveTextAsync("1 of 4");
+
+        // At level 5 the cap and the slot level rise: Fireball becomes available.
+        await dm.GetByLabel("Level", new() { Exact = true }).CommitAsync("5");
+        await Assertions.Expect(dm.GetByTestId("list-spells-count")).ToHaveTextAsync("1 of 9");
+        await dm.GetByTestId("list-spells-search").FillAsync("Fireball");
+        await dm.GetByTestId("list-spells-options").GetByRole(AriaRole.Button, new() { Name = "Add Fireball" }).ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("list-spells-count")).ToHaveTextAsync("2 of 9");
+        await Assertions.Expect(dm.GetByTestId("derived-proficiencyBonus")).ToHaveTextAsync("+3");
+        await dm.GetByTestId("sheet-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+        await Assertions.Expect(dm.GetByTestId("list-spells-pick")).ToHaveCountAsync(2);
+
+        // ---- 4c. House rules: the DM downgrades strict to warn, and the player's over-budget sheet saves with a warning. ----
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("settings-rules").SelectOptionAsync("warn");
+        await dm.GetByTestId("settings-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+
+        await player.ReloadAsync();
+        await E2EHelpers.WaitForInteractiveAsync(player);
+        await player.GetByTestId("attr-str").CommitAsync("18");
+        await Assertions.Expect(player.GetByTestId("rule-violations")).ToContainTextAsync("Warnings only");
+        await player.GetByTestId("sheet-save").ClickAsync();
+        await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Saved with 1 rule warning");
 
         // ---- 5. Accessibility smoke across the main pages. ----
         foreach (var path in new[] { "/", $"/campaigns/{campaignId}", $"/campaigns/{campaignId}/cast", $"/campaigns/{campaignId}/world", $"/campaigns/{campaignId}/lore", $"/campaigns/{campaignId}/sessions", $"/campaigns/{campaignId}/table", $"/campaigns/{campaignId}/library/spell/fireball", $"/campaigns/{campaignId}/settings", "/about", "/library" })

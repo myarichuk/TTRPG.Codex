@@ -58,6 +58,12 @@ else
     [Parameter]
     public IReadOnlyDictionary<string, IReadOnlyList<(string Id, string Name)>>? ReferenceOptions { get; set; }
 
+    /// <summary>Options for specific EntityReference fields, by field key; takes precedence over
+    /// <see cref="ReferenceOptions"/>. This is how sheet rules narrow a picker (subclasses of the
+    /// chosen class, the feat a background grants...).</summary>
+    [Parameter]
+    public IReadOnlyDictionary<string, IReadOnlyList<(string Id, string Name)>>? FieldOptions { get; set; }
+
     /// <summary>Field keys rendered elsewhere (e.g. attributes drawn as a grid) and skipped here.</summary>
     [Parameter]
     public IReadOnlySet<string> HiddenKeys { get; set; } = new HashSet<string>();
@@ -248,10 +254,27 @@ else
 
     // ---- Helpers ----
 
-    private IReadOnlyList<(string Id, string Name)> OptionsFor(FieldDefinition field) =>
-        field.TargetEntityType != null && ReferenceOptions != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var options)
+    private IReadOnlyList<(string Id, string Name)> OptionsFor(FieldDefinition field)
+    {
+        if (FieldOptions != null && FieldOptions.TryGetValue(field.Key, out var narrowed))
+        {
+            // Keep the current (possibly now-invalid) value selectable so the user sees what's wrong
+            // instead of the select silently snapping to the first option.
+            var current = GetValue(field)?.ToString();
+            if (!string.IsNullOrEmpty(current) && narrowed.All(o => o.Id != current) && ReferenceOptions != null
+                && field.TargetEntityType != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var all)
+                && all.FirstOrDefault(o => o.Id == current) is { Id.Length: > 0 } stale)
+            {
+                return narrowed.Append((stale.Id, stale.Name + " (not allowed)")).ToList();
+            }
+
+            return narrowed;
+        }
+
+        return field.TargetEntityType != null && ReferenceOptions != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var options)
             ? options
             : Array.Empty<(string, string)>();
+    }
 
     private static string FormatNumber(object? value) => value switch
     {

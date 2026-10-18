@@ -142,6 +142,10 @@ public class SystemDefinition
 
     public DiceConventions Dice { get; set; } = new();
 
+    /// <summary>Character-sheet rules (attribute generation, pick constraints, lists, derived
+    /// fields). Null means "no rules": any value goes, which is what a loose homebrew wants.</summary>
+    public SheetRules? SheetRules { get; set; }
+
     public ContentTypeDefinition? FindType(string typeOrFolder)
     {
         foreach (var type in EntityTypes)

@@ -287,6 +287,13 @@
         }
 
         var actor = NewActor(newName, newKind, newOwnerId);
+        if (Ctx.System != null)
+        {
+            // Rule-driven systems start the sheet on the default attribute method (point buy at the
+            // minimum, say) rather than the attributes' plain defaults.
+            new Codex.Core.Rules.SheetRuleEngine(Ctx.System, Codex.Core.Rules.NullEntryResolver.Instance).InitializeSheet(actor.Sheet);
+        }
+
         ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
         if (!await ActorRepo.TrySaveAsync(actor, Ctx.Access))

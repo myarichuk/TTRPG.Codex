@@ -21,6 +21,17 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
     private const string SystemId = "srd5e";
 
     private readonly Dictionary<string, JsonDocument> _documents = new();
+    private readonly Lazy<JsonElement?> _classTables = new(LoadClassTables);
+
+    /// <summary>The per-level class tables (cantrips, prepared spells, slots, feat slots) are not in
+    /// the 5e-bits 2024 data; they come from the SRD's own class tables, embedded as numbers only.</summary>
+    private static JsonElement? LoadClassTables()
+    {
+        using var stream = typeof(Srd5eImporter).Assembly.GetManifestResourceStream("srd521-class-tables.json");
+        if (stream == null) return null;
+        using var reader = new StreamReader(stream);
+        return JsonDocument.Parse(reader.ReadToEnd()).RootElement.Clone();
+    }
 
     public async Task<ImportResult> ImportAsync(string outputDirectory, TextWriter log)
     {
@@ -217,6 +228,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             if (multiclassText != null) entry.Properties["multiclassing"] = multiclassText;
             entry.Properties["subclasses"] = subclasses.Cast<object>().ToList();
             entry.Properties["features"] = FeatureRows(rows);
+            AddClassTables(entry, id);
 
             var sb = new StringBuilder();
             sb.AppendLine($"**Primary Ability:** {primary}  ");
@@ -230,6 +242,37 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Tags.Add("class");
             yield return entry;
         }
+    }
+
+    /// <summary>Adds casterType, a spellcasting row table and a featSlots row table from the SRD class tables.</summary>
+    private void AddClassTables(ContentEntry entry, string classId)
+    {
+        var tables = _classTables.Value;
+        if (tables == null || tables.Value.Get("classes")?.Get(classId) is not { } cls) return;
+
+        var casterType = cls.Str("casterType") ?? "none";
+        entry.Properties["casterType"] = casterType;
+
+        var spellcasting = new List<object>();
+        var featSlots = new List<object>();
+        foreach (var level in cls.Items("levels"))
+        {
+            var lvl = (long)(level.Int("level") ?? 0);
+            featSlots.Add(new Dictionary<string, object> { ["level"] = lvl, ["slots"] = (long)(level.Int("featSlots") ?? 0) });
+            if (casterType == "none") continue;
+            var slots = level.Items("slots").Select(s => s.GetInt32()).ToList();
+            spellcasting.Add(new Dictionary<string, object>
+            {
+                ["level"] = lvl,
+                ["cantrips"] = (long)(level.Int("cantrips") ?? 0),
+                ["preparedSpells"] = (long)(level.Int("preparedSpells") ?? 0),
+                ["maxSpellLevel"] = (long)(level.Int("maxSpellLevel") ?? 0),
+                ["slots"] = string.Join("/", slots)
+            });
+        }
+
+        if (spellcasting.Count > 0) entry.Properties["spellcasting"] = spellcasting;
+        entry.Properties["featSlots"] = featSlots;
     }
 
     private static string DescribeMulticlass(JsonElement multiclass)
@@ -289,6 +332,9 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
 
             if (prereqs.Count > 0) entry.Properties["prerequisites"] = string.Join("; ", prereqs);
             if (feat.Bool("repeatable") is { } repeatable) entry.Properties["repeatable"] = repeatable;
+            // The level a feat can first be taken: stated for general feats, level 19 for epic boons
+            // (the SRD grants them at 19), level 1 otherwise (origin feats, fighting styles via class features).
+            entry.Properties["minLevel"] = (long)(feat.Get("prerequisites")?.Int("minimum_level") ?? (category == "epic-boon" ? 19 : 1));
             entry.Tags.Add(category);
             yield return entry;
         }

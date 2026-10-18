@@ -177,3 +177,146 @@ properties:
       Nature Magician. You can convert uses of Wild Shape into a spell slot (no action required). Choose a number of your unexpended uses of Wild Shape and convert them into a single spell slot, with each use contributing 2 spell levels. For example, if you convert two uses of Wild Shape, you produce a level 4 spell slot. Once you use this benefit, you can't do so again until you finish a Long Rest.
 
       Longevity. The primal magic that you wield causes you to age more slowly. For every ten years that pass, your body ages only one year.
+  casterType: full
+  spellcasting:
+  - level: 1
+    cantrips: 2
+    preparedSpells: 4
+    maxSpellLevel: 1
+    slots: 2
+  - level: 2
+    cantrips: 2
+    preparedSpells: 5
+    maxSpellLevel: 1
+    slots: 3
+  - level: 3
+    cantrips: 2
+    preparedSpells: 6
+    maxSpellLevel: 2
+    slots: 4/2
+  - level: 4
+    cantrips: 3
+    preparedSpells: 7
+    maxSpellLevel: 2
+    slots: 4/3
+  - level: 5
+    cantrips: 3
+    preparedSpells: 9
+    maxSpellLevel: 3
+    slots: 4/3/2
+  - level: 6
+    cantrips: 3
+    preparedSpells: 10
+    maxSpellLevel: 3
+    slots: 4/3/3
+  - level: 7
+    cantrips: 3
+    preparedSpells: 11
+    maxSpellLevel: 4
+    slots: 4/3/3/1
+  - level: 8
+    cantrips: 3
+    preparedSpells: 12
+    maxSpellLevel: 4
+    slots: 4/3/3/2
+  - level: 9
+    cantrips: 3
+    preparedSpells: 14
+    maxSpellLevel: 5
+    slots: 4/3/3/3/1
+  - level: 10
+    cantrips: 4
+    preparedSpells: 15
+    maxSpellLevel: 5
+    slots: 4/3/3/3/2
+  - level: 11
+    cantrips: 4
+    preparedSpells: 16
+    maxSpellLevel: 6
+    slots: 4/3/3/3/2/1
+  - level: 12
+    cantrips: 4
+    preparedSpells: 16
+    maxSpellLevel: 6
+    slots: 4/3/3/3/2/1
+  - level: 13
+    cantrips: 4
+    preparedSpells: 17
+    maxSpellLevel: 7
+    slots: 4/3/3/3/2/1/1
+  - level: 14
+    cantrips: 4
+    preparedSpells: 17
+    maxSpellLevel: 7
+    slots: 4/3/3/3/2/1/1
+  - level: 15
+    cantrips: 4
+    preparedSpells: 18
+    maxSpellLevel: 8
+    slots: 4/3/3/3/2/1/1/1
+  - level: 16
+    cantrips: 4
+    preparedSpells: 18
+    maxSpellLevel: 8
+    slots: 4/3/3/3/2/1/1/1
+  - level: 17
+    cantrips: 4
+    preparedSpells: 19
+    maxSpellLevel: 9
+    slots: 4/3/3/3/2/1/1/1/1
+  - level: 18
+    cantrips: 4
+    preparedSpells: 20
+    maxSpellLevel: 9
+    slots: 4/3/3/3/3/1/1/1/1
+  - level: 19
+    cantrips: 4
+    preparedSpells: 21
+    maxSpellLevel: 9
+    slots: 4/3/3/3/3/2/1/1/1
+  - level: 20
+    cantrips: 4
+    preparedSpells: 22
+    maxSpellLevel: 9
+    slots: 4/3/3/3/3/2/2/1/1
+  featSlots:
+  - level: 1
+    slots: 0
+  - level: 2
+    slots: 0
+  - level: 3
+    slots: 0
+  - level: 4
+    slots: 1
+  - level: 5
+    slots: 1
+  - level: 6
+    slots: 1
+  - level: 7
+    slots: 1
+  - level: 8
+    slots: 2
+  - level: 9
+    slots: 2
+  - level: 10
+    slots: 2
+  - level: 11
+    slots: 2
+  - level: 12
+    slots: 3
+  - level: 13
+    slots: 3
+  - level: 14
+    slots: 3
+  - level: 15
+    slots: 3
+  - level: 16
+    slots: 4
+  - level: 17
+    slots: 4
+  - level: 18
+    slots: 4
+  - level: 19
+    slots: 5
+  - level: 20
+    slots: 5

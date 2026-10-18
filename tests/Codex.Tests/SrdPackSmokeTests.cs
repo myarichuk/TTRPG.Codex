@@ -104,6 +104,43 @@ public class SrdPackSmokeTests : IAsyncLifetime
     }
 
     [Fact]
+    public void Classes_CarryTheSrdTables_ForTheSheetRules()
+    {
+        var bard = _registry.GetEntry("srd5e", "class", "bard")!;
+        Assert.Equal("full", bard.Properties["casterType"]);
+        var rows = Assert.IsType<List<object>>(bard.Properties["spellcasting"]).Cast<Dictionary<string, object>>().ToList();
+        var level5 = rows.Single(r => (long)r["level"] == 5);
+        Assert.Equal(3L, level5["cantrips"]);
+        Assert.Equal(9L, level5["preparedSpells"]);
+        Assert.Equal(3L, level5["maxSpellLevel"]);
+        Assert.Equal("4/3/2", level5["slots"]);
+
+        var fighter = _registry.GetEntry("srd5e", "class", "fighter")!;
+        Assert.Equal("none", fighter.Properties["casterType"]);
+        Assert.False(fighter.Properties.ContainsKey("spellcasting"));
+        var feats = Assert.IsType<List<object>>(fighter.Properties["featSlots"]).Cast<Dictionary<string, object>>().ToList();
+        Assert.Equal(2L, feats.Single(r => (long)r["level"] == 6)["slots"]);   // ASI at 4 and 6
+        Assert.Equal(7L, feats.Single(r => (long)r["level"] == 20)["slots"]);  // 4, 6, 8, 12, 14, 16 and the level 19 boon
+
+        var warlock = _registry.GetEntry("srd5e", "class", "warlock")!;
+        Assert.Equal("pact", warlock.Properties["casterType"]);
+
+        Assert.Equal(4L, _registry.GetEntry("srd5e", "feat", "grappler")!.Properties["minLevel"]);
+        Assert.Equal(19L, _registry.GetEntry("srd5e", "feat", "boon-of-fate")!.Properties["minLevel"]);
+        Assert.Equal(1L, _registry.GetEntry("srd5e", "feat", "alert")!.Properties["minLevel"]);
+    }
+
+    [Fact]
+    public void SheetRules_AreDeclaredAndResolveAgainstThePack()
+    {
+        var definition = _loader.GetDefinition("srd5e")!;
+        Assert.NotNull(definition.SheetRules);
+        Assert.Equal("strict", definition.SheetRules!.Enforcement);
+        Assert.Equal(27, definition.SheetRules.Attributes!.PointBuy!.Budget);
+        Assert.Equal(new[] { "cantrips", "spells", "feats" }, definition.SheetRules.Lists.Select(l => l.Key));
+    }
+
+    [Fact]
     public void Search_FindsAcrossTypes_AndTheActorSchemaReferencesContentTypes()
     {
         var hits = _registry.Search("srd5e", "dwarf").ToList();
@@ -124,5 +161,45 @@ public class SrdPackSmokeTests : IAsyncLifetime
         Assert.Equal(2, _registry.GetEntries("srd5e", "lore").Count());
         Assert.NotNull(_registry.GetLocation("srd5e:the-salt-lantern"));
         Assert.NotNull(_registry.GetActor("srd5e:maud-ketter"));
+    }
+}
+
+public class SrdSheetScenarioTests : IAsyncLifetime
+{
+    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly PluginLoader _loader;
+
+    public SrdSheetScenarioTests()
+    {
+        _loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(_registry));
+    }
+
+    public async Task InitializeAsync() => await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    private sealed class RegistryResolver(ContentRegistry registry) : Codex.Core.Rules.IEntryResolver
+    {
+        public ContentEntry? Resolve(string type, string id) => registry.GetEntries("srd5e", type).FirstOrDefault(e => e.Id == id);
+        public IEnumerable<ContentEntry> Candidates(string type) => registry.GetEntries("srd5e", type);
+    }
+
+    [Fact]
+    public void ALegalPointBuyFighterWithSageBonuses_HasNoViolations()
+    {
+        var engine = new Codex.Core.Rules.SheetRuleEngine(_loader.GetDefinition("srd5e")!, new RegistryResolver(_registry));
+        var sheet = new Dictionary<string, object>();
+        engine.InitializeSheet(sheet);
+        sheet["class"] = "fighter";
+        sheet["species"] = "dwarf";
+        sheet["background"] = "sage";
+        foreach (var (key, score) in new[] { ("str", 15), ("dex", 14), ("con", 13), ("int", 12), ("wis", 10), ("cha", 8) })
+            sheet["base_" + key] = (long)score;
+        sheet["bonus_int"] = 2L;
+        sheet["bonus_wis"] = 1L;
+        engine.ApplyAttributeTotals(sheet);
+        var evaluation = engine.Evaluate(sheet);
+        Assert.True(!evaluation.HasViolations, string.Join(" | ", evaluation.Violations.Select(v => v.FieldKey + ": " + v.Message)));
+        Assert.Equal(14, (int)(long)sheet["int"]);
     }
 }

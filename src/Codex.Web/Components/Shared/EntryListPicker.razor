@@ -1,0 +1,110 @@
+@using Codex.Plugin.Abstractions
+
+@* A multi-pick list of Library entries (spells, feats, knacks...) driven by a ListRule: the picked
+   entries as removable chips, a count against the rule's limit, and a search box that only offers
+   what the rules allow right now. *@
+
+<div class="list-picker" role="group" aria-labelledby="@(id)-label" data-testid="list-@Rule.Key">
+    <div class="d-flex justify-content-between align-items-baseline gap-2">
+        <div>
+            <div id="@(id)-label" class="form-label mb-0">@Rule.Label</div>
+            @if (!string.IsNullOrWhiteSpace(Rule.Description))
+            {
+                <div class="form-text mt-0">@Rule.Description</div>
+            }
+        </div>
+        <span class="pill @(Limit.HasValue && Picks.Count > Limit ? "pill-danger" : "")" data-testid="list-@Rule.Key-count">
+            @Picks.Count@(Limit.HasValue ? $" of {Limit}" : "")
+        </span>
+    </div>
+
+    @if (Picks.Count == 0)
+    {
+        <p class="small-muted mb-2">Nothing picked yet.</p>
+    }
+    else
+    {
+        <ul class="list-inline mb-2 mt-2" aria-label="@Rule.Label picked">
+            @foreach (var entry in Picks)
+            {
+                <li class="list-inline-item mb-1">
+                    <span class="pill pill-accent" data-testid="list-@Rule.Key-pick">
+                        <a href="@LibraryPath/@entry.Type/@Uri.EscapeDataString(entry.Id)" class="text-reset text-decoration-none">@entry.Name</a>
+                        @if (!ReadOnly)
+                        {
+                            <button type="button" class="btn-link-plain ms-1" aria-label="Remove @entry.Name" @onclick="() => RemoveAsync(entry.Id)"><LucideIcon IconName="x" Size="12" /></button>
+                        }
+                    </span>
+                </li>
+            }
+        </ul>
+    }
+
+    @if (!ReadOnly)
+    {
+        var canAdd = !Limit.HasValue || Picks.Count < Limit;
+        <div class="d-flex gap-2 align-items-end flex-wrap">
+            <div class="flex-grow-1" style="min-width: 220px">
+                <label for="@(id)-search" class="visually-hidden">Search @Rule.Label to add</label>
+                <input id="@(id)-search" type="search" class="form-control form-control-sm" placeholder="@(canAdd ? $"Search {Rule.Label.ToLowerInvariant()} to add…" : "Limit reached")"
+                       disabled="@(!canAdd)" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" autocomplete="off" data-testid="list-@Rule.Key-search" />
+            </div>
+        </div>
+        @if (canAdd && query.Length > 0)
+        {
+            var matches = Options.Where(o => o.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).Take(12).ToList();
+            <ul class="list-unstyled mb-0 mt-1 picker-results" data-testid="list-@Rule.Key-options">
+                @if (matches.Count == 0)
+                {
+                    <li class="small-muted">No allowed entry matches “@query”.</li>
+                }
+                @foreach (var option in matches)
+                {
+                    <li class="list-row py-1">
+                        <span>@option.Name <span class="small-muted">@Summary(option)</span></span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => AddAsync(option.Id)" aria-label="Add @option.Name">Add</button>
+                    </li>
+                }
+            </ul>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ListRule Rule { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<ContentEntry> Picks { get; set; } = Array.Empty<ContentEntry>();
+    [Parameter, EditorRequired] public IReadOnlyList<ContentEntry> Options { get; set; } = Array.Empty<ContentEntry>();
+    [Parameter] public int? Limit { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public string LibraryPath { get; set; } = string.Empty;
+    [Parameter] public ContentTypeDefinition? Type { get; set; }
+
+    /// <summary>Called with the new ordered list of picked ids.</summary>
+    [Parameter] public EventCallback<List<string>> PicksChanged { get; set; }
+
+    private readonly string id = "lp-" + Guid.NewGuid().ToString("N")[..6];
+    private string query = string.Empty;
+
+    private async Task AddAsync(string entryId)
+    {
+        query = string.Empty;
+        await PicksChanged.InvokeAsync(Picks.Select(p => p.Id).Append(entryId).ToList());
+    }
+
+    private async Task RemoveAsync(string entryId) =>
+        await PicksChanged.InvokeAsync(Picks.Select(p => p.Id).Where(i => i != entryId).ToList());
+
+    private string Summary(ContentEntry entry)
+    {
+        var parts = new List<string>();
+        foreach (var key in Type?.SummaryFields ?? new List<string>())
+        {
+            if (entry.Properties.TryGetValue(key, out var value) && value != null)
+            {
+                parts.Add(value is IEnumerable<object> list ? string.Join(", ", list.Select(o => o?.ToString())) : value.ToString() ?? string.Empty);
+            }
+        }
+
+        return parts.Count == 0 ? string.Empty : "· " + string.Join(" · ", parts);
+    }
+}

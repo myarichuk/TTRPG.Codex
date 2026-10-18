@@ -138,6 +138,11 @@ public static class SystemDefinitionLoader
             }
         }
 
+        foreach (var error in ValidateSheetRules(definition))
+        {
+            yield return error;
+        }
+
         var attributeKeys = definition.Attributes.Select(a => a.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var resourceKeys = definition.Resources.SelectMany(r => new[] { r.Key, r.MaxKey }).Where(k => k != null).ToHashSet(StringComparer.OrdinalIgnoreCase)!;
         foreach (var field in definition.ActorFields)
@@ -171,6 +176,92 @@ public static class SystemDefinitionLoader
         }
 
         return string.Join(" -> ", messages);
+    }
+
+    private static IEnumerable<string> ValidateSheetRules(SystemDefinition definition)
+    {
+        var rules = definition.SheetRules;
+        if (rules == null) yield break;
+
+        if (rules.Enforcement.ToLowerInvariant() is not ("strict" or "warn" or "off"))
+        {
+            yield return $"sheetRules.enforcement '{rules.Enforcement}' must be strict, warn or off.";
+        }
+
+        var fieldKeys = definition.ActorFields.Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var referenceFields = definition.ActorFields.Where(f => f.Type == FieldType.EntityReference).Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (rules.Attributes is { } attributes)
+        {
+            foreach (var method in attributes.Methods.Where(m => m is not ("point-buy" or "standard-array" or "manual")))
+            {
+                yield return $"sheetRules.attributes.methods: unknown method '{method}'.";
+            }
+
+            if (attributes.Methods.Contains("point-buy") && attributes.PointBuy == null)
+            {
+                yield return "sheetRules.attributes: point-buy is offered but pointBuy is not defined.";
+            }
+
+            if (attributes.Methods.Contains("standard-array") && attributes.StandardArray.Count != definition.Attributes.Count)
+            {
+                yield return $"sheetRules.attributes.standardArray must list one score per attribute ({definition.Attributes.Count}).";
+            }
+
+            if (attributes.Bonuses is { } bonuses && !referenceFields.Contains(bonuses.FromField))
+            {
+                yield return $"sheetRules.attributes.bonuses.fromField '{bonuses.FromField}' is not an EntityReference actor field.";
+            }
+        }
+
+        foreach (var derived in rules.Derived)
+        {
+            if (string.IsNullOrWhiteSpace(derived.Key) || string.IsNullOrWhiteSpace(derived.Formula))
+            {
+                yield return "every sheetRules.derived entry needs a key and a formula.";
+            }
+            else if (fieldKeys.Contains(derived.Key))
+            {
+                yield return $"sheetRules.derived '{derived.Key}' collides with an actor field; derived fields are computed, not entered.";
+            }
+        }
+
+        foreach (var constraint in rules.Constraints.Where(c => !referenceFields.Contains(c.Field)))
+        {
+            yield return $"sheetRules.constraints: '{constraint.Field}' is not an EntityReference actor field.";
+        }
+
+        foreach (var duplicate in Duplicates(rules.Lists.Select(l => l.Key)))
+        {
+            yield return $"sheetRules.lists key '{duplicate}' is declared more than once.";
+        }
+
+        foreach (var list in rules.Lists)
+        {
+            if (string.IsNullOrWhiteSpace(list.Key) || string.IsNullOrWhiteSpace(list.TargetEntityType))
+            {
+                yield return "every sheetRules.lists entry needs a key and a targetEntityType.";
+            }
+            else if (definition.FindType(list.TargetEntityType) == null)
+            {
+                yield return $"sheetRules.lists '{list.Key}' targets entity type '{list.TargetEntityType}', which this system does not declare.";
+            }
+
+            if (fieldKeys.Contains(list.Key))
+            {
+                yield return $"sheetRules.lists '{list.Key}' collides with an actor field.";
+            }
+        }
+
+        foreach (var condition in rules.Constraints.SelectMany(c => c.Where).Concat(rules.Lists.SelectMany(l => l.Where)))
+        {
+            var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.LteLookup?.Field }
+                .Where(f => f != null);
+            foreach (var field in referencedFields.Where(f => !fieldKeys.Contains(f!)))
+            {
+                yield return $"a sheet rule on '{condition.Property}' refers to actor field '{field}', which does not exist.";
+            }
+        }
     }
 
     private static IEnumerable<string> Duplicates(IEnumerable<string> keys) =>

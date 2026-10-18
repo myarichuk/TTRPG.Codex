@@ -83,6 +83,61 @@ entityTypes:                  # what packs for this system may contain
 Field types: `Text`, `LongText`, `Number` (honours `min`/`max`), `Boolean`, `Dropdown` (`options`),
 `TagList` (comma-separated), `EntityReference` (`targetEntityType`), `Collection` (rows), `ImagePicker`.
 
+### Sheet rules (`sheetRules`)
+
+What a character sheet may contain is data too, so a homebrew can be as strict or as loose as it
+likes. Leave `sheetRules` out and anything goes. The SRD system uses every kind of rule:
+
+```yaml
+sheetRules:
+  enforcement: strict          # strict: players can't save a sheet that breaks a rule (the DM always can)
+                               # warn: show problems but allow saving; off: don't check.
+                               # A campaign can override this under Settings > House rules.
+  attributes:
+    methods: [point-buy, standard-array]      # what players may pick; the DM also gets "manual"
+    default: point-buy
+    max: 20                                   # cap on base + bonuses
+    pointBuy: { budget: 27, min: 8, max: 15, costs: { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 } }
+    standardArray: [15, 14, 13, 12, 10, 8]
+    bonuses:                                  # bonuses granted by a referenced entry
+      label: Background bonuses
+      fromField: background                   # the sheet field that references the entry
+      property: abilityScores                 # that entry's list of eligible attributes (keys, abbreviations or labels)
+      allocations: [[2, 1], [1, 1, 1]]        # allowed spreads, one bonus per distinct attribute
+  derived:                                    # read-only, computed from numeric sheet fields
+    - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4" }
+    #  floor(), ceil(), max(), min() and mod(score) (the half-minus-five modifier) are available
+  constraints:                                # on single-pick reference fields
+    - field: subclass
+      where:
+        - { property: class, equalsField: class, message: "that subclass belongs to another class." }
+    - field: originFeat
+      where:
+        - { property: category, equals: origin }
+        - { property: id, equalsPropertyOfField: { field: background, property: feat } }
+  lists:                                      # multi-pick lists shown under "Picks" on the sheet
+    - key: spells
+      label: Prepared spells
+      targetEntityType: spell
+      where:
+        - { property: level, gte: 1 }
+        - { property: classes, containsNameOfField: class }       # the spell's class list names the sheet's class
+        - { property: level, lteLookup: { field: class, table: spellcasting, byField: level, column: maxSpellLevel } }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: preparedSpells } }
+```
+
+Conditions compare a property of the candidate entry (`level`, `classes`, `category`, or `id`,
+`name`, `tags`) with a constant (`equals`, `in`, `gte`, `lte`), a sheet field (`equalsField`,
+`lteField`, `gteField`), the entry another field references (`containsNameOfField`,
+`equalsPropertyOfField`) or a value looked up in that entry's row table (`lteLookup`). A lookup
+takes the row whose `level` (or `rowKey`) is the highest not above the sheet's `byField`. A
+`maxCount` that looks up a table the chosen entry doesn't have is zero (a fighter's spells); with
+nothing chosen yet it is unlimited.
+
+Base scores live in the sheet as `base_<key>` and bonuses as `bonus_<key>`; the engine writes the
+total into `<key>`, which is what the live table and the ECS use. List picks are stored as lists of
+entry ids under the list's key.
+
 Validation runs at load. A broken `system.yaml` is reported on the About page under "Content
 warnings" and the system is skipped; nothing else stops loading.
 

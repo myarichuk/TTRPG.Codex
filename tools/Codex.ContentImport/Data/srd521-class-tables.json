@@ -1,0 +1,3235 @@
+{
+ "_license": "Class tables from the System Reference Document 5.2.1 by Wizards of the Coast LLC (CC-BY-4.0, https://www.dndbeyond.com/srd), read from the Markdown transcription at https://github.com/downfallx/dnd-5e-srd-markdown (CC-BY-4.0). Numbers only; no rules text.",
+ "classes": {
+  "barbarian": {
+   "casterType": "none",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Rage",
+      "Unarmored Defense",
+      "Weapon Mastery"
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Danger Sense",
+      "Reckless Attack"
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Barbarian Subclass",
+      "Primal Knowledge"
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Extra Attack",
+      "Fast Movement"
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Feral Instinct",
+      "Instinctive Pounce"
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Brutal Strike"
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [
+      "Relentless Rage"
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [
+      "Improved Brutal Strike"
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [
+      "Persistent Rage"
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [
+      "Improved Brutal Strike"
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Indomitable Might"
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Primal Champion"
+     ]
+    }
+   ]
+  },
+  "bard": {
+   "casterType": "full",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Bardic Inspiration",
+      "Spellcasting"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Expertise",
+      "Jack of All Trades"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 5,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Bard Subclass"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Font of Inspiration"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Countercharm"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Expertise"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Magical Secrets"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 19,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Superior Inspiration"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 20,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 21,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Words of Creation"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 22,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1
+     ]
+    }
+   ]
+  },
+  "cleric": {
+   "casterType": "full",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Spellcasting",
+      "Divine Order"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Channel Divinity"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 5,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Cleric Subclass"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Sear Undead"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Blessed Strikes"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Divine Intervention"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Improved Blessed Strikes"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 19,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 20,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 21,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Greater Divine Intervention"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 22,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1
+     ]
+    }
+   ]
+  },
+  "druid": {
+   "casterType": "full",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Spellcasting",
+      "Druidic",
+      "Primal Order"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Wild Shape",
+      "Wild Companion"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 5,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Druid Subclass"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Wild Resurgence"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Elemental Fury"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 3,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [
+      "Improved Elemental Fury"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 19,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Beast Spells"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 20,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 21,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Archdruid"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 22,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1
+     ]
+    }
+   ]
+  },
+  "fighter": {
+   "casterType": "none",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Fighting Style",
+      "Second Wind",
+      "Weapon Mastery"
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Action Surge (one use)",
+      "Tactical Mind"
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Fighter Subclass"
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Extra Attack",
+      "Tactical Shift"
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 3,
+     "features": [
+      "Indomitable (one use)",
+      "Tactical Master"
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 3,
+     "features": [
+      "Two Extra Attacks"
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 4,
+     "features": [
+      "Indomitable (two uses)",
+      "Studied Attacks"
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 5,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 5,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 6,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 6,
+     "features": [
+      "Action Surge (two uses)",
+      "Indomitable (three uses)"
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 6,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 7,
+     "features": [
+      "Epic Boon"
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 7,
+     "features": [
+      "Three Extra Attacks"
+     ]
+    }
+   ]
+  },
+  "monk": {
+   "casterType": "none",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Martial Arts",
+      "Unarmored Defense"
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Monk's Focus",
+      "Unarmored Movement",
+      "Uncanny Metabolism"
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Deflect Attacks",
+      "Monk Subclass"
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement",
+      "Slow Fall"
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Extra Attack",
+      "Stunning Strike"
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Empowered Strikes",
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Evasion"
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Acrobatic Movement"
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Heightened Focus",
+      "Self-Restoration"
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [
+      "Deflect Energy"
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Disciplined Survivor"
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [
+      "Perfect Focus"
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Superior Defense"
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Body and Mind"
+     ]
+    }
+   ]
+  },
+  "paladin": {
+   "casterType": "half",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Lay On Hands",
+      "Spellcasting",
+      "Weapon Mastery"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 2,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Fighting Style",
+      "Paladin's Smite"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 3,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Channel Divinity",
+      "Paladin Subclass"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 5,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Extra Attack",
+      "Faithful Steed"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Aura of Protection"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Abjure Foes"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Aura of Courage"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [
+      "Radiant Strikes"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 0,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Restoring Touch"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [],
+     "cantrips": 0,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Aura Expansion"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    }
+   ]
+  },
+  "ranger": {
+   "casterType": "half",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Spellcasting",
+      "Favored Enemy",
+      "Weapon Mastery"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 2,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Deft Explorer",
+      "Fighting Style"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 3,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Ranger Subclass"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 5,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Extra Attack"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Roving"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Expertise"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Tireless"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [
+      "Relentless Hunter"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Nature\u2019s Veil"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [
+      "Precise Hunter"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Feral Senses"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Foe Slayer"
+     ],
+     "cantrips": 0,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    }
+   ]
+  },
+  "rogue": {
+   "casterType": "none",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Expertise",
+      "Sneak Attack",
+      "Thieves' Cant",
+      "Weapon Mastery"
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Cunning Action"
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Rogue Subclass",
+      "Steady Aim"
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Cunning Strike",
+      "Uncanny Dodge"
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Expertise"
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Evasion",
+      "Reliable Talent"
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 3,
+     "features": [
+      "Improved Cunning Strike"
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 4,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 4,
+     "features": [
+      "Devious Strikes"
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 4,
+     "features": [
+      "Slippery Mind"
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 5,
+     "features": [
+      "Ability Score Improvement"
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 5,
+     "features": [
+      "Subclass feature"
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 5,
+     "features": [
+      "Elusive"
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 6,
+     "features": [
+      "Epic Boon"
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 6,
+     "features": [
+      "Stroke of Luck"
+     ]
+    }
+   ]
+  },
+  "sorcerer": {
+   "casterType": "full",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Spellcasting",
+      "Innate Sorcery"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 2,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Font of Magic",
+      "Metamagic"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Sorcerer Subclass"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Sorcerous Restoration"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [
+      "Sorcery Incarnate"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Metamagic"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 6,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 6,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 6,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 18,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [
+      "Metamagic"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 19,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 20,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 21,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Arcane Apotheosis"
+     ],
+     "cantrips": 6,
+     "preparedSpells": 22,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1
+     ]
+    }
+   ]
+  },
+  "warlock": {
+   "casterType": "pact",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Eldritch Invocations",
+      "Pact Magic"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 2,
+     "maxSpellLevel": 1,
+     "slots": [
+      1
+     ],
+     "pactSlotLevel": 1
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Magical Cunning"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 3,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 1
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Warlock Subclass"
+     ],
+     "cantrips": 2,
+     "preparedSpells": 4,
+     "maxSpellLevel": 2,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 2
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 5,
+     "maxSpellLevel": 2,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 2
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [],
+     "cantrips": 3,
+     "preparedSpells": 6,
+     "maxSpellLevel": 3,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 3
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 7,
+     "maxSpellLevel": 3,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 3
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [],
+     "cantrips": 3,
+     "preparedSpells": 8,
+     "maxSpellLevel": 4,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 4
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 9,
+     "maxSpellLevel": 4,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 4
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [
+      "Contact Patron"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 10,
+     "maxSpellLevel": 5,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 10,
+     "maxSpellLevel": 5,
+     "slots": [
+      2
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [
+      "Mystic Arcanum (level 6 spell)"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 11,
+     "maxSpellLevel": 5,
+     "slots": [
+      3
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 11,
+     "maxSpellLevel": 5,
+     "slots": [
+      3
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [
+      "Mystic Arcanum (level 7 spell)"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 12,
+     "maxSpellLevel": 5,
+     "slots": [
+      3
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 12,
+     "maxSpellLevel": 5,
+     "slots": [
+      3
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [
+      "Mystic Arcanum (level 8 spell)"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 13,
+     "maxSpellLevel": 5,
+     "slots": [
+      3
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 13,
+     "maxSpellLevel": 5,
+     "slots": [
+      3
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [
+      "Mystic Arcanum (level 9 spell)"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4
+     ],
+     "pactSlotLevel": 5
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Eldritch Master"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4
+     ],
+     "pactSlotLevel": 5
+    }
+   ]
+  },
+  "wizard": {
+   "casterType": "full",
+   "levels": [
+    {
+     "level": 1,
+     "featSlots": 0,
+     "features": [
+      "Spellcasting",
+      "Ritual Adept",
+      "Arcane Recovery"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 4,
+     "maxSpellLevel": 1,
+     "slots": [
+      2
+     ]
+    },
+    {
+     "level": 2,
+     "featSlots": 0,
+     "features": [
+      "Scholar"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 5,
+     "maxSpellLevel": 1,
+     "slots": [
+      3
+     ]
+    },
+    {
+     "level": 3,
+     "featSlots": 0,
+     "features": [
+      "Wizard Subclass"
+     ],
+     "cantrips": 3,
+     "preparedSpells": 6,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      2
+     ]
+    },
+    {
+     "level": 4,
+     "featSlots": 1,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 7,
+     "maxSpellLevel": 2,
+     "slots": [
+      4,
+      3
+     ]
+    },
+    {
+     "level": 5,
+     "featSlots": 1,
+     "features": [
+      "Memorize Spell"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 9,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 6,
+     "featSlots": 1,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 10,
+     "maxSpellLevel": 3,
+     "slots": [
+      4,
+      3,
+      3
+     ]
+    },
+    {
+     "level": 7,
+     "featSlots": 1,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 11,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 8,
+     "featSlots": 2,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 4,
+     "preparedSpells": 12,
+     "maxSpellLevel": 4,
+     "slots": [
+      4,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 9,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 4,
+     "preparedSpells": 14,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      1
+     ]
+    },
+    {
+     "level": 10,
+     "featSlots": 2,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 15,
+     "maxSpellLevel": 5,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2
+     ]
+    },
+    {
+     "level": 11,
+     "featSlots": 2,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 12,
+     "featSlots": 3,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 16,
+     "maxSpellLevel": 6,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1
+     ]
+    },
+    {
+     "level": 13,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 17,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 14,
+     "featSlots": 3,
+     "features": [
+      "Subclass feature"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 18,
+     "maxSpellLevel": 7,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 15,
+     "featSlots": 3,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 19,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 16,
+     "featSlots": 4,
+     "features": [
+      "Ability Score Improvement"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 21,
+     "maxSpellLevel": 8,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 17,
+     "featSlots": 4,
+     "features": [],
+     "cantrips": 5,
+     "preparedSpells": 22,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 18,
+     "featSlots": 4,
+     "features": [
+      "Spell Mastery"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 23,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 19,
+     "featSlots": 5,
+     "features": [
+      "Epic Boon"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 24,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "level": 20,
+     "featSlots": 5,
+     "features": [
+      "Signature Spells"
+     ],
+     "cantrips": 5,
+     "preparedSpells": 25,
+     "maxSpellLevel": 9,
+     "slots": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1
+     ]
+    }
+   ]
+  }
+ }
+}

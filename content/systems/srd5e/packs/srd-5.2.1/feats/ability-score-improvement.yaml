@@ -7,3 +7,4 @@ tags:
 properties:
   category: general
   prerequisites: Level 4+
+  minLevel: 4
