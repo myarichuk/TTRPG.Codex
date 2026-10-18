@@ -4,19 +4,22 @@
 @page "/campaigns/{CampaignId}/{Section}/{Arg1}/{Arg2}"
 @using System.Security.Claims
 @using Codex.Persistence
+@using Codex.Persistence.Runtime
 @using Codex.Plugin.Abstractions
 @using Microsoft.AspNetCore.Components.Authorization
+@implements IDisposable
 @inject ICampaignRepository CampaignRepo
 @inject IActorRepository ActorRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject ISystemCatalog Catalog
+@inject CampaignRuntimeManager RuntimeManager
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>@(campaign?.Name ?? "Campaign") | TTRPG.Codex</PageTitle>
 
 @if (loading)
 {
-    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+    <LoadingSkeleton Rows="4" />
 }
 else if (campaign == null)
 {
@@ -38,60 +41,68 @@ else if (access == null)
 }
 else
 {
-    <div class="page-header mb-3">
-        <div>
-            <nav aria-label="Breadcrumb" class="small-muted mb-1"><a href="/">Campaigns</a> / <span>@campaign.Name</span></nav>
-            <h1 class="mb-0" data-testid="campaign-title">@campaign.Name</h1>
-            <div class="d-flex flex-wrap gap-1 mt-1">
+    var tableLive = RuntimeManager.TryGet(CampaignId) != null;
+
+    <div class="workspace">
+        <header class="ws-head">
+            <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>@campaign.Name</span></nav>
+            <h1 data-testid="campaign-title">@campaign.Name</h1>
+            <div class="pills">
                 <span class="pill">@Catalog.GetDisplayName(campaign.SystemId)</span>
                 <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@access.Role</span>
             </div>
+        </header>
+
+        <nav class="ws-nav" aria-label="Campaign sections">
+            @foreach (var section in Sections)
+            {
+                var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
+                var current = CurrentSection == section.Key ? "page" : null;
+                var testId = "section-" + section.Key;
+                <a href="@href" aria-current="@current" data-testid="@testId">
+                    <LucideIcon IconName="@section.Icon" Size="18" /><span>@section.Label</span>
+                    @if (section.Key == "table" && tableLive)
+                    {
+                        <span class="pill pill-success nav-badge" title="The table is running"><span class="live-dot" aria-hidden="true"></span>Live</span>
+                    }
+                </a>
+            }
+        </nav>
+
+        <div class="ws-main">
+            <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+            <CascadingValue Value="context" IsFixed="false">
+                @switch (CurrentSection)
+                {
+                    case "cast":
+                        <CastSection />
+                        break;
+                    case "world":
+                        <WorldSection />
+                        break;
+                    case "lore":
+                        <LoreSection />
+                        break;
+                    case "sessions":
+                        <SessionsSection />
+                        break;
+                    case "table":
+                        <TableSection />
+                        break;
+                    case "library":
+                        <LibrarySection RouteType="@Arg1" RouteId="@Arg2" />
+                        break;
+                    case "settings":
+                        <SettingsSection />
+                        break;
+                    default:
+                        <OverviewSection />
+                        break;
+                }
+            </CascadingValue>
         </div>
     </div>
-
-    <nav class="section-nav" aria-label="Campaign sections">
-        @foreach (var section in Sections)
-        {
-            var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
-            var current = CurrentSection == section.Key ? "page" : null;
-            var testId = "section-" + section.Key;
-            <a href="@href" aria-current="@current" data-testid="@testId">
-                <LucideIcon IconName="@section.Icon" Size="16" /><span>@section.Label</span>
-            </a>
-        }
-    </nav>
-
-    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
-
-    <CascadingValue Value="context" IsFixed="false">
-        @switch (CurrentSection)
-        {
-            case "cast":
-                <CastSection />
-                break;
-            case "world":
-                <WorldSection />
-                break;
-            case "lore":
-                <LoreSection />
-                break;
-            case "sessions":
-                <SessionsSection />
-                break;
-            case "table":
-                <TableSection />
-                break;
-            case "library":
-                <LibrarySection RouteType="@Arg1" RouteId="@Arg2" />
-                break;
-            case "settings":
-                <SettingsSection />
-                break;
-            default:
-                <OverviewSection />
-                break;
-        }
-    </CascadingValue>
 }
 
 @code {
@@ -124,12 +135,26 @@ else
     private string BasePath => $"/campaigns/{CampaignId}";
     private string CurrentSection => Sections.Any(s => s.Key == Section) ? Section! : "overview";
 
+    protected override void OnInitialized()
+    {
+        // The "Live" badge next to Table follows the runtime starting or stopping, on every page.
+        RuntimeManager.RuntimeChanged += OnRuntimeChanged;
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         if (loadedCampaignId != CampaignId)
         {
             flash = null;
             await ReloadAsync();
+        }
+    }
+
+    private void OnRuntimeChanged(string campaignId)
+    {
+        if (campaignId == CampaignId)
+        {
+            InvokeAsync(StateHasChanged);
         }
     }
 
@@ -160,4 +185,6 @@ else
         loadedCampaignId = CampaignId;
         loading = false;
     }
+
+    public void Dispose() => RuntimeManager.RuntimeChanged -= OnRuntimeChanged;
 }

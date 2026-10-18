@@ -59,7 +59,7 @@
             <div class="panel-title"><h2 id="table-heading">Table</h2></div>
             @if (RuntimeManager.TryGet(Ctx.Campaign.Id) != null)
             {
-                <p class="mb-2"><span class="pill pill-success">Live</span> The table is running.</p>
+                <p class="mb-2"><span class="pill pill-success"><span class="live-dot" aria-hidden="true"></span>Live</span> The table is running.</p>
                 <a href="@Ctx.BasePath/table" class="btn btn-primary btn-sm w-100">Join the table</a>
             }
             else

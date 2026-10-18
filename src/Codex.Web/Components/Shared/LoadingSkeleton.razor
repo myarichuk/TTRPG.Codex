@@ -1,0 +1,16 @@
+@* A shimmering placeholder shown while a page or panel loads. Rows mimic the list that will
+   replace them, so the layout doesn't jump when data arrives. A live region announces the wait. *@
+<div class="skeleton-list" role="status" aria-live="polite" aria-busy="true">
+    @for (var i = 0; i < Rows; i++)
+    {
+        <div class="skeleton-row" aria-hidden="true">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-sub"></div>
+        </div>
+    }
+    <span class="visually-hidden">Loading…</span>
+</div>
+
+@code {
+    [Parameter] public int Rows { get; set; } = 3;
+}

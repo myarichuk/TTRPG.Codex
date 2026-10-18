@@ -16,7 +16,7 @@
 
 @if (loading)
 {
-    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+    <LoadingSkeleton />
 }
 else if (campaign == null || session == null || access == null)
 {
@@ -31,7 +31,7 @@ else
 {
     <div class="page-header mb-3">
         <div>
-            <nav aria-label="Breadcrumb" class="small-muted mb-1"><a href="/">Campaigns</a> / <a href="/campaigns/@CampaignId">@campaign.Name</a> / <a href="/campaigns/@CampaignId/sessions">Sessions</a></nav>
+            <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/sessions">Sessions</a></nav>
             <h1 class="mb-0">@Title</h1>
             <div class="d-flex flex-wrap gap-1 mt-1">
                 <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
