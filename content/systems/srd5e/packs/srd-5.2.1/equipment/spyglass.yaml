@@ -1,0 +1,19 @@
+id: spyglass
+type: equipment
+name: Spyglass
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1000 gp  
+
+  **Weight:** 1 lb.
+
+
+  Objects viewed through a Spyglass are magnified to twice their size.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1000 gp
+  weight: 1

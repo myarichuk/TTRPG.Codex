@@ -1,0 +1,17 @@
+id: smiths-tools
+type: equipment
+name: Smith's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 20 gp  
+
+  **Weight:** 8 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 20 gp
+  weight: 8

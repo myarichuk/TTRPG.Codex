@@ -1,0 +1,99 @@
+id: vrock
+type: monster
+name: Vrock
+description: >-
+  *Large Fiend, Chaotic Evil*
+
+
+  **AC** 15  
+
+  **HP** 152 (16d10 + 64)  
+
+  **Speed** 40 ft., fly 60 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 15 (+2) | 18 (+4) | 8 (-1) | 13 (+1) | 8 (-1) |
+
+
+  **Saving Throws** DEX +5, WIS +4, CHA +2  
+
+  **Resistances** cold, fire, lightning  
+
+  **Immunities** poison, Poisoned  
+
+  **Senses** darkvision 120 ft., passive perception 11  
+
+  **Languages** Abyssal; telepathy 120 ft.
+
+
+  ### Traits
+
+  **Demonic Restoration.** If the vrock dies outside the Abyss, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Abyss.
+
+
+  **Magic Resistance.** The vrock has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The vrock makes two Shred attacks.
+
+
+  **Shred.** Melee Attack Roll: +6, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage plus 10 (3d6) Poison damage.
+
+
+  **Spores.** Constitution Saving Throw: DC 15, each creature in a 20-foot Emanation originating from the vrock. Failure: The target has the Poisoned condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. While Poisoned, the target takes 5 (1d10) Poison damage at the start of each of its turns. Emptying a flask of Holy Water on the target ends the effect early.
+
+
+  **Stunning Screech (1/day).** Constitution Saving Throw: DC 15, each creature in a 20-foot Emanation originating from the vrock (demons succeed automatically). Failure: 10 (3d6) Thunder damage, and the target has the Stunned condition until the end of the vrock’s next turn.
+tags:
+- fiend
+- large
+- cr-6
+properties:
+  size: Large
+  creatureType: fiend
+  alignment: chaotic evil
+  armorClass: 15
+  hitPoints: 152
+  hitDice: 16d10 + 64
+  speed: 40 ft., fly 60 ft.
+  strength: 17
+  dexterity: 15
+  constitution: 18
+  intelligence: 8
+  wisdom: 13
+  charisma: 8
+  challengeRating: 6
+  xp: 2300
+  senses: darkvision 120 ft., passive perception 11
+  languages: Abyssal; telepathy 120 ft.
+  savingThrows: DEX +5, WIS +4, CHA +2
+  resistances:
+  - cold
+  - fire
+  - lightning
+  immunities:
+  - poison
+  - Poisoned
+  traits:
+  - name: Demonic Restoration
+    description: If the vrock dies outside the Abyss, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Abyss.
+  - name: Magic Resistance
+    description: The vrock has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The vrock makes two Shred attacks.
+  - name: Shred
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage plus 10 (3d6) Poison damage.'
+  - name: Spores
+    description: 'Constitution Saving Throw: DC 15, each creature in a 20-foot Emanation originating from the vrock. Failure: The target has the Poisoned condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. While Poisoned, the target takes 5 (1d10) Poison damage at the start of each of its turns. Emptying a flask of Holy Water on the target ends the effect early.'
+  - name: Stunning Screech (1/day)
+    description: 'Constitution Saving Throw: DC 15, each creature in a 20-foot Emanation originating from the vrock (demons succeed automatically). Failure: 10 (3d6) Thunder damage, and the target has the Stunned condition until the end of the vrock’s next turn.'

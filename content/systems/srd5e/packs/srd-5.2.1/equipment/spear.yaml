@@ -1,0 +1,30 @@
+id: spear
+type: equipment
+name: Spear
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d6 Piercing (two-handed: 1d8)  
+
+  **Properties:** Thrown, Versatile  
+
+  **Mastery:** Sap  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 2 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 5 gp
+  weight: 2
+  damage: '1d6 Piercing (two-handed: 1d8)'
+  properties:
+  - Thrown
+  - Versatile
+  mastery: Sap

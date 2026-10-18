@@ -1,0 +1,19 @@
+id: costume
+type: equipment
+name: Costume
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 5 gp  
+
+  **Weight:** 4 lb.
+
+
+  While wearing a Costume, you have Advantage on any ability check you make to impersonate the person or type of person it represents.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 5 gp
+  weight: 4

@@ -1,0 +1,65 @@
+id: baboon
+type: monster
+name: Baboon
+description: >-
+  *Small Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 3 (1d6)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 8 (-1) | 14 (+2) | 11 (+0) | 4 (-3) | 12 (+1) | 6 (-2) |
+
+
+  **Senses** passive perception 11  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Pack Tactics.** The baboon has Advantage on an attack roll against a creature if at least one of the baboon’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +1, reach 5 ft. Hit: 1 (1d4 − 1) Piercing damage.
+tags:
+- beast
+- small
+- cr-0
+properties:
+  size: Small
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 3
+  hitDice: 1d6
+  speed: 30 ft., climb 30 ft.
+  strength: 8
+  dexterity: 14
+  constitution: 11
+  intelligence: 4
+  wisdom: 12
+  charisma: 6
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 11
+  languages: None
+  traits:
+  - name: Pack Tactics
+    description: The baboon has Advantage on an attack roll against a creature if at least one of the baboon’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +1, reach 5 ft. Hit: 1 (1d4 − 1) Piercing damage.'

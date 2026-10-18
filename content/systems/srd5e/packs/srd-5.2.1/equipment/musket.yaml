@@ -1,0 +1,33 @@
+id: musket
+type: equipment
+name: Musket
+description: >-
+  *Martial Ranged Weapons, Martial Weapons, Ranged Weapons, Weapons*
+
+
+  **Damage:** 1d12 Piercing  
+
+  **Properties:** Ammunition, Loading, Two-Handed  
+
+  **Range:** 40/120 ft.  
+
+  **Mastery:** Slow  
+
+  **Cost:** 500 gp  
+
+  **Weight:** 10 lb.
+tags:
+- martial ranged weapons
+- martial weapons
+- ranged weapons
+- weapons
+properties:
+  category: Martial Ranged Weapons
+  cost: 500 gp
+  weight: 10
+  damage: 1d12 Piercing
+  properties:
+  - Ammunition
+  - Loading
+  - Two-Handed
+  mastery: Slow

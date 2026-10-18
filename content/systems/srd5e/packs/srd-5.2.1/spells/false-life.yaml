@@ -1,0 +1,42 @@
+id: false-life
+type: spell
+name: False Life
+description: >-
+  *Level 1 Necromancy (Sorcerer, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Self  
+
+  **Components:** V, S, M (a drop of alcohol)  
+
+  **Duration:** Instantaneous
+
+
+  You gain 2d4 + 4 Temporary Hit Points.
+
+
+  **Using a Higher-Level Spell Slot.** You gain 5 additional Temporary Hit Points for each spell slot level above 1.
+tags:
+- level-1
+- necromancy
+- sorcerer
+- wizard
+properties:
+  level: 1
+  school: Necromancy
+  castingTime: Action
+  range: Self
+  components:
+  - V
+  - S
+  - M
+  material: a drop of alcohol
+  duration: Instantaneous
+  concentration: false
+  ritual: false
+  classes:
+  - Sorcerer
+  - Wizard
+  higherLevel: You gain 5 additional Temporary Hit Points for each spell slot level above 1.

@@ -1,0 +1,8 @@
+id: weapon-property-two-handed
+type: rule
+name: Two-Handed
+description: A Two-Handed weapon requires two hands when you attack with it.
+tags:
+- weapon-property
+properties:
+  category: Weapon Property

@@ -1,0 +1,90 @@
+id: young-bronze-dragon
+type: monster
+name: Young Bronze Dragon
+description: >-
+  *Large Dragon, Lawful Good*
+
+
+  **AC** 17  
+
+  **HP** 142 (15d10 + 60)  
+
+  **Speed** 40 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 8 (XP 3900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 21 (+5) | 10 (+0) | 19 (+4) | 14 (+2) | 13 (+1) | 17 (+3) |
+
+
+  **Saving Throws** DEX +3, WIS +4  
+
+  **Skills** Insight +4, Perception +7, Stealth +3  
+
+  **Immunities** lightning  
+
+  **Senses** darkvision 120 ft., blindsight 30 ft., passive perception 17  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Amphibious.** The dragon can breathe air and water.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks. It can replace one attack with a use of Repulsion Breath.
+
+
+  **Rend.** Melee Attack Roll: +8, reach 10 ft. Hit: 16 (2d10 + 5) Slashing damage.
+
+
+  **Lightning Breath.** Dexterity Saving Throw: DC 15, each creature in a 60-foot-long, 5-footwide Line. Failure: 49 (9d10) Lightning damage. Success: Half damage.
+
+
+  **Repulsion Breath.** Strength Saving Throw: DC 15, each creature in a 30-foot Cone. Failure: The target is pushed up to 40 feet straight away from the dragon and has the Prone condition.
+tags:
+- dragon
+- large
+- cr-8
+properties:
+  size: Large
+  creatureType: dragon
+  alignment: lawful good
+  armorClass: 17
+  hitPoints: 142
+  hitDice: 15d10 + 60
+  speed: 40 ft., fly 80 ft., swim 40 ft.
+  strength: 21
+  dexterity: 10
+  constitution: 19
+  intelligence: 14
+  wisdom: 13
+  charisma: 17
+  challengeRating: 8
+  xp: 3900
+  senses: darkvision 120 ft., blindsight 30 ft., passive perception 17
+  languages: Common, Draconic
+  skills: Insight +4, Perception +7, Stealth +3
+  savingThrows: DEX +3, WIS +4
+  immunities:
+  - lightning
+  traits:
+  - name: Amphibious
+    description: The dragon can breathe air and water.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks. It can replace one attack with a use of Repulsion Breath.
+  - name: Rend
+    description: 'Melee Attack Roll: +8, reach 10 ft. Hit: 16 (2d10 + 5) Slashing damage.'
+  - name: Lightning Breath
+    description: 'Dexterity Saving Throw: DC 15, each creature in a 60-foot-long, 5-footwide Line. Failure: 49 (9d10) Lightning damage. Success: Half damage.'
+  - name: Repulsion Breath
+    description: 'Strength Saving Throw: DC 15, each creature in a 30-foot Cone. Failure: The target is pushed up to 40 feet straight away from the dragon and has the Prone condition.'

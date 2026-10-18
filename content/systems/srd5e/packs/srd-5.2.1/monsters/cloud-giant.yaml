@@ -1,0 +1,86 @@
+id: cloud-giant
+type: monster
+name: Cloud Giant
+description: >-
+  *Huge Giant, Neutral*
+
+
+  **AC** 14  
+
+  **HP** 200 (16d12 + 96)  
+
+  **Speed** 40 ft., fly 20 ft., hover True  
+
+  **CR** 9 (XP 5000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 27 (+8) | 10 (+0) | 22 (+6) | 12 (+1) | 16 (+3) | 16 (+3) |
+
+
+  **Saving Throws** CON +10, WIS +7  
+
+  **Skills** Insight +7, Perception +11  
+
+  **Senses** passive perception 21  
+
+  **Languages** Common, Giant
+
+
+  ### Actions
+
+  **Multiattack.** The giant makes two attacks, using Thunderous Mace or Thundercloud in any combination. It can replace one attack with a use of Spellcasting to cast Fog Cloud.
+
+
+  **Thunderous Mace.** Melee Attack Roll: +12, reach 10 ft. Hit: 21 (3d8 + 8) Bludgeoning damage plus 7 (2d6) Thunder damage.
+
+
+  **Thundercloud.** Ranged Attack Roll: +12, range 240 ft. Hit: 18 (3d6 + 8) Thunder damage, and the target has the Incapacitated condition until the end of its next turn.
+
+
+  **Spellcasting.** The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):
+
+
+
+  ### Bonus Actions
+
+  **Misty Step.** The giant casts the Misty Step spell, using the same spellcasting ability as Spellcasting.
+tags:
+- giant
+- huge
+- cr-9
+properties:
+  size: Huge
+  creatureType: giant
+  alignment: neutral
+  armorClass: 14
+  hitPoints: 200
+  hitDice: 16d12 + 96
+  speed: 40 ft., fly 20 ft., hover True
+  strength: 27
+  dexterity: 10
+  constitution: 22
+  intelligence: 12
+  wisdom: 16
+  charisma: 16
+  challengeRating: 9
+  xp: 5000
+  senses: passive perception 21
+  languages: Common, Giant
+  skills: Insight +7, Perception +11
+  savingThrows: CON +10, WIS +7
+  actions:
+  - name: Multiattack
+    description: The giant makes two attacks, using Thunderous Mace or Thundercloud in any combination. It can replace one attack with a use of Spellcasting to cast Fog Cloud.
+  - name: Thunderous Mace
+    description: 'Melee Attack Roll: +12, reach 10 ft. Hit: 21 (3d8 + 8) Bludgeoning damage plus 7 (2d6) Thunder damage.'
+  - name: Thundercloud
+    description: 'Ranged Attack Roll: +12, range 240 ft. Hit: 18 (3d6 + 8) Thunder damage, and the target has the Incapacitated condition until the end of its next turn.'
+  - name: Spellcasting
+    description: 'The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):'
+  bonusActions:
+  - name: Misty Step
+    description: The giant casts the Misty Step spell, using the same spellcasting ability as Spellcasting.

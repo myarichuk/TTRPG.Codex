@@ -1,0 +1,32 @@
+id: dart
+type: equipment
+name: Dart
+description: >-
+  *Ranged Weapons, Simple Ranged Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d4 Piercing  
+
+  **Properties:** Finesse, Thrown  
+
+  **Range:** 20/60 ft.  
+
+  **Mastery:** Vex  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 0.25 lb.
+tags:
+- ranged weapons
+- simple ranged weapons
+- simple weapons
+- weapons
+properties:
+  category: Ranged Weapons
+  cost: 5 gp
+  weight: 0.25
+  damage: 1d4 Piercing
+  properties:
+  - Finesse
+  - Thrown
+  mastery: Vex

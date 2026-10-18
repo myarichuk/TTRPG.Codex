@@ -1,0 +1,42 @@
+id: control-weather
+type: spell
+name: Control Weather
+description: >-
+  *Level 8 Transmutation (Cleric, Druid, Wizard)*
+
+
+  **Casting Time:** 10 minutes  
+
+  **Range:** Self  
+
+  **Components:** V, S, M (burning incense)  
+
+  **Duration:** Concentration, up to 8 hours
+
+
+  You take control of the weather within 5 miles of you for the duration. You must be outdoors to cast this spell, and it ends early if you go indoors.
+
+  When you cast the spell, you change the current weather conditions, which are determined by the GM. You can change precipitation, temperature, and wind. It takes 1d4 × 10 minutes for the new
+tags:
+- level-8
+- transmutation
+- cleric
+- druid
+- wizard
+properties:
+  level: 8
+  school: Transmutation
+  castingTime: 10 minutes
+  range: Self
+  components:
+  - V
+  - S
+  - M
+  material: burning incense
+  duration: up to 8 hours
+  concentration: true
+  ritual: false
+  classes:
+  - Cleric
+  - Druid
+  - Wizard

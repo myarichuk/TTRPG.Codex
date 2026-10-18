@@ -1,9 +1,21 @@
 using System.Reflection;
+using Codex.Core.Components;
+using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace Codex.Core;
 
+/// <summary>
+/// Discovers game systems and content packs under one or more content roots and loads them once at
+/// startup. A root may contain:
+/// <list type="bullet">
+/// <item>compiled plugins: <c>*.dll</c> directly in the root (code-level systems);</item>
+/// <item>data systems: any <c>system.yaml</c> below the root (see <see cref="SystemDefinitionLoader"/>);</item>
+/// <item>packs: any directory holding <c>manifest.yaml</c>/<c>manifest.json</c>, or a <c>*.zip</c>/<c>*.cdx</c> archive.</item>
+/// </list>
+/// Packs are loaded in dependency order and only for systems that actually loaded.
+/// </summary>
 public class PluginLoader(
     ILogger<PluginLoader> logger,
     ComponentRegistry registry,
@@ -16,18 +28,32 @@ public class PluginLoader(
     public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
     public event Action? OnPluginsLoaded;
 
+    /// <summary>Problems found while loading that a DM should see (bad manifest, invalid system.yaml...).</summary>
+    public IReadOnlyList<string> LoadWarnings => _warnings;
+
+    private readonly List<string> _warnings = new();
     private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
+
+    public IEnumerable<SystemSummary> Systems => _pluginsBySystemId.Values
+        .Select(p => new SystemSummary(p.SystemId, p.DisplayName, p.Definition?.Description, p.Definition?.Compatibility, p.Definition?.License, p is DataDrivenSystemPlugin))
+        .OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    public string GetDisplayName(string systemId) =>
+        _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.DisplayName : systemId;
+
+    public SystemDefinition? GetDefinition(string systemId) =>
+        _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.Definition : null;
 
     public IEnumerable<UISchema> GetUISchemas(string systemId) =>
         _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetUISchemas() : Enumerable.Empty<UISchema>();
 
-    /// <summary>The loaded plugin ruling <paramref name="systemId"/>, or null if no such system is
-    /// loaded. Used by <c>CampaignRuntime</c> (3.1) to wire that plugin's systems onto its own,
-    /// per-campaign <see cref="CodexWorld"/> - there is no longer a shared world to register onto
-    /// at startup (B8).</summary>
+    /// <summary>The loaded plugin ruling <paramref name="systemId"/>, or null if no such system is loaded.</summary>
     public ICodexSystemPlugin? GetPlugin(string systemId) => _pluginsBySystemId.GetValueOrDefault(systemId);
 
-    public async Task LoadAndInitializeAsync(string pluginsDirectory)
+    public Task LoadAndInitializeAsync(string contentRoot) => LoadAndInitializeAsync(new[] { contentRoot });
+
+    public async Task LoadAndInitializeAsync(IEnumerable<string> contentRoots)
     {
         await _semaphore.WaitAsync();
         try
@@ -39,28 +65,37 @@ public class PluginLoader(
 
             IsLoading = true;
             LoadException = null;
+            _warnings.Clear();
+
+            var roots = contentRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
+            foreach (var missing in contentRoots.Where(r => !Directory.Exists(r)))
+            {
+                logger.LogWarning("Content root '{Root}' does not exist", missing);
+            }
 
             try
             {
-                var plugins = await Task.Run(() => LoadPlugins(pluginsDirectory));
+                var plugins = await Task.Run(() => DiscoverPlugins(roots));
 
-                // Only components are registered globally at startup, into the shared
-                // ComponentRegistry. Systems are no longer registered onto a shared world here -
-                // there isn't one anymore (B8) - CampaignRuntimeManager looks the plugin up via
-                // GetPlugin and calls InitializePlugins itself, once per campaign, onto that
-                // campaign's own CodexWorld.
+                // Core components every system relies on, registered once regardless of plugin.
+                // ActiveEffectsComponent is deliberately NOT registered: its ActiveEffect records
+                // hold a live DefaultEcs Entity (anchor), which cannot be snapshotted to JSON -
+                // conditions are table state and die with the runtime.
+                registry.Register<ResourcePoolComponent>();
+                registry.Register<AttributesComponent>();
+                registry.Register<StatModifierComponent>();
+                registry.Register<TagsComponent>();
+
                 foreach (var plugin in plugins)
                 {
-                    logger.LogInformation("Initializing plugin: {SystemId}", plugin.SystemId);
+                    logger.LogInformation("Initializing system: {SystemId} ({Name})", plugin.SystemId, plugin.DisplayName);
                     plugin.RegisterComponents(registry);
                 }
 
-                var activeSystemIds = plugins.Select(p => p.SystemId).ToHashSet();
-                LoadedSystemIds = activeSystemIds;
                 _pluginsBySystemId = plugins.ToDictionary(p => p.SystemId);
+                LoadedSystemIds = _pluginsBySystemId.Keys.ToHashSet();
 
-                // Load Content Packs after systems are initialized
-                await LoadContentPacksAsync(pluginsDirectory, activeSystemIds);
+                await LoadContentPacksAsync(roots, LoadedSystemIds);
             }
             catch (Exception ex)
             {
@@ -80,37 +115,83 @@ public class PluginLoader(
         }
     }
 
+    private List<ICodexSystemPlugin> DiscoverPlugins(IReadOnlyList<string> roots)
+    {
+        var plugins = new List<ICodexSystemPlugin>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var root in roots)
+        {
+            foreach (var plugin in LoadPlugins(root))
+            {
+                if (!seen.Add(plugin.SystemId))
+                {
+                    Warn($"System '{plugin.SystemId}' is provided twice; the second copy (from {root}) was ignored.");
+                    continue;
+                }
+
+                plugins.Add(plugin);
+            }
+        }
+
+        foreach (var root in roots)
+        {
+            foreach (var systemFile in EnumerateFiles(root, SystemDefinitionLoader.FileName))
+            {
+                try
+                {
+                    var definition = SystemDefinitionLoader.Load(systemFile);
+                    if (!seen.Add(definition.Id))
+                    {
+                        Warn($"System '{definition.Id}' in {systemFile} duplicates an already loaded system and was ignored.");
+                        continue;
+                    }
+
+                    logger.LogInformation("Loaded data-driven system {SystemId} from {File}", definition.Id, systemFile);
+                    plugins.Add(new DataDrivenSystemPlugin(definition));
+                }
+                catch (Exception ex)
+                {
+                    Warn($"Could not load {systemFile}: {ex.Message}");
+                    logger.LogError(ex, "Failed to load system definition {File}", systemFile);
+                }
+            }
+        }
+
+        return plugins;
+    }
+
+    internal Task LoadContentPacksAsync(string contentRoot, HashSet<string> activeSystemIds) =>
+        LoadContentPacksAsync(new[] { contentRoot }, activeSystemIds);
+
     // Internal (rather than private) so tests can exercise dependency-ordered pack loading
     // directly, without needing a real plugin assembly on disk just to populate activeSystemIds.
-    internal async Task LoadContentPacksAsync(string pluginsDirectory, HashSet<string> activeSystemIds)
+    internal async Task LoadContentPacksAsync(IEnumerable<string> contentRoots, IReadOnlySet<string> activeSystemIds)
     {
-        if (!Directory.Exists(pluginsDirectory)) return;
-
-        // B5: directory-based packs (manifest.json + subfolders) were the only kind ever
-        // discovered. Packs shipped as a single .zip/.cdx file directly under the plugins
-        // directory - exactly what the Authoring app's exporter produces - were never found.
-        var packPaths = Directory.GetFiles(pluginsDirectory, "manifest.json", SearchOption.AllDirectories)
-            .Select(Path.GetDirectoryName)
-            .Where(dir => dir != null)
-            .Cast<string>()
-            .Concat(Directory.GetFiles(pluginsDirectory, "*.zip"))
-            .Concat(Directory.GetFiles(pluginsDirectory, "*.cdx"))
-            .Distinct();
+        var packPaths = new List<string>();
+        foreach (var root in contentRoots.Where(Directory.Exists))
+        {
+            packPaths.AddRange(EnumerateFiles(root, YamlContentPackLoader.ManifestYaml).Select(Path.GetDirectoryName)!);
+            packPaths.AddRange(EnumerateFiles(root, YamlContentPackLoader.ManifestJson).Select(Path.GetDirectoryName)!);
+            packPaths.AddRange(EnumerateFiles(root, "*.zip"));
+            packPaths.AddRange(EnumerateFiles(root, "*.cdx"));
+        }
 
         var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
 
-        // Read every manifest up front so packs can be loaded in dependency order (B9) rather
-        // than whatever order the filesystem happens to enumerate them in - a pack's base has to
-        // be registered before anything that inherits from it, regardless of load order.
+        // Read every manifest up front so packs can be loaded in dependency order rather than
+        // whatever order the filesystem happens to enumerate them in - a pack's base has to be
+        // registered before anything that inherits from it, regardless of load order.
         var manifestsByPath = new Dictionary<string, PackManifest>();
-        foreach (var packPath in packPaths)
+        foreach (var packPath in packPaths.Where(p => p != null).Distinct())
         {
             try
             {
-                manifestsByPath[packPath] = await contentPackLoader.ReadManifestAsync(packPath);
+                manifestsByPath[packPath!] = await contentPackLoader.ReadManifestAsync(packPath!);
             }
             catch (Exception ex)
             {
+                Warn($"Could not read the manifest of the pack at {packPath}: {ex.Message}");
                 logger.LogError(ex, "Failed to read manifest for content pack at {Path}", packPath);
             }
         }
@@ -121,15 +202,13 @@ public class PluginLoader(
 
             if (!manifest.IsAppVersionCompatible(appVersion))
             {
-                logger.LogWarning("Skipping content pack {PackId}: Requires app version {MinAppVersion}, but current is {AppVersion}",
-                    manifest.Id, manifest.MinAppVersion, appVersion);
+                Warn($"Pack '{manifest.Id}' needs app version {manifest.MinAppVersion} (this is {appVersion}) and was skipped.");
                 continue;
             }
 
             if (!activeSystemIds.Contains(manifest.SystemId))
             {
-                logger.LogWarning("Skipping content pack {PackId} because system {SystemId} is not loaded",
-                    manifest.Id, manifest.SystemId);
+                Warn($"Pack '{manifest.Id}' is for system '{manifest.SystemId}', which is not loaded, and was skipped.");
                 continue;
             }
 
@@ -137,10 +216,11 @@ public class PluginLoader(
             {
                 logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
                     manifest.Name, manifest.Id, manifest.SystemId);
-                await contentPackLoader.LoadPackAsync(packPath);
+                await contentPackLoader.LoadPackAsync(packPath, GetDefinition(manifest.SystemId));
             }
             catch (Exception ex)
             {
+                Warn($"Pack '{manifest.Id}' failed to load: {ex.Message}");
                 logger.LogError(ex, "Failed to load content pack from {Path}", packPath);
             }
         }
@@ -149,16 +229,23 @@ public class PluginLoader(
     /// <summary>
     /// Orders packs so every pack's <see cref="PackManifest.Dependencies"/> load before it does.
     /// A dependency that names a pack id not present among the discovered manifests is a load
-    /// error naming the pack (B9) - that pack is skipped rather than silently loaded out of
-    /// order, since its base content wouldn't be there to inherit from.
+    /// error naming the pack; that pack still loads, but its base content may be missing.
     /// </summary>
     private IEnumerable<string> TopologicalOrder(Dictionary<string, PackManifest> manifestsByPath)
     {
-        var pathById = manifestsByPath.ToDictionary(kv => kv.Value.Id, kv => kv.Key);
+        var pathById = new Dictionary<string, string>();
+        foreach (var (path, manifest) in manifestsByPath)
+        {
+            if (!pathById.TryAdd(manifest.Id, path))
+            {
+                Warn($"Pack id '{manifest.Id}' appears at both {pathById[manifest.Id]} and {path}; both will load and the higher priority/pack ordering wins per entry.");
+            }
+        }
+
         var visited = new HashSet<string>();
         var result = new List<string>();
 
-        foreach (var path in manifestsByPath.Keys)
+        foreach (var path in manifestsByPath.Keys.OrderBy(p => p, StringComparer.Ordinal))
         {
             Visit(path, new HashSet<string>());
         }
@@ -177,8 +264,7 @@ public class PluginLoader(
             {
                 if (!pathById.TryGetValue(dependencyId, out var dependencyPath))
                 {
-                    logger.LogError("Content pack {PackId} depends on {DependencyId}, which was not found among the discovered packs. It will still be loaded, but its base content may be missing.",
-                        manifest.Id, dependencyId);
+                    Warn($"Pack '{manifest.Id}' depends on '{dependencyId}', which was not found. It still loads, but inherited content may be missing.");
                     continue;
                 }
 
@@ -200,20 +286,15 @@ public class PluginLoader(
             return plugins;
         }
 
-        var dllFiles = Directory.GetFiles(pluginsDirectory, "*.dll");
-
-        foreach (var file in dllFiles)
+        foreach (var file in Directory.GetFiles(pluginsDirectory, "*.dll"))
         {
             try
             {
                 var assembly = Assembly.LoadFrom(file);
                 var pluginTypes = assembly.GetTypes()
                     .Where(t => typeof(ICodexSystemPlugin).IsAssignableFrom(t) &&
-                                t is
-                                {
-                                    IsInterface: false,
-                                    IsAbstract: false
-                                });
+                                t is { IsInterface: false, IsAbstract: false } &&
+                                t.GetConstructor(Type.EmptyTypes) != null);
 
                 foreach (var type in pluginTypes)
                 {
@@ -240,6 +321,48 @@ public class PluginLoader(
             logger.LogInformation("Initializing plugin: {SystemId}", plugin.SystemId);
             plugin.RegisterComponents(registry);
             plugin.RegisterSystems(world);
+        }
+    }
+
+    private void Warn(string message)
+    {
+        _warnings.Add(message);
+        logger.LogWarning("{Message}", message);
+    }
+
+    /// <summary>Recursive file search that skips build output and hidden folders.</summary>
+    private static IEnumerable<string> EnumerateFiles(string root, string pattern)
+    {
+        var pending = new Stack<string>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            var dir = pending.Pop();
+            IEnumerable<string> files;
+            try
+            {
+                files = Directory.EnumerateFiles(dir, pattern);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                continue;
+            }
+
+            foreach (var file in files)
+            {
+                yield return file;
+            }
+
+            foreach (var sub in Directory.EnumerateDirectories(dir))
+            {
+                var name = Path.GetFileName(sub);
+                if (name.StartsWith('.') || name is "bin" or "obj" or "node_modules")
+                {
+                    continue;
+                }
+
+                pending.Push(sub);
+            }
         }
     }
 }

@@ -1,0 +1,7 @@
+id: language-infernal
+type: rule
+name: Infernal
+tags:
+- language
+properties:
+  category: Language

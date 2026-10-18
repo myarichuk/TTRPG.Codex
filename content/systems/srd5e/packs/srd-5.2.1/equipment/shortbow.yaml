@@ -1,0 +1,32 @@
+id: shortbow
+type: equipment
+name: Shortbow
+description: >-
+  *Ranged Weapons, Simple Ranged Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d6 Piercing  
+
+  **Properties:** Ammunition, Two-Handed  
+
+  **Range:** 80/320 ft.  
+
+  **Mastery:** Vex  
+
+  **Cost:** 25 gp  
+
+  **Weight:** 2 lb.
+tags:
+- ranged weapons
+- simple ranged weapons
+- simple weapons
+- weapons
+properties:
+  category: Ranged Weapons
+  cost: 25 gp
+  weight: 2
+  damage: 1d6 Piercing
+  properties:
+  - Ammunition
+  - Two-Handed
+  mastery: Vex

@@ -1,0 +1,17 @@
+id: glassblowers-tools
+type: equipment
+name: Glassblower's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 30 gp  
+
+  **Weight:** 5 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 30 gp
+  weight: 5

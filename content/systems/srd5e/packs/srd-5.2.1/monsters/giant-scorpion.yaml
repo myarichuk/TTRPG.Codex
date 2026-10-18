@@ -1,0 +1,66 @@
+id: giant-scorpion
+type: monster
+name: Giant Scorpion
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 15  
+
+  **HP** 52 (7d10 + 14)  
+
+  **Speed** 40 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 13 (+1) | 15 (+2) | 1 (-5) | 9 (-1) | 3 (-4) |
+
+
+  **Senses** blindsight 60 ft., passive perception 9  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The scorpion makes two Claw attacks and one Sting attack.
+
+
+  **Claw.** Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 13) from one of two claws.
+
+
+  **Sting.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 11 (2d10) Poison damage.
+tags:
+- beast
+- large
+- cr-3
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 15
+  hitPoints: 52
+  hitDice: 7d10 + 14
+  speed: 40 ft.
+  strength: 16
+  dexterity: 13
+  constitution: 15
+  intelligence: 1
+  wisdom: 9
+  charisma: 3
+  challengeRating: 3
+  xp: 700
+  senses: blindsight 60 ft., passive perception 9
+  languages: None
+  actions:
+  - name: Multiattack
+    description: The scorpion makes two Claw attacks and one Sting attack.
+  - name: Claw
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 13) from one of two claws.'
+  - name: Sting
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 11 (2d10) Poison damage.'

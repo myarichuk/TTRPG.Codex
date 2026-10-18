@@ -1,0 +1,17 @@
+id: bagpipes
+type: equipment
+name: Bagpipes
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 30 gp  
+
+  **Weight:** 6 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 30 gp
+  weight: 6

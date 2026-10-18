@@ -1,0 +1,19 @@
+id: weapon
+type: magic-item
+name: Weapon
+description: >-
+  Weapon (Any Simple or Martial)
+
+
+  You have a bonus to attack rolls and damage rolls made with this magic weapon. The bonus is determined by the weapon's rarity.
+tags:
+- uncommon (+1), rare (+2), or very rare (+3)
+- weapons
+properties:
+  category: Weapons
+  rarity: Uncommon (+1), Rare (+2), or Very Rare (+3)
+  attunement: false
+  variants:
+  - Weapon +1
+  - Weapon +2
+  - Weapon +3

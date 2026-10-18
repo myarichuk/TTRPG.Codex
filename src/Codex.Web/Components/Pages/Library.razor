@@ -1,0 +1,52 @@
+@page "/library"
+@page "/library/{SystemId}"
+@page "/library/{SystemId}/{Type}"
+@page "/library/{SystemId}/{Type}/{EntryId}"
+@using Codex.Plugin.Abstractions
+@using Codex.Web.Components.Shared
+@inject ISystemCatalog Catalog
+@inject NavigationManager Nav
+
+<PageTitle>Library | TTRPG.Codex</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1>Library</h1>
+        <p class="page-subtitle">Browse every loaded system's reference content. Inside a campaign, the Library also includes that table's homebrew.</p>
+    </div>
+    @if (Catalog.Systems.Count() > 1)
+    {
+        <div>
+            <label for="library-system" class="form-label">System</label>
+            <select id="library-system" class="form-select" value="@EffectiveSystemId" @onchange="OnSystemChanged">
+                @foreach (var system in Catalog.Systems)
+                {
+                    <option value="@system.Id">@system.Name</option>
+                }
+            </select>
+        </div>
+    }
+</div>
+
+@if (string.IsNullOrEmpty(EffectiveSystemId))
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
+        <h2>No game systems loaded</h2>
+        <p>Add a <code>system.yaml</code> under a content folder and restart the app.</p>
+    </div>
+}
+else
+{
+    <LibraryBrowser SystemId="@EffectiveSystemId" BasePath="@($"/library/{EffectiveSystemId}")" RouteType="@Type" RouteId="@EntryId" />
+}
+
+@code {
+    [Parameter] public string? SystemId { get; set; }
+    [Parameter] public string? Type { get; set; }
+    [Parameter] public string? EntryId { get; set; }
+
+    private string EffectiveSystemId => SystemId ?? Catalog.Systems.FirstOrDefault()?.Id ?? string.Empty;
+
+    private void OnSystemChanged(ChangeEventArgs e) => Nav.NavigateTo($"/library/{e.Value}");
+}

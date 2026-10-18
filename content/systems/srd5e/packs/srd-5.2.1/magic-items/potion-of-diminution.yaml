@@ -1,0 +1,18 @@
+id: potion-of-diminution
+type: magic-item
+name: Potion of Diminution
+description: >-
+  Potion
+
+
+  When you drink this potion, you gain the "reduce" effect of the Enlarge/Reduce spell for 1d4 hours (no Concentration required).
+
+
+  The red in the potion's liquid continuously contracts to a tiny bead and then expands to color the clear liquid around it. Shaking the bottle fails to interrupt this process.
+tags:
+- rare
+- potions
+properties:
+  category: Potions
+  rarity: Rare
+  attunement: false

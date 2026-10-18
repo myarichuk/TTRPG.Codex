@@ -1,0 +1,19 @@
+id: map
+type: equipment
+name: Map
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 0 lb.
+
+
+  If you consult an accurate Map, you gain a +5 bonus to Wisdom (Survival) checks you make to find your way in the place represented on it.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 0

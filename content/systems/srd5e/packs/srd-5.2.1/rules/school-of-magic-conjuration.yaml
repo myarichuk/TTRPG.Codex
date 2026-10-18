@@ -1,0 +1,8 @@
+id: school-of-magic-conjuration
+type: rule
+name: Conjuration
+description: Transports creatures or objects
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

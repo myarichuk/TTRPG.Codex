@@ -1,0 +1,64 @@
+id: owlbear
+type: monster
+name: Owlbear
+description: >-
+  *Large Monstrosity, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 59 (7d10 + 21)  
+
+  **Speed** 40 ft., climb 40 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 20 (+5) | 12 (+1) | 17 (+3) | 3 (-4) | 12 (+1) | 7 (-2) |
+
+
+  **Skills** Perception +5  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The owlbear makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Slashing damage.
+tags:
+- monstrosity
+- large
+- cr-3
+properties:
+  size: Large
+  creatureType: monstrosity
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 59
+  hitDice: 7d10 + 21
+  speed: 40 ft., climb 40 ft.
+  strength: 20
+  dexterity: 12
+  constitution: 17
+  intelligence: 3
+  wisdom: 12
+  charisma: 7
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 15
+  languages: None
+  skills: Perception +5
+  actions:
+  - name: Multiattack
+    description: The owlbear makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Slashing damage.'

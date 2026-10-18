@@ -1,0 +1,181 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Codex.Plugin.Abstractions;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
+namespace Codex.Core.Systems;
+
+/// <summary>Reads and validates a <c>system.yaml</c> into a <see cref="SystemDefinition"/>.</summary>
+public static class SystemDefinitionLoader
+{
+    public const string FileName = "system.yaml";
+
+    private static readonly Regex IdPattern = new("^[a-z0-9][a-z0-9-_]*$", RegexOptions.Compiled);
+
+    private static readonly IDeserializer Deserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
+    public static SystemDefinition Load(string path)
+    {
+        var yaml = File.ReadAllText(path);
+        return Parse(yaml, path);
+    }
+
+    public static SystemDefinition Parse(string yaml, string? sourceName = null)
+    {
+        SystemDefinition? definition;
+        try
+        {
+            definition = Deserializer.Deserialize<SystemDefinition>(yaml);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is not a valid system definition: {Describe(ex)}", ex);
+        }
+
+        if (definition == null)
+        {
+            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is empty.");
+        }
+
+        var errors = Validate(definition).ToList();
+        if (errors.Count > 0)
+        {
+            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors));
+        }
+
+        return definition;
+    }
+
+    /// <summary>Every problem that would make the definition unusable, as plain sentences.</summary>
+    public static IEnumerable<string> Validate(SystemDefinition definition)
+    {
+        if (string.IsNullOrWhiteSpace(definition.Id))
+        {
+            yield return "id is required.";
+        }
+        else if (!IdPattern.IsMatch(definition.Id))
+        {
+            yield return $"id '{definition.Id}' must be lower-case letters, digits, '-' or '_', and start with a letter or digit.";
+        }
+
+        if (string.IsNullOrWhiteSpace(definition.Name))
+        {
+            yield return "name is required.";
+        }
+
+        foreach (var duplicate in Duplicates(definition.Attributes.Select(a => a.Key)))
+        {
+            yield return $"attribute key '{duplicate}' is declared more than once.";
+        }
+
+        foreach (var attribute in definition.Attributes)
+        {
+            if (string.IsNullOrWhiteSpace(attribute.Key)) yield return "every attribute needs a key.";
+            if (attribute.Modifier is not ("none" or "half-minus-five"))
+            {
+                yield return $"attribute '{attribute.Key}' has unknown modifier rule '{attribute.Modifier}' (use 'none' or 'half-minus-five').";
+            }
+        }
+
+        foreach (var duplicate in Duplicates(definition.Resources.Select(r => r.Key)))
+        {
+            yield return $"resource key '{duplicate}' is declared more than once.";
+        }
+
+        foreach (var resource in definition.Resources)
+        {
+            if (string.IsNullOrWhiteSpace(resource.Key)) yield return "every resource needs a key.";
+        }
+
+        if (definition.Resources.Count(r => r.IsPrimary) > 1)
+        {
+            yield return "only one resource may be marked isPrimary.";
+        }
+
+        foreach (var duplicate in Duplicates(definition.EntityTypes.Select(t => t.Type)))
+        {
+            yield return $"entity type '{duplicate}' is declared more than once.";
+        }
+
+        foreach (var duplicate in Duplicates(definition.EntityTypes.Select(t => t.FolderOrType)))
+        {
+            yield return $"two entity types share the folder '{duplicate}'.";
+        }
+
+        foreach (var type in definition.EntityTypes)
+        {
+            if (string.IsNullOrWhiteSpace(type.Type))
+            {
+                yield return "every entity type needs a type key.";
+                continue;
+            }
+
+            if (!IdPattern.IsMatch(type.Type))
+            {
+                yield return $"entity type '{type.Type}' must be lower-case letters, digits, '-' or '_'.";
+            }
+
+            if (type.FolderOrType is "abilities" or "actors" or "locations")
+            {
+                yield return $"entity type '{type.Type}' uses the reserved folder '{type.FolderOrType}'.";
+            }
+
+            foreach (var duplicate in Duplicates(type.Fields.Select(f => f.Key)))
+            {
+                yield return $"entity type '{type.Type}' declares field '{duplicate}' more than once.";
+            }
+
+            foreach (var field in type.Fields.Where(f => f.Type == FieldType.EntityReference && string.IsNullOrWhiteSpace(f.TargetEntityType)))
+            {
+                yield return $"field '{field.Key}' on '{type.Type}' is an EntityReference without a targetEntityType.";
+            }
+        }
+
+        var attributeKeys = definition.Attributes.Select(a => a.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var resourceKeys = definition.Resources.SelectMany(r => new[] { r.Key, r.MaxKey }).Where(k => k != null).ToHashSet(StringComparer.OrdinalIgnoreCase)!;
+        foreach (var field in definition.ActorFields)
+        {
+            if (attributeKeys.Contains(field.Key) || resourceKeys.Contains(field.Key))
+            {
+                yield return $"actor field '{field.Key}' collides with an attribute or resource key.";
+            }
+
+            if (field.Type == FieldType.EntityReference)
+            {
+                if (string.IsNullOrWhiteSpace(field.TargetEntityType))
+                {
+                    yield return $"actor field '{field.Key}' is an EntityReference without a targetEntityType.";
+                }
+                else if (definition.FindType(field.TargetEntityType) == null)
+                {
+                    yield return $"actor field '{field.Key}' references entity type '{field.TargetEntityType}', which this system does not declare.";
+                }
+            }
+        }
+    }
+
+    /// <summary>YamlDotNet wraps the useful message two or three exceptions deep.</summary>
+    private static string Describe(Exception ex)
+    {
+        var messages = new List<string>();
+        for (var current = ex; current != null; current = current.InnerException)
+        {
+            if (!messages.Contains(current.Message)) messages.Add(current.Message);
+        }
+
+        return string.Join(" -> ", messages);
+    }
+
+    private static IEnumerable<string> Duplicates(IEnumerable<string> keys) =>
+        keys.Where(k => !string.IsNullOrWhiteSpace(k))
+            .GroupBy(k => k, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key);
+}

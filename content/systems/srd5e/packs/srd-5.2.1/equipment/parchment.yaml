@@ -1,0 +1,19 @@
+id: parchment
+type: equipment
+name: Parchment
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 3 gp  
+
+  **Weight:** 0 lb.
+
+
+  One sheet of Parchment can hold about 250 handwritten words.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 3 gp
+  weight: 0

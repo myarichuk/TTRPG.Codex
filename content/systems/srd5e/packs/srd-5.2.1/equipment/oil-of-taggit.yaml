@@ -1,0 +1,17 @@
+id: oil-of-taggit
+type: equipment
+name: Oil of Taggit
+description: >-
+  *Poison (contact)*
+
+
+  **Cost:** 400 gp
+
+
+  A creature subjected to Oil of Taggit must succeed on a DC 13 Constitution saving throw or have the Poisoned condition for 24 hours. The creature also has the Unconscious condition while Poisoned in this way. It wakes up if it takes damage.
+tags:
+- poison
+- contact
+properties:
+  category: Poison
+  cost: 400 gp

@@ -1,0 +1,33 @@
+id: light-crossbow
+type: equipment
+name: Light Crossbow
+description: >-
+  *Ranged Weapons, Simple Ranged Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d8 Piercing  
+
+  **Properties:** Ammunition, Loading, Two-Handed  
+
+  **Range:** 80/320 ft.  
+
+  **Mastery:** Slow  
+
+  **Cost:** 25 gp  
+
+  **Weight:** 5 lb.
+tags:
+- ranged weapons
+- simple ranged weapons
+- simple weapons
+- weapons
+properties:
+  category: Ranged Weapons
+  cost: 25 gp
+  weight: 5
+  damage: 1d8 Piercing
+  properties:
+  - Ammunition
+  - Loading
+  - Two-Handed
+  mastery: Slow

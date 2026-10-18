@@ -1,0 +1,7 @@
+id: language-giant
+type: rule
+name: Giant
+tags:
+- language
+properties:
+  category: Language

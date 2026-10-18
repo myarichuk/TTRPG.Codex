@@ -1,0 +1,81 @@
+id: tough-boss
+type: monster
+name: Tough Boss
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 16 (Chain Mail)  
+
+  **HP** 82 (11d8 + 33)  
+
+  **Speed** 30 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 14 (+2) | 16 (+3) | 11 (+0) | 10 (+0) | 11 (+0) |
+
+
+  **Saving Throws** STR +5, CON +5, CHA +2  
+
+  **Gear** Chain Mail, Heavy Crossbow, Warhammer  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common plus one other language
+
+
+  ### Traits
+
+  **Pack Tactics.** The tough has Advantage on an attack roll against a creature if at least one of the tough’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Multiattack.** The tough makes two attacks, using Warhammer or Heavy Crossbow in any combination.
+
+
+  **Warhammer.** Melee Attack Roll: +5, reach 5 ft. Hit: 12 (2d8 + 3) Bludgeoning damage. If the target is a Large or smaller creature, the tough pushes the target up to 10 feet straight away from itself.
+
+
+  **Heavy Crossbow.** Ranged Attack Roll: +4, range 100/400 ft. Hit: 13 (2d10 + 2) Piercing damage.
+tags:
+- humanoid
+- medium or small
+- cr-4
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 16
+  hitPoints: 82
+  hitDice: 11d8 + 33
+  speed: 30 ft.
+  strength: 17
+  dexterity: 14
+  constitution: 16
+  intelligence: 11
+  wisdom: 10
+  charisma: 11
+  challengeRating: 4
+  xp: 1100
+  senses: passive perception 10
+  languages: Common plus one other language
+  savingThrows: STR +5, CON +5, CHA +2
+  gear: Chain Mail, Heavy Crossbow, Warhammer
+  traits:
+  - name: Pack Tactics
+    description: The tough has Advantage on an attack roll against a creature if at least one of the tough’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Multiattack
+    description: The tough makes two attacks, using Warhammer or Heavy Crossbow in any combination.
+  - name: Warhammer
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 12 (2d8 + 3) Bludgeoning damage. If the target is a Large or smaller creature, the tough pushes the target up to 10 feet straight away from itself.'
+  - name: Heavy Crossbow
+    description: 'Ranged Attack Roll: +4, range 100/400 ft. Hit: 13 (2d10 + 2) Piercing damage.'

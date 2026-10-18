@@ -1,0 +1,19 @@
+id: case-crossbow-bolt
+type: equipment
+name: Case, Crossbow Bolt
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 1 lb.
+
+
+  A Crossbow Bolt Case holds up to 20 Bolts.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 1

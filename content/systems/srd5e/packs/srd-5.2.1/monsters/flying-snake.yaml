@@ -1,0 +1,65 @@
+id: flying-snake
+type: monster
+name: Flying Snake
+description: >-
+  *Tiny Monstrosity, Unaligned*
+
+
+  **AC** 14  
+
+  **HP** 5 (2d4)  
+
+  **Speed** 30 ft., fly 60 ft., swim 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 4 (-3) | 15 (+2) | 11 (+0) | 2 (-4) | 12 (+1) | 5 (-3) |
+
+
+  **Senses** blindsight 10 ft., passive perception 11  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Flyby.** The snake doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 1 Piercing damage plus 5 (2d4) Poison damage.
+tags:
+- monstrosity
+- tiny
+- cr-1/8
+properties:
+  size: Tiny
+  creatureType: monstrosity
+  alignment: unaligned
+  armorClass: 14
+  hitPoints: 5
+  hitDice: 2d4
+  speed: 30 ft., fly 60 ft., swim 30 ft.
+  strength: 4
+  dexterity: 15
+  constitution: 11
+  intelligence: 2
+  wisdom: 12
+  charisma: 5
+  challengeRating: 1/8
+  xp: 25
+  senses: blindsight 10 ft., passive perception 11
+  languages: None
+  traits:
+  - name: Flyby
+    description: The snake doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 1 Piercing damage plus 5 (2d4) Poison damage.'

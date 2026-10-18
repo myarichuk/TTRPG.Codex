@@ -1,0 +1,137 @@
+id: lich
+type: monster
+name: Lich
+description: >-
+  *Medium Undead, Neutral Evil*
+
+
+  **AC** 20  
+
+  **HP** 315 (42d8 + 126)  
+
+  **Speed** 30 ft.  
+
+  **CR** 21 (XP 33000; PB +7)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 16 (+3) | 16 (+3) | 21 (+5) | 14 (+2) | 16 (+3) |
+
+
+  **Saving Throws** DEX +10, CON +10, INT +12, WIS +9  
+
+  **Skills** Arcana +19, History +12, Insight +9, Perception +9  
+
+  **Resistances** cold, lightning  
+
+  **Immunities** necrotic, poison, Charmed, Exhaustion, Frightened, Paralyzed, Poisoned  
+
+  **Gear** Component Pouch  
+
+  **Senses** truesight 120 ft., passive perception 19  
+
+  **Languages** All
+
+
+  ### Traits
+
+  **Legendary Resistance (4/day).** If the lich fails a saving throw, it can choose to succeed instead.
+
+
+  **Spirit Jar.** If destroyed, the lich reforms in 1d10 days if it has a spirit jar, reviving with all its Hit Points. The new body appears in an unoccupied space within the lich’s lair.
+
+
+
+  ### Actions
+
+  **Multiattack.** The lich makes three attacks, using Eldritch Burst or Paralyzing Touch in any combination.
+
+
+  **Eldritch Burst.** Melee or Ranged Attack Roll: +12, reach 5 ft. or range 120 ft. Hit: 31 (4d12 + 5) Force damage.
+
+
+  **Paralyzing Touch.** Melee Attack Roll: +12, reach 5 ft. Hit: 15 (3d6 + 5) Cold damage, and the target has the Paralyzed condition until the start of the lich’s next turn.
+
+
+  **Spellcasting.** The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):
+
+
+
+  ### Reactions
+
+  **Protective Magic.** The lich casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.
+
+
+
+  ### Legendary Actions
+
+  **Deathly Teleport.** The lich teleports up to 60 feet to an unoccupied space it can see, and each creature within 10 feet of the space it left takes 11 (2d10) Necrotic damage.
+
+
+  **Disrupt Life.** Constitution Saving Throw: DC 20, each creature that isn’t an Undead in a 20-foot Emanation originating from the lich. Failure: 31 (9d6) Necrotic damage. Success: Half damage. Failure or Success: The lich can’t take this action again until the start of its next turn.
+
+
+  **Frightening Gaze.** The lich casts Fear, using the same spellcasting ability as Spellcasting. The lich can’t take this action again until the start of its next turn.
+tags:
+- undead
+- medium
+- cr-21
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: neutral evil
+  armorClass: 20
+  hitPoints: 315
+  hitDice: 42d8 + 126
+  speed: 30 ft.
+  strength: 11
+  dexterity: 16
+  constitution: 16
+  intelligence: 21
+  wisdom: 14
+  charisma: 16
+  challengeRating: 21
+  xp: 33000
+  senses: truesight 120 ft., passive perception 19
+  languages: All
+  skills: Arcana +19, History +12, Insight +9, Perception +9
+  savingThrows: DEX +10, CON +10, INT +12, WIS +9
+  resistances:
+  - cold
+  - lightning
+  immunities:
+  - necrotic
+  - poison
+  - Charmed
+  - Exhaustion
+  - Frightened
+  - Paralyzed
+  - Poisoned
+  gear: Component Pouch
+  traits:
+  - name: Legendary Resistance (4/day)
+    description: If the lich fails a saving throw, it can choose to succeed instead.
+  - name: Spirit Jar
+    description: If destroyed, the lich reforms in 1d10 days if it has a spirit jar, reviving with all its Hit Points. The new body appears in an unoccupied space within the lich’s lair.
+  actions:
+  - name: Multiattack
+    description: The lich makes three attacks, using Eldritch Burst or Paralyzing Touch in any combination.
+  - name: Eldritch Burst
+    description: 'Melee or Ranged Attack Roll: +12, reach 5 ft. or range 120 ft. Hit: 31 (4d12 + 5) Force damage.'
+  - name: Paralyzing Touch
+    description: 'Melee Attack Roll: +12, reach 5 ft. Hit: 15 (3d6 + 5) Cold damage, and the target has the Paralyzed condition until the start of the lich’s next turn.'
+  - name: Spellcasting
+    description: 'The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):'
+  reactions:
+  - name: Protective Magic
+    description: The lich casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.
+  legendaryActions:
+  - name: Deathly Teleport
+    description: The lich teleports up to 60 feet to an unoccupied space it can see, and each creature within 10 feet of the space it left takes 11 (2d10) Necrotic damage.
+  - name: Disrupt Life
+    description: 'Constitution Saving Throw: DC 20, each creature that isn’t an Undead in a 20-foot Emanation originating from the lich. Failure: 31 (9d6) Necrotic damage. Success: Half damage. Failure or Success: The lich can’t take this action again until the start of its next turn.'
+  - name: Frightening Gaze
+    description: The lich casts Fear, using the same spellcasting ability as Spellcasting. The lich can’t take this action again until the start of its next turn.

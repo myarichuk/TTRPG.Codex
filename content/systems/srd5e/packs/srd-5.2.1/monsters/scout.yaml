@@ -1,0 +1,72 @@
+id: scout
+type: monster
+name: Scout
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 13 (Leather Armor)  
+
+  **HP** 16 (3d8 + 3)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 14 (+2) | 12 (+1) | 11 (+0) | 13 (+1) | 11 (+0) |
+
+
+  **Skills** Nature +4, Perception +5, Stealth +6, Survival +5  
+
+  **Gear** Leather Armor, Longbow, Shortsword  
+
+  **Senses** passive perception 15  
+
+  **Languages** Common plus one other language
+
+
+  ### Actions
+
+  **Multiattack.** The scout makes two attacks, using Shortsword and Longbow in any combination.
+
+
+  **Shortsword.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage.
+
+
+  **Longbow.** Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage.
+tags:
+- humanoid
+- medium or small
+- cr-1/2
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 13
+  hitPoints: 16
+  hitDice: 3d8 + 3
+  speed: 30 ft.
+  strength: 11
+  dexterity: 14
+  constitution: 12
+  intelligence: 11
+  wisdom: 13
+  charisma: 11
+  challengeRating: 1/2
+  xp: 100
+  senses: passive perception 15
+  languages: Common plus one other language
+  skills: Nature +4, Perception +5, Stealth +6, Survival +5
+  gear: Leather Armor, Longbow, Shortsword
+  actions:
+  - name: Multiattack
+    description: The scout makes two attacks, using Shortsword and Longbow in any combination.
+  - name: Shortsword
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage.'
+  - name: Longbow
+    description: 'Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage.'

@@ -1,0 +1,120 @@
+id: aboleth
+type: monster
+name: Aboleth
+description: >-
+  *Large Aberration, Lawful Evil*
+
+
+  **AC** 17  
+
+  **HP** 150 (20d10 + 40)  
+
+  **Speed** 10 ft., swim 40 ft.  
+
+  **CR** 10 (XP 5900; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 21 (+5) | 9 (-1) | 15 (+2) | 18 (+4) | 15 (+2) | 18 (+4) |
+
+
+  **Saving Throws** DEX +3, CON +6, INT +8, WIS +6  
+
+  **Skills** History +12, Perception +10  
+
+  **Senses** darkvision 120 ft., passive perception 20  
+
+  **Languages** Deep Speech; telepathy 120 ft.
+
+
+  ### Traits
+
+  **Amphibious.** The aboleth can breathe air and water.
+
+
+  **Eldritch Restoration.** If destroyed, the aboleth gains a new body in 5d10 days, reviving with all its Hit Points in the Far Realm or another location chosen by the GM.
+
+
+  **Legendary Resistance (3/day).** If the aboleth fails a saving throw, it can choose to succeed instead.
+
+
+  **Mucus Cloud.** While underwater, the aboleth is surrounded by mucus. Constitution Saving Throw: DC 14, each creature in a 5-foot Emanation originating from the aboleth at the end of the aboleth’s turn. Failure: The target is cursed. Until the curse ends, the target’s skin becomes slimy, the target can breathe air and water, and it can’t regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes 6 (1d12) Acid damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.
+
+
+  **Probing Telepathy.** If a creature the aboleth can see communicates telepathically with the aboleth, the aboleth learns the creature’s greatest desires.
+
+
+
+  ### Actions
+
+  **Multiattack.** The aboleth makes two Tentacle attacks and uses either Consume Memories or Dominate Mind if available.
+
+
+  **Tentacle.** Melee Attack Roll: +9, reach 15 ft. Hit: 12 (2d6 + 5) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14) from one of four tentacles.
+
+
+  **Consume Memories.** Intelligence Saving Throw: DC 16, one creature within 30 feet that is Charmed or Grappled by the aboleth. Failure: 10 (3d6) Psychic damage. Success: Half damage. Failure or Success: The aboleth gains the target’s memories if the target is a Humanoid and is reduced to 0 Hit Points by this action.
+
+
+  **Dominate Mind (2/day).** Wisdom Saving Throw: DC 16, one creature the aboleth can see within 30 feet. Failure: The target has the Charmed condition until the aboleth dies or is on a different plane of existence from the target. While Charmed, the target acts as an ally to the aboleth and is under its control while within 60 feet of it. In addition, the aboleth and the target can communicate telepathically with each other over any distance. The target repeats the save whenever it takes damage as well as after every 24 hours it spends at least 1 mile away from the aboleth, ending the effect on itself on a success.
+
+
+
+  ### Legendary Actions
+
+  **Lash.** The aboleth makes one Tentacle attack.
+
+
+  **Psychic Drain.** If the aboleth has at least one creature Charmed or Grappled, it uses Consume Memories and regains 5 (1d10) Hit Points.
+tags:
+- aberration
+- large
+- cr-10
+properties:
+  size: Large
+  creatureType: aberration
+  alignment: lawful evil
+  armorClass: 17
+  hitPoints: 150
+  hitDice: 20d10 + 40
+  speed: 10 ft., swim 40 ft.
+  strength: 21
+  dexterity: 9
+  constitution: 15
+  intelligence: 18
+  wisdom: 15
+  charisma: 18
+  challengeRating: 10
+  xp: 5900
+  senses: darkvision 120 ft., passive perception 20
+  languages: Deep Speech; telepathy 120 ft.
+  skills: History +12, Perception +10
+  savingThrows: DEX +3, CON +6, INT +8, WIS +6
+  traits:
+  - name: Amphibious
+    description: The aboleth can breathe air and water.
+  - name: Eldritch Restoration
+    description: If destroyed, the aboleth gains a new body in 5d10 days, reviving with all its Hit Points in the Far Realm or another location chosen by the GM.
+  - name: Legendary Resistance (3/day)
+    description: If the aboleth fails a saving throw, it can choose to succeed instead.
+  - name: Mucus Cloud
+    description: 'While underwater, the aboleth is surrounded by mucus. Constitution Saving Throw: DC 14, each creature in a 5-foot Emanation originating from the aboleth at the end of the aboleth’s turn. Failure: The target is cursed. Until the curse ends, the target’s skin becomes slimy, the target can breathe air and water, and it can’t regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes 6 (1d12) Acid damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.'
+  - name: Probing Telepathy
+    description: If a creature the aboleth can see communicates telepathically with the aboleth, the aboleth learns the creature’s greatest desires.
+  actions:
+  - name: Multiattack
+    description: The aboleth makes two Tentacle attacks and uses either Consume Memories or Dominate Mind if available.
+  - name: Tentacle
+    description: 'Melee Attack Roll: +9, reach 15 ft. Hit: 12 (2d6 + 5) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14) from one of four tentacles.'
+  - name: Consume Memories
+    description: 'Intelligence Saving Throw: DC 16, one creature within 30 feet that is Charmed or Grappled by the aboleth. Failure: 10 (3d6) Psychic damage. Success: Half damage. Failure or Success: The aboleth gains the target’s memories if the target is a Humanoid and is reduced to 0 Hit Points by this action.'
+  - name: Dominate Mind (2/day)
+    description: 'Wisdom Saving Throw: DC 16, one creature the aboleth can see within 30 feet. Failure: The target has the Charmed condition until the aboleth dies or is on a different plane of existence from the target. While Charmed, the target acts as an ally to the aboleth and is under its control while within 60 feet of it. In addition, the aboleth and the target can communicate telepathically with each other over any distance. The target repeats the save whenever it takes damage as well as after every 24 hours it spends at least 1 mile away from the aboleth, ending the effect on itself on a success.'
+  legendaryActions:
+  - name: Lash
+    description: The aboleth makes one Tentacle attack.
+  - name: Psychic Drain
+    description: If the aboleth has at least one creature Charmed or Grappled, it uses Consume Memories and regains 5 (1d10) Hit Points.

@@ -1,0 +1,19 @@
+id: antitoxin
+type: equipment
+name: Antitoxin
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 50 gp  
+
+  **Weight:** 1 lb.
+
+
+  As a Bonus Action, you can drink a vial of Antitoxin to gain Advantage on saving throws to avoid or end the Poisoned condition for 1 hour.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 50 gp
+  weight: 1

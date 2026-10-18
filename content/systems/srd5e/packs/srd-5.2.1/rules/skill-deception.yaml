@@ -1,0 +1,12 @@
+id: skill-deception
+type: rule
+name: Deception
+description: >-
+  **Ability:** CHA
+
+
+  Tell a convincing lie, or wear a disguise convincingly.
+tags:
+- skill
+properties:
+  category: Skill

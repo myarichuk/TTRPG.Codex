@@ -1,0 +1,18 @@
+- id: greyharbour
+  name: Greyharbour
+  description: A fog-bound port of slate roofs and crooked piers.
+  tags: [town, port]
+- id: the-salt-lantern
+  name: The Salt Lantern
+  parentId: greyharbour
+  description: The only inn with rooms above the water line. Ask for Maud.
+  tags: [inn]
+  connections:
+    - targetId: harbour-office
+      relationType: Street
+      distance: 0.2
+- id: harbour-office
+  name: Harbour-Master's Office
+  parentId: greyharbour
+  description: Ledgers, lamp oil, and a locked drawer nobody has the key to.
+  tags: [office]

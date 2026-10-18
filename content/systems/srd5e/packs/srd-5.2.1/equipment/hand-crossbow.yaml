@@ -1,0 +1,33 @@
+id: hand-crossbow
+type: equipment
+name: Hand Crossbow
+description: >-
+  *Martial Ranged Weapons, Martial Weapons, Ranged Weapons, Weapons*
+
+
+  **Damage:** 1d6 Piercing  
+
+  **Properties:** Ammunition, Light, Loading  
+
+  **Range:** 30/120 ft.  
+
+  **Mastery:** Vex  
+
+  **Cost:** 25 gp  
+
+  **Weight:** 2 lb.
+tags:
+- martial ranged weapons
+- martial weapons
+- ranged weapons
+- weapons
+properties:
+  category: Martial Ranged Weapons
+  cost: 25 gp
+  weight: 2
+  damage: 1d6 Piercing
+  properties:
+  - Ammunition
+  - Light
+  - Loading
+  mastery: Vex

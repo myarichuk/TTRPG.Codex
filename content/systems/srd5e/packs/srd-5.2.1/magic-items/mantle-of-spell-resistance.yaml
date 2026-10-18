@@ -1,0 +1,15 @@
+id: mantle-of-spell-resistance
+type: magic-item
+name: Mantle of Spell Resistance
+description: >-
+  Wondrous Item
+
+
+  You have Advantage on saving throws against spells while you wear this cloak.
+tags:
+- rare
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Rare
+  attunement: true

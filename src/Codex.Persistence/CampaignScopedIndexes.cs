@@ -90,3 +90,18 @@ public class EncountersByCampaignIndex : AbstractIndexCreationTask<EncounterDocu
                              };
     }
 }
+
+public class HomebrewByCampaignIndex : AbstractIndexCreationTask<HomebrewEntryDocument>
+{
+    public HomebrewByCampaignIndex()
+    {
+        Map = entries => from entry in entries
+                         select new
+                         {
+                             entry.CampaignId,
+                             entry.Type,
+                             entry.IsPublished,
+                             entry.Name
+                         };
+    }
+}

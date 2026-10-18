@@ -1,0 +1,19 @@
+id: armor
+type: magic-item
+name: Armor
+description: >-
+  Armor (Any Light, Medium, or Heavy)
+
+
+  You have a bonus to Armor Class while wearing this armor. The bonus is determined by its rarity.
+tags:
+- rare (+1), very rare (+2), or legendary (+3)
+- armor
+properties:
+  category: Armor
+  rarity: Rare (+1), Very Rare (+2), or Legendary (+3)
+  attunement: false
+  variants:
+  - Armor +1
+  - Armor +2
+  - Armor +3

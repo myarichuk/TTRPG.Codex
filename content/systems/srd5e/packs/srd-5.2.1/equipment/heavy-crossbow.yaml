@@ -1,0 +1,34 @@
+id: heavy-crossbow
+type: equipment
+name: Heavy Crossbow
+description: >-
+  *Martial Ranged Weapons, Martial Weapons, Ranged Weapons, Weapons*
+
+
+  **Damage:** 1d10 Piercing  
+
+  **Properties:** Ammunition, Heavy, Loading, Two-Handed  
+
+  **Range:** 100/400 ft.  
+
+  **Mastery:** Push  
+
+  **Cost:** 50 gp  
+
+  **Weight:** 18 lb.
+tags:
+- martial ranged weapons
+- martial weapons
+- ranged weapons
+- weapons
+properties:
+  category: Martial Ranged Weapons
+  cost: 50 gp
+  weight: 18
+  damage: 1d10 Piercing
+  properties:
+  - Ammunition
+  - Heavy
+  - Loading
+  - Two-Handed
+  mastery: Push

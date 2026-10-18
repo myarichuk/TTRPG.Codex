@@ -34,14 +34,14 @@ public class PluginLoadTest
             File.WriteAllText(Path.Combine(addonDir, "manifest.json"), "{}");
 
             var baseManifest = new PackManifest("base-pack", "Base", "1.0.0", "dnd5e");
-            var addonManifest = new PackManifest("addon-pack", "Addon", "1.0.0", "dnd5e", Dependencies: new[] { "base-pack" });
+            var addonManifest = new PackManifest("addon-pack", "Addon", "1.0.0", "dnd5e", dependencies: new[] { "base-pack" });
 
             var contentLoader = Substitute.For<IContentPackLoader>();
             contentLoader.ReadManifestAsync(baseDir).Returns(baseManifest);
             contentLoader.ReadManifestAsync(addonDir).Returns(addonManifest);
 
             var loadOrder = new List<string>();
-            _ = contentLoader.LoadPackAsync(Arg.Do<string>(p => loadOrder.Add(p)));
+            _ = contentLoader.LoadPackAsync(Arg.Do<string>(p => loadOrder.Add(p)), Arg.Any<SystemDefinition?>());
 
             var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), contentLoader);
 
@@ -56,29 +56,62 @@ public class PluginLoadTest
     }
 
     [Fact]
-    public void LoadPlugins_ShouldFindAndInitializePlugins()
+    public async Task LoadAndInitialize_DiscoversDataDrivenSystemsAndTheirPacks()
     {
-        // Arrange
-        var logger = NullLogger<PluginLoader>.Instance;
+        // The example system under content/examples is a system.yaml plus one pack - no compiled
+        // plugin anywhere. Loading it proves the data-driven path end to end.
+        var root = Path.Combine(TestPaths.RepoRoot, "content", "examples", "simple-d6");
         var registry = new ComponentRegistry();
-        var contentLoader = Substitute.For<IContentPackLoader>();
-        var loader = new PluginLoader(logger, registry, contentLoader);
+        var scriptEvaluator = new Codex.Core.Scripting.ScriptEvaluator(NullLogger<Codex.Core.Scripting.ScriptEvaluator>.Instance);
+        var contentRegistry = new ContentRegistry(scriptEvaluator);
+        var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, registry, new YamlContentPackLoader(contentRegistry));
 
-        // We will just point it to the output directory of the tests, which should have the plugin dlls copied.
-        var pluginsDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        await loader.LoadAndInitializeAsync(root);
 
-        // Act
-        var plugins = loader.LoadPlugins(pluginsDir!);
+        Assert.True(loader.IsLoaded);
+        Assert.Null(loader.LoadException);
+        Assert.Contains("simple-d6", loader.LoadedSystemIds);
+        Assert.Equal("Simple d6 (example homebrew)", loader.GetDisplayName("simple-d6"));
+        Assert.NotNull(loader.GetDefinition("simple-d6"));
+        Assert.Contains(registry.RegisteredComponents, t => t == typeof(Codex.Core.Components.AttributesComponent));
 
-        // Assert
-        Assert.NotEmpty(plugins);
-        Assert.Contains(plugins, p => p.SystemId == "DnD5e");
+        var actorSchema = loader.GetUISchemas("simple-d6").Single(s => s.EntityType == "Actor");
+        Assert.Contains(actorSchema.Fields, f => f.Key == "body");
+        Assert.Contains(actorSchema.Fields, f => f.Key == "HP_Max");
+        Assert.Contains(actorSchema.Fields, f => f.Key == "calling" && f.Type == FieldType.EntityReference);
+
+        Assert.Equal(3, contentRegistry.GetEntries("simple-d6", "calling").Count());
+        // Foes are declared actorBlueprint: true, so they are reachable both as entries and as actor blueprints.
+        var hound = contentRegistry.GetActor("simple-d6:clockwork-hound");
+        Assert.NotNull(hound);
+        Assert.Equal(8, hound!.Resources["HP"]);
+        Assert.Equal(4L, hound.Properties["body"]);
 
         using var world = new CodexWorld();
-        loader.InitializePlugins(plugins, world);
-
-        // By running the system without throwing, we consider it a success.
-        var entity = world.CreateEntity();
+        loader.InitializePlugins(new[] { loader.GetPlugin("simple-d6")! }, world);
         world.Tick(0.1f);
+    }
+
+    [Fact]
+    public async Task LoadAndInitialize_ReportsInvalidSystemYamlAsWarning_NotCrash()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "BadSystem_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            File.WriteAllText(Path.Combine(tempDir, "system.yaml"), "name: Nameless\nattributes:\n  - key: str\n  - key: str\n");
+            var registry = new ComponentRegistry();
+            var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, registry, Substitute.For<IContentPackLoader>());
+
+            await loader.LoadAndInitializeAsync(tempDir);
+
+            Assert.True(loader.IsLoaded);
+            Assert.Empty(loader.LoadedSystemIds);
+            Assert.Contains(loader.LoadWarnings, w => w.Contains("id is required") && w.Contains("declared more than once"));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
     }
 }

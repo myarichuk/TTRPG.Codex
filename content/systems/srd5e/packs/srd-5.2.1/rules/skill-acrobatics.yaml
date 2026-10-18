@@ -1,0 +1,12 @@
+id: skill-acrobatics
+type: rule
+name: Acrobatics
+description: >-
+  **Ability:** DEX
+
+
+  Stay on your feet in a tricky situation, or perform an acrobatic stunt.
+tags:
+- skill
+properties:
+  category: Skill

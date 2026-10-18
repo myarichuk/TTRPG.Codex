@@ -1,0 +1,17 @@
+id: jewelers-tools
+type: equipment
+name: Jeweler's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 25 gp  
+
+  **Weight:** 2 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 25 gp
+  weight: 2

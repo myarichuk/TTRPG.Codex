@@ -1,0 +1,46 @@
+id: longstrider
+type: spell
+name: Longstrider
+description: >-
+  *Level 1 Transmutation (Bard, Druid, Ranger, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S, M (a pinch of dirt)  
+
+  **Duration:** 1 hour
+
+
+  You touch a creature. The target's Speed increases by 10 feet until the spell ends.
+
+
+  **Using a Higher-Level Spell Slot.** You can target one additional creature for each spell slot level above 1.
+tags:
+- level-1
+- transmutation
+- bard
+- druid
+- ranger
+- wizard
+properties:
+  level: 1
+  school: Transmutation
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  - M
+  material: a pinch of dirt
+  duration: 1 hour
+  concentration: false
+  ritual: false
+  classes:
+  - Bard
+  - Druid
+  - Ranger
+  - Wizard
+  higherLevel: You can target one additional creature for each spell slot level above 1.

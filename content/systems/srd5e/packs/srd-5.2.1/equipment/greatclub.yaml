@@ -1,0 +1,29 @@
+id: greatclub
+type: equipment
+name: Greatclub
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d8 Bludgeoning  
+
+  **Properties:** Two-Handed  
+
+  **Mastery:** Push  
+
+  **Cost:** 2 sp  
+
+  **Weight:** 10 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 2 sp
+  weight: 10
+  damage: 1d8 Bludgeoning
+  properties:
+  - Two-Handed
+  mastery: Push

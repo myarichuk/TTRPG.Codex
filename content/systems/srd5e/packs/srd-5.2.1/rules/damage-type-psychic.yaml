@@ -1,0 +1,8 @@
+id: damage-type-psychic
+type: rule
+name: Psychic
+description: Mind-rending energy
+tags:
+- damage-type
+properties:
+  category: Damage Type

@@ -1,0 +1,22 @@
+id: emblem
+type: equipment
+name: Emblem
+description: >-
+  *Adventuring Gear, Holy Symbols*
+
+
+  **Cost:** 5 gp  
+
+  **Weight:** 0 lb.
+
+
+  A Holy Symbol takes one of the forms in the Holy Symbol table and is bejeweled or painted to channel divine magic. A Cleric or Paladin can use a Holy Symbol as a Spellcasting Focus.
+
+  The table indicates whether a Holy Symbol needs to be held, worn, or borne on fabric (such as a tabard or banner) or a Shield.
+tags:
+- adventuring gear
+- holy symbols
+properties:
+  category: Adventuring Gear
+  cost: 5 gp
+  weight: 0

@@ -1,0 +1,74 @@
+id: sprite
+type: monster
+name: Sprite
+description: >-
+  *Tiny Fey, Neutral Good*
+
+
+  **AC** 15  
+
+  **HP** 10 (4d4)  
+
+  **Speed** 10 ft., fly 40 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 3 (-4) | 18 (+4) | 10 (+0) | 14 (+2) | 13 (+1) | 11 (+0) |
+
+
+  **Skills** Perception +3, Stealth +8  
+
+  **Senses** passive perception 13  
+
+  **Languages** Common, Elvish, Sylvan
+
+
+  ### Actions
+
+  **Needle Sword.** Melee Attack Roll: +6, reach 5 ft. Hit: 6 (1d4 + 4) Piercing damage.
+
+
+  **Enchanting Bow.** Ranged Attack Roll: +6, range 40/160 ft. Hit: 1 Piercing damage, and the target has the Charmed condition until the start of the sprite’s next turn.
+
+
+  **Heart Sight.** Charisma Saving Throw: DC 10, one creature within 5 feet the sprite can see (Celestials, Fiends, and Undead automatically fail the save). Failure: The sprite knows the target’s emotions and alignment.
+
+
+  **Invisibility.** The sprite casts Invisibility on itself, requiring no spell components and using Charisma as the spellcasting ability.
+tags:
+- fey
+- tiny
+- cr-1/4
+properties:
+  size: Tiny
+  creatureType: fey
+  alignment: neutral good
+  armorClass: 15
+  hitPoints: 10
+  hitDice: 4d4
+  speed: 10 ft., fly 40 ft.
+  strength: 3
+  dexterity: 18
+  constitution: 10
+  intelligence: 14
+  wisdom: 13
+  charisma: 11
+  challengeRating: 1/4
+  xp: 50
+  senses: passive perception 13
+  languages: Common, Elvish, Sylvan
+  skills: Perception +3, Stealth +8
+  actions:
+  - name: Needle Sword
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 6 (1d4 + 4) Piercing damage.'
+  - name: Enchanting Bow
+    description: 'Ranged Attack Roll: +6, range 40/160 ft. Hit: 1 Piercing damage, and the target has the Charmed condition until the start of the sprite’s next turn.'
+  - name: Heart Sight
+    description: 'Charisma Saving Throw: DC 10, one creature within 5 feet the sprite can see (Celestials, Fiends, and Undead automatically fail the save). Failure: The sprite knows the target’s emotions and alignment.'
+  - name: Invisibility
+    description: The sprite casts Invisibility on itself, requiring no spell components and using Charisma as the spellcasting ability.

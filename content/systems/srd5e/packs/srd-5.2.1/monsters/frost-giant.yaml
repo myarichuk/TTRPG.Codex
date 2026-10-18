@@ -1,0 +1,85 @@
+id: frost-giant
+type: monster
+name: Frost Giant
+description: >-
+  *Huge Giant, Neutral Evil*
+
+
+  **AC** 15  
+
+  **HP** 149 (13d12 + 65)  
+
+  **Speed** 40 ft.  
+
+  **CR** 8 (XP 3900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 23 (+6) | 9 (-1) | 21 (+5) | 9 (-1) | 10 (+0) | 12 (+1) |
+
+
+  **Saving Throws** CON +8, WIS +3, CHA +4  
+
+  **Skills** Athletics +9, Perception +3  
+
+  **Immunities** cold  
+
+  **Senses** passive perception 13  
+
+  **Languages** Giant
+
+
+  ### Actions
+
+  **Multiattack.** The giant makes two attacks, using Frost Axe or Great Bow in any combination.
+
+
+  **Frost Axe.** Melee Attack Roll: +9, reach 10 ft. Hit: 19 (2d12 + 6) Slashing damage plus 9 (2d8) Cold damage.
+
+
+  **Great Bow.** Ranged Attack Roll: +9, range 150/600 ft. Hit: 17 (2d10 + 6) Piercing damage plus 7 (2d6) Cold damage, and the target’s Speed decreases by 10 feet until the end of its next turn.
+
+
+
+  ### Bonus Actions
+
+  **War Cry.** The giant or one creature of its choice that can see or hear it gains 16 (2d10 + 5) Temporary Hit Points and has Advantage on attack rolls until the start of the giant’s next turn.
+tags:
+- giant
+- huge
+- cr-8
+properties:
+  size: Huge
+  creatureType: giant
+  alignment: neutral evil
+  armorClass: 15
+  hitPoints: 149
+  hitDice: 13d12 + 65
+  speed: 40 ft.
+  strength: 23
+  dexterity: 9
+  constitution: 21
+  intelligence: 9
+  wisdom: 10
+  charisma: 12
+  challengeRating: 8
+  xp: 3900
+  senses: passive perception 13
+  languages: Giant
+  skills: Athletics +9, Perception +3
+  savingThrows: CON +8, WIS +3, CHA +4
+  immunities:
+  - cold
+  actions:
+  - name: Multiattack
+    description: The giant makes two attacks, using Frost Axe or Great Bow in any combination.
+  - name: Frost Axe
+    description: 'Melee Attack Roll: +9, reach 10 ft. Hit: 19 (2d12 + 6) Slashing damage plus 9 (2d8) Cold damage.'
+  - name: Great Bow
+    description: 'Ranged Attack Roll: +9, range 150/600 ft. Hit: 17 (2d10 + 6) Piercing damage plus 7 (2d6) Cold damage, and the target’s Speed decreases by 10 feet until the end of its next turn.'
+  bonusActions:
+  - name: War Cry
+    description: The giant or one creature of its choice that can see or hear it gains 16 (2d10 + 5) Temporary Hit Points and has Advantage on attack rolls until the start of the giant’s next turn.

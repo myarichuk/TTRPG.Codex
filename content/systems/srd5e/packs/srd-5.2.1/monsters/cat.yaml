@@ -1,0 +1,71 @@
+id: cat
+type: monster
+name: Cat
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 2 (1d4)  
+
+  **Speed** 40 ft., climb 40 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 3 (-4) | 15 (+2) | 10 (+0) | 3 (-4) | 12 (+1) | 7 (-2) |
+
+
+  **Saving Throws** DEX +4  
+
+  **Skills** Perception +3, Stealth +4  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Jumper.** The cat’s jump distance is determined using its Dexterity rather than its Strength.
+
+
+
+  ### Actions
+
+  **Scratch.** Melee Attack Roll: +4, reach 5 ft. Hit: 1 Slashing damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 2
+  hitDice: 1d4
+  speed: 40 ft., climb 40 ft.
+  strength: 3
+  dexterity: 15
+  constitution: 10
+  intelligence: 3
+  wisdom: 12
+  charisma: 7
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 60 ft., passive perception 13
+  languages: None
+  skills: Perception +3, Stealth +4
+  savingThrows: DEX +4
+  traits:
+  - name: Jumper
+    description: The cat’s jump distance is determined using its Dexterity rather than its Strength.
+  actions:
+  - name: Scratch
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 1 Slashing damage.'

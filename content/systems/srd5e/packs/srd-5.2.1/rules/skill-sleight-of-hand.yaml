@@ -1,0 +1,12 @@
+id: skill-sleight-of-hand
+type: rule
+name: Sleight of Hand
+description: >-
+  **Ability:** DEX
+
+
+  Pick a pocket, conceal a handheld object, or perform legerdemain.
+tags:
+- skill
+properties:
+  category: Skill

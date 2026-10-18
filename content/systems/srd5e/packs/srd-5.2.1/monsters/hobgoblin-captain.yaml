@@ -1,0 +1,78 @@
+id: hobgoblin-captain
+type: monster
+name: Hobgoblin Captain
+description: >-
+  *Medium Fey, Lawful Evil*
+
+
+  **AC** 17 (Half-Plate Armor)  
+
+  **HP** 58 (9d8 + 18)  
+
+  **Speed** 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 14 (+2) | 14 (+2) | 12 (+1) | 10 (+0) | 13 (+1) |
+
+
+  **Gear** Greatsword, Half Plate Armor, Longbow  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Common, Goblin
+
+
+  ### Traits
+
+  **Aura of Authority.** While in a 10-foot Emanation originating from the hobgoblin, the hobgoblin and its allies have Advantage on attack rolls and saving throws, provided the hobgoblin doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Multiattack.** The hobgoblin makes two attacks, using Greatsword or Longbow in any combination.
+
+
+  **Greatsword.** Melee Attack Roll: +4, reach 5 ft. Hit: 9 (2d6 + 2) Slashing damage plus 3 (1d6) Poison damage.
+
+
+  **Longbow.** Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage plus 5 (2d4) Poison damage.
+tags:
+- fey
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: lawful evil
+  armorClass: 17
+  hitPoints: 58
+  hitDice: 9d8 + 18
+  speed: 30 ft.
+  strength: 15
+  dexterity: 14
+  constitution: 14
+  intelligence: 12
+  wisdom: 10
+  charisma: 13
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 10
+  languages: Common, Goblin
+  gear: Greatsword, Half Plate Armor, Longbow
+  traits:
+  - name: Aura of Authority
+    description: While in a 10-foot Emanation originating from the hobgoblin, the hobgoblin and its allies have Advantage on attack rolls and saving throws, provided the hobgoblin doesn’t have the Incapacitated condition.
+  actions:
+  - name: Multiattack
+    description: The hobgoblin makes two attacks, using Greatsword or Longbow in any combination.
+  - name: Greatsword
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 9 (2d6 + 2) Slashing damage plus 3 (1d6) Poison damage.'
+  - name: Longbow
+    description: 'Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage plus 5 (2d4) Poison damage.'

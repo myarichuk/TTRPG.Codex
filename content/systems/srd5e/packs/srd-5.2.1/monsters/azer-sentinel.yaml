@@ -1,0 +1,79 @@
+id: azer-sentinel
+type: monster
+name: Azer Sentinel
+description: >-
+  *Medium Elemental, Lawful Neutral*
+
+
+  **AC** 17  
+
+  **HP** 39 (6d8 + 12)  
+
+  **Speed** 30 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 12 (+1) | 15 (+2) | 12 (+1) | 13 (+1) | 10 (+0) |
+
+
+  **Saving Throws** CON +4  
+
+  **Immunities** fire, poison, Poisoned  
+
+  **Senses** passive perception 11  
+
+  **Languages** Primordial (Ignan)
+
+
+  ### Traits
+
+  **Fire Aura.** At the end of each of the azer’s turns, each creature of the azer’s choice in a 5-foot Emanation originating from the azer takes 5 (1d10) Fire damage unless the azer has the Incapacitated condition.
+
+
+  **Illumination.** The azer sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet.
+
+
+
+  ### Actions
+
+  **Burning Hammer.** Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Bludgeoning damage plus 3 (1d6) Fire damage.
+tags:
+- elemental
+- medium
+- cr-2
+properties:
+  size: Medium
+  creatureType: elemental
+  alignment: lawful neutral
+  armorClass: 17
+  hitPoints: 39
+  hitDice: 6d8 + 12
+  speed: 30 ft.
+  strength: 17
+  dexterity: 12
+  constitution: 15
+  intelligence: 12
+  wisdom: 13
+  charisma: 10
+  challengeRating: 2
+  xp: 450
+  senses: passive perception 11
+  languages: Primordial (Ignan)
+  savingThrows: CON +4
+  immunities:
+  - fire
+  - poison
+  - Poisoned
+  traits:
+  - name: Fire Aura
+    description: At the end of each of the azer’s turns, each creature of the azer’s choice in a 5-foot Emanation originating from the azer takes 5 (1d10) Fire damage unless the azer has the Incapacitated condition.
+  - name: Illumination
+    description: The azer sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet.
+  actions:
+  - name: Burning Hammer
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Bludgeoning damage plus 3 (1d6) Fire damage.'

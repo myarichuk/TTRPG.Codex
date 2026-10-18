@@ -11,20 +11,14 @@ public enum EffectExpiry
 }
 
 /// <summary>
-/// One status effect an entity is currently under (3.4/B6). Durations are whole rounds that tick
-/// on <see cref="Codex.Core.CodexWorld.AdvanceTurn"/> - never on wall-clock time - and expire
+/// One status effect an entity is currently under. Durations are whole rounds that tick on
+/// <see cref="Codex.Core.CodexWorld.AdvanceTurn"/> - never on wall-clock time - and expire
 /// relative to a specific creature's turn (<see cref="AnchorEntity"/>), matching how conditions
 /// actually work at a table.
 /// </summary>
 public record ActiveEffect(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry, Entity AnchorEntity);
 
-/// <summary>
-/// Replaces the old single-slot <c>StatusEffectComponent</c>/<c>DurationComponent</c> pair, which
-/// could hold at most one status at a time - adding Stunned while Poisoned was active silently
-/// overwrote Poisoned (B6, confirmed: Poisoned then Stunned left only Stunned, and Stunned's
-/// expiry then also removed Poisoned's tracking). An entity can have any number of concurrent
-/// effects here, each expiring independently.
-/// </summary>
+/// <summary>An entity can have any number of concurrent effects, each expiring independently.</summary>
 public struct ActiveEffectsComponent
 {
     public List<ActiveEffect> Effects { get; init; }
@@ -35,6 +29,7 @@ public struct ActiveEffectsComponent
     }
 }
 
+/// <summary>Depletable pools: "HP", "HP_Max", "TempHP", "Mana", ... keyed by the system's resource keys.</summary>
 public struct ResourcePoolComponent
 {
     public Dictionary<string, int> Pools { get; init; }
@@ -51,6 +46,24 @@ public struct ResourcePoolComponent
     {
         Pools[name] = Get(name) + delta;
     }
+}
+
+/// <summary>
+/// The system-defined attributes (ability scores, characteristics) of an actor, keyed by the
+/// <c>AttributeDefinition.Key</c> of its system. Generic on purpose: a homebrew system with
+/// "Grit" and "Guile" needs no new component type, just a different <c>system.yaml</c>.
+/// </summary>
+public struct AttributesComponent
+{
+    public Dictionary<string, int> Values { get; init; }
+
+    public AttributesComponent()
+    {
+        Values = new Dictionary<string, int>();
+    }
+
+    public int Get(string key) => Values.TryGetValue(key, out var val) ? val : 0;
+    public void Set(string key, int value) => Values[key] = value;
 }
 
 public record Modifier(string Stat, int Value, string Source, string? Description = null);

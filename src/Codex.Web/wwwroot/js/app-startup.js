@@ -1,65 +1,31 @@
 (function () {
-    // === 1. Status Message Cycling (Loading Splash) ===
-    const messages = [
-        "Inscribing the Grimoire...",
-        "Loading D&D 5E Plugin...",
-        "Tuning the FFG Force Dice...",
-        "Scribing NPC Archetypes...",
-        "Synchronizing with the Weave...",
-        "Opening the Vaults...",
-        "Polishing the Dice..."
-    ];
-
-    let index = 0;
-    const statusEl = document.getElementById('status');
-
-    function cycleStatus() {
-        if (!statusEl) return;
-        statusEl.classList.remove('active');
-        
-        setTimeout(() => {
-            statusEl.innerText = messages[index];
-            statusEl.classList.add('active');
-            index = (index + 1) % messages.length;
-        }, 500);
-    }
-
-    // === 2. Splash Screen Removal ===
+    // ---- Splash ----
     function removeSplash() {
         const el = document.getElementById("boot-splash");
         if (!el) return;
         el.style.opacity = '0';
-        el.style.transition = 'opacity 0.5s ease';
-        setTimeout(function() {
-            if (el.parentNode) {
-                el.parentNode.removeChild(el);
-            }
-        }, 500);
+        el.style.transition = 'opacity 0.3s ease';
+        setTimeout(function () {
+            if (el.parentNode) el.parentNode.removeChild(el);
+        }, 300);
     }
 
-    // === 3. Reconnect Modal Logic ===
+    // ---- Reconnect modal ----
     function initReconnectLogic() {
         const reconnectModal = document.getElementById("components-reconnect-modal");
         const retryButton = document.getElementById("components-reconnect-button");
         const resumeButton = document.getElementById("components-resume-button");
-
         if (!reconnectModal) return;
 
         reconnectModal.addEventListener("components-reconnect-state-changed", handleReconnectStateChanged);
-        
-        if (retryButton) {
-            retryButton.addEventListener("click", retry);
-        }
-        
-        if (resumeButton) {
-            resumeButton.addEventListener("click", resume);
-        }
+        if (retryButton) retryButton.addEventListener("click", retry);
+        if (resumeButton) resumeButton.addEventListener("click", resume);
 
         function handleReconnectStateChanged(event) {
             if (event.detail.state === "show") {
-                if (reconnectModal.showModal) reconnectModal.showModal();
+                if (reconnectModal.showModal && !reconnectModal.open) reconnectModal.showModal();
             } else if (event.detail.state === "hide") {
-                if (reconnectModal.close) reconnectModal.close();
+                if (reconnectModal.close && reconnectModal.open) reconnectModal.close();
             } else if (event.detail.state === "failed") {
                 document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
             } else if (event.detail.state === "rejected") {
@@ -87,38 +53,19 @@
         async function resume() {
             try {
                 const successful = await Blazor.resumeCircuit();
-                if (!successful) {
-                    location.reload();
-                }
+                if (!successful) location.reload();
             } catch {
                 location.reload();
             }
         }
 
         async function retryWhenDocumentBecomesVisible() {
-            if (document.visibilityState === "visible") {
-                await retry();
-            }
+            if (document.visibilityState === "visible") await retry();
         }
     }
 
-    // === 4. Startup Orchestration ===
     function init() {
-        // Initialize Lucide icons if available
-        if (window.lucide) {
-            lucide.createIcons();
-        }
-
-        // Start status cycling
-        if (statusEl) {
-            statusEl.classList.add('active');
-            setInterval(cycleStatus, 2500);
-        }
-
-        // Initialize Reconnect Modal logic
         initReconnectLogic();
-
-        // Boot Blazor
         if (window.Blazor) {
             try {
                 Blazor.start().then(removeSplash).catch(removeSplash);
@@ -126,17 +73,14 @@
                 removeSplash();
             }
         } else {
-            // Fallback if Blazor is missing for some reason
             setTimeout(removeSplash, 2000);
         }
 
-        // Fallback for splash removal
         window.addEventListener("load", function () {
             setTimeout(removeSplash, 8000);
         });
     }
 
-    // Run when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
@@ -144,13 +88,51 @@
     }
 })();
 
-// Campaign JSON export (4.4): Blazor hands over a data URI plus filename; the temp anchor
-// triggers the browser's download UI without navigating away from the circuit.
-window.codexDownload = function (href, filename) {
-    const a = document.createElement('a');
-    a.href = href;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+// ---- Interop used by components ----
+window.codex = {
+    // Theme: persisted per browser; the inline <head> script applies it before first paint.
+    getTheme: function () {
+        return document.documentElement.getAttribute('data-theme') || 'light';
+    },
+    setTheme: function (theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        try { localStorage.setItem('codex-theme', theme); } catch (e) { /* private mode */ }
+    },
+
+    // Downloads: Blazor hands over a data URI (or blob URL) plus filename.
+    download: function (href, filename) {
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    },
+
+    copyText: async function (text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    // Native <dialog> helpers for the ConfirmDialog component and other modals.
+    showModal: function (id) {
+        const el = document.getElementById(id);
+        if (el && el.showModal && !el.open) el.showModal();
+    },
+    closeModal: function (id) {
+        const el = document.getElementById(id);
+        if (el && el.close && el.open) el.close();
+    },
+    focus: function (id) {
+        const el = document.getElementById(id);
+        if (el) el.focus();
+    }
 };
+
+// Kept for backwards compatibility with earlier builds.
+window.codexDownload = window.codex.download;

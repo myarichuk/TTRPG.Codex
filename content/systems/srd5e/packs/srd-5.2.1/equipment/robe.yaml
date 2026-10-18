@@ -1,0 +1,19 @@
+id: robe
+type: equipment
+name: Robe
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 1 lb.
+
+
+  A Robe has vocational or ceremonial significance. Some events and locations admit only people wearing a Robe bearing certain colors or symbols.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 1

@@ -1,0 +1,15 @@
+id: potion-of-gaseous-form
+type: magic-item
+name: Potion of Gaseous Form
+description: >-
+  Potion
+
+
+  Potion of Healing    (supreme)
+tags:
+- rare
+- potions
+properties:
+  category: Potions
+  rarity: Rare
+  attunement: false

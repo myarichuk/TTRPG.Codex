@@ -1,0 +1,30 @@
+id: light-hammer
+type: equipment
+name: Light Hammer
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d4 Bludgeoning  
+
+  **Properties:** Light, Thrown  
+
+  **Mastery:** Nick  
+
+  **Cost:** 2 gp  
+
+  **Weight:** 2 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 2 gp
+  weight: 2
+  damage: 1d4 Bludgeoning
+  properties:
+  - Light
+  - Thrown
+  mastery: Nick

@@ -1,0 +1,19 @@
+id: case-map-or-scroll
+type: equipment
+name: Case, Map or Scroll
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 1 lb.
+
+
+  A Map or Scroll Case holds up to 10 sheets of paper or 5 sheets of parchment.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 1

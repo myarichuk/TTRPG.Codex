@@ -1,0 +1,19 @@
+id: spikes-iron
+type: equipment
+name: Spikes, Iron
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 2 lb.
+
+
+  Iron Spikes come in bundles of ten. As a Utilize action, you can use a blunt object, such as a Light Hammer, to hammer a spike into wood, earth, or a similar material. You can do so to jam a door shut or to then tie a Rope or Chain to the Spike.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 2

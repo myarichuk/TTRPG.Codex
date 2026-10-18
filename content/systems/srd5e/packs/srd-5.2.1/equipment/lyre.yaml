@@ -1,0 +1,17 @@
+id: lyre
+type: equipment
+name: Lyre
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 30 gp  
+
+  **Weight:** 2 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 30 gp
+  weight: 2

@@ -1,0 +1,93 @@
+id: bugbear-stalker
+type: monster
+name: Bugbear Stalker
+description: >-
+  *Medium Fey, Chaotic Evil*
+
+
+  **AC** 15 (Chain Shirt)  
+
+  **HP** 65 (10d8 + 20)  
+
+  **Speed** 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 14 (+2) | 14 (+2) | 11 (+0) | 12 (+1) | 11 (+0) |
+
+
+  **Saving Throws** CON +4, WIS +3  
+
+  **Skills** Stealth +6, Survival +3  
+
+  **Gear** Chain Shirt, Javelins (6), Morningstar  
+
+  **Senses** darkvision 60 ft., passive perception 11  
+
+  **Languages** Common, Goblin
+
+
+  ### Traits
+
+  **Abduct.** The bugbear needn’t spend extra movement to move a creature it is grappling.
+
+
+
+  ### Actions
+
+  **Multiattack.** The bugbear makes two Javelin or Morningstar attacks.
+
+
+  **Javelin.** Melee or Ranged Attack Roll: +5, reach 10 ft. or range 30/120 ft. Hit: 13 (3d6 + 3) Piercing damage.
+
+
+  **Morningstar.** Melee Attack Roll: +5 (with Advantage if the target is Grappled by the bugbear), reach 10 ft. Hit: 12 (2d8 + 3) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Quick Grapple.** Dexterity Saving Throw: DC 13, one Medium or smaller creature the bugbear can see within 10 feet. Failure: The target has the Grappled condition (escape DC 13).
+tags:
+- fey
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: chaotic evil
+  armorClass: 15
+  hitPoints: 65
+  hitDice: 10d8 + 20
+  speed: 30 ft.
+  strength: 17
+  dexterity: 14
+  constitution: 14
+  intelligence: 11
+  wisdom: 12
+  charisma: 11
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 11
+  languages: Common, Goblin
+  skills: Stealth +6, Survival +3
+  savingThrows: CON +4, WIS +3
+  gear: Chain Shirt, Javelins (6), Morningstar
+  traits:
+  - name: Abduct
+    description: The bugbear needn’t spend extra movement to move a creature it is grappling.
+  actions:
+  - name: Multiattack
+    description: The bugbear makes two Javelin or Morningstar attacks.
+  - name: Javelin
+    description: 'Melee or Ranged Attack Roll: +5, reach 10 ft. or range 30/120 ft. Hit: 13 (3d6 + 3) Piercing damage.'
+  - name: Morningstar
+    description: 'Melee Attack Roll: +5 (with Advantage if the target is Grappled by the bugbear), reach 10 ft. Hit: 12 (2d8 + 3) Piercing damage.'
+  bonusActions:
+  - name: Quick Grapple
+    description: 'Dexterity Saving Throw: DC 13, one Medium or smaller creature the bugbear can see within 10 feet. Failure: The target has the Grappled condition (escape DC 13).'

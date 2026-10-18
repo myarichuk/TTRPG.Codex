@@ -1,0 +1,20 @@
+id: breastplate
+type: equipment
+name: Breastplate
+description: >-
+  *Armor, Medium Armor*
+
+
+  **Armor Class:** 14 + Dex modifier (max 2)  
+
+  **Cost:** 400 gp  
+
+  **Weight:** 20 lb.
+tags:
+- armor
+- medium armor
+properties:
+  category: Armor
+  cost: 400 gp
+  weight: 20
+  armorClass: 14 + Dex modifier (max 2)

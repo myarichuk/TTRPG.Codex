@@ -1,0 +1,96 @@
+id: wight
+type: monster
+name: Wight
+description: >-
+  *Medium Undead, Neutral Evil*
+
+
+  **AC** 14 (Studded Leather Armor)  
+
+  **HP** 82 (11d8 + 33)  
+
+  **Speed** 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 14 (+2) | 16 (+3) | 10 (+0) | 13 (+1) | 15 (+2) |
+
+
+  **Skills** Perception +3, Stealth +4  
+
+  **Resistances** necrotic  
+
+  **Immunities** poison, Exhaustion, Poisoned  
+
+  **Gear** Studded Leather Armor  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** Common plus one other language
+
+
+  ### Traits
+
+  **Sunlight Sensitivity.** While in sunlight, the wight has Disadvantage on ability checks and attack rolls.
+
+
+
+  ### Actions
+
+  **Multiattack.** The wight makes two attacks, using Necrotic Sword or Necrotic Bow in any combination. It can replace one attack with a use of Life Drain.
+
+
+  **Necrotic Sword.** Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage plus 4 (1d8) Necrotic damage.
+
+
+  **Necrotic Bow.** Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage plus 4 (1d8) Necrotic damage.
+
+
+  **Life Drain.** Constitution Saving Throw: DC 13, one creature within 5 feet. Failure: 6 (1d8 + 2) Necrotic damage, and the target’s Hit Point maximum decreases by an amount equal to the damage taken. A Humanoid slain by this attack rises 24 hours later as a Zombie under the wight’s control, unless the Humanoid is restored to life or its body is destroyed. The wight can have no more than twelve zombies under its control at a time.
+tags:
+- undead
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: neutral evil
+  armorClass: 14
+  hitPoints: 82
+  hitDice: 11d8 + 33
+  speed: 30 ft.
+  strength: 15
+  dexterity: 14
+  constitution: 16
+  intelligence: 10
+  wisdom: 13
+  charisma: 15
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 13
+  languages: Common plus one other language
+  skills: Perception +3, Stealth +4
+  resistances:
+  - necrotic
+  immunities:
+  - poison
+  - Exhaustion
+  - Poisoned
+  gear: Studded Leather Armor
+  traits:
+  - name: Sunlight Sensitivity
+    description: While in sunlight, the wight has Disadvantage on ability checks and attack rolls.
+  actions:
+  - name: Multiattack
+    description: The wight makes two attacks, using Necrotic Sword or Necrotic Bow in any combination. It can replace one attack with a use of Life Drain.
+  - name: Necrotic Sword
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage plus 4 (1d8) Necrotic damage.'
+  - name: Necrotic Bow
+    description: 'Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage plus 4 (1d8) Necrotic damage.'
+  - name: Life Drain
+    description: 'Constitution Saving Throw: DC 13, one creature within 5 feet. Failure: 6 (1d8 + 2) Necrotic damage, and the target’s Hit Point maximum decreases by an amount equal to the damage taken. A Humanoid slain by this attack rises 24 hours later as a Zombie under the wight’s control, unless the Humanoid is restored to life or its body is destroyed. The wight can have no more than twelve zombies under its control at a time.'

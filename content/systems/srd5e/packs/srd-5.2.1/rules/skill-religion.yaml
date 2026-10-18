@@ -1,0 +1,12 @@
+id: skill-religion
+type: rule
+name: Religion
+description: >-
+  **Ability:** INT
+
+
+  Recall lore about gods, religious rituals, and holy symbols.
+tags:
+- skill
+properties:
+  category: Skill

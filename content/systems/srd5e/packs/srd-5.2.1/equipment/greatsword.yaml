@@ -1,0 +1,30 @@
+id: greatsword
+type: equipment
+name: Greatsword
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 2d6 Slashing  
+
+  **Properties:** Heavy, Two-Handed  
+
+  **Mastery:** Graze  
+
+  **Cost:** 50 gp  
+
+  **Weight:** 6 lb.
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 50 gp
+  weight: 6
+  damage: 2d6 Slashing
+  properties:
+  - Heavy
+  - Two-Handed
+  mastery: Graze

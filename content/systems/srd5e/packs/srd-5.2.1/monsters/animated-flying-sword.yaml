@@ -1,0 +1,71 @@
+id: animated-flying-sword
+type: monster
+name: Animated Flying Sword
+description: >-
+  *Small Construct, Unaligned*
+
+
+  **AC** 17  
+
+  **HP** 14 (4d6)  
+
+  **Speed** 5 ft., fly 50 ft., hover True  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 12 (+1) | 15 (+2) | 11 (+0) | 1 (-5) | 5 (-3) | 1 (-5) |
+
+
+  **Saving Throws** DEX +4  
+
+  **Immunities** poison, psychic, Charmed, Deafened, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned  
+
+  **Senses** blindsight 60 ft., passive perception 7  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Slash.** Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage.
+tags:
+- construct
+- small
+- cr-1/4
+properties:
+  size: Small
+  creatureType: construct
+  alignment: unaligned
+  armorClass: 17
+  hitPoints: 14
+  hitDice: 4d6
+  speed: 5 ft., fly 50 ft., hover True
+  strength: 12
+  dexterity: 15
+  constitution: 11
+  intelligence: 1
+  wisdom: 5
+  charisma: 1
+  challengeRating: 1/4
+  xp: 50
+  senses: blindsight 60 ft., passive perception 7
+  languages: None
+  savingThrows: DEX +4
+  immunities:
+  - poison
+  - psychic
+  - Charmed
+  - Deafened
+  - Exhaustion
+  - Frightened
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  actions:
+  - name: Slash
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage.'

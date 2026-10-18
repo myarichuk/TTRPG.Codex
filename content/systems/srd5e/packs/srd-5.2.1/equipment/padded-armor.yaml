@@ -1,0 +1,23 @@
+id: padded-armor
+type: equipment
+name: Padded Armor
+description: >-
+  *Armor, Light Armor*
+
+
+  **Armor Class:** 11 + Dex modifier  
+
+  **Stealth:** Disadvantage  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 8 lb.
+tags:
+- armor
+- light armor
+properties:
+  category: Armor
+  cost: 5 gp
+  weight: 8
+  armorClass: 11 + Dex modifier
+  stealth: true

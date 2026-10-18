@@ -1,0 +1,109 @@
+id: ancient-white-dragon
+type: monster
+name: Ancient White Dragon
+description: >-
+  *Gargantuan Dragon, Chaotic Evil*
+
+
+  **AC** 20  
+
+  **HP** 333 (18d20 + 144)  
+
+  **Speed** 40 ft., burrow 40 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 20 (XP 25000; PB +6)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 26 (+8) | 10 (+0) | 26 (+8) | 10 (+0) | 13 (+1) | 18 (+4) |
+
+
+  **Saving Throws** DEX +6, WIS +7  
+
+  **Skills** Perception +13, Stealth +6  
+
+  **Immunities** cold  
+
+  **Senses** darkvision 120 ft., blindsight 60 ft., passive perception 23  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Ice Walk.** The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+
+
+  **Legendary Resistance (4/day).** If the dragon fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +14, reach 15 ft. Hit: 17 (2d8 + 8) Slashing damage plus 7 (2d6) Cold damage.
+
+
+  **Cold Breath.** Constitution Saving Throw: DC 22, each creature in a 90-foot Cone. Failure: 63 (14d8) Cold damage. Success: Half damage.
+
+
+
+  ### Legendary Actions
+
+  **Freezing Burst.** Constitution Saving Throw: DC 20, each creature in a 30-foot-radius Sphere centered on a point the dragon can see within 120 feet. Failure: 14 (4d6) Cold damage, and the target’s Speed is 0 until the end of the target’s next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.
+
+
+  **Frightful Presence.** The dragon casts Fear, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18). The dragon can’t take this action again until the start of its next turn.
+
+
+  **Pounce.** The dragon moves up to half its Speed, and it makes one Rend attack.
+tags:
+- dragon
+- gargantuan
+- cr-20
+properties:
+  size: Gargantuan
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 20
+  hitPoints: 333
+  hitDice: 18d20 + 144
+  speed: 40 ft., burrow 40 ft., fly 80 ft., swim 40 ft.
+  strength: 26
+  dexterity: 10
+  constitution: 26
+  intelligence: 10
+  wisdom: 13
+  charisma: 18
+  challengeRating: 20
+  xp: 25000
+  senses: darkvision 120 ft., blindsight 60 ft., passive perception 23
+  languages: Common, Draconic
+  skills: Perception +13, Stealth +6
+  savingThrows: DEX +6, WIS +7
+  immunities:
+  - cold
+  traits:
+  - name: Ice Walk
+    description: The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+  - name: Legendary Resistance (4/day)
+    description: If the dragon fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +14, reach 15 ft. Hit: 17 (2d8 + 8) Slashing damage plus 7 (2d6) Cold damage.'
+  - name: Cold Breath
+    description: 'Constitution Saving Throw: DC 22, each creature in a 90-foot Cone. Failure: 63 (14d8) Cold damage. Success: Half damage.'
+  legendaryActions:
+  - name: Freezing Burst
+    description: 'Constitution Saving Throw: DC 20, each creature in a 30-foot-radius Sphere centered on a point the dragon can see within 120 feet. Failure: 14 (4d6) Cold damage, and the target’s Speed is 0 until the end of the target’s next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.'
+  - name: Frightful Presence
+    description: The dragon casts Fear, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18). The dragon can’t take this action again until the start of its next turn.
+  - name: Pounce
+    description: The dragon moves up to half its Speed, and it makes one Rend attack.

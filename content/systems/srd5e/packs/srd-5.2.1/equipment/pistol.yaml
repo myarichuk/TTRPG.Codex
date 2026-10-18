@@ -1,0 +1,32 @@
+id: pistol
+type: equipment
+name: Pistol
+description: >-
+  *Martial Ranged Weapons, Martial Weapons, Ranged Weapons, Weapons*
+
+
+  **Damage:** 1d10 Piercing  
+
+  **Properties:** Ammunition, Loading  
+
+  **Range:** 30/90 ft.  
+
+  **Mastery:** Vex  
+
+  **Cost:** 250 gp  
+
+  **Weight:** 3 lb.
+tags:
+- martial ranged weapons
+- martial weapons
+- ranged weapons
+- weapons
+properties:
+  category: Martial Ranged Weapons
+  cost: 250 gp
+  weight: 3
+  damage: 1d10 Piercing
+  properties:
+  - Ammunition
+  - Loading
+  mastery: Vex

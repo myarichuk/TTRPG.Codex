@@ -1,0 +1,17 @@
+id: navigators-tools
+type: equipment
+name: Navigator's Tools
+description: >-
+  *Other Tools, Tools*
+
+
+  **Cost:** 25 gp  
+
+  **Weight:** 2 lb.
+tags:
+- other tools
+- tools
+properties:
+  category: Other Tools
+  cost: 25 gp
+  weight: 2

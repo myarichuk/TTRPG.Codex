@@ -1,0 +1,17 @@
+id: drum
+type: equipment
+name: Drum
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 6 gp  
+
+  **Weight:** 3 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 6 gp
+  weight: 3

@@ -1,0 +1,7 @@
+id: language-thieves-cant
+type: rule
+name: Thieves' Cant
+tags:
+- language
+properties:
+  category: Language

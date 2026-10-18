@@ -1,0 +1,8 @@
+id: school-of-magic-necromancy
+type: rule
+name: Necromancy
+description: Manipulates life and death
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

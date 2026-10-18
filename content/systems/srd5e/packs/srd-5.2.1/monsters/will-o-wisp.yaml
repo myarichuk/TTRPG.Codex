@@ -1,0 +1,112 @@
+id: will-o-wisp
+type: monster
+name: Will-o’-Wisp
+description: >-
+  *Tiny Undead, Chaotic Evil*
+
+
+  **AC** 19  
+
+  **HP** 27 (11d4)  
+
+  **Speed** 5 ft., fly 50 ft., hover True  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 1 (-5) | 28 (+9) | 10 (+0) | 13 (+1) | 14 (+2) | 11 (+0) |
+
+
+  **Resistances** acid, bludgeoning, cold, fire, necrotic, piercing, slashing  
+
+  **Immunities** lightning, poison, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious  
+
+  **Senses** darkvision 120 ft., passive perception 12  
+
+  **Languages** Common plus one other language
+
+
+  ### Traits
+
+  **Ephemeral.** The wisp can’t wear or carry anything.
+
+
+  **Illumination.** The wisp sheds Bright Light in a 20-foot radius and Dim Light for an additional 20 feet.
+
+
+  **Incorporeal Movement.** The wisp can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.
+
+
+
+  ### Actions
+
+  **Shock.** Melee Attack Roll: +4, reach 5 ft. Hit: 11 (2d8 + 2) Lightning damage.
+
+
+
+  ### Bonus Actions
+
+  **Consume Life.** Constitution Saving Throw: DC 10, one living creature the wisp can see within 5 feet that has 0 Hit Points. Failure: The target dies, and the wisp regains 10 (3d6) Hit Points.
+
+
+  **Vanish.** The wisp and its light have the Invisible condition until the wisp’s Concentration ends on this effect, which ends early immediately after the wisp makes an attack roll or uses Consume Life.
+tags:
+- undead
+- tiny
+- cr-2
+properties:
+  size: Tiny
+  creatureType: undead
+  alignment: chaotic evil
+  armorClass: 19
+  hitPoints: 27
+  hitDice: 11d4
+  speed: 5 ft., fly 50 ft., hover True
+  strength: 1
+  dexterity: 28
+  constitution: 10
+  intelligence: 13
+  wisdom: 14
+  charisma: 11
+  challengeRating: 2
+  xp: 450
+  senses: darkvision 120 ft., passive perception 12
+  languages: Common plus one other language
+  resistances:
+  - acid
+  - bludgeoning
+  - cold
+  - fire
+  - necrotic
+  - piercing
+  - slashing
+  immunities:
+  - lightning
+  - poison
+  - Exhaustion
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  - Prone
+  - Restrained
+  - Unconscious
+  traits:
+  - name: Ephemeral
+    description: The wisp can’t wear or carry anything.
+  - name: Illumination
+    description: The wisp sheds Bright Light in a 20-foot radius and Dim Light for an additional 20 feet.
+  - name: Incorporeal Movement
+    description: The wisp can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.
+  actions:
+  - name: Shock
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 11 (2d8 + 2) Lightning damage.'
+  bonusActions:
+  - name: Consume Life
+    description: 'Constitution Saving Throw: DC 10, one living creature the wisp can see within 5 feet that has 0 Hit Points. Failure: The target dies, and the wisp regains 10 (3d6) Hit Points.'
+  - name: Vanish
+    description: The wisp and its light have the Invisible condition until the wisp’s Concentration ends on this effect, which ends early immediately after the wisp makes an attack roll or uses Consume Life.

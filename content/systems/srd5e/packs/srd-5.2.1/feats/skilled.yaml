@@ -1,0 +1,8 @@
+id: skilled
+type: feat
+name: Skilled
+description: You gain proficiency in any combination of three skills or tools of your choice.
+tags:
+- origin
+properties:
+  category: origin

@@ -1,0 +1,19 @@
+id: ladder
+type: equipment
+name: Ladder
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 sp  
+
+  **Weight:** 25 lb.
+
+
+  A Ladder is 10 feet tall. You must climb to move up or down it. Lamp (5 SP)
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 sp
+  weight: 25

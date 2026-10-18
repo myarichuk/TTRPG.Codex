@@ -1,0 +1,44 @@
+id: true-seeing
+type: spell
+name: True Seeing
+description: >-
+  *Level 6 Divination (Bard, Cleric, Sorcerer, Warlock, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S, M (mushroom powder worth 25+, GP, which the spell consumes)  
+
+  **Duration:** 1 hour
+
+
+  For the duration, the willing creature you touch has Truesight with a range of 120 feet.
+tags:
+- level-6
+- divination
+- bard
+- cleric
+- sorcerer
+- warlock
+- wizard
+properties:
+  level: 6
+  school: Divination
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  - M
+  material: mushroom powder worth 25+, GP, which the spell consumes
+  duration: 1 hour
+  concentration: false
+  ritual: false
+  classes:
+  - Bard
+  - Cleric
+  - Sorcerer
+  - Warlock
+  - Wizard

@@ -1,0 +1,73 @@
+id: archelon
+type: monster
+name: Archelon
+description: >-
+  *Huge Beast, Unaligned*
+
+
+  **AC** 17  
+
+  **HP** 90 (12d12 + 12)  
+
+  **Speed** 20 ft., swim 80 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 16 (+3) | 13 (+1) | 4 (-3) | 14 (+2) | 6 (-2) |
+
+
+  **Skills** Stealth +5  
+
+  **Senses** passive perception 12  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Amphibious.** The archelon can breathe air and water.
+
+
+
+  ### Actions
+
+  **Multiattack.** The archelon makes two Bite attacks.
+
+
+  **Bite.** Melee Attack Roll: +6, reach 5 ft. Hit: 14 (3d6 + 4) Piercing damage.
+tags:
+- beast
+- huge
+- cr-4
+properties:
+  size: Huge
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 17
+  hitPoints: 90
+  hitDice: 12d12 + 12
+  speed: 20 ft., swim 80 ft.
+  strength: 18
+  dexterity: 16
+  constitution: 13
+  intelligence: 4
+  wisdom: 14
+  charisma: 6
+  challengeRating: 4
+  xp: 1100
+  senses: passive perception 12
+  languages: None
+  skills: Stealth +5
+  traits:
+  - name: Amphibious
+    description: The archelon can breathe air and water.
+  actions:
+  - name: Multiattack
+    description: The archelon makes two Bite attacks.
+  - name: Bite
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 14 (3d6 + 4) Piercing damage.'

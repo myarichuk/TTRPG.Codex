@@ -1,0 +1,68 @@
+id: animated-rug-of-smothering
+type: monster
+name: Animated Rug of Smothering
+description: >-
+  *Large Construct, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 27 (5d10)  
+
+  **Speed** 10 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 14 (+2) | 10 (+0) | 1 (-5) | 3 (-4) | 1 (-5) |
+
+
+  **Immunities** poison, psychic, Charmed, Deafened, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned  
+
+  **Senses** blindsight 60 ft., passive perception 6  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Smother.** Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Bludgeoning damage. If the target is a Medium or smaller creature, the rug can give it the Grappled condition (escape DC 13) instead of dealing damage. Until the grapple ends, the target has the Blinded and Restrained conditions, is suffocating, and takes 10 (2d6 + 3) Bludgeoning damage at the start of each of its turns. The rug can smother only one creature at a time. While grappling the target, the rug can’t take this action, the rug halves the damage it takes (round down), and the target takes the same amount of damage.
+tags:
+- construct
+- large
+- cr-2
+properties:
+  size: Large
+  creatureType: construct
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 27
+  hitDice: 5d10
+  speed: 10 ft.
+  strength: 17
+  dexterity: 14
+  constitution: 10
+  intelligence: 1
+  wisdom: 3
+  charisma: 1
+  challengeRating: 2
+  xp: 450
+  senses: blindsight 60 ft., passive perception 6
+  languages: None
+  immunities:
+  - poison
+  - psychic
+  - Charmed
+  - Deafened
+  - Exhaustion
+  - Frightened
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  actions:
+  - name: Smother
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Bludgeoning damage. If the target is a Medium or smaller creature, the rug can give it the Grappled condition (escape DC 13) instead of dealing damage. Until the grapple ends, the target has the Blinded and Restrained conditions, is suffocating, and takes 10 (2d6 + 3) Bludgeoning damage at the start of each of its turns. The rug can smother only one creature at a time. While grappling the target, the rug can’t take this action, the rug halves the damage it takes (round down), and the target takes the same amount of damage.'

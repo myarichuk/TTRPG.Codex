@@ -1,0 +1,258 @@
+@using Codex.Core
+@using Codex.Core.Systems
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject IActorRepository ActorRepo
+@inject IContentRegistry Registry
+@inject ComponentRegistry Components
+@inject ISystemCatalog Catalog
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@{
+    var pcs = Ctx.Actors.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList();
+    var others = Ctx.Actors.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList();
+}
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">Cast</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? "Player characters, NPCs and monsters in this campaign." : "The party and everyone it has met.")</p>
+    </div>
+    <div class="row-actions">
+        <button type="button" class="btn btn-primary" @onclick="OpenCreateAsync" data-testid="create-character">
+            <LucideIcon IconName="user-plus" Size="16" /> @(Ctx.IsDm ? "New character or NPC" : "Create my character")
+        </button>
+        @if (Ctx.IsDm)
+        {
+            <a href="@Ctx.BasePath/library/monster" class="btn btn-outline-secondary"><LucideIcon IconName="skull" Size="16" /> Add from library</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <section class="panel" aria-labelledby="pcs-heading">
+            <div class="panel-title"><h3 id="pcs-heading">Player characters (@pcs.Count)</h3></div>
+            @if (pcs.Count == 0)
+            {
+                <p class="small-muted mb-0">No player characters yet.</p>
+            }
+            <ul class="list-unstyled mb-0" data-testid="pc-list">
+                @foreach (var actor in pcs)
+                {
+                    @ActorRow(actor)
+                }
+            </ul>
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="panel" aria-labelledby="npcs-heading">
+            <div class="panel-title"><h3 id="npcs-heading">@(Ctx.IsDm ? "NPCs and monsters" : "People and creatures met") (@others.Count)</h3></div>
+            @if (others.Count == 0)
+            {
+                <p class="small-muted mb-0">@(Ctx.IsDm ? "Nobody yet. Add NPCs here or creatures from the Library." : "The party has not met anyone of note yet.")</p>
+            }
+            <ul class="list-unstyled mb-0" data-testid="npc-list">
+                @foreach (var actor in others)
+                {
+                    @ActorRow(actor)
+                }
+            </ul>
+        </section>
+    </div>
+</div>
+
+<ConfirmDialog @ref="confirm" />
+
+<dialog id="create-actor-dialog" class="codex-dialog" aria-labelledby="create-actor-title">
+    <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
+        <div class="dialog-body">
+            <h2 id="create-actor-title">@(Ctx.IsDm ? "New character or NPC" : "Create my character")</h2>
+            <div class="mb-3">
+                <label for="ca-name" class="form-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <input id="ca-name" class="form-control" @bind="newName" required maxlength="120" data-testid="create-character-name" />
+            </div>
+            @if (Ctx.IsDm)
+            {
+                <div class="mb-3">
+                    <label for="ca-kind" class="form-label">Kind</label>
+                    <select id="ca-kind" class="form-select" @bind="newKind" data-testid="create-character-kind">
+                        <option value="@ActorKind.PlayerCharacter">Player character</option>
+                        <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
+                        <option value="@ActorKind.Monster">Monster</option>
+                    </select>
+                </div>
+                @if (newKind == ActorKind.PlayerCharacter)
+                {
+                    <div class="mb-3">
+                        <label for="ca-owner" class="form-label">Played by</label>
+                        <select id="ca-owner" class="form-select" @bind="newOwnerId">
+                            <option value="">— nobody yet —</option>
+                            @foreach (var member in Ctx.Campaign.Members)
+                            {
+                                <option value="@member.UserId">@member.UserId</option>
+                            }
+                        </select>
+                    </div>
+                }
+            }
+            <p class="form-text mb-0">Stats, class, species and the rest are filled in on the character sheet next.</p>
+            @if (createError != null)
+            {
+                <p class="text-danger mb-0 mt-2" role="alert">@createError</p>
+            }
+        </div>
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-outline-secondary" @onclick="CloseCreateAsync">Cancel</button>
+            <button type="submit" class="btn btn-primary" data-testid="create-character-submit">Create</button>
+        </div>
+    </form>
+</dialog>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private ConfirmDialog confirm = null!;
+    private string newName = string.Empty;
+    private ActorKind newKind = ActorKind.NonPlayerCharacter;
+    private string newOwnerId = string.Empty;
+    private string? createError;
+
+    private RenderFragment ActorRow(ActorDocument actor) => @<li class="list-row" data-testid="actor-row" data-actor-id="@actor.Id">
+        <div class="row-main">
+            <div class="row-title">
+                <a href="@Ctx.BasePath/actors/@actor.Id">@DisplayName(actor)</a>
+                @if (actor.OwnerUserId == Ctx.UserId)
+                {
+                    <span class="pill pill-accent ms-1">Mine</span>
+                }
+                @if (Ctx.IsDm && actor.Visibility != ActorVisibility.Known)
+                {
+                    <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? "Hidden from players" : "Identity unknown")</span>
+                }
+            </div>
+            <div class="row-sub">@Summary(actor)</div>
+        </div>
+        @if (Ctx.IsDm)
+        {
+            <div class="row-actions">
+                @if (actor.Visibility != ActorVisibility.Known)
+                {
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => SetVisibilityAsync(actor, ActorVisibility.Known)" aria-label="Reveal @actor.Name to players"><LucideIcon IconName="eye" Size="14" /> Reveal</button>
+                }
+                else if (actor.Kind != ActorKind.PlayerCharacter)
+                {
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => SetVisibilityAsync(actor, ActorVisibility.Hidden)" aria-label="Hide @actor.Name from players"><LucideIcon IconName="eye-off" Size="14" /> Hide</button>
+                }
+                <button type="button" class="icon-btn danger" aria-label="Delete @actor.Name" @onclick="() => DeleteAsync(actor)"><LucideIcon IconName="trash-2" Size="16" /></button>
+            </div>
+        }
+    </li>;
+
+    private string DisplayName(ActorDocument actor) =>
+        !Ctx.IsDm && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
+
+    private string Summary(ActorDocument actor)
+    {
+        var parts = new List<string>();
+        var hp = ActorSheetSync.PrimaryResource(actor, Ctx.System);
+        foreach (var key in new[] { "level", "species", "class" })
+        {
+            var value = YamlValues.GetString(actor.Sheet, key);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                parts.Add(key == "level" ? $"Level {value}" : Registry.GetEntry(Ctx.Campaign.SystemId, key, value)?.Name ?? value);
+            }
+        }
+
+        if (hp.Max > 0 && (Ctx.IsDm || actor.OwnerUserId == Ctx.UserId))
+        {
+            parts.Add($"{hp.Current}/{hp.Max} {hp.Label}");
+        }
+
+        if (!string.IsNullOrEmpty(actor.BlueprintId))
+        {
+            parts.Add(Registry.GetActor(actor.BlueprintId) == null ? "Missing content: " + actor.BlueprintId : "From " + actor.BlueprintId.Split(':').Last());
+        }
+
+        return parts.Count == 0 ? actor.Kind.ToString() : string.Join(" · ", parts);
+    }
+
+    private async Task OpenCreateAsync()
+    {
+        createError = null;
+        newName = string.Empty;
+        newKind = Ctx.IsDm ? ActorKind.NonPlayerCharacter : ActorKind.PlayerCharacter;
+        newOwnerId = Ctx.IsDm ? string.Empty : Ctx.UserId;
+        await JS.InvokeVoidAsync("codex.showModal", "create-actor-dialog");
+        await JS.InvokeVoidAsync("codex.focus", "ca-name");
+    }
+
+    private Task CloseCreateAsync() => JS.InvokeVoidAsync("codex.closeModal", "create-actor-dialog").AsTask();
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            createError = "Give them a name.";
+            return;
+        }
+
+        var kind = Ctx.IsDm ? newKind : ActorKind.PlayerCharacter;
+        var actor = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = Ctx.Campaign.Id,
+            Kind = kind,
+            Name = newName.Trim(),
+            OwnerUserId = kind == ActorKind.PlayerCharacter ? (Ctx.IsDm ? (string.IsNullOrEmpty(newOwnerId) ? null : newOwnerId) : Ctx.UserId) : null,
+            Visibility = kind == ActorKind.PlayerCharacter ? ActorVisibility.Known : ActorVisibility.Hidden
+        };
+
+        // Seed the sheet with the system's defaults so the first sheet view isn't a wall of blanks.
+        var schema = Catalog.GetUISchemas(Ctx.Campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
+        foreach (var field in schema?.Fields ?? new List<FieldDefinition>())
+        {
+            if (field.DefaultValue != null)
+            {
+                actor.Sheet[field.Key] = field.DefaultValue is int i ? (long)i : field.DefaultValue;
+            }
+        }
+
+        ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
+
+        if (!await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+        {
+            createError = "You can only create a character you own.";
+            return;
+        }
+
+        await CloseCreateAsync();
+        Nav.NavigateTo($"{Ctx.BasePath}/actors/{actor.Id}");
+    }
+
+    private async Task SetVisibilityAsync(ActorDocument actor, ActorVisibility visibility)
+    {
+        actor.Visibility = visibility;
+        if (await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(visibility == ActorVisibility.Known ? $"{actor.Name} is now visible to players." : $"{actor.Name} is hidden from players."));
+            await Ctx.ReloadAsync();
+        }
+    }
+
+    private async Task DeleteAsync(ActorDocument actor)
+    {
+        if (!await confirm.ShowAsync($"Delete {actor.Name}?", "Their sheet and state are removed from this campaign. This cannot be undone.", "Delete", isDestructive: true))
+        {
+            return;
+        }
+
+        if (await ActorRepo.TryDeleteAsync(actor.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success($"Deleted {actor.Name}."));
+            await Ctx.ReloadAsync();
+        }
+    }
+}

@@ -1,0 +1,8 @@
+id: alignment-neutral-evil
+type: rule
+name: Neutral Evil
+description: Neutral Evil is the alignment of those who are untroubled by the harm they cause as they pursue their desires. A criminal who robs and murders as they please is probably Neutral Evil.
+tags:
+- alignment
+properties:
+  category: Alignment

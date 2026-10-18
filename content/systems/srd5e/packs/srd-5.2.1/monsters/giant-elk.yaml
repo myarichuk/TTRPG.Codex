@@ -1,0 +1,67 @@
+id: giant-elk
+type: monster
+name: Giant Elk
+description: >-
+  *Huge Celestial, Neutral Good*
+
+
+  **AC** 14  
+
+  **HP** 42 (5d12 + 10)  
+
+  **Speed** 60 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 18 (+4) | 14 (+2) | 7 (-2) | 14 (+2) | 10 (+0) |
+
+
+  **Saving Throws** STR +6, DEX +6  
+
+  **Skills** Perception +4  
+
+  **Resistances** necrotic, radiant  
+
+  **Senses** darkvision 90 ft., passive perception 14  
+
+  **Languages** Celestial; understands Common, Elvish, and Sylvan but can’t speak them
+
+
+  ### Actions
+
+  **Ram.** Melee Attack Roll: +6, reach 10 ft. Hit: 11 (2d6 + 4) Bludgeoning damage plus 5 (2d4) Radiant damage. If the target is a Huge or smaller creature and the elk moved 20+ feet straight toward it immediately before the hit, the target takes an extra 5 (2d4) Bludgeoning damage and has the Prone condition.
+tags:
+- celestial
+- huge
+- cr-2
+properties:
+  size: Huge
+  creatureType: celestial
+  alignment: neutral good
+  armorClass: 14
+  hitPoints: 42
+  hitDice: 5d12 + 10
+  speed: 60 ft.
+  strength: 19
+  dexterity: 18
+  constitution: 14
+  intelligence: 7
+  wisdom: 14
+  charisma: 10
+  challengeRating: 2
+  xp: 450
+  senses: darkvision 90 ft., passive perception 14
+  languages: Celestial; understands Common, Elvish, and Sylvan but can’t speak them
+  skills: Perception +4
+  savingThrows: STR +6, DEX +6
+  resistances:
+  - necrotic
+  - radiant
+  actions:
+  - name: Ram
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 11 (2d6 + 4) Bludgeoning damage plus 5 (2d4) Radiant damage. If the target is a Huge or smaller creature and the elk moved 20+ feet straight toward it immediately before the hit, the target takes an extra 5 (2d4) Bludgeoning damage and has the Prone condition.'

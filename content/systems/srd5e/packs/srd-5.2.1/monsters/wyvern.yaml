@@ -1,0 +1,69 @@
+id: wyvern
+type: monster
+name: Wyvern
+description: >-
+  *Large Dragon, Unaligned*
+
+
+  **AC** 14  
+
+  **HP** 127 (15d10 + 45)  
+
+  **Speed** 30 ft., fly 80 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 10 (+0) | 16 (+3) | 5 (-3) | 12 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +4  
+
+  **Senses** darkvision 120 ft., passive perception 14  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The wyvern makes one Bite attack and one Sting attack.
+
+
+  **Bite.** Melee Attack Roll: +7, reach 5 ft. Hit: 13 (2d8 + 4) Piercing damage.
+
+
+  **Sting.** Melee Attack Roll: +7, reach 10 ft. Hit: 11 (2d6 + 4) Piercing damage plus 24 (7d6) Poison damage, and the target has the Poisoned condition until the start of the wyvern’s next turn.
+tags:
+- dragon
+- large
+- cr-6
+properties:
+  size: Large
+  creatureType: dragon
+  alignment: unaligned
+  armorClass: 14
+  hitPoints: 127
+  hitDice: 15d10 + 45
+  speed: 30 ft., fly 80 ft.
+  strength: 19
+  dexterity: 10
+  constitution: 16
+  intelligence: 5
+  wisdom: 12
+  charisma: 6
+  challengeRating: 6
+  xp: 2300
+  senses: darkvision 120 ft., passive perception 14
+  languages: None
+  skills: Perception +4
+  actions:
+  - name: Multiattack
+    description: The wyvern makes one Bite attack and one Sting attack.
+  - name: Bite
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 13 (2d8 + 4) Piercing damage.'
+  - name: Sting
+    description: 'Melee Attack Roll: +7, reach 10 ft. Hit: 11 (2d6 + 4) Piercing damage plus 24 (7d6) Poison damage, and the target has the Poisoned condition until the start of the wyvern’s next turn.'

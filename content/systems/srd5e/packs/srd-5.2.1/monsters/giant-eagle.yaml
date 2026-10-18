@@ -1,0 +1,69 @@
+id: giant-eagle
+type: monster
+name: Giant Eagle
+description: >-
+  *Large Celestial, Neutral Good*
+
+
+  **AC** 13  
+
+  **HP** 26 (4d10 + 4)  
+
+  **Speed** 10 ft., fly 80 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 17 (+3) | 13 (+1) | 8 (-1) | 14 (+2) | 10 (+0) |
+
+
+  **Skills** Perception +6  
+
+  **Resistances** necrotic, radiant  
+
+  **Senses** passive perception 16  
+
+  **Languages** Celestial; understands Common and Primordial (Auran) but can’t speak them
+
+
+  ### Actions
+
+  **Multiattack.** The eagle makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Slashing damage plus 3 (1d6) Radiant damage.
+tags:
+- celestial
+- large
+- cr-1
+properties:
+  size: Large
+  creatureType: celestial
+  alignment: neutral good
+  armorClass: 13
+  hitPoints: 26
+  hitDice: 4d10 + 4
+  speed: 10 ft., fly 80 ft.
+  strength: 16
+  dexterity: 17
+  constitution: 13
+  intelligence: 8
+  wisdom: 14
+  charisma: 10
+  challengeRating: 1
+  xp: 200
+  senses: passive perception 16
+  languages: Celestial; understands Common and Primordial (Auran) but can’t speak them
+  skills: Perception +6
+  resistances:
+  - necrotic
+  - radiant
+  actions:
+  - name: Multiattack
+    description: The eagle makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Slashing damage plus 3 (1d6) Radiant damage.'

@@ -1,0 +1,7 @@
+id: language-sylvan
+type: rule
+name: Sylvan
+tags:
+- language
+properties:
+  category: Language

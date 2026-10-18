@@ -1,0 +1,9 @@
+id: ability-score-improvement
+type: feat
+name: Ability Score Improvement
+description: Increase one ability score of your choice by 2, or increase two ability scores of your choice by 1. This feat can't increase an ability score above 20.
+tags:
+- general
+properties:
+  category: general
+  prerequisites: Level 4+

@@ -1,39 +1,45 @@
-@* Schema-driven form renderer (2.2): the web-side renderer of Codex.Plugin.Abstractions.UISchema,
-   the same schema ICodexSystemPlugin.GetUISchemas() feeds the Authoring app's own renderer. One
-   schema, two renderers - this one only handles PreferredEditor.Form; Graph/Hybrid/Timeline
-   schemas say so instead of pretending to be a form. *@
+@using Codex.Core
 @using Codex.Plugin.Abstractions
+
+@* Schema-driven form renderer: the web side of UISchema. Every control is labelled by a unique id
+   (two forms on one page never collide), numbers honour min/max, dropdowns and reference pickers
+   are real <select>s, tag lists are comma-separated, and Collection fields get a row editor. *@
 
 @if (Schema.PreferredEditor != PreferredEditor.Form)
 {
-    <p class="text-tertiary small fst-italic">
-        This entity's schema (@Schema.EntityType) prefers a @Schema.PreferredEditor.ToString().ToLowerInvariant() editor,
-        which isn't available here yet - use the Authoring app for it.
-    </p>
+    <p class="small-muted"><em>This entity type is designed for a @Schema.PreferredEditor.ToString().ToLowerInvariant() editor, which is not available here.</em></p>
 }
 else
 {
-    @foreach (var group in Schema.Fields.GroupBy(f => f.Category ?? "General"))
+    @foreach (var group in Schema.Fields.Where(f => !HiddenKeys.Contains(f.Key)).GroupBy(f => f.Category ?? "General"))
     {
-        <fieldset class="schema-form-group mb-3">
-            <legend class="h6 text-tertiary text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">@group.Key</legend>
-            @foreach (var field in group)
+        <fieldset class="field-group">
+            @if (ShowGroupHeadings)
             {
-                <div class="mb-2">
-                    <label for="@field.Key" class="form-label small">
-                        @field.Label
-                        @if (field.IsRequired)
-                        {
-                            <span class="text-danger" aria-hidden="true">*</span>
-                        }
-                    </label>
-                    @RenderField(field)
-                    @if (!string.IsNullOrWhiteSpace(field.Description))
-                    {
-                        <div class="form-text small">@field.Description</div>
-                    }
-                </div>
+                <legend>@group.Key</legend>
             }
+            <div class="field-grid">
+                @foreach (var field in group)
+                {
+                    var controlId = ControlId(field);
+                    var wide = field.Type is FieldType.LongText or FieldType.Collection;
+                    <div class="@(wide ? "field-wide" : null)">
+                        <label for="@controlId" class="form-label">
+                            @field.Label
+                            @if (field.IsRequired)
+                            {
+                                <span class="required-mark" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(required)</span>
+                            }
+                        </label>
+                        @RenderField(field, controlId)
+                        @if (!string.IsNullOrWhiteSpace(field.Description))
+                        {
+                            <div id="@(controlId)-help" class="form-text">@field.Description</div>
+                        }
+                    </div>
+                }
+            </div>
         </fieldset>
     }
 }
@@ -48,12 +54,30 @@ else
     [Parameter]
     public EventCallback<Dictionary<string, object>> ValuesChanged { get; set; }
 
+    /// <summary>Options for EntityReference fields, by target type. Each option is (id, display name).</summary>
+    [Parameter]
+    public IReadOnlyDictionary<string, IReadOnlyList<(string Id, string Name)>>? ReferenceOptions { get; set; }
+
+    /// <summary>Field keys rendered elsewhere (e.g. attributes drawn as a grid) and skipped here.</summary>
+    [Parameter]
+    public IReadOnlySet<string> HiddenKeys { get; set; } = new HashSet<string>();
+
+    [Parameter]
+    public bool ShowGroupHeadings { get; set; } = true;
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    private readonly string prefix = "f" + Guid.NewGuid().ToString("N")[..6];
+
+    private string ControlId(FieldDefinition field) => $"{prefix}-{field.Key}";
+
     private object? GetValue(FieldDefinition field) =>
         Values.TryGetValue(field.Key, out var value) ? value : field.DefaultValue;
 
     private async Task SetValueAsync(FieldDefinition field, object? value)
     {
-        if (value == null)
+        if (value == null || (value is string s && s.Length == 0))
         {
             Values.Remove(field.Key);
         }
@@ -65,58 +89,201 @@ else
         await ValuesChanged.InvokeAsync(Values);
     }
 
-    private RenderFragment RenderField(FieldDefinition field) => field.Type switch
+    private string? Describe(FieldDefinition field, string controlId) =>
+        string.IsNullOrWhiteSpace(field.Description) ? null : $"{controlId}-help";
+
+    private RenderFragment RenderField(FieldDefinition field, string controlId) => field.Type switch
     {
-        FieldType.Number => @<input id="@field.Key" type="number" class="form-control form-control-sm"
-                                     value="@GetValue(field)"
-                                     @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString())))" />,
+        FieldType.Number => @<input id="@controlId" type="number" class="form-control" inputmode="numeric"
+                                     min="@field.Min" max="@field.Max" step="1" disabled="@ReadOnly"
+                                     aria-describedby="@Describe(field, controlId)"
+                                     value="@FormatNumber(GetValue(field))"
+                                     @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString(), field)))" />,
 
-        FieldType.Boolean => @<input id="@field.Key" type="checkbox" class="form-check-input"
-                                      checked="@(GetValue(field) is true)"
-                                      @onchange="@(e => SetValueAsync(field, (bool)(e.Value ?? false)))" />,
+        FieldType.Boolean => @<div class="form-check">
+            <input id="@controlId" type="checkbox" class="form-check-input" disabled="@ReadOnly"
+                   checked="@IsTrue(GetValue(field))"
+                   aria-describedby="@Describe(field, controlId)"
+                   @onchange="@(e => SetValueAsync(field, (bool)(e.Value ?? false)))" />
+            <label class="form-check-label visually-hidden" for="@controlId">@field.Label</label>
+        </div>,
 
-        FieldType.Dropdown => @<select id="@field.Key" class="form-select form-select-sm"
-                                        value="@GetValue(field)?.ToString()"
+        FieldType.Dropdown => @<select id="@controlId" class="form-select" disabled="@ReadOnly"
+                                        aria-describedby="@Describe(field, controlId)"
+                                        value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                         @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
-            <option value="">-- Select --</option>
+            <option value="">— none —</option>
             @foreach (var option in field.Options ?? new List<string>())
             {
                 <option value="@option">@option</option>
             }
         </select>,
 
-        FieldType.LongText => @<textarea id="@field.Key" class="form-control form-control-sm" rows="3"
-                                          value="@GetValue(field)?.ToString()"
+        FieldType.EntityReference => @<select id="@controlId" class="form-select" disabled="@ReadOnly"
+                                               aria-describedby="@Describe(field, controlId)"
+                                               value="@(GetValue(field)?.ToString() ?? string.Empty)"
+                                               @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
+            <option value="">— none —</option>
+            @foreach (var option in OptionsFor(field))
+            {
+                <option value="@option.Id">@option.Name</option>
+            }
+        </select>,
+
+        FieldType.LongText => @<textarea id="@controlId" class="form-control" rows="4" disabled="@ReadOnly"
+                                          aria-describedby="@Describe(field, controlId)"
+                                          value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
 
-        FieldType.TagList => @<input id="@field.Key" type="text" class="form-control form-control-sm"
+        FieldType.TagList => @<input id="@controlId" type="text" class="form-control" disabled="@ReadOnly"
                                       placeholder="Comma-separated"
+                                      aria-describedby="@Describe(field, controlId)"
                                       value="@string.Join(", ", GetTags(field))"
                                       @onchange="@(e => SetValueAsync(field, SplitTags(e.Value?.ToString())))" />,
 
-        FieldType.EntityReference or FieldType.Collection or FieldType.ImagePicker =>
-            @<input id="@field.Key" type="text" class="form-control form-control-sm" disabled
-                     value="@DescribeUnsupported(field)" />,
+        FieldType.Collection => RenderCollection(field, controlId),
 
-        _ => @<input id="@field.Key" type="text" class="form-control form-control-sm"
-                      value="@GetValue(field)?.ToString()"
+        FieldType.ImagePicker => @<input id="@controlId" type="url" class="form-control" disabled="@ReadOnly"
+                                          placeholder="Image URL"
+                                          aria-describedby="@Describe(field, controlId)"
+                                          value="@(GetValue(field)?.ToString() ?? string.Empty)"
+                                          @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />,
+
+        _ => @<input id="@controlId" type="text" class="form-control" disabled="@ReadOnly"
+                      aria-describedby="@Describe(field, controlId)"
+                      value="@(GetValue(field)?.ToString() ?? string.Empty)"
                       @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />
     };
 
-    private static object? ParseNumber(string? raw) =>
-        double.TryParse(raw, out var parsed) ? parsed : null;
+    // ---- Collection rows: a list of {name, description, level?} maps ----
+
+    private RenderFragment RenderCollection(FieldDefinition field, string controlId) => @<div id="@controlId" class="collection-editor" role="group" aria-label="@field.Label">
+        @{
+            var rows = GetRows(field);
+        }
+        @for (var i = 0; i < rows.Count; i++)
+        {
+            var index = i;
+            var row = rows[index];
+            <div class="d-flex gap-2 align-items-start mb-2">
+                <input type="text" class="form-control w-5" placeholder="Level" aria-label="@field.Label row @(index + 1) level" disabled="@ReadOnly"
+                       value="@(row.GetValueOrDefault("level")?.ToString())"
+                       @onchange="@(e => UpdateRowAsync(field, index, "level", e.Value?.ToString()))" />
+                <input type="text" class="form-control" style="max-width: 14rem" placeholder="Name" aria-label="@field.Label row @(index + 1) name" disabled="@ReadOnly"
+                       value="@(row.GetValueOrDefault("name")?.ToString())"
+                       @onchange="@(e => UpdateRowAsync(field, index, "name", e.Value?.ToString()))" />
+                <textarea class="form-control" rows="2" placeholder="Description" aria-label="@field.Label row @(index + 1) description" disabled="@ReadOnly"
+                          value="@(row.GetValueOrDefault("description")?.ToString())"
+                          @onchange="@(e => UpdateRowAsync(field, index, "description", e.Value?.ToString()))"></textarea>
+                @if (!ReadOnly)
+                {
+                    <button type="button" class="icon-btn danger" aria-label="Remove @field.Label row @(index + 1)" @onclick="() => RemoveRowAsync(field, index)">
+                        <LucideIcon IconName="x" Size="16" />
+                    </button>
+                }
+            </div>
+        }
+        @if (!ReadOnly)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => AddRowAsync(field)">
+                <LucideIcon IconName="plus" Size="14" /> Add @field.Label.ToLowerInvariant() row
+            </button>
+        }
+    </div>;
+
+    private List<Dictionary<string, object>> GetRows(FieldDefinition field)
+    {
+        if (GetValue(field) is IEnumerable<object> list)
+        {
+            return list.Select(item => item switch
+            {
+                Dictionary<string, object> map => map,
+                IDictionary<string, object> map => new Dictionary<string, object>(map),
+                _ => new Dictionary<string, object> { ["name"] = item?.ToString() ?? string.Empty }
+            }).ToList();
+        }
+
+        return new List<Dictionary<string, object>>();
+    }
+
+    private async Task AddRowAsync(FieldDefinition field)
+    {
+        var rows = GetRows(field);
+        rows.Add(new Dictionary<string, object> { ["name"] = string.Empty });
+        await SetValueAsync(field, rows.Cast<object>().ToList());
+    }
+
+    private async Task RemoveRowAsync(FieldDefinition field, int index)
+    {
+        var rows = GetRows(field);
+        if (index >= 0 && index < rows.Count)
+        {
+            rows.RemoveAt(index);
+        }
+
+        await SetValueAsync(field, rows.Count == 0 ? null : rows.Cast<object>().ToList());
+    }
+
+    private async Task UpdateRowAsync(FieldDefinition field, int index, string key, string? value)
+    {
+        var rows = GetRows(field);
+        if (index < 0 || index >= rows.Count) return;
+        var row = new Dictionary<string, object>(rows[index]);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            row.Remove(key);
+        }
+        else if (key == "level" && long.TryParse(value, out var level))
+        {
+            row[key] = level;
+        }
+        else
+        {
+            row[key] = value;
+        }
+
+        rows[index] = row;
+        await SetValueAsync(field, rows.Cast<object>().ToList());
+    }
+
+    // ---- Helpers ----
+
+    private IReadOnlyList<(string Id, string Name)> OptionsFor(FieldDefinition field) =>
+        field.TargetEntityType != null && ReferenceOptions != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var options)
+            ? options
+            : Array.Empty<(string, string)>();
+
+    private static string FormatNumber(object? value) => value switch
+    {
+        null => string.Empty,
+        double d => d.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        _ => value.ToString() ?? string.Empty
+    };
+
+    private static object? ParseNumber(string? raw, FieldDefinition field)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (!double.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed)) return null;
+        if (field.Min.HasValue) parsed = Math.Max(field.Min.Value, parsed);
+        if (field.Max.HasValue) parsed = Math.Min(field.Max.Value, parsed);
+        return parsed % 1 == 0 ? (long)parsed : parsed;
+    }
+
+    private static bool IsTrue(object? value) => value switch
+    {
+        bool b => b,
+        string s => bool.TryParse(s, out var parsed) && parsed,
+        _ => false
+    };
 
     private IEnumerable<string> GetTags(FieldDefinition field) => GetValue(field) switch
     {
         List<string> list => list,
         IEnumerable<object> objects => objects.Select(o => o.ToString() ?? ""),
-        string s => SplitTags(s),
+        string s => SplitTags(s).Select(o => o.ToString() ?? string.Empty),
         _ => Enumerable.Empty<string>()
     };
 
-    private static List<string> SplitTags(string? raw) =>
-        (raw ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-
-    private string DescribeUnsupported(FieldDefinition field) =>
-        $"Edit via the Authoring app ({field.Type})";
+    private static List<object> SplitTags(string? raw) =>
+        (raw ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Cast<object>().ToList();
 }

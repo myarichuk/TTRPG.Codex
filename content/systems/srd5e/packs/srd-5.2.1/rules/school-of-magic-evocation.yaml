@@ -1,0 +1,8 @@
+id: school-of-magic-evocation
+type: rule
+name: Evocation
+description: Channels energy to create effects that are often destructive
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

@@ -1,0 +1,15 @@
+id: crystal-ball-of-mind-reading
+type: magic-item
+name: Crystal Ball of Mind Reading
+description: >-
+  Wondrous Item
+
+
+  While touching this crystal orb, you can cast Scrying (save DC 17) with it. In addition, you can cast Detect Thoughts (save DC 17) targeting creatures you can see within 30 feet of the spell's sensor. You don't need to concentrate on this Detect Thoughts spellto maintain it during its duration, but it ends if theScrying spell ends.
+tags:
+- legendary
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Legendary
+  attunement: true

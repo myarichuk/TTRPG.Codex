@@ -1,0 +1,72 @@
+id: pirate
+type: monster
+name: Pirate
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 14 (Leather Armor)  
+
+  **HP** 33 (6d8 + 6)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 16 (+3) | 12 (+1) | 8 (-1) | 12 (+1) | 14 (+2) |
+
+
+  **Saving Throws** DEX +5, CHA +4  
+
+  **Gear** Daggers (6), Leather Armor  
+
+  **Senses** passive perception 11  
+
+  **Languages** Common plus one other language
+
+
+  ### Actions
+
+  **Multiattack.** The pirate makes two Dagger attacks. It can replace one attack with a use of Enthralling Panache.
+
+
+  **Dagger.** Melee or Ranged Attack Roll: +5, reach 5 ft. or range 20/60 ft. Hit: 5 (1d4 + 3) Piercing damage.
+
+
+  **Enthralling Panache.** Wisdom Saving Throw: DC 12, one creature the pirate can see within 30 feet. Failure: The target has the Charmed condition until the start of the pirate’s next turn.
+tags:
+- humanoid
+- medium or small
+- cr-1
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 14
+  hitPoints: 33
+  hitDice: 6d8 + 6
+  speed: 30 ft.
+  strength: 10
+  dexterity: 16
+  constitution: 12
+  intelligence: 8
+  wisdom: 12
+  charisma: 14
+  challengeRating: 1
+  xp: 200
+  senses: passive perception 11
+  languages: Common plus one other language
+  savingThrows: DEX +5, CHA +4
+  gear: Daggers (6), Leather Armor
+  actions:
+  - name: Multiattack
+    description: The pirate makes two Dagger attacks. It can replace one attack with a use of Enthralling Panache.
+  - name: Dagger
+    description: 'Melee or Ranged Attack Roll: +5, reach 5 ft. or range 20/60 ft. Hit: 5 (1d4 + 3) Piercing damage.'
+  - name: Enthralling Panache
+    description: 'Wisdom Saving Throw: DC 12, one creature the pirate can see within 30 feet. Failure: The target has the Charmed condition until the start of the pirate’s next turn.'

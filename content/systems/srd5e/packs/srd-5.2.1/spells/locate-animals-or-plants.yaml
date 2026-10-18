@@ -1,0 +1,40 @@
+id: locate-animals-or-plants
+type: spell
+name: Locate Animals or Plants
+description: >-
+  *Level 2 Divination (Bard, Druid, Ranger)*
+
+
+  **Casting Time:** Action or Ritual  
+
+  **Range:** Self  
+
+  **Components:** V, S, M (fur from a bloodhound)  
+
+  **Duration:** Instantaneous
+
+
+  Describe or name a specific kind of Beast, Plant creature, or nonmagical plant. You learn the direction and distance to the closest creature or plant of that kind within 5 miles, if any are present.
+tags:
+- level-2
+- divination
+- bard
+- druid
+- ranger
+properties:
+  level: 2
+  school: Divination
+  castingTime: Action
+  range: Self
+  components:
+  - V
+  - S
+  - M
+  material: fur from a bloodhound
+  duration: Instantaneous
+  concentration: false
+  ritual: true
+  classes:
+  - Bard
+  - Druid
+  - Ranger

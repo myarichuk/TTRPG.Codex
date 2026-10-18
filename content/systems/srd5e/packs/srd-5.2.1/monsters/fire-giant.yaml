@@ -1,0 +1,76 @@
+id: fire-giant
+type: monster
+name: Fire Giant
+description: >-
+  *Huge Giant, Lawful Evil*
+
+
+  **AC** 18  
+
+  **HP** 162 (13d12 + 78)  
+
+  **Speed** 30 ft.  
+
+  **CR** 9 (XP 5000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 25 (+7) | 9 (-1) | 23 (+6) | 10 (+0) | 14 (+2) | 13 (+1) |
+
+
+  **Saving Throws** DEX +3, CON +10, CHA +5  
+
+  **Skills** Athletics +11, Perception +6  
+
+  **Immunities** fire  
+
+  **Senses** passive perception 16  
+
+  **Languages** Giant
+
+
+  ### Actions
+
+  **Multiattack.** The giant makes two attacks, using Flame Sword or Hammer Throw in any combination.
+
+
+  **Flame Sword.** Melee Attack Roll: +11, reach 10 ft. Hit: 21 (4d6 + 7) Slashing damage plus 10 (3d6) Fire damage.
+
+
+  **Hammer Throw.** Ranged Attack Roll: +11, range 60/240 ft. Hit: 23 (3d10 + 7) Bludgeoning damage plus 4 (1d8) Fire damage, and the target is pushed up to 15 feet straight away from the giant and has Disadvantage on the next attack roll it makes before the end of its next turn.
+tags:
+- giant
+- huge
+- cr-9
+properties:
+  size: Huge
+  creatureType: giant
+  alignment: lawful evil
+  armorClass: 18
+  hitPoints: 162
+  hitDice: 13d12 + 78
+  speed: 30 ft.
+  strength: 25
+  dexterity: 9
+  constitution: 23
+  intelligence: 10
+  wisdom: 14
+  charisma: 13
+  challengeRating: 9
+  xp: 5000
+  senses: passive perception 16
+  languages: Giant
+  skills: Athletics +11, Perception +6
+  savingThrows: DEX +3, CON +10, CHA +5
+  immunities:
+  - fire
+  actions:
+  - name: Multiattack
+    description: The giant makes two attacks, using Flame Sword or Hammer Throw in any combination.
+  - name: Flame Sword
+    description: 'Melee Attack Roll: +11, reach 10 ft. Hit: 21 (4d6 + 7) Slashing damage plus 10 (3d6) Fire damage.'
+  - name: Hammer Throw
+    description: 'Ranged Attack Roll: +11, range 60/240 ft. Hit: 23 (3d10 + 7) Bludgeoning damage plus 4 (1d8) Fire damage, and the target is pushed up to 15 feet straight away from the giant and has Disadvantage on the next attack roll it makes before the end of its next turn.'

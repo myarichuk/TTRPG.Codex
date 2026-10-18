@@ -1,0 +1,23 @@
+id: half-plate-armor
+type: equipment
+name: Half-Plate Armor
+description: >-
+  *Armor, Medium Armor*
+
+
+  **Armor Class:** 15 + Dex modifier (max 2)  
+
+  **Stealth:** Disadvantage  
+
+  **Cost:** 750 gp  
+
+  **Weight:** 40 lb.
+tags:
+- armor
+- medium armor
+properties:
+  category: Armor
+  cost: 750 gp
+  weight: 40
+  armorClass: 15 + Dex modifier (max 2)
+  stealth: true

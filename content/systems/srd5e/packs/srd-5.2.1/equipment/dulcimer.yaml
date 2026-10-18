@@ -1,0 +1,17 @@
+id: dulcimer
+type: equipment
+name: Dulcimer
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 25 gp  
+
+  **Weight:** 10 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 25 gp
+  weight: 10

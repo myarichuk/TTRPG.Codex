@@ -1,0 +1,97 @@
+id: assassin
+type: monster
+name: Assassin
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 16 (Studded Leather Armor)  
+
+  **HP** 97 (15d8 + 30)  
+
+  **Speed** 30 ft.  
+
+  **CR** 8 (XP 3900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 18 (+4) | 14 (+2) | 16 (+3) | 11 (+0) | 10 (+0) |
+
+
+  **Saving Throws** DEX +7, INT +6  
+
+  **Skills** Acrobatics +7, Perception +6, Stealth +10  
+
+  **Resistances** poison  
+
+  **Gear** Light Crossbow, Shortsword, Studded Leather Armor  
+
+  **Senses** passive perception 16  
+
+  **Languages** Common, Thieves’ Cant
+
+
+  ### Traits
+
+  **Evasion.** If the assassin is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the assassin instead takes no damage if it succeeds on the save and only half damage if it fails. It can’t use this trait if it has the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Multiattack.** The assassin makes three attacks, using Shortsword or Light Crossbow in any combination.
+
+
+  **Shortsword.** Melee Attack Roll: +7, reach 5 ft. Hit: 7 (1d6 + 4) Piercing damage plus 17 (5d6) Poison damage, and the target has the Poisoned condition until the start of the assassin’s next turn.
+
+
+  **Light Crossbow.** Ranged Attack Roll: +7, range 80/320 ft. Hit: 8 (1d8 + 4) Piercing damage plus 21 (6d6) Poison damage.
+
+
+
+  ### Bonus Actions
+
+  **Cunning Action.** The assassin takes the Dash, Disengage, or Hide action.
+tags:
+- humanoid
+- medium or small
+- cr-8
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 16
+  hitPoints: 97
+  hitDice: 15d8 + 30
+  speed: 30 ft.
+  strength: 11
+  dexterity: 18
+  constitution: 14
+  intelligence: 16
+  wisdom: 11
+  charisma: 10
+  challengeRating: 8
+  xp: 3900
+  senses: passive perception 16
+  languages: Common, Thieves’ Cant
+  skills: Acrobatics +7, Perception +6, Stealth +10
+  savingThrows: DEX +7, INT +6
+  resistances:
+  - poison
+  gear: Light Crossbow, Shortsword, Studded Leather Armor
+  traits:
+  - name: Evasion
+    description: If the assassin is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the assassin instead takes no damage if it succeeds on the save and only half damage if it fails. It can’t use this trait if it has the Incapacitated condition.
+  actions:
+  - name: Multiattack
+    description: The assassin makes three attacks, using Shortsword or Light Crossbow in any combination.
+  - name: Shortsword
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 7 (1d6 + 4) Piercing damage plus 17 (5d6) Poison damage, and the target has the Poisoned condition until the start of the assassin’s next turn.'
+  - name: Light Crossbow
+    description: 'Ranged Attack Roll: +7, range 80/320 ft. Hit: 8 (1d8 + 4) Piercing damage plus 21 (6d6) Poison damage.'
+  bonusActions:
+  - name: Cunning Action
+    description: The assassin takes the Dash, Disengage, or Hide action.

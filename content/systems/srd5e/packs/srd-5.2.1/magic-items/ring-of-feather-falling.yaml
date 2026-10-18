@@ -1,0 +1,15 @@
+id: ring-of-feather-falling
+type: magic-item
+name: Ring of Feather Falling
+description: >-
+  Ring
+
+
+  When you fall while wearing this ring, you descend 60 feet per round and take no damage from falling.
+tags:
+- rare
+- rings
+properties:
+  category: Rings
+  rarity: Rare
+  attunement: true

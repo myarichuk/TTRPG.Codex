@@ -1,0 +1,98 @@
+id: ice-devil
+type: monster
+name: Ice Devil
+description: >-
+  *Large Fiend, Lawful Evil*
+
+
+  **AC** 18  
+
+  **HP** 228 (24d10 + 96)  
+
+  **Speed** 40 ft.  
+
+  **CR** 14 (XP 11500; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 21 (+5) | 14 (+2) | 18 (+4) | 18 (+4) | 15 (+2) | 18 (+4) |
+
+
+  **Saving Throws** DEX +7, CON +9, WIS +7, CHA +9  
+
+  **Skills** Insight +7, Perception +7, Persuasion +9  
+
+  **Immunities** cold, fire, poison, Poisoned  
+
+  **Senses** blindsight 120 ft., passive perception 17  
+
+  **Languages** Infernal; telepathy 120 ft.
+
+
+  ### Traits
+
+  **Diabolical Restoration.** If the devil dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Nine Hells.
+
+
+  **Magic Resistance.** The devil has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The devil makes three Ice Spear attacks. It can replace one attack with a Tail attack.
+
+
+  **Ice Spear.** Melee or Ranged Attack Roll: +10, reach 5 ft. or range 30/120 ft. Hit: 14 (2d8 + 5) Piercing damage plus 10 (3d6) Cold damage. Until the end of its next turn, the target can’t take a Bonus Action or Reaction, its Speed decreases by 10 feet, and it can move or take one action on its turn, not both. Hit or Miss: The spear magically returns to the devil’s hand immediately after a ranged attack.
+
+
+  **Tail.** Melee Attack Roll: +10, reach 10 ft. Hit: 15 (3d6 + 5) Bludgeoning damage plus 18 (4d8) Cold damage.
+
+
+  **Ice Wall.** The devil casts Wall of Ice (level 8 version), requiring no spell components and using Intelligence as the spellcasting ability (spell save DC 17).
+tags:
+- fiend
+- large
+- cr-14
+properties:
+  size: Large
+  creatureType: fiend
+  alignment: lawful evil
+  armorClass: 18
+  hitPoints: 228
+  hitDice: 24d10 + 96
+  speed: 40 ft.
+  strength: 21
+  dexterity: 14
+  constitution: 18
+  intelligence: 18
+  wisdom: 15
+  charisma: 18
+  challengeRating: 14
+  xp: 11500
+  senses: blindsight 120 ft., passive perception 17
+  languages: Infernal; telepathy 120 ft.
+  skills: Insight +7, Perception +7, Persuasion +9
+  savingThrows: DEX +7, CON +9, WIS +7, CHA +9
+  immunities:
+  - cold
+  - fire
+  - poison
+  - Poisoned
+  traits:
+  - name: Diabolical Restoration
+    description: If the devil dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Nine Hells.
+  - name: Magic Resistance
+    description: The devil has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The devil makes three Ice Spear attacks. It can replace one attack with a Tail attack.
+  - name: Ice Spear
+    description: 'Melee or Ranged Attack Roll: +10, reach 5 ft. or range 30/120 ft. Hit: 14 (2d8 + 5) Piercing damage plus 10 (3d6) Cold damage. Until the end of its next turn, the target can’t take a Bonus Action or Reaction, its Speed decreases by 10 feet, and it can move or take one action on its turn, not both. Hit or Miss: The spear magically returns to the devil’s hand immediately after a ranged attack.'
+  - name: Tail
+    description: 'Melee Attack Roll: +10, reach 10 ft. Hit: 15 (3d6 + 5) Bludgeoning damage plus 18 (4d8) Cold damage.'
+  - name: Ice Wall
+    description: The devil casts Wall of Ice (level 8 version), requiring no spell components and using Intelligence as the spellcasting ability (spell save DC 17).

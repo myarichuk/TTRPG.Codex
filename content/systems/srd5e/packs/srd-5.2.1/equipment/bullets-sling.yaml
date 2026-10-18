@@ -1,0 +1,16 @@
+id: bullets-sling
+type: equipment
+name: Bullets, Sling
+description: >-
+  *Ammunition*
+
+
+  **Cost:** 4 cp  
+
+  **Weight:** 1.5 lb.
+tags:
+- ammunition
+properties:
+  category: Ammunition
+  cost: 4 cp
+  weight: 1.5

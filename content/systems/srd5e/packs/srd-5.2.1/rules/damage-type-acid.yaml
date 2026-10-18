@@ -1,0 +1,8 @@
+id: damage-type-acid
+type: rule
+name: Acid
+description: Corrosive liquids, digestive enzymes
+tags:
+- damage-type
+properties:
+  category: Damage Type

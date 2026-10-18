@@ -1,0 +1,77 @@
+id: lemure
+type: monster
+name: Lemure
+description: >-
+  *Medium Fiend, Lawful Evil*
+
+
+  **AC** 9  
+
+  **HP** 9 (2d8)  
+
+  **Speed** 20 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 5 (-3) | 11 (+0) | 1 (-5) | 11 (+0) | 3 (-4) |
+
+
+  **Resistances** cold  
+
+  **Immunities** fire, poison, Charmed, Frightened, Poisoned  
+
+  **Senses** darkvision 120 ft. (unimpeded by magical darkness), passive perception 10  
+
+  **Languages** Understands Infernal but can’t speak
+
+
+  ### Traits
+
+  **Hellish Restoration.** If the lemure dies in the Nine Hells, it revives with all its Hit Points in 1d10 days unless it is killed by a creature under the effects of a Bless spell or its remains are sprinkled with Holy Water.
+
+
+
+  ### Actions
+
+  **Vile Slime.** Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Poison damage.
+tags:
+- fiend
+- medium
+- cr-0
+properties:
+  size: Medium
+  creatureType: fiend
+  alignment: lawful evil
+  armorClass: 9
+  hitPoints: 9
+  hitDice: 2d8
+  speed: 20 ft.
+  strength: 10
+  dexterity: 5
+  constitution: 11
+  intelligence: 1
+  wisdom: 11
+  charisma: 3
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 120 ft. (unimpeded by magical darkness), passive perception 10
+  languages: Understands Infernal but can’t speak
+  resistances:
+  - cold
+  immunities:
+  - fire
+  - poison
+  - Charmed
+  - Frightened
+  - Poisoned
+  traits:
+  - name: Hellish Restoration
+    description: If the lemure dies in the Nine Hells, it revives with all its Hit Points in 1d10 days unless it is killed by a creature under the effects of a Bless spell or its remains are sprinkled with Holy Water.
+  actions:
+  - name: Vile Slime
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Poison damage.'

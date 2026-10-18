@@ -1,0 +1,13 @@
+id: entertainers-pack
+type: equipment
+name: Entertainer's Pack
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 40 gp
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 40 gp

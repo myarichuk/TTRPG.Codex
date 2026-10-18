@@ -1,0 +1,88 @@
+id: green-hag
+type: monster
+name: Green Hag
+description: >-
+  *Medium Fey, Neutral Evil*
+
+
+  **AC** 17  
+
+  **HP** 82 (11d8 + 33)  
+
+  **Speed** 30 ft., swim 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 12 (+1) | 16 (+3) | 13 (+1) | 14 (+2) | 14 (+2) |
+
+
+  **Skills** Arcana +5, Deception +4, Perception +4, Stealth +3  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Common, Elvish, Sylvan
+
+
+  ### Traits
+
+  **Amphibious.** The hag can breathe air and water.
+
+
+  **Coven Magic.** While within 30 feet of at least two hag allies, the hag can cast one of the following spells, requiring no Material components, using the spell’s normal casting time, and using Intelligence as the spellcasting ability (spell save DC 11): Augury, Find Familiar, Identify, Locate Object, Scrying, or Unseen Servant. The hag must finish a Long Rest before using this trait to cast that spell again.
+
+
+  **Mimicry.** The hag can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful DC 14 Wisdom (Insight) check.
+
+
+
+  ### Actions
+
+  **Multiattack.** The hag makes two Claw attacks.
+
+
+  **Claw.** Melee Attack Roll: +6, reach 5 ft. Hit: 8 (1d8 + 4) Slashing damage plus 3 (1d6) Poison damage.
+
+
+  **Spellcasting.** The hag casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):
+tags:
+- fey
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: neutral evil
+  armorClass: 17
+  hitPoints: 82
+  hitDice: 11d8 + 33
+  speed: 30 ft., swim 30 ft.
+  strength: 18
+  dexterity: 12
+  constitution: 16
+  intelligence: 13
+  wisdom: 14
+  charisma: 14
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 14
+  languages: Common, Elvish, Sylvan
+  skills: Arcana +5, Deception +4, Perception +4, Stealth +3
+  traits:
+  - name: Amphibious
+    description: The hag can breathe air and water.
+  - name: Coven Magic
+    description: 'While within 30 feet of at least two hag allies, the hag can cast one of the following spells, requiring no Material components, using the spell’s normal casting time, and using Intelligence as the spellcasting ability (spell save DC 11): Augury, Find Familiar, Identify, Locate Object, Scrying, or Unseen Servant. The hag must finish a Long Rest before using this trait to cast that spell again.'
+  - name: Mimicry
+    description: The hag can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful DC 14 Wisdom (Insight) check.
+  actions:
+  - name: Multiattack
+    description: The hag makes two Claw attacks.
+  - name: Claw
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 8 (1d8 + 4) Slashing damage plus 3 (1d6) Poison damage.'
+  - name: Spellcasting
+    description: 'The hag casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):'

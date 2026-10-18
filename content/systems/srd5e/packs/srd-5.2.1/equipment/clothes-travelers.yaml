@@ -1,0 +1,19 @@
+id: clothes-travelers
+type: equipment
+name: Clothes, Traveler's
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 5 gp  
+
+  **Weight:** 4 lb.
+
+
+  Traveler's Clothes are resilient garments designed for travel in various environments.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 5 gp
+  weight: 4

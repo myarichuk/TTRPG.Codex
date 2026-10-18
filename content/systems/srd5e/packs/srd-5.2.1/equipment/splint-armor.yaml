@@ -1,0 +1,26 @@
+id: splint-armor
+type: equipment
+name: Splint Armor
+description: >-
+  *Armor, Heavy Armor*
+
+
+  **Armor Class:** 17  
+
+  **Strength:** 15  
+
+  **Stealth:** Disadvantage  
+
+  **Cost:** 200 gp  
+
+  **Weight:** 60 lb.
+tags:
+- armor
+- heavy armor
+properties:
+  category: Armor
+  cost: 200 gp
+  weight: 60
+  armorClass: 17
+  strength: 15
+  stealth: true

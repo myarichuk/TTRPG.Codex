@@ -1,0 +1,14 @@
+id: boon-of-combat-prowess
+type: feat
+name: Boon of Combat Prowess
+description: >-
+  You gain the following benefits.
+
+  **Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.
+
+  **Peerless Aim.** When you miss with an attack roll, you can hit instead. Once you use this benefit, you can't use it again until the start of your next turn.
+tags:
+- epic-boon
+properties:
+  category: epic-boon
+  prerequisites: Level 19+

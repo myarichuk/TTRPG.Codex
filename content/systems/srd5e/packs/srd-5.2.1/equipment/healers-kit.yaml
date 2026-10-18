@@ -1,0 +1,19 @@
+id: healers-kit
+type: equipment
+name: Healer's Kit
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 5 gp  
+
+  **Weight:** 3 lb.
+
+
+  A Healer's Kit has ten uses. As a Utilize action, you can expend one of its uses to stabilize an Unconscious creature that has 0 Hit Points without needing to make a Wisdom (Medicine) check.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 5 gp
+  weight: 3

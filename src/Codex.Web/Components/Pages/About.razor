@@ -1,0 +1,143 @@
+@page "/about"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Codex.Core
+@using Codex.Plugin.Abstractions
+@inject ISystemCatalog Catalog
+@inject IContentRegistry Registry
+@inject PluginLoader Loader
+
+<PageTitle>About &amp; licences | TTRPG.Codex</PageTitle>
+
+<div class="page-narrow">
+    <div class="page-header">
+        <div>
+            <h1>About TTRPG.Codex</h1>
+            <p class="page-subtitle">A self-hosted campaign and character companion for tabletop role-playing games. Game systems and content are data you can read, edit and share.</p>
+        </div>
+    </div>
+
+    <section class="panel" aria-labelledby="systems-heading">
+        <div class="panel-title"><h2 id="systems-heading">Game systems</h2></div>
+        @if (!Catalog.Systems.Any())
+        {
+            <p class="mb-0">No game systems are loaded. Add a <code>system.yaml</code> under one of the content folders and restart.</p>
+        }
+        @foreach (var system in Catalog.Systems)
+        {
+            var packs = Registry.GetPacks(system.Id).ToList();
+            <article class="mb-4" aria-labelledby="sys-@system.Id" data-testid="about-system">
+                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-1">@(system.IsDataDriven ? "data-driven" : "compiled plugin")</span></h3>
+                @if (system.Compatibility != null)
+                {
+                    <div class="small-muted">@system.Compatibility</div>
+                }
+                @if (system.Description != null)
+                {
+                    <p class="mb-2">@system.Description</p>
+                }
+                @if (system.License != null)
+                {
+                    <div class="attribution mt-2">
+                        @if (!string.IsNullOrWhiteSpace(system.License.Attribution))
+                        {
+                            <div>@system.License.Attribution</div>
+                        }
+                        <div>Licence: @License(system.License)</div>
+                    </div>
+                }
+
+                @if (packs.Count > 0)
+                {
+                    <h4 class="h6 mt-3">Content packs</h4>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var pack in packs)
+                        {
+                            <li class="list-row" data-testid="about-pack">
+                                <div class="row-main">
+                                    <div class="row-title">@pack.Name <span class="pill ms-1">@pack.Kind</span> <span class="small-muted">v@(pack.Version)</span></div>
+                                    @if (pack.Description != null)
+                                    {
+                                        <div class="row-sub">@pack.Description</div>
+                                    }
+                                    @if (pack.Authors.Count > 0)
+                                    {
+                                        <div class="row-sub">By @string.Join(", ", pack.Authors)</div>
+                                    }
+                                    @if (pack.License != null)
+                                    {
+                                        <div class="attribution mt-2">
+                                            @if (!string.IsNullOrWhiteSpace(pack.License.Attribution))
+                                            {
+                                                <div>@pack.License.Attribution</div>
+                                            }
+                                            <div>Licence: @License(pack.License)</div>
+                                            @foreach (var notice in pack.License.Notices)
+                                            {
+                                                <div class="mt-1">@notice</div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </article>
+        }
+    </section>
+
+    @if (Loader.LoadWarnings.Count > 0)
+    {
+        <section class="panel" aria-labelledby="warnings-heading">
+            <div class="panel-title"><h2 id="warnings-heading">Content warnings</h2></div>
+            <p class="small-muted">Problems found while loading systems and packs. Fix the file and restart.</p>
+            <ul class="mb-0">
+                @foreach (var warning in Loader.LoadWarnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="panel" aria-labelledby="software-heading">
+        <div class="panel-title"><h2 id="software-heading">Software</h2></div>
+        <p>TTRPG.Codex is open source under the MIT licence. It bundles <a href="https://getbootstrap.com/" rel="noopener" target="_blank">Bootstrap</a> (MIT) and icons from <a href="https://lucide.dev/" rel="noopener" target="_blank">Lucide</a> (ISC); everything runs locally and nothing is loaded from the internet at the table.</p>
+        <p class="mb-0 small-muted">Product names belong to their owners. Where a system says it is “compatible with” a product, that is the only relationship: TTRPG.Codex is not affiliated with or endorsed by any publisher.</p>
+    </section>
+</div>
+
+@code {
+    private static RenderFragment License(LicenseInfo license) => builder =>
+    {
+        if (license.Url != null)
+        {
+            builder.OpenElement(0, "a");
+            builder.AddAttribute(1, "href", license.Url);
+            builder.AddAttribute(2, "rel", "license noopener");
+            builder.AddAttribute(3, "target", "_blank");
+            builder.AddContent(4, license.Name);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.AddContent(5, license.Name);
+        }
+
+        if (license.Modified)
+        {
+            builder.AddContent(6, " · modified from the original");
+        }
+
+        if (license.SourceUrl != null)
+        {
+            builder.AddContent(7, " · source: ");
+            builder.OpenElement(8, "a");
+            builder.AddAttribute(9, "href", license.SourceUrl);
+            builder.AddAttribute(10, "rel", "noopener");
+            builder.AddAttribute(11, "target", "_blank");
+            builder.AddContent(12, license.SourceUrl);
+            builder.CloseElement();
+        }
+    };
+}

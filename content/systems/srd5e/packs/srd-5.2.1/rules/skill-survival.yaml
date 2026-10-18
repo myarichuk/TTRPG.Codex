@@ -1,0 +1,12 @@
+id: skill-survival
+type: rule
+name: Survival
+description: >-
+  **Ability:** WIS
+
+
+  Follow tracks, forage, find a trail, or avoid natural hazards.
+tags:
+- skill
+properties:
+  category: Skill

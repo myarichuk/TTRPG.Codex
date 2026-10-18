@@ -1,0 +1,7 @@
+id: language-halfling
+type: rule
+name: Halfling
+tags:
+- language
+properties:
+  category: Language

@@ -1,0 +1,15 @@
+id: crystal-ball
+type: magic-item
+name: Crystal Ball
+description: >-
+  Wondrous Item
+
+
+  While touching this crystal orb, you can cast Scrying(save DC 17) with it.
+tags:
+- very rare
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Very Rare
+  attunement: true

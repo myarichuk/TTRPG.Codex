@@ -1,0 +1,8 @@
+id: damage-type-necrotic
+type: rule
+name: Necrotic
+description: Life-draining energy
+tags:
+- damage-type
+properties:
+  category: Damage Type

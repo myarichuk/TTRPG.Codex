@@ -1,0 +1,34 @@
+id: lance
+type: equipment
+name: Lance
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 1d10 Piercing  
+
+  **Properties:** Heavy, Reach, Two-Handed  
+
+  **Mastery:** Topple  
+
+  **Cost:** 10 gp  
+
+  **Weight:** 6 lb.
+
+
+  Two-handed unless mounted
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 10 gp
+  weight: 6
+  damage: 1d10 Piercing
+  properties:
+  - Heavy
+  - Reach
+  - Two-Handed
+  mastery: Topple

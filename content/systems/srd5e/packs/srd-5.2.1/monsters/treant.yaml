@@ -1,0 +1,89 @@
+id: treant
+type: monster
+name: Treant
+description: >-
+  *Huge Plant, Chaotic Good*
+
+
+  **AC** 16  
+
+  **HP** 138 (12d12 + 60)  
+
+  **Speed** 30 ft.  
+
+  **CR** 9 (XP 5000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 23 (+6) | 8 (-1) | 21 (+5) | 12 (+1) | 16 (+3) | 12 (+1) |
+
+
+  **Resistances** bludgeoning, piercing  
+
+  **Vulnerabilities** fire  
+
+  **Senses** passive perception 13  
+
+  **Languages** Common, Druidic, Elvish, Sylvan
+
+
+  ### Traits
+
+  **Siege Monster.** The treant deals double damage to objects and structures.
+
+
+
+  ### Actions
+
+  **Multiattack.** The treant makes two Slam attacks.
+
+
+  **Slam.** Melee Attack Roll: +10, reach 5 ft. Hit: 16 (3d6 + 6) Bludgeoning damage.
+
+
+  **Hail of Bark.** Ranged Attack Roll: +10, range 180 ft. Hit: 28 (4d10 + 6) Piercing damage.
+
+
+  **Animate Trees (1/day).** The treant magically animates up to two trees it can see within 60 feet of itself. Each tree uses the Treant stat block, except it has Intelligence and Charisma scores of 1, it can’t speak, and it lacks this action. The tree takes its turn immediately after the treant on the same Initiative count, and it obeys the treant. A tree remains animate for 1 day or until it dies, the treant dies, or it is more than 120 feet from the treant. The tree then takes root if possible.
+tags:
+- plant
+- huge
+- cr-9
+properties:
+  size: Huge
+  creatureType: plant
+  alignment: chaotic good
+  armorClass: 16
+  hitPoints: 138
+  hitDice: 12d12 + 60
+  speed: 30 ft.
+  strength: 23
+  dexterity: 8
+  constitution: 21
+  intelligence: 12
+  wisdom: 16
+  charisma: 12
+  challengeRating: 9
+  xp: 5000
+  senses: passive perception 13
+  languages: Common, Druidic, Elvish, Sylvan
+  resistances:
+  - bludgeoning
+  - piercing
+  vulnerabilities:
+  - fire
+  traits:
+  - name: Siege Monster
+    description: The treant deals double damage to objects and structures.
+  actions:
+  - name: Multiattack
+    description: The treant makes two Slam attacks.
+  - name: Slam
+    description: 'Melee Attack Roll: +10, reach 5 ft. Hit: 16 (3d6 + 6) Bludgeoning damage.'
+  - name: Hail of Bark
+    description: 'Ranged Attack Roll: +10, range 180 ft. Hit: 28 (4d10 + 6) Piercing damage.'
+  - name: Animate Trees (1/day)
+    description: The treant magically animates up to two trees it can see within 60 feet of itself. Each tree uses the Treant stat block, except it has Intelligence and Charisma scores of 1, it can’t speak, and it lacks this action. The tree takes its turn immediately after the treant on the same Initiative count, and it obeys the treant. A tree remains animate for 1 day or until it dies, the treant dies, or it is more than 120 feet from the treant. The tree then takes root if possible.

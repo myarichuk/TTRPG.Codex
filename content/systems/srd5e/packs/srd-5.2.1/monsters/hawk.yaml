@@ -1,0 +1,59 @@
+id: hawk
+type: monster
+name: Hawk
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 1 (1d4 - 1)  
+
+  **Speed** 10 ft., fly 60 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 5 (-3) | 16 (+3) | 8 (-1) | 2 (-4) | 14 (+2) | 6 (-2) |
+
+
+  **Skills** Perception +6  
+
+  **Senses** passive perception 16  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Talons.** Melee Attack Roll: +5, reach 5 ft. Hit: 1 Slashing damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 1
+  hitDice: 1d4 - 1
+  speed: 10 ft., fly 60 ft.
+  strength: 5
+  dexterity: 16
+  constitution: 8
+  intelligence: 2
+  wisdom: 14
+  charisma: 6
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 16
+  languages: None
+  skills: Perception +6
+  actions:
+  - name: Talons
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 1 Slashing damage.'

@@ -1,0 +1,7 @@
+id: language-goblin
+type: rule
+name: Goblin
+tags:
+- language
+properties:
+  category: Language

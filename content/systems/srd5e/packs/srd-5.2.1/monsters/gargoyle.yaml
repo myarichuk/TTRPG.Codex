@@ -1,0 +1,80 @@
+id: gargoyle
+type: monster
+name: Gargoyle
+description: >-
+  *Medium Elemental, Chaotic Evil*
+
+
+  **AC** 15  
+
+  **HP** 67 (9d8 + 27)  
+
+  **Speed** 30 ft., fly 60 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 11 (+0) | 16 (+3) | 6 (-2) | 11 (+0) | 7 (-2) |
+
+
+  **Skills** Stealth +4  
+
+  **Immunities** poison, Exhaustion, Petrified, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Primordial (Terran)
+
+
+  ### Traits
+
+  **Flyby.** The gargoyle doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Multiattack.** The gargoyle makes two Claw attacks.
+
+
+  **Claw.** Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d4 + 2) Slashing damage.
+tags:
+- elemental
+- medium
+- cr-2
+properties:
+  size: Medium
+  creatureType: elemental
+  alignment: chaotic evil
+  armorClass: 15
+  hitPoints: 67
+  hitDice: 9d8 + 27
+  speed: 30 ft., fly 60 ft.
+  strength: 15
+  dexterity: 11
+  constitution: 16
+  intelligence: 6
+  wisdom: 11
+  charisma: 7
+  challengeRating: 2
+  xp: 450
+  senses: darkvision 60 ft., passive perception 10
+  languages: Primordial (Terran)
+  skills: Stealth +4
+  immunities:
+  - poison
+  - Exhaustion
+  - Petrified
+  - Poisoned
+  traits:
+  - name: Flyby
+    description: The gargoyle doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+  actions:
+  - name: Multiattack
+    description: The gargoyle makes two Claw attacks.
+  - name: Claw
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d4 + 2) Slashing damage.'

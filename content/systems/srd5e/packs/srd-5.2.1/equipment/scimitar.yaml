@@ -1,0 +1,30 @@
+id: scimitar
+type: equipment
+name: Scimitar
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 1d6 Slashing  
+
+  **Properties:** Finesse, Light  
+
+  **Mastery:** Nick  
+
+  **Cost:** 25 gp  
+
+  **Weight:** 3 lb.
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 25 gp
+  weight: 3
+  damage: 1d6 Slashing
+  properties:
+  - Finesse
+  - Light
+  mastery: Nick

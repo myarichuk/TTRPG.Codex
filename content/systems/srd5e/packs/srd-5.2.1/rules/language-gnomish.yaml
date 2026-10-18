@@ -1,0 +1,7 @@
+id: language-gnomish
+type: rule
+name: Gnomish
+tags:
+- language
+properties:
+  category: Language

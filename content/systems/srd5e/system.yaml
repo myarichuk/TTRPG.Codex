@@ -1,0 +1,252 @@
+# Fifth Edition SRD - a data-driven system definition for TTRPG.Codex.
+#
+# The rules text this system's packs carry comes from the System Reference Document 5.2.1 by
+# Wizards of the Coast LLC under CC-BY-4.0 (see license below and content/systems/srd5e/packs/*/manifest.yaml).
+# The SRD licence grants no trademark rights, so the system is named after the document and
+# describes itself only as "5E compatible", exactly as the SRD's legal page permits.
+id: srd5e
+name: Fifth Edition SRD (5.2.1)
+version: 5.2.1
+compatibility: 5E compatible
+description: >-
+  The 2024 revision of the fifth-edition rules as published in the System Reference Document 5.2.1:
+  twelve classes with one subclass each, nine species, four backgrounds, seventeen feats, 339 spells
+  and 341 creatures.
+license:
+  name: CC-BY-4.0
+  url: https://creativecommons.org/licenses/by/4.0/legalcode
+  sourceUrl: https://www.dndbeyond.com/srd
+  modified: true
+  attribution: >-
+    This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the
+    Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative
+    Commons Attribution 4.0 International License, available at
+    https://creativecommons.org/licenses/by/4.0/legalcode.
+
+attributes:
+  - { key: str, label: Strength,     abbreviation: STR, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: dex, label: Dexterity,    abbreviation: DEX, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: con, label: Constitution, abbreviation: CON, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: int, label: Intelligence, abbreviation: INT, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: wis, label: Wisdom,       abbreviation: WIS, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: cha, label: Charisma,     abbreviation: CHA, default: 10, min: 1, max: 30, modifier: half-minus-five }
+
+resources:
+  - { key: HP,     label: Hit Points,           maxKey: HP_Max, default: 10, isPrimary: true }
+  - { key: TempHP, label: Temporary Hit Points, default: 0 }
+
+actorFields:
+  - { key: level,            label: Level,              type: Number,          defaultValue: 1, category: General }
+  - { key: class,            label: Class,              type: EntityReference, targetEntityType: class,      category: General }
+  - { key: subclass,         label: Subclass,           type: EntityReference, targetEntityType: subclass,   category: General }
+  - { key: species,          label: Species,            type: EntityReference, targetEntityType: species,    category: General }
+  - { key: background,       label: Background,         type: EntityReference, targetEntityType: background, category: General }
+  - key: alignment
+    label: Alignment
+    type: Dropdown
+    category: General
+    options: [Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil, Unaligned]
+  - { key: armorClass,       label: Armor Class,        type: Number,  defaultValue: 10, category: Combat }
+  - { key: speed,            label: Speed (feet),       type: Number,  defaultValue: 30, category: Combat }
+  - { key: proficiencyBonus, label: Proficiency Bonus,  type: Number,  defaultValue: 2,  category: Combat }
+  - { key: notes,            label: Notes,              type: LongText, category: Notes }
+
+conditions:
+  [Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible,
+   Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious]
+
+dice:
+  initiative: 1d20
+  check: 1d20
+
+entityTypes:
+  - type: class
+    label: Class
+    pluralLabel: Classes
+    folder: classes
+    icon: swords
+    summaryFields: [hitDie, primaryAbility]
+    fields:
+      - { key: hitDie,              label: Hit Die,                 type: Text }
+      - { key: primaryAbility,      label: Primary Ability,         type: Text }
+      - { key: savingThrows,        label: Saving Throws,           type: TagList }
+      - { key: armorProficiencies,  label: Armor Training,          type: TagList }
+      - { key: weaponProficiencies, label: Weapon Proficiencies,    type: TagList }
+      - { key: skillChoices,        label: Skill Proficiencies,     type: Text }
+      - { key: startingEquipment,   label: Starting Equipment,      type: LongText }
+      - { key: multiclassing,       label: Multiclassing,           type: LongText }
+      - { key: subclasses,          label: Subclasses,              type: TagList }
+      - { key: features,            label: Class Features,          type: Collection, description: "One row per feature: level, name, description." }
+
+  - type: subclass
+    label: Subclass
+    pluralLabel: Subclasses
+    folder: subclasses
+    icon: swords
+    summaryFields: [class, summary]
+    filterFields: [class]
+    fields:
+      - { key: class,    label: Class,    type: EntityReference, targetEntityType: class }
+      - { key: summary,  label: Summary,  type: Text }
+      - { key: features, label: Features, type: Collection }
+
+  - type: species
+    label: Species
+    pluralLabel: Species
+    folder: species
+    icon: users
+    summaryFields: [size, speed]
+    fields:
+      - { key: creatureType, label: Creature Type, type: Text }
+      - { key: size,         label: Size,          type: Text }
+      - { key: speed,        label: Speed,         type: Number }
+      - { key: traits,       label: Traits,        type: Collection }
+      - { key: lineages,     label: Lineages,      type: Collection }
+
+  - type: background
+    label: Background
+    pluralLabel: Backgrounds
+    folder: backgrounds
+    icon: scroll
+    summaryFields: [feat]
+    fields:
+      - { key: abilityScores,      label: Ability Scores,      type: TagList }
+      - { key: feat,               label: Feat,                type: EntityReference, targetEntityType: feat }
+      - { key: skillProficiencies, label: Skill Proficiencies, type: TagList }
+      - { key: toolProficiency,    label: Tool Proficiency,    type: Text }
+      - { key: equipment,          label: Equipment,           type: LongText }
+
+  - type: feat
+    label: Feat
+    pluralLabel: Feats
+    folder: feats
+    icon: sparkles
+    summaryFields: [category, prerequisites]
+    filterFields: [category]
+    fields:
+      - { key: category,      label: Category,      type: Dropdown, options: [origin, general, fighting-style, epic-boon] }
+      - { key: prerequisites, label: Prerequisites, type: Text }
+      - { key: repeatable,    label: Repeatable,    type: Boolean }
+
+  - type: spell
+    label: Spell
+    pluralLabel: Spells
+    folder: spells
+    icon: flame
+    summaryFields: [level, school]
+    filterFields: [level, school, classes]
+    fields:
+      - { key: level,         label: Level,         type: Number }
+      - key: school
+        label: School
+        type: Dropdown
+        options: [Abjuration, Conjuration, Divination, Enchantment, Evocation, Illusion, Necromancy, Transmutation]
+      - { key: castingTime,   label: Casting Time,  type: Text }
+      - { key: range,         label: Range,         type: Text }
+      - { key: components,    label: Components,    type: TagList }
+      - { key: material,      label: Material,      type: Text }
+      - { key: duration,      label: Duration,      type: Text }
+      - { key: concentration, label: Concentration, type: Boolean }
+      - { key: ritual,        label: Ritual,        type: Boolean }
+      - { key: classes,       label: Classes,       type: TagList }
+      - { key: damageType,    label: Damage Type,   type: Text }
+      - { key: higherLevel,   label: Using a Higher-Level Spell Slot, type: LongText }
+
+  - type: monster
+    label: Creature
+    pluralLabel: Creatures
+    folder: monsters
+    icon: skull
+    actorBlueprint: true
+    hitPointsProperty: hitPoints
+    attributeProperties: { strength: str, dexterity: dex, constitution: con, intelligence: int, wisdom: wis, charisma: cha }
+    summaryFields: [challengeRating, creatureType, size]
+    filterFields: [challengeRating, creatureType, size]
+    playerFacing: false
+    fields:
+      - { key: size,            label: Size,             type: Text }
+      - { key: creatureType,    label: Type,             type: Text }
+      - { key: alignment,       label: Alignment,        type: Text }
+      - { key: armorClass,      label: Armor Class,      type: Number }
+      - { key: hitPoints,       label: Hit Points,       type: Number }
+      - { key: hitDice,         label: Hit Dice,         type: Text }
+      - { key: speed,           label: Speed,            type: Text }
+      - { key: strength,        label: Strength,         type: Number }
+      - { key: dexterity,       label: Dexterity,        type: Number }
+      - { key: constitution,    label: Constitution,     type: Number }
+      - { key: intelligence,    label: Intelligence,     type: Number }
+      - { key: wisdom,          label: Wisdom,           type: Number }
+      - { key: charisma,        label: Charisma,         type: Number }
+      - { key: challengeRating, label: Challenge Rating, type: Text }
+      - { key: xp,              label: XP,               type: Number }
+      - { key: senses,          label: Senses,           type: Text }
+      - { key: languages,       label: Languages,        type: Text }
+      - { key: skills,          label: Skills,           type: Text }
+      - { key: savingThrows,    label: Saving Throws,    type: Text }
+      - { key: resistances,     label: Resistances,      type: TagList }
+      - { key: immunities,      label: Immunities,       type: TagList }
+      - { key: vulnerabilities, label: Vulnerabilities,  type: TagList }
+      - { key: gear,            label: Gear,             type: Text }
+      - { key: traits,          label: Traits,           type: Collection }
+      - { key: actions,         label: Actions,          type: Collection }
+      - { key: bonusActions,    label: Bonus Actions,    type: Collection }
+      - { key: reactions,       label: Reactions,        type: Collection }
+      - { key: legendaryActions, label: Legendary Actions, type: Collection }
+
+  - type: condition
+    label: Condition
+    pluralLabel: Conditions
+    folder: conditions
+    icon: skull
+    fields: []
+
+  - type: equipment
+    label: Equipment
+    pluralLabel: Equipment
+    folder: equipment
+    icon: layers
+    summaryFields: [category, cost]
+    filterFields: [category]
+    fields:
+      - { key: category,   label: Category,       type: Text }
+      - { key: cost,       label: Cost,           type: Text }
+      - { key: weight,     label: Weight (lb),    type: Number }
+      - { key: damage,     label: Damage,         type: Text }
+      - { key: properties, label: Properties,     type: TagList }
+      - { key: mastery,    label: Weapon Mastery, type: Text }
+      - { key: armorClass, label: Armor Class,    type: Text }
+      - { key: strength,   label: Strength Minimum, type: Number }
+      - { key: stealth,    label: Stealth Disadvantage, type: Boolean }
+
+  - type: magic-item
+    label: Magic Item
+    pluralLabel: Magic Items
+    folder: magic-items
+    icon: gem
+    summaryFields: [rarity, category]
+    filterFields: [rarity, category]
+    fields:
+      - { key: category,   label: Category,            type: Text }
+      - { key: rarity,     label: Rarity,              type: Dropdown, options: [Common, Uncommon, Rare, Very Rare, Legendary, Artifact, Varies] }
+      - { key: attunement, label: Requires Attunement, type: Boolean }
+
+  - type: rule
+    label: Rule
+    pluralLabel: Rules Glossary
+    folder: rules
+    icon: book-open
+    summaryFields: [category]
+    filterFields: [category]
+    fields:
+      - { key: category, label: Category, type: Text }
+
+  # World-building types for setting and homebrew packs. The SRD pack carries none of these.
+  - type: lore
+    label: Lore
+    pluralLabel: Lore
+    folder: lore
+    icon: book-marked
+    summaryFields: [category]
+    filterFields: [category]
+    fields:
+      - { key: category, label: Category, type: Text, description: "History, religion, faction, legend..." }

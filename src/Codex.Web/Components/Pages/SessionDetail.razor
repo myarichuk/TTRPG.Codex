@@ -12,118 +12,144 @@
 @inject ILogger<SessionDetail> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 
-<PageTitle>@(session?.Title ?? "Session") | TTRPG.Codex</PageTitle>
+<PageTitle>@(Title ?? "Session") | TTRPG.Codex</PageTitle>
 
-<div class="app-container">
 @if (loading)
 {
-    <div class="d-flex justify-content-center my-5 py-5">
-        <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Loading...</span></div>
-    </div>
+    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
 }
 else if (campaign == null || session == null || access == null)
 {
-    <div class="empty-state text-center py-5">
-        <h3>Session not found</h3>
-        <p class="text-tertiary">It may not exist, or you may not have access to it.</p>
-        <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="calendar" Size="28" /></div>
+        <h1 class="h4">Session not found</h1>
+        <p>It may not exist, or you may not have access to it.</p>
+        <a href="/" class="btn btn-primary">Back to campaigns</a>
     </div>
 }
 else
 {
-    <header class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-header mb-3">
         <div>
-            <h1 class="mb-0">@(string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToString("MMM dd, yyyy") : session.Title)</h1>
-            <span class="badge bg-secondary">@session.Status</span>
-            <span class="text-tertiary small ms-2">@session.Date.ToString("MMM dd, yyyy")</span>
-        </div>
-        <a href="/campaigns/@CampaignId" class="btn btn-outline-secondary btn-sm">Back to Campaign</a>
-    </header>
-
-    @if (!string.IsNullOrEmpty(statusMessage))
-    {
-        <div class="alert alert-info py-2">@statusMessage</div>
-    }
-
-    <div class="card p-3 mb-4">
-        <h5>Recap</h5>
-        @if (access.IsDm)
-        {
-            <textarea class="form-control form-control-sm mb-2" rows="5" placeholder="What happened this session..." @bind="editRecap" @bind:event="oninput"></textarea>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-accent btn-sm" @onclick="SaveRecapAsync">Save Recap</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="PreFillRecap">Pre-fill from Events</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="DraftWithAiAsync" disabled="@draftingAi">
-                    @(draftingAi ? "Drafting..." : "Draft with AI")
-                </button>
+            <nav aria-label="Breadcrumb" class="small-muted mb-1"><a href="/">Campaigns</a> / <a href="/campaigns/@CampaignId">@campaign.Name</a> / <a href="/campaigns/@CampaignId/sessions">Sessions</a></nav>
+            <h1 class="mb-0">@Title</h1>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+                <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
+                <span class="pill">@session.Date.ToLocalTime().ToString("dddd d MMM yyyy")</span>
             </div>
-            <p class="form-text small mb-0">AI draft sends the event list to the configured chat model, only when you click.</p>
-        }
-        else if (!string.IsNullOrWhiteSpace(session.Recap))
-        {
-            <p class="mb-0">@session.Recap</p>
-        }
-        else
-        {
-            <p class="text-tertiary small mb-0">The DM hasn't written a recap yet.</p>
-        }
+        </div>
     </div>
 
-    <div class="card p-3 mb-4">
-        <h5>Session Notes</h5>
-        @foreach (var note in notes)
-        {
-            <div class="border-bottom py-2">
-                <div class="d-flex justify-content-between">
-                    <strong class="small">@memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong>
-                    <span>
-                        <span class="badge bg-dark me-1">@note.Visibility</span>
-                        <span class="text-tertiary small">@note.CreatedAt.ToString("MMM dd, HH:mm")</span>
-                    </span>
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            @if (access.IsDm)
+            {
+                <section class="panel" aria-labelledby="details-heading">
+                    <div class="panel-title"><h2 id="details-heading" class="h5">Details</h2></div>
+                    <div class="field-grid">
+                        <div>
+                            <label for="session-title" class="form-label">Title</label>
+                            <input id="session-title" class="form-control" @bind="editTitle" />
+                        </div>
+                        <div>
+                            <label for="session-status" class="form-label">Status</label>
+                            <select id="session-status" class="form-select" @bind="editStatus">
+                                <option value="@SessionStatus.Planned">Planned</option>
+                                <option value="@SessionStatus.Live">Live</option>
+                                <option value="@SessionStatus.Completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-3" @onclick="SaveDetailsAsync">Save details</button>
+                </section>
+            }
+
+            <section class="panel" aria-labelledby="recap-heading">
+                <div class="panel-title"><h2 id="recap-heading" class="h5">Recap</h2></div>
+                @if (access.IsDm)
+                {
+                    <label for="recap" class="visually-hidden">Recap</label>
+                    <textarea id="recap" class="form-control mb-2" rows="6" placeholder="What happened this session…" @bind="editRecap" @bind:event="oninput"></textarea>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-primary btn-sm" @onclick="SaveRecapAsync">Save recap</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="PreFillRecap">Pre-fill from events</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="DraftWithAiAsync" disabled="@draftingAi" aria-describedby="ai-help">
+                            @(draftingAi ? "Drafting…" : "Draft with AI")
+                        </button>
+                    </div>
+                    <p id="ai-help" class="form-text mb-0">“Draft with AI” sends the event list to the configured chat model, only when you click it.</p>
+                }
+                else if (!string.IsNullOrWhiteSpace(session.Recap))
+                {
+                    <p class="mb-0" style="white-space: pre-wrap">@session.Recap</p>
+                }
+                else
+                {
+                    <p class="small-muted mb-0">The DM hasn't written a recap yet.</p>
+                }
+            </section>
+
+            <section class="panel" aria-labelledby="notes-heading">
+                <div class="panel-title"><h2 id="notes-heading" class="h5">Notes</h2></div>
+                @if (notes.Count == 0)
+                {
+                    <p class="small-muted">No notes yet.</p>
+                }
+                @foreach (var note in notes)
+                {
+                    <div class="list-row align-items-start">
+                        <div class="row-main">
+                            <div class="row-sub">
+                                <strong>@memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong>
+                                · @note.CreatedAt.ToLocalTime().ToString("d MMM, HH:mm")
+                                · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span>
+                            </div>
+                            <p class="mb-0">@note.Content</p>
+                        </div>
+                    </div>
+                }
+                <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
+                    <label for="new-note" class="form-label">Add a note</label>
+                    <textarea id="new-note" class="form-control mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-testid="new-note"></textarea>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <label for="note-visibility" class="visually-hidden">Note visibility</label>
+                        <select id="note-visibility" class="form-select form-select-sm w-auto" @bind="newNoteVisibility" aria-label="Note visibility">
+                            <option value="@CommentVisibility.Private">Private (you and the DM)</option>
+                            <option value="@CommentVisibility.Public">Party (everyone in the campaign)</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Add note</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <div class="col-lg-4">
+            <section class="panel" aria-labelledby="events-heading">
+                <div class="panel-title"><h2 id="events-heading" class="h5">Events (@session.Events.Count)</h2></div>
+                @if (session.Events.Count == 0)
+                {
+                    <p class="small-muted mb-0">Nothing recorded yet. Events are written automatically while the table runs.</p>
+                }
+                <div class="log">
+                    @foreach (var evt in session.Events.OrderByDescending(e => e.Timestamp))
+                    {
+                        <div class="log-entry">
+                            <span class="small-muted">@evt.Timestamp.ToLocalTime().ToString("HH:mm")</span>
+                            <span class="pill ms-1">@evt.Type</span>
+                            <div>@evt.Description</div>
+                        </div>
+                    }
                 </div>
-                <p class="mb-0">@note.Content</p>
-            </div>
-        }
-        @if (!notes.Any())
-        {
-            <p class="text-tertiary small">No notes yet.</p>
-        }
-        <div class="mt-3">
-            <textarea class="form-control form-control-sm mb-2" rows="2" placeholder="Add a note..." @bind="newNoteContent" @bind:event="oninput"></textarea>
-            <div class="d-flex gap-2">
-                <select class="form-select form-select-sm w-auto" @bind="newNoteVisibility" aria-label="Note visibility">
-                    <option value="@CommentVisibility.Private">Private (you + DM)</option>
-                    <option value="@CommentVisibility.Public">Public (whole party)</option>
-                </select>
-                <button type="button" class="btn btn-accent btn-sm" @onclick="AddNoteAsync">Add Note</button>
-            </div>
+            </section>
         </div>
-    </div>
-
-    <div class="card p-3 mb-4">
-        <h5>Events (@session.Events.Count)</h5>
-        @foreach (var evt in session.Events.OrderBy(e => e.Timestamp))
-        {
-            <div class="small border-bottom py-1">
-                <span class="text-tertiary">@evt.Timestamp.ToString("HH:mm")</span>
-                <span class="badge bg-dark ms-1">@evt.Type</span>
-                <span class="ms-1">@evt.Description</span>
-            </div>
-        }
-        @if (!session.Events.Any())
-        {
-            <p class="text-tertiary small mb-0">Nothing recorded yet.</p>
-        }
     </div>
 }
-</div>
 
 @code {
-    [Parameter]
-    public string CampaignId { get; set; } = string.Empty;
-
-    [Parameter]
-    public string SessionId { get; set; } = string.Empty;
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+    [Parameter] public string SessionId { get; set; } = string.Empty;
 
     private bool loading = true;
     private CampaignDocument? campaign;
@@ -131,19 +157,19 @@ else
     private CampaignAccess? access;
     private string? currentUserId;
     private List<NoteDocument> notes = new();
-    private Dictionary<string, string> memberUsernames = new();
+    private readonly Dictionary<string, string> memberUsernames = new();
     private string newNoteContent = "";
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
     private string editRecap = "";
+    private string editTitle = "";
+    private SessionStatus editStatus;
     private bool draftingAi;
-    private string? statusMessage;
+    private Flash? flash;
 
     private string NotesTargetId => $"session:{SessionId}";
+    private string? Title => session == null ? null : string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title;
 
-    protected override async Task OnParametersSetAsync()
-    {
-        await ReloadAsync();
-    }
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
 
     private async Task ReloadAsync()
     {
@@ -152,10 +178,7 @@ else
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         campaign = await CampaignRepo.GetAsync(CampaignId);
-        if (campaign != null && currentUserId != null)
-        {
-            access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
-        }
+        access = campaign != null && currentUserId != null ? await AccessResolver.ResolveAsync(CampaignId, currentUserId) : null;
 
         if (campaign != null && access != null)
         {
@@ -164,6 +187,8 @@ else
             if (session != null)
             {
                 editRecap = session.Recap ?? "";
+                editTitle = session.Title;
+                editStatus = session.Status;
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access)).ToList();
                 memberUsernames.Clear();
                 foreach (var member in campaign.Members)
@@ -182,44 +207,42 @@ else
 
     private void PreFillRecap()
     {
-        if (session == null)
-        {
-            return;
-        }
-
+        if (session == null) return;
         editRecap = SerializeEvents();
-        statusMessage = "Recap pre-filled from the event log - edit and save.";
+        flash = Flash.Info("Recap pre-filled from the event log. Edit and save.");
+    }
+
+    private async Task SaveDetailsAsync()
+    {
+        if (session == null || access == null || !access.IsDm) return;
+        session.Title = editTitle.Trim();
+        session.Status = editStatus;
+        await SessionRepo.SaveAsync(session);
+        flash = Flash.Success("Details saved.");
     }
 
     private async Task SaveRecapAsync()
     {
-        if (session == null || access == null || !access.IsDm)
-        {
-            return;
-        }
-
+        if (session == null || access == null || !access.IsDm) return;
         session.Recap = editRecap;
         await SessionRepo.SaveAsync(session);
-        statusMessage = "Recap saved.";
+        flash = Flash.Success("Recap saved.");
     }
 
     private async Task DraftWithAiAsync()
     {
-        if (session == null || access == null || !access.IsDm || draftingAi)
-        {
-            return;
-        }
+        if (session == null || access == null || !access.IsDm || draftingAi) return;
 
         draftingAi = true;
         try
         {
             editRecap = await Lore.SummarizeSessionAsync(SerializeEvents());
-            statusMessage = "AI draft ready - review and save.";
+            flash = Flash.Info("AI draft ready. Review and save.");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI recap draft failed for session {SessionId}", SessionId);
-            statusMessage = "AI draft failed. The event list below still works for a manual recap.";
+            flash = Flash.Error("The AI draft failed. The event list still works for a manual recap.");
         }
         finally
         {
@@ -229,10 +252,7 @@ else
 
     private async Task AddNoteAsync()
     {
-        if (access == null || currentUserId == null || string.IsNullOrWhiteSpace(newNoteContent))
-        {
-            return;
-        }
+        if (access == null || currentUserId == null || string.IsNullOrWhiteSpace(newNoteContent)) return;
 
         await NoteRepo.CreateNoteAsync(new NoteDocument
         {
@@ -244,7 +264,7 @@ else
             Visibility = newNoteVisibility
         });
         newNoteContent = "";
-        statusMessage = "Note added.";
+        flash = Flash.Success("Note added.");
         await ReloadAsync();
     }
 }

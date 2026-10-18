@@ -1,0 +1,19 @@
+id: wand-of-the-war-mage
+type: magic-item
+name: Wand of the War Mage
+description: >-
+  Wand
+
+
+  While holding this wand, you gain a bonus to spell attack rolls determined by the wand's rarity. In addition, you ignore Half Cover when making a spell attack roll.
+tags:
+- uncommon (+1), rare (+2), or very rare (+3)
+- wands
+properties:
+  category: Wands
+  rarity: Uncommon (+1), Rare (+2), or Very Rare (+3)
+  attunement: true
+  variants:
+  - Wand of the War Mage +1
+  - Wand of the War Mage +2
+  - Wand of the War Mage +3

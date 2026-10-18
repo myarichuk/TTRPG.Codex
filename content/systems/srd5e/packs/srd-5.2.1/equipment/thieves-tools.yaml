@@ -1,0 +1,17 @@
+id: thieves-tools
+type: equipment
+name: Thieves' Tools
+description: >-
+  *Other Tools, Tools*
+
+
+  **Cost:** 25 gp  
+
+  **Weight:** 1 lb.
+tags:
+- other tools
+- tools
+properties:
+  category: Other Tools
+  cost: 25 gp
+  weight: 1

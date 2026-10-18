@@ -1,0 +1,12 @@
+id: skill-investigation
+type: rule
+name: Investigation
+description: >-
+  **Ability:** INT
+
+
+  Find obscure information in books, or deduce how something works.
+tags:
+- skill
+properties:
+  category: Skill

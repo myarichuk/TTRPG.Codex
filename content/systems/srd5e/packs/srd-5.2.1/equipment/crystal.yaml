@@ -1,0 +1,17 @@
+id: crystal
+type: equipment
+name: Crystal
+description: >-
+  *Arcane Foci, Adventuring Gear*
+
+
+  **Cost:** 10 gp  
+
+  **Weight:** 1 lb.
+tags:
+- arcane foci
+- adventuring gear
+properties:
+  category: Arcane Foci
+  cost: 10 gp
+  weight: 1

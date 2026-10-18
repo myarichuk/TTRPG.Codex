@@ -1,0 +1,31 @@
+id: dagger
+type: equipment
+name: Dagger
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d4 Piercing  
+
+  **Properties:** Finesse, Light, Thrown  
+
+  **Mastery:** Nick  
+
+  **Cost:** 2 gp  
+
+  **Weight:** 1 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 2 gp
+  weight: 1
+  damage: 1d4 Piercing
+  properties:
+  - Finesse
+  - Light
+  - Thrown
+  mastery: Nick

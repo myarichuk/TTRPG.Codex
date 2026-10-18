@@ -1,0 +1,108 @@
+id: shadow
+type: monster
+name: Shadow
+description: >-
+  *Medium Undead, Chaotic Evil*
+
+
+  **AC** 12  
+
+  **HP** 27 (5d8 + 5)  
+
+  **Speed** 40 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 6 (-2) | 14 (+2) | 13 (+1) | 6 (-2) | 10 (+0) | 8 (-1) |
+
+
+  **Skills** Stealth +6  
+
+  **Resistances** acid, cold, fire, lightning, thunder  
+
+  **Immunities** necrotic, poison, Exhaustion, Frightened, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious  
+
+  **Vulnerabilities** radiant  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Amorphous.** The shadow can move through a space as narrow as 1 inch without expending extra movement to do so.
+
+
+  **Sunlight Weakness.** While in sunlight, the shadow has Disadvantage on D20 Tests.
+
+
+
+  ### Actions
+
+  **Draining Swipe.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Necrotic damage, and the target’s Strength score decreases by 1d4. The target dies if this reduces that score to 0. If a Humanoid is slain by this attack, a Shadow rises from the corpse 1d4 hours later.
+
+
+
+  ### Bonus Actions
+
+  **Shadow Stealth.** While in Dim Light or Darkness, the shadow takes the Hide action.
+tags:
+- undead
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: chaotic evil
+  armorClass: 12
+  hitPoints: 27
+  hitDice: 5d8 + 5
+  speed: 40 ft.
+  strength: 6
+  dexterity: 14
+  constitution: 13
+  intelligence: 6
+  wisdom: 10
+  charisma: 8
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 10
+  languages: None
+  skills: Stealth +6
+  resistances:
+  - acid
+  - cold
+  - fire
+  - lightning
+  - thunder
+  immunities:
+  - necrotic
+  - poison
+  - Exhaustion
+  - Frightened
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  - Prone
+  - Restrained
+  - Unconscious
+  vulnerabilities:
+  - radiant
+  traits:
+  - name: Amorphous
+    description: The shadow can move through a space as narrow as 1 inch without expending extra movement to do so.
+  - name: Sunlight Weakness
+    description: While in sunlight, the shadow has Disadvantage on D20 Tests.
+  actions:
+  - name: Draining Swipe
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Necrotic damage, and the target’s Strength score decreases by 1d4. The target dies if this reduces that score to 0. If a Humanoid is slain by this attack, a Shadow rises from the corpse 1d4 hours later.'
+  bonusActions:
+  - name: Shadow Stealth
+    description: While in Dim Light or Darkness, the shadow takes the Hide action.

@@ -1,0 +1,8 @@
+id: ability-score-con
+type: rule
+name: Constitution
+description: Health and stamina
+tags:
+- ability-score
+properties:
+  category: Ability Score

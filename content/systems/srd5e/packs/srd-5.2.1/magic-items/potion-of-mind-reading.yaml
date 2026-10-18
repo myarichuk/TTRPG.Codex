@@ -1,0 +1,15 @@
+id: potion-of-mind-reading
+type: magic-item
+name: Potion of Mind Reading
+description: >-
+  Potion
+
+
+  When you drink this potion, you gain the effect of the Detect Thoughts spell (save DC 13) for 10 minutes (no Concentration required).This potion's dense, purple liquid has an ovoidcloud of pink floating in it.
+tags:
+- rare
+- potions
+properties:
+  category: Potions
+  rarity: Rare
+  attunement: false

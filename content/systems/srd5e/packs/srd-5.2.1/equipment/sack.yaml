@@ -1,0 +1,19 @@
+id: sack
+type: equipment
+name: Sack
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 cp  
+
+  **Weight:** 1 lb.
+
+
+  A Sack holds up to 30 pounds within 1 cubic foot.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 cp
+  weight: 1

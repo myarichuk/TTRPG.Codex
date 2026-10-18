@@ -1,0 +1,59 @@
+id: grimlock
+type: monster
+name: Grimlock
+description: >-
+  *Medium Aberration, Neutral Evil*
+
+
+  **AC** 11  
+
+  **HP** 11 (2d8 + 2)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 12 (+1) | 12 (+1) | 9 (-1) | 8 (-1) | 6 (-2) |
+
+
+  **Skills** Athletics +5, Perception +3, Stealth +5  
+
+  **Senses** blindsight 30 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bone Cudgel.** Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Bludgeoning damage plus 2 (1d4) Psychic damage.
+tags:
+- aberration
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: aberration
+  alignment: neutral evil
+  armorClass: 11
+  hitPoints: 11
+  hitDice: 2d8 + 2
+  speed: 30 ft., climb 30 ft.
+  strength: 16
+  dexterity: 12
+  constitution: 12
+  intelligence: 9
+  wisdom: 8
+  charisma: 6
+  challengeRating: 1/4
+  xp: 50
+  senses: blindsight 30 ft., passive perception 13
+  languages: None
+  skills: Athletics +5, Perception +3, Stealth +5
+  actions:
+  - name: Bone Cudgel
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Bludgeoning damage plus 2 (1d4) Psychic damage.'

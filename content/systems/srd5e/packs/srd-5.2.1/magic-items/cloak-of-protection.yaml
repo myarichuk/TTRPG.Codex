@@ -1,0 +1,15 @@
+id: cloak-of-protection
+type: magic-item
+name: Cloak of Protection
+description: >-
+  Wondrous Item
+
+
+  You gain a +1 bonus to Armor Class and saving throws while you wear this cloak.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

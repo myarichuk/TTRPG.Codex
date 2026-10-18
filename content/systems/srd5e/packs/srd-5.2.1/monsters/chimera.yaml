@@ -1,0 +1,79 @@
+id: chimera
+type: monster
+name: Chimera
+description: >-
+  *Large Monstrosity, Chaotic Evil*
+
+
+  **AC** 14  
+
+  **HP** 114 (12d10 + 48)  
+
+  **Speed** 30 ft., fly 60 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 11 (+0) | 19 (+4) | 3 (-4) | 14 (+2) | 10 (+0) |
+
+
+  **Skills** Perception +8  
+
+  **Senses** darkvision 60 ft., passive perception 18  
+
+  **Languages** Understands Draconic but can’t speak
+
+
+  ### Actions
+
+  **Multiattack.** The chimera makes one Ram attack, one Bite attack, and one Claw attack. It can replace the Claw attack with a use of Fire Breath if available.
+
+
+  **Bite.** Melee Attack Roll: +7, reach 5 ft. Hit: 11 (2d6 + 4) Piercing damage, or 18 (4d6 + 4) Piercing damage if the chimera had Advantage on the attack roll.
+
+
+  **Claw.** Melee Attack Roll: +7, reach 5 ft. Hit: 7 (1d6 + 4) Slashing damage.
+
+
+  **Ram.** Melee Attack Roll: +7, reach 5 ft. Hit: 10 (1d12 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.
+
+
+  **Fire Breath.** Dexterity Saving Throw: DC 15, each creature in a 15-foot Cone. Failure: 31 (7d8) Fire damage. Success: Half damage.
+tags:
+- monstrosity
+- large
+- cr-6
+properties:
+  size: Large
+  creatureType: monstrosity
+  alignment: chaotic evil
+  armorClass: 14
+  hitPoints: 114
+  hitDice: 12d10 + 48
+  speed: 30 ft., fly 60 ft.
+  strength: 19
+  dexterity: 11
+  constitution: 19
+  intelligence: 3
+  wisdom: 14
+  charisma: 10
+  challengeRating: 6
+  xp: 2300
+  senses: darkvision 60 ft., passive perception 18
+  languages: Understands Draconic but can’t speak
+  skills: Perception +8
+  actions:
+  - name: Multiattack
+    description: The chimera makes one Ram attack, one Bite attack, and one Claw attack. It can replace the Claw attack with a use of Fire Breath if available.
+  - name: Bite
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 11 (2d6 + 4) Piercing damage, or 18 (4d6 + 4) Piercing damage if the chimera had Advantage on the attack roll.'
+  - name: Claw
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 7 (1d6 + 4) Slashing damage.'
+  - name: Ram
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 10 (1d12 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.'
+  - name: Fire Breath
+    description: 'Dexterity Saving Throw: DC 15, each creature in a 15-foot Cone. Failure: 31 (7d8) Fire damage. Success: Half damage.'

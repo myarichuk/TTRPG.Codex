@@ -1,0 +1,19 @@
+id: flask
+type: equipment
+name: Flask
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 cp  
+
+  **Weight:** 1 lb.
+
+
+  A Flask holds up to 1 pint.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 cp
+  weight: 1

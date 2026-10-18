@@ -1,0 +1,17 @@
+id: carpenters-tools
+type: equipment
+name: Carpenter's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 8 gp  
+
+  **Weight:** 6 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 8 gp
+  weight: 6

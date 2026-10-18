@@ -90,6 +90,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         existing.PublicName = actor.PublicName;
         existing.PublicDescription = actor.PublicDescription;
         existing.BlueprintId = actor.BlueprintId;
+        existing.Sheet = actor.Sheet;
         existing.State = actor.State;
         if (access.IsDm)
         {

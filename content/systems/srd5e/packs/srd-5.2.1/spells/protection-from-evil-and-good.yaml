@@ -1,0 +1,44 @@
+id: protection-from-evil-and-good
+type: spell
+name: Protection from Evil and Good
+description: >-
+  *Level 1 Abjuration (Cleric, Druid, Paladin, Warlock, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S, M (a flask of Holy Water worth 25+, GP, which the spell consumes)  
+
+  **Duration:** Concentration up to 10 minutes
+
+
+  Until the spell ends, one willing creature you touch is protected against creatures that are Aberrations, Celestials, Elementals, Fey, Fiends, or Undead. The protection grants several benefits. Creatures of those types have Disadvantage on attack rolls against the target. The target also can't be possessed by or gain the Charmed or Frightened conditions from them. If the target is already possessed, Charmed, or Frightened by such a creature, the target has Advantage on any new saving throw against the relevant effect.
+tags:
+- level-1
+- abjuration
+- cleric
+- druid
+- paladin
+- warlock
+- wizard
+properties:
+  level: 1
+  school: Abjuration
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  - M
+  material: a flask of Holy Water worth 25+, GP, which the spell consumes
+  duration: Concentration up to 10 minutes
+  concentration: false
+  ritual: false
+  classes:
+  - Cleric
+  - Druid
+  - Paladin
+  - Warlock
+  - Wizard

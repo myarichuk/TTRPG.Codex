@@ -1,14 +1,13 @@
 @inherits LayoutComponentBase
 
-<div class="page-wrapper">
-    <SpellGlyphsBackground />
-    <NavMenu />
-    <main class="main-content">
-        <div class="app-container">
-            @Body
-        </div>
-    </main>
-</div>
-
-@code {
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<AppHeader />
+<main id="main-content" class="page" tabindex="-1">
+    @Body
+</main>
+@* Rendered only by the interactive circuit, never by prerendering: end-to-end tests wait for it
+   before typing, so keystrokes can't land on the static prerender and be lost. *@
+@if (RendererInfo.IsInteractive)
+{
+    <span data-interactive hidden></span>
 }

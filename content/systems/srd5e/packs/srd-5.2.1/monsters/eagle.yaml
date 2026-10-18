@@ -1,0 +1,59 @@
+id: eagle
+type: monster
+name: Eagle
+description: >-
+  *Small Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 4 (1d6 + 1)  
+
+  **Speed** 10 ft., fly 60 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 6 (-2) | 15 (+2) | 12 (+1) | 2 (-4) | 14 (+2) | 7 (-2) |
+
+
+  **Skills** Perception +6  
+
+  **Senses** passive perception 16  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Talons.** Melee Attack Roll: +4, reach 5 feet. Hit: 4 (1d4 + 2) Slashing damage.
+tags:
+- beast
+- small
+- cr-0
+properties:
+  size: Small
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 4
+  hitDice: 1d6 + 1
+  speed: 10 ft., fly 60 ft.
+  strength: 6
+  dexterity: 15
+  constitution: 12
+  intelligence: 2
+  wisdom: 14
+  charisma: 7
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 16
+  languages: None
+  skills: Perception +6
+  actions:
+  - name: Talons
+    description: 'Melee Attack Roll: +4, reach 5 feet. Hit: 4 (1d4 + 2) Slashing damage.'

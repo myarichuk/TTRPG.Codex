@@ -1,0 +1,31 @@
+id: quarterstaff
+type: equipment
+name: Quarterstaff
+description: >-
+  *Arcane Foci, Druidic Foci, Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d6 Bludgeoning (two-handed: 1d8)  
+
+  **Properties:** Versatile  
+
+  **Mastery:** Topple  
+
+  **Cost:** 2 sp  
+
+  **Weight:** 4 lb.
+tags:
+- arcane foci
+- druidic foci
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Arcane Foci
+  cost: 2 sp
+  weight: 4
+  damage: '1d6 Bludgeoning (two-handed: 1d8)'
+  properties:
+  - Versatile
+  mastery: Topple

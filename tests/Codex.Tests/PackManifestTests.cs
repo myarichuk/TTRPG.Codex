@@ -18,7 +18,7 @@ public class PackManifestTests
     [InlineData("1.0.0", "1.0", true)]
     public void IsAppVersionCompatible_WorksCorrectly(string currentAppVersion, string minAppVersion, bool expected)
     {
-        var manifest = new PackManifest("id", "name", "1.0.0", "sysId", MinAppVersion: minAppVersion);
+        var manifest = new PackManifest("id", "name", "1.0.0", "sysId", minAppVersion: minAppVersion);
         Assert.Equal(expected, manifest.IsAppVersionCompatible(currentAppVersion));
     }
 }

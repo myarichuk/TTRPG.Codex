@@ -1,0 +1,65 @@
+id: giant-wasp
+type: monster
+name: Giant Wasp
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 22 (5d8)  
+
+  **Speed** 10 ft., fly 50 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 14 (+2) | 10 (+0) | 1 (-5) | 10 (+0) | 3 (-4) |
+
+
+  **Senses** passive perception 10  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Flyby.** The wasp doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Sting.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage plus 5 (2d4) Poison damage.
+tags:
+- beast
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 22
+  hitDice: 5d8
+  speed: 10 ft., fly 50 ft.
+  strength: 10
+  dexterity: 14
+  constitution: 10
+  intelligence: 1
+  wisdom: 10
+  charisma: 3
+  challengeRating: 1/2
+  xp: 100
+  senses: passive perception 10
+  languages: None
+  traits:
+  - name: Flyby
+    description: The wasp doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+  actions:
+  - name: Sting
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage plus 5 (2d4) Poison damage.'

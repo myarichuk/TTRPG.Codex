@@ -1,235 +1,223 @@
 @page "/"
 @using System.Security.Claims
-@using Codex.Core.AI
 @using Codex.Persistence
-@using Codex.Web.Components.Layout
+@using Codex.Plugin.Abstractions
+@using Codex.Web.Components.Shared
+@using Codex.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
-@inject IActorRepository ActorRepo
-@inject LoreGenerator LoreGenerator
-@inject IJSRuntime JSRuntime
+@inject ISystemCatalog Catalog
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
-<PageTitle>Dashboard | TTRPG.Codex</PageTitle>
+<PageTitle>Campaigns | TTRPG.Codex</PageTitle>
 
-@if (campaigns == null || characters == null)
+<div class="page-header">
+    <div>
+        <h1>Campaigns</h1>
+        <p class="page-subtitle">Every campaign you run or play in. Players join with an invite link from their DM.</p>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="OpenNewDialogAsync" data-testid="new-campaign">
+        <LucideIcon IconName="plus" Size="18" /> New campaign
+    </button>
+</div>
+
+<StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+@if (campaigns == null)
 {
-    <div class="d-flex justify-content-center my-5 py-5">
-        <div class="spinner-border text-accent" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
+    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+}
+else if (campaigns.Count == 0)
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="map" Size="28" /></div>
+        <h2>No campaigns yet</h2>
+        <p>Create one to run a table, or ask your DM for an invite link to join theirs.</p>
+        <button type="button" class="btn btn-primary" @onclick="OpenNewDialogAsync" data-testid="new-campaign-empty">Create your first campaign</button>
     </div>
 }
 else
 {
-    <div class="animate-fade">
-        <header class="d-flex justify-content-between align-items-start">
-            <div>
-                <h1>Your Worlds</h1>
-                <p class="page-subtitle">Welcome back. You have <span>@campaigns.Count()</span> active @(campaigns.Count() == 1 ? "campaign" : "campaigns").</p>
-            </div>
-            <button type="button" class="btn btn-accent d-flex align-items-center gap-2">
-                <LucideIcon IconName="plus" Size="20" />
-                <span>Create Adventure</span>
-            </button>
-        </header>
-
-        <div class="dashboard-grid">
-            @foreach (var campaign in campaigns)
-            {
-                <div class="campaign-card">
-                    <div class="art-preview">
-                        <LucideIcon IconName="@(campaign.SystemId.Contains("DnD") ? "swords" : "anchor")" Size="40" Class="text-white opacity-25" />
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h3 class="card-title mb-0">@campaign.Name</h3>
-                            <button type="button" class="btn-delete-fluence" aria-label="Delete @campaign.Name" @onclick="() => DeleteCampaign(campaign.Id, campaign.Name)" title="Destroy Chronicle">
-                                <LucideIcon IconName="trash-2" Size="14" />
+    <div class="card-grid" data-testid="campaign-list">
+        @foreach (var campaign in campaigns)
+        {
+            var role = RoleOf(campaign);
+            <article class="campaign-card" aria-labelledby="camp-@campaign.Id">
+                <div class="card-head">
+                    <h2 id="camp-@campaign.Id"><a href="/campaigns/@campaign.Id">@campaign.Name</a></h2>
+                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@role</span>
+                </div>
+                <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
+                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description yet." : campaign.Description)</p>
+                <div class="card-foot">
+                    <span class="small-muted">@campaign.Members.Count member@(campaign.Members.Count == 1 ? "" : "s") · updated @campaign.UpdatedAt.ToString("d MMM yyyy")</span>
+                    <div class="row-actions">
+                        @if (campaign.OwnerId == currentUserId)
+                        {
+                            <button type="button" class="icon-btn danger" aria-label="Delete @campaign.Name" title="Delete campaign" @onclick="() => DeleteAsync(campaign)">
+                                <LucideIcon IconName="trash-2" Size="16" />
                             </button>
-                        </div>
-                        <p class="card-text">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description recorded." : campaign.Description)</p>
+                        }
+                        <a href="/campaigns/@campaign.Id" class="btn btn-outline-secondary btn-sm">Open</a>
                     </div>
                 </div>
-            }
-
-            @if (campaigns.Count() < 3)
-            {
-                <button type="button" class="campaign-card card-empty w-100 text-center" aria-label="New Storyline" @onclick="ExpandAI">
-                    <div class="card-body">
-                        <LucideIcon IconName="sparkles" Size="32" Class="sparkle-icon" />
-                        <h3 class="card-title">New Storyline</h3>
-                        <p class="card-text">Start with a blank canvas or let the Oracle suggest a spark.</p>
-                        <div class="mt-4">
-                            <span class="btn btn-sm btn-outline-secondary px-4" style="border-radius: 20px; font-size: 0.75rem;">Browse Hub</span>
-                        </div>
-                    </div>
-                </button>
-            }
-        </div>
-
-        <section>
-            <div class="section-header">
-                <h2 class="h5 mb-0 fw-bold">Recent Archives</h2>
-                <div class="archive-controls">
-                    <button type="button" class="control-btn @(!sortByCreated ? "active" : "")" aria-pressed="@(!sortByCreated ? "true" : "false")" @onclick="() => SetSort(false)">Modified</button>
-                    <button type="button" class="control-btn @(sortByCreated ? "active" : "")" aria-pressed="@(sortByCreated ? "true" : "false")" @onclick="() => SetSort(true)">Newest</button>
-                </div>
-            </div>
-
-            <div class="fluent-table-wrapper">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Subject</th>
-                            <th>Last Modified</th>
-                            <th style="width: 40px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (characters.Any())
-                        {
-                            @foreach (var character in characters)
-                            {
-                                <tr>
-                                    <td>@character.Name</td>
-                                    <td>Character</td>
-                                    <td>@character.UpdatedAt.ToString("MMM dd, yyyy")</td>
-                                    <td><LucideIcon IconName="chevron-right" Size="16" Class="text-tertiary" /></td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <div class="empty-state-icon mx-auto mb-3" style="width: 48px; height: 48px; background: var(--fluent-surface-secondary); border-radius: 50%; display: grid; place-items: center;">
-                                        <LucideIcon IconName="book-open" Size="24" Class="text-tertiary" />
-                                    </div>
-                                    <h3 class="h6 fw-bold mb-2">The Archives are Empty</h3>
-                                    <p class="text-secondary small mb-0">Begin an adventure to see history here.</p>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-3 text-end">
-                <a href="demo" class="text-accent small text-decoration-none fw-600" aria-label="View all lore">View all lore <span aria-hidden="true">→</span></a>
-            </div>
-        </section>
-    </div>
-
-    <!-- AI Toast Interaction -->
-    <div id="ai-toast" style="display: @(showToast ? "block" : "none")">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="small fw-bold text-accent d-flex align-items-center gap-2">
-                <LucideIcon IconName="sparkles" Size="14" /> Oracle Suggestion
-            </span>
-            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" aria-label="Dismiss Oracle Suggestion" @onclick="HideToast"></button>
-        </div>
-        <div class="small text-secondary mb-4" style="line-height: 1.6;">
-            @if (isConsulting)
-            {
-                <div class="d-flex align-items-center gap-2 opacity-50">
-                    <div class="spinner-border spinner-border-sm" role="status"></div> Consulting the archives...
-                </div>
-            }
-            else
-            {
-                @toastContent
-            }
-        </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm w-100 btn-outline-secondary" style="font-size: 0.75rem;" @onclick="HideToast">Dismiss</button>
-            <button type="button" class="btn btn-sm w-100 btn-accent" style="font-size: 0.75rem;" @onclick="HideToast">Use This</button>
-        </div>
+            </article>
+        }
+        <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="New campaign">
+            <LucideIcon IconName="plus" Size="24" />
+            <span class="fw-semibold">New campaign</span>
+        </button>
     </div>
 }
 
-@code {
-    private IEnumerable<CampaignDocument>? campaigns;
-    private IEnumerable<ActorDocument>? characters;
-    private string? currentUserId;
-    private bool sortByCreated = false;
+<ConfirmDialog @ref="confirm" />
 
-    private bool showToast = false;
-    private bool isConsulting = false;
-    private string toastContent = "";
+<dialog id="new-campaign-dialog" class="codex-dialog" aria-labelledby="new-campaign-title" @oncancel="CloseNewDialog">
+    <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
+        <div class="dialog-body">
+            <h2 id="new-campaign-title">New campaign</h2>
+            <div class="mb-3">
+                <label for="nc-name" class="form-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <input id="nc-name" class="form-control" @bind="newName" required maxlength="120" data-testid="new-campaign-name" />
+            </div>
+            <div class="mb-3">
+                <label for="nc-system" class="form-label">Game system <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <select id="nc-system" class="form-select" @bind="newSystemId" required data-testid="new-campaign-system">
+                    @foreach (var system in Catalog.Systems)
+                    {
+                        <option value="@system.Id">@system.Name</option>
+                    }
+                </select>
+                @if (SelectedSystem?.Description is { } description)
+                {
+                    <div class="form-text">@description</div>
+                }
+            </div>
+            <div class="mb-1">
+                <label for="nc-desc" class="form-label">Description</label>
+                <textarea id="nc-desc" class="form-control" rows="2" @bind="newDescription" placeholder="A line or two about the campaign (optional)"></textarea>
+            </div>
+            @if (createError != null)
+            {
+                <p class="text-danger mb-0" role="alert">@createError</p>
+            }
+        </div>
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-outline-secondary" @onclick="CloseNewDialog">Cancel</button>
+            <button type="submit" class="btn btn-primary" disabled="@creating" data-testid="new-campaign-create">@(creating ? "Creating…" : "Create campaign")</button>
+        </div>
+    </form>
+</dialog>
+
+@code {
+    private List<CampaignDocument>? campaigns;
+    private string? currentUserId;
+    private Flash? flash;
+    private ConfirmDialog confirm = null!;
+
+    private string newName = string.Empty;
+    private string newSystemId = string.Empty;
+    private string newDescription = string.Empty;
+    private string? createError;
+    private bool creating;
+
+    private SystemSummary? SelectedSystem => Catalog.Systems.FirstOrDefault(s => s.Id == newSystemId);
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        campaigns = await CampaignRepo.GetAllAsync();
-        await LoadCharacters();
+        newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? string.Empty;
+        await LoadAsync();
     }
 
-    private async Task SetSort(bool newestFirst)
+    private async Task LoadAsync()
     {
-        if (sortByCreated == newestFirst) return;
-        sortByCreated = newestFirst;
-        await LoadCharacters();
+        campaigns = currentUserId == null
+            ? new List<CampaignDocument>()
+            : (await CampaignRepo.GetForUserAsync(currentUserId)).ToList();
     }
 
-    private async Task LoadCharacters()
+    private CampaignRole RoleOf(CampaignDocument campaign) =>
+        campaign.OwnerId == currentUserId
+            ? CampaignRole.DM
+            : campaign.Members.FirstOrDefault(m => m.UserId == currentUserId)?.Role ?? CampaignRole.Observer;
+
+    private async Task OpenNewDialogAsync()
     {
-        characters = null; // Show spinner
-        characters = currentUserId == null
-            ? Array.Empty<ActorDocument>()
-            : await ActorRepo.GetRecentForOwnerAsync(currentUserId, 5, sortByCreated);
-    }
-
-    private async Task DeleteCampaign(string id, string name)
-    {
-        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the campaign '{name}'? This action cannot be undone.");
-        if (!confirm) return;
-
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null) return;
-
-        var result = await CampaignRepo.DeleteAsync(id, userId);
-        if (result == CampaignDeleteResult.Forbidden)
+        createError = null;
+        newName = string.Empty;
+        newDescription = string.Empty;
+        if (string.IsNullOrEmpty(newSystemId))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Only the campaign owner can delete it.");
+            newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? string.Empty;
         }
-        campaigns = await CampaignRepo.GetAllAsync();
-        StateHasChanged();
+
+        await JS.InvokeVoidAsync("codex.showModal", "new-campaign-dialog");
+        await JS.InvokeVoidAsync("codex.focus", "nc-name");
     }
 
-    private async Task ExpandAI()
-    {
-        showToast = true;
-        isConsulting = true;
-        toastContent = "";
-        StateHasChanged();
+    private async Task CloseNewDialog() => await JS.InvokeVoidAsync("codex.closeModal", "new-campaign-dialog");
 
+    private async Task CreateAsync()
+    {
+        if (currentUserId == null) return;
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            createError = "Give the campaign a name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newSystemId))
+        {
+            createError = "No game system is loaded. Add a system.yaml under the content folder and restart.";
+            return;
+        }
+
+        creating = true;
         try
         {
-            // B15: this used to call the Gemini API directly with a hardcoded empty key,
-            // bypassing the app's configured IChatClient entirely and always failing. Route it
-            // through the same LoreGenerator every other AI-touching feature uses; it already
-            // degrades gracefully ("AI integration is not configured.") when no provider is set.
-            toastContent = await LoreGenerator.GenerateLoreAsync(
-                sessionRecap: string.Empty,
-                entityName: "a one-sentence, mysterious TTRPG campaign hook");
+            var doc = new CampaignDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                OwnerId = currentUserId,
+                Name = newName.Trim(),
+                Description = newDescription.Trim(),
+                SystemId = newSystemId,
+                UpdatedAt = DateTime.UtcNow
+            };
+            await CampaignRepo.SaveAsync(doc);
+            await CloseNewDialog();
+            Nav.NavigateTo($"/campaigns/{doc.Id}");
         }
-        catch
+        catch (InvalidOperationException ex)
         {
-            toastContent = "Connection to the Oracle lost.";
+            createError = ex.Message;
         }
         finally
         {
-            isConsulting = false;
-            StateHasChanged();
+            creating = false;
         }
     }
 
-    private void HideToast()
+    private async Task DeleteAsync(CampaignDocument campaign)
     {
-        showToast = false;
+        var ok = await confirm.ShowAsync(
+            $"Delete “{campaign.Name}”?",
+            "This removes the campaign and everything in it: characters, sessions, lore, notes and homebrew. Export a backup first if you want to keep any of it. This cannot be undone.",
+            "Delete campaign",
+            isDestructive: true);
+        if (!ok || currentUserId == null) return;
+
+        var result = await CampaignRepo.DeleteAsync(campaign.Id, currentUserId);
+        flash = result switch
+        {
+            CampaignDeleteResult.Deleted => Flash.Success($"Deleted “{campaign.Name}”."),
+            CampaignDeleteResult.Forbidden => Flash.Error("Only the campaign's owner can delete it."),
+            _ => Flash.Error("That campaign no longer exists.")
+        };
+        await LoadAsync();
     }
 }

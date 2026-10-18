@@ -1,0 +1,30 @@
+id: wand-of-fear
+type: magic-item
+name: Wand of Fear
+description: >-
+  Wand
+
+
+  This wand has 7 charges.
+
+
+  **Spells.** While holding the wand, you can cast one of the spells (save DC 15) on the following table from it. The table indicates how many charges you must expend to cast the spell.
+
+
+  | Spell | Charge Cost |
+
+
+  |---|---|
+
+
+  | Command ("flee" or "grovel" only) | 1 |
+
+
+  | Fear (60-foot Cone) | 3 |
+tags:
+- rare
+- wands
+properties:
+  category: Wands
+  rarity: Rare
+  attunement: true

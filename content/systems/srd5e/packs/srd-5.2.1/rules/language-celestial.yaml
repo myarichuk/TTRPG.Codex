@@ -1,0 +1,7 @@
+id: language-celestial
+type: rule
+name: Celestial
+tags:
+- language
+properties:
+  category: Language

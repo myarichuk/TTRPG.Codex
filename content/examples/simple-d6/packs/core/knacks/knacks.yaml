@@ -1,0 +1,10 @@
+- id: second-wind
+  name: Second Wind
+  description: Spend a Fate Point to recover 3 Grit once per scene.
+  properties:
+    cost: 1
+- id: lucky-break
+  name: Lucky Break
+  description: Spend a Fate Point to declare a helpful coincidence.
+  properties:
+    cost: 1

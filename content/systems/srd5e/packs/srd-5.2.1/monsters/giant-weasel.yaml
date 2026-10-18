@@ -1,0 +1,59 @@
+id: giant-weasel
+type: monster
+name: Giant Weasel
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 9 (2d8)  
+
+  **Speed** 40 ft., climb 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 17 (+3) | 10 (+0) | 4 (-3) | 12 (+1) | 5 (-3) |
+
+
+  **Skills** Acrobatics +5, Perception +3, Stealth +5  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Piercing damage.
+tags:
+- beast
+- medium
+- cr-1/8
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 9
+  hitDice: 2d8
+  speed: 40 ft., climb 30 ft.
+  strength: 11
+  dexterity: 17
+  constitution: 10
+  intelligence: 4
+  wisdom: 12
+  charisma: 5
+  challengeRating: 1/8
+  xp: 25
+  senses: darkvision 60 ft., passive perception 13
+  languages: None
+  skills: Acrobatics +5, Perception +3, Stealth +5
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Piercing damage.'

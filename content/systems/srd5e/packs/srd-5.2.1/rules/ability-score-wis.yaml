@@ -1,0 +1,8 @@
+id: ability-score-wis
+type: rule
+name: Wisdom
+description: Perceptiveness and mental fortitude
+tags:
+- ability-score
+properties:
+  category: Ability Score

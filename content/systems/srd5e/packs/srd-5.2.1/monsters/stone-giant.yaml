@@ -1,0 +1,81 @@
+id: stone-giant
+type: monster
+name: Stone Giant
+description: >-
+  *Huge Giant, Neutral*
+
+
+  **AC** 17  
+
+  **HP** 126 (11d12 + 55)  
+
+  **Speed** 40 ft.  
+
+  **CR** 7 (XP 2900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 23 (+6) | 15 (+2) | 20 (+5) | 10 (+0) | 12 (+1) | 9 (-1) |
+
+
+  **Saving Throws** DEX +5, CON +8, WIS +4  
+
+  **Skills** Athletics +12, Perception +4, Stealth +5  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Giant
+
+
+  ### Actions
+
+  **Multiattack.** The giant makes two attacks, using Stone Club or Boulder in any combination.
+
+
+  **Stone Club.** Melee Attack Roll: +9, reach 15 ft. Hit: 22 (3d10 + 6) Bludgeoning damage.
+
+
+  **Boulder.** Ranged Attack Roll: +9, range 60/240 ft. Hit: 15 (2d8 + 6) Bludgeoning damage. If the target is a Large or smaller creature, it has the Prone condition.
+
+
+
+  ### Reactions
+
+  **Deflect Missile.** Trigger: The giant is hit by a ranged attack roll and takes Bludgeoning, Piercing, or Slashing damage from it. Response: The giant reduces the damage it takes from the attack by 11 (1d10 + 6), and if that damage is reduced to 0, the giant can redirect some of the attack’s force. Dexterity Saving Throw: DC 17, one creature the giant can see within 60 feet. Failure: 11 (1d10 + 6) Force damage.
+tags:
+- giant
+- huge
+- cr-7
+properties:
+  size: Huge
+  creatureType: giant
+  alignment: neutral
+  armorClass: 17
+  hitPoints: 126
+  hitDice: 11d12 + 55
+  speed: 40 ft.
+  strength: 23
+  dexterity: 15
+  constitution: 20
+  intelligence: 10
+  wisdom: 12
+  charisma: 9
+  challengeRating: 7
+  xp: 2900
+  senses: darkvision 60 ft., passive perception 14
+  languages: Giant
+  skills: Athletics +12, Perception +4, Stealth +5
+  savingThrows: DEX +5, CON +8, WIS +4
+  actions:
+  - name: Multiattack
+    description: The giant makes two attacks, using Stone Club or Boulder in any combination.
+  - name: Stone Club
+    description: 'Melee Attack Roll: +9, reach 15 ft. Hit: 22 (3d10 + 6) Bludgeoning damage.'
+  - name: Boulder
+    description: 'Ranged Attack Roll: +9, range 60/240 ft. Hit: 15 (2d8 + 6) Bludgeoning damage. If the target is a Large or smaller creature, it has the Prone condition.'
+  reactions:
+  - name: Deflect Missile
+    description: 'Trigger: The giant is hit by a ranged attack roll and takes Bludgeoning, Piercing, or Slashing damage from it. Response: The giant reduces the damage it takes from the attack by 11 (1d10 + 6), and if that damage is reduced to 0, the giant can redirect some of the attack’s force. Dexterity Saving Throw: DC 17, one creature the giant can see within 60 feet. Failure: 11 (1d10 + 6) Force damage.'

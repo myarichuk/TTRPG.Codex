@@ -1,0 +1,115 @@
+id: adult-green-dragon
+type: monster
+name: Adult Green Dragon
+description: >-
+  *Huge Dragon, Lawful Evil*
+
+
+  **AC** 19  
+
+  **HP** 207 (18d12 + 90)  
+
+  **Speed** 40 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 15 (XP 13000; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 23 (+6) | 12 (+1) | 21 (+5) | 18 (+4) | 15 (+2) | 18 (+4) |
+
+
+  **Saving Throws** DEX +6, WIS +7  
+
+  **Skills** Deception +9, Perception +12, Persuasion +9, Stealth +6  
+
+  **Immunities** poison, Poisoned  
+
+  **Senses** darkvision 120 ft., blindsight 60 ft., passive perception 22  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Amphibious.** The dragon can breathe air and water.
+
+
+  **Legendary Resistance (3/day).** If the dragon fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast Mind Spike (level 3 version).
+
+
+  **Rend.** Melee Attack Roll: +11, reach 10 ft. Hit: 15 (2d8 + 6) Slashing damage plus 7 (2d6) Poison damage.
+
+
+  **Poison Breath.** Constitution Saving Throw: DC 18, each creature in a 60-foot Cone. Failure: 56 (16d6) Poison damage. Success: Half damage.
+
+
+  **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):
+
+
+
+  ### Legendary Actions
+
+  **Mind Invasion.** The dragon uses Spellcasting to cast Mind Spike (level 3 version).
+
+
+  **Noxious Miasma.** Constitution Saving Throw: DC 17, each creature in a 20-foot-radius Sphere centered on a point the dragon can see within 90 feet. Failure: 7 (2d6) Poison damage, and the target takes a −2 penalty to AC until the end of its next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.
+
+
+  **Pounce.** The dragon moves up to half its Speed, and it makes one Rend attack.
+tags:
+- dragon
+- huge
+- cr-15
+properties:
+  size: Huge
+  creatureType: dragon
+  alignment: lawful evil
+  armorClass: 19
+  hitPoints: 207
+  hitDice: 18d12 + 90
+  speed: 40 ft., fly 80 ft., swim 40 ft.
+  strength: 23
+  dexterity: 12
+  constitution: 21
+  intelligence: 18
+  wisdom: 15
+  charisma: 18
+  challengeRating: 15
+  xp: 13000
+  senses: darkvision 120 ft., blindsight 60 ft., passive perception 22
+  languages: Common, Draconic
+  skills: Deception +9, Perception +12, Persuasion +9, Stealth +6
+  savingThrows: DEX +6, WIS +7
+  immunities:
+  - poison
+  - Poisoned
+  traits:
+  - name: Amphibious
+    description: The dragon can breathe air and water.
+  - name: Legendary Resistance (3/day)
+    description: If the dragon fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast Mind Spike (level 3 version).
+  - name: Rend
+    description: 'Melee Attack Roll: +11, reach 10 ft. Hit: 15 (2d8 + 6) Slashing damage plus 7 (2d6) Poison damage.'
+  - name: Poison Breath
+    description: 'Constitution Saving Throw: DC 18, each creature in a 60-foot Cone. Failure: 56 (16d6) Poison damage. Success: Half damage.'
+  - name: Spellcasting
+    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):'
+  legendaryActions:
+  - name: Mind Invasion
+    description: The dragon uses Spellcasting to cast Mind Spike (level 3 version).
+  - name: Noxious Miasma
+    description: 'Constitution Saving Throw: DC 17, each creature in a 20-foot-radius Sphere centered on a point the dragon can see within 90 feet. Failure: 7 (2d6) Poison damage, and the target takes a −2 penalty to AC until the end of its next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.'
+  - name: Pounce
+    description: The dragon moves up to half its Speed, and it makes one Rend attack.

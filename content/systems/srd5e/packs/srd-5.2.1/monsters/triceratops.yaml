@@ -1,0 +1,61 @@
+id: triceratops
+type: monster
+name: Triceratops
+description: >-
+  *Huge Beast, Unaligned*
+
+
+  **AC** 14  
+
+  **HP** 114 (12d12 + 36)  
+
+  **Speed** 50 ft.  
+
+  **CR** 5 (XP 1800; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 22 (+6) | 9 (-1) | 17 (+3) | 2 (-4) | 11 (+0) | 5 (-3) |
+
+
+  **Senses** passive perception 10  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The triceratops makes two Gore attacks.
+
+
+  **Gore.** Melee Attack Roll: +9, reach 5 ft. Hit: 19 (2d12 + 6) Piercing damage. If the target is Huge or smaller and the triceratops moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.
+tags:
+- beast
+- huge
+- cr-5
+properties:
+  size: Huge
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 14
+  hitPoints: 114
+  hitDice: 12d12 + 36
+  speed: 50 ft.
+  strength: 22
+  dexterity: 9
+  constitution: 17
+  intelligence: 2
+  wisdom: 11
+  charisma: 5
+  challengeRating: 5
+  xp: 1800
+  senses: passive perception 10
+  languages: None
+  actions:
+  - name: Multiattack
+    description: The triceratops makes two Gore attacks.
+  - name: Gore
+    description: 'Melee Attack Roll: +9, reach 5 ft. Hit: 19 (2d12 + 6) Piercing damage. If the target is Huge or smaller and the triceratops moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.'

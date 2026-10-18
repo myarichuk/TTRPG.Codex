@@ -1,0 +1,96 @@
+id: bone-devil
+type: monster
+name: Bone Devil
+description: >-
+  *Large Fiend, Lawful Evil*
+
+
+  **AC** 16  
+
+  **HP** 161 (17d10 + 68)  
+
+  **Speed** 40 ft., fly 40 ft.  
+
+  **CR** 9 (XP 5000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 16 (+3) | 18 (+4) | 13 (+1) | 14 (+2) | 16 (+3) |
+
+
+  **Saving Throws** STR +8, INT +5, WIS +6, CHA +7  
+
+  **Skills** Deception +7, Insight +6  
+
+  **Resistances** cold  
+
+  **Immunities** fire, poison, Poisoned  
+
+  **Senses** darkvision 120 ft. (unimpeded by magical darkness), passive perception 12  
+
+  **Languages** Infernal; telepathy 120 ft.
+
+
+  ### Traits
+
+  **Diabolical Restoration.** If the devil dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Nine Hells.
+
+
+  **Magic Resistance.** The devil has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The devil makes two Claw attacks and one Infernal Sting attack.
+
+
+  **Claw.** Melee Attack Roll: +8, reach 10 ft. Hit: 13 (2d8 + 4) Slashing damage.
+
+
+  **Infernal Sting.** Melee Attack Roll: +8, reach 10 ft. Hit: 15 (2d10 + 4) Piercing damage plus 18 (4d8) Poison damage, and the target has the Poisoned condition until the start of the devil’s next turn. While Poisoned, the target can’t regain Hit Points.
+tags:
+- fiend
+- large
+- cr-9
+properties:
+  size: Large
+  creatureType: fiend
+  alignment: lawful evil
+  armorClass: 16
+  hitPoints: 161
+  hitDice: 17d10 + 68
+  speed: 40 ft., fly 40 ft.
+  strength: 18
+  dexterity: 16
+  constitution: 18
+  intelligence: 13
+  wisdom: 14
+  charisma: 16
+  challengeRating: 9
+  xp: 5000
+  senses: darkvision 120 ft. (unimpeded by magical darkness), passive perception 12
+  languages: Infernal; telepathy 120 ft.
+  skills: Deception +7, Insight +6
+  savingThrows: STR +8, INT +5, WIS +6, CHA +7
+  resistances:
+  - cold
+  immunities:
+  - fire
+  - poison
+  - Poisoned
+  traits:
+  - name: Diabolical Restoration
+    description: If the devil dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Nine Hells.
+  - name: Magic Resistance
+    description: The devil has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The devil makes two Claw attacks and one Infernal Sting attack.
+  - name: Claw
+    description: 'Melee Attack Roll: +8, reach 10 ft. Hit: 13 (2d8 + 4) Slashing damage.'
+  - name: Infernal Sting
+    description: 'Melee Attack Roll: +8, reach 10 ft. Hit: 15 (2d10 + 4) Piercing damage plus 18 (4d8) Poison damage, and the target has the Poisoned condition until the start of the devil’s next turn. While Poisoned, the target can’t regain Hit Points.'

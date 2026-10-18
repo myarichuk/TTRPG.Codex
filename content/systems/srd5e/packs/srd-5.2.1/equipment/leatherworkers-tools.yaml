@@ -1,0 +1,17 @@
+id: leatherworkers-tools
+type: equipment
+name: Leatherworker's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 5 gp  
+
+  **Weight:** 5 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 5 gp
+  weight: 5

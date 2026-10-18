@@ -1,0 +1,17 @@
+id: flute
+type: equipment
+name: Flute
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 1 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 2 gp
+  weight: 1

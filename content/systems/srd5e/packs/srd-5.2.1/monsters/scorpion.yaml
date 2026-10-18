@@ -1,0 +1,56 @@
+id: scorpion
+type: monster
+name: Scorpion
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 1 (1d4 - 1)  
+
+  **Speed** 10 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 2 (-4) | 11 (+0) | 8 (-1) | 1 (-5) | 8 (-1) | 2 (-4) |
+
+
+  **Senses** blindsight 10 ft., passive perception 9  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Sting.** Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage plus 3 (1d6) Poison damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 1
+  hitDice: 1d4 - 1
+  speed: 10 ft.
+  strength: 2
+  dexterity: 11
+  constitution: 8
+  intelligence: 1
+  wisdom: 8
+  charisma: 2
+  challengeRating: 0
+  xp: 10
+  senses: blindsight 10 ft., passive perception 9
+  languages: None
+  actions:
+  - name: Sting
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage plus 3 (1d6) Poison damage.'

@@ -1,0 +1,15 @@
+id: amulet-of-health
+type: magic-item
+name: Amulet of Health
+description: >-
+  Wondrous Item
+
+
+  Your Constitution is 19 while you wear this amulet. It has no effect on you if your Constitution is 19 or higher without it.
+tags:
+- rare
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Rare
+  attunement: true

@@ -1,0 +1,59 @@
+id: warhorse
+type: monster
+name: Warhorse
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 19 (3d10 + 3)  
+
+  **Speed** 60 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 12 (+1) | 13 (+1) | 2 (-4) | 12 (+1) | 7 (-2) |
+
+
+  **Saving Throws** WIS +3  
+
+  **Senses** passive perception 11  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Hooves.** Melee Attack Roll: +6, reach 5 ft. Hit: 9 (2d4 + 4) Bludgeoning damage. If the target is a Large or smaller creature and the horse moved 20+ feet straight toward it immediately before the hit, the target takes an extra 5 (2d4) Bludgeoning damage and has the Prone condition.
+tags:
+- beast
+- large
+- cr-1/2
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 19
+  hitDice: 3d10 + 3
+  speed: 60 ft.
+  strength: 18
+  dexterity: 12
+  constitution: 13
+  intelligence: 2
+  wisdom: 12
+  charisma: 7
+  challengeRating: 1/2
+  xp: 100
+  senses: passive perception 11
+  languages: None
+  savingThrows: WIS +3
+  actions:
+  - name: Hooves
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 9 (2d4 + 4) Bludgeoning damage. If the target is a Large or smaller creature and the horse moved 20+ feet straight toward it immediately before the hit, the target takes an extra 5 (2d4) Bludgeoning damage and has the Prone condition.'

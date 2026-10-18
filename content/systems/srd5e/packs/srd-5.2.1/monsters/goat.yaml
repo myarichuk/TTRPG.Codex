@@ -1,0 +1,62 @@
+id: goat
+type: monster
+name: Goat
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 4 (1d8)  
+
+  **Speed** 40 ft., climb 30 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 10 (+0) | 11 (+0) | 2 (-4) | 10 (+0) | 5 (-3) |
+
+
+  **Saving Throws** STR +2  
+
+  **Skills** Perception +2  
+
+  **Senses** darkvision 60 ft., passive perception 12  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Ram.** Melee Attack Roll: +2, reach 5 ft. Hit: 1 Bludgeoning damage, or 2 (1d4) Bludgeoning damage if the goat moved 20+ feet straight toward the target immediately before the hit.
+tags:
+- beast
+- medium
+- cr-0
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 4
+  hitDice: 1d8
+  speed: 40 ft., climb 30 ft.
+  strength: 11
+  dexterity: 10
+  constitution: 11
+  intelligence: 2
+  wisdom: 10
+  charisma: 5
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 60 ft., passive perception 12
+  languages: None
+  skills: Perception +2
+  savingThrows: STR +2
+  actions:
+  - name: Ram
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 1 Bludgeoning damage, or 2 (1d4) Bludgeoning damage if the goat moved 20+ feet straight toward the target immediately before the hit.'

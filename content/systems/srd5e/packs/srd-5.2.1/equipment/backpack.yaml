@@ -1,0 +1,19 @@
+id: backpack
+type: equipment
+name: Backpack
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 5 lb.
+
+
+  A Backpack holds up to 30 pounds within 1 cubic foot. It can also serve as a saddlebag.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 5

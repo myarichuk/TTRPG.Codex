@@ -1,0 +1,90 @@
+id: gold-dragon-wyrmling
+type: monster
+name: Gold Dragon Wyrmling
+description: >-
+  *Medium Dragon, Lawful Good*
+
+
+  **AC** 17  
+
+  **HP** 60 (8d8 + 24)  
+
+  **Speed** 30 ft., fly 60 ft., swim 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 14 (+2) | 17 (+3) | 14 (+2) | 11 (+0) | 16 (+3) |
+
+
+  **Saving Throws** DEX +4, WIS +2  
+
+  **Skills** Perception +4, Stealth +4  
+
+  **Immunities** fire  
+
+  **Senses** darkvision 60 ft., blindsight 10 ft., passive perception 14  
+
+  **Languages** Draconic
+
+
+  ### Traits
+
+  **Amphibious.** The dragon can breathe air and water.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +6, reach 5 ft. Hit: 9 (1d10 + 4) Slashing damage.
+
+
+  **Fire Breath.** Dexterity Saving Throw: DC 13, each creature in a 15-foot Cone. Failure: 22 (4d10) Fire damage. Success: Half damage.
+
+
+  **Weakening Breath.** Strength Saving Throw: DC 13, each creature that isn’t currently affected by this breath in a 15-foot Cone. Failure: The target has Disadvantage on Strength-based D20 Tests and subtracts 2 (1d4) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.
+tags:
+- dragon
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: dragon
+  alignment: lawful good
+  armorClass: 17
+  hitPoints: 60
+  hitDice: 8d8 + 24
+  speed: 30 ft., fly 60 ft., swim 30 ft.
+  strength: 19
+  dexterity: 14
+  constitution: 17
+  intelligence: 14
+  wisdom: 11
+  charisma: 16
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., blindsight 10 ft., passive perception 14
+  languages: Draconic
+  skills: Perception +4, Stealth +4
+  savingThrows: DEX +4, WIS +2
+  immunities:
+  - fire
+  traits:
+  - name: Amphibious
+    description: The dragon can breathe air and water.
+  actions:
+  - name: Multiattack
+    description: The dragon makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 9 (1d10 + 4) Slashing damage.'
+  - name: Fire Breath
+    description: 'Dexterity Saving Throw: DC 13, each creature in a 15-foot Cone. Failure: 22 (4d10) Fire damage. Success: Half damage.'
+  - name: Weakening Breath
+    description: 'Strength Saving Throw: DC 13, each creature that isn’t currently affected by this breath in a 15-foot Cone. Failure: The target has Disadvantage on Strength-based D20 Tests and subtracts 2 (1d4) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.'

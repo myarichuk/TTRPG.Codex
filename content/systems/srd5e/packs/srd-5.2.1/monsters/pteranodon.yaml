@@ -1,0 +1,68 @@
+id: pteranodon
+type: monster
+name: Pteranodon
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 13 (3d8)  
+
+  **Speed** 10 ft., fly 60 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 12 (+1) | 15 (+2) | 10 (+0) | 2 (-4) | 9 (-1) | 5 (-3) |
+
+
+  **Skills** Perception +1  
+
+  **Senses** passive perception 11  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Flyby.** The pteranodon doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Piercing damage.
+tags:
+- beast
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 13
+  hitDice: 3d8
+  speed: 10 ft., fly 60 ft.
+  strength: 12
+  dexterity: 15
+  constitution: 10
+  intelligence: 2
+  wisdom: 9
+  charisma: 5
+  challengeRating: 1/4
+  xp: 50
+  senses: passive perception 11
+  languages: None
+  skills: Perception +1
+  traits:
+  - name: Flyby
+    description: The pteranodon doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Piercing damage.'

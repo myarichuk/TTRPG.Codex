@@ -1,0 +1,64 @@
+id: minotaur-of-baphomet
+type: monster
+name: Minotaur of Baphomet
+description: >-
+  *Large Monstrosity, Chaotic Evil*
+
+
+  **AC** 14  
+
+  **HP** 85 (10d10 + 30)  
+
+  **Speed** 40 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 11 (+0) | 16 (+3) | 6 (-2) | 16 (+3) | 9 (-1) |
+
+
+  **Skills** Perception +7, Survival +7  
+
+  **Senses** darkvision 60 ft., passive perception 17  
+
+  **Languages** Abyssal
+
+
+  ### Actions
+
+  **Abyssal Glaive.** Melee Attack Roll: +6, reach 10 ft. Hit: 10 (1d12 + 4) Slashing damage plus 10 (3d6) Necrotic damage.
+
+
+  **Gore.** Melee Attack Roll: +6, reach 5 ft. Hit: 18 (4d6 + 4) Piercing damage. If the target is a Large or smaller creature and the minotaur moved 10+ feet straight toward it immediately before the hit, the target takes an extra 10 (3d6) Piercing damage and has the Prone condition.
+tags:
+- monstrosity
+- large
+- cr-3
+properties:
+  size: Large
+  creatureType: monstrosity
+  alignment: chaotic evil
+  armorClass: 14
+  hitPoints: 85
+  hitDice: 10d10 + 30
+  speed: 40 ft.
+  strength: 18
+  dexterity: 11
+  constitution: 16
+  intelligence: 6
+  wisdom: 16
+  charisma: 9
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 17
+  languages: Abyssal
+  skills: Perception +7, Survival +7
+  actions:
+  - name: Abyssal Glaive
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 10 (1d12 + 4) Slashing damage plus 10 (3d6) Necrotic damage.'
+  - name: Gore
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 18 (4d6 + 4) Piercing damage. If the target is a Large or smaller creature and the minotaur moved 10+ feet straight toward it immediately before the hit, the target takes an extra 10 (3d6) Piercing damage and has the Prone condition.'

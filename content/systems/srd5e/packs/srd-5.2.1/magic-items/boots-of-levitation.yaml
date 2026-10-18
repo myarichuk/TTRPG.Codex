@@ -1,0 +1,15 @@
+id: boots-of-levitation
+type: magic-item
+name: Boots of Levitation
+description: >-
+  Wondrous Item
+
+
+  While you wear these boots, you can cast Levitate on yourself.
+tags:
+- rare
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Rare
+  attunement: true

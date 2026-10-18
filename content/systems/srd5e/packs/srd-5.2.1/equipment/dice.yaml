@@ -1,0 +1,17 @@
+id: dice
+type: equipment
+name: Dice
+description: >-
+  *Gaming Sets, Tools*
+
+
+  **Cost:** 1 sp  
+
+  **Weight:** 0 lb.
+tags:
+- gaming sets
+- tools
+properties:
+  category: Gaming Sets
+  cost: 1 sp
+  weight: 0

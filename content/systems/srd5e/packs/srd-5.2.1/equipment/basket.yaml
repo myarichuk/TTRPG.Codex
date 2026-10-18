@@ -1,0 +1,19 @@
+id: basket
+type: equipment
+name: Basket
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 2 lb.
+
+
+  A Basket holds up to 40 pounds within 2 cubic feet.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 2

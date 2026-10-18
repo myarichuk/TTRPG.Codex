@@ -1,0 +1,76 @@
+id: blue-dragon-wyrmling
+type: monster
+name: Blue Dragon Wyrmling
+description: >-
+  *Medium Dragon, Lawful Evil*
+
+
+  **AC** 17  
+
+  **HP** 65 (10d8 + 20)  
+
+  **Speed** 30 ft., burrow 15 ft., fly 60 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 10 (+0) | 15 (+2) | 12 (+1) | 11 (+0) | 15 (+2) |
+
+
+  **Saving Throws** DEX +2, WIS +2  
+
+  **Skills** Perception +4, Stealth +2  
+
+  **Immunities** lightning  
+
+  **Senses** darkvision 60 ft., blindsight 10 ft., passive perception 14  
+
+  **Languages** Draconic
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Slashing damage plus 3 (1d6) Lightning damage.
+
+
+  **Lightning Breath.** Dexterity Saving Throw: DC 12, each creature in a 30-foot-long, 5-footwide Line. Failure: 21 (6d6) Lightning damage. Success: Half damage.
+tags:
+- dragon
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: dragon
+  alignment: lawful evil
+  armorClass: 17
+  hitPoints: 65
+  hitDice: 10d8 + 20
+  speed: 30 ft., burrow 15 ft., fly 60 ft.
+  strength: 17
+  dexterity: 10
+  constitution: 15
+  intelligence: 12
+  wisdom: 11
+  charisma: 15
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., blindsight 10 ft., passive perception 14
+  languages: Draconic
+  skills: Perception +4, Stealth +2
+  savingThrows: DEX +2, WIS +2
+  immunities:
+  - lightning
+  actions:
+  - name: Multiattack
+    description: The dragon makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Slashing damage plus 3 (1d6) Lightning damage.'
+  - name: Lightning Breath
+    description: 'Dexterity Saving Throw: DC 12, each creature in a 30-foot-long, 5-footwide Line. Failure: 21 (6d6) Lightning damage. Success: Half damage.'

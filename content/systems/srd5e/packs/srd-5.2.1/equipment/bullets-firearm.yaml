@@ -1,0 +1,16 @@
+id: bullets-firearm
+type: equipment
+name: Bullets, Firearm
+description: >-
+  *Ammunition*
+
+
+  **Cost:** 3 gp  
+
+  **Weight:** 2 lb.
+tags:
+- ammunition
+properties:
+  category: Ammunition
+  cost: 3 gp
+  weight: 2

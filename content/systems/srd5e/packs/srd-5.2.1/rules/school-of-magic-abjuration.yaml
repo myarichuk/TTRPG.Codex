@@ -1,0 +1,8 @@
+id: school-of-magic-abjuration
+type: rule
+name: Abjuration
+description: Prevents or reverses harmful effects
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

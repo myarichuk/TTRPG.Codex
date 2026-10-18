@@ -1,0 +1,81 @@
+id: centaur-trooper
+type: monster
+name: Centaur Trooper
+description: >-
+  *Large Fey, Neutral Good*
+
+
+  **AC** 16 (Breastplate)  
+
+  **HP** 45 (6d10 + 12)  
+
+  **Speed** 50 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 14 (+2) | 14 (+2) | 9 (-1) | 13 (+1) | 11 (+0) |
+
+
+  **Skills** Athletics +6, Perception +3  
+
+  **Gear** Breastplate, Longbow, Pike  
+
+  **Senses** passive perception 13  
+
+  **Languages** Elvish, Sylvan
+
+
+  ### Actions
+
+  **Multiattack.** The centaur makes two attacks, using Pike or Longbow in any combination.
+
+
+  **Pike.** Melee Attack Roll: +6, reach 10 ft. Hit: 9 (1d10 + 4) Piercing damage.
+
+
+  **Longbow.** Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Trampling Charge.** The centaur moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space the centaur enters is targeted once by the following effect. Strength Saving Throw: DC 14. Failure: 7 (1d6 + 4) Bludgeoning damage, and the target has the Prone condition.
+tags:
+- fey
+- large
+- cr-2
+properties:
+  size: Large
+  creatureType: fey
+  alignment: neutral good
+  armorClass: 16
+  hitPoints: 45
+  hitDice: 6d10 + 12
+  speed: 50 ft.
+  strength: 18
+  dexterity: 14
+  constitution: 14
+  intelligence: 9
+  wisdom: 13
+  charisma: 11
+  challengeRating: 2
+  xp: 450
+  senses: passive perception 13
+  languages: Elvish, Sylvan
+  skills: Athletics +6, Perception +3
+  gear: Breastplate, Longbow, Pike
+  actions:
+  - name: Multiattack
+    description: The centaur makes two attacks, using Pike or Longbow in any combination.
+  - name: Pike
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 9 (1d10 + 4) Piercing damage.'
+  - name: Longbow
+    description: 'Ranged Attack Roll: +4, range 150/600 ft. Hit: 6 (1d8 + 2) Piercing damage.'
+  bonusActions:
+  - name: Trampling Charge
+    description: 'The centaur moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space the centaur enters is targeted once by the following effect. Strength Saving Throw: DC 14. Failure: 7 (1d6 + 4) Bludgeoning damage, and the target has the Prone condition.'

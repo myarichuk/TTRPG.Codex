@@ -1,0 +1,89 @@
+@using Codex.Persistence
+@inject ISessionRepository SessionRepo
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">Sessions</h2>
+        <p class="page-subtitle">Each session keeps its recap, notes, rolls and event log.</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="@(Ctx.IsDm ? "col-lg-8" : "col-12")">
+        @if (sessions == null)
+        {
+            <div class="d-flex justify-content-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+        }
+        else if (sessions.Count == 0)
+        {
+            <div class="empty">
+                <div class="empty-icon"><LucideIcon IconName="calendar" Size="26" /></div>
+                <h3>No sessions yet</h3>
+                <p>@(Ctx.IsDm ? "Plan one here, or start the table and a live session is created for you." : "The DM has not planned a session yet.")</p>
+            </div>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-0" data-testid="session-list">
+                @foreach (var session in sessions)
+                {
+                    <li class="list-row">
+                        <div class="row-main">
+                            <div class="row-title"><a href="@Ctx.BasePath/sessions/@session.Id">@(string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title)</a></div>
+                            <div class="row-sub">@session.Date.ToLocalTime().ToString("dddd d MMM yyyy") · @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</div>
+                        </div>
+                        <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+    @if (Ctx.IsDm)
+    {
+        <div class="col-lg-4">
+            <section class="panel" aria-labelledby="plan-heading">
+                <div class="panel-title"><h3 id="plan-heading">Plan a session</h3></div>
+                <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
+                    <div class="mb-2">
+                        <label for="session-title" class="form-label">Title</label>
+                        <input id="session-title" class="form-control" @bind="newTitle" placeholder="e.g. Into the Greyharbour sewers" data-testid="new-session-title" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="session-date" class="form-label">Date</label>
+                        <input id="session-date" type="date" class="form-control" @bind="newDate" />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" data-testid="new-session-add">Add session</button>
+                </form>
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private List<SessionDocument>? sessions;
+    private string newTitle = string.Empty;
+    private DateTime newDate = DateTime.Today;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync() =>
+        sessions = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).ToList();
+
+    private async Task CreateAsync()
+    {
+        var session = new SessionDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = Ctx.Campaign.Id,
+            Title = newTitle.Trim(),
+            Date = DateTime.SpecifyKind(newDate, DateTimeKind.Local).ToUniversalTime(),
+            Status = SessionStatus.Planned
+        };
+        await SessionRepo.SaveAsync(session);
+        newTitle = string.Empty;
+        Ctx.Notify(Flash.Success("Session planned."));
+        await LoadAsync();
+    }
+}

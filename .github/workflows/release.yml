@@ -45,15 +45,12 @@ jobs:
       - name: Publish macOS (arm64)
         run: dotnet publish src/Codex.Web/Codex.Web.csproj -c Release -r osx-arm64 -o dist/macos -p:PublishSingleFile=true -p:SelfContained=true -p:Version=${{ steps.gitversion.outputs.semVer }}
 
-      - name: Build plugins
-        run: |
-          dotnet build src/Codex.Systems.DnD5e/Codex.Systems.DnD5e.csproj -c Release -o build/plugins
-
-      - name: Populate plugins/ next to each published app
+      # Game systems and content are data: ship the content/ folder beside each executable, where
+      # the app looks for it first (see src/Codex.Web/Services/ContentRoots.cs).
+      - name: Copy content/ next to each published app
         run: |
           for platform in linux win macos; do
-            mkdir -p dist/$platform/plugins
-            cp build/plugins/Codex.Systems.DnD5e.dll dist/$platform/plugins/
+            cp -R content dist/$platform/content
           done
 
       # TODO(B10): embedded RavenDB still shells out to a child `dotnet Raven.Server.dll`
@@ -79,8 +76,8 @@ jobs:
             fi
             sleep 1
           done
-          if ! grep -q "Loaded plugin" smoke.log; then
-            echo "No plugin was loaded - see smoke.log" >&2
+          if ! grep -q "Loaded data-driven system srd5e" smoke.log; then
+            echo "The SRD system was not loaded - see smoke.log" >&2
             cat smoke.log
             kill $APP_PID || true
             exit 1

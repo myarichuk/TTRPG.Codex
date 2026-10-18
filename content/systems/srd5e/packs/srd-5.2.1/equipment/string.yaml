@@ -1,0 +1,19 @@
+id: string
+type: equipment
+name: String
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 sp  
+
+  **Weight:** 0 lb.
+
+
+  String is 10 feet long. You can tie a knot in it as a Utilize action.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 sp
+  weight: 0

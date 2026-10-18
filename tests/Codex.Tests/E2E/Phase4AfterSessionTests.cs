@@ -5,16 +5,12 @@ using Microsoft.Playwright;
 namespace Codex.Tests.E2E;
 
 /// <summary>
-/// The Phase 4 exit criterion: after and between sessions.
-///   1. The DM authors lore and reveals one fact to a single actor.
-///   2. That actor's player sees it in the Grimoire; the other player doesn't; nobody but the
-///      DM ever receives the DM-only fact - asserted on the DOM and the circuit payload.
-///   3. A player adds a private and a public session note; the other player sees only the
-///      public one (DOM and payload); the DM sees both.
+/// After and between sessions:
+///   1. The DM authors lore and reveals one fact to a single character.
+///   2. That character's player sees it; the other player doesn't; nobody but the DM ever receives
+///      the DM-only fact - asserted on the DOM and the circuit payload.
+///   3. A player adds a private and a party note; the other player sees only the party one; the DM both.
 ///   4. The DM writes a recap; players can read it.
-///
-/// One scenario, one Fact, like <see cref="Phase3ExitCriteriaTests"/>: one app boot, three
-/// logged-in circuits, sequential stages of the same campaign.
 /// </summary>
 [Collection("RavenDb")]
 public class Phase4AfterSessionTests : IClassFixture<AppFixture>
@@ -24,7 +20,7 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
     public Phase4AfterSessionTests(AppFixture app) => _app = app;
 
     [Fact]
-    public async Task Phase4_AfterAndBetweenSessions_Async()
+    public async Task AfterAndBetweenSessions_Async()
     {
         const string dmPassword = "Correct-Horse-1";
         const string playerPassword = "Correct-Horse-2";
@@ -47,35 +43,17 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
 
         var player1Frames = new List<string>();
         var player2Frames = new List<string>();
-        player1.WebSocket += (_, ws) => ws.FrameReceived += (_, frame) =>
-        {
-            if (frame.Text != null)
-            {
-                lock (player1Frames) player1Frames.Add(frame.Text);
-            }
-        };
-        player2.WebSocket += (_, ws) => ws.FrameReceived += (_, frame) =>
-        {
-            if (frame.Text != null)
-            {
-                lock (player2Frames) player2Frames.Add(frame.Text);
-            }
-        };
+        player1.WebSocket += (_, ws) => ws.FrameReceived += (_, frame) => { if (frame.Text != null) lock (player1Frames) player1Frames.Add(frame.Text); };
+        player2.WebSocket += (_, ws) => ws.FrameReceived += (_, frame) => { if (frame.Text != null) lock (player2Frames) player2Frames.Add(frame.Text); };
 
-        await LoginAsync(dm, "dm_" + dmId, dmPassword);
-        await LoginAsync(player1, "aria_" + player1Id, playerPassword);
-        await LoginAsync(player2, "bram_" + player2Id, playerPassword);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, dmPassword);
+        await E2EHelpers.LoginAsync(player1, "aria_" + player1Id, playerPassword);
+        await E2EHelpers.LoginAsync(player2, "bram_" + player2Id, playerPassword);
 
-        await dm.GotoAsync("/campaigns");
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Create Your First Campaign" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Combat" }).WaitForAsync();
-        var campaignId = new Uri(dm.Url).Segments[^1].TrimEnd('/');
-
-        var inviteUrl = await dm.Locator("div.card:has(h5:text('Invite')) input").InputValueAsync();
-        await player1.GotoAsync(inviteUrl);
-        await player1.GetByText("You're in!").WaitForAsync();
-        await player2.GotoAsync(inviteUrl);
-        await player2.GetByText("You're in!").WaitForAsync();
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Between Sessions");
+        var inviteUrl = await E2EHelpers.ReadInviteLinkAsync(dm, campaignId);
+        await E2EHelpers.JoinAsync(player1, inviteUrl);
+        await E2EHelpers.JoinAsync(player2, inviteUrl);
 
         var ariaActorId = "p4-aria-" + Guid.NewGuid();
         var bramActorId = "p4-bram-" + Guid.NewGuid();
@@ -85,106 +63,83 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
             new TestSeedActor { Id = bramActorId, CampaignId = campaignId, Name = "Bram", Kind = ActorKind.PlayerCharacter, OwnerUserId = player2Id, Visibility = ActorVisibility.Known, Hp = 10, HpMax = 10 }
         });
 
-        // ---- DM authors two facts, one Knowers-only, one DM-only. ----
-
+        // ---- The DM authors two facts, one to be revealed, one DM-only. ----
         const string revealedSummary = "P4 The Bridge Is Trapped";
         const string secretSummary = "P4 Secret Villain Plot";
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Lore" }).ClickAsync();
-        var newFactCard = dm.Locator("div.card:has(h5:text('New Fact'))");
-        await newFactCard.Locator("input[placeholder='Summary']").FillAsync(revealedSummary);
-        await newFactCard.Locator("select").SelectOptionAsync("KnowersOnly");
-        await newFactCard.GetByRole(AriaRole.Button, new() { Name = "Add Fact" }).ClickAsync();
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "lore");
+        await dm.GetByTestId("new-fact-summary").FillAsync(revealedSummary);
+        await dm.GetByTestId("new-fact-visibility").SelectOptionAsync("KnowersOnly");
+        await dm.GetByTestId("new-fact-add").ClickAsync();
         await dm.GetByText(revealedSummary).WaitForAsync();
 
-        await newFactCard.Locator("input[placeholder='Summary']").FillAsync(secretSummary);
-        await newFactCard.Locator("select").SelectOptionAsync("DmOnly");
-        await newFactCard.GetByRole(AriaRole.Button, new() { Name = "Add Fact" }).ClickAsync();
+        await dm.GetByTestId("new-fact-summary").FillAsync(secretSummary);
+        await dm.GetByTestId("new-fact-visibility").SelectOptionAsync("DmOnly");
+        await dm.GetByTestId("new-fact-add").ClickAsync();
         await dm.GetByText(secretSummary).WaitForAsync();
 
-        // ---- DM reveals the bridge fact to Aria alone, from the Grimoire. ----
-
-        await dm.GotoAsync($"/campaigns/{campaignId}/grimoire");
-        var bridgeCard = dm.Locator(".lore-card", new() { HasText = revealedSummary });
-        await bridgeCard.WaitForAsync();
-        await bridgeCard.GetByLabel("Actor to reveal to").SelectOptionAsync(new SelectOptionValue { Label = "Aria" });
-        await bridgeCard.GetByRole(AriaRole.Button, new() { Name = "Reveal", Exact = true }).ClickAsync();
+        // ---- Reveal the bridge fact to Aria alone. ----
+        var bridgeCard = dm.GetByTestId("fact-card").Filter(new() { HasText = revealedSummary });
+        await bridgeCard.GetByLabel("Reveal to").SelectOptionAsync(new SelectOptionValue { Label = "Aria" });
+        await bridgeCard.GetByRole(AriaRole.Button, new() { Name = "Reveal to character" }).ClickAsync();
         await bridgeCard.GetByText("Known by: Aria").WaitForAsync();
 
-        await Assertions.Expect(dm.GetByText(revealedSummary)).ToBeVisibleAsync();
-        await Assertions.Expect(dm.GetByText(secretSummary)).ToBeVisibleAsync();
-
-        // ---- Players' Grimoires: Aria's player knows, Bram's doesn't, nobody sees the secret. ----
-
-        await player1.GotoAsync($"/campaigns/{campaignId}/grimoire");
+        // ---- Players' lore: Aria's player knows, Bram's doesn't, nobody sees the secret. ----
+        await E2EHelpers.GoToSectionAsync(player1, campaignId, "lore");
         await Assertions.Expect(player1.GetByText(revealedSummary)).ToBeVisibleAsync();
         await Assertions.Expect(player1.GetByText(secretSummary)).ToHaveCountAsync(0);
 
-        await player2.GotoAsync($"/campaigns/{campaignId}/grimoire");
+        await E2EHelpers.GoToSectionAsync(player2, campaignId, "lore");
+        await player2.GetByText("Lore").First.WaitForAsync();
         await Assertions.Expect(player2.GetByText(revealedSummary)).ToHaveCountAsync(0);
         await Assertions.Expect(player2.GetByText(secretSummary)).ToHaveCountAsync(0);
 
         // ---- Session notes: private stays between the author and the DM. ----
-
-        await dm.GetByRole(AriaRole.Link, new() { Name = "Campaign", Exact = true }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Sessions" }).ClickAsync();
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Plan New Session" }).ClickAsync();
-        var sessionLink = dm.Locator("a[href*='/sessions/']").First;
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "sessions");
+        await dm.GetByTestId("new-session-title").FillAsync("Session one");
+        await dm.GetByTestId("new-session-add").ClickAsync();
+        var sessionLink = dm.GetByTestId("session-list").GetByRole(AriaRole.Link, new() { Name = "Session one" });
         await sessionLink.WaitForAsync();
         var sessionUrl = await sessionLink.GetAttributeAsync("href");
 
         const string privateNote = "P4 aria secret theory";
         const string publicNote = "P4 party marching order";
-        await player1.GotoAsync(sessionUrl!);
-        await player1.GetByLabel("Note visibility").SelectOptionAsync("Private");
-        var noteBox = player1.Locator("textarea[placeholder='Add a note...']");
-        await noteBox.ClickAsync();
-        // Keyboard typing (not Fill): every keystroke carries the full current value, so one
-        // lost input event can't empty the server-side field the way a single Fill can.
+        await E2EHelpers.GotoInteractiveAsync(player1, sessionUrl!);
+        await player1.Locator("#note-visibility").SelectOptionAsync("Private");
+        await player1.GetByTestId("new-note").ClickAsync();
         await player1.Keyboard.TypeAsync(privateNote);
-        await player1.GetByRole(AriaRole.Button, new() { Name = "Add Note" }).ClickAsync();
+        await player1.GetByRole(AriaRole.Button, new() { Name = "Add note" }).ClickAsync();
         await player1.GetByText(privateNote).WaitForAsync();
 
-        await player1.GetByLabel("Note visibility").SelectOptionAsync("Public");
-        await player1.Locator("textarea[placeholder='Add a note...']").ClickAsync();
+        await player1.Locator("#note-visibility").SelectOptionAsync("Public");
+        await player1.GetByTestId("new-note").ClickAsync();
         await player1.Keyboard.TypeAsync(publicNote);
-        await player1.GetByRole(AriaRole.Button, new() { Name = "Add Note" }).ClickAsync();
+        await player1.GetByRole(AriaRole.Button, new() { Name = "Add note" }).ClickAsync();
         await player1.GetByText(publicNote).WaitForAsync();
 
-        await player2.GotoAsync(sessionUrl!);
+        await E2EHelpers.GotoInteractiveAsync(player2, sessionUrl!);
         await Assertions.Expect(player2.GetByText(publicNote)).ToBeVisibleAsync();
         await Assertions.Expect(player2.GetByText(privateNote)).ToHaveCountAsync(0);
 
-        await dm.GotoAsync(sessionUrl!);
+        await E2EHelpers.GotoInteractiveAsync(dm, sessionUrl!);
         await Assertions.Expect(dm.GetByText(privateNote)).ToBeVisibleAsync();
         await Assertions.Expect(dm.GetByText(publicNote)).ToBeVisibleAsync();
 
         // ---- Recap: the DM writes, the players read. ----
-
         const string recap = "P4 Goblins attacked the bridge.";
-        await dm.Locator("textarea[placeholder='What happened this session...']").ClickAsync();
+        await dm.Locator("#recap").ClickAsync();
         await dm.Keyboard.TypeAsync(recap);
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Save Recap" }).ClickAsync();
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Save recap" }).ClickAsync();
         await dm.GetByText("Recap saved.").WaitForAsync();
 
-        await player1.GotoAsync(sessionUrl!);
+        await E2EHelpers.GotoInteractiveAsync(player1, sessionUrl!);
         await player1.GetByText(recap).WaitForAsync();
 
         // ---- Payload half: secrets never crossed the wire to players. ----
-
         string player1Payload, player2Payload;
         lock (player1Frames) player1Payload = string.Join("\n", player1Frames);
         lock (player2Frames) player2Payload = string.Join("\n", player2Frames);
         Assert.DoesNotContain(secretSummary, player1Payload);
         Assert.DoesNotContain(secretSummary, player2Payload);
         Assert.DoesNotContain(privateNote, player2Payload);
-    }
-
-    private static async Task LoginAsync(IPage page, string username, string password)
-    {
-        await page.GotoAsync("/login");
-        await page.Locator("#username").FillAsync(username);
-        await page.Locator("#password").FillAsync(password);
-        await page.GetByRole(AriaRole.Button, new() { Name = "Enter Codex" }).ClickAsync();
-        await page.WaitForURLAsync(url => !url.Contains("/login"));
     }
 }

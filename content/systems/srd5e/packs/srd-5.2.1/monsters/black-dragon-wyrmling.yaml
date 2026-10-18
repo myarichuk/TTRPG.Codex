@@ -1,0 +1,85 @@
+id: black-dragon-wyrmling
+type: monster
+name: Black Dragon Wyrmling
+description: >-
+  *Medium Dragon, Chaotic Evil*
+
+
+  **AC** 17  
+
+  **HP** 33 (6d8 + 6)  
+
+  **Speed** 30 ft., fly 60 ft., swim 30 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 14 (+2) | 13 (+1) | 10 (+0) | 11 (+0) | 13 (+1) |
+
+
+  **Saving Throws** DEX +4, WIS +2  
+
+  **Skills** Perception +4, Stealth +4  
+
+  **Immunities** acid  
+
+  **Senses** darkvision 60 ft., blindsight 10 ft., passive perception 14  
+
+  **Languages** Draconic
+
+
+  ### Traits
+
+  **Amphibious.** The dragon can breathe air and water.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage plus 2 (1d4) Acid damage.
+
+
+  **Acid Breath.** Dexterity Saving Throw: DC 11, each creature in a 15-foot-long, 5-footwide Line. Failure: 22 (5d8) Acid damage. Success: Half damage.
+tags:
+- dragon
+- medium
+- cr-2
+properties:
+  size: Medium
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 17
+  hitPoints: 33
+  hitDice: 6d8 + 6
+  speed: 30 ft., fly 60 ft., swim 30 ft.
+  strength: 15
+  dexterity: 14
+  constitution: 13
+  intelligence: 10
+  wisdom: 11
+  charisma: 13
+  challengeRating: 2
+  xp: 450
+  senses: darkvision 60 ft., blindsight 10 ft., passive perception 14
+  languages: Draconic
+  skills: Perception +4, Stealth +4
+  savingThrows: DEX +4, WIS +2
+  immunities:
+  - acid
+  traits:
+  - name: Amphibious
+    description: The dragon can breathe air and water.
+  actions:
+  - name: Multiattack
+    description: The dragon makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage plus 2 (1d4) Acid damage.'
+  - name: Acid Breath
+    description: 'Dexterity Saving Throw: DC 11, each creature in a 15-foot-long, 5-footwide Line. Failure: 22 (5d8) Acid damage. Success: Half damage.'

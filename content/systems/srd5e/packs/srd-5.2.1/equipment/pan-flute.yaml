@@ -1,0 +1,17 @@
+id: pan-flute
+type: equipment
+name: Pan flute
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 12 gp  
+
+  **Weight:** 2 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 12 gp
+  weight: 2

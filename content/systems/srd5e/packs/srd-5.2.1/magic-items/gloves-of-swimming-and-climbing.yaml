@@ -1,0 +1,15 @@
+id: gloves-of-swimming-and-climbing
+type: magic-item
+name: Gloves of Swimming and Climbing
+description: >-
+  Wondrous Item
+
+
+  While wearing these gloves, you have a Climb Speed and a Swim Speed equal to your Speed, and you gain a +5 bonus to Strength (Athletics) checks made to climb or swim.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

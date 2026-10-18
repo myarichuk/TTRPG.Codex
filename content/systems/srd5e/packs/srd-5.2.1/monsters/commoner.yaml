@@ -1,0 +1,68 @@
+id: commoner
+type: monster
+name: Commoner
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 10  
+
+  **HP** 4 (1d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 10 (+0) | 10 (+0) | 10 (+0) | 10 (+0) | 10 (+0) |
+
+
+  **Gear** Club  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common
+
+
+  ### Traits
+
+  **Training.** The commoner has proficiency in one skill of the GM’s choice and has Advantage whenever it makes an ability check using that skill.
+
+
+
+  ### Actions
+
+  **Club.** Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Bludgeoning damage.
+tags:
+- humanoid
+- medium or small
+- cr-0
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 10
+  hitPoints: 4
+  hitDice: 1d8
+  speed: 30 ft.
+  strength: 10
+  dexterity: 10
+  constitution: 10
+  intelligence: 10
+  wisdom: 10
+  charisma: 10
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 10
+  languages: Common
+  gear: Club
+  traits:
+  - name: Training
+    description: The commoner has proficiency in one skill of the GM’s choice and has Advantage whenever it makes an ability check using that skill.
+  actions:
+  - name: Club
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Bludgeoning damage.'

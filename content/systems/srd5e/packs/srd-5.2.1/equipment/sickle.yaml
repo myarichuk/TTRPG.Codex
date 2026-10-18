@@ -1,0 +1,29 @@
+id: sickle
+type: equipment
+name: Sickle
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d4 Slashing  
+
+  **Properties:** Light  
+
+  **Mastery:** Nick  
+
+  **Cost:** 1 gp  
+
+  **Weight:** 2 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 1 gp
+  weight: 2
+  damage: 1d4 Slashing
+  properties:
+  - Light
+  mastery: Nick

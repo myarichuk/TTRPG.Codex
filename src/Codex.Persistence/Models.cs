@@ -91,7 +91,15 @@ public class ActorDocument
     public string? PublicName { get; set; }
     public string? PublicDescription { get; set; }
 
-    /// <summary>Serialized ECS component snapshot; see <see cref="Codex.Plugin.Abstractions.ComponentRegistry"/> (1.5).</summary>
+    /// <summary>
+    /// The schema-driven character sheet: attribute scores, resource values and the system's own
+    /// actor fields (level, class, species...), keyed by the field keys of the system's actor
+    /// schema. This is what players and the DM edit. Resource values are mirrored into
+    /// <see cref="State"/> by <see cref="ActorSheetSync"/> so the live table and the sheet agree.
+    /// </summary>
+    public Dictionary<string, object> Sheet { get; set; } = new();
+
+    /// <summary>Serialized ECS component snapshot; see <see cref="Codex.Plugin.Abstractions.ComponentRegistry"/>. Runtime-owned.</summary>
     public Dictionary<string, object> State { get; set; } = new();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

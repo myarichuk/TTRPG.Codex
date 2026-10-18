@@ -1,0 +1,69 @@
+id: brown-bear
+type: monster
+name: Brown Bear
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 22 (3d10 + 6)  
+
+  **Speed** 40 ft., climb 30 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 12 (+1) | 15 (+2) | 2 (-4) | 13 (+1) | 7 (-2) |
+
+
+  **Skills** Perception +3  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The bear makes one Bite attack and one Claw attack.
+
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage.
+
+
+  **Claw.** Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Slashing damage. If the target is a Large or smaller creature, it has the Prone condition.
+tags:
+- beast
+- large
+- cr-1
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 22
+  hitDice: 3d10 + 6
+  speed: 40 ft., climb 30 ft.
+  strength: 17
+  dexterity: 12
+  constitution: 15
+  intelligence: 2
+  wisdom: 13
+  charisma: 7
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 13
+  languages: None
+  skills: Perception +3
+  actions:
+  - name: Multiattack
+    description: The bear makes one Bite attack and one Claw attack.
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage.'
+  - name: Claw
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Slashing damage. If the target is a Large or smaller creature, it has the Prone condition.'

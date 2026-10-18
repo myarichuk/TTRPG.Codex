@@ -1,0 +1,17 @@
+id: disguise-kit
+type: equipment
+name: Disguise Kit
+description: >-
+  *Adventuring Gear, Other Tools*
+
+
+  **Cost:** 25 gp  
+
+  **Weight:** 3 lb.
+tags:
+- adventuring gear
+- other tools
+properties:
+  category: Adventuring Gear
+  cost: 25 gp
+  weight: 3

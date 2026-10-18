@@ -4,9 +4,9 @@ namespace Codex.Web;
 
 /// <summary>
 /// Request shapes for the opt-in <c>/test/seed/*</c> endpoints (see Program.cs) - exists purely
-/// so the Phase 3 exit-criteria Playwright suite (and any e2e test after it) can stand up users
-/// and actors in one HTTP round-trip against the same RavenDB instance the app under test already
-/// owns, instead of a second process fighting it for the same embedded database's file lock.
+/// so the Playwright suites can stand up users and actors in one HTTP round-trip against the same
+/// RavenDB instance the app under test already owns, instead of a second process fighting it for
+/// the same embedded database's file lock.
 /// </summary>
 public sealed class TestSeedUser
 {
@@ -26,4 +26,7 @@ public sealed class TestSeedActor
     public ActorVisibility Visibility { get; set; } = ActorVisibility.Known;
     public int Hp { get; set; }
     public int HpMax { get; set; }
+
+    /// <summary>Extra sheet fields (attribute scores, level, class reference...) to seed verbatim.</summary>
+    public Dictionary<string, object>? Sheet { get; set; }
 }

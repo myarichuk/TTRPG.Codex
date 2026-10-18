@@ -1,0 +1,38 @@
+id: greater-invisibility
+type: spell
+name: Greater Invisibility
+description: >-
+  *Level 4 Illusion (Bard, Sorcerer, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S  
+
+  **Duration:** Concentration, up to 1 minute
+
+
+  A creature you touch has the Invisible condition until the spell ends.
+tags:
+- level-4
+- illusion
+- bard
+- sorcerer
+- wizard
+properties:
+  level: 4
+  school: Illusion
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  duration: up to 1 minute
+  concentration: true
+  ritual: false
+  classes:
+  - Bard
+  - Sorcerer
+  - Wizard

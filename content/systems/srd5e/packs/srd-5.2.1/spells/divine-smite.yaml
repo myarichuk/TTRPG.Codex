@@ -1,0 +1,37 @@
+id: divine-smite
+type: spell
+name: Divine Smite
+description: >-
+  *Level 1 Evocation (Paladin)*
+
+
+  **Casting Time:** Bonus Action, which you take immediately after hitting a target with a Melee weapon or an Unarmed Strike  
+
+  **Range:** Self Component: V  
+
+  **Components:**   
+
+  **Duration:** Instantaneous
+
+
+  The target takes an extra 2d8 Radiant damage from the attack. The damage increases by 1d8 if the target is a Fiend or an Undead.
+
+
+  **Using a Higher-Level Spell Slot.** The damage increases by 1d8 for each spell slot level above 1.
+tags:
+- level-1
+- evocation
+- paladin
+properties:
+  level: 1
+  school: Evocation
+  castingTime: Bonus Action, which you take immediately after hitting a target with a Melee weapon or an Unarmed Strike
+  range: 'Self Component: V'
+  components: []
+  duration: Instantaneous
+  concentration: false
+  ritual: false
+  classes:
+  - Paladin
+  damageType: Radiant
+  higherLevel: The damage increases by 1d8 for each spell slot level above 1.

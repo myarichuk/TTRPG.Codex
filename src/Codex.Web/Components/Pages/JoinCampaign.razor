@@ -6,31 +6,30 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
-<PageTitle>Join Campaign</PageTitle>
+<PageTitle>Join campaign | TTRPG.Codex</PageTitle>
 
-<div class="app-container">
-    <div class="empty-state text-center py-5">
-        @if (result == null)
-        {
-            <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Joining...</span></div>
-        }
-        else if (result == CampaignJoinResult.InvalidCode)
-        {
-            <h3>Invalid invite link</h3>
-            <p class="text-tertiary">This invite code doesn't match any campaign.</p>
-            <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
-        }
-        else
-        {
-            @* Joined vs. AlreadyMember isn't a reliable distinction to show here: interactive
-               server rendering with prerendering runs OnInitializedAsync twice - once during the
-               static prerender, once for the live circuit - so a genuinely first-time join can
-               legitimately resolve as Joined on the first pass and AlreadyMember on the second.
-               Either way the membership is in place, so both get the same message. *@
-            <h3>You're in!</h3>
-            <a href="/campaigns/@joinedCampaignId" class="btn btn-accent mt-3">Go to Campaign</a>
-        }
-    </div>
+<div class="empty">
+    @if (result == null)
+    {
+        <div class="spinner-border" role="status"><span class="visually-hidden">Joining…</span></div>
+    }
+    else if (result == CampaignJoinResult.InvalidCode)
+    {
+        <div class="empty-icon"><LucideIcon IconName="alert-triangle" Size="28" /></div>
+        <h1 class="h4">This invite link is not valid</h1>
+        <p>It may have been mistyped, or the campaign may have been deleted. Ask your DM for a fresh link.</p>
+        <a href="/" class="btn btn-primary">Back to campaigns</a>
+    }
+    else
+    {
+        @* Joined vs. AlreadyMember isn't a reliable distinction here: prerendering runs
+           OnInitializedAsync twice, so a first-time join can resolve as Joined and then
+           AlreadyMember. Either way the membership is in place. *@
+        <div class="empty-icon"><LucideIcon IconName="check" Size="28" /></div>
+        <h1 class="h4">You're in!</h1>
+        <p>You are now a player in this campaign.</p>
+        <a href="/campaigns/@joinedCampaignId" class="btn btn-primary">Go to campaign</a>
+    }
 </div>
 
 @code {

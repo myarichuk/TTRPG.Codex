@@ -1,0 +1,12 @@
+id: skill-intimidation
+type: rule
+name: Intimidation
+description: >-
+  **Ability:** CHA
+
+
+  Awe or threaten someone into doing what you want.
+tags:
+- skill
+properties:
+  category: Skill

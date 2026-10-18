@@ -1,0 +1,17 @@
+id: orb
+type: equipment
+name: Orb
+description: >-
+  *Arcane Foci, Adventuring Gear*
+
+
+  **Cost:** 20 gp  
+
+  **Weight:** 3 lb.
+tags:
+- arcane foci
+- adventuring gear
+properties:
+  category: Arcane Foci
+  cost: 20 gp
+  weight: 3

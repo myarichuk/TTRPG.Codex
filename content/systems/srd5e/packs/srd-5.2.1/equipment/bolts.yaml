@@ -1,0 +1,16 @@
+id: bolts
+type: equipment
+name: Bolts
+description: >-
+  *Ammunition*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 1.5 lb.
+tags:
+- ammunition
+properties:
+  category: Ammunition
+  cost: 1 gp
+  weight: 1.5

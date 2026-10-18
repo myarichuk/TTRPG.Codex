@@ -1,0 +1,69 @@
+id: giant-fire-beetle
+type: monster
+name: Giant Fire Beetle
+description: >-
+  *Small Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 4 (1d6 + 1)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 8 (-1) | 10 (+0) | 12 (+1) | 1 (-5) | 7 (-2) | 3 (-4) |
+
+
+  **Resistances** fire  
+
+  **Senses** blindsight 30 ft., passive perception 8  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Illumination.** The beetle sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +1, reach 5 ft. Hit: 1 Fire damage.
+tags:
+- beast
+- small
+- cr-0
+properties:
+  size: Small
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 4
+  hitDice: 1d6 + 1
+  speed: 30 ft., climb 30 ft.
+  strength: 8
+  dexterity: 10
+  constitution: 12
+  intelligence: 1
+  wisdom: 7
+  charisma: 3
+  challengeRating: 0
+  xp: 10
+  senses: blindsight 30 ft., passive perception 8
+  languages: None
+  resistances:
+  - fire
+  traits:
+  - name: Illumination
+    description: The beetle sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +1, reach 5 ft. Hit: 1 Fire damage.'

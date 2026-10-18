@@ -1,0 +1,17 @@
+id: woodcarvers-tools
+type: equipment
+name: Woodcarver's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 5 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 1 gp
+  weight: 5

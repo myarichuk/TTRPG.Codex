@@ -1,0 +1,163 @@
+@page "/campaigns/{CampaignId}"
+@page "/campaigns/{CampaignId}/{Section}"
+@page "/campaigns/{CampaignId}/{Section}/{Arg1}"
+@page "/campaigns/{CampaignId}/{Section}/{Arg1}/{Arg2}"
+@using System.Security.Claims
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICampaignRepository CampaignRepo
+@inject IActorRepository ActorRepo
+@inject ICampaignAccessResolver AccessResolver
+@inject ISystemCatalog Catalog
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@(campaign?.Name ?? "Campaign") | TTRPG.Codex</PageTitle>
+
+@if (loading)
+{
+    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+}
+else if (campaign == null)
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
+        <h1 class="h4">Campaign not found</h1>
+        <p>It may have been deleted, or the link may be wrong.</p>
+        <a href="/" class="btn btn-primary">Back to campaigns</a>
+    </div>
+}
+else if (access == null)
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="shield" Size="28" /></div>
+        <h1 class="h4">You're not a member of this campaign</h1>
+        <p>Ask the DM for an invite link.</p>
+        <a href="/" class="btn btn-primary">Back to campaigns</a>
+    </div>
+}
+else
+{
+    <div class="page-header mb-3">
+        <div>
+            <nav aria-label="Breadcrumb" class="small-muted mb-1"><a href="/">Campaigns</a> / <span>@campaign.Name</span></nav>
+            <h1 class="mb-0" data-testid="campaign-title">@campaign.Name</h1>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+                <span class="pill">@Catalog.GetDisplayName(campaign.SystemId)</span>
+                <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@access.Role</span>
+            </div>
+        </div>
+    </div>
+
+    <nav class="section-nav" aria-label="Campaign sections">
+        @foreach (var section in Sections)
+        {
+            var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
+            var current = CurrentSection == section.Key ? "page" : null;
+            var testId = "section-" + section.Key;
+            <a href="@href" aria-current="@current" data-testid="@testId">
+                <LucideIcon IconName="@section.Icon" Size="16" /><span>@section.Label</span>
+            </a>
+        }
+    </nav>
+
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+    <CascadingValue Value="context" IsFixed="false">
+        @switch (CurrentSection)
+        {
+            case "cast":
+                <CastSection />
+                break;
+            case "world":
+                <WorldSection />
+                break;
+            case "lore":
+                <LoreSection />
+                break;
+            case "sessions":
+                <SessionsSection />
+                break;
+            case "table":
+                <TableSection />
+                break;
+            case "library":
+                <LibrarySection RouteType="@Arg1" RouteId="@Arg2" />
+                break;
+            case "settings":
+                <SettingsSection />
+                break;
+            default:
+                <OverviewSection />
+                break;
+        }
+    </CascadingValue>
+}
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+    [Parameter] public string? Section { get; set; }
+    [Parameter] public string? Arg1 { get; set; }
+    [Parameter] public string? Arg2 { get; set; }
+
+    private static readonly (string Key, string Label, string Icon)[] Sections =
+    {
+        ("overview", "Overview", "home"),
+        ("cast", "Cast", "users"),
+        ("world", "World", "map"),
+        ("lore", "Lore", "book-marked"),
+        ("sessions", "Sessions", "calendar"),
+        ("table", "Table", "dices"),
+        ("library", "Library", "book-open"),
+        ("settings", "Settings", "settings")
+    };
+
+    private bool loading = true;
+    private CampaignDocument? campaign;
+    private CampaignAccess? access;
+    private string? currentUserId;
+    private IReadOnlyList<ActorDocument> actors = Array.Empty<ActorDocument>();
+    private Flash? flash;
+    private CampaignContext? context;
+    private string? loadedCampaignId;
+
+    private string BasePath => $"/campaigns/{CampaignId}";
+    private string CurrentSection => Sections.Any(s => s.Key == Section) ? Section! : "overview";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedCampaignId != CampaignId)
+        {
+            flash = null;
+            await ReloadAsync();
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        loading = loadedCampaignId != CampaignId;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        campaign = await CampaignRepo.GetAsync(CampaignId);
+        access = campaign != null && currentUserId != null ? await AccessResolver.ResolveAsync(CampaignId, currentUserId) : null;
+
+        if (campaign != null && access != null)
+        {
+            actors = (await ActorRepo.GetVisibleForCampaignAsync(access)).OrderBy(a => a.Name).ToList();
+            context = new CampaignContext
+            {
+                Campaign = campaign,
+                Access = access,
+                UserId = currentUserId!,
+                System = Catalog.GetDefinition(campaign.SystemId),
+                Actors = actors,
+                ReloadAsync = async () => { await ReloadAsync(); StateHasChanged(); },
+                Notify = message => { flash = message; StateHasChanged(); }
+            };
+        }
+
+        loadedCampaignId = CampaignId;
+        loading = false;
+    }
+}

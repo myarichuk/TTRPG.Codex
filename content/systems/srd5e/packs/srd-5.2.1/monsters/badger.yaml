@@ -1,0 +1,63 @@
+id: badger
+type: monster
+name: Badger
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 5 (1d4 + 3)  
+
+  **Speed** 20 ft., burrow 5 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 11 (+0) | 16 (+3) | 2 (-4) | 12 (+1) | 5 (-3) |
+
+
+  **Skills** Perception +3  
+
+  **Resistances** poison  
+
+  **Senses** darkvision 30 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 5
+  hitDice: 1d4 + 3
+  speed: 20 ft., burrow 5 ft.
+  strength: 10
+  dexterity: 11
+  constitution: 16
+  intelligence: 2
+  wisdom: 12
+  charisma: 5
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 30 ft., passive perception 13
+  languages: None
+  skills: Perception +3
+  resistances:
+  - poison
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage.'

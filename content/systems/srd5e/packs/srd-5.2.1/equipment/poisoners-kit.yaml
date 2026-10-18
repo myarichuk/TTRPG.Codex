@@ -1,0 +1,17 @@
+id: poisoners-kit
+type: equipment
+name: Poisoner's Kit
+description: >-
+  *Other Tools, Tools*
+
+
+  **Cost:** 5 gp  
+
+  **Weight:** 2 lb.
+tags:
+- other tools
+- tools
+properties:
+  category: Other Tools
+  cost: 5 gp
+  weight: 2

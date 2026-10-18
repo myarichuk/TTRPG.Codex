@@ -1,0 +1,87 @@
+id: swarm-of-insects
+type: monster
+name: Swarm of Insects
+description: >-
+  *Medium Swarm Of Tiny Beasts, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 19 (3d8 + 6)  
+
+  **Speed** 20 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 3 (-4) | 13 (+1) | 14 (+2) | 1 (-5) | 7 (-2) | 1 (-5) |
+
+
+  **Resistances** bludgeoning, piercing, slashing  
+
+  **Immunities** Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned  
+
+  **Senses** blindsight 30 ft., passive perception 8  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Spider Climb.** If the swarm has a Climb Speed, the swarm can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+
+
+  **Swarm.** The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny insect. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+
+
+
+  ### Actions
+
+  **Bites.** Melee Attack Roll: +3, reach 5 ft. Hit: 6 (2d4 + 1) Poison damage, or 3 (1d4 + 1) Poison damage if the swarm is Bloodied.
+tags:
+- swarm of tiny beasts
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: swarm of tiny beasts
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 19
+  hitDice: 3d8 + 6
+  speed: 20 ft.
+  strength: 3
+  dexterity: 13
+  constitution: 14
+  intelligence: 1
+  wisdom: 7
+  charisma: 1
+  challengeRating: 1/2
+  xp: 100
+  senses: blindsight 30 ft., passive perception 8
+  languages: None
+  resistances:
+  - bludgeoning
+  - piercing
+  - slashing
+  immunities:
+  - Charmed
+  - Frightened
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Prone
+  - Restrained
+  - Stunned
+  traits:
+  - name: Spider Climb
+    description: If the swarm has a Climb Speed, the swarm can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+  - name: Swarm
+    description: The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny insect. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+  actions:
+  - name: Bites
+    description: 'Melee Attack Roll: +3, reach 5 ft. Hit: 6 (2d4 + 1) Poison damage, or 3 (1d4 + 1) Poison damage if the swarm is Bloodied.'

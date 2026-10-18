@@ -1,0 +1,81 @@
+id: roc
+type: monster
+name: Roc
+description: >-
+  *Gargantuan Monstrosity, Unaligned*
+
+
+  **AC** 15  
+
+  **HP** 248 (16d20 + 80)  
+
+  **Speed** 20 ft., fly 120 ft.  
+
+  **CR** 11 (XP 7200; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 28 (+9) | 10 (+0) | 20 (+5) | 3 (-4) | 10 (+0) | 9 (-1) |
+
+
+  **Saving Throws** DEX +4, WIS +4  
+
+  **Skills** Perception +8  
+
+  **Senses** passive perception 18  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The roc makes two Beak attacks. It can replace one attack with a Talons attack.
+
+
+  **Beak.** Melee Attack Roll: +13, reach 10 ft. Hit: 28 (3d12 + 9) Piercing damage.
+
+
+  **Talons.** Melee Attack Roll: +13, reach 5 ft. Hit: 23 (4d6 + 9) Slashing damage. If the target is a Huge or smaller creature, it has the Grappled condition (escape DC 19) from both talons, and it has the Restrained condition until the grapple ends.
+
+
+
+  ### Bonus Actions
+
+  **Swoop.** If the roc has a creature Grappled, the roc flies up to half its Fly Speed without provoking Opportunity Attacks and drops that creature.
+tags:
+- monstrosity
+- gargantuan
+- cr-11
+properties:
+  size: Gargantuan
+  creatureType: monstrosity
+  alignment: unaligned
+  armorClass: 15
+  hitPoints: 248
+  hitDice: 16d20 + 80
+  speed: 20 ft., fly 120 ft.
+  strength: 28
+  dexterity: 10
+  constitution: 20
+  intelligence: 3
+  wisdom: 10
+  charisma: 9
+  challengeRating: 11
+  xp: 7200
+  senses: passive perception 18
+  languages: None
+  skills: Perception +8
+  savingThrows: DEX +4, WIS +4
+  actions:
+  - name: Multiattack
+    description: The roc makes two Beak attacks. It can replace one attack with a Talons attack.
+  - name: Beak
+    description: 'Melee Attack Roll: +13, reach 10 ft. Hit: 28 (3d12 + 9) Piercing damage.'
+  - name: Talons
+    description: 'Melee Attack Roll: +13, reach 5 ft. Hit: 23 (4d6 + 9) Slashing damage. If the target is a Huge or smaller creature, it has the Grappled condition (escape DC 19) from both talons, and it has the Restrained condition until the grapple ends.'
+  bonusActions:
+  - name: Swoop
+    description: If the roc has a creature Grappled, the roc flies up to half its Fly Speed without provoking Opportunity Attacks and drops that creature.

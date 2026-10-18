@@ -1,0 +1,8 @@
+id: ability-score-int
+type: rule
+name: Intelligence
+description: Reasoning and memory
+tags:
+- ability-score
+properties:
+  category: Ability Score

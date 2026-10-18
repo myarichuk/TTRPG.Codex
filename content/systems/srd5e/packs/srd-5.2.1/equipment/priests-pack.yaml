@@ -1,0 +1,20 @@
+id: priests-pack
+type: equipment
+name: Priest's Pack
+description: >-
+  *Adventuring Gear, Equipment Packs*
+
+
+  **Cost:** 33 gp  
+
+  **Weight:** 29 lb.
+
+
+  A Priest's Pack contains the following items: Backpack, Blanket, Holy Water, Lamp, 7 days of Rations, Robe, and Tinderbox.
+tags:
+- adventuring gear
+- equipment packs
+properties:
+  category: Adventuring Gear
+  cost: 33 gp
+  weight: 29

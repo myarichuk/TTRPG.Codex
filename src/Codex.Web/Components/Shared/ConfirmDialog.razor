@@ -1,0 +1,57 @@
+@inject IJSRuntime JS
+
+@* An accessible confirmation built on the native <dialog>: focus is trapped by the browser, Escape
+   cancels, and the result comes back as a Task so callers read like `if (await Confirm.ShowAsync(...))`. *@
+<dialog id="@id" class="codex-dialog" aria-labelledby="@(id)-title" @onclose="OnClosed" @oncancel="OnClosed">
+    <div class="dialog-body">
+        <h2 id="@(id)-title">@title</h2>
+        <p class="mb-0">@body</p>
+    </div>
+    <div class="dialog-actions">
+        <button type="button" class="btn btn-outline-secondary" @onclick="() => Finish(false)">@cancelLabel</button>
+        <button type="button" class="btn @(destructive ? "btn-danger" : "btn-primary")" data-testid="confirm-accept" @onclick="() => Finish(true)">@confirmLabel</button>
+    </div>
+</dialog>
+
+@code {
+    private readonly string id = "confirm-" + Guid.NewGuid().ToString("N")[..8];
+    private string title = "";
+    private string body = "";
+    private string confirmLabel = "Confirm";
+    private string cancelLabel = "Cancel";
+    private bool destructive;
+    private TaskCompletionSource<bool>? pending;
+
+    public async Task<bool> ShowAsync(string dialogTitle, string dialogBody, string confirm = "Confirm", bool isDestructive = false, string cancel = "Cancel")
+    {
+        if (pending != null)
+        {
+            Finish(false);
+        }
+
+        title = dialogTitle;
+        body = dialogBody;
+        confirmLabel = confirm;
+        cancelLabel = cancel;
+        destructive = isDestructive;
+        pending = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", id);
+        return await pending.Task;
+    }
+
+    private void Finish(bool result)
+    {
+        var completion = pending;
+        pending = null;
+        _ = JS.InvokeVoidAsync("codex.closeModal", id);
+        completion?.TrySetResult(result);
+    }
+
+    private void OnClosed()
+    {
+        var completion = pending;
+        pending = null;
+        completion?.TrySetResult(false);
+    }
+}

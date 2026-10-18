@@ -1,0 +1,12 @@
+id: skill-performance
+type: rule
+name: Performance
+description: >-
+  **Ability:** CHA
+
+
+  Act, tell a story, perform music, or dance.
+tags:
+- skill
+properties:
+  category: Skill

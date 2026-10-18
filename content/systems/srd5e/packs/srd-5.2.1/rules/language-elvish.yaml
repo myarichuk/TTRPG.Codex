@@ -1,0 +1,7 @@
+id: language-elvish
+type: rule
+name: Elvish
+tags:
+- language
+properties:
+  category: Language

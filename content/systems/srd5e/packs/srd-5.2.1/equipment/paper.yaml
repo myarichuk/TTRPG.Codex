@@ -1,0 +1,19 @@
+id: paper
+type: equipment
+name: Paper
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 sp  
+
+  **Weight:** 0 lb.
+
+
+  One sheet of Paper can hold about 250 handwritten words.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 sp
+  weight: 0

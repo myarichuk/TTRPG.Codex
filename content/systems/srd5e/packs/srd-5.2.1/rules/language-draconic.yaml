@@ -1,0 +1,7 @@
+id: language-draconic
+type: rule
+name: Draconic
+tags:
+- language
+properties:
+  category: Language

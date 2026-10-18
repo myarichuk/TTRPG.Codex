@@ -1,0 +1,19 @@
+id: bottle-glass
+type: equipment
+name: Bottle, Glass
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 2 lb.
+
+
+  A Glass Bottle holds up to 11/2 pints.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 2

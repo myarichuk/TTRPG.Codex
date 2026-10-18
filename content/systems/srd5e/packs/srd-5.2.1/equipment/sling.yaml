@@ -1,0 +1,31 @@
+id: sling
+type: equipment
+name: Sling
+description: >-
+  *Ranged Weapons, Simple Ranged Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d4 Piercing  
+
+  **Properties:** Ammunition  
+
+  **Range:** 30/120 ft.  
+
+  **Mastery:** Slow  
+
+  **Cost:** 1 sp  
+
+  **Weight:** 0 lb.
+tags:
+- ranged weapons
+- simple ranged weapons
+- simple weapons
+- weapons
+properties:
+  category: Ranged Weapons
+  cost: 1 sp
+  weight: 0
+  damage: 1d4 Piercing
+  properties:
+  - Ammunition
+  mastery: Slow

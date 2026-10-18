@@ -1,0 +1,17 @@
+id: dragonchess
+type: equipment
+name: Dragonchess
+description: >-
+  *Gaming Sets, Tools*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 0 lb.
+tags:
+- gaming sets
+- tools
+properties:
+  category: Gaming Sets
+  cost: 1 gp
+  weight: 0

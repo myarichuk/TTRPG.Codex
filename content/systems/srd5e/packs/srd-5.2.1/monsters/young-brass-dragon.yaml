@@ -1,0 +1,81 @@
+id: young-brass-dragon
+type: monster
+name: Young Brass Dragon
+description: >-
+  *Large Dragon, Chaotic Good*
+
+
+  **AC** 17  
+
+  **HP** 110 (13d10 + 39)  
+
+  **Speed** 40 ft., burrow 20 ft., fly 80 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 10 (+0) | 17 (+3) | 12 (+1) | 11 (+0) | 15 (+2) |
+
+
+  **Saving Throws** DEX +3, WIS +3  
+
+  **Skills** Perception +6, Persuasion +5, Stealth +3  
+
+  **Immunities** fire  
+
+  **Senses** darkvision 120 ft., blindsight 30 ft., passive perception 16  
+
+  **Languages** Common, Draconic
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks. It can replace two attacks with a use of Sleep Breath.
+
+
+  **Rend.** Melee Attack Roll: +7, reach 10 ft. Hit: 15 (2d10 + 4) Slashing damage.
+
+
+  **Fire Breath.** Dexterity Saving Throw: DC 14, each creature in a 40-foot-long, 5-footwide Line. Failure: 38 (11d6) Fire damage. Success: Half damage.
+
+
+  **Sleep Breath.** Constitution Saving Throw: DC 14, each creature in a 30-foot Cone. Failure: The target has the Incapacitated condition until the end of its next turn, at which point it repeats the save. Second Failure: The target has the Unconscious condition for 1 minute. This effect ends for the target if it takes damage or a creature within 5 feet of it takes an action to wake it.
+tags:
+- dragon
+- large
+- cr-6
+properties:
+  size: Large
+  creatureType: dragon
+  alignment: chaotic good
+  armorClass: 17
+  hitPoints: 110
+  hitDice: 13d10 + 39
+  speed: 40 ft., burrow 20 ft., fly 80 ft.
+  strength: 19
+  dexterity: 10
+  constitution: 17
+  intelligence: 12
+  wisdom: 11
+  charisma: 15
+  challengeRating: 6
+  xp: 2300
+  senses: darkvision 120 ft., blindsight 30 ft., passive perception 16
+  languages: Common, Draconic
+  skills: Perception +6, Persuasion +5, Stealth +3
+  savingThrows: DEX +3, WIS +3
+  immunities:
+  - fire
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks. It can replace two attacks with a use of Sleep Breath.
+  - name: Rend
+    description: 'Melee Attack Roll: +7, reach 10 ft. Hit: 15 (2d10 + 4) Slashing damage.'
+  - name: Fire Breath
+    description: 'Dexterity Saving Throw: DC 14, each creature in a 40-foot-long, 5-footwide Line. Failure: 38 (11d6) Fire damage. Success: Half damage.'
+  - name: Sleep Breath
+    description: 'Constitution Saving Throw: DC 14, each creature in a 30-foot Cone. Failure: The target has the Incapacitated condition until the end of its next turn, at which point it repeats the save. Second Failure: The target has the Unconscious condition for 1 minute. This effect ends for the target if it takes damage or a creature within 5 feet of it takes an action to wake it.'

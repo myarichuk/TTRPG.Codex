@@ -1,0 +1,89 @@
+id: spirit-naga
+type: monster
+name: Spirit Naga
+description: >-
+  *Large Fiend, Chaotic Evil*
+
+
+  **AC** 17  
+
+  **HP** 135 (18d10 + 36)  
+
+  **Speed** 40 ft.  
+
+  **CR** 8 (XP 3900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 17 (+3) | 14 (+2) | 16 (+3) | 15 (+2) | 16 (+3) |
+
+
+  **Saving Throws** DEX +6, CON +5, WIS +5, CHA +6  
+
+  **Immunities** poison, Charmed, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 12  
+
+  **Languages** Abyssal, Common
+
+
+  ### Traits
+
+  **Fiendish Restoration.** If it dies, the naga returns to life in 1d6 days and regains all its Hit Points. Only a Wish spell can prevent this trait from functioning.
+
+
+
+  ### Actions
+
+  **Multiattack.** The naga makes three attacks, using Bite or Necrotic Ray in any combination.
+
+
+  **Bite.** Melee Attack Roll: +7, reach 10 ft. Hit: 7 (1d6 + 4) Piercing damage plus 14 (4d6) Poison damage.
+
+
+  **Necrotic Ray.** Ranged Attack Roll: +6, range 60 ft. Hit: 21 (6d6) Necrotic damage.
+
+
+  **Spellcasting.** The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):
+tags:
+- fiend
+- large
+- cr-8
+properties:
+  size: Large
+  creatureType: fiend
+  alignment: chaotic evil
+  armorClass: 17
+  hitPoints: 135
+  hitDice: 18d10 + 36
+  speed: 40 ft.
+  strength: 18
+  dexterity: 17
+  constitution: 14
+  intelligence: 16
+  wisdom: 15
+  charisma: 16
+  challengeRating: 8
+  xp: 3900
+  senses: darkvision 60 ft., passive perception 12
+  languages: Abyssal, Common
+  savingThrows: DEX +6, CON +5, WIS +5, CHA +6
+  immunities:
+  - poison
+  - Charmed
+  - Poisoned
+  traits:
+  - name: Fiendish Restoration
+    description: If it dies, the naga returns to life in 1d6 days and regains all its Hit Points. Only a Wish spell can prevent this trait from functioning.
+  actions:
+  - name: Multiattack
+    description: The naga makes three attacks, using Bite or Necrotic Ray in any combination.
+  - name: Bite
+    description: 'Melee Attack Roll: +7, reach 10 ft. Hit: 7 (1d6 + 4) Piercing damage plus 14 (4d6) Poison damage.'
+  - name: Necrotic Ray
+    description: 'Ranged Attack Roll: +6, range 60 ft. Hit: 21 (6d6) Necrotic damage.'
+  - name: Spellcasting
+    description: 'The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):'

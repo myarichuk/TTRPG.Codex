@@ -140,8 +140,21 @@ public sealed class AppFixture : IAsyncLifetime
         return dir?.FullName ?? throw new InvalidOperationException("Could not locate the repository root (TTRPG.Codex.sln) above " + AppContext.BaseDirectory);
     }
 
+    /// <summary>Where the app's console output is written on dispose, for post-mortems of a failed scenario.</summary>
+    public string LogPath { get; } = Path.Combine(Path.GetTempPath(), $"codex-e2e-{Environment.ProcessId}-{Guid.NewGuid():N}.log");
+
     public async Task DisposeAsync()
     {
+        try
+        {
+            lock (_output) File.WriteAllText(LogPath, _output.ToString());
+            Console.WriteLine($"Codex.Web output written to {LogPath}");
+        }
+        catch
+        {
+            // Best-effort diagnostics only.
+        }
+
         if (Browser != null)
         {
             await Browser.CloseAsync();

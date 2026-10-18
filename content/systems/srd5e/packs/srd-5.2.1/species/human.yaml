@@ -1,0 +1,29 @@
+id: human
+type: species
+name: Human
+description: >-
+  **Creature Type:** Humanoid  
+
+  **Size:** Medium  
+
+  **Speed:** 30 feet
+
+
+  **Resourceful.** You gain Heroic Inspiration whenever you finish a Long Rest.
+
+
+  **Skillful.** You gain proficiency in one skill of your choice.
+
+
+  **Versatile.** You gain an Origin feat of your choice (see "Feats"). Skilled is recommended.
+properties:
+  creatureType: Humanoid
+  size: Medium
+  speed: 30
+  traits:
+  - name: Resourceful
+    description: You gain Heroic Inspiration whenever you finish a Long Rest.
+  - name: Skillful
+    description: You gain proficiency in one skill of your choice.
+  - name: Versatile
+    description: You gain an Origin feat of your choice (see "Feats"). Skilled is recommended.

@@ -1,0 +1,107 @@
+id: archmage
+type: monster
+name: Archmage
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 17  
+
+  **HP** 170 (31d8 + 31)  
+
+  **Speed** 30 ft.  
+
+  **CR** 12 (XP 8000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 14 (+2) | 12 (+1) | 20 (+5) | 15 (+2) | 16 (+3) |
+
+
+  **Saving Throws** INT +9, WIS +6  
+
+  **Skills** Arcana +13, History +9, Perception +6  
+
+  **Immunities** psychic, Charmed  
+
+  **Gear** Wand  
+
+  **Senses** passive perception 16  
+
+  **Languages** Common plus five other languages
+
+
+  ### Traits
+
+  **Magic Resistance.** The archmage has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The archmage makes four Arcane Burst attacks.
+
+
+  **Arcane Burst.** Melee or Ranged Attack Roll: +9, reach 5 ft. or range 150 ft. Hit: 27 (4d10 + 5) Force damage.
+
+
+  **Spellcasting.** The archmage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 17):
+
+
+
+  ### Bonus Actions
+
+  **Misty Step (3/day).** The mage casts Misty Step, using the same spellcasting ability as Spellcasting.
+
+
+
+  ### Reactions
+
+  **Protective Magic (3/day).** The archmage casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.
+tags:
+- humanoid
+- medium or small
+- cr-12
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 17
+  hitPoints: 170
+  hitDice: 31d8 + 31
+  speed: 30 ft.
+  strength: 10
+  dexterity: 14
+  constitution: 12
+  intelligence: 20
+  wisdom: 15
+  charisma: 16
+  challengeRating: 12
+  xp: 8000
+  senses: passive perception 16
+  languages: Common plus five other languages
+  skills: Arcana +13, History +9, Perception +6
+  savingThrows: INT +9, WIS +6
+  immunities:
+  - psychic
+  - Charmed
+  gear: Wand
+  traits:
+  - name: Magic Resistance
+    description: The archmage has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The archmage makes four Arcane Burst attacks.
+  - name: Arcane Burst
+    description: 'Melee or Ranged Attack Roll: +9, reach 5 ft. or range 150 ft. Hit: 27 (4d10 + 5) Force damage.'
+  - name: Spellcasting
+    description: 'The archmage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 17):'
+  bonusActions:
+  - name: Misty Step (3/day)
+    description: The mage casts Misty Step, using the same spellcasting ability as Spellcasting.
+  reactions:
+  - name: Protective Magic (3/day)
+    description: The archmage casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.

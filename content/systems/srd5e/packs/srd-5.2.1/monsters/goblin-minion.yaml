@@ -1,0 +1,71 @@
+id: goblin-minion
+type: monster
+name: Goblin Minion
+description: >-
+  *Small Fey, Chaotic Neutral*
+
+
+  **AC** 12  
+
+  **HP** 7 (2d6)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 8 (-1) | 15 (+2) | 10 (+0) | 10 (+0) | 8 (-1) | 8 (-1) |
+
+
+  **Skills** Stealth +6  
+
+  **Gear** Daggers (3)  
+
+  **Senses** darkvision 60 ft., passive perception 9  
+
+  **Languages** Common, Goblin
+
+
+  ### Actions
+
+  **Dagger.** Melee or Ranged Attack Roll: +4, reach 5 ft. or range 20/60 ft. Hit: 4 (1d4 + 2) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Nimble Escape.** The goblin takes the Disengage or Hide action.
+tags:
+- fey
+- small
+- cr-1/8
+properties:
+  size: Small
+  creatureType: fey
+  alignment: chaotic neutral
+  armorClass: 12
+  hitPoints: 7
+  hitDice: 2d6
+  speed: 30 ft.
+  strength: 8
+  dexterity: 15
+  constitution: 10
+  intelligence: 10
+  wisdom: 8
+  charisma: 8
+  challengeRating: 1/8
+  xp: 25
+  senses: darkvision 60 ft., passive perception 9
+  languages: Common, Goblin
+  skills: Stealth +6
+  gear: Daggers (3)
+  actions:
+  - name: Dagger
+    description: 'Melee or Ranged Attack Roll: +4, reach 5 ft. or range 20/60 ft. Hit: 4 (1d4 + 2) Piercing damage.'
+  bonusActions:
+  - name: Nimble Escape
+    description: The goblin takes the Disengage or Hide action.

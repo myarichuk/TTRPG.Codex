@@ -1,0 +1,89 @@
+id: ice-mephit
+type: monster
+name: Ice Mephit
+description: >-
+  *Small Elemental, Neutral Evil*
+
+
+  **AC** 11  
+
+  **HP** 21 (6d6)  
+
+  **Speed** 30 ft., fly 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 7 (-2) | 13 (+1) | 10 (+0) | 9 (-1) | 11 (+0) | 12 (+1) |
+
+
+  **Skills** Perception +2, Stealth +3  
+
+  **Immunities** cold, poison, Exhaustion, Poisoned  
+
+  **Vulnerabilities** fire  
+
+  **Senses** darkvision 60 ft., passive perception 12  
+
+  **Languages** Primordial (Aquan, Auran)
+
+
+  ### Traits
+
+  **Death Burst.** The mephit explodes when it dies. Constitution Saving Throw: DC 10, each creature in a 5-foot Emanation originating from the mephit. Failure: 5 (2d4) Cold damage. Success: Half damage.
+
+
+
+  ### Actions
+
+  **Claw.** Melee Attack Roll: +3, reach 5 ft. Hit: 3 (1d4 + 1) Slashing damage plus 2 (1d4) Cold damage.
+
+
+  **Fog Cloud (1/day).** The mephit casts Fog Cloud, requiring no spell components and using Charisma as the spellcasting ability.
+
+
+  **Frost Breath.** Constitution Saving Throw: DC 10, each creature in a 15-foot Cone. Failure: 7 (3d4) Cold damage. Success: Half damage.
+tags:
+- elemental
+- small
+- cr-1/2
+properties:
+  size: Small
+  creatureType: elemental
+  alignment: neutral evil
+  armorClass: 11
+  hitPoints: 21
+  hitDice: 6d6
+  speed: 30 ft., fly 30 ft.
+  strength: 7
+  dexterity: 13
+  constitution: 10
+  intelligence: 9
+  wisdom: 11
+  charisma: 12
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 12
+  languages: Primordial (Aquan, Auran)
+  skills: Perception +2, Stealth +3
+  immunities:
+  - cold
+  - poison
+  - Exhaustion
+  - Poisoned
+  vulnerabilities:
+  - fire
+  traits:
+  - name: Death Burst
+    description: 'The mephit explodes when it dies. Constitution Saving Throw: DC 10, each creature in a 5-foot Emanation originating from the mephit. Failure: 5 (2d4) Cold damage. Success: Half damage.'
+  actions:
+  - name: Claw
+    description: 'Melee Attack Roll: +3, reach 5 ft. Hit: 3 (1d4 + 1) Slashing damage plus 2 (1d4) Cold damage.'
+  - name: Fog Cloud (1/day)
+    description: The mephit casts Fog Cloud, requiring no spell components and using Charisma as the spellcasting ability.
+  - name: Frost Breath
+    description: 'Constitution Saving Throw: DC 10, each creature in a 15-foot Cone. Failure: 7 (3d4) Cold damage. Success: Half damage.'

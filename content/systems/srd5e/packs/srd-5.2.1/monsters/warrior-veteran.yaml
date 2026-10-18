@@ -1,0 +1,81 @@
+id: warrior-veteran
+type: monster
+name: Warrior Veteran
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 17 (Splint Armor)  
+
+  **HP** 65 (10d8 + 20)  
+
+  **Speed** 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 13 (+1) | 14 (+2) | 10 (+0) | 11 (+0) | 10 (+0) |
+
+
+  **Skills** Athletics +5, Perception +2  
+
+  **Gear** Greatsword, Heavy Crossbow, Splint Armor  
+
+  **Senses** passive perception 12  
+
+  **Languages** Common plus one other language
+
+
+  ### Actions
+
+  **Multiattack.** The warrior makes two Greatsword or Heavy Crossbow attacks.
+
+
+  **Greatsword.** Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage.
+
+
+  **Heavy Crossbow.** Ranged Attack Roll: +3, range 100/400 ft. Hit: 12 (2d10 + 1) Piercing damage.
+
+
+
+  ### Reactions
+
+  **Parry.** Trigger: The warrior is hit by a melee attack roll while holding a weapon. Response: The warrior adds 2 to its AC against that attack, possibly causing it to miss.
+tags:
+- humanoid
+- medium or small
+- cr-3
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 17
+  hitPoints: 65
+  hitDice: 10d8 + 20
+  speed: 30 ft.
+  strength: 16
+  dexterity: 13
+  constitution: 14
+  intelligence: 10
+  wisdom: 11
+  charisma: 10
+  challengeRating: 3
+  xp: 700
+  senses: passive perception 12
+  languages: Common plus one other language
+  skills: Athletics +5, Perception +2
+  gear: Greatsword, Heavy Crossbow, Splint Armor
+  actions:
+  - name: Multiattack
+    description: The warrior makes two Greatsword or Heavy Crossbow attacks.
+  - name: Greatsword
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage.'
+  - name: Heavy Crossbow
+    description: 'Ranged Attack Roll: +3, range 100/400 ft. Hit: 12 (2d10 + 1) Piercing damage.'
+  reactions:
+  - name: Parry
+    description: 'Trigger: The warrior is hit by a melee attack roll while holding a weapon. Response: The warrior adds 2 to its AC against that attack, possibly causing it to miss.'

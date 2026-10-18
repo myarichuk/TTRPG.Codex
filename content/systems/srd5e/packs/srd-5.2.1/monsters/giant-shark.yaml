@@ -1,0 +1,73 @@
+id: giant-shark
+type: monster
+name: Giant Shark
+description: >-
+  *Huge Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 92 (8d12 + 40)  
+
+  **Speed** 5 ft., swim 60 ft.  
+
+  **CR** 5 (XP 1800; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 23 (+6) | 11 (+0) | 21 (+5) | 1 (-5) | 10 (+0) | 5 (-3) |
+
+
+  **Skills** Perception +3  
+
+  **Senses** blindsight 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Water Breathing.** The shark can breathe only underwater.
+
+
+
+  ### Actions
+
+  **Multiattack.** The shark makes two Bite attacks.
+
+
+  **Bite.** Melee Attack Roll: +9 (with Advantage if the target doesn’t have all its Hit Points), reach 5 ft. Hit: 22 (3d10 + 6) Piercing damage.
+tags:
+- beast
+- huge
+- cr-5
+properties:
+  size: Huge
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 92
+  hitDice: 8d12 + 40
+  speed: 5 ft., swim 60 ft.
+  strength: 23
+  dexterity: 11
+  constitution: 21
+  intelligence: 1
+  wisdom: 10
+  charisma: 5
+  challengeRating: 5
+  xp: 1800
+  senses: blindsight 60 ft., passive perception 13
+  languages: None
+  skills: Perception +3
+  traits:
+  - name: Water Breathing
+    description: The shark can breathe only underwater.
+  actions:
+  - name: Multiattack
+    description: The shark makes two Bite attacks.
+  - name: Bite
+    description: 'Melee Attack Roll: +9 (with Advantage if the target doesn’t have all its Hit Points), reach 5 ft. Hit: 22 (3d10 + 6) Piercing damage.'

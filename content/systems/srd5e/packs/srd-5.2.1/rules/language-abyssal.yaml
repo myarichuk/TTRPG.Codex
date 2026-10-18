@@ -1,0 +1,7 @@
+id: language-abyssal
+type: rule
+name: Abyssal
+tags:
+- language
+properties:
+  category: Language

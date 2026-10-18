@@ -1,0 +1,83 @@
+id: salamander
+type: monster
+name: Salamander
+description: >-
+  *Large Elemental, Neutral Evil*
+
+
+  **AC** 15  
+
+  **HP** 90 (12d10 + 24)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 5 (XP 1800; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 14 (+2) | 15 (+2) | 11 (+0) | 10 (+0) | 12 (+1) |
+
+
+  **Immunities** fire  
+
+  **Vulnerabilities** cold  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Primordial (Ignan)
+
+
+  ### Traits
+
+  **Fire Aura.** At the end of each of the salamander’s turns, each creature of the salamander’s choice in a 5-foot Emanation originating from the salamander takes 7 (2d6) Fire damage.
+
+
+
+  ### Actions
+
+  **Multiattack.** The salamander makes two Flame Spear attacks. It can replace one attack with a use of Constrict.
+
+
+  **Flame Spear.** Melee or Ranged Attack Roll: +7, reach 5 ft. or range 20/60 ft. Hit: 13 (2d8 + 4) Piercing damage plus 7 (2d6) Fire damage. Hit or Miss: The spear magically returns to the salamander’s hand immediately after a ranged attack.
+
+
+  **Constrict.** Strength Saving Throw: DC 15, one Large or smaller creature the salamander can see within 10 feet. Failure: 11 (2d6 + 4) Bludgeoning damage plus 7 (2d6) Fire damage. The target has the Grappled condition (escape DC 14), and it has the Restrained condition until the grapple ends.
+tags:
+- elemental
+- large
+- cr-5
+properties:
+  size: Large
+  creatureType: elemental
+  alignment: neutral evil
+  armorClass: 15
+  hitPoints: 90
+  hitDice: 12d10 + 24
+  speed: 30 ft., climb 30 ft.
+  strength: 18
+  dexterity: 14
+  constitution: 15
+  intelligence: 11
+  wisdom: 10
+  charisma: 12
+  challengeRating: 5
+  xp: 1800
+  senses: darkvision 60 ft., passive perception 10
+  languages: Primordial (Ignan)
+  immunities:
+  - fire
+  vulnerabilities:
+  - cold
+  traits:
+  - name: Fire Aura
+    description: At the end of each of the salamander’s turns, each creature of the salamander’s choice in a 5-foot Emanation originating from the salamander takes 7 (2d6) Fire damage.
+  actions:
+  - name: Multiattack
+    description: The salamander makes two Flame Spear attacks. It can replace one attack with a use of Constrict.
+  - name: Flame Spear
+    description: 'Melee or Ranged Attack Roll: +7, reach 5 ft. or range 20/60 ft. Hit: 13 (2d8 + 4) Piercing damage plus 7 (2d6) Fire damage. Hit or Miss: The spear magically returns to the salamander’s hand immediately after a ranged attack.'
+  - name: Constrict
+    description: 'Strength Saving Throw: DC 15, one Large or smaller creature the salamander can see within 10 feet. Failure: 11 (2d6 + 4) Bludgeoning damage plus 7 (2d6) Fire damage. The target has the Grappled condition (escape DC 14), and it has the Restrained condition until the grapple ends.'

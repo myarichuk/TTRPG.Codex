@@ -1,0 +1,59 @@
+id: elk
+type: monster
+name: Elk
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 11 (2d10)  
+
+  **Speed** 50 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 10 (+0) | 11 (+0) | 2 (-4) | 10 (+0) | 6 (-2) |
+
+
+  **Skills** Perception +2  
+
+  **Senses** darkvision 60 ft., passive perception 12  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Ram.** Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Bludgeoning damage. If the target is a Large or smaller creature and the elk moved 20+ feet straight toward it immediately before the hit, the target takes an extra 3 (1d6) Bludgeoning damage and has the Prone condition.
+tags:
+- beast
+- large
+- cr-1/4
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 11
+  hitDice: 2d10
+  speed: 50 ft.
+  strength: 16
+  dexterity: 10
+  constitution: 11
+  intelligence: 2
+  wisdom: 10
+  charisma: 6
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 12
+  languages: None
+  skills: Perception +2
+  actions:
+  - name: Ram
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Bludgeoning damage. If the target is a Large or smaller creature and the elk moved 20+ feet straight toward it immediately before the hit, the target takes an extra 3 (1d6) Bludgeoning damage and has the Prone condition.'

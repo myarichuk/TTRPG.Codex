@@ -1,0 +1,68 @@
+id: giant-wolf-spider
+type: monster
+name: Giant Wolf Spider
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 11 (2d8 + 2)  
+
+  **Speed** 40 ft., climb 40 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 12 (+1) | 16 (+3) | 13 (+1) | 3 (-4) | 12 (+1) | 4 (-3) |
+
+
+  **Skills** Perception +3, Stealth +7  
+
+  **Senses** darkvision 60 ft., blindsight 10 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Spider Climb.** The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Piercing damage plus 5 (2d4) Poison damage.
+tags:
+- beast
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 11
+  hitDice: 2d8 + 2
+  speed: 40 ft., climb 40 ft.
+  strength: 12
+  dexterity: 16
+  constitution: 13
+  intelligence: 3
+  wisdom: 12
+  charisma: 4
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., blindsight 10 ft., passive perception 13
+  languages: None
+  skills: Perception +3, Stealth +7
+  traits:
+  - name: Spider Climb
+    description: The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Piercing damage plus 5 (2d4) Poison damage.'
