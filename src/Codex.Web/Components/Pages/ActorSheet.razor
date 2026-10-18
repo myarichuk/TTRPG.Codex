@@ -1,6 +1,7 @@
 @page "/campaigns/{CampaignId}/actors/{ActorId}"
 @using System.Security.Claims
 @using Codex.Core
+@using Codex.Core.AI
 @using Codex.Core.Systems
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
@@ -12,6 +13,9 @@
 @inject ISystemCatalog SystemCatalog
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
+@inject IMediaStore Media
+@inject AiFeatures Ai
+@inject ILogger<ActorSheet> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
@@ -19,7 +23,7 @@
 
 @if (loading)
 {
-    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+    <LoadingSkeleton />
 }
 else if (campaign == null || actor == null || access == null)
 {
@@ -32,20 +36,36 @@ else if (campaign == null || actor == null || access == null)
 }
 else
 {
-    <div class="page-header mb-3">
-        <div>
-            <nav aria-label="Breadcrumb" class="small-muted mb-1"><a href="/">Campaigns</a> / <a href="/campaigns/@CampaignId">@campaign.Name</a> / <a href="/campaigns/@CampaignId/cast">Cast</a></nav>
-            <h1 class="mb-0" data-testid="actor-name">@DisplayName</h1>
-            <div class="d-flex flex-wrap gap-1 mt-1">
-                <span class="pill">@KindLabel</span>
-                @if (access.IsDm)
+    <div class="page-header sheet-header mb-3">
+        <div class="d-flex gap-3 align-items-center">
+            <div class="portrait-wrap">
+                <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="xl" Alt="@($"Portrait of {DisplayName}")" />
+                @if (CanEdit)
                 {
-                    <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
+                    <label class="portrait-upload" title="Upload a portrait">
+                        <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">Upload a portrait (PNG, JPEG or WebP, up to 6 MB)</span>
+                        <InputFile OnChange="UploadPortraitAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
+                    </label>
                 }
-                @if (!string.IsNullOrEmpty(actor.BlueprintId))
-                {
-                    <span class="pill">From @actor.BlueprintId.Split(':').Last()</span>
-                }
+            </div>
+            <div>
+                <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/cast">Cast</a></nav>
+                <h1 class="mb-0" data-testid="actor-name">@DisplayName</h1>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    <span class="pill">@KindLabel</span>
+                    @if (access.IsDm)
+                    {
+                        <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
+                    }
+                    @if (!string.IsNullOrEmpty(actor.BlueprintId))
+                    {
+                        <span class="pill">From @actor.BlueprintId.Split(':').Last()</span>
+                    }
+                    @if (CanEdit && actor.HasPortrait)
+                    {
+                        <button type="button" class="pill pill-button" @onclick="RemovePortraitAsync"><LucideIcon IconName="x" Size="12" /> Remove portrait</button>
+                    }
+                </div>
             </div>
         </div>
         @if (CanEdit)
@@ -74,7 +94,7 @@ else
             @if (system != null && system.Attributes.Count > 0)
             {
                 <section class="panel" aria-labelledby="attributes-heading">
-                    <div class="panel-title"><h2 id="attributes-heading" class="h5">Attributes</h2></div>
+                    <div class="panel-title"><h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="16" Class="title-icon" /> Attributes</h2></div>
                     <div class="attr-grid">
                         @foreach (var attr in system.Attributes)
                         {
@@ -107,7 +127,7 @@ else
             }
 
             <section class="panel" aria-labelledby="sheet-heading">
-                <div class="panel-title"><h2 id="sheet-heading" class="h5">Sheet</h2></div>
+                <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="16" Class="title-icon" /> Sheet</h2></div>
                 <div class="mb-3">
                     <label for="actor-name-input" class="form-label">Name</label>
                     <input id="actor-name-input" class="form-control" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
@@ -132,10 +152,60 @@ else
                 }
             </section>
 
+            <section class="panel" aria-labelledby="bio-heading">
+                <div class="panel-title">
+                    <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="16" Class="title-icon" /> History</h2>
+                    @if (CanEdit)
+                    {
+                        <span class="pill"><LucideIcon IconName="users" Size="12" /> Visible to whoever can see this character</span>
+                    }
+                </div>
+                @if (CanEdit)
+                {
+                    <label for="actor-bio" class="visually-hidden">History</label>
+                    <textarea id="actor-bio" class="form-control mb-2" rows="8" placeholder="Where they came from, what they want, who they owe…" @bind="editBiography" @bind:event="oninput" data-testid="sheet-biography"></textarea>
+                    <div class="ai-row">
+                        <label for="bio-instruction" class="visually-hidden">Instruction for the AI</label>
+                        <input id="bio-instruction" class="form-control form-control-sm" placeholder="Optional instruction: “expand into three paragraphs”, “make it grimmer”, “add a rival”…" @bind="bioInstruction" />
+                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => RewriteAsync(AiAudience.Players)" disabled="@(busy != null)">
+                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "bio" ? "Writing…" : string.IsNullOrWhiteSpace(editBiography) ? "Write with AI" : "Rewrite with AI")
+                        </button>
+                    </div>
+                    <p class="form-text mb-0">The AI sees the sheet and this text. Save changes to keep the result.</p>
+                }
+                else if (!string.IsNullOrWhiteSpace(actor.Biography))
+                {
+                    <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(actor.Biography))</div>
+                }
+                else
+                {
+                    <p class="small-muted mb-0">No history written yet.</p>
+                }
+            </section>
+
+            @if (access.IsDm)
+            {
+                <section class="panel panel-dm" aria-labelledby="dm-notes-heading">
+                    <div class="panel-title">
+                        <h2 id="dm-notes-heading" class="h5"><LucideIcon IconName="lock" Size="16" Class="title-icon" /> DM notes</h2>
+                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="12" /> Only you</span>
+                    </div>
+                    <label for="actor-dm-notes" class="visually-hidden">DM notes</label>
+                    <textarea id="actor-dm-notes" class="form-control mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-testid="sheet-dm-notes"></textarea>
+                    <div class="ai-row">
+                        <label for="dm-instruction" class="visually-hidden">Instruction for the AI</label>
+                        <input id="dm-instruction" class="form-control form-control-sm" placeholder="Optional instruction: “give them a secret that ties into the party”…" @bind="dmInstruction" />
+                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => RewriteAsync(AiAudience.Dm)" disabled="@(busy != null)">
+                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "dm" ? "Writing…" : "Draft with AI")
+                        </button>
+                    </div>
+                </section>
+            }
+
             @if (linkedEntries.Count > 0)
             {
                 <section class="panel" aria-labelledby="linked-heading">
-                    <div class="panel-title"><h2 id="linked-heading" class="h5">From the Library</h2></div>
+                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="16" Class="title-icon" /> From the Library</h2></div>
                     @foreach (var (label, item) in linkedEntries)
                     {
                         <div class="mb-3">
@@ -153,8 +223,10 @@ else
             {
                 var current = YamlValues.GetInt(editSheet, primary.Key) ?? 0;
                 var max = primary.MaxKey != null ? YamlValues.GetInt(editSheet, primary.MaxKey) ?? 0 : 0;
+                var pct = max > 0 ? Math.Clamp(100.0 * current / max, 0, 100) : 0;
+                var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
                 <section class="panel" aria-labelledby="vitals-heading">
-                    <div class="panel-title"><h2 id="vitals-heading" class="h5">@primary.Label</h2></div>
+                    <div class="panel-title"><h2 id="vitals-heading" class="h5"><LucideIcon IconName="heart" Size="16" Class="title-icon" /> @primary.Label</h2></div>
                     <div class="d-flex align-items-baseline gap-2">
                         <span class="display-6 hp-text" data-testid="hp-current">@current</span>
                         @if (max > 0)
@@ -164,18 +236,42 @@ else
                     </div>
                     @if (max > 0)
                     {
-                        <div class="hp-bar" role="progressbar" aria-label="@primary.Label" aria-valuemin="0" aria-valuemax="@max" aria-valuenow="@current">
-                            <span style="width:@(Math.Clamp(100.0 * current / max, 0, 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                        <div class="hp-bar @band" role="progressbar" aria-label="@primary.Label" aria-valuemin="0" aria-valuemax="@max" aria-valuenow="@current">
+                            <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
                         </div>
                     }
                     <p class="small-muted mt-2 mb-0">Changes at the live table update this number; edit the values under Sheet to set them directly.</p>
                 </section>
             }
 
+            @if (CanEdit && HasLevel)
+            {
+                <section class="panel panel-ai" aria-labelledby="levelup-heading">
+                    <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="16" Class="title-icon" /> Level up</h2></div>
+                    <p class="small-muted">Level @CurrentLevel now. Ask what level @(CurrentLevel + 1) brings and which picks fit this character, from the Library's class entry.</p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-ai btn-sm" @onclick="SuggestLevelUpAsync" disabled="@(busy != null)" data-testid="sheet-levelup">
+                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "level" ? "Thinking…" : $"Suggest level {CurrentLevel + 1}")
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="ApplyLevelUp">Set level to @(CurrentLevel + 1)</button>
+                    </div>
+                    @if (levelUpAdvice != null)
+                    {
+                        <div class="ai-output mt-3" data-testid="levelup-advice">
+                            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(levelUpAdvice))</div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => levelUpAdvice = null">Dismiss</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="AppendAdviceToNotes">Keep in notes</button>
+                            </div>
+                        </div>
+                    }
+                </section>
+            }
+
             @if (access.IsDm)
             {
                 <section class="panel" aria-labelledby="visibility-heading">
-                    <div class="panel-title"><h2 id="visibility-heading" class="h5">Visibility to players</h2></div>
+                    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="16" Class="title-icon" /> Visibility to players</h2></div>
                     <div class="mb-2">
                         <label for="actor-visibility" class="form-label">Who sees this character</label>
                         <select id="actor-visibility" class="form-select" @bind="editVisibility">
@@ -233,6 +329,12 @@ else
     private Dictionary<string, IReadOnlyList<(string Id, string Name)>> referenceOptions = new();
     private List<(string Label, LibraryItem Item)> linkedEntries = new();
     private string editName = "";
+    private string editBiography = "";
+    private string editDmNotes = "";
+    private string bioInstruction = "";
+    private string dmInstruction = "";
+    private string? levelUpAdvice;
+    private string? busy;
     private ActorVisibility editVisibility;
     private string editPublicName = "";
     private ActorKind editKind;
@@ -241,6 +343,8 @@ else
     private Flash? flash;
 
     private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
+    private bool HasLevel => schema?.Fields.Any(f => f.Key == "level") == true;
+    private int CurrentLevel => YamlValues.GetInt(editSheet, "level") ?? 1;
 
     private string DisplayName => actor == null ? string.Empty
         : access?.IsDm == false && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
@@ -281,6 +385,8 @@ else
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
                 editName = actor.Name;
+                editBiography = actor.Biography ?? "";
+                editDmNotes = actor.DmNotes ?? "";
                 editVisibility = actor.Visibility;
                 editPublicName = actor.PublicName ?? "";
                 editKind = actor.Kind;
@@ -329,21 +435,28 @@ else
         editSheet[attribute.Key] = (long)value;
     }
 
+    private ActorDocument ApplyEdits(ActorDocument target)
+    {
+        target.Name = string.IsNullOrWhiteSpace(editName) ? target.Name : editName.Trim();
+        target.Sheet = new Dictionary<string, object>(editSheet);
+        target.Biography = string.IsNullOrWhiteSpace(editBiography) ? null : editBiography.Trim();
+        if (access!.IsDm)
+        {
+            target.DmNotes = string.IsNullOrWhiteSpace(editDmNotes) ? null : editDmNotes.Trim();
+            target.Visibility = editVisibility;
+            target.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
+            target.Kind = editKind;
+            target.OwnerUserId = editKind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(editOwnerId) ? editOwnerId : (editKind == ActorKind.PlayerCharacter ? target.OwnerUserId : null);
+        }
+
+        ActorSheetSync.ApplySheetToState(target, system, Components);
+        return target;
+    }
+
     private async Task SaveAsync()
     {
         if (actor == null || access == null || campaign == null) return;
-
-        actor.Name = string.IsNullOrWhiteSpace(editName) ? actor.Name : editName.Trim();
-        actor.Sheet = new Dictionary<string, object>(editSheet);
-        if (access.IsDm)
-        {
-            actor.Visibility = editVisibility;
-            actor.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
-            actor.Kind = editKind;
-            actor.OwnerUserId = editKind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(editOwnerId) ? editOwnerId : (editKind == ActorKind.PlayerCharacter ? actor.OwnerUserId : null);
-        }
-
-        ActorSheetSync.ApplySheetToState(actor, system, Components);
+        ApplyEdits(actor);
 
         if (await ActorRepo.TrySaveAsync(actor, access))
         {
@@ -355,5 +468,121 @@ else
         }
 
         await ReloadAsync();
+    }
+
+    private async Task UploadPortraitAsync(InputFileChangeEventArgs e)
+    {
+        if (actor == null || access == null || !CanEdit) return;
+        var file = e.File;
+        if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
+        {
+            flash = Flash.Error("Use a PNG, JPEG, WebP, GIF or AVIF image.");
+            return;
+        }
+
+        if (file.Size > RavenMediaStore.MaxBytes)
+        {
+            flash = Flash.Error("That image is over 6 MB. Resize it and try again.");
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
+            await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, file.ContentType);
+            actor.HasPortrait = true;
+            actor.PortraitVersion++;
+            ApplyEdits(actor);
+            await ActorRepo.TrySaveAsync(actor, access);
+            flash = Flash.Success("Portrait updated.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Portrait upload failed for actor {ActorId}", ActorId);
+            flash = Flash.Error("The upload failed: " + ex.Message);
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task RemovePortraitAsync()
+    {
+        if (actor == null || access == null || !CanEdit) return;
+        await Media.DeleteAsync(actor.Id, RavenMediaStore.ActorPortrait);
+        actor.HasPortrait = false;
+        actor.PortraitVersion++;
+        ApplyEdits(actor);
+        await ActorRepo.TrySaveAsync(actor, access);
+        flash = Flash.Success("Portrait removed.");
+        await ReloadAsync();
+    }
+
+    private async Task RewriteAsync(AiAudience audience)
+    {
+        if (actor == null || campaign == null || currentUserId == null || busy != null) return;
+        busy = audience == AiAudience.Dm ? "dm" : "bio";
+        try
+        {
+            var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography });
+            var text = await Ai.RewriteAsync(snapshot, campaign, system,
+                audience == AiAudience.Dm ? editDmNotes : editBiography,
+                audience == AiAudience.Dm ? dmInstruction : bioInstruction,
+                audience, currentUserId);
+            if (audience == AiAudience.Dm) editDmNotes = text; else editBiography = text;
+            flash = Flash.Info("AI draft in the editor. Review, then Save changes.");
+        }
+        catch (AiNotConfiguredException)
+        {
+            flash = Flash.Error("No AI provider is set up. Add one under AI settings (top right).");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "AI rewrite failed for actor {ActorId}", ActorId);
+            flash = Flash.Error("The AI draft failed: " + ex.Message);
+        }
+        finally
+        {
+            busy = null;
+        }
+    }
+
+    private async Task SuggestLevelUpAsync()
+    {
+        if (actor == null || campaign == null || currentUserId == null || busy != null) return;
+        busy = "level";
+        try
+        {
+            var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name });
+            levelUpAdvice = await Ai.LevelUpAsync(snapshot, campaign, system, currentUserId);
+        }
+        catch (AiNotConfiguredException)
+        {
+            flash = Flash.Error("No AI provider is set up. Add one under AI settings (top right).");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "AI level-up failed for actor {ActorId}", ActorId);
+            flash = Flash.Error("The AI suggestion failed: " + ex.Message);
+        }
+        finally
+        {
+            busy = null;
+        }
+    }
+
+    private void ApplyLevelUp()
+    {
+        editSheet["level"] = (long)(CurrentLevel + 1);
+        flash = Flash.Info($"Level set to {CurrentLevel}. Update hit points and features, then Save changes.");
+    }
+
+    private void AppendAdviceToNotes()
+    {
+        if (levelUpAdvice == null) return;
+        var key = schema?.Fields.FirstOrDefault(f => f.Type == FieldType.LongText)?.Key ?? "notes";
+        var existing = YamlValues.GetString(editSheet, key) ?? string.Empty;
+        editSheet[key] = (existing.TrimEnd() + $"\n\nLevel {CurrentLevel + 1} plan:\n{levelUpAdvice}").Trim();
+        levelUpAdvice = null;
+        flash = Flash.Info("Added to the notes field. Save changes to keep it.");
     }
 }

@@ -1,0 +1,460 @@
+@using Codex.Core
+@using Codex.Core.AI
+@using Codex.Persistence
+@using Microsoft.AspNetCore.WebUtilities
+@inject IWikiRepository WikiRepo
+@inject INoteRepository NoteRepo
+@inject IUserRepository UserRepo
+@inject AiFeatures Ai
+@inject NavigationManager Nav
+@inject ILogger<WikiSection> Logger
+
+@* The world wiki: DM-written pages linked with [[Page title]], each DM-only or shared with the
+   party; players discuss a page with notes (private to them and the DM, or for the whole party). *@
+
+@if (pages == null)
+{
+    <LoadingSkeleton />
+}
+else if (Mode == "edit")
+{
+    <div class="page-header mb-3">
+        <div>
+            <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">Wiki</a>@if (current != null) { <span class="crumb-sep" aria-hidden="true">/</span><a href="@Ctx.BasePath/wiki/@current.Slug">@current.Title</a> }</nav>
+            <h2 class="mb-0">@(current == null ? "New page" : $"Edit “{current.Title}”")</h2>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <section class="panel">
+                <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" data-testid="wiki-editor">
+                    <div class="field-grid mb-3">
+                        <div class="field-wide">
+                            <label for="wiki-title" class="form-label">Title <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                            <input id="wiki-title" class="form-control form-control-lg" @bind="draft.Title" required maxlength="160" data-testid="wiki-title" />
+                        </div>
+                        <div>
+                            <label for="wiki-visibility" class="form-label">Who can read it</label>
+                            <select id="wiki-visibility" class="form-select" @bind="draft.Visibility" data-testid="wiki-visibility">
+                                <option value="@WikiVisibility.DmOnly">Only me (DM)</option>
+                                <option value="@WikiVisibility.Party">The whole party</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="wiki-tags" class="form-label">Tags</label>
+                            <input id="wiki-tags" class="form-control" placeholder="faction, city, legend…" value="@string.Join(", ", draft.Tags)"
+                                   @onchange="e => draft.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
+                        </div>
+                    </div>
+                    <label for="wiki-body" class="form-label">Text</label>
+                    <textarea id="wiki-body" class="form-control wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-testid="wiki-body" placeholder="Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link."></textarea>
+                    <div class="form-text mb-3">Link with <code>[[Page title]]</code> or <code>[[Page title|shown as]]</code>. <code>**bold**</code>, <code>*italic*</code>, "- " bullets, "### headings" and | tables | are rendered.</div>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button type="submit" class="btn btn-primary" data-testid="wiki-save"><LucideIcon IconName="check" Size="16" /> Save page</button>
+                        <button type="button" class="btn btn-ai" @onclick="ExpandAsync" disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? "Writing…" : "Expand with AI")</button>
+                        <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="btn btn-outline-secondary">Cancel</a>
+                        @if (current != null)
+                        {
+                            <button type="button" class="btn btn-outline-danger ms-auto" @onclick="DeleteAsync">Delete page</button>
+                        }
+                    </div>
+                </form>
+            </section>
+        </div>
+        <div class="col-lg-4">
+            <section class="panel">
+                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> Link to a page</h3></div>
+                <p class="small-muted">Click to append a link to the text.</p>
+                <div class="chips">
+                    @foreach (var wp in pages.Where(p => current == null || p.Id != current.Id).Take(40))
+                    {
+                        <button type="button" class="chip" @onclick="() => AppendLink(wp)">@wp.Title</button>
+                    }
+                </div>
+                @if (pages.Count == 0)
+                {
+                    <p class="small-muted mb-0">No other pages yet. Write <code>[[A new page]]</code> and it becomes a create link.</p>
+                }
+            </section>
+            <section class="panel">
+                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> AI instruction</h3></div>
+                <label for="wiki-ai-instruction" class="visually-hidden">Instruction for the AI</label>
+                <textarea id="wiki-ai-instruction" class="form-control" rows="3" @bind="aiInstruction" placeholder="Optional: “make it a travel guide written by a nervous scholar”, “keep it under 200 words”…"></textarea>
+                <p class="form-text mb-0">The AI sees this page, the campaign description and the names of pages it links to. Nothing else.</p>
+            </section>
+        </div>
+    </div>
+}
+else if (Slug != null)
+{
+    @if (current == null)
+    {
+        <div class="empty">
+            <div class="empty-icon"><LucideIcon IconName="globe" Size="26" /></div>
+            <h3>No page called “@Slug”</h3>
+            <p>@(Ctx.IsDm ? "It may have been deleted. You can write it now." : "It may be DM-only, or not written yet.")</p>
+            @if (Ctx.IsDm)
+            {
+                <a href="@Ctx.BasePath/wiki/new?title=@Uri.EscapeDataString(Slug.Replace('-', ' '))" class="btn btn-primary">Create it</a>
+            }
+            else
+            {
+                <a href="@Ctx.BasePath/wiki" class="btn btn-outline-secondary">Back to the wiki</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="page-header mb-3">
+            <div>
+                <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">Wiki</a><span class="crumb-sep" aria-hidden="true">/</span><span>@current.Title</span></nav>
+                <h2 class="mb-0" data-testid="wiki-page-title">@current.Title</h2>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="12" /> @(current.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
+                    @foreach (var tag in current.Tags)
+                    {
+                        <span class="pill">@tag</span>
+                    }
+                    <span class="pill"><LucideIcon IconName="clock" Size="12" /> @current.UpdatedAt.ToLocalTime().ToString("d MMM yyyy")</span>
+                </div>
+            </div>
+            @if (Ctx.IsDm)
+            {
+                <div class="row-actions">
+                    @if (current.Visibility == WikiVisibility.DmOnly)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" @onclick="RevealAsync"><LucideIcon IconName="eye" Size="16" /> Share with party</button>
+                    }
+                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="btn btn-primary" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="16" /> Edit</a>
+                </div>
+            }
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <article class="panel wiki-page" data-testid="wiki-page">
+                    @if (string.IsNullOrWhiteSpace(current.Body))
+                    {
+                        <p class="small-muted mb-0">This page is empty.</p>
+                    }
+                    else
+                    {
+                        <div class="rules-text wiki-body">@((MarkupString)WikiText.ToHtml(current.Body, ResolveLink, Ctx.IsDm ? CreateLink : null))</div>
+                    }
+                </article>
+
+                <section class="panel" aria-labelledby="wiki-notes-heading">
+                    <div class="panel-title"><h3 id="wiki-notes-heading" class="h6"><LucideIcon IconName="message-square" Size="14" Class="title-icon" /> Notes on this page</h3></div>
+                    @if (notes.Count == 0)
+                    {
+                        <p class="small-muted">No notes yet. @(Ctx.IsDm ? "Players can leave theirs here." : "Leave one for yourself and the DM, or for the whole party.")</p>
+                    }
+                    @foreach (var note in notes)
+                    {
+                        <div class="list-row align-items-start">
+                            <span class="avatar avatar-sm" aria-hidden="true">@Initial(usernames.GetValueOrDefault(note.AuthorId, "?"))</span>
+                            <div class="row-main">
+                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · @note.CreatedAt.ToLocalTime().ToString("d MMM, HH:mm") · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
+                                <p class="mb-0">@note.Content</p>
+                            </div>
+                            @if (note.AuthorId == Ctx.UserId || Ctx.IsDm)
+                            {
+                                <button type="button" class="icon-btn danger" aria-label="Delete note" @onclick="() => DeleteNoteAsync(note)"><LucideIcon IconName="trash-2" Size="14" /></button>
+                            }
+                        </div>
+                    }
+                    <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
+                        <label for="wiki-note" class="form-label">Add a note</label>
+                        <textarea id="wiki-note" class="form-control mb-2" rows="2" @bind="newNote" data-testid="wiki-note"></textarea>
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <label for="wiki-note-visibility" class="visually-hidden">Note visibility</label>
+                            <select id="wiki-note-visibility" class="form-select form-select-sm w-auto" @bind="newNoteVisibility">
+                                <option value="@CommentVisibility.Private">Private (you and the DM)</option>
+                                <option value="@CommentVisibility.Public">Party (everyone in the campaign)</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">Add note</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+            <div class="col-lg-4">
+                @{
+                    var outgoing = current.Links.Select(slug => pages.FirstOrDefault(p => p.Slug == slug)).Where(p => p != null).Cast<WikiPageDocument>().ToList();
+                    var incoming = pages.Where(p => p.Links.Contains(current.Slug) && p.Id != current.Id).ToList();
+                }
+                <section class="panel">
+                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> Links from this page</h3></div>
+                    @if (outgoing.Count == 0)
+                    {
+                        <p class="small-muted mb-0">None yet.</p>
+                    }
+                    <ul class="link-list mb-0">
+                        @foreach (var wp in outgoing)
+                        {
+                            <li><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></li>
+                        }
+                    </ul>
+                </section>
+                <section class="panel">
+                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="arrow-left" Size="14" Class="title-icon" /> Pages linking here</h3></div>
+                    @if (incoming.Count == 0)
+                    {
+                        <p class="small-muted mb-0">Nothing links here yet.</p>
+                    }
+                    <ul class="link-list mb-0">
+                        @foreach (var wp in incoming)
+                        {
+                            <li><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></li>
+                        }
+                    </ul>
+                </section>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="page-header mb-3">
+        <div>
+            <h2 class="mb-0">Wiki</h2>
+            <p class="page-subtitle">@(Ctx.IsDm ? "Your world, one linked page at a time. Pages start DM-only; share them when the party learns of them." : "What the party knows of the world. Pages appear as the DM shares them.")</p>
+        </div>
+        @if (Ctx.IsDm)
+        {
+            <a href="@Ctx.BasePath/wiki/new" class="btn btn-primary" data-testid="wiki-new"><LucideIcon IconName="plus" Size="16" /> New page</a>
+        }
+    </div>
+
+    <div class="toolbar">
+        <div class="search">
+            <LucideIcon IconName="search" Size="18" Class="search-icon" />
+            <label for="wiki-search" class="visually-hidden">Search the wiki</label>
+            <input id="wiki-search" type="search" class="form-control" placeholder="Search pages…" @bind="search" @bind:event="oninput" />
+        </div>
+        @if (AllTags.Count > 0)
+        {
+            <div class="chips" role="group" aria-label="Filter by tag">
+                <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">All</button>
+                @foreach (var tag in AllTags)
+                {
+                    <button type="button" class="chip" aria-pressed="@((activeTag == tag) ? "true" : "false")" @onclick="() => activeTag = tag">@tag</button>
+                }
+            </div>
+        }
+    </div>
+
+    @if (!Filtered.Any())
+    {
+        <div class="empty">
+            <div class="empty-icon"><LucideIcon IconName="globe" Size="26" /></div>
+            <h3>@(pages.Count == 0 ? "No pages yet" : "No page matches")</h3>
+            <p>@(Ctx.IsDm ? "Start with a place, a faction or a legend. Link pages with [[double brackets]]." : "The DM hasn't shared any pages yet.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="card-grid" data-testid="wiki-list">
+            @foreach (var wp in Filtered)
+            {
+                <article class="campaign-card wiki-card" aria-labelledby="wiki-@wp.Id">
+                    <div class="card-head">
+                        <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
+                        <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
+                    </div>
+                    <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
+                    <div class="card-foot">
+                        <span class="small-muted"><LucideIcon IconName="link" Size="12" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · @wp.UpdatedAt.ToLocalTime().ToString("d MMM")</span>
+                        <div class="chips">
+                            @foreach (var tag in wp.Tags.Take(3))
+                            {
+                                <span class="pill">@tag</span>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    /// <summary>A page slug, or "new".</summary>
+    [Parameter] public string? Slug { get; set; }
+
+    /// <summary>"edit" to open the editor for <see cref="Slug"/>.</summary>
+    [Parameter] public string? Action { get; set; }
+
+    private List<WikiPageDocument>? pages;
+    private WikiPageDocument? current;
+    private WikiPageDocument draft = new();
+    private List<NoteDocument> notes = new();
+    private readonly Dictionary<string, string> usernames = new();
+    private string search = string.Empty;
+    private string? activeTag;
+    private string newNote = string.Empty;
+    private CommentVisibility newNoteVisibility = CommentVisibility.Private;
+    private string aiInstruction = string.Empty;
+    private bool expanding;
+    private string? loadedKey;
+
+    private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
+    private List<string> AllTags => (pages ?? new()).SelectMany(p => p.Tags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
+
+    private IEnumerable<WikiPageDocument> Filtered => (pages ?? new())
+        .Where(p => activeTag == null || p.Tags.Contains(activeTag, StringComparer.OrdinalIgnoreCase))
+        .Where(p => string.IsNullOrWhiteSpace(search) || p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || p.Body.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = $"{Ctx.Campaign.Id}|{Slug}|{Action}";
+        if (key == loadedKey) return;
+        loadedKey = key;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        pages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
+        current = null;
+        notes = new List<NoteDocument>();
+
+        if (Slug == "new")
+        {
+            var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
+            draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty };
+            return;
+        }
+
+        if (Slug != null)
+        {
+            current = pages.FirstOrDefault(p => string.Equals(p.Slug, Slug, StringComparison.OrdinalIgnoreCase));
+            if (current != null)
+            {
+                draft = new WikiPageDocument
+                {
+                    Id = current.Id, CampaignId = current.CampaignId, Slug = current.Slug, Title = current.Title,
+                    Body = current.Body, Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId
+                };
+                notes = (await NoteRepo.GetNotesForTargetAsync(NotesTarget(current), Ctx.Access)).ToList();
+                foreach (var authorId in notes.Select(n => n.AuthorId).Distinct())
+                {
+                    if (!usernames.ContainsKey(authorId))
+                    {
+                        usernames[authorId] = (await UserRepo.GetUserByIdAsync(authorId))?.Username ?? authorId;
+                    }
+                }
+            }
+        }
+    }
+
+    private static string NotesTarget(WikiPageDocument page) => $"wiki:{page.Id}";
+    private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
+
+    private string? ResolveLink(string title)
+    {
+        var slug = WikiText.Slugify(title);
+        var page = pages?.FirstOrDefault(p => p.Slug == slug || string.Equals(p.Title, title, StringComparison.OrdinalIgnoreCase));
+        return page == null ? null : $"{Ctx.BasePath}/wiki/{page.Slug}";
+    }
+
+    private void AppendLink(WikiPageDocument target) => draft.Body = (draft.Body.TrimEnd() + $" [[{target.Title}]]").Trim();
+
+    private string CreateLink(string title) => $"{Ctx.BasePath}/wiki/new?title={Uri.EscapeDataString(title)}";
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(draft.Title))
+        {
+            Ctx.Notify(Flash.Error("The page needs a title."));
+            return;
+        }
+
+        if (await WikiRepo.TrySaveAsync(draft, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success($"Saved “{draft.Title}”."));
+            loadedKey = null;
+            Nav.NavigateTo($"{Ctx.BasePath}/wiki/{draft.Slug}");
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error("Only the DM can edit the wiki."));
+        }
+    }
+
+    private async Task RevealAsync()
+    {
+        if (current == null) return;
+        draft.Visibility = WikiVisibility.Party;
+        if (await WikiRepo.TrySaveAsync(draft, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success("Shared with the party."));
+            loadedKey = null;
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (current == null) return;
+        if (await WikiRepo.TryDeleteAsync(current.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success($"Deleted “{current.Title}”."));
+            loadedKey = null;
+            Nav.NavigateTo($"{Ctx.BasePath}/wiki");
+        }
+    }
+
+    private async Task ExpandAsync()
+    {
+        if (expanding) return;
+        expanding = true;
+        try
+        {
+            var related = WikiText.ExtractLinks(draft.Body).Concat((pages ?? new()).Select(p => p.Title)).Distinct(StringComparer.OrdinalIgnoreCase);
+            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, draft.Body, related, aiInstruction, draft.Visibility == WikiVisibility.Party ? AiAudience.Players : AiAudience.Dm, Ctx.UserId);
+            Ctx.Notify(Flash.Info("AI draft in the editor. Review and save."));
+        }
+        catch (AiNotConfiguredException)
+        {
+            Ctx.Notify(Flash.Error("No AI provider is set up. Add one under AI settings (top right)."));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Wiki AI expansion failed");
+            Ctx.Notify(Flash.Error("The AI draft failed: " + ex.Message));
+        }
+        finally
+        {
+            expanding = false;
+        }
+    }
+
+    private async Task AddNoteAsync()
+    {
+        if (current == null || string.IsNullOrWhiteSpace(newNote)) return;
+        await NoteRepo.CreateNoteAsync(new NoteDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = Ctx.Campaign.Id,
+            TargetId = NotesTarget(current),
+            AuthorId = Ctx.UserId,
+            Content = newNote.Trim(),
+            Visibility = newNoteVisibility
+        });
+        newNote = string.Empty;
+        Ctx.Notify(Flash.Success("Note added."));
+        loadedKey = null;
+        await LoadAsync();
+    }
+
+    private async Task DeleteNoteAsync(NoteDocument note)
+    {
+        if (note.AuthorId != Ctx.UserId && !Ctx.IsDm) return;
+        await NoteRepo.DeleteNoteAsync(note.Id);
+        loadedKey = null;
+        await LoadAsync();
+    }
+}

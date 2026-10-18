@@ -432,8 +432,9 @@ else
     {
         if (!CanSeeExact(actorId) || Pool(actorId) is not { } pool || pool.Max <= 0) return;
         var pct = Math.Clamp(100.0 * pool.Current / pool.Max, 0, 100);
+        var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
         builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "hp-bar");
+        builder.AddAttribute(1, "class", "hp-bar " + band);
         builder.AddAttribute(2, "role", "progressbar");
         builder.AddAttribute(3, "aria-label", $"{PrimaryLabel}");
         builder.AddAttribute(4, "aria-valuemin", "0");

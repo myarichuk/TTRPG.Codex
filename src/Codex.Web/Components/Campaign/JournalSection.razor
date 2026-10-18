@@ -1,0 +1,148 @@
+@using Codex.Core
+@using Codex.Persistence
+@inject IJournalRepository JournalRepo
+@inject ISessionRepository SessionRepo
+
+@* The player's private notebook for this campaign: one entry per session plus free entries.
+   Nobody but the owner can read these - the repository filters by owner in the query. *@
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">My journal</h2>
+        <p class="page-subtitle">Your private notebook for this campaign. Only you can read it, not even the DM. One entry per session, plus anything else you want to keep.</p>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="16" /> New entry</button>
+</div>
+
+@if (entries == null)
+{
+    <LoadingSkeleton />
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-7">
+            @if (entries.Count == 0 && editing == null)
+            {
+                <div class="empty">
+                    <div class="empty-icon"><LucideIcon IconName="notebook-pen" Size="26" /></div>
+                    <h3>Nothing written yet</h3>
+                    <p>Names, theories, who owes you money. Open a session and write there, or start a free entry.</p>
+                    <button type="button" class="btn btn-primary" @onclick="StartNew">Write the first entry</button>
+                </div>
+            }
+            @foreach (var entry in entries)
+            {
+                <article class="panel journal-entry" aria-labelledby="journal-@entry.Id" data-testid="journal-entry">
+                    <div class="panel-title">
+                        <div>
+                            <h3 id="journal-@entry.Id" class="h6 mb-0">@(string.IsNullOrWhiteSpace(entry.Title) ? "Untitled" : entry.Title)</h3>
+                            <div class="small-muted">
+                                @entry.UpdatedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")
+                                @if (entry.SessionId != null && sessionTitles.TryGetValue(entry.SessionId, out var title))
+                                {
+                                    <span> · <a href="@Ctx.BasePath/sessions/@entry.SessionId">@title</a></span>
+                                }
+                            </div>
+                        </div>
+                        <div class="row-actions">
+                            <button type="button" class="icon-btn" aria-label="Edit entry" @onclick="() => StartEdit(entry)"><LucideIcon IconName="edit-3" Size="16" /></button>
+                            <button type="button" class="icon-btn danger" aria-label="Delete entry" @onclick="() => DeleteAsync(entry)"><LucideIcon IconName="trash-2" Size="16" /></button>
+                        </div>
+                    </div>
+                    <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(entry.Body))</div>
+                </article>
+            }
+        </div>
+        <div class="col-lg-5">
+            @if (editing != null)
+            {
+                <section class="panel panel-journal" aria-labelledby="journal-editor-heading">
+                    <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="pen-line" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? "New entry" : "Edit entry")</h3></div>
+                    <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
+                        <div class="mb-2">
+                            <label for="journal-title" class="form-label">Title</label>
+                            <input id="journal-title" class="form-control" @bind="editing.Title" maxlength="160" data-testid="journal-title" />
+                        </div>
+                        <div class="mb-2">
+                            <label for="journal-session" class="form-label">Session</label>
+                            <select id="journal-session" class="form-select" @bind="editing.SessionId">
+                                <option value="">— general —</option>
+                                @foreach (var (id, title) in sessionTitles)
+                                {
+                                    <option value="@id">@title</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="journal-text" class="form-label">Text</label>
+                            <textarea id="journal-text" class="form-control" rows="10" @bind="editing.Body" data-testid="journal-body"></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" data-testid="journal-save">Save</button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="() => editing = null">Cancel</button>
+                        </div>
+                    </form>
+                </section>
+            }
+            else
+            {
+                <section class="panel panel-plain">
+                    <p class="small-muted mb-0"><LucideIcon IconName="lock" Size="14" /> Journal entries are stored per player and never appear in the DM's view, exports or AI drafts.</p>
+                </section>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private List<JournalEntryDocument>? entries;
+    private JournalEntryDocument? editing;
+    private readonly Dictionary<string, string> sessionTitles = new();
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        entries = (await JournalRepo.GetMineAsync(Ctx.Access)).ToList();
+        sessionTitles.Clear();
+        foreach (var session in (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date))
+        {
+            sessionTitles[session.Id] = string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title;
+        }
+    }
+
+    private void StartNew() => editing = new JournalEntryDocument { CampaignId = Ctx.Campaign.Id };
+
+    private void StartEdit(JournalEntryDocument entry) => editing = new JournalEntryDocument
+    {
+        Id = entry.Id, CampaignId = entry.CampaignId, OwnerUserId = entry.OwnerUserId, SessionId = entry.SessionId, Title = entry.Title, Body = entry.Body, CreatedAt = entry.CreatedAt
+    };
+
+    private async Task SaveAsync()
+    {
+        if (editing == null) return;
+        if (string.IsNullOrEmpty(editing.SessionId)) editing.SessionId = null;
+        if (await JournalRepo.TrySaveAsync(editing, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success("Journal saved."));
+            editing = null;
+            await LoadAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error("Could not save that entry."));
+        }
+    }
+
+    private async Task DeleteAsync(JournalEntryDocument entry)
+    {
+        if (await JournalRepo.TryDeleteAsync(entry.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success("Entry deleted."));
+            await LoadAsync();
+        }
+    }
+}

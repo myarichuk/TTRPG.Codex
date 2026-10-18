@@ -1,0 +1,268 @@
+@page "/settings/ai"
+@using System.Security.Claims
+@using Codex.Core.AI
+@using Codex.Persistence
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AiProviderService Providers
+@inject IUserRepository UserRepo
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>AI settings | TTRPG.Codex</PageTitle>
+
+<div class="page-header">
+    <div>
+        <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>AI settings</span></nav>
+        <h1><LucideIcon IconName="sparkles" Size="24" Class="title-icon" /> AI settings</h1>
+        <p class="page-subtitle">The chat model behind every “Draft with AI” button. Bring your own key: OpenRouter, OpenAI, a local Ollama, or any OpenAI-compatible server. Nothing is sent to a model until you click an AI button.</p>
+    </div>
+</div>
+
+<StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+@if (user == null)
+{
+    <LoadingSkeleton />
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <section class="panel" aria-labelledby="providers-heading">
+                <div class="panel-title">
+                    <h2 id="providers-heading" class="h5"><LucideIcon IconName="bot" Size="16" Class="title-icon" /> Your providers</h2>
+                    <button type="button" class="btn btn-primary btn-sm" @onclick="() => StartNew()" data-testid="ai-add-provider"><LucideIcon IconName="plus" Size="14" /> Add provider</button>
+                </div>
+
+                @if (user.AiProviders.Count == 0)
+                {
+                    <div class="empty empty-compact">
+                        <div class="empty-icon"><LucideIcon IconName="key-round" Size="24" /></div>
+                        <h3>No provider yet</h3>
+                        <p>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</p>
+                    </div>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0" data-testid="ai-provider-list">
+                        @foreach (var provider in user.AiProviders)
+                        {
+                            var isDefault = provider.Id == DefaultId;
+                            var preset = AIClientFactory.Preset(provider.Kind);
+                            <li class="list-row @(isDefault ? "list-row-active" : "")">
+                                <span class="avatar avatar-md avatar-flat" aria-hidden="true"><LucideIcon IconName="@(preset?.RequiresKey == false ? "home" : "globe")" Size="18" /></span>
+                                <div class="row-main">
+                                    <div class="row-title">@provider.Name
+                                        @if (isDefault)
+                                        {
+                                            <span class="pill pill-accent ms-1">Default</span>
+                                        }
+                                    </div>
+                                    <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? "no key" : "key stored")</div>
+                                </div>
+                                <div class="row-actions">
+                                    @if (!isDefault)
+                                    {
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => MakeDefaultAsync(provider)">Use</button>
+                                    }
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => TestAsync(provider, null)" disabled="@testing">Test</button>
+                                    <button type="button" class="icon-btn" aria-label="Edit @provider.Name" @onclick="() => StartEdit(provider)"><LucideIcon IconName="edit-3" Size="16" /></button>
+                                    <button type="button" class="icon-btn danger" aria-label="Remove @provider.Name" @onclick="() => RemoveAsync(provider)"><LucideIcon IconName="trash-2" Size="16" /></button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+
+            <section class="panel" aria-labelledby="server-heading">
+                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="16" Class="title-icon" /> Server fallback</h2></div>
+                <p class="mb-0 small">When you have no provider of your own, AI buttons use the server's <code>AI</code> configuration: <strong>@Providers.ServerDescription</strong>. Your own providers always take precedence.</p>
+            </section>
+
+            <section class="panel" aria-labelledby="what-heading">
+                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="16" Class="title-icon" /> What the AI can do</h2></div>
+                <ul class="feature-grid mb-0">
+                    <li><LucideIcon IconName="book-open" Size="18" /> <div><strong>Session recaps</strong><div class="small-muted">A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</div></div></li>
+                    <li><LucideIcon IconName="feather" Size="18" /> <div><strong>Histories and bios</strong><div class="small-muted">Polish a character's backstory or an NPC's private notes without contradicting the sheet.</div></div></li>
+                    <li><LucideIcon IconName="trending-up" Size="18" /> <div><strong>Level-up advice</strong><div class="small-muted">What the next level brings, the choices it forces, and picks that fit the character.</div></div></li>
+                    <li><LucideIcon IconName="wand" Size="18" /> <div><strong>Characters from a concept</strong><div class="small-muted">A line of concept becomes a full draft sheet built only from content in the campaign's Library.</div></div></li>
+                    <li><LucideIcon IconName="globe" Size="18" /> <div><strong>Wiki pages</strong><div class="small-muted">Expand rough notes into a linked world-wiki page.</div></div></li>
+                </ul>
+            </section>
+        </div>
+
+        <div class="col-lg-5">
+            <section class="panel" aria-labelledby="editor-heading" id="provider-editor">
+                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editing.Id == editingOriginalId ? "edit-3" : "plus")" Size="16" Class="title-icon" /> @(editingOriginalId != null ? "Edit provider" : "New provider")</h2></div>
+                <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
+                    <div class="mb-3">
+                        <label for="ai-kind" class="form-label">Service</label>
+                        <select id="ai-kind" class="form-select" value="@editing.Kind" @onchange="OnPresetChanged" data-testid="ai-kind">
+                            @foreach (var preset in AIClientFactory.Presets)
+                            {
+                                <option value="@preset.Kind">@preset.Label</option>
+                            }
+                        </select>
+                        @if (AIClientFactory.Preset(editing.Kind) is { } hint)
+                        {
+                            <div class="form-text">@hint.Hint</div>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label for="ai-name" class="form-label">Name</label>
+                        <input id="ai-name" class="form-control" @bind="editing.Name" required data-testid="ai-name" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="ai-url" class="form-label">Base URL</label>
+                        <input id="ai-url" class="form-control" @bind="editing.BaseUrl" placeholder="https://…/v1" required data-testid="ai-url" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="ai-model" class="form-label">Model</label>
+                        <input id="ai-model" class="form-control" @bind="editing.ModelId" placeholder="e.g. openai/gpt-4o-mini" required data-testid="ai-model" />
+                        @if (editing.Kind == "openrouter")
+                        {
+                            <div class="form-text">Any id from openrouter.ai/models, e.g. <code>anthropic/claude-sonnet-4</code>, <code>google/gemini-2.5-flash</code>.</div>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label for="ai-key" class="form-label">API key @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? "(leave blank to keep the stored key)" : "")</label>
+                        <input id="ai-key" type="password" class="form-control" @bind="plainKey" autocomplete="off" placeholder="@(AIClientFactory.Preset(editing.Kind)?.RequiresKey == false ? "Not needed for a local server" : "sk-…")" data-testid="ai-key" />
+                        <div class="form-text">Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary" data-testid="ai-save">Save provider</button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? "Testing…" : "Test connection")</button>
+                        @if (editingOriginalId != null)
+                        {
+                            <button type="button" class="btn btn-link" @onclick="() => StartNew()">Cancel</button>
+                        }
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+}
+
+@code {
+    private UserDocument? user;
+    private AiProviderConfig editing = new();
+    private string? editingOriginalId;
+    private string plainKey = string.Empty;
+    private bool testing;
+    private Flash? flash;
+
+    private string? DefaultId => user == null ? null : Providers.DefaultProvider(user)?.Id;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = userId == null ? null : await UserRepo.GetUserByIdAsync(userId);
+        StartNew();
+    }
+
+    private void StartNew()
+    {
+        editingOriginalId = null;
+        plainKey = string.Empty;
+        editing = new AiProviderConfig();
+        ApplyPreset("openrouter");
+    }
+
+    private void StartEdit(AiProviderConfig provider)
+    {
+        editingOriginalId = provider.Id;
+        plainKey = string.Empty;
+        editing = new AiProviderConfig
+        {
+            Id = provider.Id,
+            Name = provider.Name,
+            Kind = provider.Kind,
+            BaseUrl = provider.BaseUrl,
+            ModelId = provider.ModelId,
+            ProtectedApiKey = provider.ProtectedApiKey,
+            CreatedAt = provider.CreatedAt
+        };
+    }
+
+    private void OnPresetChanged(ChangeEventArgs e) => ApplyPreset(e.Value?.ToString() ?? "custom");
+
+    private void ApplyPreset(string kind)
+    {
+        var preset = AIClientFactory.Preset(kind);
+        editing.Kind = kind;
+        if (preset == null) return;
+        editing.Name = preset.Label;
+        editing.BaseUrl = preset.DefaultEndpoint;
+        editing.ModelId = preset.DefaultModel;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (user == null) return;
+        if (string.IsNullOrWhiteSpace(editing.Name) || string.IsNullOrWhiteSpace(editing.BaseUrl) || string.IsNullOrWhiteSpace(editing.ModelId))
+        {
+            flash = Flash.Error("Name, base URL and model are required.");
+            return;
+        }
+
+        if (!Uri.TryCreate(editing.BaseUrl.Trim(), UriKind.Absolute, out _))
+        {
+            flash = Flash.Error("The base URL must be a full URL, like https://openrouter.ai/api/v1.");
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(plainKey))
+        {
+            editing.ProtectedApiKey = Providers.Protect(plainKey.Trim());
+        }
+        else if (editingOriginalId == null && AIClientFactory.Preset(editing.Kind)?.RequiresKey == true)
+        {
+            flash = Flash.Error("This service needs an API key.");
+            return;
+        }
+
+        editing.Name = editing.Name.Trim();
+        editing.BaseUrl = editing.BaseUrl.Trim();
+        editing.ModelId = editing.ModelId.Trim();
+
+        var index = user.AiProviders.FindIndex(p => p.Id == editing.Id);
+        if (index >= 0) user.AiProviders[index] = editing; else user.AiProviders.Add(editing);
+        user.DefaultAiProviderId ??= editing.Id;
+        await UserRepo.UpdateUserAsync(user);
+        flash = Flash.Success($"Saved “{editing.Name}”.");
+        StartNew();
+    }
+
+    private async Task MakeDefaultAsync(AiProviderConfig provider)
+    {
+        if (user == null) return;
+        user.DefaultAiProviderId = provider.Id;
+        await UserRepo.UpdateUserAsync(user);
+        flash = Flash.Success($"AI buttons now use {provider.Name}.");
+    }
+
+    private async Task RemoveAsync(AiProviderConfig provider)
+    {
+        if (user == null) return;
+        user.AiProviders.Remove(provider);
+        if (user.DefaultAiProviderId == provider.Id) user.DefaultAiProviderId = user.AiProviders.FirstOrDefault()?.Id;
+        await UserRepo.UpdateUserAsync(user);
+        flash = Flash.Success($"Removed {provider.Name}.");
+        if (editingOriginalId == provider.Id) StartNew();
+    }
+
+    private async Task TestAsync(AiProviderConfig provider, string? key)
+    {
+        testing = true;
+        try
+        {
+            var (ok, message) = await Providers.TestAsync(provider, string.IsNullOrWhiteSpace(key) ? null : key.Trim());
+            flash = ok ? Flash.Success(message) : Flash.Error(message);
+        }
+        finally
+        {
+            testing = false;
+        }
+    }
+}

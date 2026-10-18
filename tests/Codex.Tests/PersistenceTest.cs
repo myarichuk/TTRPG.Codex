@@ -66,6 +66,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly FactRepository _factRepository;
     private readonly RavenEncounterRepository _encounterRepository;
     private readonly RavenHomebrewRepository _homebrewRepository;
+    private readonly RavenWikiRepository _wikiRepository;
+    private readonly RavenJournalRepository _journalRepository;
+    private readonly RavenMediaStore _mediaStore;
     private readonly CampaignExportService _exportService;
 
     public PersistenceTest(RavenDbFixture fixture)
@@ -79,8 +82,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _factRepository = new FactRepository(_dbService);
         _encounterRepository = new RavenEncounterRepository(_dbService);
         _homebrewRepository = new RavenHomebrewRepository(_dbService);
-        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository);
-        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository);
+        _wikiRepository = new RavenWikiRepository(_dbService);
+        _journalRepository = new RavenJournalRepository(_dbService);
+        _mediaStore = new RavenMediaStore(_dbService);
+        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository, _wikiRepository, _journalRepository);
+        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository, _wikiRepository);
     }
 
     [Fact]
@@ -236,16 +242,23 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task TryDeleteAsync_AsPlayer_CannotDeleteAnything_Async()
+    public async Task TryDeleteAsync_AsPlayer_CanOnlyRetireTheirOwnCharacter_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Someone's PC", Visibility = ActorVisibility.Known };
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Someone's PC", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-2", Visibility = ActorVisibility.Known };
         await _actorRepository.SaveAsync(actor);
+        var npc = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Owned NPC?", Kind = ActorKind.NonPlayerCharacter, OwnerUserId = "player-1" };
+        await _actorRepository.SaveAsync(npc);
+        var mine = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "My PC", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1" };
+        await _actorRepository.SaveAsync(mine);
 
         var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
         var deleted = await _actorRepository.TryDeleteAsync(actor.Id, playerAccess);
 
         Assert.False(deleted);
+        Assert.False(await _actorRepository.TryDeleteAsync(npc.Id, playerAccess));
+        Assert.True(await _actorRepository.TryDeleteAsync(mine.Id, playerAccess));
+        Assert.Null(await _actorRepository.GetVisibleAsync(mine.Id, playerAccess));
         var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
         Assert.NotNull(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
     }
@@ -889,5 +902,112 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var restored = Assert.Single(await _homebrewRepository.GetAllForCampaignAsync(campaignId));
         Assert.Equal("Thunderous Yawn", restored.Name);
         Assert.Equal(2L, Convert.ToInt64(restored.Properties["level"]));
+    }
+
+    [Fact]
+    public async Task Wiki_PlayersOnlySeePartyPages_AndOnlyTheDmWrites()
+    {
+        var campaignId = "camp-wiki-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+
+        Assert.False(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope", Body = "" }, player));
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Docks", Body = "See [[The Mayor]] and [[Greyharbour]].", Visibility = WikiVisibility.Party }, dm));
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Mayor", Body = "Secretly a cultist.", Visibility = WikiVisibility.DmOnly }, dm));
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Docks", Body = "Different page, same title." }, dm));
+
+        var dmPages = (await _wikiRepository.GetVisibleForCampaignAsync(dm)).ToList();
+        Assert.Equal(3, dmPages.Count);
+        Assert.Contains(dmPages, p => p.Slug == "the-docks");
+        Assert.Contains(dmPages, p => p.Slug == "the-docks-2");
+        Assert.Equal(new[] { "greyharbour", "the-mayor" }, dmPages.First(p => p.Slug == "the-docks").Links.OrderBy(l => l));
+
+        var playerPages = (await _wikiRepository.GetVisibleForCampaignAsync(player)).ToList();
+        Assert.Single(playerPages);
+        Assert.Equal("the-docks", playerPages[0].Slug);
+        Assert.Null(await _wikiRepository.GetVisibleBySlugAsync("the-mayor", player));
+        Assert.NotNull(await _wikiRepository.GetVisibleBySlugAsync("the-mayor", dm));
+
+        var other = new CampaignAccess("another-campaign", "dm", CampaignRole.DM);
+        Assert.False(await _wikiRepository.TryDeleteAsync(dmPages[0].Id, other));
+    }
+
+    [Fact]
+    public async Task Journal_IsPrivateToItsOwner_EvenFromTheDm()
+    {
+        var campaignId = "camp-journal-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var p1 = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var p2 = new CampaignAccess(campaignId, "p2", CampaignRole.Player);
+
+        var entry = new JournalEntryDocument { Title = "Session one", Body = "The mayor is lying.", SessionId = "s1" };
+        Assert.True(await _journalRepository.TrySaveAsync(entry, p1));
+
+        Assert.Single(await _journalRepository.GetMineAsync(p1));
+        Assert.Empty(await _journalRepository.GetMineAsync(p2));
+        Assert.Empty(await _journalRepository.GetMineAsync(dm));
+
+        entry.Body = "edited by someone else";
+        Assert.False(await _journalRepository.TrySaveAsync(entry, p2));
+        Assert.False(await _journalRepository.TryDeleteAsync(entry.Id, dm));
+        Assert.True(await _journalRepository.TryDeleteAsync(entry.Id, p1));
+        Assert.Empty(await _journalRepository.GetMineAsync(p1));
+    }
+
+    [Fact]
+    public async Task DmNotes_AreStrippedForPlayers_AndPlayersCannotOverwriteThem()
+    {
+        var campaignId = "camp-dmnotes-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var owner = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Biography = "Guard.", DmNotes = "Secretly cursed." };
+        await _actorRepository.SaveAsync(actor);
+
+        var seenByOwner = await _actorRepository.GetVisibleAsync(actor.Id, owner);
+        Assert.NotNull(seenByOwner);
+        Assert.Null(seenByOwner!.DmNotes);
+        Assert.Equal("Guard.", seenByOwner.Biography);
+        Assert.All(await _actorRepository.GetVisibleForCampaignAsync(owner), a => Assert.Null(a.DmNotes));
+
+        seenByOwner.Biography = "Guard, now a cleric.";
+        seenByOwner.DmNotes = "I wrote this as a player";
+        Assert.True(await _actorRepository.TrySaveAsync(seenByOwner, owner));
+
+        var seenByDm = await _actorRepository.GetVisibleAsync(actor.Id, dm);
+        Assert.Equal("Secretly cursed.", seenByDm!.DmNotes);
+        Assert.Equal("Guard, now a cleric.", seenByDm.Biography);
+    }
+
+    [Fact]
+    public async Task MediaStore_RoundTripsAnImage_AndRejectsSvg()
+    {
+        var campaignId = "camp-media-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Art", SystemId = "srd5e" });
+
+        var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 1, 2, 3 };
+        await _mediaStore.PutAsync(campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/png");
+        var stored = await _mediaStore.GetAsync(campaignId, RavenMediaStore.CampaignCover);
+        Assert.NotNull(stored);
+        Assert.Equal(png, stored!.Bytes);
+        Assert.Equal("image/png", stored.ContentType);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _mediaStore.PutAsync(campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/svg+xml"));
+
+        await _mediaStore.DeleteAsync(campaignId, RavenMediaStore.CampaignCover);
+        Assert.Null(await _mediaStore.GetAsync(campaignId, RavenMediaStore.CampaignCover));
+    }
+
+    [Fact]
+    public async Task DeletingACampaign_RemovesItsWikiAndJournals()
+    {
+        var campaignId = "camp-cascade2-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Gone", SystemId = "srd5e" });
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Page" }, dm);
+        await _journalRepository.TrySaveAsync(new JournalEntryDocument { Title = "Mine" }, dm);
+
+        Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner"));
+        Assert.Empty(await _wikiRepository.GetAllForCampaignAsync(campaignId));
+        Assert.Empty(await _journalRepository.GetMineAsync(dm));
     }
 }

@@ -27,7 +27,7 @@
 
 @if (campaigns == null)
 {
-    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+    <LoadingSkeleton />
 }
 else if (campaigns.Count == 0)
 {
@@ -44,7 +44,15 @@ else
         @foreach (var campaign in campaigns)
         {
             var role = RoleOf(campaign);
-            <article class="campaign-card" aria-labelledby="camp-@campaign.Id">
+            <article class="campaign-card @(campaign.HasCover ? "has-cover" : "")" aria-labelledby="camp-@campaign.Id">
+                @if (campaign.HasCover)
+                {
+                    <div class="card-cover" style="background-image:url('@MediaEndpoints.CoverUrl(campaign)')" aria-hidden="true"></div>
+                }
+                else
+                {
+                    <div class="card-cover card-cover-empty" style="--cover-hue:@Hue(campaign.Name)" aria-hidden="true"><LucideIcon IconName="@SystemIcon(campaign.SystemId)" Size="28" /></div>
+                }
                 <div class="card-head">
                     <h2 id="camp-@campaign.Id"><a href="/campaigns/@campaign.Id">@campaign.Name</a></h2>
                     <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@role</span>
@@ -139,6 +147,15 @@ else
             ? new List<CampaignDocument>()
             : (await CampaignRepo.GetForUserAsync(currentUserId)).ToList();
     }
+
+    private static int Hue(string name)
+    {
+        var hash = 0;
+        foreach (var c in name) hash = (hash * 31 + c) & 0x7fffffff;
+        return hash % 360;
+    }
+
+    private static string SystemIcon(string systemId) => systemId.Contains("srd", StringComparison.OrdinalIgnoreCase) ? "swords" : "scroll";
 
     private CampaignRole RoleOf(CampaignDocument campaign) =>
         campaign.OwnerId == currentUserId

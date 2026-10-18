@@ -13,7 +13,9 @@ public class CampaignRepository(
     IRegionRepository regionRepository,
     IFactRepository factRepository,
     IHomebrewRepository homebrewRepository,
-    IEncounterRepository encounterRepository) : ICampaignRepository
+    IEncounterRepository encounterRepository,
+    IWikiRepository? wikiRepository = null,
+    IJournalRepository? journalRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -101,7 +103,10 @@ public class CampaignRepository(
         await factRepository.DeleteAllForCampaignAsync(campaignId);
         await homebrewRepository.DeleteAllForCampaignAsync(campaignId);
         await encounterRepository.DeleteAllForCampaignAsync(campaignId);
+        if (wikiRepository != null) await wikiRepository.DeleteAllForCampaignAsync(campaignId);
+        if (journalRepository != null) await journalRepository.DeleteAllForCampaignAsync(campaignId);
 
+        // Attachments (cover art) are deleted with the document.
         session.Delete(campaignId);
         await session.SaveChangesAsync();
         return CampaignDeleteResult.Deleted;

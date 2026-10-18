@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Codex.Core.AI;
-using Microsoft.Extensions.AI;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -101,6 +100,9 @@ builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
 builder.Services.AddSingleton<IFactRepository, FactRepository>();
 builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
 builder.Services.AddSingleton<IHomebrewRepository, RavenHomebrewRepository>();
+builder.Services.AddSingleton<IWikiRepository, RavenWikiRepository>();
+builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
+builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 
@@ -115,18 +117,17 @@ builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 
-// Optional AI (recap drafting). Nothing is sent anywhere unless a DM clicks the button.
+// AI: the "AI" configuration section is the server-wide fallback provider; users set up their
+// own OpenAI-compatible providers (OpenRouter by default) under /settings/ai, keys protected by
+// Data Protection. Nothing is sent to a model unless someone clicks an AI button.
 var aiConfig = new AIConfiguration();
 builder.Configuration.GetSection("AI").Bind(aiConfig);
 builder.Services.AddSingleton(aiConfig);
-
-var chatClient = AIClientFactory.CreateClient(aiConfig);
-if (chatClient != null)
-{
-    builder.Services.AddSingleton<IChatClient>(chatClient);
-}
-
-builder.Services.AddSingleton<LoreGenerator>(sp => new LoreGenerator(sp.GetService<IChatClient>()));
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<AiProviderService>();
+builder.Services.AddSingleton<AiFeatures>();
+builder.Services.AddScoped<HomebrewImportService>();
+builder.Services.AddSingleton<CastService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
@@ -357,6 +358,8 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     return Results.Redirect(returnUrl ?? "/");
 });
+
+Codex.Web.MediaEndpoints.MapMedia(app);
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 

@@ -38,7 +38,7 @@
     <div class="@(selected == null ? "col-12" : "col-lg-5")">
         @if (loading)
         {
-            <div class="d-flex justify-content-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+            <LoadingSkeleton />
         }
         else if (results.Count == 0)
         {

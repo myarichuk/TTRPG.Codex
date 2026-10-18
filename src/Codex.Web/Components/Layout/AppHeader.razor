@@ -25,10 +25,12 @@
 
     <div class="header-spacer"></div>
 
-    <button type="button" class="icon-btn" @onclick="ToggleThemeAsync"
+    <div class="header-actions">
+    <button type="button" class="icon-btn theme-toggle" @onclick="ToggleThemeAsync"
             aria-label="@(theme == "dark" ? "Switch to light theme" : "Switch to dark theme")"
             title="@(theme == "dark" ? "Light theme" : "Dark theme")">
-        <LucideIcon IconName="@(theme == "dark" ? "sun" : "moon")" Size="18" />
+        @* Keyed on the theme so the icon is re-created, and its entrance animation replays, on each toggle. *@
+        <LucideIcon @key="theme" IconName="@(theme == "dark" ? "sun" : "moon")" Size="18" />
     </button>
 
     <AuthorizeView>
@@ -36,10 +38,11 @@
             @{
                 var username = context.User.Identity?.Name ?? "User";
             }
-            <span class="user-chip">
+            <a href="/settings/ai" class="user-chip" title="AI settings" aria-label="@username: AI settings">
                 <span class="avatar" aria-hidden="true">@Initial(username)</span>
                 <span>@username</span>
-            </span>
+                <LucideIcon IconName="sparkles" Size="14" Class="chip-icon" />
+            </a>
             <form method="post" action="/logout" class="d-inline">
                 <AntiforgeryToken />
                 <button type="submit" class="icon-btn" aria-label="Sign out" title="Sign out">
@@ -51,6 +54,7 @@
             <a href="/login" class="btn btn-primary btn-sm">Sign in</a>
         </NotAuthorized>
     </AuthorizeView>
+    </div>
 </header>
 
 @code {

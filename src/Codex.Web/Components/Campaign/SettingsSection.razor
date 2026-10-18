@@ -6,6 +6,7 @@
 @inject ISystemCatalog Catalog
 @inject IContentRegistry Registry
 @inject CampaignExportService ExportService
+@inject IMediaStore Media
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -56,6 +57,31 @@
 
         @if (Ctx.IsDm)
         {
+            <section class="panel" aria-labelledby="art-heading">
+                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="16" Class="title-icon" /> Cover art</h3></div>
+                <div class="cover-settings">
+                    <div class="cover-preview @(Ctx.Campaign.HasCover ? "has-cover" : "")" style="@(Ctx.Campaign.HasCover ? $"background-image:url('{MediaEndpoints.CoverUrl(Ctx.Campaign)}')" : "")" role="img" aria-label="@(Ctx.Campaign.HasCover ? "Current cover art" : "No cover art yet")">
+                        @if (!Ctx.Campaign.HasCover)
+                        {
+                            <LucideIcon IconName="image" Size="26" />
+                        }
+                    </div>
+                    <div>
+                        <p class="small-muted">Shown on the campaign card and behind the campaign title. Landscape images around 1600 × 900 look best. PNG, JPEG or WebP, up to 6 MB.</p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <label class="btn btn-outline-secondary btn-sm mb-0">
+                                <LucideIcon IconName="upload" Size="14" /> @(Ctx.Campaign.HasCover ? "Replace cover" : "Upload cover")
+                                <InputFile OnChange="UploadCoverAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
+                            </label>
+                            @if (Ctx.Campaign.HasCover)
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="RemoveCoverAsync">Remove</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="panel" aria-labelledby="packs-heading">
                 <div class="panel-title"><h3 id="packs-heading">Content packs</h3></div>
                 @{
@@ -255,6 +281,47 @@
         Ctx.Campaign.InviteCode = Guid.NewGuid().ToString("N")[..8];
         await CampaignRepo.SaveAsync(Ctx.Campaign);
         Ctx.Notify(Flash.Success("New invite link created. The old one no longer works."));
+        await Ctx.ReloadAsync();
+    }
+
+    private async Task UploadCoverAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
+        {
+            Ctx.Notify(Flash.Error("Use a PNG, JPEG, WebP, GIF or AVIF image."));
+            return;
+        }
+
+        if (file.Size > RavenMediaStore.MaxBytes)
+        {
+            Ctx.Notify(Flash.Error("That image is over 6 MB. Resize it and try again."));
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
+            await Media.PutAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover, stream, file.ContentType);
+            Ctx.Campaign.HasCover = true;
+            Ctx.Campaign.CoverVersion++;
+            await CampaignRepo.SaveAsync(Ctx.Campaign);
+            Ctx.Notify(Flash.Success("Cover art updated."));
+            await Ctx.ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Ctx.Notify(Flash.Error("The upload failed: " + ex.Message));
+        }
+    }
+
+    private async Task RemoveCoverAsync()
+    {
+        await Media.DeleteAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover);
+        Ctx.Campaign.HasCover = false;
+        Ctx.Campaign.CoverVersion++;
+        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        Ctx.Notify(Flash.Success("Cover art removed."));
         await Ctx.ReloadAsync();
     }
 

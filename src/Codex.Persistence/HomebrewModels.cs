@@ -29,6 +29,10 @@ public class HomebrewEntryDocument
     public bool IsPublished { get; set; } = true;
 
     public string AuthorUserId { get; set; } = string.Empty;
+
+    /// <summary>Set when the entry was copied in from another campaign or cloned from a pack entry: where it came from, for the attribution line.</summary>
+    public string? ImportedFrom { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

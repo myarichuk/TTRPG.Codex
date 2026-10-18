@@ -21,6 +21,9 @@ public class CampaignBundle
     public List<NoteDocument> Notes { get; set; } = new();
     public List<RegionDocument> Regions { get; set; } = new();
     public List<HomebrewEntryDocument> Homebrew { get; set; } = new();
+
+    /// <summary>World wiki pages. Player journals are deliberately absent: they are private to each player.</summary>
+    public List<WikiPageDocument> Wiki { get; set; } = new();
 }
 
 /// <summary>
@@ -38,7 +41,8 @@ public class CampaignExportService(
     IFactRepository facts,
     INoteRepository notes,
     IRegionRepository regions,
-    IHomebrewRepository homebrew)
+    IHomebrewRepository homebrew,
+    IWikiRepository? wiki = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -65,7 +69,8 @@ public class CampaignExportService(
             Facts = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).ToList(),
             Notes = (await notes.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Regions = (await regions.GetVisibleForCampaignAsync(access)).ToList(),
-            Homebrew = (await homebrew.GetAllForCampaignAsync(access.CampaignId)).ToList()
+            Homebrew = (await homebrew.GetAllForCampaignAsync(access.CampaignId)).ToList(),
+            Wiki = wiki == null ? new List<WikiPageDocument>() : (await wiki.GetAllForCampaignAsync(access.CampaignId)).ToList()
         };
     }
 
@@ -125,6 +130,14 @@ public class CampaignExportService(
         {
             entry.Properties = NormalizeMap(entry.Properties);
             await homebrew.SaveAsync(entry);
+        }
+
+        if (wiki != null)
+        {
+            foreach (var page in bundle.Wiki.Where(p => p.CampaignId == campaign.Id))
+            {
+                await wiki.SaveAsync(page);
+            }
         }
 
         return true;

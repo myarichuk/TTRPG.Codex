@@ -107,12 +107,16 @@ public class AIClientFactoryTests : IAsyncLifetime
         Assert.NotNull(result);
     }
 
+    [Fact]
+    public void CreateClient_Ollama_WithoutEndpoint_FallsBackToTheLocalDefault()
+    {
+        Assert.NotNull(AIClientFactory.CreateClient(new AIConfiguration { Provider = "ollama", ModelId = "llama3.1" }));
+    }
+
     [Theory]
-    [InlineData(null, "model-id")]
-    [InlineData("", "model-id")]
     [InlineData("http://localhost", null)]
     [InlineData("http://localhost", "")]
-    public void CreateClient_Ollama_WithMissingEndpointOrModelId_ReturnsNull(string? endpoint, string? modelId)
+    public void CreateClient_Ollama_WithMissingModelId_ReturnsNull(string? endpoint, string? modelId)
     {
         // Arrange
         var config = new AIConfiguration
@@ -146,5 +150,34 @@ public class AIClientFactoryTests : IAsyncLifetime
 
         // Assert
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void CreateClient_OpenRouter_UsesPresetEndpointWhenNoneGiven()
+    {
+        var result = AIClientFactory.CreateClient(new AIConfiguration { Provider = "openrouter", ApiKey = "sk-or-test", ModelId = "openai/gpt-4o-mini" });
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void CreateClient_OpenRouter_WithoutKey_ReturnsNull()
+    {
+        Assert.Null(AIClientFactory.CreateClient(new AIConfiguration { Provider = "openrouter", ModelId = "openai/gpt-4o-mini" }));
+    }
+
+    [Fact]
+    public void CreateClient_Custom_NeedsEndpointButNotKey()
+    {
+        Assert.NotNull(AIClientFactory.CreateClient(new AIConfiguration { Provider = "custom", Endpoint = "http://localhost:1234/v1", ModelId = "local" }));
+        Assert.Null(AIClientFactory.CreateClient(new AIConfiguration { Provider = "custom", ModelId = "local" }));
+        Assert.Null(AIClientFactory.CreateClient(new AIConfiguration { Provider = "custom", Endpoint = "not a url", ModelId = "local" }));
+    }
+
+    [Fact]
+    public void Presets_StartWithOpenRouter()
+    {
+        Assert.Equal("openrouter", AIClientFactory.Presets[0].Kind);
+        Assert.Equal(AIClientFactory.OpenRouterEndpoint, AIClientFactory.Presets[0].DefaultEndpoint);
     }
 }

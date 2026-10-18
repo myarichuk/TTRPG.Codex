@@ -64,7 +64,17 @@
         }
     }
 
+    // ---- Installable app ----
+    function registerServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        // Only on secure origins (https or localhost); registration silently fails elsewhere.
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function (err) {
+            console.debug('Service worker not registered:', err && err.message);
+        });
+    }
+
     function init() {
+        registerServiceWorker();
         initReconnectLogic();
         if (window.Blazor) {
             try {
