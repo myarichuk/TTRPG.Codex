@@ -1,0 +1,82 @@
+id: hell-hound
+type: monster
+name: Hell Hound
+description: >-
+  *Medium Fiend, Lawful Evil*
+
+
+  **AC** 15  
+
+  **HP** 58 (9d8 + 18)  
+
+  **Speed** 50 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 12 (+1) | 14 (+2) | 6 (-2) | 13 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +5  
+
+  **Immunities** fire  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** Understands Infernal but can’t speak
+
+
+  ### Traits
+
+  **Pack Tactics.** The hound has Advantage on an attack roll against a creature if at least one of the hound’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Multiattack.** The hound makes two Bite attacks.
+
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 3 (1d6) Fire damage.
+
+
+  **Fire Breath.** Dexterity Saving Throw: DC 12, each creature in a 15-foot Cone. Failure: 17 (5d6) Fire damage. Success: Half damage.
+tags:
+- fiend
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: fiend
+  alignment: lawful evil
+  armorClass: 15
+  hitPoints: 58
+  hitDice: 9d8 + 18
+  speed: 50 ft.
+  strength: 17
+  dexterity: 12
+  constitution: 14
+  intelligence: 6
+  wisdom: 13
+  charisma: 6
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 15
+  languages: Understands Infernal but can’t speak
+  skills: Perception +5
+  immunities:
+  - fire
+  traits:
+  - name: Pack Tactics
+    description: The hound has Advantage on an attack roll against a creature if at least one of the hound’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Multiattack
+    description: The hound makes two Bite attacks.
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 3 (1d6) Fire damage.'
+  - name: Fire Breath
+    description: 'Dexterity Saving Throw: DC 12, each creature in a 15-foot Cone. Failure: 17 (5d6) Fire damage. Success: Half damage.'

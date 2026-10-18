@@ -1,0 +1,19 @@
+id: clothes-fine
+type: equipment
+name: Clothes, Fine
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 15 gp  
+
+  **Weight:** 3 lb.
+
+
+  Fine Clothes are made of expensive fabrics and adorned with expertly crafted details. Some events and locations admit only people wearing these clothes.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 15 gp
+  weight: 3

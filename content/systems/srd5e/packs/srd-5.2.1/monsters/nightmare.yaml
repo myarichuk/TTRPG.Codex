@@ -1,0 +1,79 @@
+id: nightmare
+type: monster
+name: Nightmare
+description: >-
+  *Large Fiend, Neutral Evil*
+
+
+  **AC** 13  
+
+  **HP** 68 (8d10 + 24)  
+
+  **Speed** 60 ft., fly 90 ft., hover True  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 15 (+2) | 16 (+3) | 10 (+0) | 13 (+1) | 15 (+2) |
+
+
+  **Immunities** fire  
+
+  **Senses** passive perception 11  
+
+  **Languages** Understands Abyssal, Common, and Infernal but can’t speak
+
+
+  ### Traits
+
+  **Confer Fire Resistance.** The nightmare can grant Resistance to Fire damage to a rider while it is on the nightmare.
+
+
+  **Illumination.** The nightmare sheds Bright Light in a 10foot radius and Dim Light for an additional 10 feet.
+
+
+
+  ### Actions
+
+  **Hooves.** Melee Attack Roll: +6, reach 5 ft. Hit: 13 (2d8 + 4) Bludgeoning damage plus 10 (3d6) Fire damage.
+
+
+  **Ethereal Stride.** The nightmare and up to three willing creatures within 5 feet of it teleport to the Ethereal Plane from the Material Plane or vice versa.
+tags:
+- fiend
+- large
+- cr-3
+properties:
+  size: Large
+  creatureType: fiend
+  alignment: neutral evil
+  armorClass: 13
+  hitPoints: 68
+  hitDice: 8d10 + 24
+  speed: 60 ft., fly 90 ft., hover True
+  strength: 18
+  dexterity: 15
+  constitution: 16
+  intelligence: 10
+  wisdom: 13
+  charisma: 15
+  challengeRating: 3
+  xp: 700
+  senses: passive perception 11
+  languages: Understands Abyssal, Common, and Infernal but can’t speak
+  immunities:
+  - fire
+  traits:
+  - name: Confer Fire Resistance
+    description: The nightmare can grant Resistance to Fire damage to a rider while it is on the nightmare.
+  - name: Illumination
+    description: The nightmare sheds Bright Light in a 10foot radius and Dim Light for an additional 10 feet.
+  actions:
+  - name: Hooves
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 13 (2d8 + 4) Bludgeoning damage plus 10 (3d6) Fire damage.'
+  - name: Ethereal Stride
+    description: The nightmare and up to three willing creatures within 5 feet of it teleport to the Ethereal Plane from the Material Plane or vice versa.

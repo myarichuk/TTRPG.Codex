@@ -1,0 +1,16 @@
+- id: founding-of-greyharbour
+  name: The Founding of Greyharbour
+  tags: [history]
+  description: |
+    Greyharbour was a smugglers' cove long before it was a town. The first harbour-master, Idris Vane,
+    was a smuggler too; the town still prefers not to ask where its wealth comes from.
+  properties:
+    category: History
+- id: the-tide-pact
+  name: The Tide Pact
+  tags: [religion, secret]
+  description: |
+    Every seventh year the harbour-master rows out alone at midnight. Nobody speaks of what is owed
+    to the thing under the breakwater, and the catch has never failed.
+  properties:
+    category: Legend

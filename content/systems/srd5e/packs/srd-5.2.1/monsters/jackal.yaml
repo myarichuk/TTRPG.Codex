@@ -1,0 +1,59 @@
+id: jackal
+type: monster
+name: Jackal
+description: >-
+  *Small Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 3 (1d6)  
+
+  **Speed** 40 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 8 (-1) | 15 (+2) | 11 (+0) | 3 (-4) | 12 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +5, Stealth +4  
+
+  **Senses** darkvision 90 ft., passive perception 15  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +1, reach 5 ft. Hit: 1 (1d4 – 1) Piercing damage.
+tags:
+- beast
+- small
+- cr-0
+properties:
+  size: Small
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 3
+  hitDice: 1d6
+  speed: 40 ft.
+  strength: 8
+  dexterity: 15
+  constitution: 11
+  intelligence: 3
+  wisdom: 12
+  charisma: 6
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 90 ft., passive perception 15
+  languages: None
+  skills: Perception +5, Stealth +4
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +1, reach 5 ft. Hit: 1 (1d4 – 1) Piercing damage.'

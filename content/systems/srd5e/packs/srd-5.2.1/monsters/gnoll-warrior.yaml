@@ -1,0 +1,70 @@
+id: gnoll-warrior
+type: monster
+name: Gnoll Warrior
+description: >-
+  *Medium Fiend, Chaotic Evil*
+
+
+  **AC** 15  
+
+  **HP** 27 (6d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 12 (+1) | 11 (+0) | 6 (-2) | 10 (+0) | 7 (-2) |
+
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Gnoll
+
+
+  ### Actions
+
+  **Rend.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage.
+
+
+  **Bone Bow.** Ranged Attack Roll: +3, range 150/600 ft. Hit: 6 (1d10 + 1) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Rampage (1/day).** Immediately after dealing damage to a creature that is already Bloodied, the gnoll moves up to half its Speed, and it makes one Rend attack.
+tags:
+- fiend
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: fiend
+  alignment: chaotic evil
+  armorClass: 15
+  hitPoints: 27
+  hitDice: 6d8
+  speed: 30 ft.
+  strength: 14
+  dexterity: 12
+  constitution: 11
+  intelligence: 6
+  wisdom: 10
+  charisma: 7
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 10
+  languages: Gnoll
+  actions:
+  - name: Rend
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage.'
+  - name: Bone Bow
+    description: 'Ranged Attack Roll: +3, range 150/600 ft. Hit: 6 (1d10 + 1) Piercing damage.'
+  bonusActions:
+  - name: Rampage (1/day)
+    description: Immediately after dealing damage to a creature that is already Bloodied, the gnoll moves up to half its Speed, and it makes one Rend attack.

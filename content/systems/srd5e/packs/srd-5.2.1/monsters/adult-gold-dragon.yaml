@@ -1,0 +1,119 @@
+id: adult-gold-dragon
+type: monster
+name: Adult Gold Dragon
+description: >-
+  *Huge Dragon, Lawful Good*
+
+
+  **AC** 19  
+
+  **HP** 243 (18d12 + 126)  
+
+  **Speed** 40 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 17 (XP 18000; PB +6)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 27 (+8) | 14 (+2) | 25 (+7) | 16 (+3) | 15 (+2) | 24 (+7) |
+
+
+  **Saving Throws** DEX +8, WIS +8  
+
+  **Skills** Insight +8, Perception +14, Persuasion +13, Stealth +8  
+
+  **Immunities** fire  
+
+  **Senses** darkvision 120 ft., blindsight 60 ft., passive perception 24  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Amphibious.** The dragon can breathe air and water.
+
+
+  **Legendary Resistance (3/day).** If the dragon fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks. It can replace one attack with a use of (A) Spellcasting to cast Guiding Bolt (level 2 version) or (B) Weakening Breath.
+
+
+  **Rend.** Melee Attack Roll: +14, reach 10 ft. Hit: 17 (2d8 + 8) Slashing damage plus 4 (1d8) Fire damage.
+
+
+  **Fire Breath.** Dexterity Saving Throw: DC 21, each creature in a 60-foot Cone. Failure: 66 (12d10) Fire damage. Success: Half damage.
+
+
+  **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):
+
+
+  **Weakening Breath.** Strength Saving Throw: DC 21, each creature that isn’t currently affected by this breath in a 60-foot Cone. Failure: The target has Disadvantage on Strength-based D20 Tests and subtracts 3 (1d6) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.
+
+
+
+  ### Legendary Actions
+
+  **Banish.** Charisma Saving Throw: DC 21, one creature the dragon can see within 120 feet. Failure: 10 (3d6) Force damage, and the target has the Incapacitated condition and is transported to a harmless demiplane until the start of the dragon’s next turn, at which point it re appears in an unoccupied space of the dragon’s choice within 120 feet of the dragon. Failure or Success: The dragon can’t take this action again until the start of its next turn.
+
+
+  **Guiding Light.** The dragon uses Spellcasting to cast Guiding Bolt (level 2 version).
+
+
+  **Pounce.** The dragon moves up to half its Speed, and it makes one Rend attack.
+tags:
+- dragon
+- huge
+- cr-17
+properties:
+  size: Huge
+  creatureType: dragon
+  alignment: lawful good
+  armorClass: 19
+  hitPoints: 243
+  hitDice: 18d12 + 126
+  speed: 40 ft., fly 80 ft., swim 40 ft.
+  strength: 27
+  dexterity: 14
+  constitution: 25
+  intelligence: 16
+  wisdom: 15
+  charisma: 24
+  challengeRating: 17
+  xp: 18000
+  senses: darkvision 120 ft., blindsight 60 ft., passive perception 24
+  languages: Common, Draconic
+  skills: Insight +8, Perception +14, Persuasion +13, Stealth +8
+  savingThrows: DEX +8, WIS +8
+  immunities:
+  - fire
+  traits:
+  - name: Amphibious
+    description: The dragon can breathe air and water.
+  - name: Legendary Resistance (3/day)
+    description: If the dragon fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks. It can replace one attack with a use of (A) Spellcasting to cast Guiding Bolt (level 2 version) or (B) Weakening Breath.
+  - name: Rend
+    description: 'Melee Attack Roll: +14, reach 10 ft. Hit: 17 (2d8 + 8) Slashing damage plus 4 (1d8) Fire damage.'
+  - name: Fire Breath
+    description: 'Dexterity Saving Throw: DC 21, each creature in a 60-foot Cone. Failure: 66 (12d10) Fire damage. Success: Half damage.'
+  - name: Spellcasting
+    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):'
+  - name: Weakening Breath
+    description: 'Strength Saving Throw: DC 21, each creature that isn’t currently affected by this breath in a 60-foot Cone. Failure: The target has Disadvantage on Strength-based D20 Tests and subtracts 3 (1d6) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.'
+  legendaryActions:
+  - name: Banish
+    description: 'Charisma Saving Throw: DC 21, one creature the dragon can see within 120 feet. Failure: 10 (3d6) Force damage, and the target has the Incapacitated condition and is transported to a harmless demiplane until the start of the dragon’s next turn, at which point it re appears in an unoccupied space of the dragon’s choice within 120 feet of the dragon. Failure or Success: The dragon can’t take this action again until the start of its next turn.'
+  - name: Guiding Light
+    description: The dragon uses Spellcasting to cast Guiding Bolt (level 2 version).
+  - name: Pounce
+    description: The dragon moves up to half its Speed, and it makes one Rend attack.

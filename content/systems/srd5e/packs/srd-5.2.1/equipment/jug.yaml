@@ -1,0 +1,19 @@
+id: jug
+type: equipment
+name: Jug
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 cp  
+
+  **Weight:** 4 lb.
+
+
+  A Jug holds up to 1 gallon.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 cp
+  weight: 4

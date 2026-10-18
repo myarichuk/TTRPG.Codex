@@ -1,0 +1,93 @@
+id: mage
+type: monster
+name: Mage
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 15  
+
+  **HP** 81 (18d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 9 (-1) | 14 (+2) | 11 (+0) | 17 (+3) | 12 (+1) | 11 (+0) |
+
+
+  **Saving Throws** INT +6, WIS +4  
+
+  **Skills** Arcana +6, History +6, Perception +4  
+
+  **Gear** Wand  
+
+  **Senses** passive perception 14  
+
+  **Languages** Common plus three other languages
+
+
+  ### Actions
+
+  **Multiattack.** The mage makes three Arcane Burst attacks.
+
+
+  **Arcane Burst.** Melee or Ranged Attack Roll: +6, reach 5 ft. or range 120 ft. Hit: 16 (3d8 + 3) Force damage.
+
+
+  **Spellcasting.** The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):
+
+
+
+  ### Bonus Actions
+
+  **Misty Step (3/day).** The mage casts Misty Step, using the same spellcasting ability as Spellcasting.
+
+
+
+  ### Reactions
+
+  **Protective Magic (3/day).** The mage casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.
+tags:
+- humanoid
+- medium or small
+- cr-6
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 15
+  hitPoints: 81
+  hitDice: 18d8
+  speed: 30 ft.
+  strength: 9
+  dexterity: 14
+  constitution: 11
+  intelligence: 17
+  wisdom: 12
+  charisma: 11
+  challengeRating: 6
+  xp: 2300
+  senses: passive perception 14
+  languages: Common plus three other languages
+  skills: Arcana +6, History +6, Perception +4
+  savingThrows: INT +6, WIS +4
+  gear: Wand
+  actions:
+  - name: Multiattack
+    description: The mage makes three Arcane Burst attacks.
+  - name: Arcane Burst
+    description: 'Melee or Ranged Attack Roll: +6, reach 5 ft. or range 120 ft. Hit: 16 (3d8 + 3) Force damage.'
+  - name: Spellcasting
+    description: 'The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):'
+  bonusActions:
+  - name: Misty Step (3/day)
+    description: The mage casts Misty Step, using the same spellcasting ability as Spellcasting.
+  reactions:
+  - name: Protective Magic (3/day)
+    description: The mage casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.

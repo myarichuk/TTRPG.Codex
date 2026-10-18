@@ -1,0 +1,30 @@
+id: maul
+type: equipment
+name: Maul
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 2d6 Bludgeoning  
+
+  **Properties:** Heavy, Two-Handed  
+
+  **Mastery:** Topple  
+
+  **Cost:** 10 gp  
+
+  **Weight:** 10 lb.
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 10 gp
+  weight: 10
+  damage: 2d6 Bludgeoning
+  properties:
+  - Heavy
+  - Two-Handed
+  mastery: Topple

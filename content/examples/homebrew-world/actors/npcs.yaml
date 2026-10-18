@@ -1,0 +1,28 @@
+- id: maud-ketter
+  name: Maud Ketter
+  description: Innkeeper of the Salt Lantern. Knows every rumour in town and sells most of them.
+  tags: [npc, innkeeper]
+  resources: { HP: 9, HP_Max: 9 }
+  properties:
+    str: 10
+    dex: 12
+    con: 11
+    int: 13
+    wis: 15
+    cha: 16
+    armorClass: 11
+    speed: 30
+- id: harbour-master-vane
+  name: Harbour-Master Orrin Vane
+  description: Descendant of the founder. Tired, polite, and keeping a seventh-year appointment.
+  tags: [npc, official]
+  resources: { HP: 18, HP_Max: 18 }
+  properties:
+    str: 11
+    dex: 10
+    con: 12
+    int: 14
+    wis: 12
+    cha: 14
+    armorClass: 12
+    speed: 30

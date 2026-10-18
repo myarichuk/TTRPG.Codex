@@ -1,0 +1,15 @@
+id: ring-of-jumping
+type: magic-item
+name: Ring of Jumping
+description: >-
+  Ring
+
+
+  While wearing this ring, you can cast Jump from it, but can target only yourself when you do so.
+tags:
+- uncommon
+- rings
+properties:
+  category: Rings
+  rarity: Uncommon
+  attunement: true

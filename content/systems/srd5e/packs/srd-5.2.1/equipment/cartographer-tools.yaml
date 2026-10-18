@@ -1,0 +1,17 @@
+id: cartographer-tools
+type: equipment
+name: Cartographer's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 15 gp  
+
+  **Weight:** 6 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 15 gp
+  weight: 6

@@ -1,0 +1,85 @@
+id: swarm-of-rats
+type: monster
+name: Swarm of Rats
+description: >-
+  *Medium Swarm Of Tiny Beasts, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 14 (4d8 - 4)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 9 (-1) | 11 (+0) | 9 (-1) | 2 (-4) | 10 (+0) | 3 (-4) |
+
+
+  **Saving Throws** DEX +2  
+
+  **Resistances** bludgeoning, piercing, slashing  
+
+  **Immunities** Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned  
+
+  **Senses** darkvision 30 ft., passive perception 10  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Swarm.** The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny rat. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+
+
+
+  ### Actions
+
+  **Bites.** Melee Attack Roll: +2, reach 5 ft. Hit: 5 (2d4) Piercing damage, or 2 (1d4) Piercing damage if the swarm is Bloodied.
+tags:
+- swarm of tiny beasts
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: swarm of tiny beasts
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 14
+  hitDice: 4d8 - 4
+  speed: 30 ft., climb 30 ft.
+  strength: 9
+  dexterity: 11
+  constitution: 9
+  intelligence: 2
+  wisdom: 10
+  charisma: 3
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 30 ft., passive perception 10
+  languages: None
+  savingThrows: DEX +2
+  resistances:
+  - bludgeoning
+  - piercing
+  - slashing
+  immunities:
+  - Charmed
+  - Frightened
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Prone
+  - Restrained
+  - Stunned
+  traits:
+  - name: Swarm
+    description: The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny rat. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+  actions:
+  - name: Bites
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 5 (2d4) Piercing damage, or 2 (1d4) Piercing damage if the swarm is Bloodied.'

@@ -1,0 +1,7 @@
+id: language-dwarvish
+type: rule
+name: Dwarvish
+tags:
+- language
+properties:
+  category: Language

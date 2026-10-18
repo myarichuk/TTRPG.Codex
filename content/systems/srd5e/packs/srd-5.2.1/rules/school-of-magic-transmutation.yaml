@@ -1,0 +1,8 @@
+id: school-of-magic-transmutation
+type: rule
+name: Transmutation
+description: Transforms creatures or objects
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

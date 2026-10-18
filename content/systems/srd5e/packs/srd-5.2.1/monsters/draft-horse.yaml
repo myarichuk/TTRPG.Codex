@@ -1,0 +1,56 @@
+id: draft-horse
+type: monster
+name: Draft Horse
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 15 (2d10 + 4)  
+
+  **Speed** 40 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 10 (+0) | 15 (+2) | 2 (-4) | 11 (+0) | 7 (-2) |
+
+
+  **Senses** passive perception 10  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Hooves.** Melee Attack Roll: +6, reach 5 ft. Hit: 6 (1d4 + 4) Bludgeoning damage.
+tags:
+- beast
+- large
+- cr-1/4
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 15
+  hitDice: 2d10 + 4
+  speed: 40 ft.
+  strength: 18
+  dexterity: 10
+  constitution: 15
+  intelligence: 2
+  wisdom: 11
+  charisma: 7
+  challengeRating: 1/4
+  xp: 50
+  senses: passive perception 10
+  languages: None
+  actions:
+  - name: Hooves
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 6 (1d4 + 4) Bludgeoning damage.'

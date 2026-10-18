@@ -1,0 +1,31 @@
+id: glaive
+type: equipment
+name: Glaive
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 1d10 Slashing  
+
+  **Properties:** Heavy, Reach, Two-Handed  
+
+  **Mastery:** Graze  
+
+  **Cost:** 20 gp  
+
+  **Weight:** 6 lb.
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 20 gp
+  weight: 6
+  damage: 1d10 Slashing
+  properties:
+  - Heavy
+  - Reach
+  - Two-Handed
+  mastery: Graze

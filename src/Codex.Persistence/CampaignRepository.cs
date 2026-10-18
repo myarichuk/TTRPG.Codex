@@ -11,13 +11,28 @@ public class CampaignRepository(
     ISessionRepository sessionRepository,
     INoteRepository noteRepository,
     IRegionRepository regionRepository,
-    IFactRepository factRepository) : ICampaignRepository
+    IFactRepository factRepository,
+    IHomebrewRepository homebrewRepository,
+    IEncounterRepository encounterRepository) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
         using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
         return await session.Query<CampaignDocument>()
             .Customize(x => x.WaitForNonStaleResults())
+            .OrderByDescending(c => c.UpdatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<CampaignDocument>> GetForUserAsync(string userId)
+    {
+        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+        // Membership is what the access layer checks; the owner is always a DM member (SaveAsync
+        // guarantees it), so filtering on Members covers both. The filter runs in the Raven query so
+        // another user's campaigns never leave the database for this session.
+        return await session.Query<CampaignDocument>()
+            .Customize(x => x.WaitForNonStaleResults())
+            .Where(c => c.OwnerId == userId || c.Members.Any(m => m.UserId == userId))
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync();
     }
@@ -84,6 +99,8 @@ public class CampaignRepository(
         await noteRepository.DeleteAllForCampaignAsync(campaignId);
         await regionRepository.DeleteAllForCampaignAsync(campaignId);
         await factRepository.DeleteAllForCampaignAsync(campaignId);
+        await homebrewRepository.DeleteAllForCampaignAsync(campaignId);
+        await encounterRepository.DeleteAllForCampaignAsync(campaignId);
 
         session.Delete(campaignId);
         await session.SaveChangesAsync();

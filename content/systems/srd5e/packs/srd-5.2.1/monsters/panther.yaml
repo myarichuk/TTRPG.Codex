@@ -1,0 +1,68 @@
+id: panther
+type: monster
+name: Panther
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 13 (3d8)  
+
+  **Speed** 50 ft., climb 40 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 16 (+3) | 10 (+0) | 3 (-4) | 14 (+2) | 7 (-2) |
+
+
+  **Skills** Perception +4, Stealth +7  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Rend.** Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Slashing damage.
+
+
+
+  ### Bonus Actions
+
+  **Nimble Escape.** The panther takes the Disengage or Hide action.
+tags:
+- beast
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 13
+  hitDice: 3d8
+  speed: 50 ft., climb 40 ft.
+  strength: 14
+  dexterity: 16
+  constitution: 10
+  intelligence: 3
+  wisdom: 14
+  charisma: 7
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 14
+  languages: None
+  skills: Perception +4, Stealth +7
+  actions:
+  - name: Rend
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Slashing damage.'
+  bonusActions:
+  - name: Nimble Escape
+    description: The panther takes the Disengage or Hide action.

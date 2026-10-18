@@ -1,0 +1,70 @@
+id: elephant
+type: monster
+name: Elephant
+description: >-
+  *Huge Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 76 (8d12 + 24)  
+
+  **Speed** 40 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 22 (+6) | 9 (-1) | 17 (+3) | 3 (-4) | 11 (+0) | 6 (-2) |
+
+
+  **Senses** passive perception 10  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The elephant makes two Gore attacks.
+
+
+  **Gore.** Melee Attack Roll: +8, reach 5 ft. Hit: 15 (2d8 + 6) Piercing damage. If the target is a Huge or smaller creature and the elephant moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.
+
+
+
+  ### Bonus Actions
+
+  **Trample.** Dexterity Saving Throw: DC 16, one creature within 5 feet that has the Prone condition. Failure: 17 (2d10 + 6) Bludgeoning damage. Success: Half damage.
+tags:
+- beast
+- huge
+- cr-4
+properties:
+  size: Huge
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 76
+  hitDice: 8d12 + 24
+  speed: 40 ft.
+  strength: 22
+  dexterity: 9
+  constitution: 17
+  intelligence: 3
+  wisdom: 11
+  charisma: 6
+  challengeRating: 4
+  xp: 1100
+  senses: passive perception 10
+  languages: None
+  actions:
+  - name: Multiattack
+    description: The elephant makes two Gore attacks.
+  - name: Gore
+    description: 'Melee Attack Roll: +8, reach 5 ft. Hit: 15 (2d8 + 6) Piercing damage. If the target is a Huge or smaller creature and the elephant moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.'
+  bonusActions:
+  - name: Trample
+    description: 'Dexterity Saving Throw: DC 16, one creature within 5 feet that has the Prone condition. Failure: 17 (2d10 + 6) Bludgeoning damage. Success: Half damage.'

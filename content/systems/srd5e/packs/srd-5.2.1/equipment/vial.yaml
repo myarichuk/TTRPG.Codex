@@ -1,0 +1,19 @@
+id: vial
+type: equipment
+name: Vial
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 0 lb.
+
+
+  A Vial holds up to 4 ounces.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 0

@@ -1,0 +1,31 @@
+id: pike
+type: equipment
+name: Pike
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 1d10 Piercing  
+
+  **Properties:** Heavy, Reach, Two-Handed  
+
+  **Mastery:** Push  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 6 lb.
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 5 gp
+  weight: 6
+  damage: 1d10 Piercing
+  properties:
+  - Heavy
+  - Reach
+  - Two-Handed
+  mastery: Push

@@ -1,0 +1,8 @@
+id: damage-type-lightning
+type: rule
+name: Lightning
+description: Electricity
+tags:
+- damage-type
+properties:
+  category: Damage Type

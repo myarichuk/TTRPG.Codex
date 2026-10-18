@@ -1,0 +1,15 @@
+id: necklace-of-adaptation
+type: magic-item
+name: Necklace of Adaptation
+description: >-
+  Wondrous Item
+
+
+  While wearing this necklace, you can breathe normally in any environment, and you have Advantage on saving throws made to avoid or end the Poisoned condition.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

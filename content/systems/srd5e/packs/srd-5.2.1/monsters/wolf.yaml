@@ -1,0 +1,68 @@
+id: wolf
+type: monster
+name: Wolf
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 11 (2d8 + 2)  
+
+  **Speed** 40 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 15 (+2) | 12 (+1) | 3 (-4) | 12 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +5, Stealth +4  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Pack Tactics.** The wolf has Advantage on attack rolls against a creature if at least one of the wolf’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage. If the target is a Medium or smaller creature, it has the Prone condition.
+tags:
+- beast
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 11
+  hitDice: 2d8 + 2
+  speed: 40 ft.
+  strength: 14
+  dexterity: 15
+  constitution: 12
+  intelligence: 3
+  wisdom: 12
+  charisma: 6
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 15
+  languages: None
+  skills: Perception +5, Stealth +4
+  traits:
+  - name: Pack Tactics
+    description: The wolf has Advantage on attack rolls against a creature if at least one of the wolf’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage. If the target is a Medium or smaller creature, it has the Prone condition.'

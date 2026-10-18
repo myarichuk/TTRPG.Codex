@@ -1,0 +1,30 @@
+id: handaxe
+type: equipment
+name: Handaxe
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d6 Slashing  
+
+  **Properties:** Light, Thrown  
+
+  **Mastery:** Vex  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 2 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 5 gp
+  weight: 2
+  damage: 1d6 Slashing
+  properties:
+  - Light
+  - Thrown
+  mastery: Vex

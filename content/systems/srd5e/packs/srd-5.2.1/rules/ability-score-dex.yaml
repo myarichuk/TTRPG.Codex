@@ -1,0 +1,8 @@
+id: ability-score-dex
+type: rule
+name: Dexterity
+description: Agility, reflexes, and balance
+tags:
+- ability-score
+properties:
+  category: Ability Score

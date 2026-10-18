@@ -1,0 +1,38 @@
+id: mage-armor
+type: spell
+name: Mage Armor
+description: >-
+  *Level 1 Abjuration (Sorcerer, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S, M (a piece of cured leather)  
+
+  **Duration:** 8 hours
+
+
+  You touch a willing creature who isn't wearing armor. Until the spell ends, the target's base AC becomes 13 plus its Dexterity modifier. The spell ends early if the target dons armor.
+tags:
+- level-1
+- abjuration
+- sorcerer
+- wizard
+properties:
+  level: 1
+  school: Abjuration
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  - M
+  material: a piece of cured leather
+  duration: 8 hours
+  concentration: false
+  ritual: false
+  classes:
+  - Sorcerer
+  - Wizard

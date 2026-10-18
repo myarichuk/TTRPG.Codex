@@ -1,0 +1,19 @@
+id: shield
+type: magic-item
+name: Shield
+description: >-
+  Armor (Shield)
+
+
+  While holding this Shield, you have a bonus to Armor Class determined by the Shield's rarity, in addition to the Shield's normal bonus to AC.
+tags:
+- uncommon (+1), rare (+2), or very rare (+3)
+- armor
+properties:
+  category: Armor
+  rarity: Uncommon (+1), Rare (+2), or Very Rare (+3)
+  attunement: false
+  variants:
+  - Shield +1
+  - Shield +2
+  - Shield +3

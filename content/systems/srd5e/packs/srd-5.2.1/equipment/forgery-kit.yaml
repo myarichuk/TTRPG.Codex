@@ -1,0 +1,17 @@
+id: forgery-kit
+type: equipment
+name: Forgery Kit
+description: >-
+  *Other Tools, Tools*
+
+
+  **Cost:** 15 gp  
+
+  **Weight:** 5 lb.
+tags:
+- other tools
+- tools
+properties:
+  category: Other Tools
+  cost: 15 gp
+  weight: 5

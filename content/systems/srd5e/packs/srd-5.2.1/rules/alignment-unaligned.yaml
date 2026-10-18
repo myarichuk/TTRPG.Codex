@@ -1,0 +1,8 @@
+id: alignment-unaligned
+type: rule
+name: Unaligned
+description: Most creatures that lack the capacity for rational thought don't have alignments; they are unaligned. Sharks are savage predators, for example, but they aren't evil; they are unaligned.
+tags:
+- alignment
+properties:
+  category: Alignment

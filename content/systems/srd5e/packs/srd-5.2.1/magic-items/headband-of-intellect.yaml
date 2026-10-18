@@ -1,0 +1,15 @@
+id: headband-of-intellect
+type: magic-item
+name: Headband of Intellect
+description: >-
+  Wondrous Item
+
+
+  Your Intelligence is 19 while you wear this headband. It has no effect on you if your Intelligence is 19 or higher without it.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

@@ -1,0 +1,68 @@
+id: giant-hyena
+type: monster
+name: Giant Hyena
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 45 (6d10 + 12)  
+
+  **Speed** 50 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 14 (+2) | 14 (+2) | 2 (-4) | 12 (+1) | 7 (-2) |
+
+
+  **Skills** Perception +3  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Rampage (1/day).** Immediately after dealing damage to a creature that was already Bloodied, the hyena can move up to half its Speed, and it makes one Bite attack.
+tags:
+- beast
+- large
+- cr-1
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 45
+  hitDice: 6d10 + 12
+  speed: 50 ft.
+  strength: 16
+  dexterity: 14
+  constitution: 14
+  intelligence: 2
+  wisdom: 12
+  charisma: 7
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 13
+  languages: None
+  skills: Perception +3
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Piercing damage.'
+  bonusActions:
+  - name: Rampage (1/day)
+    description: Immediately after dealing damage to a creature that was already Bloodied, the hyena can move up to half its Speed, and it makes one Bite attack.

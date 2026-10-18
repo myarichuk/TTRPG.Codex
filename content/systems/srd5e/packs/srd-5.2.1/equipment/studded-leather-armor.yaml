@@ -1,0 +1,20 @@
+id: studded-leather-armor
+type: equipment
+name: Studded Leather Armor
+description: >-
+  *Armor, Light Armor*
+
+
+  **Armor Class:** 12 + Dex modifier  
+
+  **Cost:** 45 gp  
+
+  **Weight:** 13 lb.
+tags:
+- armor
+- light armor
+properties:
+  category: Armor
+  cost: 45 gp
+  weight: 13
+  armorClass: 12 + Dex modifier

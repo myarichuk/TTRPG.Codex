@@ -1,0 +1,87 @@
+id: swarm-of-crawling-claws
+type: monster
+name: Swarm of Crawling Claws
+description: >-
+  *Medium Swarm Of Tiny Undead, Neutral Evil*
+
+
+  **AC** 12  
+
+  **HP** 49 (11d8)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 14 (+2) | 11 (+0) | 5 (-3) | 10 (+0) | 4 (-3) |
+
+
+  **Resistances** bludgeoning, piercing, slashing  
+
+  **Immunities** necrotic, poison, Charmed, Exhaustion, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned  
+
+  **Senses** blindsight 30 ft., passive perception 10  
+
+  **Languages** Understands Common but can’t speak
+
+
+  ### Traits
+
+  **Swarm.** The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+
+
+
+  ### Actions
+
+  **Swarm of Grasping Hands.** Melee Attack Roll: +4, reach 5 ft. Hit: 20 (4d8 + 2) Necrotic damage, or 11 (2d8 + 2) Necrotic damage if the swarm is Bloodied. If the target is a Medium or smaller creature, it has the Prone condition.
+tags:
+- swarm of tiny undead
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: swarm of tiny undead
+  alignment: neutral evil
+  armorClass: 12
+  hitPoints: 49
+  hitDice: 11d8
+  speed: 30 ft., climb 30 ft.
+  strength: 14
+  dexterity: 14
+  constitution: 11
+  intelligence: 5
+  wisdom: 10
+  charisma: 4
+  challengeRating: 3
+  xp: 700
+  senses: blindsight 30 ft., passive perception 10
+  languages: Understands Common but can’t speak
+  resistances:
+  - bludgeoning
+  - piercing
+  - slashing
+  immunities:
+  - necrotic
+  - poison
+  - Charmed
+  - Exhaustion
+  - Frightened
+  - Grappled
+  - Incapacitated
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  - Prone
+  - Restrained
+  - Stunned
+  traits:
+  - name: Swarm
+    description: The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+  actions:
+  - name: Swarm of Grasping Hands
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 20 (4d8 + 2) Necrotic damage, or 11 (2d8 + 2) Necrotic damage if the swarm is Bloodied. If the target is a Medium or smaller creature, it has the Prone condition.'

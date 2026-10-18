@@ -1,0 +1,38 @@
+id: expeditious-retreat
+type: spell
+name: Expeditious Retreat
+description: >-
+  *Level 1 Transmutation (Sorcerer, Warlock, Wizard)*
+
+
+  **Casting Time:** Bonus Action  
+
+  **Range:** Self  
+
+  **Components:** V, S  
+
+  **Duration:** Concentration, up to 10 minutes
+
+
+  You take the Dash action, and until the spell ends, you can take that action again as a Bonus Action.
+tags:
+- level-1
+- transmutation
+- sorcerer
+- warlock
+- wizard
+properties:
+  level: 1
+  school: Transmutation
+  castingTime: Bonus Action
+  range: Self
+  components:
+  - V
+  - S
+  duration: up to 10 minutes
+  concentration: true
+  ritual: false
+  classes:
+  - Sorcerer
+  - Warlock
+  - Wizard

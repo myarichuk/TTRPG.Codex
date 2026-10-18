@@ -1,0 +1,73 @@
+id: hippogriff
+type: monster
+name: Hippogriff
+description: >-
+  *Large Monstrosity, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 26 (4d10 + 4)  
+
+  **Speed** 40 ft., fly 60 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 13 (+1) | 13 (+1) | 2 (-4) | 12 (+1) | 8 (-1) |
+
+
+  **Skills** Perception +5  
+
+  **Senses** passive perception 15  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Flyby.** The hippogriff doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Multiattack.** The hippogriff makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Slashing damage.
+tags:
+- monstrosity
+- large
+- cr-1
+properties:
+  size: Large
+  creatureType: monstrosity
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 26
+  hitDice: 4d10 + 4
+  speed: 40 ft., fly 60 ft.
+  strength: 17
+  dexterity: 13
+  constitution: 13
+  intelligence: 2
+  wisdom: 12
+  charisma: 8
+  challengeRating: 1
+  xp: 200
+  senses: passive perception 15
+  languages: None
+  skills: Perception +5
+  traits:
+  - name: Flyby
+    description: The hippogriff doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+  actions:
+  - name: Multiattack
+    description: The hippogriff makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Slashing damage.'

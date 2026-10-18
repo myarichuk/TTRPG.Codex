@@ -1,0 +1,7 @@
+id: language-deep-speech
+type: rule
+name: Deep Speech
+tags:
+- language
+properties:
+  category: Language

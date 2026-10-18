@@ -1,0 +1,34 @@
+id: power-word-heal
+type: spell
+name: Power Word Heal
+description: >-
+  *Level 9 Enchantment (Bard, Cleric)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** 60 feet Component: V  
+
+  **Components:**   
+
+  **Duration:** Instantaneous
+
+
+  A wave of healing energy washes over one creature you can see within range. The target regains all its Hit Points. If the creature has the Charmed, Frightened, Paralyzed, Poisoned, or Stunned condition, the condition ends. If the creature has the Prone condition, it can use its Reaction to stand up.
+tags:
+- level-9
+- enchantment
+- bard
+- cleric
+properties:
+  level: 9
+  school: Enchantment
+  castingTime: Action
+  range: '60 feet Component: V'
+  components: []
+  duration: Instantaneous
+  concentration: false
+  ritual: false
+  classes:
+  - Bard
+  - Cleric

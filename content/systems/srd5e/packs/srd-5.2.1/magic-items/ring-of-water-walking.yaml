@@ -1,0 +1,15 @@
+id: ring-of-water-walking
+type: magic-item
+name: Ring of Water Walking
+description: >-
+  Ring
+
+
+  While wearing this ring, you cast Water Walk from it, targeting only yourself.
+tags:
+- uncommon
+- rings
+properties:
+  category: Rings
+  rarity: Uncommon
+  attunement: false

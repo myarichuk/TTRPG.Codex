@@ -1,0 +1,63 @@
+id: shrieker-fungus
+type: monster
+name: Shrieker Fungus
+description: >-
+  *Medium Plant, Unaligned*
+
+
+  **AC** 5  
+
+  **HP** 13 (3d8)  
+
+  **Speed** 5 ft.  
+
+  **CR** 0 (XP 0; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 1 (-5) | 1 (-5) | 10 (+0) | 1 (-5) | 3 (-4) | 1 (-5) |
+
+
+  **Immunities** Blinded, Charmed, Deafened, Frightened  
+
+  **Senses** blindsight 30 ft., passive perception 6  
+
+  **Languages** None
+
+
+  ### Reactions
+
+  **Shriek.** Trigger: A creature or a source of Bright Light moves within 30 feet of the shrieker. Response: The shrieker emits a shriek audible within 300 feet of itself for 1 minute or until the shrieker dies.
+tags:
+- plant
+- medium
+- cr-0
+properties:
+  size: Medium
+  creatureType: plant
+  alignment: unaligned
+  armorClass: 5
+  hitPoints: 13
+  hitDice: 3d8
+  speed: 5 ft.
+  strength: 1
+  dexterity: 1
+  constitution: 10
+  intelligence: 1
+  wisdom: 3
+  charisma: 1
+  challengeRating: 0
+  xp: 0
+  senses: blindsight 30 ft., passive perception 6
+  languages: None
+  immunities:
+  - Blinded
+  - Charmed
+  - Deafened
+  - Frightened
+  reactions:
+  - name: Shriek
+    description: 'Trigger: A creature or a source of Bright Light moves within 30 feet of the shrieker. Response: The shrieker emits a shriek audible within 300 feet of itself for 1 minute or until the shrieker dies.'

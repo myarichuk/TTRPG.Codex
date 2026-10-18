@@ -1,0 +1,87 @@
+id: swarm-of-piranhas
+type: monster
+name: Swarm of Piranhas
+description: >-
+  *Medium Swarm Of Tiny Beasts, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 28 (8d8 - 8)  
+
+  **Speed** 5 ft., swim 40 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 13 (+1) | 16 (+3) | 9 (-1) | 1 (-5) | 7 (-2) | 2 (-4) |
+
+
+  **Resistances** bludgeoning, piercing, slashing  
+
+  **Immunities** Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned  
+
+  **Senses** darkvision 60 ft., passive perception 8  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Swarm.** The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny piranha. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+
+
+  **Water Breathing.** The swarm can breathe only underwater.
+
+
+
+  ### Actions
+
+  **Bites.** Melee Attack Roll: +5 (with Advantage if the target doesn’t have all its Hit Points), reach 5 ft. Hit: 8 (2d4 + 3) Piercing damage, or 5 (1d4 + 3) Piercing damage if the swarm is Bloodied.
+tags:
+- swarm of tiny beasts
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: swarm of tiny beasts
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 28
+  hitDice: 8d8 - 8
+  speed: 5 ft., swim 40 ft.
+  strength: 13
+  dexterity: 16
+  constitution: 9
+  intelligence: 1
+  wisdom: 7
+  charisma: 2
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 8
+  languages: None
+  resistances:
+  - bludgeoning
+  - piercing
+  - slashing
+  immunities:
+  - Charmed
+  - Frightened
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Prone
+  - Restrained
+  - Stunned
+  traits:
+  - name: Swarm
+    description: The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny piranha. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+  - name: Water Breathing
+    description: The swarm can breathe only underwater.
+  actions:
+  - name: Bites
+    description: 'Melee Attack Roll: +5 (with Advantage if the target doesn’t have all its Hit Points), reach 5 ft. Hit: 8 (2d4 + 3) Piercing damage, or 5 (1d4 + 3) Piercing damage if the swarm is Bloodied.'

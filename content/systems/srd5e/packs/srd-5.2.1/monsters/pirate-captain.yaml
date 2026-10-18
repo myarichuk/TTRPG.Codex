@@ -1,0 +1,84 @@
+id: pirate-captain
+type: monster
+name: Pirate Captain
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 17  
+
+  **HP** 84 (13d8 + 26)  
+
+  **Speed** 30 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 18 (+4) | 14 (+2) | 10 (+0) | 14 (+2) | 17 (+3) |
+
+
+  **Saving Throws** STR +3, DEX +7, WIS +5, CHA +6  
+
+  **Skills** Acrobatics +7, Perception +5  
+
+  **Gear** Pistol, Rapier  
+
+  **Senses** passive perception 15  
+
+  **Languages** Common plus one other language
+
+
+  ### Actions
+
+  **Multiattack.** The pirate makes three attacks, using Rapier or Pistol in any combination.
+
+
+  **Rapier.** Melee Attack Roll: +7, reach 5 ft. Hit: 13 (2d8 + 4) Piercing damage, and the pirate has Advantage on the next attack roll it makes before the end of this turn.
+
+
+  **Pistol.** Ranged Attack Roll: +7, range 30/90 ft. Hit: 15 (2d10 + 4) Piercing damage.
+
+
+
+  ### Reactions
+
+  **Riposte.** Trigger: The pirate is hit by a melee attack roll while holding a weapon. Response: The pirate adds 3 to its AC against that attack, possibly causing it to miss. On a miss, the pirate makes one Rapier attack against the triggering creature if within range.
+tags:
+- humanoid
+- medium or small
+- cr-6
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 17
+  hitPoints: 84
+  hitDice: 13d8 + 26
+  speed: 30 ft.
+  strength: 10
+  dexterity: 18
+  constitution: 14
+  intelligence: 10
+  wisdom: 14
+  charisma: 17
+  challengeRating: 6
+  xp: 2300
+  senses: passive perception 15
+  languages: Common plus one other language
+  skills: Acrobatics +7, Perception +5
+  savingThrows: STR +3, DEX +7, WIS +5, CHA +6
+  gear: Pistol, Rapier
+  actions:
+  - name: Multiattack
+    description: The pirate makes three attacks, using Rapier or Pistol in any combination.
+  - name: Rapier
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 13 (2d8 + 4) Piercing damage, and the pirate has Advantage on the next attack roll it makes before the end of this turn.'
+  - name: Pistol
+    description: 'Ranged Attack Roll: +7, range 30/90 ft. Hit: 15 (2d10 + 4) Piercing damage.'
+  reactions:
+  - name: Riposte
+    description: 'Trigger: The pirate is hit by a melee attack roll while holding a weapon. Response: The pirate adds 3 to its AC against that attack, possibly causing it to miss. On a miss, the pirate makes one Rapier attack against the triggering creature if within range.'

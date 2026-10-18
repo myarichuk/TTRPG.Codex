@@ -1,0 +1,76 @@
+id: copper-dragon-wyrmling
+type: monster
+name: Copper Dragon Wyrmling
+description: >-
+  *Medium Dragon, Chaotic Good*
+
+
+  **AC** 16  
+
+  **HP** 22 (4d8 + 4)  
+
+  **Speed** 30 ft., climb 30 ft., fly 60 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 12 (+1) | 13 (+1) | 14 (+2) | 11 (+0) | 13 (+1) |
+
+
+  **Saving Throws** DEX +3, WIS +2  
+
+  **Skills** Perception +4, Stealth +3  
+
+  **Immunities** acid  
+
+  **Senses** darkvision 60 ft., blindsight 10 ft., passive perception 14  
+
+  **Languages** Draconic
+
+
+  ### Actions
+
+  **Rend.** Melee Attack Roll: +4, reach 5 ft. Hit: 7 (1d10 + 2) Slashing damage.
+
+
+  **Acid Breath.** Dexterity Saving Throw: DC 11, each creature in a 20-foot-long, 5-footwide Line. Failure: 18 (4d8) Acid damage. Success: Half damage.
+
+
+  **Slowing Breath.** Constitution Saving Throw: DC 11, each creature in a 15-foot Cone. Failure: The target can’t take Reactions; its Speed is halved; and it can take either an action or a Bonus Action on its turn, not both. This effect lasts until the end of its next turn.
+tags:
+- dragon
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: dragon
+  alignment: chaotic good
+  armorClass: 16
+  hitPoints: 22
+  hitDice: 4d8 + 4
+  speed: 30 ft., climb 30 ft., fly 60 ft.
+  strength: 15
+  dexterity: 12
+  constitution: 13
+  intelligence: 14
+  wisdom: 11
+  charisma: 13
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., blindsight 10 ft., passive perception 14
+  languages: Draconic
+  skills: Perception +4, Stealth +3
+  savingThrows: DEX +3, WIS +2
+  immunities:
+  - acid
+  actions:
+  - name: Rend
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 7 (1d10 + 2) Slashing damage.'
+  - name: Acid Breath
+    description: 'Dexterity Saving Throw: DC 11, each creature in a 20-foot-long, 5-footwide Line. Failure: 18 (4d8) Acid damage. Success: Half damage.'
+  - name: Slowing Breath
+    description: 'Constitution Saving Throw: DC 11, each creature in a 15-foot Cone. Failure: The target can’t take Reactions; its Speed is halved; and it can take either an action or a Bonus Action on its turn, not both. This effect lasts until the end of its next turn.'

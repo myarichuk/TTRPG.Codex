@@ -1,0 +1,59 @@
+id: camel
+type: monster
+name: Camel
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 17 (2d10 + 6)  
+
+  **Speed** 50 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 8 (-1) | 17 (+3) | 2 (-4) | 11 (+0) | 5 (-3) |
+
+
+  **Saving Throws** CON +5  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Bludgeoning damage.
+tags:
+- beast
+- large
+- cr-1/8
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 17
+  hitDice: 2d10 + 6
+  speed: 50 ft.
+  strength: 15
+  dexterity: 8
+  constitution: 17
+  intelligence: 2
+  wisdom: 11
+  charisma: 5
+  challengeRating: 1/8
+  xp: 25
+  senses: darkvision 60 ft., passive perception 10
+  languages: None
+  savingThrows: CON +5
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Bludgeoning damage.'

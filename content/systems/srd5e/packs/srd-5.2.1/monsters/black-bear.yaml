@@ -1,0 +1,64 @@
+id: black-bear
+type: monster
+name: Black Bear
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 19 (3d8 + 6)  
+
+  **Speed** 30 ft., climb 30 ft., swim 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 12 (+1) | 14 (+2) | 2 (-4) | 12 (+1) | 7 (-2) |
+
+
+  **Skills** Perception +5  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The bear makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage.
+tags:
+- beast
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 19
+  hitDice: 3d8 + 6
+  speed: 30 ft., climb 30 ft., swim 30 ft.
+  strength: 15
+  dexterity: 12
+  constitution: 14
+  intelligence: 2
+  wisdom: 12
+  charisma: 7
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 15
+  languages: None
+  skills: Perception +5
+  actions:
+  - name: Multiattack
+    description: The bear makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage.'

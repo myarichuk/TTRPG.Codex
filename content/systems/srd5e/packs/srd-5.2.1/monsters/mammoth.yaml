@@ -1,0 +1,73 @@
+id: mammoth
+type: monster
+name: Mammoth
+description: >-
+  *Huge Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 126 (11d12 + 55)  
+
+  **Speed** 50 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 24 (+7) | 9 (-1) | 21 (+5) | 3 (-4) | 11 (+0) | 6 (-2) |
+
+
+  **Saving Throws** STR +10, CON +8  
+
+  **Senses** passive perception 10  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The mammoth makes two Gore attacks.
+
+
+  **Gore.** Melee Attack Roll: +10, reach 10 ft. Hit: 18 (2d10 + 7) Piercing damage. If the target is a Huge or smaller creature and the mammoth moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.
+
+
+
+  ### Bonus Actions
+
+  **Trample.** Dexterity Saving Throw: DC 18, one creature within 5 feet that has the Prone condition. Failure: 29 (4d10 + 7) Bludgeoning damage. Success: Half damage.
+tags:
+- beast
+- huge
+- cr-6
+properties:
+  size: Huge
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 126
+  hitDice: 11d12 + 55
+  speed: 50 ft.
+  strength: 24
+  dexterity: 9
+  constitution: 21
+  intelligence: 3
+  wisdom: 11
+  charisma: 6
+  challengeRating: 6
+  xp: 2300
+  senses: passive perception 10
+  languages: None
+  savingThrows: STR +10, CON +8
+  actions:
+  - name: Multiattack
+    description: The mammoth makes two Gore attacks.
+  - name: Gore
+    description: 'Melee Attack Roll: +10, reach 10 ft. Hit: 18 (2d10 + 7) Piercing damage. If the target is a Huge or smaller creature and the mammoth moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.'
+  bonusActions:
+  - name: Trample
+    description: 'Dexterity Saving Throw: DC 18, one creature within 5 feet that has the Prone condition. Failure: 29 (4d10 + 7) Bludgeoning damage. Success: Half damage.'

@@ -1,0 +1,65 @@
+id: lizard
+type: monster
+name: Lizard
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 2 (1d4)  
+
+  **Speed** 20 ft., climb 20 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 2 (-4) | 11 (+0) | 10 (+0) | 1 (-5) | 8 (-1) | 3 (-4) |
+
+
+  **Senses** darkvision 30 ft., passive perception 9  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Spider Climb.** The lizard can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 2
+  hitDice: 1d4
+  speed: 20 ft., climb 20 ft.
+  strength: 2
+  dexterity: 11
+  constitution: 10
+  intelligence: 1
+  wisdom: 8
+  charisma: 3
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 30 ft., passive perception 9
+  languages: None
+  traits:
+  - name: Spider Climb
+    description: The lizard can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage.'

@@ -1,0 +1,12 @@
+id: skill-stealth
+type: rule
+name: Stealth
+description: >-
+  **Ability:** DEX
+
+
+  Escape notice by moving quietly and hiding behind things.
+tags:
+- skill
+properties:
+  category: Skill

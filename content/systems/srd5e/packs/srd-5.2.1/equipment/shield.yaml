@@ -1,0 +1,20 @@
+id: shield
+type: equipment
+name: Shield
+description: >-
+  *Armor, Shields*
+
+
+  **Armor Class:** 2  
+
+  **Cost:** 10 gp  
+
+  **Weight:** 6 lb.
+tags:
+- armor
+- shields
+properties:
+  category: Armor
+  cost: 10 gp
+  weight: 6
+  armorClass: 2

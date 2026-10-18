@@ -1,0 +1,17 @@
+id: masons-tools
+type: equipment
+name: Mason's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 10 gp  
+
+  **Weight:** 8 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 10 gp
+  weight: 8

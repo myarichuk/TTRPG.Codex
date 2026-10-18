@@ -1,0 +1,88 @@
+id: dust-mephit
+type: monster
+name: Dust Mephit
+description: >-
+  *Small Elemental, Neutral Evil*
+
+
+  **AC** 12  
+
+  **HP** 17 (5d6)  
+
+  **Speed** 30 ft., fly 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 5 (-3) | 14 (+2) | 10 (+0) | 9 (-1) | 11 (+0) | 10 (+0) |
+
+
+  **Skills** Perception +2, Stealth +4  
+
+  **Immunities** poison, Exhaustion, Poisoned  
+
+  **Vulnerabilities** fire  
+
+  **Senses** darkvision 60 ft., passive perception 12  
+
+  **Languages** Primordial (Auran, Terran)
+
+
+  ### Traits
+
+  **Death Burst.** The mephit explodes when it dies. Dexterity Saving Throw: DC 10, each creature in a 5-foot Emanation originating from the mephit. Failure: 5 (2d4) Bludgeoning damage. Success: Half damage.
+
+
+
+  ### Actions
+
+  **Claw.** Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Slashing damage.
+
+
+  **Blinding Breath.** Dexterity Saving Throw: DC 10, each creature in a 15-foot Cone. Failure: The target has the Blinded condition until the end of the mephit’s next turn.
+
+
+  **Sleep (1/day).** The mephit casts the Sleep spell, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 10).
+tags:
+- elemental
+- small
+- cr-1/2
+properties:
+  size: Small
+  creatureType: elemental
+  alignment: neutral evil
+  armorClass: 12
+  hitPoints: 17
+  hitDice: 5d6
+  speed: 30 ft., fly 30 ft.
+  strength: 5
+  dexterity: 14
+  constitution: 10
+  intelligence: 9
+  wisdom: 11
+  charisma: 10
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 12
+  languages: Primordial (Auran, Terran)
+  skills: Perception +2, Stealth +4
+  immunities:
+  - poison
+  - Exhaustion
+  - Poisoned
+  vulnerabilities:
+  - fire
+  traits:
+  - name: Death Burst
+    description: 'The mephit explodes when it dies. Dexterity Saving Throw: DC 10, each creature in a 5-foot Emanation originating from the mephit. Failure: 5 (2d4) Bludgeoning damage. Success: Half damage.'
+  actions:
+  - name: Claw
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Slashing damage.'
+  - name: Blinding Breath
+    description: 'Dexterity Saving Throw: DC 10, each creature in a 15-foot Cone. Failure: The target has the Blinded condition until the end of the mephit’s next turn.'
+  - name: Sleep (1/day)
+    description: The mephit casts the Sleep spell, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 10).

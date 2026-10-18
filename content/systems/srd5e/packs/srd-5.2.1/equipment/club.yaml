@@ -1,0 +1,29 @@
+id: club
+type: equipment
+name: Club
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d4 Bludgeoning  
+
+  **Properties:** Light  
+
+  **Mastery:** Slow  
+
+  **Cost:** 1 sp  
+
+  **Weight:** 2 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 1 sp
+  weight: 2
+  damage: 1d4 Bludgeoning
+  properties:
+  - Light
+  mastery: Slow

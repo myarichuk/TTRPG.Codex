@@ -1,0 +1,100 @@
+id: storm-giant
+type: monster
+name: Storm Giant
+description: >-
+  *Huge Giant, Chaotic Good*
+
+
+  **AC** 16  
+
+  **HP** 230 (20d12 + 100)  
+
+  **Speed** 50 ft., fly 25 ft., hover True, swim 50 ft.  
+
+  **CR** 13 (XP 10000; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 29 (+9) | 14 (+2) | 20 (+5) | 16 (+3) | 20 (+5) | 18 (+4) |
+
+
+  **Saving Throws** STR +14, CON +10, WIS +10, CHA +9  
+
+  **Skills** Arcana +8, Athletics +14, History +8, Perception +10  
+
+  **Resistances** cold  
+
+  **Immunities** lightning, thunder  
+
+  **Senses** darkvision 120 ft., truesight 30 ft., passive perception 20  
+
+  **Languages** Common, Giant
+
+
+  ### Traits
+
+  **Amphibious.** The giant can breathe air and water.
+
+
+
+  ### Actions
+
+  **Multiattack.** The giant makes two attacks, using Storm Sword or Thunderbolt in any combination.
+
+
+  **Storm Sword.** Melee Attack Roll: +14, reach 10 ft. Hit: 23 (4d6 + 9) Slashing damage plus 13 (3d8) Lightning damage.
+
+
+  **Thunderbolt.** Ranged Attack Roll: +14, range 500 ft. Hit: 22 (2d12 + 9) Lightning damage, and the target has the Blinded and Deafened conditions until the start of the giant’s next turn.
+
+
+  **Lightning Storm.** Dexterity Saving Throw: DC 18, each creature in a 10-foot-radius, 40-foot-high Cylinder originating from a point the giant can see within 500 feet. Failure: 55 (10d10) Lightning damage. Success: Half damage.
+
+
+  **Spellcasting.** The giant casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):
+tags:
+- giant
+- huge
+- cr-13
+properties:
+  size: Huge
+  creatureType: giant
+  alignment: chaotic good
+  armorClass: 16
+  hitPoints: 230
+  hitDice: 20d12 + 100
+  speed: 50 ft., fly 25 ft., hover True, swim 50 ft.
+  strength: 29
+  dexterity: 14
+  constitution: 20
+  intelligence: 16
+  wisdom: 20
+  charisma: 18
+  challengeRating: 13
+  xp: 10000
+  senses: darkvision 120 ft., truesight 30 ft., passive perception 20
+  languages: Common, Giant
+  skills: Arcana +8, Athletics +14, History +8, Perception +10
+  savingThrows: STR +14, CON +10, WIS +10, CHA +9
+  resistances:
+  - cold
+  immunities:
+  - lightning
+  - thunder
+  traits:
+  - name: Amphibious
+    description: The giant can breathe air and water.
+  actions:
+  - name: Multiattack
+    description: The giant makes two attacks, using Storm Sword or Thunderbolt in any combination.
+  - name: Storm Sword
+    description: 'Melee Attack Roll: +14, reach 10 ft. Hit: 23 (4d6 + 9) Slashing damage plus 13 (3d8) Lightning damage.'
+  - name: Thunderbolt
+    description: 'Ranged Attack Roll: +14, range 500 ft. Hit: 22 (2d12 + 9) Lightning damage, and the target has the Blinded and Deafened conditions until the start of the giant’s next turn.'
+  - name: Lightning Storm
+    description: 'Dexterity Saving Throw: DC 18, each creature in a 10-foot-radius, 40-foot-high Cylinder originating from a point the giant can see within 500 feet. Failure: 55 (10d10) Lightning damage. Success: Half damage.'
+  - name: Spellcasting
+    description: 'The giant casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):'

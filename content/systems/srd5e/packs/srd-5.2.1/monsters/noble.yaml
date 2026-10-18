@@ -1,0 +1,71 @@
+id: noble
+type: monster
+name: Noble
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 15 (Breastplate)  
+
+  **HP** 9 (2d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 12 (+1) | 11 (+0) | 12 (+1) | 14 (+2) | 16 (+3) |
+
+
+  **Skills** Deception +5, Insight +4, Persuasion +5  
+
+  **Gear** Breastplate, Rapier  
+
+  **Senses** passive perception 12  
+
+  **Languages** Common plus two other languages
+
+
+  ### Actions
+
+  **Rapier.** Melee Attack Roll: +3, reach 5 ft. Hit: 5 (1d8 + 1) Piercing damage.
+
+
+
+  ### Reactions
+
+  **Parry.** Trigger: The noble is hit by a melee attack roll while holding a weapon. Response: The noble adds 2 to its AC against that attack, possibly causing it to miss.
+tags:
+- humanoid
+- medium or small
+- cr-1/8
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 15
+  hitPoints: 9
+  hitDice: 2d8
+  speed: 30 ft.
+  strength: 11
+  dexterity: 12
+  constitution: 11
+  intelligence: 12
+  wisdom: 14
+  charisma: 16
+  challengeRating: 1/8
+  xp: 25
+  senses: passive perception 12
+  languages: Common plus two other languages
+  skills: Deception +5, Insight +4, Persuasion +5
+  gear: Breastplate, Rapier
+  actions:
+  - name: Rapier
+    description: 'Melee Attack Roll: +3, reach 5 ft. Hit: 5 (1d8 + 1) Piercing damage.'
+  reactions:
+  - name: Parry
+    description: 'Trigger: The noble is hit by a melee attack roll while holding a weapon. Response: The noble adds 2 to its AC against that attack, possibly causing it to miss.'

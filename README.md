@@ -1,47 +1,62 @@
 # TTRPG.Codex
 
-> ⚠️ **WORK IN PROGRESS:** This project is currently under active development. Features and APIs are subject to change.
+> ⚠️ **Work in progress.** Features and file formats may still change.
 
-**Modular tabletop RPG campaign and character management system.**
+**A self-hosted companion for running tabletop role-playing campaigns.** One DM, any number of
+players, one browser tab each: a live table with initiative, hit points and conditions; campaign
+prep (cast, places, lore with per-character reveal); session recaps and notes; and a Library of rules
+content that the DM can extend with homebrew.
 
-A lightweight digital companion for tabletop play that replaces paper sheets while preserving the tabletop feel.
-Supports multiple TTRPG systems via plugins and uses an **Entity Component System (ECS)** runtime to model living character state.
+Game systems are **data**: a `system.yaml` describes attributes, the character sheet and the kinds
+of content a system has; packs of YAML files supply the content. The repository ships the
+**Fifth Edition SRD (5.2.1)** under CC-BY-4.0 and two small examples (a homebrew system, a setting
+pack). See [docs/CONTENT_PACKS.md](docs/CONTENT_PACKS.md) for the format and
+[LEGAL.md](LEGAL.md) for licences.
 
-## Architecture Summary
-TTRPG.Codex models characters and game state using an **Entity Component System (ECS)** pattern.
-It consists of a Blazor Server front-end and a modular plugin engine loaded via reflection.
-Data is persisted in an embedded RavenDB instance.
+## Run it
 
-## How to Run
 ```sh
-dotnet restore
-dotnet build
 dotnet run --project src/Codex.Web
 ```
-The server will start at `http://localhost:5183` (see `src/Codex.Web/Properties/launchSettings.json`).
 
-## How to add plugins
-Drop compiled plugin `.dll` files implementing `ICodexSystemPlugin` into the `/plugins` directory. The engine will discover and load them on startup.
+Open http://localhost:5183, create an account (the first account becomes server admin), create a
+campaign, and share its invite link with players. Data lives in an embedded RavenDB under
+`src/Codex.Web/RavenData` (configurable via `Codex:DataDirectory`); a daily backup is written to
+`<data>/Backups`. Nothing is fetched from the internet while the app runs.
 
-## Testing
-Run tests using:
+Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.json`), plus
+`content/` and `plugins/` next to a published executable.
+
+## Layout
+
+| Project | What |
+|---|---|
+| `src/Codex.Plugin.Abstractions` | The contracts: `SystemDefinition`, `ContentEntry`, `PackManifest`, `ICodexSystemPlugin`, dice. |
+| `src/Codex.Core` | Loading systems and packs, the content registry and search, the ECS world, scripting, text formatting. |
+| `src/Codex.Persistence` | RavenDB documents and repositories; the per-campaign live runtime (single-writer command loop). |
+| `src/Codex.Web` | The Blazor Server UI. |
+| `tools/Codex.ContentImport` | Converts open rules data (5e-bits SRD JSON) into packs. |
+| `content/` | Shipped systems and packs. |
+| `tests/Codex.Tests` | xUnit unit tests and Playwright end-to-end scenarios. |
+
+## Tests
+
 ```sh
 dotnet test
 ```
 
-## Deployment
-Use the scripts in `/scripts` to create single-file executables for Windows, Linux, and MacOS.
+The Playwright scenarios under `tests/Codex.Tests/E2E` boot the real app and drive it with headless
+Chromium; install the browser once with `pwsh tests/Codex.Tests/bin/Debug/net10.0/playwright.ps1 install chromium`
+(CI does this). Run only the unit tests with `dotnet test --filter "FullyQualifiedName!~E2E"`.
 
-## Development & Releases
-This project follows conventional commits and uses GitVersion to automatically version the application.
-- `feat: <message>` to trigger a minor version bump
-- `fix: <message>` to trigger a patch version bump
-- `chore: <message>`, `docs: <message>`, `test: <message>`, etc. for changes that don't affect the compiled artifact.
+## Regenerating the SRD pack
 
-Releases are automated via GitHub Actions. By pushing a tag (e.g. `v0.1.0`), a pipeline triggers which calculates Semantic Versioning (SemVer), compiles binaries for Windows, Linux, and MacOS, and creates a GitHub Release linking these artifacts alongside an automatically generated changelog.
-
-You can calculate the version locally by installing the GitVersion tool:
 ```sh
-dotnet tool install --global GitVersion.Tool
-dotnet-gitversion
+dotnet run --project tools/Codex.ContentImport -- srd5e --download --source /tmp/srd-json --out content/systems/srd5e/packs/srd-5.2.1
 ```
+
+## Releases
+
+Pushing a tag such as `v0.2.0` builds single-file executables for Windows, Linux and macOS with the
+`content/` folder beside them. Conventional commit titles (`feat:`, `fix:`, `chore:`…) drive the
+version number through GitVersion.

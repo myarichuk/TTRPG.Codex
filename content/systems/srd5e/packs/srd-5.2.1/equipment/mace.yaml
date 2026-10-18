@@ -1,0 +1,25 @@
+id: mace
+type: equipment
+name: Mace
+description: >-
+  *Melee Weapons, Simple Melee Weapons, Simple Weapons, Weapons*
+
+
+  **Damage:** 1d6 Bludgeoning  
+
+  **Mastery:** Sap  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 2 lb.
+tags:
+- melee weapons
+- simple melee weapons
+- simple weapons
+- weapons
+properties:
+  category: Melee Weapons
+  cost: 5 gp
+  weight: 2
+  damage: 1d6 Bludgeoning
+  mastery: Sap

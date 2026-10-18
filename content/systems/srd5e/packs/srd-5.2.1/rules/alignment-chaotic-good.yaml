@@ -1,0 +1,8 @@
+id: alignment-chaotic-good
+type: rule
+name: Chaotic Good
+description: Chaotic Good creatures act as their conscience directs with little regard for what others expect. A rebel who waylays a cruel baron's tax collectors and uses the stolen money to help the poor is probably Chaotic Good.
+tags:
+- alignment
+properties:
+  category: Alignment

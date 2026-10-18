@@ -1,0 +1,81 @@
+id: priest-acolyte
+type: monster
+name: Priest Acolyte
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 13 (Chain Shirt)  
+
+  **HP** 11 (2d8 + 2)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 10 (+0) | 12 (+1) | 10 (+0) | 14 (+2) | 11 (+0) |
+
+
+  **Skills** Medicine +4, Religion +2  
+
+  **Gear** Chain Shirt, Holy Symbol, Mace  
+
+  **Senses** passive perception 12  
+
+  **Languages** Common
+
+
+  ### Actions
+
+  **Mace.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Bludgeoning damage plus 2 (1d4) Radiant damage.
+
+
+  **Radiant Flame.** Ranged Attack Roll: +4, range 60 ft. Hit: 7 (2d6) Radiant damage.
+
+
+  **Spellcasting.** The priest casts one of the following spells, using Wisdom as the spellcasting ability:
+
+
+
+  ### Bonus Actions
+
+  **Divine Aid (1/day).** The priest casts Bless, Healing Word, or Sanctuary, using the same spellcasting ability as Spellcasting.
+tags:
+- humanoid
+- medium or small
+- cr-1/4
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 13
+  hitPoints: 11
+  hitDice: 2d8 + 2
+  speed: 30 ft.
+  strength: 14
+  dexterity: 10
+  constitution: 12
+  intelligence: 10
+  wisdom: 14
+  charisma: 11
+  challengeRating: 1/4
+  xp: 50
+  senses: passive perception 12
+  languages: Common
+  skills: Medicine +4, Religion +2
+  gear: Chain Shirt, Holy Symbol, Mace
+  actions:
+  - name: Mace
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Bludgeoning damage plus 2 (1d4) Radiant damage.'
+  - name: Radiant Flame
+    description: 'Ranged Attack Roll: +4, range 60 ft. Hit: 7 (2d6) Radiant damage.'
+  - name: Spellcasting
+    description: 'The priest casts one of the following spells, using Wisdom as the spellcasting ability:'
+  bonusActions:
+  - name: Divine Aid (1/day)
+    description: The priest casts Bless, Healing Word, or Sanctuary, using the same spellcasting ability as Spellcasting.

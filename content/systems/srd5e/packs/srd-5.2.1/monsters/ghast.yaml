@@ -1,0 +1,84 @@
+id: ghast
+type: monster
+name: Ghast
+description: >-
+  *Medium Undead, Chaotic Evil*
+
+
+  **AC** 13  
+
+  **HP** 36 (8d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 17 (+3) | 10 (+0) | 11 (+0) | 10 (+0) | 8 (-1) |
+
+
+  **Saving Throws** WIS +2  
+
+  **Resistances** necrotic  
+
+  **Immunities** poison, Charmed, Exhaustion, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Common
+
+
+  ### Traits
+
+  **Stench.** Constitution Saving Throw: DC 10, any creature that starts its turn in a 5-foot Emanation originating from the ghast. Failure: The target has the Poisoned condition until the start of its next turn. Success: The target is immune to this ghast’s Stench for 24 hours.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 9 (2d8) Necrotic damage.
+
+
+  **Claw.** Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage. If the target is a non-Undead creature, it is subjected to the following effect. Constitution Saving Throw: DC 10. Failure: The target has the Paralyzed condition until the end of its next turn.
+tags:
+- undead
+- medium
+- cr-2
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: chaotic evil
+  armorClass: 13
+  hitPoints: 36
+  hitDice: 8d8
+  speed: 30 ft.
+  strength: 16
+  dexterity: 17
+  constitution: 10
+  intelligence: 11
+  wisdom: 10
+  charisma: 8
+  challengeRating: 2
+  xp: 450
+  senses: darkvision 60 ft., passive perception 10
+  languages: Common
+  savingThrows: WIS +2
+  resistances:
+  - necrotic
+  immunities:
+  - poison
+  - Charmed
+  - Exhaustion
+  - Poisoned
+  traits:
+  - name: Stench
+    description: 'Constitution Saving Throw: DC 10, any creature that starts its turn in a 5-foot Emanation originating from the ghast. Failure: The target has the Poisoned condition until the start of its next turn. Success: The target is immune to this ghast’s Stench for 24 hours.'
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage plus 9 (2d8) Necrotic damage.'
+  - name: Claw
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage. If the target is a non-Undead creature, it is subjected to the following effect. Constitution Saving Throw: DC 10. Failure: The target has the Paralyzed condition until the end of its next turn.'

@@ -1,0 +1,15 @@
+id: brooch-of-shielding
+type: magic-item
+name: Brooch of Shielding
+description: >-
+  Wondrous Item
+
+
+  While wearing this brooch, you have Resistance to Force damage, and you have Immunity to damage from the Magic Missile spell.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

@@ -1,0 +1,56 @@
+id: giant-centipede
+type: monster
+name: Giant Centipede
+description: >-
+  *Small Beast, Unaligned*
+
+
+  **AC** 14  
+
+  **HP** 9 (2d6 + 2)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 5 (-3) | 14 (+2) | 12 (+1) | 1 (-5) | 7 (-2) | 3 (-4) |
+
+
+  **Senses** blindsight 30 ft., passive perception 8  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Piercing damage, and the target has the Poisoned condition until the start of the centipede’s next turn.
+tags:
+- beast
+- small
+- cr-1/4
+properties:
+  size: Small
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 14
+  hitPoints: 9
+  hitDice: 2d6 + 2
+  speed: 30 ft., climb 30 ft.
+  strength: 5
+  dexterity: 14
+  constitution: 12
+  intelligence: 1
+  wisdom: 7
+  charisma: 3
+  challengeRating: 1/4
+  xp: 50
+  senses: blindsight 30 ft., passive perception 8
+  languages: None
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Piercing damage, and the target has the Poisoned condition until the start of the centipede’s next turn.'

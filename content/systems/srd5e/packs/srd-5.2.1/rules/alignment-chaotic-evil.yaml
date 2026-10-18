@@ -1,0 +1,8 @@
+id: alignment-chaotic-evil
+type: rule
+name: Chaotic Evil
+description: Chaotic Evil creatures act with arbitrary violence, spurred by their hatred or bloodlust. A villain pursuing schemes of vengeance and havoc is probably Chaotic Evil.
+tags:
+- alignment
+properties:
+  category: Alignment

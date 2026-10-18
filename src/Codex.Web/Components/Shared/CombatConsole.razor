@@ -1,3 +1,4 @@
+@using Codex.Core
 @using Codex.Core.Components
 @using Codex.Persistence
 @using Codex.Persistence.Runtime
@@ -6,50 +7,50 @@
 @inject CampaignRuntimeManager RuntimeManager
 @inject IActorRepository ActorRepo
 @inject IContentRegistry ContentRegistry
+@inject ComponentRegistry Components
 
-@* The table loop (3.5-3.7): initiative tracker, dice roller, and DM combat console / player
-   view, all driven off one live CampaignRuntime per campaign (3.1-3.3). Every mutation goes
-   through runtime.EnqueueAsync onto the campaign's single-writer command loop - this component
-   never touches ECS state directly, exactly like the plan's "each circuit subscribes, re-projects
-   through its own CampaignAccess" model (3.3). *@
-
-@if (!string.IsNullOrEmpty(error))
-{
-    <div class="alert alert-danger py-2">@error</div>
-}
+@* The table loop: initiative, hit points, conditions, dice and quick notes, driven off one live
+   CampaignRuntime per campaign. Every mutation goes through runtime.EnqueueAsync onto the campaign's
+   single-writer loop; this component never touches ECS state directly. *@
 
 @if (runtime == null)
 {
-    @if (Access.IsDm)
-    {
-        <button type="button" class="btn btn-accent" data-testid="start-table" @onclick="StartOrJoinAsync">Start Table</button>
-    }
-    else
-    {
-        <p class="text-tertiary">Waiting for the DM to start the table.</p>
-    }
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="dices" Size="26" /></div>
+        @if (Access.IsDm)
+        {
+            <h3>The table is not running</h3>
+            <p>Starting the table opens a live session: initiative, hit points and conditions update for every player as you change them.</p>
+            <button type="button" class="btn btn-primary" data-testid="start-table" @onclick="StartOrJoinAsync">Start the table</button>
+        }
+        else
+        {
+            <h3>Waiting for the DM</h3>
+            <p>This page updates by itself when the DM starts the table.</p>
+        }
+    </div>
 }
 else
 {
     var encounter = runtime.ActiveEncounter;
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0" data-testid="initiative-header">Initiative @(encounter != null ? $"- Round {encounter.Round}" : "")</h5>
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <section class="panel" aria-labelledby="initiative-heading">
+                <div class="panel-title">
+                    <h3 id="initiative-heading" class="mb-0" data-testid="initiative-header">Initiative@(encounter != null ? $" - Round {encounter.Round}" : "")</h3>
                     @if (Access.IsDm && encounter is { Participants.Count: > 0 })
                     {
                         <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="prev-turn-btn" @onclick="PreviousTurnAsync">◀ Prev</button>
-                            <button type="button" class="btn btn-sm btn-accent" data-testid="next-turn-btn" @onclick="NextTurnAsync">Next Turn ▶</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="prev-turn-btn" @onclick="PreviousTurnAsync"><LucideIcon IconName="chevron-left" Size="14" /> Previous</button>
+                            <button type="button" class="btn btn-sm btn-primary" data-testid="next-turn-btn" @onclick="NextTurnAsync">Next turn <LucideIcon IconName="chevron-right" Size="14" /></button>
                         </div>
                     }
                 </div>
 
                 @if (encounter == null || encounter.Participants.Count == 0)
                 {
-                    <p class="text-tertiary small mb-0">No one's in the initiative order yet.</p>
+                    <p class="small-muted mb-0">Nobody is in the initiative order yet.</p>
                 }
                 else
                 {
@@ -59,153 +60,205 @@ else
                         var isCurrent = i == encounter.TurnIndex;
                         var actor = ActorsById.GetValueOrDefault(participant.ActorId);
 
-                        @* A participant this viewer can't see (a Hidden NPC, from a player's
-                           already-filtered Actors list) must not render at all - not even as an
-                           anonymous row with a banded HP badge. Rendering a row for it would leak
-                           its existence and turn position even though HpBadge already hides its
-                           exact HP; the DM sees everyone, since their Actors list is unfiltered. *@
+                        @* A participant this viewer can't see (a Hidden NPC, filtered out of a player's
+                           Actors list) must not render at all - not even anonymously - or its existence
+                           and turn position would leak. The DM's Actors list is unfiltered. *@
                         if (Access.IsDm || actor != null)
                         {
-                        <div class="card p-2 mb-2 @(isCurrent ? "border-accent" : "")" data-testid="participant-row" data-actor-id="@participant.ActorId">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>@(actor?.Name ?? participant.ActorId)</strong>
-                                    <span class="badge bg-secondary ms-1">init @participant.InitiativeRoll</span>
+                            var name = actor?.Name ?? participant.ActorId;
+                            <div class="participant @(isCurrent ? "current" : "")" data-testid="participant-row" data-actor-id="@participant.ActorId" aria-current="@(isCurrent ? "true" : null)">
+                                <div class="participant-head">
+                                    <span class="participant-name">@name</span>
+                                    <span class="pill">Initiative @participant.InitiativeRoll</span>
                                     @if (participant.State != TurnState.Normal)
                                     {
-                                        <span class="badge bg-warning text-dark ms-1">@participant.State</span>
+                                        <span class="pill pill-warning">@participant.State</span>
                                     }
                                     @HpBadge(participant.ActorId)
+                                    @if (isCurrent)
+                                    {
+                                        <span class="visually-hidden">(current turn)</span>
+                                    }
+                                    @if (Access.IsDm)
+                                    {
+                                        <div class="ms-auto d-flex gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleDelayAsync(participant.ActorId, TurnState.Delayed)" aria-label="@name delays their turn">Delay</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleDelayAsync(participant.ActorId, TurnState.Readied)" aria-label="@name readies an action">Ready</button>
+                                            @if (participant.State != TurnState.Normal)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleDelayAsync(participant.ActorId, TurnState.Normal)" aria-label="Clear @name's delay or ready state">Clear</button>
+                                            }
+                                        </div>
+                                    }
                                 </div>
+
+                                @HpBar(participant.ActorId)
+
+                                @{
+                                    var effects = GetEffects(participant.ActorId);
+                                }
+                                @if (effects.Count > 0)
+                                {
+                                    <ul class="list-inline mb-0 mt-2" aria-label="Conditions on @name">
+                                        @foreach (var effect in effects)
+                                        {
+                                            <li class="list-inline-item">
+                                                <span class="pill pill-warning" data-testid="condition-badge" data-effect-id="@effect.EffectId">
+                                                    @effect.EffectId (@effect.RoundsRemaining)
+                                                    @if (Access.IsDm)
+                                                    {
+                                                        <button type="button" class="btn-link-plain ms-1" aria-label="Remove @effect.EffectId from @name" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)"><LucideIcon IconName="x" Size="12" /></button>
+                                                    }
+                                                </span>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+
                                 @if (Access.IsDm)
                                 {
-                                    <div class="d-flex gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleDelayAsync(participant.ActorId, TurnState.Delayed)">Delay</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleDelayAsync(participant.ActorId, TurnState.Readied)">Ready</button>
-                                        @if (participant.State != TurnState.Normal)
-                                        {
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleDelayAsync(participant.ActorId, TurnState.Normal)">Clear</button>
-                                        }
+                                    <div class="console-row">
+                                        <div>
+                                            <label for="dmg-@participant.ActorId" class="form-label small mb-1">Amount</label>
+                                            <input id="dmg-@participant.ActorId" type="number" min="0" class="form-control form-control-sm w-5" data-testid="damage-input"
+                                                   value="@GetDamageInput(participant.ActorId)"
+                                                   @oninput="e => SetDamageInput(participant.ActorId, e.Value?.ToString())" />
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-testid="damage-btn" @onclick="() => ApplyDamageAsync(participant.ActorId)" aria-label="Damage @name">Damage</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="heal-btn" @onclick="() => ApplyHealingAsync(participant.ActorId)" aria-label="Heal @name">Heal</button>
+                                        <div>
+                                            <label for="cond-@participant.ActorId" class="form-label small mb-1">Condition</label>
+                                            <input id="cond-@participant.ActorId" class="form-control form-control-sm w-8" list="conditions-list" data-testid="condition-input"
+                                                   value="@GetConditionInput(participant.ActorId)"
+                                                   @oninput="e => SetConditionInput(participant.ActorId, e.Value?.ToString())" />
+                                        </div>
+                                        <div>
+                                            <label for="rounds-@participant.ActorId" class="form-label small mb-1">Rounds</label>
+                                            <input id="rounds-@participant.ActorId" type="number" min="1" class="form-control form-control-sm w-5" data-testid="condition-rounds-input"
+                                                   value="@GetConditionRounds(participant.ActorId)"
+                                                   @oninput="e => SetConditionRounds(participant.ActorId, e.Value?.ToString())" />
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(participant.ActorId)" aria-label="Add condition to @name">Add condition</button>
                                     </div>
                                 }
                             </div>
-
-                            @foreach (var effect in GetEffects(participant.ActorId))
-                            {
-                                <span class="badge bg-dark me-1 mt-1" data-testid="condition-badge" data-effect-id="@effect.EffectId">
-                                    @effect.EffectId (@effect.RoundsRemaining)
-                                    @if (Access.IsDm)
-                                    {
-                                        <a href="javascript:void(0)" class="text-white ms-1" @onclick="() => RemoveConditionAsync(participant.ActorId, effect.EffectId)">×</a>
-                                    }
-                                </span>
-                            }
-
-                            @if (Access.IsDm)
-                            {
-                                <div class="d-flex gap-1 mt-2 align-items-center">
-                                    <input type="number" class="form-control form-control-sm" style="width:5rem" data-testid="damage-input"
-                                           value="@GetDamageInput(participant.ActorId)"
-                                           @oninput="e => SetDamageInput(participant.ActorId, e.Value?.ToString())" />
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-testid="damage-btn" @onclick="() => ApplyDamageAsync(participant.ActorId)">Damage</button>
-                                    <button type="button" class="btn btn-sm btn-outline-success" data-testid="heal-btn" @onclick="() => ApplyHealingAsync(participant.ActorId)">Heal</button>
-                                    <input class="form-control form-control-sm" style="width:8rem" placeholder="condition" data-testid="condition-input"
-                                           value="@GetConditionInput(participant.ActorId)"
-                                           @oninput="e => SetConditionInput(participant.ActorId, e.Value?.ToString())" />
-                                    <input type="number" class="form-control form-control-sm" style="width:4rem" placeholder="rounds" data-testid="condition-rounds-input"
-                                           value="@GetConditionRounds(participant.ActorId)"
-                                           @oninput="e => SetConditionRounds(participant.ActorId, e.Value?.ToString())" />
-                                    <button type="button" class="btn btn-sm btn-outline-primary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(participant.ActorId)">Add</button>
-                                </div>
-                            }
-                        </div>
                         }
                     }
                 }
 
                 @if (Access.IsDm)
                 {
-                    <div class="d-flex gap-1 mt-2 align-items-center">
-                        <select class="form-select form-select-sm" style="width:auto" data-testid="add-to-initiative-select" @bind="selectedActorId">
-                            <option value="">Add to initiative...</option>
-                            @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
-                            {
-                                <option value="@actor.Id">@actor.Name</option>
-                            }
-                        </select>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="roll-initiative-btn" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll d20</button>
-                        <span class="text-tertiary small">or</span>
-                        <input type="number" class="form-control form-control-sm" style="width:5rem" placeholder="enter" data-testid="manual-initiative-input"
-                               value="@GetManualInitiative(selectedActorId)"
-                               @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="set-initiative-btn" @onclick="SetInitiativeManualAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Set</button>
+                    <datalist id="conditions-list">
+                        @foreach (var condition in Conditions)
+                        {
+                            <option value="@condition"></option>
+                        }
+                    </datalist>
+                    <div class="console-row mt-3 pt-3 border-top">
+                        <div>
+                            <label for="add-to-initiative" class="form-label small mb-1">Add to initiative</label>
+                            <select id="add-to-initiative" class="form-select form-select-sm" data-testid="add-to-initiative-select" @bind="selectedActorId">
+                                <option value="">Choose someone…</option>
+                                @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
+                                {
+                                    <option value="@actor.Id">@actor.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="roll-initiative-btn" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll @InitiativeDice</button>
+                        <span class="small-muted pb-1">or</span>
+                        <div>
+                            <label for="manual-initiative" class="form-label small mb-1">Enter result</label>
+                            <input id="manual-initiative" type="number" class="form-control form-control-sm w-5" data-testid="manual-initiative-input"
+                                   value="@GetManualInitiative(selectedActorId)"
+                                   @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="set-initiative-btn" @onclick="SetInitiativeManualAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Set</button>
                     </div>
                 }
-            </div>
+            </section>
 
             @if (Access.IsDm)
             {
-                <div class="card p-3 mb-3">
-                    <h5>Quick-Add Monster</h5>
-                    <input class="form-control form-control-sm mb-2" placeholder="Search @Campaign.SystemId monsters..." @bind="contentSearch" @bind:event="oninput" />
-                    @foreach (var definition in SearchBlueprints())
+                <section class="panel" aria-labelledby="quick-add-heading">
+                    <div class="panel-title"><h3 id="quick-add-heading">Quick-add a creature</h3></div>
+                    <label for="monster-search" class="visually-hidden">Search creatures</label>
+                    <input id="monster-search" type="search" class="form-control form-control-sm mb-2" placeholder="Search creatures in the Library…" @bind="contentSearch" @bind:event="oninput" />
+                    @if (contentSearch.Length > 0)
                     {
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-1">
-                            <span>@definition.Name</span>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => QuickAddMonsterAsync(definition)">Add to Encounter</button>
-                        </div>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var definition in SearchBlueprints().Take(12))
+                            {
+                                <li class="list-row">
+                                    <span>@definition.Name</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => QuickAddMonsterAsync(definition)" aria-label="Add @definition.Name to the encounter">Add to encounter</button>
+                                </li>
+                            }
+                        </ul>
                     }
+                    else
+                    {
+                        <p class="small-muted mb-0">Type to search. Creatures are added hidden and hydrated into the live table at once.</p>
+                    }
+                </section>
+
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="EndTableAsync" data-testid="end-table">End the table</button>
                 </div>
             }
         </div>
 
-        <div class="col-md-4">
-            <div class="card p-3 mb-3">
-                <h5>Dice</h5>
-                <div class="input-group input-group-sm mb-2">
-                    <input class="form-control" placeholder="2d6+3, 4d6kh3, adv+5..." @bind="diceExpression" />
-                    <button type="button" class="btn btn-accent" @onclick="RollDiceAsync">Roll</button>
-                </div>
+        <div class="col-lg-4">
+            <section class="panel" aria-labelledby="dice-heading">
+                <div class="panel-title"><h3 id="dice-heading">Dice</h3></div>
+                <form class="input-group input-group-sm mb-2" @onsubmit="RollDiceAsync" @onsubmit:preventDefault="true">
+                    <label for="dice-expression" class="visually-hidden">Dice expression</label>
+                    <input id="dice-expression" class="form-control" placeholder="2d6+3, 4d6kh3, adv+5…" @bind="diceExpression" data-testid="dice-input" />
+                    <button type="submit" class="btn btn-primary" data-testid="dice-roll">Roll</button>
+                </form>
                 @if (Access.IsDm)
                 {
                     <div class="form-check mb-2">
                         <input type="checkbox" class="form-check-input" id="diceSecret" @bind="diceSecret" />
-                        <label class="form-check-label small" for="diceSecret">Secret (DM only)</label>
+                        <label class="form-check-label small" for="diceSecret">Secret roll (DM only)</label>
                     </div>
                 }
-                <div style="max-height: 220px; overflow-y: auto;">
+                <div class="log" aria-live="polite" aria-label="Roll log">
                     @foreach (var entry in VisibleRollLog())
                     {
-                        <div class="small border-bottom py-1" data-testid="roll-log-entry">
+                        <div class="log-entry" data-testid="roll-log-entry">
                             <strong>@ResolveRollerName(entry)</strong>
                             @if (entry.IsSecret)
                             {
-                                <span class="badge bg-dark ms-1">secret</span>
+                                <span class="pill ms-1">secret</span>
                             }
-                            <div class="text-tertiary">@entry.Expression → @entry.Result</div>
+                            <div class="small-muted">@entry.Expression → @entry.Result</div>
                         </div>
                     }
                 </div>
-            </div>
+            </section>
 
-            <div class="card p-3">
-                <h5>Quick Notes</h5>
-                <textarea class="form-control form-control-sm mb-2" rows="2" @bind="noteText"></textarea>
-                @if (Access.IsDm)
-                {
-                    <div class="form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="noteSecret" @bind="noteSecret" />
-                        <label class="form-check-label small" for="noteSecret">Secret (DM only)</label>
-                    </div>
-                }
-                <button type="button" class="btn btn-sm btn-outline-primary mb-2" @onclick="AddNoteAsync">Add Note</button>
-                <div style="max-height: 220px; overflow-y: auto;">
+            <section class="panel" aria-labelledby="notes-heading">
+                <div class="panel-title"><h3 id="notes-heading">Quick notes</h3></div>
+                <form @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
+                    <label for="quick-note" class="visually-hidden">New note</label>
+                    <textarea id="quick-note" class="form-control form-control-sm mb-2" rows="2" @bind="noteText" placeholder="Something worth remembering…"></textarea>
+                    @if (Access.IsDm)
+                    {
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" id="noteSecret" @bind="noteSecret" />
+                            <label class="form-check-label small" for="noteSecret">Secret note (DM only)</label>
+                        </div>
+                    }
+                    <button type="submit" class="btn btn-sm btn-outline-secondary mb-2">Add note</button>
+                </form>
+                <div class="log">
                     @foreach (var note in VisibleNotes())
                     {
-                        <div class="small border-bottom py-1">@note.Text</div>
+                        <div class="log-entry">@note.Text @if (note.IsSecret) { <span class="pill ms-1">secret</span> }</div>
                     }
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 }
@@ -216,10 +269,11 @@ else
     [Parameter] public CampaignAccess Access { get; set; } = null!;
     [Parameter] public string CurrentUserId { get; set; } = string.Empty;
     [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
+    [Parameter] public SystemDefinition? Definition { get; set; }
     [Parameter] public EventCallback OnActorAdded { get; set; }
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
 
     private CampaignRuntime? runtime;
-    private string? error;
     private string diceExpression = "1d20";
     private bool diceSecret;
     private string noteText = "";
@@ -230,12 +284,15 @@ else
     private readonly Dictionary<string, string> conditionInputs = new();
     private readonly Dictionary<string, int> conditionRoundsInputs = new();
     private readonly Dictionary<string, int> manualInitiativeInputs = new();
+    private bool subscribedToManager;
 
     private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
+    private IEnumerable<string> Conditions => Definition?.Conditions ?? Enumerable.Empty<string>();
+    private string InitiativeDice => Definition?.Dice.Initiative ?? "1d20";
+    private string PrimaryKey => Definition?.PrimaryResource?.Key ?? "HP";
+    private string PrimaryMaxKey => Definition?.PrimaryResource?.MaxKey ?? "HP_Max";
+    private string PrimaryLabel => Definition?.PrimaryResource?.Label ?? "HP";
 
-    // Dictionary indexers throw KeyNotFoundException on a missing key, and a fresh participant
-    // never has an entry yet - these read/write through GetValueOrDefault instead of @bind'ing
-    // the indexer directly, which would throw on that row's very first render.
     private int GetDamageInput(string actorId) => damageInputs.GetValueOrDefault(actorId, 0);
     private void SetDamageInput(string actorId, string? raw) => damageInputs[actorId] = int.TryParse(raw, out var value) ? value : 0;
     private string GetConditionInput(string actorId) => conditionInputs.GetValueOrDefault(actorId, string.Empty);
@@ -243,16 +300,39 @@ else
 
     protected override Task OnParametersSetAsync()
     {
-        // Only auto-attach to a table that's already running - starting a brand-new one is the
-        // DM's explicit "Start Table" click (StartOrJoinAsync below). Auto-invoking that here
-        // too would start the table the instant the DM's tab mounts, making the button
-        // unreachable dead UI and silently skipping the "DM starts a session" step entirely.
+        if (!subscribedToManager)
+        {
+            RuntimeManager.RuntimeChanged += OnRuntimeChanged;
+            subscribedToManager = true;
+        }
+
         if (runtime == null && RuntimeManager.TryGet(CampaignId) is { } existing)
         {
             Attach(existing);
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>A player's open table page attaches the moment the DM starts (or ends) the table.</summary>
+    private void OnRuntimeChanged(string campaignId)
+    {
+        if (campaignId != CampaignId) return;
+        InvokeAsync(() =>
+        {
+            var current = RuntimeManager.TryGet(CampaignId);
+            if (current == null && runtime != null)
+            {
+                runtime.StateChanged -= OnStateChanged;
+                runtime = null;
+            }
+            else if (current != null && runtime == null)
+            {
+                Attach(current);
+            }
+
+            StateHasChanged();
+        });
     }
 
     private async Task StartOrJoinAsync()
@@ -264,10 +344,7 @@ else
             return;
         }
 
-        if (!Access.IsDm)
-        {
-            return;
-        }
+        if (!Access.IsDm) return;
 
         try
         {
@@ -275,8 +352,15 @@ else
         }
         catch (InvalidOperationException ex)
         {
-            error = ex.Message;
+            await OnMessage.InvokeAsync(Flash.Error(ex.Message));
         }
+    }
+
+    private async Task EndTableAsync()
+    {
+        if (!Access.IsDm) return;
+        await RuntimeManager.EvictAsync(CampaignId);
+        await OnMessage.InvokeAsync(Flash.Success("The table has ended. The session is marked complete."));
     }
 
     private void Attach(CampaignRuntime started)
@@ -287,34 +371,22 @@ else
 
     private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(StateHasChanged);
 
-    // ---- Initiative (3.5) ----
+    // ---- Initiative ----
 
     private async Task RollInitiativeForSelectedAsync()
     {
-        if (string.IsNullOrEmpty(selectedActorId))
-        {
-            return;
-        }
-
-        var result = runtime!.DiceRoller.Roll("1d20");
+        if (string.IsNullOrEmpty(selectedActorId)) return;
+        var result = runtime!.DiceRoller.Roll(InitiativeDice);
         var actorId = selectedActorId;
         selectedActorId = "";
         await runtime.EnqueueAsync(new SetInitiativeCommand(actorId, result.Total));
     }
 
-    /// <summary>3.5 calls for "roll or enter initiative" - a DM running a system with a fixed
-    /// initiative (or correcting a misroll) needs to type the number directly, not just re-roll.</summary>
     private async Task SetInitiativeManualAsync()
     {
-        if (string.IsNullOrEmpty(selectedActorId))
-        {
-            return;
-        }
-
-        // Clear the picker before awaiting the command, not after: EnqueueAsync's round trip
-        // (through the single-writer loop and a RavenDB encounter save) can take long enough that
-        // a DM's next click lands before this resumes, and a reset that happens "late" clobbers
-        // whatever the DM had already selected in the meantime.
+        if (string.IsNullOrEmpty(selectedActorId)) return;
+        // Clear the picker before awaiting: the round trip through the single-writer loop can be
+        // long enough that a DM's next click lands before this resumes.
         var actorId = selectedActorId;
         var roll = GetManualInitiative(actorId);
         selectedActorId = "";
@@ -334,38 +406,49 @@ else
         return entity is { } e && e.Has<ActiveEffectsComponent>() ? e.Get<ActiveEffectsComponent>().Effects : Array.Empty<ActiveEffect>();
     }
 
-    private RenderFragment HpBadge(string actorId) => builder =>
+    private (int Current, int Max)? Pool(string actorId)
     {
         var entity = runtime?.GetEntity(actorId);
-        if (entity is not { } e || !e.Has<ResourcePoolComponent>())
-        {
-            return;
-        }
-
+        if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return null;
         var pool = e.Get<ResourcePoolComponent>();
-        var current = pool.Get("HP");
-        var max = pool.Get("HP_Max");
-        var text = Access.IsDm || ActorsById.GetValueOrDefault(actorId)?.OwnerUserId == CurrentUserId
-            ? $"{current}/{max} HP"
-            : HpBand(current, max);
+        return (pool.Get(PrimaryKey), pool.Get(PrimaryMaxKey));
+    }
+
+    private bool CanSeeExact(string actorId) => Access.IsDm || ActorsById.GetValueOrDefault(actorId)?.OwnerUserId == CurrentUserId;
+
+    private RenderFragment HpBadge(string actorId) => builder =>
+    {
+        if (Pool(actorId) is not { } pool) return;
+        var text = CanSeeExact(actorId) ? $"{pool.Current}/{pool.Max} {PrimaryKey}" : HpBand(pool.Current, pool.Max);
 
         builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "class", "badge bg-info text-dark ms-1");
+        builder.AddAttribute(1, "class", "pill pill-danger hp-text");
         builder.AddAttribute(2, "data-testid", "hp-badge");
         builder.AddContent(3, text);
         builder.CloseElement();
     };
 
-    /// <summary>Players never learn a hostile's exact remaining HP (3.7/3.3) - only a coarse
-    /// band, matching how <see cref="ActorDocument.Visibility"/> already stands in real numbers
-    /// with "Unknown" placeholders elsewhere in this app.</summary>
+    private RenderFragment HpBar(string actorId) => builder =>
+    {
+        if (!CanSeeExact(actorId) || Pool(actorId) is not { } pool || pool.Max <= 0) return;
+        var pct = Math.Clamp(100.0 * pool.Current / pool.Max, 0, 100);
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "hp-bar");
+        builder.AddAttribute(2, "role", "progressbar");
+        builder.AddAttribute(3, "aria-label", $"{PrimaryLabel}");
+        builder.AddAttribute(4, "aria-valuemin", "0");
+        builder.AddAttribute(5, "aria-valuemax", pool.Max.ToString());
+        builder.AddAttribute(6, "aria-valuenow", pool.Current.ToString());
+        builder.OpenElement(7, "span");
+        builder.AddAttribute(8, "style", $"width:{pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}%");
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    /// <summary>Players never learn a hostile's exact remaining hit points - only a coarse band.</summary>
     private static string HpBand(int current, int max)
     {
-        if (max <= 0)
-        {
-            return "Unknown";
-        }
-
+        if (max <= 0) return "Unknown";
         var fraction = (double)current / max;
         return fraction switch
         {
@@ -376,38 +459,26 @@ else
         };
     }
 
-    // ---- DM console (3.7) ----
+    // ---- DM console ----
 
     private async Task ApplyDamageAsync(string actorId)
     {
-        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0)
-        {
-            return;
-        }
-
-        await runtime!.EnqueueAsync(new ApplyDamageCommand(actorId, "HP", amount, CurrentUserId));
+        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
+        await runtime!.EnqueueAsync(new ApplyDamageCommand(actorId, PrimaryKey, amount, CurrentUserId));
     }
 
     private async Task ApplyHealingAsync(string actorId)
     {
-        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0)
-        {
-            return;
-        }
-
-        await runtime!.EnqueueAsync(new ApplyHealingCommand(actorId, "HP", amount, CurrentUserId));
+        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
+        await runtime!.EnqueueAsync(new ApplyHealingCommand(actorId, PrimaryKey, amount, CurrentUserId));
     }
 
     private async Task AddConditionAsync(string actorId)
     {
-        if (!conditionInputs.TryGetValue(actorId, out var effectId) || string.IsNullOrWhiteSpace(effectId))
-        {
-            return;
-        }
-
+        if (!conditionInputs.TryGetValue(actorId, out var effectId) || string.IsNullOrWhiteSpace(effectId)) return;
         var rounds = GetConditionRounds(actorId);
         conditionInputs[actorId] = "";
-        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId, CurrentUserId, rounds, EffectExpiry.EndOfTurn, actorId));
+        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId.Trim(), CurrentUserId, rounds, EffectExpiry.EndOfTurn, actorId));
     }
 
     private int GetConditionRounds(string actorId) => conditionRoundsInputs.GetValueOrDefault(actorId, 1);
@@ -418,11 +489,7 @@ else
     private IEnumerable<IActorDefinition> SearchBlueprints()
     {
         var blueprints = ContentRegistry.GetActorsBySystem(Campaign.SystemId);
-        if (string.IsNullOrWhiteSpace(contentSearch))
-        {
-            return blueprints;
-        }
-
+        if (string.IsNullOrWhiteSpace(contentSearch)) return blueprints;
         return blueprints.Where(a => a.Name.Contains(contentSearch, StringComparison.OrdinalIgnoreCase) ||
             a.Tags.Any(t => t.Contains(contentSearch, StringComparison.OrdinalIgnoreCase)));
     }
@@ -436,17 +503,19 @@ else
             Kind = ActorKind.Monster,
             BlueprintId = $"{definition.SystemId}:{definition.Id}",
             Name = definition.Name,
-            Visibility = ActorVisibility.Hidden,
-            State = new Dictionary<string, object>(definition.Properties)
+            Visibility = ActorVisibility.Hidden
         };
+        ActorSheetSync.SeedFromBlueprint(actor, definition, Definition, Components);
 
         if (!await ActorRepo.TrySaveAsync(actor, Access))
         {
-            error = "Only the DM can add monsters.";
+            await OnMessage.InvokeAsync(Flash.Error("Only the DM can add creatures."));
             return;
         }
 
         await runtime!.EnqueueAsync(new HydrateActorCommand(actor));
+        contentSearch = "";
+        await OnMessage.InvokeAsync(Flash.Success($"{actor.Name} added (hidden from players). Add them to initiative when ready."));
 
         if (OnActorAdded.HasDelegate)
         {
@@ -454,27 +523,21 @@ else
         }
     }
 
-    // ---- Dice (3.6) ----
+    // ---- Dice ----
 
     private async Task RollDiceAsync()
     {
-        if (string.IsNullOrWhiteSpace(diceExpression))
-        {
-            return;
-        }
-
+        if (string.IsNullOrWhiteSpace(diceExpression)) return;
         try
         {
             await runtime!.EnqueueAsync(new RollDiceCommand(diceExpression, null, CurrentUserId, diceSecret && Access.IsDm));
         }
         catch (FormatException ex)
         {
-            error = ex.Message;
+            await OnMessage.InvokeAsync(Flash.Error(ex.Message));
         }
     }
 
-    /// <summary>A secret roll is DM-only until the encounter's over - there's no reveal flow yet
-    /// (that's 4.1's recap territory), so for now "secret" just means "never sent to players."</summary>
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
         (runtime?.ActiveSession?.RollLog ?? new List<RollLogEntry>())
         .Where(entry => Access.IsDm || !entry.IsSecret)
@@ -482,17 +545,13 @@ else
         .Take(20);
 
     private string ResolveRollerName(RollLogEntry entry) =>
-        entry.ActorId != null ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? entry.ActorId : entry.RollerUserId;
+        entry.ActorId != null ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? entry.ActorId : (entry.RollerUserId == CurrentUserId ? "You" : entry.RollerUserId == Campaign.OwnerId ? "DM" : "Player");
 
-    // ---- Notes (3.7) ----
+    // ---- Notes ----
 
     private async Task AddNoteAsync()
     {
-        if (string.IsNullOrWhiteSpace(noteText))
-        {
-            return;
-        }
-
+        if (string.IsNullOrWhiteSpace(noteText)) return;
         var text = noteText;
         noteText = "";
         await runtime!.EnqueueAsync(new AddSessionNoteCommand(CurrentUserId, text, noteSecret && Access.IsDm));
@@ -508,6 +567,11 @@ else
         if (runtime != null)
         {
             runtime.StateChanged -= OnStateChanged;
+        }
+
+        if (subscribedToManager)
+        {
+            RuntimeManager.RuntimeChanged -= OnRuntimeChanged;
         }
 
         await Task.CompletedTask;

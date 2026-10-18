@@ -1,0 +1,15 @@
+id: helm-of-comprehending-languages
+type: magic-item
+name: Helm of Comprehending Languages
+description: >-
+  Wondrous Item
+
+
+  While wearing this helm, you can cast Comprehend Languages from it.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: false

@@ -1,0 +1,19 @@
+id: chest
+type: equipment
+name: Chest
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 50 gp  
+
+  **Weight:** 20 lb.
+
+
+  A Chest holds up to 12 cubic feet of contents.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 50 gp
+  weight: 20

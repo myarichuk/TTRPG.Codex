@@ -1,0 +1,73 @@
+id: hobgoblin-warrior
+type: monster
+name: Hobgoblin Warrior
+description: >-
+  *Medium Fey, Lawful Evil*
+
+
+  **AC** 18 (Half-Plate Armor, Shield)  
+
+  **HP** 11 (2d8 + 2)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 13 (+1) | 12 (+1) | 12 (+1) | 10 (+0) | 10 (+0) | 9 (-1) |
+
+
+  **Gear** Half Plate Armor, Longbow, Longsword, Shield  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Common, Goblin
+
+
+  ### Traits
+
+  **Pack Tactics.** The hobgoblin has Advantage on an attack roll against a creature if at least one of the hobgoblin’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Longsword.** Melee Attack Roll: +3, reach 5 ft. Hit: 12 (2d10 + 1) Slashing damage.
+
+
+  **Longbow.** Ranged Attack Roll: +3, range 150/600 ft. Hit: 5 (1d8 + 1) Piercing damage plus 7 (3d4) Poison damage.
+tags:
+- fey
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: lawful evil
+  armorClass: 18
+  hitPoints: 11
+  hitDice: 2d8 + 2
+  speed: 30 ft.
+  strength: 13
+  dexterity: 12
+  constitution: 12
+  intelligence: 10
+  wisdom: 10
+  charisma: 9
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 10
+  languages: Common, Goblin
+  gear: Half Plate Armor, Longbow, Longsword, Shield
+  traits:
+  - name: Pack Tactics
+    description: The hobgoblin has Advantage on an attack roll against a creature if at least one of the hobgoblin’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Longsword
+    description: 'Melee Attack Roll: +3, reach 5 ft. Hit: 12 (2d10 + 1) Slashing damage.'
+  - name: Longbow
+    description: 'Ranged Attack Roll: +3, range 150/600 ft. Hit: 5 (1d8 + 1) Piercing damage plus 7 (3d4) Poison damage.'

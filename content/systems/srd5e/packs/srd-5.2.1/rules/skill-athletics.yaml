@@ -1,0 +1,12 @@
+id: skill-athletics
+type: rule
+name: Athletics
+description: >-
+  **Ability:** STR
+
+
+  Jump farther than normal, stay afloat in rough water, or break something.
+tags:
+- skill
+properties:
+  category: Skill

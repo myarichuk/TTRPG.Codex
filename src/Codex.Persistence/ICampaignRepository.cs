@@ -18,7 +18,11 @@ public interface ICampaignRepository
 {
     Task<CampaignDocument?> GetAsync(string campaignId);
     Task SaveAsync(CampaignDocument campaign);
+    /// <summary>Every campaign on the server. Administrative/export use only - never for a user-facing list.</summary>
     Task<IEnumerable<CampaignDocument>> GetAllAsync();
+
+    /// <summary>The campaigns <paramref name="userId"/> owns or is a member of - the only list a user should ever see.</summary>
+    Task<IEnumerable<CampaignDocument>> GetForUserAsync(string userId);
 
     /// <summary>
     /// Deletes a campaign and everything scoped to it (characters, sessions, notes) only if

@@ -1,0 +1,19 @@
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">Table</h2>
+        <p class="page-subtitle">Initiative, hit points, conditions, dice and quick notes, live for everyone at the table.</p>
+    </div>
+</div>
+
+<CombatConsole CampaignId="@Ctx.Campaign.Id"
+               Campaign="Ctx.Campaign"
+               Access="Ctx.Access"
+               CurrentUserId="@Ctx.UserId"
+               Actors="Ctx.Actors"
+               Definition="Ctx.System"
+               OnActorAdded="Ctx.ReloadAsync"
+               OnMessage="Ctx.Notify" />
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+}

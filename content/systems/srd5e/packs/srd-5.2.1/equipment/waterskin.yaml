@@ -1,0 +1,19 @@
+id: waterskin
+type: equipment
+name: Waterskin
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 sp  
+
+  **Weight:** 5 lb.
+
+
+  A Waterskin holds up to 4 pints. If you don't drink sufficient water, you risk dehydration (see “Rules Glossary”).
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 sp
+  weight: 5

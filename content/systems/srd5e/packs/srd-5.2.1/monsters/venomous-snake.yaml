@@ -1,0 +1,56 @@
+id: venomous-snake
+type: monster
+name: Venomous Snake
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 5 (2d4)  
+
+  **Speed** 30 ft., swim 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 2 (-4) | 15 (+2) | 11 (+0) | 1 (-5) | 10 (+0) | 3 (-4) |
+
+
+  **Senses** blindsight 10 ft., passive perception 10  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Piercing damage plus 3 (1d6) Poison damage.
+tags:
+- beast
+- tiny
+- cr-1/8
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 5
+  hitDice: 2d4
+  speed: 30 ft., swim 30 ft.
+  strength: 2
+  dexterity: 15
+  constitution: 11
+  intelligence: 1
+  wisdom: 10
+  charisma: 3
+  challengeRating: 1/8
+  xp: 25
+  senses: blindsight 10 ft., passive perception 10
+  languages: None
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Piercing damage plus 3 (1d6) Poison damage.'

@@ -1,0 +1,15 @@
+id: ring-of-telekinesis
+type: magic-item
+name: Ring of Telekinesis
+description: >-
+  Ring
+
+
+  While wearing this ring, you can cast Telekinesisfrom it.
+tags:
+- very rare
+- rings
+properties:
+  category: Rings
+  rarity: Very Rare
+  attunement: true

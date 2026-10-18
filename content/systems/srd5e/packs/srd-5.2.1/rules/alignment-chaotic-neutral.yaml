@@ -1,0 +1,8 @@
+id: alignment-chaotic-neutral
+type: rule
+name: Chaotic Neutral
+description: Chaotic Neutral creatures follow their whims, valuing their personal freedom above all else. A scoundrel who wanders the land living by their wits is probably Chaotic Neutral.
+tags:
+- alignment
+properties:
+  category: Alignment

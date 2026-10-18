@@ -1,0 +1,128 @@
+using Codex.Core;
+using Codex.Core.Scripting;
+using Codex.Plugin.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Codex.Tests;
+
+/// <summary>
+/// Loads the real <c>content/</c> folder shipped in the repository and checks the SRD 5.2.1 pack is
+/// complete and carries its licence. This is the regression gate for the import tool: counts come
+/// from the SRD 5.2.1 table of contents, not from the importer's own output.
+/// </summary>
+public class SrdPackSmokeTests : IAsyncLifetime
+{
+    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly PluginLoader _loader;
+
+    public SrdPackSmokeTests()
+    {
+        _loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(_registry));
+    }
+
+    public async Task InitializeAsync() => await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    [Fact]
+    public void LoadsWithoutWarnings()
+    {
+        Assert.Null(_loader.LoadException);
+        Assert.Empty(_loader.LoadWarnings);
+        Assert.Contains("srd5e", _loader.LoadedSystemIds);
+        Assert.Contains("simple-d6", _loader.LoadedSystemIds);
+    }
+
+    [Fact]
+    public void SystemIsNamedAfterTheDocument_NotTheTrademark()
+    {
+        var system = _loader.Systems.Single(s => s.Id == "srd5e");
+        Assert.Equal("Fifth Edition SRD (5.2.1)", system.Name);
+        Assert.Equal("5E compatible", system.Compatibility);
+        Assert.DoesNotContain("D&D", system.Name);
+        Assert.DoesNotContain("Dungeons", system.Name);
+    }
+
+    [Theory]
+    [InlineData("class", 12)]
+    [InlineData("subclass", 12)]
+    [InlineData("species", 9)]
+    [InlineData("background", 4)]
+    [InlineData("feat", 17)]
+    [InlineData("spell", 339)]
+    [InlineData("monster", 341)]
+    [InlineData("condition", 15)]
+    public void SrdPack_HasTheDocumentsCounts(string type, int expected)
+    {
+        Assert.Equal(expected, _registry.GetEntries("srd5e", type, new HashSet<string> { "srd-5.2.1" }).Count());
+    }
+
+    [Fact]
+    public void SrdPack_CarriesTheVerbatimAttribution()
+    {
+        var pack = _registry.GetPack("srd-5.2.1");
+        Assert.NotNull(pack);
+        Assert.Equal("CC-BY-4.0", pack!.License!.Name);
+        Assert.True(pack.License.Modified);
+        Assert.StartsWith("This work includes material from the System Reference Document 5.2.1", pack.License.Attribution);
+        Assert.Contains("https://www.dndbeyond.com/srd", pack.License.Attribution);
+        Assert.Contains("https://creativecommons.org/licenses/by/4.0/legalcode", pack.License.Attribution);
+        Assert.Contains(pack.License.Notices, n => n.Contains("5e-bits") && n.Contains("MIT"));
+    }
+
+    [Fact]
+    public void Fireball_IsStructuredAndReadable()
+    {
+        var fireball = _registry.GetEntry("srd5e", "spell", "fireball");
+        Assert.NotNull(fireball);
+        Assert.Equal(3L, fireball!.Properties["level"]);
+        Assert.Equal("Evocation", fireball.Properties["school"]);
+        Assert.Contains("8d6", fireball.Description);
+        Assert.Contains("level-3", fireball.Tags);
+    }
+
+    [Fact]
+    public void Monsters_DoubleAsActorBlueprints_WithHitPoints()
+    {
+        var goblin = _registry.GetActor("srd5e:goblin-warrior");
+        Assert.NotNull(goblin);
+        Assert.Equal(10, goblin!.Resources["HP"]);
+        Assert.Equal(15L, goblin.Properties["dex"]);
+        Assert.Equal(341, _registry.GetActorsBySystem("srd5e").Count(a => a.PackId == "srd-5.2.1"));
+    }
+
+    [Fact]
+    public void Classes_HaveFeaturesByLevel_AndOneSubclassEach()
+    {
+        var fighter = _registry.GetEntry("srd5e", "class", "fighter")!;
+        var features = Assert.IsType<List<object>>(fighter.Properties["features"]);
+        Assert.Contains(features.Cast<Dictionary<string, object>>(), f => (string)f["name"] == "Second Wind" && (long)f["level"] == 1);
+        Assert.Equal(new List<object> { "Champion" }, fighter.Properties["subclasses"]);
+
+        var champion = _registry.GetEntry("srd5e", "subclass", "champion")!;
+        Assert.Equal("fighter", champion.Properties["class"]);
+    }
+
+    [Fact]
+    public void Search_FindsAcrossTypes_AndTheActorSchemaReferencesContentTypes()
+    {
+        var hits = _registry.Search("srd5e", "dwarf").ToList();
+        Assert.Contains(hits, h => h.Type == "species" && h.Id == "dwarf");
+
+        var definition = _loader.GetDefinition("srd5e")!;
+        foreach (var reference in definition.ActorFields.Where(f => f.Type == FieldType.EntityReference))
+        {
+            Assert.NotEmpty(_registry.GetEntries("srd5e", reference.TargetEntityType!));
+        }
+    }
+
+    [Fact]
+    public void ExampleWorldPack_LoadsLoreLocationsAndNpcs()
+    {
+        Assert.NotNull(_registry.GetPack("example-world-greyharbour"));
+        Assert.Equal("world", _registry.GetPack("example-world-greyharbour")!.Kind);
+        Assert.Equal(2, _registry.GetEntries("srd5e", "lore").Count());
+        Assert.NotNull(_registry.GetLocation("srd5e:the-salt-lantern"));
+        Assert.NotNull(_registry.GetActor("srd5e:maud-ketter"));
+    }
+}

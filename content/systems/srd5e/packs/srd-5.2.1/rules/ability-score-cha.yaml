@@ -1,0 +1,8 @@
+id: ability-score-cha
+type: rule
+name: Charisma
+description: Confidence, poise, and charm
+tags:
+- ability-score
+properties:
+  category: Ability Score

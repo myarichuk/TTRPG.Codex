@@ -1,0 +1,19 @@
+id: tent
+type: equipment
+name: Tent
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 20 lb.
+
+
+  A Tent sleeps up to two Small or Medium creatures.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 20

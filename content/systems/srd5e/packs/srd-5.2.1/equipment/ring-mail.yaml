@@ -1,0 +1,23 @@
+id: ring-mail
+type: equipment
+name: Ring Mail
+description: >-
+  *Armor, Heavy Armor*
+
+
+  **Armor Class:** 14  
+
+  **Stealth:** Disadvantage  
+
+  **Cost:** 30 gp  
+
+  **Weight:** 40 lb.
+tags:
+- armor
+- heavy armor
+properties:
+  category: Armor
+  cost: 30 gp
+  weight: 40
+  armorClass: 14
+  stealth: true

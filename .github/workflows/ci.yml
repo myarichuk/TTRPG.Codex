@@ -43,6 +43,14 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
+      # The shipped SRD pack must stay in sync with the importer: regenerate it from the pinned
+      # upstream commit and fail if the tree changes.
+      - name: Verify the SRD pack is up to date with the importer
+        if: runner.os == 'Linux'
+        run: |
+          dotnet run --project tools/Codex.ContentImport -c Release --no-build -- srd5e --download --source "$RUNNER_TEMP/srd-json" --out content/systems/srd5e/packs/srd-5.2.1
+          git diff --exit-code --stat -- content/systems/srd5e/packs/srd-5.2.1 || { echo "::error::content/systems/srd5e/packs/srd-5.2.1 is out of date - rerun the importer and commit"; exit 1; }
+
       - name: Install Playwright browsers
         run: pwsh tests/Codex.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 

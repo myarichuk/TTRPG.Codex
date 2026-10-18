@@ -1,0 +1,73 @@
+id: kobold-warrior
+type: monster
+name: Kobold Warrior
+description: >-
+  *Small Dragon, Neutral*
+
+
+  **AC** 14  
+
+  **HP** 7 (3d6 - 3)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 7 (-2) | 15 (+2) | 9 (-1) | 8 (-1) | 7 (-2) | 8 (-1) |
+
+
+  **Gear** Daggers (3)  
+
+  **Senses** darkvision 60 ft., passive perception 8  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Pack Tactics.** The kobold has Advantage on an attack roll against a creature if at least one of the kobold’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+  **Sunlight Sensitivity.** While in sunlight, the kobold has Disadvantage on ability checks and attack rolls.
+
+
+
+  ### Actions
+
+  **Dagger.** Melee or Ranged Attack Roll: +4, reach 5 ft. or range 20/60 ft. Hit: 4 (1d4 + 2) Piercing damage.
+tags:
+- dragon
+- small
+- cr-1/8
+properties:
+  size: Small
+  creatureType: dragon
+  alignment: neutral
+  armorClass: 14
+  hitPoints: 7
+  hitDice: 3d6 - 3
+  speed: 30 ft.
+  strength: 7
+  dexterity: 15
+  constitution: 9
+  intelligence: 8
+  wisdom: 7
+  charisma: 8
+  challengeRating: 1/8
+  xp: 25
+  senses: darkvision 60 ft., passive perception 8
+  languages: Common, Draconic
+  gear: Daggers (3)
+  traits:
+  - name: Pack Tactics
+    description: The kobold has Advantage on an attack roll against a creature if at least one of the kobold’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  - name: Sunlight Sensitivity
+    description: While in sunlight, the kobold has Disadvantage on ability checks and attack rolls.
+  actions:
+  - name: Dagger
+    description: 'Melee or Ranged Attack Roll: +4, reach 5 ft. or range 20/60 ft. Hit: 4 (1d4 + 2) Piercing damage.'

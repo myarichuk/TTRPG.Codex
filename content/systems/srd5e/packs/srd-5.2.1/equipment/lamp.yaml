@@ -1,0 +1,19 @@
+id: lamp
+type: equipment
+name: Lamp
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 5 sp  
+
+  **Weight:** 1 lb.
+
+
+  A Lamp burns Oil as fuel to cast Bright Light in a 15foot radius and Dim Light for an additional 30 feet
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 5 sp
+  weight: 1

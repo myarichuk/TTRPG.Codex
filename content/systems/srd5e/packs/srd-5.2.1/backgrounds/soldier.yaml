@@ -1,0 +1,21 @@
+id: soldier
+type: background
+name: Soldier
+description: >-
+  **Ability Scores:** STR, DEX, CON  
+
+  **Feat:** Savage Attacker  
+
+  **Skill Proficiencies:** Athletics, Intimidation  
+
+  **Equipment:** Choose A or B: (A) Spear, Shortbow, 20 Arrows, Gaming Set (same as above), Healer's Kit, Quiver, Traveler's Clothes, 14 GP; or (B) 50 GP
+properties:
+  abilityScores:
+  - STR
+  - DEX
+  - CON
+  feat: savage-attacker
+  skillProficiencies:
+  - Athletics
+  - Intimidation
+  equipment: "Choose A or B: (A) Spear, Shortbow, 20 Arrows, Gaming Set (same as above), Healer's Kit, Quiver, Traveler's Clothes, 14 GP; or (B) 50 GP"

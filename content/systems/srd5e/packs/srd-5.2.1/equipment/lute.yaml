@@ -1,0 +1,17 @@
+id: lute
+type: equipment
+name: Lute
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 35 gp  
+
+  **Weight:** 2 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 35 gp
+  weight: 2

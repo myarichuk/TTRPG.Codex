@@ -1,0 +1,19 @@
+id: crowbar
+type: equipment
+name: Crowbar
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 5 lb.
+
+
+  Using a Crowbar gives you Advantage on Strength checks where the Crowbar's leverage can be applied.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 5

@@ -1,0 +1,78 @@
+id: gorgon
+type: monster
+name: Gorgon
+description: >-
+  *Large Construct, Unaligned*
+
+
+  **AC** 19  
+
+  **HP** 114 (12d10 + 48)  
+
+  **Speed** 40 ft.  
+
+  **CR** 5 (XP 1800; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 20 (+5) | 11 (+0) | 18 (+4) | 2 (-4) | 12 (+1) | 7 (-2) |
+
+
+  **Skills** Perception +7  
+
+  **Immunities** Exhaustion, Petrified  
+
+  **Senses** darkvision 60 ft., passive perception 17  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Gore.** Melee Attack Roll: +8, reach 5 ft. Hit: 18 (2d12 + 5) Piercing damage. If the target is a Large or smaller creature and the gorgon moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.
+
+
+  **Petrifying Breath.** Constitution Saving Throw: DC 15, each creature in a 30-foot Cone. First Failure: The target has the Restrained condition and repeats the save at the end of its next turn if it is still Restrained, ending the effect on itself on a success. Second Failure: The target has the Petrified condition instead of the Restrained condition.
+
+
+
+  ### Bonus Actions
+
+  **Trample.** Dexterity Saving Throw: DC 16, one creature within 5 feet that has the Prone condition. Failure: 16 (2d10 + 5) Bludgeoning damage. Success: Half damage.
+tags:
+- construct
+- large
+- cr-5
+properties:
+  size: Large
+  creatureType: construct
+  alignment: unaligned
+  armorClass: 19
+  hitPoints: 114
+  hitDice: 12d10 + 48
+  speed: 40 ft.
+  strength: 20
+  dexterity: 11
+  constitution: 18
+  intelligence: 2
+  wisdom: 12
+  charisma: 7
+  challengeRating: 5
+  xp: 1800
+  senses: darkvision 60 ft., passive perception 17
+  languages: None
+  skills: Perception +7
+  immunities:
+  - Exhaustion
+  - Petrified
+  actions:
+  - name: Gore
+    description: 'Melee Attack Roll: +8, reach 5 ft. Hit: 18 (2d12 + 5) Piercing damage. If the target is a Large or smaller creature and the gorgon moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.'
+  - name: Petrifying Breath
+    description: 'Constitution Saving Throw: DC 15, each creature in a 30-foot Cone. First Failure: The target has the Restrained condition and repeats the save at the end of its next turn if it is still Restrained, ending the effect on itself on a success. Second Failure: The target has the Petrified condition instead of the Restrained condition.'
+  bonusActions:
+  - name: Trample
+    description: 'Dexterity Saving Throw: DC 16, one creature within 5 feet that has the Prone condition. Failure: 16 (2d10 + 5) Bludgeoning damage. Success: Half damage.'

@@ -1,0 +1,63 @@
+id: giant-badger
+type: monster
+name: Giant Badger
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 15 (2d8 + 6)  
+
+  **Speed** 30 ft., burrow 10 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 13 (+1) | 10 (+0) | 17 (+3) | 2 (-4) | 12 (+1) | 5 (-3) |
+
+
+  **Skills** Perception +3  
+
+  **Resistances** poison  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +3, reach 5 ft. Hit: 6 (2d4 + 1) Piercing damage.
+tags:
+- beast
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 15
+  hitDice: 2d8 + 6
+  speed: 30 ft., burrow 10 ft.
+  strength: 13
+  dexterity: 10
+  constitution: 17
+  intelligence: 2
+  wisdom: 12
+  charisma: 5
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 13
+  languages: None
+  skills: Perception +3
+  resistances:
+  - poison
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +3, reach 5 ft. Hit: 6 (2d4 + 1) Piercing damage.'

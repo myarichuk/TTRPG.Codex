@@ -1,0 +1,77 @@
+id: druid
+type: monster
+name: Druid
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 13 (Studded Leather Armor)  
+
+  **HP** 44 (8d8 + 8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 12 (+1) | 13 (+1) | 12 (+1) | 16 (+3) | 11 (+0) |
+
+
+  **Skills** Medicine +5, Nature +3, Perception +5  
+
+  **Gear** Studded Leather Armor  
+
+  **Senses** passive perception 15  
+
+  **Languages** Common, Druidic, Sylvan
+
+
+  ### Actions
+
+  **Multiattack.** The druid makes two attacks, using Vine Staff or Verdant Wisp in any combination.
+
+
+  **Vine Staff.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Bludgeoning damage plus 2 (1d4) Poison damage.
+
+
+  **Verdant Wisp.** Ranged Attack Roll: +5, range 90 ft. Hit: 10 (3d6) Radiant damage.
+
+
+  **Spellcasting.** The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):
+tags:
+- humanoid
+- medium or small
+- cr-2
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 13
+  hitPoints: 44
+  hitDice: 8d8 + 8
+  speed: 30 ft.
+  strength: 10
+  dexterity: 12
+  constitution: 13
+  intelligence: 12
+  wisdom: 16
+  charisma: 11
+  challengeRating: 2
+  xp: 450
+  senses: passive perception 15
+  languages: Common, Druidic, Sylvan
+  skills: Medicine +5, Nature +3, Perception +5
+  gear: Studded Leather Armor
+  actions:
+  - name: Multiattack
+    description: The druid makes two attacks, using Vine Staff or Verdant Wisp in any combination.
+  - name: Vine Staff
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Bludgeoning damage plus 2 (1d4) Poison damage.'
+  - name: Verdant Wisp
+    description: 'Ranged Attack Roll: +5, range 90 ft. Hit: 10 (3d6) Radiant damage.'
+  - name: Spellcasting
+    description: 'The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):'

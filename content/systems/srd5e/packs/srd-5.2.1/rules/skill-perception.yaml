@@ -1,0 +1,12 @@
+id: skill-perception
+type: rule
+name: Perception
+description: >-
+  **Ability:** WIS
+
+
+  Using a combination of senses, notice something that’s easy to miss.
+tags:
+- skill
+properties:
+  category: Skill

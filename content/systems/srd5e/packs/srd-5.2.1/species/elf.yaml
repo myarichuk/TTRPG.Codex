@@ -1,0 +1,128 @@
+id: elf
+type: species
+name: Elf
+description: >-
+  **Creature Type:** Humanoid  
+
+  **Size:** Medium  
+
+  **Speed:** 30 feet
+
+
+  **Darkvision (60 ft.).** You have Darkvision with a range of 60 feet.
+
+
+  **Elven Lineage.** You are part of a lineage that grants you supernatural abilities. Choose a lineage from the Elven Lineages table. You gain the level 1 benefit of that lineage.
+
+  When you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table.
+
+  You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have of the appropriate level.
+
+  Elven Lineages
+
+  Drow
+
+  Level 1. The range of your Darkvision increases to 120 feet. You also know the Dancing Lights cantrip.
+
+  Level 3. Faerie Fire
+
+  Level 5. Darkness
+
+  High Elf
+
+  Level 1. You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
+
+  Level 3. Detect Magic
+
+  Level 5. Misty Step
+
+  Wood Elf
+
+  Level 1. Your Speed increases to 35 feet. You also know the Druidcraft cantrip.
+
+  Level 3. Longstrider
+
+  Level 5. Pass without Trace
+
+  Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the lineage).
+
+
+  **Fey Ancestry.** You have Advantage on saving throws you make to avoid or end the Charmed condition.
+
+
+  **Keen Senses.** You have proficiency in the Insight, Perception, or Survival skill.
+
+
+  **Trance.** You don't need to sleep, and magic can't put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness.
+properties:
+  creatureType: Humanoid
+  size: Medium
+  speed: 30
+  traits:
+  - name: Darkvision (60 ft.)
+    description: You have Darkvision with a range of 60 feet.
+  - name: Elven Lineage
+    description: >-
+      You are part of a lineage that grants you supernatural abilities. Choose a lineage from the Elven Lineages table. You gain the level 1 benefit of that lineage.
+
+      When you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table.
+
+      You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have of the appropriate level.
+
+      Elven Lineages
+
+      Drow
+
+      Level 1. The range of your Darkvision increases to 120 feet. You also know the Dancing Lights cantrip.
+
+      Level 3. Faerie Fire
+
+      Level 5. Darkness
+
+      High Elf
+
+      Level 1. You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
+
+      Level 3. Detect Magic
+
+      Level 5. Misty Step
+
+      Wood Elf
+
+      Level 1. Your Speed increases to 35 feet. You also know the Druidcraft cantrip.
+
+      Level 3. Longstrider
+
+      Level 5. Pass without Trace
+
+      Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the lineage).
+  - name: Fey Ancestry
+    description: You have Advantage on saving throws you make to avoid or end the Charmed condition.
+  - name: Keen Senses
+    description: You have proficiency in the Insight, Perception, or Survival skill.
+  - name: Trance
+    description: You don't need to sleep, and magic can't put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness.
+  lineages:
+  - name: 'Elven Lineage: Drow'
+    description: >-
+      **Darkvision (120 ft.).** You have Darkvision with a range of 120 feet.
+
+      **Dancing Lights.** You know the spell Dancing Lights.
+
+      **Faerie Fire.** You know the spell Faerie Fire.
+
+      **Darkness.** You know the spell Darkness.
+  - name: 'Elven Lineage: High Elf'
+    description: >-
+      **High Elf: Cantrip Versatility.** You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
+
+      **Detect Magic.** You know the spell Detect Magic.
+
+      **Misty Step.** You know the spell Misty Step.
+  - name: 'Elven Lineage: Wood Elf'
+    description: >-
+      **Wood Elf: Movement Speed Increase.** Your Movement Speed increases to 35 feet.
+
+      **Longstrider.** You learn the spell Longstrider.
+
+      **Pass without Trace.** You learn the spell Pass without Trace.

@@ -1,0 +1,18 @@
+id: potion-of-clairvoyance
+type: magic-item
+name: Potion of Clairvoyance
+description: >-
+  Potion
+
+
+  When you drink this potion, you gain the effect of the Clairvoyance spell (no Concentration required).
+
+
+  An eyeball bobs in this potion's yellowish liquid but vanishes when the potion is opened.
+tags:
+- rare
+- potions
+properties:
+  category: Potions
+  rarity: Rare
+  attunement: false

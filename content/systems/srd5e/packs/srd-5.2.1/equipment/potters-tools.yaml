@@ -1,0 +1,17 @@
+id: potters-tools
+type: equipment
+name: Potter's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 10 gp  
+
+  **Weight:** 3 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 10 gp
+  weight: 3

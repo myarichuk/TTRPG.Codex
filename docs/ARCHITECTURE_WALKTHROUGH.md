@@ -28,7 +28,7 @@ The engine shouldn't know what a "Fireball" is. If you hardcode your rules in C#
   - **Costs**: *What is spent* (e.g., 2 Mana, 1 Action).
   - **Effects**: *What happens* (e.g., Deal 2d6 Fire damage).
 - **DynamicExpresso for Logic**: When you need "real" logic, we use a safe scripting sandbox.
-- **Schema Patching (The Homebrew Secret)**: The Authoring UI is not hardcoded. Content packs can provide `schema.patch.yaml` to extend the UI. If a homebrew pack adds "Sanity" as a resource, the Authoring App automatically adds "Sanity" to all relevant dropdowns.
+- **Systems as data**: a `system.yaml` declares attributes, resources, the sheet and the content types a system has (see `CONTENT_PACKS.md`). The web UI renders forms, pickers and the Library from that schema, so a homebrew system that adds "Sanity" as a resource gets it on every sheet and at the table without a recompile. Compiled plugins remain for behaviour data can't express (custom dice).
 
 ## 4. The "No-Nonsense" Rule
 

@@ -1,0 +1,85 @@
+id: white-dragon-wyrmling
+type: monster
+name: White Dragon Wyrmling
+description: >-
+  *Medium Dragon, Chaotic Evil*
+
+
+  **AC** 16  
+
+  **HP** 32 (5d8 + 10)  
+
+  **Speed** 30 ft., burrow 15 ft., fly 60 ft., swim 30 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 10 (+0) | 14 (+2) | 5 (-3) | 10 (+0) | 11 (+0) |
+
+
+  **Saving Throws** DEX +2, WIS +2  
+
+  **Skills** Perception +4, Stealth +2  
+
+  **Immunities** cold  
+
+  **Senses** darkvision 60 ft., blindsight 10 ft., passive perception 14  
+
+  **Languages** Draconic
+
+
+  ### Traits
+
+  **Ice Walk.** The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes two Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage plus 2 (1d4) Cold damage.
+
+
+  **Cold Breath.** Constitution Saving Throw: DC 12, each creature in a 15-foot Cone. Failure: 22 (5d8) Cold damage. Success: Half damage.
+tags:
+- dragon
+- medium
+- cr-2
+properties:
+  size: Medium
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 16
+  hitPoints: 32
+  hitDice: 5d8 + 10
+  speed: 30 ft., burrow 15 ft., fly 60 ft., swim 30 ft.
+  strength: 14
+  dexterity: 10
+  constitution: 14
+  intelligence: 5
+  wisdom: 10
+  charisma: 11
+  challengeRating: 2
+  xp: 450
+  senses: darkvision 60 ft., blindsight 10 ft., passive perception 14
+  languages: Draconic
+  skills: Perception +4, Stealth +2
+  savingThrows: DEX +2, WIS +2
+  immunities:
+  - cold
+  traits:
+  - name: Ice Walk
+    description: The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+  actions:
+  - name: Multiattack
+    description: The dragon makes two Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage plus 2 (1d4) Cold damage.'
+  - name: Cold Breath
+    description: 'Constitution Saving Throw: DC 12, each creature in a 15-foot Cone. Failure: 22 (5d8) Cold damage. Success: Half damage.'

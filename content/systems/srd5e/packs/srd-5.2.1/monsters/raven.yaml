@@ -1,0 +1,68 @@
+id: raven
+type: monster
+name: Raven
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 2 (1d4)  
+
+  **Speed** 10 ft., fly 50 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 2 (-4) | 14 (+2) | 10 (+0) | 5 (-3) | 13 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +3  
+
+  **Senses** passive perception 13  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Mimicry.** The raven can mimic simple sounds it has heard, such as a whisper or chitter. A hearer can discern the sounds are imitations with a successful DC 10 Wisdom (Insight) check.
+
+
+
+  ### Actions
+
+  **Beak.** Melee Attack Roll: +4, reach 5 ft. Hit: 1 Piercing damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 2
+  hitDice: 1d4
+  speed: 10 ft., fly 50 ft.
+  strength: 2
+  dexterity: 14
+  constitution: 10
+  intelligence: 5
+  wisdom: 13
+  charisma: 6
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 13
+  languages: None
+  skills: Perception +3
+  traits:
+  - name: Mimicry
+    description: The raven can mimic simple sounds it has heard, such as a whisper or chitter. A hearer can discern the sounds are imitations with a successful DC 10 Wisdom (Insight) check.
+  actions:
+  - name: Beak
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 1 Piercing damage.'

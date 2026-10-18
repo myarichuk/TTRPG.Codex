@@ -1,0 +1,90 @@
+id: swarm-of-ravens
+type: monster
+name: Swarm of Ravens
+description: >-
+  *Medium Swarm Of Tiny Beasts, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 11 (2d8 + 2)  
+
+  **Speed** 10 ft., fly 50 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 6 (-2) | 14 (+2) | 12 (+1) | 5 (-3) | 12 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +5  
+
+  **Resistances** bludgeoning, piercing, slashing  
+
+  **Immunities** Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned  
+
+  **Senses** passive perception 15  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Swarm.** The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny raven. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+
+
+
+  ### Actions
+
+  **Beaks.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage, or 2 (1d4) Piercing damage if the swarm is Bloodied.
+
+
+  **Cacophony.** Wisdom Saving Throw: DC 10, one creature in the swarm’s space. Failure: The target has the Deafened condition until the start of the swarm’s next turn. While Deafened, the target also has Disadvantage on ability checks and attack rolls.
+tags:
+- swarm of tiny beasts
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: swarm of tiny beasts
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 11
+  hitDice: 2d8 + 2
+  speed: 10 ft., fly 50 ft.
+  strength: 6
+  dexterity: 14
+  constitution: 12
+  intelligence: 5
+  wisdom: 12
+  charisma: 6
+  challengeRating: 1/4
+  xp: 50
+  senses: passive perception 15
+  languages: None
+  skills: Perception +5
+  resistances:
+  - bludgeoning
+  - piercing
+  - slashing
+  immunities:
+  - Charmed
+  - Frightened
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Prone
+  - Restrained
+  - Stunned
+  traits:
+  - name: Swarm
+    description: The swarm can occupy another creature’s space and vice versa, and the swarm can move through any opening large enough for a Tiny raven. The swarm can’t regain Hit Points or gain Temporary Hit Points.
+  actions:
+  - name: Beaks
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage, or 2 (1d4) Piercing damage if the swarm is Bloodied.'
+  - name: Cacophony
+    description: 'Wisdom Saving Throw: DC 10, one creature in the swarm’s space. Failure: The target has the Deafened condition until the start of the swarm’s next turn. While Deafened, the target also has Disadvantage on ability checks and attack rolls.'

@@ -1,0 +1,12 @@
+id: skill-animal-handling
+type: rule
+name: Animal Handling
+description: >-
+  **Ability:** WIS
+
+
+  Calm or train an animal, or get an animal to behave in a certain way.
+tags:
+- skill
+properties:
+  category: Skill

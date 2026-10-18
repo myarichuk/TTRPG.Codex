@@ -1,0 +1,8 @@
+id: alignment-lawful-evil
+type: rule
+name: Lawful Evil
+description: Lawful Evil creatures methodically take what they want within the limits of a code of tradition, loyalty, or order. An aristocrat exploiting citizens while scheming for power is probably Lawful Evil.
+tags:
+- alignment
+properties:
+  category: Alignment

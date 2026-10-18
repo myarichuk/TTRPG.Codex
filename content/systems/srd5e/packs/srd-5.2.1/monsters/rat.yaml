@@ -1,0 +1,68 @@
+id: rat
+type: monster
+name: Rat
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 1 (1d4 - 1)  
+
+  **Speed** 20 ft., climb 20 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 2 (-4) | 11 (+0) | 9 (-1) | 2 (-4) | 10 (+0) | 4 (-3) |
+
+
+  **Skills** Perception +2  
+
+  **Senses** darkvision 30 ft., passive perception 12  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Agile.** The rat doesn’t provoke an Opportunity Attack when it moves out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 1
+  hitDice: 1d4 - 1
+  speed: 20 ft., climb 20 ft.
+  strength: 2
+  dexterity: 11
+  constitution: 9
+  intelligence: 2
+  wisdom: 10
+  charisma: 4
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 30 ft., passive perception 12
+  languages: None
+  skills: Perception +2
+  traits:
+  - name: Agile
+    description: The rat doesn’t provoke an Opportunity Attack when it moves out of an enemy’s reach.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage.'

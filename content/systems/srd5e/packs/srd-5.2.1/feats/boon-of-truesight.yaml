@@ -1,0 +1,14 @@
+id: boon-of-truesight
+type: feat
+name: Boon of Truesight
+description: >-
+  You gain the following benefits.
+
+  **Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.
+
+  **Truesight.** You have Truesight with a range of 60 feet.
+tags:
+- epic-boon
+properties:
+  category: epic-boon
+  prerequisites: Level 19+

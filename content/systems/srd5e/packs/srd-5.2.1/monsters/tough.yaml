@@ -1,0 +1,73 @@
+id: tough
+type: monster
+name: Tough
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 12 (Leather Armor)  
+
+  **HP** 32 (5d8 + 10)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 12 (+1) | 14 (+2) | 10 (+0) | 10 (+0) | 11 (+0) |
+
+
+  **Gear** Heavy Crossbow, Leather Armor, Mace  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common
+
+
+  ### Traits
+
+  **Pack Tactics.** The tough has Advantage on an attack roll against a creature if at least one of the tough’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Mace.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Bludgeoning damage.
+
+
+  **Heavy Crossbow.** Ranged Attack Roll: +3, range 100/400 ft. Hit: 6 (1d10 + 1) Piercing damage.
+tags:
+- humanoid
+- medium or small
+- cr-1/2
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 12
+  hitPoints: 32
+  hitDice: 5d8 + 10
+  speed: 30 ft.
+  strength: 15
+  dexterity: 12
+  constitution: 14
+  intelligence: 10
+  wisdom: 10
+  charisma: 11
+  challengeRating: 1/2
+  xp: 100
+  senses: passive perception 10
+  languages: Common
+  gear: Heavy Crossbow, Leather Armor, Mace
+  traits:
+  - name: Pack Tactics
+    description: The tough has Advantage on an attack roll against a creature if at least one of the tough’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Mace
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Bludgeoning damage.'
+  - name: Heavy Crossbow
+    description: 'Ranged Attack Roll: +3, range 100/400 ft. Hit: 6 (1d10 + 1) Piercing damage.'

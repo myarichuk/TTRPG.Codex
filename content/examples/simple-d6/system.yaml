@@ -1,0 +1,70 @@
+# A deliberately tiny homebrew system, to show that a system is just data. Drop a folder like
+# this one anywhere under a content root and TTRPG.Codex will offer it when creating a campaign.
+id: simple-d6
+name: Simple d6 (example homebrew)
+version: 1.0.0
+description: >-
+  A three-attribute, d6-pool example system. Exists to demonstrate the system.yaml format and as a
+  test fixture; it is not a complete game.
+license:
+  name: CC0-1.0
+  url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Example content released to the public domain by the TTRPG.Codex project.
+
+attributes:
+  - { key: body, label: Body, default: 2, min: 1, max: 6 }
+  - { key: mind, label: Mind, default: 2, min: 1, max: 6 }
+  - { key: luck, label: Luck, default: 2, min: 1, max: 6 }
+
+resources:
+  - { key: HP, label: Grit, maxKey: HP_Max, default: 6, isPrimary: true }
+  - { key: Fate, label: Fate Points, default: 1 }
+
+actorFields:
+  - { key: calling, label: Calling, type: EntityReference, targetEntityType: calling }
+  - { key: concept, label: Concept, type: Text, description: "One line: who is this person?" }
+
+conditions: [Dazed, Scared, Wounded]
+
+dice:
+  initiative: 1d6
+  check: 1d6
+
+entityTypes:
+  - type: calling
+    label: Calling
+    pluralLabel: Callings
+    folder: callings
+    icon: swords
+    summaryFields: [bonus]
+    fields:
+      - { key: bonus, label: Bonus, type: Text }
+  - type: knack
+    label: Knack
+    pluralLabel: Knacks
+    folder: knacks
+    icon: sparkles
+    fields:
+      - { key: cost, label: Fate cost, type: Number }
+  - type: foe
+    label: Foe
+    pluralLabel: Foes
+    folder: foes
+    icon: skull
+    actorBlueprint: true
+    hitPointsProperty: grit
+    attributeProperties: { body: body, mind: mind, luck: luck }
+    playerFacing: false
+    summaryFields: [threat]
+    fields:
+      - { key: threat, label: Threat, type: Number }
+      - { key: grit, label: Grit, type: Number }
+      - { key: body, label: Body, type: Number }
+      - { key: mind, label: Mind, type: Number }
+      - { key: luck, label: Luck, type: Number }
+  - type: lore
+    label: Lore
+    folder: lore
+    icon: book-marked
+    fields:
+      - { key: category, label: Category, type: Text }

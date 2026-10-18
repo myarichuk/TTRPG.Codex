@@ -1,0 +1,66 @@
+id: manticore
+type: monster
+name: Manticore
+description: >-
+  *Large Monstrosity, Lawful Evil*
+
+
+  **AC** 14  
+
+  **HP** 68 (8d10 + 24)  
+
+  **Speed** 30 ft., fly 50 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 16 (+3) | 17 (+3) | 7 (-2) | 12 (+1) | 8 (-1) |
+
+
+  **Senses** darkvision 60 ft., passive perception 11  
+
+  **Languages** Common
+
+
+  ### Actions
+
+  **Multiattack.** The manticore makes three attacks, using Rend or Tail Spike in any combination.
+
+
+  **Rend.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Slashing damage.
+
+
+  **Tail Spike.** Ranged Attack Roll: +5, range 100/200 ft. Hit: 7 (1d8 + 3) Piercing damage.
+tags:
+- monstrosity
+- large
+- cr-3
+properties:
+  size: Large
+  creatureType: monstrosity
+  alignment: lawful evil
+  armorClass: 14
+  hitPoints: 68
+  hitDice: 8d10 + 24
+  speed: 30 ft., fly 50 ft.
+  strength: 17
+  dexterity: 16
+  constitution: 17
+  intelligence: 7
+  wisdom: 12
+  charisma: 8
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 11
+  languages: Common
+  actions:
+  - name: Multiattack
+    description: The manticore makes three attacks, using Rend or Tail Spike in any combination.
+  - name: Rend
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Slashing damage.'
+  - name: Tail Spike
+    description: 'Ranged Attack Roll: +5, range 100/200 ft. Hit: 7 (1d8 + 3) Piercing damage.'

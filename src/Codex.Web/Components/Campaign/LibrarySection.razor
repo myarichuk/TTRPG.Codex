@@ -1,0 +1,153 @@
+@using Codex.Core
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject IHomebrewRepository Homebrew
+@inject IContentRegistry Registry
+@inject IActorRepository ActorRepo
+@inject ComponentRegistry Components
+@inject ContentPackExporter Exporter
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">Library</h2>
+        <p class="page-subtitle">Reference content for this campaign's system@(Ctx.IsDm ? ", plus your homebrew." : ", including the DM's homebrew.")</p>
+    </div>
+    @if (Ctx.IsDm)
+    {
+        <div class="row-actions">
+            <button type="button" class="btn btn-primary" @onclick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="16" /> New homebrew</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="ExportHomebrewAsync" aria-label="Export this campaign's homebrew as a content pack"><LucideIcon IconName="download" Size="16" /> Export homebrew pack</button>
+        </div>
+    }
+</div>
+
+@if (editing != null)
+{
+    <section class="panel">
+        <HomebrewEditor Campaign="Ctx.Campaign" Access="Ctx.Access" Entry="editing"
+                        OnSaved="OnSavedAsync" OnCancel="() => editing = null" OnDeleted="OnDeletedAsync" />
+    </section>
+}
+
+<LibraryBrowser Campaign="Ctx.Campaign" Access="Ctx.Access" BasePath="@($"{Ctx.BasePath}/library")"
+                RouteType="@RouteType" RouteId="@RouteId" Version="version">
+    <DetailActions Context="item">
+        @if (Ctx.IsDm && item.IsHomebrew)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => editing = item.Homebrew" data-testid="edit-homebrew"><LucideIcon IconName="edit-3" Size="14" /> Edit</button>
+        }
+        @if (Ctx.IsDm && IsBlueprint(item))
+        {
+            <button type="button" class="btn btn-primary btn-sm" @onclick="() => AddToCastAsync(item)" data-testid="add-to-cast"><LucideIcon IconName="user-plus" Size="14" /> Add to cast</button>
+        }
+    </DetailActions>
+</LibraryBrowser>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+    [Parameter] public string? RouteType { get; set; }
+    [Parameter] public string? RouteId { get; set; }
+
+    private HomebrewEntryDocument? editing;
+    private int version;
+
+    private void NewHomebrew() => editing = new HomebrewEntryDocument
+    {
+        CampaignId = Ctx.Campaign.Id,
+        SystemId = Ctx.Campaign.SystemId,
+        Type = RouteType ?? string.Empty,
+        AuthorUserId = Ctx.UserId
+    };
+
+    private async Task OnSavedAsync(Flash flash)
+    {
+        Ctx.Notify(flash);
+        if (flash.Tone != FlashTone.Error)
+        {
+            var saved = editing;
+            editing = null;
+            version++;
+            if (saved != null)
+            {
+                Nav.NavigateTo($"{Ctx.BasePath}/library/{saved.Type}/{Uri.EscapeDataString(saved.EntryId)}");
+            }
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task OnDeletedAsync(Flash flash)
+    {
+        Ctx.Notify(flash);
+        editing = null;
+        version++;
+        Nav.NavigateTo($"{Ctx.BasePath}/library");
+        await Task.CompletedTask;
+    }
+
+    private bool IsBlueprint(LibraryItem item) =>
+        !item.IsHomebrew
+            ? Registry.GetActor($"{Ctx.Campaign.SystemId}:{item.Entry.Id}") != null
+            : Ctx.System?.FindType(item.Entry.Type)?.ActorBlueprint == true;
+
+    private async Task AddToCastAsync(LibraryItem item)
+    {
+        var type = Ctx.System?.FindType(item.Entry.Type);
+        IActorDefinition? blueprint = item.IsHomebrew
+            ? (type != null ? YamlContentPackLoader.ToActorBlueprint(item.Entry, type) : null)
+            : Registry.GetActor($"{Ctx.Campaign.SystemId}:{item.Entry.Id}");
+        if (blueprint == null)
+        {
+            Ctx.Notify(Flash.Error("That entry can't be turned into a creature."));
+            return;
+        }
+
+        var actor = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = Ctx.Campaign.Id,
+            Kind = ActorKind.Monster,
+            BlueprintId = item.IsHomebrew ? null : $"{blueprint.SystemId}:{blueprint.Id}",
+            Name = blueprint.Name,
+            Visibility = ActorVisibility.Hidden
+        };
+        ActorSheetSync.SeedFromBlueprint(actor, blueprint, Ctx.System, Components);
+
+        if (await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success($"Added {actor.Name} to the cast (hidden from players)."));
+            await Ctx.ReloadAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error("Only the DM can add creatures."));
+        }
+    }
+
+    private async Task ExportHomebrewAsync()
+    {
+        var entries = (await Homebrew.GetAllForCampaignAsync(Ctx.Campaign.Id)).Select(h => h.ToEntry()).ToList();
+        if (entries.Count == 0)
+        {
+            Ctx.Notify(Flash.Info("There is no homebrew to export yet."));
+            return;
+        }
+
+        var manifest = new PackManifest
+        {
+            Id = $"homebrew-{RavenHomebrewRepository.Slugify(Ctx.Campaign.Name)}",
+            Name = $"{Ctx.Campaign.Name} homebrew",
+            Version = "1.0.0",
+            SystemId = Ctx.Campaign.SystemId,
+            Kind = "homebrew",
+            Description = $"Homebrew content exported from the campaign “{Ctx.Campaign.Name}”.",
+            License = new LicenseInfo { Name = "All rights reserved", Attribution = $"Homebrew by the DM of “{Ctx.Campaign.Name}”." }
+        };
+        var bytes = await Exporter.ExportToZipBytesAsync(manifest, entries, Ctx.System);
+        var href = "data:application/zip;base64," + Convert.ToBase64String(bytes);
+        await JS.InvokeVoidAsync("codex.download", href, $"{manifest.Id}.zip");
+        Ctx.Notify(Flash.Success($"Exported {entries.Count} entries. Drop the zip into a content folder to load it as a pack."));
+    }
+}

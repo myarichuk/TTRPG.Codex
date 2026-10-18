@@ -1,0 +1,41 @@
+id: power-word-stun
+type: spell
+name: Power Word Stun
+description: >-
+  *Level 8 Enchantment (Bard, Sorcerer, Warlock, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** 60 feet  
+
+  **Components:** V  
+
+  **Duration:** Instantaneous
+
+
+  You overwhelm the mind of one creature you can see within range. If the target has 150 Hit Points or fewer, it has the Stunned condition. Otherwise, its Speed is 0 until the start of your next turn.
+
+  The Stunned target makes a Constitution saving throw at the end of each of its turns, ending the condition on itself on a success.
+tags:
+- level-8
+- enchantment
+- bard
+- sorcerer
+- warlock
+- wizard
+properties:
+  level: 8
+  school: Enchantment
+  castingTime: Action
+  range: 60 feet
+  components:
+  - V
+  duration: Instantaneous
+  concentration: false
+  ritual: false
+  classes:
+  - Bard
+  - Sorcerer
+  - Warlock
+  - Wizard

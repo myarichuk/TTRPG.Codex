@@ -1,0 +1,17 @@
+id: yew-wand
+type: equipment
+name: Yew Wand
+description: >-
+  *Druidic Foci, Adventuring Gear*
+
+
+  **Cost:** 10 gp  
+
+  **Weight:** 1 lb.
+tags:
+- druidic foci
+- adventuring gear
+properties:
+  category: Druidic Foci
+  cost: 10 gp
+  weight: 1

@@ -1,0 +1,96 @@
+id: vampire-familiar
+type: monster
+name: Vampire Familiar
+description: >-
+  *Medium or small Humanoid, Neutral Evil*
+
+
+  **AC** 15  
+
+  **HP** 65 (10d8 + 20)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 16 (+3) | 15 (+2) | 10 (+0) | 10 (+0) | 14 (+2) |
+
+
+  **Saving Throws** DEX +5, WIS +2  
+
+  **Skills** Perception +4, Persuasion +4, Stealth +7  
+
+  **Resistances** necrotic  
+
+  **Immunities** Charmed  
+
+  **Gear** Daggers (10)  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Common plus one other language
+
+
+  ### Traits
+
+  **Vampiric Connection.** While the familiar and its vampire master are on the same plane of existence, the vampire can communicate with the familiar telepathically, and the vampire can perceive through the familiar’s senses.
+
+
+
+  ### Actions
+
+  **Multiattack.** The familiar makes two Umbral Dagger attacks.
+
+
+  **Umbral Dagger.** Melee or Ranged Attack Roll: +5, reach 5 ft. or range 20/60 ft. Hit: 5 (1d4 + 3) Piercing damage plus 7 (3d4) Necrotic damage. If the target is reduced to 0 Hit Points by this attack, the target becomes Stable but has the Poisoned condition for 1 hour. While it has the Poisoned condition, the target has the Paralyzed condition.
+
+
+
+  ### Bonus Actions
+
+  **Deathless Agility.** The familiar takes the Dash or Disengage action.
+tags:
+- humanoid
+- medium or small
+- cr-3
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral evil
+  armorClass: 15
+  hitPoints: 65
+  hitDice: 10d8 + 20
+  speed: 30 ft., climb 30 ft.
+  strength: 17
+  dexterity: 16
+  constitution: 15
+  intelligence: 10
+  wisdom: 10
+  charisma: 14
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 14
+  languages: Common plus one other language
+  skills: Perception +4, Persuasion +4, Stealth +7
+  savingThrows: DEX +5, WIS +2
+  resistances:
+  - necrotic
+  immunities:
+  - Charmed
+  gear: Daggers (10)
+  traits:
+  - name: Vampiric Connection
+    description: While the familiar and its vampire master are on the same plane of existence, the vampire can communicate with the familiar telepathically, and the vampire can perceive through the familiar’s senses.
+  actions:
+  - name: Multiattack
+    description: The familiar makes two Umbral Dagger attacks.
+  - name: Umbral Dagger
+    description: 'Melee or Ranged Attack Roll: +5, reach 5 ft. or range 20/60 ft. Hit: 5 (1d4 + 3) Piercing damage plus 7 (3d4) Necrotic damage. If the target is reduced to 0 Hit Points by this attack, the target becomes Stable but has the Poisoned condition for 1 hour. While it has the Poisoned condition, the target has the Paralyzed condition.'
+  bonusActions:
+  - name: Deathless Agility
+    description: The familiar takes the Dash or Disengage action.

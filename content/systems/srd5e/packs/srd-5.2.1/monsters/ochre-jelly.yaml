@@ -1,0 +1,95 @@
+id: ochre-jelly
+type: monster
+name: Ochre Jelly
+description: >-
+  *Large Ooze, Unaligned*
+
+
+  **AC** 8  
+
+  **HP** 52 (7d10 + 14)  
+
+  **Speed** 20 ft., climb 20 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 6 (-2) | 14 (+2) | 2 (-4) | 6 (-2) | 1 (-5) |
+
+
+  **Resistances** acid  
+
+  **Immunities** lightning, slashing, Charmed, Deafened, Exhaustion, Frightened, Grappled, Prone, Restrained  
+
+  **Senses** blindsight 60 ft., passive perception 8  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Amorphous.** The jelly can move through a space as narrow as 1 inch without expending extra movement to do so.
+
+
+  **Spider Climb.** The jelly can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+
+
+
+  ### Actions
+
+  **Pseudopod.** Melee Attack Roll: +4, reach 5 ft. Hit: 12 (3d6 + 2) Acid damage.
+
+
+
+  ### Reactions
+
+  **Split.** Trigger: While the jelly is Large or Medium and has 10+ Hit Points, it becomes Bloodied or is subjected to Lightning or Slashing damage. Response: The jelly splits into two new Ochre Jellies. Each new jelly is one size smaller than the original jelly and acts on its Initiative. The original jelly’s Hit Points are divided evenly between the new jellies (round down).
+tags:
+- ooze
+- large
+- cr-2
+properties:
+  size: Large
+  creatureType: ooze
+  alignment: unaligned
+  armorClass: 8
+  hitPoints: 52
+  hitDice: 7d10 + 14
+  speed: 20 ft., climb 20 ft.
+  strength: 15
+  dexterity: 6
+  constitution: 14
+  intelligence: 2
+  wisdom: 6
+  charisma: 1
+  challengeRating: 2
+  xp: 450
+  senses: blindsight 60 ft., passive perception 8
+  languages: None
+  resistances:
+  - acid
+  immunities:
+  - lightning
+  - slashing
+  - Charmed
+  - Deafened
+  - Exhaustion
+  - Frightened
+  - Grappled
+  - Prone
+  - Restrained
+  traits:
+  - name: Amorphous
+    description: The jelly can move through a space as narrow as 1 inch without expending extra movement to do so.
+  - name: Spider Climb
+    description: The jelly can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+  actions:
+  - name: Pseudopod
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 12 (3d6 + 2) Acid damage.'
+  reactions:
+  - name: Split
+    description: 'Trigger: While the jelly is Large or Medium and has 10+ Hit Points, it becomes Bloodied or is subjected to Lightning or Slashing damage. Response: The jelly splits into two new Ochre Jellies. Each new jelly is one size smaller than the original jelly and acts on its Initiative. The original jelly’s Hit Points are divided evenly between the new jellies (round down).'

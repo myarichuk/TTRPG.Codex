@@ -1,10 +1,9 @@
 # TTRPG.Codex Design Specification
 
-> **Aspirational — this is a spec, not a status report.** As of the 2026-09-25 review
-> (`docs/REVIEW_AND_REMEDIATION_PLAN.md`), several systems described below do not exist in code:
-> `PeriodicEffectSystem`, "Shield before HP" draining, and `SceneDocument`, among others. Treat
-> anything here that isn't backed by a file/type reference in the current source as a target for
-> a future phase, not a description of what runs today.
+> **Aspirational — this is a spec, not a status report.** `PeriodicEffectSystem`, "Shield before
+> HP" draining and `SceneDocument` do not exist in code; encounters are `EncounterDocument` and live
+> state is applied by `CampaignRuntime` commands. Systems and content are described in
+> `CONTENT_PACKS.md`, which is current.
 
 **Modular tabletop RPG campaign and character management system.**
 

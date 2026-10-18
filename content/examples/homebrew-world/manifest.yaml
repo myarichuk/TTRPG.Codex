@@ -1,0 +1,11 @@
+id: example-world-greyharbour
+name: Greyharbour (example world)
+version: 1.0.0
+systemId: srd5e
+kind: world
+description: A small port town with a few people, a few places and a few secrets - an example of a setting pack for the 5E SRD system.
+authors: [TTRPG.Codex project]
+license:
+  name: CC0-1.0
+  url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Example setting released to the public domain by the TTRPG.Codex project.

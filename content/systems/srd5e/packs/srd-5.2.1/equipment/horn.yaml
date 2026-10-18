@@ -1,0 +1,17 @@
+id: horn
+type: equipment
+name: Horn
+description: >-
+  *Musical Instruments, Tools*
+
+
+  **Cost:** 3 gp  
+
+  **Weight:** 2 lb.
+tags:
+- musical instruments
+- tools
+properties:
+  category: Musical Instruments
+  cost: 3 gp
+  weight: 2

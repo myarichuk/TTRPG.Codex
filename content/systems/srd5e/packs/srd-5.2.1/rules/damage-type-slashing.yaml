@@ -1,0 +1,8 @@
+id: damage-type-slashing
+type: rule
+name: Slashing
+description: Claws, cutting objects
+tags:
+- damage-type
+properties:
+  category: Damage Type

@@ -1,0 +1,12 @@
+id: skill-persuasion
+type: rule
+name: Persuasion
+description: >-
+  **Ability:** CHA
+
+
+  Honestly and graciously convince someone of something.
+tags:
+- skill
+properties:
+  category: Skill

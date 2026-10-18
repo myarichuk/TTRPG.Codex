@@ -11,8 +11,8 @@ public enum FieldType
     Dropdown,
     TagList,
     ImagePicker,
-    EntityReference, // Reference another entity (e.g., NPC's parent organization)
-    Collection // A list of sub-objects or IDs
+    EntityReference, // Reference another entity (e.g., a character's class, an NPC's parent organization)
+    Collection // A list of rows, each a small map (name / description / level ...)
 }
 
 public enum PreferredEditor
@@ -23,17 +23,59 @@ public enum PreferredEditor
     Timeline // For story/event authoring
 }
 
-public record FieldDefinition(
-    string Key,
-    string Label,
-    FieldType Type,
-    string? Description = null,
-    List<string>? Options = null,
-    object? DefaultValue = null,
-    bool IsRequired = false,
-    string? TargetEntityType = null, // Used if Type == EntityReference
-    string? Category = "General" // For grouping fields in the UI
-);
+/// <summary>
+/// One field of a schema-driven form. A plain class (not a positional record) so it can be read
+/// straight out of <c>system.yaml</c>; the positional constructor is kept for code that builds
+/// schemas by hand.
+/// </summary>
+public class FieldDefinition
+{
+    public FieldDefinition()
+    {
+    }
+
+    public FieldDefinition(
+        string key,
+        string label,
+        FieldType type,
+        string? description = null,
+        List<string>? options = null,
+        object? defaultValue = null,
+        bool isRequired = false,
+        string? targetEntityType = null,
+        string? category = "General")
+    {
+        Key = key;
+        Label = label;
+        Type = type;
+        Description = description;
+        Options = options;
+        DefaultValue = defaultValue;
+        IsRequired = isRequired;
+        TargetEntityType = targetEntityType;
+        Category = category;
+    }
+
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public FieldType Type { get; set; } = FieldType.Text;
+    public string? Description { get; set; }
+    public List<string>? Options { get; set; }
+    public object? DefaultValue { get; set; }
+    public bool IsRequired { get; set; }
+
+    /// <summary>For <see cref="FieldType.EntityReference"/>: the content type the field points at.</summary>
+    public string? TargetEntityType { get; set; }
+
+    /// <summary>Grouping heading in the rendered form.</summary>
+    public string? Category { get; set; } = "General";
+
+    /// <summary>Lower bound for <see cref="FieldType.Number"/>.</summary>
+    public double? Min { get; set; }
+
+    /// <summary>Upper bound for <see cref="FieldType.Number"/>.</summary>
+    public double? Max { get; set; }
+}
 
 public record GraphEdgeSchema(
     string EdgeType,

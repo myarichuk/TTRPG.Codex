@@ -1,0 +1,8 @@
+id: weapon-property-heavy
+type: rule
+name: Heavy
+description: You have Disadvantage on attack rolls with a Heavy weapon if it's a Melee weapon and your Strength score isn't at least 13 or if it's a Ranged weapon and your Dexterity score isn't at least 13.
+tags:
+- weapon-property
+properties:
+  category: Weapon Property

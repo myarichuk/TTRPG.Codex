@@ -1,0 +1,19 @@
+id: ink
+type: equipment
+name: Ink
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 10 gp  
+
+  **Weight:** 0 lb.
+
+
+  Ink comes in a 1-ounce bottle, which provides enough ink to write about 500 pages.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 10 gp
+  weight: 0

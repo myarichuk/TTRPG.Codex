@@ -1,5 +1,5 @@
 using Codex.Plugin.Abstractions;
-using Codex.Systems.DnD5e;
+using Codex.Core.Components;
 
 namespace Codex.Tests;
 
@@ -9,66 +9,62 @@ public class ComponentRegistryTests
     public void SnapshotThenHydrate_ValueTypeComponent_RoundTripsEqual()
     {
         var registry = new ComponentRegistry();
-        registry.Register<AbilityScoresComponent>();
+        registry.Register<ResourcePoolComponent>();
 
-        var original = new AbilityScoresComponent
-        {
-            Strength = 16,
-            Dexterity = 12,
-            Constitution = 14,
-            Intelligence = 10,
-            Wisdom = 8,
-            Charisma = 18
-        };
+        var original = new ResourcePoolComponent();
+        original.Set("HP", 16);
+        original.Set("HP_Max", 20);
 
         var snapshot = registry.Snapshot(new object[] { original });
-        var hydrated = registry.Hydrate(snapshot).Cast<AbilityScoresComponent>().Single();
+        var hydrated = registry.Hydrate(snapshot).Cast<ResourcePoolComponent>().Single();
 
-        Assert.Equal(original, hydrated);
+        Assert.Equal(original.Pools, hydrated.Pools);
     }
 
     [Fact]
     public void SnapshotThenHydrate_ComponentWithReferenceField_PreservesContents()
     {
         var registry = new ComponentRegistry();
-        registry.Register<ConditionComponent>();
+        registry.Register<TagsComponent>();
 
-        var original = new ConditionComponent { Conditions = new List<string> { "Poisoned", "Prone" } };
+        var original = new TagsComponent { Tags = new List<string> { "Poisoned", "Prone" } };
 
         var snapshot = registry.Snapshot(new object[] { original });
-        var hydrated = registry.Hydrate(snapshot).Cast<ConditionComponent>().Single();
+        var hydrated = registry.Hydrate(snapshot).Cast<TagsComponent>().Single();
 
-        Assert.Equal(original.Conditions, hydrated.Conditions);
+        Assert.Equal(original.Tags, hydrated.Tags);
     }
 
     [Fact]
     public void Hydrate_UnregisteredComponentName_IsSkippedNotThrown()
     {
         var registry = new ComponentRegistry();
-        registry.Register<AbilityScoresComponent>();
+        registry.Register<AttributesComponent>();
 
         var snapshotFromAnotherRegistry = new ComponentRegistry();
-        snapshotFromAnotherRegistry.Register<AbilityScoresComponent>();
-        snapshotFromAnotherRegistry.Register<ConditionComponent>();
+        snapshotFromAnotherRegistry.Register<AttributesComponent>();
+        snapshotFromAnotherRegistry.Register<TagsComponent>();
+        var attributes = new AttributesComponent();
+        attributes.Set("str", 10);
         var snapshot = snapshotFromAnotherRegistry.Snapshot(new object[]
         {
-            new AbilityScoresComponent { Strength = 10 },
-            new ConditionComponent { Conditions = new List<string> { "Stunned" } }
+            attributes,
+            new TagsComponent { Tags = new List<string> { "Stunned" } }
         });
 
-        // registry never registered ConditionComponent (its content pack/plugin is "uninstalled"
-        // relative to this process) - hydration should skip it, not throw.
+        // registry never registered TagsComponent (its plugin is "uninstalled" relative to this
+        // process) - hydration should skip it, not throw.
         var hydrated = registry.Hydrate(snapshot).ToList();
 
-        var abilityScores = Assert.Single(hydrated);
-        Assert.IsType<AbilityScoresComponent>(abilityScores);
+        var only = Assert.Single(hydrated);
+        Assert.IsType<AttributesComponent>(only);
     }
 
     [Fact]
     public void NameOf_IsStableAcrossRegistries()
     {
         Assert.Equal(
-            ComponentRegistry.NameOf(typeof(AbilityScoresComponent)),
-            ComponentRegistry.NameOf(typeof(AbilityScoresComponent)));
+            ComponentRegistry.NameOf(typeof(AttributesComponent)),
+            ComponentRegistry.NameOf(typeof(AttributesComponent)));
     }
 }

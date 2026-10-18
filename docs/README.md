@@ -13,10 +13,14 @@ The Codex is designed to be **invisible but omnipresent**. It provides the DM wi
    - Deep dive into Sessions, Campaigns, Characters, and Lore.
 3. [**UI/UX Specification**](UI_SPECIFICATION.md)
    - Screen-by-screen breakdown and design principles.
-4. [**Review & Remediation Plan**](REVIEW_AND_REMEDIATION_PLAN.md)
-   - Current bugs, gap to a usable campaign tool, and the phased fix plan.
+4. [**Content packs & systems**](CONTENT_PACKS.md)
+   - The data format: `system.yaml`, `manifest.yaml`, entries, homebrew, the SRD importer.
+5. [**Audit of 2026-10-18**](AUDIT_2026-10-18.md)
+   - Findings (incomplete features, UI/accessibility, licensing) and what was changed in response.
+6. [**Review & Remediation Plan (2026-09-25)**](REVIEW_AND_REMEDIATION_PLAN.md)
+   - The earlier review; phases 0-4 landed, the rest is superseded by the audit above.
 
 ## Getting Started for Developers
-- High-fidelity UI is built with Blazor (Interactive Server).
-- Persistence is handled by RavenDB.
-- Modern layout uses CSS Grid and Flexbox with a Fluent-inspired design system.
+- The UI is Blazor (Interactive Server) with a small token-based stylesheet (light and dark themes) over a vendored Bootstrap.
+- Persistence is an embedded RavenDB.
+- Game systems and content are YAML under `content/`; see CONTENT_PACKS.md.

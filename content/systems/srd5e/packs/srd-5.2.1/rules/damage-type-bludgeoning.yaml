@@ -1,0 +1,8 @@
+id: damage-type-bludgeoning
+type: rule
+name: Bludgeoning
+description: Blunt objects, constriction, falling
+tags:
+- damage-type
+properties:
+  category: Damage Type

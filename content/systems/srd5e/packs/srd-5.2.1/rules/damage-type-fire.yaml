@@ -1,0 +1,8 @@
+id: damage-type-fire
+type: rule
+name: Fire
+description: Flames, unbearable heat
+tags:
+- damage-type
+properties:
+  category: Damage Type

@@ -1,0 +1,72 @@
+id: guard-captain
+type: monster
+name: Guard Captain
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 18 (Breastplate, Shield)  
+
+  **HP** 75 (10d8 + 30)  
+
+  **Speed** 30 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 14 (+2) | 16 (+3) | 12 (+1) | 14 (+2) | 13 (+1) |
+
+
+  **Skills** Athletics +6, Perception +4  
+
+  **Gear** Breastplate, Javelins (6), Longsword, Shield  
+
+  **Senses** passive perception 14  
+
+  **Languages** Common
+
+
+  ### Actions
+
+  **Multiattack.** The guard makes two attacks, using Javelin or Longsword in any combination.
+
+
+  **Javelin.** Melee or Ranged Attack Roll: +6, reach 5 ft. or range 30/120 ft. Hit: 14 (3d6 + 4) Piercing damage.
+
+
+  **Longsword.** Melee Attack Roll: +6, reach 5 ft. Hit: 15 (2d10 + 4) Slashing damage.
+tags:
+- humanoid
+- medium or small
+- cr-4
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 18
+  hitPoints: 75
+  hitDice: 10d8 + 30
+  speed: 30 ft.
+  strength: 18
+  dexterity: 14
+  constitution: 16
+  intelligence: 12
+  wisdom: 14
+  charisma: 13
+  challengeRating: 4
+  xp: 1100
+  senses: passive perception 14
+  languages: Common
+  skills: Athletics +6, Perception +4
+  gear: Breastplate, Javelins (6), Longsword, Shield
+  actions:
+  - name: Multiattack
+    description: The guard makes two attacks, using Javelin or Longsword in any combination.
+  - name: Javelin
+    description: 'Melee or Ranged Attack Roll: +6, reach 5 ft. or range 30/120 ft. Hit: 14 (3d6 + 4) Piercing damage.'
+  - name: Longsword
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 15 (2d10 + 4) Slashing damage.'

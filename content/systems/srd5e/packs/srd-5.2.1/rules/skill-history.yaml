@@ -1,0 +1,12 @@
+id: skill-history
+type: rule
+name: History
+description: >-
+  **Ability:** INT
+
+
+  Recall lore about historical events, people, nations, and cultures.
+tags:
+- skill
+properties:
+  category: Skill

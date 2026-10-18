@@ -1,0 +1,65 @@
+id: awakened-tree
+type: monster
+name: Awakened Tree
+description: >-
+  *Huge Plant, Neutral*
+
+
+  **AC** 13  
+
+  **HP** 59 (7d12 + 14)  
+
+  **Speed** 20 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 6 (-2) | 15 (+2) | 10 (+0) | 10 (+0) | 7 (-2) |
+
+
+  **Resistances** bludgeoning, piercing  
+
+  **Vulnerabilities** fire  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common plus one other language
+
+
+  ### Actions
+
+  **Slam.** Melee Attack Roll: +6, reach 10 ft. Hit: 14 (3d6 + 4) Bludgeoning damage.
+tags:
+- plant
+- huge
+- cr-2
+properties:
+  size: Huge
+  creatureType: plant
+  alignment: neutral
+  armorClass: 13
+  hitPoints: 59
+  hitDice: 7d12 + 14
+  speed: 20 ft.
+  strength: 19
+  dexterity: 6
+  constitution: 15
+  intelligence: 10
+  wisdom: 10
+  charisma: 7
+  challengeRating: 2
+  xp: 450
+  senses: passive perception 10
+  languages: Common plus one other language
+  resistances:
+  - bludgeoning
+  - piercing
+  vulnerabilities:
+  - fire
+  actions:
+  - name: Slam
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 14 (3d6 + 4) Bludgeoning damage.'

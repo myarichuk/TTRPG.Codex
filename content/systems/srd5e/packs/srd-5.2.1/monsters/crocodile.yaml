@@ -1,0 +1,71 @@
+id: crocodile
+type: monster
+name: Crocodile
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 13 (2d10 + 2)  
+
+  **Speed** 20 ft., swim 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 10 (+0) | 13 (+1) | 2 (-4) | 10 (+0) | 5 (-3) |
+
+
+  **Saving Throws** CON +3  
+
+  **Skills** Stealth +2  
+
+  **Senses** passive perception 10  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Hold Breath.** The crocodile can hold its breath for 1 hour.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Piercing damage. If the target is a Medium or smaller creature, it has the Grappled condition (escape DC 12). While Grappled, the target has the Restrained condition.
+tags:
+- beast
+- large
+- cr-1/2
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 13
+  hitDice: 2d10 + 2
+  speed: 20 ft., swim 30 ft.
+  strength: 15
+  dexterity: 10
+  constitution: 13
+  intelligence: 2
+  wisdom: 10
+  charisma: 5
+  challengeRating: 1/2
+  xp: 100
+  senses: passive perception 10
+  languages: None
+  skills: Stealth +2
+  savingThrows: CON +3
+  traits:
+  - name: Hold Breath
+    description: The crocodile can hold its breath for 1 hour.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Piercing damage. If the target is a Medium or smaller creature, it has the Grappled condition (escape DC 12). While Grappled, the target has the Restrained condition.'

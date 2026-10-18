@@ -1,0 +1,85 @@
+id: young-black-dragon
+type: monster
+name: Young Black Dragon
+description: >-
+  *Large Dragon, Chaotic Evil*
+
+
+  **AC** 18  
+
+  **HP** 127 (15d10 + 45)  
+
+  **Speed** 40 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 7 (XP 2900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 14 (+2) | 17 (+3) | 12 (+1) | 11 (+0) | 15 (+2) |
+
+
+  **Saving Throws** DEX +5, WIS +3  
+
+  **Skills** Perception +6, Stealth +5  
+
+  **Immunities** acid  
+
+  **Senses** darkvision 120 ft., blindsight 30 ft., passive perception 16  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Amphibious.** The dragon can breathe air and water.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +7, reach 10 ft. Hit: 9 (2d4 + 4) Slashing damage plus 3 (1d6) Acid damage.
+
+
+  **Acid Breath.** Dexterity Saving Throw: DC 14, each creature in a 30-foot-long, 5-footwide Line. Failure: 49 (14d6) Acid damage. Success: Half damage.
+tags:
+- dragon
+- large
+- cr-7
+properties:
+  size: Large
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 18
+  hitPoints: 127
+  hitDice: 15d10 + 45
+  speed: 40 ft., fly 80 ft., swim 40 ft.
+  strength: 19
+  dexterity: 14
+  constitution: 17
+  intelligence: 12
+  wisdom: 11
+  charisma: 15
+  challengeRating: 7
+  xp: 2900
+  senses: darkvision 120 ft., blindsight 30 ft., passive perception 16
+  languages: Common, Draconic
+  skills: Perception +6, Stealth +5
+  savingThrows: DEX +5, WIS +3
+  immunities:
+  - acid
+  traits:
+  - name: Amphibious
+    description: The dragon can breathe air and water.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +7, reach 10 ft. Hit: 9 (2d4 + 4) Slashing damage plus 3 (1d6) Acid damage.'
+  - name: Acid Breath
+    description: 'Dexterity Saving Throw: DC 14, each creature in a 30-foot-long, 5-footwide Line. Failure: 49 (14d6) Acid damage. Success: Half damage.'

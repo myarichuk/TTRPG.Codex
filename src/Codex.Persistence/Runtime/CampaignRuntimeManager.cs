@@ -21,6 +21,12 @@ public sealed class CampaignRuntimeManager(
 {
     private readonly ConcurrentDictionary<string, CampaignRuntime> _runtimes = new();
 
+    /// <summary>
+    /// Fires with the campaign id when a table starts or stops, so a player's already-open table
+    /// page can attach to the runtime without a reload (the gap the Phase 3 test worked around).
+    /// </summary>
+    public event Action<string>? RuntimeChanged;
+
     public CampaignRuntime? TryGet(string campaignId) => _runtimes.GetValueOrDefault(campaignId);
 
     /// <summary>Starts a campaign's runtime if it isn't already running, hydrating it from every
@@ -66,6 +72,7 @@ public sealed class CampaignRuntimeManager(
         var actors = await actorRepository.GetVisibleForCampaignAsync(dmAccess);
         runtime.Hydrate(actors);
 
+        RuntimeChanged?.Invoke(campaign.Id);
         return runtime;
     }
 
@@ -124,6 +131,8 @@ public sealed class CampaignRuntimeManager(
                 await sessionRepository.SaveAsync(liveSession);
             }
         }
+
+        RuntimeChanged?.Invoke(campaignId);
     }
 
     public async ValueTask DisposeAsync()

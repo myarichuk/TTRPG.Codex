@@ -1,0 +1,8 @@
+id: school-of-magic-illusion
+type: rule
+name: Illusion
+description: Deceives the mind or senses
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

@@ -1,0 +1,88 @@
+id: chuul
+type: monster
+name: Chuul
+description: >-
+  *Large Aberration, Chaotic Evil*
+
+
+  **AC** 16  
+
+  **HP** 76 (9d10 + 27)  
+
+  **Speed** 30 ft., swim 30 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 19 (+4) | 10 (+0) | 16 (+3) | 5 (-3) | 11 (+0) | 5 (-3) |
+
+
+  **Skills** Perception +4  
+
+  **Immunities** poison, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Understands Deep Speech but can’t speak
+
+
+  ### Traits
+
+  **Amphibious.** The chuul can breathe air and water.
+
+
+  **Sense Magic.** The chuul senses magic within 120 feet of itself. This trait otherwise works like the Detect Magic spell but isn’t itself magical.
+
+
+
+  ### Actions
+
+  **Multiattack.** The chuul makes two Pincer attacks and uses Paralyzing Tentacles.
+
+
+  **Pincer.** Melee Attack Roll: +6, reach 10 ft. Hit: 9 (1d10 + 4) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14) from one of two pincers.
+
+
+  **Paralyzing Tentacles.** Constitution Saving Throw: DC 13, one creature Grappled by the chuul. Failure: The target has the Poisoned condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically. While Poisoned, the target has the Paralyzed condition.
+tags:
+- aberration
+- large
+- cr-4
+properties:
+  size: Large
+  creatureType: aberration
+  alignment: chaotic evil
+  armorClass: 16
+  hitPoints: 76
+  hitDice: 9d10 + 27
+  speed: 30 ft., swim 30 ft.
+  strength: 19
+  dexterity: 10
+  constitution: 16
+  intelligence: 5
+  wisdom: 11
+  charisma: 5
+  challengeRating: 4
+  xp: 1100
+  senses: darkvision 60 ft., passive perception 14
+  languages: Understands Deep Speech but can’t speak
+  skills: Perception +4
+  immunities:
+  - poison
+  - Poisoned
+  traits:
+  - name: Amphibious
+    description: The chuul can breathe air and water.
+  - name: Sense Magic
+    description: The chuul senses magic within 120 feet of itself. This trait otherwise works like the Detect Magic spell but isn’t itself magical.
+  actions:
+  - name: Multiattack
+    description: The chuul makes two Pincer attacks and uses Paralyzing Tentacles.
+  - name: Pincer
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 9 (1d10 + 4) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14) from one of two pincers.'
+  - name: Paralyzing Tentacles
+    description: 'Constitution Saving Throw: DC 13, one creature Grappled by the chuul. Failure: The target has the Poisoned condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically. While Poisoned, the target has the Paralyzed condition.'

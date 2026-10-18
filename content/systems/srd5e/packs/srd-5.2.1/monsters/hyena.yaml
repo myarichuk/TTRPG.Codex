@@ -1,0 +1,68 @@
+id: hyena
+type: monster
+name: Hyena
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 5 (1d8 + 1)  
+
+  **Speed** 50 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 13 (+1) | 12 (+1) | 2 (-4) | 12 (+1) | 5 (-3) |
+
+
+  **Skills** Perception +3  
+
+  **Senses** darkvision 60 ft., passive perception 13  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Pack Tactics.** The hyena has Advantage on an attack roll against a creature if at least one of the hyena’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +2, reach 5 ft. Hit: 3 (1d6) Piercing damage.
+tags:
+- beast
+- medium
+- cr-0
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 5
+  hitDice: 1d8 + 1
+  speed: 50 ft.
+  strength: 11
+  dexterity: 13
+  constitution: 12
+  intelligence: 2
+  wisdom: 12
+  charisma: 5
+  challengeRating: 0
+  xp: 10
+  senses: darkvision 60 ft., passive perception 13
+  languages: None
+  skills: Perception +3
+  traits:
+  - name: Pack Tactics
+    description: The hyena has Advantage on an attack roll against a creature if at least one of the hyena’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 3 (1d6) Piercing damage.'

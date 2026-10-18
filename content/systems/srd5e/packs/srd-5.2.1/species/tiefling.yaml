@@ -1,0 +1,122 @@
+id: tiefling
+type: species
+name: Tiefling
+description: >-
+  **Creature Type:** Humanoid  
+
+  **Size:**   
+
+  **Speed:** 30 feet
+
+
+  **Darkvision (60 ft.).** You have Darkvision with a range of 60 feet.
+
+
+  **Fiendish Legacy.** You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy.
+
+  When you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table.
+
+  You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have of the appropriate level.
+
+  Intelligence, Wisdom, or Charisma is your spell-casting ability for the spells you cast with this trait (choose the ability when you select the legacy).
+
+  Fiendish Legacies
+
+  Abyssal.
+
+  Level 1. You have Resistance to Poison damage. You also know the Poison Spray cantrip.
+
+  Level 3. Ray of Sickness
+
+  Level 5. Hold Person
+
+  Chthonic.
+
+  Level 1. You have Resistance to Necrotic damage. You also know the Chill Touch cantrip.
+
+  Level 3. False Life
+
+  Level 5. Ray of Enfeeblement
+
+  Infernal.
+
+  Level 1. You have Resistance to Fire damage. You also know the Fire Bolt cantrip.
+
+  Level 3. Hellish Rebuke
+
+  Level 5. Darkness
+
+
+  **Otherworldly Presence.** You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait.
+properties:
+  creatureType: Humanoid
+  size: ''
+  speed: 30
+  traits:
+  - name: Darkvision (60 ft.)
+    description: You have Darkvision with a range of 60 feet.
+  - name: Fiendish Legacy
+    description: >-
+      You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy.
+
+      When you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table.
+
+      You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have of the appropriate level.
+
+      Intelligence, Wisdom, or Charisma is your spell-casting ability for the spells you cast with this trait (choose the ability when you select the legacy).
+
+      Fiendish Legacies
+
+      Abyssal.
+
+      Level 1. You have Resistance to Poison damage. You also know the Poison Spray cantrip.
+
+      Level 3. Ray of Sickness
+
+      Level 5. Hold Person
+
+      Chthonic.
+
+      Level 1. You have Resistance to Necrotic damage. You also know the Chill Touch cantrip.
+
+      Level 3. False Life
+
+      Level 5. Ray of Enfeeblement
+
+      Infernal.
+
+      Level 1. You have Resistance to Fire damage. You also know the Fire Bolt cantrip.
+
+      Level 3. Hellish Rebuke
+
+      Level 5. Darkness
+  - name: Otherworldly Presence
+    description: You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait.
+  lineages:
+  - name: 'Fiendish Legacy: Abyssal'
+    description: >-
+      **Damage Resistance: Poison.** You have Resistance to Poison damage.
+
+      **Poison Spray.** You know the spell Poison Spray.
+
+      **Ray of Sickness.** You know the spell Ray of Sickness.
+
+      **Hold Person.** You know the spell Hold Person.
+  - name: 'Fiendish Legacy: Chthonic'
+    description: >-
+      **Damage Resistance: Necrotic.** You have Resistance to Necrotic damage.
+
+      **Chill Touch.** You know the spell Chill Touch.
+
+      **False Life.** You know the spell False Life.
+
+      **Ray of Enfeeblement.** You know the spell Ray of Enfeeblement.
+  - name: 'Fiendish Legacy: Infernal'
+    description: >-
+      **Damage Resistance: Fire.** You have Resistance to Fire damage.
+
+      **Fire Bolt.** You know the spell Fire Bolt.
+
+      **Hellish Rebuke.** You know the spell Hellish Rebuke.
+
+      **Darkness.** You know the spell Darkness.

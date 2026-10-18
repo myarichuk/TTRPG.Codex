@@ -1,0 +1,90 @@
+id: werewolf-human
+type: monster
+name: Werewolf, Human Form
+description: >-
+  *Medium Monstrosity, Chaotic Evil*
+
+
+  **AC** 15  
+
+  **HP** 71 (11d8 + 22)  
+
+  **Speed** 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 14 (+2) | 14 (+2) | 10 (+0) | 11 (+0) | 10 (+0) |
+
+
+  **Skills** Perception +4, Stealth +4  
+
+  **Gear** Longbow  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Common (can’t speak in wolf form)
+
+
+  ### Traits
+
+  **Pack Tactics.** The werewolf has Advantage on an attack roll against a creature if at least one of the werewolf’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Multiattack.** The werewolf makes two attacks, using Scratch or Longbow in any combination. It can replace one attack with a Bite attack.
+
+
+  **Scratch.** Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage.
+
+
+  **Longbow.** Ranged Attack Roll: +4, range 150/600 ft. Hit: 11 (2d8 + 2) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Shape-Shift.** The werewolf shape-shifts into a Large wolf-humanoid hybrid or a Medium wolf, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn’t transformed.
+tags:
+- monstrosity
+- medium
+- cr-3
+properties:
+  size: Medium
+  creatureType: monstrosity
+  alignment: chaotic evil
+  armorClass: 15
+  hitPoints: 71
+  hitDice: 11d8 + 22
+  speed: 30 ft.
+  strength: 16
+  dexterity: 14
+  constitution: 14
+  intelligence: 10
+  wisdom: 11
+  charisma: 10
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 14
+  languages: Common (can’t speak in wolf form)
+  skills: Perception +4, Stealth +4
+  gear: Longbow
+  traits:
+  - name: Pack Tactics
+    description: The werewolf has Advantage on an attack roll against a creature if at least one of the werewolf’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Multiattack
+    description: The werewolf makes two attacks, using Scratch or Longbow in any combination. It can replace one attack with a Bite attack.
+  - name: Scratch
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage.'
+  - name: Longbow
+    description: 'Ranged Attack Roll: +4, range 150/600 ft. Hit: 11 (2d8 + 2) Piercing damage.'
+  bonusActions:
+  - name: Shape-Shift
+    description: The werewolf shape-shifts into a Large wolf-humanoid hybrid or a Medium wolf, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn’t transformed.

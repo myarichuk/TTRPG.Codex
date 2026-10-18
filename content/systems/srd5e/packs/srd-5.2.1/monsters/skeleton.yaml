@@ -1,0 +1,74 @@
+id: skeleton
+type: monster
+name: Skeleton
+description: >-
+  *Medium Undead, Lawful Evil*
+
+
+  **AC** 14  
+
+  **HP** 13 (2d8 + 4)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 16 (+3) | 15 (+2) | 6 (-2) | 8 (-1) | 5 (-3) |
+
+
+  **Immunities** poison, Exhaustion, Poisoned  
+
+  **Vulnerabilities** bludgeoning  
+
+  **Gear** Shortbow, Shortsword  
+
+  **Senses** darkvision 60 ft., passive perception 9  
+
+  **Languages** Understands Common plus one other language but can’t speak
+
+
+  ### Actions
+
+  **Shortsword.** Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Piercing damage.
+
+
+  **Shortbow.** Ranged Attack Roll: +5, range 80/320 ft. Hit: 6 (1d6 + 3) Piercing damage.
+tags:
+- undead
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: lawful evil
+  armorClass: 14
+  hitPoints: 13
+  hitDice: 2d8 + 4
+  speed: 30 ft.
+  strength: 10
+  dexterity: 16
+  constitution: 15
+  intelligence: 6
+  wisdom: 8
+  charisma: 5
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 9
+  languages: Understands Common plus one other language but can’t speak
+  immunities:
+  - poison
+  - Exhaustion
+  - Poisoned
+  vulnerabilities:
+  - bludgeoning
+  gear: Shortbow, Shortsword
+  actions:
+  - name: Shortsword
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Piercing damage.'
+  - name: Shortbow
+    description: 'Ranged Attack Roll: +5, range 80/320 ft. Hit: 6 (1d6 + 3) Piercing damage.'

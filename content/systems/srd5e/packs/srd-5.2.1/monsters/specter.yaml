@@ -1,0 +1,95 @@
+id: specter
+type: monster
+name: Specter
+description: >-
+  *Medium Undead, Chaotic Evil*
+
+
+  **AC** 12  
+
+  **HP** 22 (5d8)  
+
+  **Speed** 30 ft., fly 50 ft., hover True  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 1 (-5) | 14 (+2) | 11 (+0) | 10 (+0) | 10 (+0) | 11 (+0) |
+
+
+  **Resistances** acid, bludgeoning, cold, fire, lightning, piercing, slashing, thunder  
+
+  **Immunities** necrotic, poison, Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Understands Common plus one other language but can’t speak
+
+
+  ### Traits
+
+  **Incorporeal Movement.** The specter can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.
+
+
+  **Sunlight Sensitivity.** While in sunlight, the specter has Disadvantage on ability checks and attack rolls.
+
+
+
+  ### Actions
+
+  **Life Drain.** Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d6) Necrotic damage. If the target is a creature, its Hit Point maximum decreases by an amount equal to the damage taken.
+tags:
+- undead
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: chaotic evil
+  armorClass: 12
+  hitPoints: 22
+  hitDice: 5d8
+  speed: 30 ft., fly 50 ft., hover True
+  strength: 1
+  dexterity: 14
+  constitution: 11
+  intelligence: 10
+  wisdom: 10
+  charisma: 11
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 10
+  languages: Understands Common plus one other language but can’t speak
+  resistances:
+  - acid
+  - bludgeoning
+  - cold
+  - fire
+  - lightning
+  - piercing
+  - slashing
+  - thunder
+  immunities:
+  - necrotic
+  - poison
+  - Charmed
+  - Exhaustion
+  - Grappled
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  - Prone
+  - Restrained
+  - Unconscious
+  traits:
+  - name: Incorporeal Movement
+    description: The specter can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.
+  - name: Sunlight Sensitivity
+    description: While in sunlight, the specter has Disadvantage on ability checks and attack rolls.
+  actions:
+  - name: Life Drain
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d6) Necrotic damage. If the target is a creature, its Hit Point maximum decreases by an amount equal to the damage taken.'

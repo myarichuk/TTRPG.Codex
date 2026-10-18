@@ -1,0 +1,24 @@
+id: sage
+type: background
+name: Sage
+description: >-
+  **Ability Scores:** CON, INT, WIS  
+
+  **Feat:** Magic Initiate  
+
+  **Skill Proficiencies:** Arcana, History  
+
+  **Tool Proficiency:** Calligrapher's Supplies  
+
+  **Equipment:** Choose A or B: (A) Quarterstaff, Calligrapher's Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP; or (B) 50 GP
+properties:
+  abilityScores:
+  - CON
+  - INT
+  - WIS
+  feat: magic-initiate
+  skillProficiencies:
+  - Arcana
+  - History
+  toolProficiency: Calligrapher's Supplies
+  equipment: "Choose A or B: (A) Quarterstaff, Calligrapher's Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP; or (B) 50 GP"

@@ -1,0 +1,64 @@
+id: awakened-shrub
+type: monster
+name: Awakened Shrub
+description: >-
+  *Small Plant, Neutral*
+
+
+  **AC** 9  
+
+  **HP** 10 (3d6)  
+
+  **Speed** 20 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 3 (-4) | 8 (-1) | 11 (+0) | 10 (+0) | 10 (+0) | 6 (-2) |
+
+
+  **Resistances** piercing  
+
+  **Vulnerabilities** fire  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common plus one other language
+
+
+  ### Actions
+
+  **Rake.** Melee Attack Roll: +1, reach 5 ft. Hit: 1 Slashing damage.
+tags:
+- plant
+- small
+- cr-0
+properties:
+  size: Small
+  creatureType: plant
+  alignment: neutral
+  armorClass: 9
+  hitPoints: 10
+  hitDice: 3d6
+  speed: 20 ft.
+  strength: 3
+  dexterity: 8
+  constitution: 11
+  intelligence: 10
+  wisdom: 10
+  charisma: 6
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 10
+  languages: Common plus one other language
+  resistances:
+  - piercing
+  vulnerabilities:
+  - fire
+  actions:
+  - name: Rake
+    description: 'Melee Attack Roll: +1, reach 5 ft. Hit: 1 Slashing damage.'

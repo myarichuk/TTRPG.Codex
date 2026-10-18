@@ -1,0 +1,73 @@
+id: reef-shark
+type: monster
+name: Reef Shark
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 12  
+
+  **HP** 22 (4d8 + 4)  
+
+  **Speed** 5 ft., swim 30 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 14 (+2) | 15 (+2) | 13 (+1) | 1 (-5) | 10 (+0) | 4 (-3) |
+
+
+  **Skills** Perception +2  
+
+  **Senses** blindsight 30 ft., passive perception 12  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Pack Tactics.** The shark has Advantage on an attack roll against a creature if at least one of the shark’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+  **Water Breathing.** The shark can breathe only underwater.
+
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d4 + 2) Piercing damage.
+tags:
+- beast
+- medium
+- cr-1/2
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 12
+  hitPoints: 22
+  hitDice: 4d8 + 4
+  speed: 5 ft., swim 30 ft.
+  strength: 14
+  dexterity: 15
+  constitution: 13
+  intelligence: 1
+  wisdom: 10
+  charisma: 4
+  challengeRating: 1/2
+  xp: 100
+  senses: blindsight 30 ft., passive perception 12
+  languages: None
+  skills: Perception +2
+  traits:
+  - name: Pack Tactics
+    description: The shark has Advantage on an attack roll against a creature if at least one of the shark’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  - name: Water Breathing
+    description: The shark can breathe only underwater.
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d4 + 2) Piercing damage.'

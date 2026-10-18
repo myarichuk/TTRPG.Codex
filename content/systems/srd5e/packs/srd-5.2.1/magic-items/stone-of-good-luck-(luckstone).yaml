@@ -1,0 +1,15 @@
+id: stone-of-good-luck-(luckstone)
+type: magic-item
+name: Stone of Good Luck (Luckstone)
+description: >-
+  Wondrous Item
+
+
+  While this polished agate is on your person, you gain a +1 bonus to ability checks and saving throws.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

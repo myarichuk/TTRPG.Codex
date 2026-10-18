@@ -1,0 +1,59 @@
+id: worg
+type: monster
+name: Worg
+description: >-
+  *Large Fey, Neutral Evil*
+
+
+  **AC** 13  
+
+  **HP** 26 (4d10 + 4)  
+
+  **Speed** 50 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 13 (+1) | 13 (+1) | 7 (-2) | 11 (+0) | 8 (-1) |
+
+
+  **Skills** Perception +4  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Goblin, Worg
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage, and the next attack roll made against the target before the start of the worg’s next turn has Advantage.
+tags:
+- fey
+- large
+- cr-1/2
+properties:
+  size: Large
+  creatureType: fey
+  alignment: neutral evil
+  armorClass: 13
+  hitPoints: 26
+  hitDice: 4d10 + 4
+  speed: 50 ft.
+  strength: 16
+  dexterity: 13
+  constitution: 13
+  intelligence: 7
+  wisdom: 11
+  charisma: 8
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 14
+  languages: Goblin, Worg
+  skills: Perception +4
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Piercing damage, and the next attack roll made against the target before the start of the worg’s next turn has Advantage.'

@@ -1,0 +1,68 @@
+id: crab
+type: monster
+name: Crab
+description: >-
+  *Tiny Beast, Unaligned*
+
+
+  **AC** 11  
+
+  **HP** 3 (1d4 + 1)  
+
+  **Speed** 20 ft., swim 20 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 6 (-2) | 11 (+0) | 12 (+1) | 1 (-5) | 8 (-1) | 2 (-4) |
+
+
+  **Skills** Stealth +2  
+
+  **Senses** blindsight 30 ft., passive perception 9  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Amphibious.** The crab can breathe air and water.
+
+
+
+  ### Actions
+
+  **Claw.** Melee Attack Roll: +2, reach 5 ft. Hit: 1 Bludgeoning damage.
+tags:
+- beast
+- tiny
+- cr-0
+properties:
+  size: Tiny
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 11
+  hitPoints: 3
+  hitDice: 1d4 + 1
+  speed: 20 ft., swim 20 ft.
+  strength: 6
+  dexterity: 11
+  constitution: 12
+  intelligence: 1
+  wisdom: 8
+  charisma: 2
+  challengeRating: 0
+  xp: 10
+  senses: blindsight 30 ft., passive perception 9
+  languages: None
+  skills: Stealth +2
+  traits:
+  - name: Amphibious
+    description: The crab can breathe air and water.
+  actions:
+  - name: Claw
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 1 Bludgeoning damage.'

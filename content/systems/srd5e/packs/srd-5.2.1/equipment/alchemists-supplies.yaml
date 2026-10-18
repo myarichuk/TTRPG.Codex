@@ -1,0 +1,17 @@
+id: alchemists-supplies
+type: equipment
+name: Alchemist's Supplies
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 50 gp  
+
+  **Weight:** 8 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 50 gp
+  weight: 8

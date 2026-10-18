@@ -1,0 +1,156 @@
+@using Codex.Core
+@using Codex.Plugin.Abstractions
+@using Codex.Web.Services
+
+@* Renders one Library item: its summary fields, the formatted rules text, any structured rows
+   (features, traits, actions) and - always - the licence attribution for where it came from. *@
+
+<article class="entry-detail" aria-labelledby="entry-title">
+    <header class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+        <div>
+            <div class="small-muted text-uppercase fw-bold" style="letter-spacing:.06em">@TypeLabel</div>
+            <h2 id="entry-title" class="mb-1">@Item.Entry.Name</h2>
+            <div class="d-flex flex-wrap gap-1">
+                @if (Item.IsHomebrew)
+                {
+                    <span class="pill pill-accent">Homebrew</span>
+                }
+                @foreach (var tag in Item.Entry.Tags.Take(8))
+                {
+                    <span class="pill">@tag</span>
+                }
+            </div>
+        </div>
+        @if (Actions != null)
+        {
+            <div class="row-actions">@Actions</div>
+        }
+    </header>
+
+    @if (SummaryPairs.Count > 0)
+    {
+        <dl class="prop-list">
+            @foreach (var pair in SummaryPairs)
+            {
+                <dt>@pair.Label</dt>
+                <dd>@pair.Value</dd>
+            }
+        </dl>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Item.Entry.Description))
+    {
+        <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(Item.Entry.Description))</div>
+    }
+
+    @foreach (var group in CollectionProperties)
+    {
+        <h3 class="h6 mt-3">@group.Label</h3>
+        <ul class="feature-list">
+            @foreach (var row in group.Rows)
+            {
+                <li>
+                    @if (row.TryGetValue("level", out var level))
+                    {
+                        <div class="feature-level">Level @level</div>
+                    }
+                    <strong>@(row.GetValueOrDefault("name")?.ToString())</strong>
+                    @if (row.GetValueOrDefault("description") is { } description)
+                    {
+                        <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(description.ToString()))</div>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    <footer class="attribution" data-testid="entry-attribution">
+        <div><strong>Source:</strong> @Item.SourceName@(Item.Entry.Source != null && !Item.IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
+        @if (Item.License != null)
+        {
+            <div class="mt-1">
+                @if (!string.IsNullOrWhiteSpace(Item.License.Attribution))
+                {
+                    <div>@Item.License.Attribution</div>
+                }
+                <div>
+                    Licence: @if (Item.License.Url != null) { <a href="@Item.License.Url" rel="license noopener" target="_blank">@Item.License.Name</a> } else { @Item.License.Name }
+                    @if (Item.License.Modified) { <span> · modified from the original</span> }
+                </div>
+            </div>
+        }
+        else if (Item.IsHomebrew)
+        {
+            <div class="mt-1">Created at this table. The DM decides who may reuse it.</div>
+        }
+    </footer>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public LibraryItem Item { get; set; } = null!;
+    [Parameter] public ContentTypeDefinition? Type { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    private string TypeLabel => Type?.Label ?? CampaignLibrary.Humanize(Item.Entry.Type);
+
+    /// <summary>Scalar properties worth a definition list: declared summary fields first, then
+    /// every other scalar (strings, numbers, booleans, tag lists) that isn't a collection.</summary>
+    private List<(string Label, string Value)> SummaryPairs
+    {
+        get
+        {
+            var pairs = new List<(string, string)>();
+            var fields = Type?.Fields ?? new List<FieldDefinition>();
+            var ordered = (Type?.SummaryFields ?? new List<string>())
+                .Concat(fields.Select(f => f.Key))
+                .Concat(Item.Entry.Properties.Keys)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var key in ordered)
+            {
+                if (!Item.Entry.Properties.TryGetValue(key, out var value) || value == null) continue;
+                var fieldDef = fields.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase));
+                if (fieldDef?.Type == FieldType.Collection || IsRows(value)) continue;
+                if (fieldDef?.Type == FieldType.LongText && Item.Entry.Description?.Contains(value.ToString() ?? "\0") == true) continue;
+
+                var text = value switch
+                {
+                    bool b => b ? "Yes" : "No",
+                    IEnumerable<object> list => string.Join(", ", list.Select(o => o?.ToString())),
+                    _ => value.ToString() ?? string.Empty
+                };
+                if (text.Length == 0 || text.Length > 160) continue;
+                pairs.Add((fieldDef?.Label ?? CampaignLibrary.Humanize(key), text));
+            }
+
+            return pairs;
+        }
+    }
+
+    private List<(string Label, List<Dictionary<string, object>> Rows)> CollectionProperties
+    {
+        get
+        {
+            var result = new List<(string, List<Dictionary<string, object>>)>();
+            foreach (var (key, value) in Item.Entry.Properties)
+            {
+                if (!IsRows(value)) continue;
+                var fieldDef = Type?.Fields.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase));
+                var rows = ((IEnumerable<object>)value).OfType<IDictionary<string, object>>().Select(r => new Dictionary<string, object>(r)).ToList();
+                // Rows already rendered inside the description (the importer writes both) are skipped
+                // when every row name appears in the text, to avoid showing a stat block twice.
+                if (Item.Entry.Description != null && rows.Count > 0 && rows.All(r => r.GetValueOrDefault("name") is string n && Item.Entry.Description.Contains(n)))
+                {
+                    continue;
+                }
+
+                result.Add((fieldDef?.Label ?? CampaignLibrary.Humanize(key), rows));
+            }
+
+            return result;
+        }
+    }
+
+    private static bool IsRows(object value) =>
+        value is IEnumerable<object> list && list.Any() && list.All(item => item is IDictionary<string, object>);
+}

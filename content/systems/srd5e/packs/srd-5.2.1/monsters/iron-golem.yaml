@@ -1,0 +1,102 @@
+id: iron-golem
+type: monster
+name: Iron Golem
+description: >-
+  *Large Construct, Unaligned*
+
+
+  **AC** 20  
+
+  **HP** 252 (24d10 + 120)  
+
+  **Speed** 30 ft.  
+
+  **CR** 16 (XP 15000; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 24 (+7) | 9 (-1) | 20 (+5) | 3 (-4) | 11 (+0) | 1 (-5) |
+
+
+  **Immunities** fire, poison, psychic, Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned  
+
+  **Senses** darkvision 120 ft., passive perception 10  
+
+  **Languages** Understands Common plus two other languages but can’t speak
+
+
+  ### Traits
+
+  **Fire Absorption.** Whenever the golem is subjected to Fire damage, it regains a number of Hit Points equal to the Fire damage dealt.
+
+
+  **Immutable Form.** The golem can’t shape-shift.
+
+
+  **Magic Resistance.** The golem has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The golem makes two attacks, using Bladed Arm or Fiery Bolt in any combination.
+
+
+  **Bladed Arm.** Melee Attack Roll: +12, reach 10 ft. Hit: 20 (3d8 + 7) Slashing damage plus 10 (3d6) Fire damage.
+
+
+  **Fiery Bolt.** Ranged Attack Roll: +10, range 120 ft. Hit: 36 (8d8) Fire damage.
+
+
+  **Poison Breath.** Constitution Saving Throw: DC 18, each creature in a 60-foot Cone. Failure: 55 (10d10) Poison damage. Success: Half damage.
+tags:
+- construct
+- large
+- cr-16
+properties:
+  size: Large
+  creatureType: construct
+  alignment: unaligned
+  armorClass: 20
+  hitPoints: 252
+  hitDice: 24d10 + 120
+  speed: 30 ft.
+  strength: 24
+  dexterity: 9
+  constitution: 20
+  intelligence: 3
+  wisdom: 11
+  charisma: 1
+  challengeRating: 16
+  xp: 15000
+  senses: darkvision 120 ft., passive perception 10
+  languages: Understands Common plus two other languages but can’t speak
+  immunities:
+  - fire
+  - poison
+  - psychic
+  - Charmed
+  - Exhaustion
+  - Frightened
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  traits:
+  - name: Fire Absorption
+    description: Whenever the golem is subjected to Fire damage, it regains a number of Hit Points equal to the Fire damage dealt.
+  - name: Immutable Form
+    description: The golem can’t shape-shift.
+  - name: Magic Resistance
+    description: The golem has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The golem makes two attacks, using Bladed Arm or Fiery Bolt in any combination.
+  - name: Bladed Arm
+    description: 'Melee Attack Roll: +12, reach 10 ft. Hit: 20 (3d8 + 7) Slashing damage plus 10 (3d6) Fire damage.'
+  - name: Fiery Bolt
+    description: 'Ranged Attack Roll: +10, range 120 ft. Hit: 36 (8d8) Fire damage.'
+  - name: Poison Breath
+    description: 'Constitution Saving Throw: DC 18, each creature in a 60-foot Cone. Failure: 55 (10d10) Poison damage. Success: Half damage.'

@@ -1,0 +1,115 @@
+id: dragonborn
+type: species
+name: Dragonborn
+description: >-
+  **Creature Type:** Humanoid  
+
+  **Size:** Medium  
+
+  **Speed:** 30 feet
+
+
+  **Darkvision (60 ft.).** You have Darkvision with a range of 60 feet.
+
+
+  **Draconic Flight.** When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a Bonus Action, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the Incapacitated condition. During that time, you have a Fly Speed equal to your Speed. Your wings appear to be made of the same energy as your Breath Weapon. Once you use this trait, you can't use it again until you finish a Long Rest.
+properties:
+  creatureType: Humanoid
+  size: Medium
+  speed: 30
+  traits:
+  - name: Darkvision (60 ft.)
+    description: You have Darkvision with a range of 60 feet.
+  - name: Draconic Flight
+    description: When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a Bonus Action, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the Incapacitated condition. During that time, you have a Fly Speed equal to your Speed. Your wings appear to be made of the same energy as your Breath Weapon. Once you use this trait, you can't use it again until you finish a Long Rest.
+  lineages:
+  - name: 'Draconic Ancestor: Black'
+    description: >-
+      Damage type: Acid
+
+      **Breath Weapon: Acid.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 acid damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Acid.** You have Resistance to acid damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Blue'
+    description: >-
+      Damage type: Lightning
+
+      **Breath Weapon: Lightning.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 lightning damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Lightning.** You have Resistance to lightning damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Brass'
+    description: >-
+      Damage type: Fire
+
+      **Breath Weapon: Fire.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 fire damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Fire.** You have Resistance to fire damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Bronze'
+    description: >-
+      Damage type: Lightning
+
+      **Breath Weapon: Lightning.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 lightning damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Lightning.** You have Resistance to lightning damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Copper'
+    description: >-
+      Damage type: Acid
+
+      **Breath Weapon: Acid.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 acid damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Acid.** You have Resistance to acid damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Gold'
+    description: >-
+      Damage type: Fire
+
+      **Breath Weapon: Fire.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 fire damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Fire.** You have Resistance to fire damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Green'
+    description: >-
+      Damage type: Poison
+
+      **Breath Weapon: Poison.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 poison damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Poison.** You have Resistance to poison damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Red'
+    description: >-
+      Damage type: Fire
+
+      **Breath Weapon: Fire.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 fire damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Fire.** You have Resistance to fire damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: Silver'
+    description: >-
+      Damage type: Cold
+
+      **Breath Weapon: Cold.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 cold damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Cold.** You have Resistance to cold damage, as determined by your Draconic Ancestry trait.
+  - name: 'Draconic Ancestor: White'
+    description: >-
+      Damage type: Cold
+
+      **Breath Weapon: Cold.** When you take the Attack action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot Cone or a 30-foot Line that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw (DC 8 plus your Constitution modifier and Proficiency Bonus). On a failed save, a creature takes 1d10 cold damage. On a successful save, a creature takes half as much damage. This damage increases by 1d10 when you reach character levels 5 (2d10), 11 (3d10), and 17 (4d10).
+
+      You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
+
+      **Damage Resistance: Cold.** You have Resistance to cold damage, as determined by your Draconic Ancestry trait.

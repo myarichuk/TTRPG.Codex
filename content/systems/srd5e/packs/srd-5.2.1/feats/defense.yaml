@@ -1,0 +1,8 @@
+id: defense
+type: feat
+name: Defense
+description: While you're wearing Light, Medium, or Heavy armor, you gain a +1 bonus to Armor Class.
+tags:
+- fighting-style
+properties:
+  category: fighting-style

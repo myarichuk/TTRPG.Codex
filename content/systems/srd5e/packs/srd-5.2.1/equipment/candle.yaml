@@ -1,0 +1,19 @@
+id: candle
+type: equipment
+name: Candle
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 cp  
+
+  **Weight:** 0 lb.
+
+
+  For 1 hour, a lit Candle sheds Bright Light in a 5-foot radius and Dim Light for an additional 5 feet.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 cp
+  weight: 0

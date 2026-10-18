@@ -1,0 +1,19 @@
+id: spellbook
+type: equipment
+name: Spellbook
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 50 gp  
+
+  **Weight:** 3 lb.
+
+
+  Essential for wizards, a spellbook is a leather-bound tome with 100 blank vellum pages suitable for recording spells.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 50 gp
+  weight: 3

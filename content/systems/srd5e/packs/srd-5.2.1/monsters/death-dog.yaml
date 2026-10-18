@@ -1,0 +1,73 @@
+id: death-dog
+type: monster
+name: Death Dog
+description: >-
+  *Medium Monstrosity, Neutral Evil*
+
+
+  **AC** 12  
+
+  **HP** 39 (6d8 + 12)  
+
+  **Speed** 40 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 14 (+2) | 14 (+2) | 3 (-4) | 13 (+1) | 6 (-2) |
+
+
+  **Skills** Perception +5, Stealth +4  
+
+  **Immunities** Blinded, Charmed, Deafened, Frightened, Stunned, Unconscious  
+
+  **Senses** darkvision 120 ft., passive perception 15  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The death dog makes two Bite attacks.
+
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Piercing damage. If the target is a creature, it is subjected to the following effect. Constitution Saving Throw: DC 12. First Failure: The target has the Poisoned condition. While Poisoned, the target’s Hit Point maximum doesn’t return to normal when finishing a Long Rest, and it repeats the save every 24 hours that elapse, ending the effect on itself on a success. Subsequent Failures: The Poisoned target’s Hit Point maximum decreases by 5 (1d10).
+tags:
+- monstrosity
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: monstrosity
+  alignment: neutral evil
+  armorClass: 12
+  hitPoints: 39
+  hitDice: 6d8 + 12
+  speed: 40 ft.
+  strength: 15
+  dexterity: 14
+  constitution: 14
+  intelligence: 3
+  wisdom: 13
+  charisma: 6
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 120 ft., passive perception 15
+  languages: None
+  skills: Perception +5, Stealth +4
+  immunities:
+  - Blinded
+  - Charmed
+  - Deafened
+  - Frightened
+  - Stunned
+  - Unconscious
+  actions:
+  - name: Multiattack
+    description: The death dog makes two Bite attacks.
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Piercing damage. If the target is a creature, it is subjected to the following effect. Constitution Saving Throw: DC 12. First Failure: The target has the Poisoned condition. While Poisoned, the target’s Hit Point maximum doesn’t return to normal when finishing a Long Rest, and it repeats the save every 24 hours that elapse, ending the effect on itself on a success. Subsequent Failures: The Poisoned target’s Hit Point maximum decreases by 5 (1d10).'

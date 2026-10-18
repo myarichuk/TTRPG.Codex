@@ -1,0 +1,68 @@
+id: berserker
+type: monster
+name: Berserker
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 13 (Hide Armor)  
+
+  **HP** 67 (9d8 + 27)  
+
+  **Speed** 30 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 16 (+3) | 12 (+1) | 17 (+3) | 9 (-1) | 11 (+0) | 9 (-1) |
+
+
+  **Gear** Greataxe, Hide Armor  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common
+
+
+  ### Traits
+
+  **Bloodied Frenzy.** While Bloodied, the berserker has Advantage on attack rolls and saving throws.
+
+
+
+  ### Actions
+
+  **Greataxe.** Melee Attack Roll: +5, reach 5 ft. Hit: 9 (1d12 + 3) Slashing damage.
+tags:
+- humanoid
+- medium or small
+- cr-2
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 13
+  hitPoints: 67
+  hitDice: 9d8 + 27
+  speed: 30 ft.
+  strength: 16
+  dexterity: 12
+  constitution: 17
+  intelligence: 9
+  wisdom: 11
+  charisma: 9
+  challengeRating: 2
+  xp: 450
+  senses: passive perception 10
+  languages: Common
+  gear: Greataxe, Hide Armor
+  traits:
+  - name: Bloodied Frenzy
+    description: While Bloodied, the berserker has Advantage on attack rolls and saving throws.
+  actions:
+  - name: Greataxe
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 9 (1d12 + 3) Slashing damage.'

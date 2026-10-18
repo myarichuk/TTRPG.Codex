@@ -1,0 +1,8 @@
+id: alignment-neutral-good
+type: rule
+name: Neutral Good
+description: Neutral Good creatures do the best they can, working within rules but not feeling bound by them. A kindly person who helps others according to their needs is probably Neutral Good.
+tags:
+- alignment
+properties:
+  category: Alignment

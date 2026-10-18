@@ -1,0 +1,15 @@
+id: cloak-of-the-manta-ray
+type: magic-item
+name: Cloak of the Manta Ray
+description: >-
+  Wondrous Item
+
+
+  While wearing this cloak, you can breathe underwater, and you have a Swim Speed of 60 feet.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

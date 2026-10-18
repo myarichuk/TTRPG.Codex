@@ -1,0 +1,8 @@
+id: damage-type-thunder
+type: rule
+name: Thunder
+description: Concussive sound
+tags:
+- damage-type
+properties:
+  category: Damage Type

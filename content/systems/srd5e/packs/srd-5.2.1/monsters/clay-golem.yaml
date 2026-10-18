@@ -1,0 +1,112 @@
+id: clay-golem
+type: monster
+name: Clay Golem
+description: >-
+  *Large Construct, Unaligned*
+
+
+  **AC** 14  
+
+  **HP** 123 (13d10 + 52)  
+
+  **Speed** 30 ft.  
+
+  **CR** 9 (XP 5000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 20 (+5) | 9 (-1) | 18 (+4) | 3 (-4) | 8 (-1) | 1 (-5) |
+
+
+  **Resistances** bludgeoning, piercing, slashing  
+
+  **Immunities** acid, poison, psychic, Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 9  
+
+  **Languages** Common plus one other language
+
+
+  ### Traits
+
+  **Acid Absorption.** Whenever the golem is subjected to Acid damage, it takes no damage and instead regains a number of Hit Points equal to the Acid damage dealt.
+
+
+  **Berserk.** Whenever the golem starts its turn Bloodied, roll 1d6. On a 6, the golem goes berserk. On each of its turns while berserk, the golem attacks the nearest creature it can see. If no creature is near enough to move to and attack, the golem attacks an object. Once the golem goes berserk, it continues to be berserk until it is destroyed or it is no longer Bloodied.
+
+
+  **Immutable Form.** The golem can’t shape-shift.
+
+
+  **Magic Resistance.** The golem has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The golem makes two Slam attacks, or it makes three Slam attacks if it used Hasten this turn.
+
+
+  **Slam.** Melee Attack Roll: +9, reach 5 ft. Hit: 10 (1d10 + 5) Bludgeoning damage plus 6 (1d12) Acid damage, and the target’s Hit Point maximum decreases by an amount equal to the Acid damage taken.
+
+
+
+  ### Bonus Actions
+
+  **Hasten.** The golem takes the Dash and Disengage actions.
+tags:
+- construct
+- large
+- cr-9
+properties:
+  size: Large
+  creatureType: construct
+  alignment: unaligned
+  armorClass: 14
+  hitPoints: 123
+  hitDice: 13d10 + 52
+  speed: 30 ft.
+  strength: 20
+  dexterity: 9
+  constitution: 18
+  intelligence: 3
+  wisdom: 8
+  charisma: 1
+  challengeRating: 9
+  xp: 5000
+  senses: darkvision 60 ft., passive perception 9
+  languages: Common plus one other language
+  resistances:
+  - bludgeoning
+  - piercing
+  - slashing
+  immunities:
+  - acid
+  - poison
+  - psychic
+  - Charmed
+  - Exhaustion
+  - Frightened
+  - Paralyzed
+  - Petrified
+  - Poisoned
+  traits:
+  - name: Acid Absorption
+    description: Whenever the golem is subjected to Acid damage, it takes no damage and instead regains a number of Hit Points equal to the Acid damage dealt.
+  - name: Berserk
+    description: Whenever the golem starts its turn Bloodied, roll 1d6. On a 6, the golem goes berserk. On each of its turns while berserk, the golem attacks the nearest creature it can see. If no creature is near enough to move to and attack, the golem attacks an object. Once the golem goes berserk, it continues to be berserk until it is destroyed or it is no longer Bloodied.
+  - name: Immutable Form
+    description: The golem can’t shape-shift.
+  - name: Magic Resistance
+    description: The golem has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The golem makes two Slam attacks, or it makes three Slam attacks if it used Hasten this turn.
+  - name: Slam
+    description: 'Melee Attack Roll: +9, reach 5 ft. Hit: 10 (1d10 + 5) Bludgeoning damage plus 6 (1d12) Acid damage, and the target’s Hit Point maximum decreases by an amount equal to the Acid damage taken.'
+  bonusActions:
+  - name: Hasten
+    description: The golem takes the Dash and Disengage actions.

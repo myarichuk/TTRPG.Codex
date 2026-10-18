@@ -1,0 +1,85 @@
+id: young-white-dragon
+type: monster
+name: Young White Dragon
+description: >-
+  *Large Dragon, Chaotic Evil*
+
+
+  **AC** 17  
+
+  **HP** 123 (13d10 + 52)  
+
+  **Speed** 40 ft., burrow 20 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 6 (XP 2300; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 10 (+0) | 18 (+4) | 6 (-2) | 11 (+0) | 12 (+1) |
+
+
+  **Saving Throws** DEX +3, INT +2, WIS +3  
+
+  **Skills** Perception +6, Stealth +3  
+
+  **Immunities** cold  
+
+  **Senses** darkvision 120 ft., blindsight 30 ft., passive perception 16  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Ice Walk.** The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +7, reach 10 ft. Hit: 9 (2d4 + 4) Slashing damage plus 2 (1d4) Cold damage.
+
+
+  **Cold Breath.** Constitution Saving Throw: DC 15, each creature in a 30-foot Cone. Failure: 40 (9d8) Cold damage. Success: Half damage.
+tags:
+- dragon
+- large
+- cr-6
+properties:
+  size: Large
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 17
+  hitPoints: 123
+  hitDice: 13d10 + 52
+  speed: 40 ft., burrow 20 ft., fly 80 ft., swim 40 ft.
+  strength: 18
+  dexterity: 10
+  constitution: 18
+  intelligence: 6
+  wisdom: 11
+  charisma: 12
+  challengeRating: 6
+  xp: 2300
+  senses: darkvision 120 ft., blindsight 30 ft., passive perception 16
+  languages: Common, Draconic
+  skills: Perception +6, Stealth +3
+  savingThrows: DEX +3, INT +2, WIS +3
+  immunities:
+  - cold
+  traits:
+  - name: Ice Walk
+    description: The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +7, reach 10 ft. Hit: 9 (2d4 + 4) Slashing damage plus 2 (1d4) Cold damage.'
+  - name: Cold Breath
+    description: 'Constitution Saving Throw: DC 15, each creature in a 30-foot Cone. Failure: 40 (9d8) Cold damage. Success: Half damage.'

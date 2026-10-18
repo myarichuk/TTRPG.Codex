@@ -1,0 +1,96 @@
+id: cloaker
+type: monster
+name: Cloaker
+description: >-
+  *Large Aberration, Chaotic Neutral*
+
+
+  **AC** 14  
+
+  **HP** 91 (14d10 + 14)  
+
+  **Speed** 10 ft., fly 40 ft.  
+
+  **CR** 8 (XP 3900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 15 (+2) | 12 (+1) | 13 (+1) | 14 (+2) | 7 (-2) |
+
+
+  **Skills** Stealth +5  
+
+  **Immunities** Frightened  
+
+  **Senses** darkvision 120 ft., passive perception 12  
+
+  **Languages** Deep Speech, Undercommon
+
+
+  ### Traits
+
+  **Light Sensitivity.** While in Bright Light, the cloaker has Disadvantage on attack rolls.
+
+
+
+  ### Actions
+
+  **Multiattack.** The cloaker makes one Attach attack and two Tail attacks.
+
+
+  **Attach.** Melee Attack Roll: +6, reach 5 ft. Hit: 13 (3d6 + 3) Piercing damage. If the target is a Large or smaller creature, the cloaker attaches to it. While the cloaker is attached, the target has the Blinded condition, and the cloaker can’t make Attach attacks against other targets. In addition, the cloaker halves the damage it takes (round down), and the target takes the same amount of damage. The cloaker can detach itself by spending 5 feet of movement. The target or a creature within 5 feet of it can take an action to try to detach the cloaker, doing so by succeeding on a DC 14 Strength (Athletics) check.
+
+
+  **Tail.** Melee Attack Roll: +6, reach 10 ft. Hit: 8 (1d10 + 3) Slashing damage.
+
+
+
+  ### Bonus Actions
+
+  **Moan.** Wisdom Saving Throw: DC 13, each creature in a 60-foot Emanation originating from the cloaker. Failure: The target has the Frightened condition until the end of the cloaker’s next turn. Success: The target is immune to this cloaker’s Moan for the next 24 hours.
+
+
+  **Phantasms.** The cloaker casts the Mirror Image spell, requiring no spell components and using Wisdom as the spellcasting ability. The spell ends early if the cloaker starts or ends its turn in Bright Light.
+tags:
+- aberration
+- large
+- cr-8
+properties:
+  size: Large
+  creatureType: aberration
+  alignment: chaotic neutral
+  armorClass: 14
+  hitPoints: 91
+  hitDice: 14d10 + 14
+  speed: 10 ft., fly 40 ft.
+  strength: 17
+  dexterity: 15
+  constitution: 12
+  intelligence: 13
+  wisdom: 14
+  charisma: 7
+  challengeRating: 8
+  xp: 3900
+  senses: darkvision 120 ft., passive perception 12
+  languages: Deep Speech, Undercommon
+  skills: Stealth +5
+  immunities:
+  - Frightened
+  traits:
+  - name: Light Sensitivity
+    description: While in Bright Light, the cloaker has Disadvantage on attack rolls.
+  actions:
+  - name: Multiattack
+    description: The cloaker makes one Attach attack and two Tail attacks.
+  - name: Attach
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 13 (3d6 + 3) Piercing damage. If the target is a Large or smaller creature, the cloaker attaches to it. While the cloaker is attached, the target has the Blinded condition, and the cloaker can’t make Attach attacks against other targets. In addition, the cloaker halves the damage it takes (round down), and the target takes the same amount of damage. The cloaker can detach itself by spending 5 feet of movement. The target or a creature within 5 feet of it can take an action to try to detach the cloaker, doing so by succeeding on a DC 14 Strength (Athletics) check.'
+  - name: Tail
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 8 (1d10 + 3) Slashing damage.'
+  bonusActions:
+  - name: Moan
+    description: 'Wisdom Saving Throw: DC 13, each creature in a 60-foot Emanation originating from the cloaker. Failure: The target has the Frightened condition until the end of the cloaker’s next turn. Success: The target is immune to this cloaker’s Moan for the next 24 hours.'
+  - name: Phantasms
+    description: The cloaker casts the Mirror Image spell, requiring no spell components and using Wisdom as the spellcasting ability. The spell ends early if the cloaker starts or ends its turn in Bright Light.

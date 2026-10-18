@@ -1,0 +1,15 @@
+id: hat-of-disguise
+type: magic-item
+name: Hat of Disguise
+description: >-
+  Wondrous Item
+
+
+  While wearing this hat, you can cast the Disguise Self spell. The spell ends if the hat is removed.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

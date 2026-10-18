@@ -1,0 +1,230 @@
+@using Codex.Persistence
+@inject IFactRepository FactRepo
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">Lore</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? "Facts about the world and who knows them. Reveal to the whole party or to one character." : "What your characters know. Facts appear here as the DM reveals them.")</p>
+    </div>
+</div>
+
+<div class="toolbar">
+    <div class="search">
+        <LucideIcon IconName="search" Size="18" Class="search-icon" />
+        <label for="lore-search" class="visually-hidden">Search lore</label>
+        <input id="lore-search" type="search" class="form-control" placeholder="Search lore…" @bind="search" @bind:event="oninput" />
+    </div>
+    <div class="chips" role="group" aria-label="Filter by visibility">
+        @foreach (var chip in Chips)
+        {
+            <button type="button" class="chip" aria-pressed="@((activeChip == chip) ? "true" : "false")" @onclick="() => activeChip = chip">@chip</button>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="@(Ctx.IsDm ? "col-lg-8" : "col-12")">
+        @if (facts == null)
+        {
+            <div class="d-flex justify-content-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
+        }
+        else if (!Filtered.Any())
+        {
+            <div class="empty">
+                <div class="empty-icon"><LucideIcon IconName="book-marked" Size="26" /></div>
+                <h3>@(string.IsNullOrWhiteSpace(search) ? "Nothing here yet" : "No lore matches")</h3>
+                <p>@(Ctx.IsDm ? "Write the first fact on the right." : "Nothing has been revealed to you yet.")</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var fact in Filtered)
+            {
+                <article class="panel" aria-labelledby="fact-@fact.Id" data-testid="fact-card">
+                    <div class="panel-title">
+                        <h3 id="fact-@fact.Id" class="h6">@fact.Summary</h3>
+                        <span class="pill @VisibilityClass(fact)">@VisibilityLabel(fact)</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(fact.Details))
+                    {
+                        <p class="mb-2">@fact.Details</p>
+                    }
+                    @if (Ctx.IsDm)
+                    {
+                        <div class="small-muted mb-2">Known by: @KnowersLabel(fact)</div>
+                        @if (fact.Visibility != FactVisibility.Public)
+                        {
+                            <div class="d-flex flex-wrap gap-2 align-items-end">
+                                <div>
+                                    <label for="reveal-actor-@fact.Id" class="form-label small mb-1">Reveal to</label>
+                                    <select id="reveal-actor-@fact.Id" class="form-select form-select-sm" @bind="revealActorId[fact.Id]">
+                                        @foreach (var actor in Ctx.Actors)
+                                        {
+                                            <option value="@actor.Id">@actor.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="reveal-level-@fact.Id" class="form-label small mb-1">How well</label>
+                                    <select id="reveal-level-@fact.Id" class="form-select form-select-sm" @bind="revealLevel[fact.Id]">
+                                        @foreach (KnowledgeLevel level in Enum.GetValues<KnowledgeLevel>())
+                                        {
+                                            <option value="@level">@level</option>
+                                        }
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => RevealToActorAsync(fact)" disabled="@(Ctx.Actors.Count == 0)">Reveal to character</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => RevealToPartyAsync(fact)"><LucideIcon IconName="eye" Size="14" /> Reveal to party</button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="small-muted">@MyKnowledgeLabel(fact)</div>
+                    }
+                </article>
+            }
+        }
+    </div>
+    @if (Ctx.IsDm)
+    {
+        <div class="col-lg-4">
+            <section class="panel" aria-labelledby="new-fact-heading">
+                <div class="panel-title"><h3 id="new-fact-heading">New fact</h3></div>
+                <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
+                    <div class="mb-2">
+                        <label for="fact-summary" class="form-label">Summary <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                        <input id="fact-summary" class="form-control" @bind="newSummary" required data-testid="new-fact-summary" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="fact-details" class="form-label">Details</label>
+                        <textarea id="fact-details" class="form-control" rows="3" @bind="newDetails"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fact-visibility" class="form-label">Who can see it</label>
+                        <select id="fact-visibility" class="form-select" @bind="newVisibility" data-testid="new-fact-visibility">
+                            <option value="@FactVisibility.DmOnly">Only me (DM)</option>
+                            <option value="@FactVisibility.KnowersOnly">Characters I reveal it to</option>
+                            <option value="@FactVisibility.Public">The whole party</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" data-testid="new-fact-add">Add fact</button>
+                </form>
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private List<FactDocument>? facts;
+    private string search = string.Empty;
+    private string activeChip = "All";
+    private string newSummary = string.Empty;
+    private string newDetails = string.Empty;
+    private FactVisibility newVisibility = FactVisibility.DmOnly;
+    private readonly Dictionary<string, string> revealActorId = new();
+    private readonly Dictionary<string, KnowledgeLevel> revealLevel = new();
+
+    private IEnumerable<string> Chips => Ctx.IsDm ? new[] { "All", "Party", "Revealed", "DM only" } : new[] { "All", "Party", "Revealed to me" };
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        facts = (await FactRepo.GetVisibleForCampaignAsync(Ctx.Access, Ctx.OwnedActorIds)).ToList();
+        var firstActor = Ctx.Actors.FirstOrDefault()?.Id ?? string.Empty;
+        foreach (var fact in facts)
+        {
+            revealActorId.TryAdd(fact.Id, firstActor);
+            revealLevel.TryAdd(fact.Id, KnowledgeLevel.Full);
+        }
+    }
+
+    private IEnumerable<FactDocument> Filtered
+    {
+        get
+        {
+            IEnumerable<FactDocument> result = facts ?? new List<FactDocument>();
+            result = activeChip switch
+            {
+                "Party" => result.Where(f => f.Visibility == FactVisibility.Public),
+                "Revealed" or "Revealed to me" => result.Where(f => f.Visibility == FactVisibility.KnowersOnly),
+                "DM only" => result.Where(f => f.Visibility == FactVisibility.DmOnly),
+                _ => result
+            };
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                result = result.Where(f => f.Summary.Contains(search, StringComparison.OrdinalIgnoreCase) || (f.Details?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            return result;
+        }
+    }
+
+    private static string VisibilityLabel(FactDocument fact) => fact.Visibility switch
+    {
+        FactVisibility.Public => "Party",
+        FactVisibility.KnowersOnly => "Revealed",
+        _ => "DM only"
+    };
+
+    private static string VisibilityClass(FactDocument fact) => fact.Visibility switch
+    {
+        FactVisibility.Public => "pill-success",
+        FactVisibility.KnowersOnly => "pill-accent",
+        _ => "pill-warning"
+    };
+
+    private string MyKnowledgeLabel(FactDocument fact)
+    {
+        if (fact.Visibility == FactVisibility.Public) return "Known to the whole party.";
+        var mine = fact.KnownBy.Where(k => Ctx.OwnedActorIds.Contains(k.EntityId)).OrderByDescending(k => k.Level).FirstOrDefault();
+        return mine == null ? string.Empty : $"Known to {Ctx.Actors.FirstOrDefault(a => a.Id == mine.EntityId)?.Name ?? "your character"} ({mine.Level}).";
+    }
+
+    private string KnowersLabel(FactDocument fact) =>
+        fact.KnownBy.Count == 0 ? "nobody yet" : string.Join(", ", fact.KnownBy.Select(k => Ctx.Actors.FirstOrDefault(a => a.Id == k.EntityId)?.Name ?? k.EntityId));
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newSummary)) return;
+        var fact = new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = Ctx.Campaign.Id,
+            Summary = newSummary.Trim(),
+            Details = string.IsNullOrWhiteSpace(newDetails) ? null : newDetails.Trim(),
+            Visibility = newVisibility
+        };
+        if (await FactRepo.SaveAsync(fact, Ctx.Access))
+        {
+            newSummary = string.Empty;
+            newDetails = string.Empty;
+            Ctx.Notify(Flash.Success("Fact added."));
+            await LoadAsync();
+        }
+    }
+
+    private async Task RevealToActorAsync(FactDocument fact)
+    {
+        if (!revealActorId.TryGetValue(fact.Id, out var actorId) || string.IsNullOrEmpty(actorId)) return;
+        var level = revealLevel.GetValueOrDefault(fact.Id, KnowledgeLevel.Full);
+        if (await FactRepo.AddKnowerAsync(fact.Id, new KnowerEntry(actorId, level), Ctx.Access))
+        {
+            var name = Ctx.Actors.FirstOrDefault(a => a.Id == actorId)?.Name ?? "the character";
+            Ctx.Notify(Flash.Success($"Revealed to {name}."));
+            await LoadAsync();
+        }
+    }
+
+    private async Task RevealToPartyAsync(FactDocument fact)
+    {
+        if (await FactRepo.SetVisibilityAsync(fact.Id, FactVisibility.Public, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success("Revealed to the whole party."));
+            await LoadAsync();
+        }
+    }
+}

@@ -1,0 +1,17 @@
+id: tinkers-tools
+type: equipment
+name: Tinker's Tools
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 50 gp  
+
+  **Weight:** 10 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 50 gp
+  weight: 10

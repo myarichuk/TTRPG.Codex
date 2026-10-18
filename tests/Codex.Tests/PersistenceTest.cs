@@ -39,6 +39,9 @@ public class NoOpSystemCatalog : Codex.Plugin.Abstractions.ISystemCatalog
 {
     public bool IsLoaded => false;
     public IReadOnlySet<string> LoadedSystemIds { get; } = new HashSet<string>();
+    public IEnumerable<Codex.Plugin.Abstractions.SystemSummary> Systems => Enumerable.Empty<Codex.Plugin.Abstractions.SystemSummary>();
+    public string GetDisplayName(string systemId) => systemId;
+    public Codex.Plugin.Abstractions.SystemDefinition? GetDefinition(string systemId) => null;
     public IEnumerable<Codex.Plugin.Abstractions.UISchema> GetUISchemas(string systemId) => Enumerable.Empty<Codex.Plugin.Abstractions.UISchema>();
 }
 
@@ -62,6 +65,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RegionRepository _regionRepository;
     private readonly FactRepository _factRepository;
     private readonly RavenEncounterRepository _encounterRepository;
+    private readonly RavenHomebrewRepository _homebrewRepository;
     private readonly CampaignExportService _exportService;
 
     public PersistenceTest(RavenDbFixture fixture)
@@ -74,8 +78,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _regionRepository = new RegionRepository(_dbService);
         _factRepository = new FactRepository(_dbService);
         _encounterRepository = new RavenEncounterRepository(_dbService);
-        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository);
-        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository);
+        _homebrewRepository = new RavenHomebrewRepository(_dbService);
+        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository);
+        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository);
     }
 
     [Fact]
@@ -85,7 +90,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         {
             Id = Guid.NewGuid().ToString(),
             Name = "Async Campaign",
-            SystemId = "DnD5e"
+            SystemId = "srd5e"
         };
 
         await _campaignRepository.SaveAsync(campaign);
@@ -685,7 +690,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task CampaignExport_RoundTrip_RestoresEveryAggregate_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner-1", Name = "Export Me", SystemId = "DnD5e" };
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner-1", Name = "Export Me", SystemId = "srd5e" };
         await _campaignRepository.SaveAsync(campaign);
 
         var dmAccess = new CampaignAccess(campaignId, "owner-1", CampaignRole.DM);
@@ -801,5 +806,88 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public void Dispose()
     {
         _dbService.Dispose();
+    }
+
+    [Fact]
+    public async Task GetForUserAsync_ReturnsOnlyCampaignsTheUserOwnsOrBelongsTo()
+    {
+        var mine = new CampaignDocument { Id = "camps-mine-" + Guid.NewGuid(), OwnerId = "user-a", Name = "Mine", SystemId = "srd5e" };
+        var joined = new CampaignDocument { Id = "camps-joined-" + Guid.NewGuid(), OwnerId = "user-b", Name = "Joined", SystemId = "srd5e" };
+        joined.Members.Add(new CampaignMember { UserId = "user-a", Role = CampaignRole.Player });
+        var other = new CampaignDocument { Id = "camps-other-" + Guid.NewGuid(), OwnerId = "user-c", Name = "Other", SystemId = "srd5e" };
+        await _campaignRepository.SaveAsync(mine);
+        await _campaignRepository.SaveAsync(joined);
+        await _campaignRepository.SaveAsync(other);
+
+        var visible = (await _campaignRepository.GetForUserAsync("user-a")).Select(c => c.Id).ToList();
+
+        Assert.Contains(mine.Id, visible);
+        Assert.Contains(joined.Id, visible);
+        Assert.DoesNotContain(other.Id, visible);
+    }
+
+    [Fact]
+    public async Task Homebrew_PlayersSeeOnlyPublished_AndOnlyDmCanWrite()
+    {
+        var campaignId = "camp-hb-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "player", CampaignRole.Player);
+
+        var published = new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Thunderous Yawn", IsPublished = true };
+        var draft = new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Secret Draft", IsPublished = false };
+        Assert.True(await _homebrewRepository.TrySaveAsync(published, dm));
+        Assert.True(await _homebrewRepository.TrySaveAsync(draft, dm));
+        Assert.Equal("thunderous-yawn", published.EntryId);
+
+        var playerAttempt = new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Cheat" };
+        Assert.False(await _homebrewRepository.TrySaveAsync(playerAttempt, player));
+
+        var forPlayer = (await _homebrewRepository.GetVisibleForCampaignAsync(player)).Select(h => h.Name).ToList();
+        var forDm = (await _homebrewRepository.GetVisibleForCampaignAsync(dm)).Select(h => h.Name).ToList();
+        Assert.Equal(new[] { "Thunderous Yawn" }, forPlayer);
+        Assert.Equal(2, forDm.Count);
+
+        Assert.Null(await _homebrewRepository.GetVisibleAsync(draft.Id, player));
+        Assert.False(await _homebrewRepository.TryDeleteAsync(published.Id, player));
+        Assert.True(await _homebrewRepository.TryDeleteAsync(published.Id, dm));
+    }
+
+    [Fact]
+    public async Task DeletingCampaign_CascadesToHomebrew()
+    {
+        var campaignId = "camp-hb-del-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Doomed", SystemId = "srd5e" });
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        await _homebrewRepository.TrySaveAsync(new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "feat", Name = "Gone Soon" }, dm);
+
+        Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner"));
+
+        Assert.Empty(await _homebrewRepository.GetAllForCampaignAsync(campaignId));
+    }
+
+    [Fact]
+    public async Task ExportImport_RoundTripsHomebrew()
+    {
+        var campaignId = "camp-hb-export-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Brewery", SystemId = "srd5e" });
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        await _homebrewRepository.TrySaveAsync(new HomebrewEntryDocument
+        {
+            CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Thunderous Yawn",
+            Properties = new Dictionary<string, object> { ["level"] = 2L, ["school"] = "Evocation" }
+        }, dm);
+
+        var bundle = await _exportService.ExportAsync(dm);
+        Assert.NotNull(bundle);
+        Assert.Single(bundle!.Homebrew);
+
+        var json = CampaignExportService.Serialize(bundle);
+        await _campaignRepository.DeleteAsync(campaignId, "owner");
+        Assert.Empty(await _homebrewRepository.GetAllForCampaignAsync(campaignId));
+
+        Assert.True(await _exportService.ImportAsync(CampaignExportService.Deserialize(json), "owner"));
+        var restored = Assert.Single(await _homebrewRepository.GetAllForCampaignAsync(campaignId));
+        Assert.Equal("Thunderous Yawn", restored.Name);
+        Assert.Equal(2L, Convert.ToInt64(restored.Properties["level"]));
     }
 }

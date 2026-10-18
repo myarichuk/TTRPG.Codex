@@ -1,0 +1,8 @@
+id: school-of-magic-divination
+type: rule
+name: Divination
+description: Reveals information
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

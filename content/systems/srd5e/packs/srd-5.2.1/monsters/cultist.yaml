@@ -1,0 +1,65 @@
+id: cultist
+type: monster
+name: Cultist
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 12 (Leather Armor)  
+
+  **HP** 9 (2d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1/8 (XP 25; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 11 (+0) | 12 (+1) | 10 (+0) | 10 (+0) | 11 (+0) | 10 (+0) |
+
+
+  **Saving Throws** WIS +2  
+
+  **Skills** Deception +2, Religion +2  
+
+  **Gear** Leather Armor, Sickle  
+
+  **Senses** passive perception 10  
+
+  **Languages** Common
+
+
+  ### Actions
+
+  **Ritual Sickle.** Melee Attack Roll: +3, reach 5 ft. Hit: 3 (1d4 + 1) Slashing damage plus 1 Necrotic damage.
+tags:
+- humanoid
+- medium or small
+- cr-1/8
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 12
+  hitPoints: 9
+  hitDice: 2d8
+  speed: 30 ft.
+  strength: 11
+  dexterity: 12
+  constitution: 10
+  intelligence: 10
+  wisdom: 11
+  charisma: 10
+  challengeRating: 1/8
+  xp: 25
+  senses: passive perception 10
+  languages: Common
+  skills: Deception +2, Religion +2
+  savingThrows: WIS +2
+  gear: Leather Armor, Sickle
+  actions:
+  - name: Ritual Sickle
+    description: 'Melee Attack Roll: +3, reach 5 ft. Hit: 3 (1d4 + 1) Slashing damage plus 1 Necrotic damage.'

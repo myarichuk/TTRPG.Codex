@@ -1,0 +1,12 @@
+id: skill-medicine
+type: rule
+name: Medicine
+description: >-
+  **Ability:** WIS
+
+
+  Diagnose an illness, or determine what killed the recently slain.
+tags:
+- skill
+properties:
+  category: Skill

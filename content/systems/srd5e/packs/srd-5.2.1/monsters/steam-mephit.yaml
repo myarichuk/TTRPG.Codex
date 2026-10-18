@@ -1,0 +1,85 @@
+id: steam-mephit
+type: monster
+name: Steam Mephit
+description: >-
+  *Small Elemental, Neutral Evil*
+
+
+  **AC** 10  
+
+  **HP** 17 (5d6)  
+
+  **Speed** 30 ft., fly 30 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 5 (-3) | 11 (+0) | 10 (+0) | 11 (+0) | 10 (+0) | 12 (+1) |
+
+
+  **Skills** Stealth +2  
+
+  **Immunities** fire, poison, Exhaustion, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Primordial (Aquan, Ignan)
+
+
+  ### Traits
+
+  **Blurred Form.** Attack rolls against the mephit are made with Disadvantage unless the mephit has the Incapacitated condition.
+
+
+  **Death Burst.** The mephit explodes when it dies. Dexterity Saving Throw: DC 10, each creature in a 5-foot Emanation originating from the mephit. Failure: 5 (2d4) Fire damage. Success: Half damage.
+
+
+
+  ### Actions
+
+  **Claw.** Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Slashing damage plus 2 (1d4) Fire damage.
+
+
+  **Steam Breath.** Constitution Saving Throw: DC 10, each creature in a 15-foot Cone. Failure: 5 (2d4) Fire damage, and the target’s Speed decreases by 10 feet until the end of the mephit’s next turn. Success: Half damage only. Failure or Success: Being underwater doesn’t grant Resistance to this Fire damage.
+tags:
+- elemental
+- small
+- cr-1/4
+properties:
+  size: Small
+  creatureType: elemental
+  alignment: neutral evil
+  armorClass: 10
+  hitPoints: 17
+  hitDice: 5d6
+  speed: 30 ft., fly 30 ft.
+  strength: 5
+  dexterity: 11
+  constitution: 10
+  intelligence: 11
+  wisdom: 10
+  charisma: 12
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 10
+  languages: Primordial (Aquan, Ignan)
+  skills: Stealth +2
+  immunities:
+  - fire
+  - poison
+  - Exhaustion
+  - Poisoned
+  traits:
+  - name: Blurred Form
+    description: Attack rolls against the mephit are made with Disadvantage unless the mephit has the Incapacitated condition.
+  - name: Death Burst
+    description: 'The mephit explodes when it dies. Dexterity Saving Throw: DC 10, each creature in a 5-foot Emanation originating from the mephit. Failure: 5 (2d4) Fire damage. Success: Half damage.'
+  actions:
+  - name: Claw
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Slashing damage plus 2 (1d4) Fire damage.'
+  - name: Steam Breath
+    description: 'Constitution Saving Throw: DC 10, each creature in a 15-foot Cone. Failure: 5 (2d4) Fire damage, and the target’s Speed decreases by 10 feet until the end of the mephit’s next turn. Success: Half damage only. Failure or Success: Being underwater doesn’t grant Resistance to this Fire damage.'

@@ -1,0 +1,81 @@
+id: weretiger-human
+type: monster
+name: Weretiger, Human Form
+description: >-
+  *Medium Monstrosity, Neutral*
+
+
+  **AC** 12  
+
+  **HP** 120 (16d8 + 48)  
+
+  **Speed** 30 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 17 (+3) | 15 (+2) | 16 (+3) | 10 (+0) | 13 (+1) | 11 (+0) |
+
+
+  **Skills** Perception +5, Stealth +4  
+
+  **Gear** Longbow  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** Common (can’t speak in tiger form)
+
+
+  ### Actions
+
+  **Multiattack.** The weretiger makes two attacks, using Scratch or Longbow in any combination. It can replace one attack with a Bite attack.
+
+
+  **Scratch.** Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage.
+
+
+  **Longbow.** Ranged Attack Roll: +4, range 150/600 ft. Hit: 11 (2d8 + 2) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Shape-Shift.** The weretiger shape-shifts into a Large tiger-humanoid hybrid or a Large tiger, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn’t transformed.
+tags:
+- monstrosity
+- medium
+- cr-4
+properties:
+  size: Medium
+  creatureType: monstrosity
+  alignment: neutral
+  armorClass: 12
+  hitPoints: 120
+  hitDice: 16d8 + 48
+  speed: 30 ft.
+  strength: 17
+  dexterity: 15
+  constitution: 16
+  intelligence: 10
+  wisdom: 13
+  charisma: 11
+  challengeRating: 4
+  xp: 1100
+  senses: darkvision 60 ft., passive perception 15
+  languages: Common (can’t speak in tiger form)
+  skills: Perception +5, Stealth +4
+  gear: Longbow
+  actions:
+  - name: Multiattack
+    description: The weretiger makes two attacks, using Scratch or Longbow in any combination. It can replace one attack with a Bite attack.
+  - name: Scratch
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 10 (2d6 + 3) Slashing damage.'
+  - name: Longbow
+    description: 'Ranged Attack Roll: +4, range 150/600 ft. Hit: 11 (2d8 + 2) Piercing damage.'
+  bonusActions:
+  - name: Shape-Shift
+    description: The weretiger shape-shifts into a Large tiger-humanoid hybrid or a Large tiger, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn’t transformed.

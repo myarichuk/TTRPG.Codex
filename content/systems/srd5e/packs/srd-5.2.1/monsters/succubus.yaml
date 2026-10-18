@@ -1,0 +1,99 @@
+id: succubus
+type: monster
+name: Succubus
+description: >-
+  *Medium Fiend, Neutral Evil*
+
+
+  **AC** 15  
+
+  **HP** 71 (13d8 + 13)  
+
+  **Speed** 30 ft., fly 60 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 8 (-1) | 17 (+3) | 13 (+1) | 15 (+2) | 12 (+1) | 20 (+5) |
+
+
+  **Skills** Deception +9, Insight +5, Perception +5, Persuasion +9, Stealth +7  
+
+  **Resistances** cold, fire, poison, psychic  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** Abyssal, Common, Infernal; telepathy 60 ft.
+
+
+  ### Traits
+
+  **Incubus Form.** When the succubus finishes a Long Rest, it can shape-shift into an Incubus, using that stat block instead of this one.
+
+
+
+  ### Actions
+
+  **Multiattack.** The succubus makes one Fiendish Touch attack and uses Charm or Draining Kiss.
+
+
+  **Fiendish Touch.** Melee Attack Roll: +7, reach 5 ft. Hit: 16 (2d10 + 5) Psychic damage.
+
+
+  **Charm.** The succubus casts Dominate Person (level 8 version), requiring no spell components and using Charisma as the spellcasting ability (spell save DC 15).
+
+
+  **Draining Kiss.** Constitution Saving Throw: DC 15, one creature Charmed by the succubus within 5 feet. Failure: 13 (3d8) Psychic damage. Success: Half damage. Failure or Success: The target’s Hit Point maximum decreases by an amount equal to the damage taken.
+
+
+
+  ### Bonus Actions
+
+  **Shape-Shift.** The succubus shape-shifts into a Medium or Small Humanoid, or it returns to its true form. Its game statistics are the same in each form, except its Fly Speed is available only in its true form. Any equipment it is wearing or carrying isn’t transformed.
+tags:
+- fiend
+- medium
+- cr-4
+properties:
+  size: Medium
+  creatureType: fiend
+  alignment: neutral evil
+  armorClass: 15
+  hitPoints: 71
+  hitDice: 13d8 + 13
+  speed: 30 ft., fly 60 ft.
+  strength: 8
+  dexterity: 17
+  constitution: 13
+  intelligence: 15
+  wisdom: 12
+  charisma: 20
+  challengeRating: 4
+  xp: 1100
+  senses: darkvision 60 ft., passive perception 15
+  languages: Abyssal, Common, Infernal; telepathy 60 ft.
+  skills: Deception +9, Insight +5, Perception +5, Persuasion +9, Stealth +7
+  resistances:
+  - cold
+  - fire
+  - poison
+  - psychic
+  traits:
+  - name: Incubus Form
+    description: When the succubus finishes a Long Rest, it can shape-shift into an Incubus, using that stat block instead of this one.
+  actions:
+  - name: Multiattack
+    description: The succubus makes one Fiendish Touch attack and uses Charm or Draining Kiss.
+  - name: Fiendish Touch
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 16 (2d10 + 5) Psychic damage.'
+  - name: Charm
+    description: The succubus casts Dominate Person (level 8 version), requiring no spell components and using Charisma as the spellcasting ability (spell save DC 15).
+  - name: Draining Kiss
+    description: 'Constitution Saving Throw: DC 15, one creature Charmed by the succubus within 5 feet. Failure: 13 (3d8) Psychic damage. Success: Half damage. Failure or Success: The target’s Hit Point maximum decreases by an amount equal to the damage taken.'
+  bonusActions:
+  - name: Shape-Shift
+    description: The succubus shape-shifts into a Medium or Small Humanoid, or it returns to its true form. Its game statistics are the same in each form, except its Fly Speed is available only in its true form. Any equipment it is wearing or carrying isn’t transformed.

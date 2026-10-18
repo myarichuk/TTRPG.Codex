@@ -1,0 +1,81 @@
+id: ettin
+type: monster
+name: Ettin
+description: >-
+  *Large Giant, Chaotic Evil*
+
+
+  **AC** 12  
+
+  **HP** 85 (10d10 + 30)  
+
+  **Speed** 40 ft.  
+
+  **CR** 4 (XP 1100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 21 (+5) | 8 (-1) | 17 (+3) | 6 (-2) | 10 (+0) | 8 (-1) |
+
+
+  **Skills** Perception +4  
+
+  **Immunities** Blinded, Charmed, Deafened, Frightened, Stunned, Unconscious  
+
+  **Gear** Battleaxe, Morningstar  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Giant
+
+
+  ### Actions
+
+  **Multiattack.** The ettin makes one Battleaxe attack and one Morningstar attack.
+
+
+  **Battleaxe.** Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Slashing damage. If the target is a Large or smaller creature, it has the Prone condition.
+
+
+  **Morningstar.** Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Piercing damage, and the target has Disadvantage on the next attack roll it makes before the end of its next turn.
+tags:
+- giant
+- large
+- cr-4
+properties:
+  size: Large
+  creatureType: giant
+  alignment: chaotic evil
+  armorClass: 12
+  hitPoints: 85
+  hitDice: 10d10 + 30
+  speed: 40 ft.
+  strength: 21
+  dexterity: 8
+  constitution: 17
+  intelligence: 6
+  wisdom: 10
+  charisma: 8
+  challengeRating: 4
+  xp: 1100
+  senses: darkvision 60 ft., passive perception 14
+  languages: Giant
+  skills: Perception +4
+  immunities:
+  - Blinded
+  - Charmed
+  - Deafened
+  - Frightened
+  - Stunned
+  - Unconscious
+  gear: Battleaxe, Morningstar
+  actions:
+  - name: Multiattack
+    description: The ettin makes one Battleaxe attack and one Morningstar attack.
+  - name: Battleaxe
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Slashing damage. If the target is a Large or smaller creature, it has the Prone condition.'
+  - name: Morningstar
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Piercing damage, and the target has Disadvantage on the next attack roll it makes before the end of its next turn.'

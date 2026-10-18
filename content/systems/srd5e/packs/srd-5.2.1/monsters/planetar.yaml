@@ -1,0 +1,115 @@
+id: planetar
+type: monster
+name: Planetar
+description: >-
+  *Large Celestial, Lawful Good*
+
+
+  **AC** 19  
+
+  **HP** 262 (21d10 + 147)  
+
+  **Speed** 40 ft., fly 120 ft., hover True  
+
+  **CR** 16 (XP 15000; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 24 (+7) | 20 (+5) | 24 (+7) | 19 (+4) | 22 (+6) | 25 (+7) |
+
+
+  **Saving Throws** STR +12, CON +12, WIS +11, CHA +12  
+
+  **Skills** Perception +11  
+
+  **Resistances** radiant  
+
+  **Immunities** Charmed, Exhaustion, Frightened  
+
+  **Senses** truesight 120 ft., passive perception 21  
+
+  **Languages** All; telepathy 120 ft.
+
+
+  ### Traits
+
+  **Divine Awareness.** The planetar knows if it hears a lie.
+
+
+  **Exalted Restoration.** If the planetar dies outside Mount Celestia, its body disappears, and it gains a new body instantly, reviving with all its Hit Points somewhere in Mount Celestia.
+
+
+  **Magic Resistance.** The planetar has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Multiattack.** The planetar makes three Radiant Sword attacks or uses Holy Burst twice.
+
+
+  **Radiant Sword.** Melee Attack Roll: +12, reach 10 ft. Hit: 14 (2d6 + 7) Slashing damage plus 18 (4d8) Radiant damage.
+
+
+  **Holy Burst.** Dexterity Saving Throw: DC 20, each enemy in a 20-foot-radius Sphere centered on a point the planetar can see within 120 feet. Failure: 24 (7d6) Radiant damage. Success: Half damage.
+
+
+  **Spellcasting.** The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):
+
+
+
+  ### Bonus Actions
+
+  **Divine Aid (2/day).** The planetar casts Cure Wounds, Invisibility, Lesser Restoration, or Remove Curse, using the same spellcasting ability as Spellcasting.
+tags:
+- celestial
+- large
+- cr-16
+properties:
+  size: Large
+  creatureType: celestial
+  alignment: lawful good
+  armorClass: 19
+  hitPoints: 262
+  hitDice: 21d10 + 147
+  speed: 40 ft., fly 120 ft., hover True
+  strength: 24
+  dexterity: 20
+  constitution: 24
+  intelligence: 19
+  wisdom: 22
+  charisma: 25
+  challengeRating: 16
+  xp: 15000
+  senses: truesight 120 ft., passive perception 21
+  languages: All; telepathy 120 ft.
+  skills: Perception +11
+  savingThrows: STR +12, CON +12, WIS +11, CHA +12
+  resistances:
+  - radiant
+  immunities:
+  - Charmed
+  - Exhaustion
+  - Frightened
+  traits:
+  - name: Divine Awareness
+    description: The planetar knows if it hears a lie.
+  - name: Exalted Restoration
+    description: If the planetar dies outside Mount Celestia, its body disappears, and it gains a new body instantly, reviving with all its Hit Points somewhere in Mount Celestia.
+  - name: Magic Resistance
+    description: The planetar has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Multiattack
+    description: The planetar makes three Radiant Sword attacks or uses Holy Burst twice.
+  - name: Radiant Sword
+    description: 'Melee Attack Roll: +12, reach 10 ft. Hit: 14 (2d6 + 7) Slashing damage plus 18 (4d8) Radiant damage.'
+  - name: Holy Burst
+    description: 'Dexterity Saving Throw: DC 20, each enemy in a 20-foot-radius Sphere centered on a point the planetar can see within 120 feet. Failure: 24 (7d6) Radiant damage. Success: Half damage.'
+  - name: Spellcasting
+    description: 'The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):'
+  bonusActions:
+  - name: Divine Aid (2/day)
+    description: The planetar casts Cure Wounds, Invisibility, Lesser Restoration, or Remove Curse, using the same spellcasting ability as Spellcasting.

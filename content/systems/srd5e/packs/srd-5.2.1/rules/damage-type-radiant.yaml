@@ -1,0 +1,8 @@
+id: damage-type-radiant
+type: rule
+name: Radiant
+description: Holy energy, searing radiation
+tags:
+- damage-type
+properties:
+  category: Damage Type

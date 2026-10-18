@@ -1,0 +1,24 @@
+id: acolyte
+type: background
+name: Acolyte
+description: >-
+  **Ability Scores:** INT, WIS, CHA  
+
+  **Feat:** Magic Initiate (Cleric)  
+
+  **Skill Proficiencies:** Insight, Religion  
+
+  **Tool Proficiency:** Calligrapher's Supplies  
+
+  **Equipment:** Choose A or B: (A) Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP; or (B) 50 GP
+properties:
+  abilityScores:
+  - INT
+  - WIS
+  - CHA
+  feat: magic-initiate
+  skillProficiencies:
+  - Insight
+  - Religion
+  toolProficiency: Calligrapher's Supplies
+  equipment: "Choose A or B: (A) Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP; or (B) 50 GP"

@@ -1,0 +1,7 @@
+id: language-druidic
+type: rule
+name: Druidic
+tags:
+- language
+properties:
+  category: Language

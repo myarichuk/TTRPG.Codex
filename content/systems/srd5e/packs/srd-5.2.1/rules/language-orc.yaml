@@ -1,0 +1,7 @@
+id: language-orc
+type: rule
+name: Orc
+tags:
+- language
+properties:
+  category: Language

@@ -20,6 +20,7 @@ public class CampaignBundle
     public List<FactDocument> Facts { get; set; } = new();
     public List<NoteDocument> Notes { get; set; } = new();
     public List<RegionDocument> Regions { get; set; } = new();
+    public List<HomebrewEntryDocument> Homebrew { get; set; } = new();
 }
 
 /// <summary>
@@ -36,7 +37,8 @@ public class CampaignExportService(
     IEncounterRepository encounters,
     IFactRepository facts,
     INoteRepository notes,
-    IRegionRepository regions)
+    IRegionRepository regions,
+    IHomebrewRepository homebrew)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -62,7 +64,8 @@ public class CampaignExportService(
             Encounters = (await encounters.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Facts = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).ToList(),
             Notes = (await notes.GetAllForCampaignAsync(access.CampaignId)).ToList(),
-            Regions = (await regions.GetVisibleForCampaignAsync(access)).ToList()
+            Regions = (await regions.GetVisibleForCampaignAsync(access)).ToList(),
+            Homebrew = (await homebrew.GetAllForCampaignAsync(access.CampaignId)).ToList()
         };
     }
 
@@ -118,6 +121,12 @@ public class CampaignExportService(
             await regions.SaveAsync(region, dmAccess);
         }
 
+        foreach (var entry in bundle.Homebrew.Where(h => h.CampaignId == campaign.Id))
+        {
+            entry.Properties = NormalizeMap(entry.Properties);
+            await homebrew.SaveAsync(entry);
+        }
+
         return true;
     }
 
@@ -139,6 +148,11 @@ public class CampaignExportService(
                 NormalizeState(actor);
             }
 
+            foreach (var entry in bundle.Homebrew)
+            {
+                entry.Properties = NormalizeMap(entry.Properties);
+            }
+
             return bundle;
         }
         catch (JsonException)
@@ -154,13 +168,21 @@ public class CampaignExportService(
     /// </summary>
     private static void NormalizeState(ActorDocument actor)
     {
-        foreach (var key in actor.State.Keys.ToList())
+        actor.State = NormalizeMap(actor.State);
+        actor.Sheet = NormalizeMap(actor.Sheet);
+    }
+
+    private static Dictionary<string, object> NormalizeMap(Dictionary<string, object> map)
+    {
+        foreach (var key in map.Keys.ToList())
         {
-            if (actor.State[key] is JsonElement element)
+            if (map[key] is JsonElement element)
             {
-                actor.State[key] = ToClr(element);
+                map[key] = ToClr(element);
             }
         }
+
+        return map;
     }
 
     private static object ToClr(JsonElement element) => element.ValueKind switch

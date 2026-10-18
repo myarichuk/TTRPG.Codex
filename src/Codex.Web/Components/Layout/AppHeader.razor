@@ -1,0 +1,82 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IJSRuntime JS
+
+<header class="app-header">
+    <a href="/" class="brand" aria-label="TTRPG.Codex home">
+        <span class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="18" /></span>
+        <span>TTRPG.Codex</span>
+    </a>
+
+    <nav class="app-nav" aria-label="Main">
+        <AuthorizeView>
+            <Authorized>
+                <NavLink href="" Match="NavLinkMatch.All">
+                    <LucideIcon IconName="map" Size="18" /><span>Campaigns</span>
+                </NavLink>
+                <NavLink href="library">
+                    <LucideIcon IconName="book-open" Size="18" /><span>Library</span>
+                </NavLink>
+            </Authorized>
+        </AuthorizeView>
+        <NavLink href="about">
+            <LucideIcon IconName="info" Size="18" /><span>About &amp; licences</span>
+        </NavLink>
+    </nav>
+
+    <div class="header-spacer"></div>
+
+    <button type="button" class="icon-btn" @onclick="ToggleThemeAsync"
+            aria-label="@(theme == "dark" ? "Switch to light theme" : "Switch to dark theme")"
+            title="@(theme == "dark" ? "Light theme" : "Dark theme")">
+        <LucideIcon IconName="@(theme == "dark" ? "sun" : "moon")" Size="18" />
+    </button>
+
+    <AuthorizeView>
+        <Authorized>
+            @{
+                var username = context.User.Identity?.Name ?? "User";
+            }
+            <span class="user-chip">
+                <span class="avatar" aria-hidden="true">@Initial(username)</span>
+                <span>@username</span>
+            </span>
+            <form method="post" action="/logout" class="d-inline">
+                <AntiforgeryToken />
+                <button type="submit" class="icon-btn" aria-label="Sign out" title="Sign out">
+                    <LucideIcon IconName="log-out" Size="18" />
+                </button>
+            </form>
+        </Authorized>
+        <NotAuthorized>
+            <a href="/login" class="btn btn-primary btn-sm">Sign in</a>
+        </NotAuthorized>
+    </AuthorizeView>
+</header>
+
+@code {
+    private string theme = "light";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                theme = await JS.InvokeAsync<string>("codex.getTheme");
+                StateHasChanged();
+            }
+            catch (JSException)
+            {
+                // Prerender or JS unavailable: keep the default.
+            }
+        }
+    }
+
+    private async Task ToggleThemeAsync()
+    {
+        theme = theme == "dark" ? "light" : "dark";
+        await JS.InvokeVoidAsync("codex.setTheme", theme);
+    }
+
+    private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1];
+}

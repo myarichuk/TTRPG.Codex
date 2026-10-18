@@ -1,0 +1,66 @@
+id: warhorse-skeleton
+type: monster
+name: Warhorse Skeleton
+description: >-
+  *Large Undead, Lawful Evil*
+
+
+  **AC** 13  
+
+  **HP** 22 (3d10 + 6)  
+
+  **Speed** 60 ft.  
+
+  **CR** 1/2 (XP 100; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 12 (+1) | 15 (+2) | 2 (-4) | 8 (-1) | 5 (-3) |
+
+
+  **Immunities** poison, Exhaustion, Poisoned  
+
+  **Vulnerabilities** bludgeoning  
+
+  **Senses** darkvision 60 ft., passive perception 9  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Hooves.** Melee Attack Roll: +6, reach 5 ft. Hit: 7 (1d6 + 4) Bludgeoning damage. If the target is a Large or smaller creature and the skeleton moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.
+tags:
+- undead
+- large
+- cr-1/2
+properties:
+  size: Large
+  creatureType: undead
+  alignment: lawful evil
+  armorClass: 13
+  hitPoints: 22
+  hitDice: 3d10 + 6
+  speed: 60 ft.
+  strength: 18
+  dexterity: 12
+  constitution: 15
+  intelligence: 2
+  wisdom: 8
+  charisma: 5
+  challengeRating: 1/2
+  xp: 100
+  senses: darkvision 60 ft., passive perception 9
+  languages: None
+  immunities:
+  - poison
+  - Exhaustion
+  - Poisoned
+  vulnerabilities:
+  - bludgeoning
+  actions:
+  - name: Hooves
+    description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 7 (1d6 + 4) Bludgeoning damage. If the target is a Large or smaller creature and the skeleton moved 20+ feet straight toward it immediately before the hit, the target has the Prone condition.'

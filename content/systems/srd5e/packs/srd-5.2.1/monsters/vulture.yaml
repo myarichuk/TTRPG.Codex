@@ -1,0 +1,68 @@
+id: vulture
+type: monster
+name: Vulture
+description: >-
+  *Medium Beast, Unaligned*
+
+
+  **AC** 10  
+
+  **HP** 5 (1d8 + 1)  
+
+  **Speed** 10 ft., fly 50 ft.  
+
+  **CR** 0 (XP 10; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 7 (-2) | 10 (+0) | 13 (+1) | 2 (-4) | 12 (+1) | 4 (-3) |
+
+
+  **Skills** Perception +3  
+
+  **Senses** passive perception 13  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Pack Tactics.** The vulture has Advantage on an attack roll against a creature if at least one of the vulture’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+
+
+
+  ### Actions
+
+  **Beak.** Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Piercing damage.
+tags:
+- beast
+- medium
+- cr-0
+properties:
+  size: Medium
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 10
+  hitPoints: 5
+  hitDice: 1d8 + 1
+  speed: 10 ft., fly 50 ft.
+  strength: 7
+  dexterity: 10
+  constitution: 13
+  intelligence: 2
+  wisdom: 12
+  charisma: 4
+  challengeRating: 0
+  xp: 10
+  senses: passive perception 13
+  languages: None
+  skills: Perception +3
+  traits:
+  - name: Pack Tactics
+    description: The vulture has Advantage on an attack roll against a creature if at least one of the vulture’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition.
+  actions:
+  - name: Beak
+    description: 'Melee Attack Roll: +2, reach 5 ft. Hit: 2 (1d4) Piercing damage.'

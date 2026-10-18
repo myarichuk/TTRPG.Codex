@@ -1,0 +1,81 @@
+id: giant-owl
+type: monster
+name: Giant Owl
+description: >-
+  *Large Celestial, Neutral*
+
+
+  **AC** 12  
+
+  **HP** 19 (3d10 + 3)  
+
+  **Speed** 5 ft., fly 60 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 13 (+1) | 15 (+2) | 12 (+1) | 10 (+0) | 14 (+2) | 10 (+0) |
+
+
+  **Saving Throws** WIS +4  
+
+  **Skills** Perception +6, Stealth +6  
+
+  **Resistances** necrotic, radiant  
+
+  **Senses** darkvision 120 ft., passive perception 16  
+
+  **Languages** Celestial; understands Common, Elvish, and Sylvan but can’t speak them
+
+
+  ### Traits
+
+  **Flyby.** The owl doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+
+
+
+  ### Actions
+
+  **Talons.** Melee Attack Roll: +4, reach 5 ft. Hit: 7 (1d10 + 2) Slashing damage.
+
+
+  **Spellcasting.** The owl casts one of the following spells, requiring no spell components and using Wisdom as the spellcasting ability:
+tags:
+- celestial
+- large
+- cr-1/4
+properties:
+  size: Large
+  creatureType: celestial
+  alignment: neutral
+  armorClass: 12
+  hitPoints: 19
+  hitDice: 3d10 + 3
+  speed: 5 ft., fly 60 ft.
+  strength: 13
+  dexterity: 15
+  constitution: 12
+  intelligence: 10
+  wisdom: 14
+  charisma: 10
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 120 ft., passive perception 16
+  languages: Celestial; understands Common, Elvish, and Sylvan but can’t speak them
+  skills: Perception +6, Stealth +6
+  savingThrows: WIS +4
+  resistances:
+  - necrotic
+  - radiant
+  traits:
+  - name: Flyby
+    description: The owl doesn’t provoke an Opportunity Attack when it flies out of an enemy’s reach.
+  actions:
+  - name: Talons
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 7 (1d10 + 2) Slashing damage.'
+  - name: Spellcasting
+    description: 'The owl casts one of the following spells, requiring no spell components and using Wisdom as the spellcasting ability:'

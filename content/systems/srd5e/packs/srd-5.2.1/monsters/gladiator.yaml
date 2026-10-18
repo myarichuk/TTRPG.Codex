@@ -1,0 +1,84 @@
+id: gladiator
+type: monster
+name: Gladiator
+description: >-
+  *Medium or small Humanoid, Neutral*
+
+
+  **AC** 16 (Shield, Studded Leather Armor)  
+
+  **HP** 112 (15d8 + 45)  
+
+  **Speed** 30 ft.  
+
+  **CR** 5 (XP 1800; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 15 (+2) | 16 (+3) | 10 (+0) | 12 (+1) | 15 (+2) |
+
+
+  **Saving Throws** STR +7, DEX +5, CON +6, WIS +4  
+
+  **Skills** Athletics +10, Performance +5  
+
+  **Gear** Shield, Spears (3), Studded Leather Armor  
+
+  **Senses** passive perception 11  
+
+  **Languages** Common
+
+
+  ### Actions
+
+  **Multiattack.** The gladiator makes three Spear attacks. It can replace one attack with a use of Shield Bash.
+
+
+  **Spear.** Melee or Ranged Attack Roll: +7, reach 5 ft. or range 20/60 ft. Hit: 11 (2d6 + 4) Piercing damage.
+
+
+  **Shield Bash.** Strength Saving Throw: DC 15, one creature within 5 feet that the gladiator can see. Failure: 9 (2d4 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.
+
+
+
+  ### Reactions
+
+  **Parry.** Trigger: The gladiator is hit by a melee attack roll while holding a weapon. Response: The gladiator adds 3 to its AC against that attack, possibly causing it to miss.
+tags:
+- humanoid
+- medium or small
+- cr-5
+properties:
+  size: Medium or small
+  creatureType: humanoid
+  alignment: neutral
+  armorClass: 16
+  hitPoints: 112
+  hitDice: 15d8 + 45
+  speed: 30 ft.
+  strength: 18
+  dexterity: 15
+  constitution: 16
+  intelligence: 10
+  wisdom: 12
+  charisma: 15
+  challengeRating: 5
+  xp: 1800
+  senses: passive perception 11
+  languages: Common
+  skills: Athletics +10, Performance +5
+  savingThrows: STR +7, DEX +5, CON +6, WIS +4
+  gear: Shield, Spears (3), Studded Leather Armor
+  actions:
+  - name: Multiattack
+    description: The gladiator makes three Spear attacks. It can replace one attack with a use of Shield Bash.
+  - name: Spear
+    description: 'Melee or Ranged Attack Roll: +7, reach 5 ft. or range 20/60 ft. Hit: 11 (2d6 + 4) Piercing damage.'
+  - name: Shield Bash
+    description: 'Strength Saving Throw: DC 15, one creature within 5 feet that the gladiator can see. Failure: 9 (2d4 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.'
+  reactions:
+  - name: Parry
+    description: 'Trigger: The gladiator is hit by a melee attack roll while holding a weapon. Response: The gladiator adds 3 to its AC against that attack, possibly causing it to miss.'

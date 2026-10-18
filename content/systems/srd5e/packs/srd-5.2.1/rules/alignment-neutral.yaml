@@ -1,0 +1,8 @@
+id: alignment-neutral
+type: rule
+name: Neutral
+description: Neutral is the alignment of those who prefer to avoid moral questions and don't take sides, doing what seems best at the time. Someone who's bored by moral debate is probably Neutral.
+tags:
+- alignment
+properties:
+  category: Alignment

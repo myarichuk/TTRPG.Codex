@@ -1,0 +1,109 @@
+id: adult-blue-dragon
+type: monster
+name: Adult Blue Dragon
+description: >-
+  *Huge Dragon, Lawful Evil*
+
+
+  **AC** 19  
+
+  **HP** 212 (17d12 + 102)  
+
+  **Speed** 40 ft., burrow 30 ft., fly 80 ft.  
+
+  **CR** 16 (XP 15000; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 25 (+7) | 10 (+0) | 23 (+6) | 16 (+3) | 15 (+2) | 20 (+5) |
+
+
+  **Saving Throws** DEX +5, WIS +7  
+
+  **Skills** Perception +12, Stealth +5  
+
+  **Immunities** lightning  
+
+  **Senses** darkvision 120 ft., blindsight 60 ft., passive perception 22  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Legendary Resistance (3/day).** If the dragon fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast Shatter.
+
+
+  **Rend.** Melee Attack Roll: +12, reach 10 ft. Hit: 16 (2d8 + 7) Slashing damage plus 5 (1d10) Lightning damage.
+
+
+  **Lightning Breath.** Dexterity Saving Throw: DC 19, each creature in a 90-foot-long, 5-footwide Line. Failure: 60 (11d10) Lightning damage. Success: Half damage.
+
+
+  **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):
+
+
+
+  ### Legendary Actions
+
+  **Cloaked Flight.** The dragon uses Spellcasting to cast Invisibility on itself, and it can fly up to half its Fly Speed. The dragon can’t take this action again until the start of its next turn.
+
+
+  **Sonic Boom.** The dragon uses Spellcasting to cast Shatter. The dragon can’t take this action again until the start of its next turn.
+
+
+  **Tail Swipe.** The dragon makes one Rend attack.
+tags:
+- dragon
+- huge
+- cr-16
+properties:
+  size: Huge
+  creatureType: dragon
+  alignment: lawful evil
+  armorClass: 19
+  hitPoints: 212
+  hitDice: 17d12 + 102
+  speed: 40 ft., burrow 30 ft., fly 80 ft.
+  strength: 25
+  dexterity: 10
+  constitution: 23
+  intelligence: 16
+  wisdom: 15
+  charisma: 20
+  challengeRating: 16
+  xp: 15000
+  senses: darkvision 120 ft., blindsight 60 ft., passive perception 22
+  languages: Common, Draconic
+  skills: Perception +12, Stealth +5
+  savingThrows: DEX +5, WIS +7
+  immunities:
+  - lightning
+  traits:
+  - name: Legendary Resistance (3/day)
+    description: If the dragon fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast Shatter.
+  - name: Rend
+    description: 'Melee Attack Roll: +12, reach 10 ft. Hit: 16 (2d8 + 7) Slashing damage plus 5 (1d10) Lightning damage.'
+  - name: Lightning Breath
+    description: 'Dexterity Saving Throw: DC 19, each creature in a 90-foot-long, 5-footwide Line. Failure: 60 (11d10) Lightning damage. Success: Half damage.'
+  - name: Spellcasting
+    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):'
+  legendaryActions:
+  - name: Cloaked Flight
+    description: The dragon uses Spellcasting to cast Invisibility on itself, and it can fly up to half its Fly Speed. The dragon can’t take this action again until the start of its next turn.
+  - name: Sonic Boom
+    description: The dragon uses Spellcasting to cast Shatter. The dragon can’t take this action again until the start of its next turn.
+  - name: Tail Swipe
+    description: The dragon makes one Rend attack.

@@ -1,0 +1,97 @@
+id: dryad
+type: monster
+name: Dryad
+description: >-
+  *Medium Fey, Neutral*
+
+
+  **AC** 16  
+
+  **HP** 22 (5d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 10 (+0) | 12 (+1) | 11 (+0) | 14 (+2) | 15 (+2) | 18 (+4) |
+
+
+  **Skills** Perception +4, Stealth +5  
+
+  **Senses** darkvision 60 ft., passive perception 14  
+
+  **Languages** Elvish, Sylvan
+
+
+  ### Traits
+
+  **Magic Resistance.** The dryad has Advantage on saving throws against spells and other magical effects.
+
+
+  **Speak with Beasts and Plants.** The dryad can communicate with Beasts and Plants as if they shared a language.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dryad makes one Vine Lash or Thorn Burst attack, and it can use Spellcasting to cast Charm Monster.
+
+
+  **Vine Lash.** Melee Attack Roll: +6, reach 10 ft. Hit: 8 (1d8 + 4) Slashing damage.
+
+
+  **Thorn Burst.** Ranged Attack Roll: +6, range 60 ft. Hit: 7 (1d6 + 4) Piercing damage.
+
+
+  **Spellcasting.** The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):
+
+
+
+  ### Bonus Actions
+
+  **Tree Stride.** If within 5 feet of a Large or bigger tree, the dryad teleports to an unoccupied space within 5 feet of a second Large or bigger tree that is within 60 feet of the previous tree.
+tags:
+- fey
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: neutral
+  armorClass: 16
+  hitPoints: 22
+  hitDice: 5d8
+  speed: 30 ft.
+  strength: 10
+  dexterity: 12
+  constitution: 11
+  intelligence: 14
+  wisdom: 15
+  charisma: 18
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 14
+  languages: Elvish, Sylvan
+  skills: Perception +4, Stealth +5
+  traits:
+  - name: Magic Resistance
+    description: The dryad has Advantage on saving throws against spells and other magical effects.
+  - name: Speak with Beasts and Plants
+    description: The dryad can communicate with Beasts and Plants as if they shared a language.
+  actions:
+  - name: Multiattack
+    description: The dryad makes one Vine Lash or Thorn Burst attack, and it can use Spellcasting to cast Charm Monster.
+  - name: Vine Lash
+    description: 'Melee Attack Roll: +6, reach 10 ft. Hit: 8 (1d8 + 4) Slashing damage.'
+  - name: Thorn Burst
+    description: 'Ranged Attack Roll: +6, range 60 ft. Hit: 7 (1d6 + 4) Piercing damage.'
+  - name: Spellcasting
+    description: 'The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):'
+  bonusActions:
+  - name: Tree Stride
+    description: If within 5 feet of a Large or bigger tree, the dryad teleports to an unoccupied space within 5 feet of a second Large or bigger tree that is within 60 feet of the previous tree.

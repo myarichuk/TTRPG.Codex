@@ -1,0 +1,19 @@
+id: shovel
+type: equipment
+name: Shovel
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 5 lb.
+
+
+  Working for 1 hour, you can use a Shovel to dig a hole that is 5 feet on each side in soil or similar material.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 5

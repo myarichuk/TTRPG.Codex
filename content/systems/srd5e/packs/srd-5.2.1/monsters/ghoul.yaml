@@ -1,0 +1,73 @@
+id: ghoul
+type: monster
+name: Ghoul
+description: >-
+  *Medium Undead, Chaotic Evil*
+
+
+  **AC** 12  
+
+  **HP** 22 (5d8)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 13 (+1) | 15 (+2) | 10 (+0) | 7 (-2) | 10 (+0) | 6 (-2) |
+
+
+  **Immunities** poison, Charmed, Exhaustion, Poisoned  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Common
+
+
+  ### Actions
+
+  **Multiattack.** The ghoul makes two Bite attacks.
+
+
+  **Bite.** Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage plus 3 (1d6) Necrotic damage.
+
+
+  **Claw.** Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Slashing damage. If the target is a creature that isn’t an Undead or elf, it is subjected to the following effect. Constitution Saving Throw: DC 10. Failure: The target has the Paralyzed condition until the end of its next turn.
+tags:
+- undead
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: undead
+  alignment: chaotic evil
+  armorClass: 12
+  hitPoints: 22
+  hitDice: 5d8
+  speed: 30 ft.
+  strength: 13
+  dexterity: 15
+  constitution: 10
+  intelligence: 7
+  wisdom: 10
+  charisma: 6
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 10
+  languages: Common
+  immunities:
+  - poison
+  - Charmed
+  - Exhaustion
+  - Poisoned
+  actions:
+  - name: Multiattack
+    description: The ghoul makes two Bite attacks.
+  - name: Bite
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage plus 3 (1d6) Necrotic damage.'
+  - name: Claw
+    description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Slashing damage. If the target is a creature that isn’t an Undead or elf, it is subjected to the following effect. Constitution Saving Throw: DC 10. Failure: The target has the Paralyzed condition until the end of its next turn.'

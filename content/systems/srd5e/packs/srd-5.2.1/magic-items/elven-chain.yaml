@@ -1,0 +1,15 @@
+id: elven-chain
+type: magic-item
+name: Elven Chain
+description: >-
+  Armor (Chain Mail or Chain Shirt)
+
+
+  You gain a +1 bonus to Armor Class while you wear this armor. You are considered trained with this armor even if you lack training with Medium or Heavy armor.
+tags:
+- rare
+- armor
+properties:
+  category: Armor
+  rarity: Rare
+  attunement: false

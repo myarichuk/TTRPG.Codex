@@ -1,0 +1,68 @@
+id: blink-dog
+type: monster
+name: Blink Dog
+description: >-
+  *Medium Fey, Lawful Good*
+
+
+  **AC** 13  
+
+  **HP** 22 (4d8 + 4)  
+
+  **Speed** 40 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 12 (+1) | 17 (+3) | 12 (+1) | 10 (+0) | 13 (+1) | 11 (+0) |
+
+
+  **Skills** Perception +5, Stealth +5  
+
+  **Senses** darkvision 60 ft., passive perception 15  
+
+  **Languages** Blink Dog; understands Elvish and Sylvan but can’t speak them
+
+
+  ### Actions
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Piercing damage.
+
+
+
+  ### Bonus Actions
+
+  **Teleport.** The dog teleports up to 40 feet to an unoccupied space it can see.
+tags:
+- fey
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: lawful good
+  armorClass: 13
+  hitPoints: 22
+  hitDice: 4d8 + 4
+  speed: 40 ft.
+  strength: 12
+  dexterity: 17
+  constitution: 12
+  intelligence: 10
+  wisdom: 13
+  charisma: 11
+  challengeRating: 1/4
+  xp: 50
+  senses: darkvision 60 ft., passive perception 15
+  languages: Blink Dog; understands Elvish and Sylvan but can’t speak them
+  skills: Perception +5, Stealth +5
+  actions:
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Piercing damage.'
+  bonusActions:
+  - name: Teleport
+    description: The dog teleports up to 40 feet to an unoccupied space it can see.

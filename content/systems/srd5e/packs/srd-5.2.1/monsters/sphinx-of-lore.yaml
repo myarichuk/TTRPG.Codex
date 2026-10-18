@@ -1,0 +1,113 @@
+id: sphinx-of-lore
+type: monster
+name: Sphinx of Lore
+description: >-
+  *Large Celestial, Lawful Neutral*
+
+
+  **AC** 17  
+
+  **HP** 170 (20d10 + 60)  
+
+  **Speed** 40 ft., fly 60 ft.  
+
+  **CR** 11 (XP 7200; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 18 (+4) | 15 (+2) | 16 (+3) | 18 (+4) | 18 (+4) | 18 (+4) |
+
+
+  **Skills** Arcana +12, History +12, Perception +8, Religion +12  
+
+  **Resistances** necrotic, radiant  
+
+  **Immunities** psychic, Charmed, Frightened  
+
+  **Senses** truesight 120 ft., passive perception 18  
+
+  **Languages** Celestial, Common
+
+
+  ### Traits
+
+  **Inscrutable.** No magic can observe the sphinx remotely or detect its thoughts without its permission. Wisdom (Insight) checks made to ascertain its intentions or sincerity are made with Disadvantage.
+
+
+  **Legendary Resistance (3/day).** If the sphinx fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The sphinx makes three Claw attacks.
+
+
+  **Claw.** Melee Attack Roll: +8, reach 5 ft. Hit: 14 (3d6 + 4) Slashing damage.
+
+
+  **Mind-Rending Roar.** Wisdom Saving Throw: DC 16, each enemy in a 300-foot Emanation originating from the sphinx. Failure: 35 (10d6) Psychic damage, and the target has the Incapacitated condition until the start of the sphinx’s next turn.
+
+
+  **Spellcasting.** The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):
+
+
+
+  ### Legendary Actions
+
+  **Arcane Prowl.** The sphinx can teleport up to 30 feet to an unoccupied space it can see, and it makes one Claw attack.
+
+
+  **Weight of Years.** Constitution Saving Throw: DC 16, one creature the sphinx can see within 120 feet. Failure: The target gains 1 Exhaustion level. While the target has any Exhaustion levels, it appears 3d10 years older. Failure or Success: The sphinx can’t take this action again until the start of its next turn.
+tags:
+- celestial
+- large
+- cr-11
+properties:
+  size: Large
+  creatureType: celestial
+  alignment: lawful neutral
+  armorClass: 17
+  hitPoints: 170
+  hitDice: 20d10 + 60
+  speed: 40 ft., fly 60 ft.
+  strength: 18
+  dexterity: 15
+  constitution: 16
+  intelligence: 18
+  wisdom: 18
+  charisma: 18
+  challengeRating: 11
+  xp: 7200
+  senses: truesight 120 ft., passive perception 18
+  languages: Celestial, Common
+  skills: Arcana +12, History +12, Perception +8, Religion +12
+  resistances:
+  - necrotic
+  - radiant
+  immunities:
+  - psychic
+  - Charmed
+  - Frightened
+  traits:
+  - name: Inscrutable
+    description: No magic can observe the sphinx remotely or detect its thoughts without its permission. Wisdom (Insight) checks made to ascertain its intentions or sincerity are made with Disadvantage.
+  - name: Legendary Resistance (3/day)
+    description: If the sphinx fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The sphinx makes three Claw attacks.
+  - name: Claw
+    description: 'Melee Attack Roll: +8, reach 5 ft. Hit: 14 (3d6 + 4) Slashing damage.'
+  - name: Mind-Rending Roar
+    description: 'Wisdom Saving Throw: DC 16, each enemy in a 300-foot Emanation originating from the sphinx. Failure: 35 (10d6) Psychic damage, and the target has the Incapacitated condition until the start of the sphinx’s next turn.'
+  - name: Spellcasting
+    description: 'The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):'
+  legendaryActions:
+  - name: Arcane Prowl
+    description: The sphinx can teleport up to 30 feet to an unoccupied space it can see, and it makes one Claw attack.
+  - name: Weight of Years
+    description: 'Constitution Saving Throw: DC 16, one creature the sphinx can see within 120 feet. Failure: The target gains 1 Exhaustion level. While the target has any Exhaustion levels, it appears 3d10 years older. Failure or Success: The sphinx can’t take this action again until the start of its next turn.'

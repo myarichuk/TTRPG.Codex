@@ -1,0 +1,17 @@
+id: playing-cards
+type: equipment
+name: Playing Cards
+description: >-
+  *Gaming Sets, Tools*
+
+
+  **Cost:** 5 sp  
+
+  **Weight:** 0 lb.
+tags:
+- gaming sets
+- tools
+properties:
+  category: Gaming Sets
+  cost: 5 sp
+  weight: 0

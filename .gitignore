@@ -36,3 +36,8 @@ coverage/
 # Rider
 .idea/
 *.sln.iml
+.serena/
+.claude/launch.json
+
+# Embedded RavenDB data (dev default under src/Codex.Web)
+RavenData/

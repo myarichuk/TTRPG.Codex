@@ -1,0 +1,109 @@
+id: adult-red-dragon
+type: monster
+name: Adult Red Dragon
+description: >-
+  *Huge Dragon, Chaotic Evil*
+
+
+  **AC** 19  
+
+  **HP** 256 (19d12 + 133)  
+
+  **Speed** 40 ft., climb 40 ft., fly 80 ft.  
+
+  **CR** 17 (XP 18000; PB +6)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 27 (+8) | 10 (+0) | 25 (+7) | 16 (+3) | 13 (+1) | 23 (+6) |
+
+
+  **Saving Throws** DEX +6, WIS +7  
+
+  **Skills** Perception +13, Stealth +6  
+
+  **Immunities** fire  
+
+  **Senses** darkvision 120 ft., blindsight 60 ft., passive perception 23  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Legendary Resistance (3/day).** If the dragon fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast Scorching Ray.
+
+
+  **Rend.** Melee Attack Roll: +14, reach 10 ft. Hit: 13 (1d10 + 8) Slashing damage plus 5 (2d4) Fire damage.
+
+
+  **Fire Breath.** Dexterity Saving Throw: DC 21, each creature in a 60-foot Cone. Failure: 59 (17d6) Fire damage. Success: Half damage.
+
+
+  **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 20, +12 to hit with spell attacks):
+
+
+
+  ### Legendary Actions
+
+  **Commanding Presence.** The dragon uses Spellcasting to cast Command (level 2 version). The dragon can’t take this action again until the start of its next turn.
+
+
+  **Fiery Rays.** The dragon uses Spellcasting to cast Scorching Ray. The dragon can’t take this action again until the start of its next turn.
+
+
+  **Pounce.** The dragon moves up to half its Speed, and it makes one Rend attack.
+tags:
+- dragon
+- huge
+- cr-17
+properties:
+  size: Huge
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 19
+  hitPoints: 256
+  hitDice: 19d12 + 133
+  speed: 40 ft., climb 40 ft., fly 80 ft.
+  strength: 27
+  dexterity: 10
+  constitution: 25
+  intelligence: 16
+  wisdom: 13
+  charisma: 23
+  challengeRating: 17
+  xp: 18000
+  senses: darkvision 120 ft., blindsight 60 ft., passive perception 23
+  languages: Common, Draconic
+  skills: Perception +13, Stealth +6
+  savingThrows: DEX +6, WIS +7
+  immunities:
+  - fire
+  traits:
+  - name: Legendary Resistance (3/day)
+    description: If the dragon fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast Scorching Ray.
+  - name: Rend
+    description: 'Melee Attack Roll: +14, reach 10 ft. Hit: 13 (1d10 + 8) Slashing damage plus 5 (2d4) Fire damage.'
+  - name: Fire Breath
+    description: 'Dexterity Saving Throw: DC 21, each creature in a 60-foot Cone. Failure: 59 (17d6) Fire damage. Success: Half damage.'
+  - name: Spellcasting
+    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 20, +12 to hit with spell attacks):'
+  legendaryActions:
+  - name: Commanding Presence
+    description: The dragon uses Spellcasting to cast Command (level 2 version). The dragon can’t take this action again until the start of its next turn.
+  - name: Fiery Rays
+    description: The dragon uses Spellcasting to cast Scorching Ray. The dragon can’t take this action again until the start of its next turn.
+  - name: Pounce
+    description: The dragon moves up to half its Speed, and it makes one Rend attack.

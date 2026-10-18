@@ -1,0 +1,7 @@
+id: language-common-sign-language
+type: rule
+name: Common Sign Language
+tags:
+- language
+properties:
+  category: Language

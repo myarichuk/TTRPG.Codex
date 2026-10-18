@@ -1,0 +1,11 @@
+id: simple-d6-core
+name: Simple d6 Core
+version: 1.0.0
+systemId: simple-d6
+kind: rules
+description: The handful of callings, knacks and foes the example system ships with.
+authors: [TTRPG.Codex project]
+license:
+  name: CC0-1.0
+  url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Example content released to the public domain by the TTRPG.Codex project.

@@ -1,0 +1,12 @@
+id: skill-nature
+type: rule
+name: Nature
+description: >-
+  **Ability:** INT
+
+
+  Recall lore about terrain, plants, animals, and weather.
+tags:
+- skill
+properties:
+  category: Skill

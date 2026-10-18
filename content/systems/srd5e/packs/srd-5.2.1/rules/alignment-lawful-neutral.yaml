@@ -1,0 +1,8 @@
+id: alignment-lawful-neutral
+type: rule
+name: Lawful Neutral
+description: Lawful Neutral individuals act in accordance with law, tradition, or personal codes. Someone who follows a disciplined rule of life—and isn't swayed either by the demands of those in need or by the temptations of evil—is probably Lawful Neutral.
+tags:
+- alignment
+properties:
+  category: Alignment

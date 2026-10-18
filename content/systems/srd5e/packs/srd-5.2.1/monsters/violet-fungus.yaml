@@ -1,0 +1,68 @@
+id: violet-fungus
+type: monster
+name: Violet Fungus
+description: >-
+  *Medium Plant, Unaligned*
+
+
+  **AC** 5  
+
+  **HP** 18 (4d8)  
+
+  **Speed** 5 ft.  
+
+  **CR** 1/4 (XP 50; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 3 (-4) | 1 (-5) | 10 (+0) | 1 (-5) | 3 (-4) | 1 (-5) |
+
+
+  **Immunities** Blinded, Charmed, Deafened, Frightened  
+
+  **Senses** blindsight 30 ft., passive perception 6  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Multiattack.** The fungus makes two Rotting Touch attacks.
+
+
+  **Rotting Touch.** Melee Attack Roll: +2, reach 10 ft. Hit: 4 (1d8) Necrotic damage.
+tags:
+- plant
+- medium
+- cr-1/4
+properties:
+  size: Medium
+  creatureType: plant
+  alignment: unaligned
+  armorClass: 5
+  hitPoints: 18
+  hitDice: 4d8
+  speed: 5 ft.
+  strength: 3
+  dexterity: 1
+  constitution: 10
+  intelligence: 1
+  wisdom: 3
+  charisma: 1
+  challengeRating: 1/4
+  xp: 50
+  senses: blindsight 30 ft., passive perception 6
+  languages: None
+  immunities:
+  - Blinded
+  - Charmed
+  - Deafened
+  - Frightened
+  actions:
+  - name: Multiattack
+    description: The fungus makes two Rotting Touch attacks.
+  - name: Rotting Touch
+    description: 'Melee Attack Roll: +2, reach 10 ft. Hit: 4 (1d8) Necrotic damage.'

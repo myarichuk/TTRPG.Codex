@@ -2,6 +2,7 @@ using Codex.Core;
 using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
+using Codex.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Authorization;
@@ -12,12 +13,10 @@ using Microsoft.Extensions.AI;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-
 builder.Services.AddCascadingAuthenticationState();
 
-// Configure authentication and cookies using a single AuthenticationBuilder.
+// Authentication: a local cookie scheme plus whichever external providers are configured.
 var authBuilder = builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -34,7 +33,6 @@ var authBuilder = builder.Services.AddAuthentication(options =>
         options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
     });
 
-// Register external providers conditionally based on configuration.
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
@@ -45,7 +43,7 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         options.ClientSecret = googleClientSecret;
         options.SignInScheme = "External";
         // Surface Google's own verification flag as a claim so the callback can decide
-        // whether it's safe to auto-link this login to an existing local account by email (B11).
+        // whether it's safe to auto-link this login to an existing local account by email.
         options.ClaimActions.MapJsonKey("email_verified", "email_verified");
     });
 }
@@ -62,19 +60,15 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
         options.KeyId = appleKeyId;
         options.TeamId = appleTeamId;
 
-        // Handle private key: can be a file path or PEM content
         if (System.IO.File.Exists(applePrivateKey))
         {
-            // Treat as file path
             options.UsePrivateKey(
                 (keyId) => new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetDirectoryName(applePrivateKey) ?? ".").GetFileInfo(Path.GetFileName(applePrivateKey))
             );
         }
         else if (applePrivateKey.Contains("-----BEGIN") || applePrivateKey.Contains("-----END"))
         {
-            // Treat as PEM content. Hand it to the Apple handler as an in-memory file so the
-            // key material never touches disk (B11: this used to write an undeleted temp file
-            // under Path.GetTempPath() on every startup).
+            // PEM content: hand it to the Apple handler in memory so the key never touches disk.
             options.UsePrivateKey(
                 (keyId) => new Codex.Web.InMemoryPemFileInfo(applePrivateKey, $"apple_key_{keyId}.p8")
             );
@@ -86,16 +80,15 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("DM", policy => policy.RequireRole("DM"));
-
-    // Require authentication by default, and explicitly allow anonymous on login/register/etc.
+    // Everything requires a signed-in user unless a page opts out with [AllowAnonymous].
+    // Authorisation inside a campaign is per-campaign membership (CampaignAccess), not a role.
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
 });
 builder.Services.AddHttpContextAccessor();
 
-// Configure Codex
+// Persistence
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
@@ -107,18 +100,22 @@ builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
 builder.Services.AddSingleton<IFactRepository, FactRepository>();
 builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
+builder.Services.AddSingleton<IHomebrewRepository, RavenHomebrewRepository>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 
+// Game systems and content
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<ISystemCatalog>(sp => sp.GetRequiredService<PluginLoader>());
 builder.Services.AddSingleton<ScriptEvaluator>();
 builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
 builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
+builder.Services.AddSingleton<ContentPackExporter>();
+builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 
-// Configure AI services
+// Optional AI (recap drafting). Nothing is sent anywhere unless a DM clicks the button.
 var aiConfig = new AIConfiguration();
 builder.Configuration.GetSection("AI").Bind(aiConfig);
 builder.Services.AddSingleton(aiConfig);
@@ -129,13 +126,8 @@ if (chatClient != null)
     builder.Services.AddSingleton<IChatClient>(chatClient);
 }
 
-builder.Services.AddSingleton<LoreGenerator>(sp =>
-{
-    var chatClient = sp.GetService<IChatClient>();
-    return new LoreGenerator(chatClient);
-});
+builder.Services.AddSingleton<LoreGenerator>(sp => new LoreGenerator(sp.GetService<IChatClient>()));
 
-// Add SignalR explicitly (already added by AddServerSideBlazor, but doing it for clarity)
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
@@ -143,8 +135,6 @@ var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-// B18: this used to hardcode "http://localhost:5000", which hasn't been the bound port since
-// launchSettings.json moved to 5183. Log whatever Kestrel is actually bound to once it starts.
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     var addresses = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
@@ -152,31 +142,16 @@ app.Lifetime.ApplicationStarted.Register(() =>
     logger.LogInformation("Server running at: {Addresses}", addresses is { Count: > 0 } ? string.Join(", ", addresses) : "(unknown)");
 });
 
-// Initialize Plugins and World once at startup
+// Load systems (compiled plugins and system.yaml files) and content packs once at startup.
 using (var scope = app.Services.CreateScope())
 {
     var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath);
 
-    // B10: a published, single-file app has no "../../plugins" two levels above its content
-    // root - that path only makes sense running from source under bin/Debug/net10.0/. Prefer a
-    // "plugins" folder sitting right next to the published executable; only fall back to the
-    // configured (dev-time) path if that doesn't exist.
-    var besidePublishedApp = Path.Combine(AppContext.BaseDirectory, "plugins");
-    string absolutePluginsDir;
-    if (Directory.Exists(besidePublishedApp))
-    {
-        absolutePluginsDir = besidePublishedApp;
-    }
-    else
-    {
-        var pluginsPath = config["Codex:PluginsDirectory"] ?? "plugins";
-        absolutePluginsDir = Path.GetFullPath(Path.Combine(env.ContentRootPath, pluginsPath));
-    }
-
-    logger.LogInformation("Loading plugins and content packs from: {Path}", absolutePluginsDir);
-    await loader.LoadAndInitializeAsync(absolutePluginsDir);
+    logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
+    await loader.LoadAndInitializeAsync(roots);
+    logger.LogInformation("Loaded systems: {Systems}", string.Join(", ", loader.LoadedSystemIds));
 }
 
 if (!app.Environment.IsDevelopment())
@@ -186,19 +161,14 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-// Test-only seeding endpoints for the Phase 3 exit-criteria Playwright suite (and any future
-// e2e test): opt-in via config, off by default, so a stray "Codex:EnableTestSeedEndpoint=true"
-// can never leak into a real deployment's route table - the check happens once here, at startup,
-// rather than per-request inside the handler, so the routes don't even exist otherwise.
+// Test-only seeding endpoints for the Playwright suites: opt-in via config, off by default, so a
+// stray "Codex:EnableTestSeedEndpoint=true" can never leak into a real deployment's route table.
 if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
 {
     app.MapPost("/test/seed/users", async (List<Codex.Web.TestSeedUser> users, IUserRepository userRepository) =>
@@ -214,14 +184,12 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
         return Results.Ok();
     }).AllowAnonymous();
 
-    app.MapPost("/test/seed/actors", async (List<Codex.Web.TestSeedActor> actors, IActorRepository actorRepository, ComponentRegistry componentRegistry) =>
+    app.MapPost("/test/seed/actors", async (List<Codex.Web.TestSeedActor> actors, IActorRepository actorRepository, ICampaignRepository campaignRepository, ComponentRegistry componentRegistry, ISystemCatalog catalog) =>
     {
         foreach (var seed in actors)
         {
-            var pool = new Codex.Core.Components.ResourcePoolComponent();
-            pool.Set("HP", seed.Hp);
-            pool.Set("HP_Max", seed.HpMax);
-
+            var campaign = await campaignRepository.GetAsync(seed.CampaignId);
+            var system = campaign != null ? catalog.GetDefinition(campaign.SystemId) : null;
             var actor = new ActorDocument
             {
                 Id = seed.Id,
@@ -229,18 +197,31 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
                 Kind = seed.Kind,
                 OwnerUserId = seed.OwnerUserId,
                 Name = seed.Name,
-                Visibility = seed.Visibility,
-                State = componentRegistry.Snapshot(new object[] { pool })
+                Visibility = seed.Visibility
             };
+
+            foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())
+            {
+                actor.Sheet[key] = value is System.Text.Json.JsonElement element ? element.ValueKind switch
+                {
+                    System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+                    System.Text.Json.JsonValueKind.True => true,
+                    System.Text.Json.JsonValueKind.False => false,
+                    _ => element.ToString()
+                } : value;
+            }
+
+            var primary = system?.PrimaryResource;
+            actor.Sheet[primary?.Key ?? "HP"] = (long)seed.Hp;
+            actor.Sheet[primary?.MaxKey ?? "HP_Max"] = (long)seed.HpMax;
+            ActorSheetSync.ApplySheetToState(actor, system, componentRegistry);
             await actorRepository.SaveAsync(actor);
         }
 
         return Results.Ok();
     }).AllowAnonymous();
 
-    // Phase 3 exit criterion 6 ("the session log contains every command") reads this back
-    // rather than parsing it out of rendered HTML - the session log isn't shown in any UI yet
-    // (that's 4.1's recap editor), so the only faithful way to assert on it today is directly.
+    // The session log isn't shown verbatim in any UI, so the e2e suite reads it back directly.
     app.MapGet("/test/inspect/session-events/{campaignId}", async (string campaignId, ICampaignRepository campaignRepository, ISessionRepository sessionRepository) =>
     {
         var campaign = await campaignRepository.GetAsync(campaignId);
@@ -254,8 +235,7 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
     }).AllowAnonymous();
 }
 
-// Robust sign-out: do it on a normal HTTP request so cookies can be cleared reliably.
-// POST + antiforgery (B11): a GET logout can be triggered cross-site by a bare <img>/<a> tag.
+// Sign-out is a POST with an antiforgery token so a cross-site <img> can't log a user out.
 app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>
 {
     try
@@ -273,8 +253,6 @@ app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.
 
 app.MapGet("/login/external", async (string provider, string? returnUrl, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider) =>
 {
-    // B11: whitelist against schemes actually registered instead of handing an
-    // attacker-controlled string straight to Results.Challenge (which 500s on an unknown scheme).
     var registeredSchemes = (await schemeProvider.GetAllSchemesAsync()).Select(s => s.Name);
     if (!Codex.Web.ExternalLoginPolicy.IsRegisteredScheme(provider, registeredSchemes))
     {
@@ -314,9 +292,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     var user = await userRepository.GetUserByExternalLoginAsync(provider, providerKey);
 
-    // B11: only auto-link to an existing local account by email if the provider itself
-    // vouches that the email is verified. An unverified email lets an attacker who controls
-    // that mailbox at the provider take over an existing local account.
+    // Only auto-link to an existing local account by email if the provider vouches the email is verified.
     if (user == null && !string.IsNullOrEmpty(email) && Codex.Web.ExternalLoginPolicy.IsEmailVerified(principal))
     {
         user = await userRepository.GetUserByEmailAsync(email);
@@ -339,8 +315,6 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
             ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
         };
 
-        // B12: reserve the username atomically, retrying with a fresh suffix on collision
-        // instead of the old query-then-insert race.
         var attempt = 0;
         while (!await userRepository.TryReserveUsernameAsync(user.Username, user.Id))
         {
@@ -386,8 +360,8 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 
-// 4.4: daily RavenDB backup into the data dir. Best-effort by design - a backup that can't be
-// configured must never keep the table from starting.
+// Daily RavenDB backup into the data dir. Best-effort: a backup that can't be configured must never
+// keep the table from starting.
 try
 {
     var backupDir = Path.GetFullPath(Path.Combine(dataDir, "Backups"));

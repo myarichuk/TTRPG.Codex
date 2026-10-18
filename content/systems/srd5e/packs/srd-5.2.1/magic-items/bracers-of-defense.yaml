@@ -1,0 +1,15 @@
+id: bracers-of-defense
+type: magic-item
+name: Bracers of Defense
+description: >-
+  Wondrous Item
+
+
+  While wearing these bracers, you gain a +2 bonus to Armor Class if you are wearing no armor and using no Shield.
+tags:
+- rare
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Rare
+  attunement: true

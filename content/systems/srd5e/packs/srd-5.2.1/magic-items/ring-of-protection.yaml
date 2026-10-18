@@ -1,0 +1,15 @@
+id: ring-of-protection
+type: magic-item
+name: Ring of Protection
+description: >-
+  Ring
+
+
+  You gain a +1 bonus to Armor Class and saving throws while wearing this ring.
+tags:
+- rare
+- rings
+properties:
+  category: Rings
+  rarity: Rare
+  attunement: true

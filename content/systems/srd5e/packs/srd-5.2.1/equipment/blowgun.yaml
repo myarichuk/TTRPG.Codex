@@ -1,0 +1,32 @@
+id: blowgun
+type: equipment
+name: Blowgun
+description: >-
+  *Martial Weapons, Martial Ranged Weapons, Ranged Weapons, Weapons*
+
+
+  **Damage:** 1 Piercing  
+
+  **Properties:** Ammunition, Loading  
+
+  **Range:** 25/100 ft.  
+
+  **Mastery:** Vex  
+
+  **Cost:** 10 gp  
+
+  **Weight:** 1 lb.
+tags:
+- martial weapons
+- martial ranged weapons
+- ranged weapons
+- weapons
+properties:
+  category: Martial Weapons
+  cost: 10 gp
+  weight: 1
+  damage: 1 Piercing
+  properties:
+  - Ammunition
+  - Loading
+  mastery: Vex

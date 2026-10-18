@@ -1,0 +1,23 @@
+id: scale-mail
+type: equipment
+name: Scale Mail
+description: >-
+  *Armor, Medium Armor*
+
+
+  **Armor Class:** 14 + Dex modifier (max 2)  
+
+  **Stealth:** Disadvantage  
+
+  **Cost:** 50 gp  
+
+  **Weight:** 45 lb.
+tags:
+- armor
+- medium armor
+properties:
+  category: Armor
+  cost: 50 gp
+  weight: 45
+  armorClass: 14 + Dex modifier (max 2)
+  stealth: true

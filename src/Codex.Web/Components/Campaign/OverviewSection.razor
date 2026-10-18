@@ -1,0 +1,129 @@
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@inject IUserRepository UserRepo
+@inject ISessionRepository SessionRepo
+@inject CampaignRuntimeManager RuntimeManager
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <section class="panel" aria-labelledby="about-heading">
+            <div class="panel-title">
+                <h2 id="about-heading">About this campaign</h2>
+                @if (Ctx.IsDm)
+                {
+                    <a href="@Ctx.BasePath/settings" class="btn btn-outline-secondary btn-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit</a>
+                }
+            </div>
+            <p class="mb-0">@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? "No description yet." : Ctx.Campaign.Description)</p>
+        </section>
+
+        <section class="panel" aria-labelledby="mine-heading">
+            <div class="panel-title">
+                <h2 id="mine-heading">@(Ctx.IsDm ? "Cast at a glance" : "My characters")</h2>
+                <a href="@Ctx.BasePath/cast" class="btn btn-outline-secondary btn-sm">Open cast</a>
+            </div>
+            @{
+                var mine = Ctx.IsDm ? Ctx.Actors : Ctx.Actors.Where(a => a.OwnerUserId == Ctx.UserId).ToList();
+            }
+            @if (mine.Count == 0)
+            {
+                <p class="mb-2">@(Ctx.IsDm ? "No characters, NPCs or monsters yet." : "You have no character in this campaign yet.")</p>
+                <a href="@Ctx.BasePath/cast" class="btn btn-primary btn-sm" data-testid="overview-create-character">@(Ctx.IsDm ? "Add to the cast" : "Create a character")</a>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (var actor in mine.Take(8))
+                    {
+                        var hp = ActorSheetSync.PrimaryResource(actor, Ctx.System);
+                        <li class="list-row">
+                            <div class="row-main">
+                                <div class="row-title"><a href="@Ctx.BasePath/actors/@actor.Id">@actor.Name</a></div>
+                                <div class="row-sub">@actor.Kind.ToString().Replace("Character", " character").Replace("NonPlayer", "Non-player")</div>
+                            </div>
+                            @if (hp.Max > 0)
+                            {
+                                <span class="hp-text small">@hp.Current/@hp.Max @hp.Label</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+
+    <div class="col-lg-4">
+        <section class="panel" aria-labelledby="table-heading">
+            <div class="panel-title"><h2 id="table-heading">Table</h2></div>
+            @if (RuntimeManager.TryGet(Ctx.Campaign.Id) != null)
+            {
+                <p class="mb-2"><span class="pill pill-success">Live</span> The table is running.</p>
+                <a href="@Ctx.BasePath/table" class="btn btn-primary btn-sm w-100">Join the table</a>
+            }
+            else
+            {
+                <p class="mb-2 small-muted">No session is running right now.</p>
+                <a href="@Ctx.BasePath/table" class="btn btn-outline-secondary btn-sm w-100">@(Ctx.IsDm ? "Go to the table" : "Wait at the table")</a>
+            }
+            @if (latestSession != null)
+            {
+                <hr />
+                <div class="small-muted">Latest session</div>
+                <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? latestSession.Date.ToString("d MMM yyyy") : latestSession.Title)</a>
+                <span class="pill ms-1">@latestSession.Status</span>
+            }
+        </section>
+
+        <section class="panel" aria-labelledby="members-heading">
+            <div class="panel-title"><h2 id="members-heading">Members (@Ctx.Campaign.Members.Count)</h2></div>
+            <ul class="list-unstyled mb-0">
+                @foreach (var member in Ctx.Campaign.Members)
+                {
+                    <li class="list-row">
+                        <span>@usernames.GetValueOrDefault(member.UserId, member.UserId)</span>
+                        <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@member.Role</span>
+                    </li>
+                }
+            </ul>
+            @if (Ctx.IsDm)
+            {
+                <hr />
+                <label for="invite-link" class="form-label">Invite link</label>
+                <div class="input-group input-group-sm">
+                    <input id="invite-link" class="form-control" readonly value="@InviteLink" data-testid="invite-link" />
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></button>
+                </div>
+                <div class="form-text">Anyone with this link joins as a player.</div>
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private readonly Dictionary<string, string> usernames = new();
+    private SessionDocument? latestSession;
+
+    private string InviteLink => $"{Nav.BaseUri}campaigns/join/{Ctx.Campaign.InviteCode}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        usernames.Clear();
+        foreach (var member in Ctx.Campaign.Members)
+        {
+            var user = await UserRepo.GetUserByIdAsync(member.UserId);
+            usernames[member.UserId] = user?.Username ?? member.UserId;
+        }
+
+        latestSession = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).FirstOrDefault();
+    }
+
+    private async Task CopyInviteAsync()
+    {
+        var ok = await JS.InvokeAsync<bool>("codex.copyText", InviteLink);
+        Ctx.Notify(ok ? Flash.Success("Invite link copied.") : Flash.Error("Could not copy. Select the link and copy it manually."));
+    }
+}

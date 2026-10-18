@@ -1,0 +1,92 @@
+id: hydra
+type: monster
+name: Hydra
+description: >-
+  *Huge Monstrosity, Unaligned*
+
+
+  **AC** 15  
+
+  **HP** 184 (16d12 + 80)  
+
+  **Speed** 40 ft., swim 40 ft.  
+
+  **CR** 8 (XP 3900; PB +3)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 20 (+5) | 12 (+1) | 20 (+5) | 2 (-4) | 10 (+0) | 7 (-2) |
+
+
+  **Skills** Perception +6  
+
+  **Immunities** Blinded, Charmed, Deafened, Frightened, Stunned, Unconscious  
+
+  **Senses** darkvision 60 ft., passive perception 16  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Hold Breath.** The hydra can hold its breath for 1 hour.
+
+
+  **Multiple Heads.** The hydra has five heads. Whenever the hydra takes 25 damage or more on a single turn, one of its heads dies. The hydra dies if all its heads are dead. At the end of each of its turns when it has at least one living head, the hydra grows two heads for each of its heads that died since its last turn, unless it has taken Fire damage since its last turn. The hydra regains 20 Hit Points when it grows new heads.
+
+
+  **Reactive Heads.** For each head the hydra has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks.
+
+
+
+  ### Actions
+
+  **Multiattack.** The hydra makes as many Bite attacks as it has heads.
+
+
+  **Bite.** Melee Attack Roll: +8, reach 10 ft. Hit: 10 (1d10 + 5) Piercing damage.
+tags:
+- monstrosity
+- huge
+- cr-8
+properties:
+  size: Huge
+  creatureType: monstrosity
+  alignment: unaligned
+  armorClass: 15
+  hitPoints: 184
+  hitDice: 16d12 + 80
+  speed: 40 ft., swim 40 ft.
+  strength: 20
+  dexterity: 12
+  constitution: 20
+  intelligence: 2
+  wisdom: 10
+  charisma: 7
+  challengeRating: 8
+  xp: 3900
+  senses: darkvision 60 ft., passive perception 16
+  languages: None
+  skills: Perception +6
+  immunities:
+  - Blinded
+  - Charmed
+  - Deafened
+  - Frightened
+  - Stunned
+  - Unconscious
+  traits:
+  - name: Hold Breath
+    description: The hydra can hold its breath for 1 hour.
+  - name: Multiple Heads
+    description: The hydra has five heads. Whenever the hydra takes 25 damage or more on a single turn, one of its heads dies. The hydra dies if all its heads are dead. At the end of each of its turns when it has at least one living head, the hydra grows two heads for each of its heads that died since its last turn, unless it has taken Fire damage since its last turn. The hydra regains 20 Hit Points when it grows new heads.
+  - name: Reactive Heads
+    description: For each head the hydra has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks.
+  actions:
+  - name: Multiattack
+    description: The hydra makes as many Bite attacks as it has heads.
+  - name: Bite
+    description: 'Melee Attack Roll: +8, reach 10 ft. Hit: 10 (1d10 + 5) Piercing damage.'

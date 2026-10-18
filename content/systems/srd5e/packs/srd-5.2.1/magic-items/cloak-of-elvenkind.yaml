@@ -1,0 +1,15 @@
+id: cloak-of-elvenkind
+type: magic-item
+name: Cloak of Elvenkind
+description: >-
+  Wondrous Item
+
+
+  While you wear this cloak, Wisdom (Perception) checks made to perceive you have Disadvantage, and you have Advantage on Dexterity (Stealth) checks.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

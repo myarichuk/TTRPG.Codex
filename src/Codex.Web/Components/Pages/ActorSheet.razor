@@ -1,124 +1,265 @@
 @page "/campaigns/{CampaignId}/actors/{ActorId}"
 @using System.Security.Claims
+@using Codex.Core
+@using Codex.Core.Systems
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
-@using Codex.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject IActorRepository ActorRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject IContentRegistry ContentRegistry
 @inject ISystemCatalog SystemCatalog
+@inject ComponentRegistry Components
+@inject CampaignLibrary Library
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<PageTitle>@(actor?.Name ?? "Character Sheet") | TTRPG.Codex</PageTitle>
+<PageTitle>@(actor?.Name ?? "Character") | TTRPG.Codex</PageTitle>
 
-<div class="app-container">
 @if (loading)
 {
-    <div class="d-flex justify-content-center my-5 py-5">
-        <div class="spinner-border text-accent" role="status"><span class="visually-hidden">Loading...</span></div>
-    </div>
+    <div class="d-flex justify-content-center py-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div></div>
 }
 else if (campaign == null || actor == null || access == null)
 {
-    <div class="empty-state text-center py-5">
-        <h3>Character not found</h3>
-        <p class="text-tertiary">It may not exist, or you may not have access to it.</p>
-        <a href="/campaigns" class="btn btn-accent mt-3">Back to Campaigns</a>
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="user" Size="28" /></div>
+        <h1 class="h4">Character not found</h1>
+        <p>It may not exist, or you may not have access to it.</p>
+        <a href="/" class="btn btn-primary">Back to campaigns</a>
     </div>
 }
 else
 {
-    <header class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-header mb-3">
         <div>
-            <h1 class="mb-0">@actor.Name</h1>
-            <span class="badge bg-secondary">@actor.Kind</span>
-            <span class="badge bg-dark ms-1">@actor.Visibility</span>
-        </div>
-        <a href="/campaigns/@CampaignId" class="btn btn-outline-secondary btn-sm">Back to Campaign</a>
-    </header>
-
-    @if (!string.IsNullOrEmpty(statusMessage))
-    {
-        <div class="alert alert-info py-2">@statusMessage</div>
-    }
-
-    @if (!string.IsNullOrEmpty(actor.BlueprintId) && !BlueprintExists(actor))
-    {
-        <div class="alert alert-warning py-2">Missing Content: this character was created from "@actor.BlueprintId", which isn't in a loaded pack. The sheet below is still editable.</div>
-    }
-
-    @if (CanEdit)
-    {
-        <div class="card p-3 mb-4">
-            <div class="mb-2">
-                <label class="form-label small">Name</label>
-                <input class="form-control" @bind="editName" @bind:event="oninput" />
+            <nav aria-label="Breadcrumb" class="small-muted mb-1"><a href="/">Campaigns</a> / <a href="/campaigns/@CampaignId">@campaign.Name</a> / <a href="/campaigns/@CampaignId/cast">Cast</a></nav>
+            <h1 class="mb-0" data-testid="actor-name">@DisplayName</h1>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+                <span class="pill">@KindLabel</span>
+                @if (access.IsDm)
+                {
+                    <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
+                }
+                @if (!string.IsNullOrEmpty(actor.BlueprintId))
+                {
+                    <span class="pill">From @actor.BlueprintId.Split(':').Last()</span>
+                }
             </div>
-            @if (actorSchema != null)
-            {
-                <SchemaForm Schema="actorSchema" Values="editState" />
-            }
-            else
-            {
-                <p class="text-tertiary small">No character schema for system "@campaign.SystemId" - values below are raw.</p>
-                @foreach (var entry in editState.ToList())
-                {
-                    <div class="mb-2">
-                        <label class="form-label small">@entry.Key</label>
-                        <input class="form-control form-control-sm" value="@entry.Value?.ToString()"
-                               @onchange="e => editState[entry.Key] = e.Value?.ToString() ?? string.Empty" />
-                    </div>
-                }
-            }
-            <button type="button" class="btn btn-accent btn-sm mt-2" @onclick="SaveAsync">Save Changes</button>
         </div>
-    }
-    else
+        @if (CanEdit)
+        {
+            <button type="button" class="btn btn-primary" @onclick="SaveAsync" data-testid="sheet-save"><LucideIcon IconName="check" Size="16" /> Save changes</button>
+        }
+    </div>
+
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+
+    @if (!string.IsNullOrEmpty(actor.BlueprintId) && ContentRegistry.GetActor(actor.BlueprintId) == null)
     {
-        <div class="card p-3 mb-4">
-            <p class="text-tertiary small">Only the owner and the DM can edit this sheet.</p>
-            <dl class="row mb-0">
-                @foreach (var entry in actor.State)
-                {
-                    <dt class="col-sm-4">@entry.Key</dt>
-                    <dd class="col-sm-8">@entry.Value?.ToString()</dd>
-                }
-            </dl>
-            @if (!actor.State.Any())
-            {
-                <p class="text-tertiary small mb-0">No recorded attributes.</p>
-            }
+        <div class="status" role="note">
+            <LucideIcon IconName="alert-triangle" Size="18" />
+            <span>Missing content: this character came from “@actor.BlueprintId”, which isn't in a loaded pack. The sheet still works.</span>
         </div>
     }
+
+    @if (!CanEdit)
+    {
+        <p class="small-muted">Only the owner and the DM can edit this sheet.</p>
+    }
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            @if (system != null && system.Attributes.Count > 0)
+            {
+                <section class="panel" aria-labelledby="attributes-heading">
+                    <div class="panel-title"><h2 id="attributes-heading" class="h5">Attributes</h2></div>
+                    <div class="attr-grid">
+                        @foreach (var attr in system.Attributes)
+                        {
+                            var score = YamlValues.GetInt(editSheet, attr.Key) ?? attr.Default;
+                            var modifier = Modifier(attr, score);
+                            var modifierText = modifier == null ? null : (modifier >= 0 ? "+" : "") + modifier;
+                            var inputId = "attr-input-" + attr.Key;
+                            var testId = "attr-" + attr.Key;
+                            <div class="attr-box">
+                                <div class="attr-label" id="@("attr-" + attr.Key)">@(attr.Abbreviation ?? attr.Label)</div>
+                                @if (modifierText != null)
+                                {
+                                    <div class="attr-mod" aria-label="@(attr.Label + " modifier")">@modifierText</div>
+                                }
+                                @if (CanEdit)
+                                {
+                                    <label for="@inputId" class="visually-hidden">@(attr.Label + " score")</label>
+                                    <input id="@inputId" type="number" class="form-control form-control-sm" min="@attr.Min" max="@attr.Max"
+                                           value="@score" data-testid="@testId"
+                                           @onchange="e => SetAttribute(attr, e.Value?.ToString())" />
+                                }
+                                else
+                                {
+                                    <div class="attr-score">@score</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+
+            <section class="panel" aria-labelledby="sheet-heading">
+                <div class="panel-title"><h2 id="sheet-heading" class="h5">Sheet</h2></div>
+                <div class="mb-3">
+                    <label for="actor-name-input" class="form-label">Name</label>
+                    <input id="actor-name-input" class="form-control" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
+                </div>
+                @if (schema != null)
+                {
+                    <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" HiddenKeys="attributeKeys" ReadOnly="@(!CanEdit)" />
+                }
+                else if (editSheet.Count > 0)
+                {
+                    <dl class="prop-list mb-0">
+                        @foreach (var entry in editSheet)
+                        {
+                            <dt>@entry.Key</dt>
+                            <dd>@entry.Value</dd>
+                        }
+                    </dl>
+                }
+                else
+                {
+                    <p class="small-muted mb-0">No attributes recorded, and the system “@campaign.SystemId” declares no sheet.</p>
+                }
+            </section>
+
+            @if (linkedEntries.Count > 0)
+            {
+                <section class="panel" aria-labelledby="linked-heading">
+                    <div class="panel-title"><h2 id="linked-heading" class="h5">From the Library</h2></div>
+                    @foreach (var (label, item) in linkedEntries)
+                    {
+                        <div class="mb-3">
+                            <div class="small-muted text-uppercase fw-bold" style="letter-spacing:.06em">@label</div>
+                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@item.Entry.Name</a>
+                            <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            @if (system?.PrimaryResource is { } primary)
+            {
+                var current = YamlValues.GetInt(editSheet, primary.Key) ?? 0;
+                var max = primary.MaxKey != null ? YamlValues.GetInt(editSheet, primary.MaxKey) ?? 0 : 0;
+                <section class="panel" aria-labelledby="vitals-heading">
+                    <div class="panel-title"><h2 id="vitals-heading" class="h5">@primary.Label</h2></div>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="display-6 hp-text" data-testid="hp-current">@current</span>
+                        @if (max > 0)
+                        {
+                            <span class="small-muted">/ @max</span>
+                        }
+                    </div>
+                    @if (max > 0)
+                    {
+                        <div class="hp-bar" role="progressbar" aria-label="@primary.Label" aria-valuemin="0" aria-valuemax="@max" aria-valuenow="@current">
+                            <span style="width:@(Math.Clamp(100.0 * current / max, 0, 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                        </div>
+                    }
+                    <p class="small-muted mt-2 mb-0">Changes at the live table update this number; edit the values under Sheet to set them directly.</p>
+                </section>
+            }
+
+            @if (access.IsDm)
+            {
+                <section class="panel" aria-labelledby="visibility-heading">
+                    <div class="panel-title"><h2 id="visibility-heading" class="h5">Visibility to players</h2></div>
+                    <div class="mb-2">
+                        <label for="actor-visibility" class="form-label">Who sees this character</label>
+                        <select id="actor-visibility" class="form-select" @bind="editVisibility">
+                            <option value="@ActorVisibility.Hidden">Hidden (players don't know they exist)</option>
+                            <option value="@ActorVisibility.Unknown">Seen but not identified</option>
+                            <option value="@ActorVisibility.Known">Known</option>
+                        </select>
+                    </div>
+                    @if (editVisibility == ActorVisibility.Unknown)
+                    {
+                        <div class="mb-2">
+                            <label for="actor-public-name" class="form-label">Shown to players as</label>
+                            <input id="actor-public-name" class="form-control" @bind="editPublicName" placeholder="e.g. Hooded stranger" />
+                        </div>
+                    }
+                    <div class="mb-2">
+                        <label for="actor-kind" class="form-label">Kind</label>
+                        <select id="actor-kind" class="form-select" @bind="editKind">
+                            <option value="@ActorKind.PlayerCharacter">Player character</option>
+                            <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
+                            <option value="@ActorKind.Monster">Monster</option>
+                        </select>
+                    </div>
+                    @if (editKind == ActorKind.PlayerCharacter)
+                    {
+                        <div class="mb-2">
+                            <label for="actor-owner" class="form-label">Played by</label>
+                            <select id="actor-owner" class="form-select" @bind="editOwnerId">
+                                <option value="">— nobody —</option>
+                                @foreach (var member in campaign.Members)
+                                {
+                                    <option value="@member.UserId">@member.UserId</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+    </div>
 }
-</div>
 
 @code {
-    [Parameter]
-    public string CampaignId { get; set; } = string.Empty;
-
-    [Parameter]
-    public string ActorId { get; set; } = string.Empty;
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+    [Parameter] public string ActorId { get; set; } = string.Empty;
 
     private bool loading = true;
     private CampaignDocument? campaign;
     private ActorDocument? actor;
     private CampaignAccess? access;
+    private SystemDefinition? system;
     private string? currentUserId;
-    private UISchema? actorSchema;
+    private UISchema? schema;
+    private HashSet<string> attributeKeys = new();
+    private Dictionary<string, IReadOnlyList<(string Id, string Name)>> referenceOptions = new();
+    private List<(string Label, LibraryItem Item)> linkedEntries = new();
     private string editName = "";
-    private Dictionary<string, object> editState = new();
-    private string? statusMessage;
+    private ActorVisibility editVisibility;
+    private string editPublicName = "";
+    private ActorKind editKind;
+    private string editOwnerId = "";
+    private Dictionary<string, object> editSheet = new();
+    private Flash? flash;
 
-    private bool CanEdit => access != null && actor != null
-        && (access.IsDm || actor.OwnerUserId == currentUserId);
+    private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
 
-    protected override async Task OnParametersSetAsync()
+    private string DisplayName => actor == null ? string.Empty
+        : access?.IsDm == false && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
+
+    private string KindLabel => actor?.Kind switch
     {
-        await ReloadAsync();
-    }
+        ActorKind.PlayerCharacter => "Player character",
+        ActorKind.Monster => "Monster",
+        _ => "Non-player character"
+    };
+
+    private string VisibilityLabel => actor?.Visibility switch
+    {
+        ActorVisibility.Known => "Known to players",
+        ActorVisibility.Unknown => "Seen, not identified",
+        _ => "Hidden from players"
+    };
+
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
 
     private async Task ReloadAsync()
     {
@@ -127,52 +268,90 @@ else
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         campaign = await CampaignRepo.GetAsync(CampaignId);
-        if (campaign != null && currentUserId != null)
-        {
-            access = await AccessResolver.ResolveAsync(CampaignId, currentUserId);
-        }
+        access = campaign != null && currentUserId != null ? await AccessResolver.ResolveAsync(CampaignId, currentUserId) : null;
 
         if (campaign != null && access != null)
         {
             actor = await ActorRepo.GetVisibleAsync(ActorId, access);
             if (actor != null)
             {
-                actorSchema = SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == "Actor");
+                system = SystemCatalog.GetDefinition(campaign.SystemId);
+                schema = SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
+                attributeKeys = (system?.Attributes.Select(a => a.Key) ?? Enumerable.Empty<string>()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                ActorSheetSync.ApplyStateToSheet(actor, system, Components);
                 editName = actor.Name;
-                editState = new Dictionary<string, object>(actor.State);
+                editVisibility = actor.Visibility;
+                editPublicName = actor.PublicName ?? "";
+                editKind = actor.Kind;
+                editOwnerId = actor.OwnerUserId ?? "";
+                editSheet = new Dictionary<string, object>(actor.Sheet);
+
+                await LoadReferenceOptionsAsync();
+                await LoadLinkedEntriesAsync();
             }
         }
 
         loading = false;
     }
 
-    private bool BlueprintExists(ActorDocument target)
+    private async Task LoadReferenceOptionsAsync()
     {
-        var parts = target.BlueprintId!.Split(':', 2);
-        if (parts.Length != 2)
+        referenceOptions = new Dictionary<string, IReadOnlyList<(string, string)>>();
+        if (campaign == null || access == null || schema == null) return;
+        foreach (var target in schema.Fields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
-            return false;
+            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
         }
+    }
 
-        return ContentRegistry.GetActorsBySystem(parts[0]).Any(a => a.Id == parts[1]);
+    private async Task LoadLinkedEntriesAsync()
+    {
+        linkedEntries = new List<(string, LibraryItem)>();
+        if (campaign == null || access == null || schema == null) return;
+        foreach (var field in schema.Fields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null))
+        {
+            var id = YamlValues.GetString(editSheet, field.Key);
+            if (string.IsNullOrEmpty(id)) continue;
+            var item = await Library.GetAsync(campaign, access, field.TargetEntityType!, id);
+            if (item != null) linkedEntries.Add((field.Label, item));
+        }
+    }
+
+    private static int? Modifier(AttributeDefinition attribute, int score) =>
+        attribute.Modifier == "half-minus-five" ? (int)Math.Floor((score - 10) / 2.0) : null;
+
+    private void SetAttribute(AttributeDefinition attribute, string? raw)
+    {
+        if (!int.TryParse(raw, out var value)) return;
+        if (attribute.Min.HasValue) value = Math.Max(attribute.Min.Value, value);
+        if (attribute.Max.HasValue) value = Math.Min(attribute.Max.Value, value);
+        editSheet[attribute.Key] = (long)value;
     }
 
     private async Task SaveAsync()
     {
-        if (actor == null || access == null)
+        if (actor == null || access == null || campaign == null) return;
+
+        actor.Name = string.IsNullOrWhiteSpace(editName) ? actor.Name : editName.Trim();
+        actor.Sheet = new Dictionary<string, object>(editSheet);
+        if (access.IsDm)
         {
-            return;
+            actor.Visibility = editVisibility;
+            actor.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
+            actor.Kind = editKind;
+            actor.OwnerUserId = editKind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(editOwnerId) ? editOwnerId : (editKind == ActorKind.PlayerCharacter ? actor.OwnerUserId : null);
         }
 
-        actor.Name = editName;
-        actor.State = new Dictionary<string, object>(editState);
+        ActorSheetSync.ApplySheetToState(actor, system, Components);
+
         if (await ActorRepo.TrySaveAsync(actor, access))
         {
-            statusMessage = "Saved.";
+            flash = Flash.Success("Saved.");
         }
         else
         {
-            statusMessage = "You don't have permission to edit this sheet.";
+            flash = Flash.Error("You don't have permission to edit this sheet.");
         }
 
         await ReloadAsync();

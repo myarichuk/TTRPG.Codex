@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Codex.Authoring.Services;
 using Codex.Core;
 using Codex.Core.Models;
 using Codex.Core.Scripting;
@@ -149,10 +148,11 @@ properties:
         // loaded back in. Prove the round trip works end to end.
         var manifest = new PackManifest("test-pack", "Test Pack", "1.0.0", "dnd5e");
         var ability = new AbilityDefinition { Id = "fireball", Name = "Fireball" };
+        var entry = new ContentEntry { Id = "alert", Type = "feat", Name = "Alert", Tags = { "origin" }, Properties = { ["category"] = "origin" } };
 
         var zipPath = Path.Combine(_tempPath, "test-pack.zip");
         var exporter = new ContentPackExporter();
-        await exporter.ExportToZipAsync(manifest, new[] { ability }, Array.Empty<ActorDefinition>(), Array.Empty<LocationDefinition>(), zipPath);
+        await exporter.ExportToZipAsync(manifest, new[] { ability }, Array.Empty<ActorDefinition>(), Array.Empty<LocationDefinition>(), zipPath, new[] { entry });
 
         var registry = new ContentRegistry(_evaluator);
         var loader = new YamlContentPackLoader(registry);
@@ -161,5 +161,11 @@ properties:
         var loaded = registry.GetAbility("dnd5e:fireball");
         Assert.NotNull(loaded);
         Assert.Equal("Fireball", loaded.Name);
+
+        var feat = registry.GetEntry("dnd5e", "feat", "alert");
+        Assert.NotNull(feat);
+        Assert.Equal("origin", feat!.Properties["category"]);
+        Assert.Equal("test-pack", feat.PackId);
+        Assert.Contains("test-pack", registry.GetPacks().Select(p => p.Id));
     }
 }

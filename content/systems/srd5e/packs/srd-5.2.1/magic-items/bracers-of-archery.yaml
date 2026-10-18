@@ -1,0 +1,15 @@
+id: bracers-of-archery
+type: magic-item
+name: Bracers of Archery
+description: >-
+  Wondrous Item
+
+
+  While wearing these bracers, you have proficiency with the Longbow and Shortbow, and you gain a +2 bonus to damage rolls made with such weapons.
+tags:
+- uncommon
+- wondrous items
+properties:
+  category: Wondrous Items
+  rarity: Uncommon
+  attunement: true

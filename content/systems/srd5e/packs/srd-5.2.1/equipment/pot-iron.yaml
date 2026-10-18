@@ -1,0 +1,19 @@
+id: pot-iron
+type: equipment
+name: Pot, Iron
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 gp  
+
+  **Weight:** 10 lb.
+
+
+  An Iron Pot holds up to 1 gallon.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 gp
+  weight: 10

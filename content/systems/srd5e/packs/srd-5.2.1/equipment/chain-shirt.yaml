@@ -1,0 +1,20 @@
+id: chain-shirt
+type: equipment
+name: Chain Shirt
+description: >-
+  *Armor, Medium Armor*
+
+
+  **Armor Class:** 13 + Dex modifier (max 2)  
+
+  **Cost:** 50 gp  
+
+  **Weight:** 14 lb.
+tags:
+- armor
+- medium armor
+properties:
+  category: Armor
+  cost: 50 gp
+  weight: 14
+  armorClass: 13 + Dex modifier (max 2)

@@ -1,0 +1,46 @@
+id: invisibility
+type: spell
+name: Invisibility
+description: >-
+  *Level 2 Illusion (Bard, Sorcerer, Warlock, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S, M (an eyelash in gum arabic)  
+
+  **Duration:** Concentration, up to 1 hour
+
+
+  A creature you touch has the Invisible condition until the spell ends. The spell ends early immediately after the target makes an attack roll, deals damage, or casts a spell.
+
+
+  **Using a Higher-Level Spell Slot.** You can target one additional creature for each spell slot level above 2.
+tags:
+- level-2
+- illusion
+- bard
+- sorcerer
+- warlock
+- wizard
+properties:
+  level: 2
+  school: Illusion
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  - M
+  material: an eyelash in gum arabic
+  duration: up to 1 hour
+  concentration: true
+  ritual: false
+  classes:
+  - Bard
+  - Sorcerer
+  - Warlock
+  - Wizard
+  higherLevel: You can target one additional creature for each spell slot level above 2.

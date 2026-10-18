@@ -1,0 +1,8 @@
+id: damage-type-cold
+type: rule
+name: Cold
+description: Freezing water, icy blasts
+tags:
+- damage-type
+properties:
+  category: Damage Type

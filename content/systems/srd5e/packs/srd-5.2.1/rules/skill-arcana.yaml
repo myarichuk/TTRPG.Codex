@@ -1,0 +1,12 @@
+id: skill-arcana
+type: rule
+name: Arcana
+description: >-
+  **Ability:** INT
+
+
+  Recall lore about spells, magic items, and the planes of existence.
+tags:
+- skill
+properties:
+  category: Skill

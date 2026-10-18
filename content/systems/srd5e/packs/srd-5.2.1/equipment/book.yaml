@@ -1,0 +1,19 @@
+id: book
+type: equipment
+name: Book
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 25 gp  
+
+  **Weight:** 5 lb.
+
+
+  A Book contains fiction or nonfiction. If you consult an accurate nonfiction Book about its topic, you gain a +5 bonus to Intelligence (Arcana, History, Nature, or Religion) checks you make about that topic.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 25 gp
+  weight: 5

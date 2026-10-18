@@ -1,0 +1,56 @@
+id: rhinoceros
+type: monster
+name: Rhinoceros
+description: >-
+  *Large Beast, Unaligned*
+
+
+  **AC** 13  
+
+  **HP** 45 (6d10 + 12)  
+
+  **Speed** 40 ft.  
+
+  **CR** 2 (XP 450; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 21 (+5) | 8 (-1) | 15 (+2) | 2 (-4) | 12 (+1) | 6 (-2) |
+
+
+  **Senses** passive perception 11  
+
+  **Languages** None
+
+
+  ### Actions
+
+  **Gore.** Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Piercing damage. If target is a Large or smaller creature and the rhinoceros moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.
+tags:
+- beast
+- large
+- cr-2
+properties:
+  size: Large
+  creatureType: beast
+  alignment: unaligned
+  armorClass: 13
+  hitPoints: 45
+  hitDice: 6d10 + 12
+  speed: 40 ft.
+  strength: 21
+  dexterity: 8
+  constitution: 15
+  intelligence: 2
+  wisdom: 12
+  charisma: 6
+  challengeRating: 2
+  xp: 450
+  senses: passive perception 11
+  languages: None
+  actions:
+  - name: Gore
+    description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 14 (2d8 + 5) Piercing damage. If target is a Large or smaller creature and the rhinoceros moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.'

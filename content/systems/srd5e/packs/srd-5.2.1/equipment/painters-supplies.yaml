@@ -1,0 +1,17 @@
+id: painters-supplies
+type: equipment
+name: Painter's Supplies
+description: >-
+  *Artisan's Tools, Tools*
+
+
+  **Cost:** 10 gp  
+
+  **Weight:** 5 lb.
+tags:
+- artisan's tools
+- tools
+properties:
+  category: Artisan's Tools
+  cost: 10 gp
+  weight: 5

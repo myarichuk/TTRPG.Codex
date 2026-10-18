@@ -1,0 +1,17 @@
+id: sprig-of-mistletoe
+type: equipment
+name: Sprig of Mistletoe
+description: >-
+  *Druidic Foci, Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 0 lb.
+tags:
+- druidic foci
+- adventuring gear
+properties:
+  category: Druidic Foci
+  cost: 1 gp
+  weight: 0

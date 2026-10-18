@@ -4,7 +4,6 @@
     <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\Codex.Persistence\Codex.Persistence.csproj" />
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
-    <ProjectReference Include="..\Codex.Systems.DnD5e\Codex.Systems.DnD5e.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +24,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <!-- An unknown component tag silently becomes an HTML element and the page quietly misbehaves
+         (this is how a missing @using once turned AuthorizeRouteView into a redirect loop). -->
+    <WarningsAsErrors>$(WarningsAsErrors);RZ10012</WarningsAsErrors>
   </PropertyGroup>
 
 </Project>

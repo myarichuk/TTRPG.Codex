@@ -1,0 +1,30 @@
+id: greataxe
+type: equipment
+name: Greataxe
+description: >-
+  *Martial Melee Weapons, Martial Weapons, Melee Weapons, Weapons*
+
+
+  **Damage:** 1d12 Slashing  
+
+  **Properties:** Heavy, Two-Handed  
+
+  **Mastery:** Cleave  
+
+  **Cost:** 30 gp  
+
+  **Weight:** 7 lb.
+tags:
+- martial melee weapons
+- martial weapons
+- melee weapons
+- weapons
+properties:
+  category: Martial Melee Weapons
+  cost: 30 gp
+  weight: 7
+  damage: 1d12 Slashing
+  properties:
+  - Heavy
+  - Two-Handed
+  mastery: Cleave

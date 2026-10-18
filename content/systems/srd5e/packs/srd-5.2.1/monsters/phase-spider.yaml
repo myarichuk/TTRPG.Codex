@@ -1,0 +1,92 @@
+id: phase-spider
+type: monster
+name: Phase Spider
+description: >-
+  *Large Monstrosity, Unaligned*
+
+
+  **AC** 14  
+
+  **HP** 45 (7d10 + 7)  
+
+  **Speed** 30 ft., climb 30 ft.  
+
+  **CR** 3 (XP 700; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 16 (+3) | 12 (+1) | 6 (-2) | 10 (+0) | 6 (-2) |
+
+
+  **Skills** Stealth +7  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** None
+
+
+  ### Traits
+
+  **Ethereal Sight.** The spider can see 60 feet into the Ethereal Plane while on the Material Plane and vice versa.
+
+
+  **Spider Climb.** The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+
+
+  **Web Walker.** The spider ignores movement restrictions caused by webs, and the spider knows the location of any other creature in contact with the same web.
+
+
+
+  ### Actions
+
+  **Multiattack.** The spider makes two Bite attacks.
+
+
+  **Bite.** Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Piercing damage plus 9 (2d8) Poison damage. If this damage reduces the target to 0 Hit Points, the target becomes Stable, and it has the Poisoned condition for 1 hour. While Poisoned, the target also has the Paralyzed condition.
+
+
+
+  ### Bonus Actions
+
+  **Ethereal Jaunt.** The spider teleports from the Material Plane to the Ethereal Plane or vice versa.
+tags:
+- monstrosity
+- large
+- cr-3
+properties:
+  size: Large
+  creatureType: monstrosity
+  alignment: unaligned
+  armorClass: 14
+  hitPoints: 45
+  hitDice: 7d10 + 7
+  speed: 30 ft., climb 30 ft.
+  strength: 15
+  dexterity: 16
+  constitution: 12
+  intelligence: 6
+  wisdom: 10
+  charisma: 6
+  challengeRating: 3
+  xp: 700
+  senses: darkvision 60 ft., passive perception 10
+  languages: None
+  skills: Stealth +7
+  traits:
+  - name: Ethereal Sight
+    description: The spider can see 60 feet into the Ethereal Plane while on the Material Plane and vice versa.
+  - name: Spider Climb
+    description: The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check.
+  - name: Web Walker
+    description: The spider ignores movement restrictions caused by webs, and the spider knows the location of any other creature in contact with the same web.
+  actions:
+  - name: Multiattack
+    description: The spider makes two Bite attacks.
+  - name: Bite
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Piercing damage plus 9 (2d8) Poison damage. If this damage reduces the target to 0 Hit Points, the target becomes Stable, and it has the Poisoned condition for 1 hour. While Poisoned, the target also has the Paralyzed condition.'
+  bonusActions:
+  - name: Ethereal Jaunt
+    description: The spider teleports from the Material Plane to the Ethereal Plane or vice versa.

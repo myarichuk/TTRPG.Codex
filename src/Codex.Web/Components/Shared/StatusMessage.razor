@@ -1,0 +1,39 @@
+@using Codex.Web.Services
+@using Codex.Web.Components.Layout
+
+@* A live region for the page's one-line status ("Saved.", "Only the DM can do that."). Always
+   rendered (even when empty) so screen readers have a region to watch before the first message. *@
+<div role="status" aria-live="polite" aria-atomic="true" data-testid="status-message">
+    @if (Message != null)
+    {
+        <div class="status @ToneClass">
+            <LucideIcon IconName="@Icon" Size="18" />
+            <span>@Message.Text</span>
+            @if (OnDismiss.HasDelegate)
+            {
+                <button type="button" class="icon-btn" aria-label="Dismiss message" @onclick="OnDismiss">
+                    <LucideIcon IconName="x" Size="16" />
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Flash? Message { get; set; }
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private string ToneClass => Message?.Tone switch
+    {
+        FlashTone.Success => "status-success",
+        FlashTone.Error => "status-error",
+        _ => string.Empty
+    };
+
+    private string Icon => Message?.Tone switch
+    {
+        FlashTone.Success => "check",
+        FlashTone.Error => "alert-triangle",
+        _ => "info"
+    };
+}

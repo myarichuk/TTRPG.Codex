@@ -1,0 +1,18 @@
+- id: brawler
+  name: Brawler
+  tags: [martial]
+  description: You settle things with your fists and a grin.
+  properties:
+    bonus: +1 die on Body rolls in a fight
+- id: tinker
+  name: Tinker
+  tags: [clever]
+  description: Nothing stays broken around you for long.
+  properties:
+    bonus: +1 die on Mind rolls involving machines
+- id: drifter
+  name: Drifter
+  tags: [lucky]
+  description: You have been everywhere and owe everyone.
+  properties:
+    bonus: Reroll one failed Luck roll per session

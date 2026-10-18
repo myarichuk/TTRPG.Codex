@@ -8,7 +8,7 @@ The overarching container for a game world. A campaign is the primary unit of pe
 - **Properties**:
   - `Id`: `campaigns/{unique-id}`
   - `Name`: Title of the adventure.
-  - `SystemId`: The TTRPG system (e.g., `dnd5e`, `swffg`).
+  - `SystemId`: The id of a loaded system (e.g., `srd5e`, `simple-d6`).
   - `ActivePacks`: List of loaded Content Pack IDs.
   - `ParticipantIds`: List of User IDs in this campaign.
 
@@ -32,7 +32,7 @@ Abilities are defined by their logic and resource requirements. This is a **Comp
   - `Effects`: `List<TypedComponent>` (e.g., `Type: "Damage"`, `Params: { "Dice": "2d6" }`)
 
 - **TypedComponent**: A simple structure: `{ string Type, Dictionary<string, object> Params }`.
-- **Reasoning**: This format allows the **Authoring App** to render dynamic builders (e.g., a "Cost" picker that pulls from all known resources) while keeping the engine logic isolated in C# plugins.
+- **Reasoning**: a compositional shape that data packs can describe and that the engine can execute without a system-specific class per ability.
 
 ## 4. Lore & Facts (Knowledge Graph)
 Knowledge is tracked via `FactDocument` entries. This allows the DM to track the spread of information across the campaign.
@@ -43,11 +43,13 @@ Knowledge is tracked via `FactDocument` entries. This allows the DM to track the
   - `KnownBy`: List of `EntityId`s (NPCs or PCs) and their level of knowledge (`Rumor`, `Actor`, `Full`).
   - **Query Pattern**: A Map-Reduce index on `KnownBy.EntityId` allows instant retrieval of everything a specific NPC knows.
 
-## 5. Scenes (The Live Action)
-A Scene is the aggregate root for a single play encounter (Combat or Social).
+## 5. Encounters (The Live Action)
+An `EncounterDocument` is the persisted state of one combat: participants with initiative, the round
+and turn pointer. Live state (hit points, conditions) lives on each `ActorDocument.State` as an ECS
+component snapshot, mutated only through the campaign's `CampaignRuntime` command loop.
 
-- **SceneDocument**:
-  - `LocationId`: Where the scene is happening.
-  - `Entities`: Snapshot of all NPCs, Monsters, and PCs present.
-  - `Initiative`: Current turn order.
-  - `ActiveEffects`: Environmental status effects (e.g., "Magical Darkness").
+## 6. Reference content and homebrew
+Rules content (`ContentEntry`) comes from packs on disk and is immutable at runtime; a campaign's
+`HomebrewEntryDocument`s have the same shape and are merged into its Library. Both are referenced
+from sheets by id (e.g. a character's `class` field holds `fighter`), so a missing pack shows
+"Missing content" instead of breaking the sheet.

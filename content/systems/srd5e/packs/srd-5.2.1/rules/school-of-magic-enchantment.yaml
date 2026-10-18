@@ -1,0 +1,8 @@
+id: school-of-magic-enchantment
+type: rule
+name: Enchantment
+description: Influences minds
+tags:
+- school-of-magic
+properties:
+  category: School of Magic

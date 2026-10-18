@@ -1,0 +1,76 @@
+id: bugbear-warrior
+type: monster
+name: Bugbear Warrior
+description: >-
+  *Medium Fey, Chaotic Evil*
+
+
+  **AC** 14 (Hide Armor)  
+
+  **HP** 33 (6d8 + 6)  
+
+  **Speed** 30 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 15 (+2) | 14 (+2) | 13 (+1) | 8 (-1) | 11 (+0) | 9 (-1) |
+
+
+  **Skills** Stealth +6, Survival +2  
+
+  **Gear** Hide Armor, Light Hammers (3)  
+
+  **Senses** darkvision 60 ft., passive perception 10  
+
+  **Languages** Common, Goblin
+
+
+  ### Traits
+
+  **Abduct.** The bugbear needn’t spend extra movement to move a creature it is grappling.
+
+
+
+  ### Actions
+
+  **Grab.** Melee Attack Roll: +4, reach 10 ft. Hit: 9 (2d6 + 2) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Grappled condition (escape DC 12).
+
+
+  **Light Hammer.** Melee or Ranged Attack Roll: +4 (with Advantage if the target is Grappled by the bugbear), reach 10 ft. or range 20/60 ft. Hit: 9 (3d4 + 2) Bludgeoning damage.
+tags:
+- fey
+- medium
+- cr-1
+properties:
+  size: Medium
+  creatureType: fey
+  alignment: chaotic evil
+  armorClass: 14
+  hitPoints: 33
+  hitDice: 6d8 + 6
+  speed: 30 ft.
+  strength: 15
+  dexterity: 14
+  constitution: 13
+  intelligence: 8
+  wisdom: 11
+  charisma: 9
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 10
+  languages: Common, Goblin
+  skills: Stealth +6, Survival +2
+  gear: Hide Armor, Light Hammers (3)
+  traits:
+  - name: Abduct
+    description: The bugbear needn’t spend extra movement to move a creature it is grappling.
+  actions:
+  - name: Grab
+    description: 'Melee Attack Roll: +4, reach 10 ft. Hit: 9 (2d6 + 2) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Grappled condition (escape DC 12).'
+  - name: Light Hammer
+    description: 'Melee or Ranged Attack Roll: +4 (with Advantage if the target is Grappled by the bugbear), reach 10 ft. or range 20/60 ft. Hit: 9 (3d4 + 2) Bludgeoning damage.'

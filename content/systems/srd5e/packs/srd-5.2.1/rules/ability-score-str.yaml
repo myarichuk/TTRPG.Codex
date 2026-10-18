@@ -1,0 +1,8 @@
+id: ability-score-str
+type: rule
+name: Strength
+description: Physical might
+tags:
+- ability-score
+properties:
+  category: Ability Score

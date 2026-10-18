@@ -1,0 +1,8 @@
+id: alignment-lawful-good
+type: rule
+name: Lawful Good
+description: Lawful Good creatures endeavor to do the right thing as expected by society. Someone who fights injustice and protects the innocent without hesitation is probably Lawful Good.
+tags:
+- alignment
+properties:
+  category: Alignment

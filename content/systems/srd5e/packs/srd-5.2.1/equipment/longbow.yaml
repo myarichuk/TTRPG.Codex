@@ -1,0 +1,33 @@
+id: longbow
+type: equipment
+name: Longbow
+description: >-
+  *Martial Ranged Weapons, Martial Weapons, Ranged Weapons, Weapons*
+
+
+  **Damage:** 1d8 Piercing  
+
+  **Properties:** Ammunition, Heavy, Two-Handed  
+
+  **Range:** 150/600 ft.  
+
+  **Mastery:** Slow  
+
+  **Cost:** 5 gp  
+
+  **Weight:** 2 lb.
+tags:
+- martial ranged weapons
+- martial weapons
+- ranged weapons
+- weapons
+properties:
+  category: Martial Ranged Weapons
+  cost: 5 gp
+  weight: 2
+  damage: 1d8 Piercing
+  properties:
+  - Ammunition
+  - Heavy
+  - Two-Handed
+  mastery: Slow

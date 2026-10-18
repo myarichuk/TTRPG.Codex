@@ -1,0 +1,19 @@
+id: ink-pen
+type: equipment
+name: Ink Pen
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 2 cp  
+
+  **Weight:** 0 lb.
+
+
+  Using Ink, an Ink Pen is used to write or draw.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 2 cp
+  weight: 0

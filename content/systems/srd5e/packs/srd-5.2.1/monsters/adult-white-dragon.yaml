@@ -1,0 +1,109 @@
+id: adult-white-dragon
+type: monster
+name: Adult White Dragon
+description: >-
+  *Huge Dragon, Chaotic Evil*
+
+
+  **AC** 18  
+
+  **HP** 200 (16d12 + 96)  
+
+  **Speed** 40 ft., burrow 30 ft., fly 80 ft., swim 40 ft.  
+
+  **CR** 13 (XP 10000; PB +5)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 22 (+6) | 10 (+0) | 22 (+6) | 8 (-1) | 12 (+1) | 12 (+1) |
+
+
+  **Saving Throws** DEX +5, WIS +6  
+
+  **Skills** Perception +11, Stealth +5  
+
+  **Immunities** cold  
+
+  **Senses** darkvision 120 ft., blindsight 60 ft., passive perception 21  
+
+  **Languages** Common, Draconic
+
+
+  ### Traits
+
+  **Ice Walk.** The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+
+
+  **Legendary Resistance (3/day).** If the dragon fails a saving throw, it can choose to succeed instead.
+
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +11, reach 10 ft. Hit: 13 (2d6 + 6) Slashing damage plus 4 (1d8) Cold damage.
+
+
+  **Cold Breath.** Constitution Saving Throw: DC 19, each creature in a 60-foot Cone. Failure: 54 (12d8) Cold damage. Success: Half damage.
+
+
+
+  ### Legendary Actions
+
+  **Freezing Burst.** Constitution Saving Throw: DC 14, each creature in a 30-foot-radius Sphere centered on a point the dragon can see within 120 feet. Failure: 7 (2d6) Cold damage, and the target’s Speed is 0 until the end of the target’s next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.
+
+
+  **Frightful Presence.** The dragon casts Fear, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14). The dragon can’t take this action again until the start of its next turn.
+
+
+  **Pounce.** The dragon moves up to half its Speed, and it makes one Rend attack.
+tags:
+- dragon
+- huge
+- cr-13
+properties:
+  size: Huge
+  creatureType: dragon
+  alignment: chaotic evil
+  armorClass: 18
+  hitPoints: 200
+  hitDice: 16d12 + 96
+  speed: 40 ft., burrow 30 ft., fly 80 ft., swim 40 ft.
+  strength: 22
+  dexterity: 10
+  constitution: 22
+  intelligence: 8
+  wisdom: 12
+  charisma: 12
+  challengeRating: 13
+  xp: 10000
+  senses: darkvision 120 ft., blindsight 60 ft., passive perception 21
+  languages: Common, Draconic
+  skills: Perception +11, Stealth +5
+  savingThrows: DEX +5, WIS +6
+  immunities:
+  - cold
+  traits:
+  - name: Ice Walk
+    description: The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, Difficult Terrain composed of ice or snow doesn’t cost it extra movement.
+  - name: Legendary Resistance (3/day)
+    description: If the dragon fails a saving throw, it can choose to succeed instead.
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +11, reach 10 ft. Hit: 13 (2d6 + 6) Slashing damage plus 4 (1d8) Cold damage.'
+  - name: Cold Breath
+    description: 'Constitution Saving Throw: DC 19, each creature in a 60-foot Cone. Failure: 54 (12d8) Cold damage. Success: Half damage.'
+  legendaryActions:
+  - name: Freezing Burst
+    description: 'Constitution Saving Throw: DC 14, each creature in a 30-foot-radius Sphere centered on a point the dragon can see within 120 feet. Failure: 7 (2d6) Cold damage, and the target’s Speed is 0 until the end of the target’s next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.'
+  - name: Frightful Presence
+    description: The dragon casts Fear, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14). The dragon can’t take this action again until the start of its next turn.
+  - name: Pounce
+    description: The dragon moves up to half its Speed, and it makes one Rend attack.

@@ -1,0 +1,76 @@
+id: young-blue-dragon
+type: monster
+name: Young Blue Dragon
+description: >-
+  *Large Dragon, Lawful Evil*
+
+
+  **AC** 18  
+
+  **HP** 152 (16d10 + 64)  
+
+  **Speed** 40 ft., burrow 20 ft., fly 80 ft.  
+
+  **CR** 9 (XP 5000; PB +4)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 21 (+5) | 10 (+0) | 19 (+4) | 14 (+2) | 13 (+1) | 17 (+3) |
+
+
+  **Saving Throws** DEX +4, WIS +5  
+
+  **Skills** Perception +9, Stealth +4  
+
+  **Immunities** lightning  
+
+  **Senses** darkvision 120 ft., blindsight 30 ft., passive perception 19  
+
+  **Languages** Common, Draconic
+
+
+  ### Actions
+
+  **Multiattack.** The dragon makes three Rend attacks.
+
+
+  **Rend.** Melee Attack Roll: +9, reach 10 ft. Hit: 12 (2d6 + 5) Slashing damage plus 5 (1d10) Lightning damage.
+
+
+  **Lightning Breath.** Dexterity Saving Throw: DC 16, each creature in a 60-foot-long, 5-footwide Line. Failure: 55 (10d10) Lightning damage. Success: Half damage.
+tags:
+- dragon
+- large
+- cr-9
+properties:
+  size: Large
+  creatureType: dragon
+  alignment: lawful evil
+  armorClass: 18
+  hitPoints: 152
+  hitDice: 16d10 + 64
+  speed: 40 ft., burrow 20 ft., fly 80 ft.
+  strength: 21
+  dexterity: 10
+  constitution: 19
+  intelligence: 14
+  wisdom: 13
+  charisma: 17
+  challengeRating: 9
+  xp: 5000
+  senses: darkvision 120 ft., blindsight 30 ft., passive perception 19
+  languages: Common, Draconic
+  skills: Perception +9, Stealth +4
+  savingThrows: DEX +4, WIS +5
+  immunities:
+  - lightning
+  actions:
+  - name: Multiattack
+    description: The dragon makes three Rend attacks.
+  - name: Rend
+    description: 'Melee Attack Roll: +9, reach 10 ft. Hit: 12 (2d6 + 5) Slashing damage plus 5 (1d10) Lightning damage.'
+  - name: Lightning Breath
+    description: 'Dexterity Saving Throw: DC 16, each creature in a 60-foot-long, 5-footwide Line. Failure: 55 (10d10) Lightning damage. Success: Half damage.'

@@ -1,0 +1,12 @@
+id: skill-insight
+type: rule
+name: Insight
+description: >-
+  **Ability:** WIS
+
+
+  Discern a person’s mood and intentions.
+tags:
+- skill
+properties:
+  category: Skill

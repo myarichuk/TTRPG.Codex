@@ -1,0 +1,42 @@
+id: darkvision
+type: spell
+name: Darkvision
+description: >-
+  *Level 2 Transmutation (Druid, Ranger, Sorcerer, Wizard)*
+
+
+  **Casting Time:** Action  
+
+  **Range:** Touch  
+
+  **Components:** V, S, M (a dried carrot)  
+
+  **Duration:** 8 hours
+
+
+  For the duration, a willing creature you touch has Darkvision with a range of 150 feet.
+tags:
+- level-2
+- transmutation
+- druid
+- ranger
+- sorcerer
+- wizard
+properties:
+  level: 2
+  school: Transmutation
+  castingTime: Action
+  range: Touch
+  components:
+  - V
+  - S
+  - M
+  material: a dried carrot
+  duration: 8 hours
+  concentration: false
+  ritual: false
+  classes:
+  - Druid
+  - Ranger
+  - Sorcerer
+  - Wizard

@@ -1,0 +1,8 @@
+id: language-primordial
+type: rule
+name: Primordial
+description: Primordial includes the Aquan, Auran, Ignan, and Terran dialects. Creatures that know one of these dialects can communicate with those that know a different one.
+tags:
+- language
+properties:
+  category: Language

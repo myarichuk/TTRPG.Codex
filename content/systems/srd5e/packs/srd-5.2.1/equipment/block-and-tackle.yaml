@@ -1,0 +1,19 @@
+id: block-and-tackle
+type: equipment
+name: Block and tackle
+description: >-
+  *Adventuring Gear*
+
+
+  **Cost:** 1 gp  
+
+  **Weight:** 5 lb.
+
+
+  A Block and Tackle allows you to hoist up to four times the weight you can normally lift.
+tags:
+- adventuring gear
+properties:
+  category: Adventuring Gear
+  cost: 1 gp
+  weight: 5

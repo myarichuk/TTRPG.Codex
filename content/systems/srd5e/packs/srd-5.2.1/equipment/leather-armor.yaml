@@ -1,0 +1,20 @@
+id: leather-armor
+type: equipment
+name: Leather Armor
+description: >-
+  *Armor, Light Armor*
+
+
+  **Armor Class:** 11 + Dex modifier  
+
+  **Cost:** 10 gp  
+
+  **Weight:** 10 lb.
+tags:
+- armor
+- light armor
+properties:
+  category: Armor
+  cost: 10 gp
+  weight: 10
+  armorClass: 11 + Dex modifier

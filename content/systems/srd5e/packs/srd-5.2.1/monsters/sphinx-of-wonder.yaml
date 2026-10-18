@@ -1,0 +1,83 @@
+id: sphinx-of-wonder
+type: monster
+name: Sphinx of Wonder
+description: >-
+  *Tiny Celestial, Lawful Good*
+
+
+  **AC** 13  
+
+  **HP** 24 (7d4 + 7)  
+
+  **Speed** 20 ft., fly 40 ft.  
+
+  **CR** 1 (XP 200; PB +2)
+
+
+  | STR | DEX | CON | INT | WIS | CHA |
+
+  | --- | --- | --- | --- | --- | --- |
+
+  | 6 (-2) | 17 (+3) | 13 (+1) | 15 (+2) | 12 (+1) | 11 (+0) |
+
+
+  **Skills** Arcana +4, Religion +4, Stealth +5  
+
+  **Resistances** necrotic, psychic, radiant  
+
+  **Senses** darkvision 60 ft., passive perception 11  
+
+  **Languages** Celestial, Common
+
+
+  ### Traits
+
+  **Magic Resistance.** The sphinx has Advantage on saving throws against spells and other magical effects.
+
+
+
+  ### Actions
+
+  **Rend.** Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Slashing damage plus 7 (2d6) Radiant damage.
+
+
+
+  ### Reactions
+
+  **Burst of Ingenuity (2/day).** Trigger: The sphinx or another creature within 30 feet makes an ability check or a saving throw. Response: The sphinx adds 2 to the roll.
+tags:
+- celestial
+- tiny
+- cr-1
+properties:
+  size: Tiny
+  creatureType: celestial
+  alignment: lawful good
+  armorClass: 13
+  hitPoints: 24
+  hitDice: 7d4 + 7
+  speed: 20 ft., fly 40 ft.
+  strength: 6
+  dexterity: 17
+  constitution: 13
+  intelligence: 15
+  wisdom: 12
+  charisma: 11
+  challengeRating: 1
+  xp: 200
+  senses: darkvision 60 ft., passive perception 11
+  languages: Celestial, Common
+  skills: Arcana +4, Religion +4, Stealth +5
+  resistances:
+  - necrotic
+  - psychic
+  - radiant
+  traits:
+  - name: Magic Resistance
+    description: The sphinx has Advantage on saving throws against spells and other magical effects.
+  actions:
+  - name: Rend
+    description: 'Melee Attack Roll: +5, reach 5 ft. Hit: 5 (1d4 + 3) Slashing damage plus 7 (2d6) Radiant damage.'
+  reactions:
+  - name: Burst of Ingenuity (2/day)
+    description: 'Trigger: The sphinx or another creature within 30 feet makes an ability check or a saving throw. Response: The sphinx adds 2 to the roll.'
