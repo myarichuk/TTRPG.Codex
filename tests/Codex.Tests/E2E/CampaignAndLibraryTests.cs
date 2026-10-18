@@ -52,9 +52,12 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "library");
         await dm.GetByTestId("library-type-spell").ClickAsync();
         await dm.GetByTestId("library-search").FillAsync("Fireball");
-        var fireball = dm.GetByTestId("library-item").Filter(new() { HasText = "Fireball" }).First;
+        // Exact name, not a substring: before the debounced search lands, the unfiltered list already
+        // contains "Delayed Blast Fireball", and a contains-match would click that on a slow runner.
+        var fireball = dm.GetByRole(AriaRole.Link, new() { Name = "Fireball", Exact = true });
+        await fireball.WaitForAsync();
         await fireball.ClickAsync();
-        await dm.WaitForURLAsync(url => url.Contains("/library/spell/fireball"));
+        await dm.WaitForURLAsync(url => url.EndsWith("/library/spell/fireball"));
         var detail = dm.GetByTestId("library-detail");
         await Assertions.Expect(detail.GetByRole(AriaRole.Heading, new() { Name = "Fireball" })).ToBeVisibleAsync();
         await Assertions.Expect(detail).ToContainTextAsync("8d6");
