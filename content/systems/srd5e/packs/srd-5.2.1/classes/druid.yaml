@@ -32,6 +32,8 @@ properties:
   skillChoices: 'Choose 2: Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, or Survival'
   startingEquipment: (a) Leather Armor, Shield, Sickle, Druidic Focus (Quarterstaff), Explorer's Pack, Herbalism Kit, and 9 GP; or (a) 50 GP
   multiclassing: 'Prerequisite: WIS 13+. Proficiencies gained: Light Armor, Shields'
+  multiclassPrerequisites:
+  - WIS 13+
   subclasses:
   - Circle of the Land
   features:

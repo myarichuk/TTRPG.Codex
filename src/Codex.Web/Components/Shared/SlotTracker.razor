@@ -1,0 +1,113 @@
+@using Codex.Plugin.Abstractions
+
+@* Expendable slot pools (spell slots, pact slots...) declared by the system's sheetRules.slotPools:
+   one row per slot level with the remaining count, Use / Regain buttons, and one button per rest
+   that refills them. The owner decides where values come from and where changes go, so the same
+   tracker serves the sheet (edits the sheet) and the live table (enqueues runtime commands). *@
+
+@{
+    var pools = Pools.Select(p => (Rule: p, Levels: Levels(p))).Where(p => p.Levels.Count > 0).ToList();
+}
+@if (pools.Count > 0)
+{
+    <div class="slot-tracker" data-testid="slot-tracker" aria-label="@(Title ?? "Slots")" role="group">
+        @foreach (var (rule, levels) in pools)
+        {
+            <div class="mb-2" data-testid="slot-pool-@rule.Key">
+                @if (pools.Count > 1)
+                {
+                    <div class="form-label small mb-1">@rule.Label</div>
+                }
+                <ul class="list-unstyled mb-0">
+                    @foreach (var level in levels)
+                    {
+                        var key = rule.KeyFor(level);
+                        var max = Value(rule.MaxKeyFor(level)) ?? 0;
+                        var current = Math.Clamp(Value(key) ?? max, 0, max);
+                        var label = $"level {level} {Singular(rule.Label)}";
+                        <li class="slot-row" data-testid="slot-row-@key">
+                            <span class="slot-level">Level @level</span>
+                            <span class="slot-pips" aria-hidden="true">
+                                @for (var i = 0; i < max; i++)
+                                {
+                                    <span class="slot-pip @(i < current ? "slot-pip-full" : "")"></span>
+                                }
+                            </span>
+                            <span class="small" data-testid="slot-count-@key"><span class="visually-hidden">@rule.Label level @level: </span>@current of @max</span>
+                            @if (!ReadOnly)
+                            {
+                                <span class="ms-auto d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(current <= 0)" data-testid="slot-use-@key"
+                                            aria-label="Use a @label" @onclick="() => OnAdjust.InvokeAsync((key, -1, label))">Use</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(current >= max)" data-testid="slot-regain-@key"
+                                            aria-label="Regain a @label" @onclick="() => OnAdjust.InvokeAsync((key, 1, label))">Regain</button>
+                                </span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (!ReadOnly)
+        {
+            var rests = pools.SelectMany(p => p.Rule.RecoversOn).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            @if (rests.Count > 0)
+            {
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    @foreach (var rest in rests)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="rest-@rest.Replace(' ', '-').ToLowerInvariant()"
+                                @onclick="() => OnRest.InvokeAsync((rest, RestoredBy(pools.Select(p => p.Rule), rest)))">@rest</button>
+                    }
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<SlotPoolRule> Pools { get; set; } = Array.Empty<SlotPoolRule>();
+
+    /// <summary>Reads a slot key's value ("slots_3" or "slots_3_Max"), or null when absent.</summary>
+    [Parameter, EditorRequired] public Func<string, int?> Value { get; set; } = _ => null;
+
+    /// <summary>All keys present, to find which slot levels exist.</summary>
+    [Parameter, EditorRequired] public IEnumerable<string> Keys { get; set; } = Array.Empty<string>();
+
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>(key, delta, readable label) for a Use or Regain.</summary>
+    [Parameter] public EventCallback<(string Key, int Delta, string Label)> OnAdjust { get; set; }
+
+    /// <summary>(rest name, keys it refills).</summary>
+    [Parameter] public EventCallback<(string Name, List<string> Keys)> OnRest { get; set; }
+
+    private List<int> Levels(SlotPoolRule rule) =>
+        Keys.Where(k => rule.Owns(k) && k.EndsWith("_Max", StringComparison.Ordinal))
+            .Select(k => int.Parse(k[(rule.Key.Length + 1)..^4]))
+            .Where(level => (Value(rule.MaxKeyFor(level)) ?? 0) > 0)
+            .Distinct()
+            .OrderBy(l => l)
+            .ToList();
+
+    private List<string> RestoredBy(IEnumerable<SlotPoolRule> rules, string rest) =>
+        rules.Where(r => r.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase))
+            .SelectMany(r => Levels(r).Select(r.KeyFor))
+            .ToList();
+
+    /// <summary>A panel heading: the pool's own name ("Spell slots") when only one pool applies.</summary>
+    public static string Heading(IEnumerable<SlotPoolRule> pools, IEnumerable<string> keys)
+    {
+        var present = pools.Where(p => keys.Any(p.Owns)).ToList();
+        return present.Count == 1 ? present[0].Label : "Slots";
+    }
+
+    /// <summary>"Spell slots" → "spell slot", for "Use a level 3 spell slot".</summary>
+    private static string Singular(string label)
+    {
+        var lower = label.ToLowerInvariant();
+        return lower.EndsWith('s') ? lower[..^1] : lower;
+    }
+}

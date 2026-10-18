@@ -1,0 +1,46 @@
+#!/bin/sh
+# Starts TTRPG.Codex with the .NET runtime that ships beside it, then opens it in the browser.
+# Data lives in your user folder, so reinstalling or upgrading never touches your campaigns.
+#
+#   CODEX_URL=http://0.0.0.0:5080 ttrpg-codex   # let players on your network join
+#   CODEX_NO_BROWSER=1 ttrpg-codex              # don't open a browser
+set -e
+
+# Follow symlinks (/usr/bin/ttrpg-codex -> /opt/ttrpg-codex/ttrpg-codex) to find the app folder.
+self="$0"
+while [ -L "$self" ]; do
+    target=$(readlink "$self")
+    case "$target" in
+        /*) self="$target" ;;
+        *) self="$(dirname "$self")/$target" ;;
+    esac
+done
+app_dir=$(cd "$(dirname "$self")" && pwd)
+
+if [ "$(uname)" = "Darwin" ]; then
+    data_home="$HOME/Library/Application Support/TTRPG.Codex"
+else
+    data_home="${XDG_DATA_HOME:-$HOME/.local/share}/ttrpg-codex"
+fi
+mkdir -p "$data_home"
+
+url="${CODEX_URL:-http://localhost:5080}"
+export DOTNET_ROOT="$app_dir/runtime"
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export ASPNETCORE_ENVIRONMENT="${ASPNETCORE_ENVIRONMENT:-Production}"
+export ASPNETCORE_URLS="${ASPNETCORE_URLS:-$url}"
+export Codex__DataDirectory="${Codex__DataDirectory:-$data_home/RavenData}"
+
+cd "$app_dir"
+echo "TTRPG.Codex is starting at $url (data: $Codex__DataDirectory). Press Ctrl+C to stop."
+
+if [ -z "$CODEX_NO_BROWSER" ]; then
+    browse_url=$(echo "$url" | sed 's#//0\.0\.0\.0#//localhost#; s#//\*#//localhost#; s#//+#//localhost#')
+    if command -v open >/dev/null 2>&1 && [ "$(uname)" = "Darwin" ]; then
+        (sleep 5 && open "$browse_url") >/dev/null 2>&1 &
+    elif command -v xdg-open >/dev/null 2>&1; then
+        (sleep 5 && xdg-open "$browse_url") >/dev/null 2>&1 &
+    fi
+fi
+
+exec "$DOTNET_ROOT/dotnet" "$app_dir/Codex.Web.dll" "$@"

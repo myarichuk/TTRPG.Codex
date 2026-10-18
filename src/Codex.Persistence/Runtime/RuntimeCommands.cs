@@ -338,3 +338,47 @@ public sealed record HydrateActorCommand(ActorDocument Actor) : IRuntimeCommand
         Description = $"{Actor.Name} joined the encounter."
     };
 }
+
+/// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, say),
+/// clamped between zero and the pool's maximum. <paramref name="Label"/> is what the log calls it
+/// ("level 3 spell slot").</summary>
+public sealed record AdjustResourceCommand(string ActorId, string PoolName, int Delta, string Label) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        if (runtime.GetEntity(ActorId) is { } e)
+        {
+            runtime.World.AdjustResource(e, PoolName, Delta);
+        }
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = Delta < 0 ? "ResourceSpent" : "ResourceRegained",
+        Description = Delta < 0
+            ? $"{runtime.GetActorName(ActorId)} used {(-Delta == 1 ? "a" : (-Delta).ToString())} {Label}{(-Delta == 1 ? "" : "s")}."
+            : $"{runtime.GetActorName(ActorId)} regained {(Delta == 1 ? "a" : Delta.ToString())} {Label}{(Delta == 1 ? "" : "s")}."
+    };
+}
+
+/// <summary>A rest: refills the named pools to their maximum.</summary>
+public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<string> PoolNames) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        if (runtime.GetEntity(ActorId) is { } e)
+        {
+            runtime.World.RestoreResources(e, PoolNames);
+        }
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "Rest",
+        Description = $"{runtime.GetActorName(ActorId)} took a {RestName}."
+    };
+}

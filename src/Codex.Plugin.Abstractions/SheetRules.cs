@@ -25,6 +25,13 @@ public class SheetRules
 
     /// <summary>Multi-pick lists of entries on the sheet (spells, feats, knacks...).</summary>
     public List<ListRule> Lists { get; set; } = new();
+
+    /// <summary>Levels split across more than one class. Null: one class only.</summary>
+    public MulticlassRules? Multiclass { get; set; }
+
+    /// <summary>Expendable slot pools (spell slots, pact slots...) computed from class tables and
+    /// tracked during play as resources.</summary>
+    public List<SlotPoolRule> SlotPools { get; set; } = new();
 }
 
 /// <summary>How ability scores are generated and adjusted.</summary>
@@ -45,6 +52,117 @@ public class AttributeRules
 
     /// <summary>Bonuses granted by a referenced entry (a background's "+2/+1 among these abilities").</summary>
     public BonusRules? Bonuses { get; set; }
+
+    /// <summary>Score increases granted by entries picked in a list (an Ability Score Improvement feat).</summary>
+    public IncreaseRules? Increases { get; set; }
+}
+
+/// <summary>
+/// Score increases that come from picks in a <see cref="ListRule"/>: each picked entry whose
+/// <see cref="Property"/> is a positive number grants that many points, spread by the player over
+/// the attributes its <see cref="OptionsProperty"/> lists (any attribute when it lists none), and
+/// can raise a score no higher than its <see cref="CapProperty"/> (or <see cref="AttributeRules.Max"/>).
+/// The player's choice is stored on the pick itself: <c>"feat-id|str:1,dex:1"</c>.
+/// </summary>
+public class IncreaseRules
+{
+    public string Label { get; set; } = "Score increases";
+
+    /// <summary>The <see cref="ListRule.Key"/> whose picks can grant increases.</summary>
+    public string FromList { get; set; } = string.Empty;
+
+    /// <summary>Entry property holding how many points the entry grants.</summary>
+    public string Property { get; set; } = "abilityIncrease";
+
+    /// <summary>Entry property listing the attributes (keys, abbreviations or labels) the points may go to.</summary>
+    public string OptionsProperty { get; set; } = "abilityIncreaseOptions";
+
+    /// <summary>Entry property holding the highest score the increase may reach.</summary>
+    public string CapProperty { get; set; } = "abilityIncreaseCap";
+}
+
+/// <summary>
+/// Multiclassing: the sheet's <see cref="ClassField"/> is the first class, <see cref="Key"/> holds
+/// the others as <c>"class-id:levels"</c>, and <see cref="LevelField"/> stays the total character
+/// level. Every class gets its own <see cref="ClassLevelKey"/> value, so table lookups written with
+/// <c>byField: classLevel</c> read the right row for each class; list limits are summed across
+/// classes and a list entry is allowed when any one class allows it.
+/// </summary>
+public class MulticlassRules
+{
+    public string Key { get; set; } = "multiclass";
+    public string Label { get; set; } = "Additional classes";
+    public string ClassField { get; set; } = "class";
+    public string LevelField { get; set; } = "level";
+    public string ClassLevelKey { get; set; } = "classLevel";
+
+    /// <summary>Class entry property listing prerequisite options, each like <c>"STR 13+"</c> or
+    /// <c>"DEX 13+, WIS 13+"</c> (all of these). Any one option is enough.</summary>
+    public string PrerequisitesProperty { get; set; } = "multiclassPrerequisites";
+
+    /// <summary>Whether the first class must also meet its own prerequisites once you multiclass.</summary>
+    public bool RequireForFirstClass { get; set; } = true;
+}
+
+/// <summary>
+/// One pool of expendable slots. For each of the sheet's classes, the class entry's
+/// <see cref="Table"/> row at that class's level supplies <see cref="Column"/>: either
+/// <c>"4/3/2"</c> (slots per slot level from 1 up) or, when <see cref="SlotLevelColumn"/> is set, a
+/// count of slots that are all of the level in that column. Classes are filtered by their
+/// <see cref="CasterTypeProperty"/>. When two or more classes contribute and <see cref="Combine"/> is
+/// set, their weighted levels are added up and looked up in the combined table instead.
+/// During play each slot level is a resource: <c>{Key}_{level}</c> (remaining) and
+/// <c>{Key}_{level}_Max</c>.
+/// </summary>
+public class SlotPoolRule
+{
+    public string Key { get; set; } = "slots";
+    public string Label { get; set; } = "Spell slots";
+
+    /// <summary>The sheet field naming the class entry, and the sheet value whose row is read
+    /// (with multiclass rules, use their <see cref="MulticlassRules.ClassLevelKey"/>).</summary>
+    public string Field { get; set; } = "class";
+    public string ByField { get; set; } = "level";
+
+    public string Table { get; set; } = "spellcasting";
+    public string Column { get; set; } = "slots";
+    public string? SlotLevelColumn { get; set; }
+    public string CasterTypeProperty { get; set; } = "casterType";
+
+    /// <summary>Only classes with one of these caster types count (empty: any).</summary>
+    public List<string> IncludeCasterTypes { get; set; } = new();
+    public List<string> ExcludeCasterTypes { get; set; } = new();
+
+    public SlotCombineRule? Combine { get; set; }
+
+    /// <summary>Rest names that refill this pool ("Short Rest", "Long Rest"); the table offers one button per name.</summary>
+    public List<string> RecoversOn { get; set; } = new();
+
+    public string KeyFor(int slotLevel) => $"{Key}_{slotLevel}";
+    public string MaxKeyFor(int slotLevel) => $"{Key}_{slotLevel}_Max";
+
+    /// <summary>True for "{Key}_{n}" and "{Key}_{n}_Max".</summary>
+    public bool Owns(string sheetKey)
+    {
+        if (!sheetKey.StartsWith(Key + "_", System.StringComparison.Ordinal)) return false;
+        var rest = sheetKey.Substring(Key.Length + 1);
+        if (rest.EndsWith("_Max", System.StringComparison.Ordinal)) rest = rest.Substring(0, rest.Length - 4);
+        return rest.Length > 0 && int.TryParse(rest, out _);
+    }
+}
+
+/// <summary>How several classes' slots combine: each class adds its level times its caster type's
+/// weight (rounded per <see cref="Rounding"/>), and the sum picks a row of <see cref="Table"/>
+/// (row 1 is caster level 1).</summary>
+public class SlotCombineRule
+{
+    public Dictionary<string, double> Weights { get; set; } = new();
+
+    /// <summary>"up", "down" or "nearest", applied per class.</summary>
+    public string Rounding { get; set; } = "down";
+
+    /// <summary>Slots per caster level, each like <c>"4/3/2"</c>.</summary>
+    public List<string> Table { get; set; } = new();
 }
 
 public class PointBuyRules
@@ -99,6 +217,9 @@ public class ListRule
     public List<RuleCondition> Where { get; set; } = new();
     public CountRule? MaxCount { get; set; }
     public string? Category { get; set; }
+
+    /// <summary>Candidate property that, when true, lets the same entry be picked more than once.</summary>
+    public string? RepeatableProperty { get; set; }
 }
 
 /// <summary>

@@ -8,3 +8,6 @@ properties:
   category: general
   prerequisites: Level 4+
   minLevel: 4
+  abilityIncrease: 2
+  abilityIncreaseCap: 20
+  repeatable: true

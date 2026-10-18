@@ -202,4 +202,44 @@ public class SrdSheetScenarioTests : IAsyncLifetime
         Assert.True(!evaluation.HasViolations, string.Join(" | ", evaluation.Violations.Select(v => v.FieldKey + ": " + v.Message)));
         Assert.Equal(14, (int)(long)sheet["int"]);
     }
+
+    [Fact]
+    public void AWizardClericWithAnAsi_RaisesTheScore_AndCombinesSpellSlots()
+    {
+        var engine = new Codex.Core.Rules.SheetRuleEngine(_loader.GetDefinition("srd5e")!, new RegistryResolver(_registry));
+        var sheet = new Dictionary<string, object>();
+        engine.InitializeSheet(sheet);
+        sheet["class"] = "wizard";
+        sheet["level"] = 6L;
+        sheet["multiclass"] = new List<object> { "cleric:2" };
+        foreach (var (key, score) in new[] { ("str", 8), ("dex", 14), ("con", 13), ("int", 15), ("wis", 13), ("cha", 8) })
+            sheet["base_" + key] = (long)score;
+        sheet["feats"] = new List<object> { "ability-score-improvement|int:1,con:1" };
+        engine.ApplyAttributeTotals(sheet);
+
+        var evaluation = engine.Evaluate(sheet);
+        Assert.True(!evaluation.HasViolations, string.Join(" | ", evaluation.Violations.Select(v => v.FieldKey + ": " + v.Message)));
+        Assert.Equal(16, (int)(long)sheet["int"]);
+        Assert.Equal(new[] { ("wizard", 4), ("cleric", 2) }, evaluation.Classes.Select(c => (c.Id, c.Level)));
+
+        // Wizard 4 + cleric 2 = caster level 6 on the multiclass spellcaster table: 4/3/3.
+        var slots = Assert.Single(evaluation.SlotPools);
+        Assert.Equal(new Dictionary<int, int> { [1] = 4, [2] = 3, [3] = 3 }, slots.Max);
+
+        // Feat slots: wizard 4 grants one; cleric 2 none. A second ASI is over the limit.
+        Assert.Equal(1, evaluation.ListLimits["feats"]);
+        // Cleric cantrips and spells are allowed next to wizard ones.
+        Assert.Contains(evaluation.ListOptions["spells"], s => s.Id == "cure-wounds");
+    }
+
+    [Fact]
+    public void AWarlock_GetsPactSlots_AtTheirSlotLevel()
+    {
+        var engine = new Codex.Core.Rules.SheetRuleEngine(_loader.GetDefinition("srd5e")!, new RegistryResolver(_registry));
+        var sheet = new Dictionary<string, object> { ["class"] = "warlock", ["level"] = 5L };
+        var evaluation = engine.Evaluate(sheet);
+        var pact = Assert.Single(evaluation.SlotPools);
+        Assert.Equal("pact", pact.Rule.Key);
+        Assert.Equal(new Dictionary<int, int> { [3] = 2 }, pact.Max);
+    }
 }

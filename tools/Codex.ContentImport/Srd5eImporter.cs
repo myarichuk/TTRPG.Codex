@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Codex.Core;
 using Codex.Core.Models;
 using Codex.Core.Systems;
@@ -226,6 +227,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Properties["skillChoices"] = skillChoices;
             entry.Properties["startingEquipment"] = equipment;
             if (multiclassText != null) entry.Properties["multiclassing"] = multiclassText;
+            if (multiclass != null) entry.Properties["multiclassPrerequisites"] = MulticlassPrerequisites(multiclass.Value);
             entry.Properties["subclasses"] = subclasses.Cast<object>().ToList();
             entry.Properties["features"] = FeatureRows(rows);
             AddClassTables(entry, id);
@@ -292,6 +294,16 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
         return string.Join(". ", parts);
     }
 
+    /// <summary>The multiclass prerequisites as options the sheet rules can check: each option is
+    /// "STR 13+" or "STR 13+, CHA 13+" (all of these), and meeting any one option is enough.</summary>
+    private static List<object> MulticlassPrerequisites(JsonElement multiclass)
+    {
+        var all = multiclass.Items("prerequisites").Select(p => $"{p.Name("ability_score")} {p.Int("minimum_score")}+").ToList();
+        var any = multiclass.Get("prerequisite_options")?.Get("from")?.Items("options").Select(o => $"{o.Name("ability_score")} {o.Int("minimum_score")}+").ToList() ?? new List<string>();
+        if (any.Count == 0) return all.Count == 0 ? new List<object>() : new List<object> { string.Join(", ", all) };
+        return any.Select(option => (object)string.Join(", ", all.Append(option))).ToList();
+    }
+
     // ---- Subclasses ----
 
     private IEnumerable<ContentEntry> Subclasses()
@@ -335,9 +347,31 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             // The level a feat can first be taken: stated for general feats, level 19 for epic boons
             // (the SRD grants them at 19), level 1 otherwise (origin feats, fighting styles via class features).
             entry.Properties["minLevel"] = (long)(feat.Get("prerequisites")?.Int("minimum_level") ?? (category == "epic-boon" ? 19 : 1));
+            AddAbilityIncrease(entry);
+            // Every class's Ability Score Improvement feature grants this feat again, so the sheet must
+            // allow it more than once even though the source data doesn't flag it.
+            if (entry.Id == "ability-score-improvement") entry.Properties["repeatable"] = true;
             entry.Tags.Add(category);
             yield return entry;
         }
+    }
+
+    private static readonly Regex IncreaseText = new(@"Increase (?:your (?<options>[A-Za-z, ]+?) score|one ability score of your choice) by (?<points>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex IncreaseCap = new(@"(?:to a maximum of|above) (?<cap>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Reads a feat's "Increase ... by N, to a maximum of M" into abilityIncrease (points),
+    /// abilityIncreaseOptions (empty: any ability) and abilityIncreaseCap, for the sheet rules.</summary>
+    private static void AddAbilityIncrease(ContentEntry entry)
+    {
+        var match = IncreaseText.Match(entry.Description ?? string.Empty);
+        if (!match.Success) return;
+        entry.Properties["abilityIncrease"] = long.Parse(match.Groups["points"].Value, CultureInfo.InvariantCulture);
+        var options = match.Groups["options"].Success
+            ? Regex.Split(match.Groups["options"].Value, @",|\bor\b").Select(o => o.Trim()).Where(o => o.Length > 0).Cast<object>().ToList()
+            : new List<object>();
+        if (options.Count > 0) entry.Properties["abilityIncreaseOptions"] = options;
+        var cap = IncreaseCap.Match(entry.Description![match.Index..]);
+        if (cap.Success) entry.Properties["abilityIncreaseCap"] = long.Parse(cap.Groups["cap"].Value, CultureInfo.InvariantCulture);
     }
 
     // ---- Species (2024) / Races (2014) ----

@@ -46,6 +46,21 @@ public static class ActorSheetSync
                     if (max.HasValue) pool.Set(resource.MaxKey, max.Value);
                 }
             }
+
+            // Slot pools ("slots_3", "slots_3_Max") are resources whose keys depend on the character:
+            // mirror exactly the ones the sheet has, so a lost slot level disappears from play too.
+            foreach (var slotPool in system.SheetRules?.SlotPools ?? new List<SlotPoolRule>())
+            {
+                foreach (var stale in pool.Pools.Keys.Where(k => slotPool.Owns(k) && !actor.Sheet.ContainsKey(k)).ToList())
+                {
+                    pool.Pools.Remove(stale);
+                }
+
+                foreach (var key in actor.Sheet.Keys.Where(slotPool.Owns))
+                {
+                    if (YamlValues.GetInt(actor.Sheet, key) is { } value) pool.Set(key, value);
+                }
+            }
         }
         else
         {

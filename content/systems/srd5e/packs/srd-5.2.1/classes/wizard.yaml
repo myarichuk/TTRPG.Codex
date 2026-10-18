@@ -27,6 +27,8 @@ properties:
   skillChoices: 'Choose 2: Arcana, History, Insight, Investigation, Medicine, or Religion'
   startingEquipment: (a) 2 Daggers, Arcane Focus (Quarterstaff), Robe, Spellbook, Scholar’s Pack, and 5 GP; or (b) 55 GP
   multiclassing: 'Prerequisite: INT 13+'
+  multiclassPrerequisites:
+  - INT 13+
   subclasses:
   - Evoker
   features:

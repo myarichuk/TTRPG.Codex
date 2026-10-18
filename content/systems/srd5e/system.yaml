@@ -72,6 +72,14 @@ sheetRules:
       fromField: background
       property: abilityScores
       allocations: [[2, 1], [1, 1, 1]]
+    # Feats that raise scores (Ability Score Improvement, Grappler, the epic boons) say how in their
+    # own data: abilityIncrease points, abilityIncreaseOptions (none listed: any score) and a cap.
+    increases:
+      label: Ability score increases
+      fromList: feats
+      property: abilityIncrease
+      optionsProperty: abilityIncreaseOptions
+      capProperty: abilityIncreaseCap
   derived:
     - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4", category: Combat }
   constraints:
@@ -91,7 +99,7 @@ sheetRules:
       where:
         - { property: level, equals: 0, message: "that is not a cantrip." }
         - { property: classes, containsNameOfField: class, message: "not on your class's spell list." }
-      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: cantrips } }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: classLevel, column: cantrips } }
     - key: spells
       label: Prepared spells
       description: Spells of level 1 and up. Only your class's list, no higher than your highest spell slot, up to your prepared-spells count.
@@ -100,8 +108,8 @@ sheetRules:
       where:
         - { property: level, gte: 1, message: "cantrips go in the cantrips list." }
         - { property: classes, containsNameOfField: class, message: "not on your class's spell list." }
-        - { property: level, lteLookup: { field: class, table: spellcasting, byField: level, column: maxSpellLevel }, message: "above the highest spell level you can cast." }
-      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: preparedSpells } }
+        - { property: level, lteLookup: { field: class, table: spellcasting, byField: classLevel, column: maxSpellLevel }, message: "above the highest spell level you can cast." }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: classLevel, column: preparedSpells } }
     - key: feats
       label: Feats
       description: General, fighting-style and epic-boon feats gained from class features. Origin feats come from your background.
@@ -110,7 +118,50 @@ sheetRules:
       where:
         - { property: category, in: [general, fighting-style, epic-boon], message: "origin feats come from your background, not from here." }
         - { property: minLevel, lteField: level, message: "you are not high enough level for it." }
-      maxCount: { lookup: { field: class, table: featSlots, byField: level, column: slots } }
+      maxCount: { lookup: { field: class, table: featSlots, byField: classLevel, column: slots } }
+      repeatableProperty: repeatable
+
+  # Multiclassing: "class" is the first class, the others are listed with their levels, and "level"
+  # stays the character level (proficiency bonus, feat minimums). Lookups above read each class's
+  # own row through classLevel; lists accept an entry any one class allows and add the limits up.
+  multiclass:
+    key: multiclass
+    label: Additional classes
+    classField: class
+    levelField: level
+    classLevelKey: classLevel
+    prerequisitesProperty: multiclassPrerequisites
+    requireForFirstClass: true
+
+  # Slots are tracked during play as resources (slots_1 / slots_1_Max ...), spent at the table and
+  # refilled by rests. One spellcasting class uses its own table; several combine into the
+  # multiclass spellcaster table: all levels in full casters plus half (rounded up) in half casters.
+  slotPools:
+    - key: slots
+      label: Spell slots
+      field: class
+      byField: classLevel
+      table: spellcasting
+      column: slots
+      casterTypeProperty: casterType
+      excludeCasterTypes: [pact, none]
+      recoversOn: [Long Rest]
+      combine:
+        weights: { full: 1, half: 0.5 }
+        rounding: up
+        table: ["2", "3", "4/2", "4/3", "4/3/2", "4/3/3", "4/3/3/1", "4/3/3/2", "4/3/3/3/1", "4/3/3/3/2",
+                "4/3/3/3/2/1", "4/3/3/3/2/1", "4/3/3/3/2/1/1", "4/3/3/3/2/1/1", "4/3/3/3/2/1/1/1", "4/3/3/3/2/1/1/1",
+                "4/3/3/3/2/1/1/1/1", "4/3/3/3/3/1/1/1/1", "4/3/3/3/3/2/1/1/1", "4/3/3/3/3/2/2/1/1"]
+    - key: pact
+      label: Pact slots
+      field: class
+      byField: classLevel
+      table: spellcasting
+      column: slots
+      slotLevelColumn: maxSpellLevel
+      casterTypeProperty: casterType
+      includeCasterTypes: [pact]
+      recoversOn: [Short Rest, Long Rest]
 
 dice:
   initiative: 1d20
@@ -132,6 +183,7 @@ entityTypes:
       - { key: skillChoices,        label: Skill Proficiencies,     type: Text }
       - { key: startingEquipment,   label: Starting Equipment,      type: LongText }
       - { key: multiclassing,       label: Multiclassing,           type: LongText }
+      - { key: multiclassPrerequisites, label: Multiclass Prerequisites, type: TagList, description: "Options like \"STR 13+\" or \"DEX 13+, WIS 13+\"; meeting any one is enough." }
       - { key: subclasses,          label: Subclasses,              type: TagList }
       - { key: casterType,          label: Spellcasting,            type: Text }
       - { key: features,            label: Class Features,          type: Collection, description: "One row per feature: level, name, description." }
@@ -188,6 +240,9 @@ entityTypes:
       - { key: prerequisites, label: Prerequisites, type: Text }
       - { key: minLevel,      label: Minimum Level, type: Number }
       - { key: repeatable,    label: Repeatable,    type: Boolean }
+      - { key: abilityIncrease,        label: Ability Score Points,   type: Number,  description: "Points this feat adds to ability scores." }
+      - { key: abilityIncreaseOptions, label: Abilities It Can Raise, type: TagList, description: "Leave empty for any ability." }
+      - { key: abilityIncreaseCap,     label: Raises Scores Up To,    type: Number }
 
   - type: spell
     label: Spell

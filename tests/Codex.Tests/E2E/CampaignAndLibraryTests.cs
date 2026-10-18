@@ -148,7 +148,8 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         Assert.Empty(await player.GetByTestId("rule-violations").AllInnerTextsAsync());
         await player.GetByTestId("sheet-save").ClickAsync();
         await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Saved.");
-        await Assertions.Expect(player.GetByRole(AriaRole.Link, new() { Name = "Fighter" })).ToBeVisibleAsync();
+        await Assertions.Expect(player.GetByLabel("From the Library").GetByRole(AriaRole.Link, new() { Name = "Fighter" })).ToBeVisibleAsync();
+        await Assertions.Expect(player.GetByTestId("class-level-fighter")).ToHaveTextAsync("1 level"); // the Classes panel
         await Assertions.Expect(player.GetByTestId("attr-int-total")).ToHaveTextAsync("12 + 2 = 14"); // persisted and reloaded
 
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "cast");

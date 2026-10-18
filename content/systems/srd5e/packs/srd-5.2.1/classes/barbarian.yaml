@@ -33,6 +33,8 @@ properties:
   skillChoices: 'Choose 2: Animal Handling, Athletics, Intimidation, Nature, Perception, or Survival'
   startingEquipment: (a) Greataxe, 4 Handaxes, Explorer's Pack, and 15 GP or (b) 75 GP
   multiclassing: 'Prerequisite: STR 13+. Proficiencies gained: Shields, Martial Weapons'
+  multiclassPrerequisites:
+  - STR 13+
   subclasses:
   - Path of the Berserker
   features:

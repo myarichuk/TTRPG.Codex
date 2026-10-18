@@ -37,6 +37,8 @@ properties:
   skillChoices: 'Choose 4: Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, or Stealth'
   startingEquipment: (a) Leather Armor, 2 Daggers, Shortsword, Shortbow, 20 Arrows, Quiver, Thieves’ Tools, Burglar’s Pack, and 8 GP; (b) 100 GP
   multiclassing: "Prerequisite: DEX 13+. Proficiencies gained: Light Armor, Tool: Thieves' Tools"
+  multiclassPrerequisites:
+  - DEX 13+
   subclasses:
   - Thief
   features:

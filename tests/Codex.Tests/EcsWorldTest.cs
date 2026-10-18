@@ -76,6 +76,33 @@ public class EcsWorldTest
     }
 
     [Fact]
+    public void AdjustResource_SpendsAndRegainsWithinZeroAndMax_AndRestRefills()
+    {
+        using var world = new CodexWorld();
+        var entity = world.CreateEntity();
+
+        var pool = new ResourcePoolComponent();
+        pool.Set("slots_1", 2);
+        pool.Set("slots_1_Max", 2);
+        pool.Set("slots_2", 1);
+        pool.Set("slots_2_Max", 1);
+        entity.Set(pool);
+
+        world.AdjustResource(entity, "slots_1", -1);
+        world.AdjustResource(entity, "slots_1", -5);
+        world.AdjustResource(entity, "slots_2", 3);
+        world.AdjustResource(entity, "slots_9", -1); // a slot level the actor doesn't have
+
+        var result = entity.Get<ResourcePoolComponent>();
+        Assert.Equal(0, result.Get("slots_1"));
+        Assert.Equal(1, result.Get("slots_2"));
+        Assert.False(result.Pools.ContainsKey("slots_9"));
+
+        world.RestoreResources(entity, new[] { "slots_1", "slots_2" });
+        Assert.Equal(2, entity.Get<ResourcePoolComponent>().Get("slots_1"));
+    }
+
+    [Fact]
     public void AddStatus_TwoEffectsOnSameEntity_BothCoexist()
     {
         // B6: adding Stunned used to overwrite Poisoned, since StatusEffectComponent could only

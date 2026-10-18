@@ -160,6 +160,43 @@ public sealed class CodexWorld : IDisposable
         pool.Set(poolName, Math.Max(next, 0));
     }
 
+    /// <summary>Spends (negative) or regains (positive) points of an expendable pool such as a spell
+    /// slot level, clamped to 0 and "{poolName}_Max". A pool the actor doesn't have is ignored.</summary>
+    public void AdjustResource(Entity entity, string poolName, int delta)
+    {
+        if (delta == 0 || !entity.Has<ResourcePoolComponent>())
+        {
+            return;
+        }
+
+        var pool = entity.Get<ResourcePoolComponent>();
+        if (!pool.Pools.TryGetValue(poolName, out var current))
+        {
+            return;
+        }
+
+        var max = pool.Pools.TryGetValue($"{poolName}_Max", out var m) ? m : int.MaxValue;
+        pool.Set(poolName, Math.Clamp(current + delta, 0, max));
+    }
+
+    /// <summary>Refills each named pool to its "{name}_Max" (a rest).</summary>
+    public void RestoreResources(Entity entity, IEnumerable<string> poolNames)
+    {
+        if (!entity.Has<ResourcePoolComponent>())
+        {
+            return;
+        }
+
+        var pool = entity.Get<ResourcePoolComponent>();
+        foreach (var name in poolNames)
+        {
+            if (pool.Pools.TryGetValue($"{name}_Max", out var max))
+            {
+                pool.Set(name, max);
+            }
+        }
+    }
+
     public void Dispose()
     {
         _systems?.Dispose();

@@ -32,6 +32,8 @@ properties:
   skillChoices: 'Choose 2: Athletics, Insight, Intimidation, Medicine, Persuasion, or Religion'
   startingEquipment: (a) Chain Mail, Shield, Longsword, 6 Javelins, Holy Symbol, Priest’s Pack, and 9 GP; or (b) 150 GP
   multiclassing: 'Prerequisite: STR 13+, CHA 13+. Proficiencies gained: Light Armor, Medium Armor, Shields, Martial Weapons'
+  multiclassPrerequisites:
+  - STR 13+, CHA 13+
   subclasses:
   - Oath of Devotion
   features:

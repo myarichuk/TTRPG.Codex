@@ -24,7 +24,8 @@ public class RavenDbService : IDisposable
             {
                 DataDirectory = dataDirectory,
                 ServerUrl = "http://127.0.0.1:0",
-                FrameworkVersion = null
+                FrameworkVersion = null,
+                DotNetPath = ResolveDotNetHost()
             };
             options.CommandLineArgs.Add("--Setup.Mode=None");
             if (runInMemory)
@@ -67,6 +68,26 @@ public class RavenDbService : IDisposable
 
             return store;
         });
+    }
+
+    /// <summary>
+    /// The embedded server runs as <c>dotnet Raven.Server.dll</c>, so it needs a host with the shared
+    /// .NET and ASP.NET Core runtimes. A release ships one in <c>runtime/</c> and starts the app with
+    /// it, so use (in order): <c>CODEX_DOTNET</c>, the host running this process, <c>DOTNET_ROOT</c>,
+    /// a <c>runtime/</c> folder beside the app, and finally whatever <c>dotnet</c> is on the PATH.
+    /// </summary>
+    public static string ResolveDotNetHost()
+    {
+        var exe = OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet";
+        var candidates = new[]
+        {
+            Environment.GetEnvironmentVariable("CODEX_DOTNET"),
+            Environment.ProcessPath is { } process && Path.GetFileName(process).Equals(exe, StringComparison.OrdinalIgnoreCase) ? process : null,
+            Environment.GetEnvironmentVariable("DOTNET_ROOT") is { Length: > 0 } root ? Path.Combine(root, exe) : null,
+            Path.Combine(AppContext.BaseDirectory, "runtime", exe)
+        };
+
+        return candidates.FirstOrDefault(c => !string.IsNullOrEmpty(c) && File.Exists(c)) ?? "dotnet";
     }
 
     public void Dispose()

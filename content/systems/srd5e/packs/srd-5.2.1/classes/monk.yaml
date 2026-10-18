@@ -30,6 +30,8 @@ properties:
   skillChoices: 'Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth; Choose one type of artisanâ€™s tools or one musical instrument'
   startingEquipment: (a) Spear, 5 Daggers, Artisan’s Tools or Musical Instrument chosen for the tool proficiency above, Explorer’s Pack, and 11 GP; or (b) 50 GP
   multiclassing: 'Prerequisite: DEX 13+, WIS 13+'
+  multiclassPrerequisites:
+  - DEX 13+, WIS 13+
   subclasses:
   - Warrior of the Open Hand
   features:

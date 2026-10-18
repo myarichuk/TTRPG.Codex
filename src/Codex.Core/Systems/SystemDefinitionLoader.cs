@@ -253,6 +253,57 @@ public static class SystemDefinitionLoader
             }
         }
 
+        if (rules.Attributes?.Increases is { } increases && !rules.Lists.Any(l => l.Key.Equals(increases.FromList, StringComparison.OrdinalIgnoreCase)))
+        {
+            yield return $"sheetRules.attributes.increases.fromList '{increases.FromList}' is not a sheetRules.lists key.";
+        }
+
+        if (rules.Multiclass is { } multiclass)
+        {
+            if (!referenceFields.Contains(multiclass.ClassField))
+            {
+                yield return $"sheetRules.multiclass.classField '{multiclass.ClassField}' is not an EntityReference actor field.";
+            }
+
+            if (!fieldKeys.Contains(multiclass.LevelField))
+            {
+                yield return $"sheetRules.multiclass.levelField '{multiclass.LevelField}' is not an actor field.";
+            }
+
+            if (fieldKeys.Contains(multiclass.Key) || fieldKeys.Contains(multiclass.ClassLevelKey))
+            {
+                yield return "sheetRules.multiclass key and classLevelKey must not collide with actor fields.";
+            }
+        }
+
+        foreach (var duplicate in Duplicates(rules.SlotPools.Select(p => p.Key)))
+        {
+            yield return $"sheetRules.slotPools key '{duplicate}' is declared more than once.";
+        }
+
+        foreach (var pool in rules.SlotPools)
+        {
+            if (string.IsNullOrWhiteSpace(pool.Key) || string.IsNullOrWhiteSpace(pool.Table) || string.IsNullOrWhiteSpace(pool.Column))
+            {
+                yield return "every sheetRules.slotPools entry needs a key, a table and a column.";
+            }
+
+            if (!referenceFields.Contains(pool.Field))
+            {
+                yield return $"sheetRules.slotPools '{pool.Key}' reads field '{pool.Field}', which is not an EntityReference actor field.";
+            }
+
+            if (pool.Combine is { } combine && combine.Rounding.ToLowerInvariant() is not ("up" or "down" or "nearest"))
+            {
+                yield return $"sheetRules.slotPools '{pool.Key}' combine.rounding must be up, down or nearest.";
+            }
+
+            if (definition.Resources.Any(r => pool.Owns(r.Key) || (r.MaxKey != null && pool.Owns(r.MaxKey))))
+            {
+                yield return $"sheetRules.slotPools '{pool.Key}' would overwrite a declared resource.";
+            }
+        }
+
         foreach (var condition in rules.Constraints.SelectMany(c => c.Where).Concat(rules.Lists.SelectMany(l => l.Where)))
         {
             var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.LteLookup?.Field }
