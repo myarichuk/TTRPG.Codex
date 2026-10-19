@@ -32,6 +32,9 @@ properties:
   skillChoices: 'Choose 2: Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, or Survival'
   startingEquipment: (a) Chain Mail, Greatsword, Flail, 8 Javelins, Dungeoneer’s Pack, and 4 GP; (b) Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Dungeoneer’s Pack, and 11 GP; or (c) 155 GP
   multiclassing: 'Prerequisite: STR 13+ or DEX 13+. Proficiencies gained: Light Armor, Medium Armor, Shields, Martial Weapons'
+  multiclassPrerequisites:
+  - STR 13+
+  - DEX 13+
   subclasses:
   - Champion
   features:

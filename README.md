@@ -89,6 +89,23 @@ dotnet run --project tools/Codex.ContentImport -- srd5e --download --source /tmp
 
 ## Releases
 
-Pushing a tag such as `v0.2.0` builds single-file executables for Windows, Linux and macOS with the
-`content/` folder beside them. Conventional commit titles (`feat:`, `fix:`, `chore:`…) drive the
+Run **Actions > Release > Run workflow** (optionally with a version, pre-release and draft flags), or
+push a tag such as `v0.2.0`. Each platform is built and smoke-tested on its own runner:
+
+| Platform | Installer | Portable |
+| --- | --- | --- |
+| Windows x64 | Inno Setup `-setup.exe` (per-user, no admin) | `.zip` |
+| macOS Apple silicon | `.pkg` (installs to Applications) | `.tar.gz` |
+| Linux x64 | `.deb` (`/opt/ttrpg-codex`, `ttrpg-codex` on the PATH) | `.tar.gz` |
+
+Every package carries the .NET and ASP.NET Core runtimes and a launcher that keeps campaign data in
+the user's folder. The embedded RavenDB server runs as its own `dotnet Raven.Server.dll` process and
+needs those full shared runtimes, so the app runs on the same runtime (framework-dependent,
+ReadyToRun-compiled) instead of shipping a second, trimmed copy, and RavenDB's native libraries
+are trimmed to the target platform (that alone halves the download); Native AOT is ruled out by Blazor
+Server, RavenDB, YamlDotNet and DynamicExpresso. Build the same packages locally with
+`packaging/package.sh <rid> <version>` or `pwsh packaging/package.ps1 -Version <version>`, and check
+one with `packaging/smoke-test.sh dist/<rid>/app`.
+
+Without an explicit version, conventional commit titles (`feat:`, `fix:`, `chore:`…) drive the
 version number through GitVersion.

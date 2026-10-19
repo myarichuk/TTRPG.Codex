@@ -33,6 +33,8 @@ properties:
   skillChoices: 'Choose 3: Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, or Survival'
   startingEquipment: (a) Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Druidic Focus (sprig of mistletoe), Explorer's Pack, and 7 GP; or (b) 150 GP
   multiclassing: 'Prerequisite: DEX 13+, WIS 13+. Proficiencies gained: Light Armor, Medium Armor, Shields, Martial Weapons'
+  multiclassPrerequisites:
+  - DEX 13+, WIS 13+
   subclasses:
   - Hunter
   features:

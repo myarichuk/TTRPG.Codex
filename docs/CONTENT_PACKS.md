@@ -104,6 +104,12 @@ sheetRules:
       fromField: background                   # the sheet field that references the entry
       property: abilityScores                 # that entry's list of eligible attributes (keys, abbreviations or labels)
       allocations: [[2, 1], [1, 1, 1]]        # allowed spreads, one bonus per distinct attribute
+    increases:                                # score increases granted by picks (Ability Score Improvement)
+      label: Ability score increases
+      fromList: feats                         # the list whose picks can grant them
+      property: abilityIncrease               # entry property: points to spread
+      optionsProperty: abilityIncreaseOptions # entry property: attributes they may go to (none: any)
+      capProperty: abilityIncreaseCap         # entry property: highest score they may reach (else `max`)
   derived:                                    # read-only, computed from numeric sheet fields
     - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4" }
     #  floor(), ceil(), max(), min() and mod(score) (the half-minus-five modifier) are available
@@ -122,8 +128,38 @@ sheetRules:
       where:
         - { property: level, gte: 1 }
         - { property: classes, containsNameOfField: class }       # the spell's class list names the sheet's class
-        - { property: level, lteLookup: { field: class, table: spellcasting, byField: level, column: maxSpellLevel } }
-      maxCount: { lookup: { field: class, table: spellcasting, byField: level, column: preparedSpells } }
+        - { property: level, lteLookup: { field: class, table: spellcasting, byField: classLevel, column: maxSpellLevel } }
+      maxCount: { lookup: { field: class, table: spellcasting, byField: classLevel, column: preparedSpells } }
+    - key: feats
+      label: Feats
+      targetEntityType: feat
+      repeatableProperty: repeatable          # entries with repeatable: true can be picked more than once
+  multiclass:                                 # levels split across classes
+    key: multiclass                           # sheet key holding the other classes as "class-id:levels"
+    classField: class                         # the first class; it gets the levels the others don't take
+    levelField: level                         # the character level (proficiency, feat minimums)
+    classLevelKey: classLevel                 # each class's own level, for lookups (byField: classLevel)
+    prerequisitesProperty: multiclassPrerequisites   # class property: ["STR 13+", "DEX 13+, WIS 13+"], any one option
+  slotPools:                                  # expendable slots, tracked during play
+    - key: slots                              # resources slots_1, slots_1_Max, slots_2 ...
+      label: Spell slots
+      field: class
+      byField: classLevel
+      table: spellcasting
+      column: slots                           # "4/3/2" = 4 level-1, 3 level-2, 2 level-3 slots
+      excludeCasterTypes: [pact, none]        # filter classes by their casterType property
+      recoversOn: [Long Rest]                 # a button per rest name at the table and on the sheet
+      combine:                                # two or more contributing classes
+        weights: { full: 1, half: 0.5 }       # class level x weight of its casterType...
+        rounding: up                          # ...rounded per class (up, down or nearest)...
+        table: ["2", "3", "4/2", "..."]       # ...summed, then row N of this table (caster level N)
+    - key: pact
+      label: Pact slots
+      table: spellcasting
+      column: slots                           # a count...
+      slotLevelColumn: maxSpellLevel          # ...all of the level in this column
+      includeCasterTypes: [pact]
+      recoversOn: [Short Rest, Long Rest]
 ```
 
 Conditions compare a property of the candidate entry (`level`, `classes`, `category`, or `id`,
@@ -135,8 +171,19 @@ takes the row whose `level` (or `rowKey`) is the highest not above the sheet's `
 nothing chosen yet it is unlimited.
 
 Base scores live in the sheet as `base_<key>` and bonuses as `bonus_<key>`; the engine writes the
-total into `<key>`, which is what the live table and the ECS use. List picks are stored as lists of
-entry ids under the list's key.
+total (base + bonus + increases) into `<key>`, which is what the live table and the ECS use. List
+picks are stored as lists of entry ids under the list's key; a pick that raises scores carries the
+player's choice after a bar: `ability-score-improvement|str:1,dex:1`.
+
+With `multiclass`, lists and slot pools are evaluated once per class, with the class field set to
+that class and `classLevel` to its levels: an entry is allowed when any one class allows it, and
+table-driven limits are added up (a wizard 3 / cleric 2 prepares both classes' spells, each up to its
+own highest spell level). A class's prerequisites are checked against final scores, for every class
+including the first once there is more than one.
+
+Slot pools become resources: `slots_3` is the remaining level-3 slots and `slots_3_Max` the maximum.
+The sheet keeps the maximum in step with the classes (a new slot arrives available, a lost slot level
+disappears); the live table spends and regains them and refills them on the named rests.
 
 Validation runs at load. A broken `system.yaml` is reported on the About page under "Content
 warnings" and the system is skipped; nothing else stops loading.

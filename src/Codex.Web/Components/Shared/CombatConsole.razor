@@ -209,6 +209,26 @@ else
         </div>
 
         <div class="col-lg-4">
+            @{
+                var slotActors = SlotPoolRules.Count == 0 ? new List<ActorDocument>() : Actors.Where(a => CanTrackSlots(a.Id) && SlotKeys(a.Id).Any()).ToList();
+            }
+            @if (slotActors.Count > 0)
+            {
+                <section class="panel" aria-labelledby="slots-heading" data-testid="table-slots">
+                    <div class="panel-title"><h3 id="slots-heading">@SlotTracker.Heading(SlotPoolRules, slotActors.SelectMany(a => SlotKeys(a.Id)))</h3></div>
+                    @foreach (var actor in slotActors)
+                    {
+                        var actorId = actor.Id;
+                        <div class="mb-3" data-testid="table-slots-actor" data-actor-id="@actorId">
+                            <div class="fw-semibold mb-1">@actor.Name</div>
+                            <SlotTracker Pools="SlotPoolRules" Keys="SlotKeys(actorId)" Value="key => PoolValue(actorId, key)" Title="@($"{actor.Name}'s slots")"
+                                         OnAdjust="change => runtime!.EnqueueAsync(new AdjustResourceCommand(actorId, change.Key, change.Delta, change.Label))"
+                                         OnRest="rest => runtime!.EnqueueAsync(new RestCommand(actorId, rest.Name, rest.Keys))" />
+                        </div>
+                    }
+                </section>
+            }
+
             <section class="panel" aria-labelledby="dice-heading">
                 <div class="panel-title"><h3 id="dice-heading">Dice</h3></div>
                 <form class="input-group input-group-sm mb-2" @onsubmit="RollDiceAsync" @onsubmit:preventDefault="true">
@@ -412,6 +432,25 @@ else
         if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return null;
         var pool = e.Get<ResourcePoolComponent>();
         return (pool.Get(PrimaryKey), pool.Get(PrimaryMaxKey));
+    }
+
+    private IReadOnlyList<SlotPoolRule> SlotPoolRules => Definition?.SheetRules?.SlotPools ?? (IReadOnlyList<SlotPoolRule>)Array.Empty<SlotPoolRule>();
+
+    /// <summary>The DM tracks everyone's slots; a player tracks their own character's.</summary>
+    private bool CanTrackSlots(string actorId) => Access.IsDm || ActorsById.GetValueOrDefault(actorId)?.OwnerUserId == CurrentUserId;
+
+    private IEnumerable<string> SlotKeys(string actorId)
+    {
+        var entity = runtime?.GetEntity(actorId);
+        if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return Enumerable.Empty<string>();
+        return e.Get<ResourcePoolComponent>().Pools.Keys.Where(k => SlotPoolRules.Any(r => r.Owns(k))).ToList();
+    }
+
+    private int? PoolValue(string actorId, string key)
+    {
+        var entity = runtime?.GetEntity(actorId);
+        if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return null;
+        return e.Get<ResourcePoolComponent>().Pools.TryGetValue(key, out var value) ? value : null;
     }
 
     private bool CanSeeExact(string actorId) => Access.IsDm || ActorsById.GetValueOrDefault(actorId)?.OwnerUserId == CurrentUserId;

@@ -27,6 +27,8 @@ properties:
   skillChoices: 'Choose 2: Arcana, Deception, Insight, Intimidation, Persuasion, or Religion'
   startingEquipment: (a) Spear, 2 Daggers, Arcane Focus (crystal), Dungeoneer’s Pack, and 28 GP; or (b) 50 GP
   multiclassing: 'Prerequisite: CHA 13+'
+  multiclassPrerequisites:
+  - CHA 13+
   subclasses:
   - Draconic Sorcery
   features:

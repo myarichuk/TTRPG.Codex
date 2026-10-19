@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Codex.Plugin.Abstractions;
 using DynamicExpresso;
 
@@ -28,7 +29,22 @@ public sealed record AttributeSummary(
     int? PointsBudget,
     IReadOnlyList<string> EligibleBonusAttributes,
     IReadOnlyDictionary<string, int> Bonuses,
+    IReadOnlyDictionary<string, int> Increases,
     IReadOnlyDictionary<string, int> Totals);
+
+/// <summary>One entry picked in a list. <see cref="Index"/> is its position in the sheet's raw list
+/// (the same entry can appear twice when the list allows repeats); <see cref="Choices"/> is what the
+/// player chose for it, such as where an Ability Score Improvement's points go.</summary>
+public sealed record SheetPick(int Index, string Raw, ContentEntry Entry, IReadOnlyDictionary<string, int> Choices);
+
+/// <summary>A picked entry that grants score increases, and what the player did with them.</summary>
+public sealed record IncreaseGrant(SheetPick Pick, int Points, IReadOnlyList<string> Options, int? Cap);
+
+/// <summary>One of the sheet's classes and how many of the character's levels are in it.</summary>
+public sealed record ClassLevel(string Id, ContentEntry? Entry, int Level, bool IsFirst);
+
+/// <summary>A slot pool's maximum slots per slot level for this sheet.</summary>
+public sealed record SlotPool(SlotPoolRule Rule, IReadOnlyDictionary<int, int> Max);
 
 /// <summary>The engine's whole verdict on one sheet, used by the UI to render and by save to decide.</summary>
 public sealed class SheetEvaluation
@@ -39,14 +55,25 @@ public sealed class SheetEvaluation
     /// <summary>For each constrained reference field, the entries the sheet may currently pick.</summary>
     public Dictionary<string, IReadOnlyList<ContentEntry>> AllowedOptions { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>For each list rule, the entries that may be added now (not yet picked, conditions met).</summary>
+    /// <summary>For each list rule, the entries that may be added now (conditions met, not yet picked unless repeatable).</summary>
     public Dictionary<string, IReadOnlyList<ContentEntry>> ListOptions { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>For each list rule, the resolved picked entries in sheet order (unresolvable ids are reported as violations).</summary>
-    public Dictionary<string, IReadOnlyList<ContentEntry>> ListPicks { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>For each list rule, the resolved picks in sheet order (unresolvable ids are reported as violations).</summary>
+    public Dictionary<string, IReadOnlyList<SheetPick>> ListPicks { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Dictionary<string, int?> ListLimits { get; } = new(StringComparer.OrdinalIgnoreCase);
     public AttributeSummary? Attributes { get; set; }
+
+    /// <summary>Picks that grant score increases (empty when the system declares none).</summary>
+    public List<IncreaseGrant> Increases { get; } = new();
+
+    /// <summary>The sheet's classes, first class first (empty without multiclass rules).</summary>
+    public List<ClassLevel> Classes { get; } = new();
+
+    /// <summary>Classes that can be added now: not taken yet and prerequisites met.</summary>
+    public IReadOnlyList<ContentEntry> MulticlassOptions { get; set; } = Array.Empty<ContentEntry>();
+
+    public List<SlotPool> SlotPools { get; } = new();
 
     public bool HasViolations => Violations.Count > 0;
 }
@@ -95,6 +122,8 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
 
         EvaluateAttributes(sheet, result);
         EvaluateDerived(sheet, result);
+        var views = ClassViews(sheet, result.Classes);
+        EvaluateMulticlass(sheet, result);
 
         foreach (var constraint in Rules.Constraints)
         {
@@ -120,13 +149,11 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
 
         foreach (var list in Rules.Lists)
         {
-            var picked = sheet.TryGetValue(list.Key, out var raw) && raw is IEnumerable<object> items
-                ? items.Select(i => i?.ToString() ?? string.Empty).Where(i => i.Length > 0).ToList()
-                : new List<string>();
-
-            var resolved = new List<ContentEntry>();
-            foreach (var id in picked)
+            var picked = RawList(sheet, list.Key);
+            var resolved = new List<SheetPick>();
+            for (var index = 0; index < picked.Count; index++)
             {
+                var (id, choices) = ParsePick(picked[index]);
                 var entry = resolver.Resolve(list.TargetEntityType, id);
                 if (entry == null)
                 {
@@ -134,21 +161,36 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
                     continue;
                 }
 
-                resolved.Add(entry);
-                foreach (var condition in list.Where.Where(w => !Holds(w, entry, sheet)))
+                resolved.Add(new SheetPick(index, picked[index], entry, choices));
+                if (views.Any(v => list.Where.All(w => Holds(w, entry, v)))) continue;
+
+                // No class allows it: report what the closest class objects to - fewest failures,
+                // then the one that got furthest down the conditions (a priest spell is "too high"
+                // for the priest, not "not on your list" for the mage).
+                var failures = views
+                    .Select(v => list.Where.Where(w => !Holds(w, entry, v)).ToList())
+                    .OrderBy(f => f.Count)
+                    .ThenByDescending(f => f.Count == 0 ? int.MaxValue : list.Where.IndexOf(f[0]))
+                    .First();
+                foreach (var condition in failures)
                 {
                     result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {entry.Name} - {condition.Message ?? "not allowed by the rules."}"));
                 }
             }
 
             result.ListPicks[list.Key] = resolved;
-            var pickedIds = picked.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var pickedIds = resolved.Select(p => p.Entry.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
             result.ListOptions[list.Key] = resolver.Candidates(list.TargetEntityType)
-                .Where(c => !pickedIds.Contains(c.Id) && list.Where.All(w => Holds(w, c, sheet)))
+                .Where(c => (!pickedIds.Contains(c.Id) || IsRepeatable(list, c)) && views.Any(v => list.Where.All(w => Holds(w, c, v))))
                 .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var limit = ResolveCount(list.MaxCount, sheet);
+            foreach (var duplicate in resolved.GroupBy(p => p.Entry.Id, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1 && !IsRepeatable(list, g.First().Entry)))
+            {
+                result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {duplicate.First().Entry.Name} can only be taken once."));
+            }
+
+            var limit = ResolveCount(list.MaxCount, views);
             result.ListLimits[list.Key] = limit;
             if (limit.HasValue && picked.Count > limit.Value)
             {
@@ -156,7 +198,42 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
             }
         }
 
+        EvaluateSlotPools(views, result);
         return result;
+    }
+
+    private bool IsRepeatable(ListRule list, ContentEntry entry) =>
+        list.RepeatableProperty != null && entry.Properties.TryGetValue(list.RepeatableProperty, out var value) && value is true or "true" or "True";
+
+    // ---- Picks ----
+
+    /// <summary>The raw strings stored in a list field.</summary>
+    public static List<string> RawList(IReadOnlyDictionary<string, object> sheet, string key) =>
+        sheet.TryGetValue(key, out var raw) && raw is not string and IEnumerable<object> items
+            ? items.Select(i => i?.ToString() ?? string.Empty).Where(i => i.Length > 0).ToList()
+            : new List<string>();
+
+    /// <summary>Splits <c>"feat-id|str:1,dex:1"</c> into the entry id and the choices made for it.</summary>
+    public static (string Id, Dictionary<string, int> Choices) ParsePick(string raw)
+    {
+        var choices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var bar = raw.IndexOf('|');
+        if (bar < 0) return (raw, choices);
+        foreach (var part in raw[(bar + 1)..].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var colon = part.LastIndexOf(':');
+            if (colon <= 0 || !int.TryParse(part[(colon + 1)..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var amount)) continue;
+            var key = part[..colon];
+            choices[key] = choices.GetValueOrDefault(key) + amount;
+        }
+
+        return (raw[..bar], choices);
+    }
+
+    public static string FormatPick(string id, IReadOnlyDictionary<string, int> choices)
+    {
+        var parts = choices.Where(c => c.Value != 0).Select(c => $"{c.Key}:{c.Value.ToString(CultureInfo.InvariantCulture)}").ToList();
+        return parts.Count == 0 ? id : id + "|" + string.Join(",", parts);
     }
 
     // ---- Attributes ----
@@ -169,14 +246,12 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
         var method = (YamlValues.GetString(sheet, MethodKey) ?? rules.Default).ToLowerInvariant();
         var bases = new Dictionary<string, int>();
         var bonuses = new Dictionary<string, int>();
-        var totals = new Dictionary<string, int>();
         foreach (var attribute in system.Attributes)
         {
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? YamlValues.GetInt(sheet, attribute.Key) ?? attribute.Default;
             var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
             bases[attribute.Key] = baseScore;
             if (bonus != 0) bonuses[attribute.Key] = bonus;
-            totals[attribute.Key] = baseScore + bonus;
         }
 
         var spent = 0;
@@ -237,45 +312,379 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
             }
         }
 
-        if (rules.Max.HasValue)
+        // Increases from picks (Ability Score Improvement and the like), each with its own cap.
+        var increases = new Dictionary<string, int>();
+        var caps = new Dictionary<string, int>();
+        if (rules.Increases is { } increaseRules)
         {
-            foreach (var (key, total) in totals.Where(t => t.Value > rules.Max.Value))
+            foreach (var grant in EvaluateIncreases(increaseRules, sheet, result))
             {
-                result.Violations.Add(new RuleViolation(key, $"{system.Attributes.First(a => a.Key == key).Label}: scores can't exceed {rules.Max.Value}."));
+                foreach (var (key, amount) in grant.Pick.Choices)
+                {
+                    var attribute = MatchAttribute(key);
+                    if (attribute == null) continue;
+                    increases[attribute.Key] = increases.GetValueOrDefault(attribute.Key) + amount;
+                    if (grant.Cap.HasValue) caps[attribute.Key] = Math.Max(caps.GetValueOrDefault(attribute.Key), grant.Cap.Value);
+                }
             }
         }
 
-        result.Attributes = new AttributeSummary(method, spent, budget, eligible, bonuses, totals);
+        var totals = system.Attributes.ToDictionary(
+            a => a.Key,
+            a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key) + increases.GetValueOrDefault(a.Key));
+
+        foreach (var attribute in system.Attributes)
+        {
+            int? cap = rules.Max;
+            if (caps.TryGetValue(attribute.Key, out var raised)) cap = Math.Max(cap ?? raised, raised);
+            if (cap.HasValue && totals[attribute.Key] > cap.Value)
+            {
+                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value}."));
+            }
+        }
+
+        result.Attributes = new AttributeSummary(method, spent, budget, eligible, bonuses, increases, totals);
     }
 
-    /// <summary>Attribute keys the bonus rule allows, matched by key, abbreviation or label.</summary>
-    public List<string> EligibleBonusAttributes(BonusRules bonusRules, IReadOnlyDictionary<string, object> sheet)
+    private IEnumerable<IncreaseGrant> EvaluateIncreases(IncreaseRules rules, IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
-        var field = system.ActorFields.FirstOrDefault(f => f.Key == bonusRules.FromField);
-        var id = YamlValues.GetString(sheet, bonusRules.FromField);
-        if (field?.TargetEntityType == null || string.IsNullOrEmpty(id)) return new List<string>();
-        var entry = resolver.Resolve(field.TargetEntityType, id);
-        if (entry == null || !entry.Properties.TryGetValue(bonusRules.Property, out var listed)) return new List<string>();
+        var list = Rules!.Lists.FirstOrDefault(l => l.Key.Equals(rules.FromList, StringComparison.OrdinalIgnoreCase));
+        if (list == null) yield break;
 
-        var names = listed is IEnumerable<object> list ? list.Select(o => o?.ToString() ?? "").ToList() : new List<string> { listed.ToString() ?? "" };
+        var raw = RawList(sheet, list.Key);
+        for (var index = 0; index < raw.Count; index++)
+        {
+            var (id, choices) = ParsePick(raw[index]);
+            var entry = resolver.Resolve(list.TargetEntityType, id);
+            if (entry == null) continue;
+            var pick = new SheetPick(index, raw[index], entry, choices);
+
+            var points = (int)(ToDouble(entry.Properties.GetValueOrDefault(rules.Property)) ?? 0);
+            if (points <= 0)
+            {
+                if (choices.Count > 0) result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} doesn't raise any score."));
+                continue;
+            }
+
+            var options = AttributesNamedIn(entry.Properties.GetValueOrDefault(rules.OptionsProperty));
+            if (options.Count == 0) options = system.Attributes.Select(a => a.Key).ToList();
+            var capValue = ToDouble(entry.Properties.GetValueOrDefault(rules.CapProperty));
+            var grant = new IncreaseGrant(pick, points, options, capValue.HasValue ? (int)capValue.Value : null);
+            result.Increases.Add(grant);
+
+            var spent = choices.Values.Sum();
+            if (spent < points)
+            {
+                result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: choose where {entry.Name}'s {points - spent} remaining point{(points - spent == 1 ? "" : "s")} go{(points - spent == 1 ? "es" : "")}."));
+            }
+            else if (spent > points)
+            {
+                result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} grants {points} point{(points == 1 ? "" : "s")}, not {spent}."));
+            }
+
+            foreach (var key in choices.Keys)
+            {
+                var attribute = MatchAttribute(key);
+                if (attribute == null || !options.Contains(attribute.Key))
+                {
+                    result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} can't raise {attribute?.Label ?? key}."));
+                }
+            }
+
+            yield return grant;
+        }
+    }
+
+    private AttributeDefinition? MatchAttribute(string name) =>
+        system.Attributes.FirstOrDefault(a => name.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Label, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The attribute keys a property value names, by key, abbreviation or label.</summary>
+    private List<string> AttributesNamedIn(object? listed)
+    {
+        if (listed == null) return new List<string>();
+        var names = listed is not string and IEnumerable<object> list ? list.Select(o => o?.ToString() ?? "").ToList() : new List<string> { listed.ToString() ?? "" };
         return system.Attributes
             .Where(a => names.Any(n => n.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || n.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase) || n.Equals(a.Label, StringComparison.OrdinalIgnoreCase)))
             .Select(a => a.Key)
             .ToList();
     }
 
-    /// <summary>Writes base + bonus into each attribute's total key, so the ECS sees final scores.</summary>
+    /// <summary>Attribute keys the bonus rule allows, matched by key, abbreviation or label.</summary>
+    public List<string> EligibleBonusAttributes(BonusRules bonusRules, IReadOnlyDictionary<string, object> sheet)
+    {
+        var entry = ReferencedEntry(bonusRules.FromField, sheet);
+        return entry == null ? new List<string>() : AttributesNamedIn(entry.Properties.GetValueOrDefault(bonusRules.Property));
+    }
+
+    /// <summary>Writes base + bonus + increases into each attribute's total key, so the ECS sees final scores.</summary>
     public void ApplyAttributeTotals(Dictionary<string, object> sheet)
     {
-        if (Rules?.Attributes == null) return;
+        if (Rules?.Attributes is not { } rules) return;
+        var increases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        if (rules.Increases is { } increaseRules)
+        {
+            foreach (var raw in RawList(sheet, increaseRules.FromList))
+            {
+                foreach (var (key, amount) in ParsePick(raw).Choices)
+                {
+                    if (MatchAttribute(key) is { } attribute) increases[attribute.Key] = increases.GetValueOrDefault(attribute.Key) + amount;
+                }
+            }
+        }
+
         foreach (var attribute in system.Attributes)
         {
             if (!sheet.ContainsKey(BasePrefix + attribute.Key)) continue;
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? attribute.Default;
             var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
-            sheet[attribute.Key] = (long)(baseScore + bonus);
+            sheet[attribute.Key] = (long)(baseScore + bonus + increases.GetValueOrDefault(attribute.Key));
         }
     }
+
+    // ---- Multiclass ----
+
+    /// <summary>The other classes stored under the multiclass key, as (id, levels).</summary>
+    public static List<(string Id, int Level)> ParseClassLevels(IReadOnlyDictionary<string, object> sheet, string key)
+    {
+        var result = new List<(string, int)>();
+        foreach (var raw in RawList(sheet, key))
+        {
+            var colon = raw.LastIndexOf(':');
+            if (colon <= 0) result.Add((raw, 1));
+            else result.Add((raw[..colon], int.TryParse(raw[(colon + 1)..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var level) ? level : 1));
+        }
+
+        return result;
+    }
+
+    public static string FormatClassLevel(string id, int level) => $"{id}:{level.ToString(CultureInfo.InvariantCulture)}";
+
+    /// <summary>
+    /// One view of the sheet per class: the same values, with the class field set to that class and
+    /// the class-level key set to its levels. Lists and slots are evaluated against every view, so a
+    /// fighter 2 / wizard 3 sees the wizard spell list at wizard level 3. Without multiclass rules
+    /// there is a single view: the sheet itself.
+    /// </summary>
+    private List<IReadOnlyDictionary<string, object>> ClassViews(IReadOnlyDictionary<string, object> sheet, List<ClassLevel> classes)
+    {
+        if (Rules!.Multiclass is not { } rules) return new List<IReadOnlyDictionary<string, object>> { sheet };
+
+        var total = TotalLevel(sheet, rules);
+        var others = ParseClassLevels(sheet, rules.Key);
+        var classType = ClassType(rules);
+        var firstId = YamlValues.GetString(sheet, rules.ClassField);
+        var firstLevel = total - others.Sum(o => o.Level);
+
+        var first = new Dictionary<string, object>(sheet) { [rules.ClassLevelKey] = (long)firstLevel };
+        var views = new List<IReadOnlyDictionary<string, object>> { first };
+        if (!string.IsNullOrEmpty(firstId))
+        {
+            classes.Add(new ClassLevel(firstId, classType == null ? null : resolver.Resolve(classType, firstId), firstLevel, true));
+        }
+
+        foreach (var (id, level) in others)
+        {
+            views.Add(new Dictionary<string, object>(sheet) { [rules.ClassField] = id, [rules.ClassLevelKey] = (long)level });
+            classes.Add(new ClassLevel(id, classType == null ? null : resolver.Resolve(classType, id), level, false));
+        }
+
+        return views;
+    }
+
+    private int TotalLevel(IReadOnlyDictionary<string, object> sheet, MulticlassRules rules)
+    {
+        var field = system.ActorFields.FirstOrDefault(f => f.Key == rules.LevelField);
+        return YamlValues.GetInt(sheet, rules.LevelField) ?? (int)(ToDouble(field?.DefaultValue) ?? 1);
+    }
+
+    private string? ClassType(MulticlassRules rules) => system.ActorFields.FirstOrDefault(f => f.Key == rules.ClassField)?.TargetEntityType;
+
+    private void EvaluateMulticlass(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    {
+        if (Rules!.Multiclass is not { } rules) return;
+        var classType = ClassType(rules);
+        if (classType == null) return;
+
+        var scores = result.Attributes?.Totals
+            ?? system.Attributes.ToDictionary(a => a.Key, a => YamlValues.GetInt(sheet, a.Key) ?? a.Default);
+        var others = result.Classes.Where(c => !c.IsFirst).ToList();
+        var taken = result.Classes.Select(c => c.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        result.MulticlassOptions = resolver.Candidates(classType)
+            .Where(c => !taken.Contains(c.Id) && MeetsPrerequisites(c, rules, scores, out _))
+            .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (others.Count == 0) return;
+
+        var first = result.Classes.FirstOrDefault(c => c.IsFirst);
+        if (first == null)
+        {
+            result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: choose a first class before adding more."));
+        }
+        else if (first.Level < 1)
+        {
+            result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: the other classes take {others.Sum(o => o.Level)} levels, leaving none for {first.Entry?.Name ?? first.Id}. Raise the character level."));
+        }
+
+        foreach (var duplicate in result.Classes.GroupBy(c => c.Id, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
+        {
+            result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: {duplicate.First().Entry?.Name ?? duplicate.Key} is listed more than once."));
+        }
+
+        foreach (var cls in result.Classes)
+        {
+            if (cls.Entry == null)
+            {
+                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: \"{cls.Id}\" is not in the Library."));
+                continue;
+            }
+
+            if (!cls.IsFirst && cls.Level < 1)
+            {
+                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: {cls.Entry.Name} needs at least 1 level."));
+            }
+
+            if ((cls.IsFirst && !rules.RequireForFirstClass) || MeetsPrerequisites(cls.Entry, rules, scores, out var needed)) continue;
+            result.Violations.Add(new RuleViolation(rules.Key, cls.IsFirst
+                ? $"{rules.Label}: to multiclass out of {cls.Entry.Name} you need {needed}."
+                : $"{rules.Label}: {cls.Entry.Name} needs {needed}."));
+        }
+    }
+
+    private static readonly Regex Requirement = new(@"^\s*(?<attr>[A-Za-z][A-Za-z ]*?)\s+(?<min>\d+)\s*\+?\s*$", RegexOptions.Compiled);
+
+    /// <summary>True when the class lists no prerequisites or the scores meet any one of its options;
+    /// <paramref name="needed"/> describes the options for a message.</summary>
+    public bool MeetsPrerequisites(ContentEntry cls, MulticlassRules rules, IReadOnlyDictionary<string, int> scores, out string needed)
+    {
+        var listed = cls.Properties.GetValueOrDefault(rules.PrerequisitesProperty);
+        var options = listed is not string and IEnumerable<object> list ? list.Select(o => o?.ToString() ?? "").Where(o => o.Length > 0).ToList()
+            : listed is string single && single.Length > 0 ? new List<string> { single } : new List<string>();
+        needed = string.Join(" or ", options);
+        if (options.Count == 0) return true;
+
+        foreach (var option in options)
+        {
+            var met = true;
+            foreach (var part in Regex.Split(option, @",|\band\b", RegexOptions.IgnoreCase).Where(p => p.Trim().Length > 0))
+            {
+                var match = Requirement.Match(part);
+                if (!match.Success || MatchAttribute(match.Groups["attr"].Value.Trim()) is not { } attribute) continue; // unreadable: don't block
+                if (scores.GetValueOrDefault(attribute.Key) < int.Parse(match.Groups["min"].Value, CultureInfo.InvariantCulture)) met = false;
+            }
+
+            if (met) return true;
+        }
+
+        return false;
+    }
+
+    // ---- Slot pools ----
+
+    private void EvaluateSlotPools(List<IReadOnlyDictionary<string, object>> views, SheetEvaluation result)
+    {
+        foreach (var rule in Rules!.SlotPools)
+        {
+            var contributions = new List<(string? CasterType, int Level, Dictionary<int, int> Slots)>();
+            foreach (var view in views)
+            {
+                var entry = ReferencedEntry(rule.Field, view);
+                if (entry == null) continue;
+                var casterType = entry.Properties.GetValueOrDefault(rule.CasterTypeProperty)?.ToString();
+                if (rule.IncludeCasterTypes.Count > 0 && !rule.IncludeCasterTypes.Contains(casterType ?? "", StringComparer.OrdinalIgnoreCase)) continue;
+                if (rule.ExcludeCasterTypes.Contains(casterType ?? "", StringComparer.OrdinalIgnoreCase)) continue;
+
+                var level = ToDouble(view.GetValueOrDefault(rule.ByField));
+                if (level is not > 0) continue;
+                var row = LookupRow(entry, rule.Table, level.Value, "level");
+                if (row == null) continue;
+                var slotLevel = rule.SlotLevelColumn == null ? null : ToDouble(Cell(row, rule.SlotLevelColumn));
+                var slots = ParseSlots(Cell(row, rule.Column), slotLevel.HasValue ? (int)slotLevel.Value : null);
+                if (slots.Count > 0) contributions.Add((casterType, (int)level.Value, slots));
+            }
+
+            if (contributions.Count == 0) continue;
+
+            Dictionary<int, int> max;
+            if (contributions.Count > 1 && rule.Combine is { Table.Count: > 0 } combine)
+            {
+                var casterLevel = contributions.Sum(c => Round(c.Level * combine.Weights.GetValueOrDefault(c.CasterType ?? "", 0), combine.Rounding));
+                max = casterLevel > 0 ? ParseSlots(combine.Table[Math.Min(casterLevel, combine.Table.Count) - 1], null) : new Dictionary<int, int>();
+            }
+            else
+            {
+                max = new Dictionary<int, int>();
+                foreach (var (slotLevel, count) in contributions.SelectMany(c => c.Slots)) max[slotLevel] = max.GetValueOrDefault(slotLevel) + count;
+            }
+
+            if (max.Count > 0) result.SlotPools.Add(new SlotPool(rule, max));
+        }
+    }
+
+    private static int Round(double value, string rounding) => rounding.ToLowerInvariant() switch
+    {
+        "up" => (int)Math.Ceiling(value - 1e-9),
+        "nearest" => (int)Math.Round(value, MidpointRounding.AwayFromZero),
+        _ => (int)Math.Floor(value + 1e-9)
+    };
+
+    /// <summary><c>"4/3/2"</c> → {1: 4, 2: 3, 3: 2}; a plain count with a slot level → {level: count}.</summary>
+    public static Dictionary<int, int> ParseSlots(object? value, int? slotLevel)
+    {
+        var slots = new Dictionary<int, int>();
+        var text = value switch { null => null, long l => l.ToString(CultureInfo.InvariantCulture), int i => i.ToString(CultureInfo.InvariantCulture), double d => d.ToString(CultureInfo.InvariantCulture), _ => value.ToString() };
+        if (string.IsNullOrWhiteSpace(text)) return slots;
+
+        if (slotLevel.HasValue)
+        {
+            if (slotLevel > 0 && int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) && count > 0) slots[slotLevel.Value] = count;
+            return slots;
+        }
+
+        var parts = text.Split('/', StringSplitOptions.TrimEntries);
+        for (var i = 0; i < parts.Length; i++)
+        {
+            if (int.TryParse(parts[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) && count > 0) slots[i + 1] = count;
+        }
+
+        return slots;
+    }
+
+    /// <summary>
+    /// Brings the sheet's slot resources in line with the evaluation: sets each <c>_Max</c>, fills a
+    /// new slot level, trims remaining slots above a lowered maximum and drops slot levels the
+    /// character no longer has.
+    /// </summary>
+    public void ApplySlotPools(Dictionary<string, object> sheet, SheetEvaluation evaluation)
+    {
+        if (Rules == null) return;
+        foreach (var rule in Rules.SlotPools)
+        {
+            var pool = evaluation.SlotPools.FirstOrDefault(p => p.Rule == rule);
+            var keep = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var (level, max) in pool?.Max ?? new Dictionary<int, int>())
+            {
+                var key = rule.KeyFor(level);
+                var maxKey = rule.MaxKeyFor(level);
+                keep.Add(key);
+                keep.Add(maxKey);
+                var previousMax = YamlValues.GetInt(sheet, maxKey);
+                var current = YamlValues.GetInt(sheet, key);
+                sheet[maxKey] = (long)max;
+                // A slot level that just appeared (or grew) starts with the new slots available.
+                if (current == null) current = max;
+                else if (previousMax.HasValue && max > previousMax.Value) current += max - previousMax.Value;
+                sheet[key] = (long)Math.Clamp(current.Value, 0, max);
+            }
+
+            foreach (var stale in sheet.Keys.Where(k => rule.Owns(k) && !keep.Contains(k)).ToList()) sheet.Remove(stale);
+        }
+    }
+
+    /// <summary>Rest names any slot pool recovers on, in declaration order.</summary>
+    public IReadOnlyList<string> RestNames() =>
+        Rules?.SlotPools.SelectMany(p => p.RecoversOn).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? new List<string>();
 
     // ---- Derived ----
 
@@ -302,15 +711,7 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
         foreach (var field in system.ActorFields.Where(f => f.Type == FieldType.Number && IsIdentifier(f.Key)))
         {
             if (identifiers.Any(p => p.Name == field.Key)) continue;
-            var fallback = field.DefaultValue switch
-            {
-                long l => (double)l,
-                int i => i,
-                double d => d,
-                string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) => parsed,
-                _ => 0d,
-            };
-            identifiers.Add(new Parameter(field.Key, fallback));
+            identifiers.Add(new Parameter(field.Key, ToDouble(field.DefaultValue) ?? 0d));
         }
 
         interpreter.SetFunction("floor", (Func<double, double>)Math.Floor);
@@ -434,40 +835,57 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
     public double? Lookup(LookupRule lookup, IReadOnlyDictionary<string, object> sheet)
     {
         var entry = ReferencedEntry(lookup.Field, sheet);
-        if (entry == null || !entry.Properties.TryGetValue(lookup.Table, out var table) || table is not IEnumerable<object> rows) return null;
         var key = ToDouble(sheet.GetValueOrDefault(lookup.ByField));
-        if (key == null) return null;
-
-        Dictionary<string, object>? best = null;
-        double bestKey = double.MinValue;
-        foreach (var row in rows.OfType<IDictionary<string, object>>())
-        {
-            var rowKey = ToDouble(row.TryGetValue(lookup.RowKey, out var rk) ? rk : null);
-            if (rowKey == null || rowKey > key || rowKey < bestKey) continue;
-            bestKey = rowKey.Value;
-            best = new Dictionary<string, object>(row);
-        }
-
-        return best == null ? null : ToDouble(best.GetValueOrDefault(lookup.Column));
+        if (entry == null || key == null) return null;
+        var row = LookupRow(entry, lookup.Table, key.Value, lookup.RowKey);
+        return row == null ? null : ToDouble(Cell(row, lookup.Column));
     }
 
-    private int? ResolveCount(CountRule? rule, IReadOnlyDictionary<string, object> sheet)
+    private static object? Cell(IDictionary<string, object> row, string key) => row.TryGetValue(key, out var value) ? value : null;
+
+    /// <summary>The row of an entry's table whose key equals <paramref name="key"/>, or the highest row below it.</summary>
+    private static IDictionary<string, object>? LookupRow(ContentEntry entry, string table, double key, string rowKey)
+    {
+        if (!entry.Properties.TryGetValue(table, out var raw) || raw is not IEnumerable<object> rows) return null;
+
+        IDictionary<string, object>? best = null;
+        var bestKey = double.MinValue;
+        foreach (var row in rows.OfType<IDictionary<string, object>>())
+        {
+            var value = ToDouble(row.TryGetValue(rowKey, out var rk) ? rk : null);
+            if (value == null || value > key || value < bestKey) continue;
+            bestKey = value.Value;
+            best = row;
+        }
+
+        return best;
+    }
+
+    /// <summary>A list's limit across every class view: table lookups are added up per class (a
+    /// wizard 3 / cleric 2 prepares both classes' spells), a constant counts once.</summary>
+    private int? ResolveCount(CountRule? rule, IReadOnlyList<IReadOnlyDictionary<string, object>> views)
     {
         if (rule == null) return null;
-        double? value = rule.Value;
-        if (rule.Lookup != null)
+        if (rule.Lookup == null) return rule.Value.HasValue ? rule.Value.Value + rule.Plus : null;
+
+        double total = 0;
+        var known = false;
+        foreach (var view in views)
         {
-            value = Lookup(rule.Lookup, sheet);
-            if (value == null)
+            if (Lookup(rule.Lookup, view) is { } value)
             {
-                // No referenced entry yet (no class chosen): the limit is unknown, so don't block.
-                // An entry that exists but has no such table (a fighter and "spellcasting") gets 0:
-                // the class simply doesn't grant any.
-                return ReferencedEntry(rule.Lookup.Field, sheet) == null ? null : rule.Plus;
+                total += value;
+                known = true;
+            }
+            // An entry that exists but has no such table (a fighter and "spellcasting") gets 0: the
+            // class simply doesn't grant any. No referenced entry yet (no class chosen): unknown.
+            else if (ReferencedEntry(rule.Lookup.Field, view) != null)
+            {
+                known = true;
             }
         }
 
-        return value.HasValue ? (int)value.Value + rule.Plus : null;
+        return known ? (int)total + rule.Plus : null;
     }
 
     private static bool ValuesEqual(object? a, object? b)

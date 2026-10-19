@@ -30,6 +30,8 @@ properties:
   skillChoices: 'Choose 2: from Arcana, Deception, History, Intimidation, Investigation, Nature, or Religion'
   startingEquipment: (a) Leather Armor, Sickle, 2 Daggers, Arcane Focus (orb), Book, Scholar’s Pack, and 15 GP; or (b) 100 GP
   multiclassing: 'Prerequisite: CHA 13+. Proficiencies gained: Light Armor'
+  multiclassPrerequisites:
+  - CHA 13+
   subclasses:
   - Fiend Patron
   features:

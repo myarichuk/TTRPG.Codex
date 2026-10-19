@@ -146,6 +146,7 @@ else
                             var total = summary?.Totals.GetValueOrDefault(attr.Key) ?? (YamlValues.GetInt(editSheet, attr.Key) ?? attr.Default);
                             var baseScore = attributeRules != null ? (YamlValues.GetInt(editSheet, SheetRuleEngine.BasePrefix + attr.Key) ?? attr.Default) : total;
                             var bonus = summary?.Bonuses.GetValueOrDefault(attr.Key) ?? 0;
+                            var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
                             var modifier = Modifier(attr, total);
                             var modifierText = modifier == null ? null : (modifier >= 0 ? "+" : "") + modifier;
                             var inputId = "attr-input-" + attr.Key;
@@ -180,9 +181,9 @@ else
                                 {
                                     <div class="attr-score">@total</div>
                                 }
-                                @if (attributeRules != null && (bonus != 0 || CanEdit))
+                                @if (attributeRules != null && (bonus != 0 || increase != 0 || CanEdit))
                                 {
-                                    <div class="attr-total small-muted" data-testid="@(testId + "-total")">@(bonus != 0 ? $"{baseScore} + {bonus} = {total}" : $"total {total}")</div>
+                                    <div class="attr-total small-muted" data-testid="@(testId + "-total")">@TotalText(baseScore, bonus, increase, total)</div>
                                 }
                             </div>
                         }
@@ -215,6 +216,42 @@ else
                                             </select>
                                         </div>
                                     }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (attributeRules?.Increases is { } increaseRules && evaluation != null)
+                    {
+                        <div class="mt-3" data-testid="attr-increases">
+                            <div class="form-label mb-1">@increaseRules.Label</div>
+                            @if (evaluation.Increases.Count == 0)
+                            {
+                                <p class="small-muted mb-0">None yet. Picks that raise scores, such as Ability Score Improvement, show up here once you add them under Picks.</p>
+                            }
+                            @foreach (var grant in evaluation.Increases)
+                            {
+                                var targets = PointTargets(grant);
+                                <div class="mb-2" data-testid="increase-@grant.Pick.Index">
+                                    <div class="small fw-semibold">@grant.Pick.Entry.Name <span class="small-muted fw-normal">· @grant.Points point@(grant.Points == 1 ? "" : "s")@(grant.Cap.HasValue ? $", up to {grant.Cap}" : "")</span></div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @for (var point = 0; point < grant.Points; point++)
+                                        {
+                                            var pointIndex = point;
+                                            var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
+                                            <div>
+                                                <label for="@selectId" class="form-label small mb-0">+1 to<span class="visually-hidden"> (@grant.Pick.Entry.Name, point @(pointIndex + 1) of @grant.Points)</span></label>
+                                                <select id="@selectId" class="form-select form-select-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
+                                                        @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
+                                                    <option value="">Choose…</option>
+                                                    @foreach (var key in grant.Options)
+                                                    {
+                                                        <option value="@key">@system.Attributes.First(a => a.Key == key).Label</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -260,6 +297,70 @@ else
                 }
             </section>
 
+            @if (Rules?.Multiclass is { } multiclass && evaluation != null)
+            {
+                <section class="panel" aria-labelledby="classes-heading" data-testid="multiclass">
+                    <div class="panel-title">
+                        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="16" Class="title-icon" /> Classes</h2>
+                        <span class="pill">Level @CurrentLevel in all</span>
+                    </div>
+                    @if (evaluation.Classes.Count == 0)
+                    {
+                        <p class="small-muted mb-0">Choose a class under Sheet first. You can add more classes here afterwards.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-2">
+                            @foreach (var cls in evaluation.Classes)
+                            {
+                                var classId = cls.Id;
+                                var levelInputId = "class-level-" + classId;
+                                <li class="list-row py-1" data-testid="class-row">
+                                    <span>
+                                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(cls.Entry?.Name ?? classId)</a>
+                                        @if (cls.IsFirst)
+                                        {
+                                            <span class="small-muted"> · first class</span>
+                                        }
+                                    </span>
+                                    @if (cls.IsFirst || !CanEdit)
+                                    {
+                                        <span data-testid="class-level-@classId">@cls.Level level@(cls.Level == 1 ? "" : "s")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="d-flex align-items-center gap-2">
+                                            <label for="@levelInputId" class="visually-hidden">@(cls.Entry?.Name ?? classId) levels</label>
+                                            <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="form-control form-control-sm w-5" value="@cls.Level" data-testid="class-level-@classId"
+                                                   @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
+                                            <button type="button" class="btn-link-plain" aria-label="Remove @(cls.Entry?.Name ?? classId)" @onclick="() => RemoveClass(multiclass, classId)"><LucideIcon IconName="x" Size="14" /></button>
+                                        </span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                        @if (CanEdit)
+                        {
+                            var firstLevel = evaluation.Classes.FirstOrDefault(c => c.IsFirst)?.Level ?? 0;
+                            <div class="d-flex gap-2 align-items-end flex-wrap">
+                                <div>
+                                    <label for="add-class" class="form-label small mb-0">Add a class</label>
+                                    <select id="add-class" class="form-select form-select-sm" @bind="newClassId" data-testid="add-class-select">
+                                        <option value="">Choose…</option>
+                                        @foreach (var option in evaluation.MulticlassOptions)
+                                        {
+                                            <option value="@option.Id">@option.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" @onclick="() => AddClass(multiclass)" data-testid="add-class">Add</button>
+                            </div>
+                            <p class="form-text mb-0">A new class takes one level from your first class@(firstLevel <= 1 ? " (raise the character level first)" : ""). Only classes whose prerequisites your scores meet are listed.</p>
+                        }
+                    }
+                </section>
+            }
+
             @if (Rules != null && Rules.Lists.Count > 0 && evaluation != null)
             {
                 <section class="panel" aria-labelledby="picks-heading">
@@ -268,13 +369,15 @@ else
                     {
                         <div class="mb-3">
                             <EntryListPicker Rule="list"
-                                             Picks="evaluation.ListPicks.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()"
+                                             Picks="evaluation.ListPicks.GetValueOrDefault(list.Key) ?? Array.Empty<SheetPick>()"
                                              Options="evaluation.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()"
                                              Limit="evaluation.ListLimits.GetValueOrDefault(list.Key)"
                                              ReadOnly="@(!CanEdit)"
                                              LibraryPath="@($"/campaigns/{CampaignId}/library")"
                                              Type="system?.FindType(list.TargetEntityType)"
-                                             PicksChanged="ids => SetList(list, ids)" />
+                                             Added="id => AddPick(list, id)"
+                                             Removed="index => RemovePick(list, index)"
+                                             Note="PickNote" />
                         </div>
                     }
                 </section>
@@ -372,11 +475,37 @@ else
                 </section>
             }
 
+            @if (Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))))
+            {
+                <section class="panel" aria-labelledby="sheet-slots-heading" data-testid="sheet-slots">
+                    <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="16" Class="title-icon" /> @SlotTracker.Heading(Rules.SlotPools, editSheet.Keys)</h2></div>
+                    <SlotTracker Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
+                                 OnAdjust="AdjustSlot" OnRest="RestSlots" />
+                    <p class="small-muted mt-2 mb-0">During a session, use the Table tab: changes there reach everyone at once. Changes here need Save changes.</p>
+                </section>
+            }
+
             @if (CanEdit && HasLevel)
             {
                 <section class="panel panel-ai" aria-labelledby="levelup-heading">
                     <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="16" Class="title-icon" /> Level up</h2></div>
                     <p class="small-muted">Level @CurrentLevel now. Ask what level @(CurrentLevel + 1) brings and which picks fit this character, from the Library's class entry.</p>
+                    @if (Rules?.Multiclass != null && evaluation is { Classes.Count: > 0 })
+                    {
+                        <div class="mb-2">
+                            <label for="levelup-class" class="form-label small mb-0">Class gaining the level</label>
+                            <select id="levelup-class" class="form-select form-select-sm" @bind="levelUpClassId" data-testid="levelup-class">
+                                @foreach (var cls in evaluation.Classes)
+                                {
+                                    <option value="@cls.Id">@(cls.Entry?.Name ?? cls.Id) (level @(cls.Level + 1))</option>
+                                }
+                                @foreach (var option in evaluation.MulticlassOptions)
+                                {
+                                    <option value="@option.Id">@option.Name (new, level 1)</option>
+                                }
+                            </select>
+                        </div>
+                    }
                     <div class="d-flex gap-2 flex-wrap">
                         <button type="button" class="btn btn-ai btn-sm" @onclick="SuggestLevelUpAsync" disabled="@(busy != null)" data-testid="sheet-levelup">
                             <LucideIcon IconName="sparkles" Size="14" /> @(busy == "level" ? "Thinking…" : $"Suggest level {CurrentLevel + 1}")
@@ -472,6 +601,8 @@ else
     private ActorKind editKind;
     private string editOwnerId = "";
     private Dictionary<string, object> editSheet = new();
+    private string newClassId = "";
+    private string levelUpClassId = "";
     private Flash? flash;
 
     private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
@@ -541,6 +672,7 @@ else
                     .Concat(attributeKeys.Select(k => SheetRuleEngine.BonusPrefix + k))
                     .Append(SheetRuleEngine.MethodKey)
                     .Concat(system?.SheetRules?.Lists.Select(l => l.Key) ?? Enumerable.Empty<string>())
+                    .Concat(system?.SheetRules?.Multiclass is { } mc ? new[] { mc.Key, mc.ClassLevelKey } : Array.Empty<string>())
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
@@ -556,6 +688,7 @@ else
                 await LoadReferenceOptionsAsync();
                 engine = system != null ? new SheetRuleEngine(system, await CachedEntryResolver.LoadAsync(Library, campaign, access, system)) : null;
                 Reevaluate();
+                levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
             }
         }
@@ -574,6 +707,7 @@ else
 
         engine.ApplyAttributeTotals(editSheet);
         evaluation = engine.Evaluate(editSheet);
+        engine.ApplySlotPools(editSheet, evaluation);
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, e.Name)).ToList());
@@ -634,11 +768,94 @@ else
         Reevaluate();
     }
 
-    private void SetList(ListRule list, List<string> ids)
+    private void SetRawList(string key, List<string> raw)
     {
-        if (ids.Count == 0) editSheet.Remove(list.Key);
-        else editSheet[list.Key] = ids.Cast<object>().ToList();
+        if (raw.Count == 0) editSheet.Remove(key);
+        else editSheet[key] = raw.Cast<object>().ToList();
         Reevaluate();
+    }
+
+    private void AddPick(ListRule list, string id) => SetRawList(list.Key, SheetRuleEngine.RawList(editSheet, list.Key).Append(id).ToList());
+
+    private void RemovePick(ListRule list, int index)
+    {
+        var raw = SheetRuleEngine.RawList(editSheet, list.Key);
+        if (index < 0 || index >= raw.Count) return;
+        raw.RemoveAt(index);
+        SetRawList(list.Key, raw);
+    }
+
+    /// <summary>"+1 STR, +1 DEX" after a pick that raised scores.</summary>
+    private string? PickNote(SheetPick pick) =>
+        pick.Choices.Count == 0 || system == null ? null
+            : string.Join(", ", pick.Choices.Select(c => $"+{c.Value} {system.Attributes.FirstOrDefault(a => a.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? c.Key}"));
+
+    private static string TotalText(int baseScore, int bonus, int increase, int total)
+    {
+        if (bonus == 0 && increase == 0) return $"total {total}";
+        var parts = new List<string> { baseScore.ToString() };
+        if (bonus != 0) parts.Add(bonus.ToString());
+        if (increase != 0) parts.Add(increase.ToString());
+        return string.Join(" + ", parts) + " = " + total;
+    }
+
+    /// <summary>Which attribute each of a grant's points goes to, "" where not chosen yet.</summary>
+    private static List<string> PointTargets(IncreaseGrant grant)
+    {
+        var targets = grant.Pick.Choices.SelectMany(c => Enumerable.Repeat(c.Key, Math.Max(c.Value, 0))).ToList();
+        while (targets.Count < grant.Points) targets.Add("");
+        return targets;
+    }
+
+    private void SetIncreasePoint(IncreaseRules rules, IncreaseGrant grant, int point, string? attributeKey)
+    {
+        var targets = PointTargets(grant);
+        if (point >= targets.Count) return;
+        targets[point] = attributeKey ?? "";
+        var choices = targets.Where(t => t.Length > 0).GroupBy(t => t, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.Count());
+        var raw = SheetRuleEngine.RawList(editSheet, rules.FromList);
+        if (grant.Pick.Index >= raw.Count) return;
+        raw[grant.Pick.Index] = SheetRuleEngine.FormatPick(grant.Pick.Entry.Id, choices);
+        SetRawList(rules.FromList, raw);
+    }
+
+    private void SetOtherClasses(MulticlassRules rules, List<(string Id, int Level)> classes) =>
+        SetRawList(rules.Key, classes.Select(c => SheetRuleEngine.FormatClassLevel(c.Id, c.Level)).ToList());
+
+    private void AddClass(MulticlassRules rules)
+    {
+        if (string.IsNullOrEmpty(newClassId)) return;
+        var classes = SheetRuleEngine.ParseClassLevels(editSheet, rules.Key);
+        classes.Add((newClassId, 1));
+        newClassId = "";
+        SetOtherClasses(rules, classes);
+    }
+
+    private void RemoveClass(MulticlassRules rules, string classId) =>
+        SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Where(c => c.Id != classId).ToList());
+
+    private void SetClassLevel(MulticlassRules rules, string classId, string? raw)
+    {
+        if (!int.TryParse(raw, out var level) || level < 1) return;
+        SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Select(c => c.Id == classId ? (c.Id, level) : c).ToList());
+    }
+
+    private void AdjustSlot((string Key, int Delta, string Label) change)
+    {
+        var maxKey = change.Key + "_Max";
+        var max = YamlValues.GetInt(editSheet, maxKey) ?? 0;
+        var current = YamlValues.GetInt(editSheet, change.Key) ?? max;
+        editSheet[change.Key] = (long)Math.Clamp(current + change.Delta, 0, max);
+    }
+
+    private void RestSlots((string Name, List<string> Keys) rest)
+    {
+        foreach (var key in rest.Keys)
+        {
+            if (YamlValues.GetInt(editSheet, key + "_Max") is { } max) editSheet[key] = (long)max;
+        }
+
+        flash = Flash.Info($"{rest.Name}: slots refilled. Save changes to keep it.");
     }
 
     private async Task LoadReferenceOptionsAsync()
@@ -822,6 +1039,22 @@ else
     private void ApplyLevelUp()
     {
         editSheet["level"] = (long)(CurrentLevel + 1);
+        if (Rules?.Multiclass is { } multiclass && evaluation?.Classes.FirstOrDefault(c => c.IsFirst) is { } first
+            && !string.IsNullOrEmpty(levelUpClassId) && levelUpClassId != first.Id)
+        {
+            // The first class gets whatever the others don't take, so only another class needs writing down.
+            var classes = SheetRuleEngine.ParseClassLevels(editSheet, multiclass.Key);
+            var index = classes.FindIndex(c => c.Id == levelUpClassId);
+            if (index >= 0) classes[index] = (classes[index].Id, classes[index].Level + 1);
+            else classes.Add((levelUpClassId, 1));
+            SetOtherClasses(multiclass, classes);
+        }
+        else
+        {
+            Reevaluate();
+        }
+
+        levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
         flash = Flash.Info($"Level set to {CurrentLevel}. Update hit points and features, then Save changes.");
     }
 

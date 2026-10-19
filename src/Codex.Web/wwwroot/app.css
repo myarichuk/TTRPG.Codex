@@ -913,3 +913,10 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 .list-picker { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.75rem 0.9rem; background: var(--surface); }
 .list-picker .pill a { color: inherit; }
 .picker-results { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.25rem 0.6rem; max-height: 260px; overflow-y: auto; background: var(--surface); }
+
+/* Slot pools (spell slots, pact slots): a row per slot level with pips */
+.slot-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.2rem 0; }
+.slot-row .slot-level { min-width: 4.2rem; font-size: 0.8rem; font-weight: 600; color: var(--text-3); }
+.slot-pips { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; }
+.slot-pip { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid var(--accent); background: transparent; }
+.slot-pip-full { background: var(--accent); }

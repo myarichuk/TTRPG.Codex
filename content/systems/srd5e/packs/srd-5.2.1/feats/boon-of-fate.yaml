@@ -13,3 +13,5 @@ properties:
   category: epic-boon
   prerequisites: Level 19+
   minLevel: 19
+  abilityIncrease: 1
+  abilityIncreaseCap: 30

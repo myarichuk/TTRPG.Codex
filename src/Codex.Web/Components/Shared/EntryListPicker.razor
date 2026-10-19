@@ -1,3 +1,4 @@
+@using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
 
 @* A multi-pick list of Library entries (spells, feats, knacks...) driven by a ListRule: the picked
@@ -25,14 +26,20 @@
     else
     {
         <ul class="list-inline mb-2 mt-2" aria-label="@Rule.Label picked">
-            @foreach (var entry in Picks)
+            @foreach (var pick in Picks)
             {
+                var entry = pick.Entry;
+                var note = Note?.Invoke(pick);
                 <li class="list-inline-item mb-1">
                     <span class="pill pill-accent" data-testid="list-@Rule.Key-pick">
                         <a href="@LibraryPath/@entry.Type/@Uri.EscapeDataString(entry.Id)" class="text-reset text-decoration-none">@entry.Name</a>
+                        @if (!string.IsNullOrEmpty(note))
+                        {
+                            <span class="small ms-1">(@note)</span>
+                        }
                         @if (!ReadOnly)
                         {
-                            <button type="button" class="btn-link-plain ms-1" aria-label="Remove @entry.Name" @onclick="() => RemoveAsync(entry.Id)"><LucideIcon IconName="x" Size="12" /></button>
+                            <button type="button" class="btn-link-plain ms-1" aria-label="Remove @entry.Name" @onclick="() => Removed.InvokeAsync(pick.Index)"><LucideIcon IconName="x" Size="12" /></button>
                         }
                     </span>
                 </li>
@@ -72,15 +79,21 @@
 
 @code {
     [Parameter, EditorRequired] public ListRule Rule { get; set; } = null!;
-    [Parameter, EditorRequired] public IReadOnlyList<ContentEntry> Picks { get; set; } = Array.Empty<ContentEntry>();
+    [Parameter, EditorRequired] public IReadOnlyList<SheetPick> Picks { get; set; } = Array.Empty<SheetPick>();
     [Parameter, EditorRequired] public IReadOnlyList<ContentEntry> Options { get; set; } = Array.Empty<ContentEntry>();
     [Parameter] public int? Limit { get; set; }
     [Parameter] public bool ReadOnly { get; set; }
     [Parameter] public string LibraryPath { get; set; } = string.Empty;
     [Parameter] public ContentTypeDefinition? Type { get; set; }
 
-    /// <summary>Called with the new ordered list of picked ids.</summary>
-    [Parameter] public EventCallback<List<string>> PicksChanged { get; set; }
+    /// <summary>Called with the id of an entry to append.</summary>
+    [Parameter] public EventCallback<string> Added { get; set; }
+
+    /// <summary>Called with the <see cref="SheetPick.Index"/> of the pick to remove.</summary>
+    [Parameter] public EventCallback<int> Removed { get; set; }
+
+    /// <summary>Optional short text after a pick's name (the choices made for it).</summary>
+    [Parameter] public Func<SheetPick, string?>? Note { get; set; }
 
     private readonly string id = "lp-" + Guid.NewGuid().ToString("N")[..6];
     private string query = string.Empty;
@@ -88,11 +101,8 @@
     private async Task AddAsync(string entryId)
     {
         query = string.Empty;
-        await PicksChanged.InvokeAsync(Picks.Select(p => p.Id).Append(entryId).ToList());
+        await Added.InvokeAsync(entryId);
     }
-
-    private async Task RemoveAsync(string entryId) =>
-        await PicksChanged.InvokeAsync(Picks.Select(p => p.Id).Where(i => i != entryId).ToList());
 
     private string Summary(ContentEntry entry)
     {

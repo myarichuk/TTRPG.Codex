@@ -30,6 +30,8 @@ properties:
   skillChoices: Choose any 3 skills; Three musical instruments of your choice
   startingEquipment: (a) Leather Armor, 2 Daggers, Musical Instrument of your choice, Entertainer’s Pack, and 19 GP; or (b) 90 GP
   multiclassing: 'Prerequisite: CHA 13+. Proficiencies gained: Light Armor'
+  multiclassPrerequisites:
+  - CHA 13+
   subclasses:
   - College of Lore
   features:

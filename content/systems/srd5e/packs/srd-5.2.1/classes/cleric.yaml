@@ -32,6 +32,8 @@ properties:
   skillChoices: 'Choose 2: History, Insight, Medicine, Persuasion, or Religion'
   startingEquipment: (a) Chain Shirt, Shield, Mace, Holy Symbol, Priest's Pack, and 7 GP; or (b) 110 GP
   multiclassing: 'Prerequisite: WIS 13+. Proficiencies gained: Light Armor, Medium Armor, Shields'
+  multiclassPrerequisites:
+  - WIS 13+
   subclasses:
   - Life Domain
   features:

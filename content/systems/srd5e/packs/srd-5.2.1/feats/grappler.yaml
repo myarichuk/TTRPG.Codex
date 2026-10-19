@@ -17,3 +17,8 @@ properties:
   category: general
   prerequisites: Level 4+; Strength or Dexterity 13+
   minLevel: 4
+  abilityIncrease: 1
+  abilityIncreaseOptions:
+  - Strength
+  - Dexterity
+  abilityIncreaseCap: 20
