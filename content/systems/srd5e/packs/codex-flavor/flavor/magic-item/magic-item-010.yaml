@@ -1,0 +1,90 @@
+- id: wand-of-enemy-detection
+  flavor: >-
+    A slender rod of pale ash that twitches toward trouble before anyone else notices it. Hedge-wizards say it hums faintly when a hidden foe draws near, and that humming has saved more than a few travelers in the reed-marshes. It falls silent the moment another hand takes hold of it.
+  imagePrompt: >-
+    A slender rod of pale grey ash with a tiny brass cap, set against dark wet reeds under a heavy silver sky.
+- id: wand-of-fear
+  flavor: >-
+    A pale bone-colored wand bound in cord the color of old rust, once carried by a stern drillmaster who trusted shouting over swordplay. A short sharp word from its tip can send a foe fleeing or sink it to its knees. Old soldiers call it the bully's wand, and they are not entirely wrong.
+  imagePrompt: >-
+    A pale bone-colored wand wrapped in rust-brown cord, resting on a worn leather glove beside a tarnished brass whistle.
+- id: wand-of-fireballs
+  flavor: >-
+    A blackened oak wand capped with smoky glass, warm to the touch even in winter. Its owner can coax a bright burst of flame from it, and with a little extra effort the blast grows fiercer, the way a stoked furnace roars when more coal is thrown in. Old colleges swear it sulks when nearly spent.
+  imagePrompt: >-
+    A blackened oak wand with a smoky glass cap, lying across a pile of cooling coals in a stone forge.
+- id: wand-of-lightning-bolts
+  flavor: >-
+    A length of ash-gray wood banded with copper rings that hum faintly when touched. Points of crackling blue light leap from its tip, forking through the air in a jagged line that scorches whatever stands in its path. Dock-workers swear one once split a ship's mast during a storm.
+  imagePrompt: >-
+    A copper-banded ash-gray wand crackling with blue sparks, resting on a wooden dock beside a coiled rope and a storm-dark sea.
+- id: wand-of-magic-detection
+  flavor: >-
+    A plain willow wand with a spiral of silver wire coiled along its shaft, small enough to slip into a sleeve. Its bearer can draw out a faint shimmer that reveals where enchanted objects and lingering spellwork lie nearby, like a lamp seen through frosted glass. Apprentices at the old schools often carry one as a first tool.
+  imagePrompt: >-
+    A slim willow wand with a silver wire spiral on its shaft, resting on an old leather-bound book beside a brass lantern.
+- id: wand-of-magic-missiles
+  flavor: >-
+    A slim length of blue-black wood with tiny crystals set along its shaft, each one glinting like a captured star. Darts of pure force spring from its tip and seldom miss their mark, and a bolder hand can send several at once. Traveling sellers swear the darts always find their target.
+  imagePrompt: >-
+    A slim blue-black wooden wand with tiny crystals along its shaft, glowing with bright violet light above a dusty velvet cloth.
+- id: wand-of-paralysis
+  flavor: >-
+    A slender wand of pale silver with a faintly blue tip, as though it holds a sliver of winter sky. A thin cold ray streaks from it toward a single creature in view, and the victim's limbs stiffen as though frost has crept into every joint. Stubborn wills sometimes shake the chill loose.
+  imagePrompt: >-
+    A slender silver wand with a pale blue tip, set against a dark wintry sky and a frosted iron railing.
+- id: wand-of-polymorph
+  flavor: >-
+    A long ivory wand veined with green, its surface carved with spirals that seem to shift when nobody is looking. Its bearer can loose a flicker of change that turns one creature into something else, and the result is always a gamble. Archivists say the wand has a sense of humor, and that its humor is rarely kind.
+  imagePrompt: >-
+    A long ivory wand veined with green and carved with shifting spirals, lying on a velvet tray beside a cracked glass bell.
+- id: wand-of-secrets
+  flavor: >-
+    A thin hazel wand with a hooked tip, its grain worn smooth by many anxious fingers. Pointed at a room, it twitches toward the hidden door or loose stone that nobody thought to check. Burglars, archivists and tomb-raiders have all wanted one, for reasons that need no explaining.
+  imagePrompt: >-
+    A thin hazel wand with a hooked tip resting on a stone floor beside a bronze key and a cracked flagstone.
+- id: wand-of-the-war-mage
+  flavor: >-
+    A plain ash wand with an iron band near the grip, the sort of tool a field-trained caster keeps close in a skirmish. Notches scored along its length tally old battles, and each one seems to steady the hand that holds it. The finer the wand, the truer the shot.
+  imagePrompt: >-
+    A plain ash wand with a dark iron band, notched along its length and resting on a battered leather bracer over a map.
+- id: wand-of-web
+  flavor: >-
+    A pale gray wand with a fine silken thread wound near its tip, and it always feels faintly tacky to the touch. A bearer can loose a spray of sticky strands that drape over a target and bind it in place. Spiders would be envious, and the old trappers know better than to touch one.
+  imagePrompt: >-
+    A pale gray wand wrapped with a fine silken thread near its tip, glistening with dew beside a mossy stone wall.
+- id: wand-of-wonder
+  flavor: >-
+    A crooked wand of mismatched woods, its surface dotted with paint in every color. Whatever happens when it is pointed, the outcome is a surprise to everyone, the holder included. Bards insist its maker was laughing the whole time, and nobody has ever proven otherwise.
+  imagePrompt: >-
+    A crooked wand of mismatched woods splashed with bright paint, resting on a striped carnival rug beside a tumble of glittering gems.
+- id: weapon-of-warning
+  flavor: >-
+    A plain soldier's weapon of honest steel, its grip wrapped in cord with a small brass bell tied at the pommel. Camp sentries swear it stirs sleeping comrades the moment blades are drawn, and that its wielders always seem to strike first.
+  imagePrompt: >-
+    A plain steel blade with a worn leather grip and a small brass bell tied to its pommel, resting on a canvas tent floor.
+- id: weapon
+  flavor: >-
+    An honest blade of ordinary make, touched by a faint silver sheen along the edge that no whetstone ever gave it. Smiths who forge such weapons speak of a quiet pride in the metal, as though it knows exactly where it is meant to strike.
+  imagePrompt: >-
+    A polished steel blade with a faint silver sheen along its edge, lying on a dark workbench beside a hammer and a leather apron.
+- id: well-of-many-worlds
+  flavor: >-
+    A fine black cloth, soft as silk and folded small enough to tuck into a pocket. Spread on a flat surface, it opens into a ringed window onto some other world, and where that window leads is anybody's guess. Whoever folds it closed again tends to have seen something worth forgetting.
+  imagePrompt: >-
+    A sheet of fine black silk, soft and glossy, lying open on a stone pedestal with a faint ring of silver light.
+- id: wind-fan
+  flavor: >-
+    A painted silk fan with bamboo ribs, its folds decorated with pale clouds and drifting birds. Waved with a flick of the wrist, it stirs a sudden gust that could knock over a candle or send a hat sailing. Fans of this sort have a way of tearing at the worst moment.
+  imagePrompt: >-
+    A painted silk fan with slender bamboo ribs, its folds showing pale blue clouds and white birds against cream.
+- id: winged-boots
+  flavor: >-
+    Supple brown leather boots with faded gold stitching, scuffed at the heel from a lifetime of hurried errands. Once laced on, the wearer's stride seems to lighten as if the air has offered a helping hand. Those who have worn them describe a dizzying lift and an odd reluctance to come back down.
+  imagePrompt: >-
+    Brown leather boots with faded gold stitching and scuffed heels, set on a mossy riverbank beside a tangle of ferns.
+- id: wings-of-flying
+  flavor: >-
+    A heavy traveling cloak of deep green wool, its clasp shaped like a silver bird in flight. At a practiced gesture the cloth splits and lifts, unfurling into a pair of broad feathered wings that carry its wearer skyward. The feathers fade away with a sigh once the flight is done.
+  imagePrompt: >-
+    A heavy deep green wool cloak with a silver bird clasp, half-unfurled into broad feathered wings against a pale evening sky.

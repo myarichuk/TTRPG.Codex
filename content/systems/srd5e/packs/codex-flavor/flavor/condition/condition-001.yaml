@@ -1,0 +1,45 @@
+- id: blinded
+  flavor: >-
+    Light has gone to a grey smear, and every shape arrives as a rumor of sound and touch. The blinded creature swings at memories of targets while the world seems to swing back harder.
+- id: charmed
+  flavor: >-
+    A sweet, unhurried voice has settled behind the eyes and made the charmer seem like an old friend. The charmed creature still knows a trap from a kindness, yet cannot quite bring itself to bite the hand that feeds it.
+- id: deafened
+  flavor: >-
+    The chorus of the street has shrunk to a muffled hum behind a wall of cotton. Words reach the deafened creature only as shapes on the lips of others, and the bell that once called it to supper rings in silence.
+- id: exhaustion
+  flavor: >-
+    Bones feel packed with wet sand and every thought drags its anchor behind it. Exhaustion is a slow debt that stacks, collecting interest in aching limbs until a long sleep finally begins to pay it down.
+- id: frightened
+  flavor: >-
+    Dread pools beneath the ribs whenever the source of the fear comes into view. The frightened creature's hands forget their skill, and its legs argue fiercely against every step nearer to the thing it dreads.
+- id: grappled
+  flavor: >-
+    Cold fingers have closed around an ankle or a wrist, and the struggle has become a slow contest of weight. The grappled creature can hold its ground but cannot wander, tethered to a stronger grip that refuses to let go.
+- id: incapacitated
+  flavor: >-
+    Limbs and tongue have gone quiet, as though the body has been handed to someone else for the afternoon. The incapacitated creature can only watch the battle unfold, its thoughts scattered and its breath unable to shape a word of warning.
+- id: invisible
+  flavor: >-
+    Glimmers slide off the figure like water off a stone, leaving a faint draft and the sense of someone standing where no one seems to be. Lenses and eyes find nothing to hold, though a keen nose or careful ear may still betray a passing shadow.
+- id: paralyzed
+  flavor: >-
+    Every command sent from the mind stalls at the wrist, as though the message has been intercepted by a sleepy courier. The paralyzed creature stays rigid and exposed, and any blow that lands seems to find the softest place.
+- id: petrified
+  flavor: >-
+    Skin turns to grey stone, the joints lock into a sculptor's pose, and the living clock stops ticking. Carved features keep their last expression for ages, cold and heavy as a monument waiting for someone to recall its name.
+- id: poisoned
+  flavor: >-
+    A bitter taste lingers at the back of the throat and the hands feel clumsy, as if they belong to a stranger. The poisoned creature's aim wanders and its reasoning frays, leaving thoughts that refuse to line up in neat rows.
+- id: prone
+  flavor: >-
+    Dust and gravel have become a closer companion than anyone intended, and every reach for a weapon meets the ground instead. The fallen creature claws its way upright slowly, while anything rushing toward it seems to arrive at a bad angle.
+- id: restrained
+  flavor: >-
+    Bonds need not be iron to hold fast, since a tangle of rope or the weight of a net can pin a limb as firmly as any chain. The restrained creature strains against its snares, and every twist of effort only tightens the knot.
+- id: stunned
+  flavor: >-
+    The mind rings like a struck bell, and the world arrives in disjointed pieces that will not stay in order. The stunned creature sags under the blow, too dazed to brace for whatever comes next.
+- id: unconscious
+  flavor: >-
+    Sleep has arrived without any lullaby, dropping the body onto the flagstones like a sack of grain. Thoughts drift away into a dark and silent sea, and the sleeper has no notion of who stands nearby.

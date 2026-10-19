@@ -1,0 +1,125 @@
+- id: instant-fortress
+  flavor: >-
+    Tucked inside a palm-sized adamantine figure is a tower waiting for a single word of command. Once it unfolds, the stone-grey walls stand tall and unbroken, and anything that stood in the way is politely shoved aside. Most owners treat it as a fortress for the rare evening when the open road turns hostile.
+  imagePrompt: >-
+    A small polished adamantine statuette of a watchtower resting on bare flagstones, its silver-grey surface catching cold light before it swells into a tall stone keep.
+- id: ioun-stone
+  flavor: >-
+    Each stone is a smooth, glassy jewel shaped like a slanted prism or a stubby tooth, and the colour of each one is its own private signature. Those who keep them tend to let them drift slowly over the head like miniature moons. The old colleges argue endlessly about whether the stones think, or merely sulk.
+  imagePrompt: >-
+    A marble-sized crystal hovering above an oak desk in a dim study, its faceted surface glowing violet, amber and pale green with a thin ring of drifting motes.
+- id: iron-bands
+  flavor: >-
+    A rusty iron ball no bigger than a plum hides a tangle of coiled metal bands inside its seams. Thrown with a steady arm, it bursts open mid-flight and wraps its target in a clanking knot that holds fast until the thrower chooses to loosen it. Smugglers and jailers both value it for how neatly it does its job.
+  imagePrompt: >-
+    A dull rust-spotted iron sphere resting in a gloved palm, its seams straining outward with coiled dark metal bands against a stormy grey sky.
+- id: iron-flask
+  flavor: >-
+    The stopper of this iron flask is brass, and the vessel is scarred by owners who never quite trusted what they kept inside. Anyone who has opened one reports a cramped, sulphurous hush that seems to go on for ages. Careful collectors label every flask with a name they hope never to read aloud.
+  imagePrompt: >-
+    A squat iron flask with a brass stopper sitting on a dusty wooden shelf, its dark metal dented and tarnished, a faint smoky glow curling from the gap beneath the stopper.
+- id: javelin-of-lightning
+  flavor: >-
+    This slender javelin has a shaft of dark ash bound with copper wire, and its head hums faintly before every throw. Thrown with a snap of the wrist, it can split into a crackling streak that strikes straight through a crowd of enemies. Hunters who carry it tend to keep their friends at a careful distance.
+  imagePrompt: >-
+    A slender javelin with a dark ash shaft wrapped in copper wire, its steel head crackling with pale blue sparks against a stormy grey field.
+- id: lantern-of-revealing
+  flavor: >-
+    A hooded brass lantern that burns steadily on little more than a drop of oil, and its light is clear enough to show what should stay hidden. Things that hide from ordinary eyes seem to shimmer into plain view inside its glow. Travellers keep a hand on the hood, since lowering it softens the glow for sleep.
+  imagePrompt: >-
+    A hooded brass lantern on a weathered wooden table, its glass panes glowing warm gold while a faint silver shimmer lifts an unseen outline into view.
+- id: luck-blade
+  flavor: >-
+    This blade's edge is polished so bright it seems to hold a private joke with the wielder. Lucky wielders are said to win arguments and close fights alike, and a tiny silver coin is set into the hilt as a reminder. The sword's favourite trick is a fresh chance, offered quietly when fate's first throw goes wrong.
+  imagePrompt: >-
+    A long, gleaming steel blade with a gold-wrapped grip and a small silver coin set in the crossguard, resting on dark velvet under warm candlelight.
+- id: mace-of-disruption
+  flavor: >-
+    Its flanged iron head is etched with pale rings of light, and it hums whenever it senses something that should not be walking. Against the undead and the fiendish it strikes with a pulse of radiance that can leave a weakened foe shaken to its core. The glow clings to the holder even at rest.
+  imagePrompt: >-
+    A flanged iron mace with a pale silver head etched in glowing rings of white light, its shaft wrapped in worn leather and set against a dark stone wall.
+- id: mace-of-smiting
+  flavor: >-
+    Heavy iron knobs crown this mace, and its haft is wrapped in a dull grey cord that warms in the hand. Blows that land cleanly are rewarded with a crack of force that rings through the target, and a sculpted machine will fall apart at the seams. Engineers who mend clockwork keep one close, mostly to settle grudges.
+  imagePrompt: >-
+    A heavy iron mace with a fluted head, its grip bound in grey cord and resting on a workbench beside a half-built clockwork figure.
+- id: mace-of-terror
+  flavor: >-
+    A dark iron mace with a head like a clenched fist, and a faint whisper seems to leave it each time it is swung at a crowd. When the weapon releases its dread, nearby foes feel the urge to put as much room between themselves and the wielder as possible. Its wielders often wish for a quieter weapon.
+  imagePrompt: >-
+    A dark iron mace with a head shaped like a clenched fist, its surface scored with faint red streaks, held above a crowd of blurred figures in a torchlit square.
+- id: mantle-of-spell-resistance
+  flavor: >-
+    This cloak is woven from heavy grey wool that seems to soak up sparks and stray glimmers before they can reach its wearer. Tailors who have stitched it describe the lining as cool to the touch, even in a blazing forge. Wearers say the cloth makes them feel steadier near strange magic.
+  imagePrompt: >-
+    A heavy grey wool cloak with a pale silver lining, draped over the shoulders of a figure standing in a dim stone hall lit by soft blue light.
+- id: manual-of-bodily-health
+  flavor: >-
+    This slim volume is bound in soft leather and filled with sensible advice on food, rest and stretching. Its pages are charged with a quiet magic that rewards careful reading, leaving the reader noticeably hardier. Once its lessons are learned, the book goes dim and dull for a long spell.
+  imagePrompt: >-
+    A slim leather-bound manual with worn gold lettering on its spine, lying open on a sunlit wooden table beside a small green apple and a folded towel.
+- id: manual-of-gainful-exercise
+  flavor: >-
+    A thick, cloth-covered book with diagrams of lifting, hauling and climbing, its margins crowded with small notes in a hurried hand. Its words hum with a restless energy that seems to flow into the reader's arms and shoulders. When the lessons are learned, the pages grow pale and still, and the book waits for its next eager student.
+  imagePrompt: >-
+    A thick cloth-bound book with a faded green cover and worn corners, its open pages showing sketches of muscled figures hauling stone and climbing rope.
+- id: manual-of-golems
+  flavor: >-
+    This tome holds the drawings and incantations needed to animate one particular kind of stone or metal servant. The author never names the kind plainly, and the choice seems to belong to the book. Only a caster with serious training can make sense of its pages, and clumsy readers are punished with a painful jolt of mind-fire.
+  imagePrompt: >-
+    A heavy leather tome with brass clasps, its open pages filled with intricate diagrams of a stone figure and runes drawn in faded red ink.
+- id: manual-of-quickness-of-action
+  flavor: >-
+    Bound in pale green cloth, this slim book is full of balance drills, footwork sketches, and tiny notes on reflexes. Its pages carry a light, nimble magic that seems to hum through the fingertips of anyone who studies them. After the lessons settle in, the pages fade to plain paper though the scribbled margins stay surprisingly lively.
+  imagePrompt: >-
+    A slim book bound in pale green cloth, lying open on a wooden floor beside a pair of worn leather boots and a coiled rope.
+- id: marvelous-pigments
+  flavor: >-
+    Inside a fine wooden box, small clay pots of pigment sit snugly beside a soft brush. Anything painted with them takes on a surprising solidity, so that a sketched door can be opened or a painted tree can offer shade. The results tend to be lovely, though the pots seem to run out at the worst possible turn.
+  imagePrompt: >-
+    An open fine wooden box holding small clay pots of bright pigment and a soft brush, set on a paper-strewn artist's table in warm afternoon light.
+- id: medallion-of-thoughts
+  flavor: >-
+    A silver disc on a fine chain, cool against the skin, hums softly whenever its charm is called upon. Its glimmer reveals the surface thoughts of nearby minds, so that a whispered rumour or a sudden flicker of doubt can be heard plainly. Many who wear it say the trickiest part is keeping their own opinions quiet.
+  imagePrompt: >-
+    A tarnished silver disc medallion engraved with a looping pattern of eyes and spirals, hanging from a fine chain against a dark velvet backdrop.
+- id: mirror-of-life-trapping
+  flavor: >-
+    This tall, narrow mirror shows faint shapes of creatures to anyone who glances at it sideways. Its frame is carved with thorny vines, and the glass is clouded like breath on a cold window. It is easy to break, which the careful owners of such things seem to find reassuring, since shattering it frees whatever has been caught.
+  imagePrompt: >-
+    A tall narrow mirror in a black iron frame carved with thorny vines, its clouded glass reflecting faint silhouettes of creatures in a dim cellar.
+- id: mithral-armor
+  flavor: >-
+    Silvery and light as a feather, this armor can be worn beneath ordinary clothes without showing a trace of bulk. It moves with the body as freely as a good wool jacket, and it never clinks on the stairs.
+  imagePrompt: >-
+    A suit of polished silver chain mail with a soft sheen, folded over a plain linen shirt on a stone bench in cool morning light.
+- id: mysterious-deck
+  flavor: >-
+    Cards of ivory or vellum, painted with odd little figures, come tucked in a worn pouch that smells faintly of cedar. Each deck seems to hold its own opinions about who is allowed to ask it questions. Fortune-tellers and tricksters alike treat the cards with respect bordering on fear.
+  imagePrompt: >-
+    A stack of ivory cards with painted borders and fine gold edging, fanned across a dark wooden table beside a single lit candle.
+- id: necklace-of-adaptation
+  flavor: >-
+    A simple chain of hammered copper links holds a smooth bead that feels faintly warm to the touch. Foul air and thick smoke seem to part for the wearer, and bitter venom loses much of its bite. Field medics and mapmakers alike have carried such charms into swamps and mines.
+  imagePrompt: >-
+    A delicate copper chain with a smooth amber bead hanging against a weathered leather jacket, lit by the warm glow of a lantern in a misty marsh.
+- id: necklace-of-fireballs
+  flavor: >-
+    A cord of dark leather strung with glossy red-brown beads, each one faintly warm and smelling of sulphur. Pulling a bead free should be done with care, since it bursts into a rolling blaze the moment it lands. Soldiers and gamblers both admire it, though neither can decide whether it is a weapon or a joke.
+  imagePrompt: >-
+    A coil of dark leather cord strung with glossy red-brown beads, each glowing faintly orange from within, resting on a soot-stained stone sill.
+- id: necklace-of-prayer-beads
+  flavor: >-
+    A necklace of polished stones alternates with plain beads of amber and quartz, and a few of the stones are faintly luminous to the careful eye. Each glowing bead holds a kindness that can be released when a worn bead is pressed in trouble. The rest of the string is a pleasant trinket, part of its charm.
+  imagePrompt: >-
+    A necklace of polished stones and plain amber beads, a few gems faintly luminous in a rough linen pouch on a wooden table.
+- id: nine-lives-stealer
+  flavor: >-
+    A sword with a dark blade and a hilt wrapped in cracked leather, which hums with grim eagerness in a fight. Those who have carried it describe a sharp, cold pull whenever a clean strike lands. Some call it a thief of life, which is an unkind thing to say about a blade.
+  imagePrompt: >-
+    A slender dark-bladed sword with a cracked leather-wrapped hilt and a silver pommel, its edge catching a thin line of cold moonlight.
+- id: oathbow
+  flavor: >-
+    A bow of pale ash strung with braided silver thread, and a soft whisper rises from the wood each time an arrow is set in place. Its archer may pick out one particular foe, and the bow sings more keenly whenever that foe comes near. Hunters' tales warn that grudges on a string are hard to put down.
+  imagePrompt: >-
+    A pale ash longbow strung with braided silver thread, its limbs carved with fine lines and resting against a moss-covered stone in a quiet forest clearing.

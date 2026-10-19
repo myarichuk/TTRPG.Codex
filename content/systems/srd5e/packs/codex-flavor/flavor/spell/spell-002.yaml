@@ -1,0 +1,75 @@
+- id: beacon-of-hope
+  flavor: >-
+    A lantern lit on a high pole can be seen across an entire valley, and this one burns steadier than most. Those who stand beneath it grow stubborn about fear and dread, and whatever mending reaches them sticks in full. Hedge-wizards swear it keeps a fading body on this side of the grave.
+- id: befuddlement
+  flavor: >-
+    Some minds are simply too clever for their own good, and this spell is the remedy the old colleges reserved for them. A focused blast of psychic force leaves the victim staring blankly at the wall, unable to string a single spell together. Sages say recovery arrives slowly, one stubborn thought at a time.
+- id: bestow-curse
+  flavor: >-
+    A touch that leaves a stain no washing can remove, and the victim feels it settle into the bones like damp in old walls. Clumsy hands, sour luck, a habit of looking away from mirrors: the curse picks its own nastiness, and the old priests warned that bargains struck with such magic rarely end cleanly.
+- id: black-tentacles
+  flavor: >-
+    Ebony limbs push up through the cobbles and coil about anything foolish enough to stand on that patch of earth. Slick rope, gripping hands and a sudden lack of footing all come to mind. Scholars insist the things are summoned rather than grown, which has never stopped anyone from wishing they had stayed home.
+- id: blade-barrier
+  flavor: >-
+    A wall of humming blades spins into being where a path used to be, flensing through anything that tries to pass. Stone ignores it and steel gets chewed, which makes it popular with the bored and the cautious alike. Instructors teach it as a lesson in drawing a line and then refusing to argue about it.
+- id: bless
+  flavor: >-
+    A few words murmured over a handful of companions leave them feeling briefly lucky, as if fortune had taken an interest. Their swings land a shade truer and their wits brace a shade harder against trickery. Clerics swear the effect owes more to good posture than to any particular deity, though nobody has ever tested the claim.
+- id: blight
+  flavor: >-
+    Withering goes through a living thing like frost through a late bloom, leaving grey rot where green things stood. Plants wither first and fastest, which makes this a favorite of anyone who resents gardens and the people who tend them.
+- id: blindness-deafness
+  flavor: >-
+    A sudden silence or a sudden dark, chosen by the caster, and the victim is left grasping at the world with the wrong senses. Each turn brings another chance to shake it off, which tends to make the sufferer dramatic about the whole affair.
+- id: blink
+  flavor: >-
+    Some casters flicker out of the ordinary world on a whim of the die, slipping into a grey, half-seen place where the real streets are only shadows. They drift through walls and between moments, returning with stories nobody quite believes.
+- id: blur
+  flavor: >-
+    The outline of the wearer softens like a figure seen through rain-streaked glass, so that blows and arrows find the wrong patch of air. Only those who can see with sensations beyond sight are unfazed, and they tend to be insufferably smug about it.
+- id: burning-hands
+  flavor: >-
+    A thin sheet of fire leaves the fingertips in a fan, scorching whatever stands in its path and setting loose papers and dry cloth alight. Practitioners keep a bucket close, since the spell is splendid at starting fires and poor at putting them out.
+- id: call-lightning
+  flavor: >-
+    A storm gathers under a sky calm a moment ago, and the caster can draw a bolt down from its underside. Anything caught beneath the cloud gets a crackling reminder of who is in charge of the weather. Druids of the old groves treat it as a last resort, since storms have a way of ignoring instructions.
+- id: calm-emotions
+  flavor: >-
+    A hush rolls over a crowd like a tide going out, and the shouting drains from the faces nearest the center. Anger cools, panic loosens its grip and the stubborn wish to fight leaves for a while. Diplomats of a certain sort keep it close, since a room that is calm is a room that listens.
+- id: chain-lightning
+  flavor: >-
+    A bolt of lightning strikes once and then refuses to stop, hopping from body to body like a rumor with legs. Each new victim feels the jolt, and the smell of scorched hair lingers long after the sky has gone quiet. Storm-mages say it is the most sociable weather they have ever made.
+- id: charm-monster
+  flavor: >-
+    A soft voice and a steady gaze can make almost any creature feel that its caster is the most agreeable company in the world. The charmed one follows along with glassy patience until something jolts it free. Handlers of prize animals consider it the cheapest way to keep a temper in check.
+- id: charm-person
+  flavor: >-
+    A pleasant look, a warm smile and a well-timed compliment can turn a stranger into a friend for the length of a spell. The new friend is glad of the company and oddly reluctant to hear a bad word about the caster. Taverns in the river-folk districts have long argued over whether this counts as manners or mischief.
+- id: chill-touch
+  flavor: >-
+    A touch as cold as a cellar stone leaves a grey ache behind, and the wound refuses to close for a while. Morticians swear the chill comes from somewhere far below the earth, where the dead keep their own weather.
+- id: chromatic-orb
+  flavor: >-
+    A small sphere of stored energy is flung at a target, and its color announces what kind of trouble it intends to cause. Acid hisses, poison sours, frost bites, flame flares and thunder rattles the teeth. Sometimes the orb cannot resist a second target, and no one is ever quite sure why.
+- id: circle-of-death
+  flavor: >-
+    Dark energy ripples outward from a single chosen point, draining color and warmth from everything caught in its reach. Grass browns, candles gutter and the living feel suddenly older than they did at breakfast. Healers and gravediggers agree it is a terrible spell and a very effective one.
+- id: clairvoyance
+  flavor: >-
+    A sensor too faint for anyone to notice drifts to a spot the caster knows well, and what it perceives flows back as though the caster were standing there. Scribes of distant observatories focused the work with a jeweled horn or a glass eye, and swore the sensor preferred familiar rooms.
+- id: clone
+  flavor: >-
+    A duplicate of a body grows slowly in a sealed vessel, quiet and empty until the appointed moment. When the original falls, the spare steps out wearing a face that has been waiting for its turn. Philosophers have argued for ages about whether the copy inherits the debts, and the lawyers have not yet settled it.
+- id: cloudkill
+  flavor: >-
+    A sickly yellow-green fog rolls out from a chosen point and settles over everything below it, thick enough that eyes water and throats close. Mining towns have dreaded the same vapors for centuries, which is why careful alchemists keep a grim name for the spell.
+- id: color-spray
+  flavor: >-
+    A pinch of colored sand is flung into the air and bursts into a dazzle of flashing light. Anyone caught in the fan of brilliance is left squinting and blinking, unable to see much until the flare has faded. Street performers have long envied the trick, though they would never admit to borrowing it.
+- id: command
+  flavor: >-
+    A single word, spoken with the right tone, can make a stubborn listener step forward, kneel or simply stop. Drill sergeants and nervous hosts both prize the trick, and it works best when the speaker sounds like they expect to be obeyed.
+- id: commune-with-nature
+  flavor: >-
+    A quiet ritual lets a druid listen to the land, and the land answers in the language of wind, roots and water. Questions about what lies beyond the next ridge are answered with a soft, sure sense of the terrain. Hermits say the replies grow faint wherever stone and machinery have crowded out the green.

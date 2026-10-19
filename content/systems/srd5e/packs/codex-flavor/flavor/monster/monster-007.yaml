@@ -1,0 +1,125 @@
+- id: gray-ooze
+  flavor: >-
+    Gray oozes slide through the cracks of old cellars and drains, leaving a pale film where they have been. They dissolve buckles, blades and boots with the same patient indifference, and seem to have no opinion about any of them. Hunters learn to carry fire and a stick of wood, and to listen for the wet sucking sound before the floor moves.
+  imagePrompt: >-
+    A grey, glossy puddle of translucent slime oozing across damp flagstones in a dim cellar, a faint pale film trailing behind it.
+- id: green-dragon-wyrmling
+  flavor: >-
+    A green dragon wyrmling is a young and vain thing that thinks its scales make it the cleverest creature in any marsh. It keeps a hoard of stolen coins beside a slow river and bargains only when it has already decided to win. Its breath smells of rot and crushed leaves, and the reeds near its lair are always yellowed.
+  imagePrompt: >-
+    A small emerald-scaled dragon with folded wings perches on a mossy bank above dark green water, its jaws parted to show a thin mist.
+- id: green-hag
+  flavor: >-
+    Green hags keep their covens in the rotting parts of forests where the water stands still and the birds have stopped singing. They can imitate a child's cry or a neighbour's voice well enough to lure the careless into the reeds. Villagers say a hag who has been properly thanked will cease to bother them, though they have never found a hag who can be trusted to say so.
+  imagePrompt: >-
+    A gaunt green-skinned hag with long dripping hair and webbed fingers stands knee-deep in black swamp water beneath a hanging curtain of moss.
+- id: grick
+  flavor: >-
+    A grick is a lean, grey-brown thing that clings to cliff faces and looks like a mass of wet rock until it moves. Its hooked beak is quick, but it prefers to wait in a crevice and let its tentacles do the deciding. Travellers who pass beneath a ledge in silence are rarely the ones who report what happened next.
+  imagePrompt: >-
+    A lean grey-brown creature with a hooked beak and four writhing tentacles clings to a sheer cliff face above a narrow crevice.
+- id: griffon
+  flavor: >-
+    Griffons nest on high crags where the wind is loud enough to hide their calls. Their heads and forelegs are those of a great bird, and they carry their kills to the peaks as proudly as any banner. Herders across the hill country tell their children that a griffon will take a sheep if it can and a shepherd if it must.
+  imagePrompt: >-
+    A tawny lion-bodied griffon with a hooked eagle head and feathered wings half open stands on a windswept crag at sunrise.
+- id: grimlock
+  flavor: >-
+    Grimlocks are pale, blind hunters who have lived so long in caves that they no longer miss the sun. They hear a dropped pebble from across a chamber and find their prey by the sound of its breathing. Their bone clubs are carved from whatever the cave has discarded, and they keep their dead in the same tunnels where they keep their young.
+  imagePrompt: >-
+    A pale hunched humanoid with blank white eyes and a cracked bone club stands in a narrow cave tunnel lit by a single guttering torch.
+- id: guard-captain
+  flavor: >-
+    A guard captain is the one who decides which of the town's walls needs mending first and which gate can go unwatched for the evening. Hired swords and sworn militia both answer to a captain's whistle, and a good one can name every family on the watch roster. Their armour is kept bright, their javelins counted twice each morning, and their temper is kept to itself.
+  imagePrompt: >-
+    A stern armoured captain in a polished breastplate and kite shield holds a longsword upright in a torchlit gatehouse of grey masonry.
+- id: guard
+  flavor: >-
+    Guards are ordinary people given a spear, a shield and a rota. Most would rather be home with their boots off, and they say so to anyone who asks nicely. A guard's loyalty usually runs to the people paying wages, the cousin on the next post and a good hot supper.
+  imagePrompt: >-
+    A weary town guard in a chain shirt and dented shield leans on a spear beside a wooden gate at dusk.
+- id: guardian-naga
+  flavor: >-
+    Guardian nagas are serpent-bodied scholars who keep watch over old libraries and sealed doors, reciting the oaths they swore long ago. Their patience is famous among the people who study with them, and their wrath is slow but thorough. Scholars who have met one tend to speak of it in whispers, as if it might still be listening.
+  imagePrompt: >-
+    A great white-scaled serpent with a serene human face and gold trim coils across a marble doorway lined with glowing sigils.
+- id: half-dragon
+  flavor: >-
+    A half-dragon is what happens when a dragon's line wanders into a village and keeps something of its ancestor, usually a sheen of scale along the arms and a temper like a banked forge. They are proud of the blood and wary of being judged for it. Most learn early that hiding a heritage is harder than wearing it.
+  imagePrompt: >-
+    A broad-shouldered figure with sheened scales across its forearms and small leathery wings stands on a rocky ridge, a faint orange glow at its throat.
+- id: harpy
+  flavor: >-
+    Harpies nest on sea cliffs and in the broken towers of forgotten coasts, singing over the rocks until the wind carries their song into every valley below. The song is sweet to the ears of anyone who hears it, and sailors who follow it tend to end up in the surf. Their feathered arms are fast and their claws are careless, so a harpy's victims seldom have a chance to regret listening.
+  imagePrompt: >-
+    A wild-haired winged creature with a woman's face and bird's talons perches on a jagged sea cliff under a grey, churning sky.
+- id: hawk
+  flavor: >-
+    Hawks hunt from the high air and dive with a shriek that makes small birds freeze in the hedge. A hawk seldom bothers with people unless they are carrying something worth stealing, such as a sandwich or a bright ring. Falconers who train them speak of patience as if it were a kind of weather.
+  imagePrompt: >-
+    A small brown hawk with barred wings hovers above a hedgerow of green leaves, its talons tucked up and its eye fixed on the grass.
+- id: hell-hound
+  flavor: >-
+    Hell hounds run in packs through the burnt edges of the world and are rarely seen without their ember breath. Their shaggy coats are the colour of cooling coals, and they keep close to one another so that no single hound ever gets caught alone. Stories say they were once a lord's hunting pack, though the tale changes with every fire told about it.
+  imagePrompt: >-
+    A lean black hound with glowing red seams in its hide and smoke curling from its jaws stands in a cracked volcanic plain.
+- id: hezrou
+  flavor: >-
+    These heavy, toad-faced brutes come from the lowest reaches of the worst places, and they carry a stench that clings to every room they enter. They do not fight with grace; they fight with crushing swipes and a great deal of noise. Scholars of such things note that a slain one simply reforms elsewhere, which may be the only consolation anyone ever finds in its company.
+  imagePrompt: >-
+    A massive grey-skinned demon with a broad toad-like head and heavy limbs stands in a smoky chamber, dripping dark ichor from its claws.
+- id: hill-giant
+  flavor: >-
+    Hill giants are huge, slow-thinking folk who favour the high places where the wind is clean and the sheep are plentiful. They are seldom cruel for their own sake, but they give little thought to what gets trodden on the way to dinner. A hill giant's club is usually a whole young tree, trimmed by its owner and kept for sentimental reasons.
+  imagePrompt: >-
+    A huge grey-skinned giant with a shaggy mane and a bare-chested frame hoists an uprooted tree trunk over one shoulder on a grassy hillside.
+- id: hippogriff
+  flavor: >-
+    Hippogriffs have the head and forelegs of an eagle and the body of a horse, which makes them curious sights in any meadow. They are proud animals that will tolerate a rider once they have decided the rider is worth the trouble. Young ones are easy to spook, and a frightened hippogriff in the open air is a hazard to everyone nearby.
+  imagePrompt: >-
+    A proud hippogriff with an eagle's head, feathered forelegs and a chestnut horse body stands in a sunlit meadow with wings half raised.
+- id: hippopotamus
+  flavor: >-
+    Hippopotamuses spend the heat of the afternoon submerged in slow brown rivers, with only their eyes and ears showing above the water. They are not the friendly animals they look like from the bank, and boatmen give them a wide berth. A large one can hold its breath for a very long while, which is how it tends to surprise the people who fish nearby.
+  imagePrompt: >-
+    A massive grey-brown hippopotamus with small ears and wide nostrils rises from a muddy river, water streaming off its barrel body under a pale sky.
+- id: hobgoblin-captain
+  flavor: >-
+    Hobgoblin captains are the ones who remember orders, count the spears and make sure the bowmen are not lazing in the shade. Their armour is good and their manners are worse, and they expect the lesser goblins to salute before they are spoken to. Those who serve under one learn to keep their heads down until the captain has finished shouting.
+  imagePrompt: >-
+    A disciplined hobgoblin officer in a half-plate cuirass and plumed helmet points a sword across a training yard lined with banners.
+- id: hobgoblin-warrior
+  flavor: >-
+    Hobgoblin warriors are drilled in lines and trained to close ranks with the discipline of a well-kept machine. They carry a sword in one hand and a bow in the other, and they are happy to use either for the same purpose. Most have grown up knowing that a shield is only useful when the person beside it holds firm.
+  imagePrompt: >-
+    A stocky red-skinned soldier in dented half-plate and a battered shield holds a longsword ready in a disciplined battle line.
+- id: homunculus
+  flavor: >-
+    A homunculus is a small made thing, stitched together by a sorcerer who wanted a servant that could never disagree. It hovers close to its master, listening with a quiet, sharp attention, and it reports every word back in a thin voice. Its bite is not dangerous in itself, but it is sly enough to leave a victim sleepy and lying in the dust.
+  imagePrompt: >-
+    A tiny pale winged figure with a pointed face and thin bat-like wings perches on a candlelit workbench beside an empty glass jar.
+- id: horned-devil
+  flavor: >-
+    Horned devils are tall, red-backed bullies who march in formation and enjoy watching others flinch. Their tails carry a hook that can punish a foe at close range, and their fire-throwing is accurate and unkind. Such creatures are the unforgiving middle managers of their own dark orders, and they speak of mercy the way a clerk speaks of weather.
+  imagePrompt: >-
+    A towering crimson-skinned devil with curled horns and a barbed tail holds a long glowing spear in a smoky hall of iron pillars.
+- id: hunter-shark
+  flavor: >-
+    Hunter sharks patrol the deep warm water beyond the reef, where they are too big for most predators to bother with. They have a single, terrible reason for their reputation: once they have tasted blood, they will not stop until the current runs quiet. Fishing boats learn to keep their nets low and their voices down.
+  imagePrompt: >-
+    A large grey shark with a blunt snout and pale underbelly glides through deep blue water, sunlight fading into the depths above.
+- id: hydra
+  flavor: >-
+    A hydra is a swamp-dwelling giant of many necks, each ending in a snapping head that seems to have its own opinion. Sever one and the stump soon bristles with something new, which has made the creature a standing trial for every hero who has ever tried to be tidy. Hunters learn that the only sure way to end the argument is with fire.
+  imagePrompt: >-
+    A coiling multi-headed serpent with five snapping heads rises from a marsh of dark reeds under a heavy, storm-grey sky.
+- id: hyena
+  flavor: >-
+    Hyenas laugh in their own harsh fashion, and the sound carries across the scrubland long into the night. They hunt in loose bands and will follow a wounded traveller for a long, patient stretch. Their laughter, more than their teeth, is what keeps campfires lit late in the bush.
+  imagePrompt: >-
+    A spotted hyena with a sloping back and bristled mane skulks across dry golden grass, head low and jaws slightly open.
+- id: ice-devil
+  flavor: >-
+    An ice devil is a patient, silver-tongued creature who prefers contracts to combat and regards a cold stare as a form of courtesy. It carries a long white spear that frosts the air near it, and it raises walls of ice to keep bargains from being broken. Those who sign with one tend to discover the fine print only when the chill sets in.
+  imagePrompt: >-
+    A tall pale-blue devil with curved horns and a spiked tail grips a jagged ice spear while frost spreads over a dark marble floor.

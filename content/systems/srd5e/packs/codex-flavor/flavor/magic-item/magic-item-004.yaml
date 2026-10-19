@@ -1,0 +1,125 @@
+- id: flame-tongue
+  flavor: >-
+    A blade forged by smiths who kept their furnaces burning through every winter. When a quiet word is spoken over its hilt, flame climbs the steel like ivy and the air smells of cinders. Hedge-wizards still argue over whether the fire is hungry or merely eager.
+  imagePrompt: >-
+    A long sword with a steel blade wrapped in curling orange flames, a dark leather-wrapped grip, and warm light spilling across a stone forge floor.
+- id: folding-boat
+  flavor: >-
+    A small pine box, light enough to tuck under one arm, that unfolds into a boat at the right words. River-folk carry them in their coats and swear the wood remembers every lake it has floated on. Folding it back up is a matter of some care, since the boat is never gentle about it.
+  imagePrompt: >-
+    A squat box of pale pine with brass hinges and rope-worn corners, sitting on a sunlit wooden dock beside a calm grey lake.
+- id: frost-brand
+  flavor: >-
+    A sword whose blade seems cut from a winter lake, its edge fogged with frost even on the warmest of summer evenings. Fire-tenders in the old colleges prize such steel for the way it chills a target to the marrow and keeps flame away from its bearer.
+  imagePrompt: >-
+    A slender steel blade with a pale blue sheen and frost creeping along the fuller, resting on dark velvet beside a shard of ice.
+- id: gauntlets-of-ogre-power
+  flavor: >-
+    Heavy iron gauntlets with knuckles like river stones, built for a grip that could bend a horseshoe into a bracelet. Smiths who made them said the metal remembered the muscles of the first giant who wore them, and most porters still believe it.
+  imagePrompt: >-
+    A pair of thick leather-and-iron gauntlets with riveted steel knuckles, scarred and polished, resting on a timber workbench in a soot-stained smithy.
+- id: gem-of-brightness
+  flavor: >-
+    A faceted prism of clear crystal, cut so that light seems to gather inside it and wait for permission to leave. Lamplighters and stage-players of the old colleges have long coveted it, though the stone never seems to run dim no matter how much is asked of it.
+  imagePrompt: >-
+    A large faceted crystal prism glowing with white-gold light, set in a silver cradle on a dark velvet cloth beside an old brass lamp.
+- id: gem-of-seeing
+  flavor: >-
+    A pale green gem that clouds at the edges when it is used, as though the stone has looked too long into something it could not hold. Sages who value sight above comfort tend to keep one near the window, watching for shapes no ordinary eye should notice.
+  imagePrompt: >-
+    An oval green gem set in a bronze frame with fine filigree, lying on an open leather notebook beside a brass spyglass.
+- id: giant-slayer
+  flavor: >-
+    A plain weapon of good make, its balance tuned for the moment when a much larger opponent comes looking for trouble. Tellers of tall tales in the river towns swear the weapon has felled hill-sized brutes with a single well-aimed blow.
+  imagePrompt: >-
+    A well-balanced sword with a plain steel blade and a worn leather grip, its edge catching the grey light above a rocky hillside.
+- id: glamoured-studded-leather
+  flavor: >-
+    A set of studded leather armor that can wear the costume of a tailor's finest coat, a gardener's apron or a court herald's tabard. Scouts who must slip past a feast unnoticed find the trick useful, though the leather never quite forgets its true shape.
+  imagePrompt: >-
+    Supple brown studded leather armor worn over a folded linen tunic, the pale rivets catching light, shown against a plain wooden wall in a tailor's shop.
+- id: gloves-of-missile-snaring
+  flavor: >-
+    Stitched from supple hide with reinforced palms, these gloves help a nimble fighter catch arrows, darts and flung hatchets out of the air. Archers of the old colleges dislike them intensely, since a well-timed grab can turn their best volley into an embarrassing handful of splinters.
+  imagePrompt: >-
+    A pair of dark brown leather gloves with stitched knuckles and pale leather palms, one hand half-raised with fingers spread to catch an arrow.
+- id: gloves-of-swimming-and-climbing
+  flavor: >-
+    Close-fitting gloves of oiled canvas with grippy fingertips, the kind a sailor or a rope-hauler might reach for before a long scramble. Wearers find that cliffs and tide-swept rocks suddenly seem less daunting, and a few have been known to paddle home with a grin.
+  imagePrompt: >-
+    A pair of oiled canvas gloves with rubbed leather fingertips and frayed rope cuffs, lying on a wet slate ledge beside a rushing stream.
+- id: goggles-of-night
+  flavor: >-
+    Thick smoked lenses in a riveted frame, the sort of spectacles a night watchman or a mapmaker of dark caves might keep in a coat pocket. Cave-delvers swear the lenses let them read faces in the gloom, and a sly few claim they help with spotting lies in lamplit taverns.
+  imagePrompt: >-
+    A pair of smoky black lenses set in dark iron frames with leather straps, resting on a weathered stone ledge at dusk.
+- id: hammer-of-thunderbolts
+  flavor: >-
+    A heavy warhammer with a head like a clenched fist of dark iron, its haft bound in leather that smells faintly of ozone after every storm. Coastal storm-callers whisper its name, since a hurled blow can make a whole valley ring like a struck bell.
+  imagePrompt: >-
+    A dark iron warhammer with a blocky head crackling with pale blue sparks, set against a bruised purple sky over a stormy grey sea.
+- id: handy-haversack
+  flavor: >-
+    A sturdy canvas pack with a broad central pouch and two side pockets, all of them deeper inside than the outside would ever suggest. Traders and wayfarers love how the top item always seems to be the one they reach for, though a few old hands grumble that the bag keeps its own secrets.
+  imagePrompt: >-
+    A sturdy brown canvas backpack with a broad front pouch, two bulging side pockets, and tan leather straps, sitting on a worn wooden trunk.
+- id: hat-of-disguise
+  flavor: >-
+    A brown felt hat with a narrow band of braided cord, the sort of thing a traveling actor might tip to a crowd before slipping into a new face. Gossips in the river towns say the hat has a talent for making a stranger look like anyone but the stranger, which is exactly the point.
+  imagePrompt: >-
+    A weathered brown felt hat with a braided cord band, tilted slightly on a wooden hook beside a folded cloak in a dim theatre dressing room.
+- id: headband-of-intellect
+  flavor: >-
+    A slim band of pale silver set with a single dark stone, cool to the touch and faintly humming like a struck glass. Scholars of the old colleges wear them during examinations, and a few insist the metal has opinions about which books deserve to be read.
+  imagePrompt: >-
+    A slim silver headband set with a single dark oval stone, resting on a stack of leather-bound books beside a tall window with soft light.
+- id: helm-of-brilliance
+  flavor: >-
+    A ceremonial helm crusted with gems in four colours, each stone catching a different sort of light, so the wearer seems to be wrapped in a small private sunrise. Armorers say its gems crumble to dust when pried loose, and the sages who wrote of it were careful never to name an owner.
+  imagePrompt: >-
+    A tall ornate steel helm inset with rows of crimson, ivory and sapphire gems and pale opals, glinting under warm candlelight on a dark velvet stand.
+- id: helm-of-comprehending-languages
+  flavor: >-
+    A plain iron helm with a visor of polished glass, its wearer able to follow speeches in tongues no one at the table has ever spoken. Envoys and dockside clerks prize it, though a sharp-tongued cook once remarked that a helm which understands everyone also hears every complaint.
+  imagePrompt: >-
+    A plain iron helm with a clear polished glass visor and a thin copper band, sitting on a wooden table covered with scrolls and folded letters.
+- id: helm-of-telepathy
+  flavor: >-
+    A cool silver helm, its inner padding worn smooth by a dozen owners who each insisted they could hear the thoughts of their friends. Fair-ground mind-readers would give a great deal for one, and the old colleges keep a strict rule against lending such a helm to anyone with a grudge.
+  imagePrompt: >-
+    A cool silver helm with a smooth inner lining and a thin sapphire stone set above the brow, resting on dark blue cloth in a candlelit study.
+- id: helm-of-teleportation
+  flavor: >-
+    A gleaming bronze helm with three small blue stones along its crest, each stone holding a little of the wearer's restless wish to be somewhere else. Couriers and cartographers both covet it, though hedge-wizards warn that arrivals are sometimes a little out of order, boots first.
+  imagePrompt: >-
+    A gleaming bronze helm with three small blue stones along its crest, the metal dented and polished, shown with a faint shimmer of air at its edges.
+- id: holy-avenger
+  flavor: >-
+    A long sword with a blade of white-gold, its hilt wrapped in ivory cord and its pommel set with a single pale stone that glows when drawn. Wardens of the old colleges guard it with great care, and a few tales insist its pale light sends shadowy creatures back into the dark.
+  imagePrompt: >-
+    A long sword with a polished white-gold blade, an ivory-wrapped hilt, and a pale glowing stone in the pommel, held upright before a plain grey stone wall.
+- id: horn-of-blasting
+  flavor: >-
+    A long brass horn with a flared bell and a wide mouthpiece, its metal dented by many a braggart's attempt at the loudest note. Miners and ferrymen keep one as a warning, since the horn has been known to burst in the hands of anyone who blows it too often.
+  imagePrompt: >-
+    A long brass horn with a flared bell, a wide mouthpiece, and cracks running along its tarnished body, set on a stone ledge in a cliffside wind.
+- id: horn-of-valhalla
+  flavor: >-
+    A curved horn, cast from one of several metals, that calls warrior spirits out of a distant hall of heroes when its note rings across a field. Those who summon them say the spirits are polite until the fighting starts, and then they are nothing but loyal, fearless and very loud.
+  imagePrompt: >-
+    A curved horn of dark bronze with engraved knotwork bands and a worn leather mouthpiece cord, resting on a carved oak table before a crackling hearth.
+- id: horseshoes-of-a-zephyr
+  flavor: >-
+    Four pale iron horseshoes that lift a steed just above the earth, leaving no trace of hooves on mud, sand or snow. Couriers of the river-plains swear the shoes make the horse feel light as a leaf, and the old horsemen's guilds consider them far too clever for honest work.
+  imagePrompt: >-
+    Four pale iron horseshoes with silver nail heads and a faint blue shimmer, hanging from a leather strap above a plank floor in a dim stable.
+- id: horseshoes-of-speed
+  flavor: >-
+    Four dark bronze horseshoes with curling edges, each one etched with a streak of golden lines that look like wind caught mid-gallop. Racers at the old fairs would sell their own saddles for a set, and stable-hands have a saying that a horse with them will beat its own shadow.
+  imagePrompt: >-
+    Four dark bronze horseshoes with curling edges and streaks of golden light etched along their surface, lying on a bed of straw in a sunlit stable.
+- id: immovable-rod
+  flavor: >-
+    This iron rod has a button at one end, which once pressed holds fast to its place as stubbornly as a mountain holds its shape. Surveyors and rope-makers find it useful for bridges and awkward ledges, though the fellows who try to shift it tend to complain about the burden.
+  imagePrompt: >-
+    A plain iron rod with a small brass button set in one end, clamped between two weathered stone pillars above a deep mossy gorge.

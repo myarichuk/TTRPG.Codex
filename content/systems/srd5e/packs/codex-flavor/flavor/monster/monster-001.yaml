@@ -1,0 +1,125 @@
+- id: aboleth
+  flavor: >-
+    Something vast waits in the black water of sunken cisterns, a thing that thinks in slow, patient currents. Its mind reaches out without sound, and those it touches find their own memories being quietly read like a ledger. Lawful in the way of a tide, it keeps its servants close and forgets nothing that is worth taking.
+  imagePrompt: >-
+    A vast tentacled shape with a fleshy, fish-like body drifts through dark green water in a flooded stone cistern, pale light glinting off its slick skin.
+- id: adult-black-dragon
+  flavor: >-
+    The black dragon claims the fens and sunken ruins where the air smells of rot and standing water. Its scales drink the light, and its breath is a hissing cloud that eats through bronze and bone alike. It is cruel without ceremony, the sort of tyrant who sees swamp villages as nothing more than tithe ledgers.
+  imagePrompt: >-
+    A huge black dragon with ragged wings perches on a rotting log in a misty swamp, acid dripping from its jaws into dark, bubbling pools.
+- id: adult-blue-dragon
+  flavor: >-
+    Blue dragons rule the dry basins where storms gather without rain. The adult of the kind is a patient schemer, burrowing beneath sand dunes to watch caravans and collect what it judges its due. When it finally rises, the sky crackles and the dunes glitter with fused glass.
+  imagePrompt: >-
+    A coiled blue dragon with crackling yellow sparks along its wings rises from a sand dune under a bruise-colored sky.
+- id: adult-brass-dragon
+  flavor: >-
+    Brass dragons are the chatterers of the sun-baked wastes, happiest when someone is listening to them tell a story. The adult delights in riddles, old songs and the warm gossip of traveling bards. Its anger is quick and bright, like a struck match, and it cools as fast as it flares.
+  imagePrompt: >-
+    A huge brass-scaled dragon with a wide, grinning muzzle lounges on pale sand dunes, its scales glinting gold under a blazing desert sun.
+- id: adult-bronze-dragon
+  flavor: >-
+    Bronze dragons keep watch over shorelines and river mouths, patrolling the coast as if the sea itself had hired them. The adult is steady and fair, the sort who will listen to a fisherman's grievance before deciding anything. Its roar rolls over the water like thunder, and those who misbehave on the tide learn to be quiet.
+  imagePrompt: >-
+    A bronze-plated dragon with wide, sweeping wings hovers above a gray coastline while surf breaks against black rocks below.
+- id: adult-copper-dragon
+  flavor: >-
+    Copper dragons are mischief given wings, and the adult takes its jokes seriously. It perches on cliffs and rocky outcrops, hatching schemes to rearrange the furniture of rival lords or hide a town's prize cattle in a cave. Its laughter is high and delighted, and it is never quite clear whether its pranks will end in a feast or a wreck.
+  imagePrompt: >-
+    A copper-scaled dragon with a crooked grin clings to a sheer cliff face, a warm reddish glow lighting its bright mischievous eyes.
+- id: adult-gold-dragon
+  flavor: >-
+    Gold dragons are the grand, slow-speaking guardians of old kingdoms, and the adult carries that dignity like a royal cloak. It takes a long view of wars and weddings alike, offering counsel that is sometimes unwelcome but never careless. Its fire is a warm, golden tide, and it reserves that fire for those who threaten the land.
+  imagePrompt: >-
+    A huge gold-scaled dragon with regal, sweeping wings stands on a marble terrace under a setting sun, its bright scales catching the warm light.
+- id: adult-green-dragon
+  flavor: >-
+    Green dragons lurk in old forests where the canopy hides every secret. The adult is a schemer who prefers whispered bargains to open war, and its voice slides into a listener's thoughts like a cold draft. Its breath is a choking green cloud, and it likes nothing more than watching rivals cough their way toward a deal that favors the dragon.
+  imagePrompt: >-
+    A green dragon with a sinuous neck coils among tangled oak roots in a shadowy forest, a faint green haze curling about its horned head.
+- id: adult-red-dragon
+  flavor: >-
+    Red dragons nest in volcanic peaks and treasure-stuffed caves, where the heat of the earth matches their temper. The adult is proud and greedy, the kind of tyrant who counts its coins twice and then counts the coins of its neighbors. When it takes to the sky, its smoke lingers over the valley long after it has gone.
+  imagePrompt: >-
+    A huge red dragon with spiked wings perches on a jagged volcanic ridge, glowing lava rivers far below and a column of dark smoke rising.
+- id: adult-silver-dragon
+  flavor: >-
+    Silver dragons are the wanderers of high mountain passes, collecting tales the way others collect coins. The adult enjoys riddles of fate and often appears at the edge of a camp to ask questions that lead travelers somewhere useful. Its frost is a sharp, bright cold, and it hates to see a promise broken more than it hates any blade.
+  imagePrompt: >-
+    A huge silver dragon with frost-rimed wings stands on a windswept mountain pass while snow drifts past its polished scales.
+- id: adult-white-dragon
+  flavor: >-
+    White dragons haunt glaciers and frozen marshes, where their cold is more reliable than any road. The adult is a brutish hunter that takes pleasure in the simple joys of the chase and the slow silence that follows. Its breath freezes lakes solid, and the ice it leaves behind looks almost like a sculpture made by someone patient and cruel.
+  imagePrompt: >-
+    A huge white dragon with ragged wings crouches on a glacier, frost spreading across the blue ice beneath its talons.
+- id: air-elemental
+  flavor: >-
+    An air elemental is a whirl of wind given a stubborn sort of will, and it drifts through open courtyards as though it owns the sky. It has no interest in cruelty for its own sake, but it can shove a careless traveler across the road in a single gust. When it roars, the sound is thunder, and dust rises in a spiral behind it.
+  imagePrompt: >-
+    A towering column of swirling pale gray wind with a faint face in its center hovers above a rocky plain under scudding clouds.
+- id: allosaurus
+  flavor: >-
+    The allosaurus is a big-jawed hunter of the old plains, built for sudden lunges rather than long pursuits. Its bite is heavy enough to crack a bone, and its clawed forelimbs rake at anything that stumbles into its path. It has no malice in it, only hunger and a narrow, practical cunning that knows where prey is likely to gather.
+  imagePrompt: >-
+    A large predatory dinosaur with a heavy skull and short clawed forelimbs stalks through tall dry grass under an open sky.
+- id: ancient-black-dragon
+  flavor: >-
+    Older than the marsh roads and most of the names used to describe them, the ancient black dragon has drowned whole valleys to make its lair. Its scales are the color of wet slate, and its breath can dissolve a fortress wall in a single sweep. Mapmakers leave its territory blank, which seems to suit everyone.
+  imagePrompt: >-
+    A gargantuan black dragon with sail-like wings sinks its bulk into a flooded valley of dead reeds, black water rising past its scales.
+- id: ancient-blue-dragon
+  flavor: >-
+    Patient beyond any mortal reckoning, the ancient blue dragon has ruled the dry basins for longer than the basins have had names. It tunnels beneath the sands and waits for a storm to answer its will, then sends lightning through the dunes like a message written in fire. Its manner is cool and courteous, but every courtesy is a contract with terms.
+  imagePrompt: >-
+    A gargantuan blue dragon half-buried in rippling golden sand, crackling arcs of lightning running along its horns and wings under a heavy sky.
+- id: ancient-brass-dragon
+  flavor: >-
+    Few creatures of the desert remember a time before the ancient brass dragon was telling stories beneath the dunes. Its voice is warm and endlessly amused, and it will trade a tale for a tale as readily as it trades gold. Fire rolls from its jaws when it grows bored, though it rarely stays idle for long, since a good riddle always draws it back.
+  imagePrompt: >-
+    A gargantuan brass-scaled dragon with a broad smiling muzzle rests on a sandstone ledge, warm light gleaming across its coppery-gold scales.
+- id: ancient-bronze-dragon
+  flavor: >-
+    Where the old harbor charts end and the open sea begins, the ancient bronze dragon keeps a long, watchful vigil. It guards the coast the way a lighthouse keeps watch over the sea, steady and bright and impossible to ignore. Its thunderclaps can flatten a line of boats, but it prefers to push the wrongdoer gently back toward shore and let the tide teach the lesson.
+  imagePrompt: >-
+    A gargantuan bronze dragon with broad wings spread over a stormy harbor, lightning arcing between its horns above tall gray waves.
+- id: ancient-copper-dragon
+  flavor: >-
+    Clever beyond the usual reach of dragons, the ancient copper dragon treats the whole world as a riddle built for its amusement. It has rearranged entire orchards just to see how the farmers would react, and has left a polite apology with each one. Its acid breath is a hissing green-gold cloud, but its laughter is what truly unsettles those who have crossed it.
+  imagePrompt: >-
+    A gargantuan copper dragon with bright verdigris-stained wings perches on a crooked apple tree, its wide grin glinting beneath a cloudy sky.
+- id: ancient-gold-dragon
+  flavor: >-
+    Crowned by no one and answerable to no throne, the ancient gold dragon still behaves like the wisest counselor any court could hope for. Its judgments arrive slowly and are rarely reversed, because it has seen empires rise and fall long before most scholars learned their names. When it opens its wings, the light that spills across the land is warm and gold, and it is a sight no witness forgets.
+  imagePrompt: >-
+    A gargantuan gold dragon with a crown-like ridge of horns rises above a ruined palace, its sweeping golden wings lit by a rising sun.
+- id: ancient-green-dragon
+  flavor: >-
+    Nothing in the wood grows without its consent, and the ancient green dragon has long since decided that every root belongs to it. Its mind reaches into the thoughts of kings and village elders alike, nudging them toward decisions that serve a patient, very old hunger. Its poison breath rolls across the treetops like a fog that remembers every name it has ever choked.
+  imagePrompt: >-
+    A gargantuan green dragon with moss-draped horns sits among ancient twisted trees, a sickly haze curling through the leaves above.
+- id: ancient-red-dragon
+  flavor: >-
+    Ash has settled on every peak the ancient red dragon has claimed, and the rock beneath it is always warm. It rules through fear and flattery in equal measure, commanding lesser creatures with a voice that makes their knees bend before they understand why. Its fire is catastrophic in scale, and the old tales of burning cities are told in fearful whispers about it.
+  imagePrompt: >-
+    A gargantuan red dragon with obsidian-black horns stands atop a smoking mountain crater, molten rock glowing orange in the cracks below.
+- id: ancient-silver-dragon
+  flavor: >-
+    Historians of the high peaks often refuse to write about the ancient silver dragon, since it corrects their accounts with unnerving precision. It has watched dynasties of the north bury their dead and raise new cities out of the same frozen stone. Its manner is courtly and kind, yet the freezing breath it can loose is cruel enough to stop an army mid-stride.
+  imagePrompt: >-
+    A gargantuan silver dragon with frost along its wing edges hovers above a snowy citadel, its pale blue breath spilling over the battlements.
+- id: ancient-white-dragon
+  flavor: >-
+    Frost has a long memory, and the ancient white dragon has spent its whole reign teaching it new patience. It lairs under a glacier that groans and cracks whenever it stirs, and it treats the snow-covered tundra as a hunting range it has never bothered to share. Its cold breath freezes rivers mid-flow, and the travelers who survive the crossing swear the ice itself seemed to be listening.
+  imagePrompt: >-
+    A gargantuan white dragon with pale, ridged wings perches on a jagged ice spire, its breath rising in a glittering cloud of frost.
+- id: animated-armor
+  flavor: >-
+    A suit of armor stands in the corner of a forgotten hall, its joints stiff and its visor empty of any mind worth speaking of. Someone once bound it to a simple duty, and the binding has outlasted nearly everyone who remembers the order. It moves with a heavy, clanking patience, and its gauntlets are perfectly happy to swing whatever weapon it has been given.
+  imagePrompt: >-
+    A suit of plate armor with dented steel and a dark empty visor stands motionless in a dusty stone hall, a sword held ready.
+- id: animated-flying-sword
+  flavor: >-
+    A blade with no owner hangs in the air of a quiet armory, turning slowly as if searching for the hand that once wielded it. Whoever enchanted it gave it a single purpose and no patience for anything beyond that purpose. It darts at intruders with a thin, eager whistle, and it is oddly pleased whenever it finds a target.
+  imagePrompt: >-
+    A slender steel sword with an ornate crossguard hovers in a dim stone armory, a faint silver shimmer running along its polished edge.

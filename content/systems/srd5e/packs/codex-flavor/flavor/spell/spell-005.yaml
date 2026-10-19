@@ -1,0 +1,75 @@
+- id: earthquake
+  flavor: >-
+    The soil remembers every grudge it was ever handed, and today it settles the account. Stone sighs, cracks open in long grins, and the old towers lean toward whoever stands nearest the fault.
+- id: eldritch-blast
+  flavor: >-
+    A bright, hard thread of sound and spite leaves the caster's hand, and the target rarely sees it coming. Hedge-wizards in the old colleges call it the honest spell, because it asks nothing and promises only the sting.
+- id: elementalism
+  flavor: >-
+    A breath of weather, a pinch of soil, and a puff of smoke, all at the caster's bidding. Village children love it, and the innkeepers wish it stayed that way, since a sculpted cup of water is never quite as sober as it looks.
+- id: enhance-ability
+  flavor: >-
+    A touch from a steady hand, with a tuft of fur or a feather tucked into a pocket for luck, and the stubborn task seems to bend toward the one who asked. Nobody calls this cheating, though the people it helps tend to look rather pleased with themselves.
+- id: enlarge-reduce
+  flavor: >-
+    Everything a body wears and carries grows or shrinks along with it, which makes doorways the least of anyone's worries. Some folk find the trick a kindness, others a rude joke, and the unwilling tend to argue about it loudly.
+- id: ensnaring-strike
+  flavor: >-
+    The hunter's blade is still humming when green cords come twisting out of the stroke and cinch tight. Trackers swear the vines pick their quarry with care, and the quarry, to its credit, usually fights them with real spirit.
+- id: entangle
+  flavor: >-
+    The meadow itself turns on the intruders, sending up a tangle of grasping stems and roots across a patch of earth. Those caught in the green snare find their legs suddenly reluctant, and the plants are perfectly happy to keep them company until they wriggle loose.
+- id: enthrall
+  flavor: >-
+    A voice that sounds like a warm bath and a sweet promise pours out and makes the crowd forget to check its pockets. Those already fighting alongside the speaker are immune, which is either a comfort or a warning depending on whose side the listener stands on.
+- id: etherealness
+  flavor: >-
+    The caster's edges go pale and thin, slipping sideways into the gray border where the world is only half-finished. Out there the sounds come muffled, the solid walls are mostly rumors, and a careless return can drop a traveler into someone else's furniture.
+- id: expeditious-retreat
+  flavor: >-
+    A quick flick of the heels and the caster is simply somewhere else, leaving behind a faint smell of hot wax and several annoyed onlookers. Scholars argue over whether this is running away or merely an early start, and the market-fair sprinters keep their opinion to themselves.
+- id: eyebite
+  flavor: >-
+    Ink pools in the caster's eyes, and a single glance can lay a chosen listener out cold or send them screaming across the fields. Tales of this kind are full of warnings, and this one is no exception.
+- id: fabricate
+  flavor: >-
+    Raw stuff is patient, and this craft asks it to become something new, such as a gate from a fallen log or a sack woven from a heap of reeds. The finished piece is only as good as the material it started from, so the careful maker picks well.
+- id: faerie-fire
+  flavor: >-
+    Shimmering outlines bloom over everything in a chosen patch, turning hidden satchels and stacked barrels into glowing signposts for anyone with a clear view. The colors are blue, green or violet, and the glow is bright enough that hiding in the shadows becomes a rather bad joke.
+- id: faithful-hound
+  flavor: >-
+    A spectral watchdog trots into an empty corner, visible to its maker alone, and it keeps its post with a patience most human sentries can only envy. Anything that approaches without the proper password gets a loud, unmistakable greeting, and the neighbors wake up wondering why.
+- id: false-life
+  flavor: >-
+    A small swig of cheap spirits, a murmured word, and the caster feels a rush of stubborn vitality that is not quite the same as health. Apothecaries call it borrowed vigor, and it wears off just as fast as it arrived.
+- id: fear
+  flavor: >-
+    A cold wall of dread spills outward in a widening fan, and the bravest faces go pale as the chill finds them. Those who run do not stop to explain themselves, and the people who watch from a safe distance swear the night got quieter.
+- id: feather-fall
+  flavor: >-
+    A gentle hand reaches into the air and asks a plunging body to slow down, as if the sky had suddenly remembered its manners. Gravity grumbles but agrees, and the landing that follows is soft enough to make the whole tumble look like a sensible plan.
+- id: find-familiar
+  flavor: >-
+    A small shape with clever eyes steps out of a puff of incense smoke and takes a seat at its new keeper's elbow. Every such companion is a spy, a critic, and entirely unwilling to be left out of the good parts of any adventure.
+- id: find-steed
+  flavor: >-
+    An otherworldly mount arrives in a flash of light, with a loyal stare and a patience that seems to have been waiting all along. Its shape is a large, sensible beast of the caster's choosing, and whatever its nature, the creature has no interest in being anyone's idle ornament.
+- id: find-the-path
+  flavor: >-
+    A thread of direction unspools inside the mind, faint at first and then certain, pointing toward a place the seeker knows well. Crossroads stop being a gamble, since the thread always knows which fork runs straightest and the seeker learns the lay of the land without asking a stranger for help.
+- id: find-traps
+  flavor: >-
+    A quiet hum settles over the air and reveals that something cunning and cruel has been arranged to bite. Natural hazards stay silent, because the hum only cares about deliberate work. It offers no map, just a warning and a rough sense of what sort of mess is waiting.
+- id: finger-of-death
+  flavor: >-
+    A pointed hand, a cold stare, and a whisper of grave-dust, and the victim's vitality drains away in a rush. Those who live through it often wish they had not, and the unlucky dead tend to stand up again, waiting for a crisp command.
+- id: fire-bolt
+  flavor: >-
+    A mote of orange fire leaps from the fingertips, streaks across the room, and lights up anything foolish enough to be lying about. Rags, crates and old wooden signs catch quickly, which is why sensible tavern owners keep buckets near the bar.
+- id: fire-shield
+  flavor: >-
+    Wispy flames wrap the body in a living halo, and the wearer chooses whether it glows warm or glows cold. Anyone who strikes out at close range is greeted by a very loud crackle.
+- id: fire-storm
+  flavor: >-
+    A storm of flame drops from nowhere and stacks itself into a blocky shape of the caster's choosing, like a child arranging toy bricks. Anyone caught inside scrambles for cover, and loose hay and dry curtains catch fire at once.

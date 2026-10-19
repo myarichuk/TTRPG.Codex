@@ -1,0 +1,125 @@
+- id: plesiosaurus
+  flavor: >-
+    Sailors who see a long-necked shape gliding under the swell usually decide they saw nothing at all. The creature is a patient sea-beast that rolls through deep bays with its four paddling limbs, lifting its head only to snap at what drifts too close. It holds a breath far longer than any fisher could, and it has learned that the shallows give it the easiest meals.
+  imagePrompt: >-
+    A long-necked grey sea creature with four broad paddle fins rising from dark green water beside a rocky bay, its small head lifted toward a fishing boat.
+- id: polar-bear
+  flavor: >-
+    Far north, where the ice meets open water, a white bear will walk into the sea as calmly as onto a frozen plain. It hunts seals from the drift, swimming with a broad head held high, and it does not care much for the cold that would stop lesser animals. Hunters who meet one learn quickly that its patience is worse than its temper.
+  imagePrompt: >-
+    A massive cream-furred bear swimming through jagged blue floes in an Arctic sea, its black nose raised and dripping water under a pale sky.
+- id: pony
+  flavor: >-
+    Ponies are the sort of animal that every village keeps and nobody writes songs about. This one is small and stubborn, with a shaggy coat and a habit of stopping dead at the edge of any bridge it distrusts. Its hooves are harder than its temper, and the stable boys learn to respect that before they learn anything else.
+  imagePrompt: >-
+    A small shaggy brown pony with a dusty mane standing at the timber end of a narrow wooden bridge over a grey stream, ears pinned back.
+- id: priest-acolyte
+  flavor: >-
+    The acolyte is the one who sweeps the altar, carries the candles and remembers every name on the donation roll. Young, earnest and a little frightened of the senior clergy, they nonetheless keep a mace close at hand and know how to use the sacred fire in its defense when a village road turns dangerous. Most would prefer to tend a garden than to fight, and most do it well.
+  imagePrompt: >-
+    A young robed attendant in a dented chain shirt stands in a stone chapel doorway, a plain iron mace held low and a bronze disc hanging at the chest.
+- id: priest
+  flavor: >-
+    Every congregation has a priest who knows which families owe which debts and which roofs need mending before winter. This one has grown into the job over many seasons of quiet service, and has a sharp memory for slights and a sharper eye for coin. When trouble comes to the parish, the priest answers with flame, a heavy mace, and a voice that carries well across the square.
+  imagePrompt: >-
+    A stout middle-aged cleric in layered grey vestments stands before a candlelit altar, a bronze mace resting on the stone and a faint orange glow at its head.
+- id: pseudodragon
+  flavor: >-
+    A pseudodragon is a sly little cousin of the great wyrms, small enough to perch on a shoulder and clever enough to keep secrets. It understands the common speech perfectly but cannot speak a word, so it communicates with a flick of its tail and a pointed look. Many sages keep one as a companion, though the creature usually decides who is trustworthy before anyone else does.
+  imagePrompt: >-
+    A tiny green-scaled winged lizard with a long curling tail perches on a mossy stone wall, its amber eyes fixed on a glinting brass lantern.
+- id: pteranodon
+  flavor: >-
+    Pteranodons nest on sea cliffs and glide the warm updrafts above the waves, their long crests catching the wind like a sail. They are not clever hunters, but they are patient ones, dropping on schools of fish and carrying off whatever they can reach. A flock settled on a headland looks almost peaceful, right up until one of them wheels about with its beak open.
+  imagePrompt: >-
+    A large pale-winged flying reptile with a long bony crest glides above grey sea cliffs, its narrow beak open over a foam-flecked surf.
+- id: purple-worm
+  flavor: >-
+    Beneath the hills there is a tunnel wide enough to drive a cart through, and at its far end lives the purple worm. It moves through solid rock as easily as a river moves through silt, leaving a hollow behind that the local folk avoid for generations. Scholars who have seen its gaping mouth still dispute whether it hunts by sound, by scent, or simply by bad luck for the traveler.
+  imagePrompt: >-
+    A colossal glossy purple worm with a ringed body and a circular toothed mouth bursts from a crumbling rock wall, its stinger-tipped tail curled behind it.
+- id: quasit
+  flavor: >-
+    Quasits are small, sour things that slip out of the cracks in old summoning circles and make mischief for whoever opened them. They wear whatever shape amuses them, usually something furry or cute, and they are quick to turn invisible when a fight goes badly. A hedge-wizard who keeps one as a familiar will soon discover that the creature is more interested in its own comfort than in anyone's orders.
+  imagePrompt: >-
+    A small leathery red-skinned imp with batlike wings and curved claws crouches on a shelf of cracked stone, half fading into thin shadow.
+- id: rakshasa
+  flavor: >-
+    This fiend wears a handsome face the way a merchant wears a good coat, and it expects to be obeyed by everyone it meets. Its patience is vast and its contracts are binding, though the fine print always favors the one who wrote it. Courts across the old lands have hired it as a counselor, and then discovered too late that the counsel was meant for its own benefit.
+  imagePrompt: >-
+    A tall elegant figure with a tiger-striped face and a silk-draped human body sits on a gilded throne, golden rings glinting on its clawed hands.
+- id: rat
+  flavor: >-
+    Rats go wherever the bread goes, and they have been doing so for as long as there have been granaries to raid. A single rat is hardly a threat, yet a sewer full of them can empty a larder faster than any thief. Cooks learn to keep their flour covered and their children close, because the rats are patient, clever at finding gaps, and always hungry.
+  imagePrompt: >-
+    A scruffy brown rat with a pink tail and wet whiskers crouches on a damp stone sewer ledge beside a spilled sack of grain.
+- id: raven
+  flavor: >-
+    Ravens are clever birds that gather where there is death, and they are fond of collecting shiny things for their nests. This one has learned to copy the voices it hears in camp, a whisper here and a chitter there, so that listeners cannot always tell the bird from the person it imitates. Old tales in the mountain villages hold that a raven which speaks a traveler's name is about to carry bad news.
+  imagePrompt: >-
+    A glossy black raven with a sharp grey beak perches on a bare branch above a dark campfire, its head tilted as if listening.
+- id: red-dragon-wyrmling
+  flavor: >-
+    A wyrmling is a dragon that has not yet earned the right to be proud, though it certainly tries. Its scales are the color of banked coals, and it has already learned that a heap of anything valuable is worth guarding with teeth and temper. Villagers who hear a crackle in the hills at dusk should bolt the doors and hope the young beast is still too greedy to be bothered with them.
+  imagePrompt: >-
+    A young crimson dragon with glossy red scales and small folded wings crouches on a pile of gold coins, smoke curling from its open jaws.
+- id: reef-shark
+  flavor: >-
+    Reef sharks patrol the warm shallows where coral breaks the surf, moving in loose families that hunt together. They are curious rather than cruel, and most divers who meet one will see only a shadow sliding along the reef edge. Fishers learn quickly, though, that a shark which has tasted blood will return with its friends and ignore every shout from the boat.
+  imagePrompt: >-
+    A sleek grey reef shark with pale underbelly turns above a sunlit coral shelf, shafts of light falling through clear blue water.
+- id: remorhaz
+  flavor: >-
+    This burrower lives where the cold runs deepest, yet it carries its own heat inside a long segmented body like a furnace that learned to crawl. It tunnels through ice and stone with a patience that frightens miners, and it surfaces in a cloud of steam wherever the rock grows warm. Survivors describe the air close to it as shimmering, with a smell somewhere between hot iron and scorched bread.
+  imagePrompt: >-
+    A huge pale-shelled burrowing creature with a glossy segmented body and a jaw dripping amber fire emerges from a crack in blue glacial ice.
+- id: rhinoceros
+  flavor: >-
+    The rhinoceros is a heavy, short-sighted grazer that trusts its horn far more than its eyes. Left alone, it will wander across the grassland at its own pace and ignore everything that does not smell like rivals or danger. Once it decides to charge, though, the plain seems to shake, and the bravest herders learn to get out of its way.
+  imagePrompt: >-
+    A massive grey rhinoceros with a long curved horn lowers its head on a sunbaked savanna, dust rising from its thick hooves beneath a wide orange sky.
+- id: riding-horse
+  flavor: >-
+    A riding horse is the animal that carries messengers, doctors and anyone else who cannot afford to walk. It has a steady gait, a clear eye and little patience for nonsense. Stable hands often say that a good mount is one that trusts its rider, and a wise rider is one who never gives it a reason to doubt them.
+  imagePrompt: >-
+    A tall chestnut horse with a flowing dark mane and a white blaze stands saddled on a dusty country road beneath a cloudy morning sky.
+- id: roc
+  flavor: >-
+    The roc is a bird that treats the mountains as its own nesting shelf, and it sees everything below with eyes sharp enough to read a letter from the clouds. It can lift a bull from a pasture, a sheep from a fold, or a sailor from a deck if the wind is wrong. Those who have watched its shadow cross a valley say the sky seems to dim, as if the light had leaned closer to listen.
+  imagePrompt: >-
+    A gigantic brown bird with outstretched feathered wings and hooked talons glides over a jagged mountain range under a bright blue sky.
+- id: roper
+  flavor: >-
+    In the dark corners of caves, a roper looks like nothing more than a stalagmite of grey stone, and that is exactly how it likes to be overlooked. When a careless traveler leans too close, a dozen sticky strands lash out to haul the unwary upward toward a mouth full of jagged teeth. Miners who spot a suspiciously lumpy column of rock learn to tap it with a pick before resting their hands on it.
+  imagePrompt: >-
+    A lumpy grey stalagmite in a dim cave hides a sprawling tangle of thick pale tentacles and a wide mouth lined with needle teeth.
+- id: rust-monster
+  flavor: >-
+    The rust monster is a six-legged scavenger that smells iron from a long way off and cannot resist a meal of it. It has no interest in gold or gems, only in the metal that hangs from people's belts and sits in their armor. A traveler who sees its feathery feelers twitching toward a sword should step back quietly and hope the blade is cheap enough to lose.
+  imagePrompt: >-
+    A hairy armored beast with a pair of long feathery feelers and a flat snout nudges a rusted iron sword on a damp cave floor.
+- id: saber-toothed-tiger
+  flavor: >-
+    Long before the first farms, the saber-toothed tiger stalked grassland edges with a gait like smoke, and its heavy front limbs were built for pulling down large prey. Its fangs are long enough to look ceremonial, though they serve a practical purpose. Herds that grazed near its hunting range learned to scatter at the first hint of a tawny flank moving through the reeds.
+  imagePrompt: >-
+    A powerful tawny cat with huge curved white fangs and muscular forelegs crouches in tall golden grass, muscles tensed for a leap.
+- id: sahuagin-warrior
+  flavor: >-
+    These sea raiders are fish-faced hunters who travel the currents in organized war bands and regard the surface world as a stocked larder. Their warriors wear shell armor and carry barbed spears, and they bargain with sharks as calmly as a farmer bargains for oxen. Coastal towns that spot a fin cutting through the harbor mouth bar their gates and light every lantern they own.
+  imagePrompt: >-
+    A lean grey-green humanoid with a finned crest and gill slits holds a barbed spear in shallow blue water, shell armor strapped across its chest.
+- id: salamander
+  flavor: >-
+    Salamanders are creatures of living fire that drift through forges and volcanic vents, glowing like coals that have learned to move. Their bodies are long and muscular, and they coil about their prey before the heat turns the captive's armor into a red-hot cage. Smiths who strike a bargain with one find it generous only until the terms are read aloud.
+  imagePrompt: >-
+    A large salamander of living flame with a muscular body of molten orange and black ash coils beside a glowing iron anvil in a dark forge.
+- id: satyr
+  flavor: >-
+    Satyrs are wild fey with goat legs and a talent for music that makes the hearers forget their chores. They are vain, quick-witted and fond of mocking anyone who takes themselves too seriously. A satyr will pipe a merry tune to lead travelers off the path, then laugh loudly when they realize the road has vanished behind them.
+  imagePrompt: >-
+    A grinning satyr with curling horns, goat legs and a reed pipe at its lips sits on a mossy log in a sunlit glade of tall ferns.
+- id: scorpion
+  flavor: >-
+    The scorpion is a small armored hunter that prefers dry rocks, the shade beneath fallen logs, and the cracks of old walls. Its pincers are for holding, while the curled tail carries a sting that is far out of proportion to the animal's size. Desert nomads shake out their boots every morning, which is a habit that has saved many a sleepy traveler.
+  imagePrompt: >-
+    A small glossy black scorpion with raised pincers and a segmented tail curved high over a sun-bleached desert stone.

@@ -1,0 +1,125 @@
+- id: scout
+  flavor: >-
+    Scouts are the quiet ones who walk ahead of every party and return with news nobody else could gather. They keep to the tree lines, read the mud for the passing of strangers, and carry a longbow that rarely leaves their grip. Most would rather go unseen than be admired, and a good scout is one whose camp no one ever finds.
+  imagePrompt: >-
+    A lean wilderness scout in patched leather crouches beside a mossy stone at dusk, a longbow in hand and a shortsword at the hip, eyes scanning a misty forest path.
+- id: sea-hag
+  flavor: >-
+    Sea hags haunt the cold shallows where fishing boats drift too close to the reefs. Their skin is slick and green, and their face shows a beauty only to those who have not yet looked closely. Sailors who spot one at the surface usually discover, too late, that the lovely voice belongs to something that wants them drowned.
+  imagePrompt: >-
+    A hunched sea hag with barnacle-crusted skin and tangled green hair rises from dark green surf beside a splintered reef, one clawed hand lifted above the waves.
+- id: seahorse
+  flavor: >-
+    Seahorses drift through kelp forests with their tails wound tight about the sea-grass, looking like the least threatening thing in the water. Their small bodies can dart through the current faster than their size suggests, and they cannot breathe anywhere but beneath the waves. Divers who have seen one clinging to a reef often swear it was watching them back.
+  imagePrompt: >-
+    A pale seahorse with a curled prehensile tail clings to a branch of violet coral in clear blue water, its ridged body glowing faintly in beams of sunlight.
+- id: shadow
+  flavor: >-
+    A shadow is what remains when a person's last warmth has gone out of them and only the outline is left to wander. It slips along cellar walls and under doorways, seeking the dim corners where light has given up, and it has no appetite except for vitality. Those it touches seldom stay themselves, and the wiser households keep their lamps lit late.
+  imagePrompt: >-
+    A tall, thin silhouette of smoky grey stretches across a flagstone cellar floor, its edges dissolving into the gloom while a single candle flickers beyond it.
+- id: shambling-mound
+  flavor: >-
+    A shambling mound is a heap of rot and marsh-grass that has learned to walk, and it smells of wet earth long before it comes into view. Its tendrils crackle with stored lightning from storms it has drunk in, and a creature caught in its embrace is pulled slowly into the sodden mass. Travellers who cross a bog after a thunderstorm do well to look at the reeds before they step on them.
+  imagePrompt: >-
+    A heap of dripping reeds and dark peat rises from a bog pool, with thick green tendrils reaching out and sparks of blue lightning crawling across its wet surface.
+- id: shield-guardian
+  flavor: >-
+    A shield guardian is a tall construct of riveted plating, built to stand watch over a tomb or a hedge-wizard's vault. It answers only to the wearer of its bound amulet, and when that person is struck it steps in with a bright shimmer of force to take the blow. Its metal is slow to wear, and a battered guardian will often knit itself whole again while the fight is still going.
+  imagePrompt: >-
+    A broad armored colossus of dull bronze plates stands in an ancient stone archway, a glowing amber amulet hanging on its chest and a fist raised ready to strike.
+- id: shrieker-fungus
+  flavor: >-
+    A shrieker is a squat purple mushroom that thrives in damp caves, where it sits patiently and waits for anything bright or alive to come close. When it senses a torch or a passing traveller it begins a piercing wail that carries through the tunnels and draws every hungry thing nearby. Cave-folk have a saying that the shriek is the only honest warning in the dark, and most of them have learned to tiptoe past.
+  imagePrompt: >-
+    A cluster of violet mushrooms with ruffled caps and pale stalks sprouts from a damp cave wall, lit by a faint purple glow in the murk.
+- id: silver-dragon-wyrmling
+  flavor: >-
+    A silver wyrmling is a young dragon with scales like polished coins, and it is more curious than cruel for all its sharp teeth. Its frosty breath can freeze a creature where it stands, and a dazed victim may be left unable to act while the wyrmling sorts through its loot. Hoards are its first pride and its favourite source of grievance, so visitors to a silver nest should keep their coins in their pockets.
+  imagePrompt: >-
+    A small silver dragon with glittering scales and folded wings crouches atop a heap of gold coins in a frosty cave, its jaws open to show glints of white breath.
+- id: skeleton
+  flavor: >-
+    A skeleton is the bare frame of someone buried with a sword, and whatever mind once lived in it has long since gone quiet. It rattles out of a barrow or a sunken crypt at the call of a necromancer, carrying a rusted blade and a bow with more loyalty than sense. Its grin never changes, which is the least unsettling part of meeting one in a dark graveyard.
+  imagePrompt: >-
+    A grinning skeleton in tattered mail and a dented helm stands among leaning headstones, holding a rusted shortsword low and a short bow across its ribs.
+- id: solar
+  flavor: >-
+    A solar is a radiant messenger of the upper heavens, a warrior whose golden sword flies from its hand and returns on its own. It hears every lie spoken within earshot, and it can rise again after death in a fresh body, though most who meet one remember only the wrath. Its bow is a thing of light that can strike across a valley, so no one should count on a clean escape from its gaze.
+  imagePrompt: >-
+    A tall, winged celestial with gleaming gold-white armor and a halo of soft light stands on a cloud-bank, a glowing longsword hovering at its shoulder beside a slender bow.
+- id: specter
+  flavor: >-
+    A specter is the pale, mournful shape of a person whose final moments were spent in a bitter grudge, and it drifts through stone as easily as through a curtain. Sunlight weakens it, and in dim places it grows bold, reaching out with a cold hand that drains the warmth and strength from whoever it touches. Its victims often find that something has quietly walked out of them and never returned.
+  imagePrompt: >-
+    A translucent, hooded figure with trailing grey wisps for a lower body hovers in a ruined stone hall, its skeletal hands outstretched and pale light seeping through its form.
+- id: sphinx-of-lore
+  flavor: >-
+    A sphinx of lore is a lion with the wings of a bird and the patience of a librarian, and it will trade riddles and secrets for an answer that pleases it. Its roar can leave the boldest traveller reeling, and no scrying eye or charm can read its thoughts.
+  imagePrompt: >-
+    A great golden sphinx with a human face and feathered wings rests on a sun-warmed dais of carved stone, scrolls and open books scattered beside its paws.
+- id: sphinx-of-valor
+  flavor: >-
+    Lion-bodied and eagle-winged, a sphinx of valor guards the gates of old battlefields with a roar that can scatter whole armies. Its claws can split a shield in one stroke, and those who would pass must first prove their worth in combat or be turned back in shame.
+  imagePrompt: >-
+    A massive winged lion with a feathered eagle head and golden fur stands on a broken stone rampart above a battlefield, wings spread wide against a red dusk sky.
+- id: sphinx-of-wonder
+  flavor: >-
+    Playful and cat-bodied, the sphinx of wonder has a fondness for clever gifts, and it delights in helping those who make it laugh. Its inventions and bright spells sometimes go wrong, and it is quick to add a little luck to a friend's efforts or to shield a companion from harm.
+  imagePrompt: >-
+    A sleek tawny sphinx with a silver tail and violet-tinted feathers sits in a sunlit garden, batting a glowing crystal sphere with one paw beside a bubbling flask.
+- id: spider
+  flavor: >-
+    Spiders of this sort are hunters that spin silken webs across forest gaps and cave mouths, waiting with their legs tucked close. They move through their own silk without snagging and feel every tremor a struggling meal sends along the strands, and their venom, though not strong, leaves prey sluggish enough to haul away.
+  imagePrompt: >-
+    A hairy black spider with glossy eyes hangs from a silver web strung between gnarled roots, its eight legs bent and its abdomen dusted with grey.
+- id: spirit-naga
+  flavor: >-
+    A spirit naga is the serpent-bodied ghost of a sorcerer who sold its soul to something dark, and its human face still wears a faintly cruel smile. It guards ruined shrines in the wilds, and anyone foolish enough to disturb it will find its bite venomous and its necrotic ray chilling. Even its bones are said to whisper secrets, though most who hear them do not live long enough to repeat them.
+  imagePrompt: >-
+    A pale serpent with a human face and a fine crown of black hair coils over a moss-covered altar, its ghostly body glowing faintly in dim light.
+- id: sprite
+  flavor: >-
+    Sprites are tiny fey folk with dragonfly wings and quick, mischievous hands, and they flit through the woods on errands no one quite understands. They carry needle-thin swords and bows that can make a passerby fall hopelessly fond of them for a moment, and they can vanish from sight whenever they like. Their curiosity about a stranger's heart is sharp enough to read feelings plainly, though the fey themselves rarely say what they discover.
+  imagePrompt: >-
+    A tiny green-skinned fairy with iridescent dragonfly wings and a slender needle-thin sword perches on a fern frond, a small bow slung across her back.
+- id: spy
+  flavor: >-
+    A spy is a quiet professional who sells secrets to the highest bidder, moving through crowds and rooftops with a practiced ease that makes pursuers lose the trail. Their weapons are kept clean and their poison is always close at hand, and a single nick from a poisoned blade can leave a target dazed long enough to slip away.
+  imagePrompt: >-
+    A lean figure in a dark hooded cloak and muffled leather stands on a slate rooftop at night, a hand crossbow held low and a short blade gleaming at the belt.
+- id: steam-mephit
+  flavor: >-
+    A steam mephit is a cheerful little elemental of boiling mist, all wet heat and hissing bravado, and it tends to burst into vapour when it is struck. Its steam can scald a passing traveller's face, and anyone who breathes it in finds their legs slowed and their wits muddled for a short spell. Most of them are more bluster than harm, though the bright hiss they make when they burst is hard to forget.
+  imagePrompt: >-
+    A small humanoid figure made of churning white vapour and grey mist hovers above a steaming hot spring, one clawed hand raised and wisps of steam curling from its body.
+- id: stirge
+  flavor: >-
+    A stirge is a bat-winged horror with a long needle of a beak, and it hunts by drifting silently over sleeping camps until it finds a warm neck to latch onto. Once attached, it drinks its fill and can be pulled off only with a deliberate tug, leaving its host pale, chilled and weak.
+  imagePrompt: >-
+    A grey, leathery winged creature with a long thin proboscis hangs from the eave of a wooden hut at dusk, its wings folded and its beak aimed at a hanging lantern.
+- id: stone-giant
+  flavor: >-
+    Stone giants build their homes into mountain faces and treat the slopes as a garden of carefully arranged boulders. They are patient craftsmen and watchful guardians, and a stone giant will hurl a boulder at any intruder who arrives uninvited. Their skill with rock is so fine that a giant can deflect a flung missile back at its thrower, and the wise approach them as a bargain partner rather than an opponent.
+  imagePrompt: >-
+    A towering grey giant with a craggy stone face and bare shoulders stands on a mountain ledge, gripping a huge rough boulder in both hands above a valley of pines.
+- id: stone-golem
+  flavor: >-
+    A stone golem is a carved guardian of granite and runes, made to hold a single shape and follow its maker's words to the letter. It shrugs off most spells aimed at it, and its heavy fists strike with a force that splits stone and bone alike. Its slow, heavy steps can be heard long before it arrives, and a single word of command is enough to make it stop or wander off.
+  imagePrompt: >-
+    A massive humanoid statue of pale grey granite with glowing runes carved across its chest stands in a ruined hall, one fist lowered and dust drifting from its shoulders.
+- id: storm-giant
+  flavor: >-
+    Storm giants keep halls on sea cliffs and read the coming weather in the clouds as easily as others read a letter. Their swords crackle with lightning, and a single bolt can strike an enemy far off and leave it dazed, so most seafarers give their coastline a wide berth. Yet they are generous to honest traders, and a storm giant can be a steady friend to any ship that respects the sea.
+  imagePrompt: >-
+    A towering giant with weathered blue-grey skin and a long beard streaming in the wind stands on a sea cliff, a crackling silver sword raised beneath a churning storm.
+- id: succubus
+  flavor: >-
+    A succubus is a fiend that wears a lovely face to win trust, and it can take a more modest form when it tires of being admired. Its voice is soft and its touch is burning, and those it has charmed may find their strength draining away with every whispered promise. Those who see through the smile often flee before they learn what it wants from them.
+  imagePrompt: >-
+    A pale, elegant fiend with dark bat-like wings and curling horns stands in a candlelit hall, a silk veil drifting from its shoulders and a faint smile on its lips.
+- id: swarm-of-bats
+  flavor: >-
+    A swarm of bats is a seething cloud of wings and needle teeth, pouring out of a cave mouth at dusk and blotting out the moon for a moment. No single bat is much to fear, but a hundred of them can leave a traveller bloodied and stumbling in moments, which is why the sensible keep their torches lit and their heads covered.
+  imagePrompt: >-
+    A dense, swirling cloud of small brown bats with leathery wings and sharp teeth fills a dusky sky above a rocky cave mouth, their bodies blurring in motion.

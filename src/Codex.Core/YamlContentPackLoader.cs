@@ -24,6 +24,9 @@ namespace Codex.Core;
 /// locations/*.yaml      LocationDefinition
 /// &lt;type-folder&gt;/*.yaml  generic ContentEntry, typed by the system's entity type for that folder
 ///                       (or by the folder name itself when the system declares no schema for it)
+/// flavor/&lt;type&gt;/*.yaml  lore and art prompts for entries other packs define: each item is an id plus
+///                       properties (<see cref="ContentEntry.FlavorKeys"/> and the type's own fields) merged
+///                       into that entry; the pack must depend on the one that defines it
 /// </code>
 /// Each YAML file holds either one item or a list of items.
 /// </summary>
@@ -32,7 +35,8 @@ public class YamlContentPackLoader : IContentPackLoader
     public const string ManifestYaml = "manifest.yaml";
     public const string ManifestJson = "manifest.json";
 
-    private static readonly string[] ReservedFolders = { "abilities", "actors", "locations" };
+    private const string FlavorFolder = "flavor";
+    private static readonly string[] ReservedFolders = { "abilities", "actors", "locations", FlavorFolder };
 
     private readonly IContentRegistry _registry;
     private readonly IDeserializer _yamlDeserializer;
@@ -123,6 +127,70 @@ public class YamlContentPackLoader : IContentPackLoader
                 var yaml = await File.ReadAllTextAsync(file);
                 DeserializeAndRegister<ContentEntry>(yaml, manifest, (entry, prio) => RegisterEntry(entry, typeKey, type, prio), file);
             }
+        }
+
+        var flavorPath = Path.Combine(packPath, FlavorFolder);
+        if (Directory.Exists(flavorPath))
+        {
+            foreach (var typeFolder in Directory.GetDirectories(flavorPath))
+            {
+                foreach (var file in Directory.GetFiles(typeFolder, "*.yaml", SearchOption.AllDirectories))
+                {
+                    ApplyFlavor(Path.GetFileName(typeFolder), await File.ReadAllTextAsync(file), manifest, system, file);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Merges the items of one <c>flavor/&lt;type&gt;/*.yaml</c> file into the entries they name. Only
+    /// <see cref="ContentEntry.FlavorKeys"/> and fields the type declares are accepted, so a flavor file
+    /// can add lore but never change a rule. An id no loaded pack defines is logged, and its flavor is kept for homebrew entries with that id.
+    /// </summary>
+    private void ApplyFlavor(string typeFolder, string yaml, PackManifest manifest, SystemDefinition? system, string source)
+    {
+        List<Dictionary<string, object>>? items;
+        try
+        {
+            items = _yamlDeserializer.Deserialize<List<Dictionary<string, object>>>(yaml);
+        }
+        catch (YamlDotNet.Core.YamlException ex)
+        {
+            _logger.LogError(ex, "Could not parse flavor file {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
+            return;
+        }
+
+        if (items == null) return;
+        var type = system?.FindType(typeFolder);
+        var typeKey = type?.Type ?? typeFolder.ToLowerInvariant();
+        var allowed = new HashSet<string>(ContentEntry.FlavorKeys, StringComparer.OrdinalIgnoreCase);
+        foreach (var field in type?.Fields ?? new List<FieldDefinition>()) allowed.Add(field.Key);
+
+        var missing = new List<string>();
+        foreach (var item in items)
+        {
+            var id = item.TryGetValue("id", out var rawId) ? rawId?.ToString() : null;
+            if (string.IsNullOrWhiteSpace(id)) continue;
+
+            var flavor = new Dictionary<string, object>();
+            foreach (var (key, value) in item)
+            {
+                if (key.Equals("id", StringComparison.OrdinalIgnoreCase) || !allowed.Contains(key)) continue;
+                if (YamlValues.Normalize(value) is { } normalized) flavor[key] = normalized;
+            }
+
+            // Remembered even when no loaded pack defines the entry: a campaign's homebrew may.
+            _registry.RegisterFlavor(manifest.SystemId, typeKey, id, manifest.Id, flavor);
+
+            var target = _registry.GetEntry(manifest.SystemId, typeKey, id);
+            if (target == null) missing.Add(id);
+            else target.AddFlavor(_registry.GetFlavor(manifest.SystemId, typeKey, id), overwrite: true);
+        }
+
+        if (missing.Count > 0)
+        {
+            _logger.LogWarning("Flavor in {Source} (pack {PackId}) names {Count} {Type} entries that no loaded pack defines, such as {Ids}. They only reach homebrew entries; if they should decorate another pack, does this pack depend on it?",
+                source, manifest.Id, missing.Count, typeKey, string.Join(", ", missing.Take(5)));
         }
     }
 
@@ -269,6 +337,9 @@ public class YamlContentPackLoader : IContentPackLoader
 
             switch (firstSegment.ToLowerInvariant())
             {
+                case FlavorFolder:
+                    if (segments.Length >= 3) ApplyFlavor(segments[1], yaml, manifest, system, entry.FullName);
+                    break;
                 case "abilities":
                     DeserializeAndRegister<AbilityDefinition>(yaml, manifest, RegisterAbility, entry.FullName);
                     break;

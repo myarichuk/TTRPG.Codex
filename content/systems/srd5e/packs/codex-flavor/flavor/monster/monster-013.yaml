@@ -1,0 +1,125 @@
+- id: warhorse-skeleton
+  flavor: >-
+    Some field-captains bred the warhorse for the charge, and the charge outlived everyone who signed for it. What remains is a bony mount that still keeps its ranks in a cold meadow, hooves clacking with a stubborn sense of order. Its rider never comes back, so it simply trots toward whatever it was last told to trample.
+  imagePrompt: >-
+    A bare-boned armoured warhorse skeleton stands in a frosted meadow, hooves raised, pale bones against a grey dusk sky.
+- id: warhorse
+  flavor: >-
+    Warhorses are bred for weight and nerve, and this one has plenty of both. It stays steady beside its handler, but strangers who step into its path find it far less patient. Its hooves are its favourite argument, and it swings them like a pair of heavy mallets.
+  imagePrompt: >-
+    A large chestnut warhorse with a glossy coat and a braided mane stands in a sunlit paddock, forelegs lifted, dust rising from its hooves.
+- id: warrior-infantry
+  flavor: >-
+    Every garrison keeps a few of these, mostly for the simple reason that a spear and a line of friends are cheaper than a hero. The warrior trusts its neighbours in the line and stands close enough to them that a strike at one becomes a strike at all. It owns little beyond a chain shirt, a spear, and a stubborn habit of not stepping out of formation.
+  imagePrompt: >-
+    A lightly armoured infantryman in a chain shirt holds a long spear upright beside two comrades in a muddy field at dawn.
+- id: warrior-veteran
+  flavor: >-
+    Veterans like this one have outlived most of the people who trained them, and they carry the habit of keeping their chin low and their blade ready. The splint armour is dented in a dozen places, each dent a story that the warrior will not tell. Whether it swings the greatsword or sights the heavy crossbow, it is hard to hit and harder to surprise.
+  imagePrompt: >-
+    A scarred veteran in dented splint armour grips a greatsword in both hands, one leg forward, on a windswept hilltop under heavy clouds.
+- id: water-elemental
+  flavor: >-
+    A water elemental is less a creature than a sudden decision the lake has made. It pours through gaps no bigger than a thread, then rises to fold an unlucky traveller into its churning body and hold on until the breath is gone. Those who survive its embrace tend to describe the cold as the worst part, and the silence as a close runner-up.
+  imagePrompt: >-
+    A towering humanoid mass of churning blue water with a crest of foam, rising from a dark lake under a stormy sky.
+- id: weasel
+  flavor: >-
+    A weasel is a small bundle of spite and good timing, able to slip through a hedge gap and out the other side before anyone has finished shouting. It climbs anything with a crack in it and sits up to watch with bright, unimpressed eyes. Farmers tolerate them for the mice, and the mice put up with them for reasons nobody has ever explained.
+  imagePrompt: >-
+    A sleek brown weasel perched on a mossy stone wall, head raised, bright black eyes fixed on something in the tall grass.
+- id: werebear-bear
+  flavor: >-
+    In its bear shape this creature is enormous, climbing trees with the easy patience of something that owns the forest. Its heart is kind, and it will sometimes leave honey by the path for travellers it judges to be lost. Its temper, though, is a thing that rises fast when the woods are hurt, and then it is not kind at all.
+  imagePrompt: >-
+    A massive brown bear with a thick ruff of fur and shaggy shoulders stands upright beside a pine trunk in a misty forest clearing.
+- id: werebear-human
+  flavor: >-
+    Dressed in ordinary wool and carrying a pair of handaxes, this werebear could pass for a woodcutter with a generous streak. Its manners are patient and its laugh is easy, though the rough hands and the long pauses before answering tell a different story. Few who meet it in a village square would guess what it turns into when the moon is full.
+  imagePrompt: >-
+    A broad-shouldered man in a wool coat and leather apron holds two handaxes at his sides in a village square at dusk, shadows long.
+- id: werebear-hybrid
+  flavor: >-
+    Halfway between the two shapes, the hybrid stands tall on powerful hind legs with a bear's head crowned by thick brown fur. It is the form chosen for hard work, whether that means hauling a fallen log or swinging a handaxe at a bandit who has stayed too long. Its voice comes out low and rough, but its meaning is clear enough to anyone willing to listen.
+  imagePrompt: >-
+    A tall bear-headed humanoid with shaggy brown fur, muscular arms and a handaxe in each fist, standing in a torchlit stone hall.
+- id: wereboar-boar
+  flavor: >-
+    This small boar has a temper out of all proportion to its size, and the tusks are only the start of the trouble. It snorts over fallen fruit and roots through the undergrowth, then wheels on any hunter who gets too close. Its stubbornness is famous among the villages that have tried to fence it in, and its appetite for mischief is much bigger than it looks.
+  imagePrompt: >-
+    A small bristly black boar with curved tusks and a muddy snout stands among ferns on a forest floor, one hoof pawing the dirt.
+- id: wereboar-human
+  flavor: >-
+    Dressed for a hunt and carrying a bundle of javelins, this wereboar looks like a grumpy bandit who has been up too late. Its laugh is loud and its compliments are rough, and it has a habit of spitting between sentences. Those who share its table learn quickly to keep the good wine out of reach and their boots close to the door.
+  imagePrompt: >-
+    A stocky man with a bristled jaw and coarse brown hair holds a bundle of javelins over one shoulder in a tavern doorway.
+- id: wereboar-hybrid
+  flavor: >-
+    This hybrid walks upright on thick legs and carries its head low, with boar's tusks curling from a jaw that never quite closes. It is built for charging, and it throws a javelin with the same grim pleasure it takes in shouldering a door off its hinges. Villagers say the trouble always arrives in this shape, and the rest of the night goes to clearing up the mess.
+  imagePrompt: >-
+    A broad hybrid figure with a boar's head, curved tusks and bristled hide stands in a muddy lane, a javelin cocked over its shoulder.
+- id: wererat-human
+  flavor: >-
+    Ordinary in a tavern corner, this wererat keeps a hand crossbow under its coat and a ledger of debts in its head. Its manners are precise, its rules are stricter, and its loyalty goes to whoever pays on time. The neighbourhood calls it a fair dealer, but the people who dealt with it tend to end up somewhat poorer and rather quieter.
+  imagePrompt: >-
+    A lean man with a long pale face, whiskered cheeks and pointed ears sits in a shadowy tavern corner, a small crossbow resting on the table beside his cup.
+- id: wererat-hybrid
+  flavor: >-
+    Part man and part rat, this hybrid has a narrow snout, whiskers that twitch at the wrong smell, and quick hands that find pockets before their owners notice. It moves on its toes and climbs walls with no more fuss than a stroll. Hybrids like this are rarely seen in sunshine, and nobody has yet found a polite way to ask why.
+  imagePrompt: >-
+    A rat-headed humanoid with a grey hairless tail and sharp teeth crouches on a rooftop ledge, claws splayed against a moonlit sky.
+- id: wererat-rat
+  flavor: >-
+    This rat is a little larger than the ones in the granary, and it is far cleverer about it. It slips into cellars, along the eaves and through the gaps in old walls, leaving behind the faint smell of fear and spilled grain. Those who catch sight of it at the wrong moment swear that its small black eyes know their names.
+  imagePrompt: >-
+    A small, sleek black rat with a long hairless tail and glossy eyes perches on a wooden beam in a dim, cobwebbed barn.
+- id: weretiger-human
+  flavor: >-
+    This weretiger keeps to itself and prefers a long bow to a long conversation. In the village it is a quiet hunter with a patient face and a good eye, the sort of person who notices who is leaving the inn and when. It answers questions politely and never quite lets anybody close enough to learn where it goes at dusk.
+  imagePrompt: >-
+    A lean woman with tawny hair and a striped cloak holds a longbow loosely at her side on a village road at dusk.
+- id: weretiger-hybrid
+  flavor: >-
+    Taller than a doorway and striped like a bundle of shadows, the hybrid moves with a quiet that makes the people nearby feel suddenly watched. It can pad up a slope without a sound, then go still in a patch of tall grass until it is almost forgotten. Its tiger's grin is the last thing many travellers remember before they realise the path behind them is empty.
+  imagePrompt: >-
+    A striped tiger-headed humanoid with powerful shoulders crouches low in tall grass at the edge of a dark forest, eyes glinting.
+- id: weretiger-tiger
+  flavor: >-
+    In its tiger shape this creature is a long, gold-and-black shape that glides through reeds like smoke. Its paws leave no prints on wet mud, and its tail flicks only when it is pleased, which is not often. Hunters who track it generally find nothing but a faint warmth on a rock and a feeling that something is still watching.
+  imagePrompt: >-
+    A massive tiger with gold and black stripes and pale eyes stands on a mossy riverbank, its head turned toward the reeds.
+- id: werewolf-human
+  flavor: >-
+    Most of the time this werewolf looks like a restless traveller with a longbow slung across the back and a habit of arriving just as the fire is lit. It keeps company with others of its sort and does its hunting in pairs, where one draws attention and the other strikes from the trees. Its eyes are hard to read, but the wolf inside is never far from the surface.
+  imagePrompt: >-
+    A rangy, unshaven man with a longbow over one shoulder stands at the edge of a campfire glow, his eyes catching the light like a wolf's.
+- id: werewolf-hybrid
+  flavor: >-
+    Standing tall on two legs, the hybrid looms over most doorways and carries its shoulders like a battering ram. Its face is half wolf and half something patient and grim, and the longbow it carries is more a courtesy than a preference. Nearby, the air smells of wet fur and iron, and the dogs fall quiet as if remembering something older than their names.
+  imagePrompt: >-
+    A towering wolf-headed humanoid with grey-brown fur and heavy shoulders stands in a stone archway, a longbow held loosely in one hand.
+- id: werewolf-wolf
+  flavor: >-
+    This is a wolf in the old sense of the word, lean and quick and sure of its path through the trees. Its coat is a mottled grey that disappears against the bark, and its howl carries across the hills before the light has gone. Shepherds who hear it sometimes count their flock twice, and the wolf, in turn, counts them too.
+  imagePrompt: >-
+    A lean grey wolf with a mottled coat crouches on a pine-covered ridge, ears pricked, its breath misting in the cold evening air.
+- id: white-dragon-wyrmling
+  flavor: >-
+    A white dragon wyrmling is a young and vain creature, proud of its pale scales and eager to prove them harder than they look. It loves glaciers, tundra lakes and the crusted snow that lies across a northern pass. Its cold breath is spiteful rather than strategic, and it is quite fond of freezing anything it finds mildly annoying.
+  imagePrompt: >-
+    A small white dragon with pale icy scales and frost-tipped wings perches on a jagged glacier beneath a pale blue sky.
+- id: wight
+  flavor: >-
+    A wight was once a person with a name, a grudge, and an unfinished errand, and the grudge is what kept it upright. It wears studded leather still, and it carries a blade and a bow with the grave patience of a sentry who has forgotten the war. Its touch steals warmth and strength from the living, and it hates the sun for reasons it no longer remembers.
+  imagePrompt: >-
+    A gaunt pale figure in tattered studded leather stands among crumbling grave markers at dusk, a longbow in one hand and a sword in the other.
+- id: will-o-wisp
+  flavor: >-
+    This light wanders over bogs and marshes, bobbing and flickering as if it has somewhere to be and no intention of getting there. Travellers who follow it tend to regret their curiosity, which is precisely the point. Old marsh-folk leave small offerings on the mud to keep it content, though nobody has ever been able to prove the offerings do any good.
+  imagePrompt: >-
+    A small, flickering blue-white flame hovers above dark still water among reeds, trailing faint wisps of pale light into the mist.
+- id: winter-wolf
+  flavor: >-
+    The winter wolf is a big, white-furred hunter that treats snowfields as its own kitchen. Its breath arrives first as a cold fog and then as something worse, sweeping across a clearing and leaving the grass stiff and silver. Giants have been known to keep these creatures as hounds, which says a great deal about the giants.
+  imagePrompt: >-
+    A large white wolf with a thick ruff and icy blue eyes stands on a snowbound ridge, its open jaws releasing a cloud of frost.

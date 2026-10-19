@@ -43,7 +43,7 @@ public sealed class DataDrivenSystemPlugin(SystemDefinition definition) : ICodex
 
         foreach (var type in Definition.EntityTypes)
         {
-            yield return new UISchema(type.Type, PreferredEditor.Form, type.Fields.ToList(), Intent: "Content");
+            yield return new UISchema(type.Type, PreferredEditor.Form, type.EditorFields(), Intent: "Content");
         }
     }
 

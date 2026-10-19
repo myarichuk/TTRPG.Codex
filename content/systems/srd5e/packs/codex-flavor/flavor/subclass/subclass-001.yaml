@@ -1,0 +1,36 @@
+- id: champion
+  flavor: >-
+    Champions treat the arena and the battlefield as the same kind of proving ground. Their blows land with a sharpness that old veterans of the lists speak of in hushed tones, and their bodies seem to shrug off wounds that would drop lesser fighters. Where others see a crowd, a Champion sees a crown waiting to be won.
+- id: circle-of-the-land
+  flavor: >-
+    Circles of this sort keep their rites under open sky, where standing stones and old trees mark out the sacred ground. Each keeper learns the moods of one kind of country, be it dry badlands, frozen wastes, temperate woods, or humid rainforest, and borrows a little of that land's temper. Village elders often ask them for counsel on blight, bad weather, and the right season to sow.
+- id: college-of-lore
+  flavor: >-
+    Scholars of the old colleges hold that a good story is worth more than a sword, though they rarely say so to the sword's owner. Members gather facts the way magpies gather bright things, from dusty tomes, half-remembered rites, and grandmothers' tales. They also delight in puncturing pompous lords, since a well-timed joke can unseat a tyrant as neatly as any argument.
+- id: draconic-sorcery
+  flavor: >-
+    Some gifts arrive in a dragon's wake, a stray scrap of old power bequeathed by a dying wyrm or soaked up from a hoard that never quite cooled. The blood of these sorcerers carries a faint metallic warmth, and their skin takes on a sheen like hard scales. Ancestry, rumor, or plain bad luck can all explain the change.
+- id: evoker
+  flavor: >-
+    Evokers study the loud arts, the ones that bring bitter frost, searing flame, rolling thunder, and acid that eats through iron. Some of them end up as siege artillery in the armies of the powerful, hurling ruin across a field before the enemy can close. Others pick a side more quietly, guarding villages from raiders, or they simply charge the highest bidder for their storms.
+- id: fiend-patron
+  flavor: >-
+    A bargain struck with something from below always comes with a ledger, and the entity on the other side keeps its books in blood. Patrons of this kind lend strength, favor, and a little stolen luck, though their aims run toward ruin, and the warlock must decide how far to follow them. Many discover that the cost is paid in small surrenders, long before the final reckoning.
+- id: hunter
+  flavor: >-
+    Hunters range the edges of settled land, tracking whatever threatens the farms and forests beyond the last fence. They learn the weak points of a quarry by watching it closely, and they can read a beast's frailties as easily as a farmer reads the sky. Their craft protects both the wild places and the people who live near them.
+- id: life-domain
+  flavor: >-
+    Healers who serve the mending arts treat every wound as a small argument with death, and they usually win. Their hands warm with a steady glow when they work, and the sick often say the room smells of rain on fresh grass afterward. Farm-towns, sickbeds, and battlefields all know their work, and few ask where the gift came from.
+- id: oath-of-devotion
+  flavor: >-
+    Knights who take this vow hold their word as binding as steel, and they treat a broken promise as the worst kind of crime. Many carry emblems of wings on their shields, a nod to beings of light who are said to watch over honest folk. Some are stern to a fault, though the realm sleeps easier knowing they stand watch.
+- id: path-of-the-berserker
+  flavor: >-
+    Berserkers let the red tide carry them. Their rage lifts them into a storm of blows, and they treat the fury of combat as a homecoming rather than a horror. Friends sometimes find it hard to call them back once the fight is over, and enemies learn quickly that a berserker feels no fear in the press of battle.
+- id: thief
+  flavor: >-
+    Every ruined tower holds a locked chest and a few stories nobody wants told, and the thief has come to collect both. Quick fingers pick locks and pockets alike, while a light step carries them up sheer walls and across rooftops. Such people are hard to hold for long, and the magic baubles they pry loose often find their way onto a crowded table.
+- id: warrior-of-the-open-hand
+  flavor: >-
+    Monks of this school fight without weapons and regard their own bodies as the finest tool they own. They can shove a charging brute back across the courtyard, sweep a rival off balance, or knit their own wounds closed with a pulse of inner force. Their stillness is famous, and their discipline is said to make the hardest stone seem soft.

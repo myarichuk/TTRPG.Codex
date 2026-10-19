@@ -28,6 +28,33 @@ public class ContentEntry
     /// <summary>Optional source reference inside the pack (page, section) for the attribution footer.</summary>
     public string? Source { get; set; }
 
+    /// <summary>Property keys every system understands: a short piece of lore (<c>flavor</c>), where a
+    /// creature lives and how it acts, and a one-sentence visual description for generating art.
+    /// A <c>flavor/</c> folder in a pack fills these in on entries other packs define.</summary>
+    public static readonly string[] FlavorKeys = { "flavor", "habitat", "behavior", "imagePrompt" };
+
+    /// <summary>Set by the loader on an entry whose flavor came from another pack: that pack's id, so the
+    /// Library can credit the lore to its own author and licence instead of the pack that owns the rules.</summary>
+    public const string FlavorSourceKey = "flavorSource";
+
+    /// <summary>
+    /// Copies registered flavor onto this entry. With <paramref name="overwrite"/> false (an entry the table
+    /// wrote itself) anything the entry already says is kept. The source pack is credited only when the
+    /// lore text itself came from the overlay.
+    /// </summary>
+    public void AddFlavor(IReadOnlyDictionary<string, object> flavor, bool overwrite)
+    {
+        var loreFromOverlay = false;
+        foreach (var (name, value) in flavor)
+        {
+            if (name == FlavorSourceKey || (!overwrite && Properties.ContainsKey(name))) continue;
+            Properties[name] = value;
+            loreFromOverlay |= name == "flavor";
+        }
+
+        if (loreFromOverlay && flavor.TryGetValue(FlavorSourceKey, out var source)) Properties[FlavorSourceKey] = source;
+    }
+
     public string FullId => $"{SystemId}:{Type}:{Id}";
 
     /// <summary>Fills in anything this entry left unset from <paramref name="baseEntry"/>. Lists and

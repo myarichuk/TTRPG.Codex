@@ -1,0 +1,125 @@
+- id: oil-of-etherealness
+  flavor: >-
+    Cloudy gray beads cling to the inside of this vial and vanish almost as soon as they form. Whoever opens it finds the air smelling faintly of rain that never fell, as if the anointed creature had already begun to slip from the room.
+  imagePrompt: >-
+    A small clear glass vial stoppered with cork, filled with murky gray liquid, sitting on a dusty wooden shelf beside pale blue candles in a dim workshop.
+- id: oil-of-sharpness
+  flavor: >-
+    Tiny silver shards drift through this clear jelly like frost in a still pond. Smiths of the old colleges say a single slick of it can make a plain blade keen enough to split a hair drifting on the wind.
+  imagePrompt: >-
+    A gleaming steel dagger laid across a wooden table, its edge catching the light, next to a corked glass bottle of glittering clear gel with silver flecks.
+- id: oil-of-slipperiness
+  flavor: >-
+    This heavy black unguent pours slowly and then runs quickly, as if it had remembered somewhere it wanted to be. Spilled on a stone floor it turns the flagstones into a trap that laughs at the unwary, and a careless boot will find no purchase.
+  imagePrompt: >-
+    A squat clay pot with glossy dark sludge spilling over its rim onto a cobbled square lit by a lantern.
+- id: pearl-of-power
+  flavor: >-
+    A pearl the color of old milk, faintly warm to the touch, hums softly when someone holds it close. Its keepers say the glow fades as the owner gathers spent sparks of learning back into the mind, a slow borrowing from tomorrow.
+  imagePrompt: >-
+    A lustrous cream pearl the size of a plum set in tarnished silver filigree, with a soft inner glow, resting on dark velvet.
+- id: periapt-of-health
+  flavor: >-
+    A pendant of pale green stone wrapped in fine copper wire, warm against the skin and faintly smelling of crushed mint. Healers of the river-folk hang these on children who wander too near the marsh, as if a little color could chase away sickness.
+  imagePrompt: >-
+    A pale green oval stone pendant set in fine copper wire, hanging from a braided leather cord against a plain linen shirt.
+- id: periapt-of-proof-against-poison
+  flavor: >-
+    A brilliant black gem sits at the bottom of a delicate silver chain, catching light the way deep water does. Old apothecaries kept such pendants close when they handled bitter roots, trusting the dark stone to turn away every sour breath and tainted drop.
+  imagePrompt: >-
+    A faceted black gemstone pendant on a fine silver chain, glinting against a dark slate surface beside a small dried herb bundle.
+- id: periapt-of-wound-closure
+  flavor: >-
+    Woven silver and red thread forms this slender pendant, its knots tied so tightly they seem to hold a pulse of their own. Field surgeons in the mountain forts swore by such charms, claiming that a stubborn heart often refuses to quit when one of these is near.
+  imagePrompt: >-
+    A slender silver pendant with a woven red thread cord, its tight knots gleaming against a cream linen cloth on a wooden surgeon's table.
+- id: philter-of-love
+  flavor: >-
+    A rose-tinted liquid that fizzes faintly, with one bubble shaped like a heart floating in the middle. Drinkers in the old taverns swear the first face they meet afterwards seems to glow with a warmth that is hard to shake.
+  imagePrompt: >-
+    A small clear glass vial of rose-pink liquid with a single tiny heart-shaped bubble rising inside, set on a lace doily beside a dried red petal.
+- id: pipes-of-haunting
+  flavor: >-
+    Pale bone-white pipes, polished smooth by many hands, give off a thin note that lingers in the rafters long after the last breath. Stage players in the river towns tell of audiences who fled the hall, certain they had heard their own names whispered in the reeds.
+  imagePrompt: >-
+    Three pale bone-white wooden pipes bound together with faded red cord, their dark finger holes glinting in a moonlit crypt with cobwebs drifting across them.
+- id: pipes-of-the-sewers
+  flavor: >-
+    A set of dented tin pipes, green with verdigris and warm from being handled. Rat-catchers who work beneath the market streets say the squeaking swarms gather at the first note, moving like a tide that answers only to the tune.
+  imagePrompt: >-
+    A set of tarnished tin pipes with three reed mouthpieces lying on a damp cobbled sewer ledge, a few small grey rats watching from the shadows.
+- id: plate-armor-of-etherealness
+  flavor: >-
+    Plate armor etched with thin spirals of silver, so finely worked that the metal seems to breathe with the wearer. Knights who return from the ash-fields say the steel grows faint at the edges, as if the wearer were halfway through a closed door.
+  imagePrompt: >-
+    Polished steel plate armor with fine silver spiral etchings, its breastplate fading into faint mist as a gauntleted hand rests on the hip in a grey stone hall.
+- id: portable-hole
+  flavor: >-
+    A cloth of black silk, folded small enough to tuck into a pocket and unfolding with a whisper when shaken loose. Hedge-wizards swear it holds a whole cellar's worth of stores, though nobody has ever peered down the dark mouth and come back with a clear account.
+  imagePrompt: >-
+    A folded square of black silk cloth lying on a worn oak floor beside a dark circular opening in the boards, under soft grey light.
+- id: potion-of-animal-friendship
+  flavor: >-
+    Muddy brown liquid holds specks that drift up whenever the bottle is tilted, showing a mole whisker, a scrap of moth wing and a curl of bark. Herders in the high pastures claim the drink makes wild things lower their heads and come forward, curious about what they might share.
+  imagePrompt: >-
+    A small amber glass bottle of muddy brown liquid stands on a wooden table beside a mole whisker and a moth wing under warm lamplight.
+- id: potion-of-clairvoyance
+  flavor: >-
+    A yellowish liquid drifts with the faint shape of an eye that turns to follow the glance of anyone peering in. Scribes in the border courts say it is best poured into a cup with care, since the open eye tends to wander toward whoever drinks it.
+  imagePrompt: >-
+    A slender glass flask of pale yellow liquid with a dim eye-shaped shadow drifting within, set on dark velvet beside an open brass lens.
+- id: potion-of-climbing
+  flavor: >-
+    Brown, silver and grey strata lie in the bottle, and no amount of shaking will blend them. Miners in the hill villages drink it before scaling a cliff face, trusting the bottled cliffs to lend their grip.
+  imagePrompt: >-
+    A squat glass bottle filled with layered bands of brown, silver and grey liquid, standing on a sunlit ledge above a rocky mountain face.
+- id: potion-of-diminution
+  flavor: >-
+    A clear liquid where a bead of red keeps swelling and shrinking, never settling into one shape. Tailors who sew for the tiny folk of the reed marshes swear by it, though they admit the work leaves a faint ringing in the ears.
+  imagePrompt: >-
+    A slender clear glass vial with a red bead of liquid swelling and shrinking within, resting on a dark green cloth next to a tiny thimble and needle.
+- id: potion-of-flying
+  flavor: >-
+    Silver sheen gathers at the top of this clear draught, like cloud pressed under glass. Couriers in the coastal towns carry it on long routes, sipping just before a climb and trusting the wind to keep them steady above the rooftops.
+  imagePrompt: >-
+    A tall glass bottle of clear liquid with a silvery sheen drifting at its surface, set against a pale morning sky over red tile rooftops.
+- id: potion-of-gaseous-form
+  flavor: >-
+    Mist fills this bottle and pours like thin water, curling back on itself whenever the stopper is lifted. Stage magicians in the riverside markets keep one for the trick where a performer slips through a locked door, though the audience never sees the seams.
+  imagePrompt: >-
+    A stoppered glass bottle filled with swirling white mist that curls against the glass, set on a stone windowsill with soft morning light behind it.
+- id: potion-of-giant-strength
+  flavor: >-
+    Pale flecks of light drift through this clear liquid like the parings of some enormous hand. Each brew of this drink is graded by the size of the folk who first made it, and the bottles carry a small brass tag naming their strength.
+  imagePrompt: >-
+    A stoppered glass bottle with a small brass tag, holding a glassy liquid with pale flecks of light drifting inside, on a rough-hewn stone table in a dim cave.
+- id: potion-of-growth
+  flavor: >-
+    Crimson ink seems to bloom through this watery draught, spreading from a point and then retreating into it again. Farmers' children who sip a little before a fair race giggle as their shadows stretch across the grass, a silly thrill that never lasts long.
+  imagePrompt: >-
+    A slender glass bottle of clear liquid with a single drop of crimson ink blooming within, standing among tall green grass in a sunny meadow.
+- id: potion-of-heroism
+  flavor: >-
+    Fog rolls slowly inside this flask, shifting its weight as though the bottle were a small sea. Soldiers in the frontier camps call the stuff a comfort before a charge, claiming the mist settles their nerves and steadies their hands.
+  imagePrompt: >-
+    A tall clear flask of swirling silver-grey fog shifting like water, standing on a weathered wooden bench beside a worn steel helmet in soft dawn light.
+- id: potion-of-invisibility
+  flavor: >-
+    Nothing shows through this glass, yet the flask hefts as though something thick sloshes inside it. Thieves in the harbor districts prize such bottles for their quiet, though old tales warn that the trick ends the instant a careless hand gives itself away.
+  imagePrompt: >-
+    A clear glass flask that seems almost empty, its outline blurred by a faint shimmer, resting on a dark wooden shelf in a shadowy room.
+- id: potion-of-mind-reading
+  flavor: >-
+    Dense purple liquid holds a soft pink wisp that curls in slow loops, as though sorting through someone else's secrets. Clerks in the old courts sip such brews before hard hearings, though a stray whisper rarely stays quiet.
+  imagePrompt: >-
+    A deep violet glass vial holding dense purple liquid with a soft pink wisp curling inside, set on a leather-bound book in candlelight.
+- id: potion-of-poison
+  flavor: >-
+    This bottle is dressed as a healing draught, with the same cork, glaze and ruby hue, though its contents are made to harm. Only a sharp eye, or a truthful sage with a sorting glass, can tell the difference before the first sip.
+  imagePrompt: >-
+    A stoppered ruby-red glass potion bottle with a gilded label, sitting among dried herbs and a faint dark ring of residue on a wooden apothecary counter.
+- id: potion-of-resistance
+  flavor: >-
+    Shifting bands of pale color drift through this liquid, each one hinting at a different shield against harm. Wardens in the salt towns carry a few vials on patrol, trusting luck and the steady hand of whoever pours.
+  imagePrompt: >-
+    A row of small glass vials with pale shifting colors in each liquid, arranged on a stone ledge beside a leather patrol satchel and a worn map.

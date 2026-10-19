@@ -1,0 +1,75 @@
+- id: ray-of-enfeeblement
+  flavor: >-
+    A thin beam of grey light sinks into the bones of its target, leaving muscles feeling like wet paper. The old colleges teach it as a cruel lesson in patience, since the victim keeps trying to shake the weakness loose. Each failed attempt to recover only gives the beam another chance to bite.
+- id: ray-of-frost
+  flavor: >-
+    A blue-white streak of cold leaves the caster's fingers and lands with a crackle of frost. River-folk claim the chill lingers in a creature's legs long after the sting fades, making every step a small argument. Brawlers favor it in quarrels, since a frozen foot ends more disputes than a long speech.
+- id: ray-of-sickness
+  flavor: >-
+    A greenish ray slips out of the fingertips and finds its mark with an unpleasant hiss. The sick feeling it leaves behind is the sort that makes a stomach turn long after the blow has landed. Apothecaries complain that its sour smell clings to coats, a fair price for a spell this petty.
+- id: regenerate
+  flavor: >-
+    Slow green warmth creeps through a battered body and knits flesh faster than any salve could. Tinkers spin a small brass wheel to hold the effect, and the mending carries on long after the patient stands up. Even lost fingers are said to grow back, which makes the bill from the healer a very different matter.
+- id: reincarnate
+  flavor: >-
+    A dead traveler is given a fresh body and a second chance at a life, though rarely the same face. The soul arrives with its memories intact, which tends to make conversations at the inn awkward for a while. Marsh-town healers insist the new form suits the soul better than the old one ever did.
+- id: remove-curse
+  flavor: >-
+    A careful touch unpicks every hex clinging to one creature or object, like a knot loosened by patient fingers. Cursed trinkets are a different matter, since the hex stays put even when the bond to its owner has been cut. Sensible collectors keep a spare pair of gloves handy for that moment.
+- id: resilient-sphere
+  flavor: >-
+    A glassy bubble snaps shut over a creature or small object, humming softly and shrugging off every blow from outside. Nothing gets through its skin, not steel, not sparks, not a rival's clever incantation. Those inside can still breathe, which has made it a favorite of nervous travelers and very cautious chess players.
+- id: resistance
+  flavor: >-
+    A willing companion is steadied with a soft word and a faint shimmer, ready to take a hit without flinching. Each harm meets a slightly thicker wall, provided the caster names the right sort of trouble. Cloakmakers have long sold a cheaper copy of the trick, and nobody has ever asked them to stop.
+- id: resurrection
+  flavor: >-
+    A diamond crumbles to nothing in the hand, and a long-dead figure draws its first breath again. Mortal wounds close, lost limbs return, and any old venom in the blood is swept clean. The return is an ordeal, leaving the revived clumsy and short-tempered until the body remembers how to be alive.
+- id: reverse-gravity
+  flavor: >-
+    Loose gravel, stray hats and startled birds all rise together, as if the sky had decided to pull back. Anything without a firm grip drifts upward until it meets a ceiling or hangs at the top, waiting for gravity to come to its senses.
+- id: revivify
+  flavor: >-
+    A quick touch pulls a fresh corpse back over the threshold, though the returning soul arrives shaky and bruised at the edges. Gravediggers say the diamond used for the trick is never seen again, and they would know. Missing parts stay missing, so nobody should ask for the rest of the body back.
+- id: rope-trick
+  flavor: >-
+    A simple rope lifts its own end toward the rafters until it hangs straight as a plumb line. At the top, a doorway no one can see opens into a cramped room that belongs to nobody's map. Travelers inside can watch the street through the gap, though no blade, bolt or bad luck can cross it.
+- id: sacred-flame
+  flavor: >-
+    Pale light drops from above like a lantern lowered on a rope, catching the target wherever it hides. Cover offers little shelter, because the glow finds every gap that a wall or a hedge leaves open. Priests of a certain kind call it a lesson in humility for anyone who trusted a sturdy fence.
+- id: sanctuary
+  flavor: >-
+    A sliver of mirror glass seals a protective promise over an ally, turning hostile eyes toward other targets. Many a bold attacker finds the nerve wavering at the crucial moment, since an uneasy swing may land on a stranger instead. The charm breaks once the protected one strikes back, which keeps favors honest.
+- id: scorching-ray
+  flavor: >-
+    Three bright streaks of fire leap from one palm, each one hunting its own target like a hound off the leash. Hedge-wizards love it for crowds, since a handful of crackling beams can be spread across several foes. Stronger slots add another streak to the volley, and the noise gets louder for it.
+- id: scrying
+  flavor: >-
+    A still pool or a polished crystal shows a distant face, and the owner of that face feels a sudden prickle at the back of the neck. Anyone who has shared a meal with the watched party or kept a keepsake finds the connection easier to follow, which the trade has long exploited.
+- id: searing-smite
+  flavor: >-
+    A weapon strike leaves a fiery brand that clings to the wound and refuses to go out. Each pulse of its heart brings a fresh flare of heat that the victim must shake off through sheer stubbornness. Smiths in the old quarter claim the best blades are the ones that keep the brand afterwards.
+- id: secret-chest
+  flavor: >-
+    A small trunk slips out of the world and into a hidden layer of the air, waiting for its owner to call it home. The only key is a tiny replica made of the same costly stuff, so a thief who finds it first has already won.
+- id: see-invisibility
+  flavor: >-
+    Hidden things lose their cloak for a while, and the room suddenly looks crowded with shapes that were there all along. Ghosts drift past in faint outline, and the far side of the veil looks like fog caught in a lamp. Thieves hate the spell almost as much as they hate candlelight.
+- id: seeming
+  flavor: >-
+    A crowd of guests can be dressed in borrowed faces, each one wearing a different idea of respectability. Tailors and dressmakers both dislike the trick, since a sharp eye or a poked cheek reveals the paint underneath. It holds through a good stretch of mischief, long enough for trouble and not long enough for dignity.
+- id: sending
+  flavor: >-
+    A thought-thread runs from one mind to another, carrying a few clipped words over land and sea. The receiver hears the words in its own head, and can answer at once, though a few messages go astray. Clever folk know that a reply leaves a door open, and the receiver may close it on any stranger.
+- id: sequester
+  flavor: >-
+    A chosen object or willing creature is folded into a stillness that time does not touch, and it vanishes from scrying and prying alike. Sleepers in the stillness neither age nor hunger, and they wake only when the agreed sign finally appears. Wise owners choose a trigger with care, since a riddle-like condition may outlast everyone's patience.
+- id: shapechange
+  flavor: >-
+    The caster's outline loosens and reforms into a creature they have studied closely, fur or scales arriving in turn. Old hands warn that the new body comes with a borrowed sturdiness, and a cushion of spare vigor fades when the shape is shed. Wise casters pick a shape that will not start a quarrel with the neighbors.
+- id: shatter
+  flavor: >-
+    A sudden thunderclap bursts from a chosen point and rattles everything caught in its reach. Glass sings, bells jangle, and ordinary stone and timber rattle as though a storm had been trapped in a jar. Clockmakers and stonecutters agree that the sound is nothing compared to what it does to a stubborn golem's nerves.
+- id: shield-of-faith
+  flavor: >-
+    A shimmering field settles over a chosen ally, offering a stubborn little margin against blades and claws. Old scribes say the field looks like rippling water, though most people only notice it when a blade skids off. A rolled scroll tucked into a belt is enough to make a nervous guardian feel brave.

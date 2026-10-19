@@ -1,0 +1,125 @@
+- id: boots-of-the-winterlands
+  flavor: >-
+    Stitched by hands that never trusted summer, these furred boots stay snug even when frost creeps up the stair. Old trappers swear the soles remember every drift they crossed. Walking over packed snow becomes a sort of quiet dance.
+  imagePrompt: >-
+    Pair of thick fur-lined leather boots with frost-white trim, resting on a pale snowbank under a grey sky with blue ice crystals.
+- id: bowl-of-commanding-water-elementals
+  flavor: >-
+    A plain clay bowl that comes alive once it is filled with water and someone stands close enough to speak. The water rises into a figure with a cold, patient face, and it obeys until the work is done or it is sent home. Coastal cooks say the bowl remembers every tide it has ever held.
+  imagePrompt: >-
+    Wide hammered bronze bowl brimming with clear water, its inner curve etched with rippling blue waves and pale foam under soft morning light on a stone shelf.
+- id: bracers-of-archery
+  flavor: >-
+    Supple leather cuffs stitched with tiny arrow motifs, favoured by archers who want their bowstring hand to sing. Hedge-wizards claim the leather was cured in a hillside cellar where the wind never stopped whistling. Every shot loosed through them seems to carry a little extra force of intent.
+  imagePrompt: >-
+    Pair of dark tanned leather bracers with embossed arrow patterns and brass buckles, laid across a wooden bow rack beside a quiver of fletched arrows in warm lamplight.
+- id: bracers-of-defense
+  flavor: >-
+    Plain steel-banded bracers that seem to hum faintly whenever no armour covers the wearer. Old duellists favour them for nights when they would rather move freely than be buried in plate. The metal keeps a calm, watchful quiet, as if it is waiting for a blade that never arrives.
+  imagePrompt: >-
+    Two matte steel bracers with narrow bands and rivets, resting on a dark velvet cushion beside a folded linen shirt and a pale grey stone window ledge.
+- id: brazier-of-commanding-fire-elementals
+  flavor: >-
+    An iron brazier scorched black at its rim, which wakes when someone stands near enough to murmur an old command. Flame gathers into a figure with ember eyes and a crackling voice, and it answers its summoner until it is dismissed or burns itself out. The ash in the bowl stays warm for a long while afterward.
+  imagePrompt: >-
+    Black wrought iron brazier with a sooty rim and glowing coals, flames curling upward in a shape like a crouched figure, set against a dim stone chamber.
+- id: brooch-of-shielding
+  flavor: >-
+    An oval silver brooch set with a dull grey stone that seems to drink the light. Wearers describe a faint hush settling over them, as if the air has thickened into invisible glass. Scholars at the old colleges say it was made to turn aside blunt blows and certain stray sparks of spellwork.
+  imagePrompt: >-
+    Oval silver brooch with a dull grey stone at its center, catching a soft glimmer on a dark wool coat collar beside a faint rippling shimmer of air.
+- id: broom-of-flying
+  flavor: >-
+    A plain broom of pale ash that behaves like any housework tool until someone straddles it and wills it skyward. River-folk tell of brooms that slipped their owners and flew home to the kitchen door, looking mildly offended. Its handle hums softly when it is sent off to fetch something nearby.
+  imagePrompt: >-
+    Worn ash broom with a smooth pale handle and tied bundle of straw bristles, hovering above a cobbled courtyard at dusk under a deep violet sky.
+- id: candle-of-invocation
+  flavor: >-
+    A tall tallow candle, its wax marbled in gold and ash, that brightens the room and sharpens every wit within its glow. Lamp-keepers of the old colleges say a lit candle lends clarity to prayers and quick study alike. Some burn one only once, opening a door to a far realm instead of a warm glow.
+  imagePrompt: >-
+    Tall ivory candle with gold-marbled wax and a dark wick, sitting in a bronze holder while soft amber light spills across a wooden table of old books.
+- id: cape-of-the-mountebank
+  flavor: >-
+    A dark cape that smells faintly of sulphur and old coins, favoured by traveling entertainers who vanish mid-performance. Its wearer can slip from one spot to another in a blink, and a curl of grey smoke lingers where they stood. Hedge-wizards warn that the cloth remembers every trick it has ever helped to hide.
+  imagePrompt: >-
+    Dark wine-red cape with a torn black lining and a faint curl of grey smoke drifting from its hem, draped over a wooden chair in a dim candlelit theatre dressing room.
+- id: carpet-of-flying
+  flavor: >-
+    A woven rug in faded crimson and gold, its tassels trailing like the tails of patient cats. Once a command is spoken and the rug is trusted with a passenger, it lifts smoothly and follows the directions of whoever sits upon it. Merchants from river-towns prize the old ones for crossing wide valleys without the bother of roads.
+  imagePrompt: >-
+    Large woven carpet in faded crimson and gold with fringed tassels, hovering a little above a sandy desert floor under a bright blue sky and drifting clouds.
+- id: censer-of-controlling-air-elementals
+  flavor: >-
+    A brass censer with a lid of twisted wire, through which thin threads of incense curl in patterns no breeze could make. When it is gently swung, the smoke gathers into a figure of air that speaks in soft whistles and takes orders from its summoner. Priests of a certain temperament dislike it, yet they remain curious.
+  imagePrompt: >-
+    Ornate brass censer with a perforated dome lid, swinging on a chain while pale incense smoke twists into a faint swirling shape against a gray stone wall.
+- id: chime-of-opening
+  flavor: >-
+    A slender hollow tube of metal that rings with a clear, bright tone when struck, the kind of sound locks and latches seem to dread. Wandering thieves and clever locksmiths both have stories about its song carrying across an entire valley. It cracks after enough strikes, leaving only a silent, dented shell behind.
+  imagePrompt: >-
+    Slender polished silver tube with a dented end and fine engraved rings, lying on a dark wooden bench beside a rusted iron padlock and scattered brass keys.
+- id: circlet-of-blasting
+  flavor: >-
+    A narrow circlet of blackened bronze with a single red garnet set at the brow, the sort of thing a showy sorcerer might wear to a feast. Its stone flickers when a spark of fire is ready to leap. Many have learned to keep their tempers mild near anyone who wears it.
+  imagePrompt: >-
+    Narrow blackened bronze circlet with a single red garnet at the center, its stone glowing faintly with orange light against a dark velvet cloth.
+- id: cloak-of-arachnida
+  flavor: >-
+    A fine black garment threaded with silver that glints like dew on a web. Spiders of the high forests are said to have spun the first thread, and the cloak still moves with a patient, clinging grace. Its wearer walks up walls and across ceilings, and sticky snares seem to part before them like curtains.
+  imagePrompt: >-
+    Black silk cloak with fine silver threads glinting in a web-like pattern, draped over a rough stone wall beside a dusty cobweb in a moonlit ruin.
+- id: cloak-of-displacement
+  flavor: >-
+    A shimmering cloak of deep blue that seems to shift its colours whenever the light changes. Those who wear it describe a second self standing a short step to one side, a ghostly twin that draws the blows meant for them. The garment goes still and ordinary once its wearer is hurt.
+  imagePrompt: >-
+    Deep blue cloak with a shimmering silken sheen, its folds blurring into a faint translucent double image under cool moonlight in a quiet courtyard.
+- id: cloak-of-elvenkind
+  flavor: >-
+    A cloak of muted green and gray, woven so softly that it hushes every tread and dulls the glint of a watching eye. Forest wardens who value a quiet approach often pass these cloaks down through their families. Those who wear one slip past sharp ears and keener eyes alike, as though the shadows were their own kin.
+  imagePrompt: >-
+    Soft green-gray wool cloak with a deep hood and fine embroidered leaf edging, hanging on a carved oak peg beside a leaf-dappled forest path in soft mist.
+- id: cloak-of-protection
+  flavor: >-
+    A heavy cloak of plum-dark wool, its hem stitched with a simple band of silver knots. Sentinels from the border towns wear them on long night watches, trusting that the cloth will turn a stray blow and steady the mind against a sudden fright. Old nurses say the knots tie a little good luck into every step.
+  imagePrompt: >-
+    Heavy plum-dark wool cloak with a narrow band of tarnished silver knotwork along its hem, folded over a wooden bench beside an iron lantern.
+- id: cloak-of-the-bat
+  flavor: >-
+    A dusky cloak with a scalloped hem that seems to hold a little of the night inside it. In gloom and shadow, its wearer can grip the edges and glide along on leathery wings of cloth. Some wearers fold themselves into a small winged shape, keeping their wits and their charm while they flit about.
+  imagePrompt: >-
+    Dusky charcoal cloak with a scalloped hem and faint silver veining, spread wide like leathery wings against a moonlit stone tower at night.
+- id: cloak-of-the-manta-ray
+  flavor: >-
+    A supple cloak of mottled blue and pale silver, its edges fanned out like the wings of a gliding sea creature. Divers who wear it can breathe in deep water as easily as they breathe in the open air. Coastal fishers insist the cloth still smells faintly of salt and kelp.
+  imagePrompt: >-
+    Mottled blue and silver cloak with broad fanned edges that curl like a ray's wings, floating in clear turquoise water over pale sand with sunlight rippling above.
+- id: crystal-ball-of-mind-reading
+  flavor: >-
+    A flawless crystal orb, cool to the touch, that holds the faint reflections of faraway rooms. A gazer can look into a distant place and then listen to the thoughts of those standing near the lens. Scholars of the old colleges warn that such insight leaves a mind wide open to its own harm.
+  imagePrompt: >-
+    Flawless clear crystal orb on a carved silver stand, its depths glowing with a pale swirling mist that hints at a shadowy room within.
+- id: crystal-ball-of-telepathy
+  flavor: >-
+    A smooth glass sphere set in a bronze cradle, its surface faintly misted from the inside. Through it a user can speak with minds they can see from afar, and nudge one of them toward a choice. Those who use it often grow careful with their words, since the glass keeps a faint memory of every whisper.
+  imagePrompt: >-
+    Smooth glass sphere in a tarnished bronze cradle, its inner surface misted with drifting pale clouds and a faint pattern of tiny distant lights.
+- id: crystal-ball-of-true-seeing
+  flavor: >-
+    A pale crystal orb with a cloudy heart that clears whenever it is touched by a steady hand. Looking through it, a seer can see true forms even where illusions and shadows pretend otherwise. Its sight reaches only so far, but within that circle nothing hidden stays concealed for long.
+  imagePrompt: >-
+    Pale crystal orb with a clouded core that clears to a glittering pure center, resting on a dark wooden stand beneath a bright white light.
+- id: crystal-ball
+  flavor: >-
+    A plain crystal orb with a faint silver rim, the sort of heirloom that sits on a mantel and waits for a visitor to ask. Gazing into its depths can reveal distant rooms and faces, though the view is never quite steady. Mystics in river-towns trade stories of seeing a loved one through a veil of fog.
+  imagePrompt: >-
+    Plain crystal orb with a thin silver rim resting on a wooden mantel, its clear glass reflecting a soft gray glow from a nearby fireplace.
+- id: cube-of-force
+  flavor: >-
+    A small cube no bigger than a fingertip, each face scored with a different sigil in dark red ink. Pressing a face releases a short burst of protective magic, a little ward, a sturdy shelter, or a wall of pale light that refuses every blow. Tinkerers call it the most stubborn toy ever made.
+  imagePrompt: >-
+    Small dark iron cube with engraved sigils on each face, glinting in a pool of cold blue light on a worn leather pouch.
+- id: cubic-gate
+  flavor: >-
+    A cube of dull gray metal with six faces, each marked with a different symbol and humming with restless power. Pressing a face opens a doorway to the realm it points toward, while pressing it twice carries nearby companions through. Wise users keep a spare charge in hand, because the far side is rarely tidy.
+  imagePrompt: >-
+    Dull gray metal cube with six faces each engraved with a different symbol, faintly glowing at its seams with restless violet light.

@@ -1,0 +1,75 @@
+- id: phantasmal-force
+  flavor: >-
+    A small scrap of fleece is all the wizard needs to weave a picture into someone's head. The victim sees a bridge, a beast, or a wall of fog, and believes it wholeheartedly. Their brain does the rest, inventing reasons for every odd thing that happens.
+- id: phantasmal-killer
+  flavor: >-
+    Every mind keeps a private gallery of its worst fears, and this spell walks through it uninvited. The image is built only for its owner, shaped from the shadows they fear most. Some victims wake from the vision shaken, and some never quite stop hearing the footsteps that were never there.
+- id: phantom-steed
+  flavor: >-
+    Ink-dark mane, hooves that drum on nothing, and a saddle stitched from smoke. Hedge-wizards call this a cheap way to cross a valley, and they are not wrong. The steed fades politely once its time is up, leaving the rider a moment to step down before the earth seems to shrug them off.
+- id: planar-ally
+  flavor: >-
+    A bargain struck with something vast and far away, usually at a cost in coin or favors. The entity sends a loyal messenger that owes it service, and the messenger is free to name its price. Old priests say the dearest bargains are the ones paid in quests rather than gold.
+- id: planar-binding
+  flavor: >-
+    Binding an outsider is simple to describe and miserable to perform, so the old colleges insist on a jewel as the price. The creature must stay fixed while the words are spoken, and only its stubborn pride can resist. Once it yields, it serves with sulky obedience, bending each order toward its own ends.
+- id: plane-shift
+  flavor: >-
+    A ring of linked hands, a forked rod humming with borrowed distance, and a lurch that leaves the stomach behind. Travelers say the destination arrives in pieces: first a smell, then a color with no name at home, then the soil. The sensible ones always pack a spare pair of boots.
+- id: plant-growth
+  flavor: >-
+    Hedges thicken into walls, roots push up through the cobbles, and the orchard sets fruit heavier than any farmer deserves. The old river-folk say the green things remember who woke them. Dense undergrowth makes an excellent barricade, and the grain is glad of it.
+- id: poison-spray
+  flavor: >-
+    A cloud of sickly mist, pale green and faintly sweet, drifts toward a startled target. Lab-minded types insist the vapor is simple chemistry, and the academics in their towers disagree loudly. Either way, the victim tastes metal long after the coughing has stopped.
+- id: polymorph
+  flavor: >-
+    A cocoon is wrapped about the subject, and something unfamiliar wriggles inside. The creature keeps its heart and its memories, but its shape belongs to some beast chosen by the caster. Its gear sinks into the new body and stops being anything a person can use.
+- id: power-word-heal
+  flavor: >-
+    A single word of mending, spoken in a voice that sounds like warm water over stones. Wounds knit, the poison drains away, and the trembling in the limbs simply stops. Even a slumped figure straightens enough to stand and face the day.
+- id: power-word-kill
+  flavor: >-
+    A single syllable of pure command, and the heart simply stops deciding to beat. The weak fall without a sound, leaving the grave digger with nothing to do but tidy up. Sturdier victims endure a storm of inner pain before they fall silent.
+- id: power-word-stun
+  flavor: >-
+    A thought is pressed flat, like a leaf between pages, and the mind goes quiet. Brute-strong creatures shrug off the blow only to find their legs have forgotten their purpose. The dazed mind claws its way back a little more each turn, until the fog lifts.
+- id: prayer-of-healing
+  flavor: >-
+    A long, murmured litany shared by a small circle of the faithful, a service where nobody checks the clock. Their bruises fade and their breath comes easier, and they leave the room lighter in their step. Those who have already been blessed once must sleep off their exhaustion before the words will work again.
+- id: prestidigitation
+  flavor: >-
+    The small tricks every apprentice learns first: a shower of sparks, a puff of wind, a candle that lights itself and then thinks better of it. Mugs warm or cool on request, and a stubborn stain fades to nothing. Few masters bother to write these tricks down, so tutors just call them chores.
+- id: prismatic-spray
+  flavor: >-
+    Eight bands of colored light fan out in a cone, each one a different kind of trouble. One scorches like hot brass, one smells of sour rot, and one turns a creature into a rigid statue of grey stone. Few onlookers are brave enough to stand in its path.
+- id: prismatic-wall
+  flavor: >-
+    A vertical sheet of light, shifting through seven colors, rises where the empty air used to be. The layers are taken in order, one at a time, and each one asks something different of anyone who dares to pass. Touching it sets the nerves humming, and the glow is bright enough to sting nearby eyes.
+- id: private-sanctum
+  flavor: >-
+    A cube of quiet carved out of the world, with walls that swallow sound and fog that refuses to let a stare through. Mapmakers and gossiping neighbors alike find the place is simply not there when they look. Recasting it on the same spot for a year of mornings makes the quiet permanent.
+- id: produce-flame
+  flavor: >-
+    A small flame sits in the open palm, bright enough to read by but giving no warmth at all. Its owner can hurl a streak of fire at a rival or a locked door, and the sparks are never quite where expected. The old druid circles call it a hearth that refuses to stay put.
+- id: programmed-illusion
+  flavor: >-
+    A scene is rehearsed in advance and then left to wait, silent and invisible, for its cue. When the trigger finally arrives, the performance springs to life exactly as scripted, then vanishes and sulks for a while before it can perform again. Anyone who pokes it is met with a hollow echo that gives the game away.
+- id: project-image
+  flavor: >-
+    A pale double of the caster steps out and speaks with the same voice, the same habit of pausing before a lie. It wanders across distances the caster has once seen, and every eye it meets sees a familiar face. Strike it and it dissolves, leaving the real speaker wondering where the trust went.
+- id: protection-from-energy
+  flavor: >-
+    A thin shimmer settles over the willing body and turns aside the worst of one chosen force: frost, flame, acid, spark, or thunder's deep roar. The caster picks the element before the spell takes hold, and the shield remembers that choice until it fades. Smiths and sailors both swear by it.
+- id: protection-from-evil-and-good
+  flavor: >-
+    A flask of holy water is poured over one willing soul, sealing a ward against certain creatures that slip in from elsewhere. Visitors from the wrong sort of beyond find the warded hard to touch, and their whispers slide off like rain. The ward lasts only as long as the caster keeps a steady mind on it.
+- id: protection-from-poison
+  flavor: >-
+    A simple touch ends the sickness in the blood, as if the body had only been waiting for permission to cough it up. For a while afterward the flesh resists the next dose, and the stomach grows sturdier. The herbalists of the river-quarter swear the effect is more stubborn than any bottle label admits.
+- id: purify-food-and-drink
+  flavor: >-
+    A murmured word turns spoiled broth back into something a cook would not be ashamed to serve. The rot lifts off in a little cloud, leaving the bread crisp and the wine clear. Market wardens have been known to check the bread twice anyway, and rightly so.
+- id: raise-dead
+  flavor: >-
+    A diamond the size of a plum dissolves into the wound, and a breath returns to a body that has been still for days. The return is no gentle waking. The revived walk heavy for weeks, their balance and their nerve both slow to come back.

@@ -1,0 +1,125 @@
+- id: crab
+  flavor: >-
+    Tiny and armored in a coat of brine-scoured shell, the crab scuttles along tidal flats and keeps a sharp eye on anything that lingers too long near its burrow. Fishermen in the shallow towns learned to check their nets for its pinching claws, though most crabs want nothing more than a quiet stretch of wet sand. It breathes both air and water, which makes it a stubborn neighbor for anyone who tries to chase it off.
+  imagePrompt: >-
+    A tiny crab with a glossy rust-brown shell and one oversized pale claw raised, standing on wet sand beside a tide pool.
+- id: crocodile
+  flavor: >-
+    A long, low river hunter that lies so still beside a bank it could be a fallen log, until something careless wanders to the water's edge. Its jaws are heavy enough to drag a grown animal under and hold it there, and river-folk have long learned to keep their washing and their goats well back from the reeds. Patient and cold-blooded, it is happiest where the mud is warm and the fish are plentiful.
+  imagePrompt: >-
+    A large olive-green crocodile lying motionless on a muddy riverbank, its scaled back half hidden by reeds and its jaws slightly open.
+- id: cultist-fanatic
+  flavor: >-
+    Once a quiet cellar-keeper, this cultist burned with a devotion so fierce that his neighbors stopped asking what he was devoted to. He carries a blade that hums faintly when he speaks of his masters, and he has a habit of calling small favors miracles. Among the little sects that gather in forgotten chapels, he is the one who never sleeps and never doubts.
+  imagePrompt: >-
+    A lean robed zealot in a dark leather apron stands at a candlelit altar, gripping a curved black dagger that glows with a faint violet light.
+- id: cultist
+  flavor: >-
+    Cultists of this kind are usually local shopkeepers, clerks, or farmers who were promised something better by a stranger in a hooded coat. They wear plain leather and carry a sickle more often than a sword, and they tend to vanish from the village square after dark. Their sermons are short, their faith is loud, and their knives are sharper than anyone expected.
+  imagePrompt: >-
+    A nervous villager in a hooded brown cloak clutches a curved sickle beside a dim wooden door, a single lantern flickering above.
+- id: darkmantle
+  flavor: >-
+    Hanging from cave ceilings like a folded scrap of wet cloth, the darkmantle waits until something warm passes beneath it. It drops with a sudden sticky weight and wraps its victim in an ink-black shroud, after which even the bravest torchbearer finds that the light will not reach far. Miners in the deep tunnels say it is less a creature than a patch of gloom that happens to move.
+  imagePrompt: >-
+    A small bat-like cave creature clinging to a rock ceiling, its flat dark wings spread wide and its ragged edges faintly lit by a torch below.
+- id: death-dog
+  flavor: >-
+    A death dog looks like a lean, mangy hound until its jaws open and the smell of old rot rolls out. These hunters run in pairs through the black hills, circling a traveler's camp until one of them lunges and the other bites from the flank. Wolves and shepherds alike give them a wide berth, because a single bite from one of them leaves a wound that never quite closes.
+  imagePrompt: >-
+    A gaunt, black-furred hound with a grey muzzle and dull red eyes, crouched low on a windswept hillside beneath a bruised purple sky.
+- id: deer
+  flavor: >-
+    Deer move through the woodland edge with a grace that makes them seem almost to float, flicking their white tails at the first sign of danger. Most would rather flee than fight, though a startled buck will lower its head and ram anything that blocks its path. Villagers in the highlands carve their bones into needles and their hides into soft gloves, and they still leave the old stags alone.
+  imagePrompt: >-
+    A slender brown deer with pale antlers standing alert at the edge of a misty birch forest, one front hoof lifted from the mossy floor.
+- id: deva
+  flavor: >-
+    A deva descends from the sky with wings like folded sails and a light that makes shadows shrink from its path. These messengers take up the cause of the wronged and carry a mace that rings like a bell when it strikes. Those who have fought one often say it was less a battle than a reckoning, and that the creature seemed sorry for every blow it had to land.
+  imagePrompt: >-
+    A tall, serene winged figure with golden skin and a pale mace held at its side, hovering above a sunlit marble courtyard.
+- id: dire-wolf
+  flavor: >-
+    The dire wolf is what happens when an ordinary wolf grows too large for the stories told about it and then starts to live up to them. Its pack moves like a single creature across the snow, herding travelers toward the bend in the road where the ambush waits. Mothers in the northern valleys hang bells on the gates at dusk, and the bells ring louder than any hunter's horn.
+  imagePrompt: >-
+    A massive grey wolf with a thick scruffed mane and pale yellow eyes, crouched in deep snow between bare pine trunks, breath clouding in the cold air.
+- id: djinni
+  flavor: >-
+    A djinni is a spirit of moving air, bound to no master but its own amusement, and it can be generous or cruel depending on the cleverness of the one who addresses it. It arrives on a sudden wind that lifts sand into spinning columns and leaves merchants clutching their hats. Old traders still bargain with the sky for a favor, speaking carefully, because a promise made to a djinni is rarely forgotten by it.
+  imagePrompt: >-
+    A towering figure of swirling pale smoke and lightning-streaked wind, with a broad muscled chest, bare arms raised, hovering above a dusty desert plain.
+- id: doppelganger
+  flavor: >-
+    A doppelganger wears the faces of people it has met, and it wears them well enough that friends are often the last to notice the difference. It prefers to study its targets for a long time before it steps in, learning their habits and their fears until it can speak in their voice. Once revealed, its true form is a pale, smooth-limbed thing with eyes that never seem to blink.
+  imagePrompt: >-
+    A slim pale humanoid with smooth featureless skin and a sharp grin, standing in a candlelit hallway beside a mirror that shows a different face.
+- id: draft-horse
+  flavor: >-
+    Draft horses are broad, patient animals bred to haul what would break a lesser beast. Their hooves are heavy enough to rattle a cart's axle when they stamp, and they have a placid temperament that tolerates almost anything except rude shouting. Farmers in the lowland villages often say that a good draft horse plows a field in half the time its driver spends complaining.
+  imagePrompt: >-
+    A large, heavy-boned chestnut horse with a thick feathered mane, standing in harness before a wooden farm cart on a muddy farm lane.
+- id: dragon-turtle
+  flavor: >-
+    The dragon turtle carries a mountain of barnacled shell on its back, and sailors who mistake it for an island tend to regret the landing. Its breath is a scalding cloud of steam that can strip paint from a hull, and its jaws can split a rowboat in two. Sea-folk tell of cities built on the bones of its ancestors, though nobody has ever found the cities.
+  imagePrompt: >-
+    A colossal sea turtle with a domed shell crusted in barnacles and coral, its serpentine head raised above dark churning waves, steam rising from its open jaws.
+- id: dretch
+  flavor: >-
+    A dretch is a small, pot-bellied fiend with grey skin and a stench that arrives well before it does. These creatures serve whatever cruel master will have them, usually as scavengers, lookouts, or nuisances that nobody can quite get rid of. They mutter to one another in a shared mind-speech that carries to nearby ears, and they laugh when someone gags.
+  imagePrompt: >-
+    A squat grey fiend with a bloated pale belly, hunched in a rubbish-strewn alley, claws out and a sickly green haze drifting about its wide grin.
+- id: drider
+  flavor: >-
+    Half spider and half something that once walked upright, the drider is a bitter creature with a fierce grudge against the world that made it. Its lower body scuttles across ceilings and walls with unnerving ease, and its gaze tends to linger on anyone who once looked down on it. Caves and shadowed ruins are its favored homes, and it shuns the sun as though the light itself were an insult.
+  imagePrompt: >-
+    A pale-skinned humanoid torso rising from the body of a huge black spider, long legs braced on a cobwebbed cave wall, dark eyes glinting.
+- id: druid
+  flavor: >-
+    Druids keep the old quiet bargains between the wild places and the people who live near them, and they tend to be far more patient than the settlers they advise. A druid can call a storm of thorns or wake a sapling from its sleep, and most of them would rather talk a dispute to its end than fight it. Those who cross them learn that a druid's memory for insult is as long as an old oak's.
+  imagePrompt: >-
+    A weathered robed figure with a gnarled wooden staff wrapped in green vines, standing among ferns with a small bird perched on one shoulder.
+- id: dryad
+  flavor: >-
+    A dryad is bound to a single great tree, and her moods rise and fall with the health of the wood she guards. She has a voice that can soothe a frightened colt or charm a traveler into forgetting the road home. Woodcutters who respect the old trees are rarely troubled, but those who carve a grove for firewood have been known to hear a whisper from the bark that follows them back.
+  imagePrompt: >-
+    A slender woman with bark-textured skin and leaf-green hair, half merged into the trunk of an enormous oak, pale blossoms in the branches.
+- id: dust-mephit
+  flavor: >-
+    Dust mephits are small winged mischief-makers born from the grit of dry places, and they seem to enjoy every bit of the trouble they stir up. They dart about in clouds of fine sand, blinding anyone who gets too close and sneezing with a delighted little squeak. When one of them is destroyed, it bursts into a puff of dust that scatters everything nearby, and the mephit's laughter lingers in the air long after it has gone.
+  imagePrompt: >-
+    A small grey-brown winged imp with leathery wings and a cloud of fine sand swirling about its legs as it hovers over cracked clay.
+- id: eagle
+  flavor: >-
+    Eagles ride the warm air above the high cliffs, watching the valleys with eyes sharp enough to pick out a field mouse from the sky. They are fierce defenders of their nests and will dive at anything that comes too close, but most of the time they simply circle and wait. Shepherds in the hill country respect them, and a few sing old songs about the bird that once carried a lost child home.
+  imagePrompt: >-
+    A small brown eagle with a pale head and fierce yellow eyes, wings half spread as it glides over a jagged mountain ridge at dawn.
+- id: earth-elemental
+  flavor: >-
+    An earth elemental is a lumbering mass of rock and packed soil that wakes when the deep rock is disturbed. It moves slowly through solid earth, leaving no tunnel behind, and then surfaces beside a surprised crew of miners with two fists like boulders. Walls and gates are its natural enemies, and miners who hear a low grinding beneath their boots know to leave the shaft at once.
+  imagePrompt: >-
+    A hulking humanoid made of cracked grey boulders and packed earth, with moss in its seams and glowing amber veins across its shoulders.
+- id: efreeti
+  flavor: >-
+    An efreeti is a proud spirit of flame, forged in furnace-lands where the sky stays red without ever cooling. Its temper runs as hot as its skin, and it takes an insult to its bloodline far more seriously than a broken promise. Many a foolish scholar has tried to bind one for a favor, only to find the efreeti happy to grant a wish and then spend a long while making certain the price was paid in ash.
+  imagePrompt: >-
+    A tall muscular figure wreathed in roaring orange flame, with smoldering black horns and a curved blade of glowing iron held at its hip.
+- id: elephant
+  flavor: >-
+    Elephants move across the grasslands in long, slow lines led by the oldest matriarch, each member watching the others with quiet attention. A bull that feels crowded or provoked can charge with startling speed, and its great tusks can split a wagon's side. Travelers who meet a herd on the road tend to remember that the animal's memory is as long as its patience is short.
+  imagePrompt: >-
+    A massive grey elephant with wide curved ivory tusks and flapping ears, striding out of dry savanna grass with dust rising about its broad legs.
+- id: elk
+  flavor: >-
+    An elk carries a crown of enormous antlers that look too heavy for the slender neck beneath them. Herds graze the high meadows in summer, sharing the wind and watching every ridge for wolves. When the rut arrives, the bulls clash with a crack that echoes through the valley, and the winner is the one who keeps standing when the other finally backs away.
+  imagePrompt: >-
+    A large tawny elk with a massive pale antler crown, standing in tall golden grass at the edge of a pine forest under an overcast sky.
+- id: erinyes
+  flavor: >-
+    An erinyes is a winged enforcer of cold contracts, a figure who collects debts with polite menace and a smile that never reaches her eyes. She carries a coil of enchanted rope that holds fast whatever it catches, and her blade bites with a chilling edge. Those who sign their names to an agreement with a lawful devil's court tend to learn that the paperwork matters, and that she is always there when it comes due.
+  imagePrompt: >-
+    A tall dark-winged woman with ember-red skin and a crimson-trimmed cloak, a coil of glowing rope looped over one arm in a smoky hall.
+- id: ettercap
+  flavor: >-
+    An ettercap is a hunched, hairy creature that builds sticky webs in the crooks of old trees and ruined barns. It is clever enough to set traps and vicious enough to enjoy them, and it keeps a stash of bones near its favorite web as a grim sort of trophy. Trappers who wander too deep into its territory report hearing a soft tugging sound just before the silk tightens.
+  imagePrompt: >-
+    A hunched hairy humanoid with clawed hands and a spider's dark bulbous abdomen, crouched in a sagging web strung between two rotting beams.

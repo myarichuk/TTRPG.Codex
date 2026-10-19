@@ -1,0 +1,75 @@
+- id: darkvision
+  flavor: >-
+    Some lantern-makers swear the dark is only a rumor told by people who never learned to squint. A borrowed sense, pressed into a willing friend's eyes, lets them read shadowed tavern signs as easily as midday.
+- id: daylight
+  flavor: >-
+    Hedge-wizards call it borrowed noon. A bright ball rises over the square and spills warm white light across every cobble, and the creatures that lurk in ordinary gloom slink off to find cooler dark.
+- id: death-ward
+  flavor: >-
+    Stubborn healers teach a simple rule: the body may fall, but the last thread holds. A small mark pressed to a friend's chest buys one brave breath before the grave gets its claim.
+- id: delayed-blast-fireball
+  flavor: >-
+    A bright thread of yellow light leaps from the caster and hangs in the air as a glowing bead, warm and patient. Anyone careless enough to touch it finds it hungry for heat, and the longer it waits, the more fire it swallows before the final roaring bloom.
+- id: demiplane
+  flavor: >-
+    Careful scholars of the cramped scroll-shops describe a door that opens onto no map at all. Behind the shadowy frame waits a plain room of stone or timber, swept and empty, ready for whatever a traveler chooses to leave inside.
+- id: detect-evil-and-good
+  flavor: >-
+    A devout prickle runs along the skin when the wrong sort of company draws near. Whatever shadows, spirits, or restless dead lurk close by show up as faint pulls, like a compass needle turning in a cellar.
+- id: detect-magic
+  flavor: >-
+    The air of an old reading room tingles when someone's enchantment lingers nearby. Faint halos of color bloom over ordinary-looking things, and a patient scholar can learn which arcane school first wove them.
+- id: detect-poison-and-disease
+  flavor: >-
+    A cautious herbalist sniffs the room before touching the cup. Bitter scents of venom, spores, and creeping sickness ring out like small bells, and each one tells its keeper what sort of trouble lies waiting in the dark.
+- id: detect-thoughts
+  flavor: >-
+    Mind-readers in the back rooms of certain inns like to say a crowd is one long murmur. Tuned close, that murmur sorts itself into single small voices, and with patience a listener can catch what the nearest one wants most.
+- id: dimension-door
+  flavor: >-
+    A quick step sideways through the fabric of things, and suddenly the traveler stands on a balcony across town. Nothing lies between departure and arrival but a shiver of cold air, and a botched landing means a bruising crush of unseen force.
+- id: disguise-self
+  flavor: >-
+    Costume is a craft, and the best players of old theater houses can wear a stranger's face like a borrowed coat. The illusion gives way under a close touch, so the wearer had better hope no one studies the seams too carefully.
+- id: disintegrate
+  flavor: >-
+    A narrow emerald beam snaps from the fingertips and carries a hungry, silent force. Whatever it strikes either staggers under a jolt of raw power or dissolves into fine gray dust that drifts off on the breeze, leaving only a faint scorched smell.
+- id: dispel-evil-and-good
+  flavor: >-
+    A brief ward of pale light settles over the caster's shoulders, and the things born on other planes flinch away from it. Hands laid on the possessed or the frightened can break the grip of a spirit or fiend, and a sharp word can send an intruder packed back to where it belongs.
+- id: dispel-magic
+  flavor: >-
+    A sharp snap of the fingers sends a cold ripple through the glow of enchantment. Lesser spells fall apart in the air, while the stubborn ones must be tested against the caster's skill before they give way.
+- id: dissonant-whispers
+  flavor: >-
+    A melody no one else can hear slides into the victim's skull, sour and jarring, like a bell rung in the wrong key. The listener flinches and then stumbles away from the singer as if the sound itself were a cliff edge.
+- id: divination
+  flavor: >-
+    Pilgrims in the old temple towns once climbed a ladder of smoke to put a single question to the heavens. The answer arrives as a murmured proverb or a riddle with teeth, and the wise learn the sky grows quiet when pressed too often.
+- id: divine-favor
+  flavor: >-
+    A quiet blessing settles into the grip of the weapon and makes every blow ring with a clean white light. The steel is still steel, but it carries a small sun along its edge for as long as the prayer holds.
+- id: divine-smite
+  flavor: >-
+    The paladin's strike lands with a sudden flash, and a crack like thin glass splitting fills the air. Fiends and the restless dead feel the blow sink deeper, because the light burns hardest where wickedness has taken root.
+- id: divine-word
+  flavor: >-
+    A single word, spoken low and carefully, carries the weight of a verdict. Every listener who lacks the strength to shrug it off is shaken to the bone, and any visitor from another plane is flung back to its own place.
+- id: dominate-beast
+  flavor: >-
+    A beast with a wild, wary heart goes quiet under a hand that knows its language. A thread of silent thought runs between the two of them, so instructions travel without a sound, and the animal does its level best.
+- id: dominate-monster
+  flavor: >-
+    Larger and more dangerous things are harder to claim, and the bond takes a stronger will to forge. Once the creature is bent to the caster's will, silent commands run along the link, and the monster obeys until the link frays or it wanders off to its own dark pursuits.
+- id: dominate-person
+  flavor: >-
+    A stranger's gaze lingers a moment too long, then the eyes go soft and obedient, as if a warm hand had settled on their shoulder. The bond holds while the two stand under the same sky, though a sharp blow or a defiant heart can loosen it.
+- id: dragons-breath
+  flavor: >-
+    A hot pepper's fire gets packed into a willing ally for a little while. Whichever element the caster picks, flame, frost, sparks, sour venom, or corrosive spit, the ally can exhale it in a cone that rolls over anything standing too close.
+- id: dream
+  flavor: >-
+    A messenger slips into a trance and drifts through a sleeper's imagination, carrying words and shaping landscapes out of sand and memory. The sleeper wakes with the scene still glowing behind the eyes, and if the message was made terrifying, the waking brings a jolt of cold dread.
+- id: druidcraft
+  flavor: >-
+    Whispered words to the spirits of nature coax small, harmless wonders from the soil nearby. A bud opens, a leaf tilts toward a soft breeze, a candle flares to life, or a faint woodland song drifts through the glade.

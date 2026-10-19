@@ -1,0 +1,75 @@
+- id: guardian-of-faith
+  flavor: >-
+    A pale sentinel of light takes shape in mid-air and refuses to move, offering the sort of patience that only the devout can truly appreciate. Those who step too close learn quickly that its gaze carries a sting of holy fire. Old temple keepers swear the thing has never once blinked.
+- id: guards-and-wards
+  flavor: >-
+    Fog pools in the hallways, doors seize shut with a click, and every staircase grows a tangle of sticky strands. Mischievous lights dance in the corners while a draft sighs through the gallery. Someone who knows the password can stroll right through, which the old colleges consider a reasonable insult.
+- id: guidance
+  flavor: >-
+    A small nudge from a steady voice, passed hand to hand like a borrowed coin. Whatever the chosen craft, the helped person feels a sudden clarity of purpose, as though a friendly elbow has tapped their shoulder. Hedge-wizards mutter that it works best on people who had already half-decided to try.
+- id: guiding-bolt
+  flavor: >-
+    A lance of white light leaves the caster's fingertips and hunts its target like a homing pigeon that refuses to be distracted. It strikes with a sound like a struck bell, and the afterglow clings to the struck one, marking them for every ally who follows. Some call it the politest way to point.
+- id: gust-of-wind
+  flavor: >-
+    A shove of air arrives from nowhere and rolls across the courtyard like an impatient steward clearing the porch. Candles gutter, cloaks snap, and dust climbs into the rafters. Sailors swear the wind has a favorite direction, though the caster usually decides that for it.
+- id: hallow
+  flavor: >-
+    Holy or unholy, the earth is quietly claimed. The air settles, the grass goes still, and a faint hum of intent lingers over the stones long after the ritual candles have burned down to nothing. Visitors who feel uneasy there are generally told it is only the neighbors.
+- id: hallucinatory-terrain
+  flavor: >-
+    A meadow turns into a bog in the eyes of anyone who looks, and a gentle slope wears the face of a cliff. Fields and roads take on new silhouettes without changing a single stone. Careful travelers still test the footing with a boot, and the clever ones test it twice.
+- id: harm
+  flavor: >-
+    A bruise of grey light blooms under the skin and keeps spreading after the hand has been lifted. The old wound does not heal so much as settle into a smaller shape. Healers who have seen it once tend to become very interested in prevention.
+- id: haste
+  flavor: >-
+    Every movement snaps into a quicker rhythm, as if the body had found a second wind and a spare pair of legs. Nerves sing and reflexes tighten. The bill arrives later, when a heavy, sudden drowsiness rolls over the whole party.
+- id: heal
+  flavor: >-
+    Warm light pours through a wounded body and clears away the fog of poison and the dimness of blindness and deafness. Wounds knit at a pace that makes bystanders uncomfortable. Skeptics tend to stop arguing once the color returns to their cheeks.
+- id: healing-word
+  flavor: >-
+    A single quick word, murmured like reassurance to a nervous horse, and the bruises begin to ease. It is the sort of help that can be delivered mid-argument without anyone noticing the interruption. Field medics love it for exactly that reason, and so do people who hate waiting in line.
+- id: heat-metal
+  flavor: >-
+    A blade or breastplate begins to glow the color of a sunset, and the metal ticks and sighs as it warms. Anyone holding it learns fast that the grip matters less than the wish to let go. Smiths consider it cheating, and thieves consider it a fine lesson.
+- id: hellish-rebuke
+  flavor: >-
+    A spiteful green fire flares over whoever just struck. It is a retort delivered with perfect timing, the sort that makes the attacker wish they had chosen a quieter target. The flames smell faintly of pepper and bad decisions.
+- id: heroes-feast
+  flavor: >-
+    A feast appears on a patch of level grass, heaped with roast meats, bread still steaming, and fruit that seems to have been picked that morning. Those who sit down to eat are said to rise steadier, braver, and noticeably harder to rattle. The bowl that makes it all possible is, sadly, used up in the process.
+- id: heroism
+  flavor: >-
+    A steady warmth settles into the chest and takes the tremble out of the knees. Fear slides off the skin like rain from a good cloak, and a small cushion of grit appears at the start of each turn. Bards write songs about it, usually badly.
+- id: hex
+  flavor: >-
+    A small, spiteful hex settles on a creature like a burr in a sock. Every blow the caster lands carries a sour extra sting, and the target's luck seems to slip at inconvenient moments. Warlocks treat it as a long-running grudge that happens to be written in ink.
+- id: hideous-laughter
+  flavor: >-
+    Someone in the crowd is seized by a fit of giggles so hard that their knees give way. The laughter is involuntary and rather undignified, and the poor soul tries to rise and keeps losing the argument with gravity. Bystanders find it hard to pity someone wheezing so happily on the floor.
+- id: hold-monster
+  flavor: >-
+    A creature of any size locks up mid-stride, its muscles refusing every order from its own brain. Its eyes still move, which is somehow worse. Mages with a sense of humor keep a spare plan for precisely this kind of awkward encounter.
+- id: hold-person
+  flavor: >-
+    Joints lock and a humanoid stands still as a mannequin in a shop window, able to watch the room but not to join it. Pride is the first thing to fade, followed by patience. Old hands in the trade say the stillness is harder to bear than a shout.
+- id: holy-aura
+  flavor: >-
+    A soft gold halo spreads out from the caster and settles over those they choose to shelter. Enemies find their swings grow clumsy and their certainty wobbles. Creatures of darkness that dare to strike the warded ones are met with a sudden, nauseating dizziness.
+- id: hunters-mark
+  flavor: >-
+    A faint silver sigil clings to the quarry, visible only to the one who placed it. Tracks appear more clearly, and the trail seems to lean toward the marked prey. Woodsmen say the mark never tires, only the hunter does.
+- id: hypnotic-pattern
+  flavor: >-
+    Ribbons of color twist through the air for a single heartbeat and then vanish, leaving a crowd staring at nothing in particular. Those who watched too closely sway gently and forget what they meant to do. A sharp poke, a shout, or a slap is usually enough to wake them.
+- id: ice-knife
+  flavor: >-
+    A jagged sliver of frost leaves the hand like a thrown icicle and bites into its target. The moment it lands, the sliver bursts into a spray of cold shards that stings everyone standing close. Winter-minded wizards consider it a tidy little argument for personal space.
+- id: ice-storm
+  flavor: >-
+    Hail comes down in a roaring column, pounding the earth into a slick, cracked mess that will trip up anyone foolish enough to run. Cold bites through coats and the sound is like a thousand knuckles on a tin roof. Farmers who saw it once prefer to hear about it indoors.
+- id: identify
+  flavor: >-
+    A pearl-cool calm settles over the object and its history unspools like a ribbon. Hidden properties and quiet curses surface one by one, politely introducing themselves. Scholars who have spent a career chasing such secrets call it the most satisfying kind of gossip.

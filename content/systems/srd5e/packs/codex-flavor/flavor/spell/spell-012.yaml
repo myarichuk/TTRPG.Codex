@@ -1,0 +1,75 @@
+- id: shield
+  flavor: >-
+    A thin pane of invisible force snaps into place just as the blow lands. Hedge-wizards call it the cheapest insurance in the trade, since it asks nothing but a flick of the fingers and a quick wit. Whatever struck at the caster skids off, and the bolts of the small magic missile simply evaporate against it.
+- id: shillelagh
+  flavor: >-
+    A plain club or staff, carved smooth by river-folk long before, grows a thicker grain and a sharper temper in a druid's grip. The wood hums faintly, and each blow rings with the crack of distant thunder. Once the grip loosens, the wood goes quiet again, like a dog that has finished barking.
+- id: shining-smite
+  flavor: >-
+    A blade that has just struck home suddenly blazes with a light that seems to come from somewhere beyond the sky. The victim glows like a lantern in a fog, and every swing aimed its way finds an easier target. Cloaks and shadows prove useless, since the glow gives away anyone who tries to hide.
+- id: shocking-grasp
+  flavor: >-
+    A crackle leaps from a bare palm and dances over the skin of whoever is unlucky enough to be touched. The sparks make the target's muscles jump, and its footwork goes to pieces. Cantrip-casters in the old colleges liked it for its tidy, bad-tempered snap.
+- id: silence
+  flavor: >-
+    A sphere of hush settles over a chosen spot, swallowing every bell, shout, and bird call inside it. Anyone standing within it finds their ears full of cotton, and speech of the spell-casting kind simply fails to leave the lips. Priests of certain quiet orders favor it for vigils, and thieves favor it for everything else.
+- id: silent-image
+  flavor: >-
+    A painted picture gets up and walks, though not a single footfall can be heard. The figure is a mere conjured shape, and anyone who pokes at it will feel nothing but air and realize the trick. Stage conjurers call it the cheapest way to make a crowd believe in a dragon.
+- id: simulacrum
+  flavor: >-
+    A lump of snow is shaped and breathed upon until it stands up, looking exactly like a beast or a person at the time of its making. It is a tireless copy with a cold heart. The maker must keep its brittle body mended with costly stones, or watch it melt into a puddle.
+- id: sleep
+  flavor: >-
+    A hush of drowsy magic rolls across a patch of ground and lays its listeners down like wheat before a heavy wind. Heavy-lidded folk sink into the deepest sleep of their lives, while stubborn souls merely nod where they stand. Elves, who never need such slumber, shrug it off with a yawn that seems almost rude.
+- id: sleet-storm
+  flavor: >-
+    A gray, icy downpour fills a tall column of air, turning the ground to slick glass and smothering every open flame. Anyone who wades into it finds boots skidding and balance lost. Sensible travelers keep their cloaks buttoned and their lanterns well away from the edge.
+- id: slow
+  flavor: >-
+    The air thickens over a handful of unlucky figures, who move as though wading through warm syrup. Their limbs grow heavy, their reflexes stall, and each blow they throw arrives late and a little clumsy. Even a practiced caster may fumble a gesture, since a slowed hand moves at the pace of old pitch.
+- id: sorcerous-burst
+  flavor: >-
+    A bolt of raw sorcery leaves the caster's fingers and seeks a target with the impatience of a hungry hound. The bolt takes whichever flavor of harm the caster prefers, be it frost, flame, rot, or a clap of thunder. Now and then the spark flares brighter than expected, and tavern braggarts insist it was skill.
+- id: spare-the-dying
+  flavor: >-
+    A hand laid on a fading body can hold back the gray edge of death for a little while. The creature does not wake up, nor is it healed, but its breathing steadies and the worst of the darkness recedes. Healers in the river-towns say it is the quietest kind of mercy available.
+- id: speak-with-animals
+  flavor: >-
+    For a short spell, the furred and feathered folk of the woods become fluent conversationalists. Most beasts care little for politics or poetry, yet they will happily share what they have seen, sniffed, or stumbled over recently. Rangers treat such chats as a kind of neighborly gossip exchange, mostly useful and a little impolite.
+- id: speak-with-dead
+  flavor: >-
+    A corpse is coaxed into a brief, creaky imitation of its former self, able to answer a handful of questions. Dead folk rarely make good witnesses, since they know only what they knew when their hearts stopped. Their replies come out clipped, cryptic, or stubbornly repetitive, and an enemy of the dead will get little but sulky silence.
+- id: speak-with-plants
+  flavor: >-
+    Rooted things are given a voice for a while, able to report on what has brushed past them and whether rain fell on their leaves. Thickets and brambles can be persuaded to part or to tangle, bending the ground to a traveler's convenience. Plants cannot walk, but they are capable of waving their branches at a helpful gesture.
+- id: spider-climb
+  flavor: >-
+    A sticky, clinging sheen settles on a willing companion's palms and soles, letting them scale walls and crawl across ceilings with nothing but their own nerve. It looks as if someone has borrowed an arachnid's grip. Keeping their hands free is the best part, leaving room for a torch and a dagger.
+- id: spike-growth
+  flavor: >-
+    The ground under a patch of grass sprouts a crop of hard thorns that looks entirely natural until someone steps in it. Every step through the tangle draws a sharp prick from the careless. Trackers who know their trade learn to read the leaves for a hint that something is off.
+- id: spirit-guardians
+  flavor: >-
+    Pale, watchful spirits drift in a wide ring about a devoted caster, taking on a fey or shining look when the caster is kindly and a fiendish look when the caster is not. Foes who press into the ring feel their legs grow heavy, and a scorching light or a grave chill tears at them, depending on the caster's leanings.
+- id: spiritual-weapon
+  flavor: >-
+    A ghostly blade, mace, or hammer materializes in mid-air, humming with a brisk, patient eagerness. It can be sent darting toward a foe, striking with force that sounds like a bell. Each later visit is a fresh blow, as reliable as a clerk who never forgets a bill.
+- id: starry-wisp
+  flavor: >-
+    A mote of starlight streaks from the caster's hand and stings its mark with a cool, bright sparkle. The glow lingers afterward like the tail of a comet, and anyone trying to slip away finds themselves easy to spot.
+- id: stinking-cloud
+  flavor: >-
+    A cloud of sickly yellow fog blooms over a spot of the caster's choosing, smelling like a barrel of forgotten eggs. Those who breathe it in gag, sag, and find themselves too queasy to act. The fumes hang about until a stiff breeze chases them off, which is the most welcome sight for everyone nearby.
+- id: stone-shape
+  flavor: >-
+    Stone yields under a steady hand, softening into a statue, a weapon, a coffer, or a neat little passage through a wall. Mason guilds would weep to see it, since no chisel can match the speed of the change. The result carries hinges and a latch, though fine clockwork detail stays beyond its reach.
+- id: stoneskin
+  flavor: >-
+    A skin of gray stone spreads under the touch of a willing ally, turning blades, cudgels, and arrowheads into a dull clatter. The effect is thick, heavy, and entirely the caster's gift, though the cost is diamond dust ground fine enough to sparkle. Warriors who have tried it report a comfortable calm and a bruise-free stroll through battle.
+- id: storm-of-vengeance
+  flavor: >-
+    A churning storm cloud swells over the land, dragging thunder, acid rain, hail, and lightning across the landscape in a grand procession. Creatures beneath it reel under the first crack of sound, then endure one brutal weather event after another. Druids who call such storms say the sky has a long memory for insults.
+- id: suggestion
+  flavor: >-
+    A soft, persuasive phrase slides into a listener's head and settles there like a cat in a warm lap. The listener feels the urge to do exactly as bidden, and the urge lasts until someone bashes the thought loose with a blow. Courtiers swear that a drop of honey does more than a stern tone.
