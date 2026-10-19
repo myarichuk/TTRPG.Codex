@@ -48,6 +48,7 @@ actorFields:
     options: [Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil, Unaligned]
   - { key: originFeat,       label: Origin Feat,        type: EntityReference, targetEntityType: feat,       category: General, description: "Your background grants a specific origin feat." }
   - { key: armorClass,       label: Armor Class,        type: Number,  defaultValue: 10, category: Combat }
+  - { key: armorClassMisc,   label: Other Armor Class Bonuses, type: Number, defaultValue: 0, category: Combat, description: "Magic or spell effects that are not an item you carry." }
   - { key: speed,            label: Speed (feet),       type: Number,  defaultValue: 30, category: Combat }
   - { key: notes,            label: Notes,              type: LongText, category: Notes }
 
@@ -121,6 +122,29 @@ sheetRules:
       maxCount: { lookup: { field: class, table: featSlots, byField: classLevel, column: slots } }
       repeatableProperty: repeatable
 
+  # Hit points and armor class follow the rules while a sheet's hpMode / acMode allow it (new characters
+  # do; imported creatures and older sheets keep the numbers typed in). Hit points: the first level takes
+  # the class's full hit die, later levels its average (or a roll), each plus the Constitution modifier.
+  hitPoints:
+    key: HP_Max
+    currentKey: HP
+    attribute: con
+    dieProperty: hitDie
+    modes: [average, rolled, manual]
+    default: average
+
+  # Armor class: body armor's base plus Dexterity (to its cap), or the best unarmored formula (the class
+  # may bring its own); then shields, magic items and fighting styles add their bonuses.
+  armorClass:
+    key: armorClass
+    unarmored: "10 + mod(dex)"
+    bonusLists: [feats]
+
+  inventory:
+    key: inventory
+    label: Equipment
+    types: [equipment, magic-item]
+
   # Multiclassing: "class" is the first class, the others are listed with their levels, and "level"
   # stays the character level (proficiency bonus, feat minimums). Lookups above read each class's
   # own row through classLevel; lists accept an entry any one class allows and add the limits up.
@@ -183,6 +207,8 @@ entityTypes:
       - { key: skillChoices,        label: Skill Proficiencies,     type: Text }
       - { key: startingEquipment,   label: Starting Equipment,      type: LongText }
       - { key: multiclassing,       label: Multiclassing,           type: LongText }
+      - { key: unarmoredDefense,    label: Unarmored Defense,       type: Text, description: "Armor class formula used while wearing no armor, such as 10 + mod(dex) + mod(con)." }
+      - { key: unarmoredDefenseShield, label: Unarmored Defense Allows a Shield, type: Boolean }
       - { key: multiclassPrerequisites, label: Multiclass Prerequisites, type: TagList, description: "Options like \"STR 13+\" or \"DEX 13+, WIS 13+\"; meeting any one is enough." }
       - { key: subclasses,          label: Subclasses,              type: TagList }
       - { key: casterType,          label: Spellcasting,            type: Text }
@@ -240,6 +266,8 @@ entityTypes:
       - { key: prerequisites, label: Prerequisites, type: Text }
       - { key: minLevel,      label: Minimum Level, type: Number }
       - { key: repeatable,    label: Repeatable,    type: Boolean }
+      - { key: armorClassBonus,        label: Armor Class Bonus,      type: Number, description: "Added to armor class." }
+      - { key: armorClassRequiresArmor, label: Bonus Needs Worn Armor, type: Boolean }
       - { key: abilityIncrease,        label: Ability Score Points,   type: Number,  description: "Points this feat adds to ability scores." }
       - { key: abilityIncreaseOptions, label: Abilities It Can Raise, type: TagList, description: "Leave empty for any ability." }
       - { key: abilityIncreaseCap,     label: Raises Scores Up To,    type: Number }
@@ -331,6 +359,10 @@ entityTypes:
       - { key: properties, label: Properties,     type: TagList }
       - { key: mastery,    label: Weapon Mastery, type: Text }
       - { key: armorClass, label: Armor Class,    type: Text }
+      - { key: armorType,  label: Armor Type,     type: Dropdown, options: [light, medium, heavy, shield] }
+      - { key: armorBase,  label: Armor Base AC,  type: Number, description: "Armor class while wearing it, before Dexterity." }
+      - { key: armorDexCap, label: Dexterity Cap, type: Number, description: "Most Dexterity bonus it allows. 0: none. Empty: no limit." }
+      - { key: armorClassBonus, label: Armor Class Bonus, type: Number, description: "Added to armor class while equipped (a shield, a magic item)." }
       - { key: strength,   label: Strength Minimum, type: Number }
       - { key: stealth,    label: Stealth Disadvantage, type: Boolean }
 
@@ -345,6 +377,7 @@ entityTypes:
       - { key: category,   label: Category,            type: Text }
       - { key: rarity,     label: Rarity,              type: Dropdown, options: [Common, Uncommon, Rare, Very Rare, Legendary, Artifact, Varies] }
       - { key: attunement, label: Requires Attunement, type: Boolean }
+      - { key: armorClassBonus, label: Armor Class Bonus, type: Number, description: "Added to armor class while equipped." }
 
   - type: rule
     label: Rule

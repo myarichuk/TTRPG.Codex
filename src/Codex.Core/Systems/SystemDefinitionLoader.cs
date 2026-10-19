@@ -304,6 +304,70 @@ public static class SystemDefinitionLoader
             }
         }
 
+        if (rules.HitPoints is { } hitPoints)
+        {
+            if (!referenceFields.Contains(hitPoints.ClassField))
+            {
+                yield return $"sheetRules.hitPoints.classField '{hitPoints.ClassField}' is not an EntityReference actor field.";
+            }
+
+            if (!fieldKeys.Contains(hitPoints.LevelField))
+            {
+                yield return $"sheetRules.hitPoints.levelField '{hitPoints.LevelField}' is not an actor field.";
+            }
+
+            if (!definition.Attributes.Any(a => a.Key.Equals(hitPoints.Attribute, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return $"sheetRules.hitPoints.attribute '{hitPoints.Attribute}' is not one of the system's attributes.";
+            }
+
+            foreach (var mode in hitPoints.Modes.Where(m => m is not ("average" or "rolled" or "manual")))
+            {
+                yield return $"sheetRules.hitPoints.modes: unknown mode '{mode}' (average, rolled or manual).";
+            }
+
+            if (!hitPoints.Modes.Contains(hitPoints.Default))
+            {
+                yield return $"sheetRules.hitPoints.default '{hitPoints.Default}' is not one of its modes.";
+            }
+
+            if (fieldKeys.Contains(hitPoints.ModeKey) || fieldKeys.Contains(hitPoints.RollsKey))
+            {
+                yield return "sheetRules.hitPoints modeKey and rollsKey must not collide with actor fields.";
+            }
+        }
+
+        if (rules.ArmorClass is { } armorClass)
+        {
+            foreach (var list in armorClass.BonusLists.Where(l => !rules.Lists.Any(r => r.Key.Equals(l, StringComparison.OrdinalIgnoreCase))))
+            {
+                yield return $"sheetRules.armorClass.bonusLists '{list}' is not a sheetRules.lists key.";
+            }
+
+            if (!definition.Attributes.Any(a => a.Key.Equals(armorClass.DexAttribute, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return $"sheetRules.armorClass.dexAttribute '{armorClass.DexAttribute}' is not one of the system's attributes.";
+            }
+
+            if (fieldKeys.Contains(armorClass.ModeKey))
+            {
+                yield return "sheetRules.armorClass.modeKey must not collide with an actor field.";
+            }
+        }
+
+        if (rules.Inventory is { } inventory)
+        {
+            if (fieldKeys.Contains(inventory.Key))
+            {
+                yield return $"sheetRules.inventory key '{inventory.Key}' collides with an actor field.";
+            }
+
+            foreach (var type in inventory.Types.Where(t => definition.FindType(t) == null))
+            {
+                yield return $"sheetRules.inventory.types '{type}' is not an entity type this system declares.";
+            }
+        }
+
         foreach (var condition in rules.Constraints.SelectMany(c => c.Where).Concat(rules.Lists.SelectMany(l => l.Where)))
         {
             var referencedFields = new[] { condition.EqualsField, condition.ContainsNameOfField, condition.LteField, condition.GteField, condition.EqualsPropertyOfField?.Field, condition.LteLookup?.Field }

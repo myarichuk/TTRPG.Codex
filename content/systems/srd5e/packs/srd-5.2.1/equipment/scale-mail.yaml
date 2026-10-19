@@ -20,4 +20,7 @@ properties:
   cost: 50 gp
   weight: 45
   armorClass: 14 + Dex modifier (max 2)
+  armorType: medium
+  armorBase: 14
+  armorDexCap: 2
   stealth: true

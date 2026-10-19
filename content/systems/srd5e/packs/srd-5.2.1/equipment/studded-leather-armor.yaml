@@ -18,3 +18,5 @@ properties:
   cost: 45 gp
   weight: 13
   armorClass: 12 + Dex modifier
+  armorType: light
+  armorBase: 12

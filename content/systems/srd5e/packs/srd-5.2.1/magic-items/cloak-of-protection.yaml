@@ -13,3 +13,4 @@ properties:
   category: Wondrous Items
   rarity: Uncommon
   attunement: true
+  armorClassBonus: 1

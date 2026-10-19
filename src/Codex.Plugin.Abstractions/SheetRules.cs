@@ -32,6 +32,105 @@ public class SheetRules
     /// <summary>Expendable slot pools (spell slots, pact slots...) computed from class tables and
     /// tracked during play as resources.</summary>
     public List<SlotPoolRule> SlotPools { get; set; } = new();
+
+    /// <summary>Maximum hit points computed from class hit dice and Constitution. Null: hit points are typed in.</summary>
+    public HitPointRules? HitPoints { get; set; }
+
+    /// <summary>Armor class computed from equipment, class features and bonuses. Null: typed in.</summary>
+    public ArmorClassRules? ArmorClass { get; set; }
+
+    /// <summary>What a character carries and wears. Null: no inventory.</summary>
+    public InventoryRules? Inventory { get; set; }
+}
+
+/// <summary>
+/// Maximum hit points from the sheet's classes. Levels are taken first class first, then the other
+/// classes in order. The very first level gives the full hit die, every later level the die's average
+/// (or the player's roll in "rolled" mode), plus the <see cref="Attribute"/> modifier, never less than
+/// <see cref="MinimumPerLevel"/>. Because the modifier is read from the final score, raising
+/// Constitution raises maximum hit points for every level at once. The result is written to
+/// <see cref="Key"/> only while the sheet's <see cref="ModeKey"/> is not "manual" (a sheet without the
+/// key is manual, so existing characters and imported creatures keep their numbers).
+/// </summary>
+public class HitPointRules
+{
+    /// <summary>Sheet key that receives the maximum (the primary resource's max key).</summary>
+    public string Key { get; set; } = "HP_Max";
+
+    /// <summary>Sheet key of current hit points: it follows the maximum when it was at full health.</summary>
+    public string CurrentKey { get; set; } = "HP";
+
+    public string ClassField { get; set; } = "class";
+    public string LevelField { get; set; } = "level";
+
+    /// <summary>Class entry property holding the hit die, like "d10".</summary>
+    public string DieProperty { get; set; } = "hitDie";
+
+    /// <summary>Attribute whose modifier is added per level.</summary>
+    public string Attribute { get; set; } = "con";
+
+    public int MinimumPerLevel { get; set; } = 1;
+
+    /// <summary>"average", "rolled" or "manual".</summary>
+    public List<string> Modes { get; set; } = new() { "average", "rolled", "manual" };
+    public string Default { get; set; } = "average";
+    public string ModeKey { get; set; } = "hpMode";
+
+    /// <summary>Sheet key holding the player's rolls for levels 2 and up, in level order.</summary>
+    public string RollsKey { get; set; } = "hpRolls";
+}
+
+/// <summary>
+/// Armor class. With body armor worn: its base plus the Dexterity modifier (limited by the armor's cap,
+/// none for a cap of 0). Without: the best of <see cref="Unarmored"/> and the classes' own formulas
+/// (<see cref="ClassFormulaProperty"/>, such as 10 + Dex + Con). Then every equipped item's bonus, the
+/// bonus of picks in <see cref="BonusLists"/> and the sheet's <see cref="MiscField"/> are added. Written
+/// to <see cref="Key"/> while <see cref="ModeKey"/> is "auto"; a sheet without that key is manual.
+/// </summary>
+public class ArmorClassRules
+{
+    public string Key { get; set; } = "armorClass";
+    public string ModeKey { get; set; } = "acMode";
+
+    /// <summary>Formula over the sheet's numbers when nothing is worn and no class formula is better.</summary>
+    public string Unarmored { get; set; } = "10 + mod(dex)";
+
+    public string DexAttribute { get; set; } = "dex";
+
+    /// <summary>Class entry property with an unarmored formula, and the one saying a shield is still allowed.</summary>
+    public string ClassFormulaProperty { get; set; } = "unarmoredDefense";
+    public string ClassShieldProperty { get; set; } = "unarmoredDefenseShield";
+
+    /// <summary>Item properties: the armor type ("light", "medium", "heavy", "shield"), the base AC of body
+    /// armor, its Dexterity cap (absent: uncapped; 0: no Dexterity), and the flat bonus any item gives.</summary>
+    public string TypeProperty { get; set; } = "armorType";
+    public string BaseProperty { get; set; } = "armorBase";
+    public string DexCapProperty { get; set; } = "armorDexCap";
+    public string BonusProperty { get; set; } = "armorClassBonus";
+
+    /// <summary>The <see cref="TypeProperty"/> value that marks a shield.</summary>
+    public string ShieldType { get; set; } = "shield";
+
+    /// <summary>Lists whose picks may add <see cref="BonusProperty"/> (a fighting style feat), and the pick
+    /// property that limits the bonus to wearers of body armor.</summary>
+    public List<string> BonusLists { get; set; } = new();
+    public string RequiresArmorProperty { get; set; } = "armorClassRequiresArmor";
+
+    /// <summary>Numeric sheet field for everything else (a spell, a magic effect).</summary>
+    public string MiscField { get; set; } = "armorClassMisc";
+}
+
+/// <summary>
+/// The items a sheet carries, stored under <see cref="Key"/> as <c>"item-id|qty:2,equipped:1"</c>. Items
+/// may come from any of <see cref="Types"/>. At most one suit of armor and one shield may be equipped.
+/// </summary>
+public class InventoryRules
+{
+    public string Key { get; set; } = "inventory";
+    public string Label { get; set; } = "Equipment";
+    public List<string> Types { get; set; } = new() { "equipment" };
+    public string QuantityChoice { get; set; } = "qty";
+    public string EquippedChoice { get; set; } = "equipped";
 }
 
 /// <summary>How ability scores are generated and adjusted.</summary>

@@ -160,7 +160,47 @@ sheetRules:
       slotLevelColumn: maxSpellLevel          # ...all of the level in this column
       includeCasterTypes: [pact]
       recoversOn: [Short Rest, Long Rest]
+  hitPoints:                                  # maximum hit points from the classes' hit dice
+    key: HP_Max                               # sheet key written (the primary resource's max key)
+    currentKey: HP                            # follows the maximum: a larger one arrives as health
+    attribute: con                            # modifier added per level
+    dieProperty: hitDie                       # class property: "d10"
+    modes: [average, rolled, manual]          # what a player may choose; default: average
+    default: average
+  armorClass:                                 # armor class from equipment, class features and bonuses
+    key: armorClass
+    unarmored: "10 + mod(dex)"                # formula used with no body armor (best of this and class formulas)
+    bonusLists: [feats]                       # picks here may add armorClassBonus (a fighting style)
+  inventory:                                  # what a character carries; stored as "item-id|qty:2,equipped:1"
+    key: inventory
+    label: Equipment
+    types: [equipment, magic-item]
 ```
+
+**Hit points.** Levels are counted first class first, then the others in order. The first level takes the
+full hit die; every later level takes the die's average (`die / 2 + 1`) or, in `rolled` mode, the roll the
+player entered (clamped to the die; levels without a roll use the average). Each level adds the
+`attribute` modifier, never dropping below 1. Because the modifier comes from the final score, raising
+Constitution raises every level's gain. The maximum is written to `key` while the sheet's `hpMode` is
+`average` or `rolled`; a sheet without `hpMode` (an older character, a creature seeded from a stat block)
+is manual and keeps whatever number it has. New characters start in the default mode. When the maximum
+grows, current hit points grow with it; when it shrinks they are clamped.
+
+**Armor class.** With a body armor equipped (an item whose `armorBase` is a number): `armorBase` plus the
+Dexterity modifier, limited by `armorDexCap` (absent: no limit; 0: Dexterity does not count, in either
+direction). With none: the highest of the `unarmored` formula and every class's `unarmoredDefense` formula
+(a class whose `unarmoredDefenseShield` is false loses its formula while a shield is carried). Then it
+adds `armorClassBonus` of every equipped item (a shield is an item with `armorType: shield` and a bonus),
+of picks in `bonusLists` (skipped when `armorClassRequiresArmor` is true and no body armor is worn), and
+the sheet's `armorClassMisc` number. It is written to `key` while the sheet's `acMode` is `auto`; without
+that key the sheet is manual.
+
+**Inventory.** Items may come from any of `types` (pack and homebrew entries alike). At most one body
+armor and one shield can be equipped at a time.
+
+The SRD importer fills the typed item and class properties (`armorType`, `armorBase`, `armorDexCap`,
+`armorClassBonus`, `unarmoredDefense`, `unarmoredDefenseShield`, `armorClassRequiresArmor`) from the source
+data, and homebrew armor sets them in the entry editor.
 
 Conditions compare a property of the candidate entry (`level`, `classes`, `category`, or `id`,
 `name`, `tags`) with a constant (`equals`, `in`, `gte`, `lte`), a sheet field (`equalsField`,

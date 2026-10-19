@@ -166,6 +166,8 @@ properties:
   - name: Primal Champion
     level: 20
     description: You embody primal power. Your Strength and Constitution scores increase by 4, to a maximum of 25.
+  unarmoredDefense: 10 + mod(dex) + mod(con)
+  unarmoredDefenseShield: true
   casterType: none
   featSlots:
   - level: 1

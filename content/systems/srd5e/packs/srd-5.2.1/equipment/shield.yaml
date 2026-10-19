@@ -18,3 +18,5 @@ properties:
   cost: 10 gp
   weight: 6
   armorClass: 2
+  armorType: shield
+  armorClassBonus: 2

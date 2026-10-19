@@ -13,3 +13,4 @@ properties:
   category: Rings
   rarity: Rare
   attunement: true
+  armorClassBonus: 1

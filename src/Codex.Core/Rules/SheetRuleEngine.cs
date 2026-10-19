@@ -75,6 +75,15 @@ public sealed class SheetEvaluation
 
     public List<SlotPool> SlotPools { get; } = new();
 
+    /// <summary>Maximum hit points as the rules work them out (null without hit point rules or a class).</summary>
+    public HitPointSummary? HitPoints { get; set; }
+
+    /// <summary>Armor class as the rules work it out (null without armor class rules).</summary>
+    public ArmorClassSummary? ArmorClass { get; set; }
+
+    /// <summary>What the sheet carries, in sheet order (empty without inventory rules).</summary>
+    public List<InventoryItem> Inventory { get; } = new();
+
     public bool HasViolations => Violations.Count > 0;
 }
 
@@ -84,7 +93,7 @@ public sealed class SheetEvaluation
 /// derived values, the options each picker may offer, and the list of violations. The UI filters
 /// pickers with it; save uses it to enforce.
 /// </summary>
-public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver resolver)
+public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResolver resolver)
 {
     public const string MethodKey = "attrMethod";
     public const string BasePrefix = "base_";
@@ -100,9 +109,13 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
         return value.ToLowerInvariant() is "strict" or "warn" ? value.ToLowerInvariant() : "off";
     }
 
-    /// <summary>Seeds a brand-new sheet: default attribute method and base scores.</summary>
+    /// <summary>Seeds a brand-new sheet: default attribute method and base scores, and the modes that
+    /// let hit points and armor class follow the rules.</summary>
     public void InitializeSheet(Dictionary<string, object> sheet)
     {
+        if (Rules?.HitPoints is { } hitPoints) sheet[hitPoints.ModeKey] = hitPoints.Default;
+        if (Rules?.ArmorClass is { } armorClass) sheet[armorClass.ModeKey] = "auto";
+
         var attributes = Rules?.Attributes;
         if (attributes == null) return;
         var method = attributes.Default;
@@ -199,6 +212,9 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
         }
 
         EvaluateSlotPools(views, result);
+        EvaluateInventory(sheet, result);
+        EvaluateHitPoints(sheet, result);
+        EvaluateArmorClass(sheet, result);
         return result;
     }
 
@@ -692,12 +708,32 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
     {
         if (Rules!.Derived.Count == 0) return;
 
+        var (interpreter, identifiers) = FormulaContext(sheet);
+        foreach (var derived in Rules.Derived)
+        {
+            try
+            {
+                result.Derived[derived.Key] = EvaluateFormula(interpreter, identifiers, derived.Formula);
+            }
+            catch (Exception ex)
+            {
+                result.Violations.Add(new RuleViolation(derived.Key, $"{derived.Label}: formula error ({ex.Message})."));
+            }
+        }
+    }
+
+    private static long EvaluateFormula(Interpreter interpreter, Parameter[] identifiers, string formula) =>
+        (long)Math.Floor(Convert.ToDouble(interpreter.Eval(formula, identifiers), CultureInfo.InvariantCulture));
+
+    /// <summary>A formula interpreter and the sheet's numbers as identifiers (attribute scores, numeric fields).</summary>
+    private (Interpreter Interpreter, Parameter[] Identifiers) FormulaContext(IReadOnlyDictionary<string, object> sheet)
+    {
         var interpreter = new Interpreter();
         var identifiers = new List<Parameter>();
         foreach (var (key, value) in sheet)
         {
             if (!IsIdentifier(key)) continue;
-            var number = value switch { long l => (double)l, int i => i, double d => d, string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) => parsed, _ => (double?)null };
+            var number = YamlValues.ToNumber(value);
             if (number.HasValue) identifiers.Add(new Parameter(key, number.Value));
         }
 
@@ -719,20 +755,7 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
         interpreter.SetFunction("max", (Func<double, double, double>)Math.Max);
         interpreter.SetFunction("min", (Func<double, double, double>)Math.Min);
         interpreter.SetFunction("mod", (Func<double, double>)(score => Math.Floor((score - 10) / 2)));
-
-        foreach (var derived in Rules.Derived)
-        {
-            try
-            {
-                var value = interpreter.Eval(derived.Formula, identifiers.ToArray());
-                var number = Convert.ToDouble(value, CultureInfo.InvariantCulture);
-                result.Derived[derived.Key] = (long)Math.Floor(number);
-            }
-            catch (Exception ex)
-            {
-                result.Violations.Add(new RuleViolation(derived.Key, $"{derived.Label}: formula error ({ex.Message})."));
-            }
-        }
+        return (interpreter, identifiers.ToArray());
     }
 
     private static bool IsIdentifier(string key) =>
@@ -897,15 +920,5 @@ public sealed class SheetRuleEngine(SystemDefinition system, IEntryResolver reso
         return string.Equals(a.ToString(), b.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
-    private static double? ToDouble(object? value) => value switch
-    {
-        null => null,
-        long l => l,
-        int i => i,
-        double d => d,
-        float f => f,
-        bool => null,
-        string s when double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) => parsed,
-        _ => null
-    };
+    private static double? ToDouble(object? value) => YamlValues.ToNumber(value);
 }

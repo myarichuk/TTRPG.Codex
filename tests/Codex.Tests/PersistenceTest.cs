@@ -107,6 +107,22 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task ASheetNumberSavedAsADecimal_ComesBackReadableAsAnInteger()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Decimal" };
+        actor.Sheet["level"] = 4.0; // the sheet form stores Number fields as doubles
+        actor.Sheet["speed"] = 30L;
+
+        await _actorRepository.SaveAsync(actor);
+        var loaded = await _actorRepository.GetVisibleAsync(actor.Id, new CampaignAccess(campaignId, "dm-user", CampaignRole.DM));
+
+        Assert.NotNull(loaded);
+        Assert.Equal(4, Codex.Core.YamlValues.GetInt(loaded.Sheet, "level"));
+        Assert.Equal(30, Codex.Core.YamlValues.GetInt(loaded.Sheet, "speed"));
+    }
+
+    [Fact]
     public async Task SaveAndLoadActor_ShouldSucceed_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
