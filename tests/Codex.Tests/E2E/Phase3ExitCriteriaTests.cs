@@ -171,7 +171,16 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         Assert.DoesNotContain(framesSnapshot, f => f.Contains($"{goblin1DamagedHp}/{goblinMaxHp}"));
 
         // ---- Criterion 6 ----
-        var events = await _app.Http.GetFromJsonAsync<List<string>>($"/test/inspect/session-events/{campaignId}");
+        // The session log is written by the runtime's loop; on a slow runner the last saves can land
+        // a moment after the UI shows the new round, so poll briefly before counting.
+        List<string>? events = null;
+        for (var attempt = 0; attempt < 30; attempt++)
+        {
+            events = await _app.Http.GetFromJsonAsync<List<string>>($"/test/inspect/session-events/{campaignId}");
+            if (events != null && events.Count(e => e == "TurnAdvance") >= 18) break;
+            await Task.Delay(500);
+        }
+
         Assert.NotNull(events);
         Assert.Equal(6, events!.Count(e => e == "Initiative"));
         Assert.Equal(2, events.Count(e => e == "Damage"));

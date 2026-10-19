@@ -107,7 +107,10 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await player.GetByLabel("Species", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Dwarf" });
 
         // Subclasses are narrowed to the chosen class: a Fighter sees Champion and nothing else.
-        var subclassOptions = await player.GetByLabel("Subclass", new() { Exact = true }).Locator("option").AllTextContentsAsync();
+        // Wait for the re-render after the class change before reading the options once.
+        var subclassSelect = player.GetByLabel("Subclass", new() { Exact = true });
+        await Assertions.Expect(subclassSelect.Locator("option", new() { HasText = "Champion" })).ToHaveCountAsync(1);
+        var subclassOptions = await subclassSelect.Locator("option").AllTextContentsAsync();
         Assert.Contains("Champion", subclassOptions);
         Assert.DoesNotContain("Oath of Devotion", subclassOptions);
         Assert.DoesNotContain("Circle of the Land", subclassOptions);
