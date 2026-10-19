@@ -87,10 +87,10 @@
     private async Task BuildSchemaAsync()
     {
         var type = types.FirstOrDefault(t => string.Equals(t.Type, Entry.Type, StringComparison.OrdinalIgnoreCase));
-        schema = type == null ? null : new UISchema(type.Type, PreferredEditor.Form, type.Fields);
+        schema = type == null ? null : new UISchema(type.Type, PreferredEditor.Form, type.EditorFields());
 
         referenceOptions = new Dictionary<string, IReadOnlyList<(string, string)>>();
-        foreach (var target in (type?.Fields ?? new List<FieldDefinition>()).Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
+        foreach (var target in (type?.EditorFields() ?? new List<FieldDefinition>()).Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
             referenceOptions[target] = (await Library.OptionsAsync(Campaign, Access, target)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
         }

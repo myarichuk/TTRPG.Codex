@@ -16,7 +16,7 @@ license:
   sourceUrl: https://www.dndbeyond.com/srd
   modified: true
   notices:
-  - 'Modified from the original: restructured into YAML entries, layout artefacts removed, structured fields added. No rules were changed.'
+  - "Modified from the original: restructured into YAML entries, layout artefacts removed, structured fields added. No rules were changed. One creature, the Mule, is omitted because the source transcription gives it another creature's stat block."
   - The text was read from the JSON transcription in https://github.com/5e-bits/5e-srd-api (commit 85acb251dad0b044a72c554c2d7f2d0c11e43504), packages/5e-database, MIT License, Copyright (c) 2018-2020 Adrian Padua, Christopher Ward.
   - This pack is “5E compatible”. It is not affiliated with or endorsed by Wizards of the Coast.
 kind: rules

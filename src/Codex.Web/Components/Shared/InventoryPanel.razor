@@ -1,0 +1,135 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* What a character carries: each item with a quantity and an Equipped box, and a browser to add more
+   from the Library (and the campaign's homebrew). Equipped armor and shields feed armor class. *@
+
+<section class="panel" aria-labelledby="@(id)-heading" data-testid="inventory">
+    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="package" Size="16" Class="title-icon" /> @Rules.Label</h2></div>
+
+    @if (Items.Count == 0)
+    {
+        <p class="small-muted mb-2">Nothing carried yet.</p>
+    }
+    else
+    {
+        <ul class="list-unstyled mb-2" aria-label="@Rules.Label carried">
+            @foreach (var item in Items)
+            {
+                <li class="list-row py-1" data-testid="inventory-item">
+                    <span class="row-main">
+                        <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="text-reset">@item.Entry.Name</a>
+                        <span class="small-muted">@Detail(item.Entry)</span>
+                    </span>
+                    @if (CanEdit)
+                    {
+                        <span class="d-flex align-items-center gap-2">
+                            <label class="visually-hidden" for="@(id)-q-@item.Index">Quantity of @item.Entry.Name</label>
+                            <input id="@(id)-q-@item.Index" type="number" min="1" class="form-control form-control-sm" style="width:4.5rem" value="@item.Quantity"
+                                   @onchange="e => UpdateAsync(item, quantity: ParseQuantity(e.Value?.ToString()))" data-testid="inventory-qty" />
+                            <span class="form-check mb-0">
+                                <input id="@(id)-e-@item.Index" class="form-check-input" type="checkbox" checked="@item.Equipped" @onchange="e => UpdateAsync(item, equipped: (bool)e.Value!)" data-testid="inventory-equip" />
+                                <label for="@(id)-e-@item.Index" class="form-check-label">Equipped</label>
+                            </span>
+                            <button type="button" class="btn-link-plain" aria-label="Remove @item.Entry.Name" @onclick="() => RemoveAsync(item)"><LucideIcon IconName="x" Size="14" /></button>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="small-muted">× @item.Quantity@(item.Equipped ? " · equipped" : "")</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    @if (CanEdit)
+    {
+        @if (Rules.Types.Count > 1)
+        {
+            <div class="mb-2">
+                <label for="@(id)-type" class="form-label small mb-1">Browse</label>
+                <select id="@(id)-type" class="form-select form-select-sm" style="max-width:14rem" @bind="browseType" data-testid="inventory-type">
+                    @foreach (var type in Rules.Types)
+                    {
+                        <option value="@type">@(TypeOf(type)?.PluralLabel ?? type)</option>
+                    }
+                </select>
+            </div>
+        }
+
+        <EntryBrowser @key="browseType" Options="@(browseType != null && Options.TryGetValue(browseType, out var browsable) ? browsable : Array.Empty<ContentEntry>())" Type="TypeOf(browseType)" Label="@((TypeOf(browseType)?.PluralLabel ?? "items"))"
+                      TestId="inventory" EmptyText="No items in the Library." OnAdd="AddAsync" />
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public InventoryRules Rules { get; set; } = null!;
+    [Parameter] public IReadOnlyList<InventoryItem> Items { get; set; } = Array.Empty<InventoryItem>();
+
+    /// <summary>Every entry that can be added, by content type.</summary>
+    [Parameter] public IReadOnlyDictionary<string, IReadOnlyList<ContentEntry>> Options { get; set; } = new Dictionary<string, IReadOnlyList<ContentEntry>>();
+    [Parameter] public Func<string, ContentTypeDefinition?>? FindType { get; set; }
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public string LibraryPath { get; set; } = string.Empty;
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private readonly string id = "inv-" + Guid.NewGuid().ToString("N")[..6];
+    private string? browseType;
+
+    protected override void OnParametersSet() => browseType ??= Rules.Types.FirstOrDefault();
+
+    private ContentTypeDefinition? TypeOf(string? type) => type == null ? null : FindType?.Invoke(type);
+
+    private static int ParseQuantity(string? raw) => int.TryParse(raw, out var n) && n > 0 ? n : 1;
+
+    private static string Detail(ContentEntry entry)
+    {
+        var parts = new List<string>();
+        foreach (var key in new[] { "armorClass", "damage", "category" })
+        {
+            if (entry.Properties.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value?.ToString()))
+            {
+                parts.Add(key == "armorClass" ? "AC " + value : value!.ToString()!);
+                if (key != "category") break;
+            }
+        }
+
+        return parts.Count == 0 ? string.Empty : "· " + string.Join(" · ", parts.Distinct());
+    }
+
+    private async Task StoreAsync(List<string> raw)
+    {
+        if (raw.Count == 0) Sheet.Remove(Rules.Key);
+        else Sheet[Rules.Key] = raw.Cast<object>().ToList();
+        await Changed.InvokeAsync();
+    }
+
+    /// <summary>A second copy of something already carried adds to its quantity.</summary>
+    private async Task AddAsync(string entryId)
+    {
+        var raw = SheetRuleEngine.RawList(Sheet, Rules.Key);
+        var existing = Items.FirstOrDefault(i => i.Entry.Id.Equals(entryId, StringComparison.OrdinalIgnoreCase));
+        if (existing != null) raw[existing.Index] = SheetRuleEngine.FormatItem(Rules, entryId, existing.Quantity + 1, existing.Equipped);
+        else raw.Add(SheetRuleEngine.FormatItem(Rules, entryId, 1, false));
+        await StoreAsync(raw);
+    }
+
+    private async Task UpdateAsync(InventoryItem item, int? quantity = null, bool? equipped = null)
+    {
+        var raw = SheetRuleEngine.RawList(Sheet, Rules.Key);
+        if (item.Index < 0 || item.Index >= raw.Count) return;
+        raw[item.Index] = SheetRuleEngine.FormatItem(Rules, item.Entry.Id, quantity ?? item.Quantity, equipped ?? item.Equipped);
+        await StoreAsync(raw);
+    }
+
+    private async Task RemoveAsync(InventoryItem item)
+    {
+        var raw = SheetRuleEngine.RawList(Sheet, Rules.Key);
+        if (item.Index < 0 || item.Index >= raw.Count) return;
+        raw.RemoveAt(item.Index);
+        await StoreAsync(raw);
+    }
+}

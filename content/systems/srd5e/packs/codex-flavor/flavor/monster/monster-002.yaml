@@ -1,0 +1,125 @@
+- id: animated-rug-of-smothering
+  flavor: >-
+    A woven rug that some bored tinkerer stitched with a hungry heart and then left lying in a stairwell. Its fringe curls like a patient hand, and it drops over anyone careless enough to step on its bright pattern. Victims describe the experience as warm, dark and deeply unfriendly.
+  imagePrompt: >-
+    A large patterned woolen rug rising from a dusty stone floor, its tasseled edges curled upward like grasping fingers, crimson and ochre threads glowing faintly in shadow.
+- id: ankheg
+  flavor: >-
+    Farmers in the low country blame every collapsed field on the thing that tunnels beneath it. It chews through clay and bedrock, leaving smooth passages that stay open long after the creature has gone. When it rears out of the soil, its clicking jaws seize prey and its acid spit melts whatever it cannot swallow.
+  imagePrompt: >-
+    A large segmented beetle-like creature bursting upward from cracked brown earth, glossy green shell and pincer jaws wide open, loose soil spraying across its armored body.
+- id: ankylosaurus
+  flavor: >-
+    A broad, plated grazer that moves through fern forests like a slow armored wagon. Its heavy tail ends in a knot of bone that can knock a charging predator sideways. Most wise travelers give it a wide berth and let it finish chewing in peace.
+  imagePrompt: >-
+    A massive plated dinosaur with a bony club at the end of its tail, standing in a misty fern forest with sunlight filtering through tall trunks, mottled olive and grey armour.
+- id: ape
+  flavor: >-
+    A broad-shouldered climber that lives in jungle canopies and rocky cliffs. Apes are curious about strangers and will watch from the branches for a long while before choosing a side. When they feel crowded, they hurl stones with a surprising aim, and few travelers forget the first meeting.
+  imagePrompt: >-
+    A hulking brown ape perched on a jungle branch, one long arm gripping a grey stone, its heavy brow shadowed beneath broad leaves in warm green light.
+- id: archelon
+  flavor: >-
+    An enormous sea turtle whose shell could shelter a small fishing village. It sleeps drifting on warm currents and surfaces so rarely that sailors mistake it for a reef. When hungry, it snaps with a jaw strong enough to crack a ship's timber.
+  imagePrompt: >-
+    A colossal sea turtle with a mossy, barnacled shell gliding through deep turquoise water, its flippers spread wide and sunlight rippling across its ancient face.
+- id: archmage
+  flavor: >-
+    A scholar who climbed to the top of the old colleges and then refused to come down. The tower library holds more books than its owner has ever bothered to count. Visitors who knock politely are offered tea, though the tea is rarely the most dangerous thing in the room.
+  imagePrompt: >-
+    A robed figure with silver-streaked hair standing in a tall circular study, one hand raising a glowing crystal wand above stacked leather tomes and drifting pages.
+- id: assassin
+  flavor: >-
+    A hired killer who prefers to be invisible until the moment it matters. Assassins work for whoever pays the fee and leave no trace of their methods except a poisoned blade. Their reputation is so bleak that people in every city bolt their doors at dusk.
+  imagePrompt: >-
+    A lean figure in dark studded leather crouching on a rain-slick rooftop, a short sword in one hand and a light crossbow resting across the knees under a moonless sky.
+- id: awakened-shrub
+  flavor: >-
+    A bush that a passing druid once talked into thinking for itself, and it has been gossiping ever since. Its branches are thin and its leaves are few, but it remembers every kind word and every careless kick. Gardeners who want a quiet hedge should keep their pruning shears for a different plant.
+  imagePrompt: >-
+    A small shrub with thin twisting branches and a few scattered green leaves, its gnarled roots lifting from a patch of mossy soil beside a stone garden wall.
+- id: awakened-tree
+  flavor: >-
+    An old oak that was woken by a druid's song and never went back to sleep. Its trunk creaks like a door in the wind, and its roots drag slowly across the hillside as it wanders. Villages near its path leave offerings of fresh bread, hoping it will keep walking.
+  imagePrompt: >-
+    A towering oak with a broad bark face and heavy root-legs striding across a misty hillside, leafy branches raised high against a pale grey evening sky.
+- id: axe-beak
+  flavor: >-
+    A flightless bird the size of a pony, with a beak that looks like a hatchet. Herders learn early that its long legs can outrun a galloping horse, and that its temper is worse than its appetite. Caravans camp well away from its nests, and the wise ones keep their tents tied tight.
+  imagePrompt: >-
+    A large feathered bird with a hatchet-shaped beak and sturdy scaled legs, its speckled brown plumage bristling as it charges across a sunlit open plain of tall grass.
+- id: azer-sentinel
+  flavor: >-
+    A stout guardian of living flame, cut from something like black stone and lit from within. Its keepers set it to watch their forges and treasuries, and it does not blink, sleep or accept bribes. Anyone who approaches its post with hostile intent will feel the heat before they see the hammer.
+  imagePrompt: >-
+    A squat figure of dark stone with glowing orange seams across its body, standing rigid before a heavy iron gate and holding a smoking hammer at its side.
+- id: baboon
+  flavor: >-
+    A troop of these clever primates travels together, and each member watches the others' backs. They are loud, quick and far more organised than a casual observer expects. A lone baboon is rarely seen, which is why most stories about them involve an entire gang.
+  imagePrompt: >-
+    A small baboon with a tan, grizzled coat crouched on a rocky ledge, baring its teeth beside three companions among dry grass and scattered boulders.
+- id: badger
+  flavor: >-
+    A stubborn digger with a striped face and a temper that outlasts most hunters. Badgers dig deep burrows beneath hedgerows and defend them with a surprising ferocity. Farmers grumble about the holes they leave in fields, yet few would wish for a fight with one.
+  imagePrompt: >-
+    A small grey badger with a bold white stripe down its black-and-white face, emerging from a mound of freshly dug earth beside a hedgerow in soft morning light.
+- id: balor
+  flavor: >-
+    A towering horned tyrant wreathed in flame, whose whip of fire can drag a knight from the saddle. Even when it is destroyed, its ashes gather again in some faraway pit and rise anew, bigger and angrier than before. Cult-masters who call one up rarely live long enough to renegotiate.
+  imagePrompt: >-
+    A huge horned demon with smouldering black skin and great wings spread wide, flames licking from its shoulders as a barbed whip of fire coils through a smoky cavern.
+- id: bandit-captain
+  flavor: >-
+    The boss of a road gang who keeps the accounts honest and the loot counted. Captains carry a pistol and a curved blade, and they parry more often than they brag, which is saying something. Merchants on the trade road pay their tolls without argument, or they pay a worse price later.
+  imagePrompt: >-
+    A scarred bandit leader in a faded red coat and studded leather, pointing a long-barrelled pistol from a rocky roadside ledge as a dusty caravan waits below.
+- id: bandit
+  flavor: >-
+    A cheap sort of trouble found along quiet roads, usually one of several. Bandits are hungry more often than cruel, and they tend to run when a sensible farmer turns up with a lantern and a grudge. Their greatest skill is making a pack-mule look more valuable than it really is.
+  imagePrompt: >-
+    A ragged figure in a patched leather jerkin crouching behind a mossy boulder beside a dirt road, aiming a light crossbow while a lone cart waits in the distance.
+- id: barbed-devil
+  flavor: >-
+    A horned tempter whose spiked hide tears at anything foolish enough to grab it. Barbed devils are patient rather than rash, preferring to pin a prisoner and let the spikes do the arguing. Those who study such things say they are happy to wait while a captive tires itself out.
+  imagePrompt: >-
+    A lean crimson devil with a spiked, barbed hide and small curled horns, clawed hands gripping a struggling captive while a plume of orange fire billows behind.
+- id: basilisk
+  flavor: >-
+    A lizard-like hunter whose stare turns living flesh into cold grey stone. It lairs in ruined cellars and gravel pits, where stone figures of its past victims stand in silent rows. Those who survive an encounter tell the story only over a long supper.
+  imagePrompt: >-
+    A lizard-like reptile with a heavy scaled body and glassy yellow eyes, crouched in a dim ruined cellar among grey stone statues of frozen figures.
+- id: bat
+  flavor: >-
+    A small winged mammal that hangs upside down in dark caves and sleeps through the bright parts of the morning. Bats navigate by sound and touch, so they seldom collide with anything important. Lantern-bearers tend to find their flutter more startling than their bite.
+  imagePrompt: >-
+    A tiny brown bat with outstretched leathery wings hanging from a cave ceiling, its small ears pricked and its dark eyes catching faint light from a distant entrance.
+- id: bearded-devil
+  flavor: >-
+    A bristling, bearded brute that carries a long glaive and a fondness for wounds that do not close. Bearded devils gather in squads and drill like soldiers on a dreary parade square. Their tradition holds that a wound worth giving is one that keeps on hurting long after the fight.
+  imagePrompt: >-
+    A broad-chested devil with a jagged, bristling beard and a long-handled glaive, standing in a crimson-lit courtyard of dark stone under a sky of smoky red.
+- id: behir
+  flavor: >-
+    A long serpent with many legs and a taste for lightning that crackles along its scales. It coils over cliffs and mountain passes, dropping on travelers and squeezing them until the air leaves their lungs. Old stories say its lair holds the bones of entire caravans, though the bones are rarely counted.
+  imagePrompt: >-
+    A colossal blue-green serpent with stubby clawed legs along its sinuous body, arcing lightning crackling between its coils as it rears above a rocky mountain pass.
+- id: berserker
+  flavor: >-
+    A warrior who fights best when the battle has already turned ugly. Berserkers paint their faces and sing war songs before a fight, then grow fiercer as their wounds open. Villages along the northern rivers have learned to fear the horn that calls them to war.
+  imagePrompt: >-
+    A wild-eyed warrior in cracked hide armour gripping a long-hafted axe, war paint streaking a scarred face, standing in a smoky field under a stormy grey sky.
+- id: black-bear
+  flavor: >-
+    A broad-backed forager that climbs trees as easily as it wades through a creek. Black bears prefer berries and fish to fighting, but a mother with cubs will make anyone regret the approach. Hikers who meet one are advised to speak calmly, back away slowly and carry something noisy.
+  imagePrompt: >-
+    A shaggy black bear standing on hind legs at the edge of a forest stream, dark glossy fur catching dappled light, a pale muzzle raised toward the trees.
+- id: black-dragon-wyrmling
+  flavor: >-
+    A young dragon that has claimed a swamp as its own and is already quite proud of the stink. Its scales are the colour of wet slate, and it spits acid at anyone who disturbs its dinner. Wyrmlings grow slowly, which gives nearby folk plenty of time to move away.
+  imagePrompt: >-
+    A sleek young dragon with glossy black scales and short wings, perched on a mossy log in a murky green swamp, dripping with dark liquid and watching warily.
+- id: black-pudding
+  flavor: >-
+    A glossy heap of dark, quivering goo that slides through drains and cellar cracks. Its touch eats through leather, iron and wood alike, so adventurers who fight one tend to leave their gear in pieces. Any blow that lands on it may split it into two smaller puddings, each hungrier than the last.
+  imagePrompt: >-
+    A large dark glistening blob of ooze sliding across a stone cellar floor, its surface rippling with trapped bubbles and a faint sheen of acid-green light.

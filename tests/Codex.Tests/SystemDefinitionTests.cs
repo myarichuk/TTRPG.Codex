@@ -80,7 +80,8 @@ public class SystemDefinitionTests
         Assert.Equal(3, actor.Fields[0].DefaultValue);
 
         var calling = schemas.Single(s => s.EntityType == "calling");
-        Assert.Single(calling.Fields);
+        // The type's own field, then the lore fields every entry type's editor offers.
+        Assert.Equal(new[] { "bonus", "flavor", "imagePrompt" }, calling.Fields.Select(f => f.Key));
         Assert.Equal("Content", calling.Intent);
     }
 

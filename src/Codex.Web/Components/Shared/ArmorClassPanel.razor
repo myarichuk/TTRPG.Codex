@@ -1,0 +1,76 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* Armor class: the number, what it is made of, and whether it follows the sheet's equipment and class
+   or is typed in. The numbers come from the rule engine. *@
+
+<section class="panel" aria-labelledby="@(id)-heading" data-testid="armor-class-panel">
+    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="shield" Size="16" Class="title-icon" /> Armor class</h2></div>
+    <div class="d-flex align-items-baseline gap-2">
+        <span class="display-6" data-testid="armor-class">@Value</span>
+        @if (Auto)
+        {
+            <span class="small-muted">worked out from your equipment</span>
+        }
+    </div>
+
+    @if (Auto && Summary != null)
+    {
+        <ul class="list-unstyled small mt-2 mb-2" aria-label="What armor class is made of" data-testid="armor-class-lines">
+            @foreach (var line in Summary.Lines)
+            {
+                <li>@line</li>
+            }
+        </ul>
+    }
+
+    @if (CanEdit)
+    {
+        <div class="form-check mt-2">
+            <input id="@(id)-auto" class="form-check-input" type="checkbox" checked="@Auto" @onchange="e => SetAutoAsync((bool)e.Value!)" data-testid="armor-class-auto" />
+            <label for="@(id)-auto" class="form-check-label">Work out from equipment and class</label>
+        </div>
+        @if (Auto)
+        {
+            <div class="mt-2">
+                <label for="@(id)-misc" class="form-label small mb-1">Other bonuses (spells, magic effects)</label>
+                <input id="@(id)-misc" type="number" class="form-control form-control-sm" style="width:6rem" value="@(YamlValues.GetInt(Sheet, Rules.MiscField) ?? 0)"
+                       @onchange="e => SetNumberAsync(Rules.MiscField, e.Value?.ToString())" data-testid="armor-class-misc" />
+            </div>
+        }
+        else
+        {
+            <div class="mt-2">
+                <label for="@(id)-manual" class="form-label small mb-1">Armor class</label>
+                <input id="@(id)-manual" type="number" class="form-control form-control-sm" style="width:6rem" value="@Value"
+                       @onchange="e => SetNumberAsync(Rules.Key, e.Value?.ToString())" data-testid="armor-class-input" />
+            </div>
+        }
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ArmorClassRules Rules { get; set; } = null!;
+    [Parameter] public ArmorClassSummary? Summary { get; set; }
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private readonly string id = "ac-" + Guid.NewGuid().ToString("N")[..6];
+
+    private bool Auto => Summary?.Active == true;
+    private int Value => Auto ? Summary!.Total : YamlValues.GetInt(Sheet, Rules.Key) ?? 10;
+
+    private async Task SetAutoAsync(bool auto)
+    {
+        Sheet[Rules.ModeKey] = auto ? "auto" : "manual";
+        await Changed.InvokeAsync();
+    }
+
+    private async Task SetNumberAsync(string key, string? raw)
+    {
+        Sheet[key] = (long)(int.TryParse(raw, out var number) ? number : 0);
+        await Changed.InvokeAsync();
+    }
+}

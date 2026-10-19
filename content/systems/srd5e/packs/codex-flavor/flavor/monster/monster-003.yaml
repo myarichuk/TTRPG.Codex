@@ -1,0 +1,125 @@
+- id: blink-dog
+  flavor: >-
+    Blink dogs are fey hounds that seem to pop from one patch of brush to the next, and the hunters who track them tend to find only tufts of silver fur. Their packs are known for courtesy, sharing a kill and waiting politely at the edge of a clearing for a traveler to pass. Few who meet them forget how quickly a friendly wag can turn into a sudden disappearance.
+  imagePrompt: >-
+    A slim silver-furred hound with bright eyes stands at the edge of a moonlit forest clearing, one foreleg lifted mid-leap while a faint blue shimmer trails behind it.
+- id: blood-hawk
+  flavor: >-
+    A blood hawk is a small raptor with rust-coloured wings and a restless, unforgiving stare. Hunters use them the way others use a whistle, loosing the bird to circle high while sharp eyes below do the rest. It is more clever than its size suggests, and farmers who keep chickens learn to listen for the sudden silence that means one has arrived.
+  imagePrompt: >-
+    A small hawk with rust-red wings spread wide over a dry grassy field, talons out and dark eyes fixed on something below in the stubble.
+- id: blue-dragon-wyrmling
+  flavor: >-
+    The blue wyrmling is a young dragon of dry plains and scorched dunes, its scales the colour of a storm seen from far off. It is patient in the way of creatures who expect to outlive everyone who wronged them, and it keeps careful ledgers of favours owed. Young as it is, it already prefers a bargain struck in its favour to any fight it might lose.
+  imagePrompt: >-
+    A sleek young dragon with deep sapphire scales and a sharp-ridged crest crouches on sunbaked sand, wings half-open against a hazy copper sky.
+- id: boar
+  flavor: >-
+    A boar is a stocky, bristle-backed forager of oak woods and river bottoms, more likely to root through leaf litter than to pick a fight. Cornered, it becomes something else entirely, all shoulders and lowered tusks. Loggers learn early to give a grumbling sow plenty of room and to never stand between it and its piglets.
+  imagePrompt: >-
+    A heavy brown boar with a coarse bristled back and curved yellowed tusks stands in a damp oak wood, flecks of mud on its flanks.
+- id: bone-devil
+  flavor: >-
+    A bone devil is a tall, spined fiend of ordered infernal courts, where rank is marked by the length of one's barbs and the cold cleanliness of one's contracts. It is a creature of exacting bargains, and it enjoys watching a mortal understand too late which clause they signed. Its patience is terrible, and its barbed tail, which it uses as a whip, rarely misses the point.
+  imagePrompt: >-
+    A towering pale skeletal fiend with ridged bone spines along its arms and a long barbed tail, standing in a smoke-filled hall of black marble.
+- id: brass-dragon-wyrmling
+  flavor: >-
+    The brass wyrmling lives in hot, open country and talks more than most dragons would think polite. It loves stories, songs and the sound of its own voice carried across a dune, and it will trade a tale for a tale without any fuss about who owes whom. Travelers who meet one usually leave with directions, a joke, and a faint smell of warm metal.
+  imagePrompt: >-
+    A brass-scaled young dragon with a bright, cheerful face perches on a sun-bleached rock, its wings catching the light of an open desert.
+- id: bronze-dragon-wyrmling
+  flavor: >-
+    The bronze wyrmling haunts coastlines and slow green rivers, where it keeps watch over fishing villages it has decided to protect. It takes its duties seriously, perhaps too seriously, and it has been known to hover over a harbour through a long grey morning without a word. Sailors say its patience is the only reason some boats return, which the dragon regards as a perfectly reasonable arrangement.
+  imagePrompt: >-
+    A bronze-scaled dragon with a shield-like brow coils over a grey harbour wall at dusk, its wings folded and lantern light glinting on its scales.
+- id: brown-bear
+  flavor: >-
+    A brown bear is a broad-shouldered wanderer of mountain forests and high meadows, ambling through berry patches with the air of an animal that has never once been in a hurry. Most would rather be left alone, and most will oblige a traveler who makes enough noise to be noticed. Mothers with cubs are a different matter entirely, and the wise give them a wide berth.
+  imagePrompt: >-
+    A massive shaggy brown bear rises on its hind legs at the edge of a pine forest, its broad claws bared and thick fur bristling in the cold mountain air.
+- id: bugbear-stalker
+  flavor: >-
+    The bugbear stalker is the quiet member of a hairy and ill-tempered family, a hunter that prefers the shadowed edge of a trail to the open road. It learns the habits of its prey before it ever shows itself, and its trophies are kept in neat rows that frighten even its cousins. Trackers in the lowlands speak of it in whispers, as if speaking loudly might bring it back.
+  imagePrompt: >-
+    A hulking hairy creature with a shaggy brown coat and a chain shirt glinting in the gloom, crouched low behind a thorny hedge at night.
+- id: bugbear-warrior
+  flavor: >-
+    A bugbear warrior is the loud, front-line version of its kin, built like a barrel with arms to match. It likes a good shout before a fight and a good meal after one, and it has little patience for anyone who calls it slow. The warriors of its kind keep a rough code of their own, mostly about who gets the largest share of whatever was taken.
+  imagePrompt: >-
+    A broad hairy warrior with a leather hide tunic and bristling weapons in each hand grins fiercely in a muddy forest clearing at dawn.
+- id: bulette
+  flavor: >-
+    A bulette is an armoured burrowing terror that moves through soft soil like a fish through water, surfacing only when it means to feed. Its back is plated like a shield and its jaws are wide enough to swallow a goat whole. Farmers near its hunting fields learn to feel the earth tremble before the ridge of plates breaks through the dirt.
+  imagePrompt: >-
+    A heavy, plated, burrowing beast breaks through pale sandy soil, its broad ridged back glinting as a wide-toothed maw opens below.
+- id: camel
+  flavor: >-
+    The camel is a patient beast of dry flats and salt pans, sure-footed and unbothered by heat that would drop a horse. Its humps store food for lean seasons, and its long-lashed eyes give it a look of mild disapproval that many travelers find hard to forgive. Caravan-folk value it above almost any other animal, though they will admit, quietly, that it has a sense of humour.
+  imagePrompt: >-
+    A tall tan camel with a long neck and two humps stands on cracked white salt flats under a flat, pale sky, its eyes half-closed.
+- id: cat
+  flavor: >-
+    A cat is a small, self-possessed hunter that has learned to live beside people on its own terms. It sleeps in sunny windows, climbs anything with a view, and treats most household rules as suggestions made by slower creatures. Mice in the granary know the feeling of its attention well, and so do the owners who never quite seem to own it.
+  imagePrompt: >-
+    A small tabby cat with bright amber eyes perches on a windowsill, tail curled neatly over its paws, sunlight warming its striped fur.
+- id: centaur-trooper
+  flavor: >-
+    The centaur trooper is a soldier of the high grasslands, a mix of horse and hardy rider who fights for the folk it has sworn to guard. Its armour is well kept, its lance well oiled, and its manners are better than those of most tavern brawlers. Border villages sleep easier when one of these riders keeps watch from the hills, though it will insist the credit belongs to the horses.
+  imagePrompt: >-
+    A powerful centaur in polished breastplate and a steel helm holds a long pike, its chestnut flanks and bay mane catching the morning light on a green hillside.
+- id: chain-devil
+  flavor: >-
+    A chain devil is a grim jailer of the infernal ranks, bound with rattling iron and always carrying a length of chain for someone who has stepped out of line. It serves the higher fiends with a sullen discipline and makes a point of reminding lesser souls how easily a grip can tighten. Those who have heard the rattle of its chains in a dark corridor rarely forget the sound.
+  imagePrompt: >-
+    A lean crimson-skinned fiend with iron chains wrapped across its chest and shoulders stands in a dim corridor lit by a single guttering red lamp.
+- id: chimera
+  flavor: >-
+    A chimera is three beasts stitched into one ill-tempered body, with a lion's head, a goat's bulk and a dragon's wings that never quite learned to cooperate. Each head argues for its own meal, and the result is a hunter that is fast, bad-tempered and easily distracted. Herders keep their flocks behind high fences and their dogs close, since a chimera's appetite has never been known to take advice.
+  imagePrompt: >-
+    A massive beast with a lion's head, a goat's head and a dragon's head, leathery wings spread wide, rears above a rocky hillside at dusk.
+- id: chuul
+  flavor: >-
+    A chuul is a long-limbed aberration of dark, brackish water, all pincers and sensing feelers that drift through the murk like a question nobody wanted asked. It keeps trophies of its catches tucked beneath its carapace, and it has a fondness for the deep places where sunlight never reaches. Divers who work near its waters tend to keep their lamps lit and their eyes on the shoreline.
+  imagePrompt: >-
+    A large dark-shelled crustacean-like monster with long pincers and feathery sensing feelers rises from murky green water beside a reed-covered bank.
+- id: clay-golem
+  flavor: >-
+    A clay golem is a hulking figure pressed from wet earth and given purpose by a crafter's careful words, with a grinding stride and a face that never changes. It does exactly what it was made to do and nothing it was not, which is a comfort to its makers and a worry to everyone else. Once its shaping is finished it rarely speaks, and its silence tends to come across as a verdict.
+  imagePrompt: >-
+    A towering humanoid figure of cracked, sun-dried clay with smooth blank features and heavy fists stands motionless in a dusty workshop hall.
+- id: cloaker
+  flavor: >-
+    The cloaker is a flat, dark-backed wanderer that hangs in shadows and waits for its moment to drop onto unwary travelers. Its underside holds a mouth full of teeth and a tail of stinging spines, which it treats with the casual confidence of a creature that has never been sorry. Some scholars think the cloaker is simply bored, and others think it is the most patient thing alive in the dark.
+  imagePrompt: >-
+    A broad flat cape-like creature with a dark mottled back and a ragged underside full of teeth hangs from the ceiling of a shadowy cave.
+- id: cloud-giant
+  flavor: >-
+    A cloud giant lives high above the lowlands, in towers of pale marble that seem to drift among the clouds. Its manners are courteous and its curiosity vast, and it measures the affairs of smaller folk with a patience that can feel like condescension. Visitors who climb to its halls are usually given a feast, a long conversation and a clear sense of how small their own troubles are.
+  imagePrompt: >-
+    A colossal pale-skinned giant in a flowing grey robe stands on a cloud-wrapped mountaintop, one hand raised to the sky as wind tugs at its hair.
+- id: cockatrice
+  flavor: >-
+    A cockatrice is a small, feathered oddity with the wings of a fowl, the claws of something older and a gaze that is best not tested. Farm folk keep a wary distance from its nest, and they tell children to walk slowly past the henhouse. For all its menace it is a creature of habit, mostly content to peck at grain and scold anyone who gets too close.
+  imagePrompt: >-
+    A small scruffy rooster-like creature with leathery bat wings and a scaly serpent tail stands on a straw-strewn barn floor, eyes glinting.
+- id: commoner
+  flavor: >-
+    A commoner is simply anyone who works the fields, mends the nets, or keeps the bread warm in a village oven. They are the ones who know the roads, the weather and the gossip before the lords do, and they rarely make a fuss about it. Most adventurers begin their journeys by listening to one, and most of them finish by wishing they had listened more.
+  imagePrompt: >-
+    A plainly dressed villager in a patched linen smock and worn leather boots carries a wooden bucket along a muddy village lane at dawn.
+- id: constrictor-snake
+  flavor: >-
+    The constrictor snake is a heavy, muscular serpent of river banks and sun-warmed rocks, patient enough to wait an entire morning for a meal to wander close. It hunts by coiling tight, and it swims as easily as it crawls, which makes fishing villages nervous about rowboats after dark. Its patience is legendary, but its timing is better still.
+  imagePrompt: >-
+    A thick olive-brown serpent coils over a sun-warmed river rock beside a muddy bank, its scaled body glistening as it lies still, waiting.
+- id: copper-dragon-wyrmling
+  flavor: >-
+    The copper wyrmling is a mischievous little dragon of hills and dry gullies, forever testing whatever it can reach. It loves riddles, pranks and the look on a traveler's face when a riddle has been solved too quickly. Beneath the teasing it is quite generous, and it will hand over a coin or a clue to anyone who makes it laugh.
+  imagePrompt: >-
+    A coppery young dragon with a freckled green sheen perches on a dry gully ledge, its wings half-raised and eyes sparkling with mischief.
+- id: couatl
+  flavor: >-
+    A couatl is a feathered serpent of the upper skies, bright with colour and clever with words. Those who meet one often receive a gentle lecture on honesty, delivered with more warmth than most people manage over a supper table. It is quick to heal the wounded and slow to forgive any cruelty committed in its sight, and its shed feathers seem to glow faintly for a while.
+  imagePrompt: >-
+    A jewel-toned winged serpent with a plumed crest and feathered coils hovers above a sunlit temple terrace, its wings spread wide in the warm light.

@@ -1,0 +1,120 @@
+- id: mimic
+  flavor: >-
+    Most travellers assume the iron-banded chest in the inn corner is only furniture. The mimic has lived off that assumption for longer than any innkeeper can remember, taking the shape of doors, barrels and treasure chests while it waits with a patience that feels almost polite. Its surface is sticky enough that anything leaning too close may never leave.
+  imagePrompt: >-
+    A squat iron-banded treasure chest in a dim tavern corner, its lid slightly open to reveal a glistening, toothy maw.
+- id: minotaur-of-baphomet
+  flavor: >-
+    Horned guardians of a forbidden shrine are rarely cheerful company, and this one has the heaviness of a sentry who has forgotten the reason for the post. It stands taller than a doorway and swings a black glaive with a grim, unhurried zeal. Cultists claim the beast never tires, though the stains on its altar suggest otherwise.
+  imagePrompt: >-
+    A towering horned brute with bronze-grey hide and a black-bladed polearm, standing guard before a cracked altar lit by a single brazier.
+- id: minotaur-skeleton
+  flavor: >-
+    Someone once built this skeleton out of a bull's bones and a grudge, and it has been marching through the same labyrinth ever since. Its ribs rattle with each heavy stride and its skull still lowers at intruders as if horns remained. Lawful and methodical, it obeys the old orders without question, which makes it an unnervingly reliable jailer.
+  imagePrompt: >-
+    A bleached skeleton of a massive bull with a rusted iron ring through its nose, standing in a torch-lit corridor of crumbling brick.
+- id: mummy-lord
+  flavor: >-
+    Where lesser embalmed dead are dull and shambling, the mummy lord remembers everything it was taught in life. It speaks several languages, keeps careful records of every slight, and advises the tombs it guards with a scholar's precision. Thieves who mistake its quiet for weakness tend to learn the difference from a wall of wrapped and watching servants.
+  imagePrompt: >-
+    A tall desiccated figure in gold-threaded linen wrappings, seated on a carved marble throne within a lamp-lit burial chamber.
+- id: mummy
+  flavor: >-
+    Bandages wound tight over old grief keep the mummy upright long after the body should have given up. It moves slowly through dry crypts, its rotting fists still loyal to whatever oath bound it to the tomb. A single unblinking stare is often enough to send grave-robbers running, and they rarely stop to wonder what it was guarding.
+  imagePrompt: >-
+    A shambling mummy wrapped in cracked, grey bandages, one arm raised toward the viewer in a dusty crypt with thin shafts of light.
+- id: nalfeshnee
+  flavor: >-
+    Something between a hulking ape and a bloated tyrant, the nalfeshnee sits upon its own wealth of hungry bargains. Its voice is soft and reasonable, which makes its promises all the more dangerous. Lesser devils bring it tribute from the far pits, and it rewards them with a bored, indulgent kindness that feels much like a threat.
+  imagePrompt: >-
+    A massive ash-grey ape-like fiend with pale tusks and folded leathery wings, seated on a cracked obsidian ledge above a sulphur lake.
+- id: night-hag
+  flavor: >-
+    Stooped and patient, the night hag keeps a little ledger of every bargain struck in quiet corners of the world. She wears a kindly face when visiting cradles and sickbeds, and she is seldom caught without a sweet word ready. Her covens meet where the fire has burned low, sharing secrets that cost more than any coin.
+  imagePrompt: >-
+    A gaunt, grey-skinned hag with long tangled hair and a sharp grin, standing at the edge of a bed in a dim moonlit cottage.
+- id: nightmare
+  flavor: >-
+    Shod in embers and wreathed in a fitful glow, the nightmare gallops through sleeping villages with a rider's blessing or a rider's curse. Its eyes burn like coals, and where its hooves touch the air a faint light lingers. Stablemen who have tried to break one tend to be found the next morning, staring at the rafters and grinning.
+  imagePrompt: >-
+    A large black horse with ember-red eyes and a flickering flame-tinged mane gallops through low mist beneath a pale moon.
+- id: noble
+  flavor: >-
+    Every town of consequence keeps a noble who believes the harbour and the grain stores belong to his family by right. He dresses in polished breastplate beneath a velvet cloak and grins with teeth that have never been short of supper. Most of his disputes are settled with a clever word, though he keeps a rapier for those rare occasions when words fail him.
+  imagePrompt: >-
+    A well-groomed nobleman in a polished breastplate and a velvet cloak, one gloved hand resting on a rapier hilt in a marble hall.
+- id: ochre-jelly
+  flavor: >-
+    Dripping from the damp undersides of old bridges, the ochre jelly is a slow, sour mass that treats every crevice as a meal. It oozes up walls and across ceilings, leaving a tang of vinegar and corroded metal behind. Fishermen who have seen one in the reeds tend to stay well back from the bank for a good while afterwards.
+  imagePrompt: >-
+    A large translucent yellow-brown ooze climbing a damp brick wall, its amber body studded with flecks of pale debris and dripping in slow streams.
+- id: ogre-zombie
+  flavor: >-
+    Ogres are hard to kill, and the ogre zombie has made that difficulty a grim point of pride. Its flesh sags from a great, shambling frame, yet it keeps hauling a club long after its wits have gone. Those who have seen it stand up after a fatal blow report that the dead giant seems almost embarrassed, as if it had forgotten how to lie down.
+  imagePrompt: >-
+    A hulking grey-green corpse of a giant with sagging skin and a broken wooden club, shambling through a ruined village square at dusk.
+- id: ogre
+  flavor: >-
+    The local ogre is the sort of neighbour who borrows a cart and returns only the wheels. It is loud, greedy and quick to take offence, which makes it a poor choice for any argument over the last loaf. It hauls a knotted greatclub on one shoulder and a bundle of javelins on the other, and it believes firmly that everything worth having can be won by shouting louder.
+  imagePrompt: >-
+    A broad-shouldered giant with a warty grey-green face and a knotted wooden club slung over one shoulder, standing on a muddy hillside road.
+- id: oni
+  flavor: >-
+    Horned and broad, the oni keeps a strict ledger of debts and punishments, and it collects both with a grin. It can heal from wounds that would fell a lesser creature, and it hangs in the air as easily as it walks. Rulers and magistrates have found it useful, though anyone who hires one should expect the bill to be paid in full, eventually.
+  imagePrompt: >-
+    A broad horned demon with blue-black skin and an iron club, hovering above a moss-covered shrine courtyard beneath a stormy sky.
+- id: otyugh
+  flavor: >-
+    Nothing is more reliable in a sewer than a creature that prefers rot to fresh bread, and the otyugh is the reigning example. Its bulk sits in heaps of refuse, where its tentacles sift through the leavings of the town above. It speaks only in thoughts pressed into the minds of nearby listeners, usually grumbling about the smell of its own lair.
+  imagePrompt: >-
+    A bloated, mottled brown creature with a wide toothed mouth and writhing tentacles, half-buried in heaps of refuse in a dim damp cellar.
+- id: owl
+  flavor: >-
+    Perched in the hollow of an oak, the owl watches the lane with a stillness that unnerves the bravest farmhand. Its wings make almost no sound, so a mouse may never know it has been seen until the talons close. The bird has a quiet dignity about it, and it is happy to leave the rest of the world to noisier creatures.
+  imagePrompt: >-
+    A small flat-faced owl with mottled brown feathers and wide amber eyes, perched on a gnarled oak branch in pale moonlight.
+- id: owlbear
+  flavor: >-
+    Hunters in the high woods give the owlbear a wide berth, since its body is a bear's and its temper is worse. Its owlish head turns with a hooting, offended cry whenever something trespasses into its territory. It rarely hunts for sport, yet it will tear through a fence without pausing to see who is behind it.
+  imagePrompt: >-
+    A hulking brown bear with a fierce owl's head, feathered ruff and hooked beak, standing upright in a pine forest clearing.
+- id: panther
+  flavor: >-
+    A panther is the shadow that moves when no one is looking, sliding through reeds and up trunks with barely a rustle. It hunts at the edge of a camp and vanishes before the lantern can find it. Trappers say its coat is the colour of wet slate, and that it has never once wasted a step.
+  imagePrompt: >-
+    A sleek black panther with glossy fur and pale green eyes, crouched on a mossy tree limb above a dark forest path.
+- id: pegasus
+  flavor: >-
+    White-winged and gentle, the pegasus is the sort of creature songs are written about, which it finds faintly embarrassing. It will carry a lost child home across a river or a wounded knight off a battlefield, asking nothing in return but a soft word. Its coat shines in morning light, and it rarely lets anyone touch its mane without earning that trust first.
+  imagePrompt: >-
+    A white winged horse with a flowing silver mane, standing in tall grass at the edge of a sunlit meadow with its wings half-raised.
+- id: phase-spider
+  flavor: >-
+    Some spiders weave webs, but the phase spider weaves itself out of the ordinary world. It slips between the solid and the unseen, appearing on a ceiling only to fade into the rock a moment later. Hunters who have followed its tracks report that the trail simply stops, as though the spider had decided the room was no longer worth its trouble.
+  imagePrompt: >-
+    A long-legged spider with a translucent, pale grey body and banded dark legs, clinging to a plaster ceiling that dissolves into wisps of mist.
+- id: piranha
+  flavor: >-
+    A single piranha is hardly worth a second glance, but the river rarely sends just one. They move in a flashing silver crowd, turning on a splash with a speed that makes wading children very quick to leave the water. Fishers have learned that a scrap of old meat draws them quickly, and that is a lesson best learned from the bank.
+  imagePrompt: >-
+    A small silver-flanked fish with a sharp underbite and red-tinged fins, darting through murky green river water among drifting weeds.
+- id: pirate-captain
+  flavor: >-
+    The pirate captain wears a coat stitched from three different navies and a grin that has talked its way out of every gallows. Dueling is less a skill than a hobby, and the captain fences with one hand while tipping a hat with the other. Crews follow for the share of plunder, and they stay for the stories, most of which are at least half true.
+  imagePrompt: >-
+    A swaggering captain in a faded red coat and wide-brimmed hat, pointing a silver rapier from the deck of a creaking wooden ship at dusk.
+- id: pirate
+  flavor: >-
+    Every harbour has a few pirates who prefer charm to cutlasses, and this is one of the more persuasive examples. Six daggers hang from a leather bandolier, each one with a story about the man it came from. Its charm tends to make strangers hand over their purses before they realise they have been asked for anything at all.
+  imagePrompt: >-
+    A grinning sailor in a salt-stained leather jerkin with a row of throwing daggers across his chest, leaning on a barrel on a quayside.
+- id: pit-fiend
+  flavor: >-
+    A pit fiend is a sort of infernal bureaucrat with a wingspan to match, and it treats every contract as a personal insult to be settled in its favour. Its hide is thick and scarred, and its whip is no mere decoration. Lesser fiends rise and fall at its whim, while visitors who come to bargain tend to leave with terms they do not remember agreeing to.
+  imagePrompt: >-
+    A towering crimson-skinned fiend with great bat-like wings, a scarred hide and a barbed whip, standing in a sulphurous pit lit by rising flames.
+- id: planetar
+  flavor: >-
+    Radiant and unhurried, the planetar hangs in the air like a lamp that has forgotten how to fall. Its wings beat slowly, and every word it speaks seems to carry light into the dark corners of a room. Mortals who meet one often find themselves confessing things they had meant to keep, though the creature takes such confessions as a kindness rather than a prize.
+  imagePrompt: >-
+    A tall luminous figure with broad golden wings and a crown of pale light, hovering above a marble courtyard at dawn.

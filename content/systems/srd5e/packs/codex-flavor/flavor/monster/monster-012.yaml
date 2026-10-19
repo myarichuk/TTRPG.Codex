@@ -1,0 +1,125 @@
+- id: swarm-of-crawling-claws
+  flavor: >-
+    A drift of severed fingers and skittering hands gathers in a crypt corridor, pulling itself along walls and ceilings as one restless mass. It has no will of its own that anyone has managed to read, only a hunger to grab, hold and drag down whatever comes near. Cold scholars say it is the remains of a hundred small grave-robbers, each still reaching for one more handful of earth.
+  imagePrompt: >-
+    A dark churning cloud of pale grasping hands and bony fingers swarms up a damp crypt wall, knuckles curled and fingers splayed in cold ash-grey tones.
+- id: swarm-of-insects
+  flavor: >-
+    Beetles, mites and wasps move as one brown tide through a stand of reeds, humming with a sound that carries farther than it should. Each insect is weak alone, but together they cover a traveller in moments and find every gap in the armour. Trappers learn to walk slowly, breathe through cloth and never linger near a rotting log.
+  imagePrompt: >-
+    A buzzing brown cloud of beetles, mites and wasps rises from a tangle of reeds beside a muddy riverbank under heavy overcast sky.
+- id: swarm-of-piranhas
+  flavor: >-
+    A flash of silver scales turns a slow river into a boiling pool, as a shoal of tiny fish closes in on anything that splashes at its edge. The swarm moves as a single hungry thing, darting through the weeds and along the drowned roots of trees. River-folk say the water goes quiet just before the bites begin, and the wise keep their hands out of the current.
+  imagePrompt: >-
+    A glittering silver shoal of small fanged fish churns through dark brown river water beneath a fallen log, their bodies twisting in tight spirals.
+- id: swarm-of-rats
+  flavor: >-
+    A grey, rustling tide of rats pours out of a collapsed cellar, climbing over one another in a shifting carpet of fur and teeth. Alone each rat would scatter at a boot-heel, but packed together they press forward and fill every corner they can reach. Cellar keepers in the old towns have a saying that a single rat is a nuisance and a hundred is a reckoning.
+  imagePrompt: >-
+    A heaving carpet of grey rats with glinting eyes and bared yellow teeth spills across the damp boards of a collapsed cellar, tails looping between broken barrels.
+- id: swarm-of-ravens
+  flavor: >-
+    A black cloud of ravens tears across a moor, the flapping of many wings and a harsh clamour of caws rising from it like a warning bell. Each bird is clever enough to pick a cloak's clasp or a glinting ring from a careless traveller, and the swarm moves as one mind. Shepherds say the sound alone is enough to make a man lose his footing, so they bar their doors when the sky turns dark.
+  imagePrompt: >-
+    A dense black cloud of ravens with spread wings and open beaks wheels over a windswept heath of grey rocks and dead purple heather under a low sky.
+- id: swarm-of-venomous-snakes
+  flavor: >-
+    Dozens of banded serpents knot together into a rippling mass, sliding through reeds and over sunken steps with a dry hiss that never quite stops. The swarm strikes as one, each small fang dripping a venom that burns through the blood of anything that stands still too long. Herb-sellers in the marsh towns sell charms against them, though nobody has ever proved they work.
+  imagePrompt: >-
+    A writhing knot of slender banded snakes with flicking forked tongues coils over wet green reeds and mossy sunken steps beside black water.
+- id: tarrasque
+  flavor: >-
+    A plated mountain of a beast shoulders out of the hills, its armoured hide ridged like old slate and its jaws wide enough to swallow a wagon whole. Magic slides away from its carapace, and its bellow can flatten a whole line of soldiers before they reach the wall. Scholars who have studied the bones of such creatures say the thing does not die so much as refuse to stay dead.
+  imagePrompt: >-
+    A vast armoured beast with ridged bronze plates along its back and a spiked tail sweeps across a ruined valley of toppled towers under a smoky red sky.
+- id: tiger
+  flavor: >-
+    A striped hunter moves through the tall grass without a sound, its amber eyes fixed on the herd at the far edge of the river meadow. Tigers are patient ambushers who wait for a stumble or a lone straggler, then strike with a single heavy blow that knocks prey off balance. Once the kill is made, the cat slips back into the thicket shadows, and the herd never learns what took its member.
+  imagePrompt: >-
+    A large orange-and-black striped cat crouches low in tall golden grass at the edge of a river meadow, amber eyes fixed forward, muscles tensed.
+- id: tough-boss
+  flavor: >-
+    The boss of a rough crew wears chain mail that has seen many fights and carries a warhammer thick with old dents. He directs his band with short shouts and hand signals, so that his men fight as a unit and close gaps before a foe can escape. Those who survive a meeting with him say his crossbow is as steady as his temper is short.
+  imagePrompt: >-
+    A stocky, scarred raider captain in dented chain mail grips a warhammer in one hand and a heavy crossbow in the other, standing on a muddy road at dusk.
+- id: tough
+  flavor: >-
+    Every caravan town has a few of these hired hands, men and women in worn leather who keep the road safe for coin and never ask too many questions. A tough carries a mace for close work and a heavy crossbow for the far side of the cart, and fights best alongside friends. They are rarely cruel, but they are never soft, and their loyalty lasts exactly as long as the pay does.
+  imagePrompt: >-
+    A wiry hired fighter in patched brown leather armour holds a stubby mace in one fist and a heavy crossbow braced against a wooden crate on a dusty road.
+- id: treant
+  flavor: >-
+    An ancient tree stands taller than a village hall, its bark deep with moss and its branches rustling with the voices of the wood. Such guardians wake slowly to anger, but once roused they can call up young trees from the earth to fight beside them. Forest folk leave small gifts at its roots and speak softly, since few things in the grove are older or more patient.
+  imagePrompt: >-
+    A towering old tree with a broad bark face, mossy limbs spread wide and leafy green crown, standing in a misty forest clearing among tall pale birches.
+- id: triceratops
+  flavor: >-
+    A great horned grazer lumbers through the fern plains, its bony frill rattling as it lowers three long brow horns toward anything that dares cross its path. It is no hunter, but a creature of such weight rarely needs to be. Smaller beasts drift aside from it with easy caution, and the older bulls will charge anything that stands between them and the water.
+  imagePrompt: >-
+    A massive grey horned beast with three long pale horns and a wide bony frill stands in tall green ferns under a hazy sky, head lowered.
+- id: troll-limb
+  flavor: >-
+    A severed arm, still clawing with blunt grey fingers, twitches on its own in the mud of a troll's lair. It drags itself toward the nearest warm body and swings with surprising force, knitting its torn flesh back together as it goes. Left alone long enough, the limb may wither away, but the luckless few who have seen one reform say it never truly stops trying.
+  imagePrompt: >-
+    A small grey severed arm with knobby knuckles and long clawed fingers lies twitching in dark mud beside a bundle of gnawed bones in a cave.
+- id: troll
+  flavor: >-
+    A hulking grey brute stalks the fords and bridges, its long arms hanging almost to its knees and its wounds knitting shut even as they bleed. Trolls are dim-witted but relentless, and they reach for a fight with the joy of a child at a feast. Travellers who meet one carry torches and pitch, though no two of them agree on what really finishes a troll.
+  imagePrompt: >-
+    A large hunched grey-skinned giant with long dangling arms and warty shoulders strides across a wooden bridge over a dark river under a pale moon.
+- id: tyrannosaurus-rex
+  flavor: >-
+    A towering predator strides out of the fern forest, its enormous skull filled with dagger teeth as long as a man's forearm. Its small forearms are useless for grabbing, yet its jaws and heavy tail can pin and break whatever it chooses. Herds scatter at the first thudding footfall, and even the other great reptiles give it a wide berth.
+  imagePrompt: >-
+    A massive tyrannosaur with a huge toothed skull, tiny clawed arms and a thick muscular tail stands in a steaming fern forest, jaws open wide.
+- id: unicorn
+  flavor: >-
+    A white horse with a spiral horn stands at the edge of a silver-leaved wood, its coat so bright it seems to glow in the dusk. Such creatures are rarely seen and rarely approached, for they are said to test the hearts of those who come near. Those who gain their trust find that the unicorn speaks only in gentle thoughts, and it will guard a wounded traveller with a shimmering light.
+  imagePrompt: >-
+    A large luminous white horse with a long spiral ivory horn and a silver mane stands in a moonlit glade, its hooves glowing faintly on the grass.
+- id: vampire-bat
+  flavor: >-
+    A small black bat drops from the rafters of a silent manor, and where its wings brush the air a chill settles over the room. The bat is a noble vampire in its smallest shape, slipping under shutters and through keyholes to watch the household sleep. Its eyes are old and clever, and it returns to its true form only when it has chosen a victim.
+  imagePrompt: >-
+    A tiny black bat with spread leathery wings and glowing red eyes hangs upside down from a dark wooden beam in a moonlit attic.
+- id: vampire-familiar
+  flavor: >-
+    A lean, quick servant stands at its master's shoulder, dressed in fine dark cloth and carrying a belt of throwing knives. These familiars are bound to a vampire by blood and by a thread of shared sight that lets the master see through their eyes. They move with unnatural speed, slipping along walls and across rooftops, and they never tire of the errand.
+  imagePrompt: >-
+    A pale, wiry servant in a dark coat with a bandolier of silver daggers crouches on a slanted rooftop under a full moon, one hand braced on the tiles.
+- id: vampire-mist
+  flavor: >-
+    A grey mist drifts low over the graves, thick as wet wool and cold enough to make breath freeze. Within it, a vampire can drift through gaps no wider than a thread, seeping under doors and into the tight corners where no sensible person would look. The mist does not speak, but it watches with a patience that feels almost like hunger.
+  imagePrompt: >-
+    A low drifting cloud of pale grey mist curls over moss-covered grave markers and a crooked iron fence on a moonless night, its edges faintly silver.
+- id: vampire-spawn
+  flavor: >-
+    A thin figure with long white fingers and a hungry smile climbs out of a freshly dug pit, shaking loose the soil from its grey shroud. Spawn are the brood of a greater vampire, made from the drained and the buried. They climb walls like spiders and grab with two clawed hands, pulling their victims close for a bite that leaves cold, sickly weakness behind.
+  imagePrompt: >-
+    A gaunt pale undead figure with clawed hands and a sharp grin crawls up a mossy brick wall at night, grey burial cloth trailing from its shoulders.
+- id: vampire-vampire
+  flavor: >-
+    A pale noble in a high-collared coat stands at the head of a long dining table, his eyes catching the candlelight like coins. Vampires of this kind have lived for centuries, learning the courts of distant cities and the habits of the people who serve them. They are charming hosts and terrible enemies, and they treat every fight as an invitation rather than a threat.
+  imagePrompt: >-
+    A tall pale nobleman with slicked dark hair and a black high-collared cloak raises a clawed hand in a candlelit hall lined with heavy velvet curtains.
+- id: venomous-snake
+  flavor: >-
+    A small olive-green snake lies coiled on a sun-warmed rock by the stream, its tongue tasting the air for the next meal. Its bite is quick and its venom is potent for such a little creature, so it is wise to keep a respectful distance. Swampfolk often say the smaller the snake, the more quickly the fever comes.
+  imagePrompt: >-
+    A tiny olive-green snake with a flat triangular head and banded tail rests coiled on a sunlit rock beside clear green water.
+- id: violet-fungus
+  flavor: >-
+    A cluster of violet tendrils sprouts from a damp hollow, leaning slowly toward any warmth that moves nearby. The growth has no eyes and no thoughts worth mentioning, only a slow patience and a touch that rots whatever it clings to. Herb-gatherers who lose a glove to it usually come home smelling of mould, and they never go back for the rest.
+  imagePrompt: >-
+    A clump of violet fungus with thick trailing tendrils and pale rotting fronds spreads across a damp hollow log in a shadowy forest floor.
+- id: vrock
+  flavor: >-
+    A winged demon the size of a carthorse drops out of a sulphur-yellow sky, its vulture-like head crowned with bony spikes. Its wings beat with a sound like tearing sails, and its clawed hands tear at anything within reach. When it shrieks, the air stinks of rot, and those who breathe in the spores often find their limbs turning heavy and slow.
+  imagePrompt: >-
+    A hulking winged demon with grey-purple skin, vulture-like head and bony crest spreads massive leathery wings over a smoke-filled ruined courtyard.
+- id: vulture
+  flavor: >-
+    A bald-necked scavenger circles high over the plain, riding the warm air without a single wingbeat. Vultures are patient, clumsy on foot and utterly unbothered by the smell of death. Where one lands, others follow quickly, and a small flock can strip a carcass to clean bone before the afternoon is out.
+  imagePrompt: >-
+    A bald-headed brown vulture with a bare pink neck and hooked grey beak perches on a dead tree branch under a bright blue sky.

@@ -1,0 +1,75 @@
+- id: commune
+  flavor: >-
+    A quiet audience with something far older than any temple bell, reached through a plume of sweet incense and a whispered request. The answers come back as single terse words, and a clever asker learns to phrase every question so that a bare yes or no cannot be turned against them.
+- id: comprehend-languages
+  flavor: >-
+    Strange tongues lose their fog for a while, and speech that was gibberish a moment ago settles into plain sense. Scribbled pages give up their meaning too, but only to a reader who is touching the paper. Codes and cyphers, however, keep their secrets, because understanding words is not the same as seeing through a clever lie.
+- id: compulsion
+  flavor: >-
+    A crowd of onlookers finds its footing tilted toward a single bearing, as though a warm tide had settled over them. Their paths are not dragged with chains, yet each step leans into the suggestion. Many shake the spell loose the moment their own stubborn sense of self returns.
+- id: cone-of-cold
+  flavor: >-
+    A breath of winter pours out and rolls across a wide wedge of open air, leaving frost on everything it touches. Those caught in its path may be turned into glittering statues, left that way until some warmth coaxes them back into life. Old hedge-wizards say the silence that follows is the worst part.
+- id: confusion
+  flavor: >-
+    Thoughts scatter like startled sparrows inside a cluster of bystanders, and each one wanders off on its own odd tangent. Some stand blankly, some stumble about, and a few lash out at whatever is nearest. Taverns in the old quarter still argue about whether the effect is a curse or a kindness.
+- id: conjure-animals
+  flavor: >-
+    A pack of spectral beasts gathers out of the wild places, wolves or serpents or birds, shaped in flickers like breath on a cold morning. They are intangible, slipping through stone and steel, yet they can herd a foe into a bad corner with uncanny patience.
+- id: conjure-celestial
+  flavor: >-
+    A column of white light descends from a sky that is not quite the one overhead, lighting a narrow tower of air where a bright presence takes shape. Some who stand inside it feel warmth sink into their bones, while others are scorched by a glare that makes the eyes water. Onlookers swear the sky has taken notice.
+- id: conjure-elemental
+  flavor: >-
+    A spirit of stone, flame, storm or tide hangs in the air, its shape loose and ghostly. Its nature decides its bite, whether a crack of lightning, a rolling peal of thunder, a bright burst of fire, or a bone-deep chill. Anyone who wanders too close may be pulled into a test of quickness.
+- id: conjure-fey
+  flavor: >-
+    A pale, mischievous spirit takes shape in whatever guise the caster has chosen, all antlers and glimmer. It may lash out with a claw of psychic pressure, leaving the struck foe rattled and frightened for a time. It feels less like a summoning than an uninvited visit from a neighbor who never learned to knock.
+- id: conjure-minor-elementals
+  flavor: >-
+    Small spirits of the elements swirl about the caster in a loose ring, flashing with frost, fire, lightning, or acid as the moment demands. Each blow that lands on a foe inside the ring carries a sharp extra sting, and the earth there grows treacherous for anyone who would rush across it.
+- id: conjure-woodland-beings
+  flavor: >-
+    Nature spirits flit in a loose cloud about the caster, bright as sparks in a wind-blown hedge, and they snatch at anything that wanders into their dance. A creature caught in the swirl feels a sudden pressure of wild force, though a quick mind can slip the worst of it. Hedge-folk swear the spirits dislike armored trespassers.
+- id: contact-other-plane
+  flavor: >-
+    A whisper from elsewhere brushes the caster's mind, carrying the voice of an ancient intelligence from beyond the sky. Such minds are dangerous company, and the link can leave a scholar's thoughts cracked like old glass. Those who come through unharmed get a handful of blunt, clipped answers, usually as little as a word.
+- id: contagion
+  flavor: >-
+    A single touch leaves a sickly bloom under the skin, a contagion that spreads through the blood like rot through old timber. The victim's body fights a long and miserable battle. The sickness lingers for days, and its worst cruelty lands on whichever strength the caster named.
+- id: contingency
+  flavor: >-
+    A prepared spell sits quietly in reserve, waiting for a trigger that the caster has chosen in advance. A caster who plans with care can have a simple protection snap into place at exactly the moment it is needed, like a trap set in the dark. Scholars argue whether such foresight is wisdom or fear with better manners.
+- id: continual-flame
+  flavor: >-
+    A small flame blooms on an object's surface, bright enough to read by in a large room yet cool to the touch and never hungry for fuel. It can be draped or hidden behind a shade, but no smothering breath or splash of water will put it out. Lamp-makers of the old kind have long envied its patience.
+- id: control-water
+  flavor: >-
+    Rivers and puddles answer to a single will, rising into walls, pulling into whirlpools, or sinking away to leave bare stones and mud. A sharp wrist can turn a harbor into a trap or a flood into a gentle thaw. Steady focus holds it, and the water sulks back to its own shape the moment that focus breaks.
+- id: control-weather
+  flavor: >-
+    Clouds bend to a single will over a wide patch of countryside, and the caster can coax sun, rain, or wind into new moods. The sky shifts reluctantly and over long stretches of time. The spell ends if the caster steps indoors, since the sky only answers those who stand under it.
+- id: counterspell
+  flavor: >-
+    A sharp word of refusal cuts across another caster's half-finished incantation, sending the working spark out in a faint hiss. The attempt is not always thwarted, since the target can resist with a stubborn tug of will. The energy spent on the failed working is simply gone, a waste no one can recover.
+- id: create-food-and-water
+  flavor: >-
+    Plain provisions appear out of thin air, humble and filling, shaped like whatever dish the caster fancies, alongside clean water poured into jugs or vessels. The loaves and stews will not last, so the feast is best eaten promptly while it is still warm. Travelers have never once complained about the taste, only about the lack of seasoning.
+- id: create-or-destroy-water
+  flavor: >-
+    Water comes and goes at the caster's bidding, a bucket filling from nothing or a rain of droplets falling through a small patch of air to douse a fire. Turned the other way, the same magic drinks water from a jug or dissolves a bank of fog.
+- id: create-undead
+  flavor: >-
+    Only after dark can the dead be roused, and a few corpses rise as hungry shamblers that answer to the caster's murmured commands. Each one bears the grim stillness of a grave, and a cold breeze seems to follow the new servants wherever they walk.
+- id: creation
+  flavor: >-
+    Wisps of shadow gather into a solid-looking thing of wood, cloth, stone, or metal, whatever the caster can picture clearly. Flimsy creations slip away sooner than sturdy ones, and the shadow-stuff never quite forgets where it came from.
+- id: cure-wounds
+  flavor: >-
+    Warmth flows through a touch and knits torn skin and bruised muscle back together, the body rallying faster than seems possible. Practiced hands make the glow brighter, and even a clumsy touch brings some relief.
+- id: dancing-lights
+  flavor: >-
+    A handful of lights, shaped like torches or lanterns or drifting orbs, bob in the air and can be coaxed to fold together into a vaguely human figure. It moves with a graceful, glimmering stride and skitters over the rooftops like a cat hunting mice.
+- id: darkness
+  flavor: >-
+    Ink poured into the air, a sphere of gloom that swallows torchlight whole. Even keen eyes accustomed to dimness find nothing to hold onto inside it, and a simple lid of cloth or iron can choke it down. Hedge-wizards like to hide their sneaking behind it.

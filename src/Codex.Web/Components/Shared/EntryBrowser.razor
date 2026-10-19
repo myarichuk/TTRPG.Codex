@@ -1,0 +1,134 @@
+@using Codex.Plugin.Abstractions
+
+@* A browsable list of Library entries to add from: everything is visible straight away, narrowed by a
+   name filter and by dropdowns for the type's filter fields (level, school, category...). Used by the
+   sheet's pick lists and equipment, and anywhere else an entry is chosen from a known set. *@
+
+@{
+    var facets = Facets();
+    var matches = Disabled ? new List<ContentEntry>() : Matching();
+    var shown = matches.Take(visible).ToList();
+}
+<div class="entry-browser" data-testid="@TestId-browser">
+    <div class="d-flex gap-2 align-items-end flex-wrap">
+        <div class="flex-grow-1" style="min-width: 220px">
+            <label for="@(id)-search" class="visually-hidden">Filter @Label by name</label>
+            <input id="@(id)-search" type="search" class="form-control form-control-sm" placeholder="@(Disabled ? DisabledText : $"Filter {Label.ToLowerInvariant()}…")"
+                   disabled="@Disabled" value="@query" @oninput="e => { query = e.Value?.ToString() ?? string.Empty; visible = PageSize; }" autocomplete="off" data-testid="@TestId-search" />
+        </div>
+        @foreach (var facet in facets)
+        {
+            <div>
+                <label for="@(id)-f-@facet.Key" class="visually-hidden">Filter by @facet.Label</label>
+                <select id="@(id)-f-@facet.Key" class="form-select form-select-sm" disabled="@Disabled" @onchange="e => SetFacet(facet.Key, e.Value?.ToString())" data-testid="@TestId-filter-@facet.Key">
+                    <option value="">Any @facet.Label.ToLowerInvariant()</option>
+                    @foreach (var value in facet.Values)
+                    {
+                        <option value="@value" selected="@(filters.GetValueOrDefault(facet.Key) == value)">@value</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+    @if (!Disabled)
+    {
+        <p class="small-muted mt-1 mb-0" aria-live="polite">@matches.Count of @Options.Count available</p>
+        <ul class="list-unstyled mb-0 mt-1 picker-results" data-testid="@TestId-options">
+            @if (matches.Count == 0)
+            {
+                <li class="small-muted">@(Options.Count == 0 ? EmptyText : "No allowed entry matches that filter.")</li>
+            }
+            @foreach (var option in shown)
+            {
+                <li class="list-row py-1">
+                    <span>@option.Name <span class="small-muted">@Summary(option)</span></span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => OnAdd.InvokeAsync(option.Id)" aria-label="@AddLabel @option.Name">@AddLabel</button>
+                </li>
+            }
+            @if (matches.Count > shown.Count)
+            {
+                <li class="py-1"><button type="button" class="btn btn-link btn-sm p-0" @onclick="() => visible += PageSize">Show @Math.Min(PageSize, matches.Count - shown.Count) more</button></li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ContentEntry> Options { get; set; } = Array.Empty<ContentEntry>();
+    [Parameter] public ContentTypeDefinition? Type { get; set; }
+
+    /// <summary>What the entries are called, plural ("spells"); used in labels and the placeholder.</summary>
+    [Parameter] public string Label { get; set; } = "entries";
+
+    /// <summary>Prefix of the data-testid values: {TestId}-search, -options, -filter-{field}.</summary>
+    [Parameter] public string TestId { get; set; } = "entries";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string DisabledText { get; set; } = "Nothing can be added";
+    [Parameter] public string EmptyText { get; set; } = "Nothing to choose from.";
+    [Parameter] public string AddLabel { get; set; } = "Add";
+
+    /// <summary>Called with the id of the entry whose Add button was pressed.</summary>
+    [Parameter] public EventCallback<string> OnAdd { get; set; }
+
+    private readonly string id = "eb-" + Guid.NewGuid().ToString("N")[..6];
+    private string query = string.Empty;
+    private const int PageSize = 30;
+    private int visible = PageSize;
+    private readonly Dictionary<string, string> filters = new(StringComparer.OrdinalIgnoreCase);
+
+    private sealed record Facet(string Key, string Label, List<string> Values);
+
+    /// <summary>The type's filter fields that actually split these options (2 to 24 distinct values).</summary>
+    private List<Facet> Facets()
+    {
+        var facets = new List<Facet>();
+        foreach (var key in Type?.FilterFields ?? new List<string>())
+        {
+            var values = Options.SelectMany(o => FacetValues(o, key)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            values = values.All(v => int.TryParse(v, out _))
+                ? values.OrderBy(int.Parse).ToList()
+                : values.OrderBy(v => v, StringComparer.OrdinalIgnoreCase).ToList();
+            if (values.Count < 2 || values.Count > 24) continue;
+            var label = Type?.Fields.FirstOrDefault(f => f.Key == key)?.Label ?? key;
+            facets.Add(new Facet(key, label, values));
+        }
+
+        return facets;
+    }
+
+    private static IEnumerable<string> FacetValues(ContentEntry entry, string key)
+    {
+        if (!entry.Properties.TryGetValue(key, out var value) || value == null) yield break;
+        if (value is IEnumerable<object> list && value is not string)
+        {
+            foreach (var item in list.Select(i => i?.ToString()).Where(i => !string.IsNullOrWhiteSpace(i))) yield return item!;
+        }
+        else if (!string.IsNullOrWhiteSpace(value.ToString())) yield return value.ToString()!;
+    }
+
+    private List<ContentEntry> Matching() =>
+        Options.Where(o => (query.Length == 0 || o.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+                           && filters.All(f => FacetValues(o, f.Key).Contains(f.Value, StringComparer.OrdinalIgnoreCase)))
+            .ToList();
+
+    private void SetFacet(string key, string? value)
+    {
+        if (string.IsNullOrEmpty(value)) filters.Remove(key);
+        else filters[key] = value;
+        visible = PageSize;
+    }
+
+    private string Summary(ContentEntry entry)
+    {
+        var parts = new List<string>();
+        foreach (var key in Type?.SummaryFields ?? new List<string>())
+        {
+            if (entry.Properties.TryGetValue(key, out var value) && value != null)
+            {
+                parts.Add(value is IEnumerable<object> list && value is not string ? string.Join(", ", list.Select(o => o?.ToString())) : value.ToString() ?? string.Empty);
+            }
+        }
+
+        return parts.Count == 0 ? string.Empty : "· " + string.Join(" · ", parts);
+    }
+}

@@ -39,6 +39,15 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         return declared.Concat(extra).ToList();
     }
 
+    /// <summary>A homebrew entry as the Library shows it: whatever lore a flavor pack registered for its type and
+    /// id fills in what the entry does not say itself.</summary>
+    private ContentEntry ToEntry(HomebrewEntryDocument brew)
+    {
+        var entry = brew.ToEntry();
+        entry.AddFlavor(registry.GetFlavor(entry.SystemId, entry.Type, entry.Id), overwrite: false);
+        return entry;
+    }
+
     public IReadOnlySet<string>? ActivePacks(CampaignDocument campaign) =>
         campaign.ActivePacks.Count == 0 ? null : campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -50,7 +59,7 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         var brews = (await homebrew.GetVisibleForCampaignAsync(access))
             .Where(h => type == null || string.Equals(h.Type, type, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        var brewEntries = ContentRegistry.Rank(brews.Select(b => b.ToEntry()), query).ToList();
+        var brewEntries = ContentRegistry.Rank(brews.Select(ToEntry), query).ToList();
         var brewItems = brewEntries.Select(e => new LibraryItem(e, null, brews.First(b => b.EntryId == e.Id && b.Type == e.Type)));
 
         // Homebrew first when the query is empty (it's the table's own material), otherwise by rank
@@ -84,7 +93,7 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
 
         var brew = (await homebrew.GetVisibleForCampaignAsync(access))
             .FirstOrDefault(h => string.Equals(h.Type, type, StringComparison.OrdinalIgnoreCase) && h.EntryId == id);
-        return brew == null ? null : new LibraryItem(brew.ToEntry(), null, brew);
+        return brew == null ? null : new LibraryItem(ToEntry(brew), null, brew);
     }
 
     /// <summary>Options for an EntityReference picker: every entry of the target type, homebrew included.</summary>

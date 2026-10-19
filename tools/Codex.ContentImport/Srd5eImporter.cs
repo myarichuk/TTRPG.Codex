@@ -111,7 +111,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                     : "This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.",
                 Notices =
                 {
-                    "Modified from the original: restructured into YAML entries, layout artefacts removed, structured fields added. No rules were changed.",
+                    "Modified from the original: restructured into YAML entries, layout artefacts removed, structured fields added. No rules were changed. One creature, the Mule, is omitted because the source transcription gives it another creature's stat block.",
                     $"The text was read from the JSON transcription in https://github.com/5e-bits/5e-srd-api (commit {SrdDownloader.Commit}), packages/5e-database, MIT License, Copyright (c) 2018-2020 Adrian Padua, Christopher Ward.",
                     "This pack is “5E compatible”. It is not affiliated with or endorsed by Wizards of the Coast."
                 }
@@ -230,6 +230,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             if (multiclass != null) entry.Properties["multiclassPrerequisites"] = MulticlassPrerequisites(multiclass.Value);
             entry.Properties["subclasses"] = subclasses.Cast<object>().ToList();
             entry.Properties["features"] = FeatureRows(rows);
+            AddUnarmoredDefense(entry, rows);
             AddClassTables(entry, id);
 
             var sb = new StringBuilder();
@@ -243,6 +244,27 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Description = sb.ToString().Trim();
             entry.Tags.Add("class");
             yield return entry;
+        }
+    }
+
+    private static readonly Regex UnarmoredText = new(@"base Armor Class equals 10 plus your (?<first>[A-Za-z]+) and (?<second>[A-Za-z]+) modifiers", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Dictionary<string, string> AbilityKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Strength"] = "str", ["Dexterity"] = "dex", ["Constitution"] = "con",
+        ["Intelligence"] = "int", ["Wisdom"] = "wis", ["Charisma"] = "cha"
+    };
+
+    /// <summary>Reads a class's "base Armor Class equals 10 plus your X and Y modifiers" feature into
+    /// unarmoredDefense (a formula) and whether a shield may still be used.</summary>
+    private static void AddUnarmoredDefense(ContentEntry entry, List<(int? Level, string Name, string? Description)> rows)
+    {
+        foreach (var row in rows)
+        {
+            var match = UnarmoredText.Match(row.Description ?? string.Empty);
+            if (!match.Success || !AbilityKeys.TryGetValue(match.Groups["first"].Value, out var first) || !AbilityKeys.TryGetValue(match.Groups["second"].Value, out var second)) continue;
+            entry.Properties["unarmoredDefense"] = $"10 + mod({first}) + mod({second})";
+            entry.Properties["unarmoredDefenseShield"] = (row.Description ?? string.Empty).Contains("can use a Shield", StringComparison.OrdinalIgnoreCase);
+            return;
         }
     }
 
@@ -348,12 +370,25 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             // (the SRD grants them at 19), level 1 otherwise (origin feats, fighting styles via class features).
             entry.Properties["minLevel"] = (long)(feat.Get("prerequisites")?.Int("minimum_level") ?? (category == "epic-boon" ? 19 : 1));
             AddAbilityIncrease(entry);
+            AddArmorClassBonus(entry);
             // Every class's Ability Score Improvement feature grants this feat again, so the sheet must
             // allow it more than once even though the source data doesn't flag it.
             if (entry.Id == "ability-score-improvement") entry.Properties["repeatable"] = true;
             entry.Tags.Add(category);
             yield return entry;
         }
+    }
+
+    private static readonly Regex ArmorBonusText = new(@"^While you.re wearing (?<armor>[^.]*?armor),? you gain a \+(?<bonus>\d+) bonus to Armor Class", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Reads "While you're wearing ... armor, you gain a +N bonus to Armor Class" (the Defense
+    /// fighting style) into armorClassBonus, which applies only with armor on.</summary>
+    private static void AddArmorClassBonus(ContentEntry entry)
+    {
+        var match = ArmorBonusText.Match(entry.Description ?? string.Empty);
+        if (!match.Success) return;
+        entry.Properties["armorClassBonus"] = long.Parse(match.Groups["bonus"].Value, CultureInfo.InvariantCulture);
+        entry.Properties["armorClassRequiresArmor"] = true;
     }
 
     private static readonly Regex IncreaseText = new(@"Increase (?:your (?<options>[A-Za-z, ]+?) score|one ability score of your choice) by (?<points>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -527,6 +562,8 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
     {
         foreach (var monster in All("Monsters"))
         {
+            // The source transcription gives the Mule the Octopus's stat block, so it is left out.
+            if (monster.Str("index") == "mule") continue;
             var entry = Entry("monster", monster);
             var size = monster.Str("size") ?? "";
             var type = monster.Str("type") ?? "";
@@ -662,6 +699,29 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
         }
     }
 
+    /// <summary>Typed armor data for the sheet rules: armorType, armorBase (body armor) or armorClassBonus
+    /// (shields), and armorDexCap (absent: uncapped; 0: no Dexterity).</summary>
+    private static void AddArmorData(ContentEntry entry, List<string> categories, JsonElement armor)
+    {
+        var baseValue = armor.Int("base");
+        if (!baseValue.HasValue) return;
+        var names = categories.Select(c => c.ToLowerInvariant()).ToList();
+        var type = names.Contains("shields") ? "shield"
+            : names.Contains("heavy armor") ? "heavy"
+            : names.Contains("medium armor") ? "medium"
+            : "light";
+        entry.Properties["armorType"] = type;
+        if (type == "shield")
+        {
+            entry.Properties["armorClassBonus"] = (long)baseValue.Value;
+            return;
+        }
+
+        entry.Properties["armorBase"] = (long)baseValue.Value;
+        if (armor.Bool("dex_bonus") != true) entry.Properties["armorDexCap"] = 0L;
+        else if (armor.Int("max_bonus") is { } max and > 0) entry.Properties["armorDexCap"] = (long)max;
+    }
+
     // ---- Equipment ----
 
     private IEnumerable<ContentEntry> Equipment()
@@ -711,6 +771,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                 if (armor.Bool("dex_bonus") == true) text += armor.Int("max_bonus") is { } max and > 0 ? $" + Dex modifier (max {max})" : " + Dex modifier";
                 entry.Properties["armorClass"] = text;
                 lines.Add($"**Armor Class:** {text}");
+                AddArmorData(entry, categories, armor);
             }
 
             if (item.Int("str_minimum") is { } strMin and > 0)
@@ -766,6 +827,8 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
 
     // ---- Magic items ----
 
+    private static readonly Regex ProtectionText = new(@"\+(?<bonus>\d+) bonus to (?:AC|Armor Class) and saving throws", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private IEnumerable<ContentEntry> MagicItems()
     {
         foreach (var item in All("Magic-Items"))
@@ -780,6 +843,11 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             if (item.Bool("attunement") is { } attunement) entry.Properties["attunement"] = attunement;
             var variants = item.Names("variants");
             if (variants.Count > 0) entry.Properties["variants"] = variants.Cast<object>().ToList();
+
+            if (ProtectionText.Match(entry.Description ?? string.Empty) is { Success: true } protection)
+            {
+                entry.Properties["armorClassBonus"] = long.Parse(protection.Groups["bonus"].Value, CultureInfo.InvariantCulture);
+            }
 
             entry.Tags.Add(rarity.ToLowerInvariant());
             entry.Tags.Add(category.ToLowerInvariant());

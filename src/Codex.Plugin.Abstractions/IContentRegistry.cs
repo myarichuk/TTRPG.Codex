@@ -23,6 +23,13 @@ public interface IContentRegistry
     void RegisterEntry(ContentEntry entry, int priority);
     ContentEntry? GetEntry(string systemId, string type, string id);
 
+    /// <summary>Remembers flavor (<see cref="ContentEntry.FlavorKeys"/>) for the entry of this type and id, whether
+    /// or not a loaded pack defines it, so entries made later (a campaign's homebrew) can pick it up.</summary>
+    void RegisterFlavor(string systemId, string type, string id, string packId, IReadOnlyDictionary<string, object> properties);
+
+    /// <summary>The flavor registered for this entry (empty when none), with <see cref="ContentEntry.FlavorSourceKey"/> set.</summary>
+    IReadOnlyDictionary<string, object> GetFlavor(string systemId, string type, string id);
+
     /// <summary>Every entry of <paramref name="type"/> for a system, optionally restricted to the given pack ids.</summary>
     IEnumerable<ContentEntry> GetEntries(string systemId, string type, IReadOnlySet<string>? packIds = null);
 

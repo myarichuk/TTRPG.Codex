@@ -279,7 +279,7 @@ else
                 </div>
                 @if (schema != null)
                 {
-                    <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="hiddenKeys" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" />
+                    <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="HiddenNow" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" />
                 }
                 else if (editSheet.Count > 0)
                 {
@@ -383,6 +383,12 @@ else
                 </section>
             }
 
+            @if (Rules?.Inventory is { } inventoryRules && evaluation != null)
+            {
+                <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
+                                LibraryPath="@($"/campaigns/{CampaignId}/library")" Changed="OnRulesInputChanged" />
+            }
+
             <section class="panel" aria-labelledby="bio-heading">
                 <div class="panel-title">
                     <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="16" Class="title-icon" /> History</h2>
@@ -471,8 +477,17 @@ else
                             <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
                         </div>
                     }
-                    <p class="small-muted mt-2 mb-0">Changes at the live table update this number; edit the values under Sheet to set them directly.</p>
+                    <p class="small-muted mt-2 mb-0">Changes at the live table update this number@(Rules?.HitPoints == null ? "; edit the values under Sheet to set them directly." : ".")</p>
+                    @if (Rules?.HitPoints is { } hitPointRules)
+                    {
+                        <HitPointRulesPanel Rules="hitPointRules" Summary="evaluation?.HitPoints" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+                    }
                 </section>
+            }
+
+            @if (Rules?.ArmorClass is { } armorClassRules)
+            {
+                <ArmorClassPanel Rules="armorClassRules" Summary="evaluation?.ArmorClass" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
             }
 
             @if (Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))))
@@ -588,6 +603,7 @@ else
     private Dictionary<string, IReadOnlyList<(string Id, string Name)>> fieldOptions = new();
     private SheetRuleEngine? engine;
     private SheetEvaluation? evaluation;
+    private IReadOnlyDictionary<string, IReadOnlyList<ContentEntry>> inventoryOptions = new Dictionary<string, IReadOnlyList<ContentEntry>>();
     private List<(string Label, LibraryItem Item)> linkedEntries = new();
     private string editName = "";
     private string editBiography = "";
@@ -604,6 +620,10 @@ else
     private string newClassId = "";
     private string levelUpClassId = "";
     private Flash? flash;
+
+    /// <summary>Hidden fields, plus maximum hit points while the rules work them out (typing there would be overwritten).</summary>
+    private IReadOnlySet<string> HiddenNow =>
+        Rules?.HitPoints is { } hp && evaluation?.HitPoints is { Active: true } ? new HashSet<string>(hiddenKeys, StringComparer.OrdinalIgnoreCase) { hp.Key } : hiddenKeys;
 
     private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
     private SheetRules? Rules => system?.SheetRules;
@@ -673,6 +693,9 @@ else
                     .Append(SheetRuleEngine.MethodKey)
                     .Concat(system?.SheetRules?.Lists.Select(l => l.Key) ?? Enumerable.Empty<string>())
                     .Concat(system?.SheetRules?.Multiclass is { } mc ? new[] { mc.Key, mc.ClassLevelKey } : Array.Empty<string>())
+                    .Concat(system?.SheetRules?.HitPoints is { } hp ? new[] { hp.ModeKey, hp.RollsKey } : Array.Empty<string>())
+                    .Concat(system?.SheetRules?.ArmorClass is { } ac ? new[] { ac.Key, ac.ModeKey, ac.MiscField } : Array.Empty<string>())
+                    .Concat(system?.SheetRules?.Inventory is { } inv ? new[] { inv.Key } : Array.Empty<string>())
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
@@ -686,7 +709,12 @@ else
                 editSheet = new Dictionary<string, object>(actor.Sheet);
 
                 await LoadReferenceOptionsAsync();
-                engine = system != null ? new SheetRuleEngine(system, await CachedEntryResolver.LoadAsync(Library, campaign, access, system)) : null;
+                var resolver = system != null ? await CachedEntryResolver.LoadAsync(Library, campaign, access, system) : null;
+                engine = system != null && resolver != null ? new SheetRuleEngine(system, resolver) : null;
+                inventoryOptions = Rules?.Inventory?.Types.ToDictionary(
+                    type => type,
+                    type => (IReadOnlyList<ContentEntry>)(resolver?.Candidates(type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList() ?? new List<ContentEntry>()))
+                    ?? new Dictionary<string, IReadOnlyList<ContentEntry>>();
                 Reevaluate();
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
@@ -708,9 +736,17 @@ else
         engine.ApplyAttributeTotals(editSheet);
         evaluation = engine.Evaluate(editSheet);
         engine.ApplySlotPools(editSheet, evaluation);
+        engine.ApplyHitPoints(editSheet, evaluation);
+        engine.ApplyArmorClass(editSheet, evaluation);
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, e.Name)).ToList());
+    }
+
+    private Task OnRulesInputChanged()
+    {
+        Reevaluate();
+        return Task.CompletedTask;
     }
 
     private Task OnSheetChanged(Dictionary<string, object> _)

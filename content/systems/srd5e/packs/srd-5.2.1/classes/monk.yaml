@@ -171,6 +171,8 @@ properties:
   - name: Body and Mind
     level: 20
     description: You have developed your body and mind to new heights. Your Dexterity and Wisdom scores increase by 4, to a maximum of 25.
+  unarmoredDefense: 10 + mod(dex) + mod(wis)
+  unarmoredDefenseShield: false
   casterType: none
   featSlots:
   - level: 1

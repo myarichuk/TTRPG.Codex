@@ -75,19 +75,28 @@ public static class YamlValues
         return s;
     }
 
-    /// <summary>Best-effort integer read from a normalised property bag.</summary>
-    public static int? GetInt(IReadOnlyDictionary<string, object> map, string key)
+    /// <summary>
+    /// A number out of a property bag, whatever it arrived as. RavenDB hands decimal numbers in an
+    /// <c>object</c> back as its own lazy number type (a level saved as 4.0), which is neither a
+    /// <c>double</c> nor a <c>string</c>, so anything unrecognised is read through its text.
+    /// </summary>
+    public static double? ToNumber(object? value) => value switch
     {
-        if (!map.TryGetValue(key, out var value)) return null;
-        return value switch
-        {
-            long l => (int)l,
-            int i => i,
-            double d => (int)d,
-            string s when int.TryParse(s, out var parsed) => parsed,
-            _ => null
-        };
-    }
+        null => null,
+        bool => null,
+        long l => l,
+        int i => i,
+        double d => d,
+        float f => f,
+        decimal m => (double)m,
+        string s => double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) ? parsed : null,
+        IEnumerable => null,
+        _ => double.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out var text) ? text : null
+    };
+
+    /// <summary>Best-effort integer read from a normalised property bag.</summary>
+    public static int? GetInt(IReadOnlyDictionary<string, object> map, string key) =>
+        map.TryGetValue(key, out var value) && ToNumber(value) is { } number ? (int)number : null;
 
     public static string? GetString(IReadOnlyDictionary<string, object> map, string key) =>
         map.TryGetValue(key, out var value) ? value?.ToString() : null;

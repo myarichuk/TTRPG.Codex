@@ -1,0 +1,51 @@
+- id: ability-score-improvement
+  flavor: >-
+    Years of hard lessons leave their mark, and sometimes the mark is a sharper mind or a steadier arm. Trainers call it a late bloom; veterans just call it another year of mornings spent hauling heavy things.
+- id: alert
+  flavor: >-
+    People who hear trouble coming before it shows its face have always been valued by the old watch-captains above any sword. A quick head at the start of a fight can decide who acts first and who simply reacts.
+- id: archery
+  flavor: >-
+    Every village has one person who can split a knot at a distance, and the rest of the square quietly agrees not to argue with them. Hunters, toll-keepers and bored archers alike treat a steady bowstring as a kind of honest language.
+- id: boon-of-combat-prowess
+  flavor: >-
+    A patron of war, too old to give a name, once pressed a warm thumb to a soldier's wrist. Since then the soldier's misses have grown rarer, and far less final than they used to be.
+- id: boon-of-dimensional-travel
+  flavor: >-
+    Not every doorway is built from stone or wood, and the ones that open for a wanderer tend to appear in the middle of a fight. Anyone carrying this gift learns to step sideways out of trouble and land where they meant to, most of the time.
+- id: boon-of-fate
+  flavor: >-
+    Luck is a gossip, and it has been known to whisper to certain stubborn people who refuse to stop asking questions. Anyone who hears it learns to nudge a result a little, whether a rival's blow or a friend's gamble, and the nudge always comes back later.
+- id: boon-of-irresistible-offense
+  flavor: >-
+    Some gifts come with a pointed look and a warning that the recipient will be expected to use them. Once a perfect swing lands, armor and tough hide underneath it stop mattering, and old drill sergeants swore that such blows make stubbornness look foolish.
+- id: boon-of-spell-recall
+  flavor: >-
+    Magic leaks out of every spell a little, like heat from a kiln, and most casters accept the loss as the price of the trade. This gift patches some of the leaks, so a spell sometimes costs nothing at all on the way out the door.
+- id: boon-of-the-night-spirit
+  flavor: >-
+    Night is not empty, and anyone who has spent long hours in a black cellar knows the dark has its own weight and its own company. Those who accept this gift slip into the gloom as easily as a cat slips under a door, and most blades find nothing to bite.
+- id: boon-of-truesight
+  flavor: >-
+    Plenty of eyes are polite. They take the shapes in front of them at face value and rarely look past a disguise. A gift that sees through paint, masks and courtly lies is a mixed blessing, since the truth it reveals is seldom a comfortable one.
+- id: defense
+  flavor: >-
+    Armor is a promise that the wearer will not be easy to hit, and a good smith knows the promise is only as good as the person keeping it. Soldiers who train to wear it well move as if the steel were a second skin rather than a burden.
+- id: grappler
+  flavor: >-
+    The river towns settle most arguments with a grip rather than a punch, and their wrestlers will tell you that a patient hand beats a fast one. Once someone is held, they quickly learn how little room is left for wriggling.
+- id: great-weapon-fighting
+  flavor: >-
+    A two-handed blade rewards patience and a certain stubborn respect for the grip. Smiths in the mountain forges say that a good heavy weapon wants to be swung all the way through, and the old masters agreed that a hasty half-swing is wasted iron.
+- id: magic-initiate
+  flavor: >-
+    Casters usually begin with a borrowed book and a stubborn teacher who insisted on one small spell before any grand ones. The lessons stay with a person long after the lectures are forgotten, and the first spell learned is usually the one they still cast when things go wrong.
+- id: savage-attacker
+  flavor: >-
+    There is a moment in a bout when the blade has already found its target, and the only question left is how hard it gets to go in. Old brawlers who taught this knack liked to say that a second try at the same stroke is the one that counts.
+- id: skilled
+  flavor: >-
+    Many people know one trade well, but the ones who carry three in their packs are rarely idle for long. Tinkers and tutors agree that a few well-chosen skills make a useful bridge between two very different rooms.
+- id: two-weapon-fighting
+  flavor: >-
+    A second blade in the off hand is less about extra steel than about rhythm, and the duelists who master it move like people who have practiced talking with both hands. When the follow-up cut lands, it carries a little more of the first swing's momentum behind it.

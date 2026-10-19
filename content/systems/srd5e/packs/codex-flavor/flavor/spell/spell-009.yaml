@@ -1,0 +1,75 @@
+- id: magic-weapon
+  flavor: >-
+    A plain blade or cudgel takes on a faint hum once a steady hand has coaxed it into something more. The metal keeps that borrowed edge with stubborn grace, and old smiths swear it remembers the shape of every good swing.
+- id: magnificent-mansion
+  flavor: >-
+    A shimmering door hangs in the air, looking modest enough, and it opens onto rooms that have no business existing behind it. Inside, the furniture is fine, the bread is warm, and the host is unfailingly courteous to anyone who wipes their boots.
+- id: major-image
+  flavor: >-
+    A convincing picture of a horse, a bell, or a sulking lord can be summoned in plain sight, complete with sounds and smells. It fades when its maker's focus slips, and it cannot bite, cut, or pick a pocket however real it looks.
+- id: mass-cure-wounds
+  flavor: >-
+    A wave of warm light rolls out from a chosen point, and it finds a whole crowd of the hurt at once. Bruises close, cuts knit, and even the stubborn scrapes left by a long fight feel the touch of a gentle tide.
+- id: mass-heal
+  flavor: >-
+    A flood of restorative energy pours out from the healer and washes over everyone nearby who is hurt or ailing. It is generous in the way a good cook is generous with a stew, and poison, muddled thinking, and the ringing silence of deafness drain away after it.
+- id: mass-healing-word
+  flavor: >-
+    A quick, lilting phrase drifts across a crowd like a warm breeze, and the battered and bruised each feel a little steadier. Many clerics keep it close for the sort of skirmish that ends with everyone looking a bit worse for wear.
+- id: mass-suggestion
+  flavor: >-
+    A gentle nudge arrives in a voice that sounds like an old friend, and a dozen listeners find the idea perfectly reasonable. The old colleges teach that the nudge must sound honest and harmless, or the whole affair turns into a bad joke that backfires.
+- id: maze
+  flavor: >-
+    A grinning stranger vanishes into a labyrinth folded in on itself, a pocket of nowhere where the walls rearrange at will. The trapped soul may wander for ages before stumbling on the exit, and the old stories insist the way out is clever rather than strong.
+- id: meld-into-stone
+  flavor: >-
+    A traveller presses into granite as if it were warm butter, and then there is only the quiet grain of the rock. Down there the world is muffled and distant, and the stone keeps its secret with the patience of something that has been waiting for ages.
+- id: mending
+  flavor: >-
+    A broken clasp or a split seam can be drawn back together with a few patient words and a pair of dark lodestones. The mend leaves no seam to find, and cobblers and bookbinders alike have been known to resent how little work is left to show.
+- id: message
+  flavor: >-
+    A whisper slips along a thread of air and lands in one particular ear, leaving the rest of the room none the wiser. The reply returns just as quietly, a murmur that travels only as far as the speaker intends, even through stone walls that would normally swallow every word.
+- id: meteor-swarm
+  flavor: >-
+    Four blazing stones tear down from a cold sky and split the air above a battlefield in a rain of molten noise. Where they strike, the earth glows and smoke rolls out in heavy rings, and the scholars who survived call it a short lecture the sky delivered at full volume.
+- id: mind-blank
+  flavor: >-
+    A willing mind is folded into a locked room with no windows, and the curiosity of spies and mind-readers rattles harmlessly at the door. Emotions go quiet, private thoughts stay private, and even the grandest sorcery finds nothing to hold onto.
+- id: mind-spike
+  flavor: >-
+    A needle of psionic pressure slides into a single skull and leaves a sharp, bright ache behind it. The caster can then feel where the victim wanders, a faint thread tugging across the map of their thoughts until the connection frays and fades.
+- id: minor-illusion
+  flavor: >-
+    A small sound, a flicker of candlelight, or a painted sketch of a cat can be conjured on the spot for a moment. Careful eyes can puzzle out the trick, but the apprentice who makes a convincing bell is always popular at parties.
+- id: mirage-arcane
+  flavor: >-
+    A stretch of dull plain can be dressed up as a swamp, and a dry gully can pass for a smooth road without a single false note. Travelers wade into the reeds, boots sink, and a sun-baked crossing becomes a beautiful lie.
+- id: mirror-image
+  flavor: >-
+    Three shimmering copies of the caster spring into being, each with a slightly different grin and a habit of stepping aside just before the real one moves. Attackers swing at reflections and curse the empty air while the true figure keeps walking.
+- id: mislead
+  flavor: >-
+    A double of the caster stands in plain view while the caster slips out of sight, and the double talks, gestures and drifts about like a bored actor on a rehearsal stage. It is a clever decoy, one that holds only until someone decides to strike.
+- id: misty-step
+  flavor: >-
+    A puff of silver fog wraps the caster for a heartbeat, and when it clears they are standing somewhere else entirely. Tavern lore holds that the trick works best when the destination is chosen in advance, though nobody has ever proven it.
+- id: modify-memory
+  flavor: >-
+    A mind is gently rearranged, the way a clerk might shuffle a filing cabinet and leave a few drawers stuffed with the wrong papers. Those who have been on the receiving end tend to recall the afternoon as a pleasant blur, and that blur is precisely the point.
+- id: moonbeam
+  flavor: >-
+    A column of pale light descends from a cool, starry sky and settles over a patch of meadow like a silver tent. Creatures caught beneath it feel the glow tug at them, and the druid can steer the column across the field with slow, deliberate gestures.
+- id: move-earth
+  flavor: >-
+    Soil, sand and clay respond to a slow, deliberate hand, rising into hills or sinking into ditches as if the land had changed its mind. Walls can be drawn up or flattened, and the new landscape looks as though it has always been there, sulking quietly.
+- id: nondetection
+  flavor: >-
+    A creature or a small object is wrapped in a quiet veil that scrying eyes slide right past. The veil is paid for with crushed diamond, consumed as the ward takes hold, and diviners grumble that their crystal balls keep showing empty furniture.
+- id: pass-without-trace
+  flavor: >-
+    A soft, grey aura settles over a small band, and their footprints simply stop appearing in the dust behind them. Hunters who rely on tracks find only bare earth, and the woodland creatures seem to forget that anyone passed through at all.
+- id: passwall
+  flavor: >-
+    A neat, door-shaped gap opens in a wall of wood, plaster or stone, and it stays open long enough for a careful traveller to step through. When it closes, the surface knits itself back together without a crack, and a guard on the other side is left scratching his head.

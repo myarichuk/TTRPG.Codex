@@ -1,6 +1,7 @@
 @using Codex.Core
 @using Codex.Plugin.Abstractions
 @using Codex.Web.Services
+@inject IContentRegistry Registry
 
 @* Renders one Library item: its summary fields, the formatted rules text, any structured rows
    (features, traits, actions) and - always - the licence attribution for where it came from. *@
@@ -26,6 +27,11 @@
             <div class="row-actions">@Actions</div>
         }
     </header>
+
+    @if (Flavor is { } flavor)
+    {
+        <blockquote class="entry-flavor" data-testid="entry-flavor">@flavor</blockquote>
+    }
 
     @if (SummaryPairs.Count > 0)
     {
@@ -83,6 +89,16 @@
         {
             <div class="mt-1">Created at this table. The DM decides who may reuse it.</div>
         }
+        @if (FlavorPack is { } lorePack)
+        {
+            <div class="mt-1" data-testid="flavor-attribution">
+                <strong>Lore text:</strong> @lorePack.Name@(lorePack.License != null ? $" · licence {lorePack.License.Name}" : string.Empty)
+                @if (!string.IsNullOrWhiteSpace(lorePack.License?.Attribution))
+                {
+                    <div>@lorePack.License!.Attribution</div>
+                }
+            </div>
+        }
     </footer>
 </article>
 
@@ -90,6 +106,15 @@
     [Parameter, EditorRequired] public LibraryItem Item { get; set; } = null!;
     [Parameter] public ContentTypeDefinition? Type { get; set; }
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    /// <summary>The pack the lore text came from when it is not the pack that owns the rules (the SRD's text is not ours to add to).</summary>
+    private PackManifest? FlavorPack =>
+        Item.Entry.Properties.TryGetValue(ContentEntry.FlavorSourceKey, out var source) && !string.IsNullOrWhiteSpace(source?.ToString())
+            && !string.Equals(source.ToString(), Item.Entry.PackId, StringComparison.OrdinalIgnoreCase)
+            ? Registry.GetPack(source.ToString()!)
+            : null;
+
+    private string? Flavor => Item.Entry.Properties.TryGetValue("flavor", out var value) && !string.IsNullOrWhiteSpace(value?.ToString()) ? value.ToString() : null;
 
     private string TypeLabel => Type?.Label ?? CampaignLibrary.Humanize(Item.Entry.Type);
 
@@ -108,6 +133,8 @@
 
             foreach (var key in ordered)
             {
+                // Shown as the quote above (flavor), kept for art generation (imagePrompt), or bookkeeping (flavorSource).
+                if (key is "flavor" or "imagePrompt" or ContentEntry.FlavorSourceKey) continue;
                 if (!Item.Entry.Properties.TryGetValue(key, out var value) || value == null) continue;
                 var fieldDef = fields.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase));
                 if (fieldDef?.Type == FieldType.Collection || IsRows(value)) continue;

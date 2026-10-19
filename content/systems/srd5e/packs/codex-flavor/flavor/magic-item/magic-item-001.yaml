@@ -1,0 +1,125 @@
+- id: adamantine-armor
+  flavor: >-
+    Smiths who forge with adamantine claim the metal remembers every blow it has turned aside. This armor carries that stubborn memory in its plates, so a clean, deadly strike that would find a gap instead lands as an ordinary knock. Wearers say it sounds like a bell that refuses to ring true.
+  imagePrompt: >-
+    Heavy plate armor of dark grey metal with a faint silvery sheen, its seams engraved with fine geometric lines, displayed on a stone stand in a dim armory.
+- id: ammunition-of-slaying
+  flavor: >-
+    A quiver of these arrows hums faintly whenever the wrong kind of creature is near, as though the shafts remember an old grudge. Hunters tell stories of a single shot that felled a beast or a stone-skinned titan. Once the iron head has found its mark, the shaft grows dull and ordinary.
+  imagePrompt: >-
+    Slender black-fletched arrows with pale bone-white heads rest in a worn leather quiver stitched with faded green thread.
+- id: ammunition
+  flavor: >-
+    Fletchers who work in enchantment often mark each shaft with a tiny sigil for buyers. The charm wears off the moment a shaft finds its target, leaving behind a bit of splintered wood and a story to tell. Ten of them cost about as much as a small bottle of luck.
+  imagePrompt: >-
+    Cream and rust feathered arrows lie fanned across a wooden workbench with bright brass-tipped heads and a small etched sigil near each fletching.
+- id: amulet-of-health
+  flavor: >-
+    This pendant is carved from a single piece of dark jade and warm to the touch. Healers who wear one say their own bodies seem to hold together a little longer, their muscles steadier and their breath deeper. Some suspect the stone simply remembers a vigorous heart and reminds the wearer of it.
+  imagePrompt: >-
+    A smooth oval of dark green jade hung on a plain braided cord, glowing faintly at its center against a velvet cloth.
+- id: amulet-of-proof-against-detection-and-location
+  flavor: >-
+    Scholars of hidden things stitched this charm from grey silk and a sliver of silvered glass. Anyone who searches for the wearer with mirrors, omens or distant listening finds only an empty room. The wearer can still choose to open the door when a trusted friend comes knocking.
+  imagePrompt: >-
+    A pendant of grey silk cord and a dull silver sliver of glass, its surface etched with a spiral of fine lines, resting on dark cloth.
+- id: amulet-of-the-planes
+  flavor: >-
+    Cartographers of far realms swear by this pendant, which hums like a tuning fork whenever its wearer thinks of a distant place. Stepping through the gap between worlds is never tidy, and a poor throw of the lot can scatter a whole crowd across unfamiliar sky. Wise travelers keep a rope tied to their belt.
+  imagePrompt: >-
+    A heavy silver pendant set with a dark blue stone, its face engraved with rings of stars and a tiny compass needle.
+- id: animated-shield
+  flavor: >-
+    A shield that wants to fly is a nervous thing, quick to lift itself off the arm and hover at its owner's side. Armorers who make these mutter that the metal was never quite content lying on a rack. It settles back into a grip or onto the cobbles once its owner tires of the trick.
+  imagePrompt: >-
+    A kite-shaped shield of dull bronze hovering in still air, its rim trimmed in worn leather and a faint pale glow beneath its face.
+- id: apparatus-of-the-crab
+  flavor: >-
+    Dredged from a wreck no one could date, this iron barrel looks like nothing more than a heavy cask until somebody finds the hidden latch. Inside, a row of stiff levers waits for a pilot with steady hands and a sense of humor. Once it stirs, the barrel unfolds into a shell of jointed legs and claws.
+  imagePrompt: >-
+    A dull iron barrel with a hatch at one end, opening to reveal ten brass levers and a tiny lantern, set on wet shingle beside a tide pool.
+- id: armor-of-invulnerability
+  flavor: >-
+    Armorers of an old lineage sometimes plate their work with a dense, dark alloy that rings like a struck gong. The suit guards its wearer against blows from blades and spears, and in a dire moment wraps them in a shell no weapon can dent. Such a shell only forms once and must rest before it forms again.
+  imagePrompt: >-
+    Gunmetal plate armor with a faint violet sheen across its breastplate, polished smooth and set on a carved wooden stand in a quiet hall.
+- id: armor-of-resistance
+  flavor: >-
+    Every suit of this kind has a quiet preference for one sort of harm, and the old craftsmen never agreed on how it chooses. Some say it listens to the weather. Others say the armor simply takes the shape of whatever danger its wearer is most likely to meet on the road.
+  imagePrompt: >-
+    A supple coat of lamellar plates in mixed bronze and slate, each plate etched with a small symbol of frost, flame or thunder.
+- id: armor-of-vulnerability
+  flavor: >-
+    This armor has a pleasant weight and a handsome finish, which is exactly the trouble with it. Its maker meant it as a trap for the greedy, and the curse only shows itself to a scholar with the right spell. Wise buyers ask a certain kind of priest to look it over before taking it home.
+  imagePrompt: >-
+    Dark leather brigandine studded with brass rivets, its polished surface gleaming with a sickly green sheen in a dim tavern corner.
+- id: armor
+  flavor: >-
+    Plate and mail that carry an enchantment of this sort look ordinary until a fighter stands in them and feels the difference. Forges keep ledgers of each piece's quality, marked by a set of small runes near the collar. The better the rune, the more the metal seems to meet the blow halfway.
+  imagePrompt: >-
+    A fitted breastplate of blued steel with a row of tiny runes stamped along the collar, laid out on a leather apron in a smithy.
+- id: arrow-catching-shield
+  flavor: >-
+    Archers hate this shield, and the feeling is mutual. Its face is cut with shallow grooves that seem to pull stray shafts toward it, which keeps a friend standing close at hand out of harm. Old soldiers call it a good neighbor for the dangerous corners of a battle.
+  imagePrompt: >-
+    An oval wooden shield with a steel rim, its face cut with fine parallel grooves that catch the light in a battlefield dusk.
+- id: bag-of-beans
+  flavor: >-
+    Market sellers in the river quarter swear this cloth sack is the best gamble they ever made. Plant one bean and the soil might answer with a fountain, a tree heavy with fruit, or something far less polite. Tip the lot out carelessly and the beans burst into a blast that singes everyone nearby, the bag's owner included.
+  imagePrompt: >-
+    A lumpy brown cloth sack tied with a faded red cord, a few dry beans spilling from its open mouth onto cracked earth.
+- id: bag-of-devouring
+  flavor: >-
+    This sack looks like a fine and sensible purse, which is exactly why careless hands end up inside it. Something hungry sits behind the stitching and takes whatever is dropped in with no sign of thanks. Scavengers who find one tend to sell it quickly, usually to someone who has not heard the stories.
+  imagePrompt: >-
+    A plump dark-brown leather satchel with a toothed seam along its mouth, its interior shadowed and faintly glossy, on a merchant's trestle.
+- id: bag-of-holding
+  flavor: >-
+    Packers and porters love this bag because it swallows a whole household's worth of tools and still feels light as a loaf. Its inside is far roomier than its outside, a trick the old workshops could never quite explain. Tear the seams or overload the strap and the contents spill into a silver, starry nowhere.
+  imagePrompt: >-
+    A roomy canvas satchel in deep blue with brass buckles, its open mouth showing a dark starry glimmer that seems to go on forever.
+- id: bag-of-tricks
+  flavor: >-
+    Traveling showmen have sold these cloth bags for generations, each one hiding a small furred surprise. A tossed tuft lands and blooms into a creature that follows its owner's cues, though it always keeps a bit of its own temper. Each bag wears out after a handful of tosses, leaving behind a faintly sour smell.
+  imagePrompt: >-
+    Three cloth bags in gray, rust and tan lie open on a wagon bed, one with a small furry shape peeking from its mouth.
+- id: bead-of-force
+  flavor: >-
+    Smooth as a river stone and black as a winter night, this little sphere holds a secret burst of pressure within its shell. Hurled into a crowd, it blooms into a clear dome that traps whoever failed to get out of the way. The dome stays put for a while and lets air through but nothing else.
+  imagePrompt: >-
+    A small glossy black sphere resting on a bed of white sand, a faint shimmer of clear air curling over its edges.
+- id: belt-of-dwarvenkind
+  flavor: >-
+    Stonefolk in the high valleys pass these belts down as heirlooms, though a few have wandered into the wider world. A wearer soon finds the old mountain tongue on their lips and a stubborn, sturdy pride settling into their bones. Those born elsewhere also gain keen sight in dim tunnels and a surprising knack for shrugging off poison.
+  imagePrompt: >-
+    A broad leather belt studded with hammered iron plates and a heavy engraved buckle shaped like a crossed pick and hammer.
+- id: belt-of-giant-strength
+  flavor: >-
+    Giants wear these belts like proud sashes, each buckle cut to the size of a dinner plate. Each clan favors its own stitching and metal, and the strength each one lends seems to climb with the wearer's pride. Smaller folk who buckle one on find the world tipping in their favor, then strangely heavy when it comes off.
+  imagePrompt: >-
+    A thick leather girdle with a massive iron buckle engraved in spiraling runes and set with a dull red gem, hung over a rough wooden chest.
+- id: berserker-axe
+  flavor: >-
+    The smith who forged this axe was angry, and it shows in every notch along the blade. Its edge bites deep and the haft sits in the hand as if it belongs there, which is how it keeps its owner. Those who take it up grow fond of it, then grow restless whenever the blade leaves their grip.
+  imagePrompt: >-
+    A broad iron axe head with a dark, hungry edge, its haft wrapped in cracked black leather and resting on a scarred wooden table.
+- id: boots-of-elvenkind
+  flavor: >-
+    Woodfolk cobblers stitch these soft boots from pale leather that drinks in sound. Anyone who wears them walks like a rumor through a crowded hall, arriving before anyone thinks to listen. Burglars and spies sometimes pay a fortune for a pair, though honest scouts value them just as highly.
+  imagePrompt: >-
+    Soft pale grey boots with silver stitching set side by side on a mossy stone step beneath dappled leaves.
+- id: boots-of-levitation
+  flavor: >-
+    A cobbler once swore these boots were ordinary soles with a bit of stubborn spirit stitched into the lining. Whoever wears them learns to rise from the floor at will and hang there, like a kite on a patient string. Climbers prize them, though gossip says the first pair was made for a fussy old scholar.
+  imagePrompt: >-
+    Worn brown leather boots hovering just above a flagstone floor, their laces trailing in the still air.
+- id: boots-of-speed
+  flavor: >-
+    Racing couriers in free towns say a good pair of heels beats a good horse. These boots carry a clever trick in the heel, a sharp click that doubles the stride, and anyone who tries to chase the runner finds their footing unreliable. Pushed too hard, the magic sulks until the wearer has rested properly.
+  imagePrompt: >-
+    Sleek black riding boots with bright steel heel plates, one heel mid-click, sparks of silver light bursting from the sole.
+- id: boots-of-striding-and-springing
+  flavor: >-
+    Traveling tinkers grumble that a pair of boots should not do so much. These ones keep a traveler's pace steady, no matter how heavy the pack or how armored the coat. Once in a while they give a joyful spring, lifting the wearer clean over a ditch or a fallen log.
+  imagePrompt: >-
+    Tall laced boots of tan leather with reinforced toes and springy soles, set on a dusty road beneath a wide open sky.

@@ -1,0 +1,75 @@
+- id: illusory-script
+  flavor: >-
+    Ink takes on a hidden skin here, so a page can say one thing to its author and something else to every curious reader. The old colleges trade these tricks like gossip, and the clever ones tuck them inside plain letters. Nobody who reads a stranger's notes ever suspects the trap in the margins.
+- id: imprisonment
+  flavor: >-
+    A patient cruelty lives in this one, where a foe is folded into a sealed globe, a chained stillness, a tiny gem, or a sleeping dream-prison. The old wardens called it a grave that remembered its occupant. Those who open such a cell usually find the jailer's own keepsake waiting inside.
+- id: incendiary-cloud
+  flavor: >-
+    A smoky bruise of embers rolls across the battlefield, swallowing shouts and turning the sky the color of old tea. Cinders drift like slow moths and settle into cloaks, hair, and hopeful plans. Whoever stands inside it learns that smoke is not always the gentle part of a fire.
+- id: inflict-wounds
+  flavor: >-
+    A cold touch that remembers every grave it has passed brushes against the skin and asks the body to remember too. Veins tighten, color drains, and the wound feels older than the hand that made it. Priests of the quiet kind say the dead keep the best grudges.
+- id: insect-plague
+  flavor: >-
+    A humming cloud of locusts rises from nowhere and turns an ordinary meadow into a grim wallpaper of wings. The swarm drifts where it likes, clings to cloaks, and makes even the bravest fidget. Farmers in the old tales blamed it on bad weather, though the weather had nothing to do with it.
+- id: instant-summons
+  flavor: >-
+    A sapphire holds a promise that a treasured belonging will come home whenever its name is spoken and the stone is crushed. The jewel is used up in the bargain, so each summons needs a fresh stone and a patient purse. Thieves who learn the trick tend to keep their gems in very sturdy pockets.
+- id: invisibility
+  flavor: >-
+    A thin silver veil slips over a companion until only their intentions remain visible to a careful eye. The effect is delicate, and it tends to fray the moment the bearer makes a bold move. Stage performers, cats, and bad poets have all tried to copy it with mixed results.
+- id: irresistible-dance
+  flavor: >-
+    A sudden urge to jig seizes a foe in the middle of a grim plan, and soon their boots are tapping out a jaunty tune they never agreed to. Their dignity wobbles and their footwork turns comical, while every swing seems to land off the beat. The old bards say a good dance has never been a fair fight.
+- id: jump
+  flavor: >-
+    A lightness settles into the legs of a willing friend, as if gravity had been asked politely to take a short vacation. Every bounce carries them over ditches, crates, and the occasional startled goat. Hedge-jumpers of the river towns swear by it, mostly because their landings are easier to forgive.
+- id: knock
+  flavor: >-
+    A single sharp rap rings out from a lock, a latch, or a stubborn bar, and the old fastening gives up with a weary sigh. The sound carries across the hills and announces to everyone nearby that a door has opened where it should not have. Locksmiths in the river towns take it as a personal insult.
+- id: legend-lore
+  flavor: >-
+    A hush falls and a memory unfolds from the air, carrying the gossip and grand deeds of a famous name. The details arrive in riddles and tangents, as if the past is too proud to speak plainly. Scholars who rely on it keep a sharp pencil and a suspicious grin.
+- id: lesser-restoration
+  flavor: >-
+    A gentle warmth passes through a friend's hands and clears away the fog that clouds their eyes, their ears, their limbs, or their blood. The relief is quick and unshowy, like a window opened after a long winter. Healers who prefer quiet work to speeches tend to favor this one.
+- id: levitate
+  flavor: >-
+    A creature or a loose object lifts from the floor as if an invisible hand had decided it was time to hover. It can be guided up and down, and it can only creep along by pushing against walls or ceilings. When the magic fades it sinks softly, looking mildly offended.
+- id: light
+  flavor: >-
+    A pale glow blooms on a chosen object and paints nearby walls in whatever color the caster prefers. Hedge-wizards call it the cheapest comfort in the trade, since it asks almost nothing of the purse. Covering the glow with cloth quiets it at once, which is a relief to the sleepy.
+- id: lightning-bolt
+  flavor: >-
+    A crack of white fire leaps from the caster's hand and tears a long, bright line through the air. Anything caught in its path receives a sharp, hair-raising lesson in electricity, and the air afterward smells of thunder and scorched wool. Storm-minded priests of certain orders consider it the most honest argument in the world.
+- id: locate-animals-or-plants
+  flavor: >-
+    A whisper rises from the grass and the leaves, pointing toward the nearest creature of a chosen sort. Hunters and herbalists have long relied on this sense for the company of birds, beasts, and stubborn roots. It tells where life is hiding, though never why it chose to hide.
+- id: locate-creature
+  flavor: >-
+    A tug like a fishing line settles in the chest and points toward a familiar face or a common kind of beast. The pull fades if the quarry wears a stranger's skin, and it simply stops if lead stands in the way. Trackers swear it is the most stubborn compass they have ever carried.
+- id: locate-object
+  flavor: >-
+    A thread of intuition tugs toward a remembered keepsake or the nearest item of a given sort. A cracked key, a fine sword, or a favorite hat can be drawn out of the fog of a crowded market. Seekers say it works best when they have held the thing once, close enough to remember its weight.
+- id: longstrider
+  flavor: >-
+    A springier stride settles into a friend's step, and the road seems to shorten under their boots. Messengers, pilgrims, and anyone late for supper have prized this modest kindness for generations. The effect is pleasant and quiet, the sort of blessing nobody thinks to thank until the journey ends.
+- id: mage-armor
+  flavor: >-
+    A shimmering layer of protective magic wraps a willing soul who has not yet put on a breastplate. It lends a steady sense of safety, though a shell of real metal will always be more convincing. Tailors of the old colleges complain that it spoils a perfectly good cut of cloak.
+- id: mage-hand
+  flavor: >-
+    A spectral hand drifts into view and performs small, careful chores with the manner of a very polite servant. It can turn a latch, pour from a vial, or fetch a letter from a drawer, but it cannot strike or carry heavy loads. Apprentices adore it, mostly because it never sulks about the washing up.
+- id: magic-circle
+  flavor: >-
+    A tall column of humming light rises where glowing runes mark the floor and seals the space against certain uninvited guests. Celestials, elementals, fey, fiends, and the restless dead each find the barrier unwelcoming. Some wardens flip its logic so the guests inside stay put instead.
+- id: magic-jar
+  flavor: >-
+    A still body sinks into a stupor while the soul slips out and settles inside a gem, crystal, or small reliquary. From there it can drift a short way and eye a nearby stranger, hoping for a comfortable new home. Wizards who try this rarely return to the same body with the same opinions.
+- id: magic-missile
+  flavor: >-
+    Three glowing darts of pure force hum into being and streak toward targets chosen by the caster. They always strike, which makes them the favorite of nervous students and very stubborn tutors. Each dart arrives at the same instant, leaving the victims to argue about who was hit first.
+- id: magic-mouth
+  flavor: >-
+    A stone face or a carved gargoyle suddenly gains a voice, speaking a prepared message whenever a chosen sign appears. The words come out in the caster's own tones, as if the speaker were standing right behind the statue. Mischievous wizards use it for welcome notes, dire warnings, and the occasional well-timed insult.

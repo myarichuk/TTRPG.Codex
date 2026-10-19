@@ -1,0 +1,125 @@
+- id: dagger-of-venom
+  flavor: >-
+    A slim blade with a green-black sheen, its edge tended by a patient alchemist who never wanted thanks. The poison it carries clings like river mist to steel, and the wound it leaves tends to linger long after the fight.
+  imagePrompt: >-
+    A slender steel dagger with a dark green sheen along its edge, resting on black velvet beside a small glass vial of oily liquid.
+- id: dancing-sword
+  flavor: >-
+    A longblade that refuses to stay in a hand, preferring to hover above the duelling floor and pick its own targets. Smiths of a certain stubborn school claim it learned the trick from a flock of startled herons.
+  imagePrompt: >-
+    A slim curved sabre of polished silver hovering in mid-air above a dusty stone floor, its blade catching warm lamplight.
+- id: decanter-of-endless-water
+  flavor: >-
+    A squat stoppered flask that sloshes convincingly even when empty, the sort of joke hedge-wizards enjoy repeating. Pull the cork and it gushes fresh or salt water, from a polite splash to a tumbling torrent that knocks over anything standing in its path.
+  imagePrompt: >-
+    A stoppered clay flask of pale glazed earthenware with a blue-green rim, standing on a wooden shelf beside a bright spray of falling water.
+- id: deck-of-illusions
+  flavor: >-
+    A battered box of painted cards, most of them creatures and a couple reflecting the face of whoever dares to look. Shuffled properly and tossed to the dirt, each card conjures a phantom monster that pretends to be dangerous, though it cannot actually bite anyone.
+  imagePrompt: >-
+    A worn wooden box of playing cards, one card lying face up on a dusty table with a faint shimmer rising above its painted surface.
+- id: defender
+  flavor: >-
+    A plain, honest weapon of any melee sort, though its maker's sense of humour shows in a hidden trick. Its wielder may shift strength from the blade into a sturdier guard, trading striking power for a steadier stance when the fight turns mean.
+  imagePrompt: >-
+    A broad steel sword with an engraved crossguard of tarnished gold, held point-down before a plain shield of dark oak in a quiet armoury.
+- id: demon-armor
+  flavor: >-
+    Armour of black iron etched with grinning faces, its clawed gauntlets eager for a fight. Whoever wears it picks up a language of the deep pits, but the harness never quite lets go, and demons take a sour interest in the wearer.
+  imagePrompt: >-
+    Heavy black iron plate armour with faint red glints along its seams, clawed gauntlets curled open, set in a dim stone chamber lit by a single ember.
+- id: dimensional-shackles
+  flavor: >-
+    Heavy iron cuffs that loosen or tighten to suit whoever is bound, and they tend to be used on those who are already too stunned to struggle. Escape-artists of the old colleges say the only sure key is held by whoever fastened them, and a stubborn captive may still try to break free.
+  imagePrompt: >-
+    A set of dark iron shackles with inlaid silver runes that shimmer faintly, lying coiled on a stone floor beside a shallow pool of grey light.
+- id: dragon-orb
+  flavor: >-
+    A crystal globe with mist churning inside it, and a dragon's ancient spite stirred into the glass. Those who gaze too long find the orb takes hold of their will, whispering dark counsel and offering small favours, while its smoke rises in the shape of wings.
+  imagePrompt: >-
+    An etched crystal globe glowing from within with swirling grey mist and faint crimson veins, resting on a black lacquered stand.
+- id: dragon-scale-mail
+  flavor: >-
+    Overlapping scales cut from one dragon's hide, each polished until it gleams like coloured glass. Sometimes a dragon gifts its cast-off scales, and sometimes a patient hunter preserves a fallen beast's hide, but either way the armour is prized above gold by those who wear it.
+  imagePrompt: >-
+    A shimmering breastplate of overlapping scales in deep green and bronze, each scale edged with a thin line of pale gold, displayed on a wooden stand.
+- id: dragon-slayer
+  flavor: >-
+    A plain, well-balanced blade whose edge seems to hum when a scaled monster draws near. Old hunters swear the steel remembers every wyrm it has ever pierced, and they keep it oiled for the next one that crosses their path.
+  imagePrompt: >-
+    A well-worn steel longsword with a polished crossguard and a leather-wrapped grip, its blade faintly glowing along one edge against a dark cave wall.
+- id: dust-of-disappearance
+  flavor: >-
+    A pinch of fine sand that vanishes from the palm, and a throw of it into the air hides everything nearby from sight. It is a gift for thieves and for those who need to slip past a watchful eye, though the effect fades the moment anyone acts openly.
+  imagePrompt: >-
+    A small open pouch of fine grey sand spilling across a wooden table, the grains catching the light and seeming to fade into the air above them.
+- id: dust-of-dryness
+  flavor: >-
+    A small packet of pale grit that can gather a whole pool into a single marble-like pellet, which then sits quietly until someone smashes it open again. Water-spirits dislike the stuff intensely, and a pinch of it can wither the watery bodies of elementals.
+  imagePrompt: >-
+    A tiny cloth packet tied with grey cord, dusted with pale powder and resting beside a glass bowl holding one glossy, smooth grey pellet.
+- id: dust-of-sneezing-and-choking
+  flavor: >-
+    A fine powder that looks exactly like a more useful dust until someone takes a close look, and then it is far too late. The cloud sends the unlucky into fits of sneezing and gasping, and only the stoutest or the most magically sturdy shake it off.
+  imagePrompt: >-
+    A small clay jar with a cracked wax seal, its mouth dusted with a fine white powder spilling across a worn wooden table in a cluttered apothecary.
+- id: dwarven-plate
+  flavor: >-
+    Heavy plate worked in the deep halls, with a solid, steady feel that seems to shrug off a shove. Its clever joinery lets the wearer dig in a heel and resist being hauled across the stones by a rope or a sudden gust.
+  imagePrompt: >-
+    A suit of half plate armour in dull bronze, with thick riveted joints and a sturdy leather belt, standing in a stone forge hall.
+- id: dwarven-thrower
+  flavor: >-
+    A warhammer balanced for throwing, built to fly out in a long arc and return like a loyal hound. Mountain smiths gave it a humming charge of force that bites hardest into giants. However far it flies, it always returns to its owner's palm.
+  imagePrompt: >-
+    A squat iron warhammer with a short ash haft wrapped in worn leather, its head engraved with dark runic knots and tipped with a faint blue glow.
+- id: efficient-quiver
+  flavor: >-
+    A slim leather quiver with three hidden compartments, each one stretching far deeper than its outside would suggest. Arrows, javelins and long staves all slide out as easily as if drawn from an ordinary case, which tends to baffle the people who must carry them.
+  imagePrompt: >-
+    A slim brown leather quiver with three stitched compartments, one holding feathered arrows and another a bundle of long wooden staves, hung on a wall peg.
+- id: efreeti-bottle
+  flavor: >-
+    A painted brass bottle with a stopper that never quite stays shut, and smoke that curls out with a flash of harmless fire. The fire-spirit trapped inside grows restless with every opening, and the results depend on how lucky the storyteller feels that evening.
+  imagePrompt: >-
+    A squat painted brass bottle with a dark cork stopper, its curved belly decorated with faded red and gold patterns, wisps of smoke rising from its neck.
+- id: elemental-gem
+  flavor: >-
+    A small faceted stone holding a mote of trapped weather, glowing with the colour of its element. Crack it open and a servant of that element steps out, fierce and obedient for a short while before it fades back into the world.
+  imagePrompt: >-
+    A small faceted gemstone resting on black velvet, its core glowing with a swirl of pale ember-red light.
+- id: elven-chain
+  flavor: >-
+    A shirt of fine chain links, light and supple, woven by craftsmen who believed armour should move with the wearer. Its ring pattern gleams silver in forest shade, and the link-maker's trick lets even a newcomer to heavy mail move as if born in it.
+  imagePrompt: >-
+    A supple shirt of fine silver chainmail with delicate interlocking rings, draped over a wooden stand in a dappled forest clearing.
+- id: eversmoking-bottle
+  flavor: >-
+    A squat bottle whose cork, once pulled, releases a cloud of thick smoke that swells across the field and refuses to thin. Thieves and scouts have long prized it, though the cloud keeps growing for as long as the cork stays out, and the smoke is equally blind to friend and foe.
+  imagePrompt: >-
+    A squat brown glass bottle with a dark wooden stopper, billowing grey smoke pouring from its neck across a stone courtyard at dusk.
+- id: eyes-of-charming
+  flavor: >-
+    A pair of crystal lenses that sit over the eyes, humming faintly as they catch the light. Wearers find their smiles grow strangely persuasive, and the lenses can coax a mind into a friendly haze, though their strength returns only with the dawn.
+  imagePrompt: >-
+    Two clear crystal lenses shaped to fit over the eyes, set on a velvet cushion with faint silver light glowing inside each one.
+- id: eyes-of-minute-seeing
+  flavor: >-
+    Crystal lenses cut for close work, letting the wearer see the tiniest scratch or seam as though peering through a magnifier. Scholars of the old colleges and careful forgers both prize them, since nothing small can hide from such sharp eyes.
+  imagePrompt: >-
+    A pair of small crystal lenses with delicate silver rims lying on an open ledger beside a brass magnifying loupe and fine pen nib.
+- id: eyes-of-the-eagle
+  flavor: >-
+    Crystal lenses that sharpen a wearer's sight until distant details stand out as clearly as nearby ones. Watchmen and hunters swear by them, for even a speck on the far horizon becomes a readable shape when viewed through such fine glass.
+  imagePrompt: >-
+    A single round crystal lens held up against a wide blue sky, with a distant hawk silhouetted crisply through its curved glass.
+- id: feather-token
+  flavor: >-
+    A single feather, light as a sigh, that becomes something grand the moment it is tossed or touched. Its kind varies from a small anchor for a ship to a floating whip, and tinker-scholars often joke that the feather is the smallest part of the trick.
+  imagePrompt: >-
+    A single pale grey feather with a soft iridescent sheen lying on a worn wooden tabletop beside a small tarnished silver case.
+- id: figurine-of-wondrous-power
+  flavor: >-
+    A small carved statuette that springs to life as a beast, whether a lion, a horse or something stranger, and then returns to its quiet figurine form. Each figure seems to remember its last outing and sulks for a while until it is ready to be called again.
+  imagePrompt: >-
+    An assortment of small carved figurines in bronze, ebony, ivory and gold, arranged on a dark wooden shelf with soft lamplight across their polished surfaces.

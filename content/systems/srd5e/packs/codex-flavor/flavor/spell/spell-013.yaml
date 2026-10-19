@@ -1,0 +1,75 @@
+- id: summon-dragon
+  flavor: >-
+    A gleaming trinket etched with a scaled shape can call a dragon's spirit out of the wide dark. It arrives as smoke and sharp attention, faithful for as long as the caster keeps the thread taut. Hedge-wizards say the spirit always keeps its own grudges, so a wise summoner gives it only plain orders.
+- id: sunbeam
+  flavor: >-
+    A lance of white light leaps from the caster's palm and scorches a straight path through anything standing in its way. Those caught in its glare squint, stagger, and lose their sight for a moment, as if they had stared straight into noon. The old colleges once used it to shame liars in crowded halls.
+- id: sunburst
+  flavor: >-
+    Sunlight blooms outward from a chosen point, a dropped lamp in a cellar full of dust, and the glare sears everything it touches. Those caught in the flash stumble about, eyes streaming and useless for a while. River-folk say the sunstone that fuels it stays warm long after the light has gone.
+- id: symbol
+  flavor: >-
+    A harmful glyph is pressed into a floor, wall, or lid, waiting patiently for an unwary hand or boot. Those who trip it are caught in a burst of whatever ruin the scribe chose, and the glyph then fades like frost. Old vault-keepers call these the most honest traps, since they warn no one at all.
+- id: telekinesis
+  flavor: >-
+    Thought alone becomes a pair of invisible hands, lifting a stone, a cart, or a stubborn door without a finger raised. The caster can shove a creature across the floor or hold a blade aloft, switching grip whenever they like. Teachers warn that a tired mind makes clumsy hands, so steady focus matters more than strength.
+- id: telepathic-bond
+  flavor: >-
+    Two cracked eggs, pressed together with a whispered word, weave a thread of shared thought through a small circle of willing friends. Each mind hears the others without a shared tongue, so a sailor and a scholar can finally trade jokes. Mostly the bond makes people talk over each other, which the river-folk find both charming and exhausting.
+- id: teleport
+  flavor: >-
+    A sudden lurch in the stomach, a flash of unfamiliar smells, and the caster stands somewhere else. Friends who keep a hand on the caster arrive with them, and nobody who objects gets carried along. Anyone who misremembers the destination often lands somewhere damp and wrong, which the old colleges call a lesson in humility.
+- id: teleportation-circle
+  flavor: >-
+    Chalk sigils drawn in a small ring awaken into a shimmering doorway that lingers only briefly before fading. Anyone who steps through appears at a permanent circle the caster knows well, and the journey smells faintly of ozone and old varnish. Careful scholars copy the sigil sequence twice, since a smudged line can send travelers somewhere nobody expected.
+- id: thaumaturgy
+  flavor: >-
+    A small wonder makes a fine party trick in a dim hall. The caster might make eyes glow strangely, shift a voice into a bellow, or set candle flames dancing in odd colors. Clerics of a certain kind use these tricks to unsettle skeptics, which is honestly the best part of the job.
+- id: thunderwave
+  flavor: >-
+    A thunderclap bursts out from the caster in every direction at once, rattling windows and loose teeth alike. Those caught in its path are shoved backward and left sprawling, and anything unfastened slides away with them. Travelers say the boom can be heard from over the next hill.
+- id: time-stop
+  flavor: >-
+    The world hushes, every falling leaf stops mid-air, and only the caster keeps moving. Taking a few easy steps through the frozen crowd feels like stealing something no one will miss. Sages warn that the stolen moment must be paid back before anyone notices the gap, or the bill comes due in some other way.
+- id: tiny-hut
+  flavor: >-
+    A modest dome of shimmering force rises over the caster and their companions, a snug house no bigger than a cart. Those already inside may come and go freely, but anything else finds the walls stubbornly shut. Old campaigners swear the air inside stays surprisingly warm.
+- id: tongues
+  flavor: >-
+    A brief touch on the throat, and every spoken word or flicking hand sign becomes plain meaning for the listener. The gift runs both ways, so anyone who knows even one language can follow the speaker as well. Envoys are said to pay heavily for it, and the colleges still argue whether that counts as cheating.
+- id: transport-via-plants
+  flavor: >-
+    A large tree or hedge becomes a doorway, linking itself to a distant plant that the caster has seen before. Anyone can step into the one and out of the other with only a short stride. Gardeners who notice a sudden draft in the roots tend to pretend they saw nothing at all.
+- id: tree-stride
+  flavor: >-
+    The caster slips into one trunk and emerges from another of the same kind, with leaves brushing their face. Living trees of matching girth are the only doorways, so the forest becomes a hidden road. A woodsman who knows every oak in the valley can vanish from one hillside and reappear on the next.
+- id: true-polymorph
+  flavor: >-
+    Strange transformation swallows a chosen creature or lifeless object and reshapes it into something else. The new form may be a beast, a sprite, or a pile of rope, and the old self waits quietly inside until the change ends. Scholars argue about whether such an alteration keeps the soul intact, which makes for dull dinner conversation.
+- id: true-resurrection
+  flavor: >-
+    Long after a body has gone cold, a touch can draw the spirit back into a body made whole again. Wounds knit, poisons drain away, and lost limbs grow back as if they had never been lost. Some grave-tenders say it is the most generous act a certain kind of priest can perform, and also the most costly.
+- id: true-seeing
+  flavor: >-
+    A pinch of dusty mushroom powder, rubbed over the eyes, lets a willing friend see through the cleverest illusions. Hidden doors, invisible creatures, and shapes that wear someone else's face all lose their power to fool. Old smugglers paid well for this, and a few still do.
+- id: true-strike
+  flavor: >-
+    For one fleeting heartbeat the caster's weapon seems to know exactly where the target will be. The strike is guided by insight rather than muscle, and it can burn with bright radiance instead of its ordinary edge. Duelists in the fencing halls call it cheating, and then they ask to learn it.
+- id: tsunami
+  flavor: >-
+    A towering wall of seawater rises from a chosen point and rolls forward with terrible patience. Everything in its path is battered and dragged along, held inside the churning water until the wave lets go. Fishing villages on the coast still tell tales about the one that came without warning, though nobody agrees who called it.
+- id: unseen-servant
+  flavor: >-
+    A patch of invisible force takes shape in an empty corner, obedient and mindless, ready to fetch, carry, and tidy. It cannot speak, cannot hit back, and can barely lift a loaf of bread, yet it never sulks about the chores. Harried housekeepers everywhere cast it just to keep the dust down.
+- id: vampiric-touch
+  flavor: >-
+    A shadow-wreathed hand reaches out and drinks a little life from whoever it touches. The victim feels a cold ache spreading through their limbs, while the caster feels warmth flood back into their own wounds. Those who practice this art are rarely welcome at feasts, though they are seldom short of company.
+- id: vicious-mockery
+  flavor: >-
+    A string of insults, pitched just so, slips past the ears and sticks in the mind like a splinter. The target's thoughts snag on the barbs, and its swings go wide and wild. Tavern wits have been trying to match the cruelest version for generations, and most of them are still losing.
+- id: vitriolic-sphere
+  flavor: >-
+    A glowing ball of acid streaks to a spot the caster picks and bursts open like a dropped flask of something nasty. Those caught in the splash hiss and blister, and the burn keeps eating at them after the first shock has passed. Alchemists treat the stuff with great respect, and with great suspicion.
+- id: wall-of-fire
+  flavor: >-
+    A sheet of flame stands up from a solid surface, hungry and bright, and no sensible creature wants to touch it. Anything that passes through its area is caught in a searing rush of heat, and the wall keeps its bright face aimed toward whatever is coming. Hearth-keepers say a good fire knows when to be stubborn.

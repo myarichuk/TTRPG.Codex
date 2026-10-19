@@ -1,0 +1,125 @@
+- id: potion-of-speed
+  flavor: >-
+    Gold streaks and a dark ink-swirl drift through this yellow fluid, as if it were impatient to leave the bottle. Drinkers report a sudden quickness that leaves no heavy tiredness when it wears off. River-town couriers still keep a vial close for messages that must arrive before the rain.
+  imagePrompt: >-
+    A small stoppered glass vial of bright yellow liquid with dark ink-like swirls, resting on a weathered wooden shelf beside a brass cork in warm candlelight.
+- id: potion-of-water-breathing
+  flavor: >-
+    Cloudy green fluid smelling of salt and sea-foam holds a pale bubble that drifts slowly through its center. Sailors who sip it find their lungs quietly change their habits, so the open water feels like a welcoming room. Most fishermen keep the bottle corked anyway, since the bubble has a habit of bumping the glass.
+  imagePrompt: >-
+    A stoppered green glass bottle with cloudy liquid and a small clear bubble floating inside, set on a sea-worn wooden dock at dusk.
+- id: potions-of-healing
+  flavor: >-
+    Red liquid glimmers whenever the bottle is shaken, and the glass shade hints at how potent the brew is. Hedge-wizards and roadside apothecaries sell the plainer kinds, while the richest vintages stay locked in the old colleges. Whatever its strength, the draught leaves the drinker feeling as though a warm hand has steadied them.
+  imagePrompt: >-
+    Several small corked glass bottles of ruby-red liquid lined up on a dusty wooden shelf, catching the light from a nearby window.
+- id: ring-of-animal-influence
+  flavor: >-
+    A band of tawny bronze holds a smooth amber stone that carries the scent of hay and wet fur. Trappers and herders who wear it find that wolves, hawks and stubborn oxen listen a little more closely. Its small store of power refills with the morning light.
+  imagePrompt: >-
+    A tarnished bronze ring set with a polished amber stone, resting on a mossy log beside a worn leather glove in a forest clearing.
+- id: ring-of-djinni-summoning
+  flavor: >-
+    Dull silver wraps a smoky blue stone that seems to hum when the wearer thinks of a favor. A wind spirit answers the call and stands in a clear space chosen by its summoner, bowing like an old merchant. It lingers only while its summoner keeps their focus steady.
+  imagePrompt: >-
+    A thin silver ring with a smoky blue stone, above which a swirling pale spirit of wind forms in a clear sky over rolling hills.
+- id: ring-of-elemental-command
+  flavor: >-
+    Each ring is tied to one of four primal forces, and its stone shows the mood of that force in color. Earth stones are pale ochre, sea-glass is green-grey, and flame rings glow with a restless amber. Creatures made of those forces grow wary of anyone who wears one.
+  imagePrompt: >-
+    A heavy ring set with a pale ochre stone on one side and a green-grey gem on the other, both glowing faintly on a dark stone table.
+- id: ring-of-evasion
+  flavor: >-
+    A thin band of blackened steel is engraved with tiny overlapping scales, as though a snake had been frozen mid-slither. Acrobats, thieves and archers prize it for the quick instinct it lends, the sense that a falling net or a sudden blast of flame is a little too slow. Its reserve of luck refills with the morning light.
+  imagePrompt: >-
+    A narrow band of blackened steel engraved with overlapping scale patterns, lying on a leather bench beside a folded grey cloak.
+- id: ring-of-feather-falling
+  flavor: >-
+    A pale grey ring of light metal carries a single white plume set into its band, as though a bird had shed it mid-flight. Climbers, bell-ringers and tower keepers swear by its gentle hold on the air, which lets a long fall unspool into a slow, drifting descent. Some wearers say they never landed hard in their wanderings.
+  imagePrompt: >-
+    A slender pale grey metal ring with a single white plume fixed to its band, hovering above a cloud-bright mountain ridge at dawn.
+- id: ring-of-free-action
+  flavor: >-
+    A ring of polished iron with a clear, faintly golden stone sits on the finger like a small sun that never sets. Dock crews, wrestlers and sailors in stormy waters favor it, because mud, webs and clinging magic lose their grip on the wearer's movements. The stone still feels warm when a cruel spell tries to bind them.
+  imagePrompt: >-
+    A polished iron ring set with a clear golden stone that glints in sunlight, resting on a wooden railing beside coiled rope and a bright blue scarf.
+- id: ring-of-invisibility
+  flavor: >-
+    Smoke-grey crystal forms this ring, which hums quietly and whose hollow center seems to swallow the nearby light. Spies, burglars and wandering healers have long prized it for the way it slips a wearer out of sight. Most who wear it say the hardest part is remembering where they put their own boots.
+  imagePrompt: >-
+    A ring of smoke-grey crystal with a hollow center, resting on a dusty windowsill where the light from outside seems to fade.
+- id: ring-of-jumping
+  flavor: >-
+    Bright copper bends into a loop shaped like a leaping hare, its legs tucked in mid-spring. Hunters, messengers and rooftop acrobats find that a sudden leap carries them far beyond what their legs alone could manage. Its magic is simple and eager, and it rarely asks for more than a quick flex of the hand.
+  imagePrompt: >-
+    A bright copper ring shaped like a leaping hare with tucked legs, glinting on a moss-covered stone wall at sunrise.
+- id: ring-of-mind-shielding
+  flavor: >-
+    A plain ring of dark pewter with a faint silver seam keeps prying thoughts out of its wearer's head. Spymasters and keepers of quiet rooms like it because no mind-reader can tell what they are truly thinking. Stories hint that a soul sealed inside the ring may keep its own counsel for ages.
+  imagePrompt: >-
+    A dark pewter ring with a thin silver seam, lying on a black velvet cloth beside a closed leather-bound book and a small brass lamp.
+- id: ring-of-protection
+  flavor: >-
+    A plain band of steel bears a small dull sapphire that catches the light only when the wearer stands firm. Guards, caravan masters and nervous scholars wear it for the modest but reliable sense that a blade or a curse is slightly less likely to find its mark.
+  imagePrompt: >-
+    A plain steel ring set with a small dull blue sapphire, resting on a weathered wooden table beside a battered metal shield.
+- id: ring-of-regeneration
+  flavor: >-
+    Pale pink quartz set in a fine gold ring feels faintly warm against the skin, like a healing poultice. Field surgeons and mountain hunters treasure it for the slow, steady mending it offers when they are bruised or cut far from help. Stories say it can coax a lost limb back into being, though few have tried.
+  imagePrompt: >-
+    A delicate gold ring set with a pale pink quartz stone, resting on a folded linen cloth beside a small clay jar in soft lamplight.
+- id: ring-of-resistance
+  flavor: >-
+    A gemstone's color hints at the element this band guards against, such as pearl for acid or garnet for fire. Sellers in harbor towns and mountain passes trade them as sensible gifts for travelers who expect trouble. Even a hard blow from that element leaves the wearer with only a scorched sleeve or a sore hand to show.
+  imagePrompt: >-
+    A plain silver ring holding one polished gemstone, pearl or garnet or jade, resting in a worn wooden box lined with dark velvet.
+- id: ring-of-shooting-stars
+  flavor: >-
+    A dark blue band holds silver sparks that drift across its surface like a little winter sky. Wanderers and night-watch crews use its glimmer to read the paths ahead, and its brighter flashes can startle or scatter a crowd of foes. Its sparks only fade back into the metal when the wearer goes quiet and still.
+  imagePrompt: >-
+    A dark blue metal band studded with tiny glowing silver sparks, set against a deep night sky scattered with falling stars over a quiet hillside.
+- id: ring-of-spell-storing
+  flavor: >-
+    A thick ring of dark gold seems to hold a faint swirl of colored light deep within its gem, as though it were full of breath. Mages leave it on tables and in pockets, and spells drop into it for safekeeping until someone worthy calls them forth.
+  imagePrompt: >-
+    A thick dark gold ring with a deep gem glowing with a faint swirl of colored light, resting on a cluttered scholar's desk beside stacked old books.
+- id: ring-of-spell-turning
+  flavor: >-
+    Polished black metal bears mirror-bright lines that ripple like water across the band. Duelists and court advisors who fear hostile sorcery prize it, since most unfriendly spells slide off or fold back toward their caster. The old tales praise its wearers for turning the very wind of a curse back against the one who cast it.
+  imagePrompt: >-
+    A band of polished black metal with mirror-bright ripple lines, reflecting a stormy grey sky above a calm dark lake at twilight.
+- id: ring-of-swimming
+  flavor: >-
+    A pale blue enamel ring carries a small wave pattern that seems to flow whenever the wearer moves a hand. Pearl-hunters and ferry crews favor it for the confident, fishlike strokes it lends in deep currents. Some say the water itself grows a little friendlier to anyone who wears it.
+  imagePrompt: >-
+    A pale blue enamel ring with a wave pattern, resting on smooth wet pebbles at the edge of a clear turquoise pool.
+- id: ring-of-telekinesis
+  flavor: >-
+    A rose-tinted iron band holds a small clear crystal that always seems to hover slightly above its setting. Stonecutters, bridge builders and cunning thieves dream of the quiet grip it offers, the way a stone or a dropped tool can drift across a room at a thought.
+  imagePrompt: >-
+    A rose-tinted iron ring holding a small clear crystal, floating above a wooden workbench scattered with fine tools and gears.
+- id: ring-of-the-ram
+  flavor: >-
+    Hammered bronze curls into a ram's head on this ring, which seems to stare with stubborn purpose at whatever stands in front of it. Wearers in border towns and mining camps favor it, because a spectral blow of force can knock a rival clean off balance.
+  imagePrompt: >-
+    A hammered bronze ring shaped into a curled ram's head with ridged horns, set with a faint blue glow on a dusty stone ledge.
+- id: ring-of-three-wishes
+  flavor: >-
+    Three small pale gems sit in a ring of heavy gold, each one faintly glowing and worn smooth by the thumbs of its previous holders. Kings and merchants have fought over it, while cautious folk keep their distance, knowing the final gem leaves only plain metal behind.
+  imagePrompt: >-
+    A heavy gold ring set with three small pale gemstones, each faintly glowing, resting on dark green velvet beside a candle.
+- id: ring-of-warmth
+  flavor: >-
+    A thin copper band holds an amber stone that stays warm to the touch even in bitter snow. Northern guides and sailors on frozen coasts value it, since winter chill seems to bounce off the wearer. Whatever a hard frost may do to the traveler's fingers, the ring keeps the heat sealed close.
+  imagePrompt: >-
+    A thin copper ring set with a warm amber stone, glowing softly on a frost-covered windowsill beside a steaming ceramic mug.
+- id: ring-of-water-walking
+  flavor: >-
+    Pale silver-blue metal forms this ring, with a tiny wave carved along its face. Ferry-folk, reed-gatherers and river messengers use it to cross marshes and flooded fields without wetting their boots. The wave seems to lift a little whenever the wearer steps onto a shimmering pond.
+  imagePrompt: >-
+    A ring of pale silver-blue metal with a carved wave, resting on a reed-lined riverbank where a shallow pond shimmers under a pale sky.
+- id: ring-of-x-ray-vision
+  flavor: >-
+    This dark brass ring frames a pale lens-shaped crystal that seems to peer through whatever lies before it. Inspectors, locksmiths and nosy scholars love the way walls turn to glass, though they learn that thick lead and heavy stone still block the view. Every use leaves the eyes a little strained, so wise wearers rest after each peek.
+  imagePrompt: >-
+    A dark brass ring with a pale lens-shaped crystal, held up against a stone wall that appears to turn clear as glass, in dim candlelight.

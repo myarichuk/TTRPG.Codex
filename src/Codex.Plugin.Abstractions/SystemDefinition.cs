@@ -80,6 +80,30 @@ public class ContentTypeDefinition
 
     public List<FieldDefinition> Fields { get; set; } = new();
 
+    /// <summary>
+    /// The fields an editor for this type offers: <see cref="Fields"/>, then the lore every entry can carry
+    /// (<see cref="ContentEntry.FlavorKeys"/>) unless the system declares the key itself, so a table's own
+    /// entries can have flavor text and art prompts like the shipped ones. Creature types also get a
+    /// habitat and a behavior line.
+    /// </summary>
+    public List<FieldDefinition> EditorFields()
+    {
+        const string group = "Lore";
+        var lore = new List<FieldDefinition>
+        {
+            new("flavor", "Flavor", FieldType.LongText, description: "A few sentences of lore, shown as a quote above the rules text.", category: group),
+            new("imagePrompt", "Art prompt", FieldType.LongText, description: "One visual sentence describing it, used when generating art.", category: group)
+        };
+
+        if (ActorBlueprint)
+        {
+            lore.Insert(1, new FieldDefinition("habitat", "Habitat", FieldType.Text, description: "Where it lives.", category: group));
+            lore.Insert(2, new FieldDefinition("behavior", "Behavior", FieldType.Text, description: "How it acts.", category: group));
+        }
+
+        return Fields.Concat(lore.Where(l => !Fields.Any(f => string.Equals(f.Key, l.Key, System.StringComparison.OrdinalIgnoreCase)))).ToList();
+    }
+
     /// <summary>Property keys shown in list rows next to the name (e.g. level, school for spells).</summary>
     public List<string> SummaryFields { get; set; } = new();
 

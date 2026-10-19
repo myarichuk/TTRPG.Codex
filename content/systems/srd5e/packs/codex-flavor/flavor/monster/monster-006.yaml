@@ -1,0 +1,125 @@
+- id: giant-hyena
+  flavor: >-
+    Larger than any carriage horse, the giant hyena haunts the dry grass where caravans camp. Its laugh carries farther than its shadow, and herders learn to hear it before they see it. Once a victim bleeds, the beast wakes a fury that drives it back into the fray.
+  imagePrompt: >-
+    A large, lean hyena with a coarse grey-brown coat and a grinning jaw, crouched low in tall dry grass at dusk, one eye fixed on a distant campfire.
+- id: giant-lizard
+  flavor: >-
+    A giant lizard is a patient climber that clings to cliffs and ruined walls, its scaled toes gripping surfaces no sensible creature would trust. Desert settlers keep a wary eye on the masonry after dark, since the lizard hunts by ambush from above. It is a plain animal with no interest in riddles, only in the nearest warm meal.
+  imagePrompt: >-
+    A large lizard with mottled olive scales clinging upside down to a crumbling brick wall, its splayed toes pressed flat and its jaws slightly open against a pale sky.
+- id: giant-octopus
+  flavor: >-
+    The giant octopus lives in the cold dark water beneath sea cliffs and wrecked hulls, where its eight arms can wrap a boat's keel as easily as a fisher's leg. Sailors who have survived an encounter describe the ink first, a black cloud that turns the sea into a blind room. Fishing folk leave offerings of salted fish at the shoreline, which is either respect or a very practical bribe.
+  imagePrompt: >-
+    A huge octopus with mottled purple-brown skin coiled around a dark sunken ship timber, suckered arms spread wide through murky green water and a faint ink cloud drifting near its beak.
+- id: giant-owl
+  flavor: >-
+    A giant owl is a celestial messenger that keeps to old forests and high lookouts, watching the world with patience that seems almost courteous. It speaks no language its visitors use, yet it understands every word spoken beneath its perch, and it has been known to sort out lost travellers. Hedge-wizards in the old colleges say an owl that sits close is sizing up the listener, and they are rarely wrong.
+  imagePrompt: >-
+    A giant owl with pale silver-grey feathers and a flat, solemn face, perched on a moonlit branch with wings half-open and faint gold light haloing its head.
+- id: giant-rat
+  flavor: >-
+    A giant rat is roughly the size of a large cat, with a long naked tail and a habit of moving in gangs through sewers, grain stores and the undersides of old bridges. Individually they are a nuisance; together they are the reason cellar doors get barred. Townsfolk tell children that a rat which stops to look at you is counting exits.
+  imagePrompt: >-
+    A large grey rat with a bare pink tail and bright black eyes, crouched on a sack of spilled grain in a dim stone cellar lit by a single lantern.
+- id: giant-scorpion
+  flavor: >-
+    The giant scorpion waits under desert rocks with its pincers folded, a patient engineer of a creature that knows exactly how far its tail can reach. Its venom is strong enough to slow a stout traveller's heart, which is why caravan guards in the dry lands hang bells across their camps. The scorpion does not hunt for sport; it simply takes whatever wanders close to the sand.
+  imagePrompt: >-
+    A large armored scorpion with glossy dark-brown plates, raised tail curled high over its back and claws open, standing on pale cracked desert rock under a copper sunset.
+- id: giant-seahorse
+  flavor: >-
+    The giant seahorse drifts in warm shallows and reef channels, upright and unhurried until something disturbs the water. When it charges, the impact is far heavier than its delicate frame suggests, and fishers have learned that the calm bobbing of a seahorse is no sign of mercy. Coastal artists paint them carrying crowns of coral, a flattering portrait that few who met one ever saw.
+  imagePrompt: >-
+    A giant seahorse with a curled armored tail and ridged bronze-green body, head lowered as it surges through clear turquoise water above a bed of pale sea grass.
+- id: giant-shark
+  flavor: >-
+    The giant shark is a hulking predator of open water, long enough that a boat's crew feels the shadow pass beneath them before they see the fin. Its bite is catastrophic and its appetite grows keener the moment blood appears in the water. Old harbor songs warn that a shark which circles once will circle again, and a sensible captain turns for shore.
+  imagePrompt: >-
+    A colossal gray shark with a blunt snout and rows of jagged white teeth, gliding through deep indigo water with pale light fracturing across its broad dorsal fin.
+- id: giant-spider
+  flavor: >-
+    The giant spider spins its snares between old trees and abandoned mine shafts, threads so fine that travelers walk into them before noticing. Woodcutters in the highland villages mark the web lines with bright cloth, a habit that has saved more than a few lives. Its bite carries a slow poison, and the creature is content to wait while its prey stops struggling.
+  imagePrompt: >-
+    A large spider with glossy black legs and a bulbous abdomen marked by a red stripe, hanging from silver web strands strung between two gnarled tree trunks in misty dusk.
+- id: giant-toad
+  flavor: >-
+    The giant toad squats in reed marshes and muddy fords, a broad and bloated shape that looks almost comical until it leaps. Its swallow is the part that frightens village children the most, since the creature keeps its catch alive inside its gut for a while, and the stories about its belly are not kind. Marsh-folk steer their livestock wide of the reeds at dusk and never bathe alone.
+  imagePrompt: >-
+    A massive warty toad with olive-brown skin and a pale throat sac, squatting low on a mossy log at the edge of a dark reed pond beneath tangled willow branches.
+- id: giant-venomous-snake
+  flavor: >-
+    The giant venomous snake is a sleek, dark-banded hunter of riverbanks and tangled marsh, far more agile than its heavy coils suggest. It strikes from a safe reach, a fact that has taught several careful farmers to walk the bank with a long stick. Its venom is slow and grim, and the old herb-wives keep a bitter remedy ready for any household near the water.
+  imagePrompt: >-
+    A slender dark-banded snake raised in an S-curve from tall marsh grass, mouth open to show curved fangs, its scales glossy green and gold in the late light.
+- id: giant-vulture
+  flavor: >-
+    The giant vulture circles over battlefields and dying towns, a patient carrion-eater that seems to arrive before the trouble does. Its gouge leaves a sickness behind, so even a small scratch can leave a traveler dizzy and sour for a long while. Scholars of the old colleges argue whether it is a beast or something worse, and the vultures have never offered an opinion.
+  imagePrompt: >-
+    A hulking vulture with a bare crimson head, ragged dark-brown feathers and a hooked grey beak, perched on a broken fence post under a bruised purple evening sky.
+- id: giant-wasp
+  flavor: >-
+    The giant wasp hangs in the air above orchards and hay meadows, its wings a blur that makes a sound like a distant saw. Beekeepers in the valley speak of it with a particular dread, because the creature will tend its nest with a fury that few hives survive. Its sting is quick and its venom lingers, so anyone stung should sit down at once and wait for the swelling to pass.
+  imagePrompt: >-
+    A large wasp with a slender black-and-amber striped abdomen and translucent wings, hovering in golden afternoon light beside a row of wooden beehives.
+- id: giant-weasel
+  flavor: >-
+    The giant weasel is a sleek and clever hunter of hedgerows and barns, quick enough to slip through a gap no larger than a boot. Farmers blame it for missing hens and the odd vanished lamb, though it is rarely seen out in the open. Its teeth are small but very sharp, and the creature shows more interest in cornering a meal than in fighting for one.
+  imagePrompt: >-
+    A huge long-bodied weasel with rich chestnut fur, a pale throat and a black-tipped tail, pausing on a mossy fence rail beside a rustic red barn at twilight.
+- id: giant-wolf-spider
+  flavor: >-
+    The giant wolf spider hunts without a web, sprinting across open ground with a speed that makes watchers doubt their eyes. It lives in burrows under fallen logs and dry earth banks, emerging at dusk to ambush anything small enough to carry. Herbalists keep a jar of its venom for numbing aches, though the bite itself is anything but gentle.
+  imagePrompt: >-
+    A medium-sized hairy brown wolf spider with pale eye clusters and banded legs, crouched on dark leaf litter at the mouth of a burrow in soft morning mist.
+- id: gibbering-mouther
+  flavor: >-
+    The gibbering mouther is a heap of mouths, eyes and wet flesh that drifts across boggy ground, murmuring in a dozen broken voices at once. Those who hear its babble lose the thread of their own thoughts, and a stumbling traveler can end up walking straight into its waiting mouths. Scholars of the old colleges catalogue it as a nuisance of the swamps, which is a generous word for something that absorbs what it bites.
+  imagePrompt: >-
+    A shapeless grey-pink mass of lumpy flesh studded with dozens of eyes and gaping mouths, sprawled across a dark bog beneath a low fog bank.
+- id: glabrezu
+  flavor: >-
+    The glabrezu is a towering fiend of crushing claws and cunning, the kind of bargainer who offers a fine deal and then reads the fine print aloud with relish. Its pincers can hold a struggling captive fast while its spells unpick the captive's will, and it is almost impossible to surprise. Summoners who call one up from the lower realms rarely enjoy the terms they have agreed to, and the old colleges keep long lists of those who tried.
+  imagePrompt: >-
+    A towering reddish-purple fiend with a broad ram-like head, four curved horns and two huge crab-like pincers raised in a menacing stance inside a smoky crimson hall.
+- id: gladiator
+  flavor: >-
+    The gladiator fights in sand-covered arenas for crowds who want thrills and spectacle, a trained professional who is as much showman as soldier. Its spear volleys are precise, and a well-timed shield bash can knock a rival flat in the middle of a fine speech. Promoters tell the crowd the gladiator fights for glory, though most of the fighters are in it for the pay and the chance to walk out alive.
+  imagePrompt: >-
+    A lean, armored gladiator in studded leather and a dented bronze shield, holding a spear upright in a sunlit sand-covered arena.
+- id: gnoll-warrior
+  flavor: >-
+    The gnoll warrior is a hyena-headed raider who fights with a bow carved from bone and a savage glee that sends frightened villagers running. Gnoll bands travel light, plundering dry plains and abandoned forts, and each victory ends with a howl that carries across the valley. Scouts claim the bands follow their leader by smell, which is probably the only thing they take seriously.
+  imagePrompt: >-
+    A lean hyena-headed warrior with mottled tan fur and a ragged leather harness, drawing a pale bone bow in a grassy clearing at the edge of a dark forest.
+- id: goat
+  flavor: >-
+    The goat is a sure-footed nuisance of hillsides and rocky pastures, able to climb ledges that look impossible for anything with four legs. Most goats are merely stubborn, but a few grow bold enough to butt a shepherd off a slope, and the village tales make the worst of them sound like villains. Still, a good goat gives milk and has an opinion about every gate in the parish.
+  imagePrompt: >-
+    A scruffy brown-and-white goat with curled horns and a shaggy beard, balanced on a narrow rocky ledge above a green valley at sunrise.
+- id: goblin-boss
+  flavor: >-
+    The goblin boss is a small and sharp-tongued leader who rules a band of warriors by bluster, cunning and a well-timed shove. Most of the time it stands behind its bodyguards and lets them take the first blow, a habit that has kept its neck intact through more than one ugly fight. Caravan masters have learned to pay its tolls without argument, because the boss is always quick to remember a face.
+  imagePrompt: >-
+    A small green-skinned goblin in a dented chain shirt and battered iron helm, grinning and gripping a curved scimitar beside a bristling shortbow on a torchlit hilltop.
+- id: goblin-minion
+  flavor: >-
+    The goblin minion is the smallest and most expendable member of a raiding band, carrying a handful of daggers and a great deal of nervous energy. It creeps along hedges and rooftops, hoping to slip past guards and snatch whatever is left unattended. Its superiors rarely learn its name, and it prefers things that way, since names have a habit of attracting trouble.
+  imagePrompt: >-
+    A tiny ragged goblin with pointed ears and a patched brown cloak, crouched on a mossy rooftop edge while clutching three slim daggers against a stormy grey sky.
+- id: goblin-warrior
+  flavor: >-
+    The goblin warrior is the backbone of most goblin war parties, a scrappy soldier with leather armor, a dented shield and a shortbow slung across its back. It fights in ragged lines, shouting insults at its foes and relying on numbers to make up for its lack of size. Given a choice between a long battle and a quick exit, the goblin usually picks the exit and calls it a tactic.
+  imagePrompt: >-
+    A wiry green goblin in scuffed leather armor and a dented wooden shield, drawing a short bow with a grin among ragged tents at dusk.
+- id: gold-dragon-wyrmling
+  flavor: >-
+    The gold dragon wyrmling is a young, bright-scaled dragon with a streak of honor that its elders find both charming and alarming. Its fire breath is a fine trick at festivals, but a wyrmling aims it carefully at anyone who has been rude, and its weakening breath leaves foes stumbling in the next exchange. Its hoard is small, mostly coins and polished trinkets, and it would rather lend a favor than keep a score.
+  imagePrompt: >-
+    A medium gold dragon wyrmling with glossy golden scales and a sleek tapered tail, wings half-spread as it perches on a sunlit cliff above a glittering river.
+- id: gorgon
+  flavor: >-
+    The gorgon is a bronze-plated construct built to guard old tombs and sealed vaults, a machine with no purpose beyond its orders. Its breath turns flesh to rock over a span of several moments, a grim lesson that has made quarry-folk keep well back. Scholars in the old colleges still argue over who built it and why, but the question matters less to the gorgon than the trespasser in front of it.
+  imagePrompt: >-
+    A hulking bronze construct shaped like a bull with riveted plates and a gaping grille for a mouth, standing guard in a dim vault lit by blue-green glow.

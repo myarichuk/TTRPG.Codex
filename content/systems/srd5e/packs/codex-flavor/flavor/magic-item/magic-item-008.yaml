@@ -1,0 +1,125 @@
+- id: robe-of-eyes
+  flavor: >-
+    Weavers in the old colleges of a drowned coast stitched painted eyes into this robe, believing cloth should keep watch for its wearer. The lids seem to blink at passing shadows and no whisper escapes notice. Bright glare and sudden flashes make the painted eyes squeeze shut, leaving the wearer dazzled and grumbling until the sting passes.
+  imagePrompt: >-
+    A long dark robe of supple gray wool, its fabric scattered with embroidered eyes in pale thread, hung on a wooden peg in a dim workshop.
+- id: robe-of-scintillating-colors
+  flavor: >-
+    Dyers who mixed crushed beetles and mineral powders made this robe, which holds its colors in shifting bands. When the wearer chooses, the cloth flares into a dazzling pattern that startles onlookers and spoils the aim of attackers. Anyone who stares into the flare may find their legs turned to wobbling jelly until the glare fades.
+  imagePrompt: >-
+    A flowing robe of deep violet silk, its folds catching a shimmer of rainbow light across swirling bands of woven pattern, draped over a carved chair.
+- id: robe-of-stars
+  flavor: >-
+    Night-sky tailors in a far-off harbor town sewed this robe from dark blue cloth scattered with silver. Six larger stars on the upper front can be plucked free and spent as bolts of sparkling force, and the empty places refill as dusk settles. Its wearer can also slip into a hazy starlit realm with everything they carry.
+  imagePrompt: >-
+    A long robe of midnight blue wool, embroidered with tiny silver stars and six larger pale gems on its upper front, folded over a wooden table.
+- id: robe-of-the-archmagi
+  flavor: >-
+    Cut from cloth no common loom could produce, this garment carries runes that hum faintly under the fingers. Spells glance off its wearer like rain from oiled wool, and every incantation cast through its threads grows sharper. Hedge-wizards would trade much for one thread, though the old colleges warn that such finery draws envious eyes.
+  imagePrompt: >-
+    An elegant robe of fine ivory cloth, its border stitched with glowing silver runes that catch the light in the dim halls of a high tower.
+- id: robe-of-useful-items
+  flavor: >-
+    Patched by a tinker with a sense of humor, this robe bears bright scraps that unpick into real objects: a lantern, a dagger, a mirror, a pole, rope, a sack, and stranger things. Once the last scrap is pulled free, the robe becomes an ordinary garment, waiting for the next fair.
+  imagePrompt: >-
+    A patchwork robe of mismatched wool in browns, reds and faded greens, each square sewn with a small bright scrap ready to come loose.
+- id: rod-of-absorption
+  flavor: >-
+    Forged from a dark metal that drinks light, this rod catches incoming enchantments and swallows their force without a sound. The spell itself is undone, but its power waits inside for later use. Old scholars called it a thrifty treasure, though a full rod begins to hum like a kettle on the stove.
+  imagePrompt: >-
+    A slender rod of dark tarnished iron, its surface etched with spiraling silver lines that glimmer faintly as if swallowing a flicker of light.
+- id: rod-of-alertness
+  flavor: >-
+    A slim brass rod with a glowing crystal head, made by watchmakers who prized a sharp mind. It sharpens the senses of whoever grips it and conjures small aids to clear sight and hidden thought. Planted in the earth, its head blazes with a ward that steadies allies and reveals creatures hiding in plain light.
+  imagePrompt: >-
+    Polished brass forms a slender rod topped with a faceted crystal that glows pale gold, its haft worn smooth by long use and set against dark velvet.
+- id: rod-of-lordly-might
+  flavor: >-
+    Forged by a smith with a taste for showing off, this rod folds into a fiery blade, an axe, a spear, or a battering ram. Its buttons wake each shape with a flash, and a single strike can leave a foe frozen in place or drain its strength into the wielder.
+  imagePrompt: >-
+    A heavy iron rod with a flanged head and six small enameled studs in a row along its haft, the metal scorched with faint red and gold.
+- id: rod-of-rulership
+  flavor: >-
+    Kings of nowhere in particular once raised this slender rod and expected every eye to bow. Presented before a crowd, it turns a sea of eyes into loyal followers who regard the bearer as a trusted leader until harm or a cruel order breaks the spell.
+  imagePrompt: >-
+    A slender ivory rod topped with a gold cap set with a dark red gem, resting across a velvet cushion beneath tall windows.
+- id: rod-of-security
+  flavor: >-
+    A pale rod of mother-of-pearl, carried by travelers seeking shelter from a storm. With a single command, it whisks its bearer and willing friends into a private pocket of the world, a garden or a tavern or a palace of choice. Food and water are plentiful there, and nothing picked up inside can leave it.
+  imagePrompt: >-
+    A pearly white rod with a gentle sheen, set in a rolling meadow of wildflowers under a warm sky with a distant palace glimmering on the horizon.
+- id: rope-of-climbing
+  flavor: >-
+    Hemp with a mind of its own, this rope creeps up cliff faces, fastens itself to ledges, and knots into handholds. It shrugs off poison and mind-bending magic, and it slowly mends its own fraying strands. Sailors swear it once bound a stubborn captain to the mast, at his own request.
+  imagePrompt: >-
+    A long coil of pale hemp rope with thick knots tied at regular intervals, resting on weathered wooden planks beside a rocky cliff.
+- id: rope-of-entanglement
+  flavor: >-
+    Cord-makers in a fishing port twisted this line with a grudge against thieves. Its far end can dart out and wrap a creature in a snarl, holding it fast until the captive wriggles free or the rope coils back into the hand that threw it.
+  imagePrompt: >-
+    A dark braided line of tarred hemp, coiled in a loose ring on a wet dock with its end raised and tapering toward a shadowy quay.
+- id: scarab-of-protection
+  flavor: >-
+    Carved by a certain kind of priest who feared grave-magic and the restless dead, this beetle-shaped medallion guards its wearer against dark arts. Its stored protection wears thin with each ward it raises and at last it crumbles into bronze dust.
+  imagePrompt: >-
+    A beetle-shaped medallion of dull bronze with a green enamel shell, hanging from a braided cord against a weathered leather pouch.
+- id: scimitar-of-speed
+  flavor: >-
+    A curved blade of blued steel with a quick, bright edge, forged by smiths who wanted a sword that could not be outpaced. Its wielder finds an extra flicker of rhythm, a second swing that arrives before the first has finished ringing.
+  imagePrompt: >-
+    Blued steel forms a slender curved blade with a bright silver edge, its grip wrapped in dark green cord and a faint trail of motion lines behind it.
+- id: shield-of-missile-attraction
+  flavor: >-
+    A battered shield painted with a crooked target, it turns aside arrows and bolts with an almost eager stubbornness. Anyone who takes it up soon finds arrows aimed at their friends swerving toward them instead. The bargain is a poor one, since the curse clings tight until a cleansing rite removes it.
+  imagePrompt: >-
+    A dented oval shield of old oak and iron, its face painted with a faded red target and a few arrows stuck in the wood.
+- id: shield
+  flavor: >-
+    The plain shield is the most familiar piece of defense in any armory, yet enchanted ones earn their keep through quiet, growing sturdiness. Its bearer feels a steady, reassuring presence on the arm, and blows that would have rattled the shoulder glance away.
+  imagePrompt: >-
+    A steel kite shield with a pale blue boss at its center, its painted rim chipped and gleaming in the light of a torch.
+- id: slippers-of-spider-climbing
+  flavor: >-
+    Supple leather slippers stitched with fine gray thread, these shoes let the wearer walk up walls and across ceilings as easily as on a floor. Hands stay free for gear, a lantern, or waving at the nervous guard below. Slick surfaces defeat the magic, so a wet tile will still send the wearer sliding.
+  imagePrompt: >-
+    A pair of supple brown leather slippers with worn toes, the soles dusted with fine gray grit, set on a dark wooden floor.
+- id: sovereign-glue
+  flavor: >-
+    A milky paste kept in a flask lined with slick oil, this glue binds two surfaces in a bond that yields only to the rarest solvents. Once set, it holds fast, and the pieces stay joined for good. Cabinetmakers have long coveted a jar, though the price is never a pleasant surprise.
+  imagePrompt: >-
+    A small clay flask of milky white paste with a waxed cork, its glossy surface reflecting dim candlelight on a crowded workbench.
+- id: spell-scroll
+  flavor: >-
+    A sheet of vellum rolled tight and sealed with wax, the scroll bears a single spell written in a cipher that only a practiced reader can unravel. Once the words are spoken, the parchment crumbles to dust and the magic spends itself.
+  imagePrompt: >-
+    A tightly rolled sheet of cream vellum tied with a faded red ribbon, its edges scorched and its surface covered in tiny looping script.
+- id: spellguard-shield
+  flavor: >-
+    Hammered from a dark gleaming alloy, this shield is favored by those whose opponents prefer to fight with words and charms. Its surface shimmers when a spell strikes it, and the caster's aim wobbles as though the air had turned to syrup.
+  imagePrompt: >-
+    A polished buckler of dark steel with a violet enamel face and a thin silver rim, leaning against a whitewashed wall.
+- id: sphere-of-annihilation
+  flavor: >-
+    A small black orb of nothing hangs in the air like a hole punched through the fabric of existence. It devours whatever it touches, leaving nothing behind but a quiet, faintly humming hush. Wise keepers store it in heavy lead cases and never let it wander near a doorway.
+  imagePrompt: >-
+    A perfect black sphere floating above a dusty wooden floor, its edges fringed with faint violet light and a few gray motes swirling near it.
+- id: staff-of-charming
+  flavor: >-
+    Pale ash with a silver ring near the head, this staff was made by a tradesman who thought charm an art. Its holder can coax a crowd toward kindness, command a nervous beast, or read a strange tongue. When a charm targets the bearer, the staff may bounce it back to its source.
+  imagePrompt: >-
+    A tall staff of smooth birch, a silver band below its carved crown and a small clear gem set in the head.
+- id: staff-of-fire
+  flavor: >-
+    Charred black wood bound with brass rings, this staff was forged by smiths who wanted something that could warm a cold room. A holder can call forth a burst of flame, a blazing sphere, or a wall of fire. Used carelessly, though, the staff may finish its life in a puff of cinders.
+  imagePrompt: >-
+    A blackened staff bound with brass rings, its tip glowing orange with embers and a faint haze of heat rising above it.
+- id: staff-of-frost
+  flavor: >-
+    Pale blue crystal runs through this staff like frozen veins, and the wood beneath is cold enough to frost a bare palm. A holder can conjure thick fog, a hailing storm, a wall of ice, or a cone of biting cold. Mishandled, the staff may melt into a puddle of water.
+  imagePrompt: >-
+    A slender staff of dark wood with pale blue crystal veins running its length and a cloud of frost clinging to the tip.
+- id: staff-of-healing
+  flavor: >-
+    Carved from pale wood and wrapped in clean linen, this staff was made by herbalists who believed bruises should fade quickly. Its holder can call on restorative magic to close wounds, cure a sickness, or mend many hurts at once. Careless handling may cause the staff to vanish in a bright flash, lost forever.
+  imagePrompt: >-
+    A pale wooden staff wrapped in tidy white linen near its head, a small cluster of green herbs tied beneath a carved gold ornament.

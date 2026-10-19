@@ -1,0 +1,125 @@
+- id: staff-of-power
+  flavor: >-
+    Banded iron and dark cedar bind this tall rod, and a single amber stone sits in its crown like a patient eye. Hedge-wizards argue over which ruler commissioned it, but all agree the bearer stands taller. Its holder can summon cones of frost or flares of fire, yet the amber dims with every spell.
+  imagePrompt: >-
+    A tall rod of banded iron and dark cedar, its crown holding a glowing amber stone, standing against a stormy violet sky over a dusty battlefield.
+- id: staff-of-striking
+  flavor: >-
+    A plain quarterstaff of ash that hums when swung, as if the wood remembers an older war. Each blow can be sharpened with a pulse of unseen force that rattles bone and lands harder than the wood should allow. Wardens say an eager staff must rest, lest it turn back into common timber.
+  imagePrompt: >-
+    A plain ash quarterstaff with faint silver grain, its tip wrapped in cracked leather and humming with a pale light, resting on a workbench beside sawdust and tools.
+- id: staff-of-swarming-insects
+  flavor: >-
+    Carved from green-black wood and studded with tiny jade beetles, this staff keeps a buzzing company of its own. A pulse of its magic releases a cloud of harmless flying insects that hang thick in the air and veil the sight of anyone outside. A strong gale or a sudden blaze scatters the swarm.
+  imagePrompt: >-
+    A knotted staff of green-black wood studded with tiny jade beetles, wreathed in a faint haze of gold motes inside a dim cave lit by mossy light.
+- id: staff-of-the-magi
+  flavor: >-
+    Dense black oak banded in tarnished silver, this staff seems to have swallowed a thousand small enchantments. Spells aimed at the bearer tend to unravel against it, dissolving into sparks that feed the grain of the wood. Scholars of the old colleges warn that a staff this hungry can grow too full and turn dangerous.
+  imagePrompt: >-
+    A dark oak staff banded in tarnished silver, its tip glowing with faint blue sparks, held over a stone study lined with dusty shelves of old books.
+- id: staff-of-the-python
+  flavor: >-
+    A length of mottled wood with a carved serpent's head at one end, this staff longs to coil. Thrown just right, it slithers back into living muscle, a great constrictor that answers only to its owner's silent will. River-folk tell of staves that refuse to lie still after their master's death.
+  imagePrompt: >-
+    A mottled green-brown staff of carved wood with a serpent's head, lying coiled in a sunlit clearing where ferns brush its scaled body and stones glint.
+- id: staff-of-the-woodlands
+  flavor: >-
+    Smooth birch wood with a bark-wrapped grip, this staff smells of moss after rain and hums like a hive when touched. Forest keepers say the branches on the crown bend toward the bearer as if listening. The staff can coax trees, beasts and roots into quiet cooperation.
+  imagePrompt: >-
+    A smooth birch staff wrapped in living bark with small green leaves sprouting from its crown, standing in a dappled forest glade with ferns and moss.
+- id: staff-of-thunder-and-lightning
+  flavor: >-
+    Two storms share this quarterstaff, one bright and one loud, and the wood trembles before either breaks. A bolt can ride along a blow, and a crack of thunder can roll out to shake anyone standing too close. Coastal stormcallers keep it sealed in glass, since it only quiets for a while after each use.
+  imagePrompt: >-
+    A pale ash quarterstaff with a forked crackle of blue lightning running down its length and a brass band engraved with cloud shapes near the grip.
+- id: staff-of-withering
+  flavor: >-
+    Grey and cracked like a dead branch, this staff seems to drink the color out of the leaves near it. A blow from it can drain warmth and vigor from the target, leaving limbs slow and heavy for some time afterward. Hill-village healers refuse to touch it, and most finders leave it where it lies.
+  imagePrompt: >-
+    A grey, cracked staff of dead wood with withered leaves curling from its shaft, leaning in a pale, frost-touched field under a flat overcast sky.
+- id: stone-of-controlling-earth-elementals
+  flavor: >-
+    A smooth grey-brown stone, warm in the palm, as if quarried from a deep bed. When pressed to the earth, it calls up a towering figure of rock and soil that moves at its holder's word. The creature sinks back into the dirt once its work is done, and the stone stays quiet until morning.
+  imagePrompt: >-
+    A smooth grey-brown stone the size of a fist, set on a flat slab of rock beside a pile of dark soil in a quarry at dusk.
+- id: stone-of-good-luck-(luckstone)
+  flavor: >-
+    A polished agate the size of a hen's egg, banded in cream and rust like a dusky evening sky. Gamblers and surveyors both carry one, and those who keep it close say the world tilts a little kindly toward them.
+  imagePrompt: >-
+    A polished agate the size of an egg, banded in cream and rust, resting on a dark wooden table beside a worn brass key.
+- id: sun-blade
+  flavor: >-
+    An unremarkable hilt of plain brass that becomes a blade of light at its holder's call. The light is bright and clean, but the restless dead find its touch searing. Those who carry it say it hums softly when the dawn breaks over a battlefield.
+  imagePrompt: >-
+    A plain brass sword hilt with a crossguard of worn gold, glowing from within with a bright white blade of light rising from its grip in a dim hall.
+- id: sword-of-life-stealing
+  flavor: >-
+    A keen dark-steel blade with a red thread of light along the fuller, as though it drinks as it cuts. On a perfect stroke, it tears life from a living foe and wraps the wielder in a fleeting warmth. Smiths of the river-folk say the blade is never sated, and they will not sharpen it in company.
+  imagePrompt: >-
+    A dark steel longsword with a thin red glow running through its center, resting on black velvet beneath a single candle.
+- id: sword-of-sharpness
+  flavor: >-
+    This bright, hungry blade seems to know the exact place where stone gives way and where armor parts. Against objects its edge never fails to bite, and a perfect stroke leaves a foe weary and slow to recover.
+  imagePrompt: >-
+    A long, polished blade with a razor-thin edge catching cold moonlight, its dark steel hilt wrapped in worn grey leather on a wooden rack.
+- id: sword-of-wounding
+  flavor: >-
+    A grim sword whose wounds refuse to close cleanly, the edge dark with a bruised violet sheen. Those struck by it feel a deep chill that settles inward and stays, leaving them unable to mend for a while. The chill fades only slowly, and the victim can shake it free with each stubborn effort.
+  imagePrompt: >-
+    A dark sword with a jagged, bruise-colored edge and a grey leather grip, lying across a stone table with a faint violet mist curling from the blade.
+- id: talisman-of-pure-good
+  flavor: >-
+    A disc of pale gold, polished by a thousand careful hands, bears a plain sun in relief. Creatures of rot and sulphur that touch it feel their hides scorch in clean white light. Its keepers say it answers only to a steady heart, and it flares brighter in the hands of anyone who means well.
+  imagePrompt: >-
+    A disc of pale gold with a raised sun on its face, hung on a braided cord in a dim stone vault lit by soft warm light.
+- id: talisman-of-the-sphere
+  flavor: >-
+    A slim talisman of black iron inlaid with silver script in an alphabet nobody reads anymore. Those who wear it steer a small hungry void with uncanny steadiness, as if it were a pet on a silken leash. Scholars swear the void leans toward its owner's thoughts, though no one has yet asked it nicely.
+  imagePrompt: >-
+    A slim black iron talisman inlaid with silver script, held on a leather cord above a dark velvet cloth where a tiny swirling void hangs in the air.
+- id: talisman-of-ultimate-evil
+  flavor: >-
+    A cruel medallion of cold bronze with a face of drifting smoke, it stands for spite in its purest form. Living hands that grip it for too long feel their warmth drain away. Its wearers claim it grows heavier the longer they hold it, which may be the most honest thing about it.
+  imagePrompt: >-
+    A cold bronze medallion engraved with a shadowed face of drifting smoke, hanging from a black cord over a bed of ash and charred stones.
+- id: tome-of-clear-thought
+  flavor: >-
+    Its pages hold diagrams of puzzles, memory games and tidy columns of logic, inked in steady cool blue. Anyone who studies it closely for a long stretch finds their thinking sharpened, their mind suddenly orderly as a library. Once the lesson is absorbed the book goes quiet and dull, and its ink lies dormant for generations.
+  imagePrompt: >-
+    A thick leather-bound book with blue ink diagrams on its open pages, resting on a wooden desk beside a brass compass and a stack of neat papers.
+- id: tome-of-leadership-and-influence
+  flavor: >-
+    Bound in cream leather with gilt corners, this volume reads like a long letter from a sharp-tongued statesman. Its passages on speech, poise and handshakes make a reader's voice carry further and a greeting land warmly. Court clerks in the old cities keep copies locked away, lest every petty lord learn the trick.
+  imagePrompt: >-
+    A cream leather book with gilt corners and a deep green ribbon bookmark, open on a polished wooden lectern in a candlelit hall of tall windows.
+- id: tome-of-understanding
+  flavor: >-
+    A slim volume of dove-grey cloth, its margins crowded with sketches of hands, eyes and quiet faces. Readers who work through its exercises begin to notice the tremor in a voice and the lie behind a grin. The old hermits who wrote it say wisdom is only patient attention, and the book simply insists on practice.
+  imagePrompt: >-
+    A small dove-grey cloth-bound book with pencil sketches of hands and eyes in its margins, resting beside a cup of tea on a sunlit windowsill.
+- id: trident-of-fish-command
+  flavor: >-
+    A fork of silvered bronze with three tines that catch the light like fish scales, its shaft worn smooth by salt. Anyone who carries it can bend a swimming beast to their will with a single firm thought. Fishers on the grey coast whisper that it once called whole shoals to the nets.
+  imagePrompt: >-
+    A three-pronged bronze trident with silver scale-patterned tines and a weathered wooden shaft, leaning against a rope-wrapped post on a grey seaside dock.
+- id: universal-solvent
+  flavor: >-
+    A slender glass tube of milky, sharp-smelling liquid sealed with wax that never quite dries. A pour of it undoes the stubbornest glue, even the sort used to seal forbidden letters. Traders in the harbor markets swear the tube never runs dry, though they never ask who fills it.
+  imagePrompt: >-
+    A slender glass tube of milky pale liquid sealed with cracked wax, resting on a wooden workbench beside scattered scraps of torn paper and brass fittings.
+- id: vicious-weapon
+  flavor: >-
+    A plain blade or haft honed past the point of comfort, its edge always seems a little hungrier than the hand that holds it. Each strike carries a surge of spite that rides along with the blow and sinks in deeper than it should.
+  imagePrompt: >-
+    A plain steel blade with a rough-honed edge and a dark leather-wrapped hilt, resting across a whetstone on a rough wooden bench in a smithy.
+- id: vorpal-sword
+  flavor: >-
+    A bright blade of pale steel that hums faintly when swung, its balance so perfect it seems to aim itself. Duelists speak of it in lowered voices, for a single well-judged stroke can end a fight no amount of skill could win.
+  imagePrompt: >-
+    A slender sword with a pale, bright blade and a polished silver guard, its edge catching light from a tall stained window in a quiet hall.
+- id: wand-of-binding
+  flavor: >-
+    A slender wand of pale ash capped with tarnished iron, its surface etched with coils of knotted rope. A flick of the wrist can pin a beast or a person in place, leaving them stiff and staring at nothing. Jailers keep theirs on hooks by the door, since stillness can be cruel as well as kind.
+  imagePrompt: >-
+    A slender pale ash wand capped with tarnished iron and etched with coiled rope patterns, lying on a dark cloth beside a small lantern.

@@ -1,0 +1,45 @@
+- id: dragonborn
+  flavor: >-
+    Scales catch the lamplight in the hill towns, and the dragon-blooded who carry them tend to be first to speak up at a feast. Their ancestors left a hot breath in the family line, and every generation finds a different color of it. Some wear the inheritance with pride, others with a shrug and a very long pipe.
+  imagePrompt: >-
+    A broad-shouldered scaled person in a mountain village at dusk, with iridescent scales catching orange firelight and a faint shimmer of heat rising from their breath.
+- id: dwarf
+  flavor: >-
+    Stone is the only conversation a dwarf finds entirely honest, and the mountain folk will tell you so over their second cup. They keep their hearts steady through long winters and longer grudges, and a stubborn mind is counted as a family heirloom. Their hands know good rock from bad by touch alone.
+  imagePrompt: >-
+    A stocky bearded figure in a lantern-lit stone hall, one thick hand resting on a carved pillar of grey granite and dust drifting through the light.
+- id: elf
+  flavor: >-
+    Elves of the old groves keep a slower calendar than their neighbors, measuring seasons by the blossoming of a particular tree. They do without sleep, settling into a calm meditation that keeps them awake to watch the stars turn. Their elders say the sharpest wit is the one that never rushes, and their children are taught to listen before they speak.
+  imagePrompt: >-
+    A tall graceful figure standing among silver-barked trees at twilight, pale light falling through the leaves onto a cloak of deep green.
+- id: gnome
+  flavor: >-
+    Gnomes are small in stature and large in curiosity, and their workshops tend to hum with ticking clockwork. The forest folk among them trade gossip with the birds, while the rock-workers tinker with gears that never quite stop. Few of them can resist a clever question, and fewer still will admit they were wrong about a machine.
+  imagePrompt: >-
+    A small bright-eyed tinkerer at a cluttered workbench, holding a brass clockwork trinket up to a window where forest light spills across scattered gears and tools.
+- id: goliath
+  flavor: >-
+    Goliaths carry the memory of mountain giants in their bones, and the high peaks still feel like home to them. Some seem to shrug off a blow as if a stone had merely bumped them, while others answer a challenge with a thrown boulder. Ask any of them about their ancestry and expect a long, happy story.
+  imagePrompt: >-
+    A broad muscular mountain dweller on a windswept ridge, a large weathered stone clasped in one hand as clouds roll through the valley far below.
+- id: halfling
+  flavor: >-
+    Halflings keep their hearths warm and their doors open, and most of them prefer a good meal to a grand quarrel. They have a knack for slipping past trouble and a stubborn habit of getting back up when fear knocks them down. A request is often met with a grin, a warm meal, and the favor already finished.
+  imagePrompt: >-
+    A small cheerful person in a round-doored cottage garden, sunlight on a wooden gate and a basket of fresh bread resting on a wide stone step.
+- id: human
+  flavor: >-
+    Humans are the restless ones, always building a new road or a new reputation before the last one has cooled. Their talents spread out in every direction, which makes them good at nearly anything they try once. Ask a human what they are best at and the answer is usually three things, each given with equal confidence.
+  imagePrompt: >-
+    A weathered traveler with a rolled map and a satchel of tools standing at a crossroads where a fork in a dirt road leads toward distant hills at sunrise.
+- id: orc
+  flavor: >-
+    Orcs are often judged by the loudest stories told about them, which rarely include the long patience of their elders. They are known for a fierce rush of energy in battle and an odd refusal to stay down once the fight is nearly over. Their songs favor steady hands, honest oaths, and the sort of endurance that makes a hard winter feel like a short one.
+  imagePrompt: >-
+    A determined figure with strong features and dark tousled hair standing in a torchlit stone courtyard, bracing a wooden shield as evening wind lifts a dusty banner.
+- id: tiefling
+  flavor: >-
+    Tieflings bear a faint mark of an ancestry that was seldom spoken of openly in the old villages. Their gifts run toward quick tongues, a talent for odd little magics, and a calm that unsettles people who expected shouting. Most of them would rather be judged by their deeds than by the shape of their horns.
+  imagePrompt: >-
+    A poised figure with curling horns and faint ember-colored markings on the skin, standing in a candlelit library lined with old leather books and tall shelves.

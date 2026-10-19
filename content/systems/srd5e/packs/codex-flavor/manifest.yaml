@@ -1,0 +1,16 @@
+id: codex-flavor
+name: TTRPG.Codex original flavor text
+version: 1.0.0
+systemId: srd5e
+minAppVersion: 1.0.0
+priority: 1
+kind: world
+dependencies:
+- srd-5.2.1
+description: 'Original flavor text and image prompts for SRD 5.2.1 entries: short lore and visual descriptions for classes, subclasses, species, backgrounds, feats, conditions, spells, creatures and magic items. Kept in a separate overlay so the SRD pack stays regenerable.'
+authors:
+- TTRPG.Codex contributors
+license:
+  name: MIT
+  url: https://opensource.org/licenses/MIT
+  attribution: All flavor text and image prompts in this pack are original work by TTRPG.Codex contributors, released under the MIT License (see the repository LICENSE file). They do not quote or paraphrase the SRD rules text.

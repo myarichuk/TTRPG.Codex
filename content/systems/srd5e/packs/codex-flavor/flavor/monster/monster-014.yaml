@@ -1,0 +1,80 @@
+- id: wolf
+  flavor: >-
+    The grey hunters of the high pine country move in families that share one ledger of grudges and one appetite. Their howling carries across frozen valleys long before a traveller sees the shapes between the trunks. Herders in the old valleys say the pack always knows which lamb is weakest, and they are rarely wrong about the pattern.
+  imagePrompt: >-
+    A lean grey wolf with a scarred muzzle stands on a snowy ridge of pine trees, head low, breath misting in the cold dusk air.
+- id: worg
+  flavor: >-
+    Worgs are wolves that have been taught to listen, which is worse than a wolf that merely hunts. Goblin-folk ride them into the wet hollows of the woods, and the beasts seem to enjoy the company of their masters' cruelty. Their eyes shine with a knowing, sour light when a traveller strays too near the fire.
+  imagePrompt: >-
+    A hulking shaggy wolf-beast with glowing yellow eyes and a wide dark muzzle crouches beneath gnarled roots in a moonlit forest clearing.
+- id: wraith
+  flavor: >-
+    A wraith is what remains when a grudge outlasts the body it was attached to. It drifts through walls and sleeping rooms as though they were heavy curtains, leaving a cold draught and a faint taste of iron. The old burial customs of certain hill towns exist mostly to keep these spirits quiet, and they do not always succeed.
+  imagePrompt: >-
+    A tall gaunt shape of pale grey mist with hollow dark eyes hovers above a cracked tomb, its trailing edges dissolving into shadow.
+- id: wyvern
+  flavor: >-
+    The wyvern is a dragon in the way a fox is a wolf: smaller in ambition, sharper in appetite. It hunts from high crags, dropping on goats and travellers with a snap of leathery wings and a tail that ends in a barbed sting. Its venom leaves a victim sluggish for a spell, which is usually all the time the wyvern needs.
+  imagePrompt: >-
+    A sleek scaled wyvern with leathery wings spread wide and a barbed tail raised high, perched on a jagged red cliff under a stormy sky.
+- id: xorn
+  flavor: >-
+    A xorn moves through solid stone the way a swimmer moves through a warm lake, leaving the rock behind it unbroken. Miners who hear a soft tapping in the walls soon learn to set their gold somewhere else. It has a mouth full of teeth and no interest in explaining itself.
+  imagePrompt: >-
+    A squat grey creature with a broad triangular body and a wide tooth-filled mouth emerges from a cave wall of cracked stone.
+- id: young-black-dragon
+  flavor: >-
+    The young black dragon has taken up residence in a marsh where the water tastes of rust and the reeds grow pale. Its scales gleam like wet slate, and it has learned that a patient swamp is a larder that never runs out. Travellers who wade in unwarned sometimes return as stories told by the frogs.
+  imagePrompt: >-
+    A young black dragon with glossy dark scales and thin wings perches on a mossy stump in a murky swamp, water dripping from its jaws.
+- id: young-blue-dragon
+  flavor: >-
+    Desert caravans learn to recognize the young blue dragon by the crackle in the air before a storm. It keeps its ledgers in the sand, counts every tribute with terrible precision, and expects each debt to be paid on schedule. Those who bargain with it find the terms are written fairly, and that the fine print is always its own.
+  imagePrompt: >-
+    A large blue-scaled dragon with crackling sparks along its crest coils atop a dune of pale sand beneath a bruise-colored sky.
+- id: young-brass-dragon
+  flavor: >-
+    Brass dragons are the chattiest of the young wyrms, and they will talk a traveller's ears off before deciding whether to eat the rest. They collect songs, jokes and gossip the way others collect coins. Their sleep-laden breath is considered a rude way to end a conversation, though the young ones insist it is only a courtesy.
+  imagePrompt: >-
+    A young brass-colored dragon with a burnished, hammered look sits on a sunlit desert rock, head tilted in mid-sentence with its wings half-raised.
+- id: young-bronze-dragon
+  flavor: >-
+    Sailors on the grey coast say a bronze wyrm will guard a harbor for as long as anyone remembers, asking no coin in return. It swims as easily as it flies, and it treats a sinking ship as a point of honor rather than a salvage prize. When it does correct a stubborn captain, a blast of its breath sends the captain sprawling onto the deck, and the lesson is rarely forgotten.
+  imagePrompt: >-
+    A bronze-plated dragon with a long sleek neck rises from green sea swells, sunlight glinting off its flared wings above a rocky grey shoreline.
+- id: young-copper-dragon
+  flavor: >-
+    Copper dragons treat every standoff as a puzzle to be solved with a joke and a hidden trap. They climb sheer rock faces with the delight of a child on a ladder and leave riddles scratched on the stones they pass. Caravan masters tell of a young one that once swapped every bag of salt for pebbles, then wrote an apology in verse.
+  imagePrompt: >-
+    A copper-hued dragon with a mischievous crooked grin clings to a steep canyon wall, one claw hooked into a crack, verdigris streaks on its belly.
+- id: young-gold-dragon
+  flavor: >-
+    Scholars of the old courts describe the young gold dragon as a patient diplomat with a furnace for a chest. It prefers to win arguments in the great hall, though it will happily walk into a burning field to rescue a farmer's cattle. Its word is considered binding, and its gilded scales are said to shine most brightly when it is telling the truth.
+  imagePrompt: >-
+    A radiant gold dragon with broad warm-toned wings lands on a stone terrace at dawn, embers drifting from its open jaws toward a golden hall.
+- id: young-green-dragon
+  flavor: >-
+    Forest hermits whisper that the young green dragon once wore the face of a neighbor before that neighbor quietly disappeared. It hoards secrets more eagerly than coins and trades them for favors that bind the trader for a lifetime. Its poison is slow and its manners are impeccable, which makes it the more dangerous dinner guest.
+  imagePrompt: >-
+    A slim green dragon with elegant horns and a smug half-smile lounges on a moss-covered branch in a dim forest, its wings folded like a cloak.
+- id: young-red-dragon
+  flavor: >-
+    Hoards of gold tend to attract young red dragons the way lamps attract moths, and the dragon is rarely pleased to share the light. It is vain about its horns, quick to take offense, and fond of announcing its own arrival with a column of heat. Mountain villages learn early to bolt their doors and to keep their best silver out of sight.
+  imagePrompt: >-
+    A crimson dragon with ember-lit scales and sharp horns crouches on a jagged mountain ledge, smoke curling from its nostrils above a glittering hoard of coins.
+- id: young-silver-dragon
+  flavor: >-
+    Archivists say the young silver dragon keeps a more accurate record of the valley than the valley does. It reads old letters aloud to passing shepherds and corrects their dates with a patient, faintly weary sigh. When it grows angry, the air about its wings turns to frost, and even the most stubborn historian learns to agree quickly.
+  imagePrompt: >-
+    A pale silver dragon with pearly scales and a serene expression sits in a snow-dusted library hall, frost tracing the arches overhead.
+- id: young-white-dragon
+  flavor: >-
+    Northern trappers judge a young white dragon less by its wit than by the frost it leaves on everything it touches. It is not especially clever and has no patience for riddles, which is why it prefers ambush to conversation. Its lair is usually a frozen ravine where the ice glows faintly blue, and the bones scattered across its floor are rarely picked clean.
+  imagePrompt: >-
+    A white-scaled dragon with frost-rimed wings and icicle-like horns crouches on a glacier ledge under a pale grey winter sky.
+- id: zombie
+  flavor: >-
+    Zombies are the clumsy, lingering residue of a death that was not quite finished. They shamble toward the living with an unhurried, almost polite persistence, and they can absorb a surprising number of blows before they finally stop. Villagers keep their gates barred and their dogs indoors, because a zombie's only real talent is refusing to lie down.
+  imagePrompt: >-
+    A shambling grey-skinned corpse with torn clothes and blank clouded eyes lurches down a muddy lane between leaning wooden cottages at dusk.

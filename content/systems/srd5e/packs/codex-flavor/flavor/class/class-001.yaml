@@ -1,0 +1,60 @@
+- id: barbarian
+  flavor: >-
+    Barbarians are the ones who answer the drums with their own blood still hot from the last fight. Their rage is a tide that rises from somewhere below thought, and the river-folk swear the ground itself goes quiet when it breaks loose. Most of them learn to wear that fire without letting it wear them out, which is harder than it sounds.
+  imagePrompt: >-
+    A broad-shouldered warrior with a great axe raised, tribal paint on bare arms, standing on a windswept ridge as storm clouds gather behind.
+- id: bard
+  flavor: >-
+    Bards collect songs the way magpies collect bright things, and they will trade a secret for a good verse and a warm seat by the fire. Their words carry a kind of borrowed courage, passed hand to hand through a crowd until the frightened ones stand a little taller. Where a bard learned the craft brings out three different towns, a tavern brawl, and at least one lie.
+  imagePrompt: >-
+    A lute player in a candlelit inn, mid-verse with eyes half closed, while listeners lean in from wooden tables around them.
+- id: cleric
+  flavor: >-
+    Clerics are the people a village calls when a child is feverish or a grave needs a blessing said properly. They hold to a faith that asks for patience and a steady hand, and they will argue about doctrine over supper and then sit up all night with the sick. A certain kind of priest says their power is a loan from something larger than themselves, and the lenders are rarely in a hurry to collect.
+  imagePrompt: >-
+    A robed healer kneeling beside a sickbed in a stone chapel, one hand raised over a sleeping child while morning light falls through a narrow window.
+- id: druid
+  flavor: >-
+    Druids keep the old bargains with hedgerow and hollow, and they count the seasons by the way the birds change their songs. Many of them have a fondness for animals that borders on rudeness, and a few can slip into a fox's skin or a hawk's feathers for an afternoon. The river-folk leave them bread at the edge of the wood, and the wood, in its own way, returns the favor.
+  imagePrompt: >-
+    A gray-bearded figure in moss-green robes standing in a forest clearing, a hawk perched on one outstretched arm and wildflowers growing around their boots.
+- id: fighter
+  flavor: >-
+    Fighters are the people who decided early that a hard life was better spent useful, and they have trained their bodies until the training became instinct. They know every kind of blade and armor and can usually tell you which one will fail first. Some go to war for coin, some for a cause, and a few simply cannot sit still while someone else is swinging.
+  imagePrompt: >-
+    A scarred soldier in banded mail stands guard at a stone bridge, sword point resting on the ground and a battered shield leaning against one leg.
+- id: monk
+  flavor: >-
+    Monks train the body until it becomes a tool and the tool until it becomes a kind of quiet. Their discipline is built on breath and balance, and they can turn a bare fist or a plain staff into something a sword-master would respect. Their monasteries sit in high places where the wind is loud and the bells are rare, and visitors often leave with more questions than they arrived with.
+  imagePrompt: >-
+    A barefoot practitioner in plain linen performs a balanced kick on a mountain terrace, mist curling around stone steps and a distant temple roof.
+- id: paladin
+  flavor: >-
+    Paladins swear an oath before they ever pick up a shield, and the oath is the part that keeps them up at night. They carry a healing touch that runs out faster than anyone would like, so they learn to spend it carefully. Any city watchman will tell the story of the knight who held the gate, and every version flatters the teller a little more than the knight.
+  imagePrompt: >-
+    An armored knight with a glowing sword held upright before a city gate at dusk, a faint halo of pale light around the blade and shoulders.
+- id: ranger
+  flavor: >-
+    Rangers walk the edges of settled land, where the maps stop being useful and the hunters start paying attention. They read tracks like other people read letters, and they have a habit of knowing where you are before you have decided to come in. Most of them would rather be left alone, but a village in trouble will find them quicker than any messenger.
+  imagePrompt: >-
+    A lean woman with a longbow across her back crouches on a pine-needle trail in deep forest, studying fresh footprints in soft mud.
+- id: rogue
+  flavor: >-
+    Rogues make a living from the gap between what people expect and what they actually see. They pick locks, pockets and arguments with equal calm, and they keep a private ledger of favors owed in several cities at once. The guild halls pretend not to know them, which suits everyone just fine, since a rogue who is never quite seen is also a rogue who is never quite caught.
+  imagePrompt: >-
+    A slim figure in dark leather slips through a crowded night market, a half-open purse dangling from one hand and lantern light glinting off a silver ring.
+- id: sorcerer
+  flavor: >-
+    Sorcerers were born with a spark that no school taught them to light, and the spark has a way of showing up in the middle of an argument. Their magic runs hot and close to the skin, so they often carry a faint smell of ozone or cinnamon, depending on who is telling the story. Old families sometimes try to claim a sorcerer as their own, and sorcerers tend to answer that claim with a spectacular accident.
+  imagePrompt: >-
+    A young woman with sparks of blue light drifting from her open palms, her hair lifting in a warm wind inside a ruined stone archway at night.
+- id: warlock
+  flavor: >-
+    Warlocks made a bargain with something that lives in the cracks between answers, and the terms were never as generous as the first conversation suggested. The power they receive arrives in small, sharp pieces, each one a secret that feels like a gift until it starts to itch. Their friends worry, their patrons smile, and the ledger in the warlock's head grows a little longer every season.
+  imagePrompt: >-
+    A scholar in a dark coat studies a glowing contract etched with silver script, a shadowy figure's hand resting on the table beside an open book.
+- id: wizard
+  flavor: >-
+    Wizards are the students who never stopped taking notes, and their spellbooks are as personal as diaries and twice as dangerous. Each one is copied, annotated and argued over in the margins until it becomes a map of its owner's mind. The old colleges still teach the same careful habits, where a theory gets tested before it gets trusted and no spell is believed until it has been written down twice.
+  imagePrompt: >-
+    An elderly scholar with ink-stained fingers bends over a heavy spellbook in a cluttered tower study, candles burning low beside stacks of loose parchment.

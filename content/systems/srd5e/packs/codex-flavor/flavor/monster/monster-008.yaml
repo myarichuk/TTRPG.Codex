@@ -1,0 +1,125 @@
+- id: ice-mephit
+  flavor: >-
+    Ice mephits drift through cold mountain passes like loose bits of frost, chattering nonsense at anyone who wanders too close. They puff fog over the path to hide their giggles, then exhale a freezing gust that leaves travelers stiff and sulking. When one finally shatters, it bursts into a sharp cold cloud, so the wise keep a sensible distance from its ice-rimed corpse.
+  imagePrompt: >-
+    A small blue-white creature with leathery wings hovers above a snowy mountain path, a faint fog trailing from its clawed hands.
+- id: imp
+  flavor: >-
+    Imps are tiny, spiteful tricksters who enjoy watching clever folk make fools of themselves. They take the shape of a rat, a raven or a spider when it suits them, and they never tire of sly whispers and poisoned stings. Hired hands rarely notice the creature until its invisible presence has already stolen the coins from their pockets.
+  imagePrompt: >-
+    A tiny red demon with batwings and a barbed tail perches on a sooty ledge, grinning with pointed teeth and clutching a stolen purse.
+- id: incubus
+  flavor: >-
+    An incubus wears a handsome face and a velvet voice, and few travelers guess that the kind stranger at the inn is a patient schemer. It spends evenings planting doubt and sleepless nightmares in dreamers, and the curses it leaves behind linger after the last glass is empty. Those who wake exhausted and sour often blame their bad luck, never the handsome guest who sat at their bedside.
+  imagePrompt: >-
+    A pale, elegant figure with dark feathered wings stands in a candlelit hall, one hand raised as if offering a goblet of wine.
+- id: invisible-stalker
+  flavor: >-
+    An invisible stalker is a gust of wind given a stubborn purpose, a patient hunter that floats unseen until its quarry feels a sudden pull. Storm-bound sailors describe a roar that comes from nowhere, then a whirl of dust and spray that clutches at their legs and drags them off balance. Scholars of the old colleges say it obeys the spell that called it, and it rarely forgets a grudge once the wind has turned.
+  imagePrompt: >-
+    A swirling column of dust and wind tapers into a shadowy humanoid shape, its outline shimmering against a stormy grey sky.
+- id: iron-golem
+  flavor: >-
+    An iron golem is a towering sentinel of riveted metal, built to guard a single doorway and to ignore every argument that asks it to step aside. Its fists ring like struck bells, and when it exhales its sickly green breath hangs over the courtyard long after the fighting is done. Those who build such things have vanished, leaving only the metal and a stubborn loyalty to the door it was made to keep.
+  imagePrompt: >-
+    A massive humanoid figure of dark riveted iron stands in a stone archway, its blank faceplate and clenched fists gleaming in torchlight.
+- id: jackal
+  flavor: >-
+    Jackals slink across scrubland in packs, quick and scruffy, always watching for a stray scrap of meat or a lamb that has wandered from the flock. They are small and bold, trotting in loose circles to tire out their prey, and they are rarely brave alone. Herders in the hill country have a dull saying: one jackal is a nuisance, two make a funeral.
+  imagePrompt: >-
+    A lean tan jackal with oversized ears crouches in dry grass, eyes fixed on a distant flock under a pale evening sky.
+- id: killer-whale
+  flavor: >-
+    Killer whales are sleek black-and-white hunters that roam the cold seas in tight family groups, moving with a precision that looks almost rehearsed. Sailors on the northern routes speak of a dorsal fin cutting through the swell, followed moments later by the crack of a huge tail. Fishermen who hear their clicking calls learn to lower their nets quietly and row for shore.
+  imagePrompt: >-
+    A sleek black and white whale with a tall dorsal fin breaks through dark rolling waves beneath a grey and stormy sky.
+- id: knight
+  flavor: >-
+    Knights are professional soldiers who swear to a lord's banner, and the good ones are less interested in glory than in a clean contract. Their armour creaks as they march, and a dented shield tells the story of every duel they have won. A wise lord keeps one close, though the knight will happily take a second offer if the first employer proves dull.
+  imagePrompt: >-
+    A tall armoured knight in polished plate stands beside a banner-draped stone wall, a heavy sword resting on one shoulder under a clear sky.
+- id: kobold-warrior
+  flavor: >-
+    Kobolds are small scaly folk who consider themselves the rightful heirs of old dragons, and they guard their tunnels with clever traps and loud bluster. A warrior of the tribe carries a handful of throwing daggers and fights in a crowd, because one kobold alone is easily swatted. They dislike bright sunshine, which makes them squint and grumble, and they will swear loudly that it is all a plot.
+  imagePrompt: >-
+    A small scaly creature with a short snout and leathery tail clutches three throwing daggers in a cramped cave lit by a single torch.
+- id: kraken
+  flavor: >-
+    A kraken is a vast sea horror whose mountainous body surfaces only rarely, and the sailors who see one seldom live to describe it well. Its arms can drag a ship under the swell, and the black ink it sprays leaves crews blind and stumbling across the deck. Scholars have studied its tentacles, though they never agree on whether the beast is hungry, angry or merely curious.
+  imagePrompt: >-
+    A colossal many-armed sea monster with a dark mottled body rises from churning green waves beside a shattered wooden ship at dusk.
+- id: lamia
+  flavor: >-
+    A lamia has the upper body of a fine-featured woman and the lower body of a serpent, and she uses her warm voice to coax secrets from the unwary. Her claws are sharp, and her touch leaves a sour, lingering dread that clings to a victim long after the feast is over. Hedge-wizards have argued for centuries over whether such a creature can be redeemed, and the lamia finds the debate very amusing.
+  imagePrompt: >-
+    A large creature with a graceful woman's upper body and a long scaled serpent tail rests on a cushioned throne in a dim, candlelit hall.
+- id: lemure
+  flavor: >-
+    Lemures are the mindless, shambling husks of damned souls, slow and sullen, who wander grim fields and mutter at puddles of filth. They cannot speak, yet they understand every order barked at them, which is why small devils and jailers find them so useful. Each one carries its own slow regret, and the wry observer will note that a lemure rarely sulks for long.
+  imagePrompt: >-
+    A hunched grey figure with a blank pallid face shuffles across a muddy field of stone-grey sludge beneath a bruised purple sky.
+- id: lich
+  flavor: >-
+    A lich is a wizard who traded mortality for a grip on the world, and few grips are firmer than the one it keeps. Its voice is dry as old parchment, and it speaks of ancient rivals with the amused contempt of someone who has outlived them all. Its lair is stacked with spare bodies and jars that hold the soul fragments it might need if its current body is ever smashed.
+  imagePrompt: >-
+    A gaunt skeletal figure in a tattered violet robe holds a glowing staff in a vaulted chamber lined with dusty shelves of glass jars.
+- id: lion
+  flavor: >-
+    Lions are proud cats of the open plains who hunt in groups, lying low in the tall grass until the herd grows careless. A pride's leader roars to send prey fleeing, and the rest of the family closes in with patient, practised paws. Hunters of the dry country admire the animal's courage, though they also keep a careful eye on it when the wind changes.
+  imagePrompt: >-
+    A powerful golden-maned lion with muscular shoulders stands on a rocky outcrop, mouth open in a roar as dust swirls across sun-bleached grassland.
+- id: lizard
+  flavor: >-
+    A lizard is a small, patient creature that basks on warm stones and scurries up walls with ease, cold-blooded and mostly unimpressed by the world. Children catch them in cupped hands, and old farmers claim a lizard on the wall means the weather will turn fair. It clings to ceilings without effort, and it will bite if pressed, though the bite is no more painful than a pinch.
+  imagePrompt: >-
+    A small green lizard with a spotted back clings to a sun-warmed stone wall, its tiny claws splayed against rough mortar.
+- id: mage
+  flavor: >-
+    Mages are scholars who have gone further than most in the study of arcane forces, and they are seldom shy about proving it. A mage may wear a plain coat and carry a single wand, but a few well-chosen words can turn a quiet tavern into a field of fire. Market-town folk respect them, mostly because an irritated mage remembers every slight and repays it with interest.
+  imagePrompt: >-
+    A robed spellcaster with a silver-trimmed cloak raises a glowing wand, sparks of blue light streaming from its tip in a dim library.
+- id: magma-mephit
+  flavor: >-
+    Magma mephits are small, smouldering imps of volcanic rock, forever scrambling about the cracks of a hot mountain. They pop out of lava pools to spit fiery breath at passing miners, and they giggle wildly when the flames catch someone's boots. Their own bodies crackle when they are struck, and the wisest cave-folk keep a bucket of cold water ready for the inevitable blast.
+  imagePrompt: >-
+    A small hunched creature of cracked black stone glows with orange seams of molten light, perched on the rim of a bubbling lava pool.
+- id: magmin
+  flavor: >-
+    Magmin are cheerful little flame-bodies that dance in the embers of forges and volcanic vents, delighted by any mess they can set alight. Their touch sets clothes and wooden beams smouldering, so a magmin is best met at arm's length with a pail of water in hand. They glow brightest when pleased, and a grumpy smith once swore that a happy magmin is the only kind worth keeping near the bellows.
+  imagePrompt: >-
+    A small humanoid figure made of glowing molten rock and fire, with a crackling orange body, stands among smouldering forge embers in a dark workshop.
+- id: mammoth
+  flavor: >-
+    Mammoths are shaggy giants of the frozen north, tramping across the snow with tusks as long as a sailing ship's mast. Herds move slowly and calmly, but a charging bull is a flattening force, and it will drive through a fence without a second thought. Hunters who respect their size usually leave the herd alone, since the old ones remember every trail and every treeline.
+  imagePrompt: >-
+    A massive shaggy mammoth with curved ivory tusks and a thick brown coat stands on a snowy plain under a pale winter sky.
+- id: manticore
+  flavor: >-
+    A manticore has the face of a grim man, the body of a lion and a tail bristling with barbed spikes that it can hurl at prey. Its voice is a cruel purr, and it likes to toy with travelers before it strikes from above with wings that cast a long shadow. Survivors often swear it was reasoning as it fought, which is a discomfort most warriors would prefer to avoid.
+  imagePrompt: >-
+    A winged creature with a lion's body, a human face, and a barbed tail curled upright, crouched on a rocky crag at dusk.
+- id: marilith
+  flavor: >-
+    A marilith is a towering demon with six arms, each one gripping a different blade, and it moves with a dancer's grace that hides a fierce, calculating mind. Its lower half coils like a serpent, able to wrap a foe in a crushing hold while the blades flash. Those who face one in battle rarely forget the sight of a whirl of flashing edges, and a sensible captain prays the thing is bored.
+  imagePrompt: >-
+    A tall crimson demon with six muscular arms, each gripping a curved blade, and a serpentine lower body coiled beneath her in a ruined hall.
+- id: mastiff
+  flavor: >-
+    Mastiffs are big, loyal dogs with heavy jowls and a deep bark that can startle a burglar before any blade is drawn. Farm families value them as guardians, and a good one will bowl over a trespasser and hold the intruder there until help arrives. Its loyalty is steady, though it sometimes sulks in the kitchen if it feels the stew has been forgotten.
+  imagePrompt: >-
+    A broad-chested tan mastiff with a dark muzzle and drooping jowls stands alert at a wooden gate, head lowered and ears pricked.
+- id: medusa
+  flavor: >-
+    A medusa has a crown of living snakes where hair should be and a gaze that can turn a bold challenger to stone. She keeps a marble courtyard full of statues, and she is rather proud of her collection, though she dislikes visitors who stare too long. Clever travelers bring a polished shield and never meet her eyes directly, which saves a great deal of trouble.
+  imagePrompt: >-
+    A pale serpent-crowned woman with coiled snakes for hair sits on a stone bench in a garden of statues, a polished bronze shield at her side.
+- id: merfolk-skirmisher
+  flavor: >-
+    Merfolk skirmishers are light, swift fighters from the reefs, armed with a barbed spear that seems to fly back into the hand after each throw. They can breathe air and water alike, so they slip ashore to raid fishing villages and vanish back under the waves before anyone can gather a crowd. Harbour guards grumble that one skirmisher is an annoyance, and a dozen are a siege that no sea wall can hold.
+  imagePrompt: >-
+    A lithe blue-green creature with a fish-like tail and gills along its neck grips a barbed spear on a wet rock as foamy waves crash behind it.
+- id: merrow
+  flavor: >-
+    Merrows are hulking sea creatures with a fish-like lower body, jagged teeth and a temper that matches the storm. They lurk in the cold shallows of coastal caves, hauling down unlucky boats with hooked harpoons. Fishing villages leave salted fish on the rocks as a peace offering, which the merrow accepts with a grumble and a hungry grin.
+  imagePrompt: >-
+    A hulking grey-green sea creature with a fish-like lower body and jagged teeth crouches on a seaweed-draped rock beside a dark, churning cove.

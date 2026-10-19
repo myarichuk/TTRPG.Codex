@@ -1,0 +1,104 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* How maximum hit points are worked out: the mode (average, rolled, typed in) and the per-level
+   breakdown. The numbers come from the rule engine; this only edits the mode and the rolls. *@
+
+<div class="mt-3 pt-3 border-top" data-testid="hp-rules">
+    <label for="@(id)-mode" class="form-label small mb-1">Maximum hit points</label>
+    <select id="@(id)-mode" class="form-select form-select-sm" disabled="@(!CanEdit)" value="@Mode" @onchange="e => SetModeAsync(e.Value?.ToString())" data-testid="hp-mode">
+        @foreach (var mode in Modes)
+        {
+            <option value="@mode" selected="@(Mode == mode)">@ModeLabel(mode)</option>
+        }
+    </select>
+
+    @if (Summary is { Active: true } summary)
+    {
+        <p class="small mt-2 mb-1" data-testid="hp-max-note">
+            <strong>@summary.Max</strong> from @summary.Levels.Count level@(summary.Levels.Count == 1 ? "" : "s")
+            (hit die + Constitution @Signed(summary.Modifier) each, first level takes the full die).
+        </p>
+        <details>
+            <summary class="small">How this is worked out</summary>
+            <table class="table table-sm small mt-2 mb-0">
+                <caption class="visually-hidden">Hit points gained at each level</caption>
+                <thead><tr><th scope="col">Level</th><th scope="col">Class</th><th scope="col">Die</th><th scope="col">Roll or average</th><th scope="col">Con</th><th scope="col">Gain</th></tr></thead>
+                <tbody>
+                    @foreach (var level in summary.Levels)
+                    {
+                        <tr>
+                            <td>@level.Level</td>
+                            <td>@level.ClassName</td>
+                            <td>d@(level.Die)</td>
+                            <td>
+                                @if (Mode == "rolled" && level.Level > 1 && CanEdit)
+                                {
+                                    <input type="number" class="form-control form-control-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.Die / 2 + 1)"
+                                           aria-label="Hit die roll for level @level.Level" @onchange="e => SetRollAsync(level.Level, e.Value?.ToString())" data-testid="hp-roll-@level.Level" />
+                                }
+                                else
+                                {
+                                    @level.Base
+                                }
+                            </td>
+                            <td>@Signed(level.Modifier)</td>
+                            <td>@level.Gain</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </details>
+    }
+    else if (Mode != "manual")
+    {
+        <p class="small-muted mt-2 mb-0">Choose a class and the maximum is worked out from its hit die.</p>
+    }
+    else
+    {
+        <p class="small-muted mt-2 mb-0">Typed in by hand under Sheet.</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public HitPointRules Rules { get; set; } = null!;
+    [Parameter] public HitPointSummary? Summary { get; set; }
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
+    [Parameter] public bool CanEdit { get; set; }
+
+    /// <summary>Raised after the sheet changed, so the page re-runs the rules.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private readonly string id = "hp-" + Guid.NewGuid().ToString("N")[..6];
+
+    private string Mode => Summary?.Mode ?? (YamlValues.GetString(Sheet, Rules.ModeKey) ?? "manual").ToLowerInvariant();
+    private IEnumerable<string> Modes => Rules.Modes.Contains("manual") ? Rules.Modes : Rules.Modes.Append("manual");
+
+    private static string ModeLabel(string mode) => mode switch
+    {
+        "average" => "Worked out: average per level",
+        "rolled" => "Worked out: my rolls",
+        _ => "Typed in by hand"
+    };
+
+    private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString();
+
+    private async Task SetModeAsync(string? mode)
+    {
+        if (string.IsNullOrEmpty(mode)) return;
+        Sheet[Rules.ModeKey] = mode;
+        await Changed.InvokeAsync();
+    }
+
+    private async Task SetRollAsync(int level, string? raw)
+    {
+        var rolls = SheetRuleEngine.RawList(Sheet, Rules.RollsKey);
+        while (rolls.Count < level - 1) rolls.Add("0");
+        rolls[level - 2] = int.TryParse(raw, out var roll) && roll > 0 ? roll.ToString() : "0";
+        while (rolls.Count > 0 && rolls[^1] == "0") rolls.RemoveAt(rolls.Count - 1);
+        if (rolls.Count == 0) Sheet.Remove(Rules.RollsKey);
+        else Sheet[Rules.RollsKey] = rolls.Cast<object>().ToList();
+        await Changed.InvokeAsync();
+    }
+}

@@ -20,4 +20,6 @@ properties:
   cost: 5 gp
   weight: 8
   armorClass: 11 + Dex modifier
+  armorType: light
+  armorBase: 11
   stealth: true

@@ -50,7 +50,7 @@ public class SrdPackSmokeTests : IAsyncLifetime
     [InlineData("background", 4)]
     [InlineData("feat", 17)]
     [InlineData("spell", 339)]
-    [InlineData("monster", 341)]
+    [InlineData("monster", 340)] // the document lists 341; the source data's Mule is the Octopus stat block, so it is omitted
     [InlineData("condition", 15)]
     public void SrdPack_HasTheDocumentsCounts(string type, int expected)
     {
@@ -88,7 +88,7 @@ public class SrdPackSmokeTests : IAsyncLifetime
         Assert.NotNull(goblin);
         Assert.Equal(10, goblin!.Resources["HP"]);
         Assert.Equal(15L, goblin.Properties["dex"]);
-        Assert.Equal(341, _registry.GetActorsBySystem("srd5e").Count(a => a.PackId == "srd-5.2.1"));
+        Assert.Equal(340, _registry.GetActorsBySystem("srd5e").Count(a => a.PackId == "srd-5.2.1"));
     }
 
     [Fact]

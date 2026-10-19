@@ -2,7 +2,7 @@
 @using Codex.Plugin.Abstractions
 
 @* A multi-pick list of Library entries (spells, feats, knacks...) driven by a ListRule: the picked
-   entries as removable chips, a count against the rule's limit, and a search box that only offers
+   entries as removable chips, a count against the rule's limit, and a browsable, filterable list of
    what the rules allow right now. *@
 
 <div class="list-picker" role="group" aria-labelledby="@(id)-label" data-testid="list-@Rule.Key">
@@ -50,30 +50,8 @@
     @if (!ReadOnly)
     {
         var canAdd = !Limit.HasValue || Picks.Count < Limit;
-        <div class="d-flex gap-2 align-items-end flex-wrap">
-            <div class="flex-grow-1" style="min-width: 220px">
-                <label for="@(id)-search" class="visually-hidden">Search @Rule.Label to add</label>
-                <input id="@(id)-search" type="search" class="form-control form-control-sm" placeholder="@(canAdd ? $"Search {Rule.Label.ToLowerInvariant()} to add…" : "Limit reached")"
-                       disabled="@(!canAdd)" value="@query" @oninput="e => query = e.Value?.ToString() ?? string.Empty" autocomplete="off" data-testid="list-@Rule.Key-search" />
-            </div>
-        </div>
-        @if (canAdd && query.Length > 0)
-        {
-            var matches = Options.Where(o => o.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).Take(12).ToList();
-            <ul class="list-unstyled mb-0 mt-1 picker-results" data-testid="list-@Rule.Key-options">
-                @if (matches.Count == 0)
-                {
-                    <li class="small-muted">No allowed entry matches “@query”.</li>
-                }
-                @foreach (var option in matches)
-                {
-                    <li class="list-row py-1">
-                        <span>@option.Name <span class="small-muted">@Summary(option)</span></span>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => AddAsync(option.Id)" aria-label="Add @option.Name">Add</button>
-                    </li>
-                }
-            </ul>
-        }
+        <EntryBrowser Options="Options" Type="Type" Label="@Rule.Label" TestId="@($"list-{Rule.Key}")" Disabled="@(!canAdd)" DisabledText="Limit reached"
+                      EmptyText="Nothing is allowed right now. Check your class, level and the rules above." OnAdd="Added" />
     }
 </div>
 
@@ -96,25 +74,4 @@
     [Parameter] public Func<SheetPick, string?>? Note { get; set; }
 
     private readonly string id = "lp-" + Guid.NewGuid().ToString("N")[..6];
-    private string query = string.Empty;
-
-    private async Task AddAsync(string entryId)
-    {
-        query = string.Empty;
-        await Added.InvokeAsync(entryId);
-    }
-
-    private string Summary(ContentEntry entry)
-    {
-        var parts = new List<string>();
-        foreach (var key in Type?.SummaryFields ?? new List<string>())
-        {
-            if (entry.Properties.TryGetValue(key, out var value) && value != null)
-            {
-                parts.Add(value is IEnumerable<object> list ? string.Join(", ", list.Select(o => o?.ToString())) : value.ToString() ?? string.Empty);
-            }
-        }
-
-        return parts.Count == 0 ? string.Empty : "· " + string.Join(" · ", parts);
-    }
 }

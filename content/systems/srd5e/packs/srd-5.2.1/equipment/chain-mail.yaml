@@ -22,5 +22,8 @@ properties:
   cost: 75 gp
   weight: 55
   armorClass: 16
+  armorType: heavy
+  armorBase: 16
+  armorDexCap: 0
   strength: 13
   stealth: true

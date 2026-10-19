@@ -7,3 +7,5 @@ tags:
 properties:
   category: fighting-style
   minLevel: 1
+  armorClassBonus: 1
+  armorClassRequiresArmor: true

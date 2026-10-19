@@ -1,0 +1,20 @@
+- id: acolyte
+  flavor: >-
+    Most of the day belonged to the quiet work of a temple: trimming candles, copying prayers in a neat hand, and listening to the troubles of people who came in from the rain. The holy symbol on its cord was worn smooth from being turned over in anxious fingers. Questions about the old rites get careful, slightly pedantic answers, usually with a sigh.
+  imagePrompt: >-
+    A candlelit temple side room with an open prayer book, a brass holy symbol, rolled parchment and a calligrapher's inkwell on a wooden desk, rain on a narrow window.
+- id: criminal
+  flavor: >-
+    Few locks in the lower quarter have kept this one out for long. The pockets of a good coat hold more than they should, and a quiet step on a creaking stair is a habit learned the hard way. Much of the trade runs on favors owed, a sharp memory for faces, and a healthy respect for the watch's schedule.
+  imagePrompt: >-
+    A rain-slick alley at night, a figure in a dark coat crouched beside a half-open window, a coil of thieves' tools glinting in a lantern's glow.
+- id: sage
+  flavor: >-
+    Dust and ink cling to the sleeves of a sage who has read more than is good for the eyes. Questions about a forgotten kingdom or an old spell come back with three footnotes and a long pause for thought. The library ladder creaks under every visitor, and the tea has long since gone cold.
+  imagePrompt: >-
+    A cluttered scholar's study with towering shelves, an open atlas, a quarterstaff leaning by the desk and a steaming cup beside a stack of inked pages.
+- id: soldier
+  flavor: >-
+    Marching songs fade quickly once the road turns to mud, but the habits stay. Shoulders square at the sound of a horn, and the spear is never far from reach even at supper. Old comrades share a laugh over burnt rations, and a rough voice on the parade ground still carries a warning that no one ignores.
+  imagePrompt: >-
+    A weathered soldier in a patched traveling cloak stands on a muddy road at dawn, a spear resting on one shoulder and a quiver of arrows at the hip.

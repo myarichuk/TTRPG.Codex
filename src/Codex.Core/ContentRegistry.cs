@@ -14,6 +14,7 @@ public class ContentRegistry : IContentRegistry
     private readonly Dictionary<string, Dictionary<string, (ILocationDefinition Location, int Priority, string PackId)>> _locations = new();
     private readonly Dictionary<string, Dictionary<string, (ContentEntry Entry, int Priority, string PackId)>> _entries = new();
     private readonly Dictionary<string, List<string>> _entryTypesBySystem = new();
+    private readonly Dictionary<(string System, string Key), Dictionary<string, object>> _flavor = new();
     private readonly Dictionary<string, PackManifest> _packs = new();
     private readonly HashSet<string> _loadedPacks = new();
     private readonly ScriptEvaluator _scriptEvaluator;
@@ -92,6 +93,27 @@ public class ContentRegistry : IContentRegistry
             {
                 types.Add(entry.Type);
             }
+        }
+    }
+
+    public void RegisterFlavor(string systemId, string type, string id, string packId, IReadOnlyDictionary<string, object> properties)
+    {
+        lock (_gate)
+        {
+            var key = (systemId, EntryKey(type, id));
+            if (!_flavor.TryGetValue(key, out var merged)) _flavor[key] = merged = new Dictionary<string, object>();
+            foreach (var (name, value) in properties) merged[name] = value;
+            merged[ContentEntry.FlavorSourceKey] = packId;
+        }
+    }
+
+    public IReadOnlyDictionary<string, object> GetFlavor(string systemId, string type, string id)
+    {
+        lock (_gate)
+        {
+            return _flavor.TryGetValue((systemId, EntryKey(type, id)), out var hit)
+                ? new Dictionary<string, object>(hit)
+                : new Dictionary<string, object>();
         }
     }
 

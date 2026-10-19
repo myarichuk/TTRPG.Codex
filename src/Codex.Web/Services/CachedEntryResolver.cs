@@ -19,6 +19,7 @@ public sealed class CachedEntryResolver : IEntryResolver
         var resolver = new CachedEntryResolver();
         var types = system.ActorFields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!)
             .Concat(system.SheetRules?.Lists.Select(l => l.TargetEntityType) ?? Enumerable.Empty<string>())
+            .Concat(system.SheetRules?.Inventory?.Types ?? Enumerable.Empty<string>())
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Distinct(StringComparer.OrdinalIgnoreCase);
 

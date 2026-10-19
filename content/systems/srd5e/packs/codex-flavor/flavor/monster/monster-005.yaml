@@ -1,0 +1,125 @@
+- id: ettin
+  flavor: >-
+    Two heads that never agree on anything share one enormous body, and the pair spend their waking lives quarrelling over which way to walk. Hill-folk leave the cattle pens to it, since the creature takes offense at anything that looks like a fence and will flatten the whole row out of spite. Those who have seen it fight say the heads take turns shouting, and the arguing never once slows the swing of the axe.
+  imagePrompt: >-
+    A huge two-headed giant with one body and two bearded faces glaring at each other, gripping an axe and a spiked club on a windswept hillside.
+- id: fire-elemental
+  flavor: >-
+    A knot of living flame that drifts through forges and hearths, burning with a steady and patient hunger that no bellows could ever satisfy. Scholars of the old colleges argue whether it is a creature or a weather of its own, since it has no face and no clear edge. Caravan-folk keep their lamps well away from it, and wise smiths never let it near their coal.
+  imagePrompt: >-
+    A tall column of roaring flame with a vague humanoid shape, swirling bright orange and white, flaring above a cracked flagstone floor.
+- id: fire-giant
+  flavor: >-
+    Fire giants keep their kingdoms in volcanic halls, where they forge blades that glow like a sunset and judge their subjects with iron patience. Their law is rigid and their pride is hotter than any furnace, so a challenge from a smaller creature is met with a sword rather than a laugh. Those who survive a duel with one often find the scorched earth beneath them still smoking.
+  imagePrompt: >-
+    A towering giant with glowing molten veins across dark skin, wielding a flaming sword in a hall of black rock and rising embers.
+- id: flesh-golem
+  flavor: >-
+    Built from old remains, the golem is a patchwork of mismatched parts held fast by sewn seams and a spark of borrowed life. Its maker wanted a servant that would never tire, and got one that remembers the hands it was built from and resents being told what to do. Fire is its one weakness, so a wise keeper never carries a torch near it and keeps a calm voice at hand.
+  imagePrompt: >-
+    A lumbering figure of patched gray skin and mismatched limbs with visible stitched seams, standing in a dim workshop lit by a single lantern.
+- id: flying-snake
+  flavor: >-
+    A slender snake with flaps of skin along its sides, it glides from branch to branch with more confidence than grace. Jungle guides say it spends most of its life in the canopy, dropping onto passing prey from above and swimming off before anyone can swat it. Its bite is more of a nuisance than a threat, though the poison stings enough to make a traveler regret the walk.
+  imagePrompt: >-
+    A small green snake mid-glide between jungle branches, body arched with thin skin flaps spread wide and bright yellow markings along its back.
+- id: frog
+  flavor: >-
+    A small brown frog sitting on a lily pad, the sort of creature that makes the whole pond sound brighter when it croaks. Pond-folk ignore it most of the time, though children who try to catch one learn quickly that it can leap further than they expect. Its own song is a nightly wonder of the marsh, and a gentle reminder that even the smallest creature can own a patch of the water.
+  imagePrompt: >-
+    A plump brown frog crouched on a green lily pad in still water, its throat puffed and its golden eyes fixed on a dragonfly.
+- id: frost-giant
+  flavor: >-
+    Frost giants raise their halls on glacier ledges, where the wind is always singing and the snow never melts. They take what they want from the lowland villages in the thaw, leaving frost on the doorposts as a cold kind of calling card. Their cruelty is patient and their humor is dry, and they are happy to let a traveler freeze while they count the sheep.
+  imagePrompt: >-
+    A towering pale-blue giant with white hair and a fur cloak, standing on a jagged ice ridge beneath a gray sky with a frozen axe in hand.
+- id: gargoyle
+  flavor: >-
+    Shaped from living rock, the gargoyle perches on high ledges and waits for something foolish to pass beneath it. Its stony wings look like decoration until they unfold with a crack like breaking slate, and then the thing is airborne and in a foul mood. Townsfolk have learned to bolt their shutters early, since a gargoyle in a bad temper will drop from a roof without warning.
+  imagePrompt: >-
+    A crouching winged statue of gray granite with clawed hands, horned head, and a fanged snarl, perched on a crumbling tower beneath a stormy sky.
+- id: gelatinous-cube
+  flavor: >-
+    A quivering wall of clear jelly sweeps slowly through the old tunnels, swallowing dropped coins, bones and anything else left lying about. Its body is so clear that the unlucky can be seen drifting inside it, calm and surprised, for a long while before anyone thinks to help. Adventurers' guilds post notices about it, and the notices always end with the same plea that valuables stay off the floor.
+  imagePrompt: >-
+    A huge transparent cube of gelatinous jelly filling a dark dungeon corridor, with pale bones and coins suspended glimmering inside its wobbling body.
+- id: ghast
+  flavor: >-
+    A ghoul that has grown more vicious and more rotten, the ghast carries a stench so thick that breathing near it becomes a bad idea. Gravediggers sometimes say the smell arrives a little before the thing does, which gives the careful a moment to run. Those who hear its low laughter after dark tend to keep their doors barred.
+  imagePrompt: >-
+    A gaunt pale corpse-like figure with long black claws and a grinning mouth, hunched in a crumbling graveyard among cracked headstones and drifting fog.
+- id: ghost
+  flavor: >-
+    The spirit of someone who died with unfinished business, the ghost drifts through walls and floors as if they were curtains. It remembers little of its life, but it remembers exactly who wronged it, and it keeps coming back to tell them so in a voice like cold wind. Those who ask it politely for its story are sometimes rewarded with a kinder word, though the ghost is rarely in a generous mood.
+  imagePrompt: >-
+    A pale translucent humanoid figure in tattered gray robes drifting through an empty ruined hall, faint blue light glowing behind its hollow eyes.
+- id: ghoul
+  flavor: >-
+    A ghoul is a hungry dead thing that wanders old battlefields and lonely graves, scratching at the earth in search of a meal. Its claws are long enough to hook a fence post, and its bite carries a sickly sweetness that clings to the back of the throat. Caravan guards learn early that a ghoul is most dangerous when it is pretending to be a sleeping traveler on the road.
+  imagePrompt: >-
+    A hunched gray-skinned creature with elongated limbs and a wide, hungry mouth crouching over a cracked gravestone at dusk under a pale moon.
+- id: giant-ape
+  flavor: >-
+    Taller than a barn door and built like a landslide, the giant ape prefers a quiet cliff to a fight, though it will fight when provoked. Mountain herders leave it alone and it returns the favor, sharing a ledge of wild fruit in cheerful silence. Those who anger it learn that the thing can hurl a boulder across a valley with startling accuracy and a surprisingly sharp sense of humor.
+  imagePrompt: >-
+    A massive shaggy brown ape with a silver-streaked back crouching on a rocky mountain ledge, one huge fist resting on the rock.
+- id: giant-badger
+  flavor: >-
+    A badger the size of a large dog, it digs tunnels under hedgerows and treats any burrow it finds as a personal insult. Farmers grumble about the holes, but they grumble more quietly once they have seen it chase a fox back across the field. Its temper is short, its jaws are strong, and it has never once been talked out of a meal.
+  imagePrompt: >-
+    A stocky grizzled badger with a broad white-striped head and thick black legs, digging out of a bank beside a hedgerow in the early morning light.
+- id: giant-bat
+  flavor: >-
+    Large as a hunting hound and nearly as quiet, the giant bat roosts in caves and lets its echoes do the looking for it. Miners learn to listen for the faint squeaking that comes before the wings, and they learn to keep their lamps lit in deep passages. It is not an eager hunter, but a hungry bat in a dark tunnel can be surprisingly bold.
+  imagePrompt: >-
+    A large dark brown bat with leathery wings spread wide and a flat snout, hanging from a stalactite in a dim cavern lit by a faint glow.
+- id: giant-boar
+  flavor: >-
+    A wild pig the size of a carthorse, the giant boar charges with its head low and its tusks ready to toss aside anything in its way. Its fury grows the more it bleeds, which makes a wounded boar more dangerous than any healthy one, a fact hunters learn the hard way. Villagers plant their fields on the far side of the wood and leave the swamp to the boars.
+  imagePrompt: >-
+    A massive bristly brown boar with curved ivory tusks and a lowered head, charging across muddy earth beside a dark pine forest.
+- id: giant-centipede
+  flavor: >-
+    A segmented hunter as long as a tall man's arm, the giant centipede lives under rotting logs and in the cracks of old walls. It moves faster than it looks, scuttling across floors and up walls with a rattle of legs that sounds like dry leaves blown along a path. Its bite leaves a sharp, lingering ache, and the cautious traveler shakes out boots and bedding before turning in.
+  imagePrompt: >-
+    A long segmented centipede with dozens of pale legs and a glossy reddish-brown shell, curled upon a mossy log in a dark damp forest floor.
+- id: giant-constrictor-snake
+  flavor: >-
+    A snake thick as a barrel and patient as a sleeping hill, the giant constrictor waits in river reeds until something warm wanders past. Once its coils close, it does not hurry; it simply tightens, breath by breath, until its prey has nothing left to struggle with. River-folk tell their children that a glimpse of pale scales on the mud is a sign to take the long road home.
+  imagePrompt: >-
+    A colossal green-and-gold snake coiled upon the trunk of a dead tree beside a slow brown river, its head raised above the reeds.
+- id: giant-crab
+  flavor: >-
+    A crab the width of a dinner table, it lives in tide pools and shallow bays, where it waits half-buried in the sand for a careless net. Fishermen mend their nets carefully near the rocks, since a crab that grips a leg rarely lets go before the tide turns. Its shell makes handsome armor, so the local smiths have a quiet interest in every crab that wanders into the shallows.
+  imagePrompt: >-
+    A broad red-brown crab with one oversized pincer raised high, standing on wet sand at the edge of a shallow tide pool.
+- id: giant-crocodile
+  flavor: >-
+    A crocodile big enough to take a horse in one bite, the giant crocodile rules the slow stretches of the swamp and tolerates nothing that floats. It can lie motionless beneath the murk for longer than a fisherman's patience, then erupt in a burst of spray and muscle. Villagers paddle their boats in pairs and never trail a hand in the water, a lesson the river teaches often enough.
+  imagePrompt: >-
+    A colossal armored crocodile with a mud-streaked back and jaws wide open, surging from dark swamp water beside a half-sunken log.
+- id: giant-eagle
+  flavor: >-
+    A proud bird of the high crags, the giant eagle keeps watch over valleys and sometimes swoops down to help those in trouble. Its feathers shine with a faint golden light, and its voice carries across the hills like a bell that is never quite silent. Shepherds who have been rescued from a cliff ledge tell the tale with awe, and some leave a bowl of milk on the rock as thanks.
+  imagePrompt: >-
+    A majestic golden-brown eagle with enormous outstretched wings and a white-feathered chest, perched on a sunlit mountain crag above green valleys.
+- id: giant-elk
+  flavor: >-
+    Antlers wider than a cart and a coat the color of fresh snow, the giant elk moves through the forest like a quiet promise kept. Woodland folk speak of it with reverence, and those who meet it in a clearing sometimes find their troubles lighter for a long while. It will not carry a rider and it will not be hunted, and the wise leave it a path to walk in peace.
+  imagePrompt: >-
+    A huge white elk with broad branching antlers and a silver mane standing in a sunlit glade, pale light falling through tall trees.
+- id: giant-fire-beetle
+  flavor: >-
+    A beetle the size of a cat, with two glowing glands that let it hunt in dark tunnels as easily as in full sunlight. Miners prize them for the light and fear them for the heat, since a beetle that feels cornered will bite and leave a small burn behind. Their glow is steady and cheerful, and the old lamp-keepers claim it is kinder company than most of the people who hire them.
+  imagePrompt: >-
+    A glossy black beetle the size of a house cat with glowing orange light shining from its head, crawling over damp rock inside a dim cave.
+- id: giant-frog
+  flavor: >-
+    A frog broad enough to fill a wheelbarrow, it lurks in swamps and shallow ponds waiting for a careless deer to wade close enough to swallow. Herders keep dogs on a short rope near the water, and children are taught early that a splash in the reeds is not always a fish. It sits very still until it strikes, then crosses a marsh in one bound.
+  imagePrompt: >-
+    A huge mottled green frog with bulging gold-rimmed eyes crouched on a muddy bank among tall reeds at the edge of a dark pond.
+- id: giant-goat
+  flavor: >-
+    A goat with horns like curled iron and the temper of a stubborn bull, the giant goat owns the high pastures and everything in them. Shepherds bring their flocks down to the valley before the first snows, because the goat is happy to climb a cliff and fling a rival off it. Its ram is a thing of pride and bruises, and it has been known to knock a wandering trader clean off a mountain path.
+  imagePrompt: >-
+    A massive shaggy white goat with thick curled horns, head lowered and legs braced on a grassy crag beneath a windy sky.

@@ -1,0 +1,75 @@
+- id: acid-arrow
+  flavor: >-
+    A green streak of sharp-smelling light leaves the caster's hand and bursts into a spray of stinging fluid where it lands. Teachers in the cheap schools use the trick to make a point, and the burn lingers well after the splash has dried.
+- id: acid-splash
+  flavor: >-
+    A bubble of sour green vapor swells over a chosen spot and pops in a ring of hissing droplets. Apprentices in the back rows learn it first, usually by accident, and it has never once improved a dinner party.
+- id: aid
+  flavor: >-
+    A strip of white cloth knotted onto a few willing shoulders can make a tired company feel braver than it has any right to be. Field medics of the river-folk swear by the custom, and nobody asks what the knots are for.
+- id: alarm
+  flavor: >-
+    A bell and a silver thread guard a doorway, a window, or a patch of floor, waiting for an unwelcome foot. Hedge-wizards call it cheap loyalty, since it never sleeps and never gossips.
+- id: alter-self
+  flavor: >-
+    A quick reshaping of gills, webs, or a borrowed face, held for as long as the caster can keep their nerve. The results are odd at supper, but the old colleges argue that a good disguise is worth a few awkward introductions.
+- id: animal-friendship
+  flavor: >-
+    A small offering of food and a steady gaze can win over a wild creature, at least for a day. The creature tends to forgive the first poke more readily than the second, and the old trappers know it.
+- id: animal-messenger
+  flavor: >-
+    A small creature with a message tucked beneath its feathers trots off toward a place the caster once visited. It carries the words to the right stranger in the right town, which is more than most couriers manage, and it does not stop to gossip on the road.
+- id: animal-shapes
+  flavor: >-
+    A circle of willing friends sheds its own outline and takes on the shape of a larger beast, keeping their memories and their opinions. The borrowed bodies are clumsy with hands and tools, and the wise leave their pocket watches behind.
+- id: animate-dead
+  flavor: >-
+    Bones or a corpse stand up with a bored, hollow patience, waiting for a voice that holds the leash. Old colleges treat the practice as a grim chore, and the best practitioners keep a ledger of every servant they have raised.
+- id: animate-objects
+  flavor: >-
+    Teacups, chairs, and fence posts stir and sprout uneven legs, eager for a task. They clatter after the caster like a crowd of unpaid workmen, and they dissolve back into ordinary junk the moment they are battered apart.
+- id: antilife-shell
+  flavor: >-
+    A faint shimmering dome of living air keeps the flesh-and-blood crowd politely outside while the bones and clay walk freely. Druids of the old groves consider it a courteous wall, though a guest who steps through the wrong way will break the hush at once.
+- id: antimagic-field
+  flavor: >-
+    A still bubble of nothing surrounds the caster, and every enchantment inside it goes quiet like a cut string. Scholars argue for ages over whether the silence is a gift or a theft, and the arguments remain unsettled.
+- id: antipathy-sympathy
+  flavor: >-
+    A quiet curse of attraction or repulsion, pinned to one object and aimed at a whole kind of creature. Scholars of cautious habit insist the choice between love and loathing is the only real decision in the spell, and the rest is paperwork.
+- id: arcane-eye
+  flavor: >-
+    A glassy eye of gathered light hangs in the air, drifting wherever the caster's attention wanders. It sees in every direction at once, which makes it a fine spy and a dreadful houseguest.
+- id: arcane-hand
+  flavor: >-
+    A great ghostly hand of shimmering force unfolds beside the caster, copying each gesture as though it were a bored apprentice mimicking a master. It can shove, pin, or squeeze, and it is happiest when it has something to do.
+- id: arcane-lock
+  flavor: >-
+    A closed door or a sealed chest gains a stubborn, magical grip that ordinary keys and crowbars cannot argue with. The caster may keep a short list of people allowed through, and a spoken word can open the lock for a moment before it snaps shut again.
+- id: arcane-sword
+  flavor: >-
+    A spectral blade hangs in the air, a miniature sword of pure intent that dives at a chosen foe and then waits for its next turn. Bards adore its theatrics, and the wizards pretend not to notice.
+- id: arcanists-magic-aura
+  flavor: >-
+    A small square of silk pressed to a willing creature or a loose object tells lies to anyone who reads the magic. Its users like to say it is a costume for the soul, though most of them only want a good disguise.
+- id: astral-projection
+  flavor: >-
+    Bodies lie folded in quiet sleep while their owners drift out into a pale, endless sea of thought. A thin silver thread keeps every traveler tied home, and the old texts warn that a snapped thread is the only thing worse than being lost out there.
+- id: augury
+  flavor: >-
+    A hush falls over the room while an unseen witness weighs the road ahead and passes judgment in a single word. The answer is only as good as the sticks, bones, and cards that carried it, and the wise pay the fee to keep the omens honest.
+- id: aura-of-life
+  flavor: >-
+    A warm, gold-edged glow spreads outward from the caster, steadying the sick and turning back the grey touch of rot. Veterans teach that the glow lasts only as long as the bearer's stubbornness holds, which is a lie worth believing.
+- id: awaken
+  flavor: >-
+    A patient ritual of tracing glowing paths through a costly gem gives a rooted or leafy thing a mind and a few words. The awakened creature is usually sweet, a bit confused, and very attached to the first kind face it sees.
+- id: bane
+  flavor: >-
+    A hush of ill luck settles over a small group of foes, making their every reach and every resolve feel a little heavier. Warlocks and clerics agree that the trick works best when the victims have just boasted about their skill.
+- id: banishment
+  flavor: >-
+    A foe is sent sliding out of the world into a bland, harmless pocket of nowhere, where it stands dazed and unable to act. Most creatures slip back once the spell fades, though creatures of wilder stock sometimes arrive somewhere else entirely.
+- id: barkskin
+  flavor: >-
+    A touch turns the skin of a willing friend to bark, tough and knotted, the way an old oak might look if it had decided to be a warrior. Rangers of the deep woods say the bark is patient and wise, but it does not forgive a fire.

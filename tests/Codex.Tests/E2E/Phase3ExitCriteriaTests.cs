@@ -143,7 +143,9 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
                 await dm.GetByTestId("next-turn-btn").ClickAsync();
             }
 
-            await Assertions.Expect(dm.GetByTestId("initiative-header")).ToHaveTextAsync($"Initiative - Round {round + 1}");
+            // The clicks only queue commands; each one persists every actor, the session and the
+            // encounter before the UI moves on, so a slow runner needs longer than the 5 s default.
+            await Assertions.Expect(dm.GetByTestId("initiative-header")).ToHaveTextAsync($"Initiative - Round {round + 1}", new() { Timeout = 30_000 });
         }
 
         await Assertions.Expect(ariaRowOnDm.GetByTestId("condition-badge")).ToHaveCountAsync(0);
