@@ -448,7 +448,7 @@ else
                     @foreach (var (label, item) in linkedEntries)
                     {
                         <div class="mb-3">
-                            <div class="small-muted text-uppercase fw-bold" style="letter-spacing:.06em">@label</div>
+                            <div class="label-caps">@label</div>
                             <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@item.Entry.Name</a>
                             <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
                         </div>
@@ -467,7 +467,7 @@ else
                 <section class="panel" aria-labelledby="vitals-heading">
                     <div class="panel-title"><h2 id="vitals-heading" class="h5"><LucideIcon IconName="heart" Size="16" Class="title-icon" /> @primary.Label</h2></div>
                     <div class="d-flex align-items-baseline gap-2">
-                        <span class="display-6 hp-text" data-testid="hp-current">@current</span>
+                        <span class="stat-numeral hp-text" data-testid="hp-current">@current</span>
                         @if (max > 0)
                         {
                             <span class="small-muted">/ @max</span>

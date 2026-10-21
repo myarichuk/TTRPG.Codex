@@ -9,6 +9,18 @@ Bundled third-party software:
 - Bootstrap 5.3.3 - MIT License - `src/Codex.Web/wwwroot/lib/bootstrap/LICENSE`
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
 
+Bundled typefaces, self-hosted under `src/Codex.Web/wwwroot/fonts/` (the app makes no request to a
+font CDN). Both are licensed under the SIL Open Font License 1.1, whose text sits beside the font
+files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource packages
+(`@fontsource-variable/cinzel` 5.3.0, `@fontsource/alegreya-sans` 5.3.0):
+
+- Cinzel (variable weight 400-900), Copyright 2020 The Cinzel Project Authors
+  (https://github.com/NDISCOVER/Cinzel) - used for headings, the brand, ability modifiers and the
+  HP/AC numerals - `src/Codex.Web/wwwroot/fonts/cinzel/OFL.txt`
+- Alegreya Sans (regular, medium, bold, regular italic), Copyright 2013 The Alegreya Sans Project
+  Authors (https://github.com/huertatipografica/Alegreya-Sans) - the body face -
+  `src/Codex.Web/wwwroot/fonts/alegreya-sans/OFL.txt`
+
 ## Game content
 
 Game content is shipped as data under `content/`, each pack with its own licence in its

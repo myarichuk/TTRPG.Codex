@@ -27,8 +27,8 @@
 
     <div class="header-actions">
     <button type="button" class="icon-btn theme-toggle" @onclick="ToggleThemeAsync"
-            aria-label="@(theme == "dark" ? "Switch to light theme" : "Switch to dark theme")"
-            title="@(theme == "dark" ? "Light theme" : "Dark theme")">
+            aria-label="@(theme == "dark" ? "Switch to parchment theme" : "Switch to dark theme")"
+            title="@(theme == "dark" ? "Parchment theme" : "Dark theme")">
         @* Keyed on the theme so the icon is re-created, and its entrance animation replays, on each toggle. *@
         <LucideIcon @key="theme" IconName="@(theme == "dark" ? "sun" : "moon")" Size="18" />
     </button>
@@ -58,7 +58,7 @@
 </header>
 
 @code {
-    private string theme = "light";
+    private string theme = "dark";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

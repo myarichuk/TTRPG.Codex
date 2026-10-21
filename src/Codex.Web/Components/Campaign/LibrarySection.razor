@@ -92,7 +92,7 @@
                 <div class="import-list">
                     @foreach (var group in sourceEntries.GroupBy(e => e.Type))
                     {
-                        <div class="small-muted text-uppercase fw-bold mt-2 mb-1" style="letter-spacing:.06em">@(Ctx.System?.FindType(group.Key)?.PluralOrLabel ?? CampaignLibrary.Humanize(group.Key))</div>
+                        <div class="label-caps mt-2 mb-1">@(Ctx.System?.FindType(group.Key)?.PluralOrLabel ?? CampaignLibrary.Humanize(group.Key))</div>
                         @foreach (var entry in group)
                         {
                             <div class="form-check">
