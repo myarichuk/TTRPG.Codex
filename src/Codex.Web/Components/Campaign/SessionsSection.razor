@@ -1,5 +1,6 @@
 @using Codex.Persistence
 @inject ISessionRepository SessionRepo
+@inject Codex.Web.Services.ViewerClock Clock
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
 
@@ -31,8 +32,8 @@
                 {
                     <li class="list-row">
                         <div class="row-main">
-                            <div class="row-title"><a href="@Ctx.BasePath/sessions/@session.Id">@(string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title)</a></div>
-                            <div class="row-sub">@session.Date.ToLocalTime().ToString("dddd d MMM yyyy") · @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</div>
+                            <div class="row-title"><a href="@Ctx.BasePath/sessions/@session.Id">@(string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title)</a></div>
+                            <div class="row-sub"><LocalTime Value="session.Date" Format="dddd d MMM yyyy" /> · @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</div>
                         </div>
                         <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
                         @if (Ctx.IsDm)

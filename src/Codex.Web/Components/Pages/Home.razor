@@ -60,7 +60,7 @@ else
                 <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
                 <p class="mb-0 small">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description yet." : campaign.Description)</p>
                 <div class="card-foot">
-                    <span class="small-muted">@campaign.Members.Count member@(campaign.Members.Count == 1 ? "" : "s") · updated @campaign.UpdatedAt.ToString("d MMM yyyy")</span>
+                    <span class="small-muted">@campaign.Members.Count member@(campaign.Members.Count == 1 ? "" : "s") · updated <LocalTime Value="campaign.UpdatedAt" Format="d MMM yyyy" /></span>
                     <div class="row-actions">
                         @if (campaign.OwnerId == currentUserId)
                         {

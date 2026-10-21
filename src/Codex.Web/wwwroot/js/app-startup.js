@@ -1,3 +1,5 @@
+window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOptions().timeZone; };
+
 (function () {
     // ---- Splash ----
     function removeSplash() {

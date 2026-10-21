@@ -1,6 +1,7 @@
 @using Codex.Core
 @using Codex.Persistence
 @inject IJournalRepository JournalRepo
+@inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
 
 @* The player's private notebook for this campaign: one entry per session plus free entries.
@@ -38,7 +39,7 @@ else
                         <div>
                             <h3 id="journal-@entry.Id" class="h6 mb-0">@(string.IsNullOrWhiteSpace(entry.Title) ? "Untitled" : entry.Title)</h3>
                             <div class="small-muted">
-                                @entry.UpdatedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")
+                                <LocalTime Value="entry.UpdatedAt" Format="d MMM yyyy, HH:mm" />
                                 @if (entry.SessionId != null && sessionTitles.TryGetValue(entry.SessionId, out var title))
                                 {
                                     <span> · <a href="@Ctx.BasePath/sessions/@entry.SessionId">@title</a></span>
@@ -110,7 +111,7 @@ else
         sessionTitles.Clear();
         foreach (var session in (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date))
         {
-            sessionTitles[session.Id] = string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title;
+            sessionTitles[session.Id] = string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title;
         }
     }
 

@@ -116,7 +116,7 @@ else if (Slug != null)
                     {
                         <span class="pill">@tag</span>
                     }
-                    <span class="pill"><LucideIcon IconName="clock" Size="12" /> @current.UpdatedAt.ToLocalTime().ToString("d MMM yyyy")</span>
+                    <span class="pill"><LucideIcon IconName="clock" Size="12" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
                 </div>
             </div>
             @if (Ctx.IsDm)
@@ -155,7 +155,7 @@ else if (Slug != null)
                         <div class="list-row align-items-start">
                             <span class="avatar avatar-sm" aria-hidden="true">@Initial(usernames.GetValueOrDefault(note.AuthorId, "?"))</span>
                             <div class="row-main">
-                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · @note.CreatedAt.ToLocalTime().ToString("d MMM, HH:mm") · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
+                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" /> · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
                                 <p class="mb-0">@note.Content</p>
                             </div>
                             @if (note.AuthorId == Ctx.UserId || Ctx.IsDm)
@@ -264,7 +264,7 @@ else
                     </div>
                     <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
                     <div class="card-foot">
-                        <span class="small-muted"><LucideIcon IconName="link" Size="12" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · @wp.UpdatedAt.ToLocalTime().ToString("d MMM")</span>
+                        <span class="small-muted"><LucideIcon IconName="link" Size="12" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
                             @foreach (var tag in wp.Tags.Take(3))
                             {

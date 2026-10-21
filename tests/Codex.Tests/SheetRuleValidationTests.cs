@@ -69,3 +69,18 @@ public class SheetRuleValidationTests
             """.Replace("\n", "\n  ")));
     }
 }
+
+public class ViewerClockTests
+{
+    [Fact]
+    public void Format_ConvertsStoredUtcIntoTheViewersZone()
+    {
+        var clock = new Codex.Web.Services.ViewerClock();
+        var stored = new DateTime(2026, 10, 21, 22, 30, 0, DateTimeKind.Utc);
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland"); // UTC+13 in October
+        typeof(Codex.Web.Services.ViewerClock).GetField("_zone", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(clock, zone);
+
+        Assert.Equal("22 Oct 11:30", clock.Format(stored, "d MMM HH:mm"));
+        Assert.Equal("22 Oct 11:30", clock.Format(DateTime.SpecifyKind(stored, DateTimeKind.Unspecified), "d MMM HH:mm"));
+    }
+}

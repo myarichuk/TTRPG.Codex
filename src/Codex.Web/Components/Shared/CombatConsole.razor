@@ -6,6 +6,7 @@
 @using Codex.Plugin.Abstractions
 @implements IAsyncDisposable
 @inject CampaignRuntimeManager RuntimeManager
+@inject Codex.Web.Services.ViewerClock ViewerTime
 @inject IActorRepository ActorRepo
 @inject ISessionRepository SessionRepo
 @inject IContentRegistry ContentRegistry
@@ -401,8 +402,8 @@ else
         startSessionId = openSessions.Any(s => s.Id == Campaign.CurrentSessionId) ? Campaign.CurrentSessionId! : openSessions.FirstOrDefault()?.Id ?? "";
     }
 
-    private static string SessionLabel(SessionDocument session) =>
-        $"{(string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title)} ({session.Status})";
+    private string SessionLabel(SessionDocument session) =>
+        $"{(string.IsNullOrWhiteSpace(session.Title) ? ViewerTime.Format(session.Date, "d MMM yyyy") : session.Title)} ({session.Status})";
 
     /// <summary>A player's open table page attaches the moment the DM starts (or ends) the table.</summary>
     private void OnRuntimeChanged(string campaignId)

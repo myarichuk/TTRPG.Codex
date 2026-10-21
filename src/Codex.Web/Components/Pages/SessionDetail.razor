@@ -5,6 +5,7 @@
 @using Codex.Persistence
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
+@inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
 @inject INoteRepository NoteRepo
 @inject IActorRepository ActorRepo
@@ -40,7 +41,7 @@ else
             <h1 class="mb-0">@Title</h1>
             <div class="d-flex flex-wrap gap-1 mt-1">
                 <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@(session.Status == SessionStatus.Live ? "" : "")@session.Status</span>
-                <span class="pill"><LucideIcon IconName="calendar" Size="12" /> @session.Date.ToLocalTime().ToString("dddd d MMM yyyy")</span>
+                <span class="pill"><LucideIcon IconName="calendar" Size="12" /> <LocalTime Value="session.Date" Format="dddd d MMM yyyy" /></span>
                 <span class="pill"><LucideIcon IconName="zap" Size="12" /> @visibleEvents.Count event@(visibleEvents.Count == 1 ? "" : "s")</span>
             </div>
         </div>
@@ -141,7 +142,7 @@ else
                         <div class="row-main">
                             <div class="row-sub">
                                 <strong>@memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong>
-                                · @note.CreatedAt.ToLocalTime().ToString("d MMM, HH:mm")
+                                · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" />
                                 · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span>
                             </div>
                             <p class="mb-0">@note.Content</p>
@@ -176,7 +177,7 @@ else
                     <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="SaveJournalAsync" data-testid="session-journal-save">Save journal</button>
                     @if (journalSavedAt != null)
                     {
-                        <span class="small-muted" role="status">Saved @journalSavedAt.Value.ToLocalTime().ToString("HH:mm")</span>
+                        <span class="small-muted" role="status">Saved <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></span>
                     }
                 </div>
                 <a href="/campaigns/@CampaignId/journal" class="small d-inline-block mt-2">All my journal entries</a>
@@ -192,7 +193,7 @@ else
                     @foreach (var evt in visibleEvents.OrderByDescending(e => e.Timestamp))
                     {
                         <div class="log-entry">
-                            <span class="small-muted">@evt.Timestamp.ToLocalTime().ToString("HH:mm")</span>
+                            <span class="small-muted"><LocalTime Value="evt.Timestamp" Format="HH:mm" /></span>
                             <span class="pill ms-1">@evt.Type</span>
                             <div>@evt.Description</div>
                         </div>
@@ -229,7 +230,7 @@ else
     private Flash? flash;
 
     private string NotesTargetId => $"session:{SessionId}";
-    private string? Title => session == null ? null : string.IsNullOrWhiteSpace(session.Title) ? session.Date.ToLocalTime().ToString("d MMM yyyy") : session.Title;
+    private string? Title => session == null ? null : string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title;
 
     protected override async Task OnParametersSetAsync() => await ReloadAsync();
 

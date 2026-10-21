@@ -184,6 +184,13 @@
                     .ToList();
             }
 
+            // The rules glossary would bury the spells and creatures when browsing everything; it has its own tab,
+            // and a search term still finds its entries.
+            if (selectedType == null && string.IsNullOrWhiteSpace(query))
+            {
+                results = results.Where(r => !r.Entry.Type.Equals("rule", StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             if (Access is { IsDm: false })
             {
                 var hidden = types.Where(t => !t.PlayerFacing).Select(t => t.Type).ToHashSet(StringComparer.OrdinalIgnoreCase);

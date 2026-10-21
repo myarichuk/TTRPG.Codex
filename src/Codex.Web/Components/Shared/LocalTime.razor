@@ -1,0 +1,16 @@
+@inject ViewerClock Clock
+@inject IJSRuntime Js
+
+<time datetime="@Value.ToUniversalTime().ToString("o")">@Clock.Format(Value, Format)</time>
+
+@code {
+    [Parameter, EditorRequired] public DateTime Value { get; set; }
+    [Parameter] public string Format { get; set; } = "d MMM yyyy";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || Clock.IsKnown) return;
+        await Clock.EnsureAsync(Js);
+        StateHasChanged();
+    }
+}

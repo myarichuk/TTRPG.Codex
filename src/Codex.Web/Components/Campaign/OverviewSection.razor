@@ -1,6 +1,7 @@
 @using Codex.Persistence
 @using Codex.Persistence.Runtime
 @inject IUserRepository UserRepo
+@inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
 @inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
@@ -71,7 +72,7 @@
             {
                 <hr />
                 <div class="small-muted">Latest session</div>
-                <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? latestSession.Date.ToString("d MMM yyyy") : latestSession.Title)</a>
+                <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? Clock.Format(latestSession.Date, "d MMM yyyy") : latestSession.Title)</a>
                 <span class="pill ms-1">@latestSession.Status</span>
             }
         </section>

@@ -106,6 +106,7 @@ builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
+builder.Services.AddScoped<ViewerClock>();
 
 // Game systems and content
 builder.Services.AddSingleton<ComponentRegistry>();
