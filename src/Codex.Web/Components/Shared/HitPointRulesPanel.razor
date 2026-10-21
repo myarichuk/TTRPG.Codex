@@ -6,8 +6,8 @@
    breakdown. The numbers come from the rule engine; this only edits the mode and the rolls. *@
 
 <div class="mt-3 pt-3 border-top" data-testid="hp-rules">
-    <label for="@(id)-mode" class="form-label small mb-1">Maximum hit points</label>
-    <select id="@(id)-mode" class="form-select form-select-sm" disabled="@(!CanEdit)" value="@Mode" @onchange="e => SetModeAsync(e.Value?.ToString())" data-testid="hp-mode">
+    <label for="@(id)-mode" class="field-label">Maximum hit points</label>
+    <select id="@(id)-mode" class="field-select field-sm" disabled="@(!CanEdit)" value="@Mode" @onchange="e => SetModeAsync(e.Value?.ToString())" data-testid="hp-mode">
         @foreach (var mode in Modes)
         {
             <option value="@mode" selected="@(Mode == mode)">@ModeLabel(mode)</option>
@@ -35,7 +35,7 @@
                             <td>
                                 @if (Mode == "rolled" && level.Level > 1 && CanEdit)
                                 {
-                                    <input type="number" class="form-control form-control-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.Die / 2 + 1)"
+                                    <input type="number" class="field-input field-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.Die / 2 + 1)"
                                            aria-label="Hit die roll for level @level.Level" @onchange="e => SetRollAsync(level.Level, e.Value?.ToString())" data-testid="hp-roll-@level.Level" />
                                 }
                                 else

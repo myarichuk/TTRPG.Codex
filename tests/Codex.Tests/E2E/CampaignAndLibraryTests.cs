@@ -121,10 +121,12 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await player.GetByLabel("Level", new() { Exact = true }).CommitAsync("1");
 
         // A Fighter has no spell table: both spell lists are capped at zero.
+        await player.GetByTestId("tab-picks").ClickAsync();
         await Assertions.Expect(player.GetByTestId("list-spells-count")).ToHaveTextAsync("0 of 0");
         await Assertions.Expect(player.GetByTestId("list-cantrips-count")).ToHaveTextAsync("0 of 0");
 
         // Out-of-range point-buy score: the rules panel explains, and a player can't save (strict).
+        await player.GetByTestId("tab-attributes").ClickAsync();
         await player.GetByTestId("attr-str").CommitAsync("18");
         await Assertions.Expect(player.GetByTestId("rule-violations")).ToContainTextAsync("8 to 15");
         await player.GetByTestId("sheet-save").ClickAsync();
@@ -174,6 +176,7 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await dm.GetByLabel("Class", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Wizard" });
         await dm.GetByLabel("Level", new() { Exact = true }).CommitAsync("1");
 
+        await dm.GetByTestId("tab-picks").ClickAsync();
         // Fireball is a Wizard spell, but level 3 is above a level-1 Wizard's slots: not offered.
         await dm.GetByTestId("list-spells-search").FillAsync("Fireball");
         await Assertions.Expect(dm.GetByTestId("list-spells-options")).ToContainTextAsync("No allowed entry");
@@ -186,14 +189,18 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("list-spells-count")).ToHaveTextAsync("1 of 4");
 
         // At level 5 the cap and the slot level rise: Fireball becomes available.
+        await dm.GetByTestId("tab-attributes").ClickAsync();
         await dm.GetByLabel("Level", new() { Exact = true }).CommitAsync("5");
+        await dm.GetByTestId("tab-picks").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("list-spells-count")).ToHaveTextAsync("1 of 9");
         await dm.GetByTestId("list-spells-search").FillAsync("Fireball");
         await dm.GetByTestId("list-spells-options").GetByRole(AriaRole.Button, new() { Name = "Add Fireball" }).ClickAsync();
         await Assertions.Expect(dm.GetByTestId("list-spells-count")).ToHaveTextAsync("2 of 9");
+        await dm.GetByTestId("tab-attributes").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("derived-proficiencyBonus")).ToHaveTextAsync("+3");
         await dm.GetByTestId("sheet-save").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+        await dm.GetByTestId("tab-picks").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("list-spells-pick")).ToHaveCountAsync(2);
 
         // ---- 4c. House rules: the DM downgrades strict to warn, and the player's over-budget sheet saves with a warning. ----

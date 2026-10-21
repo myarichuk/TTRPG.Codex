@@ -51,14 +51,14 @@
             var expertPicked = Expertise.Contains(key) || Expertise.Contains(skill.Label);
             <li class="list-row py-1">
                 <span class="d-flex align-items-center gap-2 flex-wrap">
-                    <input id="@(id)-prof-@key" type="checkbox" class="form-check-input mt-0" checked="@skill.Proficient" disabled="@(!CanEdit || fromElsewhere)"
+                    <input id="@(id)-prof-@key" type="checkbox" class="field-box mt-0" checked="@skill.Proficient" disabled="@(!CanEdit || fromElsewhere)"
                            @onchange="e => SetAsync(Rules.ProficienciesKey, key, (bool)e.Value!)" data-testid="@("skill-prof-" + key)" />
                     <label for="@(id)-prof-@key" class="mb-0">@skill.Label <span class="small-muted">(@Abbreviation(skill.Attribute))</span>
                         @if (fromElsewhere) { <span class="small-muted">· background</span> }
                     </label>
                     @if (skill.Proficient)
                     {
-                        <input id="@(id)-exp-@key" type="checkbox" class="form-check-input mt-0 ms-2" checked="@skill.Expert" disabled="@(!CanEdit)"
+                        <input id="@(id)-exp-@key" type="checkbox" class="field-box mt-0 ms-2" checked="@skill.Expert" disabled="@(!CanEdit)"
                                @onchange="e => SetAsync(Rules.ExpertiseKey, key, (bool)e.Value!)" data-testid="@("skill-exp-" + key)" />
                         <label for="@(id)-exp-@key" class="mb-0 small-muted">expertise</label>
                     }
@@ -69,7 +69,7 @@
     </ul>
     @if (CanEdit)
     {
-        <p class="form-text mt-2 mb-0">Your background's skills are ticked for you. Tick the ones your class and other features give.</p>
+        <p class="field-hint">Your background's skills are ticked for you. Tick the ones your class and other features give.</p>
     }
 </section>
 

@@ -8,10 +8,10 @@
 <div class="list-picker" role="group" aria-labelledby="@(id)-label" data-testid="list-@Rule.Key">
     <div class="d-flex justify-content-between align-items-baseline gap-2">
         <div>
-            <div id="@(id)-label" class="form-label mb-0">@Rule.Label</div>
+            <div id="@(id)-label" class="field-label">@Rule.Label</div>
             @if (!string.IsNullOrWhiteSpace(Rule.Description))
             {
-                <div class="form-text mt-0">@Rule.Description</div>
+                <div class="field-hint">@Rule.Description</div>
             }
         </div>
         <span class="pill @(Limit.HasValue && Picks.Count > Limit ? "pill-danger" : "")" data-testid="list-@Rule.Key-count">
@@ -39,7 +39,7 @@
                         }
                         @if (!ReadOnly)
                         {
-                            <button type="button" class="btn-link-plain ms-1" aria-label="Remove @entry.Name" @onclick="() => Removed.InvokeAsync(pick.Index)"><LucideIcon IconName="x" Size="12" /></button>
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"Remove {entry.Name}")" OnClick="() => Removed.InvokeAsync(pick.Index)" />
                         }
                     </span>
                 </li>

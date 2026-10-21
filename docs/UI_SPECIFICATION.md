@@ -101,6 +101,28 @@ rings and the HP bar's fill against its track need 3:1.
 | `/about` | Loaded systems and packs with their licence attribution; content load warnings. |
 | `/login`, `/register`, `/campaigns/join/{code}` | Authentication and invites. |
 
+## Components and frames
+
+Controls are owned by the app, not Bootstrap. New screens use these; `btn-*`, `form-control`, `form-select` and `form-check` remain only in the pages not yet migrated (the campaign sections, Library, Home, settings).
+
+| Component | Use |
+|---|---|
+| `CodexButton` | One button. `Variant` is `Plaque` (brass call to action), `Etched` (default), `Blood` (destructive) or `Rune` (icon alone: pass `Label`, it becomes the accessible name). `Small` for dense rows, `Class="cx-arcane"` for the AI helpers. Extra attributes (`data-testid`, `aria-*`, `title`) go to the `<button>`. Normal height is 44px, small 38px. |
+| `CodexField` | A label, the control and an optional hint tied together. The control is the caller's, with `class="field-input"` or `"field-select"` (add `field-sm` for compact) and `id="@id"`, the generated id passed to the template. |
+| `CodexCheck` | A checkbox with its label. Plain markup can use `div.field-check` with `input.field-box`. |
+
+Frames: every `.panel`, `.campaign-card`, `.participant`, `.list-picker` and dialog has the two-tone brass border, corner ornaments (one SVG mask, `--corner`, coloured by `--border-strong`) and, for panels, a titled header band. `.pill` is a chamfered plaque. `.divider-orn` is the ornamental rule.
+
+## The sheet
+
+A sticky plate sits under the header: portrait, name, kind, class-and-level and species plaques, then a stat strip (hit points with bar, AC on a shield, then each derived number such as proficiency bonus and initiative, and speed). The plate also holds Save, with a count of unsaved changes next to it. Below it, rule violations and warnings, then tabs: Attributes (attributes, skills, sheet fields, classes, linked Library entries), Picks, Inventory, History, and DM notes (the DM only). The "From the Library" list sits at the foot of Attributes. A tab appears only when the system or the viewer has something to put in it. The tabs are a navigation of buttons (`aria-current="page"`), not an ARIA tablist, so they are reached with Tab and activated with Enter or Space. Hit points, armor class, slots, level-up and visibility stay in the right column on every tab.
+
+Ability plates show the modifier large and the score in a medallion; with the point-buy or standard-array method the medallion is the input.
+
+## The table
+
+Above the order, a sticky banner names whose turn it is (and "Turn n of m"). Each row is a token (portrait or initials, ringed in the colour of the kind: brass for characters, verdigris for NPCs, blood for monsters), the name, an initiative plaque, state badges, an HP bar with the numbers on it, and a strip of condition chips (icon, name, rounds left, and a remove button for the DM). Players see the bar only for characters they can see exactly; hostiles keep the coarse band text.
+
 ## Test ids
 
 Playwright scenarios rely on `data-testid` attributes rather than copy; keep them when restyling

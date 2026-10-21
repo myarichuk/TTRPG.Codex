@@ -35,7 +35,7 @@ else
                         @RenderField(field, controlId)
                         @if (!string.IsNullOrWhiteSpace(field.Description))
                         {
-                            <div id="@(controlId)-help" class="form-text">@field.Description</div>
+                            <div id="@(controlId)-help" class="field-hint">@field.Description</div>
                         }
                     </div>
                 }
@@ -106,7 +106,7 @@ else
                                      value="@FormatNumber(GetValue(field))"
                                      @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString(), field)))" />,
 
-        FieldType.Boolean => @<div class="form-check">
+        FieldType.Boolean => @<div class="field-check">
             <input id="@controlId" type="checkbox" class="form-check-input" disabled="@ReadOnly"
                    checked="@IsTrue(GetValue(field))"
                    aria-describedby="@Describe(field, controlId)"

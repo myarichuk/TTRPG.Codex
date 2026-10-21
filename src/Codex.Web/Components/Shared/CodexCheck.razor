@@ -1,0 +1,22 @@
+@* A checkbox with its label. Replaces form-check so the control is drawn by the app's own CSS. *@
+
+<div class="field-check @Class">
+    <input id="@fieldId" type="checkbox" class="field-box" checked="@Checked" disabled="@Disabled" @onchange="OnChange" @attributes="Attributes" />
+    <label for="@fieldId">@ChildContent</label>
+</div>
+
+@code {
+    private static int next;
+    private readonly string generated = "cxc-" + Interlocked.Increment(ref next);
+
+    [Parameter] public bool Checked { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public EventCallback<ChangeEventArgs> OnChange { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Goes to the <input>: data-testid, aria-describedby and so on.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+
+    private string fieldId => Id ?? generated;
+}

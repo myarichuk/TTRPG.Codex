@@ -34,47 +34,92 @@ else if (campaign == null || actor == null || access == null)
         <div class="empty-icon"><LucideIcon IconName="user" Size="28" /></div>
         <h1 class="h4">Character not found</h1>
         <p>It may not exist, or you may not have access to it.</p>
-        <a href="/" class="btn btn-primary">Back to campaigns</a>
+        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
     </div>
 }
 else
 {
-    <div class="page-header sheet-header mb-3">
-        <div class="d-flex gap-3 align-items-center">
-            <div class="portrait-wrap">
-                <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="xl" Alt="@($"Portrait of {DisplayName}")" />
-                @if (CanEdit)
-                {
-                    <label class="portrait-upload" title="Upload a portrait">
-                        <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">Upload a portrait (PNG, JPEG or WebP, up to 6 MB)</span>
-                        <InputFile OnChange="UploadPortraitAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
-                    </label>
-                }
-            </div>
-            <div>
-                <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/cast">Cast</a></nav>
-                <h1 class="mb-0" data-testid="actor-name">@DisplayName</h1>
-                <div class="d-flex flex-wrap gap-1 mt-1">
-                    <span class="pill">@KindLabel</span>
-                    @if (access.IsDm)
+    <div class="sheet-plate" data-testid="sheet-plate">
+        <div class="plate-top">
+            <div class="plate-id">
+                <div class="portrait-wrap">
+                    <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" Alt="@($"Portrait of {DisplayName}")" />
+                    @if (CanEdit)
                     {
-                        <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
-                    }
-                    @if (!string.IsNullOrEmpty(actor.BlueprintId))
-                    {
-                        <span class="pill">From @actor.BlueprintId.Split(':').Last()</span>
-                    }
-                    @if (CanEdit && actor.HasPortrait)
-                    {
-                        <button type="button" class="pill pill-button" @onclick="RemovePortraitAsync"><LucideIcon IconName="x" Size="12" /> Remove portrait</button>
+                        <label class="portrait-upload" title="Upload a portrait">
+                            <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">Upload a portrait (PNG, JPEG or WebP, up to 6 MB)</span>
+                            <InputFile OnChange="UploadPortraitAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
+                        </label>
                     }
                 </div>
+                <div class="min-w-0">
+                    <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/cast">Cast</a></nav>
+                    <h1 data-testid="actor-name">@DisplayName</h1>
+                    <div class="plate-plaques">
+                        <span class="pill">@KindLabel</span>
+                        @if (access.IsDm)
+                        {
+                            <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
+                        }
+                        @if (!string.IsNullOrEmpty(actor.BlueprintId))
+                        {
+                            <span class="pill">From @actor.BlueprintId.Split(':').Last()</span>
+                        }
+                        @foreach (var plaque in PlatePlaques())
+                        {
+                            <span class="pill pill-accent">@plaque</span>
+                        }
+                        @if (CanEdit && actor.HasPortrait)
+                        {
+                            <button type="button" class="pill pill-button" @onclick="RemovePortraitAsync"><LucideIcon IconName="x" Size="12" /> Remove portrait</button>
+                        }
+                    </div>
+                </div>
             </div>
+            @if (CanEdit)
+            {
+                <div class="plate-save">
+                    @if (DirtyCount > 0)
+                    {
+                        <span class="dirty-note" role="status" data-testid="sheet-dirty">@DirtyCount unsaved @(DirtyCount == 1 ? "change" : "changes")</span>
+                    }
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">Save changes</CodexButton>
+                </div>
+            }
         </div>
-        @if (CanEdit)
-        {
-            <button type="button" class="btn btn-primary" @onclick="SaveAsync" data-testid="sheet-save"><LucideIcon IconName="check" Size="16" /> Save changes</button>
-        }
+        <div class="stat-strip" role="list" aria-label="Key numbers">
+            @if (system?.PrimaryResource is { } vital)
+            {
+                var hpNow = YamlValues.GetInt(editSheet, vital.Key) ?? 0;
+                var hpMax = vital.MaxKey != null ? YamlValues.GetInt(editSheet, vital.MaxKey) ?? 0 : 0;
+                var hpPct = hpMax > 0 ? Math.Clamp(100.0 * hpNow / hpMax, 0, 100) : 0;
+                var hpBand = hpPct < 25 ? "hp-low" : hpPct < 50 ? "hp-mid" : "hp-high";
+                <div class="stat-cell stat-hp" role="listitem">
+                    <span class="stat-label">@vital.Label</span>
+                    <span class="stat-value" data-testid="plate-hp">@hpNow@(hpMax > 0 ? $" / {hpMax}" : "")</span>
+                    @if (hpMax > 0)
+                    {
+                        <div class="hp-bar @hpBand" role="progressbar" aria-label="@vital.Label" aria-valuemin="0" aria-valuemax="@hpMax" aria-valuenow="@hpNow">
+                            <span style="width:@(hpPct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                        </div>
+                    }
+                </div>
+            }
+            @if (Rules?.ArmorClass is { } plateAc)
+            {
+                <div class="stat-cell stat-ac" role="listitem">
+                    <span class="stat-label">AC</span>
+                    <span class="stat-value" data-testid="plate-ac">@(evaluation?.ArmorClass is { Active: true } acSummary ? acSummary.Total : YamlValues.GetInt(editSheet, plateAc.Key) ?? 10)</span>
+                </div>
+            }
+            @foreach (var stat in PlateStats())
+            {
+                <div class="stat-cell" role="listitem">
+                    <span class="stat-label">@stat.Label</span>
+                    <span class="stat-value">@stat.Value</span>
+                </div>
+            }
+        </div>
     </div>
 
     <StatusMessage Message="flash" OnDismiss="() => flash = null" />
@@ -126,6 +171,17 @@ else
                 </section>
             }
 
+            <nav class="sheet-tabs" aria-label="Sheet sections" data-testid="sheet-tabs">
+                @foreach (var tab in Tabs)
+                {
+                    <button type="button" class="sheet-tab" aria-current="@(ActiveTab == tab.Key ? "page" : null)" data-testid="@("tab-" + tab.Key)" @onclick="() => activeTab = tab.Key">
+                        <LucideIcon IconName="@tab.Icon" Size="16" /> @tab.Label
+                    </button>
+                }
+            </nav>
+
+            @if (ActiveTab == "attributes")
+            {
             @if (system != null && system.Attributes.Count > 0)
             {
                 var attributeRules = Rules?.Attributes;
@@ -136,8 +192,8 @@ else
                         @if (attributeRules != null && CanEdit)
                         {
                             <div class="d-flex align-items-center gap-2">
-                                <label for="attr-method" class="form-label mb-0 small">Method</label>
-                                <select id="attr-method" class="form-select form-select-sm w-auto" value="@AttrMethod" @onchange="e => SetMethod(e.Value?.ToString())" data-testid="attr-method">
+                                <label for="attr-method" class="field-label">Method</label>
+                                <select id="attr-method" class="field-select field-sm" value="@AttrMethod" @onchange="e => SetMethod(e.Value?.ToString())" data-testid="attr-method">
                                     @foreach (var method in AvailableMethods)
                                     {
                                         <option value="@method">@MethodLabel(method)</option>
@@ -178,26 +234,30 @@ else
                                 }
                                 @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
                                 {
+                                    <div class="attr-medallion">
                                     <label for="@inputId" class="visually-hidden">@(attr.Label + " score")</label>
-                                    <select id="@inputId" class="form-select form-select-sm" value="@baseScore" data-testid="@testId" @onchange="e => SetBase(attr, e.Value?.ToString())">
+                                    <select id="@inputId" class="field-select field-sm" value="@baseScore" data-testid="@testId" @onchange="e => SetBase(attr, e.Value?.ToString())">
                                         @foreach (var value in attributeRules.StandardArray.Distinct().OrderByDescending(v => v))
                                         {
                                             <option value="@value">@value</option>
                                         }
                                     </select>
+                                    </div>
                                 }
                                 else if (CanEdit)
                                 {
                                     var min = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Min : attr.Min;
                                     var max = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Max : attr.Max;
+                                    <div class="attr-medallion">
                                     <label for="@inputId" class="visually-hidden">@(attr.Label + " score")</label>
-                                    <input id="@inputId" type="number" class="form-control form-control-sm" min="@min" max="@max"
+                                    <input id="@inputId" type="number" class="field-input field-sm" min="@min" max="@max"
                                            value="@baseScore" data-testid="@testId"
                                            @onchange="e => SetBase(attr, e.Value?.ToString())" />
+                                    </div>
                                 }
                                 else
                                 {
-                                    <div class="attr-score">@total</div>
+                                    <div class="attr-medallion attr-score">@total</div>
                                 }
                                 @if (attributeRules != null && (bonus != 0 || increase != 0 || CanEdit))
                                 {
@@ -210,7 +270,7 @@ else
                     @if (attributeRules?.Bonuses is { } bonusRules && summary != null)
                     {
                         <div class="mt-3" data-testid="attr-bonuses">
-                            <div class="form-label mb-1">@bonusRules.Label</div>
+                            <div class="field-label">@bonusRules.Label</div>
                             @if (summary.EligibleBonusAttributes.Count == 0)
                             {
                                 <p class="small-muted mb-0">Choose a @(system.ActorFields.FirstOrDefault(f => f.Key == bonusRules.FromField)?.Label.ToLowerInvariant() ?? bonusRules.FromField) under Sheet to unlock its bonuses.</p>
@@ -224,8 +284,8 @@ else
                                         var attr = system.Attributes.First(a => a.Key == key);
                                         var bonusId = "bonus-" + key;
                                         <div>
-                                            <label for="@bonusId" class="form-label small mb-0">@attr.Label</label>
-                                            <select id="@bonusId" class="form-select form-select-sm" value="@(summary.Bonuses.GetValueOrDefault(key))" disabled="@(!CanEdit)" data-testid="@bonusId" @onchange="e => SetBonus(attr, e.Value?.ToString())">
+                                            <label for="@bonusId" class="field-label">@attr.Label</label>
+                                            <select id="@bonusId" class="field-select field-sm" value="@(summary.Bonuses.GetValueOrDefault(key))" disabled="@(!CanEdit)" data-testid="@bonusId" @onchange="e => SetBonus(attr, e.Value?.ToString())">
                                                 <option value="0">—</option>
                                                 @foreach (var value in bonusRules.Allocations.SelectMany(a => a).Distinct().OrderBy(v => v))
                                                 {
@@ -242,7 +302,7 @@ else
                     @if (attributeRules?.Increases is { } increaseRules && evaluation != null)
                     {
                         <div class="mt-3" data-testid="attr-increases">
-                            <div class="form-label mb-1">@increaseRules.Label</div>
+                            <div class="field-label">@increaseRules.Label</div>
                             @if (evaluation.Increases.Count == 0)
                             {
                                 <p class="small-muted mb-0">None yet. Picks that raise scores, such as Ability Score Improvement, show up here once you add them under Picks.</p>
@@ -258,8 +318,8 @@ else
                                             var pointIndex = point;
                                             var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
                                             <div>
-                                                <label for="@selectId" class="form-label small mb-0">+1 to<span class="visually-hidden"> (@grant.Pick.Entry.Name, point @(pointIndex + 1) of @grant.Points)</span></label>
-                                                <select id="@selectId" class="form-select form-select-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
+                                                <label for="@selectId" class="field-label">+1 to<span class="visually-hidden"> (@grant.Pick.Entry.Name, point @(pointIndex + 1) of @grant.Points)</span></label>
+                                                <select id="@selectId" class="field-select field-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
                                                         @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
                                                     <option value="">Choose…</option>
                                                     @foreach (var key in grant.Options)
@@ -297,8 +357,8 @@ else
             <section class="panel" aria-labelledby="sheet-heading">
                 <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="16" Class="title-icon" /> Sheet</h2></div>
                 <div class="mb-3">
-                    <label for="actor-name-input" class="form-label">Name</label>
-                    <input id="actor-name-input" class="form-control" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
+                    <label for="actor-name-input" class="field-label">Name</label>
+                    <input id="actor-name-input" class="field-input" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
                 </div>
                 @if (schema != null)
                 {
@@ -358,9 +418,9 @@ else
                                     {
                                         <span class="d-flex align-items-center gap-2">
                                             <label for="@levelInputId" class="visually-hidden">@(cls.Entry?.Name ?? classId) levels</label>
-                                            <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="form-control form-control-sm w-5" value="@cls.Level" data-testid="class-level-@classId"
+                                            <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
                                                    @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
-                                            <button type="button" class="btn-link-plain" aria-label="Remove @(cls.Entry?.Name ?? classId)" @onclick="() => RemoveClass(multiclass, classId)"><LucideIcon IconName="x" Size="14" /></button>
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"@(")"Remove " + (cls.Entry?.Name ?? classId))" OnClick="() => RemoveClass(multiclass, classId)" />
                                         </span>
                                     }
                                 </li>
@@ -368,8 +428,8 @@ else
                                 {
                                     var subclassId = "class-subclass-" + classId;
                                     <li class="py-1">
-                                        <label for="@subclassId" class="form-label small mb-0">@(cls.Entry?.Name ?? classId) subclass</label>
-                                        <select id="@subclassId" class="form-select form-select-sm w-auto" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
+                                        <label for="@subclassId" class="field-label">@(cls.Entry?.Name ?? classId) subclass</label>
+                                        <select id="@subclassId" class="field-select field-sm" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
                                                 @onchange="e => SetClassSubclass(multiclass, classId, e.Value?.ToString())">
                                             <option value="">None yet</option>
                                             @foreach (var option in SubclassOptions(classId))
@@ -386,8 +446,8 @@ else
                             var firstLevel = evaluation.Classes.FirstOrDefault(c => c.IsFirst)?.Level ?? 0;
                             <div class="d-flex gap-2 align-items-end flex-wrap">
                                 <div>
-                                    <label for="add-class" class="form-label small mb-0">Add a class</label>
-                                    <select id="add-class" class="form-select form-select-sm" @bind="newClassId" data-testid="add-class-select">
+                                    <label for="add-class" class="field-label">Add a class</label>
+                                    <select id="add-class" class="field-select field-sm" @bind="newClassId" data-testid="add-class-select">
                                         <option value="">Choose…</option>
                                         @foreach (var option in evaluation.MulticlassOptions)
                                         {
@@ -395,14 +455,33 @@ else
                                         }
                                     </select>
                                 </div>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" @onclick="() => AddClass(multiclass)" data-testid="add-class">Add</button>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" OnClick="() => AddClass(multiclass)" data-testid="add-class">Add</CodexButton>
                             </div>
-                            <p class="form-text mb-0">A new class takes one level from your first class@(firstLevel <= 1 ? " (raise the character level first)" : ""). Only classes whose prerequisites your scores meet are listed.</p>
+                            <p class="field-hint">A new class takes one level from your first class@(firstLevel <= 1 ? " (raise the character level first)" : ""). Only classes whose prerequisites your scores meet are listed.</p>
                         }
                     }
                 </section>
             }
 
+
+            @if (linkedEntries.Count > 0)
+            {
+                <section class="panel" aria-labelledby="linked-heading">
+                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="16" Class="title-icon" /> From the Library</h2></div>
+                    @foreach (var (label, item) in linkedEntries)
+                    {
+                        <div class="mb-3">
+                            <div class="label-caps">@label</div>
+                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@item.Entry.Name</a>
+                            <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
+                        </div>
+                    }
+                </section>
+            }
+            }
+
+            @if (ActiveTab == "picks")
+            {
             @if (Rules != null && Rules.Lists.Count > 0 && evaluation != null)
             {
                 <section class="panel" aria-labelledby="picks-heading">
@@ -425,12 +504,20 @@ else
                 </section>
             }
 
+            }
+
+            @if (ActiveTab == "inventory")
+            {
             @if (Rules?.Inventory is { } inventoryRules && evaluation != null)
             {
                 <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
                                 LibraryPath="@($"/campaigns/{CampaignId}/library")" Changed="OnRulesInputChanged" />
             }
 
+            }
+
+            @if (ActiveTab == "history")
+            {
             <section class="panel" aria-labelledby="bio-heading">
                 <div class="panel-title">
                     <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="16" Class="title-icon" /> History</h2>
@@ -442,15 +529,15 @@ else
                 @if (CanEdit)
                 {
                     <label for="actor-bio" class="visually-hidden">History</label>
-                    <textarea id="actor-bio" class="form-control mb-2" rows="8" placeholder="Where they came from, what they want, who they owe…" @bind="editBiography" @bind:event="oninput" data-testid="sheet-biography"></textarea>
+                    <textarea id="actor-bio" class="field-input mb-2" rows="8" placeholder="Where they came from, what they want, who they owe…" @bind="editBiography" @bind:event="oninput" data-testid="sheet-biography"></textarea>
                     <div class="ai-row">
                         <label for="bio-instruction" class="visually-hidden">Instruction for the AI</label>
-                        <input id="bio-instruction" class="form-control form-control-sm" placeholder="Optional instruction: “expand into three paragraphs”, “make it grimmer”, “add a rival”…" @bind="bioInstruction" />
-                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => RewriteAsync(AiAudience.Players)" disabled="@(busy != null)">
+                        <input id="bio-instruction" class="field-input field-sm" placeholder="Optional instruction: “expand into three paragraphs”, “make it grimmer”, “add a rival”…" @bind="bioInstruction" />
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Players)" Disabled="@(busy != null)">
                             <LucideIcon IconName="sparkles" Size="14" /> @(busy == "bio" ? "Writing…" : string.IsNullOrWhiteSpace(editBiography) ? "Write with AI" : "Rewrite with AI")
-                        </button>
+                        </CodexButton>
                     </div>
-                    <p class="form-text mb-0">The AI sees the sheet and this text. Save changes to keep the result.</p>
+                    <p class="field-hint">The AI sees the sheet and this text. Save changes to keep the result.</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
@@ -462,6 +549,10 @@ else
                 }
             </section>
 
+            }
+
+            @if (ActiveTab == "notes")
+            {
             @if (access.IsDm)
             {
                 <section class="panel panel-dm" aria-labelledby="dm-notes-heading">
@@ -470,30 +561,17 @@ else
                         <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="12" /> Only you</span>
                     </div>
                     <label for="actor-dm-notes" class="visually-hidden">DM notes</label>
-                    <textarea id="actor-dm-notes" class="form-control mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-testid="sheet-dm-notes"></textarea>
+                    <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-testid="sheet-dm-notes"></textarea>
                     <div class="ai-row">
                         <label for="dm-instruction" class="visually-hidden">Instruction for the AI</label>
-                        <input id="dm-instruction" class="form-control form-control-sm" placeholder="Optional instruction: “give them a secret that ties into the party”…" @bind="dmInstruction" />
-                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => RewriteAsync(AiAudience.Dm)" disabled="@(busy != null)">
+                        <input id="dm-instruction" class="field-input field-sm" placeholder="Optional instruction: “give them a secret that ties into the party”…" @bind="dmInstruction" />
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Dm)" Disabled="@(busy != null)">
                             <LucideIcon IconName="sparkles" Size="14" /> @(busy == "dm" ? "Writing…" : "Draft with AI")
-                        </button>
+                        </CodexButton>
                     </div>
                 </section>
             }
 
-            @if (linkedEntries.Count > 0)
-            {
-                <section class="panel" aria-labelledby="linked-heading">
-                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="16" Class="title-icon" /> From the Library</h2></div>
-                    @foreach (var (label, item) in linkedEntries)
-                    {
-                        <div class="mb-3">
-                            <div class="label-caps">@label</div>
-                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@item.Entry.Name</a>
-                            <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
-                        </div>
-                    }
-                </section>
             }
         </div>
 
@@ -550,8 +628,8 @@ else
                     @if (Rules?.Multiclass != null && evaluation is { Classes.Count: > 0 })
                     {
                         <div class="mb-2">
-                            <label for="levelup-class" class="form-label small mb-0">Class gaining the level</label>
-                            <select id="levelup-class" class="form-select form-select-sm" @bind="levelUpClassId" data-testid="levelup-class">
+                            <label for="levelup-class" class="field-label">Class gaining the level</label>
+                            <select id="levelup-class" class="field-select field-sm" @bind="levelUpClassId" data-testid="levelup-class">
                                 @foreach (var cls in evaluation.Classes)
                                 {
                                     <option value="@cls.Id">@(cls.Entry?.Name ?? cls.Id) (level @(cls.Level + 1))</option>
@@ -564,18 +642,18 @@ else
                         </div>
                     }
                     <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-ai btn-sm" @onclick="SuggestLevelUpAsync" disabled="@(busy != null)" data-testid="sheet-levelup">
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
                             <LucideIcon IconName="sparkles" Size="14" /> @(busy == "level" ? "Thinking…" : $"Suggest level {CurrentLevel + 1}")
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="ApplyLevelUp">Set level to @(CurrentLevel + 1)</button>
+                        </CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ApplyLevelUp">Set level to @(CurrentLevel + 1)</CodexButton>
                     </div>
                     @if (levelUpAdvice != null)
                     {
                         <div class="ai-output mt-3" data-testid="levelup-advice">
                             <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(levelUpAdvice))</div>
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => levelUpAdvice = null">Dismiss</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="AppendAdviceToNotes">Keep in notes</button>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => levelUpAdvice = null">Dismiss</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AppendAdviceToNotes">Keep in notes</CodexButton>
                             </div>
                         </div>
                     }
@@ -587,8 +665,8 @@ else
                 <section class="panel" aria-labelledby="visibility-heading">
                     <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="16" Class="title-icon" /> Visibility to players</h2></div>
                     <div class="mb-2">
-                        <label for="actor-visibility" class="form-label">Who sees this character</label>
-                        <select id="actor-visibility" class="form-select" @bind="editVisibility">
+                        <label for="actor-visibility" class="field-label">Who sees this character</label>
+                        <select id="actor-visibility" class="field-select" @bind="editVisibility">
                             <option value="@ActorVisibility.Hidden">Hidden (players don't know they exist)</option>
                             <option value="@ActorVisibility.Unknown">Seen but not identified</option>
                             <option value="@ActorVisibility.Known">Known</option>
@@ -597,13 +675,13 @@ else
                     @if (editVisibility == ActorVisibility.Unknown)
                     {
                         <div class="mb-2">
-                            <label for="actor-public-name" class="form-label">Shown to players as</label>
-                            <input id="actor-public-name" class="form-control" @bind="editPublicName" placeholder="e.g. Hooded stranger" />
+                            <label for="actor-public-name" class="field-label">Shown to players as</label>
+                            <input id="actor-public-name" class="field-input" @bind="editPublicName" placeholder="e.g. Hooded stranger" />
                         </div>
                     }
                     <div class="mb-2">
-                        <label for="actor-kind" class="form-label">Kind</label>
-                        <select id="actor-kind" class="form-select" @bind="editKind">
+                        <label for="actor-kind" class="field-label">Kind</label>
+                        <select id="actor-kind" class="field-select" @bind="editKind">
                             <option value="@ActorKind.PlayerCharacter">Player character</option>
                             <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
                             <option value="@ActorKind.Monster">Monster</option>
@@ -612,8 +690,8 @@ else
                     @if (editKind == ActorKind.PlayerCharacter)
                     {
                         <div class="mb-2">
-                            <label for="actor-owner" class="form-label">Played by</label>
-                            <select id="actor-owner" class="form-select" @bind="editOwnerId">
+                            <label for="actor-owner" class="field-label">Played by</label>
+                            <select id="actor-owner" class="field-select" @bind="editOwnerId">
                                 <option value="">— nobody —</option>
                                 @foreach (var member in campaign.Members)
                                 {
@@ -664,6 +742,75 @@ else
     private string newClassId = "";
     private string levelUpClassId = "";
     private Flash? flash;
+    private Dictionary<string, object> baselineSheet = new();
+    private string activeTab = "attributes";
+
+    private string ActiveTab => Tabs.Any(t => t.Key == activeTab) ? activeTab : Tabs[0].Key;
+
+    /// <summary>The sections the sheet offers; a tab appears only when it has something to show.</summary>
+    private IReadOnlyList<(string Key, string Label, string Icon)> Tabs
+    {
+        get
+        {
+            var tabs = new List<(string, string, string)> { ("attributes", "Attributes", "zap") };
+            if (Rules != null && Rules.Lists.Count > 0) tabs.Add(("picks", "Picks", "sparkles"));
+            if (Rules?.Inventory != null) tabs.Add(("inventory", "Inventory", "package"));
+            tabs.Add(("history", "History", "feather"));
+            if (access?.IsDm == true) tabs.Add(("notes", "DM notes", "lock"));
+            return tabs;
+        }
+    }
+
+    /// <summary>Fields changed since the sheet was loaded or last saved, counting the name and the long texts.</summary>
+    private int DirtyCount
+    {
+        get
+        {
+            if (actor == null) return 0;
+            var count = 0;
+            if (editName != actor.Name) count++;
+            if (editBiography != (actor.Biography ?? "")) count++;
+            if (editDmNotes != (actor.DmNotes ?? "")) count++;
+            foreach (var key in editSheet.Keys.Union(baselineSheet.Keys))
+            {
+                editSheet.TryGetValue(key, out var now);
+                baselineSheet.TryGetValue(key, out var before);
+                if (!Equals(now, before) && now?.ToString() != before?.ToString()) count++;
+            }
+
+            return count;
+        }
+    }
+
+    /// <summary>Class and level, and the species, as plaques on the plate.</summary>
+    private IEnumerable<string> PlatePlaques()
+    {
+        if (evaluation is { Classes.Count: > 0 })
+        {
+            foreach (var cls in evaluation.Classes) yield return $"{cls.Entry?.Name ?? cls.Id} {cls.Level}";
+        }
+        else if (HasLevel)
+        {
+            yield return "Level " + CurrentLevel;
+        }
+    }
+
+    /// <summary>The derived numbers (initiative, proficiency bonus) and speed, for the plate's stat strip.</summary>
+    private IEnumerable<(string Label, string Value)> PlateStats()
+    {
+        if (Rules != null && evaluation != null)
+        {
+            foreach (var derived in Rules.Derived)
+            {
+                if (evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, FormatSigned(value));
+            }
+        }
+
+        if (system?.ActorFields.FirstOrDefault(f => f.Key == "speed") is { } speed && YamlValues.GetInt(editSheet, speed.Key) is { } feet)
+        {
+            yield return (speed.Label.Replace(" (feet)", ""), feet + " ft");
+        }
+    }
 
     /// <summary>Hidden fields, plus maximum hit points while the rules work them out (typing there would be overwritten).</summary>
     private IReadOnlySet<string> HiddenNow =>
@@ -765,6 +912,7 @@ else
                 var subclassType = system?.ActorFields.FirstOrDefault(f => f.Key == Rules?.Multiclass?.SubclassField)?.TargetEntityType;
                 subclassCandidates = subclassType == null || resolver == null ? new List<ContentEntry>() : resolver.Candidates(subclassType).ToList();
                 Reevaluate();
+                baselineSheet = new Dictionary<string, object>(editSheet);
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
             }

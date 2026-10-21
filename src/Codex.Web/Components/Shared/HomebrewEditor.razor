@@ -29,7 +29,7 @@
         <div class="field-wide">
             <label for="@(id)-desc" class="form-label">Description</label>
             <textarea id="@(id)-desc" class="form-control" rows="5" @bind="Entry.Description" data-testid="homebrew-description"></textarea>
-            <div class="form-text">Plain text. <code>**bold**</code>, <code>*italic*</code>, "- " bullets and | tables | are rendered.</div>
+            <div class="field-hint">Plain text. <code>**bold**</code>, <code>*italic*</code>, "- " bullets and | tables | are rendered.</div>
         </div>
         <div>
             <label for="@(id)-tags" class="form-label">Tags</label>
@@ -37,9 +37,9 @@
                    @onchange="e => Entry.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
         </div>
         <div>
-            <div class="form-check mt-4">
+            <div class="field-check mt-4">
                 <input id="@(id)-published" type="checkbox" class="form-check-input" @bind="Entry.IsPublished" />
-                <label for="@(id)-published" class="form-check-label">Visible to players</label>
+                <label for="@(id)-published" >Visible to players</label>
             </div>
         </div>
     </div>

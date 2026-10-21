@@ -32,8 +32,8 @@
             {
                 <div class="d-inline-flex flex-wrap gap-2 align-items-end justify-content-center mb-2">
                     <div class="text-start">
-                        <label for="start-session" class="form-label small mb-1">Session</label>
-                        <select id="start-session" class="form-select form-select-sm" data-testid="start-session-select" @bind="startSessionId">
+                        <label for="start-session" class="field-label">Session</label>
+                        <select id="start-session" class="field-select field-sm" data-testid="start-session-select" @bind="startSessionId">
                             @foreach (var session in openSessions)
                             {
                                 <option value="@session.Id">@SessionLabel(session)</option>
@@ -44,7 +44,7 @@
                 </div>
             }
             <div>
-                <button type="button" class="btn btn-primary" data-testid="start-table" @onclick="StartOrJoinAsync">Start the table</button>
+                <CodexButton Variant="CodexButtonVariant.Plaque" data-testid="start-table" OnClick="StartOrJoinAsync">Start the table</CodexButton>
             </div>
         }
         else
@@ -66,12 +66,20 @@ else
                     @if (Access.IsDm && encounter is { Participants.Count: > 0 })
                     {
                         <div class="d-flex flex-wrap gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="prev-turn-btn" @onclick="PreviousTurnAsync"><LucideIcon IconName="chevron-left" Size="14" /> Previous</button>
-                            <button type="button" class="btn btn-sm btn-primary" data-testid="next-turn-btn" @onclick="NextTurnAsync">Next turn <LucideIcon IconName="chevron-right" Size="14" /></button>
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-testid="end-encounter-btn" @onclick="EndEncounterAsync">End encounter</button>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="prev-turn-btn" OnClick="PreviousTurnAsync"><LucideIcon IconName="chevron-left" Size="14" /> Previous</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="next-turn-btn" OnClick="NextTurnAsync">Next turn <LucideIcon IconName="chevron-right" Size="14" /></CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="end-encounter-btn" OnClick="EndEncounterAsync">End encounter</CodexButton>
                         </div>
                     }
                 </div>
+
+                @if (encounter is { Participants.Count: > 0 } && CurrentTurnName(encounter) is { } turnName)
+                {
+                    <div class="round-banner turn-banner" data-testid="turn-banner">
+                        <div class="turn-callout"><LucideIcon IconName="target" Size="18" /><span class="visually-hidden">Now acting:</span><span class="turn-name" aria-live="polite">@turnName</span></div>
+                        <span class="small-muted">Turn @(encounter.TurnIndex + 1) of @encounter.Participants.Count</span>
+                    </div>
+                }
 
                 @if (encounter == null || encounter.Participants.Count == 0)
                 {
@@ -96,6 +104,16 @@ else
                             var dead = IsDead(actorId);
                             var down = !dead && IsDown(actorId);
                             <div class="participant @(isCurrent ? "current" : "") @(isSelected ? "selected" : "") @(dead ? "dead" : down ? "down" : "")" data-testid="participant-row" data-actor-id="@actorId" aria-current="@(isCurrent ? "true" : null)">
+                                <div class="participant-token">
+                                    @if (actor != null)
+                                    {
+                                        <ActorAvatar Actor="actor" Size="lg" Class="@("token " + KindClass(actor))" />
+                                    }
+                                    else
+                                    {
+                                        <span class="avatar avatar-lg token" aria-hidden="true">?</span>
+                                    }
+                                </div>
                                 <div class="participant-head">
                                     @if (Access.IsDm)
                                     {
@@ -107,7 +125,7 @@ else
                                     {
                                         <span class="participant-name">@name</span>
                                     }
-                                    <span class="pill" title="Initiative @participant.InitiativeRoll">Initiative @participant.InitiativeRoll</span>
+                                    <span class="init-plaque" title="Initiative @participant.InitiativeRoll"><span class="visually-hidden">Initiative </span>@participant.InitiativeRoll</span>
                                     @if (participant.State != TurnState.Normal)
                                     {
                                         <span class="pill pill-warning">@participant.State</span>
@@ -155,8 +173,8 @@ else
                     </datalist>
                     <div class="console-row mt-3 pt-3 border-top">
                         <div>
-                            <label for="add-to-initiative" class="form-label small mb-1">Add to initiative</label>
-                            <select id="add-to-initiative" class="form-select form-select-sm" data-testid="add-to-initiative-select" @bind="selectedActorId">
+                            <label for="add-to-initiative" class="field-label">Add to initiative</label>
+                            <select id="add-to-initiative" class="field-select field-sm" data-testid="add-to-initiative-select" @bind="selectedActorId">
                                 <option value="">Choose someone…</option>
                                 @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
                                 {
@@ -165,22 +183,22 @@ else
                             </select>
                         </div>
                         <div>
-                            <label for="initiative-mode" class="form-label small mb-1">Roll</label>
-                            <select id="initiative-mode" class="form-select form-select-sm" @bind="initiativeMode">
+                            <label for="initiative-mode" class="field-label">Roll</label>
+                            <select id="initiative-mode" class="field-select field-sm" @bind="initiativeMode">
                                 <option value="normal">Normal</option>
                                 <option value="adv">Advantage</option>
                                 <option value="dis">Disadvantage</option>
                             </select>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="roll-initiative-btn" @onclick="RollInitiativeForSelectedAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Roll @InitiativeDice@InitiativeBonusText(selectedActorId)</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="roll-initiative-btn" OnClick="RollInitiativeForSelectedAsync" Disabled="@string.IsNullOrEmpty(selectedActorId)">Roll @InitiativeDice@InitiativeBonusText(selectedActorId)</CodexButton>
                         <span class="small-muted pb-1">or</span>
                         <div>
-                            <label for="manual-initiative" class="form-label small mb-1">Enter total</label>
-                            <input id="manual-initiative" type="number" class="form-control form-control-sm w-5" data-testid="manual-initiative-input"
+                            <label for="manual-initiative" class="field-label">Enter total</label>
+                            <input id="manual-initiative" type="number" class="field-input field-sm" data-testid="manual-initiative-input"
                                    value="@GetManualInitiative(selectedActorId)"
                                    @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="set-initiative-btn" @onclick="SetInitiativeManualAsync" disabled="@string.IsNullOrEmpty(selectedActorId)">Set</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="set-initiative-btn" OnClick="SetInitiativeManualAsync" Disabled="@string.IsNullOrEmpty(selectedActorId)">Set</CodexButton>
                     </div>
                 }
             </section>
@@ -190,7 +208,7 @@ else
                 <section class="panel" aria-labelledby="quick-add-heading">
                     <div class="panel-title"><h3 id="quick-add-heading">Quick-add a creature</h3></div>
                     <label for="monster-search" class="visually-hidden">Search creatures</label>
-                    <input id="monster-search" type="search" class="form-control form-control-sm mb-2" placeholder="Search creatures in the Library…" @bind="contentSearch" @bind:event="oninput" />
+                    <input id="monster-search" type="search" class="field-input field-sm mb-2" placeholder="Search creatures in the Library…" @bind="contentSearch" @bind:event="oninput" />
                     @if (contentSearch.Length > 0)
                     {
                         <ul class="list-unstyled mb-0">
@@ -198,7 +216,7 @@ else
                             {
                                 <li class="list-row">
                                     <span>@definition.Name</span>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => QuickAddMonsterAsync(definition)" aria-label="Add @definition.Name to the encounter">Add to encounter</button>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => QuickAddMonsterAsync(definition)" aria-label="@($"Add {definition.Name} to the encounter")">Add to encounter</CodexButton>
                                 </li>
                             }
                         </ul>
@@ -217,14 +235,14 @@ else
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var rest in Rests)
                             {
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-testid="party-rest-@Slug(rest)" @onclick="() => PartyRestAsync(rest)">@rest for the party</button>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"party-rest-{Slug(rest)}")" OnClick="() => PartyRestAsync(rest)">@rest for the party</CodexButton>
                             }
                         </div>
                     </section>
                 }
 
                 <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="EndTableAsync" data-testid="end-table">End the table</button>
+                    <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="EndTableAsync" data-testid="end-table">End the table</CodexButton>
                 </div>
             }
         </div>
@@ -254,14 +272,14 @@ else
                 <div class="panel-title"><h3 id="dice-heading">Dice</h3></div>
                 <form class="input-group input-group-sm mb-2" @onsubmit="RollDiceAsync" @onsubmit:preventDefault="true">
                     <label for="dice-expression" class="visually-hidden">Dice expression</label>
-                    <input id="dice-expression" class="form-control" placeholder="2d6+3, 4d6kh3, adv+5…" @bind="diceExpression" data-testid="dice-input" />
-                    <button type="submit" class="btn btn-primary" data-testid="dice-roll">Roll</button>
+                    <input id="dice-expression" class="field-input" placeholder="2d6+3, 4d6kh3, adv+5…" @bind="diceExpression" data-testid="dice-input" />
+                    <CodexButton Variant="CodexButtonVariant.Plaque" data-testid="dice-roll">Roll</CodexButton>
                 </form>
                 @if (Access.IsDm)
                 {
-                    <div class="form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="diceSecret" @bind="diceSecret" />
-                        <label class="form-check-label small" for="diceSecret">Secret roll (DM only)</label>
+                    <div class="field-check mb-2">
+                        <input type="checkbox" class="field-box" id="diceSecret" @bind="diceSecret" />
+                        <label class="small" for="diceSecret">Secret roll (DM only)</label>
                     </div>
                 }
                 <div class="log" aria-live="polite" aria-label="Roll log">
@@ -283,15 +301,15 @@ else
                 <div class="panel-title"><h3 id="notes-heading">Quick notes</h3></div>
                 <form @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
                     <label for="quick-note" class="visually-hidden">New note</label>
-                    <textarea id="quick-note" class="form-control form-control-sm mb-2" rows="2" @bind="noteText" placeholder="Something worth remembering…"></textarea>
+                    <textarea id="quick-note" class="field-input field-sm mb-2" rows="2" @bind="noteText" placeholder="Something worth remembering…"></textarea>
                     @if (Access.IsDm)
                     {
-                        <div class="form-check mb-2">
-                            <input type="checkbox" class="form-check-input" id="noteSecret" @bind="noteSecret" />
-                            <label class="form-check-label small" for="noteSecret">Secret note (DM only)</label>
+                        <div class="field-check mb-2">
+                            <input type="checkbox" class="field-box" id="noteSecret" @bind="noteSecret" />
+                            <label class="small" for="noteSecret">Secret note (DM only)</label>
                         </div>
                     }
-                    <button type="submit" class="btn btn-sm btn-outline-secondary mb-2">Add note</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mb-2">Add note</CodexButton>
                 </form>
                 <div class="log">
                     @foreach (var note in VisibleNotes())
@@ -628,7 +646,7 @@ else
         var text = CanSeeExact(actorId) ? $"{pool.Current}/{pool.Max} {PrimaryKey}" : HpBand(pool.Current, pool.Max);
 
         builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "class", "pill pill-danger hp-text");
+        builder.AddAttribute(1, "class", (pool.Max > 0 && pool.Current * 2 < pool.Max ? "pill pill-danger" : "pill") + " hp-text");
         builder.AddAttribute(2, "data-testid", "hp-badge");
         builder.AddContent(3, text);
         builder.CloseElement();
@@ -651,7 +669,7 @@ else
         var pct = Math.Clamp(100.0 * pool.Current / pool.Max, 0, 100);
         var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
         builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "hp-bar " + band);
+        builder.AddAttribute(1, "class", "hp-bar hp-numbered " + band);
         builder.AddAttribute(2, "role", "progressbar");
         builder.AddAttribute(3, "aria-label", $"{PrimaryLabel}");
         builder.AddAttribute(4, "aria-valuemin", "0");
@@ -659,6 +677,11 @@ else
         builder.AddAttribute(6, "aria-valuenow", pool.Current.ToString());
         builder.OpenElement(7, "span");
         builder.AddAttribute(8, "style", $"width:{pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}%");
+        builder.CloseElement();
+        builder.OpenElement(9, "span");
+        builder.AddAttribute(10, "class", "hp-over");
+        builder.AddAttribute(11, "aria-hidden", "true");
+        builder.AddContent(12, $"{pool.Current} / {pool.Max}");
         builder.CloseElement();
         builder.CloseElement();
     };
@@ -700,7 +723,7 @@ else
         {
             builder.OpenElement(seq++, "button");
             builder.AddAttribute(seq++, "type", "button");
-            builder.AddAttribute(seq++, "class", "btn btn-sm btn-outline-secondary");
+            builder.AddAttribute(seq++, "class", "cx-btn cx-etched cx-sm");
             builder.AddAttribute(seq++, "data-testid", "roll-death-save");
             builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => runtime!.EnqueueAsync(new RollDeathSaveCommand(actorId, CurrentUserId))));
             builder.AddContent(seq++, "Roll death save");
@@ -710,57 +733,61 @@ else
         builder.CloseElement();
     };
 
-    private RenderFragment ConditionList(string actorId, string name) => builder =>
+    private RenderFragment ConditionList(string actorId, string name) => __builder =>
     {
         var effects = GetEffects(actorId).Where(e => !IsVitalsMarker(e.EffectId)).ToList();
         var exhaustion = Vitals?.Exhaustion is { } rules ? PoolValue(actorId, rules.Key) ?? 0 : 0;
         if (effects.Count == 0 && exhaustion == 0) return;
-        var seq = 0;
-        builder.OpenElement(seq++, "ul");
-        builder.AddAttribute(seq++, "class", "list-inline mb-0 mt-2");
-        builder.AddAttribute(seq++, "aria-label", $"Conditions on {name}");
-        if (exhaustion > 0)
-        {
-            builder.OpenElement(seq++, "li");
-            builder.AddAttribute(seq++, "class", "list-inline-item");
-            builder.OpenElement(seq++, "span");
-            builder.AddAttribute(seq++, "class", "pill pill-warning");
-            builder.AddAttribute(seq++, "data-testid", "exhaustion-badge");
-            builder.AddContent(seq++, $"{Vitals!.Exhaustion!.Condition ?? "Exhaustion"} {exhaustion}");
-            builder.CloseElement();
-            builder.CloseElement();
-        }
-
-        foreach (var effect in effects)
-        {
-            builder.OpenElement(seq++, "li");
-            builder.AddAttribute(seq++, "class", "list-inline-item");
-            builder.OpenElement(seq++, "span");
-            builder.AddAttribute(seq++, "class", "pill pill-warning");
-            builder.AddAttribute(seq++, "data-testid", "condition-badge");
-            builder.AddAttribute(seq++, "data-effect-id", effect.EffectId);
-            builder.AddAttribute(seq++, "title", effect.IsIndefinite ? "Until removed" : $"{effect.RoundsRemaining} round(s), ends at the {(effect.Expiry == EffectExpiry.StartOfTurn ? "start" : "end")} of the turn");
-            builder.AddContent(seq++, effect.IsIndefinite ? effect.EffectId : $"{effect.EffectId} ({effect.RoundsRemaining})");
-            if (Access.IsDm)
+        <ul class="cond-strip list-unstyled mb-0" aria-label="@($"Conditions on {name}")">
+            @if (exhaustion > 0)
             {
-                builder.OpenElement(seq++, "button");
-                builder.AddAttribute(seq++, "type", "button");
-                builder.AddAttribute(seq++, "class", "btn-link-plain ms-1");
-                builder.AddAttribute(seq++, "aria-label", $"Remove {effect.EffectId} from {name}");
-                builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => RemoveConditionAsync(actorId, effect.EffectId)));
-                builder.OpenComponent<LucideIcon>(seq++);
-                builder.AddAttribute(seq++, "IconName", "x");
-                builder.AddAttribute(seq++, "Size", 12);
-                builder.CloseComponent();
-                builder.CloseElement();
+                <li class="cond-chip" data-testid="exhaustion-badge" title="@($"{Vitals!.Exhaustion!.Condition ?? "Exhaustion"}, level {exhaustion}")">
+                    <LucideIcon IconName="@ConditionIcon(Vitals!.Exhaustion!.Condition ?? "Exhaustion")" Size="14" />
+                    @($"{Vitals!.Exhaustion!.Condition ?? "Exhaustion"} {exhaustion}")
+                </li>
             }
-
-            builder.CloseElement();
-            builder.CloseElement();
-        }
-
-        builder.CloseElement();
+            @foreach (var effect in effects)
+            {
+                var effectId = effect.EffectId;
+                var tip = effect.IsIndefinite ? "Until removed" : $"{effect.RoundsRemaining} round(s), ends at the {(effect.Expiry == EffectExpiry.StartOfTurn ? "start" : "end")} of the turn";
+                <li class="cond-chip" data-testid="condition-badge" data-effect-id="@effectId" title="@tip">
+                    <LucideIcon IconName="@ConditionIcon(effectId)" Size="14" />
+                    @(effect.IsIndefinite ? effectId : $"{effectId} ({effect.RoundsRemaining})")
+                    @if (Access.IsDm)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"Remove {effectId} from {name}")" OnClick="() => RemoveConditionAsync(actorId, effectId)" />
+                    }
+                </li>
+            }
+        </ul>
     };
+
+    private static string ConditionIcon(string condition) => condition.ToLowerInvariant() switch
+    {
+        "blinded" or "invisible" => "eye-off",
+        "charmed" => "heart",
+        "stunned" or "paralyzed" or "incapacitated" => "zap",
+        "poisoned" or "burning" => "flame",
+        "exhaustion" => "trending-up",
+        "frightened" or "prone" => "alert-triangle",
+        _ => "sparkles",
+    };
+
+    private static string KindClass(ActorDocument actor) => actor.Kind switch
+    {
+        ActorKind.PlayerCharacter => "token-pc",
+        ActorKind.Monster => "token-monster",
+        _ => "token-npc",
+    };
+
+    /// <summary>Whose turn it is, for the banner. A participant the viewer can't see is never named.</summary>
+    private string? CurrentTurnName(EncounterSnapshot encounter)
+    {
+        if (encounter.TurnIndex < 0 || encounter.TurnIndex >= encounter.Participants.Count) return null;
+        var id = encounter.Participants[encounter.TurnIndex].ActorId;
+        var actor = ActorsById.GetValueOrDefault(id);
+        return actor?.Name ?? (Access.IsDm ? id : "Someone you can't see");
+    }
 
     /// <summary>Dead, stable and down are shown as the row's state, not as conditions in the list.</summary>
     private bool IsVitalsMarker(string effectId) =>
@@ -790,16 +817,16 @@ else
         <div class="command-panel" data-testid="command-panel" data-actor-id="@actorId" aria-label="Commands for @name">
             <div class="console-row mt-0">
                 <div>
-                    <label for="dmg-@actorId" class="form-label small mb-1">Amount</label>
-                    <input id="dmg-@actorId" type="number" min="0" class="form-control form-control-sm w-5" data-testid="damage-input"
+                    <label for="dmg-@actorId" class="field-label">Amount</label>
+                    <input id="dmg-@actorId" type="number" min="0" class="field-input field-sm" data-testid="damage-input"
                            value="@GetDamageInput(actorId)"
                            @oninput="e => SetDamageInput(actorId, e.Value?.ToString())" />
                 </div>
                 @if (DamageTypes.Count > 0)
                 {
                     <div>
-                        <label for="dmg-type-@actorId" class="form-label small mb-1">Type</label>
-                        <select id="dmg-type-@actorId" class="form-select form-select-sm" data-testid="damage-type-select"
+                        <label for="dmg-type-@actorId" class="field-label">Type</label>
+                        <select id="dmg-type-@actorId" class="field-select field-sm" data-testid="damage-type-select"
                                 value="@damageTypeInputs.GetValueOrDefault(actorId, "")"
                                 @onchange="e => damageTypeInputs[actorId] = e.Value?.ToString() ?? string.Empty">
                             <option value="">Untyped</option>
@@ -810,17 +837,17 @@ else
                         </select>
                     </div>
                 }
-                <div class="form-check pb-1">
-                    <input type="checkbox" class="form-check-input" id="crit-@actorId" data-testid="critical-input"
+                <div class="field-check pb-1">
+                    <input type="checkbox" class="field-box" id="crit-@actorId" data-testid="critical-input"
                            checked="@criticalInputs.GetValueOrDefault(actorId)"
                            @onchange="e => criticalInputs[actorId] = e.Value is true" />
-                    <label class="form-check-label small" for="crit-@actorId">Critical hit</label>
+                    <label class="small" for="crit-@actorId">Critical hit</label>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-danger" data-testid="damage-btn" @onclick="() => ApplyDamageAsync(actorId)" aria-label="Damage @name">Damage</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="heal-btn" @onclick="() => ApplyHealingAsync(actorId)" aria-label="Heal @name">Heal</button>
+                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="damage-btn" OnClick="() => ApplyDamageAsync(actorId)" aria-label="@($"Damage {name}")">Damage</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="heal-btn" OnClick="() => ApplyHealingAsync(actorId)" aria-label="@($"Heal {name}")">Heal</CodexButton>
                 @if (Vitals?.TemporaryResource != null)
                 {
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="temp-hp-btn" @onclick="() => GrantTempHpAsync(actorId)" aria-label="Give @name temporary hit points">Temp HP</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="temp-hp-btn" OnClick="() => GrantTempHpAsync(actorId)" aria-label="@($"Give {name} temporary hit points")">Temp HP</CodexButton>
                 }
             </div>
 
@@ -828,8 +855,8 @@ else
             {
                 <div class="console-row">
                     <span class="small-muted pb-1">@name is @DeadCondition.ToLowerInvariant().</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="revive-btn" @onclick="() => RemoveConditionAsync(actorId, DeadCondition)" aria-label="Revive @name">Revive (clear @DeadCondition)</button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-testid="remove-participant-btn" @onclick="() => RemoveFromOrderAsync(actorId)" aria-label="Remove @name from the order">Remove from order</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="revive-btn" OnClick="() => RemoveConditionAsync(actorId, DeadCondition)" aria-label="@($"Revive {name}")">Revive (clear @DeadCondition)</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="remove-participant-btn" OnClick="() => RemoveFromOrderAsync(actorId)" aria-label="@($"Remove {name} from the order")">Remove from order</CodexButton>
                 </div>
             }
             else if (down && Vitals?.DeathSaves != null)
@@ -838,48 +865,48 @@ else
                     <span class="small-muted pb-1">@name is at 0 @PrimaryKey.</span>
                     @if (!IsStable(actorId))
                     {
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="death-save-success" @onclick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, true))">Success</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="death-save-failure" @onclick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, false))">Failure</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="stabilize-btn" @onclick="() => runtime!.EnqueueAsync(new StabilizeCommand(actorId, CurrentUserId))">Stabilize</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-success" OnClick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, true))">Success</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-failure" OnClick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, false))">Failure</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="stabilize-btn" OnClick="() => runtime!.EnqueueAsync(new StabilizeCommand(actorId, CurrentUserId))">Stabilize</CodexButton>
                     }
                     else
                     {
                         <span class="pill pill-success">@StableCondition</span>
                     }
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-testid="kill-btn" @onclick="() => AddConditionDirectAsync(actorId, DeadCondition)" aria-label="Mark @name dead">Mark dead</button>
+                    <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="kill-btn" OnClick="() => AddConditionDirectAsync(actorId, DeadCondition)" aria-label="@($"Mark {name} dead")">Mark dead</CodexButton>
                 </div>
             }
 
             <div class="console-row">
                 <div>
-                    <label for="cond-@actorId" class="form-label small mb-1">Condition</label>
-                    <input id="cond-@actorId" class="form-control form-control-sm w-8" list="conditions-list" data-testid="condition-input"
+                    <label for="cond-@actorId" class="field-label">Condition</label>
+                    <input id="cond-@actorId" class="field-input field-sm w-8" list="conditions-list" data-testid="condition-input"
                            value="@GetConditionInput(actorId)"
                            @oninput="e => SetConditionInput(actorId, e.Value?.ToString())" />
                 </div>
                 <div>
-                    <label for="rounds-@actorId" class="form-label small mb-1">Rounds</label>
-                    <input id="rounds-@actorId" type="number" min="0" class="form-control form-control-sm w-5" data-testid="condition-rounds-input" placeholder="∞"
+                    <label for="rounds-@actorId" class="field-label">Rounds</label>
+                    <input id="rounds-@actorId" type="number" min="0" class="field-input field-sm" data-testid="condition-rounds-input" placeholder="∞"
                            value="@GetConditionRounds(actorId)" title="0 or blank: until removed"
                            @oninput="e => SetConditionRounds(actorId, e.Value?.ToString())" />
                 </div>
                 <div>
-                    <label for="expiry-@actorId" class="form-label small mb-1">Ends at</label>
-                    <select id="expiry-@actorId" class="form-select form-select-sm" data-testid="condition-expiry-select"
+                    <label for="expiry-@actorId" class="field-label">Ends at</label>
+                    <select id="expiry-@actorId" class="field-select field-sm" data-testid="condition-expiry-select"
                             value="@conditionExpiryInputs.GetValueOrDefault(actorId, EffectExpiry.EndOfTurn).ToString()"
                             @onchange="e => conditionExpiryInputs[actorId] = Enum.TryParse<EffectExpiry>(e.Value?.ToString(), out var x) ? x : EffectExpiry.EndOfTurn">
                         <option value="@EffectExpiry.EndOfTurn">End of their turn</option>
                         <option value="@EffectExpiry.StartOfTurn">Start of their turn</option>
                     </select>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="condition-add-btn" @onclick="() => AddConditionAsync(actorId)" aria-label="Add condition to @name">Add condition</button>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="condition-add-btn" OnClick="() => AddConditionAsync(actorId)" aria-label="@($"Add condition to {name}")">Add condition</CodexButton>
                 @if (Vitals?.Exhaustion is { } exhaustion)
                 {
                     var level = PoolValue(actorId, exhaustion.Key) ?? 0;
                     <div class="d-flex align-items-end gap-1">
                         <span class="small pb-1">@(exhaustion.Condition ?? "Exhaustion") @level</span>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="exhaustion-up" disabled="@(level >= exhaustion.MaxLevel)" @onclick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, 1))" aria-label="Raise @name's exhaustion">+</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="exhaustion-down" disabled="@(level <= 0)" @onclick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, -1))" aria-label="Lower @name's exhaustion">−</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" @onclick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, 1))" aria-label="@($"Raise {name}'s exhaustion")">+</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, -1))" aria-label="@($"Lower {name}'s exhaustion")">−</CodexButton>
                     </div>
                 }
             </div>
@@ -888,17 +915,17 @@ else
                 <span class="small-muted pb-1">Turn</span>
                 @if (participant.State != TurnState.Normal)
                 {
-                    <button type="button" class="btn btn-sm btn-primary" data-testid="act-now-btn" @onclick="() => ActNowAsync(actorId)" aria-label="@name acts now">Act now</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetTurnStateAsync(actorId, TurnState.Normal)" aria-label="Clear @name's delay or ready state">Clear</button>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="act-now-btn" OnClick="() => ActNowAsync(actorId)" aria-label="@($"{name} acts now")">Act now</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetTurnStateAsync(actorId, TurnState.Normal)" aria-label="@($"Clear {name}'s delay or ready state")">Clear</CodexButton>
                 }
                 else
                 {
-                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetTurnStateAsync(actorId, TurnState.Delayed)" aria-label="@name delays their turn">Delay</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetTurnStateAsync(actorId, TurnState.Readied)" aria-label="@name readies an action">Ready</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetTurnStateAsync(actorId, TurnState.Delayed)" aria-label="@($"{name} delays their turn")">Delay</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetTurnStateAsync(actorId, TurnState.Readied)" aria-label="@($"{name} readies an action")">Ready</CodexButton>
                 }
                 @if (!dead)
                 {
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="remove-participant-btn" @onclick="() => RemoveFromOrderAsync(actorId)" aria-label="Remove @name from the order">Remove from order</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="remove-participant-btn" OnClick="() => RemoveFromOrderAsync(actorId)" aria-label="@($"Remove {name} from the order")">Remove from order</CodexButton>
                 }
             </div>
 
@@ -909,17 +936,17 @@ else
                     <span class="small-muted pb-1">Rest</span>
                     @foreach (var rest in Rests)
                     {
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="rest-@Slug(rest)" @onclick="() => RestAsync(actorId, rest)">@rest</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{Slug(rest)}")" OnClick="() => RestAsync(actorId, rest)">@rest</CodexButton>
                     }
                     @if (hitDice is { Max: > 0 } dice)
                     {
                         <span class="small pb-1" data-testid="hit-dice">Hit dice @dice.Current/@dice.Max@(dice.Sides is { } s ? $" (d{s})" : "")</span>
                         @if (dice.Sides != null)
                         {
-                            <input type="number" min="1" max="@dice.Current" class="form-control form-control-sm w-5" data-testid="hit-dice-input" aria-label="Hit dice to spend"
+                            <input type="number" min="1" max="@dice.Current" class="field-input field-sm" data-testid="hit-dice-input" aria-label="Hit dice to spend"
                                    value="@hitDiceInputs.GetValueOrDefault(actorId, 1)"
                                    @oninput="e => hitDiceInputs[actorId] = int.TryParse(e.Value?.ToString(), out var n) && n > 0 ? n : 1" />
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="spend-hit-dice-btn" disabled="@(dice.Current <= 0)" @onclick="() => SpendHitDiceAsync(actorId, dice.Sides.Value)">Spend</button>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="spend-hit-dice-btn" Disabled="@(dice.Current <= 0)" OnClick="() => SpendHitDiceAsync(actorId, dice.Sides.Value)">Spend</CodexButton>
                         }
                     }
                 </div>
