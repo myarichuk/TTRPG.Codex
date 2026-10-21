@@ -1,8 +1,9 @@
 # UI specification
 
 The web UI is a Blazor Server app with a token-based stylesheet (`src/Codex.Web/wwwroot/app.css`)
-over a vendored Bootstrap. Light and dark themes follow the OS preference and can be toggled from
-the header; every colour pair meets WCAG AA. Nothing loads from the internet at runtime.
+over a vendored Bootstrap. The look is dark stone, leather and brass; dark is the default whatever
+the OS prefers, and the opt-in light theme, *parchment*, is toggled from the header. Every colour
+pair meets WCAG AA. Nothing loads from the internet at runtime, fonts included.
 
 ## Principles
 
@@ -19,7 +20,7 @@ the header; every colour pair meets WCAG AA. Nothing loads from the internet at 
 
 ## Shell
 
-- **Header**: translucent, blurred, sticky. Brand, top-level nav (Campaigns, Library, About),
+- **Header**: leather with a brass rule, sticky. Brand, top-level nav (Campaigns, Library, About),
   theme toggle, user chip, sign out. Nav labels hide below 720px.
 - **Campaign workspace** (`/campaigns/{id}/...`): a sticky side rail on wide screens holding the
   campaign name, system and role pills, and the eight section links; a "Live" badge appears on
@@ -32,11 +33,50 @@ the header; every colour pair meets WCAG AA. Nothing loads from the internet at 
 
 ## Tokens
 
-Colours (`--bg`, `--surface`, `--surface-2/3`, `--text`, `--text-2/3`, `--accent`, `--accent-2`,
-`--danger`, `--success`, `--warning`, `--hp`, `--hp-mid`, `--hp-high`), radii (`--radius-sm/md/lg/xl`),
-shadows (`--shadow-1/2/3`), motion (`--ease-out`, `--ease-spring`, `--dur-fast`, `--dur`,
-`--dur-slow`) and layout (`--header-h`, `--content-max`, `--gutter`) all live on `:root`, with the
-dark overrides under `:root[data-theme="dark"]`.
+Colours (`--bg` stone; `--surface`, `--surface-2/3` leather; `--text`, `--text-2/3` bone;
+`--accent` brass and `--accent-2` bone; `--arcane` verdigris for magic and the AI helpers;
+`--danger`, `--success`, `--warning`; `--hp`, `--hp-mid`, `--hp-high`, `--hp-track` blood), borders
+(`--border` and `--border-strong` brass, `--rule` the dark divider between rows, `--frame` the
+inner dark line that completes the two-tone border), radii (`--radius-sm/md/lg/xl`, 2 to 4px),
+shadows (`--shadow-1/2/3`), type (`--font-display`, `--font-body`), motion (`--ease-out`,
+`--ease-spring`, `--dur-fast`, `--dur`, `--dur-slow`) and layout (`--header-h`, `--content-max`,
+`--gutter`) all live on `:root`, which is the dark theme. Parchment overrides them under
+`:root[data-theme="light"]`; the inline script in `App.razor` applies the saved choice before first
+paint and falls back to dark. There are no gradients, blurs or `backdrop-filter` anywhere in the
+stylesheet except the scrims that fade a cover image into its card and the loading-skeleton shimmer.
+
+### Type
+
+Two OFL typefaces, self-hosted under `wwwroot/fonts` and recorded in `LEGAL.md`: **Cinzel**
+(engraved Roman capitals; its lower case is true small capitals) for `h1`-`h3`, `.brand`,
+`.attr-mod` and the `.stat-numeral` HP/AC figures, set with positive tracking; **Alegreya Sans** for
+everything else. Labels (field-group legends, table heads, the side-rail group names, ability names,
+feature levels, the type line above a Library entry) share one style, `.label-caps`: body face,
+bold, `font-variant-caps: all-small-caps`, 0.08em tracking, `--text-3`. Do not add new uppercase
+eyebrows or inline `letter-spacing`.
+
+### Contrast
+
+Checked with the WCAG relative-luminance formula; text needs 4.5:1 and borders of controls, focus
+rings and the HP bar's fill against its track need 3:1.
+
+| Pair | Need | Dark | Parchment |
+|---|---|---|---|
+| `--text` on `--surface` | 4.5 | 14.9 | 13.7 |
+| `--text` on `--bg` | 4.5 | 15.9 | 11.7 |
+| `--text-2` on `--surface-2` | 4.5 | 9.8 | 8.0 |
+| `--text-3` on `--surface-2` (muted text, placeholders) | 4.5 | 6.3 | 5.5 |
+| `--text-3` on `--surface-3` | 4.5 | 5.6 | 4.7 |
+| `--accent` on `--surface` (links, labels) | 4.5 | 8.4 | 6.4 |
+| `--accent-hover` on `--surface` | 4.5 | 10.7 | 8.9 |
+| `--on-accent` on `--accent` (primary buttons, active chips) | 4.5 | 8.5 | 6.9 |
+| `--on-accent` on `--accent-hover` | 4.5 | 10.8 | 9.5 |
+| `--arcane` on `--surface` / `--bg` | 4.5 | 8.5 / 9.1 | 5.9 / 5.0 |
+| `--danger` on its tint over `--surface-2` | 4.5 | 5.5 | 4.6 |
+| `--success` on its tint over `--surface-2` | 4.5 | 7.1 | 4.8 |
+| `--warning` on its tint over `--surface-2` | 4.5 | 6.8 | 4.5 |
+| `--border-strong` on `--surface` / `--bg` | 3 | 4.8 / 5.1 | 4.9 / 4.2 |
+| `--hp-high` / `--hp` fill on `--hp-track` | 3 | 3.3 / 4.6 | 4.2 / 3.3 |
 
 ## Screens
 

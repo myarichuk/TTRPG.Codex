@@ -102,7 +102,7 @@
 window.codex = {
     // Theme: persisted per browser; the inline <head> script applies it before first paint.
     getTheme: function () {
-        return document.documentElement.getAttribute('data-theme') || 'light';
+        return document.documentElement.getAttribute('data-theme') || 'dark';
     },
     setTheme: function (theme) {
         document.documentElement.setAttribute('data-theme', theme);
