@@ -21,7 +21,7 @@
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
-            <a href="@Ctx.BasePath/library/monster" class="cx-btn cx-etched"><LucideIcon IconName="plus" Size="16" /> New homebrew creature</a>
+            <a href="@Ctx.BasePath/library/monster" class="cx-btn cx-etched"><LucideIcon IconName="plus" Size="18" /> New homebrew creature</a>
         </div>
     }
 </div>
@@ -31,7 +31,7 @@
     @if (inPlay.Count == 0)
     {
         <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="paw-print" Size="26" /></div>
+            <div class="empty-icon"><LucideIcon IconName="paw-print" Size="28" /></div>
             <h3>Nothing met yet</h3>
             <p>Creatures appear here once the DM reveals them.</p>
         </div>
@@ -59,7 +59,7 @@ else
     <div class="row g-3">
         <div class="col-lg-7">
             <section class="panel" aria-labelledby="shortlist-heading">
-                <div class="panel-title"><h3 id="shortlist-heading"><LucideIcon IconName="bookmark" Size="16" Class="title-icon" /> Shortlist (@Ctx.Campaign.Bestiary.Count)</h3></div>
+                <div class="panel-title"><h3 id="shortlist-heading"><LucideIcon IconName="bookmark" Size="18" Class="title-icon" /> Shortlist (@Ctx.Campaign.Bestiary.Count)</h3></div>
                 @if (Ctx.Campaign.Bestiary.Count == 0)
                 {
                     <p class="small-muted mb-0">Nothing shortlisted. Search the Library on the right and pin creatures for upcoming encounters.</p>
@@ -94,7 +94,7 @@ else
             </section>
 
             <section class="panel" aria-labelledby="inplay-heading">
-                <div class="panel-title"><h3 id="inplay-heading"><LucideIcon IconName="swords" Size="16" Class="title-icon" /> In the cast (@inPlay.Count)</h3></div>
+                <div class="panel-title"><h3 id="inplay-heading"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> In the cast (@inPlay.Count)</h3></div>
                 @if (inPlay.Count == 0)
                 {
                     <p class="small-muted mb-0">No monsters in the cast right now.</p>
@@ -122,7 +122,7 @@ else
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="find-heading">
-                <div class="panel-title"><h3 id="find-heading"><LucideIcon IconName="search" Size="16" Class="title-icon" /> Find creatures</h3></div>
+                <div class="panel-title"><h3 id="find-heading"><LucideIcon IconName="search" Size="18" Class="title-icon" /> Find creatures</h3></div>
                 <div class="search mb-2">
                     <LucideIcon IconName="search" Size="18" Class="search-icon" />
                     <label for="bestiary-search" class="visually-hidden">Search creatures</label>

@@ -51,7 +51,7 @@ else if (Mode == "edit")
                     <textarea id="wiki-body" class="field-input wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-testid="wiki-body" placeholder="Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link."></textarea>
                     <div class="field-hint mb-3">Link with <code>[[Page title]]</code> or <code>[[Page title|shown as]]</code>. <code>**bold**</code>, <code>*italic*</code>, "- " bullets, "### headings" and | tables | are rendered.</div>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="16" /> Save page</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> Save page</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? "Writing…" : "Expand with AI")</CodexButton>
                         <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">Cancel</a>
                         @if (current != null)
@@ -91,7 +91,7 @@ else if (Slug != null)
     @if (current == null)
     {
         <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="globe" Size="26" /></div>
+            <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
             <h3>No page called “@Slug”</h3>
             <p>@(Ctx.IsDm ? "It may have been deleted. You can write it now." : "It may be DM-only, or not written yet.")</p>
             @if (Ctx.IsDm)
@@ -111,12 +111,12 @@ else if (Slug != null)
                 <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">Wiki</a><span class="crumb-sep" aria-hidden="true">/</span><span>@current.Title</span></nav>
                 <h2 class="mb-0" data-testid="wiki-page-title">@current.Title</h2>
                 <div class="d-flex flex-wrap gap-1 mt-1">
-                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="12" /> @(current.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
+                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="14" /> @(current.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
                     @foreach (var tag in current.Tags)
                     {
                         <span class="pill">@tag</span>
                     }
-                    <span class="pill"><LucideIcon IconName="clock" Size="12" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
+                    <span class="pill"><LucideIcon IconName="clock" Size="14" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
                 </div>
             </div>
             @if (Ctx.IsDm)
@@ -124,9 +124,9 @@ else if (Slug != null)
                 <div class="row-actions">
                     @if (current.Visibility == WikiVisibility.DmOnly)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="16" /> Share with party</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="18" /> Share with party</CodexButton>
                     }
-                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="cx-btn cx-plaque" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="16" /> Edit</a>
+                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="cx-btn cx-plaque" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="18" /> Edit</a>
                 </div>
             }
         </div>
@@ -222,7 +222,7 @@ else
         </div>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="16" /> New page</a>
+            <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> New page</a>
         }
     </div>
 
@@ -247,7 +247,7 @@ else
     @if (!Filtered.Any())
     {
         <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="globe" Size="26" /></div>
+            <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
             <h3>@(pages.Count == 0 ? "No pages yet" : "No page matches")</h3>
             <p>@(Ctx.IsDm ? "Start with a place, a faction or a legend. Link pages with [[double brackets]]." : "The DM hasn't shared any pages yet.")</p>
         </div>
@@ -264,7 +264,7 @@ else
                     </div>
                     <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
                     <div class="card-foot">
-                        <span class="small-muted"><LucideIcon IconName="link" Size="12" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
+                        <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
                             @foreach (var tag in wp.Tags.Take(3))
                             {

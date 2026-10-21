@@ -17,9 +17,9 @@
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
-            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="16" /> New homebrew</CodexButton>
-            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="16" /> Import from another campaign</CodexButton>
-            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="Export this campaign's homebrew as a content pack"><LucideIcon IconName="download" Size="16" /> Export pack</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="18" /> New homebrew</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="18" /> Import from another campaign</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="Export this campaign's homebrew as a content pack"><LucideIcon IconName="download" Size="18" /> Export pack</CodexButton>
         </div>
     }
 </div>
@@ -53,7 +53,7 @@
 
 <dialog id="import-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="import-homebrew-title">
     <div class="dialog-body">
-        <h2 id="import-homebrew-title"><LucideIcon IconName="folder-input" Size="20" Class="title-icon" /> Import homebrew</h2>
+        <h2 id="import-homebrew-title"><LucideIcon IconName="folder-input" Size="18" Class="title-icon" /> Import homebrew</h2>
         @if (sourceCampaigns == null)
         {
             <LoadingSkeleton Rows="2" />

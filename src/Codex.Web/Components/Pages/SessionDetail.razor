@@ -41,8 +41,8 @@ else
             <h1 class="mb-0">@Title</h1>
             <div class="d-flex flex-wrap gap-1 mt-1">
                 <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@(session.Status == SessionStatus.Live ? "" : "")@session.Status</span>
-                <span class="pill"><LucideIcon IconName="calendar" Size="12" /> <LocalTime Value="session.Date" Format="dddd d MMM yyyy" /></span>
-                <span class="pill"><LucideIcon IconName="zap" Size="12" /> @visibleEvents.Count event@(visibleEvents.Count == 1 ? "" : "s")</span>
+                <span class="pill"><LucideIcon IconName="calendar" Size="14" /> <LocalTime Value="session.Date" Format="dddd d MMM yyyy" /></span>
+                <span class="pill"><LucideIcon IconName="zap" Size="14" /> @visibleEvents.Count event@(visibleEvents.Count == 1 ? "" : "s")</span>
             </div>
         </div>
         @if (access.IsDm)
@@ -60,7 +60,7 @@ else
             @if (access.IsDm)
             {
                 <section class="panel" aria-labelledby="details-heading">
-                    <div class="panel-title"><h2 id="details-heading" class="h5"><LucideIcon IconName="edit-3" Size="16" Class="title-icon" /> Details</h2></div>
+                    <div class="panel-title"><h2 id="details-heading" class="h5"><LucideIcon IconName="edit-3" Size="18" Class="title-icon" /> Details</h2></div>
                     <div class="field-grid">
                         <div>
                             <label for="session-title" class="field-label">Title</label>
@@ -81,10 +81,10 @@ else
 
             <section class="panel" aria-labelledby="recap-heading">
                 <div class="panel-title">
-                    <h2 id="recap-heading" class="h5"><LucideIcon IconName="book-open" Size="16" Class="title-icon" /> Recap</h2>
+                    <h2 id="recap-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> Recap</h2>
                     @if (access.IsDm)
                     {
-                        <span class="pill pill-success"><LucideIcon IconName="users" Size="12" /> Players can read this</span>
+                        <span class="pill pill-success"><LucideIcon IconName="users" Size="14" /> Players can read this</span>
                     }
                 </div>
                 @if (access.IsDm)
@@ -114,8 +114,8 @@ else
             {
                 <section class="panel panel-dm" aria-labelledby="dm-summary-heading">
                     <div class="panel-title">
-                        <h2 id="dm-summary-heading" class="h5"><LucideIcon IconName="lock" Size="16" Class="title-icon" /> DM summary</h2>
-                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="12" /> Only you</span>
+                        <h2 id="dm-summary-heading" class="h5"><LucideIcon IconName="lock" Size="18" Class="title-icon" /> DM summary</h2>
+                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> Only you</span>
                     </div>
                     <label for="dm-summary" class="visually-hidden">DM summary</label>
                     <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput"></textarea>
@@ -130,7 +130,7 @@ else
             }
 
             <section class="panel" aria-labelledby="notes-heading">
-                <div class="panel-title"><h2 id="notes-heading" class="h5"><LucideIcon IconName="message-square" Size="16" Class="title-icon" /> Table notes</h2></div>
+                <div class="panel-title"><h2 id="notes-heading" class="h5"><LucideIcon IconName="message-square" Size="18" Class="title-icon" /> Table notes</h2></div>
                 @if (notes.Count == 0)
                 {
                     <p class="small-muted">No notes yet.</p>
@@ -167,8 +167,8 @@ else
         <div class="col-lg-4">
             <section class="panel panel-journal" aria-labelledby="journal-heading">
                 <div class="panel-title">
-                    <h2 id="journal-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="16" Class="title-icon" /> My journal</h2>
-                    <span class="pill"><LucideIcon IconName="lock" Size="12" /> Only you</span>
+                    <h2 id="journal-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="18" Class="title-icon" /> My journal</h2>
+                    <span class="pill"><LucideIcon IconName="lock" Size="14" /> Only you</span>
                 </div>
                 <p class="small-muted">Your private notebook for this session. Nobody else, not even the DM, can read it.</p>
                 <label for="journal-body" class="visually-hidden">Journal entry</label>
@@ -184,7 +184,7 @@ else
             </section>
 
             <section class="panel" aria-labelledby="events-heading">
-                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="16" Class="title-icon" /> Events (@visibleEvents.Count)</h2></div>
+                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="18" Class="title-icon" /> Events (@visibleEvents.Count)</h2></div>
                 @if (visibleEvents.Count == 0)
                 {
                     <p class="small-muted mb-0">Nothing recorded yet. Events are written automatically while the table runs.</p>

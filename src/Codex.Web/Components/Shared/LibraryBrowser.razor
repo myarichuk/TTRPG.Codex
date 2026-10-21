@@ -43,7 +43,7 @@
         else if (results.Count == 0)
         {
             <div class="empty">
-                <div class="empty-icon"><LucideIcon IconName="book-open" Size="26" /></div>
+                <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
                 <h3>Nothing matches</h3>
                 <p>@(string.IsNullOrWhiteSpace(query) ? "No content of this type is loaded for this system." : "Try a different word, or clear the type filter.")</p>
             </div>
@@ -90,7 +90,7 @@
             {
                 @EditorPane
             }
-            else
+            else if (selected != null)
             {
             <div class="panel" data-testid="library-detail">
                 <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)">
@@ -112,7 +112,7 @@
     {
         <div class="col-lg-7 d-none d-lg-block library-detail-col">
             <div class="empty empty-quiet" data-testid="library-placeholder">
-                <div class="empty-icon"><LucideIcon IconName="book-open" Size="26" /></div>
+                <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
                 <p>Choose an entry to read it here.</p>
             </div>
         </div>

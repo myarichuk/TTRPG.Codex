@@ -159,6 +159,15 @@ The list shows 150 entries and "Show N more" adds the rest. The list and the det
 two-column widths whether or not an entry is open, with a quiet placeholder until one is chosen. The
 homebrew editor opens in the detail pane beside the list instead of above it.
 
+## Consistency rules
+
+- Interface icons come in three sizes: 14 (inside small buttons and chips), 18 (everything else) and 28
+  (empty states). Game concepts use `DomainIcon`'s own three sizes.
+- Edit is always `edit-3`; Campaigns is `compass` and Places is `map`.
+- Edit and remove buttons are `CodexButton` runes (remove in `cx-blood`); a bare `icon-btn` is only for
+  header chrome (theme, sign out, dismiss). Deleting anything asks first, including journal entries.
+- Every search box is a `.search` wrapper with the magnifier, in a toolbar or on its own.
+
 ## Test ids
 
 Playwright scenarios rely on `data-testid` attributes rather than copy; keep them when restyling

@@ -12,7 +12,7 @@
 <div class="page-header">
     <div>
         <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>AI settings</span></nav>
-        <h1><LucideIcon IconName="sparkles" Size="24" Class="title-icon" /> AI settings</h1>
+        <h1><LucideIcon IconName="sparkles" Size="28" Class="title-icon" /> AI settings</h1>
         <p class="page-subtitle">The chat model behind every “Draft with AI” button. Bring your own key: OpenRouter, OpenAI, a local Ollama, or any OpenAI-compatible server. Nothing is sent to a model until you click an AI button.</p>
     </div>
 </div>
@@ -29,14 +29,14 @@ else
         <div class="col-lg-7">
             <section class="panel" aria-labelledby="providers-heading">
                 <div class="panel-title">
-                    <h2 id="providers-heading" class="h5"><LucideIcon IconName="bot" Size="16" Class="title-icon" /> Your providers</h2>
+                    <h2 id="providers-heading" class="h5"><LucideIcon IconName="bot" Size="18" Class="title-icon" /> Your providers</h2>
                     <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => StartNew()" data-testid="ai-add-provider"><LucideIcon IconName="plus" Size="14" /> Add provider</CodexButton>
                 </div>
 
                 @if (user.AiProviders.Count == 0)
                 {
                     <div class="empty empty-compact">
-                        <div class="empty-icon"><LucideIcon IconName="key-round" Size="24" /></div>
+                        <div class="empty-icon"><LucideIcon IconName="key-round" Size="28" /></div>
                         <h3>No provider yet</h3>
                         <p>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</p>
                     </div>
@@ -65,7 +65,7 @@ else
                                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MakeDefaultAsync(provider)">Use</CodexButton>
                                     }
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => TestAsync(provider, null)" disabled="@testing">Test</CodexButton>
-                                    <button type="button" class="icon-btn" aria-label="Edit @provider.Name" @onclick="() => StartEdit(provider)"><LucideIcon IconName="edit-3" Size="16" /></button>
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@($"Edit {provider.Name}")" OnClick="() => StartEdit(provider)" />
                                     <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Remove {provider.Name}")" OnClick="() => RemoveAsync(provider)" />
                                 </div>
                             </li>
@@ -75,12 +75,12 @@ else
             </section>
 
             <section class="panel" aria-labelledby="server-heading">
-                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="16" Class="title-icon" /> Server fallback</h2></div>
+                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> Server fallback</h2></div>
                 <p class="mb-0 small">When you have no provider of your own, AI buttons use the server's <code>AI</code> configuration: <strong>@Providers.ServerDescription</strong>. Your own providers always take precedence.</p>
             </section>
 
             <section class="panel" aria-labelledby="what-heading">
-                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="16" Class="title-icon" /> What the AI can do</h2></div>
+                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> What the AI can do</h2></div>
                 <ul class="feature-grid mb-0">
                     <li><LucideIcon IconName="book-open" Size="18" /> <div><strong>Session recaps</strong><div class="small-muted">A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</div></div></li>
                     <li><LucideIcon IconName="feather" Size="18" /> <div><strong>Histories and bios</strong><div class="small-muted">Polish a character's backstory or an NPC's private notes without contradicting the sheet.</div></div></li>
@@ -93,7 +93,7 @@ else
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="editor-heading" id="provider-editor">
-                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editing.Id == editingOriginalId ? "edit-3" : "plus")" Size="16" Class="title-icon" /> @(editingOriginalId != null ? "Edit provider" : "New provider")</h2></div>
+                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editing.Id == editingOriginalId ? "edit-3" : "plus")" Size="18" Class="title-icon" /> @(editingOriginalId != null ? "Edit provider" : "New provider")</h2></div>
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
                         <label for="ai-kind" class="field-label">Service</label>

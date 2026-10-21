@@ -23,7 +23,7 @@
 @if (runtime == null)
 {
     <div class="empty">
-        <div class="empty-icon"><LucideIcon IconName="dices" Size="26" /></div>
+        <div class="empty-icon"><LucideIcon IconName="dices" Size="28" /></div>
         @if (Access.IsDm)
         {
             <h3>The table is not running</h3>
@@ -207,8 +207,11 @@ else
             {
                 <section class="panel" aria-labelledby="quick-add-heading">
                     <div class="panel-title"><h3 id="quick-add-heading">Quick-add a creature</h3></div>
+                    <div class="search mb-2">
+                    <LucideIcon IconName="search" Size="18" Class="search-icon" />
                     <label for="monster-search" class="visually-hidden">Search creatures</label>
-                    <input id="monster-search" type="search" class="field-input field-sm mb-2" placeholder="Search creatures in the Library…" @bind="contentSearch" @bind:event="oninput" />
+                    <input id="monster-search" type="search" class="field-input field-sm" placeholder="Search creatures in the Library…" @bind="contentSearch" @bind:event="oninput" />
+                    </div>
                     @if (contentSearch.Length > 0)
                     {
                         <ul class="list-unstyled mb-0">

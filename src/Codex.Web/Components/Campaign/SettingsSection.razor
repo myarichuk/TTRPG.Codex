@@ -71,12 +71,12 @@
         @if (Ctx.IsDm)
         {
             <section class="panel" aria-labelledby="art-heading">
-                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="16" Class="title-icon" /> Cover art</h3></div>
+                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="18" Class="title-icon" /> Cover art</h3></div>
                 <div class="cover-settings">
                     <div class="cover-preview @(Ctx.Campaign.HasCover ? "has-cover" : "")" style="@(Ctx.Campaign.HasCover ? $"background-image:url('{MediaEndpoints.CoverUrl(Ctx.Campaign)}')" : "")" role="img" aria-label="@(Ctx.Campaign.HasCover ? "Current cover art" : "No cover art yet")">
                         @if (!Ctx.Campaign.HasCover)
                         {
-                            <LucideIcon IconName="image" Size="26" />
+                            <LucideIcon IconName="image" Size="28" />
                         }
                     </div>
                     <div>

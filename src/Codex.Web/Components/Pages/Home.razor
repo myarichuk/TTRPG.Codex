@@ -32,7 +32,7 @@
 else if (campaigns.Count == 0)
 {
     <div class="empty">
-        <div class="empty-icon"><LucideIcon IconName="map" Size="28" /></div>
+        <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
         <h2>No campaigns yet</h2>
         <p>Create one to run a table, or ask your DM for an invite link to join theirs.</p>
         <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign-empty">Create your first campaign</CodexButton>
@@ -72,7 +72,7 @@ else
             </article>
         }
         <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="New campaign">
-            <LucideIcon IconName="plus" Size="24" />
+            <LucideIcon IconName="plus" Size="28" />
             <span class="fw-semibold">New campaign</span>
         </button>
     </div>

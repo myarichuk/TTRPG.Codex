@@ -7,12 +7,14 @@
 @* The player's private notebook for this campaign: one entry per session plus free entries.
    Nobody but the owner can read these - the repository filters by owner in the query. *@
 
+<ConfirmDialog @ref="confirm" />
+
 <div class="page-header mb-3">
     <div>
         <h2 class="mb-0">My journal</h2>
         <p class="page-subtitle">Your private notebook for this campaign. Only you can read it, not even the DM. One entry per session, plus anything else you want to keep.</p>
     </div>
-    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="16" /> New entry</CodexButton>
+    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="18" /> New entry</CodexButton>
 </div>
 
 @if (entries == null)
@@ -26,7 +28,7 @@ else
             @if (entries.Count == 0 && editing == null)
             {
                 <div class="empty">
-                    <div class="empty-icon"><LucideIcon IconName="notebook-pen" Size="26" /></div>
+                    <div class="empty-icon"><LucideIcon IconName="notebook-pen" Size="28" /></div>
                     <h3>Nothing written yet</h3>
                     <p>Names, theories, who owes you money. Open a session and write there, or start a free entry.</p>
                     <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew">Write the first entry</CodexButton>
@@ -47,8 +49,8 @@ else
                             </div>
                         </div>
                         <div class="row-actions">
-                            <button type="button" class="icon-btn" aria-label="Edit entry" @onclick="() => StartEdit(entry)"><LucideIcon IconName="edit-3" Size="16" /></button>
-                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="Delete entry" OnClick="() => DeleteAsync(entry)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="Edit entry" OnClick="() => StartEdit(entry)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="Delete entry" OnClick="() => DeleteAsync(entry)" data-testid="delete-journal" />
                         </div>
                     </div>
                     <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(entry.Body))</div>
@@ -59,7 +61,7 @@ else
             @if (editing != null)
             {
                 <section class="panel panel-journal" aria-labelledby="journal-editor-heading">
-                    <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="pen-line" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? "New entry" : "Edit entry")</h3></div>
+                    <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="edit-3" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? "New entry" : "Edit entry")</h3></div>
                     <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                         <div class="mb-2">
                             <label for="journal-title" class="field-label">Title</label>
@@ -138,8 +140,11 @@ else
         }
     }
 
+    private ConfirmDialog confirm = null!;
+
     private async Task DeleteAsync(JournalEntryDocument entry)
     {
+        if (!await confirm.ShowAsync("Delete this entry?", "The entry is removed from your journal and cannot be brought back.", "Delete entry", isDestructive: true)) return;
         if (await JournalRepo.TryDeleteAsync(entry.Id, Ctx.Access))
         {
             Ctx.Notify(Flash.Success("Entry deleted."));

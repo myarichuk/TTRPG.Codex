@@ -11,7 +11,8 @@
 }
 <div class="entry-browser" data-testid="@TestId-browser">
     <div class="d-flex gap-2 align-items-end flex-wrap">
-        <div class="flex-grow-1" style="min-width: 220px">
+        <div class="flex-grow-1 search" style="min-width: 220px">
+            <LucideIcon IconName="search" Size="18" Class="search-icon" />
             <label for="@(id)-search" class="visually-hidden">Filter @Label by name</label>
             <input id="@(id)-search" type="search" class="field-input field-sm" placeholder="@(Disabled ? DisabledText : $"Filter {Label.ToLowerInvariant()}…")"
                    disabled="@Disabled" value="@query" @oninput="e => { query = e.Value?.ToString() ?? string.Empty; visible = PageSize; }" autocomplete="off" data-testid="@TestId-search" />

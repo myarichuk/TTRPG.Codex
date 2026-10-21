@@ -26,14 +26,14 @@
     </div>
     <div class="row-actions">
         <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenCreateAsync" data-testid="create-character">
-            <LucideIcon IconName="user-plus" Size="16" /> @(Ctx.IsDm ? "New character or NPC" : "Create my character")
+            <LucideIcon IconName="user-plus" Size="18" /> @(Ctx.IsDm ? "New character or NPC" : "Create my character")
         </CodexButton>
         <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="OpenAiCreateAsync" data-testid="create-character-ai">
-            <LucideIcon IconName="sparkles" Size="16" /> Create with AI
+            <LucideIcon IconName="sparkles" Size="18" /> Create with AI
         </CodexButton>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/bestiary" class="cx-btn cx-etched"><LucideIcon IconName="paw-print" Size="16" /> Bestiary</a>
+            <a href="@Ctx.BasePath/bestiary" class="cx-btn cx-etched"><LucideIcon IconName="paw-print" Size="18" /> Bestiary</a>
         }
     </div>
 </div>
@@ -41,7 +41,7 @@
 <div class="row g-3">
     <div class="col-lg-6">
         <section class="panel" aria-labelledby="pcs-heading">
-            <div class="panel-title"><h3 id="pcs-heading"><LucideIcon IconName="crown" Size="16" Class="title-icon" /> Player characters (@pcs.Count)</h3></div>
+            <div class="panel-title"><h3 id="pcs-heading"><LucideIcon IconName="crown" Size="18" Class="title-icon" /> Player characters (@pcs.Count)</h3></div>
             @if (pcs.Count == 0)
             {
                 <p class="small-muted mb-0">No player characters yet.</p>
@@ -56,7 +56,7 @@
     </div>
     <div class="col-lg-6">
         <section class="panel" aria-labelledby="npcs-heading">
-            <div class="panel-title"><h3 id="npcs-heading"><LucideIcon IconName="users" Size="16" Class="title-icon" /> @(Ctx.IsDm ? "NPCs and monsters" : "People and creatures met") (@others.Count)</h3></div>
+            <div class="panel-title"><h3 id="npcs-heading"><LucideIcon IconName="users" Size="18" Class="title-icon" /> @(Ctx.IsDm ? "NPCs and monsters" : "People and creatures met") (@others.Count)</h3></div>
             @if (others.Count == 0)
             {
                 <p class="small-muted mb-0">@(Ctx.IsDm ? "Nobody yet. Add NPCs here or creatures from the Bestiary." : "The party has not met anyone of note yet.")</p>
@@ -121,7 +121,7 @@
 <dialog id="ai-actor-dialog" class="codex-dialog" aria-labelledby="ai-actor-title">
     <form @onsubmit="CreateWithAiAsync" @onsubmit:preventDefault="true">
         <div class="dialog-body">
-            <h2 id="ai-actor-title"><LucideIcon IconName="sparkles" Size="20" Class="title-icon" /> Create with AI</h2>
+            <h2 id="ai-actor-title"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> Create with AI</h2>
             <p class="small-muted">Describe the character in a line or two. The AI fills in the sheet using only classes, species and backgrounds from this campaign's Library, plus a short history you can edit afterwards.</p>
             <div class="mb-3">
                 <label for="ai-concept" class="field-label">Concept <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>

@@ -73,7 +73,7 @@ else
                         }
                         @if (CanEdit && actor.HasPortrait)
                         {
-                            <button type="button" class="pill pill-button" @onclick="RemovePortraitAsync"><LucideIcon IconName="x" Size="12" /> Remove portrait</button>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemovePortraitAsync">Remove portrait</CodexButton>
                         }
                     </div>
                 </div>
@@ -151,7 +151,7 @@ else
             {
                 <section class="panel panel-warn" aria-labelledby="rules-heading" data-testid="rule-violations">
                     <div class="panel-title">
-                        <h2 id="rules-heading" class="h5"><LucideIcon IconName="alert-triangle" Size="16" Class="title-icon" /> Rules</h2>
+                        <h2 id="rules-heading" class="h5"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> Rules</h2>
                         <span class="pill @(Enforcement == "strict" ? "pill-danger" : "pill-warning")">@(Enforcement == "strict" ? (access.IsDm ? "Strict (you can override)" : "Strict: fix before saving") : "Warnings only")</span>
                     </div>
                     <ul class="mb-0 small">
@@ -167,7 +167,7 @@ else
             {
                 <section class="panel" aria-labelledby="warnings-heading" data-testid="rule-warnings">
                     <div class="panel-title">
-                        <h2 id="warnings-heading" class="h5"><LucideIcon IconName="info" Size="16" Class="title-icon" /> Worth a look</h2>
+                        <h2 id="warnings-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> Worth a look</h2>
                         <span class="pill">Doesn't block saving</span>
                     </div>
                     <ul class="mb-0 small">
@@ -182,7 +182,7 @@ else
             @if (ShowTray)
             {
                 <section class="panel dice-tray" aria-labelledby="tray-heading" data-testid="dice-tray">
-                    <div class="panel-title"><h2 id="tray-heading" class="h5"><LucideIcon IconName="dices" Size="16" Class="title-icon" /> Dice</h2></div>
+                    <div class="panel-title"><h2 id="tray-heading" class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> Dice</h2></div>
                     <div class="tray-bar">
                         <label for="roll-mode" class="field-label mb-0">Roll with</label>
                         <select id="roll-mode" class="field-select field-sm" style="width:auto" @bind="rollMode" data-testid="roll-mode">
@@ -210,7 +210,7 @@ else
                 @foreach (var tab in Tabs)
                 {
                     <button type="button" class="sheet-tab" aria-current="@(ActiveTab == tab.Key ? "page" : null)" data-testid="@("tab-" + tab.Key)" @onclick="() => activeTab = tab.Key">
-                        <LucideIcon IconName="@tab.Icon" Size="16" /> @tab.Label
+                        <LucideIcon IconName="@tab.Icon" Size="18" /> @tab.Label
                     </button>
                 }
             </nav>
@@ -223,7 +223,7 @@ else
                 var summary = evaluation?.Attributes;
                 <section class="panel" aria-labelledby="attributes-heading">
                     <div class="panel-title">
-                        <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="16" Class="title-icon" /> Attributes</h2>
+                        <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="18" Class="title-icon" /> Attributes</h2>
                         @if (attributeRules != null && CanEdit)
                         {
                             <div class="d-flex align-items-center gap-2">
@@ -396,7 +396,7 @@ else
             }
 
             <section class="panel" aria-labelledby="sheet-heading">
-                <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="16" Class="title-icon" /> Sheet</h2></div>
+                <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="18" Class="title-icon" /> Sheet</h2></div>
                 <div class="mb-3">
                     <label for="actor-name-input" class="field-label">Name</label>
                     <input id="actor-name-input" class="field-input" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
@@ -425,7 +425,7 @@ else
             {
                 <section class="panel" aria-labelledby="classes-heading" data-testid="multiclass">
                     <div class="panel-title">
-                        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="16" Class="title-icon" /> Classes</h2>
+                        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="18" Class="title-icon" /> Classes</h2>
                         <span class="pill">Level @CurrentLevel in all</span>
                     </div>
                     @if (evaluation.Classes.Count == 0)
@@ -508,7 +508,7 @@ else
             @if (linkedEntries.Count > 0)
             {
                 <section class="panel" aria-labelledby="linked-heading">
-                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="16" Class="title-icon" /> From the Library</h2></div>
+                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> From the Library</h2></div>
                     @foreach (var (label, item) in linkedEntries)
                     {
                         <div class="mb-3">
@@ -526,7 +526,7 @@ else
             @if (Rules != null && Rules.Lists.Count > 0 && evaluation != null)
             {
                 <section class="panel" aria-labelledby="picks-heading">
-                    <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="16" Class="title-icon" /> Picks</h2></div>
+                    <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> Picks</h2></div>
                     @foreach (var list in Rules.Lists)
                     {
                         <div class="mb-3">
@@ -561,10 +561,10 @@ else
             {
             <section class="panel" aria-labelledby="bio-heading">
                 <div class="panel-title">
-                    <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="16" Class="title-icon" /> History</h2>
+                    <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="18" Class="title-icon" /> History</h2>
                     @if (CanEdit)
                     {
-                        <span class="pill"><LucideIcon IconName="users" Size="12" /> Visible to whoever can see this character</span>
+                        <span class="pill"><LucideIcon IconName="users" Size="14" /> Visible to whoever can see this character</span>
                     }
                 </div>
                 @if (CanEdit)
@@ -598,8 +598,8 @@ else
             {
                 <section class="panel panel-dm" aria-labelledby="dm-notes-heading">
                     <div class="panel-title">
-                        <h2 id="dm-notes-heading" class="h5"><LucideIcon IconName="lock" Size="16" Class="title-icon" /> DM notes</h2>
-                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="12" /> Only you</span>
+                        <h2 id="dm-notes-heading" class="h5"><LucideIcon IconName="lock" Size="18" Class="title-icon" /> DM notes</h2>
+                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> Only you</span>
                     </div>
                     <label for="actor-dm-notes" class="visually-hidden">DM notes</label>
                     <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-testid="sheet-dm-notes"></textarea>
@@ -624,7 +624,7 @@ else
                 var pct = max > 0 ? Math.Clamp(100.0 * current / max, 0, 100) : 0;
                 var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
                 <section class="panel" aria-labelledby="vitals-heading">
-                    <div class="panel-title"><h2 id="vitals-heading" class="h5"><LucideIcon IconName="heart" Size="16" Class="title-icon" /> @primary.Label</h2></div>
+                    <div class="panel-title"><h2 id="vitals-heading" class="h5"><LucideIcon IconName="heart" Size="18" Class="title-icon" /> @primary.Label</h2></div>
                     <div class="d-flex align-items-baseline gap-2">
                         <span class="stat-numeral hp-text" data-testid="hp-current">@current</span>
                         @if (max > 0)
@@ -654,7 +654,7 @@ else
             @if (Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))))
             {
                 <section class="panel" aria-labelledby="sheet-slots-heading" data-testid="sheet-slots">
-                    <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="16" Class="title-icon" /> @SlotTracker.Heading(Rules.SlotPools, editSheet.Keys)</h2></div>
+                    <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="18" Class="title-icon" /> @SlotTracker.Heading(Rules.SlotPools, editSheet.Keys)</h2></div>
                     <SlotTracker Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
                                  OnAdjust="AdjustSlot" OnRest="RestSlots" />
                     <p class="small-muted mt-2 mb-0">During a session, use the Table tab: changes there reach everyone at once. Changes here need Save changes.</p>
@@ -664,7 +664,7 @@ else
             @if (CanEdit && HasLevel)
             {
                 <section class="panel panel-ai" aria-labelledby="levelup-heading">
-                    <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="16" Class="title-icon" /> Level up</h2></div>
+                    <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="18" Class="title-icon" /> Level up</h2></div>
                     <p class="small-muted">Level @CurrentLevel now. Ask what level @(CurrentLevel + 1) brings and which picks fit this character, from the Library's class entry.</p>
                     @if (Rules?.Multiclass != null && evaluation is { Classes.Count: > 0 })
                     {
@@ -704,7 +704,7 @@ else
             @if (access.IsDm)
             {
                 <section class="panel" aria-labelledby="visibility-heading">
-                    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="16" Class="title-icon" /> Visibility to players</h2></div>
+                    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="18" Class="title-icon" /> Visibility to players</h2></div>
                     <div class="mb-2">
                         <label for="actor-visibility" class="field-label">Who sees this character</label>
                         <select id="actor-visibility" class="field-select" @bind="editVisibility">
