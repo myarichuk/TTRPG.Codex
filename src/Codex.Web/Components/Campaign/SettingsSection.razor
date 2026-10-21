@@ -176,6 +176,10 @@
                         <InputFile OnChange="ImportAsync" accept=".json" class="visually-hidden" />
                     </label>
                 </div>
+                <div class="form-check mt-2">
+                    <input id="restore-as-new" type="checkbox" class="form-check-input" @bind="restoreAsNew" />
+                    <label for="restore-as-new" class="form-check-label small-muted">The file is a backup of a different (for example deleted) campaign: restore that one</label>
+                </div>
             </section>
 
             <section class="panel" aria-labelledby="danger-heading">
@@ -197,6 +201,7 @@
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
     private ConfirmDialog confirm = null!;
+    private bool restoreAsNew;
     private string name = string.Empty;
     private string description = string.Empty;
     private string systemId = string.Empty;
@@ -369,10 +374,23 @@
                 return;
             }
 
+            if (bundle.Campaign?.Id != Ctx.Campaign.Id && !restoreAsNew)
+            {
+                Ctx.Notify(Flash.Error("That file is a backup of a different campaign. Tick “restore that one” if you meant to bring it back."));
+                return;
+            }
+
             if (await ExportService.ImportAsync(bundle, Ctx.UserId))
             {
                 Ctx.Notify(Flash.Success($"Imported “{bundle.Campaign?.Name}”."));
-                await Ctx.ReloadAsync();
+                if (bundle.Campaign!.Id == Ctx.Campaign.Id)
+                {
+                    await Ctx.ReloadAsync();
+                }
+                else
+                {
+                    Nav.NavigateTo($"/campaigns/{bundle.Campaign.Id}");
+                }
             }
             else
             {

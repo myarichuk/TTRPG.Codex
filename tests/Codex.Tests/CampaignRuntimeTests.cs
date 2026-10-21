@@ -4,6 +4,7 @@ using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace Codex.Tests;
 
@@ -57,6 +58,138 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
 
         await _actorRepository.SaveAsync(doc);
         return doc;
+    }
+
+    private (CampaignRuntimeManager Manager, CampaignRepository Campaigns) BuildManager()
+    {
+        var hooks = new CampaignLifecycleHooks();
+        var campaigns = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository,
+            new RavenNoteRepository(_dbService), new RegionRepository(_dbService), new FactRepository(_dbService),
+            new RavenHomebrewRepository(_dbService), _encounterRepository, lifecycle: hooks);
+        var loader = new Codex.Core.PluginLoader(NullLogger<Codex.Core.PluginLoader>.Instance, _componentRegistry, Substitute.For<IContentPackLoader>());
+        return (new CampaignRuntimeManager(_actorRepository, _sessionRepository, campaigns, _encounterRepository, _componentRegistry, loader, NullLoggerFactory.Instance, hooks), campaigns);
+    }
+
+    [Fact]
+    public async Task DeletingACampaign_StopsItsLiveTable_AndTheTableCannotResurrectAnything_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Doomed" };
+        await campaigns.SaveAsync(campaign);
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+        var runtime = await manager.GetOrStartAsync(campaign, dm);
+        var changes = new List<string>();
+        manager.RuntimeChanged += changes.Add;
+
+        Assert.Equal(CampaignDeleteResult.Deleted, await campaigns.DeleteAsync(campaignId, "owner"));
+
+        Assert.Null(manager.TryGet(campaignId));
+        Assert.Contains(campaignId, changes);
+        await Assert.ThrowsAnyAsync<Exception>(() => runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 1, "late")));
+        Assert.Empty(await _actorRepository.GetVisibleForCampaignAsync(dm));
+        Assert.Empty(await _sessionRepository.GetAllForCampaignAsync(campaignId));
+    }
+
+    [Fact]
+    public async Task ARuntimeNobodyHasUsedForAWhile_IsEvicted_AndItsSessionClosed_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Forgotten" };
+        await campaigns.SaveAsync(campaign);
+        var runtime = await manager.GetOrStartAsync(campaign, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+
+        Assert.Empty(await manager.EvictIdleAsync(TimeSpan.FromHours(2), DateTime.UtcNow));
+        Assert.NotNull(manager.TryGet(campaignId));
+
+        Assert.Equal(new[] { campaignId }, await manager.EvictIdleAsync(TimeSpan.FromHours(2), runtime.LastActivityUtc.AddHours(3)));
+        Assert.Null(manager.TryGet(campaignId));
+        var session = Assert.Single(await _sessionRepository.GetAllForCampaignAsync(campaignId));
+        Assert.Equal(SessionStatus.Completed, session.Status);
+    }
+
+    [Fact]
+    public async Task ARuntimeThatIsStillTakingCommands_IsNotIdle_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Busy" };
+        await campaigns.SaveAsync(campaign);
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var runtime = await manager.GetOrStartAsync(campaign, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+        var before = runtime.LastActivityUtc;
+
+        await Task.Delay(20);
+        await runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 1, "dm"));
+
+        Assert.True(runtime.LastActivityUtc > before);
+        await manager.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task SessionLog_ForAPlayer_NeverNamesAHiddenActor_AndNeverShowsExactMonsterDamage_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var ambusher = await SeedActorAsync(campaignId, hp: 40);
+        ambusher.Name = "Strahd the Ambusher";
+        ambusher.Visibility = ActorVisibility.Hidden;
+        var goblin = await SeedActorAsync(campaignId, hp: 12);
+        goblin.Name = "Goblin Skirmisher";
+        goblin.Kind = ActorKind.Monster;
+        var hero = await SeedActorAsync(campaignId, hp: 30);
+        hero.Name = "Aria";
+        hero.Kind = ActorKind.PlayerCharacter;
+        hero.OwnerUserId = "player-1";
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { ambusher, goblin, hero });
+
+        await runtime.EnqueueAsync(new SetInitiativeCommand(ambusher.Id, 19));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 12));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(ambusher.Id, "HP", 13, "dm-user"));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(goblin.Id, "HP", 7, "dm-user"));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 4, "dm-user"));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(ambusher.Id, "frightened", "dm-user", 2, EffectExpiry.EndOfTurn, ambusher.Id));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        await runtime.EnqueueAsync(new RestCommand(ambusher.Id, "short rest", new[] { "HP" }));
+
+        var events = (await _sessionRepository.GetAsync(session.Id))!.Events;
+        Assert.Contains(events, e => e.Description.Contains("Strahd"));
+
+        // What the actor repository hands this player: no Hidden actors.
+        var access = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var visible = new[] { goblin, hero };
+        var seen = SessionEventRedactor.ForViewer(events, access, visible);
+
+        Assert.DoesNotContain(seen, e => e.Description.Contains("Strahd") || e.Description.Contains("Ambusher"));
+        Assert.DoesNotContain(seen, e => e.Description.Contains("took 7"));
+        Assert.Contains(seen, e => e.Description == "Goblin Skirmisher took damage.");
+        Assert.Contains(seen, e => e.Description.StartsWith("Aria took 4 HP damage"));
+
+        // The DM keeps the full account.
+        Assert.Contains(SessionEventRedactor.ForViewer(events, new CampaignAccess(campaignId, "dm", CampaignRole.DM), new[] { ambusher, goblin, hero }),
+            e => e.Description.Contains("Strahd the Ambusher took 13 HP damage"));
+
+        // And so does nothing the player-facing AI digest is built from.
+        var digest = SessionDigest.Build(await _sessionRepository.GetAsync(session.Id) ?? session, Array.Empty<NoteDocument>(), forDm: false, actors: new[] { ambusher, goblin, hero });
+        Assert.DoesNotContain(digest.Events, line => line.Contains("Strahd") || line.Contains("took 7"));
+        Assert.Contains(digest.Events, line => line.Contains("Goblin Skirmisher took damage."));
+        Assert.DoesNotContain(digest.Events, line => line.Contains("took 4"));
+    }
+
+    [Fact]
+    public void SessionLog_EventsWrittenBeforeActorIdsExisted_AreNotHandedToPlayers()
+    {
+        var legacy = new SessionEvent { Type = "Damage", Description = "Strahd took 13 HP damage from dm-user." };
+        var note = new SessionEvent { Type = "Note", Description = "Note: the bridge is trapped" };
+
+        var seen = SessionEventRedactor.ForViewer(new[] { legacy, note }, new CampaignAccess("c", "p", CampaignRole.Player), Array.Empty<ActorDocument>());
+
+        Assert.Equal(new[] { "Note: the bridge is trapped" }, seen.Select(e => e.Description));
     }
 
     [Fact]

@@ -10,16 +10,38 @@ namespace Codex.Persistence.Runtime;
 /// singleton - the cache of runtimes needs to outlive any single Blazor circuit, since two players
 /// and the DM in the same campaign must share one runtime, not one each.
 /// </summary>
-public sealed class CampaignRuntimeManager(
-    IActorRepository actorRepository,
-    ISessionRepository sessionRepository,
-    ICampaignRepository campaignRepository,
-    IEncounterRepository encounterRepository,
-    ComponentRegistry componentRegistry,
-    PluginLoader pluginLoader,
-    ILoggerFactory loggerFactory) : IAsyncDisposable
+public sealed class CampaignRuntimeManager : IAsyncDisposable
 {
+    private readonly IActorRepository actorRepository;
+    private readonly ISessionRepository sessionRepository;
+    private readonly ICampaignRepository campaignRepository;
+    private readonly IEncounterRepository encounterRepository;
+    private readonly ComponentRegistry componentRegistry;
+    private readonly PluginLoader pluginLoader;
+    private readonly ILoggerFactory loggerFactory;
     private readonly ConcurrentDictionary<string, CampaignRuntime> _runtimes = new();
+
+    /// <param name="lifecycle">When given, a campaign's runtime is stopped just before the campaign is
+    /// deleted, so the table can't write actors and sessions back into a campaign that no longer exists.</param>
+    public CampaignRuntimeManager(
+        IActorRepository actorRepository,
+        ISessionRepository sessionRepository,
+        ICampaignRepository campaignRepository,
+        IEncounterRepository encounterRepository,
+        ComponentRegistry componentRegistry,
+        PluginLoader pluginLoader,
+        ILoggerFactory loggerFactory,
+        CampaignLifecycleHooks? lifecycle = null)
+    {
+        this.actorRepository = actorRepository;
+        this.sessionRepository = sessionRepository;
+        this.campaignRepository = campaignRepository;
+        this.encounterRepository = encounterRepository;
+        this.componentRegistry = componentRegistry;
+        this.pluginLoader = pluginLoader;
+        this.loggerFactory = loggerFactory;
+        lifecycle?.OnDeleting(EvictAsync);
+    }
 
     /// <summary>
     /// Fires with the campaign id when a table starts or stops, so a player's already-open table
@@ -108,10 +130,9 @@ public sealed class CampaignRuntimeManager(
         return session;
     }
 
-    /// <summary>Stops and disposes a campaign's runtime, and closes out its live session. Nothing
-    /// currently calls this on a timer - idle eviction is wiring left for whenever the web app
-    /// grows a hosted background service to drive it, not something this class should reach for a
-    /// Timer to do on its own.</summary>
+    /// <summary>Stops and disposes a campaign's runtime, and closes out its live session. Called
+    /// when the DM ends the table, just before a campaign is deleted, and by
+    /// <see cref="EvictIdleAsync"/>.</summary>
     public async Task EvictAsync(string campaignId)
     {
         if (!_runtimes.TryRemove(campaignId, out var runtime))
@@ -133,6 +154,20 @@ public sealed class CampaignRuntimeManager(
         }
 
         RuntimeChanged?.Invoke(campaignId);
+    }
+
+    /// <summary>Evicts every runtime that has taken no command for <paramref name="idleFor"/>, so a table
+    /// nobody ended doesn't stay in memory (and its session stay Live) forever. The manager owns no timer;
+    /// a hosted service calls this. Returns the campaigns it stopped.</summary>
+    public async Task<IReadOnlyList<string>> EvictIdleAsync(TimeSpan idleFor, DateTime utcNow)
+    {
+        var idle = _runtimes.Where(r => utcNow - r.Value.LastActivityUtc >= idleFor).Select(r => r.Key).ToList();
+        foreach (var campaignId in idle)
+        {
+            await EvictAsync(campaignId);
+        }
+
+        return idle;
     }
 
     public async ValueTask DisposeAsync()

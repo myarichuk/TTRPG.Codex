@@ -22,7 +22,9 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "Damage",
-        Description = $"{runtime.GetActorName(ActorId)} took {Amount} {PoolName} damage from {SourceId}."
+        Description = $"{runtime.GetActorName(ActorId)} took {Amount} {PoolName} damage from {SourceId}.",
+        ActorIds = { ActorId },
+        PlayerDescription = $"{runtime.GetActorName(ActorId)} took damage."
     };
 }
 
@@ -42,7 +44,9 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "Healing",
-        Description = $"{runtime.GetActorName(ActorId)} recovered {Amount} {PoolName} from {SourceId}."
+        Description = $"{runtime.GetActorName(ActorId)} recovered {Amount} {PoolName} from {SourceId}.",
+        ActorIds = { ActorId },
+        PlayerDescription = $"{runtime.GetActorName(ActorId)} was healed."
     };
 }
 
@@ -66,7 +70,8 @@ public sealed record AddStatusEffectCommand(string ActorId, string EffectId, str
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "StatusEffect",
-        Description = $"{runtime.GetActorName(ActorId)} gained {EffectId} for {Rounds} round(s) from {SourceId}."
+        Description = $"{runtime.GetActorName(ActorId)} gained {EffectId} for {Rounds} round(s) from {SourceId}.",
+        ActorIds = { ActorId }
     };
 }
 
@@ -91,7 +96,8 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "TurnAdvance",
-        Description = $"{runtime.GetActorName(ActorId)}'s turn ended."
+        Description = $"{runtime.GetActorName(ActorId)}'s turn ended.",
+        ActorIds = { ActorId }
     };
 }
 
@@ -114,7 +120,8 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "StatusEffectRemoved",
-        Description = $"{runtime.GetActorName(ActorId)} lost {EffectId}."
+        Description = $"{runtime.GetActorName(ActorId)} lost {EffectId}.",
+        ActorIds = { ActorId }
     };
 }
 
@@ -150,7 +157,8 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "Initiative",
-        Description = $"{runtime.GetActorName(ActorId)} rolled {InitiativeRoll} for initiative."
+        Description = $"{runtime.GetActorName(ActorId)} rolled {InitiativeRoll} for initiative.",
+        ActorIds = { ActorId }
     };
 }
 
@@ -196,10 +204,15 @@ public sealed record NextTurnCommand : IRuntimeCommand
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var encounter = runtime.ActiveEncounter;
-        var upNext = encounter is { Participants.Count: > 0 }
-            ? runtime.GetActorName(encounter.Participants[encounter.TurnIndex].ActorId)
-            : "nobody";
-        return new SessionEvent { Type = "TurnAdvance", Description = $"Turn passed to {upNext} (round {encounter?.Round ?? 1})." };
+        var upNextId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
+        var upNext = upNextId != null ? runtime.GetActorName(upNextId) : "nobody";
+        var evt = new SessionEvent { Type = "TurnAdvance", Description = $"Turn passed to {upNext} (round {encounter?.Round ?? 1})." };
+        if (upNextId != null)
+        {
+            evt.ActorIds.Add(upNextId);
+        }
+
+        return evt;
     }
 }
 
@@ -231,10 +244,15 @@ public sealed record PreviousTurnCommand : IRuntimeCommand
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var encounter = runtime.ActiveEncounter;
-        var current = encounter is { Participants.Count: > 0 }
-            ? runtime.GetActorName(encounter.Participants[encounter.TurnIndex].ActorId)
-            : "nobody";
-        return new SessionEvent { Type = "TurnAdvance", Description = $"Turn moved back to {current}." };
+        var currentId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
+        var current = currentId != null ? runtime.GetActorName(currentId) : "nobody";
+        var evt = new SessionEvent { Type = "TurnAdvance", Description = $"Turn moved back to {current}." };
+        if (currentId != null)
+        {
+            evt.ActorIds.Add(currentId);
+        }
+
+        return evt;
     }
 }
 
@@ -259,6 +277,7 @@ public sealed record SetTurnStateCommand(string ActorId, TurnState State) : IRun
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "TurnState",
+        ActorIds = { ActorId },
         Description = State switch
         {
             TurnState.Delayed => $"{runtime.GetActorName(ActorId)} delayed their turn.",
@@ -302,7 +321,13 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
         var description = IsSecret
             ? $"{roller} made a secret roll ({Expression})."
             : $"{roller} rolled {Expression}: {_result?.Total}.";
-        return new SessionEvent { Type = "DiceRoll", Description = description };
+        var evt = new SessionEvent { Type = "DiceRoll", Description = description };
+        if (ActorId != null)
+        {
+            evt.ActorIds.Add(ActorId);
+        }
+
+        return evt;
     }
 }
 
@@ -335,7 +360,8 @@ public sealed record HydrateActorCommand(ActorDocument Actor) : IRuntimeCommand
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "ActorJoined",
-        Description = $"{Actor.Name} joined the encounter."
+        Description = $"{Actor.Name} joined the encounter.",
+        ActorIds = { Actor.Id }
     };
 }
 
@@ -357,6 +383,7 @@ public sealed record AdjustResourceCommand(string ActorId, string PoolName, int 
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = Delta < 0 ? "ResourceSpent" : "ResourceRegained",
+        ActorIds = { ActorId },
         Description = Delta < 0
             ? $"{runtime.GetActorName(ActorId)} used {(-Delta == 1 ? "a" : (-Delta).ToString())} {Label}{(-Delta == 1 ? "" : "s")}."
             : $"{runtime.GetActorName(ActorId)} regained {(Delta == 1 ? "a" : Delta.ToString())} {Label}{(Delta == 1 ? "" : "s")}."
@@ -379,6 +406,7 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "Rest",
-        Description = $"{runtime.GetActorName(ActorId)} took a {RestName}."
+        Description = $"{runtime.GetActorName(ActorId)} took a {RestName}.",
+        ActorIds = { ActorId }
     };
 }

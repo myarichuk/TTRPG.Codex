@@ -30,8 +30,8 @@ public class CampaignBundle
 /// Campaign export/import (4.4). Export is DM-only and returns null for anyone else - a bundle
 /// contains DM secrets by design. Import restores every document under its stored id (upsert),
 /// so it doubles as the restore path for a deleted campaign; the caller must be the campaign's
-/// owner or a DM member recorded in the bundle itself, and every document must belong to the
-/// bundled campaign, so a crafted file can't write into another campaign.
+/// owner or a DM member of the stored campaign (the bundle's own membership counts only when no
+/// such campaign exists), and every document must belong to the bundled campaign.
 /// </summary>
 public class CampaignExportService(
     ICampaignRepository campaigns,
@@ -82,16 +82,32 @@ public class CampaignExportService(
         }
 
         var campaign = bundle.Campaign;
-        var allowed = campaign.OwnerId == requestingUserId
-            || campaign.Members.Any(m => m.UserId == requestingUserId && m.Role == CampaignRole.DM);
-        if (!allowed)
+
+        // Authorise against what is stored, never against what the file claims: otherwise a DM of
+        // any campaign could craft a bundle naming someone else's campaign id and make themselves
+        // its owner. Only when no such campaign exists (restoring a deleted one) is there nothing
+        // to resolve against, and then the bundle's own owner/DM list is the best evidence there is.
+        var stored = await campaigns.GetAsync(campaign.Id);
+        if (stored != null)
+        {
+            if (!IsDm(stored, requestingUserId))
+            {
+                return false;
+            }
+
+            // Content comes from the file; who may touch the campaign, and the live pointers the
+            // runtime and invite flow own, stay as stored.
+            campaign.OwnerId = stored.OwnerId;
+            campaign.Members = stored.Members;
+            campaign.InviteCode = stored.InviteCode;
+            campaign.CurrentSessionId = stored.CurrentSessionId;
+        }
+        else if (!IsDm(campaign, requestingUserId))
         {
             return false;
         }
 
-        // The bundle is trusted about its own membership (it is the restore path for a deleted
-        // campaign, where there is nothing to resolve against), so mint the DM access the
-        // guarded saves require from the verified owner/member check above.
+        // Mint the DM access the guarded saves require from the verified check above.
         var dmAccess = new CampaignAccess(campaign.Id, requestingUserId, CampaignRole.DM);
 
         await campaigns.SaveAsync(campaign);
@@ -142,6 +158,10 @@ public class CampaignExportService(
 
         return true;
     }
+
+    private static bool IsDm(CampaignDocument campaign, string userId) =>
+        campaign.OwnerId == userId
+        || campaign.Members.Any(m => m.UserId == userId && m.Role == CampaignRole.DM);
 
     public static string Serialize(CampaignBundle bundle) =>
         JsonSerializer.Serialize(bundle, JsonOptions);

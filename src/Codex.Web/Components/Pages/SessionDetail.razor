@@ -7,6 +7,7 @@
 @inject ICampaignRepository CampaignRepo
 @inject ISessionRepository SessionRepo
 @inject INoteRepository NoteRepo
+@inject IActorRepository ActorRepo
 @inject IJournalRepository JournalRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject IUserRepository UserRepo
@@ -38,7 +39,7 @@ else
             <div class="d-flex flex-wrap gap-1 mt-1">
                 <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@(session.Status == SessionStatus.Live ? "" : "")@session.Status</span>
                 <span class="pill"><LucideIcon IconName="calendar" Size="12" /> @session.Date.ToLocalTime().ToString("dddd d MMM yyyy")</span>
-                <span class="pill"><LucideIcon IconName="zap" Size="12" /> @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</span>
+                <span class="pill"><LucideIcon IconName="zap" Size="12" /> @visibleEvents.Count event@(visibleEvents.Count == 1 ? "" : "s")</span>
             </div>
         </div>
     </div>
@@ -174,13 +175,13 @@ else
             </section>
 
             <section class="panel" aria-labelledby="events-heading">
-                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="16" Class="title-icon" /> Events (@session.Events.Count)</h2></div>
-                @if (session.Events.Count == 0)
+                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="16" Class="title-icon" /> Events (@visibleEvents.Count)</h2></div>
+                @if (visibleEvents.Count == 0)
                 {
                     <p class="small-muted mb-0">Nothing recorded yet. Events are written automatically while the table runs.</p>
                 }
                 <div class="log">
-                    @foreach (var evt in session.Events.OrderByDescending(e => e.Timestamp))
+                    @foreach (var evt in visibleEvents.OrderByDescending(e => e.Timestamp))
                     {
                         <div class="log-entry">
                             <span class="small-muted">@evt.Timestamp.ToLocalTime().ToString("HH:mm")</span>
@@ -204,6 +205,8 @@ else
     private CampaignAccess? access;
     private string? currentUserId;
     private List<NoteDocument> notes = new();
+    private List<ActorDocument> campaignActors = new();
+    private IReadOnlyList<SessionEvent> visibleEvents = Array.Empty<SessionEvent>();
     private readonly Dictionary<string, string> memberUsernames = new();
     private string newNoteContent = "";
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
@@ -242,6 +245,8 @@ else
                 editTitle = session.Title;
                 editStatus = session.Status;
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access)).ToList();
+                campaignActors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
+                visibleEvents = SessionEventRedactor.ForViewer(session.Events, access, campaignActors);
                 memberUsernames.Clear();
                 foreach (var member in campaign.Members)
                 {
@@ -260,8 +265,9 @@ else
 
     private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
+    // The recap this fills in is what players read, so it starts from the player-safe log, not the DM's.
     private string SerializeEvents() => string.Join("\n",
-        session!.Events.OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Description}"));
+        SessionEventRedactor.ForPlayers(session!.Events, campaignActors).OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Description}"));
 
     private void PreFillRecap()
     {
@@ -304,7 +310,7 @@ else
         {
             // The player digest is built from player-visible notes only; the DM digest from everything.
             var allNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
-            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"));
+            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"), campaignActors);
             if (audience == AiAudience.Players) editRecap = text; else editDmSummary = text;
             flash = Flash.Info("AI draft ready. Review, edit and save.");
         }

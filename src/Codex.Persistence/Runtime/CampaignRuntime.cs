@@ -51,6 +51,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// directly off this rather than re-querying Raven on every render.</summary>
     public SessionDocument? ActiveSession => _activeSession;
 
+    /// <summary>When the runtime started or last accepted a command; idle eviction measures from here.</summary>
+    public DateTime LastActivityUtc => new(Interlocked.Read(ref _lastActivityTicks), DateTimeKind.Utc);
+
+    private long _lastActivityTicks = DateTime.UtcNow.Ticks;
+
     /// <param name="sessionRepository">Persists <paramref name="activeSession"/>'s appended events (3.2).
     /// Optional so a caller that only needs bare ECS mutation (e.g. a unit test exercising a single
     /// command in isolation) doesn't have to stand up a session too; when omitted, commands still
@@ -185,6 +190,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// can await a definite result instead of firing and hoping.</summary>
     public Task EnqueueAsync(IRuntimeCommand command)
     {
+        Interlocked.Exchange(ref _lastActivityTicks, DateTime.UtcNow.Ticks);
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         if (!_commands.Writer.TryWrite(new QueuedCommand(command, completion)))
         {

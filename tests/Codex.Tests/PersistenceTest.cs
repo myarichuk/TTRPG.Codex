@@ -805,6 +805,52 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task CampaignImport_NamingSomeoneElsesCampaign_IsRefused_AndChangesNothing_Async()
+    {
+        var victimId = Guid.NewGuid().ToString();
+        var victim = new CampaignDocument { Id = victimId, OwnerId = "victim", Name = "Victim table", Members = { new CampaignMember { UserId = "victim-player", Role = CampaignRole.Player } } };
+        await _campaignRepository.SaveAsync(victim);
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "mallory", Name = "Throwaway" });
+
+        // Mallory is DM of her own campaign and forges a bundle for the victim's id naming herself owner.
+        var forged = new CampaignBundle
+        {
+            Campaign = new CampaignDocument { Id = victimId, OwnerId = "mallory", Name = "Taken over" },
+            Actors = { new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = victimId, Name = "Injected" } }
+        };
+
+        Assert.False(await _exportService.ImportAsync(forged, "mallory"));
+
+        var after = await _campaignRepository.GetAsync(victimId);
+        Assert.Equal("victim", after!.OwnerId);
+        Assert.Equal("Victim table", after.Name);
+        Assert.Empty(await _actorRepository.GetVisibleForCampaignAsync(new CampaignAccess(victimId, "victim", CampaignRole.DM)));
+    }
+
+    [Fact]
+    public async Task CampaignImport_IntoAnExistingCampaign_KeepsTheStoredOwnerAndMembers_Async()
+    {
+        var id = Guid.NewGuid().ToString();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = id, OwnerId = "owner", Name = "Before", InviteCode = "live-code",
+            Members = { new CampaignMember { UserId = "co-dm", Role = CampaignRole.DM }, new CampaignMember { UserId = "late-joiner", Role = CampaignRole.Player } }
+        });
+
+        // The file is an older export: it knows neither the late joiner nor the current invite code, and claims a different owner.
+        var bundle = new CampaignBundle { Campaign = new CampaignDocument { Id = id, OwnerId = "someone-else", Name = "After", InviteCode = "stale" } };
+
+        Assert.False(await _exportService.ImportAsync(bundle, "late-joiner"));
+        Assert.True(await _exportService.ImportAsync(bundle, "co-dm"));
+
+        var stored = await _campaignRepository.GetAsync(id);
+        Assert.Equal("After", stored!.Name);
+        Assert.Equal("owner", stored.OwnerId);
+        Assert.Equal("live-code", stored.InviteCode);
+        Assert.Contains(stored.Members, m => m.UserId == "late-joiner");
+    }
+
+    [Fact]
     public async Task ScheduledBackup_ProducesBackupFile_AndIsIdempotent_Async()
     {
         var backupDir = Path.Combine(Path.GetTempPath(), "CodexBackup_" + Guid.NewGuid().ToString("N"));

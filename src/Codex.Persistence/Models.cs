@@ -225,7 +225,18 @@ public class SessionNote
 public class SessionEvent
 {
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>The full account, written for the DM: real names, exact numbers. Players read it through
+    /// <see cref="SessionEventRedactor"/>, never directly.</summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>Every actor the description names. A viewer who can't see one of them doesn't see the event.</summary>
+    public List<string> ActorIds { get; set; } = new();
+
+    /// <summary>What anyone who may see the actors reads instead when <see cref="Description"/> carries numbers
+    /// they may not know (a monster's exact damage). Null means the description is safe as it stands.</summary>
+    public string? PlayerDescription { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 

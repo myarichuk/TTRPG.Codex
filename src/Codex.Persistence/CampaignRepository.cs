@@ -15,7 +15,8 @@ public class CampaignRepository(
     IHomebrewRepository homebrewRepository,
     IEncounterRepository encounterRepository,
     IWikiRepository? wikiRepository = null,
-    IJournalRepository? journalRepository = null) : ICampaignRepository
+    IJournalRepository? journalRepository = null,
+    CampaignLifecycleHooks? lifecycle = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -93,6 +94,13 @@ public class CampaignRepository(
         if (!string.Equals(campaign.OwnerId, requestingUserId, StringComparison.Ordinal))
         {
             return CampaignDeleteResult.Forbidden;
+        }
+
+        // Stop the live table first: otherwise its next command rewrites actors and the session into
+        // a campaign that no longer exists, and every open table page keeps driving it.
+        if (lifecycle != null)
+        {
+            await lifecycle.RunDeletingAsync(campaignId);
         }
 
         // B13: cascade delete everything scoped to this campaign before the campaign itself.
