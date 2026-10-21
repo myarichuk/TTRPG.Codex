@@ -1244,3 +1244,10 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .sheet-plate .plate-roll { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--rule); }
 .sheet-plate .plate-roll .dice-head { display: inline-flex; margin-right: 0.75rem; }
 .sheet-plate .plate-roll .dice-result { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+
+/* ---- Domain icons ---- */
+.domain-icon { flex: 0 0 auto; vertical-align: -0.2em; }
+.pill .domain-icon, .label-caps .domain-icon { margin-right: 0.2rem; vertical-align: -0.25em; }
+.row-glyph { display: inline-flex; margin-right: 0.4rem; color: var(--accent); vertical-align: middle; }
+.title-glyph { display: inline-flex; margin-right: 0.5rem; color: var(--accent); vertical-align: middle; }
+.cond-chip .domain-icon { color: var(--accent); }

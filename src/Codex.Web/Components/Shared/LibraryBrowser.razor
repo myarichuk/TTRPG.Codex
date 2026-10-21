@@ -59,6 +59,10 @@
                     <li class="list-row">
                         <div class="row-main">
                             <div class="row-title">
+                                @if (DomainIconMap.Subject(item.Entry) is { } subject)
+                                {
+                                    <span class="row-glyph" title="@subject.Label"><DomainIcon Domain="@subject.Domain" Key="@subject.Key" Size="DomainIconSize.Small" /></span>
+                                }
                                 <a href="@link" aria-current="@ariaCurrent" data-testid="library-item">@item.Entry.Name</a>
                                 @if (item.IsHomebrew)
                                 {
@@ -67,7 +71,7 @@
                             </div>
                             <div class="row-sub">@Summary(item)</div>
                         </div>
-                        <span class="pill">@TypeLabel(item.Entry.Type)</span>
+                        <span class="pill"><DomainIcon Domain="kind" Key="@item.Entry.Type" Size="DomainIconSize.Small" /> @TypeLabel(item.Entry.Type)</span>
                     </li>
                 }
             </ul>

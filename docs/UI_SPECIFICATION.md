@@ -134,6 +134,16 @@ Normal / Advantage / Disadvantage choice. The latest roll also shows in the stic
 in view while scrolling. During a live session the roll goes into the table's shared log under the
 character; with no session it is rolled and shown to that user only, and the panel says so.
 
+## Game icons
+
+`DomainIcon` draws the game's own concepts: conditions, damage types, schools of magic, item
+categories, creature types, kinds of content (class, species, spell, ...), roles and actor kinds. The
+glyphs are drawn for this app on a 24-unit grid; Lucide stays for interface chrome only. Three sizes:
+small 16, medium 22, large 32. An unknown key gets a heraldic placeholder (a shield with its initial)
+rather than nothing. The Library shows an entry's kind in its pill and a second glyph for a spell's
+school, a monster's creature type or an item's category (`DomainIconMap`); condition chips on the
+table use the condition glyphs. Icons are decorative; the words always carry the meaning.
+
 ## Test ids
 
 Playwright scenarios rely on `data-testid` attributes rather than copy; keep them when restyling

@@ -739,7 +739,7 @@ else
             @if (exhaustion > 0)
             {
                 <li class="cond-chip" data-testid="exhaustion-badge" title="@($"{Vitals!.Exhaustion!.Condition ?? "Exhaustion"}, level {exhaustion}")">
-                    <LucideIcon IconName="@ConditionIcon(Vitals!.Exhaustion!.Condition ?? "Exhaustion")" Size="14" />
+                    <DomainIcon Domain="condition" Key="@(Vitals!.Exhaustion!.Condition ?? "Exhaustion")" Size="DomainIconSize.Small" />
                     @($"{Vitals!.Exhaustion!.Condition ?? "Exhaustion"} {exhaustion}")
                 </li>
             }
@@ -748,7 +748,7 @@ else
                 var effectId = effect.EffectId;
                 var tip = effect.IsIndefinite ? "Until removed" : $"{effect.RoundsRemaining} round(s), ends at the {(effect.Expiry == EffectExpiry.StartOfTurn ? "start" : "end")} of the turn";
                 <li class="cond-chip" data-testid="condition-badge" data-effect-id="@effectId" title="@tip">
-                    <LucideIcon IconName="@ConditionIcon(effectId)" Size="14" />
+                    <DomainIcon Domain="condition" Key="@effectId" Size="DomainIconSize.Small" />
                     @(effect.IsIndefinite ? effectId : $"{effectId} ({effect.RoundsRemaining})")
                     @if (Access.IsDm)
                     {
@@ -757,17 +757,6 @@ else
                 </li>
             }
         </ul>
-    };
-
-    private static string ConditionIcon(string condition) => condition.ToLowerInvariant() switch
-    {
-        "blinded" or "invisible" => "eye-off",
-        "charmed" => "heart",
-        "stunned" or "paralyzed" or "incapacitated" => "zap",
-        "poisoned" or "burning" => "flame",
-        "exhaustion" => "trending-up",
-        "frightened" or "prone" => "alert-triangle",
-        _ => "sparkles",
     };
 
     private static string KindClass(ActorDocument actor) => actor.Kind switch
