@@ -38,7 +38,7 @@
                         <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
                         @if (Ctx.IsDm)
                         {
-                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" data-testid="run-session" @onclick="() => RunAtTableAsync(session)">@RunLabel(session)</button>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="ms-2" data-testid="run-session" OnClick="() => RunAtTableAsync(session)">@RunLabel(session)</CodexButton>
                         }
                     </li>
                 }
@@ -52,14 +52,14 @@
                 <div class="panel-title"><h3 id="plan-heading">Plan a session</h3></div>
                 <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
                     <div class="mb-2">
-                        <label for="session-title" class="form-label">Title</label>
-                        <input id="session-title" class="form-control" @bind="newTitle" placeholder="e.g. Into the Greyharbour sewers" data-testid="new-session-title" />
+                        <label for="session-title" class="field-label">Title</label>
+                        <input id="session-title" class="field-input" @bind="newTitle" placeholder="e.g. Into the Greyharbour sewers" data-testid="new-session-title" />
                     </div>
                     <div class="mb-3">
-                        <label for="session-date" class="form-label">Date</label>
-                        <input id="session-date" type="date" class="form-control" @bind="newDate" />
+                        <label for="session-date" class="field-label">Date</label>
+                        <input id="session-date" type="date" class="field-input" @bind="newDate" />
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" data-testid="new-session-add">Add session</button>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100" data-testid="new-session-add">Add session</CodexButton>
                 </form>
             </section>
         </div>

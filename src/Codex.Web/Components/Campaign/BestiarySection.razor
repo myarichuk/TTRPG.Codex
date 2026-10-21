@@ -21,7 +21,7 @@
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
-            <a href="@Ctx.BasePath/library/monster" class="btn btn-outline-secondary"><LucideIcon IconName="plus" Size="16" /> New homebrew creature</a>
+            <a href="@Ctx.BasePath/library/monster" class="cx-btn cx-etched"><LucideIcon IconName="plus" Size="16" /> New homebrew creature</a>
         </div>
     }
 </div>
@@ -79,14 +79,14 @@ else
                                 </div>
                                 <div class="row-sub">
                                     <label for="bb-note-@entry.Key" class="visually-hidden">Note for @entry.Name</label>
-                                    <input id="bb-note-@entry.Key" class="form-control form-control-sm inline-input" placeholder="Where you'll use it…" value="@entry.Note" @onchange="e => SetNoteAsync(entry, e.Value?.ToString())" />
+                                    <input id="bb-note-@entry.Key" class="field-input field-sm inline-input" placeholder="Where you'll use it…" value="@entry.Note" @onchange="e => SetNoteAsync(entry, e.Value?.ToString())" />
                                 </div>
                             </div>
                             <div class="row-actions">
                                 <label for="bb-count-@entry.Key" class="visually-hidden">How many</label>
-                                <input id="bb-count-@entry.Key" type="number" min="1" max="20" class="form-control form-control-sm count-input" value="@entry.Count" @onchange="e => SetCountAsync(entry, e.Value?.ToString())" />
-                                <button type="button" class="btn btn-primary btn-sm" @onclick="() => AddToCastAsync(entry)" aria-label="Add @entry.Count @entry.Name to the cast"><LucideIcon IconName="user-plus" Size="14" /> To cast</button>
-                                <button type="button" class="icon-btn danger" aria-label="Remove @entry.Name from the shortlist" @onclick="() => RemoveAsync(entry)"><LucideIcon IconName="x" Size="16" /></button>
+                                <input id="bb-count-@entry.Key" type="number" min="1" max="20" class="field-input field-sm count-input" value="@entry.Count" @onchange="e => SetCountAsync(entry, e.Value?.ToString())" />
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(entry)" aria-label="@($"Add {entry.Count} {entry.Name} to the cast")"><LucideIcon IconName="user-plus" Size="14" /> To cast</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {entry.Name} from the shortlist")" OnClick="() => RemoveAsync(entry)" />
                             </div>
                         </li>
                     }
@@ -126,7 +126,7 @@ else
                 <div class="search mb-2">
                     <LucideIcon IconName="search" Size="18" Class="search-icon" />
                     <label for="bestiary-search" class="visually-hidden">Search creatures</label>
-                    <input id="bestiary-search" type="search" class="form-control" placeholder="goblin, dragon, CR 3…" value="@query" @oninput="OnQueryChanged" data-testid="bestiary-search" />
+                    <input id="bestiary-search" type="search" class="field-input" placeholder="goblin, dragon, CR 3…" value="@query" @oninput="OnQueryChanged" data-testid="bestiary-search" />
                 </div>
                 @if (results == null)
                 {
@@ -152,9 +152,9 @@ else
                                     </div>
                                     <div class="row-sub">@Summary(item)</div>
                                 </div>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => ShortlistAsync(item)" disabled="@shortlisted" aria-label="@(shortlisted ? $"{item.Entry.Name} is shortlisted" : $"Shortlist {item.Entry.Name}")">
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => ShortlistAsync(item)" Disabled="@shortlisted" aria-label="@(shortlisted ? $"{item.Entry.Name} is shortlisted" : $"Shortlist {item.Entry.Name}")">
                                     <LucideIcon IconName="@(shortlisted ? "check" : "bookmark-plus")" Size="14" /> @(shortlisted ? "Listed" : "Shortlist")
-                                </button>
+                                </CodexButton>
                             </li>
                         }
                     </ul>

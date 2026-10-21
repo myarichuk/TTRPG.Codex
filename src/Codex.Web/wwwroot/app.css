@@ -1211,3 +1211,9 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .turn-banner { position: sticky; top: calc(var(--header-h) + 0.5rem); z-index: 5; }
 .avatar.token { width: 56px; height: 56px; font-size: 1.1rem; border-radius: 50%; border: 3px solid var(--kind, var(--border-strong)); box-shadow: var(--frame), var(--shadow-1); object-fit: cover; }
 .participant .hp-bar.hp-numbered { margin-top: 0.4rem; }
+.field-lg { min-height: 52px; font-size: 1.15rem; }
+.cx-arcane { border-color: var(--arcane); }
+.cx-arcane .lucide-icon { color: var(--arcane); }
+.cx-arcane:hover { background: var(--arcane-soft); border-color: var(--arcane); }
+.input-group > .field-input, .input-group > .field-select { flex: 1 1 auto; width: 1%; min-width: 0; }
+.input-group > .cx-btn { flex: 0 0 auto; }

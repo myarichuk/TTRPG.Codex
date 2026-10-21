@@ -25,15 +25,15 @@
         <p class="page-subtitle">@(Ctx.IsDm ? "Player characters, NPCs and monsters in this campaign." : "The party and everyone it has met.")</p>
     </div>
     <div class="row-actions">
-        <button type="button" class="btn btn-primary" @onclick="OpenCreateAsync" data-testid="create-character">
+        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenCreateAsync" data-testid="create-character">
             <LucideIcon IconName="user-plus" Size="16" /> @(Ctx.IsDm ? "New character or NPC" : "Create my character")
-        </button>
-        <button type="button" class="btn btn-ai" @onclick="OpenAiCreateAsync" data-testid="create-character-ai">
+        </CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="OpenAiCreateAsync" data-testid="create-character-ai">
             <LucideIcon IconName="sparkles" Size="16" /> Create with AI
-        </button>
+        </CodexButton>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/bestiary" class="btn btn-outline-secondary"><LucideIcon IconName="paw-print" Size="16" /> Bestiary</a>
+            <a href="@Ctx.BasePath/bestiary" class="cx-btn cx-etched"><LucideIcon IconName="paw-print" Size="16" /> Bestiary</a>
         }
     </div>
 </div>
@@ -78,14 +78,14 @@
         <div class="dialog-body">
             <h2 id="create-actor-title">@(Ctx.IsDm ? "New character or NPC" : "Create my character")</h2>
             <div class="mb-3">
-                <label for="ca-name" class="form-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-                <input id="ca-name" class="form-control" @bind="newName" required maxlength="120" data-testid="create-character-name" />
+                <label for="ca-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <input id="ca-name" class="field-input" @bind="newName" required maxlength="120" data-testid="create-character-name" />
             </div>
             @if (Ctx.IsDm)
             {
                 <div class="mb-3">
-                    <label for="ca-kind" class="form-label">Kind</label>
-                    <select id="ca-kind" class="form-select" @bind="newKind" data-testid="create-character-kind">
+                    <label for="ca-kind" class="field-label">Kind</label>
+                    <select id="ca-kind" class="field-select" @bind="newKind" data-testid="create-character-kind">
                         <option value="@ActorKind.PlayerCharacter">Player character</option>
                         <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
                         <option value="@ActorKind.Monster">Monster</option>
@@ -94,8 +94,8 @@
                 @if (newKind == ActorKind.PlayerCharacter)
                 {
                     <div class="mb-3">
-                        <label for="ca-owner" class="form-label">Played by</label>
-                        <select id="ca-owner" class="form-select" @bind="newOwnerId">
+                        <label for="ca-owner" class="field-label">Played by</label>
+                        <select id="ca-owner" class="field-select" @bind="newOwnerId">
                             <option value="">— nobody yet —</option>
                             @foreach (var member in Ctx.Campaign.Members)
                             {
@@ -105,15 +105,15 @@
                     </div>
                 }
             }
-            <p class="form-text mb-0">Stats, class, species and the rest are filled in on the character sheet next.</p>
+            <p class="field-hint">Stats, class, species and the rest are filled in on the character sheet next.</p>
             @if (createError != null)
             {
                 <p class="text-danger mb-0 mt-2" role="alert">@createError</p>
             }
         </div>
         <div class="dialog-actions">
-            <button type="button" class="btn btn-outline-secondary" @onclick="CloseCreateAsync">Cancel</button>
-            <button type="submit" class="btn btn-primary" data-testid="create-character-submit">Create</button>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseCreateAsync">Cancel</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="create-character-submit">Create</CodexButton>
         </div>
     </form>
 </dialog>
@@ -124,14 +124,14 @@
             <h2 id="ai-actor-title"><LucideIcon IconName="sparkles" Size="20" Class="title-icon" /> Create with AI</h2>
             <p class="small-muted">Describe the character in a line or two. The AI fills in the sheet using only classes, species and backgrounds from this campaign's Library, plus a short history you can edit afterwards.</p>
             <div class="mb-3">
-                <label for="ai-concept" class="form-label">Concept <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-                <textarea id="ai-concept" class="form-control" rows="3" required @bind="aiConcept" placeholder="e.g. A retired city guard turned reluctant cleric, haunted by a riot she failed to stop. Level 3." data-testid="ai-concept"></textarea>
+                <label for="ai-concept" class="field-label">Concept <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <textarea id="ai-concept" class="field-input" rows="3" required @bind="aiConcept" placeholder="e.g. A retired city guard turned reluctant cleric, haunted by a riot she failed to stop. Level 3." data-testid="ai-concept"></textarea>
             </div>
             @if (Ctx.IsDm)
             {
                 <div class="mb-3">
-                    <label for="ai-kind" class="form-label">Kind</label>
-                    <select id="ai-kind" class="form-select" @bind="aiKind">
+                    <label for="ai-kind" class="field-label">Kind</label>
+                    <select id="ai-kind" class="field-select" @bind="aiKind">
                         <option value="@ActorKind.PlayerCharacter">Player character</option>
                         <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
                         <option value="@ActorKind.Monster">Monster</option>
@@ -144,8 +144,8 @@
             }
         </div>
         <div class="dialog-actions">
-            <button type="button" class="btn btn-outline-secondary" @onclick="CloseAiCreateAsync" disabled="@aiBusy">Cancel</button>
-            <button type="submit" class="btn btn-primary" disabled="@aiBusy" data-testid="ai-create-submit">@(aiBusy ? "Generating…" : "Generate character")</button>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseAiCreateAsync" Disabled="@aiBusy">Cancel</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@aiBusy" data-testid="ai-create-submit">@(aiBusy ? "Generating…" : "Generate character")</CodexButton>
         </div>
     </form>
 </dialog>
@@ -184,20 +184,20 @@
             <div class="row-actions">
                 @if (actor.Visibility != ActorVisibility.Known)
                 {
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => SetVisibilityAsync(actor, ActorVisibility.Known)" aria-label="Reveal @actor.Name to players"><LucideIcon IconName="eye" Size="14" /> Reveal</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Known)" aria-label="@($"Reveal {actor.Name} to players")"><LucideIcon IconName="eye" Size="14" /> Reveal</CodexButton>
                 }
                 else if (actor.Kind != ActorKind.PlayerCharacter)
                 {
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => SetVisibilityAsync(actor, ActorVisibility.Hidden)" aria-label="Hide @actor.Name from players"><LucideIcon IconName="eye-off" Size="14" /> Hide</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Hidden)" aria-label="@($"Hide {actor.Name} from players")"><LucideIcon IconName="eye-off" Size="14" /> Hide</CodexButton>
                 }
-                <button type="button" class="icon-btn danger" aria-label="Delete @actor.Name" @onclick="() => DeleteAsync(actor)"><LucideIcon IconName="trash-2" Size="16" /></button>
+                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Delete {actor.Name}")" OnClick="() => DeleteAsync(actor)" />
             </div>
         }
         else if (actor.Kind == ActorKind.PlayerCharacter && actor.OwnerUserId == Ctx.UserId)
         {
             <div class="row-actions">
-                <a href="@Ctx.BasePath/actors/@actor.Id" class="btn btn-outline-secondary btn-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit sheet</a>
-                <button type="button" class="icon-btn danger" aria-label="Retire @actor.Name" title="Retire this character" @onclick="() => DeleteAsync(actor)" data-testid="retire-character"><LucideIcon IconName="trash-2" Size="16" /></button>
+                <a href="@Ctx.BasePath/actors/@actor.Id" class="cx-btn cx-etched cx-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit sheet</a>
+                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Retire {actor.Name}")" title="Retire this character" OnClick="() => DeleteAsync(actor)" data-testid="retire-character" />
             </div>
         }
     </li>;

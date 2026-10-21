@@ -103,7 +103,7 @@ rings and the HP bar's fill against its track need 3:1.
 
 ## Components and frames
 
-Controls are owned by the app, not Bootstrap. New screens use these; `btn-*`, `form-control`, `form-select` and `form-check` remain only in the pages not yet migrated (the campaign sections, Library, Home, settings).
+Controls are owned by the app, not Bootstrap. Every page uses these; Bootstrap's grid and spacing utilities remain, but no `btn-*`, `form-control`, `form-select` or `form-check` classes are left. The exceptions are the icon buttons in the header (theme, sign out) and the reconnect dialog, which have their own styles. A button-shaped link is `<a class="cx-btn cx-plaque">` (or `cx-etched`, `cx-sm`).
 
 | Component | Use |
 |---|---|

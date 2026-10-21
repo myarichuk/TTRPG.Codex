@@ -8,8 +8,8 @@
         <p class="mb-0">@body</p>
     </div>
     <div class="dialog-actions">
-        <button type="button" class="btn btn-outline-secondary" @onclick="() => Finish(false)">@cancelLabel</button>
-        <button type="button" class="btn @(destructive ? "btn-danger" : "btn-primary")" data-testid="confirm-accept" @onclick="() => Finish(true)">@confirmLabel</button>
+        <CodexButton OnClick="() => Finish(false)">@cancelLabel</CodexButton>
+        <CodexButton Variant="@(destructive ? CodexButtonVariant.Blood : CodexButtonVariant.Plaque)" data-testid="confirm-accept" OnClick="() => Finish(true)">@confirmLabel</CodexButton>
     </div>
 </dialog>
 

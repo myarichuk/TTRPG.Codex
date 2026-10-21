@@ -15,7 +15,7 @@
     <div class="search">
         <LucideIcon IconName="search" Size="18" Class="search-icon" />
         <label for="@searchId" class="visually-hidden">Search @(TypeLabel(selectedType) ?? "content")</label>
-        <input id="@searchId" type="search" class="form-control" placeholder="Search by name, tag or text…"
+        <input id="@searchId" type="search" class="field-input" placeholder="Search by name, tag or text…"
                value="@query" @oninput="OnQueryChanged" autocomplete="off" data-testid="library-search" />
     </div>
     @if (ShowResultCount)
@@ -83,7 +83,7 @@
                         {
                             @DetailActions(selected)
                         }
-                        <a href="@CloseHref" class="btn btn-outline-secondary btn-sm" aria-label="Close detail">
+                        <a href="@CloseHref" class="cx-btn cx-etched cx-sm" aria-label="Close detail">
                             <LucideIcon IconName="x" Size="14" /> Close
                         </a>
                     </Actions>

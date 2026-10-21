@@ -420,7 +420,7 @@ else
                                             <label for="@levelInputId" class="visually-hidden">@(cls.Entry?.Name ?? classId) levels</label>
                                             <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
                                                    @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
-                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"@(")"Remove " + (cls.Entry?.Name ?? classId))" OnClick="() => RemoveClass(multiclass, classId)" />
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@("Remove " + (cls.Entry?.Name ?? classId))" OnClick="() => RemoveClass(multiclass, classId)" />
                                         </span>
                                     }
                                 </li>

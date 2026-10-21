@@ -12,7 +12,7 @@
         <h2 class="mb-0">My journal</h2>
         <p class="page-subtitle">Your private notebook for this campaign. Only you can read it, not even the DM. One entry per session, plus anything else you want to keep.</p>
     </div>
-    <button type="button" class="btn btn-primary" @onclick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="16" /> New entry</button>
+    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="16" /> New entry</CodexButton>
 </div>
 
 @if (entries == null)
@@ -29,7 +29,7 @@ else
                     <div class="empty-icon"><LucideIcon IconName="notebook-pen" Size="26" /></div>
                     <h3>Nothing written yet</h3>
                     <p>Names, theories, who owes you money. Open a session and write there, or start a free entry.</p>
-                    <button type="button" class="btn btn-primary" @onclick="StartNew">Write the first entry</button>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew">Write the first entry</CodexButton>
                 </div>
             }
             @foreach (var entry in entries)
@@ -48,7 +48,7 @@ else
                         </div>
                         <div class="row-actions">
                             <button type="button" class="icon-btn" aria-label="Edit entry" @onclick="() => StartEdit(entry)"><LucideIcon IconName="edit-3" Size="16" /></button>
-                            <button type="button" class="icon-btn danger" aria-label="Delete entry" @onclick="() => DeleteAsync(entry)"><LucideIcon IconName="trash-2" Size="16" /></button>
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="Delete entry" OnClick="() => DeleteAsync(entry)" />
                         </div>
                     </div>
                     <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(entry.Body))</div>
@@ -62,12 +62,12 @@ else
                     <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="pen-line" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? "New entry" : "Edit entry")</h3></div>
                     <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                         <div class="mb-2">
-                            <label for="journal-title" class="form-label">Title</label>
-                            <input id="journal-title" class="form-control" @bind="editing.Title" maxlength="160" data-testid="journal-title" />
+                            <label for="journal-title" class="field-label">Title</label>
+                            <input id="journal-title" class="field-input" @bind="editing.Title" maxlength="160" data-testid="journal-title" />
                         </div>
                         <div class="mb-2">
-                            <label for="journal-session" class="form-label">Session</label>
-                            <select id="journal-session" class="form-select" @bind="editing.SessionId">
+                            <label for="journal-session" class="field-label">Session</label>
+                            <select id="journal-session" class="field-select" @bind="editing.SessionId">
                                 <option value="">— general —</option>
                                 @foreach (var (id, title) in sessionTitles)
                                 {
@@ -76,12 +76,12 @@ else
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="journal-text" class="form-label">Text</label>
-                            <textarea id="journal-text" class="form-control" rows="10" @bind="editing.Body" data-testid="journal-body"></textarea>
+                            <label for="journal-text" class="field-label">Text</label>
+                            <textarea id="journal-text" class="field-input" rows="10" @bind="editing.Body" data-testid="journal-body"></textarea>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary" data-testid="journal-save">Save</button>
-                            <button type="button" class="btn btn-outline-secondary" @onclick="() => editing = null">Cancel</button>
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save">Save</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => editing = null">Cancel</CodexButton>
                         </div>
                     </form>
                 </section>

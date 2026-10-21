@@ -13,8 +13,8 @@
 
     <div class="field-grid mb-3">
         <div>
-            <label for="@(id)-type" class="form-label">Type <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-            <select id="@(id)-type" class="form-select" value="@Entry.Type" @onchange="OnTypeChanged" required data-testid="homebrew-type">
+            <label for="@(id)-type" class="field-label">Type <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+            <select id="@(id)-type" class="field-select" value="@Entry.Type" @onchange="OnTypeChanged" required data-testid="homebrew-type">
                 <option value="">— choose a type —</option>
                 @foreach (var type in types)
                 {
@@ -23,22 +23,22 @@
             </select>
         </div>
         <div>
-            <label for="@(id)-name" class="form-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-            <input id="@(id)-name" class="form-control" @bind="Entry.Name" required data-testid="homebrew-name" />
+            <label for="@(id)-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+            <input id="@(id)-name" class="field-input" @bind="Entry.Name" required data-testid="homebrew-name" />
         </div>
         <div class="field-wide">
-            <label for="@(id)-desc" class="form-label">Description</label>
-            <textarea id="@(id)-desc" class="form-control" rows="5" @bind="Entry.Description" data-testid="homebrew-description"></textarea>
+            <label for="@(id)-desc" class="field-label">Description</label>
+            <textarea id="@(id)-desc" class="field-input" rows="5" @bind="Entry.Description" data-testid="homebrew-description"></textarea>
             <div class="field-hint">Plain text. <code>**bold**</code>, <code>*italic*</code>, "- " bullets and | tables | are rendered.</div>
         </div>
         <div>
-            <label for="@(id)-tags" class="form-label">Tags</label>
-            <input id="@(id)-tags" class="form-control" placeholder="Comma-separated" value="@string.Join(", ", Entry.Tags)"
+            <label for="@(id)-tags" class="field-label">Tags</label>
+            <input id="@(id)-tags" class="field-input" placeholder="Comma-separated" value="@string.Join(", ", Entry.Tags)"
                    @onchange="e => Entry.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
         </div>
         <div>
             <div class="field-check mt-4">
-                <input id="@(id)-published" type="checkbox" class="form-check-input" @bind="Entry.IsPublished" />
+                <input id="@(id)-published" type="checkbox" class="field-box" @bind="Entry.IsPublished" />
                 <label for="@(id)-published" >Visible to players</label>
             </div>
         </div>
@@ -50,11 +50,11 @@
     }
 
     <div class="d-flex gap-2 flex-wrap">
-        <button type="submit" class="btn btn-primary" data-testid="homebrew-save">Save</button>
-        <button type="button" class="btn btn-outline-secondary" @onclick="OnCancel">Cancel</button>
+        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="homebrew-save">Save</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OnCancel">Cancel</CodexButton>
         @if (Entry.Id.Length > 0)
         {
-            <button type="button" class="btn btn-outline-danger ms-auto" @onclick="DeleteAsync">Delete</button>
+            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync">Delete</CodexButton>
         }
     </div>
 </form>

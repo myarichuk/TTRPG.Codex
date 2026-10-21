@@ -273,7 +273,7 @@ else
                 <form class="input-group input-group-sm mb-2" @onsubmit="RollDiceAsync" @onsubmit:preventDefault="true">
                     <label for="dice-expression" class="visually-hidden">Dice expression</label>
                     <input id="dice-expression" class="field-input" placeholder="2d6+3, 4d6kh3, adv+5…" @bind="diceExpression" data-testid="dice-input" />
-                    <CodexButton Variant="CodexButtonVariant.Plaque" data-testid="dice-roll">Roll</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="dice-roll">Roll</CodexButton>
                 </form>
                 @if (Access.IsDm)
                 {
@@ -309,7 +309,7 @@ else
                             <label class="small" for="noteSecret">Secret note (DM only)</label>
                         </div>
                     }
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mb-2">Add note</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Small="true" Class="mb-2">Add note</CodexButton>
                 </form>
                 <div class="log">
                     @foreach (var note in VisibleNotes())
@@ -905,7 +905,7 @@ else
                     var level = PoolValue(actorId, exhaustion.Key) ?? 0;
                     <div class="d-flex align-items-end gap-1">
                         <span class="small pb-1">@(exhaustion.Condition ?? "Exhaustion") @level</span>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" @onclick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, 1))" aria-label="@($"Raise {name}'s exhaustion")">+</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" OnClick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, 1))" aria-label="@($"Raise {name}'s exhaustion")">+</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, -1))" aria-label="@($"Lower {name}'s exhaustion")">−</CodexButton>
                     </div>
                 }

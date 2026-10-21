@@ -30,7 +30,7 @@ else if (campaign == null || session == null || access == null)
         <div class="empty-icon"><LucideIcon IconName="calendar" Size="28" /></div>
         <h1 class="h4">Session not found</h1>
         <p>It may not exist, or you may not have access to it.</p>
-        <a href="/" class="btn btn-primary">Back to campaigns</a>
+        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
     </div>
 }
 else
@@ -47,9 +47,9 @@ else
         </div>
         @if (access.IsDm)
         {
-            <button type="button" class="btn btn-primary btn-sm" data-testid="run-session" @onclick="RunAtTableAsync">
+            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="run-session" OnClick="RunAtTableAsync">
                 <LucideIcon IconName="dices" Size="14" /> @(RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id ? "Go to the table" : session.Status == SessionStatus.Completed ? "Reopen at the table" : "Run at the table")
-            </button>
+            </CodexButton>
         }
     </div>
 
@@ -63,19 +63,19 @@ else
                     <div class="panel-title"><h2 id="details-heading" class="h5"><LucideIcon IconName="edit-3" Size="16" Class="title-icon" /> Details</h2></div>
                     <div class="field-grid">
                         <div>
-                            <label for="session-title" class="form-label">Title</label>
-                            <input id="session-title" class="form-control" @bind="editTitle" />
+                            <label for="session-title" class="field-label">Title</label>
+                            <input id="session-title" class="field-input" @bind="editTitle" />
                         </div>
                         <div>
-                            <label for="session-status" class="form-label">Status</label>
-                            <select id="session-status" class="form-select" @bind="editStatus">
+                            <label for="session-status" class="field-label">Status</label>
+                            <select id="session-status" class="field-select" @bind="editStatus">
                                 <option value="@SessionStatus.Planned">Planned</option>
                                 <option value="@SessionStatus.Live">Live</option>
                                 <option value="@SessionStatus.Completed">Completed</option>
                             </select>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm mt-3" @onclick="SaveDetailsAsync">Save details</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-3" OnClick="SaveDetailsAsync">Save details</CodexButton>
                 </section>
             }
 
@@ -90,15 +90,15 @@ else
                 @if (access.IsDm)
                 {
                     <label for="recap" class="visually-hidden">Recap</label>
-                    <textarea id="recap" class="form-control mb-2" rows="8" placeholder="What happened this session, as the players will read it…" @bind="editRecap" @bind:event="oninput"></textarea>
+                    <textarea id="recap" class="field-input mb-2" rows="8" placeholder="What happened this session, as the players will read it…" @bind="editRecap" @bind:event="oninput"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <button type="button" class="btn btn-primary btn-sm" @onclick="SaveRecapAsync">Save recap</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="PreFillRecap">Pre-fill from events</button>
-                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync">Save recap</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">Pre-fill from events</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
                             <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? "Drafting…" : "Draft with AI")
-                        </button>
+                        </CodexButton>
                     </div>
-                    <p id="ai-help" class="form-text mb-0">The player draft is built from the event log, party notes and open rolls only. Secret rolls and private notes never reach it.</p>
+                    <p id="ai-help" class="field-hint">The player draft is built from the event log, party notes and open rolls only. Secret rolls and private notes never reach it.</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(session.Recap))
                 {
@@ -118,14 +118,14 @@ else
                         <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="12" /> Only you</span>
                     </div>
                     <label for="dm-summary" class="visually-hidden">DM summary</label>
-                    <textarea id="dm-summary" class="form-control mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput"></textarea>
+                    <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <button type="button" class="btn btn-primary btn-sm" @onclick="SaveDmSummaryAsync">Save summary</button>
-                        <button type="button" class="btn btn-ai btn-sm" @onclick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync">Save summary</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
                             <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Dm ? "Drafting…" : "Draft with AI")
-                        </button>
+                        </CodexButton>
                     </div>
-                    <p class="form-text mb-0">The DM draft sees everything: secret rolls, private notes and your previous summary.</p>
+                    <p class="field-hint">The DM draft sees everything: secret rolls, private notes and your previous summary.</p>
                 </section>
             }
 
@@ -150,15 +150,15 @@ else
                     </div>
                 }
                 <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                    <label for="new-note" class="form-label">Add a note</label>
-                    <textarea id="new-note" class="form-control mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-testid="new-note"></textarea>
+                    <label for="new-note" class="field-label">Add a note</label>
+                    <textarea id="new-note" class="field-input mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-testid="new-note"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <label for="note-visibility" class="visually-hidden">Note visibility</label>
-                        <select id="note-visibility" class="form-select form-select-sm w-auto" @bind="newNoteVisibility" aria-label="Note visibility">
+                        <select id="note-visibility" class="field-select field-sm" @bind="newNoteVisibility" aria-label="Note visibility">
                             <option value="@CommentVisibility.Private">Private (you and the DM)</option>
                             <option value="@CommentVisibility.Public">Party (everyone in the campaign)</option>
                         </select>
-                        <button type="submit" class="btn btn-primary btn-sm">Add note</button>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true">Add note</CodexButton>
                     </div>
                 </form>
             </section>
@@ -172,9 +172,9 @@ else
                 </div>
                 <p class="small-muted">Your private notebook for this session. Nobody else, not even the DM, can read it.</p>
                 <label for="journal-body" class="visually-hidden">Journal entry</label>
-                <textarea id="journal-body" class="form-control mb-2" rows="7" placeholder="Names to remember, theories, loot you're owed…" @bind="journalBody" @bind:event="oninput" data-testid="session-journal"></textarea>
+                <textarea id="journal-body" class="field-input mb-2" rows="7" placeholder="Names to remember, theories, loot you're owed…" @bind="journalBody" @bind:event="oninput" data-testid="session-journal"></textarea>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="SaveJournalAsync" data-testid="session-journal-save">Save journal</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save">Save journal</CodexButton>
                     @if (journalSavedAt != null)
                     {
                         <span class="small-muted" role="status">Saved <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></span>
