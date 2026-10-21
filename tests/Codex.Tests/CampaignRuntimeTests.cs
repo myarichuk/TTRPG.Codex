@@ -143,6 +143,9 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         hero.Name = "Aria";
         hero.Kind = ActorKind.PlayerCharacter;
         hero.OwnerUserId = "player-1";
+        // The runtime refreshes its cached documents from the store after each persist, so the
+        // renamed actors must be stored, not just edited in memory.
+        foreach (var doc in new[] { ambusher, goblin, hero }) await _actorRepository.SaveAsync(doc);
         var session = await SeedSessionAsync(campaignId);
 
         await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
