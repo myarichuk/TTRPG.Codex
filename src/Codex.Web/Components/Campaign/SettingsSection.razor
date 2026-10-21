@@ -247,13 +247,19 @@
             return;
         }
 
-        Ctx.Campaign.Name = name.Trim();
-        Ctx.Campaign.Description = description.Trim();
-        Ctx.Campaign.SystemId = systemId;
-        Ctx.Campaign.RulesEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
+        var newName = name.Trim();
+        var newDescription = description.Trim();
+        var newSystemId = systemId;
+        var newEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
         try
         {
-            await CampaignRepo.SaveAsync(Ctx.Campaign);
+            await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+            {
+                campaign.Name = newName;
+                campaign.Description = newDescription;
+                campaign.SystemId = newSystemId;
+                campaign.RulesEnforcement = newEnforcement;
+            });
             Ctx.Notify(Flash.Success("Saved."));
             await Ctx.ReloadAsync();
         }
@@ -266,8 +272,8 @@
     private async Task SavePacksAsync()
     {
         var all = Registry.GetPacks(Ctx.Campaign.SystemId).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        Ctx.Campaign.ActivePacks = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var packs = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.ActivePacks = packs.ToList());
         Ctx.Notify(Flash.Success("Pack selection saved."));
         await Ctx.ReloadAsync();
     }
@@ -275,8 +281,10 @@
     private async Task ChangeRoleAsync(CampaignMember member, string? role)
     {
         if (!Enum.TryParse<CampaignRole>(role, out var parsed)) return;
-        member.Role = parsed;
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+        {
+            if (campaign.Members.FirstOrDefault(m => m.UserId == member.UserId) is { } stored) stored.Role = parsed;
+        });
         Ctx.Notify(Flash.Success($"{usernames.GetValueOrDefault(member.UserId, member.UserId)} is now a {parsed}."));
         await Ctx.ReloadAsync();
     }
@@ -285,8 +293,7 @@
     {
         var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
         if (!await confirm.ShowAsync($"Remove {who}?", "They lose access to this campaign. Their characters stay in the cast.", "Remove", isDestructive: true)) return;
-        Ctx.Campaign.Members.Remove(member);
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.Members.RemoveAll(m => m.UserId == member.UserId));
         Ctx.Notify(Flash.Success($"Removed {who}."));
         await Ctx.ReloadAsync();
     }
@@ -299,8 +306,8 @@
 
     private async Task RegenerateInviteAsync()
     {
-        Ctx.Campaign.InviteCode = Guid.NewGuid().ToString("N")[..8];
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var code = Guid.NewGuid().ToString("N")[..8];
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.InviteCode = code);
         Ctx.Notify(Flash.Success("New invite link created. The old one no longer works."));
         await Ctx.ReloadAsync();
     }
@@ -324,9 +331,11 @@
         {
             using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
             await Media.PutAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover, stream, file.ContentType);
-            Ctx.Campaign.HasCover = true;
-            Ctx.Campaign.CoverVersion++;
-            await CampaignRepo.SaveAsync(Ctx.Campaign);
+            await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+            {
+                campaign.HasCover = true;
+                campaign.CoverVersion++;
+            });
             Ctx.Notify(Flash.Success("Cover art updated."));
             await Ctx.ReloadAsync();
         }
@@ -339,9 +348,11 @@
     private async Task RemoveCoverAsync()
     {
         await Media.DeleteAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover);
-        Ctx.Campaign.HasCover = false;
-        Ctx.Campaign.CoverVersion++;
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+        {
+            campaign.HasCover = false;
+            campaign.CoverVersion++;
+        });
         Ctx.Notify(Flash.Success("Cover art removed."));
         await Ctx.ReloadAsync();
     }

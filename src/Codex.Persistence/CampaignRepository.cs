@@ -48,23 +48,44 @@ public class CampaignRepository(
 
     public async Task SaveAsync(CampaignDocument campaign)
     {
-        // 1.1: reject a SystemId nothing implements. Skipped until the catalog has actually run
-        // once - refusing every save during the plugin-loading window at startup would be worse
-        // than the gap it closes.
+        EnsureKnownSystem(campaign);
+
+        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
+
+        if (string.IsNullOrEmpty(campaign.Id))
+        {
+            campaign.CreatedAt = DateTime.UtcNow;
+        }
+
+        Normalize(campaign);
+        await session.StoreAsync(campaign);
+        await session.SaveChangesAsync();
+    }
+
+    public Task<CampaignDocument?> UpdateAsync(string campaignId, Action<CampaignDocument> mutate) =>
+        RavenUpdate.RunAsync<CampaignDocument>(dbService, campaignId, campaign =>
+        {
+            mutate(campaign);
+            EnsureKnownSystem(campaign);
+            Normalize(campaign);
+        });
+
+    /// <summary>1.1: reject a SystemId nothing implements. Skipped until the catalog has actually run
+    /// once - refusing every save during the plugin-loading window at startup would be worse
+    /// than the gap it closes.</summary>
+    private void EnsureKnownSystem(CampaignDocument campaign)
+    {
         if (systemCatalog.IsLoaded
             && !string.IsNullOrEmpty(campaign.SystemId)
             && !systemCatalog.LoadedSystemIds.Contains(campaign.SystemId))
         {
             throw new InvalidOperationException($"SystemId '{campaign.SystemId}' is not a loaded system plugin.");
         }
+    }
 
-        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
-
+    private static void Normalize(CampaignDocument campaign)
+    {
         campaign.UpdatedAt = DateTime.UtcNow;
-        if (string.IsNullOrEmpty(campaign.Id))
-        {
-            campaign.CreatedAt = DateTime.UtcNow;
-        }
 
         // A campaign always has its owner as at least a DM member - membership, not OwnerId, is
         // what the access layer (1.4) actually checks.
@@ -77,9 +98,6 @@ public class CampaignRepository(
         {
             campaign.InviteCode = Guid.NewGuid().ToString("N")[..8];
         }
-
-        await session.StoreAsync(campaign);
-        await session.SaveChangesAsync();
     }
 
     public async Task<CampaignDeleteResult> DeleteAsync(string campaignId, string requestingUserId)
@@ -122,22 +140,39 @@ public class CampaignRepository(
 
     public async Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId)
     {
-        using IAsyncDocumentSession session = dbService.Store.OpenAsyncSession();
-        var campaign = await session.Query<CampaignDocument>()
-            .Customize(x => x.WaitForNonStaleResults())
-            .FirstOrDefaultAsync(c => c.InviteCode == inviteCode);
-        if (campaign == null)
+        string? campaignId;
+        using (IAsyncDocumentSession lookup = dbService.Store.OpenAsyncSession())
+        {
+            campaignId = (await lookup.Query<CampaignDocument>()
+                .Customize(x => x.WaitForNonStaleResults())
+                .FirstOrDefaultAsync(c => c.InviteCode == inviteCode))?.Id;
+        }
+
+        if (campaignId == null)
         {
             return (CampaignJoinResult.InvalidCode, null);
         }
 
-        if (campaign.Members.Any(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)))
+        // Reload-then-mutate: a settings save or the live table writing the same document at the
+        // same moment must neither lose this member nor be reverted by the join.
+        var result = CampaignJoinResult.InvalidCode;
+        var updated = await RavenUpdate.RunAsync<CampaignDocument>(dbService, campaignId, campaign =>
         {
-            return (CampaignJoinResult.AlreadyMember, campaign.Id);
-        }
+            if (!string.Equals(campaign.InviteCode, inviteCode, StringComparison.Ordinal))
+            {
+                result = CampaignJoinResult.InvalidCode;
+            }
+            else if (campaign.Members.Any(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)))
+            {
+                result = CampaignJoinResult.AlreadyMember;
+            }
+            else
+            {
+                campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
+                result = CampaignJoinResult.Joined;
+            }
+        });
 
-        campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
-        await session.SaveChangesAsync();
-        return (CampaignJoinResult.Joined, campaign.Id);
+        return updated == null || result == CampaignJoinResult.InvalidCode ? (CampaignJoinResult.InvalidCode, null) : (result, campaignId);
     }
 }

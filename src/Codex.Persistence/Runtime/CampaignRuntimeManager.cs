@@ -98,6 +98,37 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         return runtime;
     }
 
+    /// <summary>
+    /// Saves a character sheet. While the campaign's table is live and has hydrated the actor, the
+    /// save goes through the runtime (<see cref="ReplaceActorCommand"/>) so it is merged with the
+    /// table's current state instead of overwriting it; otherwise it is an ordinary guarded save.
+    /// Returns false when <paramref name="access"/> may not edit the actor.
+    /// </summary>
+    /// <param name="baselineSheet">The sheet as the editor loaded it, so fields it did not change keep their live value.</param>
+    public async Task<bool> TrySaveActorAsync(ActorDocument edited, IReadOnlyDictionary<string, object>? baselineSheet, CampaignAccess access, SystemDefinition? system)
+    {
+        var runtime = TryGet(access.CampaignId);
+        if (runtime == null || !runtime.HasActor(edited.Id))
+        {
+            return await actorRepository.TrySaveAsync(edited, access);
+        }
+
+        try
+        {
+            await runtime.EnqueueAsync(new ReplaceActorCommand(edited, baselineSheet, access, system));
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException) when (TryGet(access.CampaignId) != runtime)
+        {
+            // The table ended while this save was queued: nothing live left to merge with.
+            return await actorRepository.TrySaveAsync(edited, access);
+        }
+    }
+
     /// <summary>Resumes the campaign's current session if it's still Live, reopens it if the DM
     /// left it Planned/Completed, or starts a brand-new one if this campaign has never had one
     /// (3.2 - the command log needs somewhere to append to before the first command arrives).</summary>
@@ -118,13 +149,14 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             };
             await sessionRepository.SaveAsync(session);
 
+            // Patch just the pointer: the campaign we were handed was loaded when the DM's page
+            // opened, and storing it whole would drop members who joined since (F8).
+            await campaignRepository.UpdateAsync(campaign.Id, stored => stored.CurrentSessionId = session.Id);
             campaign.CurrentSessionId = session.Id;
-            await campaignRepository.SaveAsync(campaign);
         }
         else if (session.Status != SessionStatus.Live)
         {
-            session.Status = SessionStatus.Live;
-            await sessionRepository.SaveAsync(session);
+            session = await sessionRepository.UpdateAsync(session.Id, stored => stored.Status = SessionStatus.Live) ?? session;
         }
 
         return session;
@@ -145,12 +177,13 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         var campaign = await campaignRepository.GetAsync(campaignId);
         if (campaign?.CurrentSessionId is { } sessionId)
         {
-            var liveSession = await sessionRepository.GetAsync(sessionId);
-            if (liveSession is { Status: SessionStatus.Live })
+            await sessionRepository.UpdateAsync(sessionId, stored =>
             {
-                liveSession.Status = SessionStatus.Completed;
-                await sessionRepository.SaveAsync(liveSession);
-            }
+                if (stored.Status == SessionStatus.Live)
+                {
+                    stored.Status = SessionStatus.Completed;
+                }
+            });
         }
 
         RuntimeChanged?.Invoke(campaignId);

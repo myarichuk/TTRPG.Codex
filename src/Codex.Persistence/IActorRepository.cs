@@ -12,6 +12,14 @@ public interface IActorRepository
     Task SaveAsync(ActorDocument actor);
 
     /// <summary>
+    /// Reload-then-mutate: loads the stored actor, applies <paramref name="mutate"/> to it and saves
+    /// under optimistic concurrency (retrying on a collision), so the caller changes only the fields
+    /// it names instead of writing back a copy loaded earlier. Trusted server-side callers only.
+    /// Returns the stored document, or null when the actor does not exist.
+    /// </summary>
+    Task<ActorDocument?> UpdateAsync(string actorId, Action<ActorDocument> mutate);
+
+    /// <summary>
     /// Saves an actor only if <paramref name="access"/> is allowed to edit it: the DM, or the
     /// owning player of an existing actor (4.3). Players creating a new actor must own it and
     /// place it in their own campaign; a player's save can never move an actor to another
