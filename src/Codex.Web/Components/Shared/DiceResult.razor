@@ -1,0 +1,64 @@
+@* One resolved roll: what it was for, each die as a face (dropped dice struck through), the modifier,
+   and the total in display type. A natural 20 or 1 on a single d20 is marked in words as well as colour.
+   Rolls without a die breakdown (older entries, death saves, hit dice) show their text instead. *@
+
+<div class="@Css" data-testid="dice-result">
+    <div class="dice-head">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <strong class="dice-label">@Label</strong>
+        }
+        <span class="dice-expr small-muted">@Expression</span>
+        @if (Secret)
+        {
+            <span class="pill">secret</span>
+        }
+    </div>
+    <div class="dice-body">
+        @if (Kept.Count > 0 || Dropped.Count > 0)
+        {
+            <ul class="dice-faces" aria-label="Dice">
+                @foreach (var die in Kept)
+                {
+                    <li class="@FaceClass(die)">@die@if (IsCrit(die)) {<span class="visually-hidden"> natural 20</span>} else if (IsFumble(die)) {<span class="visually-hidden"> natural 1</span>}</li>
+                }
+                @foreach (var die in Dropped)
+                {
+                    <li class="die die-dropped"><span class="visually-hidden">dropped </span>@die</li>
+                }
+            </ul>
+            @if (Modifier != 0)
+            {
+                <span class="dice-mod" aria-label="@(Modifier > 0 ? "plus " + Modifier : "minus " + -Modifier)">@(Modifier > 0 ? "+" : "−") @Math.Abs(Modifier)</span>
+            }
+        }
+        else if (!string.IsNullOrEmpty(Text))
+        {
+            <span class="small-muted">@Text</span>
+        }
+        <span class="dice-total" aria-label="@("Total " + Total)">@Total</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Expression { get; set; } = string.Empty;
+    [Parameter] public IReadOnlyList<int> Kept { get; set; } = Array.Empty<int>();
+    [Parameter] public IReadOnlyList<int> Dropped { get; set; } = Array.Empty<int>();
+    [Parameter] public int Modifier { get; set; }
+    [Parameter] public int Total { get; set; }
+    /// <summary>The plain result text, shown when there are no dice to draw.</summary>
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public bool Secret { get; set; }
+    /// <summary>The smaller row used in the log.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    private string Css => Compact ? "dice-result dice-compact" : "dice-result";
+
+    // Only a lone d20 gets crit/fumble marking; other dice have no such meaning.
+    private bool SingleD20 => Kept.Count == 1 &&
+        (Expression.Contains("d20", StringComparison.OrdinalIgnoreCase) || Expression.StartsWith("adv", StringComparison.OrdinalIgnoreCase) || Expression.StartsWith("dis", StringComparison.OrdinalIgnoreCase));
+    private bool IsCrit(int die) => SingleD20 && die == 20;
+    private bool IsFumble(int die) => SingleD20 && die == 1;
+    private string FaceClass(int die) => IsCrit(die) ? "die die-crit" : IsFumble(die) ? "die die-fumble" : "die";
+}

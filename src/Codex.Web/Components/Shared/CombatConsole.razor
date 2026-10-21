@@ -287,11 +287,8 @@ else
                     {
                         <div class="log-entry" data-testid="roll-log-entry">
                             <strong>@ResolveRollerName(entry)</strong>
-                            @if (entry.IsSecret)
-                            {
-                                <span class="pill ms-1">secret</span>
-                            }
-                            <div class="small-muted">@entry.Expression → @entry.Result</div>
+                            <DiceResult Compact="true" Label="@entry.Label" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
+                                        Modifier="entry.Modifier" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret" />
                         </div>
                     }
                 </div>

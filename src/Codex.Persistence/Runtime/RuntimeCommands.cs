@@ -646,7 +646,7 @@ public sealed record RemoveActorCommand(string ActorId) : IRuntimeCommand
 /// touch ECS state - the roll log lives on the live session, exactly like everything else 3.2
 /// already logs - so <see cref="AffectedActorIds"/> is empty.
 /// </summary>
-public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret) : IRuntimeCommand
+public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret, string? Label = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
@@ -664,7 +664,11 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
             Expression = Expression,
             Result = _result.ToString(),
             Total = _result.Total,
-            IsSecret = IsSecret
+            IsSecret = IsSecret,
+            Label = Label,
+            Kept = _result.Kept.ToList(),
+            Dropped = _result.Dropped.ToList(),
+            Modifier = _result.Modifier
         });
     }
 
@@ -673,7 +677,7 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
         var roller = ActorId != null ? runtime.GetActorName(ActorId) : RollerUserId;
         var description = IsSecret
             ? $"{roller} made a secret roll ({Expression})."
-            : $"{roller} rolled {Expression}: {_result?.Total}.";
+            : $"{roller} rolled {(Label != null ? Label + " " : "")}{Expression}: {_result?.Total}.";
         var evt = new SessionEvent { Type = "DiceRoll", Description = description };
         if (ActorId != null)
         {

@@ -123,6 +123,17 @@ Ability plates show the modifier large and the score in a medallion; with the po
 
 Above the order, a sticky banner names whose turn it is (and "Turn n of m"). Each row is a token (portrait or initials, ringed in the colour of the kind: brass for characters, verdigris for NPCs, blood for monsters), the name, an initiative plaque, state badges, an HP bar with the numbers on it, and a strip of condition chips (icon, name, rounds left, and a remove button for the DM). Players see the bar only for characters they can see exactly; hostiles keep the coarse band text.
 
+## Dice
+
+`DiceResult` draws one roll: what it was for, each die as a face (dropped dice dashed and struck
+through), the modifier, and the total in display type. A natural 20 or 1 on a single d20 is marked in
+words for screen readers as well as colour. The table's roll log uses the compact form.
+
+The sheet has roll buttons beside each ability, save, skill and spell attack, and a Dice panel with a
+Normal / Advantage / Disadvantage choice. The latest roll also shows in the sticky plate so it stays
+in view while scrolling. During a live session the roll goes into the table's shared log under the
+character; with no session it is rolled and shown to that user only, and the panel says so.
+
 ## Test ids
 
 Playwright scenarios rely on `data-testid` attributes rather than copy; keep them when restyling

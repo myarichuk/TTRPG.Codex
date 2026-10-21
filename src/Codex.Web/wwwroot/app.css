@@ -1217,3 +1217,30 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .cx-arcane:hover { background: var(--arcane-soft); border-color: var(--arcane); }
 .input-group > .field-input, .input-group > .field-select { flex: 1 1 auto; width: 1%; min-width: 0; }
 .input-group > .cx-btn { flex: 0 0 auto; }
+
+/* ---- Dice ---- */
+.dice-result { display: grid; gap: 0.25rem; }
+.dice-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+.dice-label { font-family: var(--font-display); letter-spacing: 0.03em; }
+.dice-body { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.dice-faces { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0; padding: 0; }
+.die {
+    --corner: 6px; position: relative; display: grid; place-items: center; min-width: 2.1rem; height: 2.1rem; padding: 0 0.3rem;
+    background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px;
+    font-family: var(--font-display); font-weight: 600; font-variant-numeric: lining-nums tabular-nums;
+}
+.die-dropped { opacity: 0.55; text-decoration: line-through; border-style: dashed; background: transparent; color: var(--text-2); }
+.die-crit { background: var(--brass, #b98a3e); color: #1a1208; border-color: var(--brass, #b98a3e); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brass, #b98a3e) 40%, transparent); }
+.die-fumble { background: color-mix(in srgb, var(--danger, #b3423a) 28%, var(--surface-3)); border-color: var(--danger, #b3423a); }
+.dice-mod { font-family: var(--font-display); color: var(--text-2); font-size: 1.05rem; }
+.dice-total { margin-left: auto; font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
+.dice-compact .die { min-width: 1.6rem; height: 1.6rem; font-size: 0.85rem; }
+.dice-compact .dice-total { font-size: 1.35rem; }
+.dice-tray .tray-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.dice-tray .tray-empty { margin: 0; }
+.roll-btn { margin-left: 0.5rem; vertical-align: middle; }
+.list-row .roll-end { display: inline-flex; align-items: center; gap: 0.25rem; }
+@media (prefers-reduced-motion: no-preference) { .dice-tray .dice-result { animation: rise var(--dur-slow) var(--ease-out) both; } }
+.sheet-plate .plate-roll { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--rule); }
+.sheet-plate .plate-roll .dice-head { display: inline-flex; margin-right: 0.75rem; }
+.sheet-plate .plate-roll .dice-result { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }

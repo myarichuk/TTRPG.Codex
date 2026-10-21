@@ -256,6 +256,15 @@ public class RollLogEntry
     public string Result { get; set; } = string.Empty;
     public int Total { get; set; }
     public bool IsSecret { get; set; }
+
+    /// <summary>What the roll was for ("Athletics check"); null for a free-standing roll.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>The dice that counted, in the order rolled. Empty for entries that only have <see cref="Result"/> text (older rolls, death saves, hit dice).</summary>
+    public List<int> Kept { get; set; } = new();
+
+    public List<int> Dropped { get; set; } = new();
+    public int Modifier { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 

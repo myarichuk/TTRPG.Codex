@@ -22,7 +22,7 @@
                 <dt>Spell save DC@(label)</dt>
                 <dd data-testid="spell-save-dc">@casting.SaveDc</dd>
                 <dt>Spell attack bonus@(label)</dt>
-                <dd data-testid="spell-attack">@Signed(casting.AttackBonus)</dd>
+                <dd><span data-testid="spell-attack">@Signed(casting.AttackBonus)</span>@RollButton("Spell attack" + label, casting.AttackBonus, "roll-spell-attack")</dd>
             }
         </dl>
     }
@@ -35,7 +35,7 @@
             {
                 <li class="list-row py-1">
                     <span>@save.Label @if (save.Proficient) { <span class="pill pill-success">proficient</span> }</span>
-                    <span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>
+                    <span class="roll-end"><span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(save.Label + " save", save.Bonus, "roll-save-" + save.Key)</span>
                 </li>
             }
         </ul>
@@ -63,7 +63,7 @@
                         <label for="@(id)-exp-@key" class="mb-0 small-muted">expertise</label>
                     }
                 </span>
-                <span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>
+                <span class="roll-end"><span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(skill.Label + " check", skill.Bonus, "roll-skill-" + key)</span>
             </li>
         }
     </ul>
@@ -74,6 +74,8 @@
 </section>
 
 @code {
+    /// <summary>Raised when a roll button is pressed; leave unset to hide the buttons.</summary>
+    [Parameter] public EventCallback<RollRequest> OnRoll { get; set; }
     [Parameter, EditorRequired] public SkillRules Rules { get; set; } = null!;
     [Parameter, EditorRequired] public SheetEvaluation Evaluation { get; set; } = null!;
     [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
@@ -88,6 +90,14 @@
 
     private string Abbreviation(string attribute) =>
         Attributes.FirstOrDefault(a => a.Key.Equals(attribute, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? attribute.ToUpperInvariant();
+
+    /// <summary>A roll is offered only where the sheet is hosted with a tray to show it.</summary>
+    private RenderFragment RollButton(string label, int bonus, string testId) => __builder =>
+    {
+        if (!OnRoll.HasDelegate) return;
+        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="roll-btn" Icon="dices" Label="@("Roll " + label)" data-testid="@testId"
+                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(label, bonus))" />
+    };
 
     private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString();
 

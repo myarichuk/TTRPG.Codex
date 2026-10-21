@@ -7,6 +7,8 @@
 @using Codex.Persistence
 @using Codex.Persistence.Runtime
 @using Codex.Plugin.Abstractions
+@using Codex.Plugin.Abstractions.Dice
+@using Codex.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject IActorRepository ActorRepo
@@ -120,6 +122,12 @@ else
                 </div>
             }
         </div>
+        @if (lastRoll != null)
+        {
+            <div class="plate-roll" data-testid="plate-roll">
+                <DiceResult Compact="true" Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" Total="lastRoll.Total" Text="@lastRoll.Result" />
+            </div>
+        }
     </div>
 
     <StatusMessage Message="flash" OnDismiss="() => flash = null" />
@@ -168,6 +176,33 @@ else
                             <li>@warning.Message</li>
                         }
                     </ul>
+                </section>
+            }
+
+            @if (ShowTray)
+            {
+                <section class="panel dice-tray" aria-labelledby="tray-heading" data-testid="dice-tray">
+                    <div class="panel-title"><h2 id="tray-heading" class="h5"><LucideIcon IconName="dices" Size="16" Class="title-icon" /> Dice</h2></div>
+                    <div class="tray-bar">
+                        <label for="roll-mode" class="field-label mb-0">Roll with</label>
+                        <select id="roll-mode" class="field-select field-sm" style="width:auto" @bind="rollMode" data-testid="roll-mode">
+                            <option value="1d20">Normal</option>
+                            <option value="adv">Advantage</option>
+                            <option value="dis">Disadvantage</option>
+                        </select>
+                        <span class="small-muted">Use the dice buttons beside a check, save or attack.</span>
+                    </div>
+                    <div aria-live="polite">
+                        @if (lastRoll != null)
+                        {
+                            <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" Total="lastRoll.Total" Text="@lastRoll.Result" />
+                            <p class="field-hint mb-0" data-testid="roll-where">@(lastRollShared ? "Shared with the table." : "Only you see this: no session is running.")</p>
+                        }
+                        else
+                        {
+                            <p class="small-muted tray-empty">No rolls yet.</p>
+                        }
+                    </div>
                 </section>
             }
 
@@ -223,6 +258,7 @@ else
                             var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
                             var modifier = Modifier(attr, total);
                             var modifierText = modifier == null ? null : (modifier >= 0 ? "+" : "") + modifier;
+                            var checkLabel = attr.Label + " check";
                             var inputId = "attr-input-" + attr.Key;
                             var testId = "attr-" + attr.Key;
                             var invalid = evaluation?.Violations.Any(v => v.FieldKey == attr.Key) == true;
@@ -231,6 +267,11 @@ else
                                 @if (modifierText != null)
                                 {
                                     <div class="attr-mod" aria-label="@(attr.Label + " modifier")">@modifierText</div>
+                                    @if (ShowTray)
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@("Roll " + checkLabel)" data-testid="@("roll-" + attr.Key)"
+                                                     OnClick="() => RollAsync(new RollRequest(checkLabel, modifier ?? 0))" />
+                                    }
                                 }
                                 @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
                                 {
@@ -351,7 +392,7 @@ else
 
             @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
             {
-                <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+                <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync" />
             }
 
             <section class="panel" aria-labelledby="sheet-heading">
@@ -743,6 +784,34 @@ else
     private string levelUpClassId = "";
     private Flash? flash;
     private Dictionary<string, object> baselineSheet = new();
+    private string rollMode = "1d20";
+    private RollLogEntry? lastRoll;
+    private bool lastRollShared;
+
+    /// <summary>The tray appears wherever the sheet has rolls to offer.</summary>
+    private bool ShowTray => actor != null && access != null && Rules?.Skills != null && evaluation is { Skills.Count: > 0 };
+
+    /// <summary>Rolls a d20 check with the sheet's bonus. During a session the roll goes into the
+    /// table's shared log under this character; otherwise it is rolled and shown here only.</summary>
+    private async Task RollAsync(RollRequest request)
+    {
+        if (actor == null || currentUserId == null) return;
+        var expression = rollMode + (request.Bonus == 0 ? "" : request.Bonus > 0 ? $"+{request.Bonus}" : request.Bonus.ToString());
+        var live = RuntimeManager.TryGet(CampaignId);
+        if (live?.ActiveSession != null)
+        {
+            await live.EnqueueAsync(new RollDiceCommand(expression, actor.Id, currentUserId, false, request.Label));
+            lastRoll = live.Snapshot.RollLog.LastOrDefault(r => r.ActorId == actor.Id && r.Label == request.Label);
+            lastRollShared = lastRoll != null;
+        }
+        if (lastRoll == null || !lastRollShared)
+        {
+            var result = StandardDiceRoller.Instance.Roll(expression);
+            lastRoll = new RollLogEntry { ActorId = actor.Id, RollerUserId = currentUserId, Expression = expression, Result = result.ToString(), Total = result.Total, Label = request.Label, Kept = result.Kept.ToList(), Dropped = result.Dropped.ToList(), Modifier = result.Modifier };
+            lastRollShared = false;
+        }
+    }
+
     private string activeTab = "attributes";
 
     private string ActiveTab => Tabs.Any(t => t.Key == activeTab) ? activeTab : Tabs[0].Key;

@@ -389,6 +389,27 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task RollDiceCommand_KeepsTheDiceAndLabel_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session, _encounterRepository, new StandardDiceRoller(new Random(7)));
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new RollDiceCommand("adv+5", actor.Id, "p1", IsSecret: false, Label: "Athletics check"));
+
+        var entry = Assert.Single(session.RollLog);
+        Assert.Equal("Athletics check", entry.Label);
+        Assert.Single(entry.Kept);
+        Assert.Single(entry.Dropped);
+        Assert.True(entry.Kept[0] >= entry.Dropped[0]);
+        Assert.Equal(5, entry.Modifier);
+        Assert.Equal(entry.Kept[0] + 5, entry.Total);
+    }
+
+    [Fact]
     public async Task AddSessionNoteCommand_AppendsNoteToLiveSession_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
