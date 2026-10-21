@@ -353,8 +353,9 @@
 
     private async Task SetVisibilityAsync(ActorDocument actor, ActorVisibility visibility)
     {
-        actor.Visibility = visibility;
-        if (await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+        // A field-level patch: this list's copy of the actor may be minutes old, and saving it whole
+        // would write back the hit points the table has changed since.
+        if (Ctx.IsDm && actor.CampaignId == Ctx.Campaign.Id && await ActorRepo.UpdateAsync(actor.Id, stored => stored.Visibility = visibility) != null)
         {
             Ctx.Notify(Flash.Success(visibility == ActorVisibility.Known ? $"{actor.Name} is now visible to players." : $"{actor.Name} is hidden from players."));
             await Ctx.ReloadAsync();

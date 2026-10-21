@@ -1,4 +1,5 @@
 using Codex.Core.Components;
+using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 
 namespace Codex.Persistence.Runtime;
@@ -380,5 +381,30 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
     {
         Type = "Rest",
         Description = $"{runtime.GetActorName(ActorId)} took a {RestName}."
+    };
+}
+
+/// <summary>
+/// A character-sheet save made while the table is live (F2). The runtime owns the hydrated copy of
+/// the actor, so the sheet cannot store its own copy without reverting table damage and being
+/// reverted by the next turn; instead the edit is merged onto the runtime's copy and the entity is
+/// re-hydrated. <paramref name="BaselineSheet"/> is the sheet as the page loaded it: a field the
+/// editor left as it was keeps its live value (HP the table changed since), a field it changed wins.
+/// Throws <see cref="UnauthorizedAccessException"/> when <paramref name="Access"/> may not edit the actor.
+/// </summary>
+public sealed record ReplaceActorCommand(
+    ActorDocument Edited,
+    IReadOnlyDictionary<string, object>? BaselineSheet,
+    CampaignAccess Access,
+    SystemDefinition? System) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { Edited.Id };
+
+    public void Apply(CampaignRuntime runtime) => runtime.ReplaceActor(Edited, BaselineSheet, Access, System);
+
+    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    {
+        Type = "SheetEdited",
+        Description = $"{runtime.GetActorName(Edited.Id)}'s sheet was edited."
     };
 }

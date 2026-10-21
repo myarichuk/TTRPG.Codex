@@ -211,29 +211,46 @@ else
         return text.Length > 0 ? text : TextFormatting.Summary(item.Entry.Description, 90);
     }
 
+    /// <summary>Applies one small edit to the stored shortlist (reload-then-mutate, so a member who
+    /// joined or a session started since this page opened is not overwritten) and refreshes the page's copy.</summary>
+    private async Task EditBestiaryAsync(Action<List<BestiaryEntry>> edit)
+    {
+        var stored = await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => edit(campaign.Bestiary));
+        if (stored != null)
+        {
+            Ctx.Campaign.Bestiary = stored.Bestiary;
+        }
+    }
+
     private async Task ShortlistAsync(LibraryItem item)
     {
-        Ctx.Campaign.Bestiary.Add(new BestiaryEntry { EntryType = item.Entry.Type, EntryId = item.Entry.Id, IsHomebrew = item.IsHomebrew, Name = item.Entry.Name });
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var entry = new BestiaryEntry { EntryType = item.Entry.Type, EntryId = item.Entry.Id, IsHomebrew = item.IsHomebrew, Name = item.Entry.Name };
+        await EditBestiaryAsync(list =>
+        {
+            if (!list.Any(b => b.Key == entry.Key)) list.Add(entry);
+        });
         Ctx.Notify(Flash.Success($"Shortlisted {item.Entry.Name}."));
     }
 
-    private async Task RemoveAsync(BestiaryEntry entry)
+    private Task RemoveAsync(BestiaryEntry entry) => EditBestiaryAsync(list => list.RemoveAll(b => b.Key == entry.Key));
+
+    private Task SetNoteAsync(BestiaryEntry entry, string? note)
     {
-        Ctx.Campaign.Bestiary.Remove(entry);
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var text = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        return EditBestiaryAsync(list =>
+        {
+            if (list.FirstOrDefault(b => b.Key == entry.Key) is { } stored) stored.Note = text;
+        });
     }
 
-    private async Task SetNoteAsync(BestiaryEntry entry, string? note)
+    private Task SetCountAsync(BestiaryEntry entry, string? raw)
     {
-        entry.Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
-    }
-
-    private async Task SetCountAsync(BestiaryEntry entry, string? raw)
-    {
-        if (int.TryParse(raw, out var count)) entry.Count = Math.Clamp(count, 1, 20);
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        if (!int.TryParse(raw, out var count)) return Task.CompletedTask;
+        var clamped = Math.Clamp(count, 1, 20);
+        return EditBestiaryAsync(list =>
+        {
+            if (list.FirstOrDefault(b => b.Key == entry.Key) is { } stored) stored.Count = clamped;
+        });
     }
 
     private async Task AddToCastAsync(BestiaryEntry entry)

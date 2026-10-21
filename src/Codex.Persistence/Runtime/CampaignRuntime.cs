@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Codex.Core;
+using Codex.Core.Components;
 using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 using DefaultEcs;
@@ -31,6 +33,19 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly Dictionary<string, Entity> _actorEntities = new();
     private readonly Dictionary<string, ActorDocument> _actorDocs = new();
     private readonly HashSet<string> _dirtyActorIds = new();
+    // Actors whose sheet was replaced by ReplaceActorCommand, so the next persist also writes the
+    // editable fields (the value says whether the editor was the DM). Everything else is a State patch.
+    private readonly Dictionary<string, bool> _pendingSheetWrites = new();
+    // Hydrated ids, readable from any thread: lets a caller decide between the runtime and the
+    // repository without touching the loop-owned dictionaries.
+    private readonly ConcurrentDictionary<string, byte> _hydratedIds = new();
+    // Session rows appended since the last flush. The session is persisted by appending these to
+    // the stored document, never by storing the runtime's copy whole (F3).
+    private readonly List<SessionEvent> _pendingEvents = new();
+    private readonly List<RollLogEntry> _pendingRolls = new();
+    private readonly List<SessionNote> _pendingNotes = new();
+    private readonly List<string> _pendingEncounterIds = new();
+    private volatile RuntimeSnapshot _snapshot = RuntimeSnapshot.Empty;
     private EncounterDocument? _activeEncounter;
     private bool _encounterDirty;
     private readonly Channel<QueuedCommand> _commands = Channel.CreateUnbounded<QueuedCommand>(
@@ -50,6 +65,12 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// reads <see cref="SessionDocument.RollLog"/> and <see cref="SessionDocument.Notes"/>
     /// directly off this rather than re-querying Raven on every render.</summary>
     public SessionDocument? ActiveSession => _activeSession;
+
+    /// <summary>The latest immutable picture of the table, republished after every command and
+    /// before <see cref="StateChanged"/> fires. A render must read this, never
+    /// <see cref="ActiveEncounter"/>, <see cref="ActiveSession"/> or the entities, which the
+    /// command loop mutates on its own thread (F13).</summary>
+    public RuntimeSnapshot Snapshot => _snapshot;
 
     /// <param name="sessionRepository">Persists <paramref name="activeSession"/>'s appended events (3.2).
     /// Optional so a caller that only needs bare ECS mutation (e.g. a unit test exercising a single
@@ -80,6 +101,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _activeSession = activeSession;
         _encounterRepository = encounterRepository;
         DiceRoller = diceRoller ?? StandardDiceRoller.Instance;
+        PublishSnapshot();
         _loop = Task.Run(RunLoopAsync);
     }
 
@@ -91,6 +113,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             HydrateOne(actor);
         }
+
+        PublishSnapshot();
     }
 
     /// <summary>Hydrates one actor into the live ECS world - the common step behind both the
@@ -106,7 +130,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         _actorEntities[actor.Id] = entity;
         _actorDocs[actor.Id] = actor;
+        _hydratedIds[actor.Id] = 0;
     }
+
+    /// <summary>True once <paramref name="actorId"/> has been hydrated into this runtime; safe from any thread.</summary>
+    public bool HasActor(string actorId) => _hydratedIds.ContainsKey(actorId);
 
     public Entity? GetEntity(string actorId) => _actorEntities.TryGetValue(actorId, out var entity) ? entity : null;
 
@@ -135,7 +163,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 CampaignId = CampaignId,
                 SessionId = _activeSession?.Id ?? string.Empty
             };
-            _activeSession?.EncounterIds.Add(_activeEncounter.Id);
+            if (_activeSession != null)
+            {
+                _activeSession.EncounterIds.Add(_activeEncounter.Id);
+                _pendingEncounterIds.Add(_activeEncounter.Id);
+            }
         }
 
         return _activeEncounter;
@@ -163,11 +195,21 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     /// <summary>Appends a roll to the live session's shared roll log (3.6); a no-op when no
     /// session is attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
-    internal void RecordRoll(RollLogEntry entry) => _activeSession?.RollLog.Add(entry);
+    internal void RecordRoll(RollLogEntry entry)
+    {
+        if (_activeSession == null) return;
+        _activeSession.RollLog.Add(entry);
+        _pendingRolls.Add(entry);
+    }
 
     /// <summary>Appends a quick note to the live session (3.7); a no-op when no session is
     /// attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
-    internal void AddSessionNote(SessionNote note) => _activeSession?.Notes.Add(note);
+    internal void AddSessionNote(SessionNote note)
+    {
+        if (_activeSession == null) return;
+        _activeSession.Notes.Add(note);
+        _pendingNotes.Add(note);
+    }
 
     /// <summary>
     /// Fires after a command's dirty actors are persisted (3.3) - the runtime IS the "in-process
@@ -216,6 +258,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     await PersistDirtyAsync();
                     await AppendSessionEventAsync(queued.Command);
                     await PersistEncounterAsync();
+                    PublishSnapshot();
                     queued.Completion.TrySetResult();
 
                     // Deliberately still inside this try: a misbehaving subscriber (e.g. a circuit
@@ -237,6 +280,13 @@ public sealed class CampaignRuntime : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Writes each touched actor back as a patch of the stored document: <see cref="ActorDocument.State"/>
+    /// and <see cref="ActorDocument.UpdatedAt"/> only, with the live resources and attributes mirrored
+    /// onto <see cref="ActorDocument.Sheet"/> so the Cast and Overview lists (which read the sheet)
+    /// agree with the table. The runtime's cached copy of the document is never stored whole - that
+    /// reverted every edit made to the sheet since the table started (F2).
+    /// </summary>
     private async Task PersistDirtyAsync()
     {
         if (_dirtyActorIds.Count == 0)
@@ -246,17 +296,89 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         foreach (var actorId in _dirtyActorIds)
         {
-            if (!_actorEntities.TryGetValue(actorId, out var entity) || !_actorDocs.TryGetValue(actorId, out var doc))
+            if (!_actorEntities.TryGetValue(actorId, out var entity) || !_actorDocs.TryGetValue(actorId, out var cached))
             {
                 continue;
             }
 
-            doc.State = _componentRegistry.Snapshot(EntityComponentSync.SnapshotAll(entity, _componentRegistry.RegisteredComponents));
-            doc.UpdatedAt = DateTime.UtcNow;
-            await _actorRepository.SaveAsync(doc);
+            var state = _componentRegistry.Snapshot(EntityComponentSync.SnapshotAll(entity, _componentRegistry.RegisteredComponents));
+            var sheetEdit = _pendingSheetWrites.TryGetValue(actorId, out var editedByDm) ? (IsDm: editedByDm, Source: cached) : default;
+            var now = DateTime.UtcNow;
+
+            var stored = await _actorRepository.UpdateAsync(actorId, doc =>
+            {
+                if (sheetEdit.Source != null)
+                {
+                    ActorRepository.CopyEditableFields(doc, sheetEdit.Source, sheetEdit.IsDm);
+                }
+
+                doc.State = state;
+                doc.UpdatedAt = now;
+                ActorSheetSync.ApplyStateToSheet(doc, null, _componentRegistry);
+            });
+
+            if (stored != null)
+            {
+                _actorDocs[actorId] = stored;
+            }
         }
 
         _dirtyActorIds.Clear();
+        _pendingSheetWrites.Clear();
+    }
+
+    /// <summary>Applies a sheet save made while the table is live (see <c>ReplaceActorCommand</c>):
+    /// the page's edits are merged onto the runtime's current copy - a field the editor did not change
+    /// keeps its live value, so a stale sheet never reverts table damage - and the entity is
+    /// re-hydrated from the result.</summary>
+    internal void ReplaceActor(ActorDocument edited, IReadOnlyDictionary<string, object>? baselineSheet, CampaignAccess access, SystemDefinition? system)
+    {
+        if (!_actorDocs.TryGetValue(edited.Id, out var cached) || !_actorEntities.TryGetValue(edited.Id, out var entity))
+        {
+            throw new KeyNotFoundException($"Actor {edited.Id} is not part of this table.");
+        }
+
+        if (cached.CampaignId != access.CampaignId || (!access.IsDm && cached.OwnerUserId != access.UserId))
+        {
+            throw new UnauthorizedAccessException("Only the DM or the owning player can edit this sheet.");
+        }
+
+        // The table's own view of the character right now: cached document, live state, mirrored sheet.
+        var liveState = _componentRegistry.Snapshot(EntityComponentSync.SnapshotAll(entity, _componentRegistry.RegisteredComponents));
+        var live = new ActorDocument { Sheet = new Dictionary<string, object>(cached.Sheet), State = liveState };
+        ActorSheetSync.ApplyStateToSheet(live, system, _componentRegistry);
+
+        var merged = new Dictionary<string, object>();
+        foreach (var (key, value) in edited.Sheet)
+        {
+            var carriedAlong = baselineSheet != null && baselineSheet.TryGetValue(key, out var was) && YamlValues.SameValue(was, value);
+            merged[key] = carriedAlong && live.Sheet.TryGetValue(key, out var current) ? current : value;
+        }
+
+        if (baselineSheet != null)
+        {
+            // Keys the editor never saw (a pool the table created since it opened) are not its to drop.
+            foreach (var (key, value) in live.Sheet)
+            {
+                if (!merged.ContainsKey(key) && !baselineSheet.ContainsKey(key))
+                {
+                    merged[key] = value;
+                }
+            }
+        }
+
+        ActorRepository.CopyEditableFields(cached, edited, access.IsDm);
+        cached.Sheet = merged;
+        cached.State = liveState;
+        ActorSheetSync.ApplySheetToState(cached, system, _componentRegistry);
+
+        foreach (var component in _componentRegistry.Hydrate(cached.State))
+        {
+            EntityComponentSync.SetBoxed(entity, component);
+        }
+
+        _pendingSheetWrites[edited.Id] = access.IsDm;
+        _dirtyActorIds.Add(edited.Id);
     }
 
     /// <summary>The command log is the session log (3.2): every applied command's description
@@ -266,11 +388,65 @@ public sealed class CampaignRuntime : IAsyncDisposable
     {
         if (_sessionRepository == null || _activeSession == null)
         {
+            _pendingRolls.Clear();
+            _pendingNotes.Clear();
+            _pendingEncounterIds.Clear();
             return;
         }
 
-        _activeSession.Events.Add(command.Describe(this));
-        await _sessionRepository.SaveAsync(_activeSession);
+        var logged = command.Describe(this);
+        _activeSession.Events.Add(logged);
+        _pendingEvents.Add(logged);
+
+        // Append-only: the stored session gets these rows added to whatever it holds now, so a
+        // recap or title the DM saved from the session page in the meantime survives (F3).
+        var events = _pendingEvents.ToArray();
+        var rolls = _pendingRolls.ToArray();
+        var notes = _pendingNotes.ToArray();
+        var encounterIds = _pendingEncounterIds.ToArray();
+        await _sessionRepository.UpdateAsync(_activeSession.Id, stored =>
+        {
+            stored.Events.AddRange(events);
+            stored.RollLog.AddRange(rolls);
+            stored.Notes.AddRange(notes);
+            stored.EncounterIds.AddRange(encounterIds.Where(id => !stored.EncounterIds.Contains(id)));
+        });
+
+        _pendingEvents.Clear();
+        _pendingRolls.Clear();
+        _pendingNotes.Clear();
+        _pendingEncounterIds.Clear();
+    }
+
+    private void PublishSnapshot()
+    {
+        EncounterSnapshot? encounter = null;
+        if (_activeEncounter is { } live)
+        {
+            encounter = new EncounterSnapshot(
+                live.Id,
+                live.Round,
+                live.TurnIndex,
+                live.Participants.Select(p => new ParticipantSnapshot(p.ActorId, p.InitiativeRoll, p.State, p.HasActed)).ToArray());
+        }
+
+        var actors = new Dictionary<string, ActorStateSnapshot>(_actorEntities.Count);
+        foreach (var (actorId, entity) in _actorEntities)
+        {
+            IReadOnlyDictionary<string, int>? pools = entity.Has<ResourcePoolComponent>()
+                ? new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools)
+                : null;
+            IReadOnlyList<EffectSnapshot> effects = entity.Has<ActiveEffectsComponent>()
+                ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => new EffectSnapshot(e.EffectId, e.SourceId, e.RoundsRemaining)).ToArray()
+                : Array.Empty<EffectSnapshot>();
+            actors[actorId] = new ActorStateSnapshot(pools, effects);
+        }
+
+        _snapshot = new RuntimeSnapshot(
+            encounter,
+            _activeSession?.RollLog.ToArray() ?? Array.Empty<RollLogEntry>(),
+            _activeSession?.Notes.ToArray() ?? Array.Empty<SessionNote>(),
+            actors);
     }
 
     /// <summary>Write-through for the initiative tracker (3.5), mirroring

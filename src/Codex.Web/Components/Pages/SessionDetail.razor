@@ -273,25 +273,29 @@ else
     private async Task SaveDetailsAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
-        session.Title = editTitle.Trim();
-        session.Status = editStatus;
-        await SessionRepo.SaveAsync(session);
+        var title = editTitle.Trim();
+        var status = editStatus;
+        session = await SessionRepo.UpdateAsync(session.Id, stored =>
+        {
+            stored.Title = title;
+            stored.Status = status;
+        }) ?? session;
         flash = Flash.Success("Details saved.");
     }
 
     private async Task SaveRecapAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
-        session.Recap = editRecap;
-        await SessionRepo.SaveAsync(session);
+        var recap = editRecap;
+        session = await SessionRepo.UpdateAsync(session.Id, stored => stored.Recap = recap) ?? session;
         flash = Flash.Success("Recap saved.");
     }
 
     private async Task SaveDmSummaryAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
-        session.DmSummary = editDmSummary;
-        await SessionRepo.SaveAsync(session);
+        var summary = editDmSummary;
+        session = await SessionRepo.UpdateAsync(session.Id, stored => stored.DmSummary = summary) ?? session;
         flash = Flash.Success("DM summary saved.");
     }
 

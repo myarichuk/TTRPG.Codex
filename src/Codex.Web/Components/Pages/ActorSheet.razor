@@ -5,10 +5,12 @@
 @using Codex.Core.Rules
 @using Codex.Core.Systems
 @using Codex.Persistence
+@using Codex.Persistence.Runtime
 @using Codex.Plugin.Abstractions
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject IActorRepository ActorRepo
+@inject CampaignRuntimeManager RuntimeManager
 @inject ICampaignAccessResolver AccessResolver
 @inject IContentRegistry ContentRegistry
 @inject ISystemCatalog SystemCatalog
@@ -617,6 +619,7 @@ else
     private ActorKind editKind;
     private string editOwnerId = "";
     private Dictionary<string, object> editSheet = new();
+    private Dictionary<string, object> loadedSheet = new();
     private string newClassId = "";
     private string levelUpClassId = "";
     private Flash? flash;
@@ -707,6 +710,7 @@ else
                 editKind = actor.Kind;
                 editOwnerId = actor.OwnerUserId ?? "";
                 editSheet = new Dictionary<string, object>(actor.Sheet);
+                loadedSheet = new Dictionary<string, object>(actor.Sheet);
 
                 await LoadReferenceOptionsAsync();
                 var resolver = system != null ? await CachedEntryResolver.LoadAsync(Library, campaign, access, system) : null;
@@ -939,6 +943,11 @@ else
         return target;
     }
 
+    /// <summary>Saves through the live table when there is one (merging with whatever the table changed
+    /// since this page loaded), and straight to the actor otherwise. <see cref="loadedSheet"/> is what
+    /// tells the merge which fields were edited here.</summary>
+    private Task<bool> TrySaveActorAsync() => RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
+
     private async Task SaveAsync()
     {
         if (actor == null || access == null || campaign == null) return;
@@ -960,7 +969,7 @@ else
 
         ApplyEdits(actor);
 
-        if (await ActorRepo.TrySaveAsync(actor, access))
+        if (await TrySaveActorAsync())
         {
             flash ??= Flash.Success("Saved.");
         }
@@ -995,7 +1004,7 @@ else
             actor.HasPortrait = true;
             actor.PortraitVersion++;
             ApplyEdits(actor);
-            await ActorRepo.TrySaveAsync(actor, access);
+            await TrySaveActorAsync();
             flash = Flash.Success("Portrait updated.");
         }
         catch (Exception ex)
@@ -1014,7 +1023,7 @@ else
         actor.HasPortrait = false;
         actor.PortraitVersion++;
         ApplyEdits(actor);
-        await ActorRepo.TrySaveAsync(actor, access);
+        await TrySaveActorAsync();
         flash = Flash.Success("Portrait removed.");
         await ReloadAsync();
     }

@@ -32,7 +32,7 @@
 }
 else
 {
-    var encounter = runtime.ActiveEncounter;
+    var encounter = snapshot.Encounter;
 
     <div class="row g-3">
         <div class="col-lg-8">
@@ -294,6 +294,10 @@ else
     [Parameter] public EventCallback<Flash> OnMessage { get; set; }
 
     private CampaignRuntime? runtime;
+    // What this component renders from: an immutable picture the runtime's loop publishes with each
+    // StateChanged. Reading the live encounter, roll log or entities during render could collide with
+    // the loop mutating them and throw inside render (F13).
+    private RuntimeSnapshot snapshot = RuntimeSnapshot.Empty;
     private string diceExpression = "1d20";
     private bool diceSecret;
     private string noteText = "";
@@ -341,12 +345,11 @@ else
         InvokeAsync(() =>
         {
             var current = RuntimeManager.TryGet(CampaignId);
-            if (current == null && runtime != null)
+            if (current == null)
             {
-                runtime.StateChanged -= OnStateChanged;
-                runtime = null;
+                Detach();
             }
-            else if (current != null && runtime == null)
+            else
             {
                 Attach(current);
             }
@@ -383,13 +386,35 @@ else
         await OnMessage.InvokeAsync(Flash.Success("The table has ended. The session is marked complete."));
     }
 
+    /// <summary>Idempotent: starting the table reaches here twice (once from the manager's
+    /// RuntimeChanged notification, once from the click handler), and a second subscription would
+    /// outlive DisposeAsync's single unsubscribe (F14).</summary>
     private void Attach(CampaignRuntime started)
     {
+        if (ReferenceEquals(runtime, started)) return;
+
+        Detach();
         runtime = started;
         runtime.StateChanged += OnStateChanged;
+        snapshot = runtime.Snapshot;
     }
 
-    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(StateHasChanged);
+    private void Detach()
+    {
+        if (runtime != null)
+        {
+            runtime.StateChanged -= OnStateChanged;
+            runtime = null;
+        }
+
+        snapshot = RuntimeSnapshot.Empty;
+    }
+
+    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(() =>
+    {
+        if (runtime != null) snapshot = runtime.Snapshot;
+        StateHasChanged();
+    });
 
     // ---- Initiative ----
 
@@ -420,38 +445,23 @@ else
     private Task PreviousTurnAsync() => runtime!.EnqueueAsync(new PreviousTurnCommand());
     private Task ToggleDelayAsync(string actorId, TurnState state) => runtime!.EnqueueAsync(new SetTurnStateCommand(actorId, state));
 
-    private IReadOnlyList<ActiveEffect> GetEffects(string actorId)
-    {
-        var entity = runtime?.GetEntity(actorId);
-        return entity is { } e && e.Has<ActiveEffectsComponent>() ? e.Get<ActiveEffectsComponent>().Effects : Array.Empty<ActiveEffect>();
-    }
+    private IReadOnlyList<EffectSnapshot> GetEffects(string actorId) =>
+        snapshot.Actor(actorId)?.Effects ?? Array.Empty<EffectSnapshot>();
 
-    private (int Current, int Max)? Pool(string actorId)
-    {
-        var entity = runtime?.GetEntity(actorId);
-        if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return null;
-        var pool = e.Get<ResourcePoolComponent>();
-        return (pool.Get(PrimaryKey), pool.Get(PrimaryMaxKey));
-    }
+    private (int Current, int Max)? Pool(string actorId) =>
+        snapshot.Actor(actorId)?.Pools is { } pools
+            ? (pools.GetValueOrDefault(PrimaryKey), pools.GetValueOrDefault(PrimaryMaxKey))
+            : null;
 
     private IReadOnlyList<SlotPoolRule> SlotPoolRules => Definition?.SheetRules?.SlotPools ?? (IReadOnlyList<SlotPoolRule>)Array.Empty<SlotPoolRule>();
 
     /// <summary>The DM tracks everyone's slots; a player tracks their own character's.</summary>
     private bool CanTrackSlots(string actorId) => Access.IsDm || ActorsById.GetValueOrDefault(actorId)?.OwnerUserId == CurrentUserId;
 
-    private IEnumerable<string> SlotKeys(string actorId)
-    {
-        var entity = runtime?.GetEntity(actorId);
-        if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return Enumerable.Empty<string>();
-        return e.Get<ResourcePoolComponent>().Pools.Keys.Where(k => SlotPoolRules.Any(r => r.Owns(k))).ToList();
-    }
+    private IEnumerable<string> SlotKeys(string actorId) =>
+        snapshot.Actor(actorId)?.Pools?.Keys.Where(k => SlotPoolRules.Any(r => r.Owns(k))).ToList() ?? Enumerable.Empty<string>();
 
-    private int? PoolValue(string actorId, string key)
-    {
-        var entity = runtime?.GetEntity(actorId);
-        if (entity is not { } e || !e.Has<ResourcePoolComponent>()) return null;
-        return e.Get<ResourcePoolComponent>().Pools.TryGetValue(key, out var value) ? value : null;
-    }
+    private int? PoolValue(string actorId, string key) => snapshot.Actor(actorId)?.Pool(key);
 
     private bool CanSeeExact(string actorId) => Access.IsDm || ActorsById.GetValueOrDefault(actorId)?.OwnerUserId == CurrentUserId;
 
@@ -579,7 +589,7 @@ else
     }
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
-        (runtime?.ActiveSession?.RollLog ?? new List<RollLogEntry>())
+        snapshot.RollLog
         .Where(entry => Access.IsDm || !entry.IsSecret)
         .OrderByDescending(entry => entry.Timestamp)
         .Take(20);
@@ -598,16 +608,13 @@ else
     }
 
     private IEnumerable<SessionNote> VisibleNotes() =>
-        (runtime?.ActiveSession?.Notes ?? new List<SessionNote>())
+        snapshot.Notes
         .Where(note => Access.IsDm || !note.IsSecret)
         .OrderByDescending(note => note.Timestamp);
 
     public async ValueTask DisposeAsync()
     {
-        if (runtime != null)
-        {
-            runtime.StateChanged -= OnStateChanged;
-        }
+        Detach();
 
         if (subscribedToManager)
         {
