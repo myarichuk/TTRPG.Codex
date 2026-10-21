@@ -178,7 +178,7 @@ public class SheetVitalsTests
     }
 
     [Fact]
-    public void HitPoints_ALevelUp_HealsByTheGain_AndALowerMaximumClamps()
+    public void HitPoints_ALevelUp_HealsByTheGain_AndALowerMaximumTakesTheSameAmountOff()
     {
         var sheet = Sheet("knight", 2);
         Run(sheet); // 10 + 6 = 16
@@ -189,10 +189,24 @@ public class SheetVitalsTests
         Assert.Equal(22, Int(sheet, "HP_Max"));
         Assert.Equal(11, Int(sheet, "HP"));
 
+        sheet["HP"] = 15L;
+        sheet["level"] = 2L;
+        Run(sheet); // maximum 22 -> 16: the same 6 comes off
+        Assert.Equal(16, Int(sheet, "HP_Max"));
+        Assert.Equal(9, Int(sheet, "HP"));
+
+        sheet["HP"] = 16L;
         sheet["level"] = 1L;
-        Run(sheet);
+        Run(sheet); // a character at full health stays at full health
         Assert.Equal(10, Int(sheet, "HP_Max"));
         Assert.Equal(10, Int(sheet, "HP"));
+
+        sheet["level"] = 3L;
+        Run(sheet);
+        sheet["HP"] = 5L;
+        sheet["level"] = 1L;
+        Run(sheet); // never below zero
+        Assert.Equal(0, Int(sheet, "HP"));
     }
 
     [Fact]

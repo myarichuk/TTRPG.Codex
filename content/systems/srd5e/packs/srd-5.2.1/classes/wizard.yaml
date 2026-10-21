@@ -99,30 +99,21 @@ properties:
   - name: Memorize Spell
     level: 5
     description: Whenever you finish a Short Rest, you can study your spellbook and replace one of the level 1+ Wizard spells you have prepared for your Spellcasting feature with another level 1+ spell from the book.
-  - name: Wizard Subclass
+  - name: Subclass Feature
     level: 6
-    description: >-
-      You gain a Wizard subclass of your choice. The Evoker subclass is detailed after this class’s description.
-
-      A subclass is a specialization that grants you features at certain Wizard levels. For the rest of your career, you gain each of your subclass’s features that are of your Wizard level or lower.
+    description: You gain a feature from your Wizard subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 8
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Wizard levels 8, 12, and 16.
-  - name: Wizard Subclass
+  - name: Subclass Feature
     level: 10
-    description: >-
-      You gain a Wizard subclass of your choice. The Evoker subclass is detailed after this class’s description.
-
-      A subclass is a specialization that grants you features at certain Wizard levels. For the rest of your career, you gain each of your subclass’s features that are of your Wizard level or lower.
+    description: You gain a feature from your Wizard subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Wizard levels 8, 12, and 16.
-  - name: Wizard Subclass
+  - name: Subclass Feature
     level: 14
-    description: >-
-      You gain a Wizard subclass of your choice. The Evoker subclass is detailed after this class’s description.
-
-      A subclass is a specialization that grants you features at certain Wizard levels. For the rest of your career, you gain each of your subclass’s features that are of your Wizard level or lower.
+    description: You gain a feature from your Wizard subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Wizard levels 8, 12, and 16.
@@ -138,6 +129,7 @@ properties:
   - name: Signature Spells
     level: 20
     description: Choose two level 3 spells in your spellbook as your signature spells. You always have these spells prepared, and you can cast each of them once at level 3 without expending a spell slot. When you do so, you can’t cast them in this way again until you finish a Short or Long Rest. To cast either spell at a higher level, you must expend a spell slot.
+  spellcastingAbility: int
   casterType: full
   spellcasting:
   - level: 1
@@ -243,41 +235,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

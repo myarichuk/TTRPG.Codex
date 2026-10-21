@@ -106,14 +106,19 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await player.GetByLabel("Class", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Fighter" });
         await player.GetByLabel("Species", new() { Exact = true }).SelectOptionAsync(new SelectOptionValue { Label = "Dwarf" });
 
-        // Subclasses are narrowed to the chosen class: a Fighter sees Champion and nothing else.
-        // Wait for the re-render after the class change before reading the options once.
+        // A subclass is a level 3 choice: a level 1 Fighter is offered none.
         var subclassSelect = player.GetByLabel("Subclass", new() { Exact = true });
+        await Assertions.Expect(subclassSelect.Locator("option", new() { HasText = "Champion" })).ToHaveCountAsync(0);
+
+        // From level 3 subclasses are narrowed to the chosen class: a Fighter sees Champion and nothing else.
+        // Wait for the re-render after the level change before reading the options once.
+        await player.GetByLabel("Level", new() { Exact = true }).CommitAsync("3");
         await Assertions.Expect(subclassSelect.Locator("option", new() { HasText = "Champion" })).ToHaveCountAsync(1);
         var subclassOptions = await subclassSelect.Locator("option").AllTextContentsAsync();
         Assert.Contains("Champion", subclassOptions);
         Assert.DoesNotContain("Oath of Devotion", subclassOptions);
         Assert.DoesNotContain("Circle of the Land", subclassOptions);
+        await player.GetByLabel("Level", new() { Exact = true }).CommitAsync("1");
 
         // A Fighter has no spell table: both spell lists are capped at zero.
         await Assertions.Expect(player.GetByTestId("list-spells-count")).ToHaveTextAsync("0 of 0");

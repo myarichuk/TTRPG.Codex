@@ -146,12 +146,29 @@ sheetRules:
       label: Feats
       targetEntityType: feat
       repeatableProperty: repeatable          # entries with repeatable: true can be picked more than once
+    - key: fightingStyles                     # its own allowance, so a level 1 Fighter can save one
+      label: Fighting styles
+      targetEntityType: feat
+      where:
+        - { property: category, equals: fighting-style }
+      maxCount:
+        lookup: { field: class, table: featSlots, byField: classLevel, column: styles }
+        also: [{ field: subclass, table: featSlots, byField: classLevel, column: styles }]   # a subclass's own rows, added
+    - key: extraOriginFeats
+      label: Extra origin feats
+      targetEntityType: feat
+      maxCount: { fromField: { field: species, property: extraOriginFeats } }   # a number on the chosen species
+    - key: grantedSpells                      # no where, no maxCount: spells a feature grants, never counted as prepared
+      label: Granted spells
+      targetEntityType: spell
   multiclass:                                 # levels split across classes
     key: multiclass                           # sheet key holding the other classes as "class-id:levels"
     classField: class                         # the first class; it gets the levels the others don't take
     levelField: level                         # the character level (proficiency, feat minimums)
     classLevelKey: classLevel                 # each class's own level, for lookups (byField: classLevel)
     prerequisitesProperty: multiclassPrerequisites   # class property: ["STR 13+", "DEX 13+, WIS 13+"], any one option
+    subclassField: subclass                   # the first class's subclass; the others store "class-id:levels:subclass-id"
+    subclassLevel: 3                          # a subclass before this class level is a violation, and none is offered
   slotPools:                                  # expendable slots, tracked during play
     - key: slots                              # resources slots_1, slots_1_Max, slots_2 ...
       label: Spell slots
@@ -163,7 +180,7 @@ sheetRules:
       recoversOn: [Long Rest]                 # a button per rest name at the table and on the sheet
       combine:                                # two or more contributing classes
         weights: { full: 1, half: 0.5 }       # class level x weight of its casterType...
-        rounding: up                          # ...rounded per class (up, down or nearest)...
+        rounding: up                          # ...added up, rounded once (up, down or nearest)...
         table: ["2", "3", "4/2", "..."]       # ...summed, then row N of this table (caster level N)
     - key: pact
       label: Pact slots
@@ -179,10 +196,24 @@ sheetRules:
     dieProperty: hitDie                       # class property: "d10"
     modes: [average, rolled, manual]          # what a player may choose; default: average
     default: average
+    perLevelBonus: { field: species, property: hitPointsPerLevel }   # added to every level (Dwarven Toughness)
+  inherits:                                   # copied from a chosen entry once, when the choice changes
+    - field: species
+      appliedKey: speciesApplied              # sheet key remembering which entry was copied
+      copy: { speed: speed, size: size, darkvision: darkvision }   # entry property: sheet key
+  skills:                                     # saving throws, skills and passive scores
+    bonusKey: proficiencyBonus                # a derived field
+    list: [{ key: perception, label: Perception, attribute: wis }]
+    passives: [{ key: passivePerception, label: Passive Perception, skill: perception }]
+  spellcasting:                               # save DC and attack per class with a spellcastingAbility property
+    bonusKey: proficiencyBonus
+    saveBase: 8
+  proficiencies:                              # warnings for equipped armor and weapons the first class isn't trained in
+    armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
   armorClass:                                 # armor class from equipment, class features and bonuses
     key: armorClass
     unarmored: "10 + mod(dex)"                # formula used with no body armor (best of this and class formulas)
-    bonusLists: [feats]                       # picks here may add armorClassBonus (a fighting style)
+    bonusLists: [feats, fightingStyles]       # picks here may add armorClassBonus (a fighting style)
   inventory:                                  # what a character carries; stored as "item-id|qty:2,equipped:1"
     key: inventory
     label: Equipment
@@ -196,7 +227,8 @@ player entered (clamped to the die; levels without a roll use the average). Each
 Constitution raises every level's gain. The maximum is written to `key` while the sheet's `hpMode` is
 `average` or `rolled`; a sheet without `hpMode` (an older character, a creature seeded from a stat block)
 is manual and keeps whatever number it has. New characters start in the default mode. When the maximum
-grows, current hit points grow with it; when it shrinks they are clamped.
+changes, current hit points change by the same amount (never below 0); a character at full health stays
+at full health. `perLevelBonus` adds a number from a chosen entry to every level.
 
 **Armor class.** With a body armor equipped (an item whose `armorBase` is a number): `armorBase` plus the
 Dexterity modifier, limited by `armorDexCap` (absent: no limit; 0: Dexterity does not count, in either
@@ -206,6 +238,18 @@ adds `armorClassBonus` of every equipped item (a shield is an item with `armorTy
 of picks in `bonusLists` (skipped when `armorClassRequiresArmor` is true and no body armor is worn), and
 the sheet's `armorClassMisc` number. It is written to `key` while the sheet's `acMode` is `auto`; without
 that key the sheet is manual.
+
+**Ability increases.** Each pick that raises scores is applied in sheet order to the score as it then stands
+and may not take it past that pick's own cap, so a Boon's higher cap cannot carry an earlier Ability Score
+Improvement past 20.
+
+**Skills, saves and spellcasting.** A skill is proficient when its key or label is in the sheet's
+`skillProficiencies` list or in the chosen background's `skillProficiencies`; expertise doubles the bonus and
+needs proficiency. Saving throws follow the first class's `savingThrows`. Passive scores are `base + skill
+bonus`. A class with a `spellcastingAbility` property gets a spell save DC and attack bonus. Armor and
+weapon training is checked against the first class's `armorProficiencies` and `weaponProficiencies`; a gap,
+a Strength minimum or Stealth disadvantage is a warning that never blocks saving, since a feat or feature
+may grant what the class lacks.
 
 **Inventory.** Items may come from any of `types` (pack and homebrew entries alike). At most one body
 armor and one shield can be equipped at a time.

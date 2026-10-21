@@ -41,6 +41,105 @@ public class SheetRules
 
     /// <summary>What a character carries and wears. Null: no inventory.</summary>
     public InventoryRules? Inventory { get; set; }
+
+    /// <summary>Saving throws, skills and passive scores. Null: the sheet has none.</summary>
+    public SkillRules? Skills { get; set; }
+
+    /// <summary>Spell save DC and spell attack bonus per spellcasting class. Null: not shown.</summary>
+    public SpellcastingRules? Spellcasting { get; set; }
+
+    /// <summary>Armor and weapon training, checked against what the sheet equips. Null: no warnings.</summary>
+    public ProficiencyRules? Proficiencies { get; set; }
+
+    /// <summary>Values copied from a referenced entry onto the sheet when the reference changes
+    /// (a species' speed and size). Null: nothing is copied.</summary>
+    public List<InheritRule> Inherits { get; set; } = new();
+}
+
+/// <summary>
+/// Copies properties of the entry <see cref="Field"/> names onto sheet keys the moment the player
+/// picks a different entry, then leaves them alone so a hand-edited speed survives later saves.
+/// <see cref="AppliedKey"/> remembers which entry was last copied from.
+/// </summary>
+public class InheritRule
+{
+    public string Field { get; set; } = string.Empty;
+    public string AppliedKey { get; set; } = string.Empty;
+
+    /// <summary>Entry property → sheet key.</summary>
+    public Dictionary<string, string> Copy { get; set; } = new();
+}
+
+/// <summary>One skill: the attribute whose modifier it uses.</summary>
+public class SkillDefinition
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string Attribute { get; set; } = string.Empty;
+}
+
+/// <summary>A score of the form base + a skill's bonus (passive Perception is 10 + Perception).</summary>
+public class PassiveRule
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string Skill { get; set; } = string.Empty;
+    public int Base { get; set; } = 10;
+}
+
+/// <summary>
+/// Saving throws and skills. A skill is proficient when its key is in <see cref="ProficienciesKey"/>
+/// (a list on the sheet) or in the <see cref="BackgroundProperty"/> of the entry <see cref="BackgroundField"/>
+/// names; it is expert when it is also in <see cref="ExpertiseKey"/>. Saving throws are proficient for the
+/// first class's <see cref="SavingThrowsProperty"/>. Bonuses add the derived field <see cref="BonusKey"/>.
+/// </summary>
+public class SkillRules
+{
+    public string Label { get; set; } = "Skills";
+    public string BonusKey { get; set; } = "proficiencyBonus";
+    public string ProficienciesKey { get; set; } = "skillProficiencies";
+    public string ExpertiseKey { get; set; } = "skillExpertise";
+    public string ClassField { get; set; } = "class";
+    public string SavingThrowsProperty { get; set; } = "savingThrows";
+    public string BackgroundField { get; set; } = "background";
+    public string BackgroundProperty { get; set; } = "skillProficiencies";
+    public List<SkillDefinition> List { get; set; } = new();
+    public List<PassiveRule> Passives { get; set; } = new();
+}
+
+/// <summary>
+/// Each class that has a <see cref="AbilityProperty"/> casts with that attribute: save DC is
+/// <see cref="SaveBase"/> + the derived <see cref="BonusKey"/> + the modifier, the attack bonus is the
+/// bonus + the modifier.
+/// </summary>
+public class SpellcastingRules
+{
+    public string AbilityProperty { get; set; } = "spellcastingAbility";
+    public string BonusKey { get; set; } = "proficiencyBonus";
+    public int SaveBase { get; set; } = 8;
+}
+
+/// <summary>
+/// Warnings (never violations: a feat or feature may grant what the class lacks) for equipped armor and
+/// weapons the first class's training doesn't cover, plus the armor's Strength minimum and stealth penalty.
+/// Class training is a list of names such as "Light Armor", "Shields", "Martial Weapons" or "All armor".
+/// </summary>
+public class ProficiencyRules
+{
+    public string ArmorProperty { get; set; } = "armorProficiencies";
+    public string WeaponProperty { get; set; } = "weaponProficiencies";
+    public string ClassField { get; set; } = "class";
+
+    /// <summary>Equipment property → the training name that covers it: "light" → "Light Armor".</summary>
+    public Dictionary<string, string> ArmorTraining { get; set; } = new();
+
+    /// <summary>Item property holding the Strength an armor needs, and the one flagging Stealth disadvantage.</summary>
+    public string StrengthProperty { get; set; } = "strength";
+    public string StrengthAttribute { get; set; } = "str";
+    public string StealthProperty { get; set; } = "stealth";
+
+    /// <summary>Equipment tags that mark a weapon.</summary>
+    public string WeaponTag { get; set; } = "weapons";
 }
 
 /// <summary>
@@ -78,6 +177,10 @@ public class HitPointRules
 
     /// <summary>Sheet key holding the player's rolls for levels 2 and up, in level order.</summary>
     public string RollsKey { get; set; } = "hpRolls";
+
+    /// <summary>Entries whose number adds to every level's gain (Dwarven Toughness): the sheet field that
+    /// names the entry and the property holding the bonus.</summary>
+    public FieldProperty? PerLevelBonus { get; set; }
 }
 
 /// <summary>
@@ -201,6 +304,13 @@ public class MulticlassRules
 
     /// <summary>Whether the first class must also meet its own prerequisites once you multiclass.</summary>
     public bool RequireForFirstClass { get; set; } = true;
+
+    /// <summary>The sheet field naming the first class's subclass. Each other class stores its own
+    /// after its levels: <c>"class-id:levels:subclass-id"</c>. Null: subclasses are not tracked per class.</summary>
+    public string? SubclassField { get; set; }
+
+    /// <summary>The class level at which a subclass can be chosen; a subclass before it is a violation.</summary>
+    public int SubclassLevel { get; set; } = 1;
 }
 
 /// <summary>
@@ -257,7 +367,7 @@ public class SlotCombineRule
 {
     public Dictionary<string, double> Weights { get; set; } = new();
 
-    /// <summary>"up", "down" or "nearest", applied per class.</summary>
+    /// <summary>"up", "down" or "nearest", applied once to the weighted sum of every class's levels.</summary>
     public string Rounding { get; set; } = "down";
 
     /// <summary>Slots per caster level, each like <c>"4/3/2"</c>.</summary>
@@ -386,4 +496,10 @@ public class CountRule
     public int? Value { get; set; }
     public LookupRule? Lookup { get; set; }
     public int Plus { get; set; }
+
+    /// <summary>More tables added to <see cref="Lookup"/> for every class (a subclass's own grants).</summary>
+    public List<LookupRule> Also { get; set; } = new();
+
+    /// <summary>A number on the entry a sheet field references, added once (a species' extra feat).</summary>
+    public FieldProperty? FromField { get; set; }
 }

@@ -274,6 +274,57 @@ public static class SystemDefinitionLoader
             {
                 yield return "sheetRules.multiclass key and classLevelKey must not collide with actor fields.";
             }
+
+            if (multiclass.SubclassField != null && !referenceFields.Contains(multiclass.SubclassField))
+            {
+                yield return $"sheetRules.multiclass.subclassField '{multiclass.SubclassField}' is not an EntityReference actor field.";
+            }
+        }
+
+        foreach (var inherit in rules.Inherits)
+        {
+            if (!referenceFields.Contains(inherit.Field))
+            {
+                yield return $"sheetRules.inherits field '{inherit.Field}' is not an EntityReference actor field.";
+            }
+
+            if (string.IsNullOrWhiteSpace(inherit.AppliedKey) || fieldKeys.Contains(inherit.AppliedKey))
+            {
+                yield return $"sheetRules.inherits '{inherit.Field}' needs an appliedKey that is not an actor field.";
+            }
+        }
+
+        if (rules.Skills is { } skills)
+        {
+            foreach (var skill in skills.List.Where(s => !definition.Attributes.Any(a => a.Key.Equals(s.Attribute, StringComparison.OrdinalIgnoreCase))))
+            {
+                yield return $"sheetRules.skills '{skill.Key}' uses attribute '{skill.Attribute}', which is not one of the system's attributes.";
+            }
+
+            foreach (var duplicate in Duplicates(skills.List.Select(s => s.Key)))
+            {
+                yield return $"sheetRules.skills key '{duplicate}' is declared more than once.";
+            }
+
+            foreach (var passive in skills.Passives.Where(p => !skills.List.Any(s => s.Key.Equals(p.Skill, StringComparison.OrdinalIgnoreCase))))
+            {
+                yield return $"sheetRules.skills passive '{passive.Key}' reads skill '{passive.Skill}', which is not declared.";
+            }
+
+            if (!rules.Derived.Any(d => d.Key == skills.BonusKey))
+            {
+                yield return $"sheetRules.skills.bonusKey '{skills.BonusKey}' is not a sheetRules.derived key.";
+            }
+        }
+
+        if (rules.Spellcasting is { } spellcasting && !rules.Derived.Any(d => d.Key == spellcasting.BonusKey))
+        {
+            yield return $"sheetRules.spellcasting.bonusKey '{spellcasting.BonusKey}' is not a sheetRules.derived key.";
+        }
+
+        if (rules.HitPoints?.PerLevelBonus is { } perLevel && !referenceFields.Contains(perLevel.Field))
+        {
+            yield return $"sheetRules.hitPoints.perLevelBonus field '{perLevel.Field}' is not an EntityReference actor field.";
         }
 
         foreach (var duplicate in Duplicates(rules.SlotPools.Select(p => p.Key)))

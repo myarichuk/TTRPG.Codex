@@ -101,9 +101,9 @@ properties:
       You now regain all your expended uses of Bardic Inspiration when you finish a Short or Long Rest.
 
       In addition, you can expend a spell slot (no action required) to regain one expended use of Bardic Inspiration.
-  - name: Bard Subclass
+  - name: Subclass Feature
     level: 6
-    description: You gain a Bard subclass of your choice. A subclass is a specialization that grants you features at certain Bard levels. For the rest of your career, you gain each of your subclass's features that are of your Bard level or lower.
+    description: You gain a feature from your Bard subclass at this level. Its features are listed on the subclass.
   - name: Countercharm
     level: 7
     description: You can use musical notes or words of power to disrupt mind-influencing effects. If you or a creature within 30 feet of you fails a saving throw against an effect that applies the Charmed or Frightened condition, you can take a Reaction to cause the save to be rerolled, and the new roll has Advantage.
@@ -122,9 +122,9 @@ properties:
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Bard levels 8, 12, and 16.
-  - name: Bard Subclass
+  - name: Subclass Feature
     level: 14
-    description: You gain a Bard subclass of your choice. A subclass is a specialization that grants you features at certain Bard levels. For the rest of your career, you gain each of your subclass's features that are of your Bard level or lower.
+    description: You gain a feature from your Bard subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Bard levels 8, 12, and 16.
@@ -137,6 +137,7 @@ properties:
   - name: Words of Creation
     level: 20
     description: 'You have mastered two of the Words of Creation: the words of life and death. You therefore always have the Power Word Heal and Power Word Kill spells prepared. When you cast either spell, you can target a second creature with it if that creature is within 10 feet of the first target.'
+  spellcastingAbility: cha
   casterType: full
   spellcasting:
   - level: 1
@@ -242,41 +243,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

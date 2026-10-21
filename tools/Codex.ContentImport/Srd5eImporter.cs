@@ -229,7 +229,9 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             if (multiclassText != null) entry.Properties["multiclassing"] = multiclassText;
             if (multiclass != null) entry.Properties["multiclassPrerequisites"] = MulticlassPrerequisites(multiclass.Value);
             entry.Properties["subclasses"] = subclasses.Cast<object>().ToList();
+            RenameRepeatedSubclassRows(rows, entry.Name);
             entry.Properties["features"] = FeatureRows(rows);
+            if (SpellcastingAbilities.TryGetValue(id, out var castingAbility)) entry.Properties["spellcastingAbility"] = castingAbility;
             AddUnarmoredDefense(entry, rows);
             AddClassTables(entry, id);
 
@@ -244,6 +246,31 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Description = sb.ToString().Trim();
             entry.Tags.Add("class");
             yield return entry;
+        }
+    }
+
+    /// <summary>The SRD names each class's spellcasting ability in its Spellcasting feature; the sheet rules read it as data.</summary>
+    private static readonly Dictionary<string, string> SpellcastingAbilities = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["bard"] = "cha", ["cleric"] = "wis", ["druid"] = "wis", ["paladin"] = "cha", ["ranger"] = "wis",
+        ["sorcerer"] = "cha", ["warlock"] = "cha", ["wizard"] = "int"
+    };
+
+    /// <summary>The SRD lists "Wizard Subclass" at 3, 6, 10 and 14 (and so on) with the level-3 text each time.
+    /// Only the first is the choice; the others are where the chosen subclass gives features.</summary>
+    private static void RenameRepeatedSubclassRows(List<(int? Level, string Name, string? Description)> rows, string className)
+    {
+        var seen = false;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (!rows[i].Name.Equals($"{className} Subclass", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!seen)
+            {
+                seen = true;
+                continue;
+            }
+
+            rows[i] = (rows[i].Level, "Subclass Feature", $"You gain a feature from your {className} subclass at this level. Its features are listed on the subclass.");
         }
     }
 
@@ -279,10 +306,13 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
 
         var spellcasting = new List<object>();
         var featSlots = new List<object>();
+        var styles = 0L;
         foreach (var level in cls.Items("levels"))
         {
             var lvl = (long)(level.Int("level") ?? 0);
-            featSlots.Add(new Dictionary<string, object> { ["level"] = lvl, ["slots"] = (long)(level.Int("featSlots") ?? 0) });
+            // Fighting styles are their own allowance: the class feature that grants one is not an Ability Score Improvement.
+            if (level.Items("features").Any(f => f.GetString() == "Fighting Style")) styles++;
+            featSlots.Add(new Dictionary<string, object> { ["level"] = lvl, ["slots"] = (long)(level.Int("featSlots") ?? 0), ["styles"] = styles });
             if (casterType == "none") continue;
             var slots = level.Items("slots").Select(s => s.GetInt32()).ToList();
             spellcasting.Add(new Dictionary<string, object>
@@ -337,6 +367,14 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Properties["summary"] = sub.Str("summary") ?? "";
             var rows = sub.Items("features").Select(f => (f.Int("level"), f.Str("name") ?? "Feature", Json.Clean(f.Str("description")))).ToList();
             entry.Properties["features"] = FeatureRows(rows);
+            var extraStyles = rows.Where(r => r.Item2.Equals("Additional Fighting Style", StringComparison.OrdinalIgnoreCase) && r.Item1.HasValue).ToList();
+            if (extraStyles.Count > 0)
+            {
+                entry.Properties["featSlots"] = Enumerable.Range(1, 20)
+                    .Select(lvl => (object)new Dictionary<string, object> { ["level"] = (long)lvl, ["styles"] = (long)extraStyles.Count(r => r.Item1 <= lvl) })
+                    .ToList();
+            }
+
             if (sub.Str("summary") is { } summary)
             {
                 entry.Description = $"*{summary}*\n\n{entry.Description}";
@@ -427,6 +465,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                 .Select(t => (Level: (int?)null, Name: t.Str("name") ?? "", Description: t.Str("index") is { } idx && traits.TryGetValue(idx, out var full) ? full.Text("description") : null))
                 .ToList();
             entry.Properties["traits"] = FeatureRows(traitRows);
+            AddSpeciesValues(entry, traitRows);
 
             if (subspecies.TryGetValue(entry.Id, out var lineages))
             {
@@ -457,6 +496,33 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Description = sb.ToString().Trim();
             yield return entry;
         }
+    }
+
+    private static readonly Regex DarkvisionRange = new(@"(?<feet>\d+)\s*(?:feet|ft)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Numbers the sheet rules read off a species' traits: Darkvision's range, a per-level hit point
+    /// bonus (Dwarven Toughness), the extra origin feat of Versatile, and a size when the source gives none.</summary>
+    private static void AddSpeciesValues(ContentEntry entry, List<(int? Level, string Name, string? Description)> traits)
+    {
+        foreach (var trait in traits)
+        {
+            if (trait.Name.StartsWith("Darkvision", StringComparison.OrdinalIgnoreCase))
+            {
+                var range = DarkvisionRange.Match(trait.Name + " " + trait.Description);
+                if (range.Success) entry.Properties["darkvision"] = long.Parse(range.Groups["feet"].Value, CultureInfo.InvariantCulture);
+            }
+            else if (trait.Name.Equals("Dwarven Toughness", StringComparison.OrdinalIgnoreCase))
+            {
+                entry.Properties["hitPointsPerLevel"] = 1L;
+            }
+            else if (trait.Name.Equals("Versatile", StringComparison.OrdinalIgnoreCase) && (trait.Description ?? "").Contains("Origin feat", StringComparison.OrdinalIgnoreCase))
+            {
+                entry.Properties["extraOriginFeats"] = 1L;
+            }
+        }
+
+        // Some species choose Medium or Small and the source leaves it blank; start from Medium.
+        if (string.IsNullOrWhiteSpace(entry.Properties.GetValueOrDefault("size")?.ToString())) entry.Properties["size"] = "Medium";
     }
 
     private IEnumerable<ContentEntry> Races()
@@ -771,6 +837,8 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                 if (armor.Bool("dex_bonus") == true) text += armor.Int("max_bonus") is { } max and > 0 ? $" + Dex modifier (max {max})" : " + Dex modifier";
                 entry.Properties["armorClass"] = text;
                 lines.Add($"**Armor Class:** {text}");
+                // The SRD lists Hide Armor as Medium; the upstream data files it under Light.
+                if (entry.Id == "hide-armor") categories = categories.Select(c => c.Replace("Light", "Medium")).ToList();
                 AddArmorData(entry, categories, armor);
             }
 

@@ -18,7 +18,7 @@
     {
         <p class="small mt-2 mb-1" data-testid="hp-max-note">
             <strong>@summary.Max</strong> from @summary.Levels.Count level@(summary.Levels.Count == 1 ? "" : "s")
-            (hit die + Constitution @Signed(summary.Modifier) each, first level takes the full die).
+            (hit die + Constitution @Signed(summary.Modifier)@(summary.LevelExtra != 0 ? $" + {summary.LevelExtra} from {summary.ExtraSource}" : "") each, first level takes the full die).
         </p>
         <details>
             <summary class="small">How this is worked out</summary>

@@ -96,9 +96,9 @@ properties:
   - name: Sear Undead
     level: 5
     description: Whenever you use Turn Undead, you can roll a number of d8s equal to your Wisdom modifier (minimum of 1d8) and add the rolls together. Each Undead that fails its saving throw against that use of Turn Undead takes Radiant damage equal to the roll's total. This damage doesn't end the turn effect.
-  - name: Cleric Subclass
+  - name: Subclass Feature
     level: 6
-    description: You gain a Cleric subclass of your choice. A subclass is a specialization that grants you features at certain Cleric levels. For the rest of your career, you gain each of your subclass's features that are of your Cleric level or lower.
+    description: You gain a feature from your Cleric subclass at this level. Its features are listed on the subclass.
   - name: Blessed Strikes
     level: 7
     description: >-
@@ -130,9 +130,9 @@ properties:
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Cleric levels 8, 12, and 16.
-  - name: Cleric Subclass
+  - name: Subclass Feature
     level: 17
-    description: You gain a Cleric subclass of your choice. A subclass is a specialization that grants you features at certain Cleric levels. For the rest of your career, you gain each of your subclass's features that are of your Cleric level or lower.
+    description: You gain a feature from your Cleric subclass at this level. Its features are listed on the subclass.
   - name: Epic Boon
     level: 19
     description: You gain an Epic Boon feat (see "Feats") or another feat of your choice for which you qualify. Boon of Fate is recommended.
@@ -142,6 +142,7 @@ properties:
       You can call on even more powerful divine intervention. When you use your Divine Intervention feature, you can choose Wish when you select a spell.
 
       If you do so, you can't use Divine Intervention again until you finish 2d4 Long Rests.
+  spellcastingAbility: wis
   casterType: full
   spellcasting:
   - level: 1
@@ -247,41 +248,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

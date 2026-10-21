@@ -32,3 +32,4 @@ properties:
     description: You have Darkvision with a range of 120 feet.
   - name: Relentless Endurance
     description: When you are reduced to 0 Hit Points but not killed outright, you can drop to 1 Hit Point instead. Once you use this trait, you can't do so again until you finish a Long Rest.
+  darkvision: 120

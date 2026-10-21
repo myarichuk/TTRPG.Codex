@@ -8,7 +8,7 @@ description: >-
 
   **Saving Throw Proficiencies:** STR, DEX  
 
-  **Skill Proficiencies:** Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth; Choose one type of artisanâ€™s tools or one musical instrument  
+  **Skill Proficiencies:** Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth; Choose one type of artisan’s tools or one musical instrument  
 
   **Weapon Proficiencies:** Simple Weapons, Scimitars, Shortswords, Hand crossbows  
 
@@ -27,7 +27,7 @@ properties:
   - Scimitars
   - Shortswords
   - Hand crossbows
-  skillChoices: 'Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth; Choose one type of artisanâ€™s tools or one musical instrument'
+  skillChoices: 'Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth; Choose one type of artisan’s tools or one musical instrument'
   startingEquipment: (a) Spear, 5 Daggers, Artisan’s Tools or Musical Instrument chosen for the tool proficiency above, Explorer’s Pack, and 11 GP; or (b) 50 GP
   multiclassing: 'Prerequisite: DEX 13+, WIS 13+'
   multiclassPrerequisites:
@@ -102,9 +102,9 @@ properties:
   - name: Stunning Strike
     level: 5
     description: Once per turn when you hit a creature with a Monk weapon or an Unarmed Strike, you can expend 1 Focus Point to attempt a stunning strike. The target must make a Constitution saving throw. On a failed save, the target has the Stunned condition until the start of your next turn. On a successful save, the target's Speed is halved until the start of your next turn, and the next attack roll made against the target before then has Advantage.
-  - name: Monk Subclass
+  - name: Subclass Feature
     level: 6
-    description: You gain a Monk subclass of your choice. A subclass is a specialization that grants you features at certain Monk levels. For the rest of your career, you gain each of your subclass's features that are of your Monk level or lower.
+    description: You gain a feature from your Monk subclass at this level. Its features are listed on the subclass.
   - name: Empowered Strikes
     level: 6
     description: Whenever you deal damage with your Unarmed Strike, it can deal your choice of Force damage or its normal damage type.
@@ -138,9 +138,9 @@ properties:
       end of each of your turns: Charmed, Frightened, or Poisoned.
 
       In addition, forgoing food and drink doesn't give you levels of Exhaustion.
-  - name: Monk Subclass
+  - name: Subclass Feature
     level: 11
-    description: You gain a Monk subclass of your choice. A subclass is a specialization that grants you features at certain Monk levels. For the rest of your career, you gain each of your subclass's features that are of your Monk level or lower.
+    description: You gain a feature from your Monk subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Monk levels 8, 12, and 16.
@@ -159,9 +159,9 @@ properties:
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Monk levels 8, 12, and 16.
-  - name: Monk Subclass
+  - name: Subclass Feature
     level: 17
-    description: You gain a Monk subclass of your choice. A subclass is a specialization that grants you features at certain Monk levels. For the rest of your career, you gain each of your subclass's features that are of your Monk level or lower.
+    description: You gain a feature from your Monk subclass at this level. Its features are listed on the subclass.
   - name: Superior Defense
     level: 18
     description: At the start of your turn, you can expend 3 Focus Points to bolster yourself against harm for 1 minute or until you have the Incapacitated condition. During that time, you have Resistance to all damage except Force damage.
@@ -177,41 +177,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

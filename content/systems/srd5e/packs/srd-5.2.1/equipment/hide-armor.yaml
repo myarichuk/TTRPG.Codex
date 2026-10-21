@@ -2,7 +2,7 @@ id: hide-armor
 type: equipment
 name: Hide Armor
 description: >-
-  *Armor, Light Armor*
+  *Armor, Medium Armor*
 
 
   **Armor Class:** 12 + Dex modifier (max 2)  
@@ -12,12 +12,12 @@ description: >-
   **Weight:** 12 lb.
 tags:
 - armor
-- light armor
+- medium armor
 properties:
   category: Armor
   cost: 10 gp
   weight: 12
   armorClass: 12 + Dex modifier (max 2)
-  armorType: light
+  armorType: medium
   armorBase: 12
   armorDexCap: 2

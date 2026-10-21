@@ -111,9 +111,9 @@ properties:
       You and your allies in the aura gain a bonus to saving throws equal to your Charisma modifier (minimum bonus of +1).
 
       If another Paladin is present, a creature can benefit from only one Aura of Protection at a time; the creature chooses which aura while in them.
-  - name: Paladin Subclass
+  - name: Subclass Feature
     level: 7
-    description: You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.
+    description: You gain a feature from your Paladin subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 8
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Paladin levels 8, 12, and 16.
@@ -132,9 +132,9 @@ properties:
   - name: Restoring Touch
     level: 14
     description: "When you use Lay On Hands on a creature, you can also remove one or more of the following conditions from the creature: Blinded, Charmed, Deafened, Frightened, Paralyzed, or Stunned. You must expend 5 Hit Points from the healing pool of Lay On Hands for each of these conditions you remove; those points don't also restore Hit Points to the creature."
-  - name: Paladin Subclass
+  - name: Subclass Feature
     level: 15
-    description: You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.
+    description: You gain a feature from your Paladin subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Paladin levels 8, 12, and 16.
@@ -144,9 +144,10 @@ properties:
   - name: Epic Boon
     level: 19
     description: You gain an Epic Boon feat (see "Feats") or another feat of your choice for which you qualify. Boon of Truesight is recommended.
-  - name: Paladin Subclass
+  - name: Subclass Feature
     level: 20
-    description: You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.
+    description: You gain a feature from your Paladin subclass at this level. Its features are listed on the subclass.
+  spellcastingAbility: cha
   casterType: half
   spellcasting:
   - level: 1
@@ -252,41 +253,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 1
   - level: 3
     slots: 0
+    styles: 1
   - level: 4
     slots: 1
+    styles: 1
   - level: 5
     slots: 1
+    styles: 1
   - level: 6
     slots: 1
+    styles: 1
   - level: 7
     slots: 1
+    styles: 1
   - level: 8
     slots: 2
+    styles: 1
   - level: 9
     slots: 2
+    styles: 1
   - level: 10
     slots: 2
+    styles: 1
   - level: 11
     slots: 2
+    styles: 1
   - level: 12
     slots: 3
+    styles: 1
   - level: 13
     slots: 3
+    styles: 1
   - level: 14
     slots: 3
+    styles: 1
   - level: 15
     slots: 3
+    styles: 1
   - level: 16
     slots: 4
+    styles: 1
   - level: 17
     slots: 4
+    styles: 1
   - level: 18
     slots: 4
+    styles: 1
   - level: 19
     slots: 5
+    styles: 1
   - level: 20
     slots: 5
+    styles: 1

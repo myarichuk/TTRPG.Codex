@@ -17,7 +17,7 @@ internal static class Json
         if (value == null) return null;
         return value.Value.ValueKind switch
         {
-            JsonValueKind.String => value.Value.GetString(),
+            JsonValueKind.String => value.Value.GetString() is { } str ? FixEncoding(str) : null,
             JsonValueKind.Number => value.Value.GetRawText(),
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
@@ -85,11 +85,21 @@ internal static class Json
     public static string? Clean(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
+        text = FixEncoding(text);
         var lines = text.Replace("\r\n", "\n").Split('\n').Select(l => l.Trim());
         var joined = string.Join("\n", lines);
         joined = System.Text.RegularExpressions.Regex.Replace(joined, @"(\w)- (\w)", "$1$2");
         return joined.Trim();
     }
+
+    private static readonly (string Broken, string Fixed)[] Mojibake =
+    {
+        ("\u00e2\u20ac\u2122", "\u2019"), ("\u00e2\u20ac\u0153", "\u201c"), ("\u00e2\u20ac\u009d", "\u201d"),
+        ("\u00e2\u20ac\u201c", "\u2013"), ("\u00e2\u20ac\u201d", "\u2014")
+    };
+
+    /// <summary>Repairs UTF-8 punctuation that was decoded as Windows-1252 upstream ("artisanâ€™s" → "artisan’s").</summary>
+    public static string FixEncoding(string text) => Mojibake.Aggregate(text, (current, pair) => current.Replace(pair.Broken, pair.Fixed));
 
     public static string FormatCr(double cr) => cr switch
     {

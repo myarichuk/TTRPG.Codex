@@ -108,12 +108,9 @@ properties:
   - name: Sorcerous Restoration
     level: 5
     description: When you finish a Short Rest, you can regain expended Sorcery Points, but no more than a number equal to half your Sorcerer level (round down). Once you use this feature, you can’t do so again until you finish a Long Rest.
-  - name: Sorcerer Subclass
+  - name: Subclass Feature
     level: 6
-    description: >-
-      You gain a Sorcerer subclass of your choice. The Draconic Sorcery subclass is detailed after this class’s description. A subclass is a specialization that grants you features at certain Sorcerer levels.
-
-      For the rest of your career, you gain each of your subclass’s features that are of your Sorcerer level or lower.
+    description: You gain a feature from your Sorcerer subclass at this level. Its features are listed on the subclass.
   - name: Sorcery Incarnate
     level: 7
     description: >-
@@ -134,12 +131,9 @@ properties:
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Sorcerer levels 8, 12, and 16.
-  - name: Sorcerer Subclass
+  - name: Subclass Feature
     level: 14
-    description: >-
-      You gain a Sorcerer subclass of your choice. The Draconic Sorcery subclass is detailed after this class’s description. A subclass is a specialization that grants you features at certain Sorcerer levels.
-
-      For the rest of your career, you gain each of your subclass’s features that are of your Sorcerer level or lower.
+    description: You gain a feature from your Sorcerer subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Sorcerer levels 8, 12, and 16.
@@ -151,18 +145,16 @@ properties:
       You can use only one Metamagic option on a spell when you cast it unless otherwise noted in one of those options.
 
       Whenever you gain a Sorcerer level, you can replace one of your Metamagic options with one you don’t know. You gain two more options at Sorcerer level 10 and two more at Sorcerer level 17.
-  - name: Sorcerer Subclass
+  - name: Subclass Feature
     level: 18
-    description: >-
-      You gain a Sorcerer subclass of your choice. The Draconic Sorcery subclass is detailed after this class’s description. A subclass is a specialization that grants you features at certain Sorcerer levels.
-
-      For the rest of your career, you gain each of your subclass’s features that are of your Sorcerer level or lower.
+    description: You gain a feature from your Sorcerer subclass at this level. Its features are listed on the subclass.
   - name: Epic Boon
     level: 19
     description: You gain an Epic Boon feat (see "Feats") or another feat of your choice for which you qualify. Boon of Dimensional Travel is recommended.
   - name: Arcane Apotheosis
     level: 20
     description: While your Innate Sorcery feature is active, you can use one Metamagic option on each of your turns without spending Sorcery Points on it.
+  spellcastingAbility: cha
   casterType: full
   spellcasting:
   - level: 1
@@ -268,41 +260,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

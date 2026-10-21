@@ -110,6 +110,22 @@ else
                 </section>
             }
 
+            @if (evaluation != null && evaluation.Warnings.Count > 0)
+            {
+                <section class="panel" aria-labelledby="warnings-heading" data-testid="rule-warnings">
+                    <div class="panel-title">
+                        <h2 id="warnings-heading" class="h5"><LucideIcon IconName="info" Size="16" Class="title-icon" /> Worth a look</h2>
+                        <span class="pill">Doesn't block saving</span>
+                    </div>
+                    <ul class="mb-0 small">
+                        @foreach (var warning in evaluation.Warnings)
+                        {
+                            <li>@warning.Message</li>
+                        }
+                    </ul>
+                </section>
+            }
+
             @if (system != null && system.Attributes.Count > 0)
             {
                 var attributeRules = Rules?.Attributes;
@@ -273,6 +289,11 @@ else
                 </section>
             }
 
+            @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
+            {
+                <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+            }
+
             <section class="panel" aria-labelledby="sheet-heading">
                 <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="16" Class="title-icon" /> Sheet</h2></div>
                 <div class="mb-3">
@@ -324,6 +345,10 @@ else
                                         {
                                             <span class="small-muted"> · first class</span>
                                         }
+                                        @if (cls.Subclass != null)
+                                        {
+                                            <span class="small-muted"> · @cls.Subclass.Name</span>
+                                        }
                                     </span>
                                     @if (cls.IsFirst || !CanEdit)
                                     {
@@ -339,6 +364,21 @@ else
                                         </span>
                                     }
                                 </li>
+                                @if (CanEdit && !cls.IsFirst && multiclass.SubclassField != null && cls.Level >= multiclass.SubclassLevel)
+                                {
+                                    var subclassId = "class-subclass-" + classId;
+                                    <li class="py-1">
+                                        <label for="@subclassId" class="form-label small mb-0">@(cls.Entry?.Name ?? classId) subclass</label>
+                                        <select id="@subclassId" class="form-select form-select-sm w-auto" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
+                                                @onchange="e => SetClassSubclass(multiclass, classId, e.Value?.ToString())">
+                                            <option value="">None yet</option>
+                                            @foreach (var option in SubclassOptions(classId))
+                                            {
+                                                <option value="@option.Id">@option.Name</option>
+                                            }
+                                        </select>
+                                    </li>
+                                }
                             }
                         </ul>
                         @if (CanEdit)
@@ -605,6 +645,7 @@ else
     private Dictionary<string, IReadOnlyList<(string Id, string Name)>> fieldOptions = new();
     private SheetRuleEngine? engine;
     private SheetEvaluation? evaluation;
+    private List<ContentEntry> subclassCandidates = new();
     private IReadOnlyDictionary<string, IReadOnlyList<ContentEntry>> inventoryOptions = new Dictionary<string, IReadOnlyList<ContentEntry>>();
     private List<(string Label, LibraryItem Item)> linkedEntries = new();
     private string editName = "";
@@ -699,6 +740,8 @@ else
                     .Concat(system?.SheetRules?.HitPoints is { } hp ? new[] { hp.ModeKey, hp.RollsKey } : Array.Empty<string>())
                     .Concat(system?.SheetRules?.ArmorClass is { } ac ? new[] { ac.Key, ac.ModeKey, ac.MiscField } : Array.Empty<string>())
                     .Concat(system?.SheetRules?.Inventory is { } inv ? new[] { inv.Key } : Array.Empty<string>())
+                    .Concat(system?.SheetRules?.Skills is { } sk ? new[] { sk.ProficienciesKey, sk.ExpertiseKey } : Array.Empty<string>())
+                    .Concat(system?.SheetRules?.Inherits.Select(i => i.AppliedKey) ?? Enumerable.Empty<string>())
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
@@ -719,6 +762,8 @@ else
                     type => type,
                     type => (IReadOnlyList<ContentEntry>)(resolver?.Candidates(type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList() ?? new List<ContentEntry>()))
                     ?? new Dictionary<string, IReadOnlyList<ContentEntry>>();
+                var subclassType = system?.ActorFields.FirstOrDefault(f => f.Key == Rules?.Multiclass?.SubclassField)?.TargetEntityType;
+                subclassCandidates = subclassType == null || resolver == null ? new List<ContentEntry>() : resolver.Candidates(subclassType).ToList();
                 Reevaluate();
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
@@ -737,6 +782,7 @@ else
             return;
         }
 
+        engine.ApplyInherited(editSheet);
         engine.ApplyAttributeTotals(editSheet);
         evaluation = engine.Evaluate(editSheet);
         engine.ApplySlotPools(editSheet, evaluation);
@@ -859,14 +905,22 @@ else
         SetRawList(rules.FromList, raw);
     }
 
-    private void SetOtherClasses(MulticlassRules rules, List<(string Id, int Level)> classes) =>
-        SetRawList(rules.Key, classes.Select(c => SheetRuleEngine.FormatClassLevel(c.Id, c.Level)).ToList());
+    private void SetOtherClasses(MulticlassRules rules, List<OtherClass> classes) =>
+        SetRawList(rules.Key, classes.Select(SheetRuleEngine.FormatClassLevel).ToList());
+
+    private IEnumerable<ContentEntry> SubclassOptions(string classId) =>
+        subclassCandidates
+            .Where(c => string.Equals(c.Properties.GetValueOrDefault("class")?.ToString(), classId, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase);
+
+    private void SetClassSubclass(MulticlassRules rules, string classId, string? subclassId) =>
+        SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Select(c => c.Id == classId ? c with { Subclass = string.IsNullOrEmpty(subclassId) ? null : subclassId } : c).ToList());
 
     private void AddClass(MulticlassRules rules)
     {
         if (string.IsNullOrEmpty(newClassId)) return;
         var classes = SheetRuleEngine.ParseClassLevels(editSheet, rules.Key);
-        classes.Add((newClassId, 1));
+        classes.Add(new OtherClass(newClassId, 1));
         newClassId = "";
         SetOtherClasses(rules, classes);
     }
@@ -877,7 +931,7 @@ else
     private void SetClassLevel(MulticlassRules rules, string classId, string? raw)
     {
         if (!int.TryParse(raw, out var level) || level < 1) return;
-        SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Select(c => c.Id == classId ? (c.Id, level) : c).ToList());
+        SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Select(c => c.Id == classId ? c with { Level = level } : c).ToList());
     }
 
     private void AdjustSlot((string Key, int Delta, string Label) change)
@@ -1090,8 +1144,8 @@ else
             // The first class gets whatever the others don't take, so only another class needs writing down.
             var classes = SheetRuleEngine.ParseClassLevels(editSheet, multiclass.Key);
             var index = classes.FindIndex(c => c.Id == levelUpClassId);
-            if (index >= 0) classes[index] = (classes[index].Id, classes[index].Level + 1);
-            else classes.Add((levelUpClassId, 1));
+            if (index >= 0) classes[index] = classes[index] with { Level = classes[index].Level + 1 };
+            else classes.Add(new OtherClass(levelUpClassId, 1));
             SetOtherClasses(multiclass, classes);
         }
         else
