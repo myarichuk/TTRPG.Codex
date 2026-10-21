@@ -48,33 +48,44 @@ public sealed class CodexWorld : IDisposable
     /// <summary>
     /// Adds a status effect to <paramref name="entity"/> without disturbing any effect already
     /// there (B6 fix - the old API replaced whatever single status was already set). Rounds tick
-    /// down on <see cref="AdvanceTurn"/> for the turn named by <paramref name="anchorEntity"/>,
-    /// matching <paramref name="expiry"/>.
+    /// down on <see cref="AdvanceTurn"/> at the <paramref name="expiry"/> boundary of the turn of
+    /// the actor named by <paramref name="anchorId"/>; a round count below one means the effect
+    /// lasts until it is removed.
     /// </summary>
-    public void AddStatus(Entity entity, string effectId, string sourceId, int roundsRemaining, EffectExpiry expiry, Entity anchorEntity)
+    public void AddStatus(Entity entity, string effectId, string sourceId, int roundsRemaining, EffectExpiry expiry, string anchorId)
     {
         if (!entity.Has<ActiveEffectsComponent>())
         {
             entity.Set(new ActiveEffectsComponent());
         }
 
-        entity.Get<ActiveEffectsComponent>().Effects.Add(new ActiveEffect(effectId, sourceId, roundsRemaining, expiry, anchorEntity));
+        var rounds = roundsRemaining < 1 ? ActiveEffect.Indefinite : roundsRemaining;
+        entity.Get<ActiveEffectsComponent>().Effects.Add(new ActiveEffect(effectId, sourceId, rounds, expiry, anchorId));
     }
 
-    /// <summary>Scripting convenience (kept for <see cref="Codex.Core.Scripting.ScriptApi"/>): anchors
-    /// the effect to the affected entity's own turn, expiring at the end of it.</summary>
+    /// <summary>Scripting convenience (kept for <see cref="Codex.Core.Scripting.ScriptApi"/>): a script
+    /// knows entities, not actor ids, so the effect is anchored to nobody's turn and lasts until the
+    /// table removes it.</summary>
     public void AddStatus(Entity entity, string effectId, string sourceId, double roundsRemaining) =>
-        AddStatus(entity, effectId, sourceId, (int)Math.Ceiling(roundsRemaining), EffectExpiry.EndOfTurn, entity);
+        AddStatus(entity, effectId, sourceId, (int)Math.Ceiling(roundsRemaining), EffectExpiry.EndOfTurn, string.Empty);
 
     /// <summary>
-    /// Advances the turn boundary for <paramref name="actingEntity"/>: every <see cref="ActiveEffect"/>
-    /// anchored to it, on any entity, ticks its <see cref="ActiveEffect.RoundsRemaining"/> down by
-    /// one round and is removed once it reaches zero. Durations are whole rounds tied to a specific
+    /// Advances one turn boundary for the actor <paramref name="anchorId"/>: every timed
+    /// <see cref="ActiveEffect"/> anchored to it, on any entity, whose expiry matches
+    /// <paramref name="boundary"/> ticks its <see cref="ActiveEffect.RoundsRemaining"/> down by one
+    /// round and is removed once it reaches zero. Durations are whole rounds tied to a specific
     /// creature's turn, not wall-clock <see cref="Tick"/> (B6/B8) - calling this is how a DM
-    /// combat console advances the encounter, not a timer.
+    /// combat console advances the encounter, not a timer. Returns the effects that expired, as
+    /// (entity, effect) pairs, so the caller can log them.
     /// </summary>
-    public void AdvanceTurn(Entity actingEntity)
+    public List<(Entity Entity, ActiveEffect Effect)> AdvanceTurn(string anchorId, EffectExpiry boundary = EffectExpiry.EndOfTurn)
     {
+        var expired = new List<(Entity, ActiveEffect)>();
+        if (string.IsNullOrEmpty(anchorId))
+        {
+            return expired;
+        }
+
         using var set = _world.GetEntities().With<ActiveEffectsComponent>().AsSet();
         foreach (ref readonly var entity in set.GetEntities())
         {
@@ -82,7 +93,7 @@ public sealed class CodexWorld : IDisposable
             for (var i = effects.Count - 1; i >= 0; i--)
             {
                 var effect = effects[i];
-                if (!effect.AnchorEntity.Equals(actingEntity))
+                if (effect.IsIndefinite || effect.Expiry != boundary || !string.Equals(effect.AnchorId, anchorId, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -91,6 +102,7 @@ public sealed class CodexWorld : IDisposable
                 if (remaining <= 0)
                 {
                     effects.RemoveAt(i);
+                    expired.Add((entity, effect));
                 }
                 else
                 {
@@ -98,7 +110,25 @@ public sealed class CodexWorld : IDisposable
                 }
             }
         }
+
+        return expired;
     }
+
+    /// <summary>Removes every instance of <paramref name="effectId"/> from <paramref name="entity"/>; returns how many went.</summary>
+    public int RemoveStatus(Entity entity, string effectId)
+    {
+        if (!entity.Has<ActiveEffectsComponent>())
+        {
+            return 0;
+        }
+
+        return entity.Get<ActiveEffectsComponent>().Effects.RemoveAll(e => string.Equals(e.EffectId, effectId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>True while <paramref name="entity"/> is under <paramref name="effectId"/>.</summary>
+    public static bool HasStatus(Entity entity, string effectId) =>
+        entity.Has<ActiveEffectsComponent>() &&
+        entity.Get<ActiveEffectsComponent>().Effects.Exists(e => string.Equals(e.EffectId, effectId, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Applies damage to a resource pool (typically "HP") immediately and clamps at zero (B7 fix -

@@ -171,11 +171,11 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.DoesNotContain(seen, e => e.Description.Contains("Strahd") || e.Description.Contains("Ambusher"));
         Assert.DoesNotContain(seen, e => e.Description.Contains("took 7"));
         Assert.Contains(seen, e => e.Description == "Goblin Skirmisher took damage.");
-        Assert.Contains(seen, e => e.Description.StartsWith("Aria took 4 HP damage"));
+        Assert.Contains(seen, e => e.Description.StartsWith("Aria took 4 damage"));
 
         // The DM keeps the full account.
         Assert.Contains(SessionEventRedactor.ForViewer(events, new CampaignAccess(campaignId, "dm", CampaignRole.DM), new[] { ambusher, goblin, hero }),
-            e => e.Description.Contains("Strahd the Ambusher took 13 HP damage"));
+            e => e.Description.Contains("Strahd the Ambusher took 13 damage"));
 
         // And so does nothing the player-facing AI digest is built from.
         var digest = SessionDigest.Build(await _sessionRepository.GetAsync(session.Id) ?? session, Array.Empty<NoteDocument>(), forDm: false, actors: new[] { ambusher, goblin, hero });
@@ -257,7 +257,7 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         // survives the process).
         Assert.Equal(2, session.Events.Count);
         Assert.Equal("Damage", session.Events[0].Type);
-        Assert.Contains("took 3 HP damage", session.Events[0].Description);
+        Assert.Contains("took 3 damage", session.Events[0].Description);
         Assert.Equal("Healing", session.Events[1].Type);
 
         var persisted = await _sessionRepository.GetAsync(session.Id);

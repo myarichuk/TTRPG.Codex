@@ -24,9 +24,12 @@ public sealed record RuntimeSnapshot(
     public ActorStateSnapshot? Actor(string actorId) => Actors.GetValueOrDefault(actorId);
 }
 
-public sealed record EncounterSnapshot(string Id, int Round, int TurnIndex, IReadOnlyList<ParticipantSnapshot> Participants);
+public sealed record EncounterSnapshot(string Id, int Round, int TurnIndex, IReadOnlyList<ParticipantSnapshot> Participants)
+{
+    public ParticipantSnapshot? Current => Participants.Count > 0 && TurnIndex >= 0 && TurnIndex < Participants.Count ? Participants[TurnIndex] : null;
+}
 
-public sealed record ParticipantSnapshot(string ActorId, int InitiativeRoll, TurnState State, bool HasActed);
+public sealed record ParticipantSnapshot(string ActorId, int InitiativeRoll, int TieBreak, TurnState State, bool HasActed);
 
 /// <summary>One actor's live pools and conditions; <see cref="Pools"/> is null for an actor with no resource pool.</summary>
 public sealed record ActorStateSnapshot(IReadOnlyDictionary<string, int>? Pools, IReadOnlyList<EffectSnapshot> Effects)
@@ -34,4 +37,8 @@ public sealed record ActorStateSnapshot(IReadOnlyDictionary<string, int>? Pools,
     public int? Pool(string key) => Pools != null && Pools.TryGetValue(key, out var value) ? value : null;
 }
 
-public sealed record EffectSnapshot(string EffectId, string SourceId, int RoundsRemaining);
+/// <summary>A condition on an actor; <see cref="RoundsRemaining"/> below zero means it lasts until removed.</summary>
+public sealed record EffectSnapshot(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry)
+{
+    public bool IsIndefinite => RoundsRemaining < 0;
+}

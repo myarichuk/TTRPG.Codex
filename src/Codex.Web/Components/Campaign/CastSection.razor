@@ -4,6 +4,7 @@
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IActorRepository ActorRepo
+@inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
 @inject IContentRegistry Registry
 @inject ComponentRegistry Components
 @inject ISystemCatalog Catalog
@@ -296,7 +297,7 @@
 
         ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
-        if (!await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+        if (!await RuntimeManager.TryCreateActorAsync(actor, Ctx.Access))
         {
             createError = "You can only create a character you own.";
             return;
@@ -325,7 +326,7 @@
             actor.Biography = draft.Biography;
             ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
-            if (!await ActorRepo.TrySaveAsync(actor, Ctx.Access))
+            if (!await RuntimeManager.TryCreateActorAsync(actor, Ctx.Access))
             {
                 aiError = "You can only create a character you own.";
                 return;
@@ -374,7 +375,7 @@
             return;
         }
 
-        if (await ActorRepo.TryDeleteAsync(actor.Id, Ctx.Access))
+        if (await RuntimeManager.TryDeleteActorAsync(actor.Id, Ctx.Access))
         {
             Ctx.Notify(Flash.Success(retiring ? $"{actor.Name} has retired." : $"Deleted {actor.Name}."));
             await Ctx.ReloadAsync();

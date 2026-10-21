@@ -55,10 +55,17 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// actor the DM can see (the runtime is server-authoritative and must never be visibility-
     /// filtered the way a player's own queries are). Only the DM can start a campaign - there is no
     /// concept of a player unilaterally spinning up table state.</summary>
-    public async Task<CampaignRuntime> GetOrStartAsync(CampaignDocument campaign, CampaignAccess dmAccess)
+    /// <param name="sessionId">The session to run: a planned one the DM picked, or a completed one to
+    /// reopen. Null runs the campaign's current session if it is live or planned, else a new one.</param>
+    public async Task<CampaignRuntime> GetOrStartAsync(CampaignDocument campaign, CampaignAccess dmAccess, string? sessionId = null)
     {
         if (_runtimes.TryGetValue(campaign.Id, out var existing))
         {
+            if (sessionId != null && existing.ActiveSession?.Id != sessionId)
+            {
+                throw new InvalidOperationException("The table is already running another session. End it first.");
+            }
+
             return existing;
         }
 
@@ -67,7 +74,8 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             throw new InvalidOperationException("Only the campaign's DM can start its runtime.");
         }
 
-        var session = await GetOrOpenLiveSessionAsync(campaign);
+        var session = await OpenSessionAsync(campaign, sessionId);
+        var encounter = await FindOpenEncounterAsync(session);
         var plugin = pluginLoader.GetPlugin(campaign.SystemId);
 
         var runtime = new CampaignRuntime(
@@ -78,7 +86,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             sessionRepository,
             session,
             encounterRepository,
-            plugin?.GetDiceRoller());
+            plugin?.GetDiceRoller(),
+            plugin?.Definition,
+            encounter);
 
         if (!_runtimes.TryAdd(campaign.Id, runtime))
         {
@@ -129,14 +139,81 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         }
     }
 
-    /// <summary>Resumes the campaign's current session if it's still Live, reopens it if the DM
-    /// left it Planned/Completed, or starts a brand-new one if this campaign has never had one
-    /// (3.2 - the command log needs somewhere to append to before the first command arrives).</summary>
-    private async Task<SessionDocument> GetOrOpenLiveSessionAsync(CampaignDocument campaign)
+    /// <summary>
+    /// Saves a new actor and, while the campaign's table is live, hydrates it into the runtime at
+    /// once - wherever it was created from (the cast, the bestiary, the library, the AI), so it can
+    /// be put in initiative and take damage straight away (F10). Returns false when
+    /// <paramref name="access"/> may not create it.
+    /// </summary>
+    public async Task<bool> TryCreateActorAsync(ActorDocument actor, CampaignAccess access)
     {
-        var session = campaign.CurrentSessionId != null
-            ? await sessionRepository.GetAsync(campaign.CurrentSessionId)
-            : null;
+        if (!await actorRepository.TrySaveAsync(actor, access))
+        {
+            return false;
+        }
+
+        if (TryGet(access.CampaignId) is { } runtime)
+        {
+            try
+            {
+                await runtime.EnqueueAsync(new HydrateActorCommand(actor));
+            }
+            catch (InvalidOperationException)
+            {
+                // The table ended in between; the actor is saved and will be hydrated next start.
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Deletes an actor and takes it off the live table (its entity and its place in the
+    /// initiative order). Returns false when <paramref name="access"/> may not delete it.</summary>
+    public async Task<bool> TryDeleteActorAsync(string actorId, CampaignAccess access)
+    {
+        if (!await actorRepository.TryDeleteAsync(actorId, access))
+        {
+            return false;
+        }
+
+        if (TryGet(access.CampaignId) is { } runtime && runtime.HasActor(actorId))
+        {
+            try
+            {
+                await runtime.EnqueueAsync(new RemoveActorCommand(actorId));
+            }
+            catch (InvalidOperationException)
+            {
+                // The table ended in between; nothing live is left to detach from.
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// The session the table runs (3.2 - the command log needs somewhere to append to before the
+    /// first command arrives). An explicit <paramref name="sessionId"/> is opened as it is: a planned
+    /// session starts, a completed one resumes. Otherwise the campaign's current session is resumed
+    /// while it is live or planned; once it is completed, a new session begins rather than
+    /// appending a second evening's events to the first (F4).
+    /// </summary>
+    private async Task<SessionDocument> OpenSessionAsync(CampaignDocument campaign, string? sessionId)
+    {
+        SessionDocument? session = null;
+        if (sessionId != null)
+        {
+            session = await sessionRepository.GetAsync(sessionId);
+            if (session == null || session.CampaignId != campaign.Id)
+            {
+                throw new InvalidOperationException("That session does not belong to this campaign.");
+            }
+        }
+        else if (campaign.CurrentSessionId != null)
+        {
+            var current = await sessionRepository.GetAsync(campaign.CurrentSessionId);
+            session = current is { Status: not SessionStatus.Completed } ? current : null;
+        }
 
         if (session == null)
         {
@@ -148,18 +225,40 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                 Status = SessionStatus.Live
             };
             await sessionRepository.SaveAsync(session);
-
-            // Patch just the pointer: the campaign we were handed was loaded when the DM's page
-            // opened, and storing it whole would drop members who joined since (F8).
-            await campaignRepository.UpdateAsync(campaign.Id, stored => stored.CurrentSessionId = session.Id);
-            campaign.CurrentSessionId = session.Id;
         }
         else if (session.Status != SessionStatus.Live)
         {
             session = await sessionRepository.UpdateAsync(session.Id, stored => stored.Status = SessionStatus.Live) ?? session;
         }
 
+        if (campaign.CurrentSessionId != session.Id)
+        {
+            // Patch just the pointer: the campaign we were handed was loaded when the DM's page
+            // opened, and storing it whole would drop members who joined since (F8).
+            var id = session.Id;
+            await campaignRepository.UpdateAsync(campaign.Id, stored => stored.CurrentSessionId = id);
+            campaign.CurrentSessionId = id;
+        }
+
         return session;
+    }
+
+    /// <summary>The session's last encounter, when it was never ended: the table picks it up where
+    /// it left off instead of wiping the initiative order on every start (F9).</summary>
+    private async Task<EncounterDocument?> FindOpenEncounterAsync(SessionDocument session)
+    {
+        for (var i = session.EncounterIds.Count - 1; i >= 0; i--)
+        {
+            var encounter = await encounterRepository.GetAsync(session.EncounterIds[i]);
+            if (encounter == null)
+            {
+                continue;
+            }
+
+            return encounter.EndedAt == null ? encounter : null;
+        }
+
+        return null;
     }
 
     /// <summary>Stops and disposes a campaign's runtime, and closes out its live session. Called

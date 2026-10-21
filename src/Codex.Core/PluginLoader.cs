@@ -78,13 +78,13 @@ public class PluginLoader(
                 var plugins = await Task.Run(() => DiscoverPlugins(roots));
 
                 // Core components every system relies on, registered once regardless of plugin.
-                // ActiveEffectsComponent is deliberately NOT registered: its ActiveEffect records
-                // hold a live DefaultEcs Entity (anchor), which cannot be snapshotted to JSON -
-                // conditions are table state and die with the runtime.
+                // Conditions (ActiveEffectsComponent) are stored too: their anchor is an actor id,
+                // so a condition survives the table being ended and restarted.
                 registry.Register<ResourcePoolComponent>();
                 registry.Register<AttributesComponent>();
                 registry.Register<StatModifierComponent>();
                 registry.Register<TagsComponent>();
+                registry.Register<ActiveEffectsComponent>();
 
                 foreach (var plugin in plugins)
                 {

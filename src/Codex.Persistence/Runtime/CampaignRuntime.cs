@@ -47,7 +47,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly List<string> _pendingEncounterIds = new();
     private volatile RuntimeSnapshot _snapshot = RuntimeSnapshot.Empty;
     private EncounterDocument? _activeEncounter;
-    private bool _encounterDirty;
+    // The encounter the next persist writes: the live one when a command changed it, or the one
+    // just ended (which is no longer active but still has to be saved with its end time).
+    private EncounterDocument? _encounterToPersist;
     private readonly Channel<QueuedCommand> _commands = Channel.CreateUnbounded<QueuedCommand>(
         new UnboundedChannelOptions { SingleReader = true });
     private readonly CancellationTokenSource _cts = new();
@@ -58,8 +60,13 @@ public sealed class CampaignRuntime : IAsyncDisposable
     public IDiceRoller DiceRoller { get; }
 
     /// <summary>The encounter currently in progress, if any (3.5) - null until the first
-    /// initiative roll of a session creates one via <see cref="GetOrCreateEncounter"/>.</summary>
+    /// initiative roll of a session creates one via <see cref="GetOrCreateEncounter"/>, or the
+    /// session's unfinished encounter restored when the table started.</summary>
     public EncounterDocument? ActiveEncounter => _activeEncounter;
+
+    /// <summary>The campaign's system, for the table rules (<see cref="SystemDefinition.Vitals"/>,
+    /// dice conventions). Null for a bare runtime, which then applies plain clamped damage.</summary>
+    public SystemDefinition? System { get; }
 
     /// <summary>The live session commands log to (3.2) and read back from - a combat console
     /// reads <see cref="SessionDocument.RollLog"/> and <see cref="SessionDocument.Notes"/>
@@ -88,6 +95,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// no initiative tracker to persist.</param>
     /// <param name="diceRoller">This campaign's <see cref="IDiceRoller"/> (3.6); defaults to
     /// <see cref="StandardDiceRoller"/> when the plugin doesn't provide its own.</param>
+    /// <param name="system">The system definition whose table rules apply.</param>
+    /// <param name="activeEncounter">The session's unfinished encounter, restored as the live one.</param>
     public CampaignRuntime(
         string campaignId,
         IActorRepository actorRepository,
@@ -96,7 +105,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
         ISessionRepository? sessionRepository = null,
         SessionDocument? activeSession = null,
         IEncounterRepository? encounterRepository = null,
-        IDiceRoller? diceRoller = null)
+        IDiceRoller? diceRoller = null,
+        SystemDefinition? system = null,
+        EncounterDocument? activeEncounter = null)
     {
         CampaignId = campaignId;
         _actorRepository = actorRepository;
@@ -106,6 +117,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _activeSession = activeSession;
         _encounterRepository = encounterRepository;
         DiceRoller = diceRoller ?? StandardDiceRoller.Instance;
+        System = system;
+        _activeEncounter = activeEncounter is { EndedAt: null } ? activeEncounter : null;
         PublishSnapshot();
         _loop = Task.Run(RunLoopAsync);
     }
@@ -127,7 +140,13 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// quick-added monster to an encounter already in progress.</summary>
     internal void HydrateOne(ActorDocument actor)
     {
-        var entity = World.CreateEntity();
+        // Idempotent: an actor hydrated twice (saved from two places while the table is live) keeps
+        // its one entity and takes the newer document's components.
+        if (!_actorEntities.TryGetValue(actor.Id, out var entity))
+        {
+            entity = World.CreateEntity();
+        }
+
         foreach (var component in _componentRegistry.Hydrate(actor.State))
         {
             EntityComponentSync.SetBoxed(entity, component);
@@ -137,6 +156,28 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _actorDocs[actor.Id] = actor;
         _hydratedIds[actor.Id] = 0;
     }
+
+    /// <summary>Takes an actor out of the table: its entity goes, and so does its place in the
+    /// initiative order. Used when the actor is deleted while the table is live.</summary>
+    internal bool RemoveActor(string actorId)
+    {
+        if (!_actorEntities.Remove(actorId, out var entity))
+        {
+            return false;
+        }
+
+        entity.Dispose();
+        _actorDocs.Remove(actorId);
+        _hydratedIds.TryRemove(actorId, out _);
+        _dirtyActorIds.Remove(actorId);
+        _pendingSheetWrites.Remove(actorId);
+        RemoveParticipant(actorId);
+        return true;
+    }
+
+    /// <summary>The runtime's cached document for an actor (its sheet carries the stat block the
+    /// table rules read: resistances, kind, hit dice); null for an actor it never hydrated.</summary>
+    public ActorDocument? GetActorDocument(string actorId) => _actorDocs.GetValueOrDefault(actorId);
 
     /// <summary>True once <paramref name="actorId"/> has been hydrated into this runtime; safe from any thread.</summary>
     public bool HasActor(string actorId) => _hydratedIds.ContainsKey(actorId);
@@ -178,7 +219,65 @@ public sealed class CampaignRuntime : IAsyncDisposable
         return _activeEncounter;
     }
 
-    internal void MarkEncounterDirty() => _encounterDirty = true;
+    internal void MarkEncounterDirty() => _encounterToPersist = _activeEncounter;
+
+    /// <summary>Closes the live encounter: it is saved once more with its end time and stops being
+    /// the active one, so the next initiative roll starts a fresh order. Returns the encounter
+    /// that ended, or null when none was running.</summary>
+    internal EncounterDocument? EndEncounter()
+    {
+        if (_activeEncounter == null)
+        {
+            return null;
+        }
+
+        var ended = _activeEncounter;
+        ended.EndedAt = DateTime.UtcNow;
+        _encounterToPersist = ended;
+        _activeEncounter = null;
+        return ended;
+    }
+
+    /// <summary>Drops a participant from the order, keeping the turn pointer on whoever is acting
+    /// now (or the next in line when it was their turn). Returns false when they were not in it.</summary>
+    internal bool RemoveParticipant(string actorId)
+    {
+        var encounter = _activeEncounter;
+        if (encounter == null)
+        {
+            return false;
+        }
+
+        var index = encounter.Participants.FindIndex(p => p.ActorId == actorId);
+        if (index < 0)
+        {
+            return false;
+        }
+
+        encounter.Participants.RemoveAt(index);
+        if (index < encounter.TurnIndex)
+        {
+            encounter.TurnIndex--;
+        }
+
+        if (encounter.Participants.Count == 0)
+        {
+            encounter.TurnIndex = 0;
+        }
+        else if (encounter.TurnIndex >= encounter.Participants.Count)
+        {
+            // The last participant was removed on their own turn: the round is over.
+            encounter.TurnIndex = 0;
+            encounter.Round++;
+            foreach (var participant in encounter.Participants)
+            {
+                participant.HasActed = false;
+            }
+        }
+
+        MarkEncounterDirty();
+        return true;
+    }
 
     /// <summary>Deterministic initiative order: highest roll first, <see cref="EncounterParticipant.TieBreak"/>
     /// breaks a tied roll, and actor id breaks a tied tiebreak - two participants must never
@@ -433,7 +532,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 live.Id,
                 live.Round,
                 live.TurnIndex,
-                live.Participants.Select(p => new ParticipantSnapshot(p.ActorId, p.InitiativeRoll, p.State, p.HasActed)).ToArray());
+                live.Participants.Select(p => new ParticipantSnapshot(p.ActorId, p.InitiativeRoll, p.TieBreak, p.State, p.HasActed)).ToArray());
         }
 
         var actors = new Dictionary<string, ActorStateSnapshot>(_actorEntities.Count);
@@ -443,7 +542,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 ? new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools)
                 : null;
             IReadOnlyList<EffectSnapshot> effects = entity.Has<ActiveEffectsComponent>()
-                ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => new EffectSnapshot(e.EffectId, e.SourceId, e.RoundsRemaining)).ToArray()
+                ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => new EffectSnapshot(e.EffectId, e.SourceId, e.RoundsRemaining, e.Expiry)).ToArray()
                 : Array.Empty<EffectSnapshot>();
             actors[actorId] = new ActorStateSnapshot(pools, effects);
         }
@@ -461,13 +560,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// doesn't pay for a save nothing changed.</summary>
     private async Task PersistEncounterAsync()
     {
-        if (_encounterRepository == null || _activeEncounter == null || !_encounterDirty)
+        var encounter = _encounterToPersist;
+        _encounterToPersist = null;
+        if (_encounterRepository == null || encounter == null)
         {
             return;
         }
 
-        await _encounterRepository.SaveAsync(_activeEncounter);
-        _encounterDirty = false;
+        await _encounterRepository.SaveAsync(encounter);
     }
 
     public async ValueTask DisposeAsync()

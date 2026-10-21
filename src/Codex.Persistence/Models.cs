@@ -292,6 +292,9 @@ public class EncounterDocument
     public int Round { get; set; } = 1;
     public int TurnIndex { get; set; }
 
+    /// <summary>Set when the DM ends the encounter; an encounter with no end is restored when its session's table starts again.</summary>
+    public DateTime? EndedAt { get; set; }
+
     /// <summary>Active status-effect/duration state not owned by a single actor (area effects, hazards).</summary>
     public Dictionary<string, object> ActiveEffects { get; set; } = new();
 }

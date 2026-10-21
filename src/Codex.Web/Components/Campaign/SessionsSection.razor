@@ -1,5 +1,7 @@
 @using Codex.Persistence
 @inject ISessionRepository SessionRepo
+@inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
+@inject NavigationManager Nav
 
 <div class="page-header mb-3">
     <div>
@@ -33,6 +35,10 @@
                             <div class="row-sub">@session.Date.ToLocalTime().ToString("dddd d MMM yyyy") · @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</div>
                         </div>
                         <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
+                        @if (Ctx.IsDm)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" data-testid="run-session" @onclick="() => RunAtTableAsync(session)">@RunLabel(session)</button>
+                        }
                     </li>
                 }
             </ul>
@@ -70,6 +76,24 @@
 
     private async Task LoadAsync() =>
         sessions = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).ToList();
+
+    private string RunLabel(SessionDocument session) =>
+        RuntimeManager.TryGet(Ctx.Campaign.Id)?.ActiveSession?.Id == session.Id ? "Go to the table"
+        : session.Status == SessionStatus.Completed ? "Reopen at the table" : "Run at the table";
+
+    /// <summary>Starts the table on this session (a planned one begins, a completed one reopens) and goes there.</summary>
+    private async Task RunAtTableAsync(SessionDocument session)
+    {
+        try
+        {
+            await RuntimeManager.GetOrStartAsync(Ctx.Campaign, Ctx.Access, session.Id);
+            Nav.NavigateTo($"{Ctx.BasePath}/table");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Ctx.Notify(Flash.Error(ex.Message));
+        }
+    }
 
     private async Task CreateAsync()
     {

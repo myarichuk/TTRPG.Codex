@@ -58,7 +58,18 @@ actorFields:                  # the rest of the sheet; same field schema as cont
   - { key: class, label: Class, type: EntityReference, targetEntityType: class }   # picker from the Library
 
 conditions: [Blinded, Charmed, ...]   # offered in the table's condition picker
-dice: { initiative: 1d20, check: 1d20 }
+dice: { initiative: 1d20, check: 1d20, initiativeBonus: initiative, initiativeTieBreak: dex }
+
+vitals:                       # what the table does with hit points (all optional)
+  temporaryResource: TempHP   # absorbs damage first; granted as "keep the higher"
+  down: { condition: Unconscious, deadCondition: Dead, stableCondition: Stable, instantDeathAtMax: true, nonPlayersDieAtZero: true }
+  deathSaves: { die: 1d20, successOn: 10, successesToStabilize: 3, failuresToDie: 3, criticalSuccess: 20, criticalFailure: 1 }
+  damage: { types: [acid, fire, ...], resistancesField: resistances, immunitiesField: immunities, vulnerabilitiesField: vulnerabilities }
+  exhaustion: { key: Exhaustion, maxLevel: 6 }          # a level counter, kept as a pool
+  hitDice: { key: HitDice, levelField: level, classField: class, dieProperty: hitDie, creatureDiceProperty: hitDice, attribute: con }
+  rests:
+    - { name: Short Rest, spendHitDice: true }
+    - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half, exhaustionDelta: -1 }
 
 entityTypes:                  # what packs for this system may contain
   - type: spell               # singular key; the Library groups by it

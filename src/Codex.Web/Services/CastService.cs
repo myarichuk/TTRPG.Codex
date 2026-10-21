@@ -1,11 +1,13 @@
 using Codex.Core;
 using Codex.Persistence;
+using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Web.Services;
 
-/// <summary>Turns Library creatures (pack or homebrew) into cast members. DM only, enforced by the repository.</summary>
-public sealed class CastService(IActorRepository actors, IContentRegistry registry, ComponentRegistry components)
+/// <summary>Turns Library creatures (pack or homebrew) into cast members. DM only, enforced by the
+/// repository. A creature added while the table is live joins it at once.</summary>
+public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistry registry, ComponentRegistry components)
 {
     public IActorDefinition? Blueprint(LibraryItem item, CampaignDocument campaign, SystemDefinition? system)
     {
@@ -40,7 +42,7 @@ public sealed class CastService(IActorRepository actors, IContentRegistry regist
                 Visibility = ActorVisibility.Hidden
             };
             ActorSheetSync.SeedFromBlueprint(actor, blueprint, system, components);
-            if (await actors.TrySaveAsync(actor, access))
+            if (await runtimes.TryCreateActorAsync(actor, access))
             {
                 created.Add(actor);
             }

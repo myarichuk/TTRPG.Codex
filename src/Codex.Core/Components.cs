@@ -13,10 +13,17 @@ public enum EffectExpiry
 /// <summary>
 /// One status effect an entity is currently under. Durations are whole rounds that tick on
 /// <see cref="Codex.Core.CodexWorld.AdvanceTurn"/> - never on wall-clock time - and expire
-/// relative to a specific creature's turn (<see cref="AnchorEntity"/>), matching how conditions
-/// actually work at a table.
+/// relative to a specific creature's turn (<see cref="AnchorId"/>, the actor whose turn boundary
+/// counts), matching how conditions actually work at a table. The anchor is an id, not a live
+/// entity, so the effect can be stored with the actor and survive the table being ended.
+/// A <see cref="RoundsRemaining"/> below zero means "until removed".
 /// </summary>
-public record ActiveEffect(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry, Entity AnchorEntity);
+public record ActiveEffect(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry, string AnchorId)
+{
+    public const int Indefinite = -1;
+
+    public bool IsIndefinite => RoundsRemaining < 0;
+}
 
 /// <summary>An entity can have any number of concurrent effects, each expiring independently.</summary>
 public struct ActiveEffectsComponent

@@ -14,6 +14,8 @@
 @inject AiFeatures Ai
 @inject ILogger<SessionDetail> Logger
 @inject AuthenticationStateProvider AuthStateProvider
+@inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
+@inject NavigationManager Nav
 
 <PageTitle>@(Title ?? "Session") | TTRPG.Codex</PageTitle>
 
@@ -42,6 +44,12 @@ else
                 <span class="pill"><LucideIcon IconName="zap" Size="12" /> @visibleEvents.Count event@(visibleEvents.Count == 1 ? "" : "s")</span>
             </div>
         </div>
+        @if (access.IsDm)
+        {
+            <button type="button" class="btn btn-primary btn-sm" data-testid="run-session" @onclick="RunAtTableAsync">
+                <LucideIcon IconName="dices" Size="14" /> @(RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id ? "Go to the table" : session.Status == SessionStatus.Completed ? "Reopen at the table" : "Run at the table")
+            </button>
+        }
     </div>
 
     <StatusMessage Message="flash" OnDismiss="() => flash = null" />
@@ -274,6 +282,21 @@ else
         if (session == null) return;
         editRecap = SerializeEvents();
         flash = Flash.Info("Recap pre-filled from the event log. Edit and save.");
+    }
+
+    /// <summary>Starts the table on this session (a planned one begins, a completed one reopens) and goes there.</summary>
+    private async Task RunAtTableAsync()
+    {
+        if (campaign == null || session == null || access == null || !access.IsDm) return;
+        try
+        {
+            await RuntimeManager.GetOrStartAsync(campaign, access, session.Id);
+            Nav.NavigateTo($"/campaigns/{CampaignId}/table");
+        }
+        catch (InvalidOperationException ex)
+        {
+            flash = Flash.Error(ex.Message);
+        }
     }
 
     private async Task SaveDetailsAsync()

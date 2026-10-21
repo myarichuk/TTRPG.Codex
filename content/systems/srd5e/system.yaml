@@ -83,6 +83,7 @@ sheetRules:
       capProperty: abilityIncreaseCap
   derived:
     - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4", category: Combat }
+    - { key: initiative,       label: Initiative,        formula: "mod(dex)",             category: Combat }
   constraints:
     - field: subclass
       where:
@@ -190,6 +191,30 @@ sheetRules:
 dice:
   initiative: 1d20
   check: 1d20
+  initiativeBonus: initiative      # the derived field added to the roll
+  initiativeTieBreak: dex          # ties go to the higher score
+
+# What the table does with hit points. Every part is optional data, so a homebrew system can drop
+# death saves or add a rest of its own.
+vitals:
+  temporaryResource: TempHP
+  down:
+    condition: Unconscious          # a character at 0 hit points
+    deadCondition: Dead
+    stableCondition: Stable
+    instantDeathAtMax: true         # damage left over at 0 that equals the maximum kills outright
+    nonPlayersDieAtZero: true       # monsters and NPCs die at 0 unless the DM says otherwise
+  deathSaves: { die: 1d20, successOn: 10, successesToStabilize: 3, failuresToDie: 3, criticalSuccess: 20, criticalFailure: 1 }
+  damage:
+    types: [acid, bludgeoning, cold, fire, force, lightning, necrotic, piercing, poison, psychic, radiant, slashing, thunder]
+    resistancesField: resistances
+    immunitiesField: immunities
+    vulnerabilitiesField: vulnerabilities
+  exhaustion: { key: Exhaustion, maxLevel: 6, condition: Exhaustion }
+  hitDice: { key: HitDice, levelField: level, classField: class, dieProperty: hitDie, creatureDiceProperty: hitDice, attribute: con }
+  rests:
+    - { name: Short Rest, spendHitDice: true }
+    - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half, exhaustionDelta: -1 }
 
 entityTypes:
   - type: class
