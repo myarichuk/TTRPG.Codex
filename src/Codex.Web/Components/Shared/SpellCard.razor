@@ -1,0 +1,77 @@
+@using Codex.Core
+@using Codex.Plugin.Abstractions
+
+@* A spell as a card: school and level on the header strip, the casting facts in a grid, then the text. *@
+
+<div class="ref-card spell-card" data-testid="spell-card">
+    <div class="ref-typeline">
+        <DomainIcon Domain="school" Key="@RefCard.Text(Entry, "school")" Size="DomainIconSize.Small" />
+        @LevelLine
+    </div>
+    <div class="ref-rule" aria-hidden="true"></div>
+    <dl class="ref-grid">
+        @foreach (var fact in Facts)
+        {
+            <div><dt>@fact.Label</dt><dd>@fact.Value</dd></div>
+        }
+    </dl>
+    @if (Tags.Count > 0)
+    {
+        <ul class="ref-tags" aria-label="Spell details">
+            @foreach (var tag in Tags)
+            {
+                <li class="pill">@if (tag.Icon != null) {<DomainIcon Domain="damage" Key="@tag.Icon" Size="DomainIconSize.Small" />}@tag.Text</li>
+            }
+        </ul>
+    }
+    @if (RefCard.List(Entry, "classes") is { Count: > 0 } classes)
+    {
+        <div class="ref-classes"><span class="label-caps">Classes</span> @string.Join(", ", classes)</div>
+    }
+    <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(RefCard.Body(Entry.Description, "Casting Time", "Range", "Components", "Duration")))</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ContentEntry Entry { get; set; } = null!;
+
+    public static bool CanShow(ContentEntry entry) =>
+        entry.Type.Equals("spell", StringComparison.OrdinalIgnoreCase)
+        && RefCard.Int(entry, "level") != null && RefCard.Text(entry, "castingTime") != null && RefCard.Text(entry, "duration") != null;
+
+    private string LevelLine
+    {
+        get
+        {
+            var school = RefCard.Text(Entry, "school") ?? string.Empty;
+            return RefCard.Int(Entry, "level") is 0 ? $"{school} cantrip" : $"Level {RefCard.Int(Entry, "level")} {school}";
+        }
+    }
+
+    private IEnumerable<(string Label, string Value)> Facts
+    {
+        get
+        {
+            yield return ("Casting time", RefCard.Text(Entry, "castingTime")!);
+            if (RefCard.Text(Entry, "range") is { } range) yield return ("Range", range);
+            var components = string.Join(", ", RefCard.List(Entry, "components"));
+            if (components.Length > 0)
+            {
+                yield return ("Components", RefCard.Text(Entry, "material") is { } material ? $"{components} ({material})" : components);
+            }
+
+            yield return ("Duration", RefCard.Text(Entry, "duration")!);
+        }
+    }
+
+    private List<(string Text, string? Icon)> Tags
+    {
+        get
+        {
+            var tags = new List<(string, string?)>();
+            if (RefCard.Flag(Entry, "concentration")) tags.Add(("Concentration", null));
+            if (RefCard.Flag(Entry, "ritual")) tags.Add(("Ritual", null));
+            if (RefCard.Text(Entry, "damageType") is { } damage) tags.Add((damage + " damage", damage));
+            return tags;
+        }
+    }
+}

@@ -1,0 +1,105 @@
+@using Codex.Core
+@using Codex.Plugin.Abstractions
+
+@* A creature as a stat block: type line, a red rule, the three vitals, the six scores, then
+   banded Traits / Actions / Reactions. Needs the structured properties; see CanShow. *@
+
+<div class="ref-card monster-card" data-testid="monster-card">
+    <div class="ref-typeline">
+        <DomainIcon Domain="creature" Key="@RefCard.Text(Entry, "creatureType")" Size="DomainIconSize.Small" />
+        @TypeLine
+    </div>
+    <div class="ref-rule" aria-hidden="true"></div>
+    <dl class="ref-vitals">
+        <div><dt>Armor Class</dt><dd data-testid="card-ac">@RefCard.Int(Entry, "armorClass")</dd></div>
+        <div><dt>Hit Points</dt><dd data-testid="card-hp">@RefCard.Int(Entry, "hitPoints")@(RefCard.Text(Entry, "hitDice") is { } dice ? $" ({dice})" : "")</dd></div>
+        <div><dt>Speed</dt><dd>@RefCard.Text(Entry, "speed")</dd></div>
+    </dl>
+    <div class="ref-rule" aria-hidden="true"></div>
+    <table class="ref-scores" aria-label="Ability scores">
+        <thead>
+            <tr>@foreach (var (label, _) in Abilities) {<th scope="col">@label</th>}</tr>
+        </thead>
+        <tbody>
+            <tr>
+                @foreach (var (label, key) in Abilities)
+                {
+                    var score = RefCard.Int(Entry, key);
+                    <td>@(score is { } s ? $"{s} ({RefCard.Modifier(s)})" : "-")</td>
+                }
+            </tr>
+        </tbody>
+    </table>
+    <div class="ref-rule" aria-hidden="true"></div>
+    <dl class="ref-facts">
+        @foreach (var fact in Facts)
+        {
+            <dt>@fact.Label</dt>
+            <dd>@fact.Value</dd>
+        }
+    </dl>
+    @foreach (var section in Sections)
+    {
+        <section class="ref-band" aria-labelledby="@("band-" + section.Key)">
+            <h3 id="@("band-" + section.Key)" class="ref-band-title">@section.Label</h3>
+            @foreach (var row in section.Rows)
+            {
+                <div class="ref-row">
+                    <strong>@(row.GetValueOrDefault("name")?.ToString()).</strong>
+                    @((MarkupString)TextFormatting.Inline(row.GetValueOrDefault("description")?.ToString() ?? string.Empty))
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ContentEntry Entry { get; set; } = null!;
+
+    private static readonly (string Label, string Key)[] Abilities =
+    {
+        ("STR", "strength"), ("DEX", "dexterity"), ("CON", "constitution"),
+        ("INT", "intelligence"), ("WIS", "wisdom"), ("CHA", "charisma"),
+    };
+
+    private static readonly (string Key, string Label)[] SectionKeys =
+    {
+        ("traits", "Traits"), ("actions", "Actions"), ("bonusActions", "Bonus Actions"),
+        ("reactions", "Reactions"), ("legendaryActions", "Legendary Actions"),
+    };
+
+    /// <summary>True when the entry carries the structured fields a stat block needs.</summary>
+    public static bool CanShow(ContentEntry entry) =>
+        entry.Type.Equals("monster", StringComparison.OrdinalIgnoreCase)
+        && RefCard.Int(entry, "armorClass") != null && RefCard.Int(entry, "hitPoints") != null && RefCard.Int(entry, "strength") != null
+        && SectionKeys.Any(s => RefCard.Rows(entry, s.Key).Count > 0);
+
+    private string TypeLine
+    {
+        get
+        {
+            var parts = new[] { RefCard.Text(Entry, "size"), RefCard.Text(Entry, "creatureType") is { } t ? CampaignLibrary.Humanize(t) : null }.Where(p => p != null);
+            var line = string.Join(" ", parts);
+            return RefCard.Text(Entry, "alignment") is { } alignment ? $"{line}, {alignment}" : line;
+        }
+    }
+
+    private IEnumerable<(string Label, string Value)> Facts
+    {
+        get
+        {
+            foreach (var (label, key) in new[] { ("Saving Throws", "savingThrows"), ("Skills", "skills"), ("Damage Vulnerabilities", "damageVulnerabilities"), ("Damage Resistances", "damageResistances"), ("Damage Immunities", "damageImmunities"), ("Condition Immunities", "conditionImmunities"), ("Senses", "senses"), ("Languages", "languages") })
+            {
+                if (RefCard.Text(Entry, key) is { } text) yield return (label, text);
+            }
+
+            if (RefCard.Text(Entry, "challengeRating") is { } cr)
+            {
+                yield return ("Challenge", RefCard.Int(Entry, "xp") is { } xp ? $"{cr} ({xp:N0} XP)" : cr);
+            }
+        }
+    }
+
+    private IEnumerable<(string Key, string Label, List<Dictionary<string, object>> Rows)> Sections =>
+        SectionKeys.Select(s => (s.Key, s.Label, Rows: RefCard.Rows(Entry, s.Key))).Where(s => s.Rows.Count > 0);
+}

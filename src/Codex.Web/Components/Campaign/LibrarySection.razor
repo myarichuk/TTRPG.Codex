@@ -24,16 +24,17 @@
     }
 </div>
 
-@if (editing != null)
-{
-    <section class="panel">
-        <HomebrewEditor Campaign="Ctx.Campaign" Access="Ctx.Access" Entry="editing"
-                        OnSaved="OnSavedAsync" OnCancel="() => editing = null" OnDeleted="OnDeletedAsync" />
-    </section>
-}
-
 <LibraryBrowser Campaign="Ctx.Campaign" Access="Ctx.Access" BasePath="@($"{Ctx.BasePath}/library")"
-                RouteType="@RouteType" RouteId="@RouteId" Version="version">
+                RouteType="@RouteType" RouteId="@RouteId" Version="version" EditorOpen="editing != null">
+    <EditorPane>
+        @if (editing != null)
+        {
+            <section class="panel">
+                <HomebrewEditor Campaign="Ctx.Campaign" Access="Ctx.Access" Entry="editing"
+                                OnSaved="OnSavedAsync" OnCancel="() => editing = null" OnDeleted="OnDeletedAsync" />
+            </section>
+        }
+    </EditorPane>
     <DetailActions Context="item">
         @if (Ctx.IsDm && item.IsHomebrew)
         {

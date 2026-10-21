@@ -144,6 +144,21 @@ rather than nothing. The Library shows an entry's kind in its pill and a second 
 school, a monster's creature type or an item's category (`DomainIconMap`); condition chips on the
 table use the condition glyphs. Icons are decorative; the words always carry the meaning.
 
+## Library cards
+
+An entry with structured properties is drawn as a reference card (`EntryDetail` picks one, else falls
+back to the generic property list): `MonsterCard` is a stat block (type line, red rule, AC / HP /
+Speed, the six scores with modifiers, saves, skills and senses, then banded Traits, Actions, Bonus
+Actions, Reactions and Legendary Actions); `SpellCard` has school and level on the header strip, a
+grid of casting time, range, components and duration, concentration / ritual / damage-type tags and
+the class list; `ItemCard` shows category and rarity (written out and edge-coloured) with cost,
+weight and, for magic items, the type line. The text the card already shows from the properties is
+stripped from the description so nothing appears twice.
+
+The list shows 150 entries and "Show N more" adds the rest. The list and the detail pane keep their
+two-column widths whether or not an entry is open, with a quiet placeholder until one is chosen. The
+homebrew editor opens in the detail pane beside the list instead of above it.
+
 ## Test ids
 
 Playwright scenarios rely on `data-testid` attributes rather than copy; keep them when restyling

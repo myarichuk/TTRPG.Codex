@@ -23,7 +23,7 @@ public static class DomainIconMap
         }
     }
 
-    internal static string ItemKey(string category)
+    public static string ItemKey(string category)
     {
         var c = category.ToLowerInvariant();
         return c switch
@@ -31,7 +31,7 @@ public static class DomainIconMap
             _ when c.Contains("ammunition") => "ammunition",
             _ when c.Contains("weapon") => "weapon",
             _ when c.Contains("armor") => "armor",
-            _ when c.Contains("ring") => "ring",
+            _ when c.Split(' ', ',').Any(w => w is "ring" or "rings") => "ring",
             _ when c.Contains("potion") || c.Contains("poison") => "potion",
             _ when c.Contains("wand") || c.Contains("staff") || c.Contains("foci") => "wand",
             _ when c.Contains("scroll") => "scroll",
