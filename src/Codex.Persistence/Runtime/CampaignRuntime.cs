@@ -70,6 +70,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
     public DateTime LastActivityUtc => new(Interlocked.Read(ref _lastActivityTicks), DateTimeKind.Utc);
 
     private long _lastActivityTicks = DateTime.UtcNow.Ticks;
+
     /// <summary>The latest immutable picture of the table, republished after every command and
     /// before <see cref="StateChanged"/> fires. A render must read this, never
     /// <see cref="ActiveEncounter"/>, <see cref="ActiveSession"/> or the entities, which the
