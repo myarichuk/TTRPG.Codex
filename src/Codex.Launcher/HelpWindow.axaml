@@ -1,0 +1,59 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Codex.Launcher.HelpWindow"
+        Title="How do my players join?"
+        Width="520" Height="600"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#17120c">
+  <Grid RowDefinitions="*,Auto">
+    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+      <StackPanel Margin="26,22,26,8" Spacing="10">
+        <TextBlock Text="How do my players join?" FontSize="22" FontWeight="Bold" Foreground="#e3bf63" />
+        <TextBlock Classes="body" Text="TTRPG.Codex runs on this computer. Your players open it in their web browser: nothing to install for them." />
+
+        <TextBlock Classes="head" Text="Playing in the same room or on the same Wi-Fi" />
+        <TextBlock Classes="body" Text="1.  Click “Let players on my network join” in the launcher." />
+        <TextBlock Classes="body" Text="2.  Click Copy link next to “Players on your network” and send it to your players (chat, text, or read it out)." />
+        <TextBlock Classes="body" Text="3.  They open the link in a browser on their phone, tablet or laptop. It must be on the same Wi-Fi as you." />
+        <TextBlock Classes="body" Text="4.  In your campaign, copy the invite link from the Overview page and send it too. They make an account and they are in." />
+
+        <TextBlock Classes="head" Text="Players somewhere else" />
+        <TextBlock Classes="body" Text="Your computer is not on the internet, so players elsewhere need a private link to it. The easiest free way is Tailscale (tailscale.com):" />
+        <TextBlock Classes="body" Text="1.  You and each player install Tailscale and sign in (a few minutes, free for small groups)." />
+        <TextBlock Classes="body" Text="2.  In Tailscale, share this computer with each player." />
+        <TextBlock Classes="body" Text="3.  Turn on “Let players on my network join”. A “Players on Tailscale” link appears: copy it and send it to them. They open it in their browser while Tailscale is on." />
+
+        <TextBlock Classes="head" Text="If a player cannot connect" />
+        <TextBlock Classes="body" Text="•  Your computer asked about the network or firewall? Allow it for private or home networks." />
+        <TextBlock Classes="body" Text="•  Guest or café Wi-Fi often stops devices from seeing each other. Use your normal Wi-Fi, or Tailscale." />
+        <TextBlock Classes="body" Text="•  Is the launcher running, and does the status say “The table is ready”?" />
+        <TextBlock Classes="body" Text="•  Your computer's address can change when you restart it or join another network. If so, copy the new link from the launcher and send it again." />
+        <TextBlock Classes="body" Text="•  Keep this computer awake and plugged in while you play. If it sleeps, players are disconnected." />
+
+        <TextBlock Classes="head" Text="Good to know" />
+        <TextBlock Classes="body" Text="•  Closing this window does not stop the game. It keeps running from the tray icon (menu bar on a Mac). Use Quit to stop it for good." />
+        <TextBlock Classes="body" Text="•  Your campaigns are saved on this computer (Campaign data), with a daily backup (Backups)." />
+        <TextBlock Classes="body" Text="•  Only people with your link can reach it, and only while the launcher is running." />
+        <TextBlock Classes="body" Text="•  Something wrong? Open the Log and send it to whoever is helping you." />
+      </StackPanel>
+    </ScrollViewer>
+    <Border Grid.Row="1" Background="#EC17120c" BorderBrush="#9a7c36" BorderThickness="0,1,0,0" Padding="22,12">
+      <Button Classes="plaque" Content="Got it" HorizontalAlignment="Right" MinWidth="110" Click="OnClose" />
+    </Border>
+  </Grid>
+  <Window.Styles>
+    <Style Selector="TextBlock.head">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="#f3e9d2" />
+      <Setter Property="Margin" Value="0,10,0,0" />
+    </Style>
+    <Style Selector="TextBlock.body">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="#d4c8ae" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="LineHeight" Value="20" />
+    </Style>
+  </Window.Styles>
+</Window>

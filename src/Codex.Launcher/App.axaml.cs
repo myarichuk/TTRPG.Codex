@@ -72,6 +72,8 @@ public partial class App : Application
         backups.Click += (_, _) => model!.OpenBackupsFolder();
         var show = new NativeMenuItem("Show window");
         show.Click += (_, _) => ShowWindow();
+        var help = new NativeMenuItem("How do players join?");
+        help.Click += (_, _) => window!.ShowHelp();
         var log = new NativeMenuItem("Open log");
         log.Click += (_, _) => model!.OpenLog();
         var data = new NativeMenuItem("Open data folder");
@@ -80,7 +82,7 @@ public partial class App : Application
         quit.Click += (_, _) => model!.Quit();
 
         var menu = new NativeMenu();
-        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, new NativeMenuItemSeparator(), log, data, backups, new NativeMenuItemSeparator(), quit })
+        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, help, new NativeMenuItemSeparator(), log, data, backups, new NativeMenuItemSeparator(), quit })
         {
             menu.Items.Add(item);
         }
@@ -104,6 +106,13 @@ public partial class App : Application
         using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(size);
         bitmap.Render(window);
         bitmap.Save(path);
+
+        var help = new HelpWindow();
+        help.Show();
+        await Task.Delay(1500);
+        using var helpBitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)help.Bounds.Width, (int)help.Bounds.Height));
+        helpBitmap.Render(help);
+        helpBitmap.Save(Path.ChangeExtension(path, null) + "-help.png");
         model!.Quit();
     }
 

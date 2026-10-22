@@ -96,6 +96,13 @@ public partial class MainWindow : Window
         }
     }
 
+    internal void ShowHelp()
+    {
+        if (!IsVisible) Show();
+        new HelpWindow().ShowDialog(this);
+    }
+
+    private void OnHelp(object? sender, RoutedEventArgs e) => ShowHelp();
     private void OnOpenData(object? sender, RoutedEventArgs e) => model.OpenDataFolder();
     private void OnOpenBackups(object? sender, RoutedEventArgs e) => model.OpenBackupsFolder();
 

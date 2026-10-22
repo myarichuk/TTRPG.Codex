@@ -95,6 +95,8 @@ internal sealed class ServerController : IDisposable
             info.Environment["ASPNETCORE_URLS"] = settings.BindUrl;
             info.Environment["Codex__DataDirectory"] = LauncherPaths.RavenData(dataHome);
             info.Environment["Codex__StopOnStdinClose"] = "true";
+            // Invite links must carry an address players can reach, not the DM's own "localhost".
+            if (settings.PlayerUrl(LanAddress.Best(), LanAddress.Tailnet()) is { } playerUrl) info.Environment["Codex__PublicUrl"] = playerUrl;
 
             Directory.CreateDirectory(LauncherPaths.RavenData(dataHome));
             var child = new Process { StartInfo = info, EnableRaisingEvents = true };

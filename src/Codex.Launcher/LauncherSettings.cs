@@ -30,6 +30,10 @@ internal sealed class LauncherSettings
         return links;
     }
 
+    /// <summary>The address invite links should use: the network address, or Tailscale when there is no other,
+    /// or <c>null</c> while only this computer can connect.</summary>
+    public string? PlayerUrl(string? lanAddress, string? tailnetAddress) => Links(lanAddress, tailnetAddress).Skip(1).Select(l => l.Url).FirstOrDefault();
+
     private int ValidPort => Port is > 0 and < 65536 ? Port : DefaultPort;
 
     public static LauncherSettings Load(string path)

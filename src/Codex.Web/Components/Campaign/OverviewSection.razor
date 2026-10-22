@@ -5,6 +5,7 @@
 @inject ISessionRepository SessionRepo
 @inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
+@inject IConfiguration Config
 @inject IJSRuntime JS
 
 <div class="row g-3">
@@ -108,7 +109,7 @@
     private readonly Dictionary<string, string> usernames = new();
     private SessionDocument? latestSession;
 
-    private string InviteLink => $"{Nav.BaseUri}campaigns/join/{Ctx.Campaign.InviteCode}";
+    private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
     protected override async Task OnParametersSetAsync()
     {

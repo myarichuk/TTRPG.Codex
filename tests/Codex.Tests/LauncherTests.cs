@@ -25,6 +25,18 @@ public class LauncherTests
     }
 
     [Fact]
+    public void Invite_links_use_the_address_players_can_reach()
+    {
+        var settings = new LauncherSettings { AllowLan = true };
+
+        Assert.Equal("http://192.168.1.20:5080", settings.PlayerUrl("192.168.1.20", "100.64.1.1"));
+        Assert.Equal("http://100.64.1.1:5080", settings.PlayerUrl(null, "100.64.1.1"));
+        Assert.Null(new LauncherSettings().PlayerUrl("192.168.1.20", null));
+        Assert.Equal("http://192.168.1.20:5080/campaigns/join/abc", Codex.Web.Services.InviteLinks.Build("http://localhost:5080/", "http://192.168.1.20:5080/", "abc"));
+        Assert.Equal("http://localhost:5080/campaigns/join/abc", Codex.Web.Services.InviteLinks.Build("http://localhost:5080/", null, "abc"));
+    }
+
+    [Fact]
     public void An_invalid_port_falls_back_to_the_default()
     {
         Assert.Equal("http://localhost:5080", new LauncherSettings { Port = 0 }.LocalUrl);

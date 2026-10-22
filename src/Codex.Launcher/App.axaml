@@ -59,6 +59,28 @@
       <Setter Property="Foreground" Value="#8d8168" />
     </Style>
 
+    <!-- A round brass rune button (the help "?") -->
+    <Style Selector="Button.rune">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.rune /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#d917120c" />
+      <Setter Property="BorderBrush" Value="#c9a24a" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="CornerRadius" Value="17" />
+      <Setter Property="Foreground" Value="#e3bf63" />
+    </Style>
+    <Style Selector="Button.rune:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#c9a24a" />
+      <Setter Property="BorderBrush" Value="#f0cf78" />
+      <Setter Property="Foreground" Value="#2a1d08" />
+    </Style>
+
     <!-- Etched leather -->
     <Style Selector="Button.etched /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.etched /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="#2a2218" />

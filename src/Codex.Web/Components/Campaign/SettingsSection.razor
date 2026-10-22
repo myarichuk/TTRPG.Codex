@@ -8,6 +8,7 @@
 @inject CampaignExportService ExportService
 @inject IMediaStore Media
 @inject NavigationManager Nav
+@inject IConfiguration Config
 @inject IJSRuntime JS
 
 <div class="page-header mb-3">
@@ -209,7 +210,7 @@
     private HashSet<string> activePacks = new();
     private readonly Dictionary<string, string> usernames = new();
 
-    private string InviteLink => $"{Nav.BaseUri}campaigns/join/{Ctx.Campaign.InviteCode}";
+    private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
     protected override async Task OnParametersSetAsync()
     {

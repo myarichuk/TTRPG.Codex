@@ -11,6 +11,9 @@
     <!-- With no artwork, the window still gets a title of its own. -->
     <TextBlock x:Name="HeadingText" Text="TTRPG Codex" FontSize="30" Foreground="#e3bf63" HorizontalAlignment="Center"
                Margin="0,34,0,0" VerticalAlignment="Top" IsVisible="False" />
+    <Button x:Name="HelpButton" Classes="rune" Content="?" HorizontalAlignment="Right" VerticalAlignment="Top"
+            Margin="0,12,12,0" Width="34" Height="34" Click="OnHelp"
+            ToolTip.Tip="How do my players join?" AutomationProperties.Name="Help: how do my players join?" />
     <Grid RowDefinitions="*,Auto">
       <!-- The controls sit on a dark panel so they stay readable over busy artwork. -->
       <Border Grid.Row="1" Background="#EC17120c" BorderBrush="#9a7c36" BorderThickness="0,2,0,0" Padding="22,16,22,18">
