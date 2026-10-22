@@ -432,6 +432,100 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task AddSessionNoteCommand_WithSpeaker_StoresAQuote_AndItsEventNamesNobody_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("dm-user", "Mind the tide.", IsSecret: false, SpeakerActorId: actor.Id));
+
+        Assert.Equal(actor.Id, Assert.Single(session.Notes).SpeakerActorId);
+        var evt = Assert.Single(session.Events, e => e.Type == "Note");
+        Assert.Equal(new[] { actor.Id }, evt.ActorIds);
+        Assert.DoesNotContain(actor.Name, evt.Description);
+    }
+
+    [Fact]
+    public async Task AddSessionNoteCommand_InAnEncounter_StampsTheRoundAndWhoseTurnItIs_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("dm-user", "Before the fight.", IsSecret: false));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(actor.Id, 14));
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("dm-user", "The goblin found a key.", IsSecret: false, Kind: NoteKind.Loot));
+
+        var before = session.Notes[0];
+        var during = session.Notes[1];
+        Assert.Null(before.Round);
+        Assert.Equal(1, during.Round);
+        Assert.Equal(actor.Id, during.TurnActorId);
+        Assert.Equal(runtime.ActiveEncounter!.Id, during.EncounterId);
+        Assert.Equal(NoteKind.Loot, during.Kind);
+        Assert.NotEqual(before.Id, during.Id);
+    }
+
+    [Fact]
+    public async Task AddSessionNoteCommand_KeepsTheConversation_WithoutTheSpeaker_AndItsEventCarriesNoWords_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("dm-user", "Mind the tide.", IsSecret: false, SpeakerActorId: actor.Id, WithActorIds: new[] { actor.Id, "pc-1", "pc-1" }));
+
+        Assert.Equal(new[] { "pc-1" }, Assert.Single(session.Notes).WithActorIds);
+        Assert.DoesNotContain("tide", Assert.Single(session.Events, e => e.Type == "Note").Description);
+    }
+
+    [Fact]
+    public async Task EditAndDeleteSessionNote_OnlyTheAuthorOrTheDm_AndTheStoredSessionFollows_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("player-1", "The brige is out.", IsSecret: false));
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("player-1", "Typo note", IsSecret: false));
+        var first = session.Notes[0];
+        var second = session.Notes[1];
+        var snapshotBefore = runtime.Snapshot.Notes[0];
+
+        await runtime.EnqueueAsync(new EditSessionNoteCommand(first.Id, "player-2", EditorIsDm: false, "Vandalised", NoteKind.Note));
+        Assert.Equal("The brige is out.", session.Notes[0].Text);
+
+        await runtime.EnqueueAsync(new EditSessionNoteCommand(first.Id, "player-1", EditorIsDm: false, "The bridge is out.", NoteKind.FollowUp));
+        await runtime.EnqueueAsync(new DeleteSessionNoteCommand(second.Id, "player-2", EditorIsDm: false));
+        Assert.Equal(2, session.Notes.Count);
+        await runtime.EnqueueAsync(new DeleteSessionNoteCommand(second.Id, "dm-user", EditorIsDm: true));
+
+        var note = Assert.Single(session.Notes);
+        Assert.Equal("The bridge is out.", note.Text);
+        Assert.Equal(NoteKind.FollowUp, note.Kind);
+        // The old snapshot is never changed under a render that may still be reading it.
+        Assert.Equal("The brige is out.", snapshotBefore.Text);
+
+        var stored = await _sessionRepository.GetAsync(session.Id);
+        var storedNote = Assert.Single(stored!.Notes);
+        Assert.Equal("The bridge is out.", storedNote.Text);
+        Assert.Equal(first.Id, storedNote.Id);
+    }
+
+    [Fact]
     public async Task HydrateActorCommand_AddsANewlyPersistedActorToTheRunningRuntime_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

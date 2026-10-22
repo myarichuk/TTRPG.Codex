@@ -564,6 +564,26 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task RegionRepository_RenameAsync_ChangesOnlyTheName_AndOnlyForTheDm_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Norht" };
+        await _regionRepository.SaveAsync(region, dmAccess);
+        // Added after the page loaded its copy of the region: renaming must not drop it.
+        await _regionRepository.UpsertLocationAsync(region.Id, new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Icewind Dale" }, dmAccess);
+
+        Assert.False(await _regionRepository.RenameAsync(region.Id, "Player's pick", new CampaignAccess(campaignId, "player-1", CampaignRole.Player)));
+        Assert.False(await _regionRepository.RenameAsync(region.Id, "   ", dmAccess));
+        Assert.False(await _regionRepository.RenameAsync(region.Id, "Elsewhere", new CampaignAccess(Guid.NewGuid().ToString(), "dm-user", CampaignRole.DM)));
+        Assert.True(await _regionRepository.RenameAsync(region.Id, "  The North ", dmAccess));
+
+        var stored = (await _regionRepository.GetAsync(region.Id, dmAccess))!;
+        Assert.Equal("The North", stored.Name);
+        Assert.Equal("Icewind Dale", Assert.Single(stored.Locations).Name);
+    }
+
+    [Fact]
     public async Task RegionRepository_SetLocationVisibilityAsync_AsPlayer_IsRejected_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

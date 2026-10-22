@@ -369,7 +369,7 @@
         var visual = draft!.Properties.TryGetValue("imagePrompt", out var prompt) && !string.IsNullOrWhiteSpace(prompt?.ToString())
             ? prompt.ToString()
             : TextFormatting.Summary(draft.Description, 300);
-        return Art.GenerateAsync(Ctx.UserId, draft.Name, KindLabel(TypeDef), visual, landscape: !IsCreature);
+        return Art.GenerateAsync(Ctx.UserId, draft.Name, KindLabel(TypeDef), visual, IsCreature ? ArtShape.Tall : ArtShape.Wide);
     }
 
     /// <summary>"homebrew creature (Large dragon)": the type label plus the size and kind when the entry has them.</summary>

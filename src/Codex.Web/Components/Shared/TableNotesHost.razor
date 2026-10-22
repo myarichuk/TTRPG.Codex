@@ -1,0 +1,109 @@
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@implements IDisposable
+@inject CampaignRuntimeManager RuntimeManager
+@inject Codex.Web.Services.MentionSources MentionSources
+
+@* Puts the session notes drawer on every campaign page while the table is live, so a DM who opens an NPC's
+   page or the wiki mid-scene can keep writing. Follows the campaign's runtime on its own: the drawer appears
+   when the table starts and goes when it ends, wherever the viewer is. *@
+
+@if (runtime != null)
+{
+    <TableNotesDrawer Notes="snapshot.Notes" Encounter="snapshot.Encounter" Actors="Actors" Access="Access" CurrentUserId="@CurrentUserId"
+                      CampaignId="@CampaignId" Mentions="mentions" Send="runtime.EnqueueAsync" Open="Open" OpenChanged="OpenChanged" />
+}
+
+@code {
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+    [Parameter] public CampaignDocument Campaign { get; set; } = null!;
+
+    /// <summary>The actors this viewer may see.</summary>
+    [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
+    [Parameter] public CampaignAccess Access { get; set; } = null!;
+    [Parameter] public string CurrentUserId { get; set; } = string.Empty;
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    private CampaignRuntime? runtime;
+    // Rendered from the runtime's published snapshot, never its live lists (see RuntimeSnapshot).
+    private RuntimeSnapshot snapshot = RuntimeSnapshot.Empty;
+    private string? attachedCampaignId;
+
+    // What notes can mention. Places and items are loaded when the table goes live; the cast comes in as a parameter.
+    private MentionDirectory mentions = MentionDirectory.Empty;
+    private IReadOnlyList<LocationDocument> places = Array.Empty<LocationDocument>();
+    private IReadOnlyList<MentionItem> items = Array.Empty<MentionItem>();
+    private IEnumerable<ActorDocument>? mentionActors;
+    private bool wasOpen;
+
+    protected override void OnInitialized() => RuntimeManager.RuntimeChanged += OnRuntimeChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (attachedCampaignId != CampaignId)
+        {
+            attachedCampaignId = CampaignId;
+            places = Array.Empty<LocationDocument>();
+            items = Array.Empty<MentionItem>();
+            Attach(RuntimeManager.TryGet(CampaignId));
+            if (runtime != null) await LoadMentionSourcesAsync();
+        }
+        else if (Open && !wasOpen && runtime != null)
+        {
+            // Fresh on every opening, so a place the DM just added is there to mention.
+            await LoadMentionSourcesAsync();
+        }
+
+        wasOpen = Open;
+        if (!ReferenceEquals(mentionActors, Actors)) RebuildMentions();
+    }
+
+    private async Task LoadMentionSourcesAsync()
+    {
+        (places, items) = await MentionSources.LoadAsync(Campaign, Access);
+        RebuildMentions();
+    }
+
+    private void RebuildMentions()
+    {
+        mentionActors = Actors;
+        mentions = new MentionDirectory(Actors, places, items, Access.IsDm);
+    }
+
+    private void OnRuntimeChanged(string campaignId)
+    {
+        if (campaignId != CampaignId) return;
+        InvokeAsync(async () =>
+        {
+            var wasLive = runtime != null;
+            Attach(RuntimeManager.TryGet(CampaignId));
+            if (runtime != null && !wasLive) await LoadMentionSourcesAsync();
+            // A drawer left open when the table ends would leave the page squeezed beside nothing.
+            if (runtime == null && Open) await OpenChanged.InvokeAsync(false);
+            StateHasChanged();
+        });
+    }
+
+    /// <summary>Idempotent, like the console's: the manager can report the same runtime more than once.</summary>
+    private void Attach(CampaignRuntime? started)
+    {
+        if (ReferenceEquals(runtime, started)) return;
+        if (runtime != null) runtime.StateChanged -= OnStateChanged;
+        runtime = started;
+        snapshot = runtime?.Snapshot ?? RuntimeSnapshot.Empty;
+        if (runtime != null) runtime.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(() =>
+    {
+        if (runtime != null) snapshot = runtime.Snapshot;
+        StateHasChanged();
+    });
+
+    public void Dispose()
+    {
+        RuntimeManager.RuntimeChanged -= OnRuntimeChanged;
+        if (runtime != null) runtime.StateChanged -= OnStateChanged;
+    }
+}

@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Core.AI
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IHomebrewRepository Homebrew
@@ -9,6 +10,7 @@
 @inject ArtService Art
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject MentionSources MentionSources
 
 <div class="page-header mb-3">
     <div>
@@ -46,6 +48,16 @@
             <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(item)" data-testid="add-to-cast"><LucideIcon IconName="user-plus" Size="14" /> Add to cast</CodexButton>
         }
     </DetailActions>
+    <DetailFooter Context="item">
+        @{ var itemKey = MentionSources.ItemKey(item.Entry.Type, item.Entry.Id); var mentioned = SessionMentions.NotesMentioning(noteSessions, MentionKind.Item, itemKey, Ctx.IsDm); var written = noteWritings.Mentioning(MentionKind.Item, itemKey); }
+        @if (mentioned.Count + written.Count > 0)
+        {
+            <section class="mt-4" aria-labelledby="entry-mentions-heading" data-testid="entry-mentions">
+                <h2 id="entry-mentions-heading" class="h6"><LucideIcon IconName="notebook-pen" Size="16" Class="title-icon" /> In notes</h2>
+                <NotesMentioning Lines="mentioned" Written="written" Mentions="noteMentions" Actors="noteActors" IsDm="Ctx.IsDm" CampaignId="@Ctx.Campaign.Id" />
+            </section>
+        }
+    </DetailFooter>
 </LibraryBrowser>
 
 @if (Ctx.IsDm)
@@ -130,6 +142,18 @@
     private HashSet<string> selectedImports = new();
     private bool importing;
 
+    // Session notes, to list under an item the ones that mention it.
+    private IReadOnlyList<SessionDocument> noteSessions = Array.Empty<SessionDocument>();
+    private MentionWritings noteWritings = MentionWritings.Empty;
+    private MentionDirectory noteMentions = MentionDirectory.Empty;
+    private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
+        noteActors = Ctx.Actors.ToDictionary(a => a.Id);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && Ctx.IsDm && OpenNew is "1" or "true")
@@ -197,7 +221,7 @@
     {
         var visual = YamlValues.GetString(item.Entry.Properties, "imagePrompt") ?? TextFormatting.Summary(item.Entry.Description, 300);
         var kind = (Ctx.System?.FindType(item.Entry.Type)?.Label ?? CampaignLibrary.Humanize(item.Entry.Type)).ToLowerInvariant();
-        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, landscape: !IsCreatureType(item.Entry.Type));
+        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, IsCreatureType(item.Entry.Type) ? ArtShape.Tall : ArtShape.Wide);
     }
 
     private bool IsBlueprint(LibraryItem item) => Cast.Blueprint(item, Ctx.Campaign, Ctx.System) != null;

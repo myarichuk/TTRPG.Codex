@@ -1329,6 +1329,8 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .entry-art.art-portrait { float: right; width: min(14rem, 40%); margin: 0 0 0.8rem 1rem; }
 .entry-art.art-portrait .art-actions .label-caps { display: none; }
 .entry-detail::after { content: ""; display: block; clear: both; }
+/* A stat card is a framed box: next to a floated portrait its border would run under the picture. */
+.entry-detail .ref-card { clear: both; }
 
 /* Places: a thumbnail of the art, and the full description behind a disclosure. */
 .place-thumb { width: 64px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); flex: none; }
@@ -1338,3 +1340,132 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .place-details[open] summary::after { content: " ▴"; }
 .segmented { display: flex; gap: 0.4rem; }
 .art-compact { max-width: 22rem; margin-bottom: 0; }
+
+/* ---------------------------------------------------------------------------
+   Session notes drawer: slides in from the right over the live table and stays
+   open while the DM works the initiative order (not modal). On a wide screen
+   the table moves aside; on a phone the drawer is a full-width sheet.
+   --------------------------------------------------------------------------- */
+:root { --notes-w: min(480px, 100vw); }
+.notes-dock {
+    position: fixed; top: var(--header-h); right: 0; bottom: 0; z-index: 900;
+    width: var(--notes-w);
+    transform: translateX(100%);
+    transition: transform var(--dur) var(--ease-out);
+}
+.notes-dock.open { transform: none; }
+.notes-tab {
+    position: absolute; top: 5.5rem; right: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+    padding: 0.7rem 0.45rem;
+    background: var(--surface); color: var(--accent);
+    border: 1px solid var(--border-strong); border-right: 0;
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    box-shadow: var(--frame), var(--shadow-2);
+    font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+}
+.notes-tab:hover { background: var(--surface-2); color: var(--accent-hover); }
+.notes-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.notes-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); }
+.notes-tab-count {
+    min-width: 1.5rem; padding: 0 0.3rem; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent);
+    font-family: var(--font-body); font-size: 0.75rem; font-weight: 700; letter-spacing: 0; line-height: 1.5rem; text-align: center;
+}
+.notes-dock.open .notes-tab { background: var(--surface-2); }
+.notes-drawer {
+    height: 100%; display: flex; flex-direction: column;
+    background: var(--surface);
+    border-left: 1px solid var(--border-strong);
+    box-shadow: var(--frame), var(--shadow-3);
+}
+.notes-dock:not(.open) .notes-drawer { box-shadow: none; visibility: hidden; transition: visibility 0s var(--dur); }
+.notes-drawer-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+    padding: 1rem 1rem 0.75rem; border-bottom: 1px solid var(--rule);
+}
+.notes-drawer-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0.9rem 1rem 1.5rem; }
+.notes-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.9rem; }
+.notes-mode-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    min-height: 40px; padding: 0.4rem 0.6rem;
+    background: var(--surface-2); color: var(--text-2);
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    cursor: pointer; transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.notes-mode-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.notes-mode-btn[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+/* .field-sm sizes to its content; in the drawer the boxes take the full width. */
+.notes-drawer .field-input { width: 100%; }
+.notes-drawer #cast-add { flex: 1; min-width: 10rem; }
+.notes-form { padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--rule); }
+.notes-cast { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.notes-cast-member { display: inline-flex; align-items: center; }
+.notes-cast-member .chip { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.chip-key {
+    display: inline-block; min-width: 1.1rem; margin-right: 0.3rem;
+    border-radius: var(--radius-sm); background: var(--surface-3); color: var(--text-3);
+    font-size: 0.72rem; text-align: center;
+}
+.chip[aria-pressed="true"] .chip-key { background: var(--accent); color: var(--on-accent); }
+.chip-remove {
+    display: inline-flex; align-items: center; align-self: stretch; padding: 0 0.4rem;
+    background: transparent; color: var(--text-3);
+    border: 1px solid var(--border); border-left: 0; border-radius: 0 999px 999px 0;
+    cursor: pointer;
+}
+.chip-remove:hover { color: var(--danger); background: var(--danger-soft); }
+.notes-timeline-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.4rem; }
+.notes-timeline-head .field-select { width: auto; }
+.notes-group {
+    margin: 0.9rem 0 0.2rem; color: var(--text-3);
+    font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.notes-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); animation: rise var(--dur-slow) var(--ease-out) both; }
+.notes-entry.secret { border-left: 2px solid var(--border); padding-left: 0.5rem; }
+.notes-entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; color: var(--text-3); font-size: 0.8rem; margin-bottom: 0.15rem; }
+.notes-entry-actions { margin-left: auto; display: inline-flex; gap: 0.1rem; opacity: 0.55; transition: opacity var(--transition); }
+.notes-entry:hover .notes-entry-actions, .notes-entry:focus-within .notes-entry-actions { opacity: 1; }
+.icon-btn.icon-btn-sm { width: 28px; height: 28px; }
+.notes-text { white-space: pre-wrap; }
+.pill-kind { color: var(--accent); }
+
+@media (min-width: 992px) {
+    /* Every campaign page makes room for the open drawer: only as much as the drawer would cover, after the
+       space already beside the centred page. Below 1700px, side-by-side columns stack so none gets cramped. */
+    .workspace.beside-notes {
+        margin-right: max(0px, calc(var(--notes-w) + 1rem - var(--gutter) - max(0px, (100vw - var(--content-max)) / 2)));
+        transition: margin-right var(--dur) var(--ease-out);
+    }
+}
+@media (min-width: 992px) and (max-width: 1699px) {
+    .beside-notes .ws-main .row > [class*="col-lg-"] { flex: 0 0 auto; width: 100%; }
+}
+@media (max-width: 720px) {
+    .notes-tab { top: auto; bottom: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .notes-dock, .workspace.beside-notes { transition: none; }
+}
+
+/* Mentions in notes: the suggestions under a note box (built by app-startup.js), and mentions in the text. */
+.mention-list {
+    position: fixed; z-index: 1100; margin: 0; padding: 0.25rem; list-style: none;
+    max-height: 16rem; overflow-y: auto;
+    background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+    box-shadow: var(--frame), var(--shadow-2);
+}
+.mention-list [role="option"] {
+    display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline;
+    padding: 0.35rem 0.55rem; border-radius: var(--radius-sm); color: var(--text); cursor: pointer;
+}
+.mention-list [role="option"][aria-selected="true"], .mention-list [role="option"]:hover { background: var(--accent-soft); color: var(--accent); }
+.mention-kind { color: var(--text-3); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.mention { font-weight: 600; text-decoration: none; border-bottom: 1px dotted currentColor; }
+a.mention:hover { text-decoration: none; border-bottom-style: solid; }
+.mention-actor { color: var(--accent); }
+.mention-place { color: var(--arcane); }
+.mention-item { color: var(--warning); }
+.mention-unknown { color: var(--text-3); font-style: italic; font-weight: 400; border-bottom: 0; }

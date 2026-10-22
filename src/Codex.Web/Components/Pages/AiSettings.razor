@@ -63,10 +63,12 @@ else
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
                         <label for="ai-kind" class="field-label">Service</label>
-                        <select id="ai-kind" class="field-select" value="@editing.Kind" @onchange="OnPresetChanged" data-testid="ai-kind">
+                        @* `selected` on the option, not `value` on the select: the select's value is applied before
+                           its options exist, so an edited model would show the first service instead of its own. *@
+                        <select id="ai-kind" class="field-select" @onchange="OnPresetChanged" data-testid="ai-kind">
                             @foreach (var preset in Presets(purpose))
                             {
-                                <option value="@preset.Kind">@preset.Label</option>
+                                <option value="@preset.Kind" selected="@(string.Equals(preset.Kind, editing.Kind, StringComparison.OrdinalIgnoreCase))">@preset.Label</option>
                             }
                         </select>
                         @if (PresetFor(purpose, editing.Kind) is { } hint)
@@ -88,7 +90,7 @@ else
                         @if (editing.Kind == "openrouter")
                         {
                             <div class="field-hint">@(purpose == Purpose.Image
-                                ? "An image-output model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image."
+                                ? "Any image model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo."
                                 : "Any id from openrouter.ai/models, e.g. anthropic/claude-sonnet-4, google/gemini-2.5-flash.")</div>
                         }
                     </div>
@@ -251,14 +253,20 @@ else
 
     private void OnPresetChanged(ChangeEventArgs e) => ApplyPreset(e.Value?.ToString() ?? "custom");
 
+    /// <summary>Fills in the service's defaults. On a model being edited, a field the user changed from the old
+    /// service's default is kept: switching the service must not quietly swap their model for another (paid) one.</summary>
     private void ApplyPreset(string kind)
     {
+        var previous = PresetFor(purpose, editing.Kind);
         var preset = PresetFor(purpose, kind);
         editing.Kind = kind;
         if (preset == null) return;
-        editing.Name = preset.Label;
-        editing.BaseUrl = preset.DefaultEndpoint;
-        editing.ModelId = preset.DefaultModel;
+        var editingExisting = editingOriginalId != null;
+        bool Replaceable(string current, string? oldDefault) =>
+            !editingExisting || string.IsNullOrWhiteSpace(current) || string.Equals(current.Trim(), oldDefault, StringComparison.OrdinalIgnoreCase);
+        if (Replaceable(editing.Name, previous?.Label)) editing.Name = preset.Label;
+        if (Replaceable(editing.BaseUrl, previous?.DefaultEndpoint)) editing.BaseUrl = preset.DefaultEndpoint;
+        if (Replaceable(editing.ModelId, previous?.DefaultModel)) editing.ModelId = preset.DefaultModel;
     }
 
     private async Task SaveAsync()

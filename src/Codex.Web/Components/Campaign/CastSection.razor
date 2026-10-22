@@ -202,8 +202,7 @@
         }
     </li>;
 
-    private string DisplayName(ActorDocument actor) =>
-        !Ctx.IsDm && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
+    private string DisplayName(ActorDocument actor) => actor.NameFor(Ctx.IsDm);
 
     private string Summary(ActorDocument actor)
     {

@@ -1,0 +1,27 @@
+@using Codex.Persistence
+
+@* A table note's words with its mentions named for this viewer. A mention they can see links to its page
+   (a character's sheet, the place on the Places page, the library entry); one they can't reads "someone", "somewhere" or
+   "something" and links nowhere. *@
+
+@foreach (var segment in Mentions.Read(Text))
+{
+    if (segment.Kind is not { } kind)
+    {
+        @segment.Text
+    }
+    else if (!segment.Known)
+    {
+        <span class="mention mention-unknown">@segment.Text</span>
+    }
+    else
+    {
+        <a class="mention mention-@kind.ToString().ToLowerInvariant()" href="@MentionLinks.Href(CampaignId, kind, segment.Id!)">@segment.Text</a>
+    }
+}
+
+@code {
+    [Parameter] public string Text { get; set; } = string.Empty;
+    [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+}

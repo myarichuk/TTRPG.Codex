@@ -153,9 +153,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
     /// <summary>Draws a picture with the user's image model. <paramref name="visual"/> is the entry's
     /// art prompt when it has one, otherwise a short description.</summary>
-    public async Task<ArtImage> GenerateAsync(string userId, string subject, string subjectKind, string? visual, bool landscape)
+    public async Task<ArtImage> GenerateAsync(string userId, string subject, string subjectKind, string? visual, ArtShape shape)
     {
-        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, landscape), landscape);
+        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape);
         if (!RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
         {
             throw new InvalidOperationException($"The image model sent a {image.ContentType} file, which can't be stored. Try another model.");

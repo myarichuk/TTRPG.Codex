@@ -98,6 +98,10 @@
                         </a>
                     </Actions>
                 </EntryDetail>
+                @if (DetailFooter != null)
+                {
+                    @DetailFooter(selected)
+                }
             </div>
         </div>
     }
@@ -131,6 +135,8 @@
     /// <summary>When set, shown in the detail pane instead of the selected entry (the homebrew editor).</summary>
     /// <summary>The art slot for the selected entry (campaign Library only).</summary>
     [Parameter] public RenderFragment<LibraryItem>? DetailArt { get; set; }
+    /// <summary>Shown under the selected entry's detail (the session notes that mention it).</summary>
+    [Parameter] public RenderFragment<LibraryItem>? DetailFooter { get; set; }
     [Parameter] public bool ShowResultCount { get; set; } = true;
 
     /// <summary>Incremented by the host to force a reload (e.g. after homebrew changed).</summary>

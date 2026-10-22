@@ -6,6 +6,7 @@
 @inject INoteRepository NoteRepo
 @inject IUserRepository UserRepo
 @inject AiFeatures Ai
+@inject MentionSources MentionSources
 @inject NavigationManager Nav
 @inject ILogger<WikiSection> Logger
 
@@ -156,7 +157,7 @@ else if (Slug != null)
                             <span class="avatar avatar-sm" aria-hidden="true">@Initial(usernames.GetValueOrDefault(note.AuthorId, "?"))</span>
                             <div class="row-main">
                                 <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" /> · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
-                                <p class="mb-0">@note.Content</p>
+                                <p class="mb-0 notes-text"><MentionText Text="@note.Content" Mentions="@(mentions ?? MentionDirectory.Empty)" CampaignId="@Ctx.Campaign.Id" /></p>
                             </div>
                             @if (note.AuthorId == Ctx.UserId || Ctx.IsDm)
                             {
@@ -166,7 +167,8 @@ else if (Slug != null)
                     }
                     <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
                         <label for="wiki-note" class="field-label">Add a note</label>
-                        <textarea id="wiki-note" class="field-input mb-2" rows="2" @bind="newNote" data-testid="wiki-note"></textarea>
+                        <textarea id="wiki-note" class="field-input mb-2" rows="2" @bind="newNote" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="wiki-note-hint" data-testid="wiki-note"></textarea>
+                        <p id="wiki-note-hint" class="field-hint">Mention someone with @@, a place with # or an item with $.</p>
                         <div class="d-flex gap-2 flex-wrap align-items-center">
                             <label for="wiki-note-visibility" class="visually-hidden">Note visibility</label>
                             <select id="wiki-note-visibility" class="field-select field-sm" @bind="newNoteVisibility">
@@ -291,6 +293,9 @@ else
     private WikiPageDocument? current;
     private WikiPageDocument draft = new();
     private List<NoteDocument> notes = new();
+    // Names the mentions in this page's notes and feeds the note box's suggestions; loaded once, on the first page viewed.
+    private MentionDirectory? mentions;
+    private string mentionsJson = "[]";
     private readonly Dictionary<string, string> usernames = new();
     private string search = string.Empty;
     private string? activeTag;
@@ -339,6 +344,11 @@ else
                     Body = current.Body, Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId
                 };
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTarget(current), Ctx.Access)).ToList();
+                if (mentions == null)
+                {
+                    mentions = await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
+                    mentionsJson = MentionLinks.Json(mentions, Ctx.Actors);
+                }
                 foreach (var authorId in notes.Select(n => n.AuthorId).Distinct())
                 {
                     if (!usernames.ContainsKey(authorId))
@@ -441,7 +451,7 @@ else
             CampaignId = Ctx.Campaign.Id,
             TargetId = NotesTarget(current),
             AuthorId = Ctx.UserId,
-            Content = newNote.Trim(),
+            Content = (mentions ?? MentionDirectory.Empty).Encode(newNote.Trim()),
             Visibility = newNoteVisibility
         });
         newNote = string.Empty;

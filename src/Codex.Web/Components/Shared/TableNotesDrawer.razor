@@ -1,0 +1,494 @@
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+
+@* The live table's notebook: a panel that slides in from the right and stays open while the DM keeps
+   running initiative and hit points behind it (it is not modal). Two ways to write: a note of some kind
+   (a clue, loot, a ruling, a follow-up), or dialogue - pick who is in the conversation once, then each
+   line only needs its speaker. The runtime stamps every note with the round and whose turn it was, so a
+   note written mid-fight says when it happened without anyone typing it. *@
+
+<ConfirmDialog @ref="confirm" />
+
+<div class="notes-dock @(Open ? "open" : "")" data-testid="notes-dock">
+    <button type="button" class="notes-tab" @ref="tabButton" aria-expanded="@(Open ? "true" : "false")" aria-controls="table-notes"
+            accesskey="n" title="Session notes (access key N)" data-testid="notes-toggle" @onclick="ToggleAsync">
+        <LucideIcon IconName="notebook-pen" Size="18" />
+        <span class="notes-tab-label">Notes</span>
+        @if (VisibleNotes.Count > 0)
+        {
+            <span class="notes-tab-count" aria-label="@($"{VisibleNotes.Count} so far")">@VisibleNotes.Count</span>
+        }
+    </button>
+
+    <aside id="table-notes" class="notes-drawer" aria-labelledby="notes-drawer-title" inert="@(!Open)" @onkeydown="OnDrawerKeyDown">
+        <header class="notes-drawer-head">
+            <div>
+                <h2 id="notes-drawer-title" class="h5 mb-0">Session notes</h2>
+                <div class="small-muted" data-testid="notes-now">@NowLabel</div>
+            </div>
+            <button type="button" class="icon-btn" aria-label="Close notes" data-testid="notes-close" @onclick="CloseAsync"><LucideIcon IconName="x" Size="18" /></button>
+        </header>
+
+        <div class="notes-drawer-body">
+            <div class="notes-mode" role="group" aria-label="What are you writing?">
+                <button type="button" class="notes-mode-btn" aria-pressed="@(!dialogueMode ? "true" : "false")" data-testid="notes-mode-note" @onclick="() => SetMode(false)">
+                    <LucideIcon IconName="feather" Size="16" /> Note
+                </button>
+                <button type="button" class="notes-mode-btn" aria-pressed="@(dialogueMode ? "true" : "false")" data-testid="notes-mode-dialogue" @onclick="() => SetMode(true)">
+                    <LucideIcon IconName="message-square-quote" Size="16" /> Dialogue
+                </button>
+            </div>
+
+            @* Both forms stay in the page (one hidden) so a half-typed note survives switching modes. Neither box's
+               value is written by the server: the browser empties it on submit (app-startup.js), and the server only
+               reads what is typed. A server-side clear would arrive late and wipe whatever was typed after Enter. *@
+            <form class="notes-form" hidden="@dialogueMode" data-clear-on-submit="true" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
+                <div class="chips mb-2" role="group" aria-label="Kind of note" data-testid="note-kinds">
+                    @foreach (var kind in SessionNotes.Kinds)
+                    {
+                        var k = kind;
+                        <button type="button" class="chip" aria-pressed="@(noteKind == k ? "true" : "false")" data-testid="note-kind" @onclick="() => noteKind = k">
+                            <LucideIcon IconName="@KindIcon(k)" Size="13" /> @SessionNotes.KindLabel(k)
+                        </button>
+                    }
+                </div>
+                <label for="quick-note" class="visually-hidden">@SessionNotes.KindLabel(noteKind)</label>
+                <textarea id="quick-note" class="field-input field-sm mb-1" rows="3" @ref="noteInput" @oninput="e => noteText = e.Value as string ?? string.Empty"
+                          placeholder="@KindPrompt(noteKind)" aria-describedby="quick-note-hint" data-mentions="@mentionsJson" data-clear-on-submit-field data-submit-on-mod-enter data-testid="quick-note"></textarea>
+                <p id="quick-note-hint" class="field-hint mb-2">@MentionHint Ctrl+Enter (⌘+Enter on a Mac) adds it.</p>
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                    @if (Access.IsDm)
+                    {
+                        <div class="field-check mb-0">
+                            <input type="checkbox" class="field-box" id="noteSecret" @bind="secret" />
+                            <label class="small" for="noteSecret">Secret (DM only)</label>
+                        </div>
+                    }
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="add-note">Add @SessionNotes.KindNoun(noteKind)</CodexButton>
+                </div>
+            </form>
+
+            <form class="notes-form" hidden="@(!dialogueMode)" data-clear-on-submit="@(Speaker != null ? "true" : "false")" @onsubmit="AddLineAsync" @onsubmit:preventDefault="true">
+                <div class="field-label mb-1" id="cast-label">In this conversation</div>
+                @if (cast.Count == 0)
+                {
+                    <p class="field-hint mb-2">Add who's talking. After that, each line only needs its speaker.</p>
+                }
+                else
+                {
+                    <div class="notes-cast mb-2" role="group" aria-labelledby="cast-label" data-testid="speaker-chips">
+                        @for (var i = 0; i < cast.Count; i++)
+                        {
+                            var member = cast[i];
+                            var memberId = member.Id;
+                            var name = member.NameFor(Access.IsDm);
+                            <span class="notes-cast-member">
+                                <button type="button" class="chip" aria-pressed="@(speakerId == memberId ? "true" : "false")" data-testid="speaker-chip" @onclick="() => SetSpeaker(memberId)">
+                                    @if (i < 9) { <span class="chip-key" aria-hidden="true">@(i + 1)</span> }
+                                    @name
+                                </button>
+                                <button type="button" class="chip-remove" aria-label="@($"Take {name} out of the conversation")" data-testid="cast-remove" @onclick="() => RemoveFromCast(memberId)"><LucideIcon IconName="x" Size="12" /></button>
+                            </span>
+                        }
+                    </div>
+                }
+                @{ var candidates = CastCandidates(); }
+                @if (candidates.Any(g => g.Actors.Count > 0))
+                {
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <label for="cast-add" class="visually-hidden">Add someone to the conversation</label>
+                        <select id="cast-add" class="field-select field-sm" value="" @onchange="e => AddToCast(e.Value as string)" data-testid="speaker-other">
+                            <option value="">Add someone…</option>
+                            @foreach (var group in candidates.Where(g => g.Actors.Count > 0))
+                            {
+                                <optgroup label="@group.Label">
+                                    @foreach (var actor in group.Actors)
+                                    {
+                                        <option value="@actor.Id">@actor.NameFor(Access.IsDm)</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                        @if (candidates[0].Actors.Count > 1)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="cast-add-fight" OnClick="AddFightToCast">Everyone in the fight</CodexButton>
+                        }
+                    </div>
+                }
+
+                @{ var speaker = Speaker; }
+                <label for="dialogue-line" class="visually-hidden">@(speaker != null ? $"What {speaker.NameFor(Access.IsDm)} said" : "Line of dialogue")</label>
+                <input id="dialogue-line" class="field-input field-sm mb-1" autocomplete="off" @ref="lineInput" @oninput="e => lineText = e.Value as string ?? string.Empty"
+                       placeholder="@(speaker != null ? $"What did {speaker.NameFor(Access.IsDm)} say?" : "Pick who's speaking first")"
+                       aria-describedby="dialogue-hint" @onkeydown="OnLineKeyDown" data-mentions="@mentionsJson" data-clear-on-submit-field data-testid="dialogue-line" />
+                <p id="dialogue-hint" class="field-hint mb-2">Enter adds the line. ↑ and ↓ switch speaker; the speaker stays picked for the next line. @MentionHint</p>
+                @if (lineError != null)
+                {
+                    <p class="text-danger small mb-2" role="alert">@lineError</p>
+                }
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                    @if (Access.IsDm)
+                    {
+                        <div class="field-check mb-0">
+                            <input type="checkbox" class="field-box" id="lineSecret" @bind="secret" />
+                            <label class="small" for="lineSecret">Secret (DM only)</label>
+                        </div>
+                    }
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="add-line">Add line</CodexButton>
+                </div>
+            </form>
+
+            <section class="notes-timeline" aria-labelledby="notes-timeline-heading">
+                <div class="notes-timeline-head">
+                    <h3 id="notes-timeline-heading" class="h6 mb-0">This session</h3>
+                    <label for="notes-filter" class="visually-hidden">Show</label>
+                    <select id="notes-filter" class="field-select field-sm" @bind="filter" data-testid="notes-filter">
+                        <option value="">Everything</option>
+                        <option value="dialogue">Dialogue</option>
+                        @foreach (var kind in SessionNotes.Kinds)
+                        {
+                            <option value="@kind">@KindPlural(kind)</option>
+                        }
+                        <option value="mine">Mine</option>
+                    </select>
+                </div>
+
+                @{ var shown = FilteredNotes(); }
+                @if (shown.Count == 0)
+                {
+                    <p class="small-muted mb-0">@(VisibleNotes.Count == 0 ? "Nothing yet. Anything you write here goes into the session's recap." : "Nothing matches.")</p>
+                }
+                @{ string? lastGroup = null; }
+                @foreach (var note in shown)
+                {
+                    // A new heading whenever the encounter or round changes, so two fights' round 1s stay apart.
+                    var group = $"{note.EncounterId}:{note.Round}";
+                    if (group != lastGroup)
+                    {
+                        lastGroup = group;
+                        <div class="notes-group" data-testid="notes-group">@GroupLabel(note)</div>
+                    }
+
+                    var noteId = note.Id;
+                    <article class="notes-entry @(note.IsSecret ? "secret" : "")" data-testid="table-note">
+                        <div class="notes-entry-meta">
+                            <LocalTime Value="note.Timestamp" Format="HH:mm" />
+                            @if (SessionNotes.TurnName(note, ActorsById, Access.IsDm) is { } turn)
+                            {
+                                <span>· @turn's turn</span>
+                            }
+                            @if (note.Kind != NoteKind.Note)
+                            {
+                                <span class="pill pill-kind">@SessionNotes.KindLabel(note.Kind)</span>
+                            }
+                            @if (note.IsSecret) { <span class="pill">secret</span> }
+                            @if (SessionNotes.CanEdit(note, CurrentUserId, Access.IsDm) && editingId != noteId)
+                            {
+                                <span class="notes-entry-actions">
+                                    <button type="button" class="icon-btn icon-btn-sm" aria-label="Correct this note" data-testid="note-edit" @onclick="() => StartEdit(note)"><LucideIcon IconName="edit-3" Size="14" /></button>
+                                    <button type="button" class="icon-btn icon-btn-sm" aria-label="Remove this note" data-testid="note-delete" @onclick="() => DeleteAsync(noteId)"><LucideIcon IconName="trash-2" Size="14" /></button>
+                                </span>
+                            }
+                        </div>
+                        @if (editingId == noteId)
+                        {
+                            <form @onsubmit="SaveEditAsync" @onsubmit:preventDefault="true">
+                                <label for="note-edit-text" class="visually-hidden">Corrected words</label>
+                                <textarea id="note-edit-text" class="field-input field-sm mb-2" rows="2" @bind="editText" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="note-edit-text"></textarea>
+                                <div class="d-flex gap-2">
+                                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="note-edit-save">Save</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editingId = null">Cancel</CodexButton>
+                                </div>
+                            </form>
+                        }
+                        else if (note.SpeakerActorId != null)
+                        {
+                            var others = SessionNotes.WithNames(note, ActorsById, Access.IsDm);
+                            <p class="mb-0">
+                                <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, ActorsById, Access.IsDm)</strong>@if (others.Count > 0) { <span class="small-muted"> to @string.Join(", ", others)</span> }:
+                                <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q>
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="mb-0 notes-text"><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></p>
+                        }
+                    </article>
+                }
+            </section>
+        </div>
+    </aside>
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<SessionNote> Notes { get; set; } = Array.Empty<SessionNote>();
+    [Parameter] public EncounterSnapshot? Encounter { get; set; }
+
+    /// <summary>The actors this viewer may see; a player's list already leaves Hidden ones out.</summary>
+    [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
+    [Parameter] public CampaignAccess Access { get; set; } = null!;
+    [Parameter] public string CurrentUserId { get; set; } = string.Empty;
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+
+    /// <summary>The characters, places and items this viewer can mention and read.</summary>
+    [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+
+    /// <summary>Puts a note command on the campaign's single-writer loop.</summary>
+    [Parameter] public Func<IRuntimeCommand, Task> Send { get; set; } = _ => Task.CompletedTask;
+
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    private ConfirmDialog confirm = null!;
+    private ElementReference tabButton;
+    private ElementReference noteInput;
+    private ElementReference lineInput;
+    private bool focusInput;
+    private bool focusTab;
+
+    private bool dialogueMode;
+    private NoteKind noteKind;
+    private string noteText = "";
+    private bool secret;
+
+    private readonly List<ActorDocument> cast = new();
+    private string? speakerId;
+    private string lineText = "";
+    private string? lineError;
+
+    private string filter = "";
+    private string? editingId;
+    private string editText = "";
+
+    private Dictionary<string, ActorDocument> actorsById = new();
+    // The suggestions app-startup.js offers after @, # or $, as JSON on each box. Rebuilt only when the directory changes.
+    private MentionDirectory? mentionsFor;
+    private string mentionsJson = "[]";
+    private IReadOnlyList<SessionNote> visibleNotes = Array.Empty<SessionNote>();
+
+    private Dictionary<string, ActorDocument> ActorsById => actorsById;
+    private IReadOnlyList<SessionNote> VisibleNotes => visibleNotes;
+    private ActorDocument? Speaker => speakerId != null ? cast.FirstOrDefault(a => a.Id == speakerId) : null;
+
+    protected override void OnParametersSet()
+    {
+        actorsById = Actors.ToDictionary(a => a.Id);
+        if (!ReferenceEquals(mentionsFor, Mentions))
+        {
+            mentionsFor = Mentions;
+            mentionsJson = MentionsJson();
+        }
+
+        visibleNotes = Notes.Where(n => Access.IsDm || !n.IsSecret).OrderByDescending(n => n.Timestamp).ToList();
+        // Someone who left the table (or that the DM hid) leaves the conversation too.
+        cast.RemoveAll(a => !actorsById.ContainsKey(a.Id));
+        if (speakerId != null && cast.All(a => a.Id != speakerId)) speakerId = cast.FirstOrDefault()?.Id;
+        if (editingId != null && visibleNotes.All(n => n.Id != editingId)) editingId = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusInput)
+        {
+            focusInput = false;
+            await (dialogueMode ? lineInput : noteInput).FocusAsync();
+        }
+        else if (focusTab)
+        {
+            focusTab = false;
+            await tabButton.FocusAsync();
+        }
+    }
+
+    // ---- Opening and closing ----
+
+    private Task ToggleAsync() => Open ? CloseAsync() : SetOpenAsync(true);
+
+    private async Task SetOpenAsync(bool open)
+    {
+        Open = open;
+        focusInput = open;
+        await OpenChanged.InvokeAsync(open);
+    }
+
+    private async Task CloseAsync()
+    {
+        await SetOpenAsync(false);
+        focusTab = true;
+    }
+
+    private async Task OnDrawerKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" && editingId == null) await CloseAsync();
+        else if (e.Key == "Escape") editingId = null;
+    }
+
+    private void SetMode(bool dialogue)
+    {
+        dialogueMode = dialogue;
+        lineError = null;
+        focusInput = true;
+    }
+
+    private string NowLabel
+    {
+        get
+        {
+            if (Encounter is not { Participants.Count: > 0 } encounter) return "Between encounters";
+            var acting = encounter.Current is { } current && actorsById.TryGetValue(current.ActorId, out var actor) && (Access.IsDm || actor.Visibility != ActorVisibility.Hidden)
+                ? $" · {actor.NameFor(Access.IsDm)}'s turn"
+                : "";
+            return $"Round {encounter.Round}{acting}";
+        }
+    }
+
+    // ---- Notes ----
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(noteText)) return;
+        var text = noteText.Trim();
+        var kind = noteKind;
+        noteText = "";
+        // Back to a plain note, so the next one isn't filed as loot by accident.
+        noteKind = NoteKind.Note;
+        await Send(new AddSessionNoteCommand(CurrentUserId, Mentions.Encode(text), secret && Access.IsDm, Kind: kind));
+    }
+
+    private static string KindIcon(NoteKind kind) => kind switch
+    {
+        NoteKind.Clue => "search",
+        NoteKind.Loot => "gem",
+        NoteKind.Ruling => "scroll",
+        NoteKind.FollowUp => "bookmark",
+        _ => "feather"
+    };
+
+    private static string KindPrompt(NoteKind kind) => kind switch
+    {
+        NoteKind.Clue => "What did they learn?",
+        NoteKind.Loot => "What did they find, and who took it?",
+        NoteKind.Ruling => "What did you rule, and on what?",
+        NoteKind.FollowUp => "What should be picked up later?",
+        _ => "What happened?"
+    };
+
+    private static string KindPlural(NoteKind kind) => kind switch
+    {
+        NoteKind.Loot => "Loot",
+        NoteKind.FollowUp => "Follow-ups",
+        _ => SessionNotes.KindLabel(kind) + "s"
+    };
+
+    // ---- Dialogue ----
+
+    private async Task AddLineAsync()
+    {
+        if (string.IsNullOrWhiteSpace(lineText)) return;
+        if (Speaker is not { } speaker)
+        {
+            lineError = cast.Count == 0 ? "Add who's talking first." : "Pick who said it.";
+            return;
+        }
+
+        lineError = null;
+        var text = lineText.Trim();
+        lineText = "";
+        // The speaker stays picked: in a conversation the next line is usually theirs or a reply, one key away.
+        await Send(new AddSessionNoteCommand(CurrentUserId, Mentions.Encode(text), secret && Access.IsDm, speaker.Id, WithActorIds: cast.Select(a => a.Id).ToList()));
+    }
+
+    private void OnLineKeyDown(KeyboardEventArgs e)
+    {
+        if (cast.Count == 0 || (e.Key != "ArrowUp" && e.Key != "ArrowDown")) return;
+        var index = cast.FindIndex(a => a.Id == speakerId);
+        var step = e.Key == "ArrowDown" ? 1 : -1;
+        speakerId = cast[((index < 0 ? 0 : index + step) % cast.Count + cast.Count) % cast.Count].Id;
+        lineError = null;
+    }
+
+    private void SetSpeaker(string actorId)
+    {
+        speakerId = actorId;
+        lineError = null;
+        focusInput = true;
+    }
+
+    private void AddToCast(string? actorId)
+    {
+        if (string.IsNullOrEmpty(actorId) || cast.Any(a => a.Id == actorId) || !actorsById.TryGetValue(actorId, out var actor)) return;
+        cast.Add(actor);
+        speakerId ??= actor.Id;
+        focusInput = true;
+    }
+
+    private void AddFightToCast()
+    {
+        foreach (var actor in CastCandidates()[0].Actors) AddToCast(actor.Id);
+    }
+
+    private void RemoveFromCast(string actorId)
+    {
+        cast.RemoveAll(a => a.Id == actorId);
+        if (speakerId == actorId) speakerId = cast.FirstOrDefault()?.Id;
+    }
+
+    /// <summary>Who can join the conversation, nearest first: the fight, the party, everyone else this viewer can see.</summary>
+    private List<(string Label, List<ActorDocument> Actors)> CastCandidates()
+    {
+        var inCast = cast.Select(a => a.Id).ToHashSet();
+        var visible = actorsById.Values.Where(a => !inCast.Contains(a.Id) && (Access.IsDm || a.Visibility != ActorVisibility.Hidden)).ToList();
+        var fightIds = Encounter?.Participants.Select(p => p.ActorId).ToList() ?? new List<string>();
+        var fight = fightIds.Select(id => visible.FirstOrDefault(a => a.Id == id)).Where(a => a != null).Select(a => a!).ToList();
+        var rest = visible.Except(fight).OrderBy(a => a.NameFor(Access.IsDm), StringComparer.OrdinalIgnoreCase).ToList();
+        return new()
+        {
+            ("In the fight", fight),
+            ("The party", rest.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList()),
+            ("Everyone else", rest.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList())
+        };
+    }
+
+    // ---- Mentions ----
+
+    private string MentionHint => Mentions.Candidates.Count == 0 ? "" : "Type @ for a character, # for a place, $ for an item.";
+
+    /// <summary>Suggestions, nearest first: who is in the fight, the party, everyone else, then places and items.</summary>
+    private string MentionsJson() =>
+        MentionLinks.Json(Mentions, Actors, Encounter?.Participants.Select(p => p.ActorId));
+
+    // ---- Timeline ----
+
+    private List<SessionNote> FilteredNotes() => filter switch
+    {
+        "" => visibleNotes.ToList(),
+        "dialogue" => visibleNotes.Where(n => n.SpeakerActorId != null).ToList(),
+        "mine" => visibleNotes.Where(n => n.AuthorId == CurrentUserId).ToList(),
+        _ when Enum.TryParse<NoteKind>(filter, out var kind) => visibleNotes.Where(n => n.SpeakerActorId == null && n.Kind == kind).ToList(),
+        _ => visibleNotes.ToList()
+    };
+
+    /// <summary>Notes are grouped by the encounter round they were written in, newest first.</summary>
+    private static string GroupLabel(SessionNote note) => note.Round is { } round ? $"Round {round}" : "Between encounters";
+
+    private void StartEdit(SessionNote note)
+    {
+        editingId = note.Id;
+        editText = Mentions.ForEditing(note.Text);
+    }
+
+    private async Task SaveEditAsync()
+    {
+        var note = visibleNotes.FirstOrDefault(n => n.Id == editingId);
+        editingId = null;
+        var text = string.IsNullOrWhiteSpace(editText) ? "" : Mentions.Encode(editText.Trim());
+        if (note == null || text.Length == 0 || text == note.Text) return;
+        await Send(new EditSessionNoteCommand(note.Id, CurrentUserId, Access.IsDm, text, note.Kind));
+    }
+
+    private async Task DeleteAsync(string noteId)
+    {
+        if (!await confirm.ShowAsync("Remove this note?", "It is taken out of the session and won't be in the recap.", "Remove", isDestructive: true)) return;
+        await Send(new DeleteSessionNoteCommand(noteId, CurrentUserId, Access.IsDm));
+    }
+}

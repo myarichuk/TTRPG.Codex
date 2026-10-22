@@ -146,14 +146,14 @@ public sealed class AiProviderService(
 
     public async Task<bool> IsImageConfiguredForAsync(string userId) => ImageConfigFor(await users.GetUserByIdAsync(userId)) != null;
 
-    public async Task<GeneratedImage> GenerateImageAsync(string userId, string prompt, bool landscape, CancellationToken ct = default)
+    public async Task<GeneratedImage> GenerateImageAsync(string userId, string prompt, ArtShape shape, CancellationToken ct = default)
     {
         var config = ImageConfigFor(await users.GetUserByIdAsync(userId)) ?? throw new AiImageNotConfiguredException();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromMinutes(2));
         var http = httpClients.CreateClient("ai-images");
         http.Timeout = TimeSpan.FromMinutes(2);
-        return await AiImageGenerator.GenerateAsync(config, prompt, landscape, http, timeout.Token);
+        return await AiImageGenerator.GenerateAsync(config, prompt, shape, http, timeout.Token);
     }
 
     /// <summary>Sends one tiny prompt so the settings page can confirm a key and model work.</summary>

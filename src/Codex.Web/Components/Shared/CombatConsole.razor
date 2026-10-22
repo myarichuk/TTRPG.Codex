@@ -13,7 +13,7 @@
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
 
-@* The table loop: initiative, hit points, conditions, dice and quick notes, driven off one live
+@* The table loop: initiative, hit points, conditions and dice, driven off one live
    CampaignRuntime per campaign. Every mutation goes through runtime.EnqueueAsync onto the campaign's
    single-writer loop; this component never touches ECS state directly. The DM picks one combatant
    at a time and works them from a command panel under their row. *@
@@ -297,27 +297,6 @@ else
                 </div>
             </section>
 
-            <section class="panel" aria-labelledby="notes-heading">
-                <div class="panel-title"><h3 id="notes-heading">Quick notes</h3></div>
-                <form @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                    <label for="quick-note" class="visually-hidden">New note</label>
-                    <textarea id="quick-note" class="field-input field-sm mb-2" rows="2" @bind="noteText" placeholder="Something worth remembering…"></textarea>
-                    @if (Access.IsDm)
-                    {
-                        <div class="field-check mb-2">
-                            <input type="checkbox" class="field-box" id="noteSecret" @bind="noteSecret" />
-                            <label class="small" for="noteSecret">Secret note (DM only)</label>
-                        </div>
-                    }
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Small="true" Class="mb-2">Add note</CodexButton>
-                </form>
-                <div class="log">
-                    @foreach (var note in VisibleNotes())
-                    {
-                        <div class="log-entry">@note.Text @if (note.IsSecret) { <span class="pill ms-1">secret</span> }</div>
-                    }
-                </div>
-            </section>
         </div>
     </div>
 }
@@ -340,8 +319,6 @@ else
     private RuntimeSnapshot snapshot = RuntimeSnapshot.Empty;
     private string diceExpression = "1d20";
     private bool diceSecret;
-    private string noteText = "";
-    private bool noteSecret;
     private string contentSearch = "";
     private string selectedActorId = "";
     private string? selectedParticipantId;
@@ -1082,21 +1059,6 @@ else
 
     private string ResolveRollerName(RollLogEntry entry) =>
         entry.ActorId != null ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? entry.ActorId : (entry.RollerUserId == CurrentUserId ? "You" : entry.RollerUserId == Campaign.OwnerId ? "DM" : "Player");
-
-    // ---- Notes ----
-
-    private async Task AddNoteAsync()
-    {
-        if (string.IsNullOrWhiteSpace(noteText)) return;
-        var text = noteText;
-        noteText = "";
-        await runtime!.EnqueueAsync(new AddSessionNoteCommand(CurrentUserId, text, noteSecret && Access.IsDm));
-    }
-
-    private IEnumerable<SessionNote> VisibleNotes() =>
-        snapshot.Notes
-        .Where(note => Access.IsDm || !note.IsSecret)
-        .OrderByDescending(note => note.Timestamp);
 
     public async ValueTask DisposeAsync()
     {

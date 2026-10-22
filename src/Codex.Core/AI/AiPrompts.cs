@@ -17,7 +17,8 @@ public sealed record SessionSummaryRequest(
     IReadOnlyList<string> Events,
     IReadOnlyList<string> Notes,
     IReadOnlyList<string> Rolls,
-    string? PreviousDmSummary = null);
+    string? PreviousDmSummary = null,
+    IReadOnlyList<string>? Quotes = null);
 
 public sealed record RewriteRequest(
     string Subject,
@@ -84,9 +85,10 @@ public static class AiPrompts
         }
 
         AppendList(sb, "Event log", r.Events);
-        AppendList(sb, "Table notes", r.Notes);
+        AppendList(sb, "Table notes ([Clue], [Loot], [Ruling] and [Follow-up] say what a note records; \"(Round 3 · Grik's turn)\" says when in a fight it was written)", r.Notes);
         AppendList(sb, "Dice rolls", r.Rolls);
-        if (r.Events.Count == 0 && r.Notes.Count == 0 && r.Rolls.Count == 0)
+        AppendList(sb, "Things said at the table (quote the lines that matter word for word; never put words in anyone's mouth)", r.Quotes ?? Array.Empty<string>());
+        if (r.Events.Count == 0 && r.Notes.Count == 0 && r.Rolls.Count == 0 && (r.Quotes?.Count ?? 0) == 0)
         {
             sb.AppendLine().AppendLine("The log is empty. Say so in one sentence and stop.");
         }
@@ -137,9 +139,15 @@ public static class AiPrompts
     }
 
     /// <summary>A text-to-image prompt: the subject, its visual description, and a house style that keeps lettering and frames out.</summary>
-    public static string Image(string subject, string subjectKind, string? visual, bool landscape)
+    public static string Image(string subject, string subjectKind, string? visual, ArtShape shape)
     {
-        var shot = landscape ? "Wide establishing view" : "Full-figure portrait";
+        // A square is a character's avatar, shown small and cropped: the face has to carry it.
+        var shot = shape switch
+        {
+            ArtShape.Wide => "Wide establishing view",
+            ArtShape.Square => "Head-and-shoulders portrait, face clearly visible,",
+            _ => "Full-figure portrait"
+        };
         var details = string.IsNullOrWhiteSpace(visual) ? string.Empty : " " + visual.Trim().TrimEnd('.') + ".";
         return $"{shot} of {subject}, a {subjectKind}.{details} Painterly fantasy illustration, dramatic natural light, rich muted colours. No text, no lettering, no border, no watermark.";
     }
