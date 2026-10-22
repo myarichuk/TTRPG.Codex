@@ -14,7 +14,7 @@
 
         <TextBlock Classes="head" Text="Playing in the same room or on the same Wi-Fi" />
         <TextBlock Classes="body" Text="1.  Click “Let players on my network join” in the launcher." />
-        <TextBlock Classes="body" Text="2.  Click Copy link next to “Players on your network” and send it to your players (chat, text, or read it out)." />
+        <TextBlock Classes="body" Text="2.  Click QR code next to “Players on your network” and let them scan it with their phone camera. Or click Copy link and send it to them." />
         <TextBlock Classes="body" Text="3.  They open the link in a browser on their phone, tablet or laptop. It must be on the same Wi-Fi as you." />
         <TextBlock Classes="body" Text="4.  In your campaign, copy the invite link from the Overview page and send it too. They make an account and they are in." />
 

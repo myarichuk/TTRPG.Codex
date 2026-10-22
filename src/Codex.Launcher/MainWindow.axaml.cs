@@ -85,15 +85,31 @@ public partial class MainWindow : Window
                 await Task.Delay(1500);
                 copy.Content = "Copy link";
             };
+            var buttons = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
+            if (link.Label != "This computer")
+            {
+                var qr = new Button { Content = "QR code", Padding = new Thickness(12, 4), FontSize = 13 };
+                qr.Classes.Add("etched");
+                qr.Click += (_, _) => ShowQr(link.Label, link.Url);
+                buttons.Children.Add(qr);
+            }
+
+            buttons.Children.Add(copy);
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("170,*,Auto") };
             row.Children.Add(new TextBlock { Text = link.Label, Foreground = new SolidColorBrush(Color.Parse("#cbbfa5")), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
             var url = new SelectableTextBlock { Text = link.Url, Foreground = new SolidColorBrush(Color.Parse("#ffe9ae")), FontWeight = FontWeight.Bold, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
             Grid.SetColumn(url, 1);
-            Grid.SetColumn(copy, 2);
+            Grid.SetColumn(buttons, 2);
             row.Children.Add(url);
-            row.Children.Add(copy);
+            row.Children.Add(buttons);
             LinksPanel.Children.Add(row);
         }
+    }
+
+    internal void ShowQr(string label, string url)
+    {
+        if (!IsVisible) Show();
+        _ = new QrWindow(label, url).ShowDialog(this);
     }
 
     internal void ShowHelp()

@@ -64,6 +64,12 @@ internal sealed class LauncherViewModel
         Controller.Start(Settings);
     }
 
+    public void MarkWelcomeShown()
+    {
+        Settings.WelcomeShown = true;
+        Settings.Save(LauncherPaths.SettingsFile(dataHome));
+    }
+
     public void Toggle()
     {
         if (Controller.State is ServerState.Running or ServerState.Starting) _ = Controller.StopAsync();

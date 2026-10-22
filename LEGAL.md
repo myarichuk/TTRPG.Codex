@@ -13,6 +13,7 @@ Bundled third-party software:
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
 - Avalonia 12 (the tray launcher, `src/Codex.Launcher`) and its SkiaSharp and HarfBuzzSharp
   dependencies - MIT License - https://github.com/AvaloniaUI/Avalonia
+- QRCoder (QR codes in the launcher) - MIT License - https://github.com/codebude/QRCoder
 
 ### RavenDB
 

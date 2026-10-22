@@ -52,6 +52,12 @@ public partial class App : Application
                 return;
             }
 
+            if (!model.Settings.WelcomeShown)
+            {
+                _ = WelcomeAsync();
+                return;
+            }
+
             model.StartServer(openBrowser: model.Settings.OpenBrowserOnStart);
         }
 
@@ -99,20 +105,50 @@ public partial class App : Application
         UpdateMenu();
     }
 
+    /// <summary>The first run: ask who is playing, then set things up so the DM never has to find a setting.</summary>
+    private async Task WelcomeAsync()
+    {
+        var choice = await new WelcomeWindow().ShowDialog<string?>(window!);
+        model!.MarkWelcomeShown();
+        if (choice != WelcomeWindow.Host)
+        {
+            model.StartServer(openBrowser: true);
+            return;
+        }
+
+        model.SetAllowLan(true);
+        void ShowCodeWhenReady()
+        {
+            if (model.Controller.State != ServerState.Running) return;
+            model.Changed -= ShowCodeWhenReady;
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (model.Links.Skip(1).FirstOrDefault() is { } link) window!.ShowQr(link.Label, link.Url);
+            });
+        }
+
+        model.Changed += ShowCodeWhenReady;
+        model.StartServer(openBrowser: true);
+    }
+
     private async Task RenderAndExitAsync(IClassicDesktopStyleApplicationLifetime desktop, string path)
     {
-        await Task.Delay(1500);
-        var size = new PixelSize((int)window!.Bounds.Width, (int)window.Bounds.Height);
-        using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(size);
-        bitmap.Render(window);
-        bitmap.Save(path);
+        // Renders each window to <path>, <path>-help, -welcome and -qr so the design can be reviewed without a screen grab.
+        async Task Shot(Window w, string file)
+        {
+            w.Show();
+            await Task.Delay(1200);
+            using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)w.Bounds.Width, (int)w.Bounds.Height));
+            bitmap.Render(w);
+            bitmap.Save(file);
+        }
 
-        var help = new HelpWindow();
-        help.Show();
-        await Task.Delay(1500);
-        using var helpBitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)help.Bounds.Width, (int)help.Bounds.Height));
-        helpBitmap.Render(help);
-        helpBitmap.Save(Path.ChangeExtension(path, null) + "-help.png");
+        await Task.Delay(300);
+        var stem = Path.ChangeExtension(path, null);
+        await Shot(window!, path);
+        await Shot(new HelpWindow(), stem + "-help.png");
+        await Shot(new WelcomeWindow(), stem + "-welcome.png");
+        await Shot(new QrWindow("Players on your network", "http://192.168.1.20:5080"), stem + "-qr.png");
         model!.Quit();
     }
 

@@ -14,6 +14,9 @@ internal sealed class LauncherSettings
 
     public bool OpenBrowserOnStart { get; set; } = true;
 
+    /// <summary>Whether the first-run welcome has been answered.</summary>
+    public bool WelcomeShown { get; set; }
+
     /// <summary>What Kestrel binds to: loopback only, unless players on the network are allowed in.</summary>
     public string BindUrl => $"http://{(AllowLan ? "0.0.0.0" : "localhost")}:{ValidPort}";
 
