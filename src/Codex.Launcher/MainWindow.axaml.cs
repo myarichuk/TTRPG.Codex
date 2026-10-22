@@ -112,6 +112,14 @@ public partial class MainWindow : Window
         _ = new QrWindow(label, url).ShowDialog(this);
     }
 
+    internal void ShowCheck()
+    {
+        if (!IsVisible) Show();
+        _ = new CheckWindow(model).ShowDialog(this);
+    }
+
+    private void OnCheck(object? sender, RoutedEventArgs e) => ShowCheck();
+
     internal void ShowHelp()
     {
         if (!IsVisible) Show();

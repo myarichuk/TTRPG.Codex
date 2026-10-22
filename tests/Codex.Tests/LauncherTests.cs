@@ -96,3 +96,71 @@ public class LauncherTests
         Assert.Null(LanAddress.Rank(new (string, NetworkInterfaceType, IPAddress)[] { ("lo0", NetworkInterfaceType.Loopback, IPAddress.Loopback) }));
     }
 }
+
+public class JoinCheckTests
+{
+    private static Task<IReadOnlyList<CheckResult>> Run(
+        LauncherSettings settings, ServerState state, string[] addresses, bool reaches = true, bool portFree = true, string? problem = null, string? tailnet = null) =>
+        JoinCheck.RunAsync(settings, state, problem, addresses, tailnet, _ => Task.FromResult(reaches), _ => portFree);
+
+    [Fact]
+    public async Task A_healthy_table_has_nothing_to_fix()
+    {
+        var results = await Run(new LauncherSettings { AllowLan = true }, ServerState.Running, new[] { "192.168.1.20" });
+
+        Assert.DoesNotContain(results, r => r.Status is CheckStatus.Fail or CheckStatus.Warn);
+        Assert.Contains(results, r => r.Detail == "http://192.168.1.20:5080");
+    }
+
+    [Fact]
+    public async Task A_stopped_server_and_closed_network_are_reported_first()
+    {
+        var results = await Run(new LauncherSettings(), ServerState.Stopped, new[] { "192.168.1.20" });
+
+        Assert.Equal("The server is stopped", results[0].Title);
+        Assert.Contains(results, r => r.Status == CheckStatus.Fail && r.Title == "Network access is off");
+    }
+
+    [Fact]
+    public async Task A_failed_start_with_a_busy_port_names_the_port()
+    {
+        var results = await Run(new LauncherSettings { Port = 5080 }, ServerState.Failed, new[] { "192.168.1.20" }, portFree: false, problem: "boom");
+
+        Assert.Contains(results, r => r.Title == "Another program is using port 5080");
+        Assert.Contains(results, r => r.Detail == "boom");
+    }
+
+    [Fact]
+    public async Task No_network_is_a_failure_and_no_address_is_offered()
+    {
+        var results = await Run(new LauncherSettings { AllowLan = true }, ServerState.Running, Array.Empty<string>());
+
+        Assert.Contains(results, r => r.Status == CheckStatus.Fail && r.Title == "This computer has no network address");
+        Assert.DoesNotContain(results, r => r.Title == "Players use this link");
+    }
+
+    [Fact]
+    public async Task An_unreachable_network_address_suggests_a_restart()
+    {
+        var results = await Run(new LauncherSettings { AllowLan = true }, ServerState.Running, new[] { "192.168.1.20" }, reaches: false);
+
+        Assert.Contains(results, r => r.Status == CheckStatus.Fail && r.Title.Contains("does not answer"));
+    }
+
+    [Fact]
+    public async Task Other_addresses_and_tailscale_are_listed_for_the_dm()
+    {
+        var results = await Run(new LauncherSettings { AllowLan = true }, ServerState.Running, new[] { "192.168.1.20", "172.20.10.2" }, tailnet: "100.64.1.2");
+
+        Assert.Contains(results, r => r.Detail.Contains("http://172.20.10.2:5080"));
+        Assert.Contains(results, r => r.Title == "Tailscale is on");
+    }
+
+    [Fact]
+    public async Task An_address_outside_the_home_ranges_gets_a_warning()
+    {
+        var results = await Run(new LauncherSettings { AllowLan = true }, ServerState.Running, new[] { "203.0.113.9" });
+
+        Assert.Contains(results, r => r.Status == CheckStatus.Warn);
+    }
+}

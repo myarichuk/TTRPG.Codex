@@ -80,6 +80,8 @@ public partial class App : Application
         show.Click += (_, _) => ShowWindow();
         var help = new NativeMenuItem("How do players join?");
         help.Click += (_, _) => window!.ShowHelp();
+        var check = new NativeMenuItem("Players can't join?");
+        check.Click += (_, _) => window!.ShowCheck();
         var log = new NativeMenuItem("Open log");
         log.Click += (_, _) => model!.OpenLog();
         var data = new NativeMenuItem("Open data folder");
@@ -88,7 +90,7 @@ public partial class App : Application
         quit.Click += (_, _) => model!.Quit();
 
         var menu = new NativeMenu();
-        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, help, new NativeMenuItemSeparator(), log, data, backups, new NativeMenuItemSeparator(), quit })
+        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, help, check, new NativeMenuItemSeparator(), log, data, backups, new NativeMenuItemSeparator(), quit })
         {
             menu.Items.Add(item);
         }
@@ -108,7 +110,10 @@ public partial class App : Application
     /// <summary>The first run: ask who is playing, then set things up so the DM never has to find a setting.</summary>
     private async Task WelcomeAsync()
     {
-        var choice = await new WelcomeWindow().ShowDialog<string?>(window!);
+        // CODEX_WELCOME_ANSWER=host|solo answers for an unattended first run (tests, managed installs).
+        var scripted = Environment.GetEnvironmentVariable("CODEX_WELCOME_ANSWER");
+        var choice = scripted is WelcomeWindow.Host or WelcomeWindow.Solo ? scripted : await new WelcomeWindow().ShowDialog<string?>(window!);
+        model!.Controller.Note($"welcome answered: {choice ?? "closed"}");
         model!.MarkWelcomeShown();
         if (choice != WelcomeWindow.Host)
         {
@@ -123,7 +128,11 @@ public partial class App : Application
             model.Changed -= ShowCodeWhenReady;
             Dispatcher.UIThread.Post(() =>
             {
-                if (model.Links.Skip(1).FirstOrDefault() is { } link) window!.ShowQr(link.Label, link.Url);
+                if (model.Links.Skip(1).FirstOrDefault() is { } link)
+                {
+                    model.Controller.Note($"showing the QR code for {link.Url}");
+                    window!.ShowQr(link.Label, link.Url);
+                }
             });
         }
 
@@ -148,6 +157,9 @@ public partial class App : Application
         await Shot(window!, path);
         await Shot(new HelpWindow(), stem + "-help.png");
         await Shot(new WelcomeWindow(), stem + "-welcome.png");
+        var check = new CheckWindow();
+        check.Show(await JoinCheck.RunAsync(new LauncherSettings { AllowLan = true }, ServerState.Running, null, new[] { "10.0.0.4", "172.20.10.2" }, "100.101.1.2", _ => Task.FromResult(true), _ => true));
+        await Shot(check, stem + "-check.png");
         await Shot(new QrWindow("Players on your network", "http://192.168.1.20:5080"), stem + "-qr.png");
         model!.Quit();
     }

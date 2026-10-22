@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Codex.Launcher;
 
@@ -18,9 +19,11 @@ internal sealed class LauncherSettings
     public bool WelcomeShown { get; set; }
 
     /// <summary>What Kestrel binds to: loopback only, unless players on the network are allowed in.</summary>
+    [JsonIgnore]
     public string BindUrl => $"http://{(AllowLan ? "0.0.0.0" : "localhost")}:{ValidPort}";
 
     /// <summary>The address the DM opens in their own browser.</summary>
+    [JsonIgnore]
     public string LocalUrl => $"http://localhost:{ValidPort}";
 
     /// <summary>The addresses worth copying: this computer always, the network and Tailscale only while the

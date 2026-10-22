@@ -43,17 +43,35 @@ internal static class LanAddress
 
     internal static bool IsTailnet(IPAddress a) => a.AddressFamily == AddressFamily.InterNetwork && a.GetAddressBytes() is [100, >= 64 and <= 127, ..];
 
-    internal static string? Rank(IEnumerable<(string Name, NetworkInterfaceType Type, IPAddress Address)> candidates) =>
+    /// <summary>Every usable address, best first.</summary>
+    public static IReadOnlyList<string> All()
+    {
+        try
+        {
+            return RankAll(NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType is not (NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel))
+                .SelectMany(n => n.GetIPProperties().UnicastAddresses
+                    .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
+                    .Select(a => (n.Name, n.NetworkInterfaceType, a.Address)))).ToList();
+        }
+        catch (NetworkInformationException)
+        {
+            return Array.Empty<string>();
+        }
+    }
+
+    internal static string? Rank(IEnumerable<(string Name, NetworkInterfaceType Type, IPAddress Address)> candidates) => RankAll(candidates).FirstOrDefault();
+
+    internal static IEnumerable<string> RankAll(IEnumerable<(string Name, NetworkInterfaceType Type, IPAddress Address)> candidates) =>
         candidates
             .Where(c => !IPAddress.IsLoopback(c.Address) && !IsLinkLocal(c.Address))
             .OrderBy(c => IsVirtual(c.Name) ? 2 : c.Type is NetworkInterfaceType.Ethernet or NetworkInterfaceType.Wireless80211 ? 0 : 1)
             .ThenBy(c => IsPrivate(c.Address) ? 0 : 1)
-            .Select(c => c.Address.ToString())
-            .FirstOrDefault();
+            .Select(c => c.Address.ToString());
 
     private static bool IsLinkLocal(IPAddress a) => a.GetAddressBytes() is [169, 254, ..];
 
-    private static bool IsPrivate(IPAddress a) => a.GetAddressBytes() is [10, ..] or [192, 168, ..] or [172, >= 16 and <= 31, ..];
+    internal static bool IsPrivate(IPAddress a) => a.GetAddressBytes() is [10, ..] or [192, 168, ..] or [172, >= 16 and <= 31, ..];
 
     private static bool IsVirtual(string name) =>
         new[] { "docker", "veth", "virbr", "vbox", "vmnet", "vethernet", "wsl", "tailscale", "zerotier", "utun", "br-" }

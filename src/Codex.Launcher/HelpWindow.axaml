@@ -27,7 +27,7 @@
         <TextBlock Classes="head" Text="If a player cannot connect" />
         <TextBlock Classes="body" Text="•  Your computer asked about the network or firewall? Allow it for private or home networks." />
         <TextBlock Classes="body" Text="•  Guest or café Wi-Fi often stops devices from seeing each other. Use your normal Wi-Fi, or Tailscale." />
-        <TextBlock Classes="body" Text="•  Is the launcher running, and does the status say “The table is ready”?" />
+        <TextBlock Classes="body" Text="•  Click “Players can't join?” in the launcher: it checks the server, the network and the address, and tells you what to fix." />
         <TextBlock Classes="body" Text="•  Your computer's address can change when you restart it or join another network. If so, copy the new link from the launcher and send it again." />
         <TextBlock Classes="body" Text="•  Keep this computer awake and plugged in while you play. If it sleeps, players are disconnected." />
 

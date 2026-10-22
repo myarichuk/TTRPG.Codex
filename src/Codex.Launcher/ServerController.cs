@@ -246,6 +246,9 @@ internal sealed class ServerController : IDisposable
         }
     }
 
+    /// <summary>Adds a launcher line to the log beside the server's own output.</summary>
+    public void Note(string line) => Log("[launcher] " + line);
+
     private void Log(string? line)
     {
         if (line == null) return;

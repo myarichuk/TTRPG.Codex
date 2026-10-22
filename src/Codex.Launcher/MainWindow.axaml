@@ -39,6 +39,7 @@
             <Button Classes="etched" Content="Log" Padding="10,3" FontSize="12" Click="OnOpenLog" />
             <Button Classes="etched" Content="Campaign data" Padding="10,3" FontSize="12" Click="OnOpenData" />
             <Button Classes="etched" Content="Backups" Padding="10,3" FontSize="12" Click="OnOpenBackups" />
+            <Button Classes="etched" Content="Players can't join?" Padding="10,3" FontSize="12" Margin="14,0,0,0" Click="OnCheck" />
           </StackPanel>
         </StackPanel>
       </Border>
