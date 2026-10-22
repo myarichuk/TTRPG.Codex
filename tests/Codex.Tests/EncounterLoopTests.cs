@@ -41,11 +41,11 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public void Dispose() => _dbService.Dispose();
 
-    private async Task<ActorDocument> SeedAsync(string campaignId, string name, int hp, ActorKind kind = ActorKind.Monster, Action<Dictionary<string, object>>? sheet = null)
+    private async Task<ActorDocument> SeedAsync(string campaignId, string name, int hp, ActorKind kind = ActorKind.Monster, Action<Dictionary<string, object>>? sheet = null, string? idPrefix = null)
     {
         var doc = new ActorDocument
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = idPrefix + Guid.NewGuid(),
             CampaignId = campaignId,
             Name = name,
             Kind = kind,
@@ -260,14 +260,15 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
 
         await runtime.EnqueueAsync(new ApplyDamageCommand(elemental.Id, "HP", 11, "wizard", "fire"));
         Assert.Equal(55, Hp(runtime, elemental.Id));
+        // The conditional entry ("... from nonmagical attacks") is left to the DM: the table can't tell a magic club from a plain one.
         await runtime.EnqueueAsync(new ApplyDamageCommand(elemental.Id, "HP", 9, "club", "bludgeoning"));
-        Assert.Equal(51, Hp(runtime, elemental.Id));
+        Assert.Equal(46, Hp(runtime, elemental.Id));
         await runtime.EnqueueAsync(new ApplyDamageCommand(elemental.Id, "HP", 20, "dart", "poison"));
-        Assert.Equal(51, Hp(runtime, elemental.Id));
+        Assert.Equal(46, Hp(runtime, elemental.Id));
         await runtime.EnqueueAsync(new ApplyDamageCommand(elemental.Id, "HP", 10, "ray", "cold"));
-        Assert.Equal(31, Hp(runtime, elemental.Id));
+        Assert.Equal(26, Hp(runtime, elemental.Id));
         await runtime.EnqueueAsync(new ApplyDamageCommand(elemental.Id, "HP", 10, "sword"));
-        Assert.Equal(21, Hp(runtime, elemental.Id));
+        Assert.Equal(16, Hp(runtime, elemental.Id));
 
         var log = session.Events.Where(e => e.Type == "Damage").Select(e => e.Description).ToList();
         Assert.Contains(log, d => d.Contains("5 fire damage") && d.Contains("resisted, 11 rolled"));
@@ -507,5 +508,223 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Empty(runtime.ActiveEncounter!.Participants);
         Assert.Null(await StoredAsync(campaignId, goblin.Id));
         await manager.EvictAsync(campaignId);
+    }
+
+    // ---- Review fixes of 2026-10-22 ----
+
+    [Fact]
+    public async Task Initiative_RolledLowestFirst_StillStartsOnTheHighestRoll_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        var goblin = await SeedAsync(campaignId, "Goblin", 7);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero, goblin });
+
+        await runtime.EnqueueAsync(new SetInitiativeCommand(goblin.Id, 5));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 20));
+
+        var encounter = runtime.ActiveEncounter!;
+        Assert.Equal(new[] { hero.Id, goblin.Id }, encounter.Participants.Select(p => p.ActorId));
+        Assert.Equal(hero.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+    }
+
+    [Fact]
+    public async Task ActNow_HandsTheTurnBack_WithoutTickingTheInterruptedActorsStartOfTurnAgain_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var rogue = await SeedAsync(campaignId, "Rogue", 10);
+        var fighter = await SeedAsync(campaignId, "Fighter", 10);
+        var goblin = await SeedAsync(campaignId, "Goblin", 10);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { rogue, fighter, goblin });
+        await runtime.EnqueueAsync(new SetInitiativeCommand(rogue.Id, 25));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(fighter.Id, 15));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(goblin.Id, 5));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(fighter.Id, "Blessed", "cleric", 2, EffectExpiry.StartOfTurn, fighter.Id));
+
+        // The rogue delays; the fighter's turn starts and Blessed ticks from 2 to 1.
+        await runtime.EnqueueAsync(new SetTurnStateCommand(rogue.Id, TurnState.Delayed));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        Assert.Equal(1, runtime.Snapshot.Actor(fighter.Id)!.Effects.Single(e => e.EffectId == "Blessed").RoundsRemaining);
+
+        // The rogue jumps in ahead of the fighter, then hands the turn back: it is the same turn, not a new one.
+        await runtime.EnqueueAsync(new ActNowCommand(rogue.Id));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        var encounter = runtime.ActiveEncounter!;
+        Assert.Equal(fighter.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+        Assert.Equal(1, runtime.Snapshot.Actor(fighter.Id)!.Effects.Single(e => e.EffectId == "Blessed").RoundsRemaining);
+
+        // Next round it ticks as normal.
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        Assert.Equal(fighter.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+        Assert.False(Has(runtime, fighter.Id, "Blessed"));
+    }
+
+    [Theory]
+    [InlineData(1, "z-", "a-")] // the one who acted holds current + 1, and the newcomer's id sorts first
+    [InlineData(0, "b-", "d-")] // the one who acted ties the current actor outright and sorts ahead by id
+    public async Task ActNow_WithTiedInitiative_NeverGivesAnyoneASecondTurn_Async(int actedTieBreak, string actedIdPrefix, string delayerIdPrefix)
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var acted = await SeedAsync(campaignId, "Acted", 10, idPrefix: actedIdPrefix);
+        var acting = await SeedAsync(campaignId, "Acting", 10, idPrefix: "c-");
+        var delayer = await SeedAsync(campaignId, "Delayer", 10, idPrefix: delayerIdPrefix);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { acted, acting, delayer });
+        await runtime.EnqueueAsync(new SetInitiativeCommand(delayer.Id, 20));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(acted.Id, 15, actedTieBreak));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(acting.Id, 15, 0));
+
+        await runtime.EnqueueAsync(new SetTurnStateCommand(delayer.Id, TurnState.Delayed));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        var encounter = runtime.ActiveEncounter!;
+        Assert.Equal(acting.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+
+        await runtime.EnqueueAsync(new ActNowCommand(delayer.Id));
+        Assert.Equal(new[] { acted.Id, delayer.Id, acting.Id }, encounter.Participants.Select(p => p.ActorId));
+        Assert.Equal(delayer.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+
+        // The order is now held by the numbers, so a later re-sort keeps it.
+        await runtime.EnqueueAsync(new SetInitiativeCommand(acting.Id, 15, 0));
+        Assert.Equal(new[] { acted.Id, delayer.Id, acting.Id }, encounter.Participants.Select(p => p.ActorId));
+
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        Assert.Equal(acting.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+        Assert.Equal(1, encounter.Round);
+    }
+
+    [Fact]
+    public async Task PlayerLog_LeavesOutHiddenActorsSheetEditsAndRemoval_AndKeepsOtherActorsNumbersVague_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "player-9", CampaignRole.Player);
+        var lich = await SeedAsync(campaignId, "Vecnarion the Lich", 100);
+        lich.Visibility = ActorVisibility.Hidden;
+        await _actors.SaveAsync(lich);
+        var ally = await SeedAsync(campaignId, "Bram", 30, ActorKind.PlayerCharacter, s => s["level"] = 5L);
+        var session = await SeedSessionAsync(campaignId);
+        var dice = Substitute.For<IDiceRoller>();
+        dice.Roll(Arg.Any<string>()).Returns(new DiceRollResult("1d8", new[] { 4 }, Array.Empty<int>(), 0, 4));
+        await using var runtime = Runtime(campaignId, session, dice);
+        runtime.Hydrate(new[] { lich, ally });
+
+        var edited = (await StoredAsync(campaignId, lich.Id))!;
+        edited.Biography = "Older than the kingdom.";
+        await runtime.EnqueueAsync(new ReplaceActorCommand(edited, new Dictionary<string, object>(lich.Sheet), dm, Srd));
+        await runtime.EnqueueAsync(new RemoveActorCommand(lich.Id));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(ally.Id, "HP", 20, "trap"));
+        await runtime.EnqueueAsync(new GrantTemporaryHitPointsCommand(ally.Id, 11, "false life"));
+        await runtime.EnqueueAsync(new SpendHitDiceCommand(ally.Id, 2, 8));
+
+        var visible = await _actors.GetVisibleForCampaignAsync(player);
+        var log = SessionEventRedactor.ForViewer(session.Events, player, visible);
+
+        Assert.DoesNotContain(log, e => e.Description.Contains("Vecnarion"));
+        var temporary = Assert.Single(log, e => e.Type == "TemporaryHitPoints");
+        Assert.DoesNotContain("11", temporary.Description);
+        var hitDice = Assert.Single(log, e => e.Type == "HitDice");
+        Assert.DoesNotContain("12", hitDice.Description);
+
+        // The DM still reads the full account.
+        var dmLog = SessionEventRedactor.ForViewer(session.Events, dm, await _actors.GetVisibleForCampaignAsync(dm));
+        Assert.Contains(dmLog, e => e.Type == "SheetEdited" && e.Description.Contains("Vecnarion"));
+        Assert.Contains(dmLog, e => e.Type == "HitDice" && e.Description.Contains("recovered 12"));
+    }
+
+    [Fact]
+    public async Task DamageTypes_MatchWholeWordsOnly_AndSkipConditionalEntries_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var golem = await SeedAsync(campaignId, "Golem", 100, sheet: s =>
+        {
+            s["resistances"] = "fire, cold; Bludgeoning, Piercing, and Slashing from Nonmagical Attacks";
+            s["immunities"] = new List<object> { "Poisoned" };
+        });
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { golem });
+
+        await runtime.EnqueueAsync(new ApplyDamageCommand(golem.Id, "HP", 10, "wizard", "cold"));
+        Assert.Equal(95, Hp(runtime, golem.Id));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(golem.Id, "HP", 10, "magic sword", "slashing"));
+        Assert.Equal(85, Hp(runtime, golem.Id));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(golem.Id, "HP", 10, "spear", "piercing"));
+        Assert.Equal(75, Hp(runtime, golem.Id));
+
+        // Immune to the Poisoned condition is not immune to poison damage.
+        await runtime.EnqueueAsync(new ApplyDamageCommand(golem.Id, "HP", 10, "dart", "poison"));
+        Assert.Equal(65, Hp(runtime, golem.Id));
+    }
+
+    [Fact]
+    public async Task Manager_ClosesALiveSessionLeftIdleForDays_AndStartsANewOne_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Last week" };
+        await campaigns.SaveAsync(campaign);
+        var lastWeek = await SeedSessionAsync(campaignId, SessionStatus.Live, "Last week");
+        await _sessions.UpdateAsync(lastWeek.Id, s => s.Events.Add(new SessionEvent { Type = "Note", Description = "old", Timestamp = DateTime.UtcNow.AddDays(-2) }));
+        await campaigns.UpdateAsync(campaignId, c => c.CurrentSessionId = lastWeek.Id);
+        campaign.CurrentSessionId = lastWeek.Id;
+
+        var runtime = await manager.GetOrStartAsync(campaign, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+
+        Assert.NotEqual(lastWeek.Id, runtime.ActiveSession!.Id);
+        Assert.Equal(SessionStatus.Completed, (await _sessions.GetAsync(lastWeek.Id))!.Status);
+        await manager.EvictAsync(campaignId);
+    }
+
+    [Fact]
+    public async Task SheetSave_ForAnActorDeletedWhileItWasQueued_FailsCleanly_AndDoesNotBringItBack_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Race" };
+        await campaigns.SaveAsync(campaign);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        var runtime = await manager.GetOrStartAsync(campaign, dm);
+        Assert.True(runtime.HasActor(hero.Id));
+
+        // Hold the command loop so the delete's detach and the save queue up behind it, in that order -
+        // the two steps TryDeleteActorAsync takes, done by hand so the order is certain.
+        var gate = new BlockingCommand();
+        var held = runtime.EnqueueAsync(gate);
+        await gate.Entered.Task;
+        Assert.True(await _actors.TryDeleteAsync(hero.Id, dm));
+        var detached = runtime.EnqueueAsync(new RemoveActorCommand(hero.Id));
+        var edited = new ActorDocument { Id = hero.Id, CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = hero.OwnerUserId, Sheet = new Dictionary<string, object>(hero.Sheet) };
+        var saved = manager.TrySaveActorAsync(edited, hero.Sheet, dm, Srd);
+        gate.Release.SetResult();
+
+        await held;
+        await detached;
+        Assert.False(await saved);
+        Assert.Null(await StoredAsync(campaignId, hero.Id));
+        await manager.EvictAsync(campaignId);
+    }
+
+    private sealed class BlockingCommand : IRuntimeCommand
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+        public void Apply(CampaignRuntime runtime)
+        {
+            Entered.SetResult();
+            Release.Task.Wait();
+        }
+
+        public SessionEvent Describe(CampaignRuntime runtime) => new() { Type = "Test", Description = "held" };
     }
 }

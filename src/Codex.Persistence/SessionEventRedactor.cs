@@ -12,7 +12,8 @@ public static class SessionEventRedactor
     private static readonly HashSet<string> ActorBearingTypes = new(StringComparer.Ordinal)
     {
         "Damage", "Healing", "StatusEffect", "StatusEffectRemoved", "TurnAdvance", "Initiative", "TurnState",
-        "DiceRoll", "ActorJoined", "ResourceSpent", "ResourceRegained", "Rest"
+        "DiceRoll", "ActorJoined", "ResourceSpent", "ResourceRegained", "Rest",
+        "TemporaryHitPoints", "DeathSave", "Stabilized", "Exhaustion", "HitDice", "InitiativeRemoved", "ActorLeft", "SheetEdited"
     };
 
     /// <summary>The log as <paramref name="access"/> may read it. <paramref name="visibleActors"/> is what the

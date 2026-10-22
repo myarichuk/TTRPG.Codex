@@ -94,7 +94,8 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
         Description = _applied
             ? $"{runtime.GetActorName(ActorId)} gained {Amount} temporary hit points from {SourceId}."
             : $"{runtime.GetActorName(ActorId)} already had at least {Amount} temporary hit points; {SourceId} changed nothing.",
-        ActorIds = { ActorId }
+        ActorIds = { ActorId },
+        PlayerDescription = _applied ? $"{runtime.GetActorName(ActorId)} gained temporary hit points." : $"{runtime.GetActorName(ActorId)} already had temporary hit points."
     };
 }
 
@@ -251,7 +252,8 @@ public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides
             Description = _outcome is { Spent: > 0 } o
                 ? $"{name} spent {o.Spent} hit {(o.Spent == 1 ? "die" : "dice")} (d{DieSides}: {string.Join(", ", o.Rolls)}) and recovered {o.Healed} hit points."
                 : $"{name} has no hit dice to spend.",
-            ActorIds = { ActorId }
+            ActorIds = { ActorId },
+            PlayerDescription = _outcome is { Spent: > 0 } ? $"{name} spent hit dice and recovered hit points." : null
         };
     }
 }
@@ -351,7 +353,10 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
     public void Apply(CampaignRuntime runtime)
     {
         var encounter = runtime.GetOrCreateEncounter();
-        var current = encounter.Participants.Count > 0 && encounter.TurnIndex < encounter.Participants.Count ? encounter.Participants[encounter.TurnIndex] : null;
+        // Only a fight under way has a current turn to keep; while the order is still being rolled
+        // the turn belongs to whoever ends up on top.
+        var underWay = encounter.Round > 1 || encounter.Participants.Any(p => p.HasActed);
+        var current = underWay && encounter.TurnIndex < encounter.Participants.Count ? encounter.Participants[encounter.TurnIndex] : null;
         var participant = encounter.Participants.FirstOrDefault(p => p.ActorId == ActorId);
         if (participant == null)
         {
@@ -362,11 +367,7 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
         participant.InitiativeRoll = InitiativeRoll;
         participant.TieBreak = TieBreak;
         CampaignRuntime.SortParticipants(encounter);
-        if (current != null)
-        {
-            encounter.TurnIndex = Math.Max(0, encounter.Participants.IndexOf(current));
-        }
-
+        encounter.TurnIndex = current != null ? Math.Max(0, encounter.Participants.IndexOf(current)) : 0;
         runtime.MarkEncounterDirty();
     }
 
@@ -408,27 +409,17 @@ public sealed record NextTurnCommand : IRuntimeCommand
             if (encounter.TurnIndex >= encounter.Participants.Count)
             {
                 encounter.TurnIndex = 0;
-                encounter.Round++;
-                foreach (var participant in encounter.Participants)
-                {
-                    participant.HasActed = false;
-                }
+                CampaignRuntime.StartNewRound(encounter);
             }
 
             var next = encounter.Participants[encounter.TurnIndex];
-            var entity = runtime.GetEntity(next.ActorId);
-            if (entity is { } e && TableRules.IsDead(runtime, e))
+            if (runtime.GetEntity(next.ActorId) is { } e && TableRules.IsDead(runtime, e))
             {
                 next.HasActed = true;
                 continue;
             }
 
-            if (entity != null)
-            {
-                runtime.World.AdvanceTurn(next.ActorId, EffectExpiry.StartOfTurn);
-                runtime.MarkAllHydratedActorsDirty();
-            }
-
+            runtime.BeginTurn(next);
             break;
         }
 
@@ -473,6 +464,7 @@ public sealed record PreviousTurnCommand : IRuntimeCommand
             foreach (var participant in encounter.Participants)
             {
                 participant.HasActed = true;
+                participant.TurnStarted = true;
             }
         }
 
@@ -546,15 +538,16 @@ public sealed record ActNowCommand(string ActorId) : IRuntimeCommand
         participant.HasActed = false;
         if (participant != current)
         {
+            // Straight in front of whoever is acting, then tiebreaks that keep exactly this order:
+            // nudging one number could still sort them ahead of someone who has already gone.
+            encounter.Participants.Remove(participant);
+            var at = encounter.Participants.IndexOf(current);
+            encounter.Participants.Insert(at, participant);
             participant.InitiativeRoll = current.InitiativeRoll;
-            participant.TieBreak = current.TieBreak + 1;
-            CampaignRuntime.SortParticipants(encounter);
-            encounter.TurnIndex = encounter.Participants.IndexOf(participant);
-            if (runtime.GetEntity(ActorId) != null)
-            {
-                runtime.World.AdvanceTurn(ActorId, EffectExpiry.StartOfTurn);
-                runtime.MarkAllHydratedActorsDirty();
-            }
+            participant.TieBreak = current.TieBreak;
+            CampaignRuntime.FixTieOrder(encounter, current.InitiativeRoll);
+            encounter.TurnIndex = at;
+            runtime.BeginTurn(participant);
         }
 
         runtime.MarkEncounterDirty();
@@ -636,7 +629,8 @@ public sealed record RemoveActorCommand(string ActorId) : IRuntimeCommand
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "ActorLeft",
-        Description = $"{_name} left the table."
+        Description = $"{_name} left the table.",
+        ActorIds = { ActorId }
     };
 }
 
@@ -792,6 +786,7 @@ public sealed record ReplaceActorCommand(
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "SheetEdited",
-        Description = $"{runtime.GetActorName(Edited.Id)}'s sheet was edited."
+        Description = $"{runtime.GetActorName(Edited.Id)}'s sheet was edited.",
+        ActorIds = { Edited.Id }
     };
 }

@@ -268,15 +268,39 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             // The last participant was removed on their own turn: the round is over.
             encounter.TurnIndex = 0;
-            encounter.Round++;
-            foreach (var participant in encounter.Participants)
-            {
-                participant.HasActed = false;
-            }
+            StartNewRound(encounter);
         }
 
         MarkEncounterDirty();
         return true;
+    }
+
+    /// <summary>Moves the encounter into its next round: nobody has acted or begun a turn in it yet.</summary>
+    internal static void StartNewRound(EncounterDocument encounter)
+    {
+        encounter.Round++;
+        foreach (var participant in encounter.Participants)
+        {
+            participant.HasActed = false;
+            participant.TurnStarted = false;
+        }
+    }
+
+    /// <summary>Starts <paramref name="participant"/>'s turn: start-of-turn effects anchored to them tick,
+    /// once per round however often the turn comes back to them.</summary>
+    internal void BeginTurn(EncounterParticipant participant)
+    {
+        if (participant.TurnStarted)
+        {
+            return;
+        }
+
+        participant.TurnStarted = true;
+        if (_actorEntities.ContainsKey(participant.ActorId))
+        {
+            World.AdvanceTurn(participant.ActorId, EffectExpiry.StartOfTurn);
+            MarkAllHydratedActorsDirty();
+        }
     }
 
     /// <summary>Deterministic initiative order: highest roll first, <see cref="EncounterParticipant.TieBreak"/>
@@ -295,6 +319,29 @@ public sealed class CampaignRuntime : IAsyncDisposable
             var byTieBreak = b.TieBreak.CompareTo(a.TieBreak);
             return byTieBreak != 0 ? byTieBreak : string.CompareOrdinal(a.ActorId, b.ActorId);
         });
+    }
+
+    /// <summary>Makes the tiebreaks of everyone on <paramref name="roll"/> strictly descending in their
+    /// current list order, raising only those that need it, so a later <see cref="SortParticipants"/>
+    /// keeps an order that was arranged by hand.</summary>
+    internal static void FixTieOrder(EncounterDocument encounter, int roll)
+    {
+        int? below = null;
+        for (var i = encounter.Participants.Count - 1; i >= 0; i--)
+        {
+            var participant = encounter.Participants[i];
+            if (participant.InitiativeRoll != roll)
+            {
+                continue;
+            }
+
+            if (below is { } next && participant.TieBreak <= next)
+            {
+                participant.TieBreak = next + 1;
+            }
+
+            below = participant.TieBreak;
+        }
     }
 
     /// <summary>Appends a roll to the live session's shared roll log (3.6); a no-op when no

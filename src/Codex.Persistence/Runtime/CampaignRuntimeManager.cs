@@ -132,6 +132,12 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         {
             return false;
         }
+        catch (KeyNotFoundException)
+        {
+            // The actor was deleted while this save was queued. Not a fall-back to the repository:
+            // with nothing stored, that save would create the actor again.
+            return false;
+        }
         catch (InvalidOperationException) when (TryGet(access.CampaignId) != runtime)
         {
             // The table ended while this save was queued: nothing live left to merge with.
@@ -212,6 +218,20 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         else if (campaign.CurrentSessionId != null)
         {
             var current = await sessionRepository.GetAsync(campaign.CurrentSessionId);
+            if (current is { Status: SessionStatus.Live } && LastActivity(current) is { } last && DateTime.UtcNow - last > StaleLiveSession)
+            {
+                // A table left idle (evicted with its session still Live) and only started again days
+                // later is a new evening, not more of the old one: close the old one out.
+                await sessionRepository.UpdateAsync(current.Id, stored =>
+                {
+                    if (stored.Status == SessionStatus.Live)
+                    {
+                        stored.Status = SessionStatus.Completed;
+                    }
+                });
+                current = null;
+            }
+
             session = current is { Status: not SessionStatus.Completed } ? current : null;
         }
 
@@ -243,6 +263,17 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         return session;
     }
 
+    /// <summary>How long a Live session may sit without anything logged before a plain start treats it as over.</summary>
+    internal static readonly TimeSpan StaleLiveSession = TimeSpan.FromHours(12);
+
+    /// <summary>When anything was last logged to the session; null when nothing ever was.</summary>
+    private static DateTime? LastActivity(SessionDocument session) =>
+        session.Events.Select(e => e.Timestamp)
+            .Concat(session.RollLog.Select(r => r.Timestamp))
+            .Concat(session.Notes.Select(n => n.Timestamp))
+            .DefaultIfEmpty()
+            .Max() is var last && last != default ? last : null;
+
     /// <summary>The session's last encounter, when it was never ended: the table picks it up where
     /// it left off instead of wiping the initiative order on every start (F9).</summary>
     private async Task<EncounterDocument?> FindOpenEncounterAsync(SessionDocument session)
@@ -264,7 +295,11 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// <summary>Stops and disposes a campaign's runtime, and closes out its live session. Called
     /// when the DM ends the table, just before a campaign is deleted, and by
     /// <see cref="EvictIdleAsync"/>.</summary>
-    public async Task EvictAsync(string campaignId)
+    public Task EvictAsync(string campaignId) => EvictAsync(campaignId, completeSession: true);
+
+    /// <param name="completeSession">False leaves the session Live, so the next start resumes it instead of
+    /// opening a new one: what idle eviction wants, since a quiet table is not a finished evening.</param>
+    private async Task EvictAsync(string campaignId, bool completeSession)
     {
         if (!_runtimes.TryRemove(campaignId, out var runtime))
         {
@@ -273,7 +308,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
 
         await runtime.DisposeAsync();
 
-        var campaign = await campaignRepository.GetAsync(campaignId);
+        var campaign = completeSession ? await campaignRepository.GetAsync(campaignId) : null;
         if (campaign?.CurrentSessionId is { } sessionId)
         {
             await sessionRepository.UpdateAsync(sessionId, stored =>
@@ -289,14 +324,15 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     }
 
     /// <summary>Evicts every runtime that has taken no command for <paramref name="idleFor"/>, so a table
-    /// nobody ended doesn't stay in memory (and its session stay Live) forever. The manager owns no timer;
+    /// nobody ended doesn't stay in memory forever. The session stays Live: a long stretch of play
+    /// without commands (roleplay, a break) must not end the evening, and the next start resumes it. The manager owns no timer;
     /// a hosted service calls this. Returns the campaigns it stopped.</summary>
     public async Task<IReadOnlyList<string>> EvictIdleAsync(TimeSpan idleFor, DateTime utcNow)
     {
         var idle = _runtimes.Where(r => utcNow - r.Value.LastActivityUtc >= idleFor).Select(r => r.Key).ToList();
         foreach (var campaignId in idle)
         {
-            await EvictAsync(campaignId);
+            await EvictAsync(campaignId, completeSession: false);
         }
 
         return idle;

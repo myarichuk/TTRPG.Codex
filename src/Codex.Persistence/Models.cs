@@ -287,6 +287,11 @@ public class EncounterParticipant
     public int TieBreak { get; set; }
 
     public bool HasActed { get; set; }
+
+    /// <summary>Their start-of-turn effects have already ticked this round, so handing the turn back to
+    /// them (after someone acted ahead of them, or after a step back) doesn't tick them twice.</summary>
+    public bool TurnStarted { get; set; }
+
     public TurnState State { get; set; } = TurnState.Normal;
 }
 

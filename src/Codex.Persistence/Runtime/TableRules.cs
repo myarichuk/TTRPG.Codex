@@ -141,7 +141,9 @@ internal static class TableRules
         return (dealt, modifier);
     }
 
-    /// <summary>True when the sheet's tag list names the damage type ("fire", "Bludgeoning, Piercing, and Slashing from nonmagical attacks").</summary>
+    /// <summary>True when the sheet's tag list names the damage type outright ("fire", "cold, lightning"). Whole words only,
+    /// so the "Poisoned" condition among immunities is not poison damage, and conditional entries
+    /// ("Bludgeoning, Piercing, and Slashing from nonmagical attacks") never apply on their own.</summary>
     private static bool Lists(IReadOnlyDictionary<string, object> sheet, string field, string damageType)
     {
         if (!sheet.TryGetValue(field, out var raw) || raw == null)
@@ -149,15 +151,28 @@ internal static class TableRules
             return false;
         }
 
-        IEnumerable<string> tags = raw switch
+        IEnumerable<string> entries = raw switch
         {
-            string s => s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+            string s => s.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
             System.Collections.IEnumerable list => list.Cast<object?>().Select(o => o?.ToString() ?? string.Empty),
             _ => Array.Empty<string>()
         };
 
-        return tags.Any(tag => tag.Contains(damageType, StringComparison.OrdinalIgnoreCase));
+        return entries
+            .Where(entry => !IsConditional(entry))
+            .SelectMany(entry => entry.Split(new[] { ',', '/' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .SelectMany(part => part.Split(" and ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Select(part => part.StartsWith("and ", StringComparison.OrdinalIgnoreCase) ? part[4..].Trim() : part)
+            .Any(part => string.Equals(part, damageType.Trim(), StringComparison.OrdinalIgnoreCase));
     }
+
+    /// <summary>An entry with a condition attached ("... from nonmagical attacks", "... that aren't silvered"):
+    /// the table can't tell whether this hit meets it, so the DM applies it by hand rather than the table
+    /// applying it to every hit of that type.</summary>
+    private static bool IsConditional(string entry) =>
+        ConditionalMarkers.Any(marker => entry.Contains(marker, StringComparison.OrdinalIgnoreCase));
+
+    private static readonly string[] ConditionalMarkers = { " from ", "nonmagical", "that aren't", "that are not", "except", " while ", " when " };
 
     // ---- Healing and temporary hit points ----
 

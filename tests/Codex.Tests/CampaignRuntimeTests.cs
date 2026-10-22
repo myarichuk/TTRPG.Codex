@@ -94,7 +94,7 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task ARuntimeNobodyHasUsedForAWhile_IsEvicted_AndItsSessionClosed_Async()
+    public async Task ARuntimeNobodyHasUsedForAWhile_IsEvicted_AndItsSessionResumedOnTheNextStart_Async()
     {
         var (manager, campaigns) = BuildManager();
         var campaignId = Guid.NewGuid().ToString();
@@ -107,8 +107,14 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.Equal(new[] { campaignId }, await manager.EvictIdleAsync(TimeSpan.FromHours(2), runtime.LastActivityUtc.AddHours(3)));
         Assert.Null(manager.TryGet(campaignId));
+
+        // A quiet table is not a finished evening: the session stays Live and the next start picks it up.
         var session = Assert.Single(await _sessionRepository.GetAllForCampaignAsync(campaignId));
-        Assert.Equal(SessionStatus.Completed, session.Status);
+        Assert.Equal(SessionStatus.Live, session.Status);
+        var restarted = await manager.GetOrStartAsync(campaign, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+        Assert.Equal(session.Id, restarted.ActiveSession!.Id);
+        Assert.Single(await _sessionRepository.GetAllForCampaignAsync(campaignId));
+        await manager.EvictAsync(campaignId);
     }
 
     [Fact]
