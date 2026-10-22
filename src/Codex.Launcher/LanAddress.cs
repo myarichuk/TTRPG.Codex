@@ -24,6 +24,25 @@ internal static class LanAddress
         }
     }
 
+    /// <summary>This computer's Tailscale address (100.64.0.0/10), or <c>null</c>. Players who have Tailscale
+    /// can join from outside the home network with it, with no router settings.</summary>
+    public static string? Tailnet()
+    {
+        try
+        {
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n => n.OperationalStatus == OperationalStatus.Up)
+                .SelectMany(n => n.GetIPProperties().UnicastAddresses.Select(a => a.Address))
+                .FirstOrDefault(IsTailnet)?.ToString();
+        }
+        catch (NetworkInformationException)
+        {
+            return null;
+        }
+    }
+
+    internal static bool IsTailnet(IPAddress a) => a.AddressFamily == AddressFamily.InterNetwork && a.GetAddressBytes() is [100, >= 64 and <= 127, ..];
+
     internal static string? Rank(IEnumerable<(string Name, NetworkInterfaceType Type, IPAddress Address)> candidates) =>
         candidates
             .Where(c => !IPAddress.IsLoopback(c.Address) && !IsLinkLocal(c.Address))

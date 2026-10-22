@@ -60,17 +60,49 @@ public partial class MainWindow : Window
         OpenButton.IsEnabled = model.CanOpen;
         ProblemText.Text = model.Controller.Problem;
         ProblemText.IsVisible = !string.IsNullOrEmpty(model.Controller.Problem);
-        var join = model.JoinUrl;
-        JoinPanel.IsVisible = join != null;
-        JoinText.Text = join;
+        RebuildLinks();
         LanHint.IsVisible = model.Settings.AllowLan;
     }
+
+    private string linksKey = "";
+
+    /// <summary>One row per address worth sharing, each with a Copy button.</summary>
+    private void RebuildLinks()
+    {
+        var links = model.Links;
+        var key = string.Join("|", links.Select(l => l.Url));
+        if (key == linksKey) return; // keep a "Copied" confirmation on screen across refreshes
+        linksKey = key;
+        LinksPanel.Children.Clear();
+        foreach (var link in links)
+        {
+            var copy = new Button { Content = "Copy link", Padding = new Thickness(12, 4), FontSize = 13 };
+            copy.Classes.Add("etched");
+            copy.Click += async (_, _) =>
+            {
+                await CopyAsync(link.Url);
+                copy.Content = "Copied ✓";
+                await Task.Delay(1500);
+                copy.Content = "Copy link";
+            };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("170,*,Auto") };
+            row.Children.Add(new TextBlock { Text = link.Label, Foreground = new SolidColorBrush(Color.Parse("#cbbfa5")), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            var url = new SelectableTextBlock { Text = link.Url, Foreground = new SolidColorBrush(Color.Parse("#ffe9ae")), FontWeight = FontWeight.Bold, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            Grid.SetColumn(url, 1);
+            Grid.SetColumn(copy, 2);
+            row.Children.Add(url);
+            row.Children.Add(copy);
+            LinksPanel.Children.Add(row);
+        }
+    }
+
+    private void OnOpenData(object? sender, RoutedEventArgs e) => model.OpenDataFolder();
+    private void OnOpenBackups(object? sender, RoutedEventArgs e) => model.OpenBackupsFolder();
 
     private void OnToggle(object? sender, RoutedEventArgs e) => model.Toggle();
     private void OnOpen(object? sender, RoutedEventArgs e) => model.OpenBrowser();
     private void OnOpenLog(object? sender, RoutedEventArgs e) => model.OpenLog();
     private void OnQuit(object? sender, RoutedEventArgs e) => model.Quit();
-    private async void OnCopyJoin(object? sender, RoutedEventArgs e) => await CopyJoinLinkAsync();
 
     private void OnLanChanged(object? sender, RoutedEventArgs e)
     {
@@ -82,9 +114,8 @@ public partial class MainWindow : Window
     private void SetLanText() =>
         LanBox.Content = (LanBox.IsChecked == true ? "◆  " : "◇  ") + "Let players on my network join";
 
-    internal async Task CopyJoinLinkAsync()
+    internal async Task CopyAsync(string text)
     {
-        var text = model.JoinUrl ?? model.Settings.LocalUrl;
         if (Clipboard is { } clipboard) await clipboard.SetTextAsync(text);
     }
 

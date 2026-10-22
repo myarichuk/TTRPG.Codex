@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Codex.Launcher.MainWindow"
         Title="TTRPG.Codex"
-        Width="540" Height="420"
+        Width="540" Height="470"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
         Background="#15120e">
@@ -24,18 +24,19 @@
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Button x:Name="ToggleButton" Classes="plaque" MinWidth="130" Click="OnToggle" />
             <Button x:Name="OpenButton" Classes="etched" Content="Open the table" Click="OnOpen" />
-            <Button Classes="etched" Content="Log" Click="OnOpenLog" />
             <Button Classes="etched" Content="Quit" Click="OnQuit" />
           </StackPanel>
 
           <ToggleButton x:Name="LanBox" Classes="etched" HorizontalAlignment="Left" Click="OnLanChanged" />
-          <StackPanel x:Name="JoinPanel" Orientation="Horizontal" Spacing="10" IsVisible="False">
-            <TextBlock Text="Give your players" Foreground="#cbbfa5" VerticalAlignment="Center" />
-            <SelectableTextBlock x:Name="JoinText" Foreground="#ffe9ae" FontWeight="Bold" FontSize="15" VerticalAlignment="Center" />
-            <Button Classes="etched" Content="Copy link" Padding="12,4" FontSize="13" Click="OnCopyJoin" />
-          </StackPanel>
+          <StackPanel x:Name="LinksPanel" Spacing="6" />
           <TextBlock x:Name="LanHint" Foreground="#b3a78d" FontSize="12" TextWrapping="Wrap" IsVisible="False"
                      Text="Your firewall may ask the first time: allow private networks. Players on other networks need a VPN or tunnel, such as Tailscale." />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="Open" Foreground="#9d9078" FontSize="12" VerticalAlignment="Center" />
+            <Button Classes="etched" Content="Log" Padding="10,3" FontSize="12" Click="OnOpenLog" />
+            <Button Classes="etched" Content="Campaign data" Padding="10,3" FontSize="12" Click="OnOpenData" />
+            <Button Classes="etched" Content="Backups" Padding="10,3" FontSize="12" Click="OnOpenBackups" />
+          </StackPanel>
         </StackPanel>
       </Border>
     </Grid>

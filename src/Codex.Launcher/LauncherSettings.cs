@@ -20,8 +20,15 @@ internal sealed class LauncherSettings
     /// <summary>The address the DM opens in their own browser.</summary>
     public string LocalUrl => $"http://localhost:{ValidPort}";
 
-    /// <summary>The address to give players, or <c>null</c> while only this computer can connect.</summary>
-    public string? JoinUrl(string? lanAddress) => AllowLan && lanAddress != null ? $"http://{lanAddress}:{ValidPort}" : null;
+    /// <summary>The addresses worth copying: this computer always, the network and Tailscale only while the
+    /// server is open to the network.</summary>
+    public IReadOnlyList<LauncherLink> Links(string? lanAddress, string? tailnetAddress)
+    {
+        var links = new List<LauncherLink> { new("This computer", LocalUrl) };
+        if (AllowLan && lanAddress != null) links.Add(new("Players on your network", $"http://{lanAddress}:{ValidPort}"));
+        if (AllowLan && tailnetAddress != null) links.Add(new("Players on Tailscale", $"http://{tailnetAddress}:{ValidPort}"));
+        return links;
+    }
 
     private int ValidPort => Port is > 0 and < 65536 ? Port : DefaultPort;
 
@@ -55,3 +62,5 @@ internal sealed class LauncherSettings
         }
     }
 }
+
+internal sealed record LauncherLink(string Label, string Url);

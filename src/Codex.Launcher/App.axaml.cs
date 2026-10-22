@@ -15,6 +15,7 @@ public partial class App : Application
     private NativeMenuItem? toggleItem;
     private NativeMenuItem? openItem;
     private NativeMenuItem? copyItem;
+    private NativeMenuItem? copyLocalItem;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -63,8 +64,12 @@ public partial class App : Application
         toggleItem.Click += (_, _) => model!.Toggle();
         openItem = new NativeMenuItem("Open TTRPG.Codex");
         openItem.Click += (_, _) => model!.OpenBrowser();
-        copyItem = new NativeMenuItem("Copy join link");
-        copyItem.Click += async (_, _) => await window!.CopyJoinLinkAsync();
+        copyItem = new NativeMenuItem("Copy link for players");
+        copyItem.Click += async (_, _) => await window!.CopyAsync(model!.Links.Count > 1 ? model.Links[1].Url : model.Settings.LocalUrl);
+        copyLocalItem = new NativeMenuItem("Copy link for this computer");
+        copyLocalItem.Click += async (_, _) => await window!.CopyAsync(model!.Settings.LocalUrl);
+        var backups = new NativeMenuItem("Open backups folder");
+        backups.Click += (_, _) => model!.OpenBackupsFolder();
         var show = new NativeMenuItem("Show window");
         show.Click += (_, _) => ShowWindow();
         var log = new NativeMenuItem("Open log");
@@ -75,7 +80,7 @@ public partial class App : Application
         quit.Click += (_, _) => model!.Quit();
 
         var menu = new NativeMenu();
-        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, new NativeMenuItemSeparator(), log, data, new NativeMenuItemSeparator(), quit })
+        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, new NativeMenuItemSeparator(), log, data, backups, new NativeMenuItemSeparator(), quit })
         {
             menu.Items.Add(item);
         }
@@ -116,7 +121,7 @@ public partial class App : Application
         toggleItem.Header = model.ToggleText == "Stop" ? "Stop server" : "Start server";
         toggleItem.IsEnabled = !model.Controller.IsBusy;
         openItem.IsEnabled = model.CanOpen;
-        copyItem.IsEnabled = model.JoinUrl != null;
+        copyItem.IsEnabled = model.Links.Count > 1;
     }
 
     private void Quit(IClassicDesktopStyleApplicationLifetime desktop)

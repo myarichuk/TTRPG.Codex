@@ -56,8 +56,7 @@ internal sealed class LauncherViewModel
     public string ToggleText => Controller.State is ServerState.Running or ServerState.Starting ? "Stop" : "Start";
     public bool CanOpen => Controller.State == ServerState.Running;
 
-    /// <summary>The address to give players, only while the server is up and network access is on.</summary>
-    public string? JoinUrl => Settings.AllowLan ? Settings.JoinUrl(LanAddress.Best()) : null;
+    public IReadOnlyList<LauncherLink> Links => Settings.Links(LanAddress.Best(), LanAddress.Tailnet());
 
     public void StartServer(bool openBrowser)
     {
@@ -90,6 +89,13 @@ internal sealed class LauncherViewModel
     public void OpenBrowser() => Shell.Open(Settings.LocalUrl);
     public void OpenLog() => Shell.Open(File.Exists(Controller.LogPath) ? Controller.LogPath : Path.GetDirectoryName(Controller.LogPath)!);
     public void OpenDataFolder() => Shell.Open(dataHome);
+
+    /// <summary>The daily backups the server writes beside the campaign data.</summary>
+    public void OpenBackupsFolder()
+    {
+        var backups = Path.Combine(LauncherPaths.RavenData(dataHome), "Backups");
+        Shell.Open(Directory.Exists(backups) ? backups : dataHome);
+    }
 
     public void Quit()
     {

@@ -12,12 +12,15 @@ public class LauncherTests
         var settings = new LauncherSettings { Port = 5080 };
 
         Assert.Equal("http://localhost:5080", settings.BindUrl);
-        Assert.Null(settings.JoinUrl("192.168.1.20"));
+        Assert.Single(settings.Links("192.168.1.20", "100.101.102.103"));
 
         settings.AllowLan = true;
 
         Assert.Equal("http://0.0.0.0:5080", settings.BindUrl);
-        Assert.Equal("http://192.168.1.20:5080", settings.JoinUrl("192.168.1.20"));
+        Assert.Equal(
+            new[] { "http://localhost:5080", "http://192.168.1.20:5080", "http://100.101.102.103:5080" },
+            settings.Links("192.168.1.20", "100.101.102.103").Select(l => l.Url));
+        Assert.Equal(new[] { "http://localhost:5080" }, settings.Links(null, null).Select(l => l.Url));
         Assert.Equal("http://localhost:5080", settings.LocalUrl);
     }
 
@@ -62,6 +65,17 @@ public class LauncherTests
         });
 
         Assert.Equal("192.168.1.20", best);
+    }
+
+    [Theory]
+    [InlineData("100.64.0.1", true)]
+    [InlineData("100.127.255.254", true)]
+    [InlineData("100.63.0.1", false)]
+    [InlineData("100.128.0.1", false)]
+    [InlineData("192.168.1.1", false)]
+    public void Tailscale_addresses_are_the_carrier_grade_range(string address, bool expected)
+    {
+        Assert.Equal(expected, LanAddress.IsTailnet(IPAddress.Parse(address)));
     }
 
     [Fact]
