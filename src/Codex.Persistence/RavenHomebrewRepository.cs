@@ -1,3 +1,4 @@
+using Codex.Core;
 using Raven.Client.Documents;
 
 namespace Codex.Persistence;
@@ -16,7 +17,7 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
             query = query.Where(h => h.IsPublished);
         }
 
-        return await query.OrderBy(h => h.Name).ToListAsync();
+        return Normalized(await query.OrderBy(h => h.Name).ToListAsync());
     }
 
     public async Task<HomebrewEntryDocument?> GetVisibleAsync(string id, CampaignAccess access)
@@ -28,7 +29,7 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
             return null;
         }
 
-        return access.IsDm || entry.IsPublished ? entry : null;
+        return access.IsDm || entry.IsPublished ? Normalized(new[] { entry })[0] : null;
     }
 
     public async Task<bool> TrySaveAsync(HomebrewEntryDocument entry, CampaignAccess access)
@@ -80,6 +81,26 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
         return true;
     }
 
+    public async Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var entry = await session.LoadAsync<HomebrewEntryDocument>(id);
+        if (entry == null || entry.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        entry.HasArt = hasArt;
+        entry.ArtVersion++;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)
     {
         if (!access.IsDm)
@@ -102,10 +123,22 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
     public async Task<IEnumerable<HomebrewEntryDocument>> GetAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
-        return await session.Query<HomebrewEntryDocument, HomebrewByCampaignIndex>()
+        return Normalized(await session.Query<HomebrewEntryDocument, HomebrewByCampaignIndex>()
             .Customize(x => x.WaitForNonStaleResults())
             .Where(h => h.CampaignId == campaignId)
-            .ToListAsync();
+            .ToListAsync());
+    }
+
+    /// <summary>RavenDB reads numbers inside an <c>object</c> back as its own lazy type ("18.0");
+    /// the editor, the stat block and the exporter all want plain longs and doubles.</summary>
+    private static IList<HomebrewEntryDocument> Normalized(IList<HomebrewEntryDocument> entries)
+    {
+        foreach (var entry in entries)
+        {
+            entry.Properties = YamlValues.NormalizeMap(entry.Properties);
+        }
+
+        return entries;
     }
 
     public async Task SaveAsync(HomebrewEntryDocument entry)

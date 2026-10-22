@@ -33,6 +33,11 @@ public class HomebrewEntryDocument
     /// <summary>Set when the entry was copied in from another campaign or cloned from a pack entry: where it came from, for the attribution line.</summary>
     public string? ImportedFrom { get; set; }
 
+    /// <summary>True once art is stored as the "art" attachment; <see cref="ArtVersion"/> busts caches.
+    /// Set only through <see cref="IHomebrewRepository.SetArtAsync"/>, never by a plain save.</summary>
+    public bool HasArt { get; set; }
+    public int ArtVersion { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -61,6 +66,9 @@ public interface IHomebrewRepository
 
     /// <summary>Creates or updates an entry. DM only. Returns false (and saves nothing) otherwise.</summary>
     Task<bool> TrySaveAsync(HomebrewEntryDocument entry, CampaignAccess access);
+
+    /// <summary>Records that the entry's art was stored or removed (bumping its version). DM only.</summary>
+    Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access);
 
     /// <summary>Deletes one entry. DM only.</summary>
     Task<bool> TryDeleteAsync(string id, CampaignAccess access);

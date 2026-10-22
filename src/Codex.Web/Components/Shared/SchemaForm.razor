@@ -166,31 +166,42 @@ else
     private RenderFragment RenderCollection(FieldDefinition field, string controlId) => @<div id="@controlId" class="collection-editor" role="group" aria-label="@field.Label">
         @{
             var rows = GetRows(field);
+            // Only feature tables are levelled; a creature's actions have no level column.
+            var levelled = field.Key.Contains("feature", StringComparison.OrdinalIgnoreCase) || rows.Any(r => r.ContainsKey("level"));
+        }
+        @if (rows.Count == 0 && ReadOnly)
+        {
+            <p class="small-muted mb-0">None.</p>
         }
         @for (var i = 0; i < rows.Count; i++)
         {
             var index = i;
             var row = rows[index];
-            <div class="d-flex gap-2 align-items-start mb-2">
-                <input type="text" class="field-input field-sm w-5" placeholder="Level" aria-label="@field.Label row @(index + 1) level" disabled="@ReadOnly"
-                       value="@(row.GetValueOrDefault("level")?.ToString())"
-                       @onchange="@(e => UpdateRowAsync(field, index, "level", e.Value?.ToString()))" />
-                <input type="text" class="field-input" style="max-width: 14rem" placeholder="Name" aria-label="@field.Label row @(index + 1) name" disabled="@ReadOnly"
-                       value="@(row.GetValueOrDefault("name")?.ToString())"
-                       @onchange="@(e => UpdateRowAsync(field, index, "name", e.Value?.ToString()))" />
-                <textarea class="field-input" rows="2" placeholder="Description" aria-label="@field.Label row @(index + 1) description" disabled="@ReadOnly"
+            <div class="collection-row">
+                <div class="collection-row-head">
+                    @if (levelled)
+                    {
+                        <input type="number" min="1" class="field-input field-sm collection-level" placeholder="Lvl" aria-label="@field.Label @(index + 1): level" disabled="@ReadOnly"
+                               value="@(row.GetValueOrDefault("level")?.ToString())"
+                               @onchange="@(e => UpdateRowAsync(field, index, "level", e.Value?.ToString()))" />
+                    }
+                    <input type="text" class="field-input field-sm" placeholder="@($"{Singular(field.Label)} name")" aria-label="@field.Label @(index + 1): name" disabled="@ReadOnly"
+                           value="@(row.GetValueOrDefault("name")?.ToString())"
+                           @onchange="@(e => UpdateRowAsync(field, index, "name", e.Value?.ToString()))" />
+                    @if (!ReadOnly)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {field.Label} {index + 1}")" OnClick="() => RemoveRowAsync(field, index)" />
+                    }
+                </div>
+                <textarea class="field-input" rows="2" placeholder="What it does, e.g. Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Piercing damage." aria-label="@field.Label @(index + 1): description" disabled="@ReadOnly"
                           value="@(row.GetValueOrDefault("description")?.ToString())"
                           @onchange="@(e => UpdateRowAsync(field, index, "description", e.Value?.ToString()))"></textarea>
-                @if (!ReadOnly)
-                {
-                    <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {field.Label} row @(index + 1)")" OnClick="() => RemoveRowAsync(field, index)" />
-                }
             </div>
         }
         @if (!ReadOnly)
         {
             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddRowAsync(field)">
-                <LucideIcon IconName="plus" Size="14" /> Add @field.Label.ToLowerInvariant() row
+                <LucideIcon IconName="plus" Size="14" /> Add @Singular(field.Label).ToLowerInvariant()
             </CodexButton>
         }
     </div>;
@@ -251,6 +262,9 @@ else
     }
 
     // ---- Helpers ----
+
+    /// <summary>"Actions" -> "Action", "Bonus Actions" -> "Bonus Action": the label of one row.</summary>
+    private static string Singular(string label) => label.EndsWith("ies") ? label[..^3] + "y" : label.EndsWith('s') ? label[..^1] : label;
 
     private IReadOnlyList<(string Id, string Name)> OptionsFor(FieldDefinition field)
     {

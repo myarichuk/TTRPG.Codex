@@ -55,7 +55,7 @@ else
                     }
                 </div>
                 <div class="min-w-0">
-                    <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/cast">Cast</a></nav>
+                    <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">Cast</a></nav>
                     <h1 data-testid="actor-name">@DisplayName</h1>
                     <div class="plate-plaques">
                         <span class="pill">@KindLabel</span>
@@ -78,16 +78,17 @@ else
                     </div>
                 </div>
             </div>
-            @if (CanEdit)
-            {
-                <div class="plate-save">
-                    @if (DirtyCount > 0)
-                    {
-                        <span class="dirty-note" role="status" data-testid="sheet-dirty">@DirtyCount unsaved @(DirtyCount == 1 ? "change" : "changes")</span>
-                    }
+            <div class="plate-save">
+                @if (CanEdit && DirtyCount > 0)
+                {
+                    <span class="dirty-note" role="status" data-testid="sheet-dirty">@DirtyCount unsaved @(DirtyCount == 1 ? "change" : "changes")</span>
+                }
+                <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> Back to cast</a>
+                @if (CanEdit)
+                {
                     <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">Save changes</CodexButton>
-                </div>
-            }
+                }
+            </div>
         </div>
         <div class="stat-strip" role="list" aria-label="Key numbers">
             @if (system?.PrimaryResource is { } vital)
@@ -747,6 +748,10 @@ else
     </div>
 }
 
+@* Leaving with unsaved edits asks first, whichever link was used (Back, the breadcrumb, the header). *@
+<NavigationLock OnBeforeInternalNavigation="ConfirmLeaveAsync" ConfirmExternalNavigation="@(CanEdit && DirtyCount > 0)" />
+<ConfirmDialog @ref="leaveConfirm" />
+
 @code {
     [Parameter] public string CampaignId { get; set; } = string.Empty;
     [Parameter] public string ActorId { get; set; } = string.Empty;
@@ -884,6 +889,21 @@ else
     /// <summary>Hidden fields, plus maximum hit points while the rules work them out (typing there would be overwritten).</summary>
     private IReadOnlySet<string> HiddenNow =>
         Rules?.HitPoints is { } hp && evaluation?.HitPoints is { Active: true } ? new HashSet<string>(hiddenKeys, StringComparer.OrdinalIgnoreCase) { hp.Key } : hiddenKeys;
+
+    private ConfirmDialog leaveConfirm = null!;
+
+    private string CastPath => $"/campaigns/{CampaignId}/cast";
+
+    private async Task ConfirmLeaveAsync(LocationChangingContext context)
+    {
+        var dirty = CanEdit ? DirtyCount : 0;
+        if (dirty == 0) return;
+        var leave = await leaveConfirm.ShowAsync(
+            $"Discard {dirty} unsaved {(dirty == 1 ? "change" : "changes")}?",
+            "You changed this sheet without saving. Leave now and those changes are lost.",
+            "Discard and leave", isDestructive: true, cancel: "Keep editing");
+        if (!leave) context.PreventNavigation();
+    }
 
     private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
     private SheetRules? Rules => system?.SheetRules;

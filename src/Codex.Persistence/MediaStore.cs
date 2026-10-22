@@ -21,6 +21,19 @@ public class RavenMediaStore(RavenDbService dbService) : IMediaStore
 {
     public const string CampaignCover = "cover";
     public const string ActorPortrait = "portrait";
+    public const string EntryArt = "art";
+
+    /// <summary>Attachment name for a pack entry's art on the campaign document. Ids are slugs, but
+    /// anything else is folded to '-' so a crafted id can't address another attachment.</summary>
+    public static string PackArtName(string type, string id) => $"art-{Safe(type)}--{Safe(id)}";
+
+    /// <summary>Attachment name for a location's art on its region document.</summary>
+    public static string LocationArtName(string locationId) => $"location-{Safe(locationId)}";
+
+    public static string PackArtKey(string type, string id) => $"{type}/{id}".ToLowerInvariant();
+
+    private static string Safe(string value) =>
+        System.Text.RegularExpressions.Regex.Replace(value.ToLowerInvariant(), "[^a-z0-9_-]", "-");
 
     /// <summary>Image types the uploader accepts. SVG is excluded on purpose: it can carry scripts.</summary>
     public static readonly IReadOnlySet<string> AllowedContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

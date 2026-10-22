@@ -66,4 +66,33 @@ public class AiPromptsTests
         Assert.Contains("fighter (Fighter)", user);
         Assert.Contains("\"HP\"", user);
     }
+
+    [Fact]
+    public void Describe_PlayerAudience_StaysInWorldAndCarriesFacts()
+    {
+        var (system, user) = AiPrompts.Describe(new DescribeRequest("Bog Toad", "homebrew creature (Large beast)", "SRD 5.2.1",
+            new[] { "Challenge Rating: 2", "Actions: Bite; Swallow" }, "", "", AiAudience.Players));
+
+        Assert.Contains("Players will read this", system);
+        Assert.Contains("SRD 5.2.1", system);
+        Assert.Contains("Challenge Rating: 2", user);
+        Assert.Contains("Write the description from the facts.", user);
+    }
+
+    [Fact]
+    public void Describe_WithText_PolishesAndKeepsInstruction()
+    {
+        var (_, user) = AiPrompts.Describe(new DescribeRequest("Greyharbour", "place on the world map", "SRD", Array.Empty<string>(), "A grey port.", "mention the gulls", AiAudience.Dm));
+
+        Assert.Contains("A grey port.", user);
+        Assert.Contains("mention the gulls", user);
+    }
+
+    [Fact]
+    public void Image_KeepsLetteringOutAndPicksAShot()
+    {
+        Assert.Contains("Full-figure portrait of Bog Toad", AiPrompts.Image("Bog Toad", "creature", "Warty and huge.", landscape: false));
+        Assert.Contains("No text", AiPrompts.Image("Greyharbour", "place", null, landscape: true));
+        Assert.StartsWith("Wide establishing view", AiPrompts.Image("Greyharbour", "place", null, landscape: true));
+    }
 }

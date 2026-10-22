@@ -110,9 +110,13 @@ public class CampaignExportService(
         // Mint the DM access the guarded saves require from the verified check above.
         var dmAccess = new CampaignAccess(campaign.Id, requestingUserId, CampaignRole.DM);
 
+        // Images are attachments and don't travel in the bundle; flags claiming them would only show broken images.
+        campaign.HasCover = false;
+        campaign.PackArt.Clear();
         await campaigns.SaveAsync(campaign);
         foreach (var actor in bundle.Actors.Where(a => a.CampaignId == campaign.Id))
         {
+            actor.HasPortrait = false;
             NormalizeState(actor);
             await actors.SaveAsync(actor);
         }
@@ -139,12 +143,14 @@ public class CampaignExportService(
 
         foreach (var region in bundle.Regions.Where(r => r.CampaignId == campaign.Id))
         {
+            region.Locations.ForEach(l => l.HasArt = false);
             await regions.SaveAsync(region, dmAccess);
         }
 
         foreach (var entry in bundle.Homebrew.Where(h => h.CampaignId == campaign.Id))
         {
             entry.Properties = NormalizeMap(entry.Properties);
+            entry.HasArt = false;
             await homebrew.SaveAsync(entry);
         }
 

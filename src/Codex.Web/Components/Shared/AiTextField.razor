@@ -1,0 +1,96 @@
+@using Codex.Web.Services
+@inject ILogger<AiTextField> Logger
+
+@* A description box with an "Enhance with AI" button beside its label. The AI's text replaces the
+   box's text and one Undo puts the previous text back, so trying it costs nothing. Nothing is
+   saved here: the owning form saves as usual. *@
+
+<div class="ai-field">
+    <div class="ai-field-head">
+        <label for="@Id" class="field-label">@Label</label>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="EnhanceAsync" Disabled="@busy" data-testid="@($"{TestId}-ai")">
+            @(busy ? "Writing…" : string.IsNullOrWhiteSpace(Value) ? "Write with AI" : "Enhance with AI")
+        </CodexButton>
+    </div>
+    <textarea id="@Id" class="field-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput" aria-describedby="@(Id)-hint" aria-busy="@(busy ? "true" : "false")" data-testid="@TestId"></textarea>
+    <div class="ai-field-foot">
+        <label for="@(Id)-ask" class="visually-hidden">What the AI should change (optional)</label>
+        <input id="@(Id)-ask" class="field-input field-sm" placeholder="Optional: tell the AI what you want, e.g. “more menacing, mention the smell”" @bind="instruction" @bind:event="oninput" />
+        @if (previous != null)
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="undo-2" OnClick="UndoAsync" data-testid="@($"{TestId}-undo")">Undo AI</CodexButton>
+        }
+    </div>
+    <div id="@(Id)-hint" class="field-hint">@Hint</div>
+    @if (error != null)
+    {
+        <p class="text-danger small mb-0 mt-1" role="alert">@error @if (notConfigured) { <a href="/settings/ai">Open AI settings</a> }</p>
+    }
+    else if (previous != null)
+    {
+        <p class="small-muted mb-0 mt-1" role="status">AI draft in the box. Edit it freely, or undo.</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+    [Parameter] public string Label { get; set; } = "Description";
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public int Rows { get; set; } = 5;
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string Hint { get; set; } = "Plain text. **bold**, *italic*, \"- \" bullets and | tables | are rendered.";
+    [Parameter] public string? TestId { get; set; }
+
+    /// <summary>Produces the new text from the current text and the optional instruction.</summary>
+    [Parameter, EditorRequired] public Func<string, string, Task<string>> Generate { get; set; } = null!;
+
+    private bool busy;
+    private bool notConfigured;
+    private string? error;
+    private string? previous;
+    private string instruction = string.Empty;
+
+    private Task OnInput(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString();
+        return ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task EnhanceAsync()
+    {
+        if (busy) return;
+        busy = true;
+        error = null;
+        notConfigured = false;
+        try
+        {
+            var before = Value ?? string.Empty;
+            var text = await Generate(before, instruction);
+            previous = before;
+            Value = text;
+            await ValueChanged.InvokeAsync(Value);
+        }
+        catch (AiNotConfiguredException)
+        {
+            notConfigured = true;
+            error = "No AI provider is set up yet.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "AI description failed for field {FieldId}", Id);
+            error = "The AI could not write this: " + ex.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task UndoAsync()
+    {
+        Value = previous;
+        previous = null;
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

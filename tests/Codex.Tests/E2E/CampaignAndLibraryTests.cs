@@ -73,7 +73,9 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await dm.GetByTestId("new-homebrew").ClickAsync();
         await dm.GetByTestId("homebrew-type").SelectOptionAsync("spell");
         await dm.GetByTestId("homebrew-name").FillAsync("Thunderous Yawn");
+        await dm.GetByTestId("homebrew-next").ClickAsync();
         await dm.GetByTestId("homebrew-description").FillAsync("A **very** loud yawn that stuns the rude.");
+        await dm.GetByTestId("homebrew-next").ClickAsync();
         await dm.GetByLabel("Level", new() { Exact = true }).CommitAsync("2");
         await dm.GetByLabel("School", new() { Exact = true }).SelectOptionAsync("Evocation");
         await dm.GetByTestId("homebrew-save").ClickAsync();

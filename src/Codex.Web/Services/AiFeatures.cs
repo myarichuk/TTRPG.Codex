@@ -109,6 +109,57 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             string.IsNullOrWhiteSpace(campaign.Description) ? null : TextFormatting.Summary(campaign.Description, 400)));
     }
 
+    /// <summary>Writes or polishes the description of a Library entry or a place. The facts are the
+    /// filled-in fields, so the prose agrees with the numbers; <paramref name="audience"/> Players
+    /// keeps it to what someone there would see.</summary>
+    public async Task<string> DescribeAsync(CampaignDocument campaign, string subject, string subjectKind, IReadOnlyList<string> facts, string currentText, string instruction, AiAudience audience, string userId)
+    {
+        var assistant = await providers.AssistantForAsync(userId);
+        return await assistant.DescribeAsync(new DescribeRequest(
+            subject,
+            subjectKind,
+            catalog.GetDisplayName(campaign.SystemId),
+            facts,
+            currentText,
+            instruction,
+            audience,
+            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}"));
+    }
+
+    /// <summary>An entry's filled-in fields as "Label: value" lines; collections become the names of their rows.</summary>
+    public static List<string> EntryFacts(ContentEntry entry, ContentTypeDefinition? type)
+    {
+        var facts = new List<string>();
+        foreach (var field in type?.Fields ?? new List<FieldDefinition>())
+        {
+            if (field.Key is "flavor" or "imagePrompt" || !entry.Properties.TryGetValue(field.Key, out var value) || value == null)
+            {
+                continue;
+            }
+
+            var text = value switch
+            {
+                IEnumerable<object> rows when field.Type == FieldType.Collection =>
+                    string.Join("; ", rows.OfType<IDictionary<string, object>>().Select(r => r.TryGetValue("name", out var n) ? n?.ToString() : null).Where(n => !string.IsNullOrWhiteSpace(n))),
+                IEnumerable<object> list => string.Join(", ", list.Select(o => o?.ToString())),
+                bool b => b ? "yes" : "no",
+                _ => value.ToString() ?? string.Empty
+            };
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                facts.Add($"{field.Label}: {TextFormatting.Summary(text, 200)}");
+            }
+        }
+
+        if (entry.Tags.Count > 0)
+        {
+            facts.Add("Tags: " + string.Join(", ", entry.Tags));
+        }
+
+        return facts;
+    }
+
     /// <summary>Turns a one-line concept into a draft sheet. Reference fields get the ids the campaign's Library offers, so the model can only pick real content.</summary>
     public async Task<CharacterDraft> CreateCharacterAsync(string concept, ActorKind kind, CampaignDocument campaign, SystemDefinition? system, string userId, Func<string, Task<IReadOnlyList<(string Id, string Name)>>> optionsFor)
     {

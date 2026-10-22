@@ -83,17 +83,11 @@
             }
         }
     </div>
-    @if (selected != null || ShowEditor)
+    @if (selected != null)
     {
         <div class="col-lg-7 library-detail-col">
-            @if (ShowEditor)
-            {
-                @EditorPane
-            }
-            else if (selected != null)
-            {
             <div class="panel" data-testid="library-detail">
-                <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)">
+                <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)" Art="@(DetailArt?.Invoke(selected))">
                     <Actions>
                         @if (DetailActions != null)
                         {
@@ -105,7 +99,6 @@
                     </Actions>
                 </EntryDetail>
             </div>
-            }
         </div>
     }
     else
@@ -136,9 +129,8 @@
 
     [Parameter] public RenderFragment<LibraryItem>? DetailActions { get; set; }
     /// <summary>When set, shown in the detail pane instead of the selected entry (the homebrew editor).</summary>
-    [Parameter] public RenderFragment? EditorPane { get; set; }
-    [Parameter] public bool EditorOpen { get; set; }
-    private bool ShowEditor => EditorOpen && EditorPane != null;
+    /// <summary>The art slot for the selected entry (campaign Library only).</summary>
+    [Parameter] public RenderFragment<LibraryItem>? DetailArt { get; set; }
     [Parameter] public bool ShowResultCount { get; set; } = true;
 
     /// <summary>Incremented by the host to force a reload (e.g. after homebrew changed).</summary>

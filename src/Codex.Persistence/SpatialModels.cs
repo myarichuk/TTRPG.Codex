@@ -20,6 +20,10 @@ public class LocationDocument
 
     /// <summary>Fog-of-war state (2.5): Hidden by default, revealed to the party via a DM action.</summary>
     public ActorVisibility Visibility { get; set; } = ActorVisibility.Hidden;
+
+    /// <summary>True once art is stored on the region document (see <c>RavenMediaStore.LocationArtName</c>).</summary>
+    public bool HasArt { get; set; }
+    public int ArtVersion { get; set; }
 }
 
 /// <summary>

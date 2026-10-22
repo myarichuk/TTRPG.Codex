@@ -39,4 +39,12 @@ public class YamlValuesTests
         Assert.Null(YamlValues.GetInt(map, "e"));
         Assert.Null(YamlValues.GetInt(map, "missing"));
     }
+
+    [Fact]
+    public void Normalize_FoldsOtherNumberTypesToLongOrDouble()
+    {
+        Assert.Equal(18L, YamlValues.Normalize(18.0m));
+        Assert.Equal(2.5, YamlValues.Normalize(2.5f));
+        Assert.Equal("2d6 + 4", YamlValues.Normalize("2d6 + 4"));
+    }
 }

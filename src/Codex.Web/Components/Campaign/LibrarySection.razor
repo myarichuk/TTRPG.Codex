@@ -6,6 +6,7 @@
 @inject CastService Cast
 @inject HomebrewImportService Importer
 @inject ContentPackExporter Exporter
+@inject ArtService Art
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -25,20 +26,16 @@
 </div>
 
 <LibraryBrowser Campaign="Ctx.Campaign" Access="Ctx.Access" BasePath="@($"{Ctx.BasePath}/library")"
-                RouteType="@RouteType" RouteId="@RouteId" Version="version" EditorOpen="editing != null">
-    <EditorPane>
-        @if (editing != null)
-        {
-            <section class="panel">
-                <HomebrewEditor Campaign="Ctx.Campaign" Access="Ctx.Access" Entry="editing"
-                                OnSaved="OnSavedAsync" OnCancel="() => editing = null" OnDeleted="OnDeletedAsync" />
-            </section>
-        }
-    </EditorPane>
+                RouteType="@RouteType" RouteId="@RouteId" Version="version">
+    <DetailArt Context="item">
+        <ArtSlot ImageUrl="@ArtService.Url(Ctx.Campaign, item)" CanEdit="Ctx.IsDm" Landscape="@(!IsCreatureType(item.Entry.Type))"
+                 Label="@(IsCreatureType(item.Entry.Type) ? "Portrait" : "Art")" Alt="@($"Art for {item.Entry.Name}")" Class="entry-art" TestId="entry-art"
+                 OnPicked="img => StoreArtAsync(item, img)" OnRemove="() => RemoveArtAsync(item)" Generate="() => GenerateArtAsync(item)" />
+    </DetailArt>
     <DetailActions Context="item">
         @if (Ctx.IsDm && item.IsHomebrew)
         {
-            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editing = item.Homebrew" data-testid="edit-homebrew"><LucideIcon IconName="edit-3" Size="14" /> Edit</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => wizard.OpenAsync(item.Homebrew!)" data-testid="edit-homebrew"><LucideIcon IconName="edit-3" Size="14" /> Edit</CodexButton>
         }
         @if (Ctx.IsDm && !item.IsHomebrew)
         {
@@ -50,6 +47,11 @@
         }
     </DetailActions>
 </LibraryBrowser>
+
+@if (Ctx.IsDm)
+{
+    <HomebrewWizard @ref="wizard" OnSaved="OnSavedAsync" OnDeleted="OnDeletedAsync" />
+}
 
 <dialog id="import-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="import-homebrew-title">
     <div class="dialog-body">
@@ -117,7 +119,10 @@
     [Parameter] public string? RouteType { get; set; }
     [Parameter] public string? RouteId { get; set; }
 
-    private HomebrewEntryDocument? editing;
+    /// <summary>?new=1 opens the wizard on arrival (the Bestiary's "New homebrew creature" links here).</summary>
+    [SupplyParameterFromQuery(Name = "new")] public string? OpenNew { get; set; }
+
+    private HomebrewWizard wizard = null!;
     private int version;
     private List<CampaignDocument>? sourceCampaigns;
     private string sourceCampaignId = string.Empty;
@@ -125,44 +130,74 @@
     private HashSet<string> selectedImports = new();
     private bool importing;
 
-    private void NewHomebrew() => editing = new HomebrewEntryDocument
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Ctx.IsDm && OpenNew is "1" or "true")
+        {
+            // Drop the flag so a reload or Back doesn't reopen the wizard.
+            Nav.NavigateTo(Nav.GetUriWithQueryParameter("new", (string?)null), replace: true);
+            await NewHomebrew();
+        }
+    }
+
+    private Task NewHomebrew() => wizard.OpenAsync(new HomebrewEntryDocument
     {
         CampaignId = Ctx.Campaign.Id,
         SystemId = Ctx.Campaign.SystemId,
         Type = RouteType ?? string.Empty,
         AuthorUserId = Ctx.UserId
-    };
+    });
 
-    private void CloneAsHomebrew(LibraryItem item)
+    private async Task CloneAsHomebrew(LibraryItem item)
     {
-        editing = HomebrewImportService.CloneFromPack(item.Entry, item.Pack, Ctx.Campaign, Ctx.Access);
+        var copy = HomebrewImportService.CloneFromPack(item.Entry, item.Pack, Ctx.Campaign, Ctx.Access);
         Ctx.Notify(Flash.Info($"Editing a homebrew copy of “{item.Entry.Name}”. It stays a draft (hidden from players) until you tick “Visible to players”."));
+        await wizard.OpenAsync(copy, startAt: "story");
     }
 
-    private async Task OnSavedAsync(Flash flash)
+    private Task OnSavedAsync(HomebrewEntryDocument saved)
     {
-        Ctx.Notify(flash);
-        if (flash.Tone != FlashTone.Error)
-        {
-            var saved = editing;
-            editing = null;
-            version++;
-            if (saved != null)
-            {
-                Nav.NavigateTo($"{Ctx.BasePath}/library/{saved.Type}/{Uri.EscapeDataString(saved.EntryId)}");
-            }
-        }
-
-        await Task.CompletedTask;
+        Ctx.Notify(Flash.Success($"Saved “{saved.Name}”."));
+        version++;
+        Nav.NavigateTo($"{Ctx.BasePath}/library/{saved.Type}/{Uri.EscapeDataString(saved.EntryId)}");
+        return Task.CompletedTask;
     }
 
-    private async Task OnDeletedAsync(Flash flash)
+    private Task OnDeletedAsync(HomebrewEntryDocument deleted)
     {
-        Ctx.Notify(flash);
-        editing = null;
+        Ctx.Notify(Flash.Success($"Deleted “{deleted.Name}”."));
         version++;
         Nav.NavigateTo($"{Ctx.BasePath}/library");
-        await Task.CompletedTask;
+        return Task.CompletedTask;
+    }
+
+    private bool IsCreatureType(string type) => Ctx.System?.FindType(type)?.ActorBlueprint == true;
+
+    private async Task StoreArtAsync(LibraryItem item, ArtImage image)
+    {
+        if (await Art.PutAsync(Ctx.Campaign, Ctx.Access, item, image))
+        {
+            Ctx.Notify(Flash.Success($"Art saved for “{item.Entry.Name}”."));
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error("Only the DM can change Library art."));
+        }
+    }
+
+    private async Task RemoveArtAsync(LibraryItem item)
+    {
+        if (await Art.RemoveAsync(Ctx.Campaign, Ctx.Access, item))
+        {
+            Ctx.Notify(Flash.Success($"Art removed from “{item.Entry.Name}”."));
+        }
+    }
+
+    private Task<ArtImage> GenerateArtAsync(LibraryItem item)
+    {
+        var visual = YamlValues.GetString(item.Entry.Properties, "imagePrompt") ?? TextFormatting.Summary(item.Entry.Description, 300);
+        var kind = (Ctx.System?.FindType(item.Entry.Type)?.Label ?? CampaignLibrary.Humanize(item.Entry.Type)).ToLowerInvariant();
+        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, landscape: !IsCreatureType(item.Entry.Type));
     }
 
     private bool IsBlueprint(LibraryItem item) => Cast.Blueprint(item, Ctx.Campaign, Ctx.System) != null;
