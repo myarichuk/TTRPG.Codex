@@ -1,0 +1,119 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Codex.Launcher.App"
+             RequestedThemeVariant="Dark">
+  <Application.Styles>
+    <FluentTheme />
+
+    <!-- The launcher's look: leather, brass and parchment, like the web app. Two button materials:
+         .plaque is the brass call to action (one per view), .etched is everything else. -->
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="Palatino Linotype, Palatino, Book Antiqua, Georgia, serif" />
+    </Style>
+
+    <Style Selector="Button.plaque, Button.etched, ToggleButton.etched">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Padding" Value="16,7" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- Brass plaque -->
+    <Style Selector="Button.plaque">
+      <Setter Property="Foreground" Value="#2a1d08" />
+    </Style>
+    <Style Selector="Button.plaque /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background">
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Color="#e3bf63" Offset="0" />
+          <GradientStop Color="#b88f3a" Offset="1" />
+        </LinearGradientBrush>
+      </Setter>
+      <Setter Property="BorderBrush" Value="#5c431a" />
+      <Setter Property="BorderThickness" Value="1,1,1,2" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="BoxShadow" Value="0 1 6 0 #80000000, inset 0 1 0 0 #66ffffff" />
+      <Setter Property="Foreground" Value="#2a1d08" />
+    </Style>
+    <Style Selector="Button.plaque:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background">
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Color="#f0cf78" Offset="0" />
+          <GradientStop Color="#c79d45" Offset="1" />
+        </LinearGradientBrush>
+      </Setter>
+      <Setter Property="BorderBrush" Value="#5c431a" />
+      <Setter Property="Foreground" Value="#2a1d08" />
+    </Style>
+    <Style Selector="Button.plaque:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#a77f31" />
+      <Setter Property="BorderThickness" Value="1,2,1,1" />
+      <Setter Property="BoxShadow" Value="inset 0 2 4 0 #66000000" />
+      <Setter Property="Foreground" Value="#2a1d08" />
+    </Style>
+    <Style Selector="Button.plaque:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#4a3f2a" />
+      <Setter Property="BorderBrush" Value="#3a3122" />
+      <Setter Property="BoxShadow" Value="none" />
+      <Setter Property="Foreground" Value="#8d8168" />
+    </Style>
+
+    <!-- A round brass rune button (the help "?") -->
+    <Style Selector="Button.rune">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.rune /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#d917120c" />
+      <Setter Property="BorderBrush" Value="#c9a24a" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="CornerRadius" Value="17" />
+      <Setter Property="Foreground" Value="#e3bf63" />
+    </Style>
+    <Style Selector="Button.rune:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#c9a24a" />
+      <Setter Property="BorderBrush" Value="#f0cf78" />
+      <Setter Property="Foreground" Value="#2a1d08" />
+    </Style>
+
+    <!-- Etched leather -->
+    <Style Selector="Button.etched /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.etched /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#2a2218" />
+      <Setter Property="BorderBrush" Value="#7a6232" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="Foreground" Value="#eadfc6" />
+    </Style>
+    <Style Selector="Button.etched:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.etched:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#3a2f20" />
+      <Setter Property="BorderBrush" Value="#c9a24a" />
+      <Setter Property="Foreground" Value="#fff3d6" />
+    </Style>
+    <Style Selector="Button.etched:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.etched:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1c160e" />
+      <Setter Property="BorderBrush" Value="#c9a24a" />
+      <Setter Property="Foreground" Value="#eadfc6" />
+    </Style>
+    <Style Selector="Button.etched:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#211b13" />
+      <Setter Property="BorderBrush" Value="#3a3122" />
+      <Setter Property="Foreground" Value="#6f6552" />
+    </Style>
+    <!-- A lit rune: the toggle when it is on -->
+    <Style Selector="ToggleButton.etched:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#4a3a1c" />
+      <Setter Property="BorderBrush" Value="#e3bf63" />
+      <Setter Property="Foreground" Value="#ffe9ae" />
+    </Style>
+    <Style Selector="ToggleButton.etched:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#5a4722" />
+      <Setter Property="BorderBrush" Value="#f0cf78" />
+      <Setter Property="Foreground" Value="#fff3d6" />
+    </Style>
+  </Application.Styles>
+</Application>

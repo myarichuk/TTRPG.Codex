@@ -12,6 +12,9 @@ if not defined ASPNETCORE_ENVIRONMENT set "ASPNETCORE_ENVIRONMENT=Production"
 if not defined ASPNETCORE_URLS set "ASPNETCORE_URLS=%CODEX_URL%"
 if not defined Codex__DataDirectory set "Codex__DataDirectory=%LOCALAPPDATA%\TTRPG.Codex\RavenData"
 if not exist "%Codex__DataDirectory%" mkdir "%Codex__DataDirectory%"
+rem Your own systems and packs live here, so an upgrade never touches them.
+if not exist "%LOCALAPPDATA%\TTRPG.Codex\content" mkdir "%LOCALAPPDATA%\TTRPG.Codex\content"
+if not defined Codex__ContentDirectories__0 set "Codex__ContentDirectories__0=%LOCALAPPDATA%\TTRPG.Codex\content"
 
 cd /d "%APP_DIR%"
 title TTRPG.Codex

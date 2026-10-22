@@ -30,6 +30,9 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export ASPNETCORE_ENVIRONMENT="${ASPNETCORE_ENVIRONMENT:-Production}"
 export ASPNETCORE_URLS="${ASPNETCORE_URLS:-$url}"
 export Codex__DataDirectory="${Codex__DataDirectory:-$data_home/RavenData}"
+# Your own systems and packs live here, so an upgrade never touches them.
+mkdir -p "$data_home/content"
+export Codex__ContentDirectories__0="${Codex__ContentDirectories__0:-$data_home/content}"
 
 cd "$app_dir"
 echo "TTRPG.Codex is starting at $url (data: $Codex__DataDirectory). Press Ctrl+C to stop."

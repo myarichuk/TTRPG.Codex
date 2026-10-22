@@ -3,6 +3,11 @@
 #   pwsh packaging/smoke-test.ps1 dist/win-x64/app
 param([Parameter(Mandatory = $true)][string]$App)
 $ErrorActionPreference = 'Stop'
+# The tray launcher cannot open a window on a CI machine, so check what it can: that it runs on the
+# bundled runtime alone and finds the server, runtime and content packs.
+$launcher = Start-Process -FilePath (Join-Path (Resolve-Path $App) 'launcher/ttrpg-codex-tray.exe') -ArgumentList '--self-test' -Wait -PassThru
+if ($launcher.ExitCode -ne 0) { throw "The tray launcher's self-test failed (exit code $($launcher.ExitCode))" }
+
 $log = Join-Path ([IO.Path]::GetTempPath()) 'codex-smoke.log'
 $data = Join-Path ([IO.Path]::GetTempPath()) ('codex-smoke-' + [Guid]::NewGuid())
 $env:CODEX_NO_BROWSER = '1'
@@ -26,6 +31,7 @@ try {
     Start-Sleep -Seconds 5
     $output = Get-Content $log -Raw
     $problems = @()
+    if ($output -match 'was skipped') { $problems += 'A content pack was skipped' }
     if ($output -notmatch 'Loaded data-driven system srd5e') { $problems += 'The SRD system was not loaded' }
     # A licence that doesn't cover backups is fine (the database answered); anything else is not.
     if ($output -match 'Scheduled backup configuration failed' -and $output -notmatch 'LicenseLimitException') { $problems += 'The embedded database did not start' }

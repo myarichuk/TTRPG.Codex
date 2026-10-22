@@ -155,13 +155,19 @@ jobs:
 
             | Platform | Installer | Portable |
             | --- | --- | --- |
-            | Windows (x64) | `TTRPG.Codex-${{ needs.version.outputs.version }}-win-x64-setup.exe` | `.zip`, run `TTRPG.Codex.cmd` |
-            | macOS (Apple silicon) | `.pkg`, installs to Applications | `.tar.gz`, run `ttrpg-codex` |
-            | Linux (x64) | `.deb`, then run `ttrpg-codex` | `.tar.gz`, run `ttrpg-codex` |
+            | Windows (x64) | `TTRPG.Codex-${{ needs.version.outputs.version }}-win-x64-setup.exe` | `.zip`, run `launcher\ttrpg-codex-tray.exe` |
+            | macOS (Apple silicon) | `.pkg`, installs to Applications | `.tar.gz`, run `launcher/ttrpg-codex-tray` |
+            | Linux (x64) | `.deb`, then start TTRPG.Codex from your applications menu | `.tar.gz`, run `launcher/ttrpg-codex-tray` |
+
+            Start **TTRPG.Codex** and it sits in your system tray (menu bar on macOS): it starts the
+            server, opens your browser, and its menu starts or stops the server and copies the link
+            for your players. Tick "Let players on my network join" in its window to host a table on
+            your laptop. On GNOME, the tray needs the AppIndicator extension; without it the launcher
+            stays in a normal window. `ttrpg-codex` (or `TTRPG.Codex.cmd`) still runs the plain server
+            in a terminal.
 
             Each package carries its own .NET runtime: nothing else to install. The app opens at
-            http://localhost:5080; set `CODEX_URL=http://0.0.0.0:5080` before starting it to let players on
-            your network join. Campaign data is kept in your user folder (`%LOCALAPPDATA%\TTRPG.Codex`,
+            http://localhost:5080. Campaign data is kept in your user folder (`%LOCALAPPDATA%\TTRPG.Codex`,
             `~/Library/Application Support/TTRPG.Codex` or `~/.local/share/ttrpg-codex`), so upgrades keep it.
 
             The packages are not code-signed yet: Windows SmartScreen and macOS Gatekeeper will ask

@@ -20,7 +20,7 @@ public class PackManifest
         string name,
         string version,
         string systemId,
-        string minAppVersion = "1.0.0",
+        string minAppVersion = "0.0.0",
         int priority = 0,
         string[]? contentPaths = null,
         string[]? dependencies = null)
@@ -39,7 +39,7 @@ public class PackManifest
     public string Name { get; set; } = string.Empty;
     public string Version { get; set; } = "1.0.0";
     public string SystemId { get; set; } = string.Empty;
-    public string MinAppVersion { get; set; } = "1.0.0";
+    public string MinAppVersion { get; set; } = "0.0.0";
     public int Priority { get; set; }
     public string[]? ContentPaths { get; set; }
     public string[]? Dependencies { get; set; }

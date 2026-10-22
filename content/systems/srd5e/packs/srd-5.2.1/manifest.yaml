@@ -2,7 +2,7 @@ id: srd-5.2.1
 name: System Reference Document 5.2.1
 version: 5.2.1
 systemId: srd5e
-minAppVersion: 1.0.0
+minAppVersion: 0.0.0
 priority: 0
 description: 'The complete SRD 5.2.1 (2024 rules): classes, subclasses, species, backgrounds, feats, spells, creatures, conditions, equipment, magic items and the rules glossary.'
 authors:

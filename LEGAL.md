@@ -11,6 +11,9 @@ Bundled third-party software:
 
 - Bootstrap 5.3.3 - MIT License - `src/Codex.Web/wwwroot/lib/bootstrap/LICENSE`
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
+- Avalonia 12 (the tray launcher, `src/Codex.Launcher`) and its SkiaSharp and HarfBuzzSharp
+  dependencies - MIT License - https://github.com/AvaloniaUI/Avalonia
+- QRCoder (QR codes in the launcher) - MIT License - https://github.com/codebude/QRCoder
 
 ### RavenDB
 
@@ -39,6 +42,14 @@ files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource 
 - Alegreya Sans (regular, medium, bold, regular italic), Copyright 2013 The Alegreya Sans Project
   Authors (https://github.com/huertatipografica/Alegreya-Sans) - the body face -
   `src/Codex.Web/wwwroot/fonts/alegreya-sans/OFL.txt`
+
+### Launcher artwork
+
+The background of the tray launcher window (`src/Codex.Launcher/Assets/background.jpg`) is an image
+the project author generated with Google's Gemini image model. It contains no third-party artwork.
+Like the rest of the project's own files it is not licensed for commercial use. (Images made by an
+AI model may not be protected by copyright in some countries, so others may be free to reuse
+similar ones.)
 
 ## Game content
 

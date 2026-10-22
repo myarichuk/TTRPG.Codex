@@ -146,6 +146,25 @@ app.Lifetime.ApplicationStarted.Register(() =>
     logger.LogInformation("Server running at: {Addresses}", addresses is { Count: > 0 } ? string.Join(", ", addresses) : "(unknown)");
 });
 
+// The tray launcher keeps this process's stdin open and closes it to ask for a clean stop (there is
+// no portable signal for that on Windows). It also stops the server if the launcher itself dies.
+if (app.Configuration.GetValue<bool>("Codex:StopOnStdinClose"))
+{
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            while (await Console.In.ReadLineAsync() != null) { }
+        }
+        catch (IOException)
+        {
+        }
+
+        logger.LogInformation("Stdin closed: stopping.");
+        app.Lifetime.StopApplication();
+    });
+}
+
 // Load systems (compiled plugins and system.yaml files) and content packs once at startup.
 using (var scope = app.Services.CreateScope())
 {

@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Codex.Launcher.WelcomeWindow"
+        Title="Welcome to TTRPG.Codex"
+        Width="500" Height="410"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#17120c">
+  <StackPanel Margin="30,26" Spacing="14">
+    <TextBlock Text="Welcome to TTRPG.Codex" FontSize="24" FontWeight="Bold" Foreground="#e3bf63" />
+    <TextBlock Text="Characters, rules, your world and a live table, all running on this computer. Who will be playing?"
+               Foreground="#d4c8ae" FontSize="15" TextWrapping="Wrap" LineHeight="21" />
+
+    <Button x:Name="HostButton" Classes="plaque" HorizontalAlignment="Stretch" Padding="18,12" Click="OnHost">
+      <StackPanel Spacing="3">
+        <TextBlock Text="Host a game for friends" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center" />
+        <TextBlock Text="Players join from their phones or laptops on your Wi-Fi. I'll show you a code to scan."
+                   FontSize="12" FontWeight="Normal" TextWrapping="Wrap" TextAlignment="Center" />
+      </StackPanel>
+    </Button>
+
+    <Button Classes="etched" HorizontalAlignment="Stretch" Padding="18,12" Click="OnSolo">
+      <StackPanel Spacing="3">
+        <TextBlock Text="Just me for now" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center" />
+        <TextBlock Text="Only this computer can open it. You can open it to players later."
+                   FontSize="12" FontWeight="Normal" TextWrapping="Wrap" TextAlignment="Center" Foreground="#cbbfa5" />
+      </StackPanel>
+    </Button>
+
+    <TextBlock Text="You can change this any time in the launcher. The ? button explains how players join."
+               Foreground="#9d9078" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,6,0,0" />
+  </StackPanel>
+</Window>
