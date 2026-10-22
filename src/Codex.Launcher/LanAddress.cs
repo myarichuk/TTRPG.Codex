@@ -10,6 +10,8 @@ internal static class LanAddress
     /// Ethernet and Wi-Fi come before virtual adapters (VPNs, Docker, VM bridges).</summary>
     public static string? Best()
     {
+        // CODEX_FAKE_LAN shows a neutral address in documentation screenshots.
+        if (Environment.GetEnvironmentVariable("CODEX_FAKE_LAN") is { Length: > 0 } fake) return fake;
         try
         {
             return Rank(NetworkInterface.GetAllNetworkInterfaces()
@@ -28,6 +30,7 @@ internal static class LanAddress
     /// can join from outside the home network with it, with no router settings.</summary>
     public static string? Tailnet()
     {
+        if (Environment.GetEnvironmentVariable("CODEX_FAKE_LAN") is { Length: > 0 }) return null;
         try
         {
             return NetworkInterface.GetAllNetworkInterfaces()
@@ -46,6 +49,7 @@ internal static class LanAddress
     /// <summary>Every usable address, best first.</summary>
     public static IReadOnlyList<string> All()
     {
+        if (Environment.GetEnvironmentVariable("CODEX_FAKE_LAN") is { Length: > 0 } fake) return new[] { fake };
         try
         {
             return RankAll(NetworkInterface.GetAllNetworkInterfaces()

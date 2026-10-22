@@ -32,8 +32,9 @@ dotnet run --project src/Codex.Web
 
 Open http://localhost:5183, create an account (the first account becomes server admin), create a
 campaign, and share its invite link with players. Data lives in an embedded RavenDB under
-`src/Codex.Web/RavenData` (configurable via `Codex:DataDirectory`); a daily backup is written to
-`<data>/Backups`. Nothing is fetched from the internet while the app runs.
+`src/Codex.Web/RavenData` (configurable via `Codex:DataDirectory`); the server also asks the database for a
+daily backup in `<data>/Backups`, which RavenDB's free licence does not allow, so rely on **Export campaign**
+(campaign Settings) instead. Nothing is fetched from the internet while the app runs.
 
 Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.json`), plus
 `content/` and `plugins/` next to a published executable.

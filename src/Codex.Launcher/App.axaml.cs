@@ -149,19 +149,30 @@ public partial class App : Application
         {
             w.Show();
             await Task.Delay(1200);
-            using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)w.Bounds.Width, (int)w.Bounds.Height));
+            using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)w.Bounds.Width * 2, (int)w.Bounds.Height * 2), new Vector(192, 192));
             bitmap.Render(w);
             bitmap.Save(file);
         }
 
         await Task.Delay(300);
+        if (Environment.GetEnvironmentVariable("CODEX_SCREENSHOT_START") != null)
+        {
+            model!.StartServer(openBrowser: false);
+            for (var i = 0; i < 120 && model.Controller.State != ServerState.Running; i++) await Task.Delay(500);
+            Dispatcher.UIThread.Post(() => window!.Refresh());
+            await Task.Delay(500);
+        }
+
         var stem = Path.ChangeExtension(path, null);
         await Shot(window!, path);
         await Shot(new HelpWindow(), stem + "-help.png");
         await Shot(new WelcomeWindow(), stem + "-welcome.png");
         var check = new CheckWindow();
-        check.Show(await JoinCheck.RunAsync(new LauncherSettings { AllowLan = true }, ServerState.Running, null, new[] { "10.0.0.4", "172.20.10.2" }, "100.101.1.2", _ => Task.FromResult(true), _ => true));
+        check.Show(await JoinCheck.RunAsync(new LauncherSettings { AllowLan = true }, ServerState.Running, null, new[] { "192.168.1.20", "10.8.0.4" }, "100.101.1.2", _ => Task.FromResult(true), _ => true));
         await Shot(check, stem + "-check.png");
+        var broken = new CheckWindow();
+        broken.Show(await JoinCheck.RunAsync(new LauncherSettings(), ServerState.Stopped, null, new[] { "192.168.1.20" }, null, _ => Task.FromResult(false), _ => true));
+        await Shot(broken, stem + "-check-problems.png");
         await Shot(new QrWindow("Players on your network", "http://192.168.1.20:5080"), stem + "-qr.png");
         model!.Quit();
     }
