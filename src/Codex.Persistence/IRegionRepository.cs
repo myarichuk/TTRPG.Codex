@@ -15,6 +15,10 @@ public interface IRegionRepository
     /// <summary>Creates or updates a region. DM only (2.1/2.5 are DM prep-loop tools).</summary>
     Task<bool> SaveAsync(RegionDocument region, CampaignAccess access);
 
+    /// <summary>Renames a region, changing nothing else, so a stale copy can't undo place edits made since. DM only;
+    /// false for a blank name or a region outside the campaign.</summary>
+    Task<bool> RenameAsync(string regionId, string name, CampaignAccess access);
+
     /// <summary>Adds or replaces (by <see cref="LocationDocument.Id"/>) a location within a region. DM only.</summary>
     Task<bool> UpsertLocationAsync(string regionId, LocationDocument location, CampaignAccess access);
 

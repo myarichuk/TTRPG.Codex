@@ -22,6 +22,7 @@
 @inject CampaignLibrary Library
 @inject IMediaStore Media
 @inject AiFeatures Ai
+@inject ArtService Art
 @inject ILogger<ActorSheet> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
@@ -73,9 +74,13 @@ else
                         {
                             <span class="pill pill-accent">@plaque</span>
                         }
+                        @if (CanEdit)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GeneratePortraitAsync" Disabled="@(busy != null)" data-testid="portrait-generate">@(busy == "portrait" ? "Drawing… this can take a minute" : actor.HasPortrait ? "New portrait with AI" : "Portrait with AI")</CodexButton>
+                        }
                         @if (CanEdit && actor.HasPortrait)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemovePortraitAsync">Remove portrait</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemovePortraitAsync" Disabled="@(busy != null)">Remove portrait</CodexButton>
                         }
                     </div>
                 </div>
@@ -1349,6 +1354,51 @@ else
         ApplyEdits(actor);
         await TrySaveActorAsync();
         flash = Flash.Success("Portrait removed.");
+        await ReloadAsync();
+    }
+
+    /// <summary>Has the image model draw a square, face-first portrait from what players may know of the character
+    /// (sheet choices, public description, history; never the DM's notes), and stores it like an upload.</summary>
+    private async Task GeneratePortraitAsync()
+    {
+        if (actor == null || campaign == null || currentUserId == null || !CanEdit || busy != null) return;
+        if (actor.HasPortrait && !await leaveConfirm.ShowAsync(
+                "Replace the portrait?",
+                "The image model draws a new portrait from the sheet and the history, and it replaces the current one. Most image services charge for every picture.",
+                "Draw a new one", cancel: "Keep this one"))
+        {
+            return;
+        }
+
+        busy = "portrait";
+        try
+        {
+            var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, PublicDescription = actor.PublicDescription });
+            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind), Ai.PortraitVisual(snapshot, campaign.SystemId, system), ArtShape.Square);
+            using var stream = new MemoryStream(image.Bytes);
+            await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, image.ContentType);
+            actor.HasPortrait = true;
+            actor.PortraitVersion++;
+            ApplyEdits(actor);
+            await TrySaveActorAsync();
+            flash = Flash.Success("New portrait drawn.");
+        }
+        catch (AiImageNotConfiguredException)
+        {
+            flash = Flash.Error("No image model is set up. Add one under AI settings (top right), in the Images section.");
+            return;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Portrait generation failed for actor {ActorId}", ActorId);
+            flash = Flash.Error("The image model could not draw this: " + ex.Message);
+            return;
+        }
+        finally
+        {
+            busy = null;
+        }
+
         await ReloadAsync();
     }
 

@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Core.AI
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IHomebrewRepository Homebrew
@@ -197,7 +198,7 @@
     {
         var visual = YamlValues.GetString(item.Entry.Properties, "imagePrompt") ?? TextFormatting.Summary(item.Entry.Description, 300);
         var kind = (Ctx.System?.FindType(item.Entry.Type)?.Label ?? CampaignLibrary.Humanize(item.Entry.Type)).ToLowerInvariant();
-        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, landscape: !IsCreatureType(item.Entry.Type));
+        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, IsCreatureType(item.Entry.Type) ? ArtShape.Tall : ArtShape.Wide);
     }
 
     private bool IsBlueprint(LibraryItem item) => Cast.Blueprint(item, Ctx.Campaign, Ctx.System) != null;

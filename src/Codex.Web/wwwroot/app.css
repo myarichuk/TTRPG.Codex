@@ -1329,6 +1329,8 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .entry-art.art-portrait { float: right; width: min(14rem, 40%); margin: 0 0 0.8rem 1rem; }
 .entry-art.art-portrait .art-actions .label-caps { display: none; }
 .entry-detail::after { content: ""; display: block; clear: both; }
+/* A stat card is a framed box: next to a floated portrait its border would run under the picture. */
+.entry-detail .ref-card { clear: both; }
 
 /* Places: a thumbnail of the art, and the full description behind a disclosure. */
 .place-thumb { width: 64px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); flex: none; }

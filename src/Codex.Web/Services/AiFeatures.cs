@@ -201,6 +201,36 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}"));
     }
 
+    /// <summary>What a character's portrait is drawn from. Everyone who can see the character sees the picture, so only
+    /// what they could read anyway goes in: the sheet's visible choices, the public description and the history.</summary>
+    public string PortraitVisual(ActorDocument actor, string systemId, SystemDefinition? system) =>
+        PortraitVisual(actor, system, (type, id) => registry.GetEntry(systemId, type, id)?.Name);
+
+    /// <param name="entryName">Resolves a reference field's id to the entry's name (a species, a class); null keeps the id.</param>
+    public static string PortraitVisual(ActorDocument actor, SystemDefinition? system, Func<string, string, string?> entryName)
+    {
+        // Choices that show on a person (species, class, background, size, alignment), not numbers or notes.
+        var looks = new List<string>();
+        foreach (var field in system?.ActorFields ?? new List<FieldDefinition>())
+        {
+            if (field.Type is not (FieldType.EntityReference or FieldType.Dropdown or FieldType.Text)) continue;
+            var value = YamlValues.GetString(actor.Sheet, field.Key);
+            if (string.IsNullOrWhiteSpace(value)) continue;
+            if (field.Type == FieldType.EntityReference && field.TargetEntityType != null)
+            {
+                value = entryName(field.TargetEntityType, value) ?? value;
+            }
+
+            looks.Add($"{field.Label}: {value}");
+        }
+
+        var parts = new List<string>();
+        if (looks.Count > 0) parts.Add(string.Join("; ", looks) + ".");
+        if (!string.IsNullOrWhiteSpace(actor.PublicDescription)) parts.Add(TextFormatting.Summary(actor.PublicDescription, 200));
+        if (!string.IsNullOrWhiteSpace(actor.Biography)) parts.Add(TextFormatting.Summary(actor.Biography, 300));
+        return string.Join(" ", parts);
+    }
+
     /// <summary>The sheet as readable lines: attributes with labels, resources, and reference fields resolved to names.</summary>
     public IEnumerable<string> SheetFacts(ActorDocument actor, string systemId, SystemDefinition? system)
     {

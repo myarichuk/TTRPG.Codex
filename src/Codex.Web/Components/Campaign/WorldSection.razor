@@ -34,7 +34,27 @@ else
             @foreach (var region in regions)
             {
                 <section class="panel" aria-labelledby="region-@region.Id">
-                    <div class="panel-title"><h3 id="region-@region.Id">@region.Name</h3></div>
+                    <div class="panel-title">
+                        @if (renamingRegionId == region.Id)
+                        {
+                            @* The heading stays for the section's accessible name; the field takes its place on screen. *@
+                            <h3 id="region-@region.Id" class="visually-hidden">@region.Name</h3>
+                            <form class="d-flex flex-wrap gap-2 align-items-center" @onsubmit="() => RenameRegionAsync(region)" @onsubmit:preventDefault="true">
+                                <label for="rename-@region.Id" class="visually-hidden">New name for @region.Name</label>
+                                <input id="rename-@region.Id" class="field-input field-sm" @bind="renameText" @onkeydown="e => OnRenameKey(e)" required data-testid="rename-region-input" />
+                                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="rename-region-save">Save</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="CancelRename">Cancel</CodexButton>
+                            </form>
+                        }
+                        else
+                        {
+                            <h3 id="region-@region.Id">@region.Name</h3>
+                            @if (Ctx.IsDm)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@($"Rename {region.Name}")" data-testid="rename-region">Rename</CodexButton>
+                            }
+                        }
+                    </div>
                     @if (region.Locations.Count == 0)
                     {
                         <p class="small-muted mb-0">No places here yet.</p>
@@ -204,6 +224,57 @@ else
         packLocations = Ctx.IsDm ? Registry.GetLocationsBySystem(Ctx.Campaign.SystemId).OrderBy(l => l.Name).ToList() : new List<ILocationDefinition>();
     }
 
+    private string? renamingRegionId;
+    private string renameText = string.Empty;
+
+    // The field only exists after the next render, so it is focused from OnAfterRenderAsync.
+    private bool focusRename;
+
+    private void StartRename(RegionDocument region)
+    {
+        renamingRegionId = region.Id;
+        renameText = region.Name;
+        focusRename = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusRename && renamingRegionId != null)
+        {
+            focusRename = false;
+            await JS.InvokeVoidAsync("codex.focus", $"rename-{renamingRegionId}");
+        }
+    }
+
+    private void CancelRename() => renamingRegionId = null;
+
+    private void OnRenameKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") CancelRename();
+    }
+
+    private async Task RenameRegionAsync(RegionDocument region)
+    {
+        var name = renameText.Trim();
+        if (name.Length == 0) return;
+        if (name == region.Name)
+        {
+            CancelRename();
+            return;
+        }
+
+        if (await RegionRepo.RenameAsync(region.Id, name, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success($"Renamed “{region.Name}” to “{name}”."));
+            renamingRegionId = null;
+            await LoadAsync();
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error("Could not rename the region."));
+        }
+    }
+
     private async Task CreateRegionAsync()
     {
         if (string.IsNullOrWhiteSpace(newRegionName)) return;
@@ -326,7 +397,7 @@ else
     }
 
     private Task<ArtImage> GenerateLocationArtAsync() =>
-        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), landscape: true);
+        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide);
 
     private async Task RevealAsync(string regionId, string locationId)
     {

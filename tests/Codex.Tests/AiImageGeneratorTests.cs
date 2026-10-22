@@ -7,26 +7,12 @@ public class AiImageGeneratorTests
     private static readonly byte[] Png = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0 };
 
     [Fact]
-    public void ParseChatImageUrl_ReadsOpenRouterImages()
+    public void ParseImagesResponse_DecodesB64Json_AndTypesItByItsBytes()
     {
-        const string json = """
-            {"choices":[{"message":{"role":"assistant","content":"Here you go","images":[{"type":"image_url","image_url":{"url":"data:image/png;base64,AAAA"}}]}}]}
-            """;
+        // Declared as JPEG, but the bytes are a PNG: the stored type must match the bytes.
+        var json = $$"""{"created":1,"data":[{"b64_json":"{{Convert.ToBase64String(Png)}}","media_type":"image/jpeg"}]}""";
 
-        Assert.Equal("data:image/png;base64,AAAA", AiImageGenerator.ParseChatImageUrl(json));
-    }
-
-    [Fact]
-    public void ParseChatImageUrl_TextOnlyReply_IsNull()
-    {
-        Assert.Null(AiImageGenerator.ParseChatImageUrl("""{"choices":[{"message":{"content":"I can't draw."}}]}"""));
-    }
-
-    [Fact]
-    public void DecodeDataUrl_SniffsTheRealType()
-    {
-        // Labelled JPEG, but the bytes are a PNG: the stored type must match the bytes.
-        var image = AiImageGenerator.DecodeDataUrl("data:image/jpeg;base64," + Convert.ToBase64String(Png));
+        var image = AiImageGenerator.ParseImagesResponse(json);
 
         Assert.NotNull(image);
         Assert.Equal("image/png", image.ContentType);
@@ -34,9 +20,85 @@ public class AiImageGeneratorTests
     }
 
     [Fact]
-    public void DecodeDataUrl_IgnoresPlainUrls()
+    public void ParseImagesResponse_NoPicture_IsNull()
     {
-        Assert.Null(AiImageGenerator.DecodeDataUrl("https://example.test/a.png"));
+        Assert.Null(AiImageGenerator.ParseImagesResponse("""{"created":1,"data":[]}"""));
+        Assert.Null(AiImageGenerator.ParseImagesResponse("""{"error":{"message":"nope"}}"""));
+    }
+
+    [Fact]
+    public void ErrorMessage_ReadsTheReason_NotTheRawBody()
+    {
+        Assert.Equal("Model not found", AiImageGenerator.ErrorMessage("""{"error":{"message":"Model not found","code":404},"user_id":"user_123"}"""));
+        Assert.Equal("Bad gateway", AiImageGenerator.ErrorMessage("Bad gateway"));
+    }
+
+    [Theory]
+    [InlineData(ArtShape.Tall, "2:3")]
+    [InlineData(ArtShape.Wide, "3:2")]
+    [InlineData(ArtShape.Square, "1:1")]
+    public async Task OpenRouter_PostsToTheImagesEndpoint_WithTheShapesAspectRatio(ArtShape shape, string ratio)
+    {
+        var handler = new RecordingHandler($$"""{"created":1,"data":[{"b64_json":"{{Convert.ToBase64String(Png)}}"}]}""");
+        var config = new AIConfiguration { Provider = "openrouter", ModelId = "qwen/qwen-image-2.1-turbo", ApiKey = "sk-test" };
+
+        var image = await AiImageGenerator.GenerateAsync(config, "a toad", shape, new HttpClient(handler));
+
+        Assert.Equal("https://openrouter.ai/api/v1/images", handler.Uri?.ToString());
+        Assert.Equal("Bearer sk-test", handler.Authorization);
+        using var body = System.Text.Json.JsonDocument.Parse(handler.Body!);
+        Assert.Equal("qwen/qwen-image-2.1-turbo", body.RootElement.GetProperty("model").GetString());
+        Assert.Equal("a toad", body.RootElement.GetProperty("prompt").GetString());
+        Assert.Equal(ratio, body.RootElement.GetProperty("aspect_ratio").GetString());
+        Assert.Equal(Png, image.Bytes);
+    }
+
+    [Fact]
+    public async Task OpenRouterAddress_UsesItsImagesEndpoint_EvenUnderAnotherService()
+    {
+        var handler = new RecordingHandler($$"""{"created":1,"data":[{"b64_json":"{{Convert.ToBase64String(Png)}}"}]}""");
+        var config = new AIConfiguration { Provider = "openai", Endpoint = "https://openrouter.ai/api/v1", ModelId = "qwen/qwen-image-2.1-turbo", ApiKey = "sk-test" };
+
+        await AiImageGenerator.GenerateAsync(config, "a toad", ArtShape.Tall, new HttpClient(handler));
+
+        Assert.Equal("https://openrouter.ai/api/v1/images", handler.Uri?.ToString());
+    }
+
+    [Theory]
+    [InlineData("https://openrouter.ai/api/v1")]
+    [InlineData("https://openrouter.ai/api/v1/")]
+    [InlineData("https://openrouter.ai/api/v1/images")]
+    [InlineData("https://openrouter.ai/api/v1/images/generations")]
+    [InlineData("https://openrouter.ai/api/v1/chat/completions")]
+    public void OpenRouterImagesUri_CutsAnEndpointBackToTheApiRoot(string baseUrl)
+    {
+        Assert.Equal("https://openrouter.ai/api/v1/images", AiImageGenerator.OpenRouterImagesUri(new Uri(baseUrl)).ToString());
+    }
+
+    [Fact]
+    public async Task OpenRouter_ErrorReply_SurfacesItsMessage()
+    {
+        var handler = new RecordingHandler("""{"error":{"message":"Insufficient credits","code":402}}""", System.Net.HttpStatusCode.PaymentRequired);
+        var config = new AIConfiguration { Provider = "openrouter", ModelId = "qwen/qwen-image-2.1-turbo", ApiKey = "sk-test" };
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => AiImageGenerator.GenerateAsync(config, "a toad", ArtShape.Tall, new HttpClient(handler)));
+
+        Assert.Equal("The image service answered 402: Insufficient credits", error.Message);
+    }
+
+    private sealed class RecordingHandler(string reply, System.Net.HttpStatusCode status = System.Net.HttpStatusCode.OK) : HttpMessageHandler
+    {
+        public Uri? Uri { get; private set; }
+        public string? Authorization { get; private set; }
+        public string? Body { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Uri = request.RequestUri;
+            Authorization = request.Headers.Authorization?.ToString();
+            Body = request.Content == null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(status) { Content = new StringContent(reply) };
+        }
     }
 
     [Theory]
@@ -61,8 +123,9 @@ public class AiImageGeneratorTests
     [Fact]
     public void SizeFor_PicksSizesEachFamilyAccepts()
     {
-        Assert.Equal(new System.Drawing.Size(1024, 1536), AiImageGenerator.SizeFor("gpt-image-1", landscape: false));
-        Assert.Equal(new System.Drawing.Size(1792, 1024), AiImageGenerator.SizeFor("dall-e-3", landscape: true));
-        Assert.Null(AiImageGenerator.SizeFor("stable-diffusion-xl", landscape: true));
+        Assert.Equal(new System.Drawing.Size(1024, 1536), AiImageGenerator.SizeFor("gpt-image-1", ArtShape.Tall));
+        Assert.Equal(new System.Drawing.Size(1024, 1024), AiImageGenerator.SizeFor("gpt-image-1", ArtShape.Square));
+        Assert.Equal(new System.Drawing.Size(1792, 1024), AiImageGenerator.SizeFor("dall-e-3", ArtShape.Wide));
+        Assert.Null(AiImageGenerator.SizeFor("stable-diffusion-xl", ArtShape.Wide));
     }
 }

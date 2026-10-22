@@ -91,8 +91,9 @@ public class AiPromptsTests
     [Fact]
     public void Image_KeepsLetteringOutAndPicksAShot()
     {
-        Assert.Contains("Full-figure portrait of Bog Toad", AiPrompts.Image("Bog Toad", "creature", "Warty and huge.", landscape: false));
-        Assert.Contains("No text", AiPrompts.Image("Greyharbour", "place", null, landscape: true));
-        Assert.StartsWith("Wide establishing view", AiPrompts.Image("Greyharbour", "place", null, landscape: true));
+        Assert.Contains("Full-figure portrait of Bog Toad", AiPrompts.Image("Bog Toad", "creature", "Warty and huge.", ArtShape.Tall));
+        Assert.Contains("No text", AiPrompts.Image("Greyharbour", "place", null, ArtShape.Wide));
+        Assert.StartsWith("Wide establishing view", AiPrompts.Image("Greyharbour", "place", null, ArtShape.Wide));
+        Assert.StartsWith("Head-and-shoulders portrait", AiPrompts.Image("Aria Vell", "player character", null, ArtShape.Square));
     }
 }

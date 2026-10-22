@@ -56,6 +56,26 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         return true;
     }
 
+    public async Task<bool> RenameAsync(string regionId, string name, CampaignAccess access)
+    {
+        if (!access.IsDm || string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var region = await session.LoadAsync<RegionDocument>(regionId);
+        if (region == null || region.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        region.Name = name.Trim();
+        region.UpdatedAt = DateTime.UtcNow;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> UpsertLocationAsync(string regionId, LocationDocument location, CampaignAccess access)
     {
         if (!access.IsDm)
