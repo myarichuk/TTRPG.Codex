@@ -57,10 +57,15 @@ public static class YamlValues
             }
             case IEnumerable enumerable:
                 return enumerable.Cast<object?>().Select(Normalize).Where(v => v != null).Select(v => v!).ToList();
+            case float or decimal:
+                return Whole(ToNumber(value)!.Value);
             default:
-                return value;
+                // RavenDB's lazy number type (a whole number read back as "18.0") becomes a plain long or double.
+                return ToNumber(value) is { } number ? Whole(number) : value;
         }
     }
+
+    private static object Whole(double number) => number % 1 == 0 && Math.Abs(number) < 9e15 ? (object)(long)number : number;
 
     private static object ParseScalar(string s)
     {

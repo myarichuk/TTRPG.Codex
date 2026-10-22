@@ -126,10 +126,14 @@ builder.Services.AddHostedService<IdleRuntimeEvictionService>();
 var aiConfig = new AIConfiguration();
 builder.Configuration.GetSection("AI").Bind(aiConfig);
 builder.Services.AddSingleton(aiConfig);
+var aiImageConfig = new AIImageConfiguration();
+builder.Configuration.GetSection("AIImage").Bind(aiImageConfig);
+builder.Services.AddSingleton(aiImageConfig);
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<AiProviderService>();
 builder.Services.AddSingleton<AiFeatures>();
 builder.Services.AddScoped<HomebrewImportService>();
+builder.Services.AddSingleton<ArtService>();
 builder.Services.AddSingleton<CastService>();
 
 builder.Services.AddSignalR();

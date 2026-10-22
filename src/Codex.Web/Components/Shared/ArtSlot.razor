@@ -1,0 +1,153 @@
+@using Codex.Persistence
+@using Codex.Web.Services
+@inject ILogger<ArtSlot> Logger
+
+@* The picture every Library entry and place reserves room for. Readers see the art, or nothing
+   when there is none. Editors see the frame either way, and can drop a file on it, pick one,
+   have the image model draw one, or remove it. What happens to the picture (store it now, or
+   hold it until the wizard saves) is the caller's OnPicked. *@
+
+@if (CanEdit || Src != null)
+{
+    <figure class="art-slot @(Landscape ? "art-landscape" : "art-portrait") @(Src == null ? "art-empty" : "") @Class" data-testid="@TestId">
+        <div class="art-frame">
+            @if (Src != null)
+            {
+                <img src="@Src" alt="@Alt" loading="lazy" />
+            }
+            else
+            {
+                <div class="art-placeholder" aria-hidden="true">
+                    <LucideIcon IconName="image-plus" Size="30" />
+                    <span>Drop an image here</span>
+                </div>
+            }
+            @if (CanEdit)
+            {
+                @* The file input covers the frame, so dropping a file anywhere on it works. *@
+                <InputFile OnChange="OnFileAsync" accept="@ArtService.Accept" class="art-drop" title="Drop an image, or click to choose one" aria-label="@($"Choose {Label.ToLowerInvariant()} (PNG, JPEG or WebP, up to 6 MB)")" disabled="@(busy != null)" data-testid="@($"{TestId}-file")" />
+            }
+            @if (busy != null)
+            {
+                <div class="art-busy" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> @busy</div>
+            }
+        </div>
+        @if (CanEdit)
+        {
+            <figcaption class="art-actions">
+                <span class="label-caps">@Label</span>
+                <div class="d-flex flex-wrap gap-1">
+                    @if (Generate != null)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GenerateAsync" Disabled="@(busy != null)" data-testid="@($"{TestId}-generate")">Generate with AI</CodexButton>
+                    }
+                    @if (Src != null && OnRemove.HasDelegate)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemoveAsync" Disabled="@(busy != null)">Remove</CodexButton>
+                    }
+                </div>
+                @if (error != null)
+                {
+                    <p class="text-danger small mb-0" role="alert">@error @if (notConfigured) { <a href="/settings/ai#images">Set up an image model</a> }</p>
+                }
+                else
+                {
+                    <p class="field-hint mb-0">@(Landscape ? "Wide images look best." : "Tall images look best.") PNG, JPEG or WebP, up to 6 MB.</p>
+                }
+            </figcaption>
+        }
+    </figure>
+}
+
+@code {
+    /// <summary>The stored image's URL, if any.</summary>
+    [Parameter] public string? ImageUrl { get; set; }
+
+    /// <summary>An image picked but not stored yet (the wizard holds it until Save); shown instead of <see cref="ImageUrl"/>.</summary>
+    [Parameter] public ArtImage? Pending { get; set; }
+
+    [Parameter] public string Alt { get; set; } = string.Empty;
+    [Parameter] public string Label { get; set; } = "Art";
+    [Parameter] public bool Landscape { get; set; }
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? TestId { get; set; } = "art-slot";
+
+    [Parameter] public EventCallback<ArtImage> OnPicked { get; set; }
+    [Parameter] public EventCallback OnRemove { get; set; }
+
+    /// <summary>Draws an image; null hides the button.</summary>
+    [Parameter] public Func<Task<ArtImage>>? Generate { get; set; }
+
+    private string? busy;
+    private string? error;
+    private bool notConfigured;
+
+    private string? Src => Pending != null ? $"data:{Pending.ContentType};base64,{Convert.ToBase64String(Pending.Bytes)}" : ImageUrl;
+
+    private async Task OnFileAsync(InputFileChangeEventArgs e)
+    {
+        error = null;
+        notConfigured = false;
+        var file = e.File;
+        if (ArtService.Problem(file.ContentType, file.Size) is { } problem)
+        {
+            error = problem;
+            return;
+        }
+
+        busy = "Uploading…";
+        try
+        {
+            using var buffer = new MemoryStream();
+            await using (var stream = file.OpenReadStream(RavenMediaStore.MaxBytes))
+            {
+                await stream.CopyToAsync(buffer);
+            }
+
+            await OnPicked.InvokeAsync(new ArtImage(buffer.ToArray(), file.ContentType));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Art upload failed");
+            error = "The upload failed: " + ex.Message;
+        }
+        finally
+        {
+            busy = null;
+        }
+    }
+
+    private async Task GenerateAsync()
+    {
+        if (Generate == null || busy != null) return;
+        error = null;
+        notConfigured = false;
+        busy = "Drawing… this can take a minute";
+        try
+        {
+            var image = await Generate();
+            await OnPicked.InvokeAsync(image);
+        }
+        catch (AiImageNotConfiguredException)
+        {
+            notConfigured = true;
+            error = "No image model is set up yet.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Art generation failed");
+            error = "The image model could not draw this: " + ex.Message;
+        }
+        finally
+        {
+            busy = null;
+        }
+    }
+
+    private async Task RemoveAsync()
+    {
+        error = null;
+        await OnRemove.InvokeAsync();
+    }
+}

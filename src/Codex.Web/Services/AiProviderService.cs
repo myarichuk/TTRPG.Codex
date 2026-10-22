@@ -8,6 +8,9 @@ namespace Codex.Web.Services;
 /// <summary>Thrown by AI features when the user has no working provider; the UI turns it into a link to the settings page.</summary>
 public sealed class AiNotConfiguredException() : InvalidOperationException("No AI provider is set up.");
 
+/// <summary>Thrown by art generation when the user has no image model; chat providers don't count.</summary>
+public sealed class AiImageNotConfiguredException() : InvalidOperationException("No image provider is set up.");
+
 /// <summary>
 /// Which chat model a user's AI buttons talk to. Each user keeps their own providers (and keys,
 /// protected with Data Protection) on their <see cref="UserDocument"/>; the server-wide
@@ -18,6 +21,8 @@ public sealed class AiProviderService(
     IDataProtectionProvider dataProtection,
     IUserRepository users,
     AIConfiguration serverConfig,
+    AIImageConfiguration serverImageConfig,
+    IHttpClientFactory httpClients,
     ILogger<AiProviderService> logger)
 {
     private readonly IDataProtector _protector = dataProtection.CreateProtector("Codex.AiProviderKeys.v1");
@@ -105,6 +110,51 @@ public sealed class AiProviderService(
     }
 
     public async Task<bool> IsConfiguredForAsync(string userId) => ClientFor(await users.GetUserByIdAsync(userId)) != null;
+
+    public bool ServerImageConfigured => AiImageGenerator.Problem(serverImageConfig) == null;
+
+    public string ServerImageDescription => ServerImageConfigured
+        ? $"{AiImageGenerator.Preset(serverImageConfig.Provider)?.Label ?? serverImageConfig.Provider} · {serverImageConfig.ModelId}"
+        : "not configured";
+
+    /// <summary>The image model a user's "Generate art" buttons use, or null to fall back to the server.</summary>
+    public AiProviderConfig? DefaultImageProvider(UserDocument? user)
+    {
+        if (user == null || user.ImageProviders.Count == 0)
+        {
+            return null;
+        }
+
+        return user.ImageProviders.FirstOrDefault(p => p.Id == user.DefaultImageProviderId) ?? user.ImageProviders[0];
+    }
+
+    private AIConfiguration? ImageConfigFor(UserDocument? user)
+    {
+        if (DefaultImageProvider(user) is { } provider)
+        {
+            var config = ToConfiguration(provider);
+            if (AiImageGenerator.Problem(config) == null)
+            {
+                return config;
+            }
+
+            logger.LogWarning("User {UserId}'s image provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);
+        }
+
+        return ServerImageConfigured ? serverImageConfig : null;
+    }
+
+    public async Task<bool> IsImageConfiguredForAsync(string userId) => ImageConfigFor(await users.GetUserByIdAsync(userId)) != null;
+
+    public async Task<GeneratedImage> GenerateImageAsync(string userId, string prompt, bool landscape, CancellationToken ct = default)
+    {
+        var config = ImageConfigFor(await users.GetUserByIdAsync(userId)) ?? throw new AiImageNotConfiguredException();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromMinutes(2));
+        var http = httpClients.CreateClient("ai-images");
+        http.Timeout = TimeSpan.FromMinutes(2);
+        return await AiImageGenerator.GenerateAsync(config, prompt, landscape, http, timeout.Token);
+    }
 
     /// <summary>Sends one tiny prompt so the settings page can confirm a key and model work.</summary>
     public async Task<(bool Ok, string Message)> TestAsync(AiProviderConfig provider, string? plainKey, CancellationToken ct = default)

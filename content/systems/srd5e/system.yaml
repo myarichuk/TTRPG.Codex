@@ -412,34 +412,34 @@ entityTypes:
     filterFields: [challengeRating, creatureType, size]
     playerFacing: false
     fields:
-      - { key: size,            label: Size,             type: Text }
-      - { key: creatureType,    label: Type,             type: Text }
-      - { key: alignment,       label: Alignment,        type: Text }
-      - { key: armorClass,      label: Armor Class,      type: Number }
-      - { key: hitPoints,       label: Hit Points,       type: Number }
-      - { key: hitDice,         label: Hit Dice,         type: Text }
-      - { key: speed,           label: Speed,            type: Text }
-      - { key: strength,        label: Strength,         type: Number }
-      - { key: dexterity,       label: Dexterity,        type: Number }
-      - { key: constitution,    label: Constitution,     type: Number }
-      - { key: intelligence,    label: Intelligence,     type: Number }
-      - { key: wisdom,          label: Wisdom,           type: Number }
-      - { key: charisma,        label: Charisma,         type: Number }
-      - { key: challengeRating, label: Challenge Rating, type: Text }
-      - { key: xp,              label: XP,               type: Number }
-      - { key: senses,          label: Senses,           type: Text }
-      - { key: languages,       label: Languages,        type: Text }
-      - { key: skills,          label: Skills,           type: Text }
-      - { key: savingThrows,    label: Saving Throws,    type: Text }
-      - { key: resistances,     label: Resistances,      type: TagList }
-      - { key: immunities,      label: Immunities,       type: TagList }
-      - { key: vulnerabilities, label: Vulnerabilities,  type: TagList }
-      - { key: gear,            label: Gear,             type: Text }
-      - { key: traits,          label: Traits,           type: Collection }
-      - { key: actions,         label: Actions,          type: Collection }
-      - { key: bonusActions,    label: Bonus Actions,    type: Collection }
-      - { key: reactions,       label: Reactions,        type: Collection }
-      - { key: legendaryActions, label: Legendary Actions, type: Collection }
+      - { key: size,            label: Size,             type: Text, category: Profile }
+      - { key: creatureType,    label: Type,             type: Text, category: Profile }
+      - { key: alignment,       label: Alignment,        type: Text, category: Profile }
+      - { key: armorClass,      label: Armor Class,      type: Number, category: Defenses }
+      - { key: hitPoints,       label: Hit Points,       type: Number, category: Defenses }
+      - { key: hitDice,         label: Hit Dice,         type: Text, category: Defenses }
+      - { key: speed,           label: Speed,            type: Text, category: Defenses }
+      - { key: strength,        label: Strength,         type: Number, category: Ability scores }
+      - { key: dexterity,       label: Dexterity,        type: Number, category: Ability scores }
+      - { key: constitution,    label: Constitution,     type: Number, category: Ability scores }
+      - { key: intelligence,    label: Intelligence,     type: Number, category: Ability scores }
+      - { key: wisdom,          label: Wisdom,           type: Number, category: Ability scores }
+      - { key: charisma,        label: Charisma,         type: Number, category: Ability scores }
+      - { key: challengeRating, label: Challenge Rating, type: Text, category: Profile }
+      - { key: xp,              label: XP,               type: Number, category: Profile }
+      - { key: senses,          label: Senses,           type: Text, category: Senses and skills }
+      - { key: languages,       label: Languages,        type: Text, category: Senses and skills }
+      - { key: skills,          label: Skills,           type: Text, category: Senses and skills }
+      - { key: savingThrows,    label: Saving Throws,    type: Text, category: Defenses }
+      - { key: resistances,     label: Resistances,      type: TagList, category: Defenses }
+      - { key: immunities,      label: Immunities,       type: TagList, category: Defenses }
+      - { key: vulnerabilities, label: Vulnerabilities,  type: TagList, category: Defenses }
+      - { key: gear,            label: Gear,             type: Text, category: Senses and skills }
+      - { key: traits,          label: Traits,           type: Collection, category: Traits and actions }
+      - { key: actions,         label: Actions,          type: Collection, category: Traits and actions }
+      - { key: bonusActions,    label: Bonus Actions,    type: Collection, category: Traits and actions }
+      - { key: reactions,       label: Reactions,        type: Collection, category: Traits and actions }
+      - { key: legendaryActions, label: Legendary Actions, type: Collection, category: Traits and actions }
 
   - type: condition
     label: Condition

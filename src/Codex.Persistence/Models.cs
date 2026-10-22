@@ -51,6 +51,11 @@ public class CampaignDocument
     /// <summary>The DM's shortlist of creatures for this campaign: ones in play and ones planned for later.</summary>
     public List<BestiaryEntry> Bestiary { get; set; } = new();
 
+    /// <summary>Art the DM attached to pack entries in this campaign's Library, keyed
+    /// <c>type/id</c>, valued by a version that busts caches. The bytes are attachments on this
+    /// document (see <c>RavenMediaStore.PackArtName</c>); homebrew keeps its art on its own document.</summary>
+    public Dictionary<string, int> PackArt { get; set; } = new();
+
     public Dictionary<string, object> WorldState { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -157,6 +162,12 @@ public class UserDocument
 
     /// <summary>Which of <see cref="AiProviders"/> the AI buttons use. Null falls back to the server-wide configuration.</summary>
     public string? DefaultAiProviderId { get; set; }
+
+    /// <summary>Image models for the art slots, kept apart from the chat models: the best writer
+    /// rarely draws, and the two speak different protocols. Same shape, keys protected the same way.</summary>
+    public List<AiProviderConfig> ImageProviders { get; set; } = new();
+
+    public string? DefaultImageProviderId { get; set; }
 }
 
 /// <summary>One OpenAI-compatible chat endpoint a user has set up: OpenRouter, OpenAI, a local

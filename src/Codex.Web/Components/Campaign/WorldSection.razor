@@ -1,7 +1,12 @@
+@using Codex.Core
+@using Codex.Core.AI
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IRegionRepository RegionRepo
 @inject IContentRegistry Registry
+@inject AiFeatures Ai
+@inject ArtService Art
+@inject IJSRuntime JS
 
 <div class="page-header mb-3">
     <div>
@@ -37,7 +42,16 @@ else
                     <ul class="list-unstyled mb-0">
                         @foreach (var location in region.Locations)
                         {
-                            <li class="list-row" data-testid="location-row">
+                            var art = ArtService.Url(region, location);
+                            <li class="list-row align-items-start" data-testid="location-row">
+                                @if (art != null)
+                                {
+                                    <img class="place-thumb" src="@art" alt="" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="avatar avatar-md avatar-flat" aria-hidden="true"><LucideIcon IconName="map-pin" Size="18" /></span>
+                                }
                                 <div class="row-main">
                                     <div class="row-title">@location.Name
                                         @if (Ctx.IsDm && location.Visibility != ActorVisibility.Known)
@@ -47,12 +61,25 @@ else
                                     </div>
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
                                     {
-                                        <div class="row-sub">@location.Description</div>
+                                        <details class="place-details">
+                                            <summary class="row-sub">@TextFormatting.Summary(location.Description, 140)</summary>
+                                            <div class="rules-text mt-2">@((MarkupString)TextFormatting.ToHtml(location.Description))</div>
+                                        </details>
+                                    }
+                                    else if (Ctx.IsDm)
+                                    {
+                                        <div class="row-sub">No description yet.</div>
                                     }
                                 </div>
-                                @if (Ctx.IsDm && location.Visibility != ActorVisibility.Known)
+                                @if (Ctx.IsDm)
                                 {
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@($"Reveal {location.Name} to players")"><LucideIcon IconName="eye" Size="14" /> Reveal</CodexButton>
+                                    <div class="row-actions">
+                                        @if (location.Visibility != ActorVisibility.Known)
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@($"Reveal {location.Name} to players")"><LucideIcon IconName="eye" Size="14" /> Reveal</CodexButton>
+                                        }
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => EditLocationAsync(region, location)" aria-label="@($"Edit {location.Name}")" data-testid="edit-location">Edit</CodexButton>
+                                    </div>
                                 }
                             </li>
                         }
@@ -112,8 +139,46 @@ else
     </div>
 }
 
+@if (Ctx.IsDm)
+{
+    <dialog id="edit-location-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="edit-location-title" @oncancel="CloseLocationAsync">
+        @if (editingLocation != null && editingRegion != null)
+        {
+            <form @onsubmit="SaveLocationAsync" @onsubmit:preventDefault="true">
+                <div class="dialog-body">
+                    <h2 id="edit-location-title"><LucideIcon IconName="map-pin" Size="18" Class="title-icon" /> @(string.IsNullOrWhiteSpace(editingLocation.Name) ? "Place" : editingLocation.Name)</h2>
+                    <p class="small-muted">In @editingRegion.Name · @(editingLocation.Visibility == ActorVisibility.Known ? "players can see this place" : "hidden from players until you reveal it")</p>
+                    <div class="mb-3">
+                        <label for="loc-edit-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                        <input id="loc-edit-name" class="field-input" @bind="editingLocation.Name" required maxlength="120" data-testid="location-name" />
+                    </div>
+                    <div class="mb-3">
+                        <AiTextField Id="loc-edit-desc" Label="Description" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
+                                     Placeholder="What the party sees, hears and smells on arrival…" Generate="DescribeLocationAsync"
+                                     Hint="Players read this once the place is revealed, so the AI writes what a visitor would notice. **bold**, *italic* and &quot;- &quot; bullets are rendered." />
+                    </div>
+                    <ArtSlot ImageUrl="@ArtService.Url(editingRegion, editingLocation)" CanEdit="true" Landscape="true" Label="Art" Class="art-compact" Alt="@($"Art for {editingLocation.Name}")" TestId="location-art"
+                             OnPicked="img => SetLocationArtAsync(img)" OnRemove="() => SetLocationArtAsync(null)" Generate="GenerateLocationArtAsync" />
+                    @if (locationError != null)
+                    {
+                        <p class="text-danger mb-0 mt-2" role="alert">@locationError</p>
+                    }
+                </div>
+                <div class="dialog-actions">
+                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="CloseLocationAsync">Back</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" data-testid="location-save">Save place</CodexButton>
+                </div>
+            </form>
+        }
+    </dialog>
+}
+
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private RegionDocument? editingRegion;
+    private LocationDocument? editingLocation;
+    private string? locationError;
 
     private List<RegionDocument>? regions;
     private List<ILocationDefinition> packLocations = new();
@@ -181,6 +246,87 @@ else
             await LoadAsync();
         }
     }
+
+    private async Task EditLocationAsync(RegionDocument region, LocationDocument location)
+    {
+        editingRegion = region;
+        // A copy: Back must not leave half-typed text on the list.
+        editingLocation = new LocationDocument
+        {
+            Id = location.Id,
+            Name = location.Name,
+            Description = location.Description,
+            Connections = location.Connections,
+            Metadata = location.Metadata,
+            Visibility = location.Visibility,
+            HasArt = location.HasArt,
+            ArtVersion = location.ArtVersion
+        };
+        locationError = null;
+        await JS.InvokeVoidAsync("codex.showModal", "edit-location-dialog");
+        await JS.InvokeVoidAsync("codex.focus", "loc-edit-name");
+    }
+
+    private async Task CloseLocationAsync()
+    {
+        await JS.InvokeVoidAsync("codex.closeModal", "edit-location-dialog");
+        editingLocation = null;
+        editingRegion = null;
+    }
+
+    private async Task SaveLocationAsync()
+    {
+        if (editingRegion == null || editingLocation == null) return;
+        if (string.IsNullOrWhiteSpace(editingLocation.Name))
+        {
+            locationError = "Give the place a name.";
+            return;
+        }
+
+        editingLocation.Name = editingLocation.Name.Trim();
+        if (await RegionRepo.UpsertLocationAsync(editingRegion.Id, editingLocation, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success($"Saved “{editingLocation.Name}”."));
+            await CloseLocationAsync();
+            await LoadAsync();
+        }
+        else
+        {
+            locationError = "Only the DM can edit places.";
+        }
+    }
+
+    private Task<string> DescribeLocationAsync(string text, string instruction)
+    {
+        var facts = new List<string> { $"Region: {editingRegion!.Name}" };
+        var neighbours = editingRegion.Locations.Where(l => l.Id != editingLocation!.Id).Select(l => l.Name).Take(12).ToList();
+        if (neighbours.Count > 0) facts.Add("Other places in the region: " + string.Join(", ", neighbours));
+        return Ai.DescribeAsync(Ctx.Campaign, string.IsNullOrWhiteSpace(editingLocation!.Name) ? "an unnamed place" : editingLocation.Name, "place on the world map", facts, text, instruction, AiAudience.Players, Ctx.UserId);
+    }
+
+    private async Task SetLocationArtAsync(ArtImage? image)
+    {
+        if (editingRegion == null || editingLocation == null) return;
+        // Art is stored at once (like a portrait); the text fields still wait for Save.
+        if (await Art.SetLocationAsync(editingRegion.Id, editingLocation, Ctx.Access, image))
+        {
+            var listed = regions?.FirstOrDefault(r => r.Id == editingRegion.Id)?.Locations.FirstOrDefault(l => l.Id == editingLocation.Id);
+            if (listed != null)
+            {
+                listed.HasArt = editingLocation.HasArt;
+                listed.ArtVersion = editingLocation.ArtVersion;
+            }
+
+            Ctx.Notify(Flash.Success(image == null ? "Art removed." : "Art saved."));
+        }
+        else
+        {
+            locationError = "That place no longer exists, or you can't change it.";
+        }
+    }
+
+    private Task<ArtImage> GenerateLocationArtAsync() =>
+        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), landscape: true);
 
     private async Task RevealAsync(string regionId, string locationId)
     {

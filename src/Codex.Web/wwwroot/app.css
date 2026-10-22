@@ -1234,3 +1234,107 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .empty-quiet { opacity: 0.8; position: sticky; top: calc(var(--header-h) + 1rem); }
 .library-detail-col { min-width: 0; }
 .ref-subtype { font-style: italic; color: var(--text-2); margin: 0 0 0.6rem; }
+
+/* ---------------------------------------------------------------------------
+   Homebrew wizard: steps down the left, the step in the middle, a live preview
+   on the right, Back / Next along the bottom. Stacks on narrow screens.
+   --------------------------------------------------------------------------- */
+dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hidden; }
+.wizard {
+    display: grid; max-height: 92vh;
+    grid-template-columns: 13.5rem minmax(0, 1fr) minmax(0, 24rem);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "head head head" "steps body preview" "foot foot foot";
+}
+.wizard-head {
+    grid-area: head; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+    padding: 1.1rem 1.4rem 0.9rem; border-bottom: 1px solid var(--border); background: var(--surface-2);
+}
+.wizard-head h2 { margin: 0.1rem 0 0; font-size: 1.35rem; }
+.wizard-steps { grid-area: steps; overflow-y: auto; padding: 1rem 0.7rem; border-right: 1px solid var(--border); background: var(--surface-2); }
+.wizard-steps ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.wizard-step {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+    padding: 0.5rem 0.6rem; border: 1px solid transparent; border-radius: var(--radius-md);
+    background: none; color: var(--text-2); font: inherit; cursor: pointer;
+    transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.wizard-step:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.wizard-step:disabled { opacity: 0.5; cursor: not-allowed; }
+.wizard-step.current { background: var(--surface); color: var(--text); border-color: var(--border-strong); box-shadow: var(--frame); font-weight: 700; }
+.wizard-step-num {
+    flex: none; display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+    border: 1px solid var(--border-strong); font-size: 0.85rem; font-variant-numeric: lining-nums tabular-nums;
+}
+.wizard-step.current .wizard-step-num { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.wizard-step.done .wizard-step-num { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+.wizard-body { grid-area: body; overflow-y: auto; padding: 1.2rem 1.5rem 1.5rem; min-width: 0; }
+.wizard-step-title { font-size: 1.15rem; margin: 0 0 0.35rem; }
+.wizard-preview { grid-area: preview; overflow-y: auto; padding: 1rem 1.1rem; border-left: 1px solid var(--border); background: var(--bg); min-width: 0; }
+.wizard-preview .entry-detail h2 { font-size: 1.3rem; }
+.wizard-preview-art { display: block; width: 100%; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-strong); margin-bottom: 0.8rem; }
+.wizard-preview-art.art-portrait { aspect-ratio: 3 / 4; max-height: 18rem; }
+.wizard-preview-art.art-landscape { aspect-ratio: 16 / 9; }
+.wizard-foot {
+    grid-area: foot; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    padding: 0.85rem 1.4rem; border-top: 1px solid var(--border); background: var(--surface-2);
+}
+.wizard-checklist { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.45rem; }
+.wizard-checklist li { display: flex; align-items: center; gap: 0.55rem; color: var(--text-3); }
+.wizard-checklist li.done { color: var(--success); }
+.wizard-checklist .small-muted { margin-left: auto; text-align: right; }
+.link-button { background: none; border: 0; padding: 0; color: var(--text); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link-button:hover { color: var(--accent-hover); }
+@media (max-width: 1000px) {
+    dialog.wizard-dialog { overflow-y: auto; }
+    .wizard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "steps" "body" "preview" "foot"; max-height: none; }
+    .wizard-steps { border-right: 0; border-bottom: 1px solid var(--border); padding: 0.5rem; overflow-x: auto; }
+    .wizard-steps ol { flex-direction: row; }
+    .wizard-step { white-space: nowrap; width: auto; }
+    .wizard-preview { border-left: 0; border-top: 1px solid var(--border); }
+    .wizard-body, .wizard-preview { overflow: visible; }
+    .wizard-foot { position: sticky; bottom: 0; }
+}
+
+/* Collection rows (traits, actions, features): a name line over a description, as on a stat block. */
+.collection-row { padding: 0.6rem; margin-bottom: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); }
+.collection-row-head { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
+.collection-row-head .field-input:not(.collection-level) { flex: 1; font-weight: 600; }
+.collection-level { width: 4.5rem; flex: none; }
+
+/* An "Enhance with AI" description box. */
+.ai-field-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.3rem; }
+.ai-field-head .field-label { margin-bottom: 0; }
+.ai-field-foot { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
+.ai-field-foot .field-input { flex: 1; }
+
+/* The art slot every Library entry and place reserves. */
+.art-slot { margin: 0 0 1rem; }
+.art-frame {
+    position: relative; overflow: hidden; border-radius: var(--radius-lg);
+    border: 1px solid var(--border-strong); background: var(--surface-2); box-shadow: var(--frame);
+}
+.art-portrait .art-frame { aspect-ratio: 3 / 4; max-width: 16rem; }
+.art-landscape .art-frame { aspect-ratio: 16 / 9; }
+.art-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.art-empty .art-frame { border-style: dashed; background: repeating-linear-gradient(135deg, var(--surface-2) 0 12px, var(--surface-3) 12px 24px); }
+.art-placeholder { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 0.4rem; color: var(--text-3); font-weight: 600; text-align: center; padding: 1rem; }
+.art-drop { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.art-drop:disabled { cursor: progress; }
+.art-frame:has(.art-drop:hover), .art-frame:has(.art-drop:focus-visible) { border-color: var(--accent); box-shadow: var(--frame), 0 0 0 2px var(--accent-glow); }
+.art-frame:has(.art-drop:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.art-busy { position: absolute; inset: 0; display: grid; place-content: center; background: rgba(5, 4, 3, 0.6); color: #fff; font-weight: 600; }
+.art-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 0.8rem; margin-top: 0.5rem; }
+.art-actions .field-hint, .art-actions [role="alert"] { flex-basis: 100%; }
+.entry-art.art-portrait { float: right; width: min(14rem, 40%); margin: 0 0 0.8rem 1rem; }
+.entry-art.art-portrait .art-actions .label-caps { display: none; }
+.entry-detail::after { content: ""; display: block; clear: both; }
+
+/* Places: a thumbnail of the art, and the full description behind a disclosure. */
+.place-thumb { width: 64px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); flex: none; }
+.place-details summary { cursor: pointer; list-style: none; }
+.place-details summary::-webkit-details-marker { display: none; }
+.place-details summary::after { content: " ▾"; color: var(--text-3); }
+.place-details[open] summary::after { content: " ▴"; }
+.segmented { display: flex; gap: 0.4rem; }
+.art-compact { max-width: 22rem; margin-bottom: 0; }

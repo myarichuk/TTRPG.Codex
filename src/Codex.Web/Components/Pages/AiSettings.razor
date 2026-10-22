@@ -6,6 +6,7 @@
 @inject AiProviderService Providers
 @inject IUserRepository UserRepo
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
 
 <PageTitle>AI settings | TTRPG.Codex</PageTitle>
 
@@ -13,7 +14,7 @@
     <div>
         <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>AI settings</span></nav>
         <h1><LucideIcon IconName="sparkles" Size="28" Class="title-icon" /> AI settings</h1>
-        <p class="page-subtitle">The chat model behind every “Draft with AI” button. Bring your own key: OpenRouter, OpenAI, a local Ollama, or any OpenAI-compatible server. Nothing is sent to a model until you click an AI button.</p>
+        <p class="page-subtitle">Two kinds of model, set up separately: a <strong>text model</strong> behind every “Write with AI” and “Enhance with AI” button, and an <strong>image model</strong> behind “Generate with AI” on art. Bring your own keys. Nothing is sent to a model until you click one of those buttons.</p>
     </div>
 </div>
 
@@ -27,83 +28,48 @@ else
 {
     <div class="row g-3">
         <div class="col-lg-7">
-            <section class="panel" aria-labelledby="providers-heading">
-                <div class="panel-title">
-                    <h2 id="providers-heading" class="h5"><LucideIcon IconName="bot" Size="18" Class="title-icon" /> Your providers</h2>
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => StartNew()" data-testid="ai-add-provider"><LucideIcon IconName="plus" Size="14" /> Add provider</CodexButton>
-                </div>
-
-                @if (user.AiProviders.Count == 0)
-                {
-                    <div class="empty empty-compact">
-                        <div class="empty-icon"><LucideIcon IconName="key-round" Size="28" /></div>
-                        <h3>No provider yet</h3>
-                        <p>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</p>
-                    </div>
-                }
-                else
-                {
-                    <ul class="list-unstyled mb-0" data-testid="ai-provider-list">
-                        @foreach (var provider in user.AiProviders)
-                        {
-                            var isDefault = provider.Id == DefaultId;
-                            var preset = AIClientFactory.Preset(provider.Kind);
-                            <li class="list-row @(isDefault ? "list-row-active" : "")">
-                                <span class="avatar avatar-md avatar-flat" aria-hidden="true"><LucideIcon IconName="@(preset?.RequiresKey == false ? "home" : "globe")" Size="18" /></span>
-                                <div class="row-main">
-                                    <div class="row-title">@provider.Name
-                                        @if (isDefault)
-                                        {
-                                            <span class="pill pill-accent ms-1">Default</span>
-                                        }
-                                    </div>
-                                    <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? "no key" : "key stored")</div>
-                                </div>
-                                <div class="row-actions">
-                                    @if (!isDefault)
-                                    {
-                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MakeDefaultAsync(provider)">Use</CodexButton>
-                                    }
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => TestAsync(provider, null)" disabled="@testing">Test</CodexButton>
-                                    <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@($"Edit {provider.Name}")" OnClick="() => StartEdit(provider)" />
-                                    <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Remove {provider.Name}")" OnClick="() => RemoveAsync(provider)" />
-                                </div>
-                            </li>
-                        }
-                    </ul>
-                }
-            </section>
+            @ProviderList(Purpose.Text)
+            @ProviderList(Purpose.Image)
 
             <section class="panel" aria-labelledby="server-heading">
                 <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> Server fallback</h2></div>
-                <p class="mb-0 small">When you have no provider of your own, AI buttons use the server's <code>AI</code> configuration: <strong>@Providers.ServerDescription</strong>. Your own providers always take precedence.</p>
+                <p class="mb-1 small">When you have no model of your own, the server's configuration is used. Your own models always take precedence.</p>
+                <ul class="small mb-0">
+                    <li>Text (<code>AI</code> section): <strong>@Providers.ServerDescription</strong></li>
+                    <li>Images (<code>AIImage</code> section): <strong>@Providers.ServerImageDescription</strong></li>
+                </ul>
             </section>
 
             <section class="panel" aria-labelledby="what-heading">
                 <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> What the AI can do</h2></div>
                 <ul class="feature-grid mb-0">
                     <li><LucideIcon IconName="book-open" Size="18" /> <div><strong>Session recaps</strong><div class="small-muted">A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</div></div></li>
-                    <li><LucideIcon IconName="feather" Size="18" /> <div><strong>Histories and bios</strong><div class="small-muted">Polish a character's backstory or an NPC's private notes without contradicting the sheet.</div></div></li>
+                    <li><LucideIcon IconName="feather" Size="18" /> <div><strong>Histories and descriptions</strong><div class="small-muted">Polish a backstory, an NPC's private notes, a homebrew creature or a place, without contradicting the stats.</div></div></li>
                     <li><LucideIcon IconName="trending-up" Size="18" /> <div><strong>Level-up advice</strong><div class="small-muted">What the next level brings, the choices it forces, and picks that fit the character.</div></div></li>
                     <li><LucideIcon IconName="wand" Size="18" /> <div><strong>Characters from a concept</strong><div class="small-muted">A line of concept becomes a full draft sheet built only from content in the campaign's Library.</div></div></li>
                     <li><LucideIcon IconName="globe" Size="18" /> <div><strong>Wiki pages</strong><div class="small-muted">Expand rough notes into a linked world-wiki page.</div></div></li>
+                    <li><LucideIcon IconName="image" Size="18" /> <div><strong>Art</strong><div class="small-muted">Portraits for creatures and pictures for Library entries and places, from their art prompt or description. Needs an image model.</div></div></li>
                 </ul>
             </section>
         </div>
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="editor-heading" id="provider-editor">
-                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editing.Id == editingOriginalId ? "edit-3" : "plus")" Size="18" Class="title-icon" /> @(editingOriginalId != null ? "Edit provider" : "New provider")</h2></div>
+                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editingOriginalId != null ? "edit-3" : "plus")" Size="18" Class="title-icon" /> @(editingOriginalId != null ? "Edit" : "New") @(purpose == Purpose.Image ? "image model" : "text model")</h2></div>
+                <div class="segmented mb-3" role="group" aria-label="Kind of model">
+                    <button type="button" class="chip" aria-pressed="@(purpose == Purpose.Text ? "true" : "false")" @onclick="() => StartNew(Purpose.Text)" disabled="@(editingOriginalId != null)" data-testid="ai-purpose-text"><LucideIcon IconName="feather" Size="14" /> Text</button>
+                    <button type="button" class="chip" aria-pressed="@(purpose == Purpose.Image ? "true" : "false")" @onclick="() => StartNew(Purpose.Image)" disabled="@(editingOriginalId != null)" data-testid="ai-purpose-image"><LucideIcon IconName="image" Size="14" /> Images</button>
+                </div>
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
                         <label for="ai-kind" class="field-label">Service</label>
                         <select id="ai-kind" class="field-select" value="@editing.Kind" @onchange="OnPresetChanged" data-testid="ai-kind">
-                            @foreach (var preset in AIClientFactory.Presets)
+                            @foreach (var preset in Presets(purpose))
                             {
                                 <option value="@preset.Kind">@preset.Label</option>
                             }
                         </select>
-                        @if (AIClientFactory.Preset(editing.Kind) is { } hint)
+                        @if (PresetFor(purpose, editing.Kind) is { } hint)
                         {
                             <div class="field-hint">@hint.Hint</div>
                         }
@@ -118,25 +84,40 @@ else
                     </div>
                     <div class="mb-3">
                         <label for="ai-model" class="field-label">Model</label>
-                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="e.g. openai/gpt-4o-mini" required data-testid="ai-model" />
+                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="@(purpose == Purpose.Image ? "e.g. gpt-image-1" : "e.g. openai/gpt-4o-mini")" required data-testid="ai-model" />
                         @if (editing.Kind == "openrouter")
                         {
-                            <div class="field-hint">Any id from openrouter.ai/models, e.g. <code>anthropic/claude-sonnet-4</code>, <code>google/gemini-2.5-flash</code>.</div>
+                            <div class="field-hint">@(purpose == Purpose.Image
+                                ? "An image-output model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image."
+                                : "Any id from openrouter.ai/models, e.g. anthropic/claude-sonnet-4, google/gemini-2.5-flash.")</div>
                         }
                     </div>
                     <div class="mb-3">
                         <label for="ai-key" class="field-label">API key @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? "(leave blank to keep the stored key)" : "")</label>
-                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(AIClientFactory.Preset(editing.Kind)?.RequiresKey == false ? "Not needed for a local server" : "sk-…")" data-testid="ai-key" />
-                        <div class="field-hint">Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.</div>
+                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(PresetFor(purpose, editing.Kind)?.RequiresKey == false ? "Not needed for a local server" : "sk-…")" data-testid="ai-key" />
+                        <div class="field-hint">
+                            Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.
+                            @if (SharedKeySource() is { } source)
+                            {
+                                <span> Leave it blank to reuse the key of your “@source.Name” text model.</span>
+                            }
+                        </div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save">Save provider</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? "Testing…" : "Test connection")</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save">Save @(purpose == Purpose.Image ? "image model" : "text model")</CodexButton>
+                        @if (purpose == Purpose.Text)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? "Testing…" : "Test connection")</CodexButton>
+                        }
                         @if (editingOriginalId != null)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => StartNew()">Cancel</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => StartNew(purpose)">Cancel</CodexButton>
                         }
                     </div>
+                    @if (purpose == Purpose.Image)
+                    {
+                        <p class="field-hint mt-2 mb-0">There is no test button for images: every picture costs money. Try “Generate with AI” on a Library entry instead.</p>
+                    }
                 </form>
             </section>
         </div>
@@ -144,33 +125,116 @@ else
 }
 
 @code {
+    private enum Purpose { Text, Image }
+
+    private sealed record PresetView(string Kind, string Label, string DefaultEndpoint, string DefaultModel, bool RequiresKey, string Hint);
+
     private UserDocument? user;
+    private Purpose purpose = Purpose.Text;
     private AiProviderConfig editing = new();
     private string? editingOriginalId;
     private string plainKey = string.Empty;
     private bool testing;
     private Flash? flash;
 
-    private string? DefaultId => user == null ? null : Providers.DefaultProvider(user)?.Id;
+    private RenderFragment ProviderList(Purpose listPurpose) => __builder =>
+    {
+        var list = ListFor(listPurpose);
+        var defaultId = DefaultIdFor(listPurpose);
+        var key = listPurpose == Purpose.Image ? "images" : "text";
+        <section class="panel" aria-labelledby="@key-heading" id="@key">
+            <div class="panel-title">
+                <h2 id="@key-heading" class="h5"><LucideIcon IconName="@(listPurpose == Purpose.Image ? "image" : "bot")" Size="18" Class="title-icon" /> @(listPurpose == Purpose.Image ? "Image models" : "Text models")</h2>
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => StartNew(listPurpose, focus: true)" data-testid="@(listPurpose == Purpose.Image ? "ai-add-image-provider" : "ai-add-provider")"><LucideIcon IconName="plus" Size="14" /> Add</CodexButton>
+            </div>
+            @if (list.Count == 0)
+            {
+                <div class="empty empty-compact">
+                    <div class="empty-icon"><LucideIcon IconName="@(listPurpose == Purpose.Image ? "image" : "key-round")" Size="28" /></div>
+                    <h3>@(listPurpose == Purpose.Image ? "No image model yet" : "No text model yet")</h3>
+                    <p>@(listPurpose == Purpose.Image
+                        ? "Uploading art works without one. Add one to have pictures drawn for you; good writing models rarely draw, so this is set up apart from text."
+                        : "Add one on the right. OpenRouter is pre-selected: one key gives you most current models.")</p>
+                </div>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0" data-testid="@(listPurpose == Purpose.Image ? "ai-image-provider-list" : "ai-provider-list")">
+                    @foreach (var provider in list)
+                    {
+                        var isDefault = provider.Id == defaultId;
+                        var local = PresetFor(listPurpose, provider.Kind)?.RequiresKey == false;
+                        <li class="list-row @(isDefault ? "list-row-active" : "")">
+                            <span class="avatar avatar-md avatar-flat" aria-hidden="true"><LucideIcon IconName="@(local ? "home" : "globe")" Size="18" /></span>
+                            <div class="row-main">
+                                <div class="row-title">@provider.Name
+                                    @if (isDefault)
+                                    {
+                                        <span class="pill pill-accent ms-1">In use</span>
+                                    }
+                                </div>
+                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? "no key" : "key stored")</div>
+                            </div>
+                            <div class="row-actions">
+                                @if (!isDefault)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MakeDefaultAsync(provider, listPurpose)">Use</CodexButton>
+                                }
+                                @if (listPurpose == Purpose.Text)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => TestAsync(provider, null)" disabled="@testing">Test</CodexButton>
+                                }
+                                <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@($"Edit {provider.Name}")" OnClick="() => StartEdit(provider, listPurpose)" />
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Remove {provider.Name}")" OnClick="() => RemoveAsync(provider, listPurpose)" />
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    };
+
+    private List<AiProviderConfig> ListFor(Purpose p) => p == Purpose.Image ? user!.ImageProviders : user!.AiProviders;
+
+    private string? DefaultIdFor(Purpose p) => user == null ? null : (p == Purpose.Image ? Providers.DefaultImageProvider(user) : Providers.DefaultProvider(user))?.Id;
+
+    private static IEnumerable<PresetView> Presets(Purpose p) => p == Purpose.Image
+        ? AiImageGenerator.Presets.Select(x => new PresetView(x.Kind, x.Label, x.DefaultEndpoint, x.DefaultModel, x.RequiresKey, x.Hint))
+        : AIClientFactory.Presets.Select(x => new PresetView(x.Kind, x.Label, x.DefaultEndpoint, x.DefaultModel, x.RequiresKey, x.Hint));
+
+    private static PresetView? PresetFor(Purpose p, string? kind) =>
+        Presets(p).FirstOrDefault(x => string.Equals(x.Kind, kind, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>A text model on the same service with a stored key, which a new image model may reuse (one OpenRouter key does both).</summary>
+    private AiProviderConfig? SharedKeySource() =>
+        purpose == Purpose.Image && editingOriginalId == null && user != null
+            ? user.AiProviders.FirstOrDefault(p => string.Equals(p.Kind, editing.Kind, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(p.ProtectedApiKey))
+            : null;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = userId == null ? null : await UserRepo.GetUserByIdAsync(userId);
-        StartNew();
+        await StartNew(Purpose.Text);
     }
 
-    private void StartNew()
+    private async Task StartNew(Purpose p, bool focus = false)
     {
+        purpose = p;
         editingOriginalId = null;
         plainKey = string.Empty;
         editing = new AiProviderConfig();
-        ApplyPreset("openrouter");
+        ApplyPreset(p == Purpose.Image ? "openai" : "openrouter");
+        if (focus)
+        {
+            await JS.InvokeVoidAsync("codex.focus", "ai-kind");
+        }
     }
 
-    private void StartEdit(AiProviderConfig provider)
+    private void StartEdit(AiProviderConfig provider, Purpose p)
     {
+        purpose = p;
         editingOriginalId = provider.Id;
         plainKey = string.Empty;
         editing = new AiProviderConfig
@@ -189,7 +253,7 @@ else
 
     private void ApplyPreset(string kind)
     {
-        var preset = AIClientFactory.Preset(kind);
+        var preset = PresetFor(purpose, kind);
         editing.Kind = kind;
         if (preset == null) return;
         editing.Name = preset.Label;
@@ -216,7 +280,11 @@ else
         {
             editing.ProtectedApiKey = Providers.Protect(plainKey.Trim());
         }
-        else if (editingOriginalId == null && AIClientFactory.Preset(editing.Kind)?.RequiresKey == true)
+        else if (SharedKeySource() is { } shared)
+        {
+            editing.ProtectedApiKey = shared.ProtectedApiKey;
+        }
+        else if (editingOriginalId == null && PresetFor(purpose, editing.Kind)?.RequiresKey == true)
         {
             flash = Flash.Error("This service needs an API key.");
             return;
@@ -226,30 +294,40 @@ else
         editing.BaseUrl = editing.BaseUrl.Trim();
         editing.ModelId = editing.ModelId.Trim();
 
-        var index = user.AiProviders.FindIndex(p => p.Id == editing.Id);
-        if (index >= 0) user.AiProviders[index] = editing; else user.AiProviders.Add(editing);
-        user.DefaultAiProviderId ??= editing.Id;
+        var list = ListFor(purpose);
+        var index = list.FindIndex(p => p.Id == editing.Id);
+        if (index >= 0) list[index] = editing; else list.Add(editing);
+        if (purpose == Purpose.Image) user.DefaultImageProviderId ??= editing.Id; else user.DefaultAiProviderId ??= editing.Id;
         await UserRepo.UpdateUserAsync(user);
         flash = Flash.Success($"Saved “{editing.Name}”.");
-        StartNew();
+        await StartNew(purpose);
     }
 
-    private async Task MakeDefaultAsync(AiProviderConfig provider)
+    private async Task MakeDefaultAsync(AiProviderConfig provider, Purpose p)
     {
         if (user == null) return;
-        user.DefaultAiProviderId = provider.Id;
+        if (p == Purpose.Image) user.DefaultImageProviderId = provider.Id; else user.DefaultAiProviderId = provider.Id;
         await UserRepo.UpdateUserAsync(user);
-        flash = Flash.Success($"AI buttons now use {provider.Name}.");
+        flash = Flash.Success(p == Purpose.Image ? $"Art is now drawn with {provider.Name}." : $"AI buttons now use {provider.Name}.");
     }
 
-    private async Task RemoveAsync(AiProviderConfig provider)
+    private async Task RemoveAsync(AiProviderConfig provider, Purpose p)
     {
         if (user == null) return;
-        user.AiProviders.Remove(provider);
-        if (user.DefaultAiProviderId == provider.Id) user.DefaultAiProviderId = user.AiProviders.FirstOrDefault()?.Id;
+        var list = ListFor(p);
+        list.Remove(provider);
+        if (p == Purpose.Image)
+        {
+            if (user.DefaultImageProviderId == provider.Id) user.DefaultImageProviderId = list.FirstOrDefault()?.Id;
+        }
+        else if (user.DefaultAiProviderId == provider.Id)
+        {
+            user.DefaultAiProviderId = list.FirstOrDefault()?.Id;
+        }
+
         await UserRepo.UpdateUserAsync(user);
         flash = Flash.Success($"Removed {provider.Name}.");
-        if (editingOriginalId == provider.Id) StartNew();
+        if (editingOriginalId == provider.Id) await StartNew(p);
     }
 
     private async Task TestAsync(AiProviderConfig provider, string? key)

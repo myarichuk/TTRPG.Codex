@@ -28,6 +28,17 @@ public sealed record RewriteRequest(
     AiAudience Audience,
     string? CampaignContext = null);
 
+/// <summary>A description for a Library entry (a homebrew creature, spell, item) or a place on the world map.</summary>
+public sealed record DescribeRequest(
+    string Subject,
+    string SubjectKind,
+    string SystemName,
+    IReadOnlyList<string> Facts,
+    string CurrentText,
+    string Instruction,
+    AiAudience Audience,
+    string? CampaignContext = null);
+
 public sealed record LevelUpRequest(
     string CharacterName,
     string SystemName,
@@ -101,6 +112,36 @@ public static class AiPrompts
         sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction) ? "Polish and expand the current text into two or three paragraphs." : r.Instruction.Trim()));
         sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet - write it from the facts)" : r.CurrentText);
         return (system, sb.ToString());
+    }
+
+    public static (string System, string User) Describe(DescribeRequest r)
+    {
+        var audience = r.Audience == AiAudience.Players
+            ? "Players will read this, so describe only what someone standing there would see, hear and learn; no secrets, no game-master asides."
+            : "The text is for the game master's eyes and may include hooks and secrets.";
+        var system = $"You are a writing assistant for a {r.SystemName} tabletop campaign. You write the description of a {r.SubjectKind}: vivid, concrete and usable at the table, two short paragraphs unless told otherwise. Keep every fact given and never contradict the numbers or names. {audience} Reply with the finished text only. {Style}";
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Subject: {r.Subject} ({r.SubjectKind})");
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
+        {
+            sb.AppendLine($"Campaign: {r.CampaignContext}");
+        }
+
+        AppendList(sb, "Facts", r.Facts);
+        sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction)
+            ? (string.IsNullOrWhiteSpace(r.CurrentText) ? "Write the description from the facts." : "Polish and enrich the current text; keep what it says.")
+            : r.Instruction.Trim()));
+        sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet)" : r.CurrentText);
+        return (system, sb.ToString());
+    }
+
+    /// <summary>A text-to-image prompt: the subject, its visual description, and a house style that keeps lettering and frames out.</summary>
+    public static string Image(string subject, string subjectKind, string? visual, bool landscape)
+    {
+        var shot = landscape ? "Wide establishing view" : "Full-figure portrait";
+        var details = string.IsNullOrWhiteSpace(visual) ? string.Empty : " " + visual.Trim().TrimEnd('.') + ".";
+        return $"{shot} of {subject}, a {subjectKind}.{details} Painterly fantasy illustration, dramatic natural light, rich muted colours. No text, no lettering, no border, no watermark.";
     }
 
     public static (string System, string User) LevelUp(LevelUpRequest r)
