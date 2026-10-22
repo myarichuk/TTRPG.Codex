@@ -14,23 +14,17 @@ public class RavenDbFixture : IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
 
+        // Runs killed before Dispose leave their data behind, so clear out the old ones first.
+        TestTempData.SweepStale(Path.GetTempPath(), "TestRavenData_*");
+        TestTempData.SweepStale(Path.Combine(AppContext.BaseDirectory, "RavenDBServer", "Temp"), "*");
+
         DbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
         DbName = "Campaigns_" + Guid.NewGuid().ToString();
     }
 
     public void Dispose()
     {
-        // Give RavenDB a moment to release file handles
-        Task.Delay(1000).Wait();
-
-        try
-        {
-            if (Directory.Exists(DbPath))
-            {
-                Directory.Delete(DbPath, true);
-            }
-        }
-        catch { }
+        TestTempData.DeleteDirectory(DbPath);
     }
 }
 
