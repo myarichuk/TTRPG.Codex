@@ -12,6 +12,22 @@ Bundled third-party software:
 - Bootstrap 5.3.3 - MIT License - `src/Codex.Web/wwwroot/lib/bootstrap/LICENSE`
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
 
+### RavenDB
+
+Campaign data is stored in RavenDB, run as the unmodified `RavenDB.Embedded` server in a separate
+process that the app talks to over HTTP. The client library (`RavenDB.Client`) is MIT licensed.
+The server is Copyright RavenDB Ltd and is used under the GNU Affero General Public License v3
+(`licenses/AGPL-3.0.txt`, shipped as `AGPL-3.0.txt` next to the packaged app), as RavenDB's own
+licence file for the package states. RavenDB is also available under a commercial licence.
+
+- The packaged downloads include the RavenDB server binaries as published by RavenDB Ltd, without
+  changes. Its complete corresponding source is at https://github.com/ravendb/ravendb (the
+  release matching the `RavenDB.Embedded` version in `src/Codex.Persistence/Codex.Persistence.csproj`).
+- TTRPG.Codex's own code is a separate program, not a modification of or linked into the server, so
+  the AGPL covers the RavenDB server only; the PolyForm licence above covers this project's code.
+- If you modify the RavenDB server and let others use it, the AGPL requires you to offer them your
+  modified source.
+
 Bundled typefaces, self-hosted under `src/Codex.Web/wwwroot/fonts/` (the app makes no request to a
 font CDN). Both are licensed under the SIL Open Font License 1.1, whose text sits beside the font
 files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource packages
