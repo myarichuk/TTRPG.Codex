@@ -2,7 +2,10 @@
 
 ## Software
 
-TTRPG.Codex is released under the MIT License (see `LICENSE`).
+TTRPG.Codex is source-available under the PolyForm Noncommercial License 1.0.0 (see `LICENSE`):
+free for any noncommercial use, not for commercial use. It is not an OSI-approved open source
+licence. Versions published before this change were released under the MIT License, and copies of
+those versions stay MIT.
 
 Bundled third-party software:
 
@@ -52,6 +55,6 @@ domain under CC0 1.0 by the TTRPG.Codex project.
 - Non-SRD fifth-edition material (other subclasses, most feats, setting lore): proprietary.
 - Pathfinder Second Edition Remaster: its rules text is under the ORC License, but no ORC-licensed
   machine-readable dataset exists, and the community datasets (Foundry VTT, Pf2ools, Archives of
-  Nethys) are distributed under Paizo's Community Use Policy, which cannot be re-licensed into an
-  MIT project. A PF2E-shaped system can still be defined in `system.yaml` and filled from a local,
+  Nethys) are distributed under Paizo's Community Use Policy, which cannot be re-licensed into this
+  project. A PF2E-shaped system can still be defined in `system.yaml` and filled from a local,
   ORC-compliant transcription that is not redistributed here.
