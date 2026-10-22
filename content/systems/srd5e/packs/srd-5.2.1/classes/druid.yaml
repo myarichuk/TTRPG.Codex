@@ -129,9 +129,9 @@ properties:
       Once on each of your turns, if you have no uses of Wild Shape left, you can give yourself one use by expending a spell slot (no action required).
 
       In addition, you can expend one use of Wild Shape (no action required) to give yourself a level 1 spell slot, but you can't do so again until you finish a Long Rest.
-  - name: Druid Subclass
+  - name: Subclass Feature
     level: 6
-    description: You gain a Druid subclass of your choice. A subclass is a specialization that grants you features at certain Druid levels. For the rest of your career, you gain each of your subclass's features that are of your Druid level or lower.
+    description: You gain a feature from your Druid subclass at this level. Its features are listed on the subclass.
   - name: Elemental Fury
     level: 7
     description: >-
@@ -143,15 +143,15 @@ properties:
   - name: Ability Score Improvement
     level: 8
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Druid levels 8, 12, and 16.
-  - name: Druid Subclass
+  - name: Subclass Feature
     level: 10
-    description: You gain a Druid subclass of your choice. A subclass is a specialization that grants you features at certain Druid levels. For the rest of your career, you gain each of your subclass's features that are of your Druid level or lower.
+    description: You gain a feature from your Druid subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Druid levels 8, 12, and 16.
-  - name: Druid Subclass
+  - name: Subclass Feature
     level: 14
-    description: You gain a Druid subclass of your choice. A subclass is a specialization that grants you features at certain Druid levels. For the rest of your career, you gain each of your subclass's features that are of your Druid level or lower.
+    description: You gain a feature from your Druid subclass at this level. Its features are listed on the subclass.
   - name: Improved Elemental Fury
     level: 15
     description: >-
@@ -179,6 +179,7 @@ properties:
       Nature Magician. You can convert uses of Wild Shape into a spell slot (no action required). Choose a number of your unexpended uses of Wild Shape and convert them into a single spell slot, with each use contributing 2 spell levels. For example, if you convert two uses of Wild Shape, you produce a level 4 spell slot. Once you use this benefit, you can't do so again until you finish a Long Rest.
 
       Longevity. The primal magic that you wield causes you to age more slowly. For every ten years that pass, your body ages only one year.
+  spellcastingAbility: wis
   casterType: full
   spellcasting:
   - level: 1
@@ -284,41 +285,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

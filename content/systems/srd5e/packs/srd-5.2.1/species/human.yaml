@@ -27,3 +27,4 @@ properties:
     description: You gain proficiency in one skill of your choice.
   - name: Versatile
     description: You gain an Origin feat of your choice (see "Feats"). Skilled is recommended.
+  extraOriginFeats: 1

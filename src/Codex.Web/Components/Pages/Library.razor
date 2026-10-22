@@ -17,8 +17,8 @@
     @if (Catalog.Systems.Count() > 1)
     {
         <div>
-            <label for="library-system" class="form-label">System</label>
-            <select id="library-system" class="form-select" value="@EffectiveSystemId" @onchange="OnSystemChanged">
+            <label for="library-system" class="field-label">System</label>
+            <select id="library-system" class="field-select" value="@EffectiveSystemId" @onchange="OnSystemChanged">
                 @foreach (var system in Catalog.Systems)
                 {
                     <option value="@system.Id">@system.Name</option>

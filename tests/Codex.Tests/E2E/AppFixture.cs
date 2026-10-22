@@ -29,6 +29,8 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        TestTempData.SweepStale(Path.GetTempPath(), "E2E_RavenData_*");
+
         var repoRoot = FindRepoRoot();
         var port = GetFreePort();
         BaseUrl = $"http://127.0.0.1:{port}";
@@ -178,17 +180,7 @@ public sealed class AppFixture : IAsyncLifetime
 
         _process?.Dispose();
 
-        try
-        {
-            await Task.Delay(500); // let RavenDB's embedded server release its file handles
-            if (Directory.Exists(_dataDir))
-            {
-                Directory.Delete(_dataDir, recursive: true);
-            }
-        }
-        catch
-        {
-            // Best-effort cleanup of a throwaway temp directory.
-        }
+        // The app has exited, so its embedded RavenDB has released the files.
+        TestTempData.DeleteDirectory(_dataDir);
     }
 }

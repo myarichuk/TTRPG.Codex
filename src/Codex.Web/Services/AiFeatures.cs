@@ -16,14 +16,14 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     public Task<bool> IsConfiguredAsync(string userId) => providers.IsConfiguredForAsync(userId);
 
     /// <summary>A session summary for the DM (everything) or the players (public notes and rolls only). DM only: it is the DM who publishes recaps.</summary>
-    public async Task<string> SessionSummaryAsync(CampaignDocument campaign, SessionDocument session, IEnumerable<NoteDocument> notes, AiAudience audience, CampaignAccess access, Func<string, string> nameOf)
+    public async Task<string> SessionSummaryAsync(CampaignDocument campaign, SessionDocument session, IEnumerable<NoteDocument> notes, AiAudience audience, CampaignAccess access, Func<string, string> nameOf, IEnumerable<ActorDocument> actors)
     {
         if (!access.IsDm)
         {
             throw new UnauthorizedAccessException("Only the DM drafts session summaries.");
         }
 
-        var digest = SessionDigest.Build(session, notes, forDm: audience == AiAudience.Dm, nameOf);
+        var digest = SessionDigest.Build(session, notes, forDm: audience == AiAudience.Dm, nameOf, actors);
         var assistant = await providers.AssistantForAsync(access.UserId);
         return await assistant.SummarizeSessionAsync(new SessionSummaryRequest(
             campaign.Name,

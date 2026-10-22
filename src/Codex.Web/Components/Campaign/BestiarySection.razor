@@ -21,7 +21,7 @@
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
-            <a href="@Ctx.BasePath/library/monster" class="btn btn-outline-secondary"><LucideIcon IconName="plus" Size="16" /> New homebrew creature</a>
+            <a href="@Ctx.BasePath/library/monster" class="cx-btn cx-etched"><LucideIcon IconName="plus" Size="18" /> New homebrew creature</a>
         </div>
     }
 </div>
@@ -31,7 +31,7 @@
     @if (inPlay.Count == 0)
     {
         <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="paw-print" Size="26" /></div>
+            <div class="empty-icon"><LucideIcon IconName="paw-print" Size="28" /></div>
             <h3>Nothing met yet</h3>
             <p>Creatures appear here once the DM reveals them.</p>
         </div>
@@ -59,7 +59,7 @@ else
     <div class="row g-3">
         <div class="col-lg-7">
             <section class="panel" aria-labelledby="shortlist-heading">
-                <div class="panel-title"><h3 id="shortlist-heading"><LucideIcon IconName="bookmark" Size="16" Class="title-icon" /> Shortlist (@Ctx.Campaign.Bestiary.Count)</h3></div>
+                <div class="panel-title"><h3 id="shortlist-heading"><LucideIcon IconName="bookmark" Size="18" Class="title-icon" /> Shortlist (@Ctx.Campaign.Bestiary.Count)</h3></div>
                 @if (Ctx.Campaign.Bestiary.Count == 0)
                 {
                     <p class="small-muted mb-0">Nothing shortlisted. Search the Library on the right and pin creatures for upcoming encounters.</p>
@@ -79,14 +79,14 @@ else
                                 </div>
                                 <div class="row-sub">
                                     <label for="bb-note-@entry.Key" class="visually-hidden">Note for @entry.Name</label>
-                                    <input id="bb-note-@entry.Key" class="form-control form-control-sm inline-input" placeholder="Where you'll use it…" value="@entry.Note" @onchange="e => SetNoteAsync(entry, e.Value?.ToString())" />
+                                    <input id="bb-note-@entry.Key" class="field-input field-sm inline-input" placeholder="Where you'll use it…" value="@entry.Note" @onchange="e => SetNoteAsync(entry, e.Value?.ToString())" />
                                 </div>
                             </div>
                             <div class="row-actions">
                                 <label for="bb-count-@entry.Key" class="visually-hidden">How many</label>
-                                <input id="bb-count-@entry.Key" type="number" min="1" max="20" class="form-control form-control-sm count-input" value="@entry.Count" @onchange="e => SetCountAsync(entry, e.Value?.ToString())" />
-                                <button type="button" class="btn btn-primary btn-sm" @onclick="() => AddToCastAsync(entry)" aria-label="Add @entry.Count @entry.Name to the cast"><LucideIcon IconName="user-plus" Size="14" /> To cast</button>
-                                <button type="button" class="icon-btn danger" aria-label="Remove @entry.Name from the shortlist" @onclick="() => RemoveAsync(entry)"><LucideIcon IconName="x" Size="16" /></button>
+                                <input id="bb-count-@entry.Key" type="number" min="1" max="20" class="field-input field-sm count-input" value="@entry.Count" @onchange="e => SetCountAsync(entry, e.Value?.ToString())" />
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(entry)" aria-label="@($"Add {entry.Count} {entry.Name} to the cast")"><LucideIcon IconName="user-plus" Size="14" /> To cast</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {entry.Name} from the shortlist")" OnClick="() => RemoveAsync(entry)" />
                             </div>
                         </li>
                     }
@@ -94,7 +94,7 @@ else
             </section>
 
             <section class="panel" aria-labelledby="inplay-heading">
-                <div class="panel-title"><h3 id="inplay-heading"><LucideIcon IconName="swords" Size="16" Class="title-icon" /> In the cast (@inPlay.Count)</h3></div>
+                <div class="panel-title"><h3 id="inplay-heading"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> In the cast (@inPlay.Count)</h3></div>
                 @if (inPlay.Count == 0)
                 {
                     <p class="small-muted mb-0">No monsters in the cast right now.</p>
@@ -122,11 +122,11 @@ else
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="find-heading">
-                <div class="panel-title"><h3 id="find-heading"><LucideIcon IconName="search" Size="16" Class="title-icon" /> Find creatures</h3></div>
+                <div class="panel-title"><h3 id="find-heading"><LucideIcon IconName="search" Size="18" Class="title-icon" /> Find creatures</h3></div>
                 <div class="search mb-2">
                     <LucideIcon IconName="search" Size="18" Class="search-icon" />
                     <label for="bestiary-search" class="visually-hidden">Search creatures</label>
-                    <input id="bestiary-search" type="search" class="form-control" placeholder="goblin, dragon, CR 3…" value="@query" @oninput="OnQueryChanged" data-testid="bestiary-search" />
+                    <input id="bestiary-search" type="search" class="field-input" placeholder="goblin, dragon, CR 3…" value="@query" @oninput="OnQueryChanged" data-testid="bestiary-search" />
                 </div>
                 @if (results == null)
                 {
@@ -152,9 +152,9 @@ else
                                     </div>
                                     <div class="row-sub">@Summary(item)</div>
                                 </div>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => ShortlistAsync(item)" disabled="@shortlisted" aria-label="@(shortlisted ? $"{item.Entry.Name} is shortlisted" : $"Shortlist {item.Entry.Name}")">
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => ShortlistAsync(item)" Disabled="@shortlisted" aria-label="@(shortlisted ? $"{item.Entry.Name} is shortlisted" : $"Shortlist {item.Entry.Name}")">
                                     <LucideIcon IconName="@(shortlisted ? "check" : "bookmark-plus")" Size="14" /> @(shortlisted ? "Listed" : "Shortlist")
-                                </button>
+                                </CodexButton>
                             </li>
                         }
                     </ul>
@@ -211,29 +211,46 @@ else
         return text.Length > 0 ? text : TextFormatting.Summary(item.Entry.Description, 90);
     }
 
+    /// <summary>Applies one small edit to the stored shortlist (reload-then-mutate, so a member who
+    /// joined or a session started since this page opened is not overwritten) and refreshes the page's copy.</summary>
+    private async Task EditBestiaryAsync(Action<List<BestiaryEntry>> edit)
+    {
+        var stored = await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => edit(campaign.Bestiary));
+        if (stored != null)
+        {
+            Ctx.Campaign.Bestiary = stored.Bestiary;
+        }
+    }
+
     private async Task ShortlistAsync(LibraryItem item)
     {
-        Ctx.Campaign.Bestiary.Add(new BestiaryEntry { EntryType = item.Entry.Type, EntryId = item.Entry.Id, IsHomebrew = item.IsHomebrew, Name = item.Entry.Name });
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var entry = new BestiaryEntry { EntryType = item.Entry.Type, EntryId = item.Entry.Id, IsHomebrew = item.IsHomebrew, Name = item.Entry.Name };
+        await EditBestiaryAsync(list =>
+        {
+            if (!list.Any(b => b.Key == entry.Key)) list.Add(entry);
+        });
         Ctx.Notify(Flash.Success($"Shortlisted {item.Entry.Name}."));
     }
 
-    private async Task RemoveAsync(BestiaryEntry entry)
+    private Task RemoveAsync(BestiaryEntry entry) => EditBestiaryAsync(list => list.RemoveAll(b => b.Key == entry.Key));
+
+    private Task SetNoteAsync(BestiaryEntry entry, string? note)
     {
-        Ctx.Campaign.Bestiary.Remove(entry);
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var text = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        return EditBestiaryAsync(list =>
+        {
+            if (list.FirstOrDefault(b => b.Key == entry.Key) is { } stored) stored.Note = text;
+        });
     }
 
-    private async Task SetNoteAsync(BestiaryEntry entry, string? note)
+    private Task SetCountAsync(BestiaryEntry entry, string? raw)
     {
-        entry.Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
-    }
-
-    private async Task SetCountAsync(BestiaryEntry entry, string? raw)
-    {
-        if (int.TryParse(raw, out var count)) entry.Count = Math.Clamp(count, 1, 20);
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        if (!int.TryParse(raw, out var count)) return Task.CompletedTask;
+        var clamped = Math.Clamp(count, 1, 20);
+        return EditBestiaryAsync(list =>
+        {
+            if (list.FirstOrDefault(b => b.Key == entry.Key) is { } stored) stored.Count = clamped;
+        });
     }
 
     private async Task AddToCastAsync(BestiaryEntry entry)

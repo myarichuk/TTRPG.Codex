@@ -2,7 +2,7 @@ namespace Codex.Persistence;
 
 /// <summary>
 /// What an AI summary of a session is allowed to see, as plain lines. Built once per audience:
-/// the DM digest carries everything; the player digest drops secret rolls and private notes, so
+/// the DM digest carries everything; the player digest drops secret rolls, private notes and anything about actors the players can't see, so
 /// a player-facing recap can never be drafted from something the players don't know.
 /// </summary>
 public sealed class SessionDigest
@@ -19,10 +19,13 @@ public sealed class SessionDigest
 
     public bool IsEmpty => Events.Count == 0 && Notes.Count == 0 && Rolls.Count == 0;
 
-    public static SessionDigest Build(SessionDocument session, IEnumerable<NoteDocument> notes, bool forDm, Func<string, string>? nameOf = null)
+    /// <param name="actors">The campaign's actors, so the player digest can leave out events about ones the players
+    /// don't know of and keep exact numbers out of the rest. Without them a player digest carries no actor events at all.</param>
+    public static SessionDigest Build(SessionDocument session, IEnumerable<NoteDocument> notes, bool forDm, Func<string, string>? nameOf = null, IEnumerable<ActorDocument>? actors = null)
     {
         nameOf ??= id => id;
-        var events = session.Events.OrderBy(e => e.Timestamp)
+        var sourceEvents = forDm ? session.Events : SessionEventRedactor.ForPlayers(session.Events, actors ?? Array.Empty<ActorDocument>());
+        var events = sourceEvents.OrderBy(e => e.Timestamp)
             .Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Description}")
             .ToList();
 

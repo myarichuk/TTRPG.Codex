@@ -225,7 +225,18 @@ public class SessionNote
 public class SessionEvent
 {
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>The full account, written for the DM: real names, exact numbers. Players read it through
+    /// <see cref="SessionEventRedactor"/>, never directly.</summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>Every actor the description names. A viewer who can't see one of them doesn't see the event.</summary>
+    public List<string> ActorIds { get; set; } = new();
+
+    /// <summary>What anyone who may see the actors reads instead when <see cref="Description"/> carries numbers
+    /// they may not know (a monster's exact damage). Null means the description is safe as it stands.</summary>
+    public string? PlayerDescription { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
@@ -245,6 +256,15 @@ public class RollLogEntry
     public string Result { get; set; } = string.Empty;
     public int Total { get; set; }
     public bool IsSecret { get; set; }
+
+    /// <summary>What the roll was for ("Athletics check"); null for a free-standing roll.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>The dice that counted, in the order rolled. Empty for entries that only have <see cref="Result"/> text (older rolls, death saves, hit dice).</summary>
+    public List<int> Kept { get; set; } = new();
+
+    public List<int> Dropped { get; set; } = new();
+    public int Modifier { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
@@ -267,6 +287,11 @@ public class EncounterParticipant
     public int TieBreak { get; set; }
 
     public bool HasActed { get; set; }
+
+    /// <summary>Their start-of-turn effects have already ticked this round, so handing the turn back to
+    /// them (after someone acted ahead of them, or after a step back) doesn't tick them twice.</summary>
+    public bool TurnStarted { get; set; }
+
     public TurnState State { get; set; } = TurnState.Normal;
 }
 
@@ -280,6 +305,9 @@ public class EncounterDocument
     public List<EncounterParticipant> Participants { get; set; } = new();
     public int Round { get; set; } = 1;
     public int TurnIndex { get; set; }
+
+    /// <summary>Set when the DM ends the encounter; an encounter with no end is restored when its session's table starts again.</summary>
+    public DateTime? EndedAt { get; set; }
 
     /// <summary>Active status-effect/duration state not owned by a single actor (area effects, hazards).</summary>
     public Dictionary<string, object> ActiveEffects { get; set; } = new();

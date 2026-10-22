@@ -1,8 +1,9 @@
 # UI specification
 
 The web UI is a Blazor Server app with a token-based stylesheet (`src/Codex.Web/wwwroot/app.css`)
-over a vendored Bootstrap. Light and dark themes follow the OS preference and can be toggled from
-the header; every colour pair meets WCAG AA. Nothing loads from the internet at runtime.
+over a vendored Bootstrap. The look is dark stone, leather and brass; dark is the default whatever
+the OS prefers, and the opt-in light theme, *parchment*, is toggled from the header. Every colour
+pair meets WCAG AA. Nothing loads from the internet at runtime, fonts included.
 
 ## Principles
 
@@ -19,7 +20,7 @@ the header; every colour pair meets WCAG AA. Nothing loads from the internet at 
 
 ## Shell
 
-- **Header**: translucent, blurred, sticky. Brand, top-level nav (Campaigns, Library, About),
+- **Header**: leather with a brass rule, sticky. Brand, top-level nav (Campaigns, Library, About),
   theme toggle, user chip, sign out. Nav labels hide below 720px.
 - **Campaign workspace** (`/campaigns/{id}/...`): a sticky side rail on wide screens holding the
   campaign name, system and role pills, and the eight section links; a "Live" badge appears on
@@ -32,11 +33,50 @@ the header; every colour pair meets WCAG AA. Nothing loads from the internet at 
 
 ## Tokens
 
-Colours (`--bg`, `--surface`, `--surface-2/3`, `--text`, `--text-2/3`, `--accent`, `--accent-2`,
-`--danger`, `--success`, `--warning`, `--hp`, `--hp-mid`, `--hp-high`), radii (`--radius-sm/md/lg/xl`),
-shadows (`--shadow-1/2/3`), motion (`--ease-out`, `--ease-spring`, `--dur-fast`, `--dur`,
-`--dur-slow`) and layout (`--header-h`, `--content-max`, `--gutter`) all live on `:root`, with the
-dark overrides under `:root[data-theme="dark"]`.
+Colours (`--bg` stone; `--surface`, `--surface-2/3` leather; `--text`, `--text-2/3` bone;
+`--accent` brass and `--accent-2` bone; `--arcane` verdigris for magic and the AI helpers;
+`--danger`, `--success`, `--warning`; `--hp`, `--hp-mid`, `--hp-high`, `--hp-track` blood), borders
+(`--border` and `--border-strong` brass, `--rule` the dark divider between rows, `--frame` the
+inner dark line that completes the two-tone border), radii (`--radius-sm/md/lg/xl`, 2 to 4px),
+shadows (`--shadow-1/2/3`), type (`--font-display`, `--font-body`), motion (`--ease-out`,
+`--ease-spring`, `--dur-fast`, `--dur`, `--dur-slow`) and layout (`--header-h`, `--content-max`,
+`--gutter`) all live on `:root`, which is the dark theme. Parchment overrides them under
+`:root[data-theme="light"]`; the inline script in `App.razor` applies the saved choice before first
+paint and falls back to dark. There are no gradients, blurs or `backdrop-filter` anywhere in the
+stylesheet except the scrims that fade a cover image into its card and the loading-skeleton shimmer.
+
+### Type
+
+Two OFL typefaces, self-hosted under `wwwroot/fonts` and recorded in `LEGAL.md`: **Cinzel**
+(engraved Roman capitals; its lower case is true small capitals) for `h1`-`h3`, `.brand`,
+`.attr-mod` and the `.stat-numeral` HP/AC figures, set with positive tracking; **Alegreya Sans** for
+everything else. Labels (field-group legends, table heads, the side-rail group names, ability names,
+feature levels, the type line above a Library entry) share one style, `.label-caps`: body face,
+bold, `font-variant-caps: all-small-caps`, 0.08em tracking, `--text-3`. Do not add new uppercase
+eyebrows or inline `letter-spacing`.
+
+### Contrast
+
+Checked with the WCAG relative-luminance formula; text needs 4.5:1 and borders of controls, focus
+rings and the HP bar's fill against its track need 3:1.
+
+| Pair | Need | Dark | Parchment |
+|---|---|---|---|
+| `--text` on `--surface` | 4.5 | 14.9 | 13.7 |
+| `--text` on `--bg` | 4.5 | 15.9 | 11.7 |
+| `--text-2` on `--surface-2` | 4.5 | 9.8 | 8.0 |
+| `--text-3` on `--surface-2` (muted text, placeholders) | 4.5 | 6.3 | 5.5 |
+| `--text-3` on `--surface-3` | 4.5 | 5.6 | 4.7 |
+| `--accent` on `--surface` (links, labels) | 4.5 | 8.4 | 6.4 |
+| `--accent-hover` on `--surface` | 4.5 | 10.7 | 8.9 |
+| `--on-accent` on `--accent` (primary buttons, active chips) | 4.5 | 8.5 | 6.9 |
+| `--on-accent` on `--accent-hover` | 4.5 | 10.8 | 9.5 |
+| `--arcane` on `--surface` / `--bg` | 4.5 | 8.5 / 9.1 | 5.9 / 5.0 |
+| `--danger` on its tint over `--surface-2` | 4.5 | 5.5 | 4.6 |
+| `--success` on its tint over `--surface-2` | 4.5 | 7.1 | 4.8 |
+| `--warning` on its tint over `--surface-2` | 4.5 | 6.8 | 4.5 |
+| `--border-strong` on `--surface` / `--bg` | 3 | 4.8 / 5.1 | 4.9 / 4.2 |
+| `--hp-high` / `--hp` fill on `--hp-track` | 3 | 3.3 / 4.6 | 4.2 / 3.3 |
 
 ## Screens
 
@@ -60,6 +100,73 @@ dark overrides under `:root[data-theme="dark"]`.
 | `/library[/{system}[/{type}[/{entry}]]]` | Read-only browser across loaded systems. |
 | `/about` | Loaded systems and packs with their licence attribution; content load warnings. |
 | `/login`, `/register`, `/campaigns/join/{code}` | Authentication and invites. |
+
+## Components and frames
+
+Controls are owned by the app, not Bootstrap. Every page uses these; Bootstrap's grid and spacing utilities remain, but no `btn-*`, `form-control`, `form-select` or `form-check` classes are left. The exceptions are the icon buttons in the header (theme, sign out) and the reconnect dialog, which have their own styles. A button-shaped link is `<a class="cx-btn cx-plaque">` (or `cx-etched`, `cx-sm`).
+
+| Component | Use |
+|---|---|
+| `CodexButton` | One button. `Variant` is `Plaque` (brass call to action), `Etched` (default), `Blood` (destructive) or `Rune` (icon alone: pass `Label`, it becomes the accessible name). `Small` for dense rows, `Class="cx-arcane"` for the AI helpers. Extra attributes (`data-testid`, `aria-*`, `title`) go to the `<button>`. Normal height is 44px, small 38px. |
+| `CodexField` | A label, the control and an optional hint tied together. The control is the caller's, with `class="field-input"` or `"field-select"` (add `field-sm` for compact) and `id="@id"`, the generated id passed to the template. |
+| `CodexCheck` | A checkbox with its label. Plain markup can use `div.field-check` with `input.field-box`. |
+
+Frames: every `.panel`, `.campaign-card`, `.participant`, `.list-picker` and dialog has the two-tone brass border, corner ornaments (one SVG mask, `--corner`, coloured by `--border-strong`) and, for panels, a titled header band. `.pill` is a chamfered plaque. `.divider-orn` is the ornamental rule.
+
+## The sheet
+
+A sticky plate sits under the header: portrait, name, kind, class-and-level and species plaques, then a stat strip (hit points with bar, AC on a shield, then each derived number such as proficiency bonus and initiative, and speed). The plate also holds Save, with a count of unsaved changes next to it. Below it, rule violations and warnings, then tabs: Attributes (attributes, skills, sheet fields, classes, linked Library entries), Picks, Inventory, History, and DM notes (the DM only). The "From the Library" list sits at the foot of Attributes. A tab appears only when the system or the viewer has something to put in it. The tabs are a navigation of buttons (`aria-current="page"`), not an ARIA tablist, so they are reached with Tab and activated with Enter or Space. Hit points, armor class, slots, level-up and visibility stay in the right column on every tab.
+
+Ability plates show the modifier large and the score in a medallion; with the point-buy or standard-array method the medallion is the input.
+
+## The table
+
+Above the order, a sticky banner names whose turn it is (and "Turn n of m"). Each row is a token (portrait or initials, ringed in the colour of the kind: brass for characters, verdigris for NPCs, blood for monsters), the name, an initiative plaque, state badges, an HP bar with the numbers on it, and a strip of condition chips (icon, name, rounds left, and a remove button for the DM). Players see the bar only for characters they can see exactly; hostiles keep the coarse band text.
+
+## Dice
+
+`DiceResult` draws one roll: what it was for, each die as a face (dropped dice dashed and struck
+through), the modifier, and the total in display type. A natural 20 or 1 on a single d20 is marked in
+words for screen readers as well as colour. The table's roll log uses the compact form.
+
+The sheet has roll buttons beside each ability, save, skill and spell attack, and a Dice panel with a
+Normal / Advantage / Disadvantage choice. The latest roll also shows in the sticky plate so it stays
+in view while scrolling. During a live session the roll goes into the table's shared log under the
+character; with no session it is rolled and shown to that user only, and the panel says so.
+
+## Game icons
+
+`DomainIcon` draws the game's own concepts: conditions, damage types, schools of magic, item
+categories, creature types, kinds of content (class, species, spell, ...), roles and actor kinds. The
+glyphs are drawn for this app on a 24-unit grid; Lucide stays for interface chrome only. Three sizes:
+small 16, medium 22, large 32. An unknown key gets a heraldic placeholder (a shield with its initial)
+rather than nothing. The Library shows an entry's kind in its pill and a second glyph for a spell's
+school, a monster's creature type or an item's category (`DomainIconMap`); condition chips on the
+table use the condition glyphs. Icons are decorative; the words always carry the meaning.
+
+## Library cards
+
+An entry with structured properties is drawn as a reference card (`EntryDetail` picks one, else falls
+back to the generic property list): `MonsterCard` is a stat block (type line, red rule, AC / HP /
+Speed, the six scores with modifiers, saves, skills and senses, then banded Traits, Actions, Bonus
+Actions, Reactions and Legendary Actions); `SpellCard` has school and level on the header strip, a
+grid of casting time, range, components and duration, concentration / ritual / damage-type tags and
+the class list; `ItemCard` shows category and rarity (written out and edge-coloured) with cost,
+weight and, for magic items, the type line. The text the card already shows from the properties is
+stripped from the description so nothing appears twice.
+
+The list shows 150 entries and "Show N more" adds the rest. The list and the detail pane keep their
+two-column widths whether or not an entry is open, with a quiet placeholder until one is chosen. The
+homebrew editor opens in the detail pane beside the list instead of above it.
+
+## Consistency rules
+
+- Interface icons come in three sizes: 14 (inside small buttons and chips), 18 (everything else) and 28
+  (empty states). Game concepts use `DomainIcon`'s own three sizes.
+- Edit is always `edit-3`; Campaigns is `compass` and Places is `map`.
+- Edit and remove buttons are `CodexButton` runes (remove in `cx-blood`); a bare `icon-btn` is only for
+  header chrome (theme, sign out, dismiss). Deleting anything asks first, including journal entries.
+- Every search box is a `.search` wrapper with the magnifier, in a toolbar or on its own.
 
 ## Test ids
 

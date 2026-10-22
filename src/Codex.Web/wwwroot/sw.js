@@ -2,7 +2,7 @@
 // never served from cache: this worker only (1) keeps the static shell (styles, scripts, icons)
 // fresh with a stale-while-revalidate strategy and (2) shows an offline page when the server
 // can't be reached. Anything private (/media, /_blazor, API calls) is never cached.
-const VERSION = 'codex-shell-v1';
+const VERSION = 'codex-shell-v2';
 const SHELL = [
     '/offline.html',
     '/app.css',
@@ -10,7 +10,10 @@ const SHELL = [
     '/js/app-startup.js',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
-    '/favicon.png'
+    '/favicon.png',
+    '/fonts/cinzel/cinzel-latin-wght-normal.woff2',
+    '/fonts/alegreya-sans/alegreya-sans-latin-400-normal.woff2',
+    '/fonts/alegreya-sans/alegreya-sans-latin-700-normal.woff2'
 ];
 
 self.addEventListener('install', event => {
@@ -32,6 +35,7 @@ function isShellAsset(url) {
         url.pathname.startsWith('/lib/') ||
         url.pathname.startsWith('/js/') ||
         url.pathname.startsWith('/icons/') ||
+        url.pathname.startsWith('/fonts/') ||
         url.pathname.startsWith('/_framework/')
     );
 }

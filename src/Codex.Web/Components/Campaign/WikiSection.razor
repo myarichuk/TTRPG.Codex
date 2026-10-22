@@ -31,32 +31,32 @@ else if (Mode == "edit")
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" data-testid="wiki-editor">
                     <div class="field-grid mb-3">
                         <div class="field-wide">
-                            <label for="wiki-title" class="form-label">Title <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-                            <input id="wiki-title" class="form-control form-control-lg" @bind="draft.Title" required maxlength="160" data-testid="wiki-title" />
+                            <label for="wiki-title" class="field-label">Title <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                            <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" required maxlength="160" data-testid="wiki-title" />
                         </div>
                         <div>
-                            <label for="wiki-visibility" class="form-label">Who can read it</label>
-                            <select id="wiki-visibility" class="form-select" @bind="draft.Visibility" data-testid="wiki-visibility">
+                            <label for="wiki-visibility" class="field-label">Who can read it</label>
+                            <select id="wiki-visibility" class="field-select" @bind="draft.Visibility" data-testid="wiki-visibility">
                                 <option value="@WikiVisibility.DmOnly">Only me (DM)</option>
                                 <option value="@WikiVisibility.Party">The whole party</option>
                             </select>
                         </div>
                         <div>
-                            <label for="wiki-tags" class="form-label">Tags</label>
-                            <input id="wiki-tags" class="form-control" placeholder="faction, city, legend…" value="@string.Join(", ", draft.Tags)"
+                            <label for="wiki-tags" class="field-label">Tags</label>
+                            <input id="wiki-tags" class="field-input" placeholder="faction, city, legend…" value="@string.Join(", ", draft.Tags)"
                                    @onchange="e => draft.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
                         </div>
                     </div>
-                    <label for="wiki-body" class="form-label">Text</label>
-                    <textarea id="wiki-body" class="form-control wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-testid="wiki-body" placeholder="Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link."></textarea>
-                    <div class="form-text mb-3">Link with <code>[[Page title]]</code> or <code>[[Page title|shown as]]</code>. <code>**bold**</code>, <code>*italic*</code>, "- " bullets, "### headings" and | tables | are rendered.</div>
+                    <label for="wiki-body" class="field-label">Text</label>
+                    <textarea id="wiki-body" class="field-input wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-testid="wiki-body" placeholder="Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link."></textarea>
+                    <div class="field-hint mb-3">Link with <code>[[Page title]]</code> or <code>[[Page title|shown as]]</code>. <code>**bold**</code>, <code>*italic*</code>, "- " bullets, "### headings" and | tables | are rendered.</div>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <button type="submit" class="btn btn-primary" data-testid="wiki-save"><LucideIcon IconName="check" Size="16" /> Save page</button>
-                        <button type="button" class="btn btn-ai" @onclick="ExpandAsync" disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? "Writing…" : "Expand with AI")</button>
-                        <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="btn btn-outline-secondary">Cancel</a>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> Save page</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? "Writing…" : "Expand with AI")</CodexButton>
+                        <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">Cancel</a>
                         @if (current != null)
                         {
-                            <button type="button" class="btn btn-outline-danger ms-auto" @onclick="DeleteAsync">Delete page</button>
+                            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync">Delete page</CodexButton>
                         }
                     </div>
                 </form>
@@ -80,8 +80,8 @@ else if (Mode == "edit")
             <section class="panel">
                 <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> AI instruction</h3></div>
                 <label for="wiki-ai-instruction" class="visually-hidden">Instruction for the AI</label>
-                <textarea id="wiki-ai-instruction" class="form-control" rows="3" @bind="aiInstruction" placeholder="Optional: “make it a travel guide written by a nervous scholar”, “keep it under 200 words”…"></textarea>
-                <p class="form-text mb-0">The AI sees this page, the campaign description and the names of pages it links to. Nothing else.</p>
+                <textarea id="wiki-ai-instruction" class="field-input" rows="3" @bind="aiInstruction" placeholder="Optional: “make it a travel guide written by a nervous scholar”, “keep it under 200 words”…"></textarea>
+                <p class="field-hint">The AI sees this page, the campaign description and the names of pages it links to. Nothing else.</p>
             </section>
         </div>
     </div>
@@ -91,16 +91,16 @@ else if (Slug != null)
     @if (current == null)
     {
         <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="globe" Size="26" /></div>
+            <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
             <h3>No page called “@Slug”</h3>
             <p>@(Ctx.IsDm ? "It may have been deleted. You can write it now." : "It may be DM-only, or not written yet.")</p>
             @if (Ctx.IsDm)
             {
-                <a href="@Ctx.BasePath/wiki/new?title=@Uri.EscapeDataString(Slug.Replace('-', ' '))" class="btn btn-primary">Create it</a>
+                <a href="@Ctx.BasePath/wiki/new?title=@Uri.EscapeDataString(Slug.Replace('-', ' '))" class="cx-btn cx-plaque">Create it</a>
             }
             else
             {
-                <a href="@Ctx.BasePath/wiki" class="btn btn-outline-secondary">Back to the wiki</a>
+                <a href="@Ctx.BasePath/wiki" class="cx-btn cx-etched">Back to the wiki</a>
             }
         </div>
     }
@@ -111,12 +111,12 @@ else if (Slug != null)
                 <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">Wiki</a><span class="crumb-sep" aria-hidden="true">/</span><span>@current.Title</span></nav>
                 <h2 class="mb-0" data-testid="wiki-page-title">@current.Title</h2>
                 <div class="d-flex flex-wrap gap-1 mt-1">
-                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="12" /> @(current.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
+                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="14" /> @(current.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
                     @foreach (var tag in current.Tags)
                     {
                         <span class="pill">@tag</span>
                     }
-                    <span class="pill"><LucideIcon IconName="clock" Size="12" /> @current.UpdatedAt.ToLocalTime().ToString("d MMM yyyy")</span>
+                    <span class="pill"><LucideIcon IconName="clock" Size="14" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
                 </div>
             </div>
             @if (Ctx.IsDm)
@@ -124,9 +124,9 @@ else if (Slug != null)
                 <div class="row-actions">
                     @if (current.Visibility == WikiVisibility.DmOnly)
                     {
-                        <button type="button" class="btn btn-outline-secondary" @onclick="RevealAsync"><LucideIcon IconName="eye" Size="16" /> Share with party</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="18" /> Share with party</CodexButton>
                     }
-                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="btn btn-primary" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="16" /> Edit</a>
+                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="cx-btn cx-plaque" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="18" /> Edit</a>
                 </div>
             }
         </div>
@@ -155,25 +155,25 @@ else if (Slug != null)
                         <div class="list-row align-items-start">
                             <span class="avatar avatar-sm" aria-hidden="true">@Initial(usernames.GetValueOrDefault(note.AuthorId, "?"))</span>
                             <div class="row-main">
-                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · @note.CreatedAt.ToLocalTime().ToString("d MMM, HH:mm") · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
+                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" /> · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
                                 <p class="mb-0">@note.Content</p>
                             </div>
                             @if (note.AuthorId == Ctx.UserId || Ctx.IsDm)
                             {
-                                <button type="button" class="icon-btn danger" aria-label="Delete note" @onclick="() => DeleteNoteAsync(note)"><LucideIcon IconName="trash-2" Size="14" /></button>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="Delete note" OnClick="() => DeleteNoteAsync(note)" />
                             }
                         </div>
                     }
                     <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                        <label for="wiki-note" class="form-label">Add a note</label>
-                        <textarea id="wiki-note" class="form-control mb-2" rows="2" @bind="newNote" data-testid="wiki-note"></textarea>
+                        <label for="wiki-note" class="field-label">Add a note</label>
+                        <textarea id="wiki-note" class="field-input mb-2" rows="2" @bind="newNote" data-testid="wiki-note"></textarea>
                         <div class="d-flex gap-2 flex-wrap align-items-center">
                             <label for="wiki-note-visibility" class="visually-hidden">Note visibility</label>
-                            <select id="wiki-note-visibility" class="form-select form-select-sm w-auto" @bind="newNoteVisibility">
+                            <select id="wiki-note-visibility" class="field-select field-sm" @bind="newNoteVisibility">
                                 <option value="@CommentVisibility.Private">Private (you and the DM)</option>
                                 <option value="@CommentVisibility.Public">Party (everyone in the campaign)</option>
                             </select>
-                            <button type="submit" class="btn btn-primary btn-sm">Add note</button>
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true">Add note</CodexButton>
                         </div>
                     </form>
                 </section>
@@ -222,7 +222,7 @@ else
         </div>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/wiki/new" class="btn btn-primary" data-testid="wiki-new"><LucideIcon IconName="plus" Size="16" /> New page</a>
+            <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> New page</a>
         }
     </div>
 
@@ -230,7 +230,7 @@ else
         <div class="search">
             <LucideIcon IconName="search" Size="18" Class="search-icon" />
             <label for="wiki-search" class="visually-hidden">Search the wiki</label>
-            <input id="wiki-search" type="search" class="form-control" placeholder="Search pages…" @bind="search" @bind:event="oninput" />
+            <input id="wiki-search" type="search" class="field-input" placeholder="Search pages…" @bind="search" @bind:event="oninput" />
         </div>
         @if (AllTags.Count > 0)
         {
@@ -247,7 +247,7 @@ else
     @if (!Filtered.Any())
     {
         <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="globe" Size="26" /></div>
+            <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
             <h3>@(pages.Count == 0 ? "No pages yet" : "No page matches")</h3>
             <p>@(Ctx.IsDm ? "Start with a place, a faction or a legend. Link pages with [[double brackets]]." : "The DM hasn't shared any pages yet.")</p>
         </div>
@@ -264,7 +264,7 @@ else
                     </div>
                     <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
                     <div class="card-foot">
-                        <span class="small-muted"><LucideIcon IconName="link" Size="12" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · @wp.UpdatedAt.ToLocalTime().ToString("d MMM")</span>
+                        <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
                             @foreach (var tag in wp.Tags.Take(3))
                             {

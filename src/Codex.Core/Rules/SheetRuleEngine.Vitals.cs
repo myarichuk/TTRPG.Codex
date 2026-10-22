@@ -8,11 +8,11 @@ namespace Codex.Core.Rules;
 public sealed record InventoryItem(int Index, string Raw, ContentEntry Entry, int Quantity, bool Equipped);
 
 /// <summary>What one character level adds to maximum hit points.</summary>
-public sealed record HitPointLevel(int Level, string ClassName, int Die, int Base, bool IsRolled, int Modifier, int Gain);
+public sealed record HitPointLevel(int Level, string ClassName, int Die, int Base, bool IsRolled, int Modifier, int Gain, int Extra = 0);
 
 /// <summary>Maximum hit points as the rules work them out. <see cref="Active"/> is false in manual mode
 /// or while no class with a hit die is chosen: the sheet's own number stands.</summary>
-public sealed record HitPointSummary(string Mode, bool Active, int Max, int Modifier, IReadOnlyList<HitPointLevel> Levels);
+public sealed record HitPointSummary(string Mode, bool Active, int Max, int Modifier, IReadOnlyList<HitPointLevel> Levels, int LevelExtra = 0, string? ExtraSource = null);
 
 /// <summary>Armor class as the rules work it out, with a line per contribution for display.</summary>
 public sealed record ArmorClassSummary(string Mode, bool Active, int Total, IReadOnlyList<string> Lines);
@@ -106,6 +106,9 @@ public sealed partial class SheetRuleEngine
         var modifier = ModifierOf(sheet, rules.Attribute);
         var rolls = RawList(sheet, rules.RollsKey).Select(r => int.TryParse(r, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 0).ToList();
 
+        // A species can add to every level (Dwarven Toughness).
+        var extraEntry = rules.PerLevelBonus == null ? null : ReferencedEntry(rules.PerLevelBonus.Field, sheet);
+        var extra = extraEntry == null ? 0 : (int)(ToDouble(extraEntry.Properties.GetValueOrDefault(rules.PerLevelBonus!.Property)) ?? 0);
         var levels = new List<HitPointLevel>();
         var number = 0;
         foreach (var cls in SheetClasses(sheet, result, rules.ClassField, rules.LevelField))
@@ -131,17 +134,17 @@ public sealed partial class SheetRuleEngine
                     baseValue = die.Value / 2 + 1;
                 }
 
-                levels.Add(new HitPointLevel(number, cls.Entry!.Name, die.Value, baseValue, rolled, modifier, Math.Max(baseValue + modifier, rules.MinimumPerLevel)));
+                levels.Add(new HitPointLevel(number, cls.Entry!.Name, die.Value, baseValue, rolled, modifier, Math.Max(baseValue + modifier + extra, rules.MinimumPerLevel), extra));
             }
         }
 
-        result.HitPoints = new HitPointSummary(mode, mode != "manual" && levels.Count > 0, levels.Sum(l => l.Gain), modifier, levels);
+        result.HitPoints = new HitPointSummary(mode, mode != "manual" && levels.Count > 0, levels.Sum(l => l.Gain), modifier, levels, extra, extra != 0 ? extraEntry!.Name : null);
     }
 
     /// <summary>
     /// Writes the computed maximum hit points to the sheet and keeps current hit points in step: a
     /// character whose maximum grows gains the difference (a level up arrives healthy), one whose
-    /// maximum shrinks is clamped, and a fresh character starts at full health.
+    /// maximum shrinks loses the same amount (never below 0), and a fresh character starts at full health.
     /// </summary>
     public void ApplyHitPoints(Dictionary<string, object> sheet, SheetEvaluation evaluation)
     {
@@ -150,7 +153,7 @@ public sealed partial class SheetRuleEngine
         var previousMax = YamlValues.GetInt(sheet, rules.Key);
         var current = YamlValues.GetInt(sheet, rules.CurrentKey);
         sheet[rules.Key] = (long)summary.Max;
-        var next = previousMax == null || current == null ? summary.Max : current.Value + Math.Max(summary.Max - previousMax.Value, 0);
+        var next = previousMax == null || current == null ? summary.Max : current.Value + (summary.Max - previousMax.Value);
         sheet[rules.CurrentKey] = (long)Math.Clamp(next, 0, summary.Max);
     }
 

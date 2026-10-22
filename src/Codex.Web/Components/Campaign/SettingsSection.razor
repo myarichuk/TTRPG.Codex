@@ -25,37 +25,37 @@
             {
                 <form @onsubmit="SaveDetailsAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
-                        <label for="cs-name" class="form-label">Name</label>
-                        <input id="cs-name" class="form-control" @bind="name" required maxlength="120" data-testid="settings-name" />
+                        <label for="cs-name" class="field-label">Name</label>
+                        <input id="cs-name" class="field-input" @bind="name" required maxlength="120" data-testid="settings-name" />
                     </div>
                     <div class="mb-3">
-                        <label for="cs-desc" class="form-label">Description</label>
-                        <textarea id="cs-desc" class="form-control" rows="3" @bind="description"></textarea>
+                        <label for="cs-desc" class="field-label">Description</label>
+                        <textarea id="cs-desc" class="field-input" rows="3" @bind="description"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="cs-system" class="form-label">Game system</label>
-                        <select id="cs-system" class="form-select" @bind="systemId" aria-describedby="cs-system-help">
+                        <label for="cs-system" class="field-label">Game system</label>
+                        <select id="cs-system" class="field-select" @bind="systemId" aria-describedby="cs-system-help">
                             @foreach (var system in Catalog.Systems)
                             {
                                 <option value="@system.Id">@system.Name</option>
                             }
                         </select>
-                        <div id="cs-system-help" class="form-text">Changing the system does not convert existing character sheets.</div>
+                        <div id="cs-system-help" class="field-hint">Changing the system does not convert existing character sheets.</div>
                     </div>
                     @if (Ctx.System?.SheetRules != null)
                     {
                         <div class="mb-3">
-                            <label for="cs-rules" class="form-label">House rules: sheet checks</label>
-                            <select id="cs-rules" class="form-select" @bind="rulesEnforcement" aria-describedby="cs-rules-help" data-testid="settings-rules">
+                            <label for="cs-rules" class="field-label">House rules: sheet checks</label>
+                            <select id="cs-rules" class="field-select" @bind="rulesEnforcement" aria-describedby="cs-rules-help" data-testid="settings-rules">
                                 <option value="inherit">Use the system's setting (@Ctx.System.SheetRules.Enforcement)</option>
                                 <option value="strict">Strict: players can't save a sheet that breaks a rule</option>
                                 <option value="warn">Warn only: show problems, allow saving</option>
                                 <option value="off">Off: no checks</option>
                             </select>
-                            <div id="cs-rules-help" class="form-text">Point buy, class spell lists, subclass and feat limits come from the system's rules. The DM can always save regardless.</div>
+                            <div id="cs-rules-help" class="field-hint">Point buy, class spell lists, subclass and feat limits come from the system's rules. The DM can always save regardless.</div>
                         </div>
                     }
-                    <button type="submit" class="btn btn-primary" data-testid="settings-save">Save details</button>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="settings-save">Save details</CodexButton>
                 </form>
             }
             else
@@ -71,24 +71,24 @@
         @if (Ctx.IsDm)
         {
             <section class="panel" aria-labelledby="art-heading">
-                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="16" Class="title-icon" /> Cover art</h3></div>
+                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="18" Class="title-icon" /> Cover art</h3></div>
                 <div class="cover-settings">
                     <div class="cover-preview @(Ctx.Campaign.HasCover ? "has-cover" : "")" style="@(Ctx.Campaign.HasCover ? $"background-image:url('{MediaEndpoints.CoverUrl(Ctx.Campaign)}')" : "")" role="img" aria-label="@(Ctx.Campaign.HasCover ? "Current cover art" : "No cover art yet")">
                         @if (!Ctx.Campaign.HasCover)
                         {
-                            <LucideIcon IconName="image" Size="26" />
+                            <LucideIcon IconName="image" Size="28" />
                         }
                     </div>
                     <div>
                         <p class="small-muted">Shown on the campaign card and behind the campaign title. Landscape images around 1600 × 900 look best. PNG, JPEG or WebP, up to 6 MB.</p>
                         <div class="d-flex gap-2 flex-wrap">
-                            <label class="btn btn-outline-secondary btn-sm mb-0">
+                            <label class="cx-btn cx-etched cx-sm mb-0">
                                 <LucideIcon IconName="upload" Size="14" /> @(Ctx.Campaign.HasCover ? "Replace cover" : "Upload cover")
                                 <InputFile OnChange="UploadCoverAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
                             </label>
                             @if (Ctx.Campaign.HasCover)
                             {
-                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="RemoveCoverAsync">Remove</button>
+                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="RemoveCoverAsync">Remove</CodexButton>
                             }
                         </div>
                     </div>
@@ -109,12 +109,12 @@
                     <p class="small-muted">Untick a pack to keep it out of this campaign's Library. With nothing ticked, every pack is in play.</p>
                     @foreach (var pack in packs)
                     {
-                        <div class="form-check mb-1">
-                            <input id="pack-@pack.Id" type="checkbox" class="form-check-input" checked="@IsActive(pack.Id)" @onchange="e => TogglePack(pack.Id, (bool)(e.Value ?? false))" />
-                            <label for="pack-@pack.Id" class="form-check-label">@pack.Name <span class="pill ms-1">@pack.Kind</span></label>
+                        <div class="field-check mb-1">
+                            <input id="pack-@pack.Id" type="checkbox" class="field-box" checked="@IsActive(pack.Id)" @onchange="e => TogglePack(pack.Id, (bool)(e.Value ?? false))" />
+                            <label for="pack-@pack.Id" >@pack.Name <span class="pill ms-1">@pack.Kind</span></label>
                         </div>
                     }
-                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" @onclick="SavePacksAsync">Save pack selection</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-2" OnClick="SavePacksAsync">Save pack selection</CodexButton>
                 }
             </section>
         }
@@ -133,13 +133,13 @@
                         {
                             <div class="row-actions">
                                 <label for="role-@member.UserId" class="visually-hidden">Role for @usernames.GetValueOrDefault(member.UserId, member.UserId)</label>
-                                <select id="role-@member.UserId" class="form-select form-select-sm w-auto" value="@member.Role" @onchange="e => ChangeRoleAsync(member, e.Value?.ToString())">
+                                <select id="role-@member.UserId" class="field-select field-sm" value="@member.Role" @onchange="e => ChangeRoleAsync(member, e.Value?.ToString())">
                                     @foreach (CampaignRole role in Enum.GetValues<CampaignRole>())
                                     {
                                         <option value="@role">@role</option>
                                     }
                                 </select>
-                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveMemberAsync(member)" aria-label="Remove @usernames.GetValueOrDefault(member.UserId, member.UserId) from the campaign">Remove</button>
+                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="() => RemoveMemberAsync(member)" aria-label="@($"Remove {usernames.GetValueOrDefault(member.UserId, member.UserId)} from the campaign")">Remove</CodexButton>
                             </div>
                         }
                         else
@@ -152,13 +152,13 @@
             @if (Ctx.IsDm)
             {
                 <hr />
-                <label for="cs-invite" class="form-label">Invite link</label>
+                <label for="cs-invite" class="field-label">Invite link</label>
                 <div class="input-group input-group-sm">
-                    <input id="cs-invite" class="form-control" readonly value="@InviteLink" />
-                    <button type="button" class="btn btn-outline-secondary" @onclick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></button>
-                    <button type="button" class="btn btn-outline-secondary" @onclick="RegenerateInviteAsync">New link</button>
+                    <input id="cs-invite" class="field-input" readonly value="@InviteLink" />
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RegenerateInviteAsync">New link</CodexButton>
                 </div>
-                <div class="form-text">Making a new link stops the old one from working.</div>
+                <div class="field-hint">Making a new link stops the old one from working.</div>
             }
         </section>
     </div>
@@ -170,21 +170,25 @@
                 <div class="panel-title"><h3 id="backup-heading">Backup</h3></div>
                 <p class="small-muted">Export downloads the whole campaign (characters, sessions, lore, notes, homebrew) as one JSON file. Import restores a file exported from here, including after the campaign was deleted.</p>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="ExportAsync"><LucideIcon IconName="download" Size="14" /> Export campaign</button>
-                    <label class="btn btn-outline-secondary btn-sm mb-0">
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ExportAsync"><LucideIcon IconName="download" Size="14" /> Export campaign</CodexButton>
+                    <label class="cx-btn cx-etched cx-sm mb-0">
                         <LucideIcon IconName="upload" Size="14" /> Import campaign
                         <InputFile OnChange="ImportAsync" accept=".json" class="visually-hidden" />
                     </label>
+                </div>
+                <div class="field-check mt-2">
+                    <input id="restore-as-new" type="checkbox" class="field-box" @bind="restoreAsNew" />
+                    <label for="restore-as-new" class="small-muted">The file is a backup of a different (for example deleted) campaign: restore that one</label>
                 </div>
             </section>
 
             <section class="panel" aria-labelledby="danger-heading">
                 <div class="panel-title"><h3 id="danger-heading">Delete campaign</h3></div>
                 <p class="small-muted">Removes the campaign and everything in it. Export first if you want to keep anything.</p>
-                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="DeleteAsync" disabled="@(Ctx.Campaign.OwnerId != Ctx.UserId)" data-testid="settings-delete">Delete this campaign</button>
+                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="DeleteAsync" Disabled="@(Ctx.Campaign.OwnerId != Ctx.UserId)" data-testid="settings-delete">Delete this campaign</CodexButton>
                 @if (Ctx.Campaign.OwnerId != Ctx.UserId)
                 {
-                    <div class="form-text">Only the campaign's owner can delete it.</div>
+                    <div class="field-hint">Only the campaign's owner can delete it.</div>
                 }
             </section>
         </div>
@@ -197,6 +201,7 @@
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
     private ConfirmDialog confirm = null!;
+    private bool restoreAsNew;
     private string name = string.Empty;
     private string description = string.Empty;
     private string systemId = string.Empty;
@@ -242,13 +247,19 @@
             return;
         }
 
-        Ctx.Campaign.Name = name.Trim();
-        Ctx.Campaign.Description = description.Trim();
-        Ctx.Campaign.SystemId = systemId;
-        Ctx.Campaign.RulesEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
+        var newName = name.Trim();
+        var newDescription = description.Trim();
+        var newSystemId = systemId;
+        var newEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
         try
         {
-            await CampaignRepo.SaveAsync(Ctx.Campaign);
+            await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+            {
+                campaign.Name = newName;
+                campaign.Description = newDescription;
+                campaign.SystemId = newSystemId;
+                campaign.RulesEnforcement = newEnforcement;
+            });
             Ctx.Notify(Flash.Success("Saved."));
             await Ctx.ReloadAsync();
         }
@@ -261,8 +272,8 @@
     private async Task SavePacksAsync()
     {
         var all = Registry.GetPacks(Ctx.Campaign.SystemId).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        Ctx.Campaign.ActivePacks = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var packs = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.ActivePacks = packs.ToList());
         Ctx.Notify(Flash.Success("Pack selection saved."));
         await Ctx.ReloadAsync();
     }
@@ -270,8 +281,10 @@
     private async Task ChangeRoleAsync(CampaignMember member, string? role)
     {
         if (!Enum.TryParse<CampaignRole>(role, out var parsed)) return;
-        member.Role = parsed;
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+        {
+            if (campaign.Members.FirstOrDefault(m => m.UserId == member.UserId) is { } stored) stored.Role = parsed;
+        });
         Ctx.Notify(Flash.Success($"{usernames.GetValueOrDefault(member.UserId, member.UserId)} is now a {parsed}."));
         await Ctx.ReloadAsync();
     }
@@ -280,8 +293,7 @@
     {
         var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
         if (!await confirm.ShowAsync($"Remove {who}?", "They lose access to this campaign. Their characters stay in the cast.", "Remove", isDestructive: true)) return;
-        Ctx.Campaign.Members.Remove(member);
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.Members.RemoveAll(m => m.UserId == member.UserId));
         Ctx.Notify(Flash.Success($"Removed {who}."));
         await Ctx.ReloadAsync();
     }
@@ -294,8 +306,8 @@
 
     private async Task RegenerateInviteAsync()
     {
-        Ctx.Campaign.InviteCode = Guid.NewGuid().ToString("N")[..8];
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        var code = Guid.NewGuid().ToString("N")[..8];
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.InviteCode = code);
         Ctx.Notify(Flash.Success("New invite link created. The old one no longer works."));
         await Ctx.ReloadAsync();
     }
@@ -319,9 +331,11 @@
         {
             using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
             await Media.PutAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover, stream, file.ContentType);
-            Ctx.Campaign.HasCover = true;
-            Ctx.Campaign.CoverVersion++;
-            await CampaignRepo.SaveAsync(Ctx.Campaign);
+            await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+            {
+                campaign.HasCover = true;
+                campaign.CoverVersion++;
+            });
             Ctx.Notify(Flash.Success("Cover art updated."));
             await Ctx.ReloadAsync();
         }
@@ -334,9 +348,11 @@
     private async Task RemoveCoverAsync()
     {
         await Media.DeleteAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover);
-        Ctx.Campaign.HasCover = false;
-        Ctx.Campaign.CoverVersion++;
-        await CampaignRepo.SaveAsync(Ctx.Campaign);
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+        {
+            campaign.HasCover = false;
+            campaign.CoverVersion++;
+        });
         Ctx.Notify(Flash.Success("Cover art removed."));
         await Ctx.ReloadAsync();
     }
@@ -369,10 +385,23 @@
                 return;
             }
 
+            if (bundle.Campaign?.Id != Ctx.Campaign.Id && !restoreAsNew)
+            {
+                Ctx.Notify(Flash.Error("That file is a backup of a different campaign. Tick “restore that one” if you meant to bring it back."));
+                return;
+            }
+
             if (await ExportService.ImportAsync(bundle, Ctx.UserId))
             {
                 Ctx.Notify(Flash.Success($"Imported “{bundle.Campaign?.Name}”."));
-                await Ctx.ReloadAsync();
+                if (bundle.Campaign!.Id == Ctx.Campaign.Id)
+                {
+                    await Ctx.ReloadAsync();
+                }
+                else
+                {
+                    Nav.NavigateTo($"/campaigns/{bundle.Campaign.Id}");
+                }
             }
             else
             {

@@ -134,6 +134,134 @@ public class DiceConventions
 {
     public string Initiative { get; set; } = "1d20";
     public string Check { get; set; } = "1d20";
+
+    /// <summary>The derived field (see <c>sheetRules.derived</c>) added to an initiative roll, e.g.
+    /// an <c>initiative</c> field with the formula <c>mod(dex)</c>. Null: the bare die.</summary>
+    public string? InitiativeBonus { get; set; }
+
+    /// <summary>Attribute whose score breaks initiative ties (higher first). Null: ties fall to actor id.</summary>
+    public string? InitiativeTieBreak { get; set; }
+}
+
+/// <summary>
+/// What happens to a creature's vitals at the table (<c>vitals:</c> in system.yaml): dropping to zero,
+/// death saves, damage types, exhaustion, hit dice and rests. Every part is optional; a system that
+/// leaves one out gets the plain behaviour (damage stops at zero, rests refill only what slot pools say).
+/// </summary>
+public class VitalsRules
+{
+    /// <summary>Resource that absorbs damage before the primary one ("TempHP"); granted as "take the higher".</summary>
+    public string? TemporaryResource { get; set; }
+
+    public DownRules? Down { get; set; }
+    public DeathSaveRules? DeathSaves { get; set; }
+    public DamageTypeRules? Damage { get; set; }
+    public ExhaustionRules? Exhaustion { get; set; }
+    public HitDiceRules? HitDice { get; set; }
+
+    /// <summary>Rests the table offers, by name; a slot pool's <c>recoversOn</c> names one of these.</summary>
+    public List<RestRule> Rests { get; set; } = new();
+
+    public RestRule? FindRest(string name) =>
+        Rests.Find(r => string.Equals(r.Name, name, System.StringComparison.OrdinalIgnoreCase));
+}
+
+/// <summary>What reaching zero on the primary resource does.</summary>
+public class DownRules
+{
+    /// <summary>Condition applied to a player character at zero ("Unconscious").</summary>
+    public string Condition { get; set; } = "Unconscious";
+
+    /// <summary>Condition that marks a dead creature; monsters and NPCs get it straight away at zero.</summary>
+    public string DeadCondition { get; set; } = "Dead";
+
+    /// <summary>Condition for a creature at zero that is no longer making death saves.</summary>
+    public string StableCondition { get; set; } = "Stable";
+
+    /// <summary>When the damage left over after reaching zero is at least the maximum, the creature dies outright.</summary>
+    public bool InstantDeathAtMax { get; set; } = true;
+
+    /// <summary>Non-player creatures die at zero instead of falling unconscious.</summary>
+    public bool NonPlayersDieAtZero { get; set; } = true;
+}
+
+public class DeathSaveRules
+{
+    public string Die { get; set; } = "1d20";
+    public int SuccessOn { get; set; } = 10;
+    public int SuccessesToStabilize { get; set; } = 3;
+    public int FailuresToDie { get; set; } = 3;
+
+    /// <summary>A natural roll this high regains one hit point. Null: no critical success.</summary>
+    public int? CriticalSuccess { get; set; } = 20;
+
+    /// <summary>A natural roll this low counts as two failures. Null: no critical failure.</summary>
+    public int? CriticalFailure { get; set; } = 1;
+
+    /// <summary>Pool keys the running tally is kept in.</summary>
+    public string SuccessesKey { get; set; } = "DeathSaveSuccesses";
+    public string FailuresKey { get; set; } = "DeathSaveFailures";
+}
+
+/// <summary>Damage types and the sheet lists that halve, cancel or double them.</summary>
+public class DamageTypeRules
+{
+    public List<string> Types { get; set; } = new();
+    public string ResistancesField { get; set; } = "resistances";
+    public string ImmunitiesField { get; set; } = "immunities";
+    public string VulnerabilitiesField { get; set; } = "vulnerabilities";
+}
+
+/// <summary>Exhaustion as a level counter kept in a pool, not a timed condition.</summary>
+public class ExhaustionRules
+{
+    public string Key { get; set; } = "Exhaustion";
+    public int MaxLevel { get; set; } = 6;
+
+    /// <summary>The condition name in <see cref="SystemDefinition.Conditions"/> this replaces in the picker.</summary>
+    public string? Condition { get; set; } = "Exhaustion";
+}
+
+/// <summary>A pool of hit dice: one per level for characters, the stat block's count for creatures.</summary>
+public class HitDiceRules
+{
+    public string Key { get; set; } = "HitDice";
+    public string LevelField { get; set; } = "level";
+    public string ClassField { get; set; } = "class";
+
+    /// <summary>Class entry property with the die ("d10").</summary>
+    public string DieProperty { get; set; } = "hitDie";
+
+    /// <summary>Creature property with the dice expression ("2d6") that gives count and die.</summary>
+    public string? CreatureDiceProperty { get; set; } = "hitDice";
+
+    /// <summary>Attribute whose modifier is added to each die spent.</summary>
+    public string Attribute { get; set; } = "con";
+
+    public string MaxKey => Key + "_Max";
+}
+
+public class RestRule
+{
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Resources refilled to their maximum ("HP").</summary>
+    public List<string> Restores { get; set; } = new();
+
+    /// <summary>Resources set to zero ("TempHP").</summary>
+    public List<string> Clears { get; set; } = new();
+
+    /// <summary>Hit dice regained: "all", "half" (rounded down, at least one) or "none".</summary>
+    public string HitDiceRegain { get; set; } = "none";
+
+    /// <summary>Whether the table offers spending hit dice during this rest.</summary>
+    public bool SpendHitDice { get; set; }
+
+    /// <summary>Change to the exhaustion level (-1 for a long rest).</summary>
+    public int ExhaustionDelta { get; set; }
+
+    /// <summary>Conditions removed by the rest.</summary>
+    public List<string> ClearsConditions { get; set; } = new();
 }
 
 /// <summary>
@@ -165,6 +293,9 @@ public class SystemDefinition
     public List<string> Conditions { get; set; } = new();
 
     public DiceConventions Dice { get; set; } = new();
+
+    /// <summary>Table rules for hit points, death, damage types, exhaustion, hit dice and rests. Null: none.</summary>
+    public VitalsRules? Vitals { get; set; }
 
     /// <summary>Character-sheet rules (attribute generation, pick constraints, lists, derived
     /// fields). Null means "no rules": any value goes, which is what a loose homebrew wants.</summary>

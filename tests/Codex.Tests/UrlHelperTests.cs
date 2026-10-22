@@ -23,7 +23,7 @@ public class UrlHelperTests
     [InlineData("//google.com")]
     [InlineData("/\\google.com")]
     [InlineData("javascript:alert(1)")]
-    public void IsLocalUrl_ReturnsFalse_ForInvalidOrRemoteUrls(string url)
+    public void IsLocalUrl_ReturnsFalse_ForInvalidOrRemoteUrls(string? url)
     {
         Assert.False(UrlHelper.IsLocalUrl(url));
     }

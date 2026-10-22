@@ -16,7 +16,7 @@
             <div class="mb-2" data-testid="slot-pool-@rule.Key">
                 @if (pools.Count > 1)
                 {
-                    <div class="form-label small mb-1">@rule.Label</div>
+                    <div class="field-label">@rule.Label</div>
                 }
                 <ul class="list-unstyled mb-0">
                     @foreach (var level in levels)
@@ -37,10 +37,10 @@
                             @if (!ReadOnly)
                             {
                                 <span class="ms-auto d-flex gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(current <= 0)" data-testid="slot-use-@key"
-                                            aria-label="Use a @label" @onclick="() => OnAdjust.InvokeAsync((key, -1, label))">Use</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(current >= max)" data-testid="slot-regain-@key"
-                                            aria-label="Regain a @label" @onclick="() => OnAdjust.InvokeAsync((key, 1, label))">Regain</button>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"slot-use-{key}")"
+                                            aria-label="@($"Use a {label}")" OnClick="() => OnAdjust.InvokeAsync((key, -1, label))">Use</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"slot-regain-{key}")"
+                                            aria-label="@($"Regain a {label}")" @onclick="() => OnAdjust.InvokeAsync((key, 1, label))">Regain</CodexButton>
                                 </span>
                             }
                         </li>
@@ -57,8 +57,8 @@
                 <div class="d-flex flex-wrap gap-2 mt-2">
                     @foreach (var rest in rests)
                     {
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-testid="rest-@rest.Replace(' ', '-').ToLowerInvariant()"
-                                @onclick="() => OnRest.InvokeAsync((rest, RestoredBy(pools.Select(p => p.Rule), rest)))">@rest</button>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{rest.Replace(' ', '-').ToLowerInvariant()}")"
+                                OnClick="() => OnRest.InvokeAsync((rest, RestoredBy(pools.Select(p => p.Rule), rest)))">@rest</CodexButton>
                     }
                 </div>
             }

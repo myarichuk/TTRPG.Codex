@@ -1,6 +1,7 @@
 @using Codex.Persistence
 @using Codex.Persistence.Runtime
 @inject IUserRepository UserRepo
+@inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
 @inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
@@ -13,7 +14,7 @@
                 <h2 id="about-heading">About this campaign</h2>
                 @if (Ctx.IsDm)
                 {
-                    <a href="@Ctx.BasePath/settings" class="btn btn-outline-secondary btn-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit</a>
+                    <a href="@Ctx.BasePath/settings" class="cx-btn cx-etched cx-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit</a>
                 }
             </div>
             <p class="mb-0">@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? "No description yet." : Ctx.Campaign.Description)</p>
@@ -22,7 +23,7 @@
         <section class="panel" aria-labelledby="mine-heading">
             <div class="panel-title">
                 <h2 id="mine-heading">@(Ctx.IsDm ? "Cast at a glance" : "My characters")</h2>
-                <a href="@Ctx.BasePath/cast" class="btn btn-outline-secondary btn-sm">Open cast</a>
+                <a href="@Ctx.BasePath/cast" class="cx-btn cx-etched cx-sm">Open cast</a>
             </div>
             @{
                 var mine = Ctx.IsDm ? Ctx.Actors : Ctx.Actors.Where(a => a.OwnerUserId == Ctx.UserId).ToList();
@@ -30,7 +31,7 @@
             @if (mine.Count == 0)
             {
                 <p class="mb-2">@(Ctx.IsDm ? "No characters, NPCs or monsters yet." : "You have no character in this campaign yet.")</p>
-                <a href="@Ctx.BasePath/cast" class="btn btn-primary btn-sm" data-testid="overview-create-character">@(Ctx.IsDm ? "Add to the cast" : "Create a character")</a>
+                <a href="@Ctx.BasePath/cast" class="cx-btn cx-plaque cx-sm" data-testid="overview-create-character">@(Ctx.IsDm ? "Add to the cast" : "Create a character")</a>
             }
             else
             {
@@ -60,18 +61,18 @@
             @if (RuntimeManager.TryGet(Ctx.Campaign.Id) != null)
             {
                 <p class="mb-2"><span class="pill pill-success"><span class="live-dot" aria-hidden="true"></span>Live</span> The table is running.</p>
-                <a href="@Ctx.BasePath/table" class="btn btn-primary btn-sm w-100">Join the table</a>
+                <a href="@Ctx.BasePath/table" class="cx-btn cx-plaque cx-sm w-100">Join the table</a>
             }
             else
             {
                 <p class="mb-2 small-muted">No session is running right now.</p>
-                <a href="@Ctx.BasePath/table" class="btn btn-outline-secondary btn-sm w-100">@(Ctx.IsDm ? "Go to the table" : "Wait at the table")</a>
+                <a href="@Ctx.BasePath/table" class="cx-btn cx-etched cx-sm w-100">@(Ctx.IsDm ? "Go to the table" : "Wait at the table")</a>
             }
             @if (latestSession != null)
             {
                 <hr />
                 <div class="small-muted">Latest session</div>
-                <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? latestSession.Date.ToString("d MMM yyyy") : latestSession.Title)</a>
+                <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? Clock.Format(latestSession.Date, "d MMM yyyy") : latestSession.Title)</a>
                 <span class="pill ms-1">@latestSession.Status</span>
             }
         </section>
@@ -90,12 +91,12 @@
             @if (Ctx.IsDm)
             {
                 <hr />
-                <label for="invite-link" class="form-label">Invite link</label>
+                <label for="invite-link" class="field-label">Invite link</label>
                 <div class="input-group input-group-sm">
-                    <input id="invite-link" class="form-control" readonly value="@InviteLink" data-testid="invite-link" />
-                    <button type="button" class="btn btn-outline-secondary" @onclick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></button>
+                    <input id="invite-link" class="field-input" readonly value="@InviteLink" data-testid="invite-link" />
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></CodexButton>
                 </div>
-                <div class="form-text">Anyone with this link joins as a player.</div>
+                <div class="field-hint">Anyone with this link joins as a player.</div>
             }
         </section>
     </div>

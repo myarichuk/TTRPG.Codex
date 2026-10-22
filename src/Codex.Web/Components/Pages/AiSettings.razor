@@ -12,7 +12,7 @@
 <div class="page-header">
     <div>
         <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>AI settings</span></nav>
-        <h1><LucideIcon IconName="sparkles" Size="24" Class="title-icon" /> AI settings</h1>
+        <h1><LucideIcon IconName="sparkles" Size="28" Class="title-icon" /> AI settings</h1>
         <p class="page-subtitle">The chat model behind every “Draft with AI” button. Bring your own key: OpenRouter, OpenAI, a local Ollama, or any OpenAI-compatible server. Nothing is sent to a model until you click an AI button.</p>
     </div>
 </div>
@@ -29,14 +29,14 @@ else
         <div class="col-lg-7">
             <section class="panel" aria-labelledby="providers-heading">
                 <div class="panel-title">
-                    <h2 id="providers-heading" class="h5"><LucideIcon IconName="bot" Size="16" Class="title-icon" /> Your providers</h2>
-                    <button type="button" class="btn btn-primary btn-sm" @onclick="() => StartNew()" data-testid="ai-add-provider"><LucideIcon IconName="plus" Size="14" /> Add provider</button>
+                    <h2 id="providers-heading" class="h5"><LucideIcon IconName="bot" Size="18" Class="title-icon" /> Your providers</h2>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => StartNew()" data-testid="ai-add-provider"><LucideIcon IconName="plus" Size="14" /> Add provider</CodexButton>
                 </div>
 
                 @if (user.AiProviders.Count == 0)
                 {
                     <div class="empty empty-compact">
-                        <div class="empty-icon"><LucideIcon IconName="key-round" Size="24" /></div>
+                        <div class="empty-icon"><LucideIcon IconName="key-round" Size="28" /></div>
                         <h3>No provider yet</h3>
                         <p>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</p>
                     </div>
@@ -62,11 +62,11 @@ else
                                 <div class="row-actions">
                                     @if (!isDefault)
                                     {
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => MakeDefaultAsync(provider)">Use</button>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MakeDefaultAsync(provider)">Use</CodexButton>
                                     }
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => TestAsync(provider, null)" disabled="@testing">Test</button>
-                                    <button type="button" class="icon-btn" aria-label="Edit @provider.Name" @onclick="() => StartEdit(provider)"><LucideIcon IconName="edit-3" Size="16" /></button>
-                                    <button type="button" class="icon-btn danger" aria-label="Remove @provider.Name" @onclick="() => RemoveAsync(provider)"><LucideIcon IconName="trash-2" Size="16" /></button>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => TestAsync(provider, null)" disabled="@testing">Test</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@($"Edit {provider.Name}")" OnClick="() => StartEdit(provider)" />
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Remove {provider.Name}")" OnClick="() => RemoveAsync(provider)" />
                                 </div>
                             </li>
                         }
@@ -75,12 +75,12 @@ else
             </section>
 
             <section class="panel" aria-labelledby="server-heading">
-                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="16" Class="title-icon" /> Server fallback</h2></div>
+                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> Server fallback</h2></div>
                 <p class="mb-0 small">When you have no provider of your own, AI buttons use the server's <code>AI</code> configuration: <strong>@Providers.ServerDescription</strong>. Your own providers always take precedence.</p>
             </section>
 
             <section class="panel" aria-labelledby="what-heading">
-                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="16" Class="title-icon" /> What the AI can do</h2></div>
+                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> What the AI can do</h2></div>
                 <ul class="feature-grid mb-0">
                     <li><LucideIcon IconName="book-open" Size="18" /> <div><strong>Session recaps</strong><div class="small-muted">A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</div></div></li>
                     <li><LucideIcon IconName="feather" Size="18" /> <div><strong>Histories and bios</strong><div class="small-muted">Polish a character's backstory or an NPC's private notes without contradicting the sheet.</div></div></li>
@@ -93,11 +93,11 @@ else
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="editor-heading" id="provider-editor">
-                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editing.Id == editingOriginalId ? "edit-3" : "plus")" Size="16" Class="title-icon" /> @(editingOriginalId != null ? "Edit provider" : "New provider")</h2></div>
+                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editing.Id == editingOriginalId ? "edit-3" : "plus")" Size="18" Class="title-icon" /> @(editingOriginalId != null ? "Edit provider" : "New provider")</h2></div>
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
-                        <label for="ai-kind" class="form-label">Service</label>
-                        <select id="ai-kind" class="form-select" value="@editing.Kind" @onchange="OnPresetChanged" data-testid="ai-kind">
+                        <label for="ai-kind" class="field-label">Service</label>
+                        <select id="ai-kind" class="field-select" value="@editing.Kind" @onchange="OnPresetChanged" data-testid="ai-kind">
                             @foreach (var preset in AIClientFactory.Presets)
                             {
                                 <option value="@preset.Kind">@preset.Label</option>
@@ -105,36 +105,36 @@ else
                         </select>
                         @if (AIClientFactory.Preset(editing.Kind) is { } hint)
                         {
-                            <div class="form-text">@hint.Hint</div>
+                            <div class="field-hint">@hint.Hint</div>
                         }
                     </div>
                     <div class="mb-3">
-                        <label for="ai-name" class="form-label">Name</label>
-                        <input id="ai-name" class="form-control" @bind="editing.Name" required data-testid="ai-name" />
+                        <label for="ai-name" class="field-label">Name</label>
+                        <input id="ai-name" class="field-input" @bind="editing.Name" required data-testid="ai-name" />
                     </div>
                     <div class="mb-3">
-                        <label for="ai-url" class="form-label">Base URL</label>
-                        <input id="ai-url" class="form-control" @bind="editing.BaseUrl" placeholder="https://…/v1" required data-testid="ai-url" />
+                        <label for="ai-url" class="field-label">Base URL</label>
+                        <input id="ai-url" class="field-input" @bind="editing.BaseUrl" placeholder="https://…/v1" required data-testid="ai-url" />
                     </div>
                     <div class="mb-3">
-                        <label for="ai-model" class="form-label">Model</label>
-                        <input id="ai-model" class="form-control" @bind="editing.ModelId" placeholder="e.g. openai/gpt-4o-mini" required data-testid="ai-model" />
+                        <label for="ai-model" class="field-label">Model</label>
+                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="e.g. openai/gpt-4o-mini" required data-testid="ai-model" />
                         @if (editing.Kind == "openrouter")
                         {
-                            <div class="form-text">Any id from openrouter.ai/models, e.g. <code>anthropic/claude-sonnet-4</code>, <code>google/gemini-2.5-flash</code>.</div>
+                            <div class="field-hint">Any id from openrouter.ai/models, e.g. <code>anthropic/claude-sonnet-4</code>, <code>google/gemini-2.5-flash</code>.</div>
                         }
                     </div>
                     <div class="mb-3">
-                        <label for="ai-key" class="form-label">API key @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? "(leave blank to keep the stored key)" : "")</label>
-                        <input id="ai-key" type="password" class="form-control" @bind="plainKey" autocomplete="off" placeholder="@(AIClientFactory.Preset(editing.Kind)?.RequiresKey == false ? "Not needed for a local server" : "sk-…")" data-testid="ai-key" />
-                        <div class="form-text">Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.</div>
+                        <label for="ai-key" class="field-label">API key @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? "(leave blank to keep the stored key)" : "")</label>
+                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(AIClientFactory.Preset(editing.Kind)?.RequiresKey == false ? "Not needed for a local server" : "sk-…")" data-testid="ai-key" />
+                        <div class="field-hint">Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.</div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-primary" data-testid="ai-save">Save provider</button>
-                        <button type="button" class="btn btn-outline-secondary" @onclick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? "Testing…" : "Test connection")</button>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save">Save provider</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? "Testing…" : "Test connection")</CodexButton>
                         @if (editingOriginalId != null)
                         {
-                            <button type="button" class="btn btn-link" @onclick="() => StartNew()">Cancel</button>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => StartNew()">Cancel</CodexButton>
                         }
                     </div>
                 </form>

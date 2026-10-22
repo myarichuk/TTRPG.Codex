@@ -1,0 +1,83 @@
+@using Codex.Core
+@using Codex.Plugin.Abstractions
+
+@* An item as a card: category and rarity on the header strip, cost and weight, then the text.
+   Rarity is written out as well as coloured. *@
+
+<div class="@("ref-card item-card rarity-" + RarityClass)" data-testid="item-card">
+    <div class="ref-typeline">
+        <DomainIcon Domain="item" Key="@ItemKey" Size="DomainIconSize.Small" />
+        @Category
+        @if (RefCard.Text(Entry, "rarity") is { } rarity)
+        {
+            <span class="ref-rarity" data-testid="item-rarity">@rarity</span>
+        }
+        @if (RefCard.Flag(Entry, "attunement"))
+        {
+            <span class="pill">Requires attunement</span>
+        }
+    </div>
+    <div class="ref-rule" aria-hidden="true"></div>
+    @if (Facts.Count > 0)
+    {
+        <dl class="ref-grid">
+            @foreach (var fact in Facts)
+            {
+                <div><dt>@fact.Label</dt><dd>@fact.Value</dd></div>
+            }
+        </dl>
+    }
+    @if (Subtype != null)
+    {
+        <p class="ref-subtype">@Subtype</p>
+    }
+    <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(BodyText))</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ContentEntry Entry { get; set; } = null!;
+
+    public static bool CanShow(ContentEntry entry) =>
+        (entry.Type.Equals("equipment", StringComparison.OrdinalIgnoreCase) || entry.Type.Equals("magic-item", StringComparison.OrdinalIgnoreCase))
+        && RefCard.Text(entry, "category") != null;
+
+    // Magic items open with a plain type line ("Armor (Any Medium or Heavy)"); it reads as a subtitle, not as body text.
+    private string BodyText { get; set; } = string.Empty;
+    private string? Subtype { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var body = RefCard.Body(Entry.Description, "Cost", "Weight");
+        Subtype = null;
+        var split = body.IndexOf("\n\n", StringComparison.Ordinal);
+        var first = split < 0 ? body : body[..split];
+        if (split > 0 && first.Length < 120 && !first.Contains('.') && !first.StartsWith('#'))
+        {
+            Subtype = first;
+            body = body[(split + 2)..];
+        }
+
+        BodyText = body;
+    }
+
+    private string Category => RefCard.Text(Entry, "category") ?? string.Empty;
+    private string ItemKey => DomainIconMap.ItemKey(Category);
+    private string RarityClass => (RefCard.Text(Entry, "rarity") ?? "none").Split(' ', '(', ',')[0].ToLowerInvariant().Replace(' ', '-');
+
+    private List<(string Label, string Value)> Facts
+    {
+        get
+        {
+            var facts = new List<(string, string)>();
+            if (RefCard.Text(Entry, "cost") is { } cost) facts.Add(("Cost", cost));
+            if (RefCard.Text(Entry, "weight") is { } weight) facts.Add(("Weight", weight + " lb."));
+            foreach (var key in new[] { "damage", "damageType", "mastery", "properties", "armorClass", "strength", "stealth" })
+            {
+                var text = RefCard.Text(Entry, key) ?? (RefCard.List(Entry, key) is { Count: > 0 } list ? string.Join(", ", list) : null);
+                if (text != null) facts.Add((CampaignLibrary.Humanize(key), text));
+            }
+
+            return facts;
+        }
+    }
+}

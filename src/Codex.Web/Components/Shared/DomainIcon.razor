@@ -1,0 +1,123 @@
+@namespace Codex.Web.Components.Shared
+
+@* The game's own icons: conditions, damage types, schools of magic, item categories, creature types,
+   kinds of content and roles. They are drawn for this app (Lucide stays for interface chrome) on the
+   same 24-unit grid. Anything without a glyph gets a heraldic placeholder: a shield with its initial.
+   Three sizes only: sm 16, md 22, lg 32. Decorative unless a Label is given. *@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="@Pixels" height="@Pixels" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="domain-icon @Class"
+     role="@(Label == null ? null : "img")" aria-label="@Label" aria-hidden="@(Label == null ? "true" : null)" focusable="false" data-domain="@Domain" data-key="@Slug">
+    @if (Glyphs.TryGetValue(Domain + "/" + Slug, out var markup))
+    {
+        @((MarkupString)markup)
+    }
+    else
+    {
+        <path d="M12 3 4.500 6v6c0 4.500 3 7.500 7.500 9 4.500-1.500 7.500-4.500 7.500-9V6z" />
+        @* Razor reserves <text>, so the SVG text element goes in as markup. *@
+        @((MarkupString)$"<text x=\"12\" y=\"15.5\" text-anchor=\"middle\" font-size=\"9\" font-family=\"var(--font-display)\" stroke=\"none\" fill=\"currentColor\">{System.Net.WebUtility.HtmlEncode(Initial)}</text>")
+    }
+</svg>
+
+@code {
+    /// <summary>condition, damage, school, item, creature, kind, role or actor.</summary>
+    [Parameter, EditorRequired] public string Domain { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string? Key { get; set; }
+    [Parameter] public DomainIconSize Size { get; set; } = DomainIconSize.Medium;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Label { get; set; }
+
+    private int Pixels => Size switch { DomainIconSize.Small => 16, DomainIconSize.Large => 32, _ => 22 };
+    private string Slug => Normalise(Key);
+    private string Initial => string.IsNullOrEmpty(Slug) ? "?" : char.ToUpperInvariant(Slug[0]).ToString();
+
+    /// <summary>True when there is a drawn glyph, so callers can skip the placeholder in tight spots.</summary>
+    public static bool Has(string domain, string? key) => Glyphs.ContainsKey(domain + "/" + Normalise(key));
+
+    private static string Normalise(string? key) => (key ?? string.Empty).Trim().ToLowerInvariant().Replace(' ', '-').Replace('_', '-');
+
+    private static readonly Dictionary<string, string> Glyphs = new()
+    {
+        ["condition/blinded"] = @"<path d=""M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z""/><circle cx=""12"" cy=""12"" r=""2.5""/><path d=""M4 20 20 4""/>",
+        ["condition/charmed"] = @"<path d=""M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20z""/><path d=""M12 11v3M10.5 12.5h3""/>",
+        ["condition/deafened"] = @"<path d=""M7 9a5 5 0 0 1 10 0c0 3-2 3.5-2 6a3 3 0 0 1-5.5 1.6""/><path d=""M4 20 20 4""/>",
+        ["condition/frightened"] = @"<path d=""M5 21V10a7 7 0 0 1 14 0v11l-2.3-2-2.4 2-2.3-2-2.3 2-2.4-2z""/><circle cx=""9.5"" cy=""10"" r=""1""/><circle cx=""14.5"" cy=""10"" r=""1""/><path d=""M10 14h4""/>",
+        ["condition/grappled"] = @"<path d=""M9 12.5 6.5 15a3 3 0 0 0 4.2 4.2l2.5-2.5""/><path d=""m15 11.5 2.5-2.5a3 3 0 0 0-4.2-4.2L10.8 7.3""/><path d=""m9.5 14.5 5-5""/>",
+        ["condition/incapacitated"] = @"<circle cx=""12"" cy=""12"" r=""9""/><path d=""m8.5 8.5 7 7M15.5 8.5l-7 7""/>",
+        ["condition/invisible"] = @"<circle cx=""12"" cy=""12"" r=""9"" stroke-dasharray=""3 3""/><circle cx=""12"" cy=""12"" r=""2"" stroke-dasharray=""1 2""/>",
+        ["condition/paralyzed"] = @"<rect x=""5"" y=""4"" width=""14"" height=""16"" rx=""2""/><path d=""m13 7-3 5h4l-3 5""/>",
+        ["condition/petrified"] = @"<path d=""M6 21V9l3-5 4 2 4 3v12z""/><path d=""M6 13h6l2 3h3M10 9l2 4""/>",
+        ["condition/poisoned"] = @"<path d=""M12 3C8 8 6 11 6 14.5a6 6 0 0 0 12 0C18 11 16 8 12 3z""/><circle cx=""10.5"" cy=""14"" r=""1""/><circle cx=""14"" cy=""16"" r="".8""/><path d=""M12 11v1""/>",
+        ["condition/prone"] = @"<circle cx=""5.5"" cy=""14"" r=""2""/><path d=""M8 15.5 20 17M12 16l-1 3M16.5 16.6 17 20M8 13.5l4-2.5 3 1.5""/><path d=""M3 21h18""/>",
+        ["condition/restrained"] = @"<circle cx=""7"" cy=""12"" r=""3.5""/><circle cx=""17"" cy=""12"" r=""3.5""/><path d=""M10.5 12h3""/><path d=""M2 5v3M22 5v3M2 19v-3M22 19v-3""/>",
+        ["condition/stunned"] = @"<path d=""m12 3 1.8 3.7 4 .5-2.9 2.8.7 4L12 12.1 8.4 14l.7-4L6.2 7.2l4-.5z""/><path d=""M5 19c2-1.5 4-1.5 6 0s4 1.5 6 0 2-1 2-1""/>",
+        ["condition/unconscious"] = @"<path d=""M5 6h6L5 13h6""/><path d=""M13 12h5l-5 6h5""/><path d=""M17 4h3l-3 3.5h3""/>",
+        ["condition/exhaustion"] = @"<rect x=""3"" y=""8"" width=""16"" height=""9"" rx=""2""/><path d=""M21 11v3""/><path d=""M6 11v3""/>",
+        ["condition/dazed"] = @"<circle cx=""12"" cy=""12"" r=""9""/><path d=""M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0M12 8a4 4 0 1 1-4 4""/>",
+        ["condition/burning"] = @"<path d=""M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.5 1 2 2 2 0-3-.5-5 1-8z""/>",
+        ["damage/acid"] = @"<path d=""M12 3C8.5 7.5 7 10 7 13a5 5 0 0 0 10 0c0-3-1.5-5.5-5-10z""/><path d=""M10 14.5a2 2 0 0 0 2 2""/><path d=""M4 21h3M17 21h3M8 21l2-2M16 21l-2-2""/>",
+        ["damage/bludgeoning"] = @"<circle cx=""15.500"" cy=""8.500"" r=""5""/><path d=""M12 12 4 20""/><path d=""M3 21l2-2""/><path d=""M13 6.500l3 3""/>",
+        ["damage/cold"] = @"<path d=""M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7""/><path d=""m9.5 4 2.5 2 2.5-2M9.5 20l2.5-2 2.5 2""/>",
+        ["damage/fire"] = @"<path d=""M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.5 1 2 2 2 0-3-.5-5 1-8z""/><path d=""M12 20a2 2 0 0 0 2-2c0-1.2-1-2-2-3-1 1-2 1.8-2 3a2 2 0 0 0 2 2z""/>",
+        ["damage/force"] = @"<circle cx=""12"" cy=""12"" r=""3""/><circle cx=""12"" cy=""12"" r=""7""/><path d=""M12 2v3M12 19v3M2 12h3M19 12h3""/>",
+        ["damage/lightning"] = @"<path d=""M13 2 5 13.5h6L10 22l9-12.5h-6z""/>",
+        ["damage/necrotic"] = @"<path d=""M12 3a8 8 0 0 0-5 14v3h10v-3a8 8 0 0 0-5-14z""/><circle cx=""9.5"" cy=""11.5"" r=""1.5""/><circle cx=""14.5"" cy=""11.5"" r=""1.5""/><path d=""M10 20v-3M14 20v-3""/>",
+        ["damage/piercing"] = @"<path d=""M4 20 17 7""/><path d=""m14 3.500 6.500.5.500 6.500-3-2.500z""/><path d=""M4 20l-1 1M7 17l2 2""/>",
+        ["damage/poison"] = @"<path d=""M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3""/><path d=""M8 15h8""/>",
+        ["damage/psychic"] = @"<path d=""M12 12a1.5 1.5 0 1 1 1.5 1.5A3 3 0 1 1 10 9.5a4.5 4.5 0 1 1 5 5.5A6 6 0 1 1 8 6""/>",
+        ["damage/radiant"] = @"<circle cx=""12"" cy=""12"" r=""4""/><path d=""M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2""/>",
+        ["damage/slashing"] = @"<path d=""M5 20 19 4""/><path d=""m16 4 3 0 0 3""/><path d=""M7 21l-3-3M9 15l-3 3""/>",
+        ["damage/thunder"] = @"<path d=""M4 9a8 8 0 0 1 16 0""/><path d=""M7 12a5 5 0 0 1 10 0""/><path d=""M10 15a2 2 0 0 1 4 0""/><path d=""m12 18-1.5 3M12 18l1.5 3""/>",
+        ["school/abjuration"] = @"<path d=""M12 3 4.5 6v5.5c0 4.5 3 8 7.5 9.5 4.5-1.5 7.5-5 7.5-9.5V6z""/><path d=""M12 8v8M8.5 11.5h7""/>",
+        ["school/conjuration"] = @"<ellipse cx=""12"" cy=""12"" rx=""4"" ry=""8""/><path d=""M3 5l3 2M3 12h3M3 19l3-2M21 5l-3 2M21 12h-3M21 19l-3-2""/>",
+        ["school/divination"] = @"<path d=""M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z""/><circle cx=""12"" cy=""12"" r=""2.5""/><path d=""M12 2v2M5 4l1.5 1.5M19 4l-1.5 1.5""/>",
+        ["school/enchantment"] = @"<path d=""M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20z""/><path d=""M19 3v3M17.5 4.5h3""/>",
+        ["school/evocation"] = @"<path d=""m12 2 2 6 6-2-3.5 5.5L22 14l-6.5 1L16 22l-4-5-4 5 .5-7L2 14l5.5-2.5L4 6l6 2z""/>",
+        ["school/illusion"] = @"<path d=""M4 8c0-2 2-3 8-3s8 1 8 3v3c0 5-3.5 9-8 9s-8-4-8-9z""/><path d=""M7.5 10.5c1-1 2.5-1 3.5 0M13 10.5c1-1 2.5-1 3.5 0""/><path d=""M9 15c1.5 1.5 4.5 1.5 6 0""/>",
+        ["school/necromancy"] = @"<path d=""M12 3a8 8 0 0 0-5 14v3h10v-3a8 8 0 0 0-5-14z""/><circle cx=""9.5"" cy=""11.5"" r=""1.5""/><circle cx=""14.5"" cy=""11.5"" r=""1.5""/><path d=""M10 20v-3M14 20v-3""/>",
+        ["school/transmutation"] = @"<path d=""M4 12a8 8 0 0 1 14-5.3L20 9""/><path d=""M20 4v5h-5""/><path d=""M20 12a8 8 0 0 1-14 5.3L4 15""/><path d=""M4 20v-5h5""/>",
+        ["item/weapon"] = @"<path d=""M14.5 3H21v6.5L10 20.5l-3-3z""/><path d=""m5 15 4 4M3 21l3-3""/>",
+        ["item/armor"] = @"<path d=""M8 3 3 6v5l3 1v9h12v-9l3-1V6l-5-3c-.5 2-2 3-4 3S8.5 5 8 3z""/>",
+        ["item/tool"] = @"<path d=""M14.5 6.5a4 4 0 0 0-5.2 5.2L3 18l3 3 6.3-6.3a4 4 0 0 0 5.2-5.2l-2.5 2.5-2.5-.5-.5-2.5z""/>",
+        ["item/gear"] = @"<path d=""M7 8a5 5 0 0 1 10 0v1H7z""/><rect x=""5"" y=""9"" width=""14"" height=""12"" rx=""3""/><path d=""M9 14h6M9 17h6""/>",
+        ["item/potion"] = @"<path d=""M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3""/><path d=""M7.5 14h9""/>",
+        ["item/ring"] = @"<circle cx=""12"" cy=""14"" r=""6""/><path d=""m9.5 5 2.5-2 2.5 2-2.5 3z""/>",
+        ["item/wand"] = @"<path d=""m4 20 11-11""/><path d=""m14 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1z""/><path d=""M19 13l.7 1.3 1.3.7-1.3.7-.7 1.3-.7-1.3-1.3-.7 1.3-.7z""/>",
+        ["item/scroll"] = @"<path d=""M8 4h11v13a3 3 0 0 1-3 3H6""/><path d=""M8 4a3 3 0 0 0-3 3v1h3""/><path d=""M6 20a3 3 0 0 1-3-3v-1h13""/><path d=""M12 9h4M12 12h4""/>",
+        ["item/wondrous"] = @"<path d=""M6 3h12l4 6-10 12L2 9z""/><path d=""M2 9h20M9 9l3 12 3-12M8 3l1 6M16 3l-1 6""/>",
+        ["item/ammunition"] = @"<path d=""M3 21 17 7""/><path d=""m14 4 6-1-1 6-3-1z""/><path d=""m4 17 3 3M7 14l3 3""/>",
+        ["item/mount"] = @"<path d=""M4 20c0-6 2-10 6-12l-1-4 4 2c4 0 7 3 7 7 0 3-2 4-4 4l-3-2-2 5z""/><circle cx=""15.5"" cy=""9"" r="".6""/>",
+        ["creature/aberration"] = @"<circle cx=""12"" cy=""12"" r=""4""/><circle cx=""12"" cy=""12"" r=""1.2""/><path d=""M12 8C12 4 9 3 6 4M16 12c4 0 5-3 4-6M12 16c0 4 3 5 6 4M8 12c-4 0-5 3-4 6""/>",
+        ["creature/beast"] = @"<circle cx=""7"" cy=""9"" r=""2""/><circle cx=""17"" cy=""9"" r=""2""/><circle cx=""4"" cy=""14"" r=""1.8""/><circle cx=""20"" cy=""14"" r=""1.8""/><path d=""M12 12c-3 0-5 3-5 5.5 0 2 1.5 2.5 3 2.5l2-.7 2 .7c1.5 0 3-.5 3-2.5 0-2.5-2-5.5-5-5.5z""/>",
+        ["creature/celestial"] = @"<path d=""M12 3v18M7 8h10""/><path d=""M4 10c0 5 3 8 8 11 5-3 8-6 8-11""/>",
+        ["creature/construct"] = @"<rect x=""5"" y=""5"" width=""14"" height=""14"" rx=""2""/><circle cx=""12"" cy=""12"" r=""3""/><path d=""M12 2v3M12 19v3M2 12h3M19 12h3""/>",
+        ["creature/dragon"] = @"<path d=""M3 8c3-3 6-3 9 0 3-3 6-3 9 0-1 5-3 8-5 10l-4 3-4-3c-2-2-4-5-5-10z""/><circle cx=""9"" cy=""12"" r="".8""/><circle cx=""15"" cy=""12"" r="".8""/><path d=""M10.5 17h3""/>",
+        ["creature/elemental"] = @"<path d=""M12 3 4 20h16z""/><path d=""M8 14h8""/>",
+        ["creature/fey"] = @"<path d=""M12 12C8 6 3 6 3 10s5 5 9 2zM12 12c4-6 9-6 9-2s-5 5-9 2z""/><path d=""M12 12c-4 1-6 6-4 9 2-1 4-4 4-9zM12 12c4 1 6 6 4 9-2-1-4-4-4-9z""/>",
+        ["creature/fiend"] = @"<path d=""M6 3c-1 4 0 7 2 9M18 3c1 4 0 7-2 9""/><path d=""M8 12a6 6 0 0 0 8 0v3a4 4 0 0 1-8 0z""/><path d=""M10 17h4""/>",
+        ["creature/giant"] = @"<circle cx=""12"" cy=""5"" r=""2.5""/><path d=""M8 21v-9l-3-3M16 21v-9l3-3M8 12h8""/><path d=""M10 21v-5M14 21v-5""/>",
+        ["creature/humanoid"] = @"<circle cx=""12"" cy=""7"" r=""3.5""/><path d=""M5 21a7 7 0 0 1 14 0z""/>",
+        ["creature/monstrosity"] = @"<path d=""m3 6 5 3 4-4 4 4 5-3-1 8c-1 4-4 7-8 7s-7-3-8-7z""/><circle cx=""9"" cy=""13"" r=""1""/><circle cx=""15"" cy=""13"" r=""1""/><path d=""M9.5 17h5""/>",
+        ["creature/ooze"] = @"<path d=""M12 4c-2 0-3 2-3 4-3 0-5 2-5 5 0 4 3 7 8 7s8-3 8-7c0-3-2-5-5-5 0-2-1-4-3-4z""/><circle cx=""9.5"" cy=""13"" r=""1""/><circle cx=""14.5"" cy=""13"" r=""1""/>",
+        ["creature/plant"] = @"<path d=""M12 21V10""/><path d=""M12 10C12 5 8 3 4 4c0 4 3 7 8 6z""/><path d=""M12 14c0-4 3-6 8-5 0 4-3 7-8 5z""/>",
+        ["creature/undead"] = @"<path d=""M12 3a8 8 0 0 0-5 14v3h10v-3a8 8 0 0 0-5-14z""/><path d=""M8.5 11l2 2M10.5 11l-2 2M13.5 11l2 2M15.5 11l-2 2""/><path d=""M10 20v-3M14 20v-3""/>",
+        ["kind/class"] = @"<path d=""M12 3 4 7v6c0 4 3 7 8 8 5-1 8-4 8-8V7z""/><path d=""m9 10 3 5 3-5""/>",
+        ["kind/subclass"] = @"<path d=""M12 3 4 7v6c0 4 3 7 8 8 5-1 8-4 8-8V7z""/><path d=""M12 8v6M9 11h6""/>",
+        ["kind/species"] = @"<circle cx=""12"" cy=""7"" r=""3.5""/><path d=""M5 21a7 7 0 0 1 14 0z""/><path d=""M12 11v10""/>",
+        ["kind/background"] = @"<path d=""M8 4h11v13a3 3 0 0 1-3 3H6""/><path d=""M8 4a3 3 0 0 0-3 3v1h3""/><path d=""M6 20a3 3 0 0 1-3-3v-1h13""/>",
+        ["kind/feat"] = @"<path d=""m12 3 2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.4l6-.9z""/>",
+        ["kind/spell"] = @"<path d=""m4 20 11-11""/><path d=""m14 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1z""/><path d=""M19 13l.7 1.3 1.3.7-1.3.7-.7 1.3-.7-1.3-1.3-.7 1.3-.7z""/>",
+        ["kind/monster"] = @"<path d=""M5 4c4 2 5 6 4 11M12 3c3 3 3 8 1 14M19 4c-1 4-3 7-7 9""/><path d=""M4 21c3-2 7-2 10 0""/>",
+        ["kind/equipment"] = @"<path d=""M7 8a5 5 0 0 1 10 0v1H7z""/><rect x=""5"" y=""9"" width=""14"" height=""12"" rx=""3""/><path d=""M9 14h6M9 17h6""/>",
+        ["kind/magic-item"] = @"<path d=""M6 3h12l4 6-10 12L2 9z""/><path d=""M2 9h20M9 9l3 12 3-12""/>",
+        ["kind/condition"] = @"<circle cx=""12"" cy=""12"" r=""9""/><path d=""M12 7v6M12 16.5v.5""/>",
+        ["kind/rule"] = @"<path d=""M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z""/>",
+        ["role/dm"] = @"<path d=""M3 8l4 4 5-7 5 7 4-4-2 11H5z""/>",
+        ["role/player"] = @"<circle cx=""12"" cy=""7"" r=""3.5""/><path d=""M5 21a7 7 0 0 1 14 0z""/>",
+        ["role/spectator"] = @"<path d=""M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z""/><circle cx=""12"" cy=""12"" r=""2.5""/>",
+        ["actor/pc"] = @"<path d=""M12 3 4 7v6c0 4 3 7 8 8 5-1 8-4 8-8V7z""/><circle cx=""12"" cy=""10.5"" r=""2""/><path d=""M8.5 16a3.5 3.5 0 0 1 7 0""/>",
+        ["actor/npc"] = @"<circle cx=""12"" cy=""8"" r=""3.5""/><path d=""M5 21a7 7 0 0 1 14 0""/>",
+        ["actor/monster"] = @"<path d=""M5 4c4 2 5 6 4 11M12 3c3 3 3 8 1 14M19 4c-1 4-3 7-7 9""/><path d=""M4 21c3-2 7-2 10 0""/>",
+    };
+}

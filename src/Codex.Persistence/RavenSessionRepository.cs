@@ -27,6 +27,9 @@ public class RavenSessionRepository(RavenDbService dbService) : ISessionReposito
         await session.SaveChangesAsync();
     }
 
+    public Task<SessionDocument?> UpdateAsync(string sessionId, Action<SessionDocument> mutate) =>
+        RavenUpdate.RunAsync(dbService, sessionId, mutate);
+
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();

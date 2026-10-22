@@ -83,8 +83,22 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         return result.Take(limit).ToList();
     }
 
+    /// <summary>
+    /// Players may only open types the system marks <c>playerFacing</c>; the monster manual and
+    /// its kin stay DM-only. The browser already hides those types from its chips and results, so
+    /// the detail path (a typed-in or shared URL) has to apply the same rule.
+    /// </summary>
+    public bool CanRead(CampaignDocument campaign, CampaignAccess access, string type) =>
+        access.IsDm
+        || Definition(campaign)?.EntityTypes.FirstOrDefault(t => string.Equals(t.Type, type, StringComparison.OrdinalIgnoreCase))?.PlayerFacing != false;
+
     public async Task<LibraryItem?> GetAsync(CampaignDocument campaign, CampaignAccess access, string type, string id)
     {
+        if (!CanRead(campaign, access, type))
+        {
+            return null;
+        }
+
         var entry = registry.GetEntry(campaign.SystemId, type, id);
         if (entry != null && (ActivePacks(campaign) is not { } packs || packs.Contains(entry.PackId)))
         {

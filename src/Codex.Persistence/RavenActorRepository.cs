@@ -60,6 +60,9 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         await session.SaveChangesAsync();
     }
 
+    public Task<ActorDocument?> UpdateAsync(string actorId, Action<ActorDocument> mutate) =>
+        RavenUpdate.RunAsync(dbService, actorId, mutate);
+
     public async Task<bool> TrySaveAsync(ActorDocument actor, CampaignAccess access)
     {
         using var session = dbService.Store.OpenAsyncSession();
@@ -95,27 +98,36 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
         // Copy onto the tracked instance (the passed object is detached): CampaignId never
         // moves, and only the DM can change ownership - a player's OwnerUserId is ignored.
-        existing.Name = actor.Name;
-        existing.Kind = actor.Kind;
-        existing.Visibility = actor.Visibility;
-        existing.PublicName = actor.PublicName;
-        existing.PublicDescription = actor.PublicDescription;
-        existing.BlueprintId = actor.BlueprintId;
-        existing.Sheet = actor.Sheet;
-        existing.State = actor.State;
-        existing.Biography = actor.Biography;
-        existing.HasPortrait = actor.HasPortrait;
-        existing.PortraitVersion = actor.PortraitVersion;
-        if (access.IsDm)
-        {
-            existing.OwnerUserId = actor.OwnerUserId;
-            // Only the DM writes DM notes; a player's save (where they arrive redacted as null) leaves them alone.
-            existing.DmNotes = actor.DmNotes;
-        }
-
-        existing.UpdatedAt = DateTime.UtcNow;
+        CopyEditableFields(existing, actor, access.IsDm);
         await session.SaveChangesAsync();
         return true;
+    }
+
+    /// <summary>
+    /// The fields a sheet save may change, copied from <paramref name="source"/> onto
+    /// <paramref name="target"/>. CampaignId never moves; only the DM can change ownership and DM
+    /// notes (a player's save arrives with the notes redacted to null and leaves them alone).
+    /// </summary>
+    internal static void CopyEditableFields(ActorDocument target, ActorDocument source, bool isDm)
+    {
+        target.Name = source.Name;
+        target.Kind = source.Kind;
+        target.Visibility = source.Visibility;
+        target.PublicName = source.PublicName;
+        target.PublicDescription = source.PublicDescription;
+        target.BlueprintId = source.BlueprintId;
+        target.Sheet = source.Sheet;
+        target.State = source.State;
+        target.Biography = source.Biography;
+        target.HasPortrait = source.HasPortrait;
+        target.PortraitVersion = source.PortraitVersion;
+        if (isDm)
+        {
+            target.OwnerUserId = source.OwnerUserId;
+            target.DmNotes = source.DmNotes;
+        }
+
+        target.UpdatedAt = DateTime.UtcNow;
     }
 
     public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)

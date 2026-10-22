@@ -102,9 +102,9 @@ properties:
   - name: Fast Movement
     level: 5
     description: Your speed increases by 10 feet while you aren't wearing Heavy armor.
-  - name: Barbarian Subclass
+  - name: Subclass Feature
     level: 6
-    description: You gain a Barbarian subclass of your choice. A subclass is a specialization that grants you features at certain Barbarian levels. For the rest of your career, you gain each of your subclass's features that are of your Barbarian level or lower.
+    description: You gain a feature from your Barbarian subclass at this level. Its features are listed on the subclass.
   - name: Feral Instinct
     level: 7
     description: Your instincts are so honed that you have Advantage on Initiative rolls.
@@ -122,9 +122,9 @@ properties:
       Forceful Blow. The target is pushed 15 feet straight away from you. You can then move up to half your Speed straight toward the target without provoking Opportunity Attacks.
 
       Hamstring Blow. The target's Speed is reduced by 15 feet until the start of your next turn. A target can be affected by only one Hamstring Blow at a timethe most recent one.
-  - name: Barbarian Subclass
+  - name: Subclass Feature
     level: 10
-    description: You gain a Barbarian subclass of your choice. A subclass is a specialization that grants you features at certain Barbarian levels. For the rest of your career, you gain each of your subclass's features that are of your Barbarian level or lower.
+    description: You gain a feature from your Barbarian subclass at this level. Its features are listed on the subclass.
   - name: Relentless Rage
     level: 11
     description: >-
@@ -142,9 +142,9 @@ properties:
       Staggering Blow. The target has Disadvantage on the next saving throw it makes, and it can't make Opportunity Attacks until the start of your next turn.
 
       Sundering Blow. Before the start of your next turn, the next attack roll made by another creature against the target gains a +5 bonus to the roll. An attack roll can gain only one Sundering Blow bonus.
-  - name: Barbarian Subclass
+  - name: Subclass Feature
     level: 14
-    description: You gain a Barbarian subclass of your choice. A subclass is a specialization that grants you features at certain Barbarian levels. For the rest of your career, you gain each of your subclass's features that are of your Barbarian level or lower.
+    description: You gain a feature from your Barbarian subclass at this level. Its features are listed on the subclass.
   - name: Persistent Rage
     level: 15
     description: >-
@@ -172,41 +172,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

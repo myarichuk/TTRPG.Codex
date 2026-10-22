@@ -38,3 +38,44 @@ properties:
       Defy Death. You have Advantage on Death Saving Throws. Moreover, when you roll 18-20 on a Death Saving Throw, you gain the benefit of rolling a 20 on it.
 
       Heroic Rally. At the start of each of your turns, you regain Hit Points equal to 5 plus your Constitution modifier if you are Bloodied and have at least 1 Hit Point.
+  featSlots:
+  - level: 1
+    styles: 0
+  - level: 2
+    styles: 0
+  - level: 3
+    styles: 0
+  - level: 4
+    styles: 0
+  - level: 5
+    styles: 0
+  - level: 6
+    styles: 0
+  - level: 7
+    styles: 1
+  - level: 8
+    styles: 1
+  - level: 9
+    styles: 1
+  - level: 10
+    styles: 1
+  - level: 11
+    styles: 1
+  - level: 12
+    styles: 1
+  - level: 13
+    styles: 1
+  - level: 14
+    styles: 1
+  - level: 15
+    styles: 1
+  - level: 16
+    styles: 1
+  - level: 17
+    styles: 1
+  - level: 18
+    styles: 1
+  - level: 19
+    styles: 1
+  - level: 20
+    styles: 1

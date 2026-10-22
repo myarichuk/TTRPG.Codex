@@ -86,9 +86,9 @@ properties:
   - name: Ability Score Improvement
     level: 4
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Warlock levels 8, 12, and 16.
-  - name: Warlock Subclass
+  - name: Subclass Feature
     level: 6
-    description: You gain a Warlock subclass of your choice. The Fiend Patron subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Warlock levels. For the rest of your career, you gain each of your subclass's features that are of your Warlock level or lower.
+    description: You gain a feature from your Warlock subclass at this level. Its features are listed on the subclass.
   - name: Ability Score Improvement
     level: 8
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Warlock levels 8, 12, and 16.
@@ -98,9 +98,9 @@ properties:
       In the past, you usually contacted your patron through intermediaries. Now you can communicate directly; you always have the Contact Other Plane spell prepared. With this feature, you can cast the spell without expending a spell slot to contact your patron, and you automatically succeed on the spell's saving throw.
 
       Once you cast the spell with this feature, you can't do so in this way again until you finish a Long Rest.
-  - name: Warlock Subclass
+  - name: Subclass Feature
     level: 10
-    description: You gain a Warlock subclass of your choice. The Fiend Patron subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Warlock levels. For the rest of your career, you gain each of your subclass's features that are of your Warlock level or lower.
+    description: You gain a feature from your Warlock subclass at this level. Its features are listed on the subclass.
   - name: Mystic Arcanum
     level: 11
     description: >-
@@ -124,9 +124,9 @@ properties:
       As shown in the Warlock Features table, you gain another Warlock spell of your choice that can be cast in this way when you reach Warlock levels 13 (level 7 spell), 15 (level 8 spell), and 17 (level 9 spell). You regain all uses of your Mystic Arcanum when you finish a Long Rest.
 
       Whenever you gain a Warlock level, you can replace one of your arcanum spells with another Warlock spell of the same level.
-  - name: Warlock Subclass
+  - name: Subclass Feature
     level: 14
-    description: You gain a Warlock subclass of your choice. The Fiend Patron subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Warlock levels. For the rest of your career, you gain each of your subclass's features that are of your Warlock level or lower.
+    description: You gain a feature from your Warlock subclass at this level. Its features are listed on the subclass.
   - name: Mystic Arcanum
     level: 15
     description: >-
@@ -156,6 +156,7 @@ properties:
   - name: Eldritch Master
     level: 20
     description: When you use your Magical Cunning feature, you regain all your expended Pact Magic spell slots.
+  spellcastingAbility: cha
   casterType: pact
   spellcasting:
   - level: 1
@@ -261,41 +262,61 @@ properties:
   featSlots:
   - level: 1
     slots: 0
+    styles: 0
   - level: 2
     slots: 0
+    styles: 0
   - level: 3
     slots: 0
+    styles: 0
   - level: 4
     slots: 1
+    styles: 0
   - level: 5
     slots: 1
+    styles: 0
   - level: 6
     slots: 1
+    styles: 0
   - level: 7
     slots: 1
+    styles: 0
   - level: 8
     slots: 2
+    styles: 0
   - level: 9
     slots: 2
+    styles: 0
   - level: 10
     slots: 2
+    styles: 0
   - level: 11
     slots: 2
+    styles: 0
   - level: 12
     slots: 3
+    styles: 0
   - level: 13
     slots: 3
+    styles: 0
   - level: 14
     slots: 3
+    styles: 0
   - level: 15
     slots: 3
+    styles: 0
   - level: 16
     slots: 4
+    styles: 0
   - level: 17
     slots: 4
+    styles: 0
   - level: 18
     slots: 4
+    styles: 0
   - level: 19
     slots: 5
+    styles: 0
   - level: 20
     slots: 5
+    styles: 0

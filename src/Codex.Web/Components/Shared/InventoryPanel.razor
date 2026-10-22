@@ -6,7 +6,7 @@
    from the Library (and the campaign's homebrew). Equipped armor and shields feed armor class. *@
 
 <section class="panel" aria-labelledby="@(id)-heading" data-testid="inventory">
-    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="package" Size="16" Class="title-icon" /> @Rules.Label</h2></div>
+    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="package" Size="18" Class="title-icon" /> @Rules.Label</h2></div>
 
     @if (Items.Count == 0)
     {
@@ -26,13 +26,13 @@
                     {
                         <span class="d-flex align-items-center gap-2">
                             <label class="visually-hidden" for="@(id)-q-@item.Index">Quantity of @item.Entry.Name</label>
-                            <input id="@(id)-q-@item.Index" type="number" min="1" class="form-control form-control-sm" style="width:4.5rem" value="@item.Quantity"
+                            <input id="@(id)-q-@item.Index" type="number" min="1" class="field-input field-sm" style="width:4.5rem" value="@item.Quantity"
                                    @onchange="e => UpdateAsync(item, quantity: ParseQuantity(e.Value?.ToString()))" data-testid="inventory-qty" />
-                            <span class="form-check mb-0">
-                                <input id="@(id)-e-@item.Index" class="form-check-input" type="checkbox" checked="@item.Equipped" @onchange="e => UpdateAsync(item, equipped: (bool)e.Value!)" data-testid="inventory-equip" />
-                                <label for="@(id)-e-@item.Index" class="form-check-label">Equipped</label>
+                            <span class="field-check mb-0">
+                                <input id="@(id)-e-@item.Index" class="field-box" type="checkbox" checked="@item.Equipped" @onchange="e => UpdateAsync(item, equipped: (bool)e.Value!)" data-testid="inventory-equip" />
+                                <label for="@(id)-e-@item.Index" >Equipped</label>
                             </span>
-                            <button type="button" class="btn-link-plain" aria-label="Remove @item.Entry.Name" @onclick="() => RemoveAsync(item)"><LucideIcon IconName="x" Size="14" /></button>
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"Remove {item.Entry.Name}")" OnClick="() => RemoveAsync(item)" />
                         </span>
                     }
                     else
@@ -49,8 +49,8 @@
         @if (Rules.Types.Count > 1)
         {
             <div class="mb-2">
-                <label for="@(id)-type" class="form-label small mb-1">Browse</label>
-                <select id="@(id)-type" class="form-select form-select-sm" style="max-width:14rem" @bind="browseType" data-testid="inventory-type">
+                <label for="@(id)-type" class="field-label">Browse</label>
+                <select id="@(id)-type" class="field-select field-sm" style="max-width:14rem" @bind="browseType" data-testid="inventory-type">
                     @foreach (var type in Rules.Types)
                     {
                         <option value="@type">@(TypeOf(type)?.PluralLabel ?? type)</option>

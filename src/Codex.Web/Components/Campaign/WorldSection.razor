@@ -21,7 +21,7 @@ else
             @if (regions.Count == 0)
             {
                 <div class="empty">
-                    <div class="empty-icon"><LucideIcon IconName="map" Size="26" /></div>
+                    <div class="empty-icon"><LucideIcon IconName="map" Size="28" /></div>
                     <h3>@(Ctx.IsDm ? "No regions yet" : "Nothing discovered yet")</h3>
                     <p>@(Ctx.IsDm ? "Add a region, then the places inside it." : "The DM will reveal places as the party explores.")</p>
                 </div>
@@ -52,7 +52,7 @@ else
                                 </div>
                                 @if (Ctx.IsDm && location.Visibility != ActorVisibility.Known)
                                 {
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => RevealAsync(region.Id, location.Id)" aria-label="Reveal @location.Name to players"><LucideIcon IconName="eye" Size="14" /> Reveal</button>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@($"Reveal {location.Name} to players")"><LucideIcon IconName="eye" Size="14" /> Reveal</CodexButton>
                                 }
                             </li>
                         }
@@ -61,8 +61,8 @@ else
                     {
                         <form class="input-group input-group-sm mt-3" @onsubmit="() => AddLocationAsync(region.Id)" @onsubmit:preventDefault="true">
                             <label for="loc-@region.Id" class="visually-hidden">New place in @region.Name</label>
-                            <input id="loc-@region.Id" class="form-control" placeholder="New place…" @bind="newLocationNames[region.Id]" />
-                            <button type="submit" class="btn btn-outline-secondary">Add place</button>
+                            <input id="loc-@region.Id" class="field-input" placeholder="New place…" @bind="newLocationNames[region.Id]" />
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Etched">Add place</CodexButton>
                         </form>
                     }
                 </section>
@@ -74,10 +74,10 @@ else
                 <section class="panel" aria-labelledby="new-region-heading">
                     <div class="panel-title"><h3 id="new-region-heading">New region</h3></div>
                     <form @onsubmit="CreateRegionAsync" @onsubmit:preventDefault="true">
-                        <label for="new-region" class="form-label">Name</label>
+                        <label for="new-region" class="field-label">Name</label>
                         <div class="input-group input-group-sm">
-                            <input id="new-region" class="form-control" @bind="newRegionName" required data-testid="new-region-name" />
-                            <button type="submit" class="btn btn-primary" data-testid="new-region-add">Add</button>
+                            <input id="new-region" class="field-input" @bind="newRegionName" required data-testid="new-region-name" />
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="new-region-add">Add</CodexButton>
                         </div>
                     </form>
                 </section>
@@ -86,8 +86,8 @@ else
                     <section class="panel" aria-labelledby="pack-places-heading">
                         <div class="panel-title"><h3 id="pack-places-heading">Places from packs</h3></div>
                         <p class="small-muted">Setting packs for this system ship these. Add one to a region to use it.</p>
-                        <label for="pack-target-region" class="form-label">Add into</label>
-                        <select id="pack-target-region" class="form-select form-select-sm mb-2" @bind="packTargetRegionId">
+                        <label for="pack-target-region" class="field-label">Add into</label>
+                        <select id="pack-target-region" class="field-select field-sm mb-2" @bind="packTargetRegionId">
                             @foreach (var region in regions)
                             {
                                 <option value="@region.Id">@region.Name</option>
@@ -101,7 +101,7 @@ else
                                         <div class="row-title">@location.Name</div>
                                         <div class="row-sub">@location.Description</div>
                                     </div>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => AddFromPackAsync(location)" disabled="@(regions.Count == 0)" aria-label="Add @location.Name to the selected region">Add</button>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddFromPackAsync(location)" disabled="@(regions.Count == 0)" aria-label="@($"Add {location.Name} to the selected region")">Add</CodexButton>
                                 </li>
                             }
                         </ul>

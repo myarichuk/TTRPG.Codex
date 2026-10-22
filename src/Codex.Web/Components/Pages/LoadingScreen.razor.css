@@ -15,17 +15,17 @@
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: var(--accent);
     color: var(--on-accent);
     display: grid;
     place-items: center;
 }
 
-.brand-name { font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
+.brand-name { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.14em; margin-bottom: 1rem; }
 .status-text { color: var(--text-3); font-size: 0.9rem; }
 
-.progress-wrapper { height: 3px; background: var(--surface-3); border-radius: 2px; overflow: hidden; margin-top: 1rem; }
+.progress-wrapper { height: 3px; background: var(--surface-3); border-radius: 1px; overflow: hidden; margin-top: 1rem; }
 .progress-bar-inner { height: 100%; width: 30%; background: var(--accent); animation: slide 1.5s infinite ease-in-out; }
 
 @keyframes slide {

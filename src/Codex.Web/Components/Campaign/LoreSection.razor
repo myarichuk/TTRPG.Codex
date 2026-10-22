@@ -12,7 +12,7 @@
     <div class="search">
         <LucideIcon IconName="search" Size="18" Class="search-icon" />
         <label for="lore-search" class="visually-hidden">Search lore</label>
-        <input id="lore-search" type="search" class="form-control" placeholder="Search lore…" @bind="search" @bind:event="oninput" />
+        <input id="lore-search" type="search" class="field-input" placeholder="Search lore…" @bind="search" @bind:event="oninput" />
     </div>
     <div class="chips" role="group" aria-label="Filter by visibility">
         @foreach (var chip in Chips)
@@ -31,7 +31,7 @@
         else if (!Filtered.Any())
         {
             <div class="empty">
-                <div class="empty-icon"><LucideIcon IconName="book-marked" Size="26" /></div>
+                <div class="empty-icon"><LucideIcon IconName="book-marked" Size="28" /></div>
                 <h3>@(string.IsNullOrWhiteSpace(search) ? "Nothing here yet" : "No lore matches")</h3>
                 <p>@(Ctx.IsDm ? "Write the first fact on the right." : "Nothing has been revealed to you yet.")</p>
             </div>
@@ -56,8 +56,8 @@
                         {
                             <div class="d-flex flex-wrap gap-2 align-items-end">
                                 <div>
-                                    <label for="reveal-actor-@fact.Id" class="form-label small mb-1">Reveal to</label>
-                                    <select id="reveal-actor-@fact.Id" class="form-select form-select-sm" @bind="revealActorId[fact.Id]">
+                                    <label for="reveal-actor-@fact.Id" class="field-label">Reveal to</label>
+                                    <select id="reveal-actor-@fact.Id" class="field-select field-sm" @bind="revealActorId[fact.Id]">
                                         @foreach (var actor in Ctx.Actors)
                                         {
                                             <option value="@actor.Id">@actor.Name</option>
@@ -65,16 +65,16 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="reveal-level-@fact.Id" class="form-label small mb-1">How well</label>
-                                    <select id="reveal-level-@fact.Id" class="form-select form-select-sm" @bind="revealLevel[fact.Id]">
+                                    <label for="reveal-level-@fact.Id" class="field-label">How well</label>
+                                    <select id="reveal-level-@fact.Id" class="field-select field-sm" @bind="revealLevel[fact.Id]">
                                         @foreach (KnowledgeLevel level in Enum.GetValues<KnowledgeLevel>())
                                         {
                                             <option value="@level">@level</option>
                                         }
                                     </select>
                                 </div>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => RevealToActorAsync(fact)" disabled="@(Ctx.Actors.Count == 0)">Reveal to character</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => RevealToPartyAsync(fact)"><LucideIcon IconName="eye" Size="14" /> Reveal to party</button>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealToActorAsync(fact)" disabled="@(Ctx.Actors.Count == 0)">Reveal to character</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealToPartyAsync(fact)"><LucideIcon IconName="eye" Size="14" /> Reveal to party</CodexButton>
                             </div>
                         }
                     }
@@ -93,22 +93,22 @@
                 <div class="panel-title"><h3 id="new-fact-heading">New fact</h3></div>
                 <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
                     <div class="mb-2">
-                        <label for="fact-summary" class="form-label">Summary <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-                        <input id="fact-summary" class="form-control" @bind="newSummary" required data-testid="new-fact-summary" />
+                        <label for="fact-summary" class="field-label">Summary <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                        <input id="fact-summary" class="field-input" @bind="newSummary" required data-testid="new-fact-summary" />
                     </div>
                     <div class="mb-2">
-                        <label for="fact-details" class="form-label">Details</label>
-                        <textarea id="fact-details" class="form-control" rows="3" @bind="newDetails"></textarea>
+                        <label for="fact-details" class="field-label">Details</label>
+                        <textarea id="fact-details" class="field-input" rows="3" @bind="newDetails"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="fact-visibility" class="form-label">Who can see it</label>
-                        <select id="fact-visibility" class="form-select" @bind="newVisibility" data-testid="new-fact-visibility">
+                        <label for="fact-visibility" class="field-label">Who can see it</label>
+                        <select id="fact-visibility" class="field-select" @bind="newVisibility" data-testid="new-fact-visibility">
                             <option value="@FactVisibility.DmOnly">Only me (DM)</option>
                             <option value="@FactVisibility.KnowersOnly">Characters I reveal it to</option>
                             <option value="@FactVisibility.Public">The whole party</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" data-testid="new-fact-add">Add fact</button>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100" data-testid="new-fact-add">Add fact</CodexButton>
                 </form>
             </section>
         </div>

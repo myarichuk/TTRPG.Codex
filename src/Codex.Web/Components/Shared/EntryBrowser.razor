@@ -11,16 +11,17 @@
 }
 <div class="entry-browser" data-testid="@TestId-browser">
     <div class="d-flex gap-2 align-items-end flex-wrap">
-        <div class="flex-grow-1" style="min-width: 220px">
+        <div class="flex-grow-1 search" style="min-width: 220px">
+            <LucideIcon IconName="search" Size="18" Class="search-icon" />
             <label for="@(id)-search" class="visually-hidden">Filter @Label by name</label>
-            <input id="@(id)-search" type="search" class="form-control form-control-sm" placeholder="@(Disabled ? DisabledText : $"Filter {Label.ToLowerInvariant()}…")"
+            <input id="@(id)-search" type="search" class="field-input field-sm" placeholder="@(Disabled ? DisabledText : $"Filter {Label.ToLowerInvariant()}…")"
                    disabled="@Disabled" value="@query" @oninput="e => { query = e.Value?.ToString() ?? string.Empty; visible = PageSize; }" autocomplete="off" data-testid="@TestId-search" />
         </div>
         @foreach (var facet in facets)
         {
             <div>
                 <label for="@(id)-f-@facet.Key" class="visually-hidden">Filter by @facet.Label</label>
-                <select id="@(id)-f-@facet.Key" class="form-select form-select-sm" disabled="@Disabled" @onchange="e => SetFacet(facet.Key, e.Value?.ToString())" data-testid="@TestId-filter-@facet.Key">
+                <select id="@(id)-f-@facet.Key" class="field-select field-sm" disabled="@Disabled" @onchange="e => SetFacet(facet.Key, e.Value?.ToString())" data-testid="@TestId-filter-@facet.Key">
                     <option value="">Any @facet.Label.ToLowerInvariant()</option>
                     @foreach (var value in facet.Values)
                     {
@@ -42,12 +43,12 @@
             {
                 <li class="list-row py-1">
                     <span>@option.Name <span class="small-muted">@Summary(option)</span></span>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => OnAdd.InvokeAsync(option.Id)" aria-label="@AddLabel @option.Name">@AddLabel</button>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnAdd.InvokeAsync(option.Id)" aria-label="@($"{AddLabel} {option.Name}")">@AddLabel</CodexButton>
                 </li>
             }
             @if (matches.Count > shown.Count)
             {
-                <li class="py-1"><button type="button" class="btn btn-link btn-sm p-0" @onclick="() => visible += PageSize">Show @Math.Min(PageSize, matches.Count - shown.Count) more</button></li>
+                <li class="py-1"><CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => visible += PageSize">Show @Math.Min(PageSize, matches.Count - shown.Count) more</CodexButton></li>
             }
         </ul>
     }

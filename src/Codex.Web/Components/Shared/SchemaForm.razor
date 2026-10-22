@@ -24,7 +24,7 @@ else
                     var controlId = ControlId(field);
                     var wide = field.Type is FieldType.LongText or FieldType.Collection;
                     <div class="@(wide ? "field-wide" : null)">
-                        <label for="@controlId" class="form-label">
+                        <label for="@controlId" class="field-label">
                             @field.Label
                             @if (field.IsRequired)
                             {
@@ -35,7 +35,7 @@ else
                         @RenderField(field, controlId)
                         @if (!string.IsNullOrWhiteSpace(field.Description))
                         {
-                            <div id="@(controlId)-help" class="form-text">@field.Description</div>
+                            <div id="@(controlId)-help" class="field-hint">@field.Description</div>
                         }
                     </div>
                 }
@@ -100,21 +100,21 @@ else
 
     private RenderFragment RenderField(FieldDefinition field, string controlId) => field.Type switch
     {
-        FieldType.Number => @<input id="@controlId" type="number" class="form-control" inputmode="numeric"
+        FieldType.Number => @<input id="@controlId" type="number" class="field-input" inputmode="numeric"
                                      min="@field.Min" max="@field.Max" step="1" disabled="@ReadOnly"
                                      aria-describedby="@Describe(field, controlId)"
                                      value="@FormatNumber(GetValue(field))"
                                      @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString(), field)))" />,
 
-        FieldType.Boolean => @<div class="form-check">
-            <input id="@controlId" type="checkbox" class="form-check-input" disabled="@ReadOnly"
+        FieldType.Boolean => @<div class="field-check">
+            <input id="@controlId" type="checkbox" class="field-box" disabled="@ReadOnly"
                    checked="@IsTrue(GetValue(field))"
                    aria-describedby="@Describe(field, controlId)"
                    @onchange="@(e => SetValueAsync(field, (bool)(e.Value ?? false)))" />
-            <label class="form-check-label visually-hidden" for="@controlId">@field.Label</label>
+            <label class="visually-hidden" for="@controlId">@field.Label</label>
         </div>,
 
-        FieldType.Dropdown => @<select id="@controlId" class="form-select" disabled="@ReadOnly"
+        FieldType.Dropdown => @<select id="@controlId" class="field-select" disabled="@ReadOnly"
                                         aria-describedby="@Describe(field, controlId)"
                                         value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                         @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
@@ -125,7 +125,7 @@ else
             }
         </select>,
 
-        FieldType.EntityReference => @<select id="@controlId" class="form-select" disabled="@ReadOnly"
+        FieldType.EntityReference => @<select id="@controlId" class="field-select" disabled="@ReadOnly"
                                                aria-describedby="@Describe(field, controlId)"
                                                value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                                @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
@@ -136,12 +136,12 @@ else
             }
         </select>,
 
-        FieldType.LongText => @<textarea id="@controlId" class="form-control" rows="4" disabled="@ReadOnly"
+        FieldType.LongText => @<textarea id="@controlId" class="field-input" rows="4" disabled="@ReadOnly"
                                           aria-describedby="@Describe(field, controlId)"
                                           value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
 
-        FieldType.TagList => @<input id="@controlId" type="text" class="form-control" disabled="@ReadOnly"
+        FieldType.TagList => @<input id="@controlId" type="text" class="field-input" disabled="@ReadOnly"
                                       placeholder="Comma-separated"
                                       aria-describedby="@Describe(field, controlId)"
                                       value="@string.Join(", ", GetTags(field))"
@@ -149,13 +149,13 @@ else
 
         FieldType.Collection => RenderCollection(field, controlId),
 
-        FieldType.ImagePicker => @<input id="@controlId" type="url" class="form-control" disabled="@ReadOnly"
+        FieldType.ImagePicker => @<input id="@controlId" type="url" class="field-input" disabled="@ReadOnly"
                                           placeholder="Image URL"
                                           aria-describedby="@Describe(field, controlId)"
                                           value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />,
 
-        _ => @<input id="@controlId" type="text" class="form-control" disabled="@ReadOnly"
+        _ => @<input id="@controlId" type="text" class="field-input" disabled="@ReadOnly"
                       aria-describedby="@Describe(field, controlId)"
                       value="@(GetValue(field)?.ToString() ?? string.Empty)"
                       @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />
@@ -172,28 +172,26 @@ else
             var index = i;
             var row = rows[index];
             <div class="d-flex gap-2 align-items-start mb-2">
-                <input type="text" class="form-control w-5" placeholder="Level" aria-label="@field.Label row @(index + 1) level" disabled="@ReadOnly"
+                <input type="text" class="field-input field-sm w-5" placeholder="Level" aria-label="@field.Label row @(index + 1) level" disabled="@ReadOnly"
                        value="@(row.GetValueOrDefault("level")?.ToString())"
                        @onchange="@(e => UpdateRowAsync(field, index, "level", e.Value?.ToString()))" />
-                <input type="text" class="form-control" style="max-width: 14rem" placeholder="Name" aria-label="@field.Label row @(index + 1) name" disabled="@ReadOnly"
+                <input type="text" class="field-input" style="max-width: 14rem" placeholder="Name" aria-label="@field.Label row @(index + 1) name" disabled="@ReadOnly"
                        value="@(row.GetValueOrDefault("name")?.ToString())"
                        @onchange="@(e => UpdateRowAsync(field, index, "name", e.Value?.ToString()))" />
-                <textarea class="form-control" rows="2" placeholder="Description" aria-label="@field.Label row @(index + 1) description" disabled="@ReadOnly"
+                <textarea class="field-input" rows="2" placeholder="Description" aria-label="@field.Label row @(index + 1) description" disabled="@ReadOnly"
                           value="@(row.GetValueOrDefault("description")?.ToString())"
                           @onchange="@(e => UpdateRowAsync(field, index, "description", e.Value?.ToString()))"></textarea>
                 @if (!ReadOnly)
                 {
-                    <button type="button" class="icon-btn danger" aria-label="Remove @field.Label row @(index + 1)" @onclick="() => RemoveRowAsync(field, index)">
-                        <LucideIcon IconName="x" Size="16" />
-                    </button>
+                    <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {field.Label} row @(index + 1)")" OnClick="() => RemoveRowAsync(field, index)" />
                 }
             </div>
         }
         @if (!ReadOnly)
         {
-            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => AddRowAsync(field)">
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddRowAsync(field)">
                 <LucideIcon IconName="plus" Size="14" /> Add @field.Label.ToLowerInvariant() row
-            </button>
+            </CodexButton>
         }
     </div>;
 

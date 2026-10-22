@@ -15,12 +15,12 @@
     <div class="search">
         <LucideIcon IconName="search" Size="18" Class="search-icon" />
         <label for="@searchId" class="visually-hidden">Search @(TypeLabel(selectedType) ?? "content")</label>
-        <input id="@searchId" type="search" class="form-control" placeholder="Search by name, tag or text…"
+        <input id="@searchId" type="search" class="field-input" placeholder="Search by name, tag or text…"
                value="@query" @oninput="OnQueryChanged" autocomplete="off" data-testid="library-search" />
     </div>
     @if (ShowResultCount)
     {
-        <span class="small-muted" role="status">@(results.Count > PageSize ? $"Showing {PageSize} of {results.Count} results - search to narrow" : $"{results.Count} result{(results.Count == 1 ? "" : "s")}")</span>
+        <span class="small-muted" role="status">@(results.Count > shown ? $"Showing {shown} of {results.Count} results" : $"{results.Count} result{(results.Count == 1 ? "" : "s")}")</span>
     }
 </div>
 
@@ -35,7 +35,7 @@
 </div>
 
 <div class="row g-3">
-    <div class="@(selected == null ? "col-12" : "col-lg-5")">
+    <div class="col-lg-5">
         @if (loading)
         {
             <LoadingSkeleton />
@@ -43,7 +43,7 @@
         else if (results.Count == 0)
         {
             <div class="empty">
-                <div class="empty-icon"><LucideIcon IconName="book-open" Size="26" /></div>
+                <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
                 <h3>Nothing matches</h3>
                 <p>@(string.IsNullOrWhiteSpace(query) ? "No content of this type is loaded for this system." : "Try a different word, or clear the type filter.")</p>
             </div>
@@ -51,7 +51,7 @@
         else
         {
             <ul class="list-unstyled mb-0" data-testid="library-results">
-                @foreach (var item in results.Take(PageSize))
+                @foreach (var item in results.Take(shown))
                 {
                     var isSelected = selected != null && selected.Entry.Type == item.Entry.Type && selected.Entry.Id == item.Entry.Id && selected.IsHomebrew == item.IsHomebrew;
                     var ariaCurrent = isSelected ? "true" : null;
@@ -59,6 +59,10 @@
                     <li class="list-row">
                         <div class="row-main">
                             <div class="row-title">
+                                @if (DomainIconMap.Subject(item.Entry) is { } subject)
+                                {
+                                    <span class="row-glyph" title="@subject.Label"><DomainIcon Domain="@subject.Domain" Key="@subject.Key" Size="DomainIconSize.Small" /></span>
+                                }
                                 <a href="@link" aria-current="@ariaCurrent" data-testid="library-item">@item.Entry.Name</a>
                                 @if (item.IsHomebrew)
                                 {
@@ -67,15 +71,27 @@
                             </div>
                             <div class="row-sub">@Summary(item)</div>
                         </div>
-                        <span class="pill">@TypeLabel(item.Entry.Type)</span>
+                        <span class="pill"><DomainIcon Domain="kind" Key="@item.Entry.Type" Size="DomainIconSize.Small" /> @TypeLabel(item.Entry.Type)</span>
                     </li>
                 }
             </ul>
+            @if (results.Count > shown)
+            {
+                <div class="load-more">
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => shown += PageSize" data-testid="library-more">Show @Math.Min(PageSize, results.Count - shown) more</CodexButton>
+                </div>
+            }
         }
     </div>
-    @if (selected != null)
+    @if (selected != null || ShowEditor)
     {
-        <div class="col-lg-7">
+        <div class="col-lg-7 library-detail-col">
+            @if (ShowEditor)
+            {
+                @EditorPane
+            }
+            else if (selected != null)
+            {
             <div class="panel" data-testid="library-detail">
                 <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)">
                     <Actions>
@@ -83,11 +99,21 @@
                         {
                             @DetailActions(selected)
                         }
-                        <a href="@CloseHref" class="btn btn-outline-secondary btn-sm" aria-label="Close detail">
+                        <a href="@CloseHref" class="cx-btn cx-etched cx-sm" aria-label="Close detail">
                             <LucideIcon IconName="x" Size="14" /> Close
                         </a>
                     </Actions>
                 </EntryDetail>
+            </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="col-lg-7 d-none d-lg-block library-detail-col">
+            <div class="empty empty-quiet" data-testid="library-placeholder">
+                <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
+                <p>Choose an entry to read it here.</p>
             </div>
         </div>
     }
@@ -109,12 +135,17 @@
     [Parameter] public string? RouteId { get; set; }
 
     [Parameter] public RenderFragment<LibraryItem>? DetailActions { get; set; }
+    /// <summary>When set, shown in the detail pane instead of the selected entry (the homebrew editor).</summary>
+    [Parameter] public RenderFragment? EditorPane { get; set; }
+    [Parameter] public bool EditorOpen { get; set; }
+    private bool ShowEditor => EditorOpen && EditorPane != null;
     [Parameter] public bool ShowResultCount { get; set; } = true;
 
     /// <summary>Incremented by the host to force a reload (e.g. after homebrew changed).</summary>
     [Parameter] public int Version { get; set; }
 
     private const int PageSize = 150;
+    private int shown = PageSize;
     private readonly string searchId = "lib-search-" + Guid.NewGuid().ToString("N")[..6];
     private List<ContentTypeDefinition> types = new();
     private List<LibraryItem> results = new();
@@ -171,6 +202,7 @@
     private async Task SearchAsync()
     {
         loading = true;
+        shown = PageSize;
         try
         {
             if (Campaign != null && Access != null)
@@ -182,6 +214,13 @@
                 results = Registry.Search(EffectiveSystemId, query, selectedType, limit: 5000)
                     .Select(e => new LibraryItem(e, Registry.GetPack(e.PackId), null))
                     .ToList();
+            }
+
+            // The rules glossary would bury the spells and creatures when browsing everything; it has its own tab,
+            // and a search term still finds its entries.
+            if (selectedType == null && string.IsNullOrWhiteSpace(query))
+            {
+                results = results.Where(r => !r.Entry.Type.Equals("rule", StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
             if (Access is { IsDm: false })

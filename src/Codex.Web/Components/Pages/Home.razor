@@ -18,9 +18,9 @@
         <h1>Campaigns</h1>
         <p class="page-subtitle">Every campaign you run or play in. Players join with an invite link from their DM.</p>
     </div>
-    <button type="button" class="btn btn-primary" @onclick="OpenNewDialogAsync" data-testid="new-campaign">
+    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign">
         <LucideIcon IconName="plus" Size="18" /> New campaign
-    </button>
+    </CodexButton>
 </div>
 
 <StatusMessage Message="flash" OnDismiss="() => flash = null" />
@@ -32,10 +32,10 @@
 else if (campaigns.Count == 0)
 {
     <div class="empty">
-        <div class="empty-icon"><LucideIcon IconName="map" Size="28" /></div>
+        <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
         <h2>No campaigns yet</h2>
         <p>Create one to run a table, or ask your DM for an invite link to join theirs.</p>
-        <button type="button" class="btn btn-primary" @onclick="OpenNewDialogAsync" data-testid="new-campaign-empty">Create your first campaign</button>
+        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign-empty">Create your first campaign</CodexButton>
     </div>
 }
 else
@@ -60,21 +60,19 @@ else
                 <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
                 <p class="mb-0 small">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description yet." : campaign.Description)</p>
                 <div class="card-foot">
-                    <span class="small-muted">@campaign.Members.Count member@(campaign.Members.Count == 1 ? "" : "s") · updated @campaign.UpdatedAt.ToString("d MMM yyyy")</span>
+                    <span class="small-muted">@campaign.Members.Count member@(campaign.Members.Count == 1 ? "" : "s") · updated <LocalTime Value="campaign.UpdatedAt" Format="d MMM yyyy" /></span>
                     <div class="row-actions">
                         @if (campaign.OwnerId == currentUserId)
                         {
-                            <button type="button" class="icon-btn danger" aria-label="Delete @campaign.Name" title="Delete campaign" @onclick="() => DeleteAsync(campaign)">
-                                <LucideIcon IconName="trash-2" Size="16" />
-                            </button>
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Delete {campaign.Name}")" title="Delete campaign" OnClick="() => DeleteAsync(campaign)" />
                         }
-                        <a href="/campaigns/@campaign.Id" class="btn btn-outline-secondary btn-sm">Open</a>
+                        <a href="/campaigns/@campaign.Id" class="cx-btn cx-etched cx-sm">Open</a>
                     </div>
                 </div>
             </article>
         }
         <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="New campaign">
-            <LucideIcon IconName="plus" Size="24" />
+            <LucideIcon IconName="plus" Size="28" />
             <span class="fw-semibold">New campaign</span>
         </button>
     </div>
@@ -87,12 +85,12 @@ else
         <div class="dialog-body">
             <h2 id="new-campaign-title">New campaign</h2>
             <div class="mb-3">
-                <label for="nc-name" class="form-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-                <input id="nc-name" class="form-control" @bind="newName" required maxlength="120" data-testid="new-campaign-name" />
+                <label for="nc-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <input id="nc-name" class="field-input" @bind="newName" required maxlength="120" data-testid="new-campaign-name" />
             </div>
             <div class="mb-3">
-                <label for="nc-system" class="form-label">Game system <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
-                <select id="nc-system" class="form-select" @bind="newSystemId" required data-testid="new-campaign-system">
+                <label for="nc-system" class="field-label">Game system <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <select id="nc-system" class="field-select" @bind="newSystemId" required data-testid="new-campaign-system">
                     @foreach (var system in Catalog.Systems)
                     {
                         <option value="@system.Id">@system.Name</option>
@@ -100,12 +98,12 @@ else
                 </select>
                 @if (SelectedSystem?.Description is { } description)
                 {
-                    <div class="form-text">@description</div>
+                    <div class="field-hint">@description</div>
                 }
             </div>
             <div class="mb-1">
-                <label for="nc-desc" class="form-label">Description</label>
-                <textarea id="nc-desc" class="form-control" rows="2" @bind="newDescription" placeholder="A line or two about the campaign (optional)"></textarea>
+                <label for="nc-desc" class="field-label">Description</label>
+                <textarea id="nc-desc" class="field-input" rows="2" @bind="newDescription" placeholder="A line or two about the campaign (optional)"></textarea>
             </div>
             @if (createError != null)
             {
@@ -113,8 +111,8 @@ else
             }
         </div>
         <div class="dialog-actions">
-            <button type="button" class="btn btn-outline-secondary" @onclick="CloseNewDialog">Cancel</button>
-            <button type="submit" class="btn btn-primary" disabled="@creating" data-testid="new-campaign-create">@(creating ? "Creating…" : "Create campaign")</button>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseNewDialog">Cancel</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@creating" data-testid="new-campaign-create">@(creating ? "Creating…" : "Create campaign")</CodexButton>
         </div>
     </form>
 </dialog>

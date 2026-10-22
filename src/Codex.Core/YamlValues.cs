@@ -94,6 +94,41 @@ public static class YamlValues
         _ => double.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out var text) ? text : null
     };
 
+    /// <summary>
+    /// Structural equality for two property-bag values, whatever store they came back from: numbers
+    /// compare by value (a level saved as 4 and read back as 4.0 is the same level), maps and lists
+    /// element by element, everything else by its text. Used to tell an edited sheet field from one
+    /// the editor merely carried along.
+    /// </summary>
+    public static bool SameValue(object? left, object? right)
+    {
+        if (left is null || right is null) return left is null && right is null;
+        if (left is bool lb) return right is bool rb && lb == rb;
+        if (right is bool) return false;
+        if (left is not string && right is not string && ToNumber(left) is { } ln && ToNumber(right) is { } rn) return ln.Equals(rn);
+
+        if (left is IDictionary ld)
+        {
+            if (right is not IDictionary rd || ld.Count != rd.Count) return false;
+            foreach (DictionaryEntry entry in ld)
+            {
+                if (!rd.Contains(entry.Key) || !SameValue(entry.Value, rd[entry.Key])) return false;
+            }
+
+            return true;
+        }
+
+        if (left is IEnumerable le and not string)
+        {
+            if (right is string || right is not IEnumerable re) return false;
+            var l = le.Cast<object?>().ToList();
+            var r = re.Cast<object?>().ToList();
+            return l.Count == r.Count && l.Zip(r).All(pair => SameValue(pair.First, pair.Second));
+        }
+
+        return string.Equals(Convert.ToString(left, CultureInfo.InvariantCulture), Convert.ToString(right, CultureInfo.InvariantCulture), StringComparison.Ordinal);
+    }
+
     /// <summary>Best-effort integer read from a normalised property bag.</summary>
     public static int? GetInt(IReadOnlyDictionary<string, object> map, string key) =>
         map.TryGetValue(key, out var value) && ToNumber(value) is { } number ? (int)number : null;

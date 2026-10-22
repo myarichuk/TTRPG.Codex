@@ -41,7 +41,19 @@ public sealed record SheetPick(int Index, string Raw, ContentEntry Entry, IReadO
 public sealed record IncreaseGrant(SheetPick Pick, int Points, IReadOnlyList<string> Options, int? Cap);
 
 /// <summary>One of the sheet's classes and how many of the character's levels are in it.</summary>
-public sealed record ClassLevel(string Id, ContentEntry? Entry, int Level, bool IsFirst);
+public sealed record ClassLevel(string Id, ContentEntry? Entry, int Level, bool IsFirst, string? SubclassId = null, ContentEntry? Subclass = null);
+
+/// <summary>A class other than the first, as stored: <c>"class-id:levels:subclass-id"</c>.</summary>
+public sealed record OtherClass(string Id, int Level, string? Subclass = null);
+
+/// <summary>One skill or saving throw as the sheet shows it.</summary>
+public sealed record SkillScore(string Key, string Label, string Attribute, bool Proficient, bool Expert, int Bonus);
+
+/// <summary>A passive score such as passive Perception.</summary>
+public sealed record PassiveScore(string Key, string Label, int Value);
+
+/// <summary>A spellcasting class's ability, save DC and spell attack bonus.</summary>
+public sealed record SpellcastingScore(string ClassName, string Attribute, int SaveDc, int AttackBonus);
 
 /// <summary>A slot pool's maximum slots per slot level for this sheet.</summary>
 public sealed record SlotPool(SlotPoolRule Rule, IReadOnlyDictionary<int, int> Max);
@@ -83,6 +95,14 @@ public sealed class SheetEvaluation
 
     /// <summary>What the sheet carries, in sheet order (empty without inventory rules).</summary>
     public List<InventoryItem> Inventory { get; } = new();
+
+    /// <summary>Things worth a look that never stop a save (armor the class isn't trained in).</summary>
+    public List<RuleViolation> Warnings { get; } = new();
+
+    public List<SkillScore> SavingThrows { get; } = new();
+    public List<SkillScore> Skills { get; } = new();
+    public List<PassiveScore> Passives { get; } = new();
+    public List<SpellcastingScore> Spellcasting { get; } = new();
 
     public bool HasViolations => Violations.Count > 0;
 }
@@ -143,6 +163,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             var field = system.ActorFields.FirstOrDefault(f => f.Key == constraint.Field);
             if (field?.TargetEntityType == null) continue;
             var allowed = resolver.Candidates(field.TargetEntityType).Where(c => constraint.Where.All(w => Holds(w, c, sheet))).ToList();
+            if (IsSubclassField(constraint.Field) && result.Classes.FirstOrDefault(c => c.IsFirst) is { } firstClass && firstClass.Level < Rules.Multiclass!.SubclassLevel) allowed.Clear();
             result.AllowedOptions[constraint.Field] = allowed;
 
             var chosen = YamlValues.GetString(sheet, constraint.Field);
@@ -215,6 +236,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         EvaluateInventory(sheet, result);
         EvaluateHitPoints(sheet, result);
         EvaluateArmorClass(sheet, result);
+        EvaluateSkills(sheet, result);
+        EvaluateSpellcasting(sheet, result);
+        EvaluateProficiencies(sheet, result);
         return result;
     }
 
@@ -328,11 +352,22 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             }
         }
 
-        // Increases from picks (Ability Score Improvement and the like), each with its own cap.
+        // Increases from picks (Ability Score Improvement and the like), each with its own cap. A grant
+        // is applied to the score as it stands when the player took it, in sheet order, so a Boon's
+        // higher cap can't carry an earlier Ability Score Improvement past its own.
         var increases = new Dictionary<string, int>();
-        var caps = new Dictionary<string, int>();
+        var running = system.Attributes.ToDictionary(a => a.Key, a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key));
+        foreach (var attribute in system.Attributes)
+        {
+            if (rules.Max.HasValue && running[attribute.Key] > rules.Max.Value)
+            {
+                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {rules.Max.Value}."));
+            }
+        }
+
         if (rules.Increases is { } increaseRules)
         {
+            var overCap = new HashSet<string>();
             foreach (var grant in EvaluateIncreases(increaseRules, sheet, result))
             {
                 foreach (var (key, amount) in grant.Pick.Choices)
@@ -340,7 +375,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                     var attribute = MatchAttribute(key);
                     if (attribute == null) continue;
                     increases[attribute.Key] = increases.GetValueOrDefault(attribute.Key) + amount;
-                    if (grant.Cap.HasValue) caps[attribute.Key] = Math.Max(caps.GetValueOrDefault(attribute.Key), grant.Cap.Value);
+                    running[attribute.Key] += amount;
+                    var cap = grant.Cap ?? rules.Max;
+                    if (cap.HasValue && running[attribute.Key] > cap.Value && overCap.Add(attribute.Key))
+                    {
+                        result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value} with {grant.Pick.Entry.Name}."));
+                    }
                 }
             }
         }
@@ -348,16 +388,6 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var totals = system.Attributes.ToDictionary(
             a => a.Key,
             a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key) + increases.GetValueOrDefault(a.Key));
-
-        foreach (var attribute in system.Attributes)
-        {
-            int? cap = rules.Max;
-            if (caps.TryGetValue(attribute.Key, out var raised)) cap = Math.Max(cap ?? raised, raised);
-            if (cap.HasValue && totals[attribute.Key] > cap.Value)
-            {
-                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value}."));
-            }
-        }
 
         result.Attributes = new AttributeSummary(method, spent, budget, eligible, bonuses, increases, totals);
     }
@@ -459,21 +489,22 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     // ---- Multiclass ----
 
-    /// <summary>The other classes stored under the multiclass key, as (id, levels).</summary>
-    public static List<(string Id, int Level)> ParseClassLevels(IReadOnlyDictionary<string, object> sheet, string key)
+    /// <summary>The other classes stored under the multiclass key: id, levels and optional subclass.</summary>
+    public static List<OtherClass> ParseClassLevels(IReadOnlyDictionary<string, object> sheet, string key)
     {
-        var result = new List<(string, int)>();
+        var result = new List<OtherClass>();
         foreach (var raw in RawList(sheet, key))
         {
-            var colon = raw.LastIndexOf(':');
-            if (colon <= 0) result.Add((raw, 1));
-            else result.Add((raw[..colon], int.TryParse(raw[(colon + 1)..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var level) ? level : 1));
+            var parts = raw.Split(':', 3, StringSplitOptions.TrimEntries);
+            var level = parts.Length > 1 && int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 1;
+            result.Add(new OtherClass(parts[0], level, parts.Length > 2 && parts[2].Length > 0 ? parts[2] : null));
         }
 
         return result;
     }
 
-    public static string FormatClassLevel(string id, int level) => $"{id}:{level.ToString(CultureInfo.InvariantCulture)}";
+    public static string FormatClassLevel(OtherClass other) =>
+        $"{other.Id}:{other.Level.ToString(CultureInfo.InvariantCulture)}" + (string.IsNullOrEmpty(other.Subclass) ? "" : ":" + other.Subclass);
 
     /// <summary>
     /// One view of the sheet per class: the same values, with the class field set to that class and
@@ -488,24 +519,38 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var total = TotalLevel(sheet, rules);
         var others = ParseClassLevels(sheet, rules.Key);
         var classType = ClassType(rules);
+        var subclassType = rules.SubclassField == null ? null : system.ActorFields.FirstOrDefault(f => f.Key == rules.SubclassField)?.TargetEntityType;
         var firstId = YamlValues.GetString(sheet, rules.ClassField);
         var firstLevel = total - others.Sum(o => o.Level);
+        var firstSubclass = rules.SubclassField == null ? null : YamlValues.GetString(sheet, rules.SubclassField);
+
+        ContentEntry? Subclass(string? id) => string.IsNullOrEmpty(id) || subclassType == null ? null : resolver.Resolve(subclassType, id);
 
         var first = new Dictionary<string, object>(sheet) { [rules.ClassLevelKey] = (long)firstLevel };
         var views = new List<IReadOnlyDictionary<string, object>> { first };
         if (!string.IsNullOrEmpty(firstId))
         {
-            classes.Add(new ClassLevel(firstId, classType == null ? null : resolver.Resolve(classType, firstId), firstLevel, true));
+            classes.Add(new ClassLevel(firstId, classType == null ? null : resolver.Resolve(classType, firstId), firstLevel, true, firstSubclass, Subclass(firstSubclass)));
         }
 
-        foreach (var (id, level) in others)
+        foreach (var other in others)
         {
-            views.Add(new Dictionary<string, object>(sheet) { [rules.ClassField] = id, [rules.ClassLevelKey] = (long)level });
-            classes.Add(new ClassLevel(id, classType == null ? null : resolver.Resolve(classType, id), level, false));
+            // Another class never inherits the first class's subclass.
+            var view = new Dictionary<string, object>(sheet) { [rules.ClassField] = other.Id, [rules.ClassLevelKey] = (long)other.Level };
+            if (rules.SubclassField != null)
+            {
+                if (string.IsNullOrEmpty(other.Subclass)) view.Remove(rules.SubclassField);
+                else view[rules.SubclassField] = other.Subclass;
+            }
+
+            views.Add(view);
+            classes.Add(new ClassLevel(other.Id, classType == null ? null : resolver.Resolve(classType, other.Id), other.Level, false, other.Subclass, Subclass(other.Subclass)));
         }
 
         return views;
     }
+
+    private bool IsSubclassField(string key) => Rules?.Multiclass?.SubclassField is { } field && field.Equals(key, StringComparison.OrdinalIgnoreCase);
 
     private int TotalLevel(IReadOnlyDictionary<string, object> sheet, MulticlassRules rules)
     {
@@ -531,6 +576,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        EvaluateSubclasses(rules, result);
         if (others.Count == 0) return;
 
         var first = result.Classes.FirstOrDefault(c => c.IsFirst);
@@ -565,6 +611,38 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             result.Violations.Add(new RuleViolation(rules.Key, cls.IsFirst
                 ? $"{rules.Label}: to multiclass out of {cls.Entry.Name} you need {needed}."
                 : $"{rules.Label}: {cls.Entry.Name} needs {needed}."));
+        }
+    }
+
+    /// <summary>A subclass needs its class's level, belongs to that class, and each class has one.</summary>
+    private void EvaluateSubclasses(MulticlassRules rules, SheetEvaluation result)
+    {
+        if (rules.SubclassField == null) return;
+        var label = system.ActorFields.FirstOrDefault(f => f.Key == rules.SubclassField)?.Label ?? "Subclass";
+        var constraint = Rules!.Constraints.FirstOrDefault(c => c.Field == rules.SubclassField);
+        foreach (var cls in result.Classes)
+        {
+            if (string.IsNullOrEmpty(cls.SubclassId)) continue;
+            var className = cls.Entry?.Name ?? cls.Id;
+            // The first class's own subclass is already checked against the field's constraint.
+            var key = cls.IsFirst ? rules.SubclassField : rules.Key;
+            if (cls.Subclass == null)
+            {
+                if (!cls.IsFirst) result.Violations.Add(new RuleViolation(key, $"{label}: \"{cls.SubclassId}\" is not in the Library."));
+            }
+            else if (!cls.IsFirst)
+            {
+                var asClass = new Dictionary<string, object> { [rules.ClassField] = cls.Id };
+                foreach (var condition in constraint?.Where.Where(w => !Holds(w, cls.Subclass, asClass)) ?? Enumerable.Empty<RuleCondition>())
+                {
+                    result.Violations.Add(new RuleViolation(key, $"{label}: {className}'s {cls.Subclass.Name} - {condition.Message ?? "this choice is not allowed by the rules."}"));
+                }
+            }
+
+            if (cls.Level < rules.SubclassLevel)
+            {
+                result.Violations.Add(new RuleViolation(key, $"{label}: {className} gets a subclass at level {rules.SubclassLevel}, and you have {cls.Level}."));
+            }
         }
     }
 
@@ -625,7 +703,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             Dictionary<int, int> max;
             if (contributions.Count > 1 && rule.Combine is { Table.Count: > 0 } combine)
             {
-                var casterLevel = contributions.Sum(c => Round(c.Level * combine.Weights.GetValueOrDefault(c.CasterType ?? "", 0), combine.Rounding));
+                var casterLevel = Round(contributions.Sum(c => c.Level * combine.Weights.GetValueOrDefault(c.CasterType ?? "", 0)), combine.Rounding);
                 max = casterLevel > 0 ? ParseSlots(combine.Table[Math.Min(casterLevel, combine.Table.Count) - 1], null) : new Dictionary<int, int>();
             }
             else
@@ -889,26 +967,41 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     private int? ResolveCount(CountRule? rule, IReadOnlyList<IReadOnlyDictionary<string, object>> views)
     {
         if (rule == null) return null;
-        if (rule.Lookup == null) return rule.Value.HasValue ? rule.Value.Value + rule.Plus : null;
+        var property = 0d;
+        var hasProperty = false;
+        if (rule.FromField is { } source && ReferencedEntry(source.Field, views[0]) is { } entry)
+        {
+            property = ToDouble(entry.Properties.GetValueOrDefault(source.Property)) ?? 0;
+            hasProperty = true;
+        }
+
+        if (rule.Lookup == null)
+        {
+            if (rule.Value.HasValue) return rule.Value.Value + rule.Plus + (int)property;
+            return hasProperty ? rule.Plus + (int)property : null;
+        }
 
         double total = 0;
         var known = false;
         foreach (var view in views)
         {
-            if (Lookup(rule.Lookup, view) is { } value)
+            foreach (var lookup in rule.Also.Prepend(rule.Lookup))
             {
-                total += value;
-                known = true;
-            }
-            // An entry that exists but has no such table (a fighter and "spellcasting") gets 0: the
-            // class simply doesn't grant any. No referenced entry yet (no class chosen): unknown.
-            else if (ReferencedEntry(rule.Lookup.Field, view) != null)
-            {
-                known = true;
+                if (Lookup(lookup, view) is { } value)
+                {
+                    total += value;
+                    known = true;
+                }
+                // An entry that exists but has no such table (a fighter and "spellcasting") gets 0: the
+                // class simply doesn't grant any. No referenced entry yet (no class chosen): unknown.
+                else if (ReferencedEntry(lookup.Field, view) != null)
+                {
+                    known = true;
+                }
             }
         }
 
-        return known ? (int)total + rule.Plus : null;
+        return known || hasProperty ? (int)(total + property) + rule.Plus : null;
     }
 
     private static bool ValuesEqual(object? a, object? b)

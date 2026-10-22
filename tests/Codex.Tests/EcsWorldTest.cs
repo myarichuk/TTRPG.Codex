@@ -110,8 +110,8 @@ public class EcsWorldTest
         using var world = new CodexWorld();
         var target = world.CreateEntity();
 
-        world.AddStatus(target, "poisoned", "core", 10, EffectExpiry.EndOfTurn, target);
-        world.AddStatus(target, "stunned", "core", 1, EffectExpiry.EndOfTurn, target);
+        world.AddStatus(target, "poisoned", "core", 10, EffectExpiry.EndOfTurn, "target");
+        world.AddStatus(target, "stunned", "core", 1, EffectExpiry.EndOfTurn, "target");
 
         var effects = target.Get<ActiveEffectsComponent>().Effects;
         Assert.Equal(2, effects.Count);
@@ -128,10 +128,10 @@ public class EcsWorldTest
         using var world = new CodexWorld();
         var target = world.CreateEntity();
 
-        world.AddStatus(target, "poisoned", "core", 10, EffectExpiry.EndOfTurn, target);
-        world.AddStatus(target, "stunned", "core", 1, EffectExpiry.EndOfTurn, target);
+        world.AddStatus(target, "poisoned", "core", 10, EffectExpiry.EndOfTurn, "target");
+        world.AddStatus(target, "stunned", "core", 1, EffectExpiry.EndOfTurn, "target");
 
-        world.AdvanceTurn(target);
+        world.AdvanceTurn("target");
 
         var effects = target.Get<ActiveEffectsComponent>().Effects;
         Assert.Single(effects);
@@ -144,11 +144,11 @@ public class EcsWorldTest
     {
         using var world = new CodexWorld();
         var target = world.CreateEntity();
-        var otherActor = world.CreateEntity();
+        world.CreateEntity();
 
-        world.AddStatus(target, "poisoned", "core", 5, EffectExpiry.EndOfTurn, target);
+        world.AddStatus(target, "poisoned", "core", 5, EffectExpiry.EndOfTurn, "target");
 
-        world.AdvanceTurn(otherActor);
+        world.AdvanceTurn("other-actor");
 
         var effects = target.Get<ActiveEffectsComponent>().Effects;
         Assert.Single(effects);

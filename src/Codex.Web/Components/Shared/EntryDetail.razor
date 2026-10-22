@@ -9,8 +9,14 @@
 <article class="entry-detail" aria-labelledby="entry-title">
     <header class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
         <div>
-            <div class="small-muted text-uppercase fw-bold" style="letter-spacing:.06em">@TypeLabel</div>
-            <h2 id="entry-title" class="mb-1">@Item.Entry.Name</h2>
+            <div class="label-caps"><DomainIcon Domain="kind" Key="@Item.Entry.Type" Size="DomainIconSize.Small" /> @TypeLabel</div>
+            <h2 id="entry-title" class="mb-1">
+                @if (DomainIconMap.Subject(Item.Entry) is { } subject)
+                {
+                    <span class="title-glyph" title="@subject.Label"><DomainIcon Domain="@subject.Domain" Key="@subject.Key" Size="DomainIconSize.Large" /></span>
+                }
+                @Item.Entry.Name
+            </h2>
             <div class="d-flex flex-wrap gap-1">
                 @if (Item.IsHomebrew)
                 {
@@ -33,41 +39,56 @@
         <blockquote class="entry-flavor" data-testid="entry-flavor">@flavor</blockquote>
     }
 
-    @if (SummaryPairs.Count > 0)
+    @if (MonsterCard.CanShow(Item.Entry))
     {
-        <dl class="prop-list">
-            @foreach (var pair in SummaryPairs)
-            {
-                <dt>@pair.Label</dt>
-                <dd>@pair.Value</dd>
-            }
-        </dl>
+        <MonsterCard Entry="Item.Entry" />
     }
-
-    @if (!string.IsNullOrWhiteSpace(Item.Entry.Description))
+    else if (SpellCard.CanShow(Item.Entry))
     {
-        <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(Item.Entry.Description))</div>
+        <SpellCard Entry="Item.Entry" />
     }
-
-    @foreach (var group in CollectionProperties)
+    else if (ItemCard.CanShow(Item.Entry))
     {
-        <h3 class="h6 mt-3">@group.Label</h3>
-        <ul class="feature-list">
-            @foreach (var row in group.Rows)
-            {
-                <li>
-                    @if (row.TryGetValue("level", out var level))
-                    {
-                        <div class="feature-level">Level @level</div>
-                    }
-                    <strong>@(row.GetValueOrDefault("name")?.ToString())</strong>
-                    @if (row.GetValueOrDefault("description") is { } description)
-                    {
-                        <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(description.ToString()))</div>
-                    }
-                </li>
-            }
-        </ul>
+        <ItemCard Entry="Item.Entry" />
+    }
+    else
+    {
+        @if (SummaryPairs.Count > 0)
+        {
+            <dl class="prop-list">
+                @foreach (var pair in SummaryPairs)
+                {
+                    <dt>@pair.Label</dt>
+                    <dd>@pair.Value</dd>
+                }
+            </dl>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Item.Entry.Description))
+        {
+            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(Item.Entry.Description))</div>
+        }
+
+        @foreach (var group in CollectionProperties)
+        {
+            <h3 class="h6 mt-3">@group.Label</h3>
+            <ul class="feature-list">
+                @foreach (var row in group.Rows)
+                {
+                    <li>
+                        @if (row.TryGetValue("level", out var level))
+                        {
+                            <div class="feature-level">Level @level</div>
+                        }
+                        <strong>@(row.GetValueOrDefault("name")?.ToString())</strong>
+                        @if (row.GetValueOrDefault("description") is { } description)
+                        {
+                            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(description.ToString()))</div>
+                        }
+                    </li>
+                }
+            </ul>
+        }
     }
 
     <footer class="attribution" data-testid="entry-attribution">

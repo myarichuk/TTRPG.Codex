@@ -12,6 +12,21 @@ namespace Codex.Persistence;
 /// </summary>
 public static class ActorSheetSync
 {
+    /// <summary>"2d6" or "d10": the count (one when absent) and the die.</summary>
+    public static class HitDiceExpression
+    {
+        private static readonly System.Text.RegularExpressions.Regex Pattern = new(@"^\s*(?<count>\d+)?\s*[dD]\s*(?<sides>\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        public static (int Count, int Sides)? Parse(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            var m = Pattern.Match(text);
+            if (!m.Success) return null;
+            var count = m.Groups["count"].Success ? int.Parse(m.Groups["count"].Value) : 1;
+            return (count, int.Parse(m.Groups["sides"].Value));
+        }
+    }
+
     /// <summary>
     /// Builds/updates the component snapshot from the sheet: attribute keys of the system become an
     /// <see cref="AttributesComponent"/>, resource keys (and their max keys) a
@@ -47,6 +62,8 @@ public static class ActorSheetSync
                 }
             }
 
+            SeedHitDice(actor.Sheet, pool, system);
+
             // Slot pools ("slots_3", "slots_3_Max") are resources whose keys depend on the character:
             // mirror exactly the ones the sheet has, so a lost slot level disappears from play too.
             foreach (var slotPool in system.SheetRules?.SlotPools ?? new List<SlotPoolRule>())
@@ -76,6 +93,27 @@ public static class ActorSheetSync
         rest.Add(pool);
         if (attributes.Values.Count > 0) rest.Add(attributes);
         actor.State = registry.Snapshot(rest);
+    }
+
+    /// <summary>
+    /// The hit-dice pool follows the sheet: one die per level for a character, the stat block's count
+    /// for a creature ("2d6" gives two). The current count is kept (clamped), or starts full.
+    /// </summary>
+    private static void SeedHitDice(IReadOnlyDictionary<string, object> sheet, ResourcePoolComponent pool, SystemDefinition system)
+    {
+        if (system.Vitals?.HitDice is not { } rules) return;
+
+        var max = YamlValues.GetInt(sheet, rules.LevelField);
+        if (max == null && rules.CreatureDiceProperty != null && HitDiceExpression.Parse(YamlValues.GetString(sheet, rules.CreatureDiceProperty)) is { } creature)
+        {
+            max = creature.Count;
+        }
+
+        if (max is not > 0) return;
+
+        pool.Set(rules.MaxKey, max.Value);
+        var current = pool.Pools.TryGetValue(rules.Key, out var have) ? Math.Clamp(have, 0, max.Value) : max.Value;
+        pool.Set(rules.Key, current);
     }
 
     /// <summary>Copies live resource and attribute values from the state back onto the sheet, so a

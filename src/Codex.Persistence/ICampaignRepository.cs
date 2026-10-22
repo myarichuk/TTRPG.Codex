@@ -18,6 +18,15 @@ public interface ICampaignRepository
 {
     Task<CampaignDocument?> GetAsync(string campaignId);
     Task SaveAsync(CampaignDocument campaign);
+
+    /// <summary>
+    /// Reload-then-mutate: loads the stored campaign, applies <paramref name="mutate"/> and saves under
+    /// optimistic concurrency (retrying on a collision). Use this instead of <see cref="SaveAsync"/>
+    /// for any edit made from a page that loaded the campaign earlier: invites add members and the
+    /// live table sets <c>CurrentSessionId</c> in the meantime, and a whole-document save of the
+    /// stale copy would silently drop both. Returns the stored document, or null when it does not exist.
+    /// </summary>
+    Task<CampaignDocument?> UpdateAsync(string campaignId, Action<CampaignDocument> mutate);
     /// <summary>Every campaign on the server. Administrative/export use only - never for a user-facing list.</summary>
     Task<IEnumerable<CampaignDocument>> GetAllAsync();
 

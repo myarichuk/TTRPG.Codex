@@ -4,23 +4,21 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f4f3ef" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0e0f13" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0c0a08" />
     <base href="/" />
-    @* Apply the saved theme before first paint so there is no flash; the toggle lives in AppHeader. *@
+    @* Apply the saved theme before first paint so there is no flash; the toggle lives in AppHeader.
+       Dark is the default whatever the OS says; the light theme is "parchment" and is opt-in. *@
     <script>
         (function () {
             try {
                 var saved = localStorage.getItem('codex-theme');
-                var theme = saved === 'light' || saved === 'dark'
-                    ? saved
-                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                var theme = saved === 'light' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.setAttribute('data-bs-theme', theme);
             } catch (e) {
-                document.documentElement.setAttribute('data-theme', 'light');
-                document.documentElement.setAttribute('data-bs-theme', 'light');
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
             }
         })();
     </script>

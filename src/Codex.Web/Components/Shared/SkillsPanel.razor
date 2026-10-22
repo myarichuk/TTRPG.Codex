@@ -1,0 +1,125 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* Saving throws, skills, passive scores and spell save DC / attack. The numbers come from the rule
+   engine; this only records which skills the character is proficient in and has expertise in. *@
+
+<section class="panel" aria-labelledby="@(id)-heading" data-testid="skills-panel">
+    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="target" Size="18" Class="title-icon" /> @Rules.Label</h2></div>
+
+    @if (Evaluation.Passives.Count > 0 || Evaluation.Spellcasting.Count > 0)
+    {
+        <dl class="prop-list mb-3" data-testid="skills-summary">
+            @foreach (var passive in Evaluation.Passives)
+            {
+                <dt>@passive.Label</dt>
+                <dd data-testid="@("passive-" + passive.Key)">@passive.Value</dd>
+            }
+            @foreach (var casting in Evaluation.Spellcasting)
+            {
+                var label = Evaluation.Spellcasting.Count > 1 ? $" ({casting.ClassName})" : "";
+                <dt>Spell save DC@(label)</dt>
+                <dd data-testid="spell-save-dc">@casting.SaveDc</dd>
+                <dt>Spell attack bonus@(label)</dt>
+                <dd><span data-testid="spell-attack">@Signed(casting.AttackBonus)</span>@RollButton("Spell attack" + label, casting.AttackBonus, "roll-spell-attack")</dd>
+            }
+        </dl>
+    }
+
+    @if (Evaluation.SavingThrows.Count > 0)
+    {
+        <h3 class="label-caps mb-1">Saving throws</h3>
+        <ul class="list-unstyled skill-list mb-3" data-testid="saving-throws">
+            @foreach (var save in Evaluation.SavingThrows)
+            {
+                <li class="list-row py-1">
+                    <span>@save.Label @if (save.Proficient) { <span class="pill pill-success">proficient</span> }</span>
+                    <span class="roll-end"><span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(save.Label + " save", save.Bonus, "roll-save-" + save.Key)</span>
+                </li>
+            }
+        </ul>
+    }
+
+    <h3 class="label-caps mb-1">Skills</h3>
+    <ul class="list-unstyled skill-list mb-0" data-testid="skills">
+        @foreach (var skill in Evaluation.Skills)
+        {
+            var key = skill.Key;
+            var picked = Picked.Contains(key) || Picked.Contains(skill.Label);
+            var fromElsewhere = skill.Proficient && !picked;
+            var expertPicked = Expertise.Contains(key) || Expertise.Contains(skill.Label);
+            <li class="list-row py-1">
+                <span class="d-flex align-items-center gap-2 flex-wrap">
+                    <input id="@(id)-prof-@key" type="checkbox" class="field-box mt-0" checked="@skill.Proficient" disabled="@(!CanEdit || fromElsewhere)"
+                           @onchange="e => SetAsync(Rules.ProficienciesKey, key, (bool)e.Value!)" data-testid="@("skill-prof-" + key)" />
+                    <label for="@(id)-prof-@key" class="mb-0">@skill.Label <span class="small-muted">(@Abbreviation(skill.Attribute))</span>
+                        @if (fromElsewhere) { <span class="small-muted">· background</span> }
+                    </label>
+                    @if (skill.Proficient)
+                    {
+                        <input id="@(id)-exp-@key" type="checkbox" class="field-box mt-0 ms-2" checked="@skill.Expert" disabled="@(!CanEdit)"
+                               @onchange="e => SetAsync(Rules.ExpertiseKey, key, (bool)e.Value!)" data-testid="@("skill-exp-" + key)" />
+                        <label for="@(id)-exp-@key" class="mb-0 small-muted">expertise</label>
+                    }
+                </span>
+                <span class="roll-end"><span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(skill.Label + " check", skill.Bonus, "roll-skill-" + key)</span>
+            </li>
+        }
+    </ul>
+    @if (CanEdit)
+    {
+        <p class="field-hint">Your background's skills are ticked for you. Tick the ones your class and other features give.</p>
+    }
+</section>
+
+@code {
+    /// <summary>Raised when a roll button is pressed; leave unset to hide the buttons.</summary>
+    [Parameter] public EventCallback<RollRequest> OnRoll { get; set; }
+    [Parameter, EditorRequired] public SkillRules Rules { get; set; } = null!;
+    [Parameter, EditorRequired] public SheetEvaluation Evaluation { get; set; } = null!;
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
+    [Parameter] public IReadOnlyList<AttributeDefinition> Attributes { get; set; } = Array.Empty<AttributeDefinition>();
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private readonly string id = "skills-" + Guid.NewGuid().ToString("N")[..6];
+
+    private HashSet<string> Picked => SheetRuleEngine.RawList(Sheet, Rules.ProficienciesKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> Expertise => SheetRuleEngine.RawList(Sheet, Rules.ExpertiseKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private string Abbreviation(string attribute) =>
+        Attributes.FirstOrDefault(a => a.Key.Equals(attribute, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? attribute.ToUpperInvariant();
+
+    /// <summary>A roll is offered only where the sheet is hosted with a tray to show it.</summary>
+    private RenderFragment RollButton(string label, int bonus, string testId) => __builder =>
+    {
+        if (!OnRoll.HasDelegate) return;
+        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="roll-btn" Icon="dices" Label="@("Roll " + label)" data-testid="@testId"
+                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(label, bonus))" />
+    };
+
+    private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString();
+
+    private async Task SetAsync(string listKey, string skill, bool on)
+    {
+        var list = SheetRuleEngine.RawList(Sheet, listKey);
+        list.RemoveAll(n => n.Equals(skill, StringComparison.OrdinalIgnoreCase));
+        if (on) list.Add(skill);
+        // Dropping proficiency drops expertise with it.
+        if (!on && listKey == Rules.ProficienciesKey)
+        {
+            var expertise = SheetRuleEngine.RawList(Sheet, Rules.ExpertiseKey);
+            if (expertise.RemoveAll(n => n.Equals(skill, StringComparison.OrdinalIgnoreCase)) > 0) Store(Rules.ExpertiseKey, expertise);
+        }
+
+        Store(listKey, list);
+        await Changed.InvokeAsync();
+    }
+
+    private void Store(string key, List<string> list)
+    {
+        if (list.Count == 0) Sheet.Remove(key);
+        else Sheet[key] = list.Cast<object>().ToList();
+    }
+}

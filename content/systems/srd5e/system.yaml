@@ -49,7 +49,9 @@ actorFields:
   - { key: originFeat,       label: Origin Feat,        type: EntityReference, targetEntityType: feat,       category: General, description: "Your background grants a specific origin feat." }
   - { key: armorClass,       label: Armor Class,        type: Number,  defaultValue: 10, category: Combat }
   - { key: armorClassMisc,   label: Other Armor Class Bonuses, type: Number, defaultValue: 0, category: Combat, description: "Magic or spell effects that are not an item you carry." }
-  - { key: speed,            label: Speed (feet),       type: Number,  defaultValue: 30, category: Combat }
+  - { key: speed,            label: Speed (feet),       type: Number,  defaultValue: 30, category: Combat, description: "Copied from your species when you choose it; change it here for features that alter it." }
+  - { key: size,             label: Size,               type: Dropdown, category: Combat, options: [Tiny, Small, Medium, Large, Huge, Gargantuan] }
+  - { key: darkvision,       label: Darkvision (feet),  type: Number,  defaultValue: 0, category: Combat, description: "Copied from your species when you choose it." }
   - { key: notes,            label: Notes,              type: LongText, category: Notes }
 
 conditions:
@@ -83,6 +85,7 @@ sheetRules:
       capProperty: abilityIncreaseCap
   derived:
     - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4", category: Combat }
+    - { key: initiative,       label: Initiative,        formula: "mod(dex)",             category: Combat }
   constraints:
     - field: subclass
       where:
@@ -111,16 +114,42 @@ sheetRules:
         - { property: classes, containsNameOfField: class, message: "not on your class's spell list." }
         - { property: level, lteLookup: { field: class, table: spellcasting, byField: classLevel, column: maxSpellLevel }, message: "above the highest spell level you can cast." }
       maxCount: { lookup: { field: class, table: spellcasting, byField: classLevel, column: preparedSpells } }
+    # Spells a feature hands you outside your class list: a subclass's always-prepared spells, Magic
+    # Initiate, a species' lineage spells, Blessed Warrior, Mystic Arcanum. They are not prepared, so
+    # they take no class limit; the DM checks where each one came from.
+    - key: grantedSpells
+      label: Granted spells
+      description: Spells a feature gives you outside your class's list (subclass spells, Magic Initiate, species lineage, Mystic Arcanum). They don't count against your prepared spells.
+      targetEntityType: spell
+      category: Spellcasting
     - key: feats
       label: Feats
-      description: General, fighting-style and epic-boon feats gained from class features. Origin feats come from your background.
+      description: General and epic-boon feats gained from class features. Origin feats come from your background; fighting styles have their own list.
       targetEntityType: feat
       category: Feats
       where:
-        - { property: category, in: [general, fighting-style, epic-boon], message: "origin feats come from your background, not from here." }
+        - { property: category, in: [general, epic-boon], message: "origin feats come from your background and fighting styles have their own list." }
         - { property: minLevel, lteField: level, message: "you are not high enough level for it." }
       maxCount: { lookup: { field: class, table: featSlots, byField: classLevel, column: slots } }
       repeatableProperty: repeatable
+    - key: fightingStyles
+      label: Fighting styles
+      description: Fighting-style feats from class features such as the Fighter's Fighting Style, and a Champion's Additional Fighting Style.
+      targetEntityType: feat
+      category: Feats
+      where:
+        - { property: category, equals: fighting-style, message: "that is not a fighting style." }
+      maxCount:
+        lookup: { field: class, table: featSlots, byField: classLevel, column: styles }
+        also: [{ field: subclass, table: featSlots, byField: classLevel, column: styles }]
+    - key: extraOriginFeats
+      label: Extra origin feats
+      description: An origin feat beyond your background's, such as the one a Human's Versatile trait gives.
+      targetEntityType: feat
+      category: Feats
+      where:
+        - { property: category, equals: origin, message: "only an origin feat can go here." }
+      maxCount: { fromField: { field: species, property: extraOriginFeats } }
 
   # Hit points and armor class follow the rules while a sheet's hpMode / acMode allow it (new characters
   # do; imported creatures and older sheets keep the numbers typed in). Hit points: the first level takes
@@ -132,13 +161,57 @@ sheetRules:
     dieProperty: hitDie
     modes: [average, rolled, manual]
     default: average
+    perLevelBonus: { field: species, property: hitPointsPerLevel }
+
+  # Choosing a species copies its speed, size and Darkvision onto the sheet once; later edits stay.
+  inherits:
+    - field: species
+      appliedKey: speciesApplied
+      copy: { speed: speed, size: size, darkvision: darkvision }
+
+  # Saving throws follow the first class, skills your picks plus the background's. Expertise is a second
+  # tick on a skill you are proficient in.
+  skills:
+    label: Skills
+    bonusKey: proficiencyBonus
+    list:
+      - { key: acrobatics,      label: Acrobatics,      attribute: dex }
+      - { key: animal-handling, label: Animal Handling, attribute: wis }
+      - { key: arcana,          label: Arcana,          attribute: int }
+      - { key: athletics,       label: Athletics,       attribute: str }
+      - { key: deception,       label: Deception,       attribute: cha }
+      - { key: history,         label: History,         attribute: int }
+      - { key: insight,         label: Insight,         attribute: wis }
+      - { key: intimidation,    label: Intimidation,    attribute: cha }
+      - { key: investigation,   label: Investigation,   attribute: int }
+      - { key: medicine,        label: Medicine,        attribute: wis }
+      - { key: nature,          label: Nature,          attribute: int }
+      - { key: perception,      label: Perception,      attribute: wis }
+      - { key: performance,     label: Performance,     attribute: cha }
+      - { key: persuasion,      label: Persuasion,      attribute: cha }
+      - { key: religion,        label: Religion,        attribute: int }
+      - { key: sleight-of-hand, label: Sleight of Hand, attribute: dex }
+      - { key: stealth,         label: Stealth,         attribute: dex }
+      - { key: survival,        label: Survival,        attribute: wis }
+    passives:
+      - { key: passivePerception,    label: Passive Perception,    skill: perception }
+      - { key: passiveInsight,       label: Passive Insight,       skill: insight }
+      - { key: passiveInvestigation, label: Passive Investigation, skill: investigation }
+
+  spellcasting:
+    bonusKey: proficiencyBonus
+    saveBase: 8
+
+  # Warnings, not rules: a feat or feature may grant training the class lacks.
+  proficiencies:
+    armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
 
   # Armor class: body armor's base plus Dexterity (to its cap), or the best unarmored formula (the class
   # may bring its own); then shields, magic items and fighting styles add their bonuses.
   armorClass:
     key: armorClass
     unarmored: "10 + mod(dex)"
-    bonusLists: [feats]
+    bonusLists: [feats, fightingStyles]
 
   inventory:
     key: inventory
@@ -156,6 +229,8 @@ sheetRules:
     classLevelKey: classLevel
     prerequisitesProperty: multiclassPrerequisites
     requireForFirstClass: true
+    subclassField: subclass
+    subclassLevel: 3
 
   # Slots are tracked during play as resources (slots_1 / slots_1_Max ...), spent at the table and
   # refilled by rests. One spellcasting class uses its own table; several combine into the
@@ -190,6 +265,30 @@ sheetRules:
 dice:
   initiative: 1d20
   check: 1d20
+  initiativeBonus: initiative      # the derived field added to the roll
+  initiativeTieBreak: dex          # ties go to the higher score
+
+# What the table does with hit points. Every part is optional data, so a homebrew system can drop
+# death saves or add a rest of its own.
+vitals:
+  temporaryResource: TempHP
+  down:
+    condition: Unconscious          # a character at 0 hit points
+    deadCondition: Dead
+    stableCondition: Stable
+    instantDeathAtMax: true         # damage left over at 0 that equals the maximum kills outright
+    nonPlayersDieAtZero: true       # monsters and NPCs die at 0 unless the DM says otherwise
+  deathSaves: { die: 1d20, successOn: 10, successesToStabilize: 3, failuresToDie: 3, criticalSuccess: 20, criticalFailure: 1 }
+  damage:
+    types: [acid, bludgeoning, cold, fire, force, lightning, necrotic, piercing, poison, psychic, radiant, slashing, thunder]
+    resistancesField: resistances
+    immunitiesField: immunities
+    vulnerabilitiesField: vulnerabilities
+  exhaustion: { key: Exhaustion, maxLevel: 6, condition: Exhaustion }
+  hitDice: { key: HitDice, levelField: level, classField: class, dieProperty: hitDie, creatureDiceProperty: hitDice, attribute: con }
+  rests:
+    - { name: Short Rest, spendHitDice: true }
+    - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half, exhaustionDelta: -1 }
 
 entityTypes:
   - type: class
@@ -212,9 +311,10 @@ entityTypes:
       - { key: multiclassPrerequisites, label: Multiclass Prerequisites, type: TagList, description: "Options like \"STR 13+\" or \"DEX 13+, WIS 13+\"; meeting any one is enough." }
       - { key: subclasses,          label: Subclasses,              type: TagList }
       - { key: casterType,          label: Spellcasting,            type: Text }
+      - { key: spellcastingAbility, label: Spellcasting Ability,    type: Text, description: "The ability spell save DCs and attack bonuses use." }
       - { key: features,            label: Class Features,          type: Collection, description: "One row per feature: level, name, description." }
       - { key: spellcasting,        label: Spellcasting Table,      type: Collection, description: "One row per level: cantrips, preparedSpells, maxSpellLevel, slots." }
-      - { key: featSlots,           label: Feat Slots,              type: Collection, description: "One row per level: how many class-granted feats (ASI/boon) you have." }
+      - { key: featSlots,           label: Feat Slots,              type: Collection, description: "One row per level: slots (ability-score-improvement or boon feats) and styles (fighting styles) you have by then." }
 
   - type: subclass
     label: Subclass
@@ -227,6 +327,7 @@ entityTypes:
       - { key: class,    label: Class,    type: EntityReference, targetEntityType: class }
       - { key: summary,  label: Summary,  type: Text }
       - { key: features, label: Features, type: Collection }
+      - { key: featSlots, label: Feat Slots, type: Collection, description: "Extra class-granted feats this subclass adds, by level (a Champion's second fighting style)." }
 
   - type: species
     label: Species
@@ -238,6 +339,9 @@ entityTypes:
       - { key: creatureType, label: Creature Type, type: Text }
       - { key: size,         label: Size,          type: Text }
       - { key: speed,        label: Speed,         type: Number }
+      - { key: darkvision,   label: Darkvision (feet), type: Number }
+      - { key: hitPointsPerLevel, label: Hit Points per Level, type: Number, description: "Added to every level's hit points (Dwarven Toughness)." }
+      - { key: extraOriginFeats, label: Extra Origin Feats, type: Number, description: "Origin feats beyond the background's (Human's Versatile)." }
       - { key: traits,       label: Traits,        type: Collection }
       - { key: lineages,     label: Lineages,      type: Collection }
 

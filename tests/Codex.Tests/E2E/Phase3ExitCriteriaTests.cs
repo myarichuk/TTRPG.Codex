@@ -116,12 +116,15 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         var goblin1Row = dm.Locator($"[data-testid='participant-row'][data-actor-id='{goblin1Id}']");
         var ariaRowOnDm = dm.Locator($"[data-testid='participant-row'][data-actor-id='{ariaActorId}']");
 
+        // The DM works one combatant at a time: selecting a row opens its command panel.
         const int goblin1DamagedHp = 6;
+        await goblin1Row.GetByTestId("select-participant").ClickAsync();
         await goblin1Row.GetByTestId("damage-input").FillAsync((goblinMaxHp - goblin1DamagedHp).ToString());
         await goblin1Row.GetByTestId("damage-btn").ClickAsync();
         await Assertions.Expect(goblin1Row.GetByTestId("hp-badge")).ToHaveTextAsync($"{goblin1DamagedHp}/{goblinMaxHp} HP");
 
         // ---- Criterion 5 ----
+        await ariaRowOnDm.GetByTestId("select-participant").ClickAsync();
         await AddConditionAsync(ariaRowOnDm, "Poisoned", rounds: 3);
         await AddConditionAsync(ariaRowOnDm, "Stunned", rounds: 1);
         await Assertions.Expect(ariaRowOnDm.GetByTestId("condition-badge").Filter(new() { HasText = "Poisoned" })).ToContainTextAsync("Poisoned (3)");
@@ -191,6 +194,7 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
 
         // The DM ends the table; players' pages return to the waiting state without a reload.
         await dm.GetByTestId("end-table").ClickAsync();
+        await dm.GetByTestId("confirm-accept").ClickAsync();
         await Assertions.Expect(player1.GetByText("Waiting for the DM")).ToBeVisibleAsync(new() { Timeout = 15_000 });
     }
 

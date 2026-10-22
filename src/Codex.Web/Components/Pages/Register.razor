@@ -15,7 +15,7 @@
 <PageTitle>Create account | TTRPG.Codex</PageTitle>
 
 <div class="auth-card">
-    <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="26" /></div>
+    <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
     <h1>Create your account</h1>
 
     <EditForm Model="@Model" OnValidSubmit="HandleRegister" FormName="RegisterForm">
@@ -29,22 +29,22 @@
         }
 
         <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <InputText id="username" class="form-control" autocomplete="username" required @bind-Value="Model!.Username" />
+            <label for="username" class="field-label">Username</label>
+            <InputText id="username" class="field-input" autocomplete="username" required @bind-Value="Model!.Username" />
         </div>
 
         <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <InputText id="password" type="password" class="form-control" autocomplete="new-password" required aria-describedby="password-help" @bind-Value="Model!.Password" />
-            <div id="password-help" class="form-text">At least 8 characters with an upper-case letter, a lower-case letter and a number.</div>
+            <label for="password" class="field-label">Password</label>
+            <InputText id="password" type="password" class="field-input" autocomplete="new-password" required aria-describedby="password-help" @bind-Value="Model!.Password" />
+            <div id="password-help" class="field-hint">At least 8 characters with an upper-case letter, a lower-case letter and a number.</div>
         </div>
 
         <div class="mb-4">
-            <label for="confirmPassword" class="form-label">Confirm password</label>
-            <InputText id="confirmPassword" type="password" class="form-control" autocomplete="new-password" required @bind-Value="Model!.ConfirmPassword" />
+            <label for="confirmPassword" class="field-label">Confirm password</label>
+            <InputText id="confirmPassword" type="password" class="field-input" autocomplete="new-password" required @bind-Value="Model!.ConfirmPassword" />
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Create account</button>
+        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100">Create account</CodexButton>
     </EditForm>
 
     <p class="text-center small-muted mt-4 mb-0">Already have an account? <a href="/login">Sign in</a></p>

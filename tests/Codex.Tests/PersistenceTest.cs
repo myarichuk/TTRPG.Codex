@@ -14,23 +14,17 @@ public class RavenDbFixture : IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2");
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
 
+        // Runs killed before Dispose leave their data behind, so clear out the old ones first.
+        TestTempData.SweepStale(Path.GetTempPath(), "TestRavenData_*");
+        TestTempData.SweepStale(Path.Combine(AppContext.BaseDirectory, "RavenDBServer", "Temp"), "*");
+
         DbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
         DbName = "Campaigns_" + Guid.NewGuid().ToString();
     }
 
     public void Dispose()
     {
-        // Give RavenDB a moment to release file handles
-        Task.Delay(1000).Wait();
-
-        try
-        {
-            if (Directory.Exists(DbPath))
-            {
-                Directory.Delete(DbPath, true);
-            }
-        }
-        catch { }
+        TestTempData.DeleteDirectory(DbPath);
     }
 }
 
@@ -802,6 +796,52 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.False(await _exportService.ImportAsync(bundle, "stranger"));
         Assert.True(await _exportService.ImportAsync(bundle, "owner-1"));
         Assert.Equal("X", (await _campaignRepository.GetAsync(bundle.Campaign.Id))!.Name);
+    }
+
+    [Fact]
+    public async Task CampaignImport_NamingSomeoneElsesCampaign_IsRefused_AndChangesNothing_Async()
+    {
+        var victimId = Guid.NewGuid().ToString();
+        var victim = new CampaignDocument { Id = victimId, OwnerId = "victim", Name = "Victim table", Members = { new CampaignMember { UserId = "victim-player", Role = CampaignRole.Player } } };
+        await _campaignRepository.SaveAsync(victim);
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "mallory", Name = "Throwaway" });
+
+        // Mallory is DM of her own campaign and forges a bundle for the victim's id naming herself owner.
+        var forged = new CampaignBundle
+        {
+            Campaign = new CampaignDocument { Id = victimId, OwnerId = "mallory", Name = "Taken over" },
+            Actors = { new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = victimId, Name = "Injected" } }
+        };
+
+        Assert.False(await _exportService.ImportAsync(forged, "mallory"));
+
+        var after = await _campaignRepository.GetAsync(victimId);
+        Assert.Equal("victim", after!.OwnerId);
+        Assert.Equal("Victim table", after.Name);
+        Assert.Empty(await _actorRepository.GetVisibleForCampaignAsync(new CampaignAccess(victimId, "victim", CampaignRole.DM)));
+    }
+
+    [Fact]
+    public async Task CampaignImport_IntoAnExistingCampaign_KeepsTheStoredOwnerAndMembers_Async()
+    {
+        var id = Guid.NewGuid().ToString();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = id, OwnerId = "owner", Name = "Before", InviteCode = "live-code",
+            Members = { new CampaignMember { UserId = "co-dm", Role = CampaignRole.DM }, new CampaignMember { UserId = "late-joiner", Role = CampaignRole.Player } }
+        });
+
+        // The file is an older export: it knows neither the late joiner nor the current invite code, and claims a different owner.
+        var bundle = new CampaignBundle { Campaign = new CampaignDocument { Id = id, OwnerId = "someone-else", Name = "After", InviteCode = "stale" } };
+
+        Assert.False(await _exportService.ImportAsync(bundle, "late-joiner"));
+        Assert.True(await _exportService.ImportAsync(bundle, "co-dm"));
+
+        var stored = await _campaignRepository.GetAsync(id);
+        Assert.Equal("After", stored!.Name);
+        Assert.Equal("owner", stored.OwnerId);
+        Assert.Equal("live-code", stored.InviteCode);
+        Assert.Contains(stored.Members, m => m.UserId == "late-joiner");
     }
 
     [Fact]

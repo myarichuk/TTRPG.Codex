@@ -4,7 +4,7 @@ name: Tiefling
 description: >-
   **Creature Type:** Humanoid  
 
-  **Size:**   
+  **Size:** Medium  
 
   **Speed:** 30 feet
 
@@ -50,7 +50,7 @@ description: >-
   **Otherworldly Presence.** You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait.
 properties:
   creatureType: Humanoid
-  size: ''
+  size: Medium
   speed: 30
   traits:
   - name: Darkvision (60 ft.)
@@ -92,6 +92,7 @@ properties:
       Level 5. Darkness
   - name: Otherworldly Presence
     description: You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait.
+  darkvision: 60
   lineages:
   - name: 'Fiendish Legacy: Abyssal'
     description: >-

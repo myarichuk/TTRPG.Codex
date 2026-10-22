@@ -91,6 +91,7 @@ builder.Services.AddHttpContextAccessor();
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
+builder.Services.AddSingleton<CampaignLifecycleHooks>();
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<IActorRepository, ActorRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
@@ -105,6 +106,7 @@ builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
+builder.Services.AddScoped<ViewerClock>();
 
 // Game systems and content
 builder.Services.AddSingleton<ComponentRegistry>();
@@ -116,6 +118,7 @@ builder.Services.AddSingleton<PluginLoader>();
 builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
+builder.Services.AddHostedService<IdleRuntimeEvictionService>();
 
 // AI: the "AI" configuration section is the server-wide fallback provider; users set up their
 // own OpenAI-compatible providers (OpenRouter by default) under /settings/ai, keys protected by
