@@ -128,9 +128,9 @@ else
                 <DiceResult Compact="true" Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" Total="lastRoll.Total" Text="@lastRoll.Result" />
             </div>
         }
+        @* Inside the sticky plate so a result is seen wherever the page is scrolled to. *@
+        <StatusMessage Message="flash" OnDismiss="() => flash = null" />
     </div>
-
-    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
 
     @if (!string.IsNullOrEmpty(actor.BlueprintId) && ContentRegistry.GetActor(actor.BlueprintId) == null)
     {

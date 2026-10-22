@@ -2,12 +2,31 @@
 
 ## Software
 
-TTRPG.Codex is released under the MIT License (see `LICENSE`).
+TTRPG.Codex is source-available under the PolyForm Noncommercial License 1.0.0 (see `LICENSE`):
+free for any noncommercial use, not for commercial use. It is not an OSI-approved open source
+licence. Versions published before this change were released under the MIT License, and copies of
+those versions stay MIT.
 
 Bundled third-party software:
 
 - Bootstrap 5.3.3 - MIT License - `src/Codex.Web/wwwroot/lib/bootstrap/LICENSE`
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
+
+### RavenDB
+
+Campaign data is stored in RavenDB, run as the unmodified `RavenDB.Embedded` server in a separate
+process that the app talks to over HTTP. The client library (`RavenDB.Client`) is MIT licensed.
+The server is Copyright RavenDB Ltd and is used under the GNU Affero General Public License v3
+(`licenses/AGPL-3.0.txt`, shipped as `AGPL-3.0.txt` next to the packaged app), as RavenDB's own
+licence file for the package states. RavenDB is also available under a commercial licence.
+
+- The packaged downloads include the RavenDB server binaries as published by RavenDB Ltd, without
+  changes. Its complete corresponding source is at https://github.com/ravendb/ravendb (the
+  release matching the `RavenDB.Embedded` version in `src/Codex.Persistence/Codex.Persistence.csproj`).
+- TTRPG.Codex's own code is a separate program, not a modification of or linked into the server, so
+  the AGPL covers the RavenDB server only; the PolyForm licence above covers this project's code.
+- If you modify the RavenDB server and let others use it, the AGPL requires you to offer them your
+  modified source.
 
 Bundled typefaces, self-hosted under `src/Codex.Web/wwwroot/fonts/` (the app makes no request to a
 font CDN). Both are licensed under the SIL Open Font License 1.1, whose text sits beside the font
@@ -52,6 +71,6 @@ domain under CC0 1.0 by the TTRPG.Codex project.
 - Non-SRD fifth-edition material (other subclasses, most feats, setting lore): proprietary.
 - Pathfinder Second Edition Remaster: its rules text is under the ORC License, but no ORC-licensed
   machine-readable dataset exists, and the community datasets (Foundry VTT, Pf2ools, Archives of
-  Nethys) are distributed under Paizo's Community Use Policy, which cannot be re-licensed into an
-  MIT project. A PF2E-shaped system can still be defined in `system.yaml` and filled from a local,
+  Nethys) are distributed under Paizo's Community Use Policy, which cannot be re-licensed into this
+  project. A PF2E-shaped system can still be defined in `system.yaml` and filled from a local,
   ORC-compliant transcription that is not redistributed here.

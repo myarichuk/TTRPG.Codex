@@ -39,6 +39,8 @@ Write-Host '==> Adding content packs and the launcher'
 Copy-Item -Recurse (Join-Path $repo 'content') (Join-Path $app 'content')
 Copy-Item (Join-Path $repo 'packaging/launchers/TTRPG.Codex.cmd') $app
 Copy-Item (Join-Path $repo 'LICENSE'), (Join-Path $repo 'LEGAL.md') $app
+# The bundled RavenDB server is AGPLv3: its licence text travels with the binaries (see LEGAL.md).
+Copy-Item (Join-Path $repo 'licenses/AGPL-3.0.txt') $app
 
 Write-Host '==> Bundling the .NET and ASP.NET Core runtimes'
 $installer = Join-Path $stage 'dotnet-install.ps1'

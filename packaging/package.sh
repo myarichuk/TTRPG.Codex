@@ -54,6 +54,8 @@ cp -R "$repo/content" "$app/content"
 cp "$repo/packaging/launchers/ttrpg-codex" "$app/ttrpg-codex"
 chmod +x "$app/ttrpg-codex"
 cp "$repo/LICENSE" "$repo/LEGAL.md" "$app/"
+# The bundled RavenDB server is AGPLv3: its licence text travels with the binaries (see LEGAL.md).
+cp "$repo/licenses/AGPL-3.0.txt" "$app/"
 
 echo "==> Bundling the .NET and ASP.NET Core runtimes"
 installer="$stage/dotnet-install.sh"
