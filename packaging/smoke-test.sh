@@ -31,6 +31,7 @@ done
 
 sleep 5 # the scheduled-backup setup (the first database call) runs right after start-up
 fail=0
+grep -q "was skipped" "$log" && { echo "A content pack was skipped: $(grep "was skipped" "$log")" >&2; fail=1; }
 grep -q "Loaded data-driven system srd5e" "$log" || { echo "The SRD system was not loaded" >&2; fail=1; }
 # The backup set-up is the first database call; a licence that doesn't cover backups is fine (the
 # database answered), anything else means the embedded server didn't start.

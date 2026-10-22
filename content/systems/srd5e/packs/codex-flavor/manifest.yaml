@@ -2,7 +2,7 @@ id: codex-flavor
 name: TTRPG.Codex original flavor text
 version: 1.0.0
 systemId: srd5e
-minAppVersion: 1.0.0
+minAppVersion: 0.0.0
 priority: 1
 kind: world
 dependencies:

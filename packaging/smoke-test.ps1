@@ -31,6 +31,7 @@ try {
     Start-Sleep -Seconds 5
     $output = Get-Content $log -Raw
     $problems = @()
+    if ($output -match 'was skipped') { $problems += 'A content pack was skipped' }
     if ($output -notmatch 'Loaded data-driven system srd5e') { $problems += 'The SRD system was not loaded' }
     # A licence that doesn't cover backups is fine (the database answered); anything else is not.
     if ($output -match 'Scheduled backup configuration failed' -and $output -notmatch 'LicenseLimitException') { $problems += 'The embedded database did not start' }
