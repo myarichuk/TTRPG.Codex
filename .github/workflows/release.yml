@@ -114,7 +114,7 @@ jobs:
         run: packaging/smoke-test.ps1 -App "dist/${{ matrix.rid }}/app"
 
       - name: Upload packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: packages-${{ matrix.rid }}
           if-no-files-found: error
