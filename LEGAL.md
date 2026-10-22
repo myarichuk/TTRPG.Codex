@@ -42,6 +42,14 @@ files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource 
   Authors (https://github.com/huertatipografica/Alegreya-Sans) - the body face -
   `src/Codex.Web/wwwroot/fonts/alegreya-sans/OFL.txt`
 
+### Launcher artwork
+
+The background of the tray launcher window (`src/Codex.Launcher/Assets/background.jpg`) is an image
+the project author generated with Google's Gemini image model. It contains no third-party artwork.
+Like the rest of the project's own files it is not licensed for commercial use. (Images made by an
+AI model may not be protected by copyright in some countries, so others may be free to reuse
+similar ones.)
+
 ## Game content
 
 Game content is shipped as data under `content/`, each pack with its own licence in its
