@@ -411,13 +411,22 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     await AppendSessionEventAsync(queued.Command);
                     await PersistEncounterAsync();
                     PublishSnapshot();
-                    queued.Completion.TrySetResult();
 
-                    // Deliberately still inside this try: a misbehaving subscriber (e.g. a circuit
-                    // that throws while re-rendering) must not be able to take down the whole
-                    // campaign's single-writer loop - it's caught and logged below like any other
-                    // command failure, even though the command itself already succeeded.
-                    StateChanged?.Invoke(affectedActorIds);
+                    // Raised before the caller's task completes, so an awaited EnqueueAsync means
+                    // subscribers have already been told. A misbehaving subscriber (e.g. a circuit
+                    // that throws while re-rendering) must neither take down the campaign's
+                    // single-writer loop nor fail a command that already succeeded, so it is
+                    // logged here instead of reaching the command-failure catch below.
+                    try
+                    {
+                        StateChanged?.Invoke(affectedActorIds);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "A StateChanged subscriber failed in campaign runtime {CampaignId}", CampaignId);
+                    }
+
+                    queued.Completion.TrySetResult();
                 }
                 catch (Exception ex)
                 {

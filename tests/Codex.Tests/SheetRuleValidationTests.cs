@@ -80,7 +80,18 @@ public class ViewerClockTests
         var zone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland"); // UTC+13 in October
         typeof(Codex.Web.Services.ViewerClock).GetField("_zone", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(clock, zone);
 
-        Assert.Equal("22 Oct 11:30", clock.Format(stored, "d MMM HH:mm"));
-        Assert.Equal("22 Oct 11:30", clock.Format(DateTime.SpecifyKind(stored, DateTimeKind.Unspecified), "d MMM HH:mm"));
+        // Format is culture-sensitive by design (viewers see their own month names), so pin the
+        // culture; otherwise the machine's locale decides what "MMM" renders.
+        var previous = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+        try
+        {
+            Assert.Equal("22 Oct 11:30", clock.Format(stored, "d MMM HH:mm"));
+            Assert.Equal("22 Oct 11:30", clock.Format(DateTime.SpecifyKind(stored, DateTimeKind.Unspecified), "d MMM HH:mm"));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previous;
+        }
     }
 }
