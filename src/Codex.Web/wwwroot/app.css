@@ -1071,6 +1071,7 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .plate-id h1 { margin: 0; font-size: clamp(1.35rem, 1rem + 1.2vw, 1.8rem); overflow-wrap: anywhere; }
 .plate-plaques { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
 .plate-save { display: flex; align-items: center; gap: 0.6rem; }
+.sheet-plate .status { margin: 0.6rem 0 0; }
 .dirty-note { font-size: 0.95rem; color: var(--warning); font-weight: 700; }
 .stat-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
 .stat-cell {
