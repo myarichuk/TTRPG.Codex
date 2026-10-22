@@ -28,6 +28,14 @@ dotnet publish (Join-Path $repo 'src/Codex.Web/Codex.Web.csproj') -c Release -r 
     -p:UseAppHost=false -p:PublishReadyToRun=true -p:Version=$Version -o $app
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
+# The tray launcher goes in its own folder so its dependencies never mix with the server's. Its
+# apphost looks for the bundled runtime one level up (..\runtime), so it needs no installed .NET.
+Write-Host "==> Publishing the tray launcher for $Rid"
+dotnet publish (Join-Path $repo 'src/Codex.Launcher/Codex.Launcher.csproj') -c Release -r $Rid --self-contained false `
+    -p:UseAppHost=true -p:AppHostDotNetSearch=AppRelative '-p:AppHostRelativeDotNet=../runtime' `
+    -p:PublishReadyToRun=true -p:DebugType=none -p:Version=$Version -o (Join-Path $app 'launcher')
+if ($LASTEXITCODE -ne 0) { throw 'dotnet publish (launcher) failed' }
+
 # The embedded RavenDB server ships native libraries for every platform (over 400 MB); it only
 # loads its own platform's, so keep that one plus the generic "win" folder.
 Write-Host "==> Trimming RavenDB native libraries to $Rid"

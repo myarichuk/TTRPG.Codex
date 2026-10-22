@@ -4,6 +4,11 @@
 #   packaging/smoke-test.sh dist/linux-x64/app
 set -euo pipefail
 app="${1:?usage: smoke-test.sh <app-dir>}"
+
+# The tray launcher cannot open a window on a CI machine, so check what it can: that it runs on the
+# bundled runtime alone (no DOTNET_ROOT, no installed .NET) and finds the server, runtime and content.
+env -u DOTNET_ROOT -u DOTNET_ROOT_X64 "$app/launcher/ttrpg-codex-tray" --self-test
+
 log="$(mktemp -d)/smoke.log"
 data="$(mktemp -d)"
 

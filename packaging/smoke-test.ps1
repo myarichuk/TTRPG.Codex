@@ -3,6 +3,11 @@
 #   pwsh packaging/smoke-test.ps1 dist/win-x64/app
 param([Parameter(Mandatory = $true)][string]$App)
 $ErrorActionPreference = 'Stop'
+# The tray launcher cannot open a window on a CI machine, so check what it can: that it runs on the
+# bundled runtime alone and finds the server, runtime and content packs.
+$launcher = Start-Process -FilePath (Join-Path (Resolve-Path $App) 'launcher/ttrpg-codex-tray.exe') -ArgumentList '--self-test' -Wait -PassThru
+if ($launcher.ExitCode -ne 0) { throw "The tray launcher's self-test failed (exit code $($launcher.ExitCode))" }
+
 $log = Join-Path ([IO.Path]::GetTempPath()) 'codex-smoke.log'
 $data = Join-Path ([IO.Path]::GetTempPath()) ('codex-smoke-' + [Guid]::NewGuid())
 $env:CODEX_NO_BROWSER = '1'

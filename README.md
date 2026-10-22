@@ -17,6 +17,15 @@ pack). See [docs/CONTENT_PACKS.md](docs/CONTENT_PACKS.md) for the format and
 
 ## Run it
 
+**Download:** the [latest release](https://github.com/myarichuk/TTRPG.Codex/releases) has an
+installer for Windows, macOS and Linux. Start **TTRPG.Codex** and it sits in your system tray (menu
+bar on macOS): it starts the server, opens your browser, and its menu starts or stops the server,
+copies the link for your players and opens the log. Tick "Let players on my network join" in its
+window to host a table from your laptop. Players outside your network need a VPN or tunnel such as
+Tailscale. Nothing else needs installing.
+
+**From source:**
+
 ```sh
 dotnet run --project src/Codex.Web
 ```
@@ -37,6 +46,7 @@ Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.j
 | `src/Codex.Core` | Loading systems and packs, the content registry and search, the ECS world, scripting, text formatting. |
 | `src/Codex.Persistence` | RavenDB documents and repositories; the per-campaign live runtime (single-writer command loop). |
 | `src/Codex.Web` | The Blazor Server UI. |
+| `src/Codex.Launcher` | The Avalonia tray app that starts and stops the server on a DM's computer. |
 | `tools/Codex.ContentImport` | Converts open rules data (5e-bits SRD JSON) into packs. |
 | `content/` | Shipped systems and packs. |
 | `tests/Codex.Tests` | xUnit unit tests and Playwright end-to-end scenarios. |

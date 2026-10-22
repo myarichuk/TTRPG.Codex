@@ -11,6 +11,8 @@ Bundled third-party software:
 
 - Bootstrap 5.3.3 - MIT License - `src/Codex.Web/wwwroot/lib/bootstrap/LICENSE`
 - Lucide icons - ISC License - `src/Codex.Web/wwwroot/lib/lucide/LICENSE`
+- Avalonia 12 (the tray launcher, `src/Codex.Launcher`) and its SkiaSharp and HarfBuzzSharp
+  dependencies - MIT License - https://github.com/AvaloniaUI/Avalonia
 
 ### RavenDB
 

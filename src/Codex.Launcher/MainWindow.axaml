@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Codex.Launcher.MainWindow"
+        Title="TTRPG.Codex"
+        Width="540" Height="420"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="#15120e">
+  <Grid>
+    <Image x:Name="Backdrop" Stretch="UniformToFill" />
+    <!-- With no artwork, the window still gets a title of its own. -->
+    <TextBlock x:Name="HeadingText" Text="TTRPG Codex" FontSize="30" Foreground="#e3bf63" HorizontalAlignment="Center"
+               Margin="0,34,0,0" VerticalAlignment="Top" IsVisible="False" />
+    <Grid RowDefinitions="*,Auto">
+      <!-- The controls sit on a dark panel so they stay readable over busy artwork. -->
+      <Border Grid.Row="1" Background="#EC17120c" BorderBrush="#9a7c36" BorderThickness="0,2,0,0" Padding="22,16,22,18">
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Ellipse x:Name="StatusDot" Width="14" Height="14" Fill="Gray" VerticalAlignment="Center" />
+            <TextBlock x:Name="StatusText" FontSize="18" FontWeight="Bold" Foreground="#f3e9d2" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock x:Name="ProblemText" Foreground="#e8917a" TextWrapping="Wrap" IsVisible="False" />
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button x:Name="ToggleButton" Classes="plaque" MinWidth="130" Click="OnToggle" />
+            <Button x:Name="OpenButton" Classes="etched" Content="Open the table" Click="OnOpen" />
+            <Button Classes="etched" Content="Log" Click="OnOpenLog" />
+            <Button Classes="etched" Content="Quit" Click="OnQuit" />
+          </StackPanel>
+
+          <ToggleButton x:Name="LanBox" Classes="etched" HorizontalAlignment="Left" Click="OnLanChanged" />
+          <StackPanel x:Name="JoinPanel" Orientation="Horizontal" Spacing="10" IsVisible="False">
+            <TextBlock Text="Give your players" Foreground="#cbbfa5" VerticalAlignment="Center" />
+            <SelectableTextBlock x:Name="JoinText" Foreground="#ffe9ae" FontWeight="Bold" FontSize="15" VerticalAlignment="Center" />
+            <Button Classes="etched" Content="Copy link" Padding="12,4" FontSize="13" Click="OnCopyJoin" />
+          </StackPanel>
+          <TextBlock x:Name="LanHint" Foreground="#b3a78d" FontSize="12" TextWrapping="Wrap" IsVisible="False"
+                     Text="Your firewall may ask the first time: allow private networks. Players on other networks need a VPN or tunnel, such as Tailscale." />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

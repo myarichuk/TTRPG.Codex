@@ -39,6 +39,13 @@ echo "==> Publishing the app for $rid ($version)"
 dotnet publish "$repo/src/Codex.Web/Codex.Web.csproj" -c Release -r "$rid" --self-contained false \
     -p:UseAppHost=false -p:PublishReadyToRun=true -p:Version="$version" -o "$app"
 
+# The tray launcher goes in its own folder so its dependencies never mix with the server's. Its
+# apphost looks for the bundled runtime one level up (../runtime), so it needs no installed .NET.
+echo "==> Publishing the tray launcher for $rid"
+dotnet publish "$repo/src/Codex.Launcher/Codex.Launcher.csproj" -c Release -r "$rid" --self-contained false \
+    -p:UseAppHost=true -p:AppHostDotNetSearch=AppRelative -p:AppHostRelativeDotNet=../runtime \
+    -p:PublishReadyToRun=true -p:DebugType=none -p:Version="$version" -o "$app/launcher"
+
 # The embedded RavenDB server ships native libraries for every platform (over 400 MB); it only
 # loads its own platform's, so keep that one plus the generic OS folders.
 echo "==> Trimming RavenDB native libraries to $rid"
@@ -56,6 +63,7 @@ chmod +x "$app/ttrpg-codex"
 cp "$repo/LICENSE" "$repo/LEGAL.md" "$app/"
 # The bundled RavenDB server is AGPLv3: its licence text travels with the binaries (see LEGAL.md).
 cp "$repo/licenses/AGPL-3.0.txt" "$app/"
+cp "$repo/src/Codex.Web/wwwroot/icons/icon-512.png" "$app/ttrpg-codex.png"
 
 echo "==> Bundling the .NET and ASP.NET Core runtimes"
 installer="$stage/dotnet-install.sh"
@@ -75,13 +83,17 @@ if [ "$os" = linux ]; then
     mkdir -p "$root/DEBIAN" "$root/opt/ttrpg-codex" "$root/usr/bin" "$root/usr/share/applications"
     cp -R "$app/." "$root/opt/ttrpg-codex/"
     ln -s /opt/ttrpg-codex/ttrpg-codex "$root/usr/bin/ttrpg-codex"
+    ln -s /opt/ttrpg-codex/launcher/ttrpg-codex-tray "$root/usr/bin/ttrpg-codex-tray"
+    mkdir -p "$root/usr/share/icons/hicolor/512x512/apps"
+    cp "$app/ttrpg-codex.png" "$root/usr/share/icons/hicolor/512x512/apps/ttrpg-codex.png"
     cat > "$root/usr/share/applications/ttrpg-codex.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=TTRPG.Codex
 Comment=Run tabletop campaigns: characters, rules, world wiki and a live table
-Exec=ttrpg-codex
-Terminal=true
+Exec=/opt/ttrpg-codex/launcher/ttrpg-codex-tray
+Icon=ttrpg-codex
+Terminal=false
 Categories=Game;RolePlaying;
 EOF
     cat > "$root/DEBIAN/control" <<EOF
@@ -89,14 +101,15 @@ Package: ttrpg-codex
 Version: $deb_version
 Architecture: $deb_arch
 Maintainer: TTRPG.Codex <noreply@github.com>
-Depends: libc6, libgcc-s1, libstdc++6, zlib1g, libssl3 | libssl1.1, libicu74 | libicu72 | libicu70 | libicu67
+Depends: libc6, libgcc-s1, libstdc++6, zlib1g, libssl3 | libssl1.1, libicu74 | libicu72 | libicu70 | libicu67, libx11-6, libice6, libsm6, libfontconfig1
 Section: games
 Priority: optional
 Homepage: https://github.com/myarichuk/TTRPG.Codex
 Description: Tabletop RPG campaign manager
  Characters with data-driven rules, a world wiki, journals, a bestiary and a live
- table. Run "ttrpg-codex" and open http://localhost:5080. Campaign data is kept in
- ~/.local/share/ttrpg-codex.
+ table. Start "TTRPG.Codex" from the applications menu (a tray icon starts and stops
+ it), or run "ttrpg-codex" for the plain server and open http://localhost:5080.
+ Campaign data is kept in ~/.local/share/ttrpg-codex.
 EOF
     dpkg-deb --build --root-owner-group "$root" "$out/ttrpg-codex_${deb_version}_${deb_arch}.deb"
 fi
@@ -106,7 +119,35 @@ if [ "$os" = osx ]; then
     root="$stage/pkgroot"
     mkdir -p "$root/TTRPG.Codex"
     cp -R "$app/." "$root/TTRPG.Codex/"
-    # Double-clickable in Finder: opens Terminal, starts the server and the browser.
+    # A real app bundle, so Finder starts the tray launcher without a Terminal window or a Dock icon
+    # (LSUIElement). The bundle only points at the launcher beside it, so there is one copy of the
+    # runtime and the server. The .command file stays as the plain-server fallback.
+    bundle="$root/TTRPG.Codex/TTRPG.Codex.app/Contents"
+    mkdir -p "$bundle/MacOS" "$bundle/Resources"
+    cat > "$bundle/MacOS/TTRPG.Codex" <<'EOF'
+#!/bin/sh
+here=$(cd "$(dirname "$0")" && pwd)
+exec "$here/../../../launcher/ttrpg-codex-tray" "$@"
+EOF
+    chmod +x "$bundle/MacOS/TTRPG.Codex"
+    pkg_short=$(echo "$version" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+    cat > "$bundle/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key><string>TTRPG.Codex</string>
+    <key>CFBundleDisplayName</key><string>TTRPG.Codex</string>
+    <key>CFBundleIdentifier</key><string>io.github.myarichuk.ttrpg-codex.launcher</string>
+    <key>CFBundleExecutable</key><string>TTRPG.Codex</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$pkg_short</string>
+    <key>CFBundleVersion</key><string>$pkg_short</string>
+    <key>LSUIElement</key><true/>
+    <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+EOF
     cp "$app/ttrpg-codex" "$root/TTRPG.Codex/Start TTRPG.Codex.command"
     pkg_version=$(echo "$version" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
     pkgbuild --root "$root" --install-location /Applications --identifier io.github.myarichuk.ttrpg-codex \
