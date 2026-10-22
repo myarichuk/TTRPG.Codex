@@ -17,7 +17,8 @@ public sealed record SessionSummaryRequest(
     IReadOnlyList<string> Events,
     IReadOnlyList<string> Notes,
     IReadOnlyList<string> Rolls,
-    string? PreviousDmSummary = null);
+    string? PreviousDmSummary = null,
+    IReadOnlyList<string>? Quotes = null);
 
 public sealed record RewriteRequest(
     string Subject,
@@ -86,7 +87,8 @@ public static class AiPrompts
         AppendList(sb, "Event log", r.Events);
         AppendList(sb, "Table notes", r.Notes);
         AppendList(sb, "Dice rolls", r.Rolls);
-        if (r.Events.Count == 0 && r.Notes.Count == 0 && r.Rolls.Count == 0)
+        AppendList(sb, "Things said at the table (quote the lines that matter word for word; never put words in anyone's mouth)", r.Quotes ?? Array.Empty<string>());
+        if (r.Events.Count == 0 && r.Notes.Count == 0 && r.Rolls.Count == 0 && (r.Quotes?.Count ?? 0) == 0)
         {
             sb.AppendLine().AppendLine("The log is empty. Say so in one sentence and stop.");
         }

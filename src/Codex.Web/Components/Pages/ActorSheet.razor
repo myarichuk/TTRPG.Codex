@@ -12,6 +12,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject IActorRepository ActorRepo
+@inject ISessionRepository SessionRepo
+@inject Codex.Web.Services.ViewerClock Clock
 @inject CampaignRuntimeManager RuntimeManager
 @inject ICampaignAccessResolver AccessResolver
 @inject IContentRegistry ContentRegistry
@@ -593,6 +595,33 @@ else
 
             }
 
+            @if (ActiveTab == "said")
+            {
+            <section class="panel" aria-labelledby="said-heading" data-testid="said-panel">
+                <div class="panel-title">
+                    <h2 id="said-heading" class="h5"><LucideIcon IconName="message-square-quote" Size="18" Class="title-icon" /> Said</h2>
+                    <span class="small-muted">@said.Count @(said.Count == 1 ? "line" : "lines") from the table</span>
+                </div>
+                @foreach (var group in said.GroupBy(x => x.Session.Id).OrderByDescending(g => g.First().Session.Date))
+                {
+                    var saidIn = group.First().Session;
+                    <h3 class="h6 mt-3"><a href="/campaigns/@CampaignId/sessions/@saidIn.Id">@(string.IsNullOrWhiteSpace(saidIn.Title) ? Clock.Format(saidIn.Date, "d MMM yyyy") : saidIn.Title)</a></h3>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var (_, line) in group)
+                        {
+                            <li class="mb-2" data-testid="said-line">
+                                <q>@line.Text</q>
+                                @if (line.IsSecret)
+                                {
+                                    <span class="pill ms-1">secret</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+            }
+
             @if (ActiveTab == "notes")
             {
             @if (access.IsDm)
@@ -793,6 +822,9 @@ else
     private RollLogEntry? lastRoll;
     private bool lastRollShared;
 
+    /// <summary>Lines this actor spoke at the table, across the campaign's sessions, that this viewer may read.</summary>
+    private IReadOnlyList<(SessionDocument Session, SessionNote Line)> said = Array.Empty<(SessionDocument, SessionNote)>();
+
     /// <summary>The tray appears wherever the sheet has rolls to offer.</summary>
     private bool ShowTray => actor != null && access != null && Rules?.Skills != null && evaluation is { Skills.Count: > 0 };
 
@@ -830,6 +862,7 @@ else
             if (Rules != null && Rules.Lists.Count > 0) tabs.Add(("picks", "Picks", "sparkles"));
             if (Rules?.Inventory != null) tabs.Add(("inventory", "Inventory", "package"));
             tabs.Add(("history", "History", "feather"));
+            if (said.Count > 0) tabs.Add(("said", "Said", "message-square-quote"));
             if (access?.IsDm == true) tabs.Add(("notes", "DM notes", "lock"));
             return tabs;
         }
@@ -931,8 +964,7 @@ else
     private bool HasLevel => schema?.Fields.Any(f => f.Key == "level") == true;
     private int CurrentLevel => YamlValues.GetInt(editSheet, "level") ?? 1;
 
-    private string DisplayName => actor == null ? string.Empty
-        : access?.IsDm == false && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
+    private string DisplayName => actor == null ? string.Empty : actor.NameFor(access?.IsDm != false);
 
     private string KindLabel => actor?.Kind switch
     {
@@ -1004,6 +1036,7 @@ else
                 baselineSheet = new Dictionary<string, object>(editSheet);
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
+                said = SessionQuotes.SaidBy(await SessionRepo.GetAllForCampaignAsync(CampaignId), actor.Id, access.IsDm);
             }
         }
 

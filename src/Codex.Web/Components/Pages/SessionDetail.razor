@@ -98,7 +98,7 @@ else
                             <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? "Drafting…" : "Draft with AI")
                         </CodexButton>
                     </div>
-                    <p id="ai-help" class="field-hint">The player draft is built from the event log, party notes and open rolls only. Secret rolls and private notes never reach it.</p>
+                    <p id="ai-help" class="field-hint">The player draft is built from the event log, party notes and open rolls only. Secret rolls, private notes and secret table notes never reach it.</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(session.Recap))
                 {
@@ -131,21 +131,32 @@ else
 
             <section class="panel" aria-labelledby="notes-heading">
                 <div class="panel-title"><h2 id="notes-heading" class="h5"><LucideIcon IconName="message-square" Size="18" Class="title-icon" /> Table notes</h2></div>
-                @if (notes.Count == 0)
+                @if (noteRows.Count == 0)
                 {
                     <p class="small-muted">No notes yet.</p>
                 }
-                @foreach (var note in notes)
+                @foreach (var note in noteRows)
                 {
-                    <div class="list-row align-items-start">
+                    <div class="list-row align-items-start" data-testid="session-note">
                         <span class="avatar avatar-sm" aria-hidden="true">@Initial(memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId))</span>
                         <div class="row-main">
                             <div class="row-sub">
                                 <strong>@memberUsernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong>
-                                · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" />
-                                · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span>
+                                · <LocalTime Value="note.When" Format="d MMM, HH:mm" />
+                                · <span class="pill">@note.Label</span>
+                                @if (note.AtTable)
+                                {
+                                    <span class="pill ms-1">At the table</span>
+                                }
                             </div>
-                            <p class="mb-0">@note.Content</p>
+                            @if (note.Speaker != null)
+                            {
+                                <p class="mb-0"><strong>@note.Speaker:</strong> <q>@note.Text</q></p>
+                            }
+                            else
+                            {
+                                <p class="mb-0">@note.Text</p>
+                            }
                         </div>
                     </div>
                 }
@@ -213,7 +224,7 @@ else
     private SessionDocument? session;
     private CampaignAccess? access;
     private string? currentUserId;
-    private List<NoteDocument> notes = new();
+    private List<NoteRow> noteRows = new();
     private List<ActorDocument> campaignActors = new();
     private IReadOnlyList<SessionEvent> visibleEvents = Array.Empty<SessionEvent>();
     private readonly Dictionary<string, string> memberUsernames = new();
@@ -228,6 +239,9 @@ else
     private string journalBody = "";
     private DateTime? journalSavedAt;
     private Flash? flash;
+
+    /// <summary>One note on the page. <see cref="Speaker"/> is set for a line of dialogue, already named for this viewer.</summary>
+    private sealed record NoteRow(string AuthorId, string Text, DateTime When, string Label, bool AtTable, string? Speaker = null);
 
     private string NotesTargetId => $"session:{SessionId}";
     private string? Title => session == null ? null : string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title;
@@ -253,8 +267,18 @@ else
                 editDmSummary = access.IsDm ? session.DmSummary ?? "" : "";
                 editTitle = session.Title;
                 editStatus = session.Status;
-                notes = (await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access)).ToList();
                 campaignActors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
+                // Notes left here and quick notes typed at the live table, as one timeline. Secret table notes are the DM's alone.
+                var pageNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
+                var actorsById = campaignActors.ToDictionary(a => a.Id);
+                noteRows = pageNotes
+                    .Select(n => new NoteRow(n.AuthorId, n.Content, n.CreatedAt, n.Visibility == CommentVisibility.Public ? "Party" : "Private", AtTable: false))
+                    .Concat(session.Notes
+                        .Where(n => access.IsDm || !n.IsSecret)
+                        .Select(n => new NoteRow(n.AuthorId, n.Text, n.Timestamp, n.IsSecret ? "Secret" : "Party", AtTable: true,
+                            n.SpeakerActorId == null ? null : SessionQuotes.SpeakerName(n.SpeakerActorId, actorsById, access.IsDm))))
+                    .OrderBy(n => n.When)
+                    .ToList();
                 visibleEvents = SessionEventRedactor.ForViewer(session.Events, access, campaignActors);
                 memberUsernames.Clear();
                 foreach (var member in campaign.Members)

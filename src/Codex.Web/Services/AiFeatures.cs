@@ -33,7 +33,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             digest.Events,
             digest.Notes,
             digest.Rolls,
-            digest.DmSummary));
+            digest.DmSummary,
+            digest.Quotes));
     }
 
     /// <summary>Rewrites a character's history (player-facing) or the DM's private notes on an NPC.</summary>

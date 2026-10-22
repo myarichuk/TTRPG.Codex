@@ -230,6 +230,11 @@ public class SessionNote
     public string AuthorId { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public bool IsSecret { get; set; }
+
+    /// <summary>Who said <see cref="Text"/>, when the note is a line of dialogue; null for a plain note.
+    /// Players read the speaker by the name they know them by, and not at all if they can't see them.</summary>
+    public string? SpeakerActorId { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 

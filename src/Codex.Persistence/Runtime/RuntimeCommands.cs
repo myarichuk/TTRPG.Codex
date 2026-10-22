@@ -684,17 +684,23 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
 
 /// <summary>Appends a DM/player quick note to the live session (3.7) - reuses the same
 /// <see cref="SessionDocument.Notes"/> list the recap editor (4.1) will read from, rather than a
-/// separate combat-log-only notes concept.</summary>
-public sealed record AddSessionNoteCommand(string AuthorId, string Text, bool IsSecret) : IRuntimeCommand
+/// separate combat-log-only notes concept. With a speaker it is a line of dialogue; the event then names
+/// the speaker's id, so a player who can't see them doesn't get it.</summary>
+public sealed record AddSessionNoteCommand(string AuthorId, string Text, bool IsSecret, string? SpeakerActorId = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
-    public void Apply(CampaignRuntime runtime) => runtime.AddSessionNote(new SessionNote { AuthorId = AuthorId, Text = Text, IsSecret = IsSecret });
+    public void Apply(CampaignRuntime runtime) => runtime.AddSessionNote(new SessionNote { AuthorId = AuthorId, Text = Text, IsSecret = IsSecret, SpeakerActorId = SpeakerActorId });
 
     public SessionEvent Describe(CampaignRuntime runtime) => new()
     {
         Type = "Note",
-        Description = IsSecret ? $"{AuthorId} added a secret note." : $"Note: {Text}"
+        Description = IsSecret
+            ? $"{AuthorId} added a secret {(SpeakerActorId == null ? "note" : "quote")}."
+            // No speaker name here: the event log shows actor names unredacted, and a quote's speaker may be
+            // known to players only by a public name. The notes list names them per viewer.
+            : SpeakerActorId == null ? $"Note: {Text}" : $"Quote: \"{Text}\"",
+        ActorIds = SpeakerActorId == null ? new List<string>() : new List<string> { SpeakerActorId }
     };
 }
 

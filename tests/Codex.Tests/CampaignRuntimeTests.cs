@@ -432,6 +432,24 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task AddSessionNoteCommand_WithSpeaker_StoresAQuote_AndItsEventNamesNobody_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session);
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new AddSessionNoteCommand("dm-user", "Mind the tide.", IsSecret: false, SpeakerActorId: actor.Id));
+
+        Assert.Equal(actor.Id, Assert.Single(session.Notes).SpeakerActorId);
+        var evt = Assert.Single(session.Events, e => e.Type == "Note");
+        Assert.Equal(new[] { actor.Id }, evt.ActorIds);
+        Assert.DoesNotContain(actor.Name, evt.Description);
+    }
+
+    [Fact]
     public async Task HydrateActorCommand_AddsANewlyPersistedActorToTheRunningRuntime_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
