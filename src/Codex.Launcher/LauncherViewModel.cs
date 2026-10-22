@@ -96,6 +96,13 @@ internal sealed class LauncherViewModel
     public void OpenLog() => Shell.Open(File.Exists(Controller.LogPath) ? Controller.LogPath : Path.GetDirectoryName(Controller.LogPath)!);
     public void OpenDataFolder() => Shell.Open(dataHome);
 
+    /// <summary>The folder for the DM's own systems and packs (see the wiki's homebrew guide).</summary>
+    public void OpenMyContentFolder()
+    {
+        Directory.CreateDirectory(LauncherPaths.MyContent(dataHome));
+        Shell.Open(LauncherPaths.MyContent(dataHome));
+    }
+
     /// <summary>The daily backups the server writes beside the campaign data.</summary>
     public void OpenBackupsFolder()
     {

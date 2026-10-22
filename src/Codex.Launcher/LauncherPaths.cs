@@ -49,6 +49,9 @@ internal static class LauncherPaths
         return Path.Combine(string.IsNullOrWhiteSpace(xdg) ? Path.Combine(home, ".local", "share") : xdg, "ttrpg-codex");
     }
 
+    /// <summary>The DM's own systems and packs: survives upgrades, unlike the content folder inside the app.</summary>
+    public static string MyContent(string dataHome) => Path.Combine(dataHome, "content");
+
     public static string RavenData(string dataHome) => Path.Combine(dataHome, "RavenData");
     public static string SettingsFile(string dataHome) => Path.Combine(dataHome, "launcher.json");
     public static string LogFile(string dataHome) => Path.Combine(dataHome, "logs", "server.log");

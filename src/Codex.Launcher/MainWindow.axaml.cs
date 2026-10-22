@@ -128,6 +128,7 @@ public partial class MainWindow : Window
 
     private void OnHelp(object? sender, RoutedEventArgs e) => ShowHelp();
     private void OnOpenData(object? sender, RoutedEventArgs e) => model.OpenDataFolder();
+    private void OnOpenContent(object? sender, RoutedEventArgs e) => model.OpenMyContentFolder();
     private void OnOpenBackups(object? sender, RoutedEventArgs e) => model.OpenBackupsFolder();
 
     private void OnToggle(object? sender, RoutedEventArgs e) => model.Toggle();
