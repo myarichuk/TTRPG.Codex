@@ -44,6 +44,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly List<SessionEvent> _pendingEvents = new();
     private readonly List<RollLogEntry> _pendingRolls = new();
     private readonly List<SessionNote> _pendingNotes = new();
+    // Corrections and removals of notes already stored, by id, in order: a null note means removed.
+    private readonly List<(string Id, SessionNote? Note)> _pendingNoteChanges = new();
     private readonly List<string> _pendingEncounterIds = new();
     private volatile RuntimeSnapshot _snapshot = RuntimeSnapshot.Empty;
     private EncounterDocument? _activeEncounter;
@@ -358,9 +360,54 @@ public sealed class CampaignRuntime : IAsyncDisposable
     internal void AddSessionNote(SessionNote note)
     {
         if (_activeSession == null) return;
+        note.Id = Guid.NewGuid().ToString("N");
+        if (_activeEncounter is { Participants.Count: > 0 } encounter)
+        {
+            note.EncounterId = encounter.Id;
+            note.Round = encounter.Round;
+            note.TurnActorId = encounter.TurnIndex >= 0 && encounter.TurnIndex < encounter.Participants.Count
+                ? encounter.Participants[encounter.TurnIndex].ActorId
+                : null;
+        }
+
         _activeSession.Notes.Add(note);
         _pendingNotes.Add(note);
     }
+
+    /// <summary>Replaces a note's words and kind when <paramref name="editorId"/> may change it; returns the new note, or
+    /// null when there is no such note or they may not. The note is replaced, never changed in place: the last
+    /// snapshot still holds the old one and may be rendering it.</summary>
+    internal SessionNote? EditSessionNote(string noteId, string editorId, bool editorIsDm, string text, NoteKind kind)
+    {
+        var index = FindEditableNote(noteId, editorId, editorIsDm);
+        if (index < 0 || string.IsNullOrWhiteSpace(text)) return null;
+        var old = _activeSession!.Notes[index];
+        var edited = new SessionNote
+        {
+            Id = old.Id, AuthorId = old.AuthorId, Text = text, IsSecret = old.IsSecret, Kind = old.SpeakerActorId != null ? NoteKind.Note : kind,
+            SpeakerActorId = old.SpeakerActorId, WithActorIds = old.WithActorIds.ToList(),
+            EncounterId = old.EncounterId, Round = old.Round, TurnActorId = old.TurnActorId, Timestamp = old.Timestamp
+        };
+        _activeSession.Notes[index] = edited;
+        _pendingNoteChanges.Add((noteId, edited));
+        return edited;
+    }
+
+    /// <summary>Takes a note out when <paramref name="editorId"/> may; returns the removed note, or null.</summary>
+    internal SessionNote? DeleteSessionNote(string noteId, string editorId, bool editorIsDm)
+    {
+        var index = FindEditableNote(noteId, editorId, editorIsDm);
+        if (index < 0) return null;
+        var removed = _activeSession!.Notes[index];
+        _activeSession.Notes.RemoveAt(index);
+        _pendingNoteChanges.Add((noteId, null));
+        return removed;
+    }
+
+    private int FindEditableNote(string noteId, string editorId, bool editorIsDm) =>
+        _activeSession == null || string.IsNullOrEmpty(noteId)
+            ? -1
+            : _activeSession.Notes.FindIndex(n => n.Id == noteId && SessionNotes.CanEdit(n, editorId, editorIsDm));
 
     /// <summary>
     /// Fires after a command's dirty actors are persisted (3.3) - the runtime IS the "in-process
@@ -551,6 +598,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             _pendingRolls.Clear();
             _pendingNotes.Clear();
+            _pendingNoteChanges.Clear();
             _pendingEncounterIds.Clear();
             return;
         }
@@ -564,18 +612,28 @@ public sealed class CampaignRuntime : IAsyncDisposable
         var events = _pendingEvents.ToArray();
         var rolls = _pendingRolls.ToArray();
         var notes = _pendingNotes.ToArray();
+        var noteChanges = _pendingNoteChanges.ToArray();
         var encounterIds = _pendingEncounterIds.ToArray();
         await _sessionRepository.UpdateAsync(_activeSession.Id, stored =>
         {
             stored.Events.AddRange(events);
             stored.RollLog.AddRange(rolls);
             stored.Notes.AddRange(notes);
+            foreach (var (id, changed) in noteChanges)
+            {
+                var index = stored.Notes.FindIndex(n => n.Id == id);
+                if (index < 0) continue;
+                if (changed == null) stored.Notes.RemoveAt(index);
+                else stored.Notes[index] = changed;
+            }
+
             stored.EncounterIds.AddRange(encounterIds.Where(id => !stored.EncounterIds.Contains(id)));
         });
 
         _pendingEvents.Clear();
         _pendingRolls.Clear();
         _pendingNotes.Clear();
+        _pendingNoteChanges.Clear();
         _pendingEncounterIds.Clear();
     }
 

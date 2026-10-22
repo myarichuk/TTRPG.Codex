@@ -13,6 +13,7 @@
 @inject ICampaignAccessResolver AccessResolver
 @inject IUserRepository UserRepo
 @inject AiFeatures Ai
+@inject MentionSources MentionSources
 @inject ILogger<SessionDetail> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
@@ -90,7 +91,7 @@ else
                 @if (access.IsDm)
                 {
                     <label for="recap" class="visually-hidden">Recap</label>
-                    <textarea id="recap" class="field-input mb-2" rows="8" placeholder="What happened this session, as the players will read it…" @bind="editRecap" @bind:event="oninput"></textarea>
+                    <textarea id="recap" class="field-input mb-2" rows="8" placeholder="What happened this session, as the players will read it…" @bind="editRecap" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="mention-hint"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync">Save recap</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">Pre-fill from events</CodexButton>
@@ -98,11 +99,12 @@ else
                             <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? "Drafting…" : "Draft with AI")
                         </CodexButton>
                     </div>
+                    <p id="mention-hint" class="field-hint">Mention someone with @@, a place with # or an item with $; players read only the names they know.</p>
                     <p id="ai-help" class="field-hint">The player draft is built from the event log, party notes and open rolls only. Secret rolls, private notes and secret table notes never reach it.</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(session.Recap))
                 {
-                    <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(session.Recap))</div>
+                    <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(session.Recap, mentions, CampaignId))</div>
                 }
                 else
                 {
@@ -118,7 +120,7 @@ else
                         <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> Only you</span>
                     </div>
                     <label for="dm-summary" class="visually-hidden">DM summary</label>
-                    <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput"></textarea>
+                    <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput" data-mentions="@mentionsJson"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync">Save summary</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
@@ -148,21 +150,29 @@ else
                                 {
                                     <span class="pill ms-1">At the table</span>
                                 }
+                                @if (note.Kind != null)
+                                {
+                                    <span class="pill pill-kind ms-1">@note.Kind</span>
+                                }
+                                @if (note.Context != null)
+                                {
+                                    <span> · @note.Context</span>
+                                }
                             </div>
                             @if (note.Speaker != null)
                             {
-                                <p class="mb-0"><strong>@note.Speaker:</strong> <q>@note.Text</q></p>
+                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted"> to @string.Join(", ", note.With)</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></q></p>
                             }
                             else
                             {
-                                <p class="mb-0">@note.Text</p>
+                                <p class="mb-0"><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></p>
                             }
                         </div>
                     </div>
                 }
                 <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
                     <label for="new-note" class="field-label">Add a note</label>
-                    <textarea id="new-note" class="field-input mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-testid="new-note"></textarea>
+                    <textarea id="new-note" class="field-input mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="new-note"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <label for="note-visibility" class="visually-hidden">Note visibility</label>
                         <select id="note-visibility" class="field-select field-sm" @bind="newNoteVisibility" aria-label="Note visibility">
@@ -183,7 +193,7 @@ else
                 </div>
                 <p class="small-muted">Your private notebook for this session. Nobody else, not even the DM, can read it.</p>
                 <label for="journal-body" class="visually-hidden">Journal entry</label>
-                <textarea id="journal-body" class="field-input mb-2" rows="7" placeholder="Names to remember, theories, loot you're owed…" @bind="journalBody" @bind:event="oninput" data-testid="session-journal"></textarea>
+                <textarea id="journal-body" class="field-input mb-2" rows="7" placeholder="Names to remember, theories, loot you're owed…" @bind="journalBody" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="session-journal"></textarea>
                 <div class="d-flex align-items-center gap-2">
                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save">Save journal</CodexButton>
                     @if (journalSavedAt != null)
@@ -226,6 +236,12 @@ else
     private string? currentUserId;
     private List<NoteRow> noteRows = new();
     private List<ActorDocument> campaignActors = new();
+    // Places and items for mentions in table notes, as this viewer may see them.
+    private IReadOnlyList<LocationDocument> places = Array.Empty<LocationDocument>();
+    private IReadOnlyList<MentionItem> items = Array.Empty<MentionItem>();
+    private MentionDirectory mentions = MentionDirectory.Empty;
+    // What the recap, summary, note and journal boxes suggest after @, # or $.
+    private string mentionsJson = "[]";
     private IReadOnlyList<SessionEvent> visibleEvents = Array.Empty<SessionEvent>();
     private readonly Dictionary<string, string> memberUsernames = new();
     private string newNoteContent = "";
@@ -241,7 +257,8 @@ else
     private Flash? flash;
 
     /// <summary>One note on the page. <see cref="Speaker"/> is set for a line of dialogue, already named for this viewer.</summary>
-    private sealed record NoteRow(string AuthorId, string Text, DateTime When, string Label, bool AtTable, string? Speaker = null);
+    private sealed record NoteRow(string AuthorId, string Text, DateTime When, string Label, bool AtTable, string? Speaker = null,
+        IReadOnlyList<string>? With = null, string? Kind = null, string? Context = null);
 
     private string NotesTargetId => $"session:{SessionId}";
     private string? Title => session == null ? null : string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title;
@@ -263,11 +280,15 @@ else
             session = loaded?.CampaignId == CampaignId ? loaded : null;
             if (session != null)
             {
-                editRecap = session.Recap ?? "";
-                editDmSummary = access.IsDm ? session.DmSummary ?? "" : "";
                 editTitle = session.Title;
                 editStatus = session.Status;
                 campaignActors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
+                (places, items) = await MentionSources.LoadAsync(campaign, access);
+                mentions = new MentionDirectory(campaignActors, places, items, access.IsDm);
+                mentionsJson = MentionLinks.Json(mentions, campaignActors);
+                // The boxes hold the text as typed (@Name); the stored text holds ids.
+                editRecap = mentions.ForEditing(session.Recap ?? "");
+                editDmSummary = access.IsDm ? mentions.ForEditing(session.DmSummary ?? "") : "";
                 // Notes left here and quick notes typed at the live table, as one timeline. Secret table notes are the DM's alone.
                 var pageNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
                 var actorsById = campaignActors.ToDictionary(a => a.Id);
@@ -276,7 +297,10 @@ else
                     .Concat(session.Notes
                         .Where(n => access.IsDm || !n.IsSecret)
                         .Select(n => new NoteRow(n.AuthorId, n.Text, n.Timestamp, n.IsSecret ? "Secret" : "Party", AtTable: true,
-                            n.SpeakerActorId == null ? null : SessionQuotes.SpeakerName(n.SpeakerActorId, actorsById, access.IsDm))))
+                            n.SpeakerActorId == null ? null : SessionQuotes.SpeakerName(n.SpeakerActorId, actorsById, access.IsDm),
+                            n.SpeakerActorId == null ? Array.Empty<string>() : SessionNotes.WithNames(n, actorsById, access.IsDm),
+                            n.SpeakerActorId == null && n.Kind != NoteKind.Note ? SessionNotes.KindLabel(n.Kind) : null,
+                            SessionNotes.Context(n, actorsById, access.IsDm))))
                     .OrderBy(n => n.When)
                     .ToList();
                 visibleEvents = SessionEventRedactor.ForViewer(session.Events, access, campaignActors);
@@ -288,7 +312,7 @@ else
                 }
 
                 journal = (await JournalRepo.GetMineAsync(access)).FirstOrDefault(j => j.SessionId == SessionId);
-                journalBody = journal?.Body ?? "";
+                journalBody = mentions.ForEditing(journal?.Body ?? "");
                 journalSavedAt = journal?.UpdatedAt;
             }
         }
@@ -340,16 +364,18 @@ else
     private async Task SaveRecapAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
-        var recap = editRecap;
+        var recap = mentions.Encode(editRecap);
         session = await SessionRepo.UpdateAsync(session.Id, stored => stored.Recap = recap) ?? session;
+        editRecap = mentions.ForEditing(session.Recap ?? "");
         flash = Flash.Success("Recap saved.");
     }
 
     private async Task SaveDmSummaryAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
-        var summary = editDmSummary;
+        var summary = mentions.Encode(editDmSummary);
         session = await SessionRepo.UpdateAsync(session.Id, stored => stored.DmSummary = summary) ?? session;
+        editDmSummary = mentions.ForEditing(session.DmSummary ?? "");
         flash = Flash.Success("DM summary saved.");
     }
 
@@ -362,7 +388,7 @@ else
         {
             // The player digest is built from player-visible notes only; the DM digest from everything.
             var allNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
-            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"), campaignActors);
+            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"), campaignActors, places, items);
             if (audience == AiAudience.Players) editRecap = text; else editDmSummary = text;
             flash = Flash.Info("AI draft ready. Review, edit and save.");
         }
@@ -385,7 +411,7 @@ else
     {
         if (access == null) return;
         var entry = journal ?? new JournalEntryDocument { CampaignId = CampaignId, SessionId = SessionId, Title = Title ?? "Session" };
-        entry.Body = journalBody;
+        entry.Body = mentions.Encode(journalBody);
         entry.Title = Title ?? entry.Title;
         if (await JournalRepo.TrySaveAsync(entry, access))
         {
@@ -409,7 +435,7 @@ else
             CampaignId = CampaignId,
             TargetId = NotesTargetId,
             AuthorId = currentUserId,
-            Content = newNoteContent.Trim(),
+            Content = mentions.Encode(newNoteContent.Trim()),
             Visibility = newNoteVisibility
         });
         newNoteContent = "";

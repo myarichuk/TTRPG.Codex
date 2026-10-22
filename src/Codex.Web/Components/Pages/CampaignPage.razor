@@ -43,7 +43,7 @@ else
 {
     var tableLive = RuntimeManager.TryGet(CampaignId) != null;
 
-    <div class="workspace">
+    <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "")">
         <header class="ws-head @(campaign.HasCover ? "has-cover" : "")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
             <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>@campaign.Name</span></nav>
             <h1 data-testid="campaign-title">@campaign.Name</h1>
@@ -118,6 +118,8 @@ else
                 }
             </CascadingValue>
         </div>
+
+        <TableNotesHost CampaignId="@CampaignId" Campaign="campaign" Actors="actors" Access="access" CurrentUserId="@(currentUserId ?? "")" @bind-Open="notesOpen" />
     </div>
 }
 
@@ -160,6 +162,8 @@ else
     private IReadOnlyList<ActorDocument> actors = Array.Empty<ActorDocument>();
     private Flash? flash;
     private CampaignContext? context;
+    // Whether the session notes drawer is open; kept here so it stays open while moving between sections.
+    private bool notesOpen;
     private string? loadedCampaignId;
 
     private string BasePath => $"/campaigns/{CampaignId}";
@@ -176,6 +180,7 @@ else
         if (loadedCampaignId != CampaignId)
         {
             flash = null;
+            notesOpen = false;
             await ReloadAsync();
         }
     }

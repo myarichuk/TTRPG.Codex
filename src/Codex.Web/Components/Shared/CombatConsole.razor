@@ -13,7 +13,7 @@
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
 
-@* The table loop: initiative, hit points, conditions, dice and quick notes, driven off one live
+@* The table loop: initiative, hit points, conditions and dice, driven off one live
    CampaignRuntime per campaign. Every mutation goes through runtime.EnqueueAsync onto the campaign's
    single-writer loop; this component never touches ECS state directly. The DM picks one combatant
    at a time and works them from a command panel under their row. *@
@@ -297,54 +297,6 @@ else
                 </div>
             </section>
 
-            <section class="panel" aria-labelledby="notes-heading">
-                <div class="panel-title"><h3 id="notes-heading">Quick notes</h3></div>
-                <form @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                    @{ var speaker = noteSpeakerId != null ? ActorsById.GetValueOrDefault(noteSpeakerId) : null; }
-                    <div class="chips mb-2" role="group" aria-label="Who said it" data-testid="speaker-chips">
-                        @foreach (var candidate in SpeakerChips())
-                        {
-                            var candidateId = candidate.Id;
-                            <button type="button" class="chip" aria-pressed="@(noteSpeakerId == candidateId ? "true" : "false")" data-testid="speaker-chip" @onclick="() => ToggleSpeaker(candidateId)">@candidate.NameFor(Access.IsDm)</button>
-                        }
-                        <label for="speaker-other" class="visually-hidden">Someone else said it</label>
-                        <select id="speaker-other" class="field-select field-sm" value="@(noteSpeakerId ?? "")" @onchange="e => SetSpeaker(e.Value as string)" data-testid="speaker-other">
-                            <option value="">@(noteSpeakerId == null ? "Someone else…" : "Plain note (no speaker)")</option>
-                            @foreach (var other in Actors.OrderBy(a => a.NameFor(Access.IsDm), StringComparer.OrdinalIgnoreCase))
-                            {
-                                <option value="@other.Id">@other.NameFor(Access.IsDm)</option>
-                            }
-                        </select>
-                    </div>
-                    <label for="quick-note" class="visually-hidden">@(speaker != null ? $"What {speaker.NameFor(Access.IsDm)} said" : "New note")</label>
-                    <textarea id="quick-note" class="field-input field-sm mb-2" rows="2" @bind="noteText" placeholder="@(speaker != null ? $"What did {speaker.NameFor(Access.IsDm)} say?" : "Something worth remembering…")"></textarea>
-                    @if (Access.IsDm)
-                    {
-                        <div class="field-check mb-2">
-                            <input type="checkbox" class="field-box" id="noteSecret" @bind="noteSecret" />
-                            <label class="small" for="noteSecret">Secret (DM only)</label>
-                        </div>
-                    }
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Small="true" Class="mb-2">@(speaker != null ? "Add quote" : "Add note")</CodexButton>
-                </form>
-                <div class="log">
-                    @{ var speakersById = ActorsById; }
-                    @foreach (var note in VisibleNotes())
-                    {
-                        <div class="log-entry" data-testid="table-note">
-                            @if (note.SpeakerActorId != null)
-                            {
-                                <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, speakersById, Access.IsDm):</strong> <q>@note.Text</q>
-                            }
-                            else
-                            {
-                                @note.Text
-                            }
-                            @if (note.IsSecret) { <span class="pill ms-1">secret</span> }
-                        </div>
-                    }
-                </div>
-            </section>
         </div>
     </div>
 }
@@ -367,9 +319,6 @@ else
     private RuntimeSnapshot snapshot = RuntimeSnapshot.Empty;
     private string diceExpression = "1d20";
     private bool diceSecret;
-    private string noteText = "";
-    private bool noteSecret;
-    private string? noteSpeakerId;
     private string contentSearch = "";
     private string selectedActorId = "";
     private string? selectedParticipantId;
@@ -1110,48 +1059,6 @@ else
 
     private string ResolveRollerName(RollLogEntry entry) =>
         entry.ActorId != null ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? entry.ActorId : (entry.RollerUserId == CurrentUserId ? "You" : entry.RollerUserId == Campaign.OwnerId ? "DM" : "Player");
-
-    // ---- Notes ----
-
-    private async Task AddNoteAsync()
-    {
-        if (string.IsNullOrWhiteSpace(noteText)) return;
-        var text = noteText;
-        var speakerId = noteSpeakerId != null && ActorsById.ContainsKey(noteSpeakerId) ? noteSpeakerId : null;
-        noteText = "";
-        // Cleared after every line, so the next plain note isn't put in someone's mouth by accident.
-        noteSpeakerId = null;
-        await runtime!.EnqueueAsync(new AddSessionNoteCommand(CurrentUserId, text, noteSecret && Access.IsDm, speakerId));
-    }
-
-    private void ToggleSpeaker(string actorId) => noteSpeakerId = noteSpeakerId == actorId ? null : actorId;
-
-    private void SetSpeaker(string? actorId) => noteSpeakerId = string.IsNullOrEmpty(actorId) ? null : actorId;
-
-    /// <summary>One-click speakers: whoever spoke last, then the initiative order, then the party. The rest are in the
-    /// "Someone else" list. Only actors this viewer can see.</summary>
-    private IEnumerable<ActorDocument> SpeakerChips()
-    {
-        var byId = ActorsById;
-        var recent = snapshot.Notes
-            .Where(n => n.SpeakerActorId != null && (Access.IsDm || !n.IsSecret))
-            .OrderByDescending(n => n.Timestamp)
-            .Select(n => n.SpeakerActorId!);
-        var inOrder = snapshot.Encounter?.Participants.Select(p => p.ActorId) ?? Enumerable.Empty<string>();
-        var party = Actors.Where(a => a.Kind == ActorKind.PlayerCharacter).Select(a => a.Id);
-        return recent.Concat(inOrder).Concat(party)
-            .Distinct()
-            .Select(id => byId.GetValueOrDefault(id))
-            .Where(a => a != null && (Access.IsDm || a.Visibility != ActorVisibility.Hidden))
-            .Take(MaxSpeakerChips)!;
-    }
-
-    private const int MaxSpeakerChips = 8;
-
-    private IEnumerable<SessionNote> VisibleNotes() =>
-        snapshot.Notes
-        .Where(note => Access.IsDm || !note.IsSecret)
-        .OrderByDescending(note => note.Timestamp);
 
     public async ValueTask DisposeAsync()
     {

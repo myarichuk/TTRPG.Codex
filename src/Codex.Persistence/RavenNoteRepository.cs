@@ -36,6 +36,22 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
         return await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
     }
 
+    public async Task<IEnumerable<NoteDocument>> GetVisibleForCampaignAsync(CampaignAccess access)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+
+        var query = session.Query<NoteDocument, NotesByTargetIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
+            .Where(x => x.CampaignId == access.CampaignId);
+
+        if (!access.IsDm)
+        {
+            query = query.Where(x => x.Visibility == CommentVisibility.Public || x.AuthorId == access.UserId);
+        }
+
+        return await query.ToListAsync();
+    }
+
     public async Task<IEnumerable<NoteDocument>> GetAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();

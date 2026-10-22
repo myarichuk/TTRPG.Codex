@@ -20,6 +20,7 @@
 @inject ISystemCatalog SystemCatalog
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
+@inject MentionSources MentionSources
 @inject IMediaStore Media
 @inject AiFeatures Ai
 @inject ArtService Art
@@ -578,7 +579,7 @@ else
                 @if (CanEdit)
                 {
                     <label for="actor-bio" class="visually-hidden">History</label>
-                    <textarea id="actor-bio" class="field-input mb-2" rows="8" placeholder="Where they came from, what they want, who they owe…" @bind="editBiography" @bind:event="oninput" data-testid="sheet-biography"></textarea>
+                    <textarea id="actor-bio" class="field-input mb-2" rows="8" placeholder="Where they came from, what they want, who they owe…" @bind="editBiography" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="bio-mention-hint" data-testid="sheet-biography"></textarea>
                     <div class="ai-row">
                         <label for="bio-instruction" class="visually-hidden">Instruction for the AI</label>
                         <input id="bio-instruction" class="field-input field-sm" placeholder="Optional instruction: “expand into three paragraphs”, “make it grimmer”, “add a rival”…" @bind="bioInstruction" />
@@ -586,11 +587,11 @@ else
                             <LucideIcon IconName="sparkles" Size="14" /> @(busy == "bio" ? "Writing…" : string.IsNullOrWhiteSpace(editBiography) ? "Write with AI" : "Rewrite with AI")
                         </CodexButton>
                     </div>
-                    <p class="field-hint">The AI sees the sheet and this text. Save changes to keep the result.</p>
+                    <p id="bio-mention-hint" class="field-hint">Mention someone with @@, a place with # or an item with $. The AI sees the sheet and this text. Save changes to keep the result.</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
-                    <div class="rules-text mb-0">@((MarkupString)TextFormatting.ToHtml(actor.Biography))</div>
+                    <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(actor.Biography, noteMentions, CampaignId))</div>
                 }
                 else
                 {
@@ -615,7 +616,7 @@ else
                         @foreach (var (_, line) in group)
                         {
                             <li class="mb-2" data-testid="said-line">
-                                <q>@line.Text</q>
+                                <q><MentionText Text="@line.Text" Mentions="noteMentions" CampaignId="@CampaignId" /></q>
                                 @if (line.IsSecret)
                                 {
                                     <span class="pill ms-1">secret</span>
@@ -624,6 +625,17 @@ else
                         }
                     </ul>
                 }
+            </section>
+            }
+
+            @if (ActiveTab == "mentioned")
+            {
+            <section class="panel" aria-labelledby="mentioned-heading" data-testid="mentioned-panel">
+                <div class="panel-title">
+                    <h2 id="mentioned-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="18" Class="title-icon" /> In notes</h2>
+                    <span class="small-muted">@MentionCount @(MentionCount == 1 ? "note mentions" : "notes mention") @actor!.NameFor(access!.IsDm)</span>
+                </div>
+                <NotesMentioning Lines="mentionedIn" Written="writtenIn" Mentions="noteMentions" Actors="noteActors" IsDm="access!.IsDm" CampaignId="@CampaignId" />
             </section>
             }
 
@@ -637,7 +649,7 @@ else
                         <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> Only you</span>
                     </div>
                     <label for="actor-dm-notes" class="visually-hidden">DM notes</label>
-                    <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-testid="sheet-dm-notes"></textarea>
+                    <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="sheet-dm-notes"></textarea>
                     <div class="ai-row">
                         <label for="dm-instruction" class="visually-hidden">Instruction for the AI</label>
                         <input id="dm-instruction" class="field-input field-sm" placeholder="Optional instruction: “give them a secret that ties into the party”…" @bind="dmInstruction" />
@@ -829,6 +841,14 @@ else
 
     /// <summary>Lines this actor spoke at the table, across the campaign's sessions, that this viewer may read.</summary>
     private IReadOnlyList<(SessionDocument Session, SessionNote Line)> said = Array.Empty<(SessionDocument, SessionNote)>();
+    // The table notes that mention this character, and what names the mentions in them and in "said".
+    private IReadOnlyList<(SessionDocument Session, SessionNote Note)> mentionedIn = Array.Empty<(SessionDocument, SessionNote)>();
+    private IReadOnlyList<WrittenMention> writtenIn = Array.Empty<WrittenMention>();
+    private int MentionCount => mentionedIn.Count + writtenIn.Count;
+    private MentionDirectory noteMentions = MentionDirectory.Empty;
+    // What the history and DM notes boxes suggest after @, # or $.
+    private string mentionsJson = "[]";
+    private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
 
     /// <summary>The tray appears wherever the sheet has rolls to offer.</summary>
     private bool ShowTray => actor != null && access != null && Rules?.Skills != null && evaluation is { Skills.Count: > 0 };
@@ -868,6 +888,7 @@ else
             if (Rules?.Inventory != null) tabs.Add(("inventory", "Inventory", "package"));
             tabs.Add(("history", "History", "feather"));
             if (said.Count > 0) tabs.Add(("said", "Said", "message-square-quote"));
+            if (MentionCount > 0) tabs.Add(("mentioned", "In notes", "notebook-pen"));
             if (access?.IsDm == true) tabs.Add(("notes", "DM notes", "lock"));
             return tabs;
         }
@@ -881,8 +902,9 @@ else
             if (actor == null) return 0;
             var count = 0;
             if (editName != actor.Name) count++;
-            if (editBiography != (actor.Biography ?? "")) count++;
-            if (editDmNotes != (actor.DmNotes ?? "")) count++;
+            // The boxes hold the text as typed (@Name), the stored text holds ids.
+            if (editBiography != noteMentions.ForEditing(actor.Biography ?? "")) count++;
+            if (editDmNotes != noteMentions.ForEditing(actor.DmNotes ?? "")) count++;
             foreach (var key in editSheet.Keys.Union(baselineSheet.Keys))
             {
                 editSheet.TryGetValue(key, out var now);
@@ -1019,8 +1041,6 @@ else
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
                 editName = actor.Name;
-                editBiography = actor.Biography ?? "";
-                editDmNotes = actor.DmNotes ?? "";
                 editVisibility = actor.Visibility;
                 editPublicName = actor.PublicName ?? "";
                 editKind = actor.Kind;
@@ -1041,7 +1061,16 @@ else
                 baselineSheet = new Dictionary<string, object>(editSheet);
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
-                said = SessionQuotes.SaidBy(await SessionRepo.GetAllForCampaignAsync(CampaignId), actor.Id, access.IsDm);
+                var visibleActors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
+                var (sessions, writings, mentions) = await MentionSources.NotesAsync(campaign, access, visibleActors, forWriting: CanEdit);
+                said = SessionQuotes.SaidBy(sessions, actor.Id, access.IsDm);
+                mentionedIn = SessionMentions.NotesMentioning(sessions, MentionKind.Actor, actor.Id, access.IsDm);
+                writtenIn = writings.Mentioning(MentionKind.Actor, actor.Id);
+                noteMentions = mentions;
+                noteActors = visibleActors.ToDictionary(a => a.Id);
+                mentionsJson = CanEdit ? MentionLinks.Json(mentions, visibleActors) : "[]";
+                editBiography = mentions.ForEditing(actor.Biography ?? "");
+                editDmNotes = mentions.ForEditing(actor.DmNotes ?? "");
             }
         }
 
@@ -1258,10 +1287,10 @@ else
         target.Name = string.IsNullOrWhiteSpace(editName) ? target.Name : editName.Trim();
         engine?.ApplyAttributeTotals(editSheet);
         target.Sheet = new Dictionary<string, object>(editSheet);
-        target.Biography = string.IsNullOrWhiteSpace(editBiography) ? null : editBiography.Trim();
+        target.Biography = string.IsNullOrWhiteSpace(editBiography) ? null : noteMentions.Encode(editBiography.Trim());
         if (access!.IsDm)
         {
-            target.DmNotes = string.IsNullOrWhiteSpace(editDmNotes) ? null : editDmNotes.Trim();
+            target.DmNotes = string.IsNullOrWhiteSpace(editDmNotes) ? null : noteMentions.Encode(editDmNotes.Trim());
             target.Visibility = editVisibility;
             target.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
             target.Kind = editKind;
@@ -1374,7 +1403,7 @@ else
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, PublicDescription = actor.PublicDescription });
-            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind), Ai.PortraitVisual(snapshot, campaign.SystemId, system), ArtShape.Square);
+            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind), Ai.PortraitVisual(ForAi(snapshot), campaign.SystemId, system), ArtShape.Square);
             using var stream = new MemoryStream(image.Bytes);
             await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, image.ContentType);
             actor.HasPortrait = true;
@@ -1402,6 +1431,14 @@ else
         await ReloadAsync();
     }
 
+    /// <summary>The model reads names, not stored mention ids.</summary>
+    private ActorDocument ForAi(ActorDocument snapshot)
+    {
+        snapshot.Biography = snapshot.Biography == null ? null : noteMentions.Plain(snapshot.Biography);
+        snapshot.DmNotes = snapshot.DmNotes == null ? null : noteMentions.Plain(snapshot.DmNotes);
+        return snapshot;
+    }
+
     private async Task RewriteAsync(AiAudience audience)
     {
         if (actor == null || campaign == null || currentUserId == null || busy != null) return;
@@ -1409,7 +1446,7 @@ else
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography });
-            var text = await Ai.RewriteAsync(snapshot, campaign, system,
+            var text = await Ai.RewriteAsync(ForAi(snapshot), campaign, system,
                 audience == AiAudience.Dm ? editDmNotes : editBiography,
                 audience == AiAudience.Dm ? dmInstruction : bioInstruction,
                 audience, currentUserId);
@@ -1438,7 +1475,7 @@ else
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name });
-            levelUpAdvice = await Ai.LevelUpAsync(snapshot, campaign, system, currentUserId);
+            levelUpAdvice = await Ai.LevelUpAsync(ForAi(snapshot), campaign, system, currentUserId);
         }
         catch (AiNotConfiguredException)
         {

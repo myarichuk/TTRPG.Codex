@@ -1,16 +1,21 @@
 @inject IJSRuntime JS
 
 @* An accessible confirmation built on the native <dialog>: focus is trapped by the browser, Escape
-   cancels, and the result comes back as a Task so callers read like `if (await Confirm.ShowAsync(...))`. *@
+   cancels, and the result comes back as a Task so callers read like `if (await Confirm.ShowAsync(...))`.
+   Its contents render only while it is asking, so a page with several (the table notes drawer has its own) has one
+   live set of buttons. *@
 <dialog id="@id" class="codex-dialog" aria-labelledby="@(id)-title" @onclose="OnClosed" @oncancel="OnClosed">
-    <div class="dialog-body">
-        <h2 id="@(id)-title">@title</h2>
-        <p class="mb-0">@body</p>
-    </div>
-    <div class="dialog-actions">
-        <CodexButton OnClick="() => Finish(false)">@cancelLabel</CodexButton>
-        <CodexButton Variant="@(destructive ? CodexButtonVariant.Blood : CodexButtonVariant.Plaque)" data-testid="confirm-accept" OnClick="() => Finish(true)">@confirmLabel</CodexButton>
-    </div>
+    @if (pending != null)
+    {
+        <div class="dialog-body">
+            <h2 id="@(id)-title">@title</h2>
+            <p class="mb-0">@body</p>
+        </div>
+        <div class="dialog-actions">
+            <CodexButton OnClick="() => Finish(false)">@cancelLabel</CodexButton>
+            <CodexButton Variant="@(destructive ? CodexButtonVariant.Blood : CodexButtonVariant.Plaque)" data-testid="confirm-accept" OnClick="() => Finish(true)">@confirmLabel</CodexButton>
+        </div>
+    }
 </dialog>
 
 @code {
@@ -35,9 +40,19 @@
         cancelLabel = cancel;
         destructive = isDestructive;
         pending = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        // Opened after the render that fills it in, so the browser focuses its first button.
+        showRequested = true;
         StateHasChanged();
-        await JS.InvokeVoidAsync("codex.showModal", id);
         return await pending.Task;
+    }
+
+    private bool showRequested;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!showRequested) return;
+        showRequested = false;
+        await JS.InvokeVoidAsync("codex.showModal", id);
     }
 
     private void Finish(bool result)

@@ -227,15 +227,39 @@ public class SessionDocument
 
 public class SessionNote
 {
+    /// <summary>Set when the note is added at the table, so it can be corrected or removed later. Empty on notes
+    /// stored before ids existed; those can't be edited.</summary>
+    public string Id { get; set; } = string.Empty;
+
     public string AuthorId { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public bool IsSecret { get; set; }
+    public NoteKind Kind { get; set; }
 
     /// <summary>Who said <see cref="Text"/>, when the note is a line of dialogue; null for a plain note.
     /// Players read the speaker by the name they know them by, and not at all if they can't see them.</summary>
     public string? SpeakerActorId { get; set; }
 
+    /// <summary>Who else was in the conversation a line of dialogue was said in. Each viewer sees only the ones they can see.</summary>
+    public List<string> WithActorIds { get; set; } = new();
+
+    /// <summary>The encounter, round and acting combatant when the note was written; null outside an encounter.
+    /// Stamped by the runtime, never typed. A viewer who can't see <see cref="TurnActorId"/> gets the round alone.</summary>
+    public string? EncounterId { get; set; }
+    public int? Round { get; set; }
+    public string? TurnActorId { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>What a table note records. A line of dialogue is a <see cref="Note"/> with a speaker.</summary>
+public enum NoteKind
+{
+    Note,
+    Clue,
+    Loot,
+    Ruling,
+    FollowUp
 }
 
 public class SessionEvent

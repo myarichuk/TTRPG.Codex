@@ -166,6 +166,44 @@ public class SessionDigestTests
     }
 
     [Fact]
+    public void TableNotes_CarryTheirKindAndWhenInTheFight_NamingOnlyActorsTheAudienceKnows()
+    {
+        var session = Session();
+        session.Notes.Add(new SessionNote { AuthorId = "p1", Text = "A silver key", Kind = NoteKind.Loot, Round = 2, TurnActorId = "mayor", Timestamp = new DateTime(2026, 1, 1, 20, 0, 0) });
+        session.Notes.Add(new SessionNote { AuthorId = "p1", Text = "It went for the lamp", Round = 3, TurnActorId = "lurker", Timestamp = new DateTime(2026, 1, 1, 20, 1, 0) });
+
+        var players = SessionDigest.Build(session, Array.Empty<NoteDocument>(), forDm: false, actors: new[] { Mayor, Stranger, Lurker });
+        var dm = SessionDigest.Build(session, Array.Empty<NoteDocument>(), forDm: true, actors: new[] { Mayor, Stranger, Lurker });
+
+        Assert.Equal(new[] { "p1: [Loot] A silver key (Round 2 · Mayor Hollin's turn)", "p1: It went for the lamp (Round 3)" }, players.Notes);
+        Assert.Contains("p1: It went for the lamp (Round 3 · The Drowned One's turn)", dm.Notes);
+    }
+
+    [Fact]
+    public void Quotes_SayWhoElseWasInTheConversation_ThatTheAudienceCanSee()
+    {
+        var session = Session();
+        session.Notes.Add(new SessionNote { AuthorId = "dm", SpeakerActorId = "mayor", WithActorIds = { "stranger", "lurker" }, Text = "Leave town." });
+
+        var players = SessionDigest.Build(session, Array.Empty<NoteDocument>(), forDm: false, actors: new[] { Mayor, Stranger, Lurker });
+        var dm = SessionDigest.Build(session, Array.Empty<NoteDocument>(), forDm: true, actors: new[] { Mayor, Stranger, Lurker });
+
+        Assert.Equal("Mayor Hollin: \"Leave town.\"", Assert.Single(players.Quotes));
+        Assert.Equal("Mayor Hollin (to Strahd, The Drowned One): \"Leave town.\"", Assert.Single(dm.Quotes));
+    }
+
+    [Fact]
+    public void NoteContext_GivesPlayersTheRoundButNotAHiddenActorsTurn()
+    {
+        var visible = new[] { Mayor, Stranger }.ToDictionary(a => a.Id);
+        var note = new SessionNote { Round = 4, TurnActorId = "lurker" };
+
+        Assert.Equal("Round 4", SessionNotes.Context(note, visible, isDm: false));
+        Assert.Equal("Round 4 · Hooded stranger's turn", SessionNotes.Context(new SessionNote { Round = 4, TurnActorId = "stranger" }, visible, isDm: false));
+        Assert.Null(SessionNotes.Context(new SessionNote(), visible, isDm: true));
+    }
+
+    [Fact]
     public void EmptySession_IsEmpty()
     {
         Assert.True(SessionDigest.Build(new SessionDocument(), Array.Empty<NoteDocument>(), forDm: true).IsEmpty);

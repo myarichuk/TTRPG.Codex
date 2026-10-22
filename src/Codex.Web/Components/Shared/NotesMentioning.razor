@@ -1,0 +1,116 @@
+@using Codex.Persistence
+@inject Codex.Web.Services.ViewerClock Clock
+
+@* The writing that mentions one character, place or item: table notes, recaps, DM summaries and comments grouped
+   under their session, newest session first, then biographies and DM notes under their character, comments under
+   their wiki page and journal entries under their own title. The caller has already left out what the viewer may
+   not read; the other mentions in each line are named for them. *@
+
+@foreach (var session in sessionGroups)
+{
+    <h3 class="h6 mt-3 mb-1"><a href="/campaigns/@CampaignId/sessions/@session.Id">@(string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title)</a></h3>
+    <ul class="list-unstyled mb-0">
+        @foreach (var written in Written.Where(w => w.Home == MentionHome.Session && w.HomeId == session.Id && w.Source != WrittenIn.Comment))
+        {
+            @WrittenRow(written)
+        }
+        @foreach (var (_, note) in Lines.Where(x => x.Session.Id == session.Id))
+        {
+            <li class="notes-entry" data-testid="mentioned-note">
+                <div class="notes-entry-meta">
+                    <LocalTime Value="note.Timestamp" Format="HH:mm" />
+                    @if (note.Round is { } round)
+                    {
+                        <span>· Round @round</span>
+                    }
+                    @if (note.SpeakerActorId == null && note.Kind != NoteKind.Note)
+                    {
+                        <span class="pill pill-kind">@SessionNotes.KindLabel(note.Kind)</span>
+                    }
+                    @if (note.IsSecret) { <span class="pill">secret</span> }
+                </div>
+                @if (note.SpeakerActorId != null)
+                {
+                    <p class="mb-0"><strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, Actors, IsDm):</strong> <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q></p>
+                }
+                else
+                {
+                    <p class="mb-0 notes-text"><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></p>
+                }
+            </li>
+        }
+        @foreach (var written in Written.Where(w => w.Home == MentionHome.Session && w.HomeId == session.Id && w.Source == WrittenIn.Comment).OrderBy(w => w.When))
+        {
+            @WrittenRow(written)
+        }
+    </ul>
+}
+
+@foreach (var group in otherGroups)
+{
+    var first = group.First();
+    <h3 class="h6 mt-3 mb-1">
+        <span class="small-muted">@HomeLabel(first.Home):</span>
+        <a href="@MentionLinks.Href(CampaignId, first)">@(string.IsNullOrWhiteSpace(first.HomeTitle) ? "Untitled" : first.HomeTitle)</a>
+    </h3>
+    <ul class="list-unstyled mb-0">
+        @foreach (var written in group)
+        {
+            @WrittenRow(written)
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<(SessionDocument Session, SessionNote Note)> Lines { get; set; } = Array.Empty<(SessionDocument, SessionNote)>();
+
+    /// <summary>Everything else that mentions it, from <see cref="MentionWritings.Mentioning"/>.</summary>
+    [Parameter] public IReadOnlyList<WrittenMention> Written { get; set; } = Array.Empty<WrittenMention>();
+
+    [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+
+    /// <summary>The actors this viewer may see, to name the speaker of a quote.</summary>
+    [Parameter] public IReadOnlyDictionary<string, ActorDocument> Actors { get; set; } = new Dictionary<string, ActorDocument>();
+    [Parameter] public bool IsDm { get; set; }
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+
+    private IReadOnlyList<(string Id, string Title, DateTime Date)> sessionGroups = Array.Empty<(string, string, DateTime)>();
+    private IReadOnlyList<IGrouping<(MentionHome, string), WrittenMention>> otherGroups = Array.Empty<IGrouping<(MentionHome, string), WrittenMention>>();
+
+    protected override void OnParametersSet()
+    {
+        sessionGroups = Lines.Select(x => (x.Session.Id, x.Session.Title, x.Session.Date))
+            .Concat(Written.Where(w => w.Home == MentionHome.Session).Select(w => (Id: w.HomeId, Title: w.HomeTitle, Date: w.HomeDate)))
+            .DistinctBy(s => s.Id)
+            .OrderByDescending(s => s.Date)
+            .ToList();
+        otherGroups = Written.Where(w => w.Home != MentionHome.Session)
+            .GroupBy(w => (w.Home, w.HomeId))
+            .OrderBy(g => g.Key.Home)
+            .ThenByDescending(g => g.Max(w => w.When))
+            .ToList();
+    }
+
+    private RenderFragment WrittenRow(WrittenMention written) =>
+        @<li class="notes-entry" data-testid="mentioned-writing">
+            <div class="notes-entry-meta">
+                @if (written.Source != WrittenIn.Journal)
+                {
+                    <span class="pill pill-kind">@MentionWritings.SourceLabel(written.Source)</span>
+                }
+                @if (written.Source == WrittenIn.Comment)
+                {
+                    <LocalTime Value="written.When" Format="d MMM, HH:mm" />
+                }
+                @if (written.Private && written.Source is WrittenIn.Comment) { <span class="pill">private</span> }
+            </div>
+            <p class="mb-0 notes-text"><MentionText Text="@written.Excerpt" Mentions="Mentions" CampaignId="@CampaignId" /></p>
+        </li>;
+
+    private static string HomeLabel(MentionHome home) => home switch
+    {
+        MentionHome.Character => "Character",
+        MentionHome.WikiPage => "Wiki",
+        _ => "Journal"
+    };
+}

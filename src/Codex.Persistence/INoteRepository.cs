@@ -14,6 +14,9 @@ public interface INoteRepository
 
     Task<IEnumerable<NoteDocument>> GetNotesByAuthorAsync(string campaignId, string authorId);
 
+    /// <summary>Every note in a campaign this viewer may read, on any target, scoped like <see cref="GetNotesForTargetAsync"/>.</summary>
+    Task<IEnumerable<NoteDocument>> GetVisibleForCampaignAsync(CampaignAccess access);
+
     /// <summary>
     /// Every note in a campaign, regardless of target or visibility. Export/backup only -
     /// never call this for a player-facing read; use <see cref="GetNotesForTargetAsync"/> there.

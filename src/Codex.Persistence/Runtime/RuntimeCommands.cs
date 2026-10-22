@@ -685,22 +685,66 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
 /// <summary>Appends a DM/player quick note to the live session (3.7) - reuses the same
 /// <see cref="SessionDocument.Notes"/> list the recap editor (4.1) will read from, rather than a
 /// separate combat-log-only notes concept. With a speaker it is a line of dialogue; the event then names
-/// the speaker's id, so a player who can't see them doesn't get it.</summary>
-public sealed record AddSessionNoteCommand(string AuthorId, string Text, bool IsSecret, string? SpeakerActorId = null) : IRuntimeCommand
+/// the speaker's id, so a player who can't see them doesn't get it. The runtime stamps the encounter,
+/// round and acting combatant, so a note written mid-fight says when it happened without anyone typing it.</summary>
+public sealed record AddSessionNoteCommand(
+    string AuthorId,
+    string Text,
+    bool IsSecret,
+    string? SpeakerActorId = null,
+    NoteKind Kind = NoteKind.Note,
+    IReadOnlyList<string>? WithActorIds = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
-    public void Apply(CampaignRuntime runtime) => runtime.AddSessionNote(new SessionNote { AuthorId = AuthorId, Text = Text, IsSecret = IsSecret, SpeakerActorId = SpeakerActorId });
+    public void Apply(CampaignRuntime runtime) => runtime.AddSessionNote(new SessionNote
+    {
+        AuthorId = AuthorId,
+        Text = Text,
+        IsSecret = IsSecret,
+        Kind = Kind,
+        SpeakerActorId = SpeakerActorId,
+        WithActorIds = SpeakerActorId == null ? new List<string>() : (WithActorIds ?? Array.Empty<string>()).Where(id => id != SpeakerActorId).Distinct().ToList()
+    });
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    // The note's words stay out of the event log: they are in the notes list, read per viewer, and a note
+    // corrected or removed later would otherwise live on here unchanged.
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(IsSecret ? "A secret" : "A", "added", Kind, SpeakerActorId);
+}
+
+/// <summary>Corrects a table note's words or kind. Only its author or the DM may; anyone else's edit is ignored.</summary>
+public sealed record EditSessionNoteCommand(string NoteId, string EditorId, bool EditorIsDm, string Text, NoteKind Kind) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    private SessionNote? _edited;
+
+    public void Apply(CampaignRuntime runtime) => _edited = runtime.EditSessionNote(NoteId, EditorId, EditorIsDm, Text, Kind);
+
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(_edited is { IsSecret: true } ? "A secret" : "A", _edited == null ? "left unchanged" : "corrected", Kind, _edited?.SpeakerActorId);
+}
+
+/// <summary>Takes a table note out of the session. Only its author or the DM may.</summary>
+public sealed record DeleteSessionNoteCommand(string NoteId, string EditorId, bool EditorIsDm) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    private SessionNote? _removed;
+
+    public void Apply(CampaignRuntime runtime) => _removed = runtime.DeleteSessionNote(NoteId, EditorId, EditorIsDm);
+
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(_removed is { IsSecret: true } ? "A secret" : "A", _removed == null ? "left in place" : "removed", _removed?.Kind ?? NoteKind.Note, _removed?.SpeakerActorId);
+}
+
+/// <summary>The one shape every note event takes: type "Note" (which the recap digest skips, since it reads the notes
+/// themselves), no words and no names, and the speaker's id so a player who can't see them doesn't get the event.</summary>
+internal static class SessionNoteEvents
+{
+    public static SessionEvent Describe(string article, string verb, NoteKind kind, string? speakerActorId) => new()
     {
         Type = "Note",
-        Description = IsSecret
-            ? $"{AuthorId} added a secret {(SpeakerActorId == null ? "note" : "quote")}."
-            // No speaker name here: the event log shows actor names unredacted, and a quote's speaker may be
-            // known to players only by a public name. The notes list names them per viewer.
-            : SpeakerActorId == null ? $"Note: {Text}" : $"Quote: \"{Text}\"",
-        ActorIds = SpeakerActorId == null ? new List<string>() : new List<string> { SpeakerActorId }
+        Description = $"{article} {(speakerActorId != null ? "quote" : SessionNotes.KindNoun(kind))} was {verb}.",
+        ActorIds = speakerActorId == null ? new List<string>() : new List<string> { speakerActorId }
     };
 }
 
