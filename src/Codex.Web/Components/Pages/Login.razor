@@ -148,6 +148,8 @@
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            if (user.Culture is not null)
+                CultureCookie.Write(HttpContext, user.Culture);
 
             var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
             NavManager.NavigateTo(dest, forceLoad: true);

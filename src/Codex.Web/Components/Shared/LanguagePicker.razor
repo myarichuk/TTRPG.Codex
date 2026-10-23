@@ -1,0 +1,28 @@
+@implements IDisposable
+@inject NavigationManager Nav
+@inject Localizer L
+
+@* A plain GET form, so it works on the static sign-in pages and in the interactive circuit alike:
+   /set-culture writes the cookie and bounces back to the page the user was on. *@
+<form method="get" action="/set-culture" class="lang-picker" aria-label="@L["Language.Label"]">
+    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+    @foreach (var (tag, name) in SupportedCultures.All)
+    {
+        <button type="submit" name="culture" value="@tag" lang="@tag" class="lang-btn"
+                aria-current="@(tag == Current ? "true" : null)"
+                title="@L["Language.Change"]">@name</button>
+    }
+</form>
+
+@code {
+    private string Current => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
+
+    private string ReturnUrl => "/" + Nav.ToBaseRelativePath(Nav.Uri);
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

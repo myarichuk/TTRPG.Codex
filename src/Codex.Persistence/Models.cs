@@ -168,6 +168,9 @@ public class UserDocument
     public List<AiProviderConfig> ImageProviders { get; set; } = new();
 
     public string? DefaultImageProviderId { get; set; }
+
+    /// <summary>The language this user picked for the interface (en, ru, he). Null follows the server default.</summary>
+    public string? Culture { get; set; }
 }
 
 /// <summary>One OpenAI-compatible chat endpoint a user has set up: OpenRouter, OpenAI, a local

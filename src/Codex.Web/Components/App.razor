@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@Language" dir="@SupportedCultures.Direction(Language)">
 
 <head>
     <meta charset="utf-8" />
@@ -43,7 +43,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/></svg>
             </div>
             <div class="boot-name">TTRPG.Codex</div>
-            <p class="boot-status">Loading…</p>
+            <p class="boot-status">@L["App.Loading"]</p>
         </div>
     </div>
     <Routes @rendermode="PageRenderMode" />
@@ -56,6 +56,9 @@
 
 @code {
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    [Inject] private Localizer L { get; set; } = default!;
+
+    private static string Language => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
 
     // Pages marked [ExcludeFromInteractiveRouting] (sign in, register) render as static server
     // HTML: their forms post with the antiforgery token and HttpContext, which an interactive
