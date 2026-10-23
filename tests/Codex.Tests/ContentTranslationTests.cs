@@ -210,4 +210,79 @@ public class ContentTranslationTests : IDisposable
         Assert.Equal("STR", ru.Attributes[0].CanonicalAbbreviation);
         Assert.Equal("Poisoned", system.DisplayCondition("Poisoned"));
     }
+
+    private const string SkillsYaml = """
+        id: demo
+        name: Demo
+        attributes:
+          - { key: str, label: Strength, abbreviation: STR, modifier: half-minus-five }
+        actorFields:
+          - { key: level, label: Level, type: Number, defaultValue: 1 }
+        entityTypes:
+          - { type: feat, label: Feat }
+        sheetRules:
+          derived:
+            - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4" }
+          lists:
+            - { key: feats, label: Feats, targetEntityType: feat }
+          skills:
+            label: Skills
+            list:
+              - { key: athl, label: Athletics, attribute: str }
+            passives:
+              - { key: passiveAthletics, label: Passive Athletics, skill: athl }
+        """;
+
+    private static SystemDefinition TranslatedSkillsSystem()
+    {
+        var system = Codex.Core.Systems.SystemDefinitionLoader.Parse(SkillsYaml);
+        system.Translations["ru"] = new SystemTranslation
+        {
+            SheetRules =
+            {
+                Derived = { ["proficiencyBonus"] = "Бонус мастерства" },
+                Lists = { ["feats"] = "Черты" },
+                Skills = { ["athl"] = "Атлетика" },
+                Passives = { ["passiveAthletics"] = "Пассивная Атлетика" },
+                SkillsLabel = "Навыки"
+            }
+        };
+        return system;
+    }
+
+    [Fact]
+    public void SheetRuleLabels_AreTranslated_WithoutTouchingTheOriginal()
+    {
+        var system = TranslatedSkillsSystem();
+        var ru = system.Localize("ru");
+
+        Assert.Equal("Бонус мастерства", ru.SheetRules!.Derived[0].Label);
+        Assert.Equal("2 + (level - 1) / 4", ru.SheetRules.Derived[0].Formula);
+        Assert.Equal("Черты", ru.SheetRules.Lists[0].Label);
+        Assert.Equal("Навыки", ru.SheetRules.Skills!.Label);
+        Assert.Equal("Атлетика", ru.SheetRules.Skills.List[0].Label);
+        Assert.Equal("Athletics", ru.SheetRules.Skills.List[0].CanonicalLabel);
+        Assert.Equal("Proficiency Bonus", system.SheetRules!.Derived[0].Label);
+        Assert.Equal("Athletics", system.SheetRules.Skills!.List[0].Label);
+    }
+
+    [Fact]
+    public void Skills_ListedByTheirEnglishLabel_AreStillProficient_OnALocalizedSystem()
+    {
+        var ru = TranslatedSkillsSystem().Localize("ru");
+        var engine = new Codex.Core.Rules.SheetRuleEngine(ru, Codex.Core.Rules.NullEntryResolver.Instance);
+        var sheet = new Dictionary<string, object>
+        {
+            ["level"] = 5L, ["str"] = 14L, ["attrMethod"] = "manual",
+            ["skillProficiencies"] = new List<object> { "Athletics" }
+        };
+
+        var result = engine.Evaluate(sheet);
+
+        var skill = Assert.Single(result.Skills!);
+        Assert.Equal("Атлетика", skill.Label);
+        Assert.True(skill.Proficient);
+        Assert.Equal(2 + 3, skill.Bonus); // Strength 14 is +2, proficiency at level 5 is +3
+        Assert.DoesNotContain(result.Warnings, w => w.Message.Contains("is not a skill"));
+    }
 }

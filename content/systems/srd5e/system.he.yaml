@@ -352,3 +352,44 @@ values:
   Long Rest: מנוחה ארוכה
   Dead: מת
   Stable: יציב
+
+sheetRules:
+  derived:
+    proficiencyBonus: בונוס מיומנות
+    initiative: יוזמה
+  lists:
+    cantrips: לחשי בסיס
+    spells: לחשים מוכנים
+    grantedSpells: לחשים מוענקים
+    feats: תכונות מיוחדות
+    fightingStyles: סגנונות לחימה
+    extraOriginFeats: תכונות מוצא נוספות
+  skills:
+    acrobatics: אקרובטיקה
+    animal-handling: טיפול בחיות
+    arcana: כישוף
+    athletics: אתלטיקה
+    deception: הונאה
+    history: היסטוריה
+    insight: תובנה
+    intimidation: הפחדה
+    investigation: חקירה
+    medicine: רפואה
+    nature: טבע
+    perception: תפיסה
+    performance: הופעה
+    persuasion: שכנוע
+    religion: דת
+    sleight-of-hand: תחבולה
+    stealth: התגנבות
+    survival: הישרדות
+  passives:
+    passivePerception: תפיסה פסיבית
+    passiveInsight: תובנה פסיבית
+    passiveInvestigation: חקירה פסיבית
+  slotPools:
+    slots: תאי לחשים
+    pact: תאי ברית
+  skillsLabel: מיומנויות
+  inventoryLabel: ציוד
+  multiclassLabel: מקצועות נוספים

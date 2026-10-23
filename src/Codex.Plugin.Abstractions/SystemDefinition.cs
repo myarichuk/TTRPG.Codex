@@ -403,8 +403,46 @@ public class SystemDefinition
                 HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing
             };
         }).ToList();
+        copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules);
         copy.Translations = Translations;
         copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);
+        return copy;
+    }
+
+    private static readonly System.Reflection.MethodInfo ShallowCopy =
+        typeof(object).GetMethod("MemberwiseClone", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+    private static T Copy<T>(T value) where T : class => (T)ShallowCopy.Invoke(value, null)!;
+
+    private static string Pick(Dictionary<string, string> map, string key, string original) =>
+        map.TryGetValue(key, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : original;
+
+    /// <summary>The rules with their labels translated. Only the label-bearing objects on the way down are copied; every
+    /// formula, condition and key is shared with the original.</summary>
+    private static SheetRules ApplyRuleLabels(SheetRules rules, SheetRulesTranslation t)
+    {
+        var copy = Copy(rules);
+        copy.Derived = rules.Derived.Select(d => { var c = Copy(d); c.Label = Pick(t.Derived, d.Key, d.Label); return c; }).ToList();
+        copy.Lists = rules.Lists.Select(l => { var c = Copy(l); c.Label = Pick(t.Lists, l.Key, l.Label); return c; }).ToList();
+        copy.SlotPools = rules.SlotPools.Select(p => { var c = Copy(p); c.Label = Pick(t.SlotPools, p.Key, p.Label); return c; }).ToList();
+        if (rules.Inventory != null)
+        {
+            copy.Inventory = Copy(rules.Inventory);
+            copy.Inventory.Label = t.InventoryLabel ?? rules.Inventory.Label;
+        }
+        if (rules.Multiclass != null)
+        {
+            copy.Multiclass = Copy(rules.Multiclass);
+            copy.Multiclass.Label = t.MulticlassLabel ?? rules.Multiclass.Label;
+        }
+        if (rules.Skills != null)
+        {
+            var skills = Copy(rules.Skills);
+            skills.Label = t.SkillsLabel ?? rules.Skills.Label;
+            skills.List = rules.Skills.List.Select(s => { var c = Copy(s); c.CanonicalLabel = s.CanonicalLabel ?? s.Label; c.Label = Pick(t.Skills, s.Key, s.Label); return c; }).ToList();
+            skills.Passives = rules.Skills.Passives.Select(p => { var c = Copy(p); c.Label = Pick(t.Passives, p.Key, p.Label); return c; }).ToList();
+            copy.Skills = skills;
+        }
         return copy;
     }
 

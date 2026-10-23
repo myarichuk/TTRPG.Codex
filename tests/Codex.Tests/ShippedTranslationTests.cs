@@ -41,7 +41,22 @@ public class ShippedTranslationTests
                 Check($"{type} field", translated.Fields.Keys, defined.EditorFields().Select(f => f.Key));
             }
 
+            var rules = system.SheetRules;
+            var labels = t.SheetRules;
+            Check("derived stat", labels.Derived.Keys, rules?.Derived.Select(d => d.Key) ?? []);
+            Check("pick list", labels.Lists.Keys, rules?.Lists.Select(l => l.Key) ?? []);
+            Check("skill", labels.Skills.Keys, rules?.Skills?.List.Select(k => k.Key) ?? []);
+            Check("passive", labels.Passives.Keys, rules?.Skills?.Passives.Select(p => p.Key) ?? []);
+            Check("slot pool", labels.SlotPools.Keys, rules?.SlotPools.Select(p => p.Key) ?? []);
+
             Assert.Empty(problems);
+
+            // Whatever the rules label, the language labels too.
+            Assert.All(rules?.Derived ?? [], d => Assert.True(labels.Derived.ContainsKey(d.Key), $"{language}: derived stat {d.Key} untranslated"));
+            Assert.All(rules?.Lists ?? [], l => Assert.True(labels.Lists.ContainsKey(l.Key), $"{language}: list {l.Key} untranslated"));
+            Assert.All(rules?.Skills?.List ?? [], k => Assert.True(labels.Skills.ContainsKey(k.Key), $"{language}: skill {k.Key} untranslated"));
+            Assert.All(rules?.Skills?.Passives ?? [], p => Assert.True(labels.Passives.ContainsKey(p.Key), $"{language}: passive {p.Key} untranslated"));
+            Assert.All(rules?.SlotPools ?? [], p => Assert.True(labels.SlotPools.ContainsKey(p.Key), $"{language}: slot pool {p.Key} untranslated"));
 
             // Every attribute and condition is shown in the language, so a table is never half translated.
             Assert.All(system.Attributes, a => Assert.True(t.Attributes.ContainsKey(a.Key), $"{language}: attribute {a.Key} untranslated"));

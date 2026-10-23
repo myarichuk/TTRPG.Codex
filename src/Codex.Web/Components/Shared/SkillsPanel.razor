@@ -99,7 +99,7 @@
                      OnClick="() => OnRoll.InvokeAsync(new RollRequest(label, bonus))" />
     };
 
-    private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString();
+    private static string Signed(int value) => Bidi.Ltr(value >= 0 ? "+" + value : value.ToString());
 
     private async Task SetAsync(string listKey, string skill, bool on)
     {

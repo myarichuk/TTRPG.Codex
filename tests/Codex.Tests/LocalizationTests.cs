@@ -108,6 +108,19 @@ public class LocalizationTests
         Assert.Empty(missing);
     }
 
+    [Theory]
+    [InlineData("he", true)]
+    [InlineData("ru", false)]
+    [InlineData("en", false)]
+    public void Bidi_IsolatesNumbersOnlyInRightToLeftLanguages(string language, bool isolated)
+    {
+        var shown = Bidi.Ltr("+2", CultureInfo.GetCultureInfo(language));
+
+        Assert.Equal(isolated, shown != "+2");
+        Assert.Equal("+2", shown.Trim('\u2066', '\u2069'));
+        Assert.Equal("", Bidi.Ltr("", CultureInfo.GetCultureInfo("he")));
+    }
+
     private static string Placeholders(string text) =>
         string.Join(",", Regex.Matches(text, @"\{(\d+)").Select(m => m.Groups[1].Value).Distinct().Order());
 }

@@ -107,7 +107,7 @@ else
                 var hpBand = hpPct < 25 ? "hp-low" : hpPct < 50 ? "hp-mid" : "hp-high";
                 <div class="stat-cell stat-hp" role="listitem">
                     <span class="stat-label">@vital.Label</span>
-                    <span class="stat-value" data-testid="plate-hp">@hpNow@(hpMax > 0 ? $" / {hpMax}" : "")</span>
+                    <span class="stat-value" data-testid="plate-hp">@Bidi.Ltr(hpNow + (hpMax > 0 ? $" / {hpMax}" : ""))</span>
                     @if (hpMax > 0)
                     {
                         <div class="hp-bar @hpBand" role="progressbar" aria-label="@vital.Label" aria-valuemin="0" aria-valuemax="@hpMax" aria-valuenow="@hpNow">
@@ -266,7 +266,7 @@ else
                             var bonus = summary?.Bonuses.GetValueOrDefault(attr.Key) ?? 0;
                             var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
                             var modifier = Modifier(attr, total);
-                            var modifierText = modifier == null ? null : (modifier >= 0 ? "+" : "") + modifier;
+                            var modifierText = modifier == null ? null : Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier);
                             var checkLabel = L["Actor.Skills.Check", attr.Label];
                             var inputId = "attr-input-" + attr.Key;
                             var testId = "attr-" + attr.Key;
@@ -987,7 +987,7 @@ else
         _ => L["Actor.Sheet.MethodManual"]
     };
 
-    private static string FormatSigned(object value) => value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty;
+    private static string FormatSigned(object value) => Bidi.Ltr(value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty);
     private bool HasLevel => schema?.Fields.Any(f => f.Key == "level") == true;
     private int CurrentLevel => YamlValues.GetInt(editSheet, "level") ?? 1;
 

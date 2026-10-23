@@ -81,7 +81,7 @@
         _ => L["Actor.Hp.ModeManual"]
     };
 
-    private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString();
+    private static string Signed(int value) => Bidi.Ltr(value >= 0 ? "+" + value : value.ToString());
 
     private async Task SetModeAsync(string? mode)
     {

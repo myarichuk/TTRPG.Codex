@@ -75,6 +75,10 @@ public class SkillDefinition
 {
     public string Key { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
+
+    /// <summary>The label as system.yaml wrote it. Sheets and backgrounds list skills by it ("Athletics"), so the rules
+    /// match on it even when a localized copy shows <see cref="Label"/> in another language.</summary>
+    public string? CanonicalLabel { get; set; }
     public string Attribute { get; set; } = string.Empty;
 }
 

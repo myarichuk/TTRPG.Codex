@@ -352,3 +352,44 @@ values:
   Long Rest: Продолжительный отдых
   Dead: Мёртв
   Stable: Стабилен
+
+sheetRules:
+  derived:
+    proficiencyBonus: Бонус мастерства
+    initiative: Инициатива
+  lists:
+    cantrips: Заговоры
+    spells: Подготовленные заклинания
+    grantedSpells: Дарованные заклинания
+    feats: Черты
+    fightingStyles: Боевые стили
+    extraOriginFeats: Дополнительные черты происхождения
+  skills:
+    acrobatics: Акробатика
+    animal-handling: Уход за животными
+    arcana: Магия
+    athletics: Атлетика
+    deception: Обман
+    history: История
+    insight: Проницательность
+    intimidation: Запугивание
+    investigation: Расследование
+    medicine: Медицина
+    nature: Природа
+    perception: Внимательность
+    performance: Выступление
+    persuasion: Убеждение
+    religion: Религия
+    sleight-of-hand: Ловкость рук
+    stealth: Скрытность
+    survival: Выживание
+  passives:
+    passivePerception: Пассивная внимательность
+    passiveInsight: Пассивная проницательность
+    passiveInvestigation: Пассивное расследование
+  slotPools:
+    slots: Ячейки заклинаний
+    pact: Ячейки договора
+  skillsLabel: Навыки
+  inventoryLabel: Снаряжение
+  multiclassLabel: Дополнительные классы

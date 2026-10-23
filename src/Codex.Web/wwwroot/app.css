@@ -361,6 +361,9 @@ hr { border-color: var(--border); opacity: 1; }
     color: var(--text-2); text-decoration: none; font-weight: 500; font-size: 1rem;
     transition: background var(--transition), color var(--transition), transform var(--transition);
 }
+.app-nav a { white-space: nowrap; }
+/* Longer translations ("О проекте и лицензии") must not wrap the header to three lines. */
+.app-nav a span { overflow: hidden; text-overflow: ellipsis; max-width: 11rem; }
 .app-nav a:hover { background: var(--surface-2); color: var(--text); }
 .app-nav a:active { transform: scale(0.97); }
 .app-nav a.active, .app-nav a[aria-current="page"] { background: var(--accent-soft); border-color: var(--border-strong); color: var(--text); font-weight: 700; }
@@ -1483,6 +1486,12 @@ a.mention:hover { text-decoration: none; border-bottom-style: solid; }
 
 /* Arrows and chevrons that mean "back"/"next" point the other way in a right-to-left layout. */
 :root[dir="rtl"] .lucide-icon[data-dir] { transform: scaleX(-1); }
+
+/* Text people wrote (descriptions, notes, wiki pages, names) can be in either script whatever language the app is
+   in, so each paragraph takes its direction from its own first letter instead of the page's. */
+main p, main li, main td, main th, main h1, main h2, main h3, main h4, main textarea, main input[type="text"], main input[type="search"] {
+    unicode-bidi: plaintext;
+}
 
 /* Dice notation, stats and numbers keep their left-to-right shape inside Hebrew sentences. */
 bdi, .dice, .stat-token { unicode-bidi: isolate; }
