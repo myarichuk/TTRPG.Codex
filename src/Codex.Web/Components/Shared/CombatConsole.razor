@@ -168,7 +168,7 @@ else
                     <datalist id="conditions-list">
                         @foreach (var condition in PickableConditions)
                         {
-                            <option value="@condition"></option>
+                            <option value="@condition" label="@ConditionName(condition)"></option>
                         }
                     </datalist>
                     <div class="console-row mt-3 pt-3 border-top">
@@ -342,6 +342,9 @@ else
 
     private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
     private VitalsRules? Vitals => Definition?.Vitals;
+    /// <summary>A condition as the table reads it. The stored effect id stays the rules' own word.</summary>
+    private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
+
     private IEnumerable<string> PickableConditions => (Definition?.Conditions ?? Enumerable.Empty<string>())
         .Where(c => Vitals?.Exhaustion?.Condition == null || !string.Equals(c, Vitals.Exhaustion.Condition, StringComparison.OrdinalIgnoreCase));
     private IReadOnlyList<string> DamageTypes => Vitals?.Damage?.Types ?? (IReadOnlyList<string>)Array.Empty<string>();
@@ -743,7 +746,7 @@ else
                 var tip = effect.IsIndefinite ? L["Combat.UntilRemoved"] : effect.Expiry == EffectExpiry.StartOfTurn ? L["Combat.EffectEndsStart", effect.RoundsRemaining] : L["Combat.EffectEndsEnd", effect.RoundsRemaining];
                 <li class="cond-chip" data-testid="condition-badge" data-effect-id="@effectId" title="@tip">
                     <DomainIcon Domain="condition" Key="@effectId" Size="DomainIconSize.Small" />
-                    @(effect.IsIndefinite ? effectId : $"{effectId} ({effect.RoundsRemaining})")
+                    @(effect.IsIndefinite ? ConditionName(effectId) : $"{ConditionName(effectId)} ({effect.RoundsRemaining})")
                     @if (Access.IsDm)
                     {
                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@(L["Combat.RemoveCondition", effectId, name])" OnClick="() => RemoveConditionAsync(actorId, effectId)" />

@@ -186,7 +186,7 @@ else
         var found = new List<LibraryItem>();
         foreach (var type in CreatureTypes)
         {
-            found.AddRange(await Library.SearchAsync(Ctx.Campaign, Ctx.Access, query, type, limit: 60));
+            found.AddRange(await Library.SearchAsync(Ctx.Campaign, Ctx.Access, query, type, limit: 60, culture: L.Culture.Name));
         }
 
         results = found;

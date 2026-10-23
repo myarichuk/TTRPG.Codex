@@ -34,6 +34,12 @@ public class AttributeDefinition
     public string Key { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
     public string? Abbreviation { get; set; }
+
+    /// <summary>The label and abbreviation as system.yaml wrote them. A localized copy shows translated text in
+    /// <see cref="Label"/>, but sheet data and pack entries refer to the original words ("STR 13+", "Strength"),
+    /// so rules match on these as well.</summary>
+    public string? CanonicalLabel { get; set; }
+    public string? CanonicalAbbreviation { get; set; }
     public int Default { get; set; } = 10;
     public int? Min { get; set; }
     public int? Max { get; set; }
@@ -346,7 +352,7 @@ public class SystemDefinition
 
     private SystemDefinition Apply(SystemTranslation t)
     {
-        static FieldDefinition Field(FieldDefinition f, LabelTranslation? x) => new()
+        FieldDefinition Field(FieldDefinition f, LabelTranslation? x) => new()
         {
             Key = f.Key,
             Label = x?.Label ?? f.Label,
@@ -358,7 +364,8 @@ public class SystemDefinition
             TargetEntityType = f.TargetEntityType,
             Category = x?.Category ?? f.Category,
             Min = f.Min,
-            Max = f.Max
+            Max = f.Max,
+            OptionLabels = OptionLabelsFor(t, x)
         };
 
         static LabelTranslation? Find(Dictionary<string, LabelTranslation> map, string key) =>
@@ -372,7 +379,9 @@ public class SystemDefinition
         {
             Key = a.Key, Default = a.Default, Min = a.Min, Max = a.Max, Modifier = a.Modifier,
             Label = Find(t.Attributes, a.Key)?.Label ?? a.Label,
-            Abbreviation = Find(t.Attributes, a.Key)?.Abbreviation ?? a.Abbreviation
+            Abbreviation = Find(t.Attributes, a.Key)?.Abbreviation ?? a.Abbreviation,
+            CanonicalLabel = a.CanonicalLabel ?? a.Label,
+            CanonicalAbbreviation = a.CanonicalAbbreviation ?? a.Abbreviation
         }).ToList();
         copy.Resources = Resources.Select(r => new ResourceDefinition
         {
@@ -395,8 +404,25 @@ public class SystemDefinition
             };
         }).ToList();
         copy.Translations = Translations;
+        copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);
         return copy;
     }
+
+    /// <summary>Shared values first, then this field's own options, so a field can word a value differently.</summary>
+    private static Dictionary<string, string>? OptionLabelsFor(SystemTranslation t, LabelTranslation? field)
+    {
+        if (t.Values.Count == 0 && (field == null || field.Options.Count == 0)) return null;
+        var labels = new Dictionary<string, string>(t.Values);
+        if (field != null) foreach (var (value, shown) in field.Options) labels[value] = shown;
+        return labels;
+    }
+
+    /// <summary>Set on a localized copy: condition name as the rules know it -> name to show.</summary>
+    public Dictionary<string, string>? ConditionLabels { get; set; }
+
+    /// <summary>The name to show for a condition ("Poisoned"); the name itself when this copy has no translation for it.</summary>
+    public string DisplayCondition(string condition) =>
+        ConditionLabels != null && ConditionLabels.TryGetValue(condition, out var shown) ? shown : condition;
 
     public ContentTypeDefinition? FindType(string typeOrFolder)
     {

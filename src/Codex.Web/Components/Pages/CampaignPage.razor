@@ -239,7 +239,7 @@ else
                 Campaign = campaign,
                 Access = access,
                 UserId = currentUserId!,
-                System = Catalog.GetDefinition(campaign.SystemId),
+                System = Catalog.GetLocalizedDefinition(campaign.SystemId),
                 Actors = actors,
                 ReloadAsync = async () => { await ReloadAsync(); StateHasChanged(); },
                 Notify = message => { flash = message; StateHasChanged(); }

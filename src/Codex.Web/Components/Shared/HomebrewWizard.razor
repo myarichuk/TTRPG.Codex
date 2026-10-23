@@ -331,7 +331,7 @@
         referenceOptions = new Dictionary<string, IReadOnlyList<(string, string)>>();
         foreach (var target in (TypeDef?.EditorFields() ?? new List<FieldDefinition>()).Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
-            referenceOptions[target] = (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, target)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
+            referenceOptions[target] = (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, target, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
         }
     }
 

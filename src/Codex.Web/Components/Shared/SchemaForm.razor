@@ -121,7 +121,7 @@ else
             <option value="">@L["Actor.Form.None"]</option>
             @foreach (var option in field.Options ?? new List<string>())
             {
-                <option value="@option">@option</option>
+                <option value="@option">@field.Display(option)</option>
             }
         </select>,
 

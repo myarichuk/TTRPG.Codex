@@ -1023,8 +1023,11 @@ else
             actor = await ActorRepo.GetVisibleAsync(ActorId, access);
             if (actor != null)
             {
-                system = SystemCatalog.GetDefinition(campaign.SystemId);
-                schema = SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
+                // The sheet shows the system in the reader's language; the rules engine still matches the original words (see AttributeDefinition.CanonicalLabel).
+                system = SystemCatalog.GetLocalizedDefinition(campaign.SystemId);
+                schema = system != null
+                    ? DataDrivenSystemPlugin.BuildActorSchema(system)
+                    : SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
                 attributeKeys = (system?.Attributes.Select(a => a.Key) ?? Enumerable.Empty<string>()).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 hiddenKeys = attributeKeys
                     .Concat(attributeKeys.Select(k => SheetRuleEngine.BasePrefix + k))
@@ -1262,7 +1265,7 @@ else
         if (campaign == null || access == null || schema == null) return;
         foreach (var target in schema.Fields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
-            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
+            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
         }
     }
 
@@ -1274,7 +1277,7 @@ else
         {
             var id = YamlValues.GetString(editSheet, field.Key);
             if (string.IsNullOrEmpty(id)) continue;
-            var item = await Library.GetAsync(campaign, access, field.TargetEntityType!, id);
+            var item = await Library.GetAsync(campaign, access, field.TargetEntityType!, id, L.Culture.Name);
             if (item != null) linkedEntries.Add((field.Label, item));
         }
     }

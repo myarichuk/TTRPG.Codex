@@ -171,8 +171,8 @@
                 var text = value switch
                 {
                     bool b => b ? L["Library.Detail.Yes"] : L["Library.Detail.No"],
-                    IEnumerable<object> list => string.Join(", ", list.Select(o => o?.ToString())),
-                    _ => value.ToString() ?? string.Empty
+                    IEnumerable<object> list => string.Join(", ", list.Select(o => Shown(fieldDef, o?.ToString()))),
+                    _ => Shown(fieldDef, value.ToString())
                 };
                 if (text.Length == 0 || text.Length > 160) continue;
                 pairs.Add((fieldDef?.Label ?? CampaignLibrary.Humanize(key), text));
@@ -205,6 +205,10 @@
             return result;
         }
     }
+
+    /// <summary>A stored value as the reader should see it: dropdown and tag values are translated, never replaced.</summary>
+    private static string Shown(FieldDefinition? field, string? value) =>
+        value == null ? string.Empty : field?.Display(value) ?? value;
 
     private static bool IsRows(object value) =>
         value is IEnumerable<object> list && list.Any() && list.All(item => item is IDictionary<string, object>);

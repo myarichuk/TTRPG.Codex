@@ -162,6 +162,8 @@ public class ContentRegistry : IContentRegistry
         return copy;
     }
 
+    public bool IsLocalized(string? culture) => LanguageOf(culture).Length > 0;
+
     /// <summary>"ru-RU" -> "ru"; empty for English (the entries' own language) and for no culture.</summary>
     private static string LanguageOf(string? culture)
     {

@@ -39,6 +39,9 @@ public interface IContentRegistry
     /// provides them, falling back from the exact culture to its language and then to the entry itself. Never mutates the shared entry.</summary>
     ContentEntry Localize(ContentEntry entry, string? culture);
 
+    /// <summary>True when <paramref name="culture"/> names a language other than the entries' own (English).</summary>
+    bool IsLocalized(string? culture);
+
     /// <summary>Every entry of <paramref name="type"/> for a system, optionally restricted to the given pack ids.</summary>
     IEnumerable<ContentEntry> GetEntries(string systemId, string type, IReadOnlySet<string>? packIds = null);
 

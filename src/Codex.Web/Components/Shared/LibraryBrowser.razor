@@ -186,7 +186,7 @@
             return (await Library.TypesAsync(Campaign, Access)).Where(IsVisibleType).ToList();
         }
 
-        var definition = Catalog.GetDefinition(EffectiveSystemId);
+        var definition = Catalog.GetLocalizedDefinition(EffectiveSystemId);
         var declared = definition?.EntityTypes.ToList() ?? new List<ContentTypeDefinition>();
         var known = declared.Select(t => t.Type).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var extra = Registry.GetEntryTypes(EffectiveSystemId).Where(t => !known.Contains(t))
@@ -205,7 +205,7 @@
         {
             if (Campaign != null && Access != null)
             {
-                results = (await Library.SearchAsync(Campaign, Access, query, selectedType, limit: 5000)).ToList();
+                results = (await Library.SearchAsync(Campaign, Access, query, selectedType, limit: 5000, culture: L.Culture.Name)).ToList();
             }
             else
             {
@@ -237,7 +237,7 @@
     {
         if (Campaign != null && Access != null)
         {
-            return await Library.GetAsync(Campaign, Access, type, id);
+            return await Library.GetAsync(Campaign, Access, type, id, L.Culture.Name);
         }
 
         var entry = Registry.GetEntry(EffectiveSystemId, type, id);

@@ -26,7 +26,7 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
     /// declaration order), then any extra types packs or homebrew introduced.</summary>
     public async Task<IReadOnlyList<ContentTypeDefinition>> TypesAsync(CampaignDocument campaign, CampaignAccess access)
     {
-        var definition = Definition(campaign);
+        var definition = catalog.GetLocalizedDefinition(campaign.SystemId);
         var declared = definition?.EntityTypes.ToList() ?? new List<ContentTypeDefinition>();
         var known = declared.Select(t => t.Type).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -51,9 +51,11 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
     public IReadOnlySet<string>? ActivePacks(CampaignDocument campaign) =>
         campaign.ActivePacks.Count == 0 ? null : campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    public async Task<IReadOnlyList<LibraryItem>> SearchAsync(CampaignDocument campaign, CampaignAccess access, string query, string? type, int limit = 200)
+    /// <param name="culture">The language to show pack entries in ("ru", "he-IL"); null returns the entries exactly as the packs
+    /// define them, which is what rules code must use, since translated names would no longer match the data that refers to them.</param>
+    public async Task<IReadOnlyList<LibraryItem>> SearchAsync(CampaignDocument campaign, CampaignAccess access, string query, string? type, int limit = 200, string? culture = null)
     {
-        var packItems = registry.Search(campaign.SystemId, query, type, ActivePacks(campaign), limit)
+        var packItems = registry.Search(campaign.SystemId, query, type, ActivePacks(campaign), limit, culture)
             .Select(e => new LibraryItem(e, registry.GetPack(e.PackId), null));
 
         var brews = (await homebrew.GetVisibleForCampaignAsync(access))
@@ -61,6 +63,13 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
             .ToList();
         var brewEntries = ContentRegistry.Rank(brews.Select(ToEntry), query).ToList();
         var brewItems = brewEntries.Select(e => new LibraryItem(e, null, brews.First(b => b.EntryId == e.Id && b.Type == e.Type)));
+
+        // Pack entries came back already ranked on their translated and original names. Ranking them again on the
+        // translated name alone would drop an English-name match, so the table's own homebrew simply goes first.
+        if (registry.IsLocalized(culture))
+        {
+            return brewItems.Concat(packItems).Take(limit).ToList();
+        }
 
         // Homebrew first when the query is empty (it's the table's own material), otherwise by rank
         // which Search/Rank already applied within each source; interleave by name match quality.
@@ -92,7 +101,7 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         access.IsDm
         || Definition(campaign)?.EntityTypes.FirstOrDefault(t => string.Equals(t.Type, type, StringComparison.OrdinalIgnoreCase))?.PlayerFacing != false;
 
-    public async Task<LibraryItem?> GetAsync(CampaignDocument campaign, CampaignAccess access, string type, string id)
+    public async Task<LibraryItem?> GetAsync(CampaignDocument campaign, CampaignAccess access, string type, string id, string? culture = null)
     {
         if (!CanRead(campaign, access, type))
         {
@@ -102,7 +111,7 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         var entry = registry.GetEntry(campaign.SystemId, type, id);
         if (entry != null && (ActivePacks(campaign) is not { } packs || packs.Contains(entry.PackId)))
         {
-            return new LibraryItem(entry, registry.GetPack(entry.PackId), null);
+            return new LibraryItem(registry.Localize(entry, culture), registry.GetPack(entry.PackId), null);
         }
 
         var brew = (await homebrew.GetVisibleForCampaignAsync(access))
@@ -111,8 +120,8 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
     }
 
     /// <summary>Options for an EntityReference picker: every entry of the target type, homebrew included.</summary>
-    public async Task<IReadOnlyList<LibraryItem>> OptionsAsync(CampaignDocument campaign, CampaignAccess access, string type) =>
-        await SearchAsync(campaign, access, string.Empty, type, limit: 2000);
+    public async Task<IReadOnlyList<LibraryItem>> OptionsAsync(CampaignDocument campaign, CampaignAccess access, string type, string? culture = null) =>
+        await SearchAsync(campaign, access, string.Empty, type, limit: 2000, culture);
 
     public static string Humanize(string type) =>
         string.Join(' ', type.Split('-', '_').Select(part => part.Length == 0 ? part : char.ToUpperInvariant(part[0]) + part[1..]));

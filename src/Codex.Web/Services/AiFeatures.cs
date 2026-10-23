@@ -14,6 +14,9 @@ namespace Codex.Web.Services;
 /// </summary>
 public sealed class AiFeatures(AiProviderService providers, IContentRegistry registry, ISystemCatalog catalog)
 {
+    /// <summary>The language the model writes in: the one the user reads the app in.</summary>
+    private static string Lang => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
+
     public Task<bool> IsConfiguredAsync(string userId) => providers.IsConfiguredForAsync(userId);
 
     /// <summary>A session summary for the DM (everything) or the players (public notes and rolls only). DM only: it is the DM who publishes recaps.</summary>
@@ -36,7 +39,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             digest.Notes,
             digest.Rolls,
             digest.DmSummary,
-            digest.Quotes));
+            digest.Quotes,
+            Language: Lang));
     }
 
     /// <summary>Rewrites a character's history (player-facing) or the DM's private notes on an NPC.</summary>
@@ -56,7 +60,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             currentText,
             instruction,
             audience,
-            $"{campaign.Name} ({catalog.GetDisplayName(campaign.SystemId)}){(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}"));
+            $"{campaign.Name} ({catalog.GetDisplayName(campaign.SystemId)}){(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
+            Language: Lang));
     }
 
     /// <summary>What the next level brings, with picks that fit the sheet, from the Library's class and subclass entries.</summary>
@@ -88,7 +93,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             FeaturesAtLevel(classEntry, next),
             FeaturesAtLevel(subclassEntry, next),
             subclassId == null ? subclasses : new List<string>(),
-            actor.Biography));
+            actor.Biography,
+            Language: Lang));
     }
 
     /// <summary>Expands or rewrites a wiki page from its current text, the campaign blurb and the titles it links to.</summary>
@@ -109,7 +115,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             body,
             string.IsNullOrWhiteSpace(instruction) ? "Expand the current notes into a well-structured wiki page with short headings. Keep [[links]] as written and add [[links]] to the related pages where they fit." : instruction,
             audience,
-            string.IsNullOrWhiteSpace(campaign.Description) ? null : TextFormatting.Summary(campaign.Description, 400)));
+            string.IsNullOrWhiteSpace(campaign.Description) ? null : TextFormatting.Summary(campaign.Description, 400),
+            Language: Lang));
     }
 
     /// <summary>Writes or polishes the description of a Library entry or a place. The facts are the
@@ -126,7 +133,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             currentText,
             instruction,
             audience,
-            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}"));
+            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
+            Language: Lang));
     }
 
     /// <summary>An entry's filled-in fields as "Label: value" lines; collections become the names of their rows.</summary>
@@ -200,7 +208,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             fields,
             primary?.Key,
             primary?.MaxKey,
-            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}"));
+            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
+            Language: Lang));
     }
 
     /// <summary>What a character's portrait is drawn from. Everyone who can see the character sees the picture, so only

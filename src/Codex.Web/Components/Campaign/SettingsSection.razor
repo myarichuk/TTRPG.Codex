@@ -99,7 +99,7 @@
             <section class="panel" aria-labelledby="packs-heading">
                 <div class="panel-title"><h3 id="packs-heading">@L["Campaign.Settings.Packs.Title"]</h3></div>
                 @{
-                    var packs = Registry.GetPacks(Ctx.Campaign.SystemId).ToList();
+                    var packs = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).ToList();
                 }
                 @if (packs.Count == 0)
                 {
@@ -241,7 +241,7 @@
         if (activePacks.Count == 0)
         {
             // Going from "everything" to an explicit list: start from all packs, then apply the change.
-            activePacks = Registry.GetPacks(Ctx.Campaign.SystemId).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            activePacks = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         if (on) activePacks.Add(packId); else activePacks.Remove(packId);
@@ -279,7 +279,7 @@
 
     private async Task SavePacksAsync()
     {
-        var all = Registry.GetPacks(Ctx.Campaign.SystemId).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var all = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var packs = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
         await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.ActivePacks = packs.ToList());
         Ctx.Notify(Flash.Success(L["Campaign.Settings.PacksSaved"]));

@@ -176,4 +176,38 @@ public class ContentTranslationTests : IDisposable
         Assert.False(system.Translations.ContainsKey("he")); // a broken translation falls back instead of failing the system
         Assert.Equal("Demo", system.Name);
     }
+
+    [Fact]
+    public void LocalizedSystem_ShowsTranslatedValues_ButKeepsCanonicalWordsForTheRules()
+    {
+        var system = Codex.Core.Systems.SystemDefinitionLoader.Parse("""
+            id: demo
+            name: Demo
+            attributes:
+              - { key: str, label: Strength, abbreviation: STR }
+            conditions: [Poisoned]
+            actorFields:
+              - { key: size, label: Size, type: Dropdown, options: [Tiny, Large] }
+            """);
+        system.Translations["ru"] = new SystemTranslation
+        {
+            Attributes = { ["str"] = new LabelTranslation { Label = "Сила", Abbreviation = "СИЛ" } },
+            Conditions = { ["Poisoned"] = "Отравлен" },
+            Values = { ["Tiny"] = "Крошечный" },
+            ActorFields = { ["size"] = new LabelTranslation { Options = { ["Large"] = "Большой" } } }
+        };
+
+        var ru = system.Localize("ru");
+        var size = ru.ActorFields[0];
+
+        Assert.Equal("Крошечный", size.Display("Tiny"));   // shared value
+        Assert.Equal("Большой", size.Display("Large"));    // this field's own option
+        Assert.Equal("Huge", size.Display("Huge"));        // untranslated: unchanged
+        Assert.Equal(new[] { "Tiny", "Large" }, size.Options);
+        Assert.Equal("Отравлен", ru.DisplayCondition("Poisoned"));
+        Assert.Equal("Poisoned", ru.Conditions[0]);
+        Assert.Equal("Strength", ru.Attributes[0].CanonicalLabel);
+        Assert.Equal("STR", ru.Attributes[0].CanonicalAbbreviation);
+        Assert.Equal("Poisoned", system.DisplayCondition("Poisoned"));
+    }
 }
