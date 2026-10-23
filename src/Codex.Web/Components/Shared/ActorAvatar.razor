@@ -4,7 +4,7 @@
    actor has a stable face in lists, the cast and the live table. *@
 @if (Actor.HasPortrait)
 {
-    <img class="avatar avatar-img @SizeClass @Class" src="@MediaEndpoints.PortraitUrl(Actor)" alt="@(Alt ?? $"Portrait of {Name}")" loading="lazy" width="@Pixels" height="@Pixels" />
+    <img class="avatar avatar-img @SizeClass @Class" src="@MediaEndpoints.PortraitUrl(Actor)" alt="@(Alt ?? L["Actor.Avatar.Portrait", Name])" loading="lazy" width="@Pixels" height="@Pixels" />
 }
 else
 {
@@ -34,7 +34,9 @@ else
         {
             var parts = Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0) return "?";
-            return parts.Length == 1 ? parts[0][..1].ToUpperInvariant() : (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+            // Whole text elements, so a surrogate pair or a base letter with its combining marks is never split; scripts without case are unchanged.
+            var first = System.Globalization.StringInfo.GetNextTextElement(parts[0]);
+            return parts.Length == 1 ? first.ToUpperInvariant() : (first + System.Globalization.StringInfo.GetNextTextElement(parts[^1])).ToUpperInvariant();
         }
     }
 

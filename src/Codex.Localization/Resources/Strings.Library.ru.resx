@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Library.Browser.Search" xml:space="preserve"><value>Поиск: {0}</value></data>
+  <data name="Library.Browser.Content" xml:space="preserve"><value>материалы</value></data>
+  <data name="Library.Browser.SearchPlaceholder" xml:space="preserve"><value>Поиск по названию, тегу или тексту…</value></data>
+  <data name="Library.Browser.Showing" xml:space="preserve"><value>Показано {0} из {1} результатов</value></data>
+  <data name="Library.Browser.Results" xml:space="preserve"><value>{0, plural, one{# результат} few{# результата} many{# результатов} other{# результата}}</value></data>
+  <data name="Library.Browser.ContentType" xml:space="preserve"><value>Тип материала</value></data>
+  <data name="Library.Browser.All" xml:space="preserve"><value>Все</value></data>
+  <data name="Library.Browser.NothingMatches" xml:space="preserve"><value>Ничего не найдено</value></data>
+  <data name="Library.Browser.EmptyType" xml:space="preserve"><value>Для этой системы не загружено материалов этого типа.</value></data>
+  <data name="Library.Browser.TryDifferent" xml:space="preserve"><value>Попробуйте другое слово или сбросьте фильтр по типу.</value></data>
+  <data name="Library.Homebrew" xml:space="preserve"><value>Хоумбрю</value></data>
+  <data name="Library.ShowMore" xml:space="preserve"><value>Показать ещё {0}</value></data>
+  <data name="Library.Browser.CloseDetail" xml:space="preserve"><value>Закрыть описание</value></data>
+  <data name="Library.Browser.ChooseEntry" xml:space="preserve"><value>Выберите запись, чтобы прочитать её здесь.</value></data>
+  <data name="Library.Entries.Default" xml:space="preserve"><value>записи</value></data>
+  <data name="Library.Entries.FilterByName" xml:space="preserve"><value>Фильтровать {0} по названию</value></data>
+  <data name="Library.Entries.FilterPlaceholder" xml:space="preserve"><value>Фильтр: {0}…</value></data>
+  <data name="Library.Entries.FilterBy" xml:space="preserve"><value>Фильтр по: {0}</value></data>
+  <data name="Library.Entries.Any" xml:space="preserve"><value>Все: {0}</value></data>
+  <data name="Library.Entries.Available" xml:space="preserve"><value>Доступно: {0} из {1}</value></data>
+  <data name="Library.Entries.NoMatch" xml:space="preserve"><value>Нет разрешённых записей, подходящих под этот фильтр.</value></data>
+  <data name="Library.Entries.AddNamed" xml:space="preserve"><value>Добавить {0}</value></data>
+  <data name="Library.Entries.Add" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Library.Entries.Disabled" xml:space="preserve"><value>Ничего нельзя добавить</value></data>
+  <data name="Library.Entries.Empty" xml:space="preserve"><value>Выбирать не из чего.</value></data>
+  <data name="Library.Ai.Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="Library.Ai.Writing" xml:space="preserve"><value>Пишу…</value></data>
+  <data name="Library.Ai.Write" xml:space="preserve"><value>Написать с помощью ИИ</value></data>
+  <data name="Library.Ai.Enhance" xml:space="preserve"><value>Улучшить с помощью ИИ</value></data>
+  <data name="Library.Ai.AskLabel" xml:space="preserve"><value>Что ИИ должен изменить (необязательно)</value></data>
+  <data name="Library.Ai.AskPlaceholder" xml:space="preserve"><value>Необязательно: подскажите ИИ, чего вы хотите, например «более зловеще, упомяни запах»</value></data>
+  <data name="Library.Ai.Undo" xml:space="preserve"><value>Отменить правку ИИ</value></data>
+  <data name="Library.Ai.Hint" xml:space="preserve"><value>Простой текст. **жирный**, *курсив*, маркеры «- » и | таблицы | отображаются.</value></data>
+  <data name="Library.Ai.Draft" xml:space="preserve"><value>В поле черновик от ИИ. Правьте его как угодно или отмените.</value></data>
+  <data name="Library.Ai.OpenSettings" xml:space="preserve"><value>Открыть настройки ИИ</value></data>
+  <data name="Library.Ai.NotConfigured" xml:space="preserve"><value>Поставщик ИИ ещё не настроен.</value></data>
+  <data name="Library.Ai.Failed" xml:space="preserve"><value>ИИ не смог это написать: {0}</value></data>
+  <data name="Library.Detail.Level" xml:space="preserve"><value>Уровень {0}</value></data>
+  <data name="Library.Detail.Yes" xml:space="preserve"><value>Да</value></data>
+  <data name="Library.Detail.No" xml:space="preserve"><value>Нет</value></data>
+  <data name="Library.Detail.Source" xml:space="preserve"><value>Источник:</value></data>
+  <data name="Library.Detail.Licence" xml:space="preserve"><value>Лицензия:</value></data>
+  <data name="Library.Detail.Modified" xml:space="preserve"><value>изменено относительно оригинала</value></data>
+  <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>Создано за этим столом. Мастер решает, кто может использовать это повторно.</value></data>
+  <data name="Library.Detail.LoreText" xml:space="preserve"><value>Текст преданий:</value></data>
+  <data name="Library.Detail.LicenceName" xml:space="preserve"><value>лицензия {0}</value></data>
+</root>

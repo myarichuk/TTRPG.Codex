@@ -10,11 +10,11 @@
 
     @if (Items.Count == 0)
     {
-        <p class="small-muted mb-2">Nothing carried yet.</p>
+        <p class="small-muted mb-2">@L["Actor.Inv.Empty"]</p>
     }
     else
     {
-        <ul class="list-unstyled mb-2" aria-label="@Rules.Label carried">
+        <ul class="list-unstyled mb-2" aria-label="@L["Actor.Inv.Carried", Rules.Label]">
             @foreach (var item in Items)
             {
                 <li class="list-row py-1" data-testid="inventory-item">
@@ -25,19 +25,19 @@
                     @if (CanEdit)
                     {
                         <span class="d-flex align-items-center gap-2">
-                            <label class="visually-hidden" for="@(id)-q-@item.Index">Quantity of @item.Entry.Name</label>
+                            <label class="visually-hidden" for="@(id)-q-@item.Index">@L["Actor.Inv.Quantity", item.Entry.Name]</label>
                             <input id="@(id)-q-@item.Index" type="number" min="1" class="field-input field-sm" style="width:4.5rem" value="@item.Quantity"
                                    @onchange="e => UpdateAsync(item, quantity: ParseQuantity(e.Value?.ToString()))" data-testid="inventory-qty" />
                             <span class="field-check mb-0">
                                 <input id="@(id)-e-@item.Index" class="field-box" type="checkbox" checked="@item.Equipped" @onchange="e => UpdateAsync(item, equipped: (bool)e.Value!)" data-testid="inventory-equip" />
-                                <label for="@(id)-e-@item.Index" >Equipped</label>
+                                <label for="@(id)-e-@item.Index" >@L["Actor.Inv.Equipped"]</label>
                             </span>
-                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"Remove {item.Entry.Name}")" OnClick="() => RemoveAsync(item)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Inv.Remove", item.Entry.Name]" OnClick="() => RemoveAsync(item)" />
                         </span>
                     }
                     else
                     {
-                        <span class="small-muted">× @item.Quantity@(item.Equipped ? " · equipped" : "")</span>
+                        <span class="small-muted">× @item.Quantity@(item.Equipped ? " · " + L["Actor.Inv.EquippedLower"] : "")</span>
                     }
                 </li>
             }
@@ -49,7 +49,7 @@
         @if (Rules.Types.Count > 1)
         {
             <div class="mb-2">
-                <label for="@(id)-type" class="field-label">Browse</label>
+                <label for="@(id)-type" class="field-label">@L["Actor.Inv.Browse"]</label>
                 <select id="@(id)-type" class="field-select field-sm" style="max-width:14rem" @bind="browseType" data-testid="inventory-type">
                     @foreach (var type in Rules.Types)
                     {
@@ -59,8 +59,8 @@
             </div>
         }
 
-        <EntryBrowser @key="browseType" Options="@(browseType != null && Options.TryGetValue(browseType, out var browsable) ? browsable : Array.Empty<ContentEntry>())" Type="TypeOf(browseType)" Label="@((TypeOf(browseType)?.PluralLabel ?? "items"))"
-                      TestId="inventory" EmptyText="No items in the Library." OnAdd="AddAsync" />
+        <EntryBrowser @key="browseType" Options="@(browseType != null && Options.TryGetValue(browseType, out var browsable) ? browsable : Array.Empty<ContentEntry>())" Type="TypeOf(browseType)" Label="@((TypeOf(browseType)?.PluralLabel ?? L["Actor.Inv.Items"]))"
+                      TestId="inventory" EmptyText="@L["Actor.Inv.NoneInLibrary"]" OnAdd="AddAsync" />
     }
 </section>
 
@@ -85,14 +85,14 @@
 
     private static int ParseQuantity(string? raw) => int.TryParse(raw, out var n) && n > 0 ? n : 1;
 
-    private static string Detail(ContentEntry entry)
+    private string Detail(ContentEntry entry)
     {
         var parts = new List<string>();
         foreach (var key in new[] { "armorClass", "damage", "category" })
         {
             if (entry.Properties.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value?.ToString()))
             {
-                parts.Add(key == "armorClass" ? "AC " + value : value!.ToString()!);
+                parts.Add(key == "armorClass" ? L["Actor.Inv.Ac", value] : value!.ToString()!);
                 if (key != "category") break;
             }
         }

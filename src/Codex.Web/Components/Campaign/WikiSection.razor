@@ -21,8 +21,8 @@ else if (Mode == "edit")
 {
     <div class="page-header mb-3">
         <div>
-            <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">Wiki</a>@if (current != null) { <span class="crumb-sep" aria-hidden="true">/</span><a href="@Ctx.BasePath/wiki/@current.Slug">@current.Title</a> }</nav>
-            <h2 class="mb-0">@(current == null ? "New page" : $"Edit “{current.Title}”")</h2>
+            <nav aria-label="@L["Campaign.Wiki.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">@L["Campaign.Wiki.Title"]</a>@if (current != null) { <span class="crumb-sep" aria-hidden="true">/</span><a href="@Ctx.BasePath/wiki/@current.Slug">@current.Title</a> }</nav>
+            <h2 class="mb-0">@(current == null ? L["Campaign.Wiki.NewPage"] : L["Campaign.Wiki.EditPage", current.Title])</h2>
         </div>
     </div>
 
@@ -32,32 +32,32 @@ else if (Mode == "edit")
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" data-testid="wiki-editor">
                     <div class="field-grid mb-3">
                         <div class="field-wide">
-                            <label for="wiki-title" class="field-label">Title <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                            <label for="wiki-title" class="field-label">@L["Campaign.Wiki.Field.Title"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.Wiki.Required"]</span></label>
                             <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" required maxlength="160" data-testid="wiki-title" />
                         </div>
                         <div>
-                            <label for="wiki-visibility" class="field-label">Who can read it</label>
+                            <label for="wiki-visibility" class="field-label">@L["Campaign.Wiki.Field.WhoCanRead"]</label>
                             <select id="wiki-visibility" class="field-select" @bind="draft.Visibility" data-testid="wiki-visibility">
-                                <option value="@WikiVisibility.DmOnly">Only me (DM)</option>
-                                <option value="@WikiVisibility.Party">The whole party</option>
+                                <option value="@WikiVisibility.DmOnly">@L["Campaign.Wiki.Vis.DmOnly"]</option>
+                                <option value="@WikiVisibility.Party">@L["Campaign.Wiki.Vis.Party"]</option>
                             </select>
                         </div>
                         <div>
-                            <label for="wiki-tags" class="field-label">Tags</label>
-                            <input id="wiki-tags" class="field-input" placeholder="faction, city, legend…" value="@string.Join(", ", draft.Tags)"
+                            <label for="wiki-tags" class="field-label">@L["Campaign.Wiki.Field.Tags"]</label>
+                            <input id="wiki-tags" class="field-input" placeholder="@L["Campaign.Wiki.TagsPlaceholder"]" value="@string.Join(", ", draft.Tags)"
                                    @onchange="e => draft.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
                         </div>
                     </div>
-                    <label for="wiki-body" class="field-label">Text</label>
-                    <textarea id="wiki-body" class="field-input wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-testid="wiki-body" placeholder="Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link."></textarea>
-                    <div class="field-hint mb-3">Link with <code>[[Page title]]</code> or <code>[[Page title|shown as]]</code>. <code>**bold**</code>, <code>*italic*</code>, "- " bullets, "### headings" and | tables | are rendered.</div>
+                    <label for="wiki-body" class="field-label">@L["Campaign.Wiki.Field.Text"]</label>
+                    <textarea id="wiki-body" class="field-input wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-testid="wiki-body" placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"></textarea>
+                    <div class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"])</div>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> Save page</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? "Writing…" : "Expand with AI")</CodexButton>
-                        <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">Cancel</a>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? L["Campaign.Wiki.Writing"] : L["Campaign.Wiki.ExpandWithAi"])</CodexButton>
+                        <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">@L["Campaign.Wiki.Cancel"]</a>
                         @if (current != null)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync">Delete page</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync">@L["Campaign.Wiki.DeletePage"]</CodexButton>
                         }
                     </div>
                 </form>
@@ -65,8 +65,8 @@ else if (Mode == "edit")
         </div>
         <div class="col-lg-4">
             <section class="panel">
-                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> Link to a page</h3></div>
-                <p class="small-muted">Click to append a link to the text.</p>
+                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinkToPage"]</h3></div>
+                <p class="small-muted">@L["Campaign.Wiki.ClickToAppend"]</p>
                 <div class="chips">
                     @foreach (var wp in pages.Where(p => current == null || p.Id != current.Id).Take(40))
                     {
@@ -75,14 +75,14 @@ else if (Mode == "edit")
                 </div>
                 @if (pages.Count == 0)
                 {
-                    <p class="small-muted mb-0">No other pages yet. Write <code>[[A new page]]</code> and it becomes a create link.</p>
+                    <p class="small-muted mb-0">@Rich(L["Campaign.Wiki.NoOtherPages"])</p>
                 }
             </section>
             <section class="panel">
-                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> AI instruction</h3></div>
-                <label for="wiki-ai-instruction" class="visually-hidden">Instruction for the AI</label>
-                <textarea id="wiki-ai-instruction" class="field-input" rows="3" @bind="aiInstruction" placeholder="Optional: “make it a travel guide written by a nervous scholar”, “keep it under 200 words”…"></textarea>
-                <p class="field-hint">The AI sees this page, the campaign description and the names of pages it links to. Nothing else.</p>
+                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> @L["Campaign.Wiki.AiInstruction"]</h3></div>
+                <label for="wiki-ai-instruction" class="visually-hidden">@L["Campaign.Wiki.AiInstructionLabel"]</label>
+                <textarea id="wiki-ai-instruction" class="field-input" rows="3" @bind="aiInstruction" placeholder="@L["Campaign.Wiki.AiInstructionPlaceholder"]"></textarea>
+                <p class="field-hint">@L["Campaign.Wiki.AiSees"]</p>
             </section>
         </div>
     </div>
@@ -93,15 +93,15 @@ else if (Slug != null)
     {
         <div class="empty">
             <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
-            <h3>No page called “@Slug”</h3>
-            <p>@(Ctx.IsDm ? "It may have been deleted. You can write it now." : "It may be DM-only, or not written yet.")</p>
+            <h3>@L["Campaign.Wiki.Missing.Title", Slug]</h3>
+            <p>@(Ctx.IsDm ? L["Campaign.Wiki.Missing.Dm"] : L["Campaign.Wiki.Missing.Player"])</p>
             @if (Ctx.IsDm)
             {
-                <a href="@Ctx.BasePath/wiki/new?title=@Uri.EscapeDataString(Slug.Replace('-', ' '))" class="cx-btn cx-plaque">Create it</a>
+                <a href="@Ctx.BasePath/wiki/new?title=@Uri.EscapeDataString(Slug.Replace('-', ' '))" class="cx-btn cx-plaque">@L["Campaign.Wiki.CreateIt"]</a>
             }
             else
             {
-                <a href="@Ctx.BasePath/wiki" class="cx-btn cx-etched">Back to the wiki</a>
+                <a href="@Ctx.BasePath/wiki" class="cx-btn cx-etched">@L["Campaign.Wiki.BackToWiki"]</a>
             }
         </div>
     }
@@ -109,10 +109,10 @@ else if (Slug != null)
     {
         <div class="page-header mb-3">
             <div>
-                <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">Wiki</a><span class="crumb-sep" aria-hidden="true">/</span><span>@current.Title</span></nav>
+                <nav aria-label="@L["Campaign.Wiki.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">@L["Campaign.Wiki.Title"]</a><span class="crumb-sep" aria-hidden="true">/</span><span>@current.Title</span></nav>
                 <h2 class="mb-0" data-testid="wiki-page-title">@current.Title</h2>
                 <div class="d-flex flex-wrap gap-1 mt-1">
-                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="14" /> @(current.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
+                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="14" /> @(current.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     @foreach (var tag in current.Tags)
                     {
                         <span class="pill">@tag</span>
@@ -125,9 +125,9 @@ else if (Slug != null)
                 <div class="row-actions">
                     @if (current.Visibility == WikiVisibility.DmOnly)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="18" /> Share with party</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="18" /> @L["Campaign.Wiki.SharePage"]</CodexButton>
                     }
-                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="cx-btn cx-plaque" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="18" /> Edit</a>
+                    <a href="@Ctx.BasePath/wiki/@current.Slug/edit" class="cx-btn cx-plaque" data-testid="wiki-edit"><LucideIcon IconName="edit-3" Size="18" /> @L["Campaign.Wiki.Edit"]</a>
                 </div>
             }
         </div>
@@ -137,7 +137,7 @@ else if (Slug != null)
                 <article class="panel wiki-page" data-testid="wiki-page">
                     @if (string.IsNullOrWhiteSpace(current.Body))
                     {
-                        <p class="small-muted mb-0">This page is empty.</p>
+                        <p class="small-muted mb-0">@L["Campaign.Wiki.PageEmpty"]</p>
                     }
                     else
                     {
@@ -146,36 +146,36 @@ else if (Slug != null)
                 </article>
 
                 <section class="panel" aria-labelledby="wiki-notes-heading">
-                    <div class="panel-title"><h3 id="wiki-notes-heading" class="h6"><LucideIcon IconName="message-square" Size="14" Class="title-icon" /> Notes on this page</h3></div>
+                    <div class="panel-title"><h3 id="wiki-notes-heading" class="h6"><LucideIcon IconName="message-square" Size="14" Class="title-icon" /> @L["Campaign.Wiki.NotesOnPage"]</h3></div>
                     @if (notes.Count == 0)
                     {
-                        <p class="small-muted">No notes yet. @(Ctx.IsDm ? "Players can leave theirs here." : "Leave one for yourself and the DM, or for the whole party.")</p>
+                        <p class="small-muted">@(Ctx.IsDm ? L["Campaign.Wiki.NoNotes.Dm"] : L["Campaign.Wiki.NoNotes.Player"])</p>
                     }
                     @foreach (var note in notes)
                     {
                         <div class="list-row align-items-start">
                             <span class="avatar avatar-sm" aria-hidden="true">@Initial(usernames.GetValueOrDefault(note.AuthorId, "?"))</span>
                             <div class="row-main">
-                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" /> · <span class="pill">@(note.Visibility == CommentVisibility.Public ? "Party" : "Private")</span></div>
+                                <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" /> · <span class="pill">@(note.Visibility == CommentVisibility.Public ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.Private"])</span></div>
                                 <p class="mb-0 notes-text"><MentionText Text="@note.Content" Mentions="@(mentions ?? MentionDirectory.Empty)" CampaignId="@Ctx.Campaign.Id" /></p>
                             </div>
                             @if (note.AuthorId == Ctx.UserId || Ctx.IsDm)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="Delete note" OnClick="() => DeleteNoteAsync(note)" />
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.Wiki.DeleteNote"]" OnClick="() => DeleteNoteAsync(note)" />
                             }
                         </div>
                     }
                     <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                        <label for="wiki-note" class="field-label">Add a note</label>
+                        <label for="wiki-note" class="field-label">@L["Campaign.Wiki.AddNoteLabel"]</label>
                         <textarea id="wiki-note" class="field-input mb-2" rows="2" @bind="newNote" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="wiki-note-hint" data-testid="wiki-note"></textarea>
-                        <p id="wiki-note-hint" class="field-hint">Mention someone with @@, a place with # or an item with $.</p>
+                        <p id="wiki-note-hint" class="field-hint">@L["Campaign.Wiki.MentionHint"]</p>
                         <div class="d-flex gap-2 flex-wrap align-items-center">
-                            <label for="wiki-note-visibility" class="visually-hidden">Note visibility</label>
+                            <label for="wiki-note-visibility" class="visually-hidden">@L["Campaign.Wiki.NoteVisibility"]</label>
                             <select id="wiki-note-visibility" class="field-select field-sm" @bind="newNoteVisibility">
-                                <option value="@CommentVisibility.Private">Private (you and the DM)</option>
-                                <option value="@CommentVisibility.Public">Party (everyone in the campaign)</option>
+                                <option value="@CommentVisibility.Private">@L["Campaign.Wiki.NoteVis.Private"]</option>
+                                <option value="@CommentVisibility.Public">@L["Campaign.Wiki.NoteVis.Public"]</option>
                             </select>
-                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true">Add note</CodexButton>
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true">@L["Campaign.Wiki.AddNote"]</CodexButton>
                         </div>
                     </form>
                 </section>
@@ -186,10 +186,10 @@ else if (Slug != null)
                     var incoming = pages.Where(p => p.Links.Contains(current.Slug) && p.Id != current.Id).ToList();
                 }
                 <section class="panel">
-                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> Links from this page</h3></div>
+                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksFrom"]</h3></div>
                     @if (outgoing.Count == 0)
                     {
-                        <p class="small-muted mb-0">None yet.</p>
+                        <p class="small-muted mb-0">@L["Campaign.Wiki.None"]</p>
                     }
                     <ul class="link-list mb-0">
                         @foreach (var wp in outgoing)
@@ -199,10 +199,10 @@ else if (Slug != null)
                     </ul>
                 </section>
                 <section class="panel">
-                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="arrow-left" Size="14" Class="title-icon" /> Pages linking here</h3></div>
+                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="arrow-left" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksHere"]</h3></div>
                     @if (incoming.Count == 0)
                     {
-                        <p class="small-muted mb-0">Nothing links here yet.</p>
+                        <p class="small-muted mb-0">@L["Campaign.Wiki.NothingLinksHere"]</p>
                     }
                     <ul class="link-list mb-0">
                         @foreach (var wp in incoming)
@@ -219,25 +219,25 @@ else
 {
     <div class="page-header mb-3">
         <div>
-            <h2 class="mb-0">Wiki</h2>
-            <p class="page-subtitle">@(Ctx.IsDm ? "Your world, one linked page at a time. Pages start DM-only; share them when the party learns of them." : "What the party knows of the world. Pages appear as the DM shares them.")</p>
+            <h2 class="mb-0">@L["Campaign.Wiki.Title"]</h2>
+            <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.Wiki.Subtitle.Dm"] : L["Campaign.Wiki.Subtitle.Player"])</p>
         </div>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> New page</a>
+            <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
         }
     </div>
 
     <div class="toolbar">
         <div class="search">
             <LucideIcon IconName="search" Size="18" Class="search-icon" />
-            <label for="wiki-search" class="visually-hidden">Search the wiki</label>
-            <input id="wiki-search" type="search" class="field-input" placeholder="Search pages…" @bind="search" @bind:event="oninput" />
+            <label for="wiki-search" class="visually-hidden">@L["Campaign.Wiki.Search"]</label>
+            <input id="wiki-search" type="search" class="field-input" placeholder="@L["Campaign.Wiki.SearchPlaceholder"]" @bind="search" @bind:event="oninput" />
         </div>
         @if (AllTags.Count > 0)
         {
-            <div class="chips" role="group" aria-label="Filter by tag">
-                <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">All</button>
+            <div class="chips" role="group" aria-label="@L["Campaign.Wiki.FilterByTag"]">
+                <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">@L["Campaign.Wiki.All"]</button>
                 @foreach (var tag in AllTags)
                 {
                     <button type="button" class="chip" aria-pressed="@((activeTag == tag) ? "true" : "false")" @onclick="() => activeTag = tag">@tag</button>
@@ -250,8 +250,8 @@ else
     {
         <div class="empty">
             <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
-            <h3>@(pages.Count == 0 ? "No pages yet" : "No page matches")</h3>
-            <p>@(Ctx.IsDm ? "Start with a place, a faction or a legend. Link pages with [[double brackets]]." : "The DM hasn't shared any pages yet.")</p>
+            <h3>@(pages.Count == 0 ? L["Campaign.Wiki.Empty.None"] : L["Campaign.Wiki.Empty.NoMatch"])</h3>
+            <p>@(Ctx.IsDm ? L["Campaign.Wiki.Empty.Dm"] : L["Campaign.Wiki.Empty.Player"])</p>
         </div>
     }
     else
@@ -262,11 +262,11 @@ else
                 <article class="campaign-card wiki-card" aria-labelledby="wiki-@wp.Id">
                     <div class="card-head">
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
-                        <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? "Party" : "DM only")</span>
+                        <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
                     <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
                     <div class="card-foot">
-                        <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @wp.Links.Count link@(wp.Links.Count == 1 ? "" : "s") · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
+                        <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
                             @foreach (var tag in wp.Tags.Take(3))
                             {
@@ -360,6 +360,26 @@ else
         }
     }
 
+    /// <summary>Renders a localized sentence in which `backtick` segments are code samples.</summary>
+    private static RenderFragment Rich(string template) => builder =>
+    {
+        var parts = template.Split('`');
+        for (var i = 0; i < parts.Length; i++)
+        {
+            if (parts[i].Length == 0) continue;
+            if (i % 2 == 1)
+            {
+                builder.OpenElement(0, "code");
+                builder.AddContent(1, parts[i]);
+                builder.CloseElement();
+            }
+            else
+            {
+                builder.AddContent(2, parts[i]);
+            }
+        }
+    };
+
     private static string NotesTarget(WikiPageDocument page) => $"wiki:{page.Id}";
     private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
@@ -378,19 +398,19 @@ else
     {
         if (string.IsNullOrWhiteSpace(draft.Title))
         {
-            Ctx.Notify(Flash.Error("The page needs a title."));
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.TitleNeeded"]));
             return;
         }
 
         if (await WikiRepo.TrySaveAsync(draft, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Saved “{draft.Title}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.Wiki.Saved", draft.Title]));
             loadedKey = null;
             Nav.NavigateTo($"{Ctx.BasePath}/wiki/{draft.Slug}");
         }
         else
         {
-            Ctx.Notify(Flash.Error("Only the DM can edit the wiki."));
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.OnlyDm"]));
         }
     }
 
@@ -400,7 +420,7 @@ else
         draft.Visibility = WikiVisibility.Party;
         if (await WikiRepo.TrySaveAsync(draft, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success("Shared with the party."));
+            Ctx.Notify(Flash.Success(L["Campaign.Wiki.SharedWithParty"]));
             loadedKey = null;
             await LoadAsync();
         }
@@ -411,7 +431,7 @@ else
         if (current == null) return;
         if (await WikiRepo.TryDeleteAsync(current.Id, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Deleted “{current.Title}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.Wiki.Deleted", current.Title]));
             loadedKey = null;
             Nav.NavigateTo($"{Ctx.BasePath}/wiki");
         }
@@ -425,16 +445,16 @@ else
         {
             var related = WikiText.ExtractLinks(draft.Body).Concat((pages ?? new()).Select(p => p.Title)).Distinct(StringComparer.OrdinalIgnoreCase);
             draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, draft.Body, related, aiInstruction, draft.Visibility == WikiVisibility.Party ? AiAudience.Players : AiAudience.Dm, Ctx.UserId);
-            Ctx.Notify(Flash.Info("AI draft in the editor. Review and save."));
+            Ctx.Notify(Flash.Info(L["Campaign.Wiki.AiDraftReady"]));
         }
         catch (AiNotConfiguredException)
         {
-            Ctx.Notify(Flash.Error("No AI provider is set up. Add one under AI settings (top right)."));
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.NoAi"]));
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Wiki AI expansion failed");
-            Ctx.Notify(Flash.Error("The AI draft failed: " + ex.Message));
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.AiFailed", L.Describe(ex)]));
         }
         finally
         {
@@ -455,7 +475,7 @@ else
             Visibility = newNoteVisibility
         });
         newNote = string.Empty;
-        Ctx.Notify(Flash.Success("Note added."));
+        Ctx.Notify(Flash.Success(L["Campaign.Wiki.NoteAdded"]));
         loadedKey = null;
         await LoadAsync();
     }

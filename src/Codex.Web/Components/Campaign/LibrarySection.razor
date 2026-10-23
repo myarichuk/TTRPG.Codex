@@ -14,15 +14,15 @@
 
 <div class="page-header mb-3">
     <div>
-        <h2 class="mb-0">Library</h2>
-        <p class="page-subtitle">Reference content for this campaign's system@(Ctx.IsDm ? ", plus your homebrew: equipment, classes, subclasses, feats, spells, creatures and more." : ", including the DM's homebrew.")</p>
+        <h2 class="mb-0">@L["Campaign.Library.Title"]</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.Library.Subtitle.Dm"] : L["Campaign.Library.Subtitle.Player"])</p>
     </div>
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
-            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="18" /> New homebrew</CodexButton>
-            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="18" /> Import from another campaign</CodexButton>
-            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="Export this campaign's homebrew as a content pack"><LucideIcon IconName="download" Size="18" /> Export pack</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Library.NewHomebrew"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="18" /> @L["Campaign.Library.ImportFromCampaign"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="@L["Campaign.Library.ExportLabel"]"><LucideIcon IconName="download" Size="18" /> @L["Campaign.Library.ExportPack"]</CodexButton>
         </div>
     }
 </div>
@@ -31,21 +31,21 @@
                 RouteType="@RouteType" RouteId="@RouteId" Version="version">
     <DetailArt Context="item">
         <ArtSlot ImageUrl="@ArtService.Url(Ctx.Campaign, item)" CanEdit="Ctx.IsDm" Landscape="@(!IsCreatureType(item.Entry.Type))"
-                 Label="@(IsCreatureType(item.Entry.Type) ? "Portrait" : "Art")" Alt="@($"Art for {item.Entry.Name}")" Class="entry-art" TestId="entry-art"
+                 Label="@(IsCreatureType(item.Entry.Type) ? L["Campaign.Library.Portrait"] : L["Campaign.Library.Art"])" Alt="@L["Campaign.Library.ArtFor", item.Entry.Name]" Class="entry-art" TestId="entry-art"
                  OnPicked="img => StoreArtAsync(item, img)" OnRemove="() => RemoveArtAsync(item)" Generate="() => GenerateArtAsync(item)" />
     </DetailArt>
     <DetailActions Context="item">
         @if (Ctx.IsDm && item.IsHomebrew)
         {
-            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => wizard.OpenAsync(item.Homebrew!)" data-testid="edit-homebrew"><LucideIcon IconName="edit-3" Size="14" /> Edit</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => wizard.OpenAsync(item.Homebrew!)" data-testid="edit-homebrew"><LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Library.Edit"]</CodexButton>
         }
         @if (Ctx.IsDm && !item.IsHomebrew)
         {
-            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => CloneAsHomebrew(item)" data-testid="clone-homebrew" title="Start a homebrew variant with these fields"><LucideIcon IconName="copy" Size="14" /> Homebrew copy</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => CloneAsHomebrew(item)" data-testid="clone-homebrew" title="@L["Campaign.Library.CloneTitle"]"><LucideIcon IconName="copy" Size="14" /> @L["Campaign.Library.HomebrewCopy"]</CodexButton>
         }
         @if (Ctx.IsDm && IsBlueprint(item))
         {
-            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(item)" data-testid="add-to-cast"><LucideIcon IconName="user-plus" Size="14" /> Add to cast</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(item)" data-testid="add-to-cast"><LucideIcon IconName="user-plus" Size="14" /> @L["Campaign.Library.AddToCast"]</CodexButton>
         }
     </DetailActions>
     <DetailFooter Context="item">
@@ -53,7 +53,7 @@
         @if (mentioned.Count + written.Count > 0)
         {
             <section class="mt-4" aria-labelledby="entry-mentions-heading" data-testid="entry-mentions">
-                <h2 id="entry-mentions-heading" class="h6"><LucideIcon IconName="notebook-pen" Size="16" Class="title-icon" /> In notes</h2>
+                <h2 id="entry-mentions-heading" class="h6"><LucideIcon IconName="notebook-pen" Size="16" Class="title-icon" /> @L["Campaign.Library.InNotes"]</h2>
                 <NotesMentioning Lines="mentioned" Written="written" Mentions="noteMentions" Actors="noteActors" IsDm="Ctx.IsDm" CampaignId="@Ctx.Campaign.Id" />
             </section>
         }
@@ -67,19 +67,19 @@
 
 <dialog id="import-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="import-homebrew-title">
     <div class="dialog-body">
-        <h2 id="import-homebrew-title"><LucideIcon IconName="folder-input" Size="18" Class="title-icon" /> Import homebrew</h2>
+        <h2 id="import-homebrew-title"><LucideIcon IconName="folder-input" Size="18" Class="title-icon" /> @L["Campaign.Library.Import.Title"]</h2>
         @if (sourceCampaigns == null)
         {
             <LoadingSkeleton Rows="2" />
         }
         else if (sourceCampaigns.Count == 0)
         {
-            <p class="mb-0">You don't run another campaign on this system yet. Homebrew can be imported from any campaign where you are the DM and the game system matches.</p>
+            <p class="mb-0">@L["Campaign.Library.Import.NoSource"]</p>
         }
         else
         {
             <div class="mb-3">
-                <label for="import-source" class="field-label">From campaign</label>
+                <label for="import-source" class="field-label">@L["Campaign.Library.Import.FromCampaign"]</label>
                 <select id="import-source" class="field-select" value="@sourceCampaignId" @onchange="OnSourceChangedAsync" data-testid="import-source">
                     @foreach (var campaign in sourceCampaigns)
                     {
@@ -93,15 +93,15 @@
             }
             else if (sourceEntries.Count == 0)
             {
-                <p class="small-muted mb-0">That campaign has no homebrew.</p>
+                <p class="small-muted mb-0">@L["Campaign.Library.Import.NoHomebrew"]</p>
             }
             else
             {
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small-muted">@selectedImports.Count of @sourceEntries.Count selected</span>
+                    <span class="small-muted">@L["Campaign.Library.Import.Selected", selectedImports.Count, sourceEntries.Count]</span>
                     <div class="d-flex gap-2">
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => selectedImports = sourceEntries.Select(e => e.Id).ToHashSet()">Select all</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => selectedImports.Clear()">None</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => selectedImports = sourceEntries.Select(e => e.Id).ToHashSet()">@L["Campaign.Library.Import.SelectAll"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => selectedImports.Clear()">@L["Campaign.Library.Import.None"]</CodexButton>
                     </div>
                 </div>
                 <div class="import-list">
@@ -121,8 +121,8 @@
         }
     </div>
     <div class="dialog-actions">
-        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseImportAsync">Close</CodexButton>
-        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="ImportAsync" Disabled="@(selectedImports.Count == 0 || importing)" data-testid="import-confirm">@(importing ? "Importing…" : $"Import {selectedImports.Count}")</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseImportAsync">@L["Common.Close"]</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="ImportAsync" Disabled="@(selectedImports.Count == 0 || importing)" data-testid="import-confirm">@(importing ? L["Campaign.Library.Import.Importing"] : L["Campaign.Library.Import.Button", selectedImports.Count])</CodexButton>
     </div>
 </dialog>
 
@@ -175,13 +175,13 @@
     private async Task CloneAsHomebrew(LibraryItem item)
     {
         var copy = HomebrewImportService.CloneFromPack(item.Entry, item.Pack, Ctx.Campaign, Ctx.Access);
-        Ctx.Notify(Flash.Info($"Editing a homebrew copy of “{item.Entry.Name}”. It stays a draft (hidden from players) until you tick “Visible to players”."));
+        Ctx.Notify(Flash.Info(L["Campaign.Library.EditingCopy", item.Entry.Name]));
         await wizard.OpenAsync(copy, startAt: "story");
     }
 
     private Task OnSavedAsync(HomebrewEntryDocument saved)
     {
-        Ctx.Notify(Flash.Success($"Saved “{saved.Name}”."));
+        Ctx.Notify(Flash.Success(L["Campaign.Library.Saved", saved.Name]));
         version++;
         Nav.NavigateTo($"{Ctx.BasePath}/library/{saved.Type}/{Uri.EscapeDataString(saved.EntryId)}");
         return Task.CompletedTask;
@@ -189,7 +189,7 @@
 
     private Task OnDeletedAsync(HomebrewEntryDocument deleted)
     {
-        Ctx.Notify(Flash.Success($"Deleted “{deleted.Name}”."));
+        Ctx.Notify(Flash.Success(L["Campaign.Library.Deleted", deleted.Name]));
         version++;
         Nav.NavigateTo($"{Ctx.BasePath}/library");
         return Task.CompletedTask;
@@ -201,11 +201,11 @@
     {
         if (await Art.PutAsync(Ctx.Campaign, Ctx.Access, item, image))
         {
-            Ctx.Notify(Flash.Success($"Art saved for “{item.Entry.Name}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.Library.ArtSaved", item.Entry.Name]));
         }
         else
         {
-            Ctx.Notify(Flash.Error("Only the DM can change Library art."));
+            Ctx.Notify(Flash.Error(L["Campaign.Library.ArtOnlyDm"]));
         }
     }
 
@@ -213,7 +213,7 @@
     {
         if (await Art.RemoveAsync(Ctx.Campaign, Ctx.Access, item))
         {
-            Ctx.Notify(Flash.Success($"Art removed from “{item.Entry.Name}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.Library.ArtRemoved", item.Entry.Name]));
         }
     }
 
@@ -231,11 +231,11 @@
         var created = await Cast.AddToCastAsync(item, Ctx.Campaign, Ctx.System, Ctx.Access);
         if (created.Count == 0)
         {
-            Ctx.Notify(Flash.Error("That entry can't be turned into a creature, or only the DM can add creatures."));
+            Ctx.Notify(Flash.Error(L["Campaign.Library.CannotCreate"]));
             return;
         }
 
-        Ctx.Notify(Flash.Success($"Added {created[0].Name} to the cast (hidden from players)."));
+        Ctx.Notify(Flash.Success(L["Campaign.Library.AddedToCast", created[0].Name]));
         await Ctx.ReloadAsync();
     }
 
@@ -279,8 +279,8 @@
             await CloseImportAsync();
             version++;
             Ctx.Notify(copied == 0
-                ? Flash.Info("Nothing imported: every selected entry already exists here.")
-                : Flash.Success($"Imported {copied} entr{(copied == 1 ? "y" : "ies")}. Entries that already existed here were skipped."));
+                ? Flash.Info(L["Campaign.Library.NothingImported"])
+                : Flash.Success(L["Campaign.Library.Imported", copied]));
         }
         finally
         {
@@ -293,7 +293,7 @@
         var entries = (await Homebrew.GetAllForCampaignAsync(Ctx.Campaign.Id)).Select(h => h.ToEntry()).ToList();
         if (entries.Count == 0)
         {
-            Ctx.Notify(Flash.Info("There is no homebrew to export yet."));
+            Ctx.Notify(Flash.Info(L["Campaign.Library.NoHomebrewToExport"]));
             return;
         }
 
@@ -310,6 +310,6 @@
         var bytes = await Exporter.ExportToZipBytesAsync(manifest, entries, Ctx.System);
         var href = "data:application/zip;base64," + Convert.ToBase64String(bytes);
         await JS.InvokeVoidAsync("codex.download", href, $"{manifest.Id}.zip");
-        Ctx.Notify(Flash.Success($"Exported {entries.Count} entries. Drop the zip into a content folder to load it as a pack."));
+        Ctx.Notify(Flash.Success(L["Campaign.Library.Exported", entries.Count]));
     }
 }

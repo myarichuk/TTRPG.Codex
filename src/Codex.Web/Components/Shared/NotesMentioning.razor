@@ -21,13 +21,13 @@
                     <LocalTime Value="note.Timestamp" Format="HH:mm" />
                     @if (note.Round is { } round)
                     {
-                        <span>· Round @round</span>
+                        <span>· @L["Combat.Round", round]</span>
                     }
                     @if (note.SpeakerActorId == null && note.Kind != NoteKind.Note)
                     {
-                        <span class="pill pill-kind">@SessionNotes.KindLabel(note.Kind)</span>
+                        <span class="pill pill-kind">@KindLabel(note.Kind)</span>
                     }
-                    @if (note.IsSecret) { <span class="pill">secret</span> }
+                    @if (note.IsSecret) { <span class="pill">@L["Combat.Notes.SecretPill"]</span> }
                 </div>
                 @if (note.SpeakerActorId != null)
                 {
@@ -51,7 +51,7 @@
     var first = group.First();
     <h3 class="h6 mt-3 mb-1">
         <span class="small-muted">@HomeLabel(first.Home):</span>
-        <a href="@MentionLinks.Href(CampaignId, first)">@(string.IsNullOrWhiteSpace(first.HomeTitle) ? "Untitled" : first.HomeTitle)</a>
+        <a href="@MentionLinks.Href(CampaignId, first)">@(string.IsNullOrWhiteSpace(first.HomeTitle) ? L["Combat.Mention.Untitled"] : first.HomeTitle)</a>
     </h3>
     <ul class="list-unstyled mb-0">
         @foreach (var written in group)
@@ -96,21 +96,40 @@
             <div class="notes-entry-meta">
                 @if (written.Source != WrittenIn.Journal)
                 {
-                    <span class="pill pill-kind">@MentionWritings.SourceLabel(written.Source)</span>
+                    <span class="pill pill-kind">@SourceLabel(written.Source)</span>
                 }
                 @if (written.Source == WrittenIn.Comment)
                 {
                     <LocalTime Value="written.When" Format="d MMM, HH:mm" />
                 }
-                @if (written.Private && written.Source is WrittenIn.Comment) { <span class="pill">private</span> }
+                @if (written.Private && written.Source is WrittenIn.Comment) { <span class="pill">@L["Combat.Mention.Private"]</span> }
             </div>
             <p class="mb-0 notes-text"><MentionText Text="@written.Excerpt" Mentions="Mentions" CampaignId="@CampaignId" /></p>
         </li>;
 
-    private static string HomeLabel(MentionHome home) => home switch
+    private string HomeLabel(MentionHome home) => home switch
     {
-        MentionHome.Character => "Character",
-        MentionHome.WikiPage => "Wiki",
-        _ => "Journal"
+        MentionHome.Character => L["Combat.Mention.Home.Character"],
+        MentionHome.WikiPage => L["Combat.Mention.Home.Wiki"],
+        _ => L["Combat.Mention.Home.Journal"]
+    };
+
+    private string SourceLabel(WrittenIn source) => source switch
+    {
+        WrittenIn.Recap => L["Combat.Mention.Source.Recap"],
+        WrittenIn.DmSummary => L["Combat.Mention.Source.DmSummary"],
+        WrittenIn.Comment => L["Combat.Mention.Source.Comment"],
+        WrittenIn.Journal => L["Combat.Mention.Home.Journal"],
+        WrittenIn.Biography => L["Combat.Mention.Source.Biography"],
+        _ => L["Combat.Mention.Source.DmNotes"]
+    };
+
+    private string KindLabel(NoteKind kind) => kind switch
+    {
+        NoteKind.Clue => L["Combat.Notes.Kind.Clue"],
+        NoteKind.Loot => L["Combat.Notes.Kind.Loot"],
+        NoteKind.Ruling => L["Combat.Notes.Kind.Ruling"],
+        NoteKind.FollowUp => L["Combat.Notes.Kind.FollowUp"],
+        _ => L["Combat.Notes.Kind.Note"]
     };
 }

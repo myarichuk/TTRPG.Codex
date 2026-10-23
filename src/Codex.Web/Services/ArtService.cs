@@ -1,4 +1,5 @@
 using Codex.Core.AI;
+using Codex.Localization;
 using Codex.Persistence;
 
 namespace Codex.Web.Services;
@@ -158,12 +159,12 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
         var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape);
         if (!RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
         {
-            throw new InvalidOperationException($"The image model sent a {image.ContentType} file, which can't be stored. Try another model.");
+            throw new LocalizedException("Service.Art.BadType", image.ContentType);
         }
 
         if (image.Bytes.Length > RavenMediaStore.MaxBytes)
         {
-            throw new InvalidOperationException("The generated image is over 6 MB. Pick a smaller size or another model.");
+            throw new LocalizedException("Service.Art.TooBig");
         }
 
         return new ArtImage(image.Bytes, image.ContentType);

@@ -7,8 +7,9 @@
 
     <!-- The launcher's look: leather, brass and parchment, like the web app. Two button materials:
          .plaque is the brass call to action (one per view), .etched is everything else. -->
+    <!-- The serif stack covers Latin and Cyrillic; the sans-serif tail is there for Hebrew glyphs the serif faces lack. -->
     <Style Selector="Window">
-      <Setter Property="FontFamily" Value="Palatino Linotype, Palatino, Book Antiqua, Georgia, serif" />
+      <Setter Property="FontFamily" Value="Palatino Linotype, Palatino, Book Antiqua, Georgia, serif, Segoe UI, Arial Hebrew, Arial, Helvetica Neue, sans-serif" />
     </Style>
 
     <Style Selector="Button.plaque, Button.etched, ToggleButton.etched">

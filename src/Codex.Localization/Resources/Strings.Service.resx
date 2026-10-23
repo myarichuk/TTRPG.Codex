@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Service.Ai.NotConfigured" xml:space="preserve"><value>No AI provider is set up.</value></data>
+  <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>No image provider is set up.</value></data>
+  <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>Only the DM drafts session summaries.</value></data>
+  <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>The provider needs an endpoint, a model and (for hosted services) an API key.</value></data>
+  <data name="Service.Ai.Connected" xml:space="preserve"><value>Connected. The model said: “{0}”</value></data>
+  <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>Connected (empty reply).</value></data>
+  <data name="Service.Ai.Unreachable" xml:space="preserve"><value>Could not reach the model: {0}</value></data>
+  <data name="Service.Art.BadType" xml:space="preserve"><value>The image model sent a {0} file, which can't be stored. Try another model.</value></data>
+  <data name="Service.Art.TooBig" xml:space="preserve"><value>The generated image is over 6 MB. Pick a smaller size or another model.</value></data>
+</root>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Launcher.Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Launcher.Help.Title" xml:space="preserve"><value>How do my players join?</value></data>
+  <data name="Launcher.Help.Automation" xml:space="preserve"><value>Help: how do my players join?</value></data>
+  <data name="Launcher.Status.Starting" xml:space="preserve"><value>Lighting the candles… (the first start takes a little longer)</value></data>
+  <data name="Launcher.Status.Running" xml:space="preserve"><value>The table is ready at {0}</value></data>
+  <data name="Launcher.Status.Stopping" xml:space="preserve"><value>Putting out the candles…</value></data>
+  <data name="Launcher.Status.Failed" xml:space="preserve"><value>The server would not start</value></data>
+  <data name="Launcher.Status.Stopped" xml:space="preserve"><value>Server stopped</value></data>
+  <data name="Launcher.StartServer" xml:space="preserve"><value>Start server</value></data>
+  <data name="Launcher.StopServer" xml:space="preserve"><value>Stop server</value></data>
+  <data name="Launcher.StopWord" xml:space="preserve"><value>Stop</value></data>
+  <data name="Launcher.OpenTable" xml:space="preserve"><value>Open the table</value></data>
+  <data name="Launcher.Quit" xml:space="preserve"><value>Quit</value></data>
+  <data name="Launcher.Done" xml:space="preserve"><value>Done</value></data>
+  <data name="Launcher.Lan.Toggle" xml:space="preserve"><value>Let players on my network join</value></data>
+  <data name="Launcher.Lan.Hint" xml:space="preserve"><value>Your firewall may ask the first time: allow private networks. Players on other networks need a VPN or tunnel, such as Tailscale.</value></data>
+  <data name="Launcher.OpenLabel" xml:space="preserve"><value>Open</value></data>
+  <data name="Launcher.Log" xml:space="preserve"><value>Log</value></data>
+  <data name="Launcher.CampaignData" xml:space="preserve"><value>Campaign data</value></data>
+  <data name="Launcher.Backups" xml:space="preserve"><value>Backups</value></data>
+  <data name="Launcher.MyContent" xml:space="preserve"><value>My content</value></data>
+  <data name="Launcher.CantJoin" xml:space="preserve"><value>Can't join?</value></data>
+  <data name="Launcher.CopyLink" xml:space="preserve"><value>Copy link</value></data>
+  <data name="Launcher.Copied" xml:space="preserve"><value>Copied ✓</value></data>
+  <data name="Launcher.QrCode" xml:space="preserve"><value>QR code</value></data>
+  <data name="Launcher.Link.This" xml:space="preserve"><value>This computer</value></data>
+  <data name="Launcher.Link.Network" xml:space="preserve"><value>Players on your network</value></data>
+  <data name="Launcher.Link.Tailscale" xml:space="preserve"><value>Players on Tailscale</value></data>
+  <data name="Launcher.Tray.Open" xml:space="preserve"><value>Open TTRPG.Codex</value></data>
+  <data name="Launcher.Tray.CopyPlayers" xml:space="preserve"><value>Copy link for players</value></data>
+  <data name="Launcher.Tray.CopyLocal" xml:space="preserve"><value>Copy link for this computer</value></data>
+  <data name="Launcher.Tray.ContentFolder" xml:space="preserve"><value>Open my content folder</value></data>
+  <data name="Launcher.Tray.BackupsFolder" xml:space="preserve"><value>Open backups folder</value></data>
+  <data name="Launcher.Tray.Show" xml:space="preserve"><value>Show window</value></data>
+  <data name="Launcher.Tray.Help" xml:space="preserve"><value>How do players join?</value></data>
+  <data name="Launcher.Tray.Check" xml:space="preserve"><value>Players can't join?</value></data>
+  <data name="Launcher.Tray.Log" xml:space="preserve"><value>Open log</value></data>
+  <data name="Launcher.Tray.Data" xml:space="preserve"><value>Open data folder</value></data>
+  <data name="Launcher.Welcome.Title" xml:space="preserve"><value>Welcome to TTRPG.Codex</value></data>
+  <data name="Launcher.Welcome.Intro" xml:space="preserve"><value>Characters, rules, your world and a live table, all running on this computer. Who will be playing?</value></data>
+  <data name="Launcher.Welcome.HostTitle" xml:space="preserve"><value>Host a game for friends</value></data>
+  <data name="Launcher.Welcome.HostBody" xml:space="preserve"><value>Players join from their phones or laptops on your Wi-Fi. I'll show you a code to scan.</value></data>
+  <data name="Launcher.Welcome.SoloTitle" xml:space="preserve"><value>Just me for now</value></data>
+  <data name="Launcher.Welcome.SoloBody" xml:space="preserve"><value>Only this computer can open it. You can open it to players later.</value></data>
+  <data name="Launcher.Welcome.Footer" xml:space="preserve"><value>You can change this any time in the launcher. The ? button explains how players join.</value></data>
+  <data name="Launcher.Check.Title" xml:space="preserve"><value>Why can't players join?</value></data>
+  <data name="Launcher.Check.Checking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="Launcher.Check.Again" xml:space="preserve"><value>Check again</value></data>
+  <data name="Launcher.Check.SummaryProblems" xml:space="preserve"><value>Found something to fix. Start at the first red item.</value></data>
+  <data name="Launcher.Check.SummaryWarnings" xml:space="preserve"><value>Nothing is broken, but check the yellow items.</value></data>
+  <data name="Launcher.Check.SummaryOk" xml:space="preserve"><value>Everything I can check looks fine. If a player still cannot connect, see the last item.</value></data>
+  <data name="Launcher.Qr.Title" xml:space="preserve"><value>Scan to join</value></data>
+  <data name="Launcher.Qr.Instruction" xml:space="preserve"><value>Point your phone's camera at this. It opens the table in the browser.</value></data>
+  <data name="Launcher.Qr.SameWifi" xml:space="preserve"><value>Phones must be on the same Wi-Fi as this computer.</value></data>
+  <data name="Launcher.Help.Got" xml:space="preserve"><value>Got it</value></data>
+  <data name="Launcher.Help.Intro" xml:space="preserve"><value>TTRPG.Codex runs on this computer. Your players open it in their web browser: nothing to install for them.</value></data>
+  <data name="Launcher.Help.Head.Room" xml:space="preserve"><value>Playing in the same room or on the same Wi-Fi</value></data>
+  <data name="Launcher.Help.Room1" xml:space="preserve"><value>Click “{0}” in the launcher.</value></data>
+  <data name="Launcher.Help.Room2" xml:space="preserve"><value>Click {0} next to “{1}” and let them scan it with their phone camera. Or click {2} and send it to them.</value></data>
+  <data name="Launcher.Help.Room3" xml:space="preserve"><value>They open the link in a browser on their phone, tablet or laptop. It must be on the same Wi-Fi as you.</value></data>
+  <data name="Launcher.Help.Room4" xml:space="preserve"><value>In your campaign, copy the invite link from the Overview page and send it too. They make an account and they are in.</value></data>
+  <data name="Launcher.Help.Head.Away" xml:space="preserve"><value>Players somewhere else</value></data>
+  <data name="Launcher.Help.AwayIntro" xml:space="preserve"><value>Your computer is not on the internet, so players elsewhere need a private link to it. The easiest free way is Tailscale (tailscale.com):</value></data>
+  <data name="Launcher.Help.Away1" xml:space="preserve"><value>You and each player install Tailscale and sign in (a few minutes, free for small groups).</value></data>
+  <data name="Launcher.Help.Away2" xml:space="preserve"><value>In Tailscale, share this computer with each player.</value></data>
+  <data name="Launcher.Help.Away3" xml:space="preserve"><value>Turn on “{0}”. A “{1}” link appears: copy it and send it to them. They open it in their browser while Tailscale is on.</value></data>
+  <data name="Launcher.Help.Head.Trouble" xml:space="preserve"><value>If a player cannot connect</value></data>
+  <data name="Launcher.Help.Trouble1" xml:space="preserve"><value>Your computer asked about the network or firewall? Allow it for private or home networks.</value></data>
+  <data name="Launcher.Help.Trouble2" xml:space="preserve"><value>Guest or café Wi-Fi often stops devices from seeing each other. Use your normal Wi-Fi, or Tailscale.</value></data>
+  <data name="Launcher.Help.Trouble3" xml:space="preserve"><value>Click “{0}” in the launcher: it checks the server, the network and the address, and tells you what to fix.</value></data>
+  <data name="Launcher.Help.Trouble4" xml:space="preserve"><value>Your computer's address can change when you restart it or join another network. If so, copy the new link from the launcher and send it again.</value></data>
+  <data name="Launcher.Help.Trouble5" xml:space="preserve"><value>Keep this computer awake and plugged in while you play. If it sleeps, players are disconnected.</value></data>
+  <data name="Launcher.Help.Head.Good" xml:space="preserve"><value>Good to know</value></data>
+  <data name="Launcher.Help.Good1" xml:space="preserve"><value>Closing this window does not stop the game. It keeps running from the tray icon (menu bar on a Mac). Use {0} to stop it for good.</value></data>
+  <data name="Launcher.Help.Good2" xml:space="preserve"><value>Your campaigns are saved on this computer ({0}), with a daily backup ({1}).</value></data>
+  <data name="Launcher.Help.Good3" xml:space="preserve"><value>Only people with your link can reach it, and only while the launcher is running.</value></data>
+  <data name="Launcher.Help.Good4" xml:space="preserve"><value>Something wrong? Open the {0} and send it to whoever is helping you.</value></data>
+  <data name="Launcher.Join.Running.Title" xml:space="preserve"><value>The server is running</value></data>
+  <data name="Launcher.Join.Running.Detail" xml:space="preserve"><value>It is up on this computer at {0}.</value></data>
+  <data name="Launcher.Join.Starting.Title" xml:space="preserve"><value>The server is still starting</value></data>
+  <data name="Launcher.Join.Starting.Detail" xml:space="preserve"><value>Give it a minute (the first start is slower), then check again.</value></data>
+  <data name="Launcher.Join.SeeLog" xml:space="preserve"><value>See the log for details.</value></data>
+  <data name="Launcher.Join.PortBusy.Title" xml:space="preserve"><value>Another program is using port {0}</value></data>
+  <data name="Launcher.Join.PortBusy.Detail" xml:space="preserve"><value>Close the other program (it may be another copy of TTRPG.Codex), then press {0}.</value></data>
+  <data name="Launcher.Join.Stopped.Title" xml:space="preserve"><value>The server is stopped</value></data>
+  <data name="Launcher.Join.Stopped.Detail" xml:space="preserve"><value>Press {0}.</value></data>
+  <data name="Launcher.Join.LanOn.Title" xml:space="preserve"><value>Network access is on</value></data>
+  <data name="Launcher.Join.LanOn.Detail" xml:space="preserve"><value>Players on your Wi-Fi are allowed in.</value></data>
+  <data name="Launcher.Join.LanOff.Title" xml:space="preserve"><value>Network access is off</value></data>
+  <data name="Launcher.Join.LanOff.Detail" xml:space="preserve"><value>Only this computer can open the table. Turn on “{0}”.</value></data>
+  <data name="Launcher.Join.NoAddress.Title" xml:space="preserve"><value>This computer has no network address</value></data>
+  <data name="Launcher.Join.NoAddress.Detail" xml:space="preserve"><value>It does not look connected to Wi-Fi or a cable. Connect to your network, then check again.</value></data>
+  <data name="Launcher.Join.UseLink.Title" xml:space="preserve"><value>Players use this link</value></data>
+  <data name="Launcher.Join.Odd.Title" xml:space="preserve"><value>That address does not look like a home network</value></data>
+  <data name="Launcher.Join.Odd.Detail" xml:space="preserve"><value>Home and office networks usually start with 192.168 or 10. A VPN may be on, or you may be on a public network. Players on your Wi-Fi may need to use a different address.</value></data>
+  <data name="Launcher.Join.Multi.Title" xml:space="preserve"><value>This computer has more than one address</value></data>
+  <data name="Launcher.Join.Multi.Detail" xml:space="preserve"><value>If the first link does not work, try one of these: {0}.</value></data>
+  <data name="Launcher.Join.Answers.Title" xml:space="preserve"><value>The server answers on your network address</value></data>
+  <data name="Launcher.Join.Answers.Detail" xml:space="preserve"><value>This computer can reach itself at that link.</value></data>
+  <data name="Launcher.Join.NoAnswer.Title" xml:space="preserve"><value>The server does not answer on your network address</value></data>
+  <data name="Launcher.Join.NoAnswer.Detail" xml:space="preserve"><value>Network access may have been switched on after the server started: press {0}, then {1}.</value></data>
+  <data name="Launcher.Join.Tailscale.Title" xml:space="preserve"><value>Tailscale is on</value></data>
+  <data name="Launcher.Join.Tailscale.Detail" xml:space="preserve"><value>Friends who are not on your Wi-Fi can use {0} if they have Tailscale and you have shared this computer with them.</value></data>
+  <data name="Launcher.Join.Unknown.Title" xml:space="preserve"><value>What I cannot check from here</value></data>
+  <data name="Launcher.Join.Unknown.Detail" xml:space="preserve"><value>Your firewall and your Wi-Fi router. If everything above is fine and a player still cannot connect: allow TTRPG.Codex through the firewall for private networks when your computer asks, make sure their phone is on the same Wi-Fi (not mobile data), and avoid guest Wi-Fi, which often blocks devices from seeing each other.</value></data>
+  <data name="Launcher.Server.NotFound" xml:space="preserve"><value>Codex.Web.dll was not found in {0}.</value></data>
+  <data name="Launcher.Server.RuntimeIncomplete" xml:space="preserve"><value>The bundled .NET runtime is incomplete.</value></data>
+  <data name="Launcher.Server.StartFailed" xml:space="preserve"><value>The server could not be started: {0}</value></data>
+  <data name="Launcher.Server.NoAnswer" xml:space="preserve"><value>The server did not answer in time. See the log for details.</value></data>
+  <data name="Launcher.Server.Unexpected" xml:space="preserve"><value>The server stopped unexpectedly. Another program may be using the port. See the log for details.</value></data>
+</root>

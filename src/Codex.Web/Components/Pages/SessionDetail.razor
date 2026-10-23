@@ -19,7 +19,7 @@
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
 
-<PageTitle>@(Title ?? "Session") | TTRPG.Codex</PageTitle>
+<PageTitle>@(Title ?? L["Session.Title"]) | TTRPG.Codex</PageTitle>
 
 @if (loading)
 {
@@ -29,27 +29,27 @@ else if (campaign == null || session == null || access == null)
 {
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="calendar" Size="28" /></div>
-        <h1 class="h4">Session not found</h1>
-        <p>It may not exist, or you may not have access to it.</p>
-        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+        <h1 class="h4">@L["Session.NotFound"]</h1>
+        <p>@L["Session.NotFoundHint"]</p>
+        <a href="/" class="cx-btn cx-plaque">@L["Session.BackToCampaigns"]</a>
     </div>
 }
 else
 {
     <div class="page-header mb-3">
         <div>
-            <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/sessions">Sessions</a></nav>
+            <nav aria-label="@L["Session.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="/">@L["Session.Campaigns"]</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId/sessions">@L["Session.Sessions"]</a></nav>
             <h1 class="mb-0">@Title</h1>
             <div class="d-flex flex-wrap gap-1 mt-1">
-                <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@(session.Status == SessionStatus.Live ? "" : "")@session.Status</span>
+                <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@StatusLabel(session.Status)</span>
                 <span class="pill"><LucideIcon IconName="calendar" Size="14" /> <LocalTime Value="session.Date" Format="dddd d MMM yyyy" /></span>
-                <span class="pill"><LucideIcon IconName="zap" Size="14" /> @visibleEvents.Count event@(visibleEvents.Count == 1 ? "" : "s")</span>
+                <span class="pill"><LucideIcon IconName="zap" Size="14" /> @L["Session.Events", visibleEvents.Count]</span>
             </div>
         </div>
         @if (access.IsDm)
         {
             <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="run-session" OnClick="RunAtTableAsync">
-                <LucideIcon IconName="dices" Size="14" /> @(RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id ? "Go to the table" : session.Status == SessionStatus.Completed ? "Reopen at the table" : "Run at the table")
+                <LucideIcon IconName="dices" Size="14" /> @(RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id ? L["Session.GoToTable"] : session.Status == SessionStatus.Completed ? L["Session.ReopenTable"] : L["Session.RunTable"])
             </CodexButton>
         }
     </div>
@@ -61,46 +61,46 @@ else
             @if (access.IsDm)
             {
                 <section class="panel" aria-labelledby="details-heading">
-                    <div class="panel-title"><h2 id="details-heading" class="h5"><LucideIcon IconName="edit-3" Size="18" Class="title-icon" /> Details</h2></div>
+                    <div class="panel-title"><h2 id="details-heading" class="h5"><LucideIcon IconName="edit-3" Size="18" Class="title-icon" /> @L["Session.Details"]</h2></div>
                     <div class="field-grid">
                         <div>
-                            <label for="session-title" class="field-label">Title</label>
+                            <label for="session-title" class="field-label">@L["Session.TitleLabel"]</label>
                             <input id="session-title" class="field-input" @bind="editTitle" />
                         </div>
                         <div>
-                            <label for="session-status" class="field-label">Status</label>
+                            <label for="session-status" class="field-label">@L["Session.StatusLabel"]</label>
                             <select id="session-status" class="field-select" @bind="editStatus">
-                                <option value="@SessionStatus.Planned">Planned</option>
-                                <option value="@SessionStatus.Live">Live</option>
-                                <option value="@SessionStatus.Completed">Completed</option>
+                                <option value="@SessionStatus.Planned">@L["Session.Status.Planned"]</option>
+                                <option value="@SessionStatus.Live">@L["Session.Status.Live"]</option>
+                                <option value="@SessionStatus.Completed">@L["Session.Status.Completed"]</option>
                             </select>
                         </div>
                     </div>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-3" OnClick="SaveDetailsAsync">Save details</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-3" OnClick="SaveDetailsAsync">@L["Session.SaveDetails"]</CodexButton>
                 </section>
             }
 
             <section class="panel" aria-labelledby="recap-heading">
                 <div class="panel-title">
-                    <h2 id="recap-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> Recap</h2>
+                    <h2 id="recap-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Session.Recap"]</h2>
                     @if (access.IsDm)
                     {
-                        <span class="pill pill-success"><LucideIcon IconName="users" Size="14" /> Players can read this</span>
+                        <span class="pill pill-success"><LucideIcon IconName="users" Size="14" /> @L["Session.PlayersCanRead"]</span>
                     }
                 </div>
                 @if (access.IsDm)
                 {
-                    <label for="recap" class="visually-hidden">Recap</label>
-                    <textarea id="recap" class="field-input mb-2" rows="8" placeholder="What happened this session, as the players will read it…" @bind="editRecap" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="mention-hint"></textarea>
+                    <label for="recap" class="visually-hidden">@L["Session.Recap"]</label>
+                    <textarea id="recap" class="field-input mb-2" rows="8" placeholder="@L["Session.RecapPlaceholder"]" @bind="editRecap" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="mention-hint"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync">Save recap</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">Pre-fill from events</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync">@L["Session.SaveRecap"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">@L["Session.Prefill"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? "Drafting…" : "Draft with AI")
+                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? L["Session.Drafting"] : L["Session.DraftAi"])
                         </CodexButton>
                     </div>
-                    <p id="mention-hint" class="field-hint">Mention someone with @@, a place with # or an item with $; players read only the names they know.</p>
-                    <p id="ai-help" class="field-hint">The player draft is built from the event log, party notes and open rolls only. Secret rolls, private notes and secret table notes never reach it.</p>
+                    <p id="mention-hint" class="field-hint">@L["Session.MentionHint"]</p>
+                    <p id="ai-help" class="field-hint">@L["Session.AiHelp"]</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(session.Recap))
                 {
@@ -108,7 +108,7 @@ else
                 }
                 else
                 {
-                    <p class="small-muted mb-0">The DM hasn't written a recap yet.</p>
+                    <p class="small-muted mb-0">@L["Session.NoRecap"]</p>
                 }
             </section>
 
@@ -116,26 +116,26 @@ else
             {
                 <section class="panel panel-dm" aria-labelledby="dm-summary-heading">
                     <div class="panel-title">
-                        <h2 id="dm-summary-heading" class="h5"><LucideIcon IconName="lock" Size="18" Class="title-icon" /> DM summary</h2>
-                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> Only you</span>
+                        <h2 id="dm-summary-heading" class="h5"><LucideIcon IconName="lock" Size="18" Class="title-icon" /> @L["Session.DmSummary"]</h2>
+                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> @L["Session.OnlyYou"]</span>
                     </div>
-                    <label for="dm-summary" class="visually-hidden">DM summary</label>
-                    <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="Secrets, loose threads, hooks for next time…" @bind="editDmSummary" @bind:event="oninput" data-mentions="@mentionsJson"></textarea>
+                    <label for="dm-summary" class="visually-hidden">@L["Session.DmSummary"]</label>
+                    <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="@L["Session.DmSummaryPlaceholder"]" @bind="editDmSummary" @bind:event="oninput" data-mentions="@mentionsJson"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync">Save summary</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync">@L["Session.SaveSummary"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Dm ? "Drafting…" : "Draft with AI")
+                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Dm ? L["Session.Drafting"] : L["Session.DraftAi"])
                         </CodexButton>
                     </div>
-                    <p class="field-hint">The DM draft sees everything: secret rolls, private notes and your previous summary.</p>
+                    <p class="field-hint">@L["Session.DmDraftHint"]</p>
                 </section>
             }
 
             <section class="panel" aria-labelledby="notes-heading">
-                <div class="panel-title"><h2 id="notes-heading" class="h5"><LucideIcon IconName="message-square" Size="18" Class="title-icon" /> Table notes</h2></div>
+                <div class="panel-title"><h2 id="notes-heading" class="h5"><LucideIcon IconName="message-square" Size="18" Class="title-icon" /> @L["Session.TableNotes"]</h2></div>
                 @if (noteRows.Count == 0)
                 {
-                    <p class="small-muted">No notes yet.</p>
+                    <p class="small-muted">@L["Session.NoNotes"]</p>
                 }
                 @foreach (var note in noteRows)
                 {
@@ -148,7 +148,7 @@ else
                                 · <span class="pill">@note.Label</span>
                                 @if (note.AtTable)
                                 {
-                                    <span class="pill ms-1">At the table</span>
+                                    <span class="pill ms-1">@L["Session.AtTable"]</span>
                                 }
                                 @if (note.Kind != null)
                                 {
@@ -161,7 +161,7 @@ else
                             </div>
                             @if (note.Speaker != null)
                             {
-                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted"> to @string.Join(", ", note.With)</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></q></p>
+                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted"> @L["Session.To", string.Join(", ", note.With)]</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></q></p>
                             }
                             else
                             {
@@ -171,15 +171,15 @@ else
                     </div>
                 }
                 <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                    <label for="new-note" class="field-label">Add a note</label>
+                    <label for="new-note" class="field-label">@L["Session.AddNoteLabel"]</label>
                     <textarea id="new-note" class="field-input mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="new-note"></textarea>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <label for="note-visibility" class="visually-hidden">Note visibility</label>
-                        <select id="note-visibility" class="field-select field-sm" @bind="newNoteVisibility" aria-label="Note visibility">
-                            <option value="@CommentVisibility.Private">Private (you and the DM)</option>
-                            <option value="@CommentVisibility.Public">Party (everyone in the campaign)</option>
+                        <label for="note-visibility" class="visually-hidden">@L["Session.NoteVisibility"]</label>
+                        <select id="note-visibility" class="field-select field-sm" @bind="newNoteVisibility" aria-label="@L["Session.NoteVisibility"]">
+                            <option value="@CommentVisibility.Private">@L["Session.VisPrivate"]</option>
+                            <option value="@CommentVisibility.Public">@L["Session.VisParty"]</option>
                         </select>
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true">Add note</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true">@L["Session.AddNote"]</CodexButton>
                     </div>
                 </form>
             </section>
@@ -188,27 +188,27 @@ else
         <div class="col-lg-4">
             <section class="panel panel-journal" aria-labelledby="journal-heading">
                 <div class="panel-title">
-                    <h2 id="journal-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="18" Class="title-icon" /> My journal</h2>
-                    <span class="pill"><LucideIcon IconName="lock" Size="14" /> Only you</span>
+                    <h2 id="journal-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="18" Class="title-icon" /> @L["Session.MyJournal"]</h2>
+                    <span class="pill"><LucideIcon IconName="lock" Size="14" /> @L["Session.OnlyYou"]</span>
                 </div>
-                <p class="small-muted">Your private notebook for this session. Nobody else, not even the DM, can read it.</p>
-                <label for="journal-body" class="visually-hidden">Journal entry</label>
-                <textarea id="journal-body" class="field-input mb-2" rows="7" placeholder="Names to remember, theories, loot you're owed…" @bind="journalBody" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="session-journal"></textarea>
+                <p class="small-muted">@L["Session.JournalHint"]</p>
+                <label for="journal-body" class="visually-hidden">@L["Session.JournalEntry"]</label>
+                <textarea id="journal-body" class="field-input mb-2" rows="7" placeholder="@L["Session.JournalPlaceholder"]" @bind="journalBody" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="session-journal"></textarea>
                 <div class="d-flex align-items-center gap-2">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save">Save journal</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save">@L["Session.SaveJournal"]</CodexButton>
                     @if (journalSavedAt != null)
                     {
-                        <span class="small-muted" role="status">Saved <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></span>
+                        <span class="small-muted" role="status">@L["Session.Saved"] <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></span>
                     }
                 </div>
-                <a href="/campaigns/@CampaignId/journal" class="small d-inline-block mt-2">All my journal entries</a>
+                <a href="/campaigns/@CampaignId/journal" class="small d-inline-block mt-2">@L["Session.AllJournal"]</a>
             </section>
 
             <section class="panel" aria-labelledby="events-heading">
-                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="18" Class="title-icon" /> Events (@visibleEvents.Count)</h2></div>
+                <div class="panel-title"><h2 id="events-heading" class="h5"><LucideIcon IconName="clock" Size="18" Class="title-icon" /> @L["Session.EventsHeading", visibleEvents.Count]</h2></div>
                 @if (visibleEvents.Count == 0)
                 {
-                    <p class="small-muted mb-0">Nothing recorded yet. Events are written automatically while the table runs.</p>
+                    <p class="small-muted mb-0">@L["Session.EventsEmpty"]</p>
                 }
                 <div class="log">
                     @foreach (var evt in visibleEvents.OrderByDescending(e => e.Timestamp))
@@ -293,14 +293,14 @@ else
                 var pageNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
                 var actorsById = campaignActors.ToDictionary(a => a.Id);
                 noteRows = pageNotes
-                    .Select(n => new NoteRow(n.AuthorId, n.Content, n.CreatedAt, n.Visibility == CommentVisibility.Public ? "Party" : "Private", AtTable: false))
+                    .Select(n => new NoteRow(n.AuthorId, n.Content, n.CreatedAt, n.Visibility == CommentVisibility.Public ? L["Session.Label.Party"] : L["Session.Label.Private"], AtTable: false))
                     .Concat(session.Notes
                         .Where(n => access.IsDm || !n.IsSecret)
-                        .Select(n => new NoteRow(n.AuthorId, n.Text, n.Timestamp, n.IsSecret ? "Secret" : "Party", AtTable: true,
+                        .Select(n => new NoteRow(n.AuthorId, n.Text, n.Timestamp, n.IsSecret ? L["Session.Label.Secret"] : L["Session.Label.Party"], AtTable: true,
                             n.SpeakerActorId == null ? null : SessionQuotes.SpeakerName(n.SpeakerActorId, actorsById, access.IsDm),
                             n.SpeakerActorId == null ? Array.Empty<string>() : SessionNotes.WithNames(n, actorsById, access.IsDm),
-                            n.SpeakerActorId == null && n.Kind != NoteKind.Note ? SessionNotes.KindLabel(n.Kind) : null,
-                            SessionNotes.Context(n, actorsById, access.IsDm))))
+                            n.SpeakerActorId == null && n.Kind != NoteKind.Note ? KindLabel(n.Kind) : null,
+                            RoundContext(n, actorsById, access.IsDm))))
                     .OrderBy(n => n.When)
                     .ToList();
                 visibleEvents = SessionEventRedactor.ForViewer(session.Events, access, campaignActors);
@@ -320,6 +320,29 @@ else
         loading = false;
     }
 
+    private string StatusLabel(SessionStatus status) => status switch
+    {
+        SessionStatus.Planned => L["Session.Status.Planned"],
+        SessionStatus.Live => L["Session.Status.Live"],
+        _ => L["Session.Status.Completed"]
+    };
+
+    private string KindLabel(NoteKind kind) => kind switch
+    {
+        NoteKind.Clue => L["Session.Kind.Clue"],
+        NoteKind.Loot => L["Session.Kind.Loot"],
+        NoteKind.Ruling => L["Session.Kind.Ruling"],
+        NoteKind.FollowUp => L["Session.Kind.FollowUp"],
+        _ => L["Session.Label.Note"]
+    };
+
+    /// <summary>"Round 3 · Grik's turn", "Round 3" when the viewer can't see who was acting, or null outside an encounter.</summary>
+    private string? RoundContext(SessionNote note, IReadOnlyDictionary<string, ActorDocument> visibleActors, bool isDm)
+    {
+        if (note.Round is not { } round) return null;
+        return SessionNotes.TurnName(note, visibleActors, isDm) is { } turn ? L["Session.RoundTurn", round, turn] : L["Session.Round", round];
+    }
+
     private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
     // The recap this fills in is what players read, so it starts from the player-safe log, not the DM's.
@@ -330,7 +353,7 @@ else
     {
         if (session == null) return;
         editRecap = SerializeEvents();
-        flash = Flash.Info("Recap pre-filled from the event log. Edit and save.");
+        flash = Flash.Info(L["Session.Flash.Prefilled"]);
     }
 
     /// <summary>Starts the table on this session (a planned one begins, a completed one reopens) and goes there.</summary>
@@ -344,7 +367,7 @@ else
         }
         catch (InvalidOperationException ex)
         {
-            flash = Flash.Error(ex.Message);
+            flash = Flash.Error(L.Describe(ex));
         }
     }
 
@@ -358,7 +381,7 @@ else
             stored.Title = title;
             stored.Status = status;
         }) ?? session;
-        flash = Flash.Success("Details saved.");
+        flash = Flash.Success(L["Session.Flash.DetailsSaved"]);
     }
 
     private async Task SaveRecapAsync()
@@ -367,7 +390,7 @@ else
         var recap = mentions.Encode(editRecap);
         session = await SessionRepo.UpdateAsync(session.Id, stored => stored.Recap = recap) ?? session;
         editRecap = mentions.ForEditing(session.Recap ?? "");
-        flash = Flash.Success("Recap saved.");
+        flash = Flash.Success(L["Session.Flash.RecapSaved"]);
     }
 
     private async Task SaveDmSummaryAsync()
@@ -376,7 +399,7 @@ else
         var summary = mentions.Encode(editDmSummary);
         session = await SessionRepo.UpdateAsync(session.Id, stored => stored.DmSummary = summary) ?? session;
         editDmSummary = mentions.ForEditing(session.DmSummary ?? "");
-        flash = Flash.Success("DM summary saved.");
+        flash = Flash.Success(L["Session.Flash.SummarySaved"]);
     }
 
     private async Task DraftAsync(AiAudience audience)
@@ -390,16 +413,16 @@ else
             var allNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
             var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"), campaignActors, places, items);
             if (audience == AiAudience.Players) editRecap = text; else editDmSummary = text;
-            flash = Flash.Info("AI draft ready. Review, edit and save.");
+            flash = Flash.Info(L["Session.Flash.DraftReady"]);
         }
         catch (AiNotConfiguredException)
         {
-            flash = Flash.Error("No AI provider is set up. Add one under your account's AI settings (top right).");
+            flash = Flash.Error(L["Session.Flash.NoAi"]);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI summary failed for session {SessionId}", SessionId);
-            flash = Flash.Error("The AI draft failed: " + ex.Message);
+            flash = Flash.Error(L["Session.Flash.DraftFailed", L.Describe(ex)]);
         }
         finally
         {
@@ -417,11 +440,11 @@ else
         {
             journal = entry;
             journalSavedAt = entry.UpdatedAt;
-            flash = Flash.Success("Journal saved. Only you can read it.");
+            flash = Flash.Success(L["Session.Flash.JournalSaved"]);
         }
         else
         {
-            flash = Flash.Error("Could not save the journal entry.");
+            flash = Flash.Error(L["Session.Flash.JournalFailed"]);
         }
     }
 
@@ -439,7 +462,7 @@ else
             Visibility = newNoteVisibility
         });
         newNoteContent = "";
-        flash = Flash.Success("Note added.");
+        flash = Flash.Success(L["Session.Flash.NoteAdded"]);
         await ReloadAsync();
     }
 }

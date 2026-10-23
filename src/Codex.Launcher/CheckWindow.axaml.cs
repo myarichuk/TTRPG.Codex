@@ -3,19 +3,39 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using static Codex.Launcher.Strings;
 
 namespace Codex.Launcher;
 
 public partial class CheckWindow : Window
 {
     private readonly LauncherViewModel? model;
+    private bool opened;
 
-    public CheckWindow() => InitializeComponent();
+    public CheckWindow()
+    {
+        InitializeComponent();
+        WindowText.Bind(this, Localize);
+    }
 
     internal CheckWindow(LauncherViewModel model) : this()
     {
         this.model = model;
-        Opened += async (_, _) => await RunAsync();
+        Opened += async (_, _) =>
+        {
+            opened = true;
+            await RunAsync();
+        };
+    }
+
+    private void Localize()
+    {
+        Title = L["Launcher.Check.Title"];
+        TitleText.Text = L["Launcher.Check.Title"];
+        AgainButton.Content = L["Launcher.Check.Again"];
+        DoneButton.Content = L["Launcher.Done"];
+        Summary.Text = L["Launcher.Check.Checking"];
+        if (opened) _ = RunAsync(); // the findings are sentences: ask again so they are in the new language
     }
 
     internal void Show(IReadOnlyList<CheckResult> results)
@@ -42,15 +62,15 @@ public partial class CheckWindow : Window
 
         var problems = results.Count(r => r.Status == CheckStatus.Fail);
         var warnings = results.Count(r => r.Status == CheckStatus.Warn);
-        Summary.Text = problems > 0 ? "Found something to fix. Start at the first red item."
-            : warnings > 0 ? "Nothing is broken, but check the yellow items."
-            : "Everything I can check looks fine. If a player still cannot connect, see the last item.";
+        Summary.Text = problems > 0 ? L["Launcher.Check.SummaryProblems"]
+            : warnings > 0 ? L["Launcher.Check.SummaryWarnings"]
+            : L["Launcher.Check.SummaryOk"];
     }
 
     private async Task RunAsync()
     {
         if (model == null) return;
-        Summary.Text = "Checking…";
+        Summary.Text = L["Launcher.Check.Checking"];
         var results = await JoinCheck.RunAsync(model.Settings, model.Controller.State, model.Controller.Problem,
             LanAddress.All(), LanAddress.Tailnet(), JoinCheck.ReachesAsync, JoinCheck.PortIsFree);
         Show(results);

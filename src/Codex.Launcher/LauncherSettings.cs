@@ -18,6 +18,9 @@ internal sealed class LauncherSettings
     /// <summary>Whether the first-run welcome has been answered.</summary>
     public bool WelcomeShown { get; set; }
 
+    /// <summary>The launcher's (and the server's default) language tag; <c>null</c> follows the operating system.</summary>
+    public string? Language { get; set; }
+
     /// <summary>What Kestrel binds to: loopback only, unless players on the network are allowed in.</summary>
     [JsonIgnore]
     public string BindUrl => $"http://{(AllowLan ? "0.0.0.0" : "localhost")}:{ValidPort}";
@@ -30,9 +33,9 @@ internal sealed class LauncherSettings
     /// server is open to the network.</summary>
     public IReadOnlyList<LauncherLink> Links(string? lanAddress, string? tailnetAddress)
     {
-        var links = new List<LauncherLink> { new("This computer", LocalUrl) };
-        if (AllowLan && lanAddress != null) links.Add(new("Players on your network", $"http://{lanAddress}:{ValidPort}"));
-        if (AllowLan && tailnetAddress != null) links.Add(new("Players on Tailscale", $"http://{tailnetAddress}:{ValidPort}"));
+        var links = new List<LauncherLink> { new(LinkKind.This, LocalUrl) };
+        if (AllowLan && lanAddress != null) links.Add(new(LinkKind.Network, $"http://{lanAddress}:{ValidPort}"));
+        if (AllowLan && tailnetAddress != null) links.Add(new(LinkKind.Tailscale, $"http://{tailnetAddress}:{ValidPort}"));
         return links;
     }
 
@@ -73,4 +76,11 @@ internal sealed class LauncherSettings
     }
 }
 
-internal sealed record LauncherLink(string Label, string Url);
+/// <summary>Which address a link is. Logic keys on this; the label is only what the DM reads.</summary>
+internal enum LinkKind { This, Network, Tailscale }
+
+internal sealed record LauncherLink(LinkKind Kind, string Url)
+{
+    /// <summary>The label in the current language, resolved when it is shown.</summary>
+    public string Label => Strings.LinkLabel(Kind);
+}

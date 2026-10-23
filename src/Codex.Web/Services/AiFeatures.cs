@@ -1,5 +1,6 @@
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Localization;
 using Codex.Core.Systems;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
@@ -21,7 +22,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     {
         if (!access.IsDm)
         {
-            throw new UnauthorizedAccessException("Only the DM drafts session summaries.");
+            throw new LocalizedException("Service.Ai.DmOnlySummary");
         }
 
         var digest = SessionDigest.Build(session, notes, forDm: audience == AiAudience.Dm, nameOf, actors, places, items);

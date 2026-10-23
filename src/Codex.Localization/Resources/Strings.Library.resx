@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Library.Browser.Search" xml:space="preserve"><value>Search {0}</value></data>
+  <data name="Library.Browser.Content" xml:space="preserve"><value>content</value></data>
+  <data name="Library.Browser.SearchPlaceholder" xml:space="preserve"><value>Search by name, tag or text…</value></data>
+  <data name="Library.Browser.Showing" xml:space="preserve"><value>Showing {0} of {1} results</value></data>
+  <data name="Library.Browser.Results" xml:space="preserve"><value>{0, plural, one{# result} other{# results}}</value></data>
+  <data name="Library.Browser.ContentType" xml:space="preserve"><value>Content type</value></data>
+  <data name="Library.Browser.All" xml:space="preserve"><value>All</value></data>
+  <data name="Library.Browser.NothingMatches" xml:space="preserve"><value>Nothing matches</value></data>
+  <data name="Library.Browser.EmptyType" xml:space="preserve"><value>No content of this type is loaded for this system.</value></data>
+  <data name="Library.Browser.TryDifferent" xml:space="preserve"><value>Try a different word, or clear the type filter.</value></data>
+  <data name="Library.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="Library.ShowMore" xml:space="preserve"><value>Show {0} more</value></data>
+  <data name="Library.Browser.CloseDetail" xml:space="preserve"><value>Close detail</value></data>
+  <data name="Library.Browser.ChooseEntry" xml:space="preserve"><value>Choose an entry to read it here.</value></data>
+  <data name="Library.Entries.Default" xml:space="preserve"><value>entries</value></data>
+  <data name="Library.Entries.FilterByName" xml:space="preserve"><value>Filter {0} by name</value></data>
+  <data name="Library.Entries.FilterPlaceholder" xml:space="preserve"><value>Filter {0}…</value></data>
+  <data name="Library.Entries.FilterBy" xml:space="preserve"><value>Filter by {0}</value></data>
+  <data name="Library.Entries.Any" xml:space="preserve"><value>Any {0}</value></data>
+  <data name="Library.Entries.Available" xml:space="preserve"><value>{0} of {1} available</value></data>
+  <data name="Library.Entries.NoMatch" xml:space="preserve"><value>No allowed entry matches that filter.</value></data>
+  <data name="Library.Entries.AddNamed" xml:space="preserve"><value>Add {0}</value></data>
+  <data name="Library.Entries.Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Library.Entries.Disabled" xml:space="preserve"><value>Nothing can be added</value></data>
+  <data name="Library.Entries.Empty" xml:space="preserve"><value>Nothing to choose from.</value></data>
+  <data name="Library.Ai.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Library.Ai.Writing" xml:space="preserve"><value>Writing…</value></data>
+  <data name="Library.Ai.Write" xml:space="preserve"><value>Write with AI</value></data>
+  <data name="Library.Ai.Enhance" xml:space="preserve"><value>Enhance with AI</value></data>
+  <data name="Library.Ai.AskLabel" xml:space="preserve"><value>What the AI should change (optional)</value></data>
+  <data name="Library.Ai.AskPlaceholder" xml:space="preserve"><value>Optional: tell the AI what you want, e.g. “more menacing, mention the smell”</value></data>
+  <data name="Library.Ai.Undo" xml:space="preserve"><value>Undo AI</value></data>
+  <data name="Library.Ai.Hint" xml:space="preserve"><value>Plain text. **bold**, *italic*, "- " bullets and | tables | are rendered.</value></data>
+  <data name="Library.Ai.Draft" xml:space="preserve"><value>AI draft in the box. Edit it freely, or undo.</value></data>
+  <data name="Library.Ai.OpenSettings" xml:space="preserve"><value>Open AI settings</value></data>
+  <data name="Library.Ai.NotConfigured" xml:space="preserve"><value>No AI provider is set up yet.</value></data>
+  <data name="Library.Ai.Failed" xml:space="preserve"><value>The AI could not write this: {0}</value></data>
+  <data name="Library.Detail.Level" xml:space="preserve"><value>Level {0}</value></data>
+  <data name="Library.Detail.Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Library.Detail.No" xml:space="preserve"><value>No</value></data>
+  <data name="Library.Detail.Source" xml:space="preserve"><value>Source:</value></data>
+  <data name="Library.Detail.Licence" xml:space="preserve"><value>Licence:</value></data>
+  <data name="Library.Detail.Modified" xml:space="preserve"><value>modified from the original</value></data>
+  <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>Created at this table. The DM decides who may reuse it.</value></data>
+  <data name="Library.Detail.LoreText" xml:space="preserve"><value>Lore text:</value></data>
+  <data name="Library.Detail.LicenceName" xml:space="preserve"><value>licence {0}</value></data>
+</root>

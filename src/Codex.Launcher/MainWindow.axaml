@@ -2,48 +2,51 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Codex.Launcher.MainWindow"
         Title="TTRPG.Codex"
-        Width="540" Height="470"
+        Width="560"
+        SizeToContent="Height"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
         Background="#15120e">
-  <Grid>
-    <Image x:Name="Backdrop" Stretch="UniformToFill" />
-    <!-- With no artwork, the window still gets a title of its own. -->
-    <TextBlock x:Name="HeadingText" Text="TTRPG Codex" FontSize="30" Foreground="#e3bf63" HorizontalAlignment="Center"
-               Margin="0,34,0,0" VerticalAlignment="Top" IsVisible="False" />
-    <Button x:Name="HelpButton" Classes="rune" Content="?" HorizontalAlignment="Right" VerticalAlignment="Top"
-            Margin="0,12,12,0" Width="34" Height="34" Click="OnHelp"
-            ToolTip.Tip="How do my players join?" AutomationProperties.Name="Help: how do my players join?" />
-    <Grid RowDefinitions="*,Auto">
-      <!-- The controls sit on a dark panel so they stay readable over busy artwork. -->
-      <Border Grid.Row="1" Background="#EC17120c" BorderBrush="#9a7c36" BorderThickness="0,2,0,0" Padding="22,16,22,18">
-        <StackPanel Spacing="12">
-          <StackPanel Orientation="Horizontal" Spacing="10">
-            <Ellipse x:Name="StatusDot" Width="14" Height="14" Fill="Gray" VerticalAlignment="Center" />
-            <TextBlock x:Name="StatusText" FontSize="18" FontWeight="Bold" Foreground="#f3e9d2" VerticalAlignment="Center" />
-          </StackPanel>
-          <TextBlock x:Name="ProblemText" Foreground="#e8917a" TextWrapping="Wrap" IsVisible="False" />
-
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button x:Name="ToggleButton" Classes="plaque" MinWidth="130" Click="OnToggle" />
-            <Button x:Name="OpenButton" Classes="etched" Content="Open the table" Click="OnOpen" />
-            <Button Classes="etched" Content="Quit" Click="OnQuit" />
-          </StackPanel>
-
-          <ToggleButton x:Name="LanBox" Classes="etched" HorizontalAlignment="Left" Click="OnLanChanged" />
-          <StackPanel x:Name="LinksPanel" Spacing="6" />
-          <TextBlock x:Name="LanHint" Foreground="#b3a78d" FontSize="12" TextWrapping="Wrap" IsVisible="False"
-                     Text="Your firewall may ask the first time: allow private networks. Players on other networks need a VPN or tunnel, such as Tailscale." />
-          <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Text="Open" Foreground="#9d9078" FontSize="12" VerticalAlignment="Center" />
-            <Button Classes="etched" Content="Log" Padding="10,3" FontSize="12" Click="OnOpenLog" />
-            <Button Classes="etched" Content="Campaign data" Padding="10,3" FontSize="12" Click="OnOpenData" />
-            <Button Classes="etched" Content="Backups" Padding="10,3" FontSize="12" Click="OnOpenBackups" />
-            <Button Classes="etched" Content="My content" Padding="10,3" FontSize="12" Click="OnOpenContent" />
-            <Button Classes="etched" Content="Can't join?" Padding="10,3" FontSize="12" Margin="8,0,0,0" Click="OnCheck" />
-          </StackPanel>
-        </StackPanel>
-      </Border>
+  <!-- All visible text is set from MainWindow.axaml.cs (Localize), so the window can change language while open.
+       Layout mirrors by itself for right-to-left languages; the artwork is pinned left-to-right so it is not flipped. -->
+  <Grid RowDefinitions="Auto,Auto">
+    <Grid Grid.Row="0" Height="230" ClipToBounds="True">
+      <Image x:Name="Backdrop" Stretch="UniformToFill" FlowDirection="LeftToRight" />
+      <!-- With no artwork, the window still gets a title of its own. -->
+      <TextBlock x:Name="HeadingText" Text="TTRPG Codex" FontSize="30" Foreground="#e3bf63" HorizontalAlignment="Center"
+                 Margin="0,34,0,0" VerticalAlignment="Top" IsVisible="False" />
+      <ComboBox x:Name="LanguageBox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,12,0,0" MinWidth="120" Height="34"
+                SelectionChanged="OnLanguageSelected" />
+      <Button x:Name="HelpButton" Classes="rune" Content="?" HorizontalAlignment="Right" VerticalAlignment="Top"
+              Margin="0,12,12,0" Width="34" Height="34" Click="OnHelp" />
     </Grid>
+    <!-- The controls sit on a dark panel so they stay readable over busy artwork. -->
+    <Border Grid.Row="1" Background="#EC17120c" BorderBrush="#9a7c36" BorderThickness="0,2,0,0" Padding="22,16,22,18">
+      <StackPanel Spacing="12">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Ellipse x:Name="StatusDot" Width="14" Height="14" Fill="Gray" VerticalAlignment="Center" />
+          <TextBlock x:Name="StatusText" FontSize="18" FontWeight="Bold" Foreground="#f3e9d2" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="470" />
+        </StackPanel>
+        <TextBlock x:Name="ProblemText" Foreground="#e8917a" TextWrapping="Wrap" IsVisible="False" />
+
+        <WrapPanel Orientation="Horizontal">
+          <Button x:Name="ToggleButton" Classes="plaque" MinWidth="130" Margin="0,0,8,6" Click="OnToggle" />
+          <Button x:Name="OpenButton" Classes="etched" Margin="0,0,8,6" Click="OnOpen" />
+          <Button x:Name="QuitButton" Classes="etched" Margin="0,0,0,6" Click="OnQuit" />
+        </WrapPanel>
+
+        <ToggleButton x:Name="LanBox" Classes="etched" HorizontalAlignment="Left" Click="OnLanChanged" />
+        <StackPanel x:Name="LinksPanel" Spacing="8" />
+        <TextBlock x:Name="LanHint" Foreground="#b3a78d" FontSize="12" TextWrapping="Wrap" IsVisible="False" />
+        <WrapPanel Orientation="Horizontal">
+          <TextBlock x:Name="OpenLabel" Foreground="#9d9078" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,6" />
+          <Button x:Name="LogButton" Classes="etched" Padding="10,3" FontSize="12" Margin="0,0,6,6" Click="OnOpenLog" />
+          <Button x:Name="DataButton" Classes="etched" Padding="10,3" FontSize="12" Margin="0,0,6,6" Click="OnOpenData" />
+          <Button x:Name="BackupsButton" Classes="etched" Padding="10,3" FontSize="12" Margin="0,0,6,6" Click="OnOpenBackups" />
+          <Button x:Name="ContentButton" Classes="etched" Padding="10,3" FontSize="12" Margin="0,0,6,6" Click="OnOpenContent" />
+          <Button x:Name="CheckButton" Classes="etched" Padding="10,3" FontSize="12" Margin="8,0,0,6" Click="OnCheck" />
+        </WrapPanel>
+      </StackPanel>
+    </Border>
   </Grid>
 </Window>

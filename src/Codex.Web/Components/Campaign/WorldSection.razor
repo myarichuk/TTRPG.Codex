@@ -11,8 +11,8 @@
 
 <div class="page-header mb-3">
     <div>
-        <h2 class="mb-0">World</h2>
-        <p class="page-subtitle">@(Ctx.IsDm ? "Regions and the places in them. Hidden places stay yours until you reveal them." : "Places the party has discovered.")</p>
+        <h2 class="mb-0">@L["Campaign.World.Title"]</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.World.Subtitle.Dm"] : L["Campaign.World.Subtitle.Player"])</p>
     </div>
 </div>
 
@@ -28,8 +28,8 @@ else
             {
                 <div class="empty">
                     <div class="empty-icon"><LucideIcon IconName="map" Size="28" /></div>
-                    <h3>@(Ctx.IsDm ? "No regions yet" : "Nothing discovered yet")</h3>
-                    <p>@(Ctx.IsDm ? "Add a region, then the places inside it." : "The DM will reveal places as the party explores.")</p>
+                    <h3>@(Ctx.IsDm ? L["Campaign.World.Empty.Dm.Title"] : L["Campaign.World.Empty.Player.Title"])</h3>
+                    <p>@(Ctx.IsDm ? L["Campaign.World.Empty.Dm.Body"] : L["Campaign.World.Empty.Player.Body"])</p>
                 </div>
             }
             @foreach (var region in regions)
@@ -41,10 +41,10 @@ else
                             @* The heading stays for the section's accessible name; the field takes its place on screen. *@
                             <h3 id="region-@region.Id" class="visually-hidden">@region.Name</h3>
                             <form class="d-flex flex-wrap gap-2 align-items-center" @onsubmit="() => RenameRegionAsync(region)" @onsubmit:preventDefault="true">
-                                <label for="rename-@region.Id" class="visually-hidden">New name for @region.Name</label>
+                                <label for="rename-@region.Id" class="visually-hidden">@L["Campaign.World.NewNameFor", region.Name]</label>
                                 <input id="rename-@region.Id" class="field-input field-sm" @bind="renameText" @onkeydown="e => OnRenameKey(e)" required data-testid="rename-region-input" />
-                                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="rename-region-save">Save</CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="CancelRename">Cancel</CodexButton>
+                                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="rename-region-save">@L["Common.Save"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="CancelRename">@L["Common.Cancel"]</CodexButton>
                             </form>
                         }
                         else
@@ -52,13 +52,13 @@ else
                             <h3 id="region-@region.Id">@region.Name</h3>
                             @if (Ctx.IsDm)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@($"Rename {region.Name}")" data-testid="rename-region">Rename</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@L["Campaign.World.RenameLabel", region.Name]" data-testid="rename-region">@L["Campaign.World.Rename"]</CodexButton>
                             }
                         }
                     </div>
                     @if (region.Locations.Count == 0)
                     {
-                        <p class="small-muted mb-0">No places here yet.</p>
+                        <p class="small-muted mb-0">@L["Campaign.World.NoPlaces"]</p>
                     }
                     <ul class="list-unstyled mb-0">
                         @foreach (var location in region.Locations)
@@ -77,7 +77,7 @@ else
                                     <div class="row-title">@location.Name
                                         @if (Ctx.IsDm && location.Visibility != ActorVisibility.Known)
                                         {
-                                            <span class="pill pill-warning ms-1">Hidden</span>
+                                            <span class="pill pill-warning ms-1">@L["Campaign.World.Hidden"]</span>
                                         }
                                     </div>
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
@@ -89,13 +89,13 @@ else
                                     }
                                     else if (Ctx.IsDm)
                                     {
-                                        <div class="row-sub">No description yet.</div>
+                                        <div class="row-sub">@L["Campaign.World.NoDescription"]</div>
                                     }
                                     @{ var mentioned = SessionMentions.NotesMentioning(noteSessions, MentionKind.Place, location.Id, Ctx.IsDm); var written = noteWritings.Mentioning(MentionKind.Place, location.Id); var mentionCount = mentioned.Count + written.Count; }
                                     @if (mentionCount > 0)
                                     {
                                         <details class="place-details mt-1" data-testid="place-mentions">
-                                            <summary class="row-sub">In @mentionCount @(mentionCount == 1 ? "note" : "notes")</summary>
+                                            <summary class="row-sub">@L["Campaign.World.InNotes", mentionCount]</summary>
                                             <NotesMentioning Lines="mentioned" Written="written" Mentions="noteMentions" Actors="noteActors" IsDm="Ctx.IsDm" CampaignId="@Ctx.Campaign.Id" />
                                         </details>
                                     }
@@ -105,9 +105,9 @@ else
                                     <div class="row-actions">
                                         @if (location.Visibility != ActorVisibility.Known)
                                         {
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@($"Reveal {location.Name} to players")"><LucideIcon IconName="eye" Size="14" /> Reveal</CodexButton>
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@L["Campaign.World.RevealLabel", location.Name]"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.World.Reveal"]</CodexButton>
                                         }
-                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => EditLocationAsync(region, location)" aria-label="@($"Edit {location.Name}")" data-testid="edit-location">Edit</CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => EditLocationAsync(region, location)" aria-label="@L["Campaign.World.EditLabel", location.Name]" data-testid="edit-location">@L["Campaign.World.Edit"]</CodexButton>
                                     </div>
                                 }
                             </li>
@@ -116,9 +116,9 @@ else
                     @if (Ctx.IsDm)
                     {
                         <form class="input-group input-group-sm mt-3" @onsubmit="() => AddLocationAsync(region.Id)" @onsubmit:preventDefault="true">
-                            <label for="loc-@region.Id" class="visually-hidden">New place in @region.Name</label>
-                            <input id="loc-@region.Id" class="field-input" placeholder="New place…" @bind="newLocationNames[region.Id]" />
-                            <CodexButton Type="submit" Variant="CodexButtonVariant.Etched">Add place</CodexButton>
+                            <label for="loc-@region.Id" class="visually-hidden">@L["Campaign.World.NewPlaceIn", region.Name]</label>
+                            <input id="loc-@region.Id" class="field-input" placeholder="@L["Campaign.World.NewPlacePlaceholder"]" @bind="newLocationNames[region.Id]" />
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Etched">@L["Campaign.World.AddPlace"]</CodexButton>
                         </form>
                     }
                 </section>
@@ -128,21 +128,21 @@ else
         {
             <div class="col-lg-4">
                 <section class="panel" aria-labelledby="new-region-heading">
-                    <div class="panel-title"><h3 id="new-region-heading">New region</h3></div>
+                    <div class="panel-title"><h3 id="new-region-heading">@L["Campaign.World.NewRegion"]</h3></div>
                     <form @onsubmit="CreateRegionAsync" @onsubmit:preventDefault="true">
-                        <label for="new-region" class="field-label">Name</label>
+                        <label for="new-region" class="field-label">@L["Campaign.World.Name"]</label>
                         <div class="input-group input-group-sm">
                             <input id="new-region" class="field-input" @bind="newRegionName" required data-testid="new-region-name" />
-                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="new-region-add">Add</CodexButton>
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="new-region-add">@L["Campaign.World.Add"]</CodexButton>
                         </div>
                     </form>
                 </section>
                 @if (packLocations.Count > 0)
                 {
                     <section class="panel" aria-labelledby="pack-places-heading">
-                        <div class="panel-title"><h3 id="pack-places-heading">Places from packs</h3></div>
-                        <p class="small-muted">Setting packs for this system ship these. Add one to a region to use it.</p>
-                        <label for="pack-target-region" class="field-label">Add into</label>
+                        <div class="panel-title"><h3 id="pack-places-heading">@L["Campaign.World.PackPlaces"]</h3></div>
+                        <p class="small-muted">@L["Campaign.World.PackPlacesHint"]</p>
+                        <label for="pack-target-region" class="field-label">@L["Campaign.World.AddInto"]</label>
                         <select id="pack-target-region" class="field-select field-sm mb-2" @bind="packTargetRegionId">
                             @foreach (var region in regions)
                             {
@@ -157,7 +157,7 @@ else
                                         <div class="row-title">@location.Name</div>
                                         <div class="row-sub">@location.Description</div>
                                     </div>
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddFromPackAsync(location)" disabled="@(regions.Count == 0)" aria-label="@($"Add {location.Name} to the selected region")">Add</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddFromPackAsync(location)" disabled="@(regions.Count == 0)" aria-label="@L["Campaign.World.AddToRegionLabel", location.Name]">@L["Campaign.World.Add"]</CodexButton>
                                 </li>
                             }
                         </ul>
@@ -175,18 +175,18 @@ else
         {
             <form @onsubmit="SaveLocationAsync" @onsubmit:preventDefault="true">
                 <div class="dialog-body">
-                    <h2 id="edit-location-title"><LucideIcon IconName="map-pin" Size="18" Class="title-icon" /> @(string.IsNullOrWhiteSpace(editingLocation.Name) ? "Place" : editingLocation.Name)</h2>
-                    <p class="small-muted">In @editingRegion.Name · @(editingLocation.Visibility == ActorVisibility.Known ? "players can see this place" : "hidden from players until you reveal it")</p>
+                    <h2 id="edit-location-title"><LucideIcon IconName="map-pin" Size="18" Class="title-icon" /> @(string.IsNullOrWhiteSpace(editingLocation.Name) ? L["Campaign.World.PlaceFallback"] : editingLocation.Name)</h2>
+                    <p class="small-muted">@(editingLocation.Visibility == ActorVisibility.Known ? L["Campaign.World.PlaceVisible", editingRegion.Name] : L["Campaign.World.PlaceHidden", editingRegion.Name])</p>
                     <div class="mb-3">
-                        <label for="loc-edit-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                        <label for="loc-edit-name" class="field-label">@L["Campaign.World.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.World.Required"]</span></label>
                         <input id="loc-edit-name" class="field-input" @bind="editingLocation.Name" required maxlength="120" data-testid="location-name" />
                     </div>
                     <div class="mb-3">
-                        <AiTextField Id="loc-edit-desc" Label="Description" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
-                                     Placeholder="What the party sees, hears and smells on arrival…" Generate="DescribeLocationAsync"
-                                     Hint="Players read this once the place is revealed, so the AI writes what a visitor would notice. **bold**, *italic* and &quot;- &quot; bullets are rendered." />
+                        <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
+                                     Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync"
+                                     Hint="@L["Campaign.World.DescHint"]" />
                     </div>
-                    <ArtSlot ImageUrl="@ArtService.Url(editingRegion, editingLocation)" CanEdit="true" Landscape="true" Label="Art" Class="art-compact" Alt="@($"Art for {editingLocation.Name}")" TestId="location-art"
+                    <ArtSlot ImageUrl="@ArtService.Url(editingRegion, editingLocation)" CanEdit="true" Landscape="true" Label="@L["Campaign.World.Art"]" Class="art-compact" Alt="@L["Campaign.World.ArtFor", editingLocation.Name]" TestId="location-art"
                              OnPicked="img => SetLocationArtAsync(img)" OnRemove="() => SetLocationArtAsync(null)" Generate="GenerateLocationArtAsync" />
                     @if (locationError != null)
                     {
@@ -194,8 +194,8 @@ else
                     }
                 </div>
                 <div class="dialog-actions">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="CloseLocationAsync">Back</CodexButton>
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" data-testid="location-save">Save place</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="CloseLocationAsync">@L["Common.Back"]</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" data-testid="location-save">@L["Campaign.World.SavePlace"]</CodexButton>
                 </div>
             </form>
         }
@@ -283,13 +283,13 @@ else
 
         if (await RegionRepo.RenameAsync(region.Id, name, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Renamed “{region.Name}” to “{name}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.World.Renamed", region.Name, name]));
             renamingRegionId = null;
             await LoadAsync();
         }
         else
         {
-            Ctx.Notify(Flash.Error("Could not rename the region."));
+            Ctx.Notify(Flash.Error(L["Campaign.World.RenameFailed"]));
         }
     }
 
@@ -299,7 +299,7 @@ else
         var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = Ctx.Campaign.Id, Name = newRegionName.Trim() };
         if (await RegionRepo.SaveAsync(region, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Added region “{region.Name}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.World.RegionAdded", region.Name]));
             newRegionName = string.Empty;
             await LoadAsync();
         }
@@ -313,7 +313,7 @@ else
         if (await RegionRepo.UpsertLocationAsync(regionId, location, Ctx.Access))
         {
             newLocationNames[regionId] = string.Empty;
-            Ctx.Notify(Flash.Success($"Added “{location.Name}” (hidden from players until you reveal it)."));
+            Ctx.Notify(Flash.Success(L["Campaign.World.PlaceAdded", location.Name]));
             await LoadAsync();
         }
     }
@@ -331,7 +331,7 @@ else
         };
         if (await RegionRepo.UpsertLocationAsync(packTargetRegionId, location, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Added “{location.Name}” from the pack."));
+            Ctx.Notify(Flash.Success(L["Campaign.World.PackPlaceAdded", location.Name]));
             await LoadAsync();
         }
     }
@@ -368,20 +368,20 @@ else
         if (editingRegion == null || editingLocation == null) return;
         if (string.IsNullOrWhiteSpace(editingLocation.Name))
         {
-            locationError = "Give the place a name.";
+            locationError = L["Campaign.World.NameRequired"];
             return;
         }
 
         editingLocation.Name = editingLocation.Name.Trim();
         if (await RegionRepo.UpsertLocationAsync(editingRegion.Id, editingLocation, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success($"Saved “{editingLocation.Name}”."));
+            Ctx.Notify(Flash.Success(L["Campaign.World.PlaceSaved", editingLocation.Name]));
             await CloseLocationAsync();
             await LoadAsync();
         }
         else
         {
-            locationError = "Only the DM can edit places.";
+            locationError = L["Campaign.World.OnlyDm"];
         }
     }
 
@@ -406,11 +406,11 @@ else
                 listed.ArtVersion = editingLocation.ArtVersion;
             }
 
-            Ctx.Notify(Flash.Success(image == null ? "Art removed." : "Art saved."));
+            Ctx.Notify(Flash.Success(image == null ? L["Campaign.World.ArtRemoved"] : L["Campaign.World.ArtSaved"]));
         }
         else
         {
-            locationError = "That place no longer exists, or you can't change it.";
+            locationError = L["Campaign.World.PlaceGone"];
         }
     }
 
@@ -421,7 +421,7 @@ else
     {
         if (await RegionRepo.SetLocationVisibilityAsync(regionId, locationId, ActorVisibility.Known, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success("Revealed to the party."));
+            Ctx.Notify(Flash.Success(L["Campaign.World.RevealedToParty"]));
             await LoadAsync();
         }
     }

@@ -7,7 +7,7 @@
 
 @if (Schema.PreferredEditor != PreferredEditor.Form)
 {
-    <p class="small-muted"><em>This entity type is designed for a @Schema.PreferredEditor.ToString().ToLowerInvariant() editor, which is not available here.</em></p>
+    <p class="small-muted"><em>@L["Actor.Form.WrongEditor", Schema.PreferredEditor.ToString().ToLowerInvariant()]</em></p>
 }
 else
 {
@@ -16,7 +16,7 @@ else
         <fieldset class="field-group">
             @if (ShowGroupHeadings)
             {
-                <legend>@group.Key</legend>
+                <legend>@(group.Key == "General" ? L["Actor.Form.General"] : group.Key)</legend>
             }
             <div class="field-grid">
                 @foreach (var field in group)
@@ -29,7 +29,7 @@ else
                             @if (field.IsRequired)
                             {
                                 <span class="required-mark" aria-hidden="true">*</span>
-                                <span class="visually-hidden">(required)</span>
+                                <span class="visually-hidden">@L["Actor.Form.Required"]</span>
                             }
                         </label>
                         @RenderField(field, controlId)
@@ -118,7 +118,7 @@ else
                                         aria-describedby="@Describe(field, controlId)"
                                         value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                         @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
-            <option value="">— none —</option>
+            <option value="">@L["Actor.Form.None"]</option>
             @foreach (var option in field.Options ?? new List<string>())
             {
                 <option value="@option">@option</option>
@@ -129,7 +129,7 @@ else
                                                aria-describedby="@Describe(field, controlId)"
                                                value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                                @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))">
-            <option value="">— none —</option>
+            <option value="">@L["Actor.Form.None"]</option>
             @foreach (var option in OptionsFor(field))
             {
                 <option value="@option.Id">@option.Name</option>
@@ -142,7 +142,7 @@ else
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
 
         FieldType.TagList => @<input id="@controlId" type="text" class="field-input" disabled="@ReadOnly"
-                                      placeholder="Comma-separated"
+                                      placeholder="@L["Actor.Form.CommaSeparated"]"
                                       aria-describedby="@Describe(field, controlId)"
                                       value="@string.Join(", ", GetTags(field))"
                                       @onchange="@(e => SetValueAsync(field, SplitTags(e.Value?.ToString())))" />,
@@ -150,7 +150,7 @@ else
         FieldType.Collection => RenderCollection(field, controlId),
 
         FieldType.ImagePicker => @<input id="@controlId" type="url" class="field-input" disabled="@ReadOnly"
-                                          placeholder="Image URL"
+                                          placeholder="@L["Actor.Form.ImageUrl"]"
                                           aria-describedby="@Describe(field, controlId)"
                                           value="@(GetValue(field)?.ToString() ?? string.Empty)"
                                           @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))" />,
@@ -171,7 +171,7 @@ else
         }
         @if (rows.Count == 0 && ReadOnly)
         {
-            <p class="small-muted mb-0">None.</p>
+            <p class="small-muted mb-0">@L["Actor.Form.NoRows"]</p>
         }
         @for (var i = 0; i < rows.Count; i++)
         {
@@ -181,19 +181,19 @@ else
                 <div class="collection-row-head">
                     @if (levelled)
                     {
-                        <input type="number" min="1" class="field-input field-sm collection-level" placeholder="Lvl" aria-label="@field.Label @(index + 1): level" disabled="@ReadOnly"
+                        <input type="number" min="1" class="field-input field-sm collection-level" placeholder="@L["Actor.Form.LevelPlaceholder"]" aria-label="@L["Actor.Form.RowLevel", field.Label, index + 1]" disabled="@ReadOnly"
                                value="@(row.GetValueOrDefault("level")?.ToString())"
                                @onchange="@(e => UpdateRowAsync(field, index, "level", e.Value?.ToString()))" />
                     }
-                    <input type="text" class="field-input field-sm" placeholder="@($"{Singular(field.Label)} name")" aria-label="@field.Label @(index + 1): name" disabled="@ReadOnly"
+                    <input type="text" class="field-input field-sm" placeholder="@L["Actor.Form.RowNamePlaceholder", Singular(field.Label)]" aria-label="@L["Actor.Form.RowName", field.Label, index + 1]" disabled="@ReadOnly"
                            value="@(row.GetValueOrDefault("name")?.ToString())"
                            @onchange="@(e => UpdateRowAsync(field, index, "name", e.Value?.ToString()))" />
                     @if (!ReadOnly)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {field.Label} {index + 1}")" OnClick="() => RemoveRowAsync(field, index)" />
+                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Form.RowRemove", field.Label, index + 1]" OnClick="() => RemoveRowAsync(field, index)" />
                     }
                 </div>
-                <textarea class="field-input" rows="2" placeholder="What it does, e.g. Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Piercing damage." aria-label="@field.Label @(index + 1): description" disabled="@ReadOnly"
+                <textarea class="field-input" rows="2" placeholder="@L["Actor.Form.RowDescribePlaceholder"]" aria-label="@L["Actor.Form.RowDescription", field.Label, index + 1]" disabled="@ReadOnly"
                           value="@(row.GetValueOrDefault("description")?.ToString())"
                           @onchange="@(e => UpdateRowAsync(field, index, "description", e.Value?.ToString()))"></textarea>
             </div>
@@ -201,7 +201,7 @@ else
         @if (!ReadOnly)
         {
             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddRowAsync(field)">
-                <LucideIcon IconName="plus" Size="14" /> Add @Singular(field.Label).ToLowerInvariant()
+                <LucideIcon IconName="plus" Size="14" /> @L["Actor.Form.AddRow", Singular(field.Label).ToLowerInvariant()]
             </CodexButton>
         }
     </div>;
@@ -277,7 +277,7 @@ else
                 && field.TargetEntityType != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var all)
                 && all.FirstOrDefault(o => o.Id == current) is { Id.Length: > 0 } stale)
             {
-                return narrowed.Append((stale.Id, stale.Name + " (not allowed)")).ToList();
+                return narrowed.Append((stale.Id, L["Actor.Form.NotAllowed", stale.Name])).ToList();
             }
 
             return narrowed;

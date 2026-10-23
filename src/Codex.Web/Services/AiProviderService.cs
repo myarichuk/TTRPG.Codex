@@ -1,4 +1,5 @@
 using Codex.Core.AI;
+using Codex.Localization;
 using Codex.Persistence;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.AI;
@@ -6,10 +7,10 @@ using Microsoft.Extensions.AI;
 namespace Codex.Web.Services;
 
 /// <summary>Thrown by AI features when the user has no working provider; the UI turns it into a link to the settings page.</summary>
-public sealed class AiNotConfiguredException() : InvalidOperationException("No AI provider is set up.");
+public sealed class AiNotConfiguredException() : LocalizedException("Service.Ai.NotConfigured");
 
 /// <summary>Thrown by art generation when the user has no image model; chat providers don't count.</summary>
-public sealed class AiImageNotConfiguredException() : InvalidOperationException("No image provider is set up.");
+public sealed class AiImageNotConfiguredException() : LocalizedException("Service.Ai.ImageNotConfigured");
 
 /// <summary>
 /// Which chat model a user's AI buttons talk to. Each user keeps their own providers (and keys,
@@ -157,12 +158,13 @@ public sealed class AiProviderService(
     }
 
     /// <summary>Sends one tiny prompt so the settings page can confirm a key and model work.</summary>
-    public async Task<(bool Ok, string Message)> TestAsync(AiProviderConfig provider, string? plainKey, CancellationToken ct = default)
+    /// <remarks>The message is a <see cref="LocalizedException"/> so the page shows it in the viewer's language; it is not thrown.</remarks>
+    public async Task<(bool Ok, LocalizedException Message)> TestAsync(AiProviderConfig provider, string? plainKey, CancellationToken ct = default)
     {
         var client = AIClientFactory.CreateClient(ToConfiguration(provider, plainKey));
         if (client == null)
         {
-            return (false, "The provider needs an endpoint, a model and (for hosted services) an API key.");
+            return (false, new LocalizedException("Service.Ai.NeedsSetup"));
         }
 
         try
@@ -174,11 +176,13 @@ public sealed class AiProviderService(
                 new ChatOptions { MaxOutputTokens = 5 },
                 timeout.Token);
             var text = response.Text?.Trim() ?? string.Empty;
-            return (true, text.Length == 0 ? "Connected (empty reply)." : $"Connected. The model said: “{(text.Length > 40 ? text[..40] + "…" : text)}”");
+            return (true, text.Length == 0
+                ? new LocalizedException("Service.Ai.ConnectedEmpty")
+                : new LocalizedException("Service.Ai.Connected", text.Length > 40 ? text[..40] + "…" : text));
         }
         catch (Exception ex)
         {
-            return (false, "Could not reach the model: " + ex.Message);
+            return (false, new LocalizedException("Service.Ai.Unreachable", ex.Message));
         }
     }
 }

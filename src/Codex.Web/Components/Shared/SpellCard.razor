@@ -17,7 +17,7 @@
     </dl>
     @if (Tags.Count > 0)
     {
-        <ul class="ref-tags" aria-label="Spell details">
+        <ul class="ref-tags" aria-label="@L["Actor.Card.SpellDetails"]">
             @foreach (var tag in Tags)
             {
                 <li class="pill">@if (tag.Icon != null) {<DomainIcon Domain="damage" Key="@tag.Icon" Size="DomainIconSize.Small" />}@tag.Text</li>
@@ -26,7 +26,7 @@
     }
     @if (RefCard.List(Entry, "classes") is { Count: > 0 } classes)
     {
-        <div class="ref-classes"><span class="label-caps">Classes</span> @string.Join(", ", classes)</div>
+        <div class="ref-classes"><span class="label-caps">@L["Actor.Card.Classes"]</span> @string.Join(", ", classes)</div>
     }
     <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(RefCard.Body(Entry.Description, "Casting Time", "Range", "Components", "Duration")))</div>
 </div>
@@ -43,7 +43,7 @@
         get
         {
             var school = RefCard.Text(Entry, "school") ?? string.Empty;
-            return RefCard.Int(Entry, "level") is 0 ? $"{school} cantrip" : $"Level {RefCard.Int(Entry, "level")} {school}";
+            return RefCard.Int(Entry, "level") is 0 ? L["Actor.Card.Cantrip", school] : L["Actor.Card.SpellLevel", RefCard.Int(Entry, "level")!, school];
         }
     }
 
@@ -51,15 +51,15 @@
     {
         get
         {
-            yield return ("Casting time", RefCard.Text(Entry, "castingTime")!);
-            if (RefCard.Text(Entry, "range") is { } range) yield return ("Range", range);
+            yield return (L["Actor.Card.CastingTime"], RefCard.Text(Entry, "castingTime")!);
+            if (RefCard.Text(Entry, "range") is { } range) yield return (L["Actor.Card.Range"], range);
             var components = string.Join(", ", RefCard.List(Entry, "components"));
             if (components.Length > 0)
             {
-                yield return ("Components", RefCard.Text(Entry, "material") is { } material ? $"{components} ({material})" : components);
+                yield return (L["Actor.Card.Components"], RefCard.Text(Entry, "material") is { } material ? $"{components} ({material})" : components);
             }
 
-            yield return ("Duration", RefCard.Text(Entry, "duration")!);
+            yield return (L["Actor.Card.Duration"], RefCard.Text(Entry, "duration")!);
         }
     }
 
@@ -68,9 +68,9 @@
         get
         {
             var tags = new List<(string, string?)>();
-            if (RefCard.Flag(Entry, "concentration")) tags.Add(("Concentration", null));
-            if (RefCard.Flag(Entry, "ritual")) tags.Add(("Ritual", null));
-            if (RefCard.Text(Entry, "damageType") is { } damage) tags.Add((damage + " damage", damage));
+            if (RefCard.Flag(Entry, "concentration")) tags.Add((L["Actor.Card.Concentration"], null));
+            if (RefCard.Flag(Entry, "ritual")) tags.Add((L["Actor.Card.Ritual"], null));
+            if (RefCard.Text(Entry, "damageType") is { } damage) tags.Add((L["Actor.Card.DamageTag", damage], damage));
             return tags;
         }
     }

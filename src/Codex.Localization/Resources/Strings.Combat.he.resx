@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <data name="Combat.Table.Title" xml:space="preserve"><value>שולחן</value></data>
+  <data name="Combat.Table.Subtitle" xml:space="preserve"><value>יוזמה, נקודות חיים, מצבים, קובייה והערות מפגש — בזמן אמת לכל מי שליד השולחן.</value></data>
+  <data name="Combat.Console.NotRunning" xml:space="preserve"><value>השולחן לא פעיל</value></data>
+  <data name="Combat.Console.NotRunningHint" xml:space="preserve"><value>הפעלת השולחן פותחת מפגש חי: יוזמה, נקודות חיים ומצבים מתעדכנים אצל כל השחקנים ברגע שאתם משנים אותם.</value></data>
+  <data name="Combat.Console.Session" xml:space="preserve"><value>מפגש</value></data>
+  <data name="Combat.Console.NewSession" xml:space="preserve"><value>מפגש חדש</value></data>
+  <data name="Combat.Console.SessionOption" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Combat.Console.StartTable" xml:space="preserve"><value>הפעלת השולחן</value></data>
+  <data name="Combat.Console.WaitingDm" xml:space="preserve"><value>ממתינים למנהל המשחק</value></data>
+  <data name="Combat.Console.WaitingDmHint" xml:space="preserve"><value>הדף יתעדכן מעצמו כשמנהל המשחק יפעיל את השולחן.</value></data>
+  <data name="Combat.Status.Planned" xml:space="preserve"><value>מתוכנן</value></data>
+  <data name="Combat.Status.Live" xml:space="preserve"><value>חי</value></data>
+  <data name="Combat.Status.Completed" xml:space="preserve"><value>הושלם</value></data>
+  <data name="Combat.Initiative" xml:space="preserve"><value>יוזמה</value></data>
+  <data name="Combat.InitiativeRound" xml:space="preserve"><value>יוזמה - סבב {0}</value></data>
+  <data name="Combat.InitiativeTitle" xml:space="preserve"><value>יוזמה {0}</value></data>
+  <data name="Combat.Previous" xml:space="preserve"><value>הקודם</value></data>
+  <data name="Combat.NextTurn" xml:space="preserve"><value>התור הבא</value></data>
+  <data name="Combat.EndEncounter" xml:space="preserve"><value>סיום מפגש קרב</value></data>
+  <data name="Combat.NowActing" xml:space="preserve"><value>בתור כעת:</value></data>
+  <data name="Combat.TurnOfCount" xml:space="preserve"><value>תור {0} מתוך {1}</value></data>
+  <data name="Combat.NobodyInOrder" xml:space="preserve"><value>עדיין אף אחד לא בסדר היוזמה.</value></data>
+  <data name="Combat.Select" xml:space="preserve"><value>בחירת {0}</value></data>
+  <data name="Combat.Deselect" xml:space="preserve"><value>ביטול בחירת {0}</value></data>
+  <data name="Combat.TurnState.Delayed" xml:space="preserve"><value>מושהה</value></data>
+  <data name="Combat.TurnState.Readied" xml:space="preserve"><value>בהיכון</value></data>
+  <data name="Combat.Acted" xml:space="preserve"><value>פעל</value></data>
+  <data name="Combat.Down" xml:space="preserve"><value>מוטל</value></data>
+  <data name="Combat.CurrentTurn" xml:space="preserve"><value>(התור הנוכחי)</value></data>
+  <data name="Combat.AddToInitiative" xml:space="preserve"><value>הוספה ליוזמה</value></data>
+  <data name="Combat.ChooseSomeone" xml:space="preserve"><value>בחרו מישהו…</value></data>
+  <data name="Combat.Roll" xml:space="preserve"><value>הטלה</value></data>
+  <data name="Combat.Roll.Normal" xml:space="preserve"><value>רגיל</value></data>
+  <data name="Combat.Roll.Advantage" xml:space="preserve"><value>יתרון</value></data>
+  <data name="Combat.Roll.Disadvantage" xml:space="preserve"><value>חיסרון</value></data>
+  <data name="Combat.RollInitiative" xml:space="preserve"><value>הטלת {0}</value></data>
+  <data name="Combat.Or" xml:space="preserve"><value>או</value></data>
+  <data name="Combat.EnterTotal" xml:space="preserve"><value>הזנת סכום</value></data>
+  <data name="Combat.Set" xml:space="preserve"><value>קביעה</value></data>
+  <data name="Combat.QuickAdd" xml:space="preserve"><value>הוספה מהירה של יצור</value></data>
+  <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים</value></data>
+  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים בספרייה…</value></data>
+  <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>הוספת {0} למפגש הקרב</value></data>
+  <data name="Combat.AddToEncounter" xml:space="preserve"><value>הוספה למפגש הקרב</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>הקלידו לחיפוש. יצורים נוספים כמוסתרים ומופיעים מיד בשולחן החי.</value></data>
+  <data name="Combat.PartyRest" xml:space="preserve"><value>מנוחת הצוות</value></data>
+  <data name="Combat.PartyRestHint" xml:space="preserve"><value>כל דמויות השחקנים נחות בבת אחת. קוביות חיים מנוצלות לכל דמות בנפרד מהשורה שלה.</value></data>
+  <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} לצוות</value></data>
+  <data name="Combat.EndTable" xml:space="preserve"><value>סיום השולחן</value></data>
+  <data name="Combat.TempHpTitle" xml:space="preserve"><value>נקודות חיים זמניות</value></data>
+  <data name="Combat.TempHpBadge" xml:space="preserve"><value>+{0} זמניות</value></data>
+  <data name="Combat.SlotsTitle" xml:space="preserve"><value>התאים של {0}</value></data>
+  <data name="Combat.Hp.Unknown" xml:space="preserve"><value>לא ידוע</value></data>
+  <data name="Combat.Hp.Critical" xml:space="preserve"><value>קריטי</value></data>
+  <data name="Combat.Hp.Bloodied" xml:space="preserve"><value>פצוע</value></data>
+  <data name="Combat.Hp.Healthy" xml:space="preserve"><value>בריא</value></data>
+  <data name="Combat.DeathSaves" xml:space="preserve"><value>הטלות הצלה מפני מוות</value></data>
+  <data name="Combat.DeathSavesLabel" xml:space="preserve"><value>הטלות הצלה מפני מוות: {0, plural, one{הצלחה #} two{# הצלחות} other{# הצלחות}}, {1, plural, one{כישלון #} two{# כישלונות} other{# כישלונות}}</value></data>
+  <data name="Combat.DeathSavesSuccessTitle" xml:space="preserve"><value>{0} מתוך {1} הצלחות</value></data>
+  <data name="Combat.DeathSavesFailureTitle" xml:space="preserve"><value>{0} מתוך {1} כישלונות</value></data>
+  <data name="Combat.RollDeathSave" xml:space="preserve"><value>הטלת הצלה מפני מוות</value></data>
+  <data name="Combat.ConditionsOn" xml:space="preserve"><value>מצבים של {0}</value></data>
+  <data name="Combat.Exhaustion" xml:space="preserve"><value>תשישות</value></data>
+  <data name="Combat.ExhaustionTitle" xml:space="preserve"><value>{0}, רמה {1}</value></data>
+  <data name="Combat.UntilRemoved" xml:space="preserve"><value>עד להסרה</value></data>
+  <data name="Combat.EffectEndsStart" xml:space="preserve"><value>{0, plural, one{סבב #} two{# סבבים} other{# סבבים}}, מסתיים בתחילת התור</value></data>
+  <data name="Combat.EffectEndsEnd" xml:space="preserve"><value>{0, plural, one{סבב #} two{# סבבים} other{# סבבים}}, מסתיים בסוף התור</value></data>
+  <data name="Combat.RemoveCondition" xml:space="preserve"><value>הסרת {0} מ{1}</value></data>
+  <data name="Combat.SomeoneUnseen" xml:space="preserve"><value>מישהו שאינכם רואים</value></data>
+  <data name="Combat.CommandsFor" xml:space="preserve"><value>פקודות עבור {0}</value></data>
+  <data name="Combat.Amount" xml:space="preserve"><value>כמות</value></data>
+  <data name="Combat.Type" xml:space="preserve"><value>סוג</value></data>
+  <data name="Combat.Untyped" xml:space="preserve"><value>ללא סוג</value></data>
+  <data name="Combat.CriticalHit" xml:space="preserve"><value>פגיעה קריטית</value></data>
+  <data name="Combat.Damage" xml:space="preserve"><value>נזק</value></data>
+  <data name="Combat.DamageTo" xml:space="preserve"><value>גרימת נזק ל{0}</value></data>
+  <data name="Combat.Heal" xml:space="preserve"><value>ריפוי</value></data>
+  <data name="Combat.HealTo" xml:space="preserve"><value>ריפוי {0}</value></data>
+  <data name="Combat.TempHp" xml:space="preserve"><value>נק' חיים זמניות</value></data>
+  <data name="Combat.TempHpTo" xml:space="preserve"><value>מתן נקודות חיים זמניות ל{0}</value></data>
+  <data name="Combat.IsDead" xml:space="preserve"><value>{0}: {1}.</value></data>
+  <data name="Combat.Revive" xml:space="preserve"><value>החייאה (הסרת {0})</value></data>
+  <data name="Combat.ReviveTo" xml:space="preserve"><value>החייאת {0}</value></data>
+  <data name="Combat.RemoveFromOrder" xml:space="preserve"><value>הסרה מהסדר</value></data>
+  <data name="Combat.RemoveFromOrderTo" xml:space="preserve"><value>הסרת {0} מהסדר</value></data>
+  <data name="Combat.IsAtZero" xml:space="preserve"><value>ל{0} יש 0 {1}.</value></data>
+  <data name="Combat.Success" xml:space="preserve"><value>הצלחה</value></data>
+  <data name="Combat.Failure" xml:space="preserve"><value>כישלון</value></data>
+  <data name="Combat.Stabilize" xml:space="preserve"><value>ייצוב</value></data>
+  <data name="Combat.MarkDead" xml:space="preserve"><value>סימון כמת</value></data>
+  <data name="Combat.MarkDeadTo" xml:space="preserve"><value>סימון {0} כמת</value></data>
+  <data name="Combat.Condition" xml:space="preserve"><value>מצב</value></data>
+  <data name="Combat.Rounds" xml:space="preserve"><value>סבבים</value></data>
+  <data name="Combat.RoundsTitle" xml:space="preserve"><value>0 או ריק: עד להסרה</value></data>
+  <data name="Combat.EndsAt" xml:space="preserve"><value>מסתיים ב</value></data>
+  <data name="Combat.EndOfTurn" xml:space="preserve"><value>בסוף התור שלהם</value></data>
+  <data name="Combat.StartOfTurn" xml:space="preserve"><value>בתחילת התור שלהם</value></data>
+  <data name="Combat.AddCondition" xml:space="preserve"><value>הוספת מצב</value></data>
+  <data name="Combat.AddConditionTo" xml:space="preserve"><value>הוספת מצב ל{0}</value></data>
+  <data name="Combat.RaiseExhaustion" xml:space="preserve"><value>הגברת התשישות של {0}</value></data>
+  <data name="Combat.LowerExhaustion" xml:space="preserve"><value>הפחתת התשישות של {0}</value></data>
+  <data name="Combat.TurnLabel" xml:space="preserve"><value>תור</value></data>
+  <data name="Combat.ActNow" xml:space="preserve"><value>לפעול עכשיו</value></data>
+  <data name="Combat.ActsNow" xml:space="preserve"><value>{0} פועל עכשיו</value></data>
+  <data name="Combat.Clear" xml:space="preserve"><value>ניקוי</value></data>
+  <data name="Combat.ClearTo" xml:space="preserve"><value>ניקוי ההשהיה או ההיכון של {0}</value></data>
+  <data name="Combat.Delay" xml:space="preserve"><value>השהיה</value></data>
+  <data name="Combat.DelayTo" xml:space="preserve"><value>{0} משהה את התור</value></data>
+  <data name="Combat.Ready" xml:space="preserve"><value>היכון</value></data>
+  <data name="Combat.ReadyTo" xml:space="preserve"><value>{0} מתכונן לפעולה</value></data>
+  <data name="Combat.Rest" xml:space="preserve"><value>מנוחה</value></data>
+  <data name="Combat.HitDice" xml:space="preserve"><value>קוביות חיים {0}/{1}</value></data>
+  <data name="Combat.HitDiceToSpend" xml:space="preserve"><value>קוביות חיים לניצול</value></data>
+  <data name="Combat.Spend" xml:space="preserve"><value>ניצול</value></data>
+  <data name="Combat.Dice" xml:space="preserve"><value>קוביות</value></data>
+  <data name="Combat.DiceExpression" xml:space="preserve"><value>ביטוי קוביות</value></data>
+  <data name="Combat.SecretRoll" xml:space="preserve"><value>הטלה סודית (מנהל המשחק בלבד)</value></data>
+  <data name="Combat.RollLog" xml:space="preserve"><value>יומן הטלות</value></data>
+  <data name="Combat.You" xml:space="preserve"><value>אתם</value></data>
+  <data name="Combat.Dm" xml:space="preserve"><value>מנהל המשחק</value></data>
+  <data name="Combat.Player" xml:space="preserve"><value>שחקן</value></data>
+  <data name="Combat.EndTableTitle" xml:space="preserve"><value>לסיים את השולחן?</value></data>
+  <data name="Combat.EndTableCombat" xml:space="preserve"><value>המפגש יסומן כהושלם. סדר היוזמה נשמר ויחזור כשהשולחן של המפגש הזה יופעל שוב.</value></data>
+  <data name="Combat.EndTableIdle" xml:space="preserve"><value>המפגש יסומן כהושלם. דפי השולחן של השחקנים יחזרו להמתנה.</value></data>
+  <data name="Combat.TableEnded" xml:space="preserve"><value>השולחן הסתיים. המפגש סומן כהושלם.</value></data>
+  <data name="Combat.EndEncounterTitle" xml:space="preserve"><value>לסיים את מפגש הקרב?</value></data>
+  <data name="Combat.EndEncounterText" xml:space="preserve"><value>סדר היוזמה מתנקה ומצבים עם מספר סבבים פוקעים. מצבים שנמשכים עד להסרה נשארים.</value></data>
+  <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>רק מנהל המשחק יכול להוסיף יצורים.</value></data>
+  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} נוסף (מוסתר מהשחקנים). הוסיפו ליוזמה כשתהיו מוכנים.</value></data>
+  <data name="Combat.Notes.Tab" xml:space="preserve"><value>הערות</value></data>
+  <data name="Combat.Notes.TabTitle" xml:space="preserve"><value>הערות מפגש (מקש גישה N)</value></data>
+  <data name="Combat.Notes.Count" xml:space="preserve"><value>{0} עד כה</value></data>
+  <data name="Combat.Notes.Title" xml:space="preserve"><value>הערות מפגש</value></data>
+  <data name="Combat.Notes.Close" xml:space="preserve"><value>סגירת ההערות</value></data>
+  <data name="Combat.Notes.WhatWriting" xml:space="preserve"><value>מה אתם כותבים?</value></data>
+  <data name="Combat.Notes.Note" xml:space="preserve"><value>הערה</value></data>
+  <data name="Combat.Notes.Dialogue" xml:space="preserve"><value>דיאלוג</value></data>
+  <data name="Combat.Notes.KindOfNote" xml:space="preserve"><value>סוג ההערה</value></data>
+  <data name="Combat.Notes.Kind.Note" xml:space="preserve"><value>הערה</value></data>
+  <data name="Combat.Notes.Kind.Clue" xml:space="preserve"><value>רמז</value></data>
+  <data name="Combat.Notes.Kind.Loot" xml:space="preserve"><value>שלל</value></data>
+  <data name="Combat.Notes.Kind.Ruling" xml:space="preserve"><value>הכרעה</value></data>
+  <data name="Combat.Notes.Kind.FollowUp" xml:space="preserve"><value>המשך טיפול</value></data>
+  <data name="Combat.Notes.KindPlural.Note" xml:space="preserve"><value>הערות</value></data>
+  <data name="Combat.Notes.KindPlural.Clue" xml:space="preserve"><value>רמזים</value></data>
+  <data name="Combat.Notes.KindPlural.Loot" xml:space="preserve"><value>שלל</value></data>
+  <data name="Combat.Notes.KindPlural.Ruling" xml:space="preserve"><value>הכרעות</value></data>
+  <data name="Combat.Notes.KindPlural.FollowUp" xml:space="preserve"><value>המשכי טיפול</value></data>
+  <data name="Combat.Notes.Add.Note" xml:space="preserve"><value>הוספת הערה</value></data>
+  <data name="Combat.Notes.Add.Clue" xml:space="preserve"><value>הוספת רמז</value></data>
+  <data name="Combat.Notes.Add.Loot" xml:space="preserve"><value>הוספת פריט שלל</value></data>
+  <data name="Combat.Notes.Add.Ruling" xml:space="preserve"><value>הוספת הכרעה</value></data>
+  <data name="Combat.Notes.Add.FollowUp" xml:space="preserve"><value>הוספת המשך טיפול</value></data>
+  <data name="Combat.Notes.Prompt.Note" xml:space="preserve"><value>מה קרה?</value></data>
+  <data name="Combat.Notes.Prompt.Clue" xml:space="preserve"><value>מה הם למדו?</value></data>
+  <data name="Combat.Notes.Prompt.Loot" xml:space="preserve"><value>מה הם מצאו, ומי לקח את זה?</value></data>
+  <data name="Combat.Notes.Prompt.Ruling" xml:space="preserve"><value>מה הכרעתם, ובאיזה עניין?</value></data>
+  <data name="Combat.Notes.Prompt.FollowUp" xml:space="preserve"><value>מה צריך להמשיך מאוחר יותר?</value></data>
+  <data name="Combat.Notes.MentionHint" xml:space="preserve"><value>הקלידו @ לדמות, # למקום, $ לפריט.</value></data>
+  <data name="Combat.Notes.SubmitHint" xml:space="preserve"><value>Ctrl+Enter (⌘+Enter ב-Mac) מוסיף אותה.</value></data>
+  <data name="Combat.Notes.SecretDm" xml:space="preserve"><value>סודי (מנהל המשחק בלבד)</value></data>
+  <data name="Combat.Notes.InConversation" xml:space="preserve"><value>בשיחה הזאת</value></data>
+  <data name="Combat.Notes.AddWhosTalking" xml:space="preserve"><value>הוסיפו מי מדבר. אחר כך כל שורה צריכה רק דובר.</value></data>
+  <data name="Combat.Notes.TakeOut" xml:space="preserve"><value>הוצאת {0} מהשיחה</value></data>
+  <data name="Combat.Notes.AddToConversation" xml:space="preserve"><value>הוספת מישהו לשיחה</value></data>
+  <data name="Combat.Notes.AddSomeone" xml:space="preserve"><value>הוספת מישהו…</value></data>
+  <data name="Combat.Notes.InTheFight" xml:space="preserve"><value>בקרב</value></data>
+  <data name="Combat.Notes.TheParty" xml:space="preserve"><value>הצוות</value></data>
+  <data name="Combat.Notes.EveryoneElse" xml:space="preserve"><value>כל השאר</value></data>
+  <data name="Combat.Notes.EveryoneInFight" xml:space="preserve"><value>כל משתתפי הקרב</value></data>
+  <data name="Combat.Notes.LineSaid" xml:space="preserve"><value>מה ש{0} אמר/ה</value></data>
+  <data name="Combat.Notes.LineGeneric" xml:space="preserve"><value>שורת דיאלוג</value></data>
+  <data name="Combat.Notes.LinePlaceholder" xml:space="preserve"><value>מה {0} אמר/ה?</value></data>
+  <data name="Combat.Notes.PickSpeakerFirst" xml:space="preserve"><value>בחרו קודם מי מדבר</value></data>
+  <data name="Combat.Notes.DialogueHint" xml:space="preserve"><value>Enter מוסיף את השורה. ↑ ו-↓ מחליפים דובר; הדובר נשאר נבחר לשורה הבאה.</value></data>
+  <data name="Combat.Notes.AddLine" xml:space="preserve"><value>הוספת שורה</value></data>
+  <data name="Combat.Notes.ErrAddTalking" xml:space="preserve"><value>הוסיפו קודם מי מדבר.</value></data>
+  <data name="Combat.Notes.ErrPickSpeaker" xml:space="preserve"><value>בחרו מי אמר את זה.</value></data>
+  <data name="Combat.Notes.ThisSession" xml:space="preserve"><value>המפגש הזה</value></data>
+  <data name="Combat.Notes.Show" xml:space="preserve"><value>הצגה</value></data>
+  <data name="Combat.Notes.Everything" xml:space="preserve"><value>הכול</value></data>
+  <data name="Combat.Notes.Mine" xml:space="preserve"><value>שלי</value></data>
+  <data name="Combat.Notes.NothingYet" xml:space="preserve"><value>עדיין אין כלום. כל מה שתכתבו כאן ייכנס לסיכום המפגש.</value></data>
+  <data name="Combat.Notes.NothingMatches" xml:space="preserve"><value>אין התאמות.</value></data>
+  <data name="Combat.Notes.BetweenEncounters" xml:space="preserve"><value>בין מפגשי קרב</value></data>
+  <data name="Combat.Round" xml:space="preserve"><value>סבב {0}</value></data>
+  <data name="Combat.TurnOf" xml:space="preserve"><value>התור של {0}</value></data>
+  <data name="Combat.RoundTurn" xml:space="preserve"><value>סבב {0} · התור של {1}</value></data>
+  <data name="Combat.Notes.SecretPill" xml:space="preserve"><value>סודי</value></data>
+  <data name="Combat.Notes.Correct" xml:space="preserve"><value>תיקון ההערה</value></data>
+  <data name="Combat.Notes.Remove" xml:space="preserve"><value>הסרת ההערה</value></data>
+  <data name="Combat.Notes.CorrectedWords" xml:space="preserve"><value>הטקסט המתוקן</value></data>
+  <data name="Combat.Notes.To" xml:space="preserve"><value>אל {0}</value></data>
+  <data name="Combat.Notes.RemoveTitle" xml:space="preserve"><value>להסיר את ההערה?</value></data>
+  <data name="Combat.Notes.RemoveText" xml:space="preserve"><value>היא תוסר מהמפגש ולא תופיע בסיכום.</value></data>
+  <data name="Combat.Notes.RemoveConfirm" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Combat.Mention.Untitled" xml:space="preserve"><value>ללא כותרת</value></data>
+  <data name="Combat.Mention.Private" xml:space="preserve"><value>פרטי</value></data>
+  <data name="Combat.Mention.Home.Character" xml:space="preserve"><value>דמות</value></data>
+  <data name="Combat.Mention.Home.Wiki" xml:space="preserve"><value>ויקי</value></data>
+  <data name="Combat.Mention.Home.Journal" xml:space="preserve"><value>יומן</value></data>
+  <data name="Combat.Mention.Source.Recap" xml:space="preserve"><value>סיכום</value></data>
+  <data name="Combat.Mention.Source.DmSummary" xml:space="preserve"><value>סיכום מנהל המשחק</value></data>
+  <data name="Combat.Mention.Source.Comment" xml:space="preserve"><value>תגובה</value></data>
+  <data name="Combat.Mention.Source.Biography" xml:space="preserve"><value>ביוגרפיה</value></data>
+  <data name="Combat.Mention.Source.DmNotes" xml:space="preserve"><value>הערות מנהל המשחק</value></data>
+</root>

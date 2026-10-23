@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page.Common.BackToCampaigns" xml:space="preserve"><value>Back to campaigns</value></data>
+  <data name="Page.Common.Breadcrumb" xml:space="preserve"><value>Breadcrumb</value></data>
+  <data name="Page.Role.DM" xml:space="preserve"><value>DM</value></data>
+  <data name="Page.Role.Player" xml:space="preserve"><value>Player</value></data>
+  <data name="Page.Role.Observer" xml:space="preserve"><value>Observer</value></data>
+  <data name="Page.Home.Title" xml:space="preserve"><value>Campaigns</value></data>
+  <data name="Page.Home.Subtitle" xml:space="preserve"><value>Every campaign you run or play in. Players join with an invite link from their DM.</value></data>
+  <data name="Page.Home.New" xml:space="preserve"><value>New campaign</value></data>
+  <data name="Page.Home.EmptyTitle" xml:space="preserve"><value>No campaigns yet</value></data>
+  <data name="Page.Home.EmptyText" xml:space="preserve"><value>Create one to run a table, or ask your DM for an invite link to join theirs.</value></data>
+  <data name="Page.Home.CreateFirst" xml:space="preserve"><value>Create your first campaign</value></data>
+  <data name="Page.Home.NoDescription" xml:space="preserve"><value>No description yet.</value></data>
+  <data name="Page.Home.Members" xml:space="preserve"><value>{0, plural, one{# member} other{# members}}</value></data>
+  <data name="Page.Home.Updated" xml:space="preserve"><value>updated</value></data>
+  <data name="Page.Home.DeleteLabel" xml:space="preserve"><value>Delete {0}</value></data>
+  <data name="Page.Home.DeleteCampaign" xml:space="preserve"><value>Delete campaign</value></data>
+  <data name="Page.Home.Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Page.Home.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Page.Home.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Page.Home.System" xml:space="preserve"><value>Game system</value></data>
+  <data name="Page.Home.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>A line or two about the campaign (optional)</value></data>
+  <data name="Page.Home.Creating" xml:space="preserve"><value>Creating…</value></data>
+  <data name="Page.Home.Create" xml:space="preserve"><value>Create campaign</value></data>
+  <data name="Page.Home.NameRequired" xml:space="preserve"><value>Give the campaign a name.</value></data>
+  <data name="Page.Home.NoSystem" xml:space="preserve"><value>No game system is loaded. Add a system.yaml under the content folder and restart.</value></data>
+  <data name="Page.Home.DeleteTitle" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Page.Home.DeleteBody" xml:space="preserve"><value>This removes the campaign and everything in it: characters, sessions, lore, notes and homebrew. Export a backup first if you want to keep any of it. This cannot be undone.</value></data>
+  <data name="Page.Home.Deleted" xml:space="preserve"><value>Deleted “{0}”.</value></data>
+  <data name="Page.Home.Forbidden" xml:space="preserve"><value>Only the campaign's owner can delete it.</value></data>
+  <data name="Page.Home.Gone" xml:space="preserve"><value>That campaign no longer exists.</value></data>
+  <data name="Page.Join.Title" xml:space="preserve"><value>Join campaign</value></data>
+  <data name="Page.Join.Joining" xml:space="preserve"><value>Joining…</value></data>
+  <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>This invite link is not valid</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>It may have been mistyped, or the campaign may have been deleted. Ask your DM for a fresh link.</value></data>
+  <data name="Page.Join.InTitle" xml:space="preserve"><value>You're in!</value></data>
+  <data name="Page.Join.InText" xml:space="preserve"><value>You are now a player in this campaign.</value></data>
+  <data name="Page.Join.Go" xml:space="preserve"><value>Go to campaign</value></data>
+  <data name="Page.Library.Title" xml:space="preserve"><value>Library</value></data>
+  <data name="Page.Library.Subtitle" xml:space="preserve"><value>Browse every loaded system's reference content. Inside a campaign, the Library also includes that table's homebrew.</value></data>
+  <data name="Page.Library.System" xml:space="preserve"><value>System</value></data>
+  <data name="Page.Library.NoneTitle" xml:space="preserve"><value>No game systems loaded</value></data>
+  <data name="Page.Library.NoneBefore" xml:space="preserve"><value>Add a </value></data>
+  <data name="Page.Library.NoneAfter" xml:space="preserve"><value> under a content folder and restart the app.</value></data>
+  <data name="Page.Error.Title" xml:space="preserve"><value>Something went wrong</value></data>
+  <data name="Page.Error.Text" xml:space="preserve"><value>The request could not be completed. Reloading the page usually fixes it; if it keeps happening, the server log has the details.</value></data>
+  <data name="Page.Error.RequestId" xml:space="preserve"><value>Request ID </value></data>
+  <data name="Page.NotFound.Title" xml:space="preserve"><value>Page not found</value></data>
+  <data name="Page.NotFound.Text" xml:space="preserve"><value>There is nothing at this address. It may have been moved or deleted.</value></data>
+  <data name="Page.Loading.Text" xml:space="preserve"><value>Loading game systems and content packs…</value></data>
+  <data name="Page.Auth.Username" xml:space="preserve"><value>Username</value></data>
+  <data name="Page.Auth.Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Page.Auth.SignIn" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Page.Login.Heading" xml:space="preserve"><value>Sign in to TTRPG.Codex</value></data>
+  <data name="Page.Login.Divider" xml:space="preserve"><value>or continue with</value></data>
+  <data name="Page.Login.Continue" xml:space="preserve"><value>Continue with {0}</value></data>
+  <data name="Page.Login.NoMethod" xml:space="preserve"><value>No sign-in method is configured. Ask whoever runs this server.</value></data>
+  <data name="Page.Login.NewHere" xml:space="preserve"><value>New here? </value></data>
+  <data name="Page.Login.CreateAccount" xml:space="preserve"><value>Create an account</value></data>
+  <data name="Page.Login.Stale" xml:space="preserve"><value>The sign-in form must be submitted from a freshly loaded page. Reload and try again.</value></data>
+  <data name="Page.Login.Invalid" xml:space="preserve"><value>Invalid username or password.</value></data>
+  <data name="Page.Register.Title" xml:space="preserve"><value>Create account</value></data>
+  <data name="Page.Register.Heading" xml:space="preserve"><value>Create your account</value></data>
+  <data name="Page.Register.PasswordHelp" xml:space="preserve"><value>At least 8 characters with an upper-case letter, a lower-case letter and a number.</value></data>
+  <data name="Page.Register.Confirm" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="Page.Register.HaveAccount" xml:space="preserve"><value>Already have an account? </value></data>
+  <data name="Page.Register.Stale" xml:space="preserve"><value>The form must be submitted from a freshly loaded page. Reload and try again.</value></data>
+  <data name="Page.Register.Mismatch" xml:space="preserve"><value>The two passwords do not match.</value></data>
+  <data name="Page.Register.Required" xml:space="preserve"><value>A username and a password are required.</value></data>
+  <data name="Page.Register.TooShort" xml:space="preserve"><value>The password must be at least 8 characters long.</value></data>
+  <data name="Page.Register.Weak" xml:space="preserve"><value>The password needs an upper-case letter, a lower-case letter and a number.</value></data>
+  <data name="Page.Register.Taken" xml:space="preserve"><value>That username is already taken.</value></data>
+  <data name="Page.About.Title" xml:space="preserve"><value>About &amp; licences</value></data>
+  <data name="Page.About.Heading" xml:space="preserve"><value>About TTRPG.Codex</value></data>
+  <data name="Page.About.Subtitle" xml:space="preserve"><value>A self-hosted campaign and character companion for tabletop role-playing games. Game systems and content are data you can read, edit and share.</value></data>
+  <data name="Page.About.Systems" xml:space="preserve"><value>Game systems</value></data>
+  <data name="Page.About.NoSystemsBefore" xml:space="preserve"><value>No game systems are loaded. Add a </value></data>
+  <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> under one of the content folders and restart.</value></data>
+  <data name="Page.About.DataDriven" xml:space="preserve"><value>data-driven</value></data>
+  <data name="Page.About.Compiled" xml:space="preserve"><value>compiled plugin</value></data>
+  <data name="Page.About.Licence" xml:space="preserve"><value>Licence:</value></data>
+  <data name="Page.About.Modified" xml:space="preserve"><value>modified from the original</value></data>
+  <data name="Page.About.Source" xml:space="preserve"><value>source:</value></data>
+  <data name="Page.About.Packs" xml:space="preserve"><value>Content packs</value></data>
+  <data name="Page.About.By" xml:space="preserve"><value>By {0}</value></data>
+  <data name="Page.About.Warnings" xml:space="preserve"><value>Content warnings</value></data>
+  <data name="Page.About.WarningsIntro" xml:space="preserve"><value>Problems found while loading systems and packs. Fix the file and restart.</value></data>
+  <data name="Page.About.Software" xml:space="preserve"><value>Software</value></data>
+  <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Campaign</value></data>
+  <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Campaign not found</value></data>
+  <data name="Page.Campaign.NotFoundText" xml:space="preserve"><value>It may have been deleted, or the link may be wrong.</value></data>
+  <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>You're not a member of this campaign</value></data>
+  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Ask the DM for an invite link.</value></data>
+  <data name="Page.Campaign.Sections" xml:space="preserve"><value>Campaign sections</value></data>
+  <data name="Page.Campaign.Live" xml:space="preserve"><value>Live</value></data>
+  <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>The table is running</value></data>
+  <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>Play</value></data>
+  <data name="Page.Campaign.Group.World" xml:space="preserve"><value>World</value></data>
+  <data name="Page.Campaign.Group.Reference" xml:space="preserve"><value>Reference</value></data>
+  <data name="Page.Campaign.Section.Overview" xml:space="preserve"><value>Overview</value></data>
+  <data name="Page.Campaign.Section.Table" xml:space="preserve"><value>Table</value></data>
+  <data name="Page.Campaign.Section.Sessions" xml:space="preserve"><value>Sessions</value></data>
+  <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>My journal</value></data>
+  <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>Cast</value></data>
+  <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>Bestiary</value></data>
+  <data name="Page.Campaign.Section.Creatures" xml:space="preserve"><value>Creatures</value></data>
+  <data name="Page.Campaign.Section.Places" xml:space="preserve"><value>Places</value></data>
+  <data name="Page.Campaign.Section.Wiki" xml:space="preserve"><value>Wiki</value></data>
+  <data name="Page.Campaign.Section.Lore" xml:space="preserve"><value>Lore</value></data>
+  <data name="Page.Campaign.Section.Library" xml:space="preserve"><value>Library</value></data>
+  <data name="Page.Campaign.Section.Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Page.AiSettings.Title" xml:space="preserve"><value>AI settings</value></data>
+  <data name="Page.AiSettings.Sub1" xml:space="preserve"><value>Two kinds of model, set up separately: a </value></data>
+  <data name="Page.AiSettings.SubTextModel" xml:space="preserve"><value>text model</value></data>
+  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> behind every “Write with AI” and “Enhance with AI” button, and an </value></data>
+  <data name="Page.AiSettings.SubImageModel" xml:space="preserve"><value>image model</value></data>
+  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> behind “Generate with AI” on art. Bring your own keys. Nothing is sent to a model until you click one of those buttons.</value></data>
+  <data name="Page.AiSettings.ServerHeading" xml:space="preserve"><value>Server fallback</value></data>
+  <data name="Page.AiSettings.ServerText" xml:space="preserve"><value>When you have no model of your own, the server's configuration is used. Your own models always take precedence.</value></data>
+  <data name="Page.AiSettings.ServerTextBefore" xml:space="preserve"><value>Text (</value></data>
+  <data name="Page.AiSettings.ServerTextAfter" xml:space="preserve"><value> section):</value></data>
+  <data name="Page.AiSettings.ServerImageBefore" xml:space="preserve"><value>Images (</value></data>
+  <data name="Page.AiSettings.ServerImageAfter" xml:space="preserve"><value> section):</value></data>
+  <data name="Page.AiSettings.WhatHeading" xml:space="preserve"><value>What the AI can do</value></data>
+  <data name="Page.AiSettings.FeatRecapsTitle" xml:space="preserve"><value>Session recaps</value></data>
+  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</value></data>
+  <data name="Page.AiSettings.FeatHistoriesTitle" xml:space="preserve"><value>Histories and descriptions</value></data>
+  <data name="Page.AiSettings.FeatHistoriesText" xml:space="preserve"><value>Polish a backstory, an NPC's private notes, a homebrew creature or a place, without contradicting the stats.</value></data>
+  <data name="Page.AiSettings.FeatLevelTitle" xml:space="preserve"><value>Level-up advice</value></data>
+  <data name="Page.AiSettings.FeatLevelText" xml:space="preserve"><value>What the next level brings, the choices it forces, and picks that fit the character.</value></data>
+  <data name="Page.AiSettings.FeatCharsTitle" xml:space="preserve"><value>Characters from a concept</value></data>
+  <data name="Page.AiSettings.FeatCharsText" xml:space="preserve"><value>A line of concept becomes a full draft sheet built only from content in the campaign's Library.</value></data>
+  <data name="Page.AiSettings.FeatWikiTitle" xml:space="preserve"><value>Wiki pages</value></data>
+  <data name="Page.AiSettings.FeatWikiText" xml:space="preserve"><value>Expand rough notes into a linked world-wiki page.</value></data>
+  <data name="Page.AiSettings.FeatArtTitle" xml:space="preserve"><value>Art</value></data>
+  <data name="Page.AiSettings.FeatArtText" xml:space="preserve"><value>Portraits for creatures and pictures for Library entries and places, from their art prompt or description. Needs an image model.</value></data>
+  <data name="Page.AiSettings.NewText" xml:space="preserve"><value>New text model</value></data>
+  <data name="Page.AiSettings.NewImage" xml:space="preserve"><value>New image model</value></data>
+  <data name="Page.AiSettings.EditText" xml:space="preserve"><value>Edit text model</value></data>
+  <data name="Page.AiSettings.EditImage" xml:space="preserve"><value>Edit image model</value></data>
+  <data name="Page.AiSettings.KindOfModel" xml:space="preserve"><value>Kind of model</value></data>
+  <data name="Page.AiSettings.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Page.AiSettings.Images" xml:space="preserve"><value>Images</value></data>
+  <data name="Page.AiSettings.Service" xml:space="preserve"><value>Service</value></data>
+  <data name="Page.AiSettings.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Page.AiSettings.BaseUrl" xml:space="preserve"><value>Base URL</value></data>
+  <data name="Page.AiSettings.Model" xml:space="preserve"><value>Model</value></data>
+  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>e.g. gpt-image-1</value></data>
+  <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>e.g. openai/gpt-4o-mini</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Any image model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Any id from openrouter.ai/models, e.g. anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API key</value></data>
+  <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(leave blank to keep the stored key)</value></data>
+  <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>Not needed for a local server</value></data>
+  <data name="Page.AiSettings.KeyHint" xml:space="preserve"><value>Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.</value></data>
+  <data name="Page.AiSettings.KeyReuse" xml:space="preserve"><value>Leave it blank to reuse the key of your “{0}” text model.</value></data>
+  <data name="Page.AiSettings.SaveText" xml:space="preserve"><value>Save text model</value></data>
+  <data name="Page.AiSettings.SaveImage" xml:space="preserve"><value>Save image model</value></data>
+  <data name="Page.AiSettings.Testing" xml:space="preserve"><value>Testing…</value></data>
+  <data name="Page.AiSettings.TestConnection" xml:space="preserve"><value>Test connection</value></data>
+  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>There is no test button for images: every picture costs money. Try “Generate with AI” on a Library entry instead.</value></data>
+  <data name="Page.AiSettings.ImageModels" xml:space="preserve"><value>Image models</value></data>
+  <data name="Page.AiSettings.TextModels" xml:space="preserve"><value>Text models</value></data>
+  <data name="Page.AiSettings.Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>No image model yet</value></data>
+  <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>No text model yet</value></data>
+  <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>Uploading art works without one. Add one to have pictures drawn for you; good writing models rarely draw, so this is set up apart from text.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</value></data>
+  <data name="Page.AiSettings.InUse" xml:space="preserve"><value>In use</value></data>
+  <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>no key</value></data>
+  <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>key stored</value></data>
+  <data name="Page.AiSettings.Use" xml:space="preserve"><value>Use</value></data>
+  <data name="Page.AiSettings.Test" xml:space="preserve"><value>Test</value></data>
+  <data name="Page.AiSettings.EditLabel" xml:space="preserve"><value>Edit {0}</value></data>
+  <data name="Page.AiSettings.RemoveLabel" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Page.AiSettings.Required" xml:space="preserve"><value>Name, base URL and model are required.</value></data>
+  <data name="Page.AiSettings.BadUrl" xml:space="preserve"><value>The base URL must be a full URL, like https://openrouter.ai/api/v1.</value></data>
+  <data name="Page.AiSettings.NeedsKey" xml:space="preserve"><value>This service needs an API key.</value></data>
+  <data name="Page.AiSettings.Saved" xml:space="preserve"><value>Saved “{0}”.</value></data>
+  <data name="Page.AiSettings.NowImage" xml:space="preserve"><value>Art is now drawn with {0}.</value></data>
+  <data name="Page.AiSettings.NowText" xml:space="preserve"><value>AI buttons now use {0}.</value></data>
+  <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Removed {0}.</value></data>
+  <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
+</root>

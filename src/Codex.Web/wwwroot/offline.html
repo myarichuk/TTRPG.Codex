@@ -33,10 +33,28 @@
             <div class="mark" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>
             </div>
-            <h1>You're offline</h1>
-            <p>TTRPG.Codex runs live against your server, so the table, sheets and wiki need a connection. Check your network and try again.</p>
-            <button type="button" onclick="location.reload()">Try again</button>
+            <h1 data-i18n="title">You're offline</h1>
+            <p data-i18n="text">TTRPG.Codex runs live against your server, so the table, sheets and wiki need a connection. Check your network and try again.</p>
+            <button type="button" onclick="location.reload()" data-i18n="retry">Try again</button>
         </div>
     </main>
+    <script>
+        /* A static page: no server culture here, so follow the browser's language (English by default). */
+        (function () {
+            var T = {
+                ru: { page: "Нет соединения | TTRPG.Codex", title: "Вы не в сети", text: "TTRPG.Codex работает вживую на вашем сервере, поэтому для стола, листов и вики нужно соединение. Проверьте сеть и попробуйте снова.", retry: "Повторить" },
+                he: { page: "לא מקוון | TTRPG.Codex", title: "אין חיבור לרשת", text: "TTRPG.Codex פועל בזמן אמת מול השרת שלכם, ולכן השולחן, דפי הדמויות והוויקי דורשים חיבור. בדקו את הרשת ונסו שוב.", retry: "נסו שוב" }
+            };
+            var lang = String(navigator.language || "en").toLowerCase().slice(0, 2);
+            if (lang === "iw") lang = "he";
+            var t = T[lang];
+            if (!t) return;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === "he" ? "rtl" : "ltr";
+            document.title = t.page;
+            var nodes = document.querySelectorAll("[data-i18n]");
+            for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t[nodes[i].getAttribute("data-i18n")];
+        })();
+    </script>
 </body>
 </html>

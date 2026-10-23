@@ -14,7 +14,7 @@
         }
         @if (RefCard.Flag(Entry, "attunement"))
         {
-            <span class="pill">Requires attunement</span>
+            <span class="pill">@L["Actor.Card.AttunementRequired"]</span>
         }
     </div>
     <div class="ref-rule" aria-hidden="true"></div>
@@ -64,17 +64,30 @@
     private string ItemKey => DomainIconMap.ItemKey(Category);
     private string RarityClass => (RefCard.Text(Entry, "rarity") ?? "none").Split(' ', '(', ',')[0].ToLowerInvariant().Replace(' ', '-');
 
+    // The English wording is what Humanize gave these keys, so existing tests keep finding it.
+    private string FactLabel(string key) => key switch
+    {
+        "damage" => L["Actor.Card.Damage"],
+        "damageType" => L["Actor.Card.DamageType"],
+        "mastery" => L["Actor.Card.Mastery"],
+        "properties" => L["Actor.Card.Properties"],
+        "armorClass" => L["Actor.Card.ArmorClassFact"],
+        "strength" => L["Actor.Card.Strength"],
+        "stealth" => L["Actor.Card.Stealth"],
+        _ => CampaignLibrary.Humanize(key)
+    };
+
     private List<(string Label, string Value)> Facts
     {
         get
         {
             var facts = new List<(string, string)>();
-            if (RefCard.Text(Entry, "cost") is { } cost) facts.Add(("Cost", cost));
-            if (RefCard.Text(Entry, "weight") is { } weight) facts.Add(("Weight", weight + " lb."));
+            if (RefCard.Text(Entry, "cost") is { } cost) facts.Add((L["Actor.Card.Cost"], cost));
+            if (RefCard.Text(Entry, "weight") is { } weight) facts.Add((L["Actor.Card.Weight"], L["Actor.Card.WeightLb", weight]));
             foreach (var key in new[] { "damage", "damageType", "mastery", "properties", "armorClass", "strength", "stealth" })
             {
                 var text = RefCard.Text(Entry, key) ?? (RefCard.List(Entry, key) is { Count: > 0 } list ? string.Join(", ", list) : null);
-                if (text != null) facts.Add((CampaignLibrary.Humanize(key), text));
+                if (text != null) facts.Add((FactLabel(key), text));
             }
 
             return facts;

@@ -11,15 +11,15 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageTitle>Campaigns | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.Home.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="page-header">
     <div>
-        <h1>Campaigns</h1>
-        <p class="page-subtitle">Every campaign you run or play in. Players join with an invite link from their DM.</p>
+        <h1>@L["Page.Home.Title"]</h1>
+        <p class="page-subtitle">@L["Page.Home.Subtitle"]</p>
     </div>
     <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign">
-        <LucideIcon IconName="plus" Size="18" /> New campaign
+        <LucideIcon IconName="plus" Size="18" /> @L["Page.Home.New"]
     </CodexButton>
 </div>
 
@@ -33,9 +33,9 @@ else if (campaigns.Count == 0)
 {
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
-        <h2>No campaigns yet</h2>
-        <p>Create one to run a table, or ask your DM for an invite link to join theirs.</p>
-        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign-empty">Create your first campaign</CodexButton>
+        <h2>@L["Page.Home.EmptyTitle"]</h2>
+        <p>@L["Page.Home.EmptyText"]</p>
+        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign-empty">@L["Page.Home.CreateFirst"]</CodexButton>
     </div>
 }
 else
@@ -55,25 +55,25 @@ else
                 }
                 <div class="card-head">
                     <h2 id="camp-@campaign.Id"><a href="/campaigns/@campaign.Id">@campaign.Name</a></h2>
-                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@role</span>
+                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(role)</span>
                 </div>
                 <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
-                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(campaign.Description) ? "No description yet." : campaign.Description)</p>
+                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(campaign.Description) ? L["Page.Home.NoDescription"] : campaign.Description)</p>
                 <div class="card-foot">
-                    <span class="small-muted">@campaign.Members.Count member@(campaign.Members.Count == 1 ? "" : "s") · updated <LocalTime Value="campaign.UpdatedAt" Format="d MMM yyyy" /></span>
+                    <span class="small-muted">@L["Page.Home.Members", campaign.Members.Count] · @L["Page.Home.Updated"] <LocalTime Value="campaign.UpdatedAt" Format="d MMM yyyy" /></span>
                     <div class="row-actions">
                         @if (campaign.OwnerId == currentUserId)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Delete {campaign.Name}")" title="Delete campaign" OnClick="() => DeleteAsync(campaign)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Page.Home.DeleteLabel", campaign.Name]" title="@L["Page.Home.DeleteCampaign"]" OnClick="() => DeleteAsync(campaign)" />
                         }
-                        <a href="/campaigns/@campaign.Id" class="cx-btn cx-etched cx-sm">Open</a>
+                        <a href="/campaigns/@campaign.Id" class="cx-btn cx-etched cx-sm">@L["Page.Home.Open"]</a>
                     </div>
                 </div>
             </article>
         }
-        <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="New campaign">
+        <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="@L["Page.Home.New"]">
             <LucideIcon IconName="plus" Size="28" />
-            <span class="fw-semibold">New campaign</span>
+            <span class="fw-semibold">@L["Page.Home.New"]</span>
         </button>
     </div>
 }
@@ -83,13 +83,13 @@ else
 <dialog id="new-campaign-dialog" class="codex-dialog" aria-labelledby="new-campaign-title" @oncancel="CloseNewDialog">
     <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
         <div class="dialog-body">
-            <h2 id="new-campaign-title">New campaign</h2>
+            <h2 id="new-campaign-title">@L["Page.Home.New"]</h2>
             <div class="mb-3">
-                <label for="nc-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <label for="nc-name" class="field-label">@L["Page.Home.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Page.Home.Required"]</span></label>
                 <input id="nc-name" class="field-input" @bind="newName" required maxlength="120" data-testid="new-campaign-name" />
             </div>
             <div class="mb-3">
-                <label for="nc-system" class="field-label">Game system <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                <label for="nc-system" class="field-label">@L["Page.Home.System"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Page.Home.Required"]</span></label>
                 <select id="nc-system" class="field-select" @bind="newSystemId" required data-testid="new-campaign-system">
                     @foreach (var system in Catalog.Systems)
                     {
@@ -102,8 +102,8 @@ else
                 }
             </div>
             <div class="mb-1">
-                <label for="nc-desc" class="field-label">Description</label>
-                <textarea id="nc-desc" class="field-input" rows="2" @bind="newDescription" placeholder="A line or two about the campaign (optional)"></textarea>
+                <label for="nc-desc" class="field-label">@L["Page.Home.Description"]</label>
+                <textarea id="nc-desc" class="field-input" rows="2" @bind="newDescription" placeholder="@L["Page.Home.DescriptionPlaceholder"]"></textarea>
             </div>
             @if (createError != null)
             {
@@ -111,8 +111,8 @@ else
             }
         </div>
         <div class="dialog-actions">
-            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseNewDialog">Cancel</CodexButton>
-            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@creating" data-testid="new-campaign-create">@(creating ? "Creating…" : "Create campaign")</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseNewDialog">@L["Common.Cancel"]</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@creating" data-testid="new-campaign-create">@(creating ? L["Page.Home.Creating"] : L["Page.Home.Create"])</CodexButton>
         </div>
     </form>
 </dialog>
@@ -153,6 +153,13 @@ else
         return hash % 360;
     }
 
+    private string RoleLabel(CampaignRole role) => role switch
+    {
+        CampaignRole.DM => L["Page.Role.DM"],
+        CampaignRole.Player => L["Page.Role.Player"],
+        _ => L["Page.Role.Observer"]
+    };
+
     private static string SystemIcon(string systemId) => systemId.Contains("srd", StringComparison.OrdinalIgnoreCase) ? "swords" : "scroll";
 
     private CampaignRole RoleOf(CampaignDocument campaign) =>
@@ -181,13 +188,13 @@ else
         if (currentUserId == null) return;
         if (string.IsNullOrWhiteSpace(newName))
         {
-            createError = "Give the campaign a name.";
+            createError = L["Page.Home.NameRequired"];
             return;
         }
 
         if (string.IsNullOrWhiteSpace(newSystemId))
         {
-            createError = "No game system is loaded. Add a system.yaml under the content folder and restart.";
+            createError = L["Page.Home.NoSystem"];
             return;
         }
 
@@ -209,7 +216,7 @@ else
         }
         catch (InvalidOperationException ex)
         {
-            createError = ex.Message;
+            createError = L.Describe(ex);
         }
         finally
         {
@@ -220,18 +227,18 @@ else
     private async Task DeleteAsync(CampaignDocument campaign)
     {
         var ok = await confirm.ShowAsync(
-            $"Delete “{campaign.Name}”?",
-            "This removes the campaign and everything in it: characters, sessions, lore, notes and homebrew. Export a backup first if you want to keep any of it. This cannot be undone.",
-            "Delete campaign",
+            L["Page.Home.DeleteTitle", campaign.Name],
+            L["Page.Home.DeleteBody"],
+            L["Page.Home.DeleteCampaign"],
             isDestructive: true);
         if (!ok || currentUserId == null) return;
 
         var result = await CampaignRepo.DeleteAsync(campaign.Id, currentUserId);
         flash = result switch
         {
-            CampaignDeleteResult.Deleted => Flash.Success($"Deleted “{campaign.Name}”."),
-            CampaignDeleteResult.Forbidden => Flash.Error("Only the campaign's owner can delete it."),
-            _ => Flash.Error("That campaign no longer exists.")
+            CampaignDeleteResult.Deleted => Flash.Success(L["Page.Home.Deleted", campaign.Name]),
+            CampaignDeleteResult.Forbidden => Flash.Error(L["Page.Home.Forbidden"]),
+            _ => Flash.Error(L["Page.Home.Gone"])
         };
         await LoadAsync();
     }

@@ -15,7 +15,7 @@
 @inject CampaignRuntimeManager RuntimeManager
 @inject AuthenticationStateProvider AuthStateProvider
 
-<PageTitle>@(campaign?.Name ?? "Campaign") | TTRPG.Codex</PageTitle>
+<PageTitle>@(campaign?.Name ?? L["Page.Campaign.Fallback"]) | TTRPG.Codex</PageTitle>
 
 @if (loading)
 {
@@ -25,18 +25,18 @@ else if (campaign == null)
 {
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
-        <h1 class="h4">Campaign not found</h1>
-        <p>It may have been deleted, or the link may be wrong.</p>
-        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+        <h1 class="h4">@L["Page.Campaign.NotFoundTitle"]</h1>
+        <p>@L["Page.Campaign.NotFoundText"]</p>
+        <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
     </div>
 }
 else if (access == null)
 {
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="shield" Size="28" /></div>
-        <h1 class="h4">You're not a member of this campaign</h1>
-        <p>Ask the DM for an invite link.</p>
-        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+        <h1 class="h4">@L["Page.Campaign.NotMemberTitle"]</h1>
+        <p>@L["Page.Campaign.NotMemberText"]</p>
+        <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
     </div>
 }
 else
@@ -45,30 +45,30 @@ else
 
     <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "")">
         <header class="ws-head @(campaign.HasCover ? "has-cover" : "")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
-            <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>@campaign.Name</span></nav>
+            <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a><span class="crumb-sep" aria-hidden="true">/</span><span>@campaign.Name</span></nav>
             <h1 data-testid="campaign-title">@campaign.Name</h1>
             <div class="pills">
                 <span class="pill">@Catalog.GetDisplayName(campaign.SystemId)</span>
-                <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@access.Role</span>
+                <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@RoleLabel(access.Role)</span>
             </div>
         </header>
 
-        <nav class="ws-nav" aria-label="Campaign sections">
+        <nav class="ws-nav" aria-label="@L["Page.Campaign.Sections"]">
             @foreach (var group in Groups)
             {
-                <div class="ws-nav-group" role="group" aria-label="@group.Label">
-                    <div class="ws-nav-label" aria-hidden="true">@group.Label</div>
+                <div class="ws-nav-group" role="group" aria-label="@GroupLabel(group.Label)">
+                    <div class="ws-nav-label" aria-hidden="true">@GroupLabel(group.Label)</div>
                     @foreach (var section in group.Sections)
                     {
                         var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
                         var current = CurrentSection == section.Key ? "page" : null;
                         var testId = "section-" + section.Key;
-                        var label = section.Key == "bestiary" && !access.IsDm ? "Creatures" : section.Label;
+                        var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
                         <a href="@href" aria-current="@current" data-testid="@testId">
                             <LucideIcon IconName="@section.Icon" Size="18" /><span>@label</span>
                             @if (section.Key == "table" && tableLive)
                             {
-                                <span class="pill pill-success nav-badge" title="The table is running"><span class="live-dot" aria-hidden="true"></span>Live</span>
+                                <span class="pill pill-success nav-badge" title="@L["Page.Campaign.TableRunning"]"><span class="live-dot" aria-hidden="true"></span>@L["Page.Campaign.Live"]</span>
                             }
                         </a>
                     }
@@ -165,6 +165,35 @@ else
     // Whether the session notes drawer is open; kept here so it stays open while moving between sections.
     private bool notesOpen;
     private string? loadedCampaignId;
+
+    private string GroupLabel(string group) => group switch
+    {
+        "Play" => L["Page.Campaign.Group.Play"],
+        "World" => L["Page.Campaign.Group.World"],
+        _ => L["Page.Campaign.Group.Reference"]
+    };
+
+    private string SectionLabel(string key) => key switch
+    {
+        "table" => L["Page.Campaign.Section.Table"],
+        "sessions" => L["Page.Campaign.Section.Sessions"],
+        "journal" => L["Page.Campaign.Section.Journal"],
+        "cast" => L["Page.Campaign.Section.Cast"],
+        "bestiary" => L["Page.Campaign.Section.Bestiary"],
+        "world" => L["Page.Campaign.Section.Places"],
+        "wiki" => L["Page.Campaign.Section.Wiki"],
+        "lore" => L["Page.Campaign.Section.Lore"],
+        "library" => L["Page.Campaign.Section.Library"],
+        "settings" => L["Page.Campaign.Section.Settings"],
+        _ => L["Page.Campaign.Section.Overview"]
+    };
+
+    private string RoleLabel(CampaignRole role) => role switch
+    {
+        CampaignRole.DM => L["Page.Role.DM"],
+        CampaignRole.Player => L["Page.Role.Player"],
+        _ => L["Page.Role.Observer"]
+    };
 
     private string BasePath => $"/campaigns/{CampaignId}";
     private string CurrentSection => Sections.Any(s => s.Key == Section) ? Section! : "overview";

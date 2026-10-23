@@ -6,19 +6,19 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
-<PageTitle>Join campaign | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.Join.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="empty">
     @if (result == null)
     {
-        <div class="spinner-border" role="status"><span class="visually-hidden">Joining…</span></div>
+        <div class="spinner-border" role="status"><span class="visually-hidden">@L["Page.Join.Joining"]</span></div>
     }
     else if (result == CampaignJoinResult.InvalidCode)
     {
         <div class="empty-icon"><LucideIcon IconName="alert-triangle" Size="28" /></div>
-        <h1 class="h4">This invite link is not valid</h1>
-        <p>It may have been mistyped, or the campaign may have been deleted. Ask your DM for a fresh link.</p>
-        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+        <h1 class="h4">@L["Page.Join.InvalidTitle"]</h1>
+        <p>@L["Page.Join.InvalidText"]</p>
+        <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
     }
     else
     {
@@ -26,9 +26,9 @@
            OnInitializedAsync twice, so a first-time join can resolve as Joined and then
            AlreadyMember. Either way the membership is in place. *@
         <div class="empty-icon"><LucideIcon IconName="check" Size="28" /></div>
-        <h1 class="h4">You're in!</h1>
-        <p>You are now a player in this campaign.</p>
-        <a href="/campaigns/@joinedCampaignId" class="cx-btn cx-plaque">Go to campaign</a>
+        <h1 class="h4">@L["Page.Join.InTitle"]</h1>
+        <p>@L["Page.Join.InText"]</p>
+        <a href="/campaigns/@joinedCampaignId" class="cx-btn cx-plaque">@L["Page.Join.Go"]</a>
     }
 </div>
 
