@@ -1,0 +1,49 @@
+name: Простая d6 (пример хоумбрю-системы)
+description: >-
+  Пример системы с тремя атрибутами и пулом d6. Нужна, чтобы показать формат system.yaml и как
+  тестовый образец; это не полноценная игра.
+
+attributes:
+  body: { label: Тело }
+  mind: { label: Разум }
+  luck: { label: Удача }
+
+resources:
+  HP: { label: Стойкость }
+  Fate: { label: Очки судьбы }
+
+actorFields:
+  calling: { label: Призвание }
+  concept:
+    label: Концепт
+    description: "Одной строкой: кто этот человек?"
+
+entityTypes:
+  calling:
+    label: Призвание
+    pluralLabel: Призвания
+    fields:
+      bonus: { label: Бонус }
+  knack:
+    label: Уловка
+    pluralLabel: Уловки
+    fields:
+      cost: { label: Цена в очках судьбы }
+  foe:
+    label: Противник
+    pluralLabel: Противники
+    fields:
+      threat: { label: Угроза }
+      grit: { label: Стойкость }
+      body: { label: Тело }
+      mind: { label: Разум }
+      luck: { label: Удача }
+  lore:
+    label: Предания
+    fields:
+      category: { label: Категория }
+
+conditions:
+  Dazed: Оглушён
+  Scared: Напуган
+  Wounded: Ранен

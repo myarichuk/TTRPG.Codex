@@ -1,0 +1,354 @@
+name: מהדורה חמישית SRD‏ (5.2.1)
+compatibility: תואם 5E
+description: >-
+  מהדורת 2024 של חוקי המהדורה החמישית כפי שפורסמה במסמך ההתייחסות למערכת 5.2.1:
+  שנים-עשר מקצועות עם תת-מקצוע אחד לכל אחד, תשעה מינים, ארבע רקעים, שבע-עשרה תכונות מיוחדות,
+  339 לחשים ו-340 יצורים.
+
+attributes:
+  str: { label: כוח, abbreviation: כוח }
+  dex: { label: זריזות, abbreviation: זרז }
+  con: { label: חוסן, abbreviation: חוס }
+  int: { label: אינטליגנציה, abbreviation: אינט }
+  wis: { label: חוכמה, abbreviation: חכמ }
+  cha: { label: קסם, abbreviation: קסם }
+
+resources:
+  HP: { label: נקודות חיים }
+  TempHP: { label: נקודות חיים זמניות }
+
+actorFields:
+  level: { label: דרגה, category: כללי }
+  class: { label: מקצוע, category: כללי }
+  subclass: { label: תת-מקצוע, category: כללי }
+  species: { label: מין, category: כללי }
+  background: { label: רקע, category: כללי }
+  alignment:
+    label: נטייה
+    category: כללי
+    options:
+      Lawful Good: טוב וחוקי
+      Neutral Good: טוב וניטרלי
+      Chaotic Good: טוב וכאוטי
+      Lawful Neutral: ניטרלי וחוקי
+      Neutral: ניטרלי
+      Chaotic Neutral: ניטרלי וכאוטי
+      Lawful Evil: רע וחוקי
+      Neutral Evil: רע וניטרלי
+      Chaotic Evil: רע וכאוטי
+      Unaligned: ללא נטייה
+  originFeat:
+    label: תכונת מוצא
+    category: כללי
+    description: הרקע שלך מעניק תכונת מוצא מסוימת.
+  armorClass: { label: דרגת שריון, category: קרב }
+  armorClassMisc:
+    label: בונוסים אחרים לדרגת שריון
+    category: קרב
+    description: השפעות קסם או לחשים שאינם פריט שאתה נושא.
+  speed:
+    label: מהירות (רגל)
+    category: קרב
+    description: מועתקת מהמין שלך כשאתה בוחר בו; שנה כאן עבור יכולות ששינו אותה.
+  size:
+    label: גודל
+    category: קרב
+    options:
+      Tiny: זעיר
+      Small: קטן
+      Medium: בינוני
+      Large: גדול
+      Huge: ענק
+      Gargantuan: עצום
+  darkvision:
+    label: ראיית חושך (רגל)
+    category: קרב
+    description: מועתקת מהמין שלך כשאתה בוחר בו.
+  notes: { label: הערות, category: הערות }
+
+conditions:
+  Blinded: מוכה עיוורון
+  Charmed: מוקסם
+  Deafened: מוכה חירשות
+  Exhaustion: תשישות
+  Frightened: מפוחד
+  Grappled: נתפס
+  Incapacitated: חסר יכולת פעולה
+  Invisible: בלתי נראה
+  Paralyzed: משותק
+  Petrified: מאובן
+  Poisoned: מורעל
+  Prone: שרוע
+  Restrained: אסור
+  Stunned: המום
+  Unconscious: חסר הכרה
+
+entityTypes:
+  class:
+    label: מקצוע
+    pluralLabel: מקצועות
+    fields:
+      hitDie: { label: קוביית חיים }
+      primaryAbility: { label: תכונה עיקרית }
+      savingThrows: { label: הצלות }
+      armorProficiencies: { label: אימון בשריון }
+      weaponProficiencies: { label: מיומנות בנשק }
+      skillChoices: { label: מיומנויות }
+      startingEquipment: { label: ציוד התחלתי }
+      multiclassing: { label: רב-מקצועיות }
+      unarmoredDefense:
+        label: הגנה ללא שריון
+        description: נוסחת דרגת שריון כשאין שריון, למשל 10 + mod(dex) + mod(con).
+      unarmoredDefenseShield: { label: הגנה ללא שריון מתירה מגן }
+      multiclassPrerequisites:
+        label: דרישות לרב-מקצועיות
+        description: 'אפשרויות כמו "STR 13+" או "DEX 13+, WIS 13+"; מספיק לעמוד באחת מהן.'
+      subclasses: { label: תתי-מקצועות }
+      casterType: { label: הטלת לחשים }
+      spellcastingAbility:
+        label: תכונת הטלת לחשים
+        description: התכונה שבה משתמשים דרגת קושי להצלה נגד לחשים ובונוס תקיפה בלחשים.
+      features:
+        label: יכולות המקצוע
+        description: "שורה לכל יכולת: דרגה, שם, תיאור."
+      spellcasting:
+        label: טבלת לחשים
+        description: 'שורה לכל דרגה: cantrips, preparedSpells, maxSpellLevel, slots.'
+      featSlots:
+        label: תאי תכונות מיוחדות
+        description: 'שורה לכל דרגה: slots (תכונות של שיפור תכונות או מתנות) ו-styles (סגנונות לחימה) שיש לך עד אותה דרגה.'
+
+  subclass:
+    label: תת-מקצוע
+    pluralLabel: תתי-מקצועות
+    fields:
+      class: { label: מקצוע }
+      summary: { label: תקציר }
+      features: { label: יכולות }
+      featSlots:
+        label: תאי תכונות מיוחדות
+        description: תכונות נוספות שהמקצוע מעניק ותת-מקצוע זה מוסיף, לפי דרגה (סגנון לחימה שני של האלוף).
+
+  species:
+    label: מין
+    pluralLabel: מינים
+    fields:
+      creatureType: { label: סוג יצור }
+      size: { label: גודל }
+      speed: { label: מהירות }
+      darkvision: { label: ראיית חושך (רגל) }
+      hitPointsPerLevel:
+        label: נקודות חיים לדרגה
+        description: מתווספות לנקודות החיים בכל דרגה (קשיחות הגמדים).
+      extraOriginFeats:
+        label: תכונות מוצא נוספות
+        description: תכונות מוצא מעבר לזו של הרקע (הרבגוניות של בני האדם).
+      traits: { label: תכונות המין }
+      lineages: { label: שושלות }
+
+  background:
+    label: רקע
+    pluralLabel: רקעים
+    fields:
+      abilityScores: { label: ציוני תכונות }
+      feat: { label: תכונה מיוחדת }
+      skillProficiencies: { label: מיומנויות }
+      toolProficiency: { label: מיומנות בכלי }
+      equipment: { label: ציוד }
+
+  feat:
+    label: תכונה מיוחדת
+    pluralLabel: תכונות מיוחדות
+    fields:
+      category:
+        label: קטגוריה
+        options:
+          origin: מוצא
+          general: כללית
+          fighting-style: סגנון לחימה
+          epic-boon: מתנה אפית
+      prerequisites: { label: דרישות קדם }
+      minLevel: { label: דרגה מינימלית }
+      repeatable: { label: ניתנת לבחירה חוזרת }
+      armorClassBonus:
+        label: בונוס לדרגת שריון
+        description: מתווסף לדרגת השריון.
+      armorClassRequiresArmor: { label: הבונוס דורש שריון לבוש }
+      abilityIncrease:
+        label: נקודות תכונה
+        description: כמה נקודות התכונה הזו מוסיפה לציוני התכונות.
+      abilityIncreaseOptions:
+        label: תכונות שניתן להעלות
+        description: השאר ריק לכל תכונה.
+      abilityIncreaseCap: { label: מעלה ציונים עד }
+
+  spell:
+    label: לחש
+    pluralLabel: לחשים
+    fields:
+      level: { label: דרגה }
+      school:
+        label: אסכולה
+        options:
+          Abjuration: הגנה
+          Conjuration: זימון
+          Divination: ניבוי
+          Enchantment: כישוף
+          Evocation: שחרור
+          Illusion: אשליה
+          Necromancy: נקרומנטיקה
+          Transmutation: שינוי צורה
+      castingTime: { label: זמן הטלה }
+      range: { label: טווח }
+      components: { label: רכיבים }
+      material: { label: חומרים }
+      duration: { label: משך }
+      concentration: { label: ריכוז }
+      ritual: { label: טקס }
+      classes: { label: מקצועות }
+      damageType: { label: סוג נזק }
+      higherLevel: { label: שימוש בתא לחשים בדרגה גבוהה יותר }
+
+  monster:
+    label: יצור
+    pluralLabel: יצורים
+    fields:
+      size: { label: גודל, category: פרופיל }
+      creatureType: { label: סוג, category: פרופיל }
+      alignment: { label: נטייה, category: פרופיל }
+      armorClass: { label: דרגת שריון, category: הגנות }
+      hitPoints: { label: נקודות חיים, category: הגנות }
+      hitDice: { label: קוביות חיים, category: הגנות }
+      speed: { label: מהירות, category: הגנות }
+      strength: { label: כוח, category: ציוני תכונות }
+      dexterity: { label: זריזות, category: ציוני תכונות }
+      constitution: { label: חוסן, category: ציוני תכונות }
+      intelligence: { label: אינטליגנציה, category: ציוני תכונות }
+      wisdom: { label: חוכמה, category: ציוני תכונות }
+      charisma: { label: קסם, category: ציוני תכונות }
+      challengeRating: { label: דרגת אתגר, category: פרופיל }
+      xp: { label: ניסיון, category: פרופיל }
+      senses: { label: חושים, category: חושים ומיומנויות }
+      languages: { label: שפות, category: חושים ומיומנויות }
+      skills: { label: מיומנויות, category: חושים ומיומנויות }
+      savingThrows: { label: הצלות, category: הגנות }
+      resistances: { label: עמידויות, category: הגנות }
+      immunities: { label: חסינויות, category: הגנות }
+      vulnerabilities: { label: פגיעויות, category: הגנות }
+      gear: { label: ציוד, category: חושים ומיומנויות }
+      traits: { label: תכונות, category: תכונות ופעולות }
+      actions: { label: פעולות, category: תכונות ופעולות }
+      bonusActions: { label: פעולות בונוס, category: תכונות ופעולות }
+      reactions: { label: תגובות, category: תכונות ופעולות }
+      legendaryActions: { label: פעולות אגדיות, category: תכונות ופעולות }
+
+  condition:
+    label: מצב
+    pluralLabel: מצבים
+
+  equipment:
+    label: ציוד
+    pluralLabel: ציוד
+    fields:
+      category: { label: קטגוריה }
+      cost: { label: מחיר }
+      weight: { label: משקל (ליברה) }
+      damage: { label: נזק }
+      properties: { label: תכונות }
+      mastery: { label: שליטה בנשק }
+      armorClass: { label: דרגת שריון }
+      armorType:
+        label: סוג שריון
+        options:
+          light: קל
+          medium: בינוני
+          heavy: כבד
+          shield: מגן
+      armorBase:
+        label: דרגת שריון בסיסית
+        description: דרגת השריון כשלובשים אותו, לפני זריזות.
+      armorDexCap:
+        label: תקרת זריזות
+        description: 'בונוס הזריזות הגבוה ביותר שהוא מתיר. 0: אין. ריק: ללא הגבלה.'
+      armorClassBonus:
+        label: בונוס לדרגת שריון
+        description: מתווסף לדרגת השריון כשהפריט מצויד (מגן, פריט קסום).
+      strength: { label: כוח מינימלי }
+      stealth: { label: חיסרון בחמקנות }
+
+  magic-item:
+    label: פריט קסום
+    pluralLabel: פריטים קסומים
+    fields:
+      category: { label: קטגוריה }
+      rarity:
+        label: נדירות
+        options:
+          Common: נפוץ
+          Uncommon: לא נפוץ
+          Rare: נדיר
+          Very Rare: נדיר מאוד
+          Legendary: אגדי
+          Artifact: חפץ עוצמה
+          Varies: משתנה
+      attunement: { label: דורש התאמה }
+      armorClassBonus:
+        label: בונוס לדרגת שריון
+        description: מתווסף לדרגת השריון כשהפריט מצויד.
+
+  rule:
+    label: חוק
+    pluralLabel: מילון חוקים
+    fields:
+      category: { label: קטגוריה }
+
+  lore:
+    label: אגדות עולם
+    pluralLabel: אגדות עולם
+    fields:
+      category:
+        label: קטגוריה
+        description: היסטוריה, דת, פלג, אגדה...
+
+values:
+  Tiny: זעיר
+  Small: קטן
+  Medium: בינוני
+  Large: גדול
+  Huge: ענק
+  Gargantuan: עצום
+  Abjuration: הגנה
+  Conjuration: זימון
+  Divination: ניבוי
+  Enchantment: כישוף
+  Evocation: שחרור
+  Illusion: אשליה
+  Necromancy: נקרומנטיקה
+  Transmutation: שינוי צורה
+  acid: חומצה
+  bludgeoning: מחץ
+  cold: קור
+  fire: אש
+  force: כוח
+  lightning: ברק
+  necrotic: נקרוטי
+  piercing: דקירה
+  poison: רעל
+  psychic: נפשי
+  radiant: קורן
+  slashing: חיתוך
+  thunder: רעם
+  Strength: כוח
+  Dexterity: זריזות
+  Constitution: חוסן
+  Intelligence: אינטליגנציה
+  Wisdom: חוכמה
+  Charisma: קסם
+  Light Armor: שריון קל
+  Medium Armor: שריון בינוני
+  Heavy Armor: שריון כבד
+  Shields: מגנים
+  Short Rest: מנוחה קצרה
+  Long Rest: מנוחה ארוכה
+  Dead: מת
+  Stable: יציב
