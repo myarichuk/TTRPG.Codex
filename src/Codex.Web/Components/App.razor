@@ -56,7 +56,6 @@
 
 @code {
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
-    [Inject] private Localizer L { get; set; } = default!;
 
     private static string Language => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
 

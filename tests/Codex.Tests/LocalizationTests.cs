@@ -83,6 +83,31 @@ public class LocalizationTests
         }
     }
 
+    [Fact]
+    public void EveryKeyUsedInSource_ExistsInEveryLanguage()
+    {
+        var root = AppContext.BaseDirectory;
+        while (root is not null && !File.Exists(Path.Combine(root, "TTRPG.Codex.sln")))
+            root = Path.GetDirectoryName(root);
+        Assert.NotNull(root);
+
+        var defined = Localizer.Keys("en").ToHashSet();
+        var pattern = new Regex(@"\bL\[\s*""([A-Z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+)""");
+        var missing = new List<string>();
+        foreach (var dir in new[] { "src/Codex.Web", "src/Codex.Launcher" })
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(root!, dir), "*.*", SearchOption.AllDirectories)
+                     .Where(f => (f.EndsWith(".razor") || f.EndsWith(".cs") || f.EndsWith(".axaml"))
+                                 && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
+                                 && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")))
+        {
+            foreach (Match m in pattern.Matches(File.ReadAllText(file)))
+                if (!defined.Contains(m.Groups[1].Value))
+                    missing.Add($"{Path.GetRelativePath(root!, file)}: {m.Groups[1].Value}");
+        }
+
+        Assert.Empty(missing);
+    }
+
     private static string Placeholders(string text) =>
         string.Join(",", Regex.Matches(text, @"\{(\d+)").Select(m => m.Groups[1].Value).Distinct().Order());
 }
