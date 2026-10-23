@@ -42,6 +42,9 @@ public sealed class Localizer
         return args.Length == 0 ? Unescape(template) : MessageFormatter.Format(template, culture, args);
     }
 
+    /// <summary>The user-facing text of an error: localized for <see cref="LocalizedException"/>, otherwise its message.</summary>
+    public string Describe(Exception ex) => ex is LocalizedException le ? Get(le.Key, le.Args) : ex.Message;
+
     public bool Has(string key) => ManagerFor(key).GetString(key, CultureInfo.InvariantCulture) is not null;
 
     /// <summary>Every key the given language defines, across all areas, for parity checks ("en" = the neutral files).</summary>
