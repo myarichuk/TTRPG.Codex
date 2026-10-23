@@ -24,7 +24,35 @@ public static class SystemDefinitionLoader
     public static SystemDefinition Load(string path)
     {
         var yaml = File.ReadAllText(path);
-        return Parse(yaml, path);
+        var definition = Parse(yaml, path);
+        LoadTranslations(definition, path);
+        return definition;
+    }
+
+    /// <summary>
+    /// Reads <c>system.&lt;locale&gt;.yaml</c> files next to <paramref name="systemYamlPath"/> (system.ru.yaml, system.he.yaml)
+    /// into <see cref="SystemDefinition.Translations"/>. A broken translation is skipped rather than failing the system:
+    /// the language falls back to the original text.
+    /// </summary>
+    private static void LoadTranslations(SystemDefinition definition, string systemYamlPath)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(systemYamlPath));
+        if (directory == null) return;
+
+        foreach (var file in Directory.GetFiles(directory, "system.*.yaml"))
+        {
+            var locale = Path.GetFileNameWithoutExtension(file)["system.".Length..].ToLowerInvariant();
+            if (locale.Length is < 2 or > 3 || !locale.All(char.IsLetter)) continue;
+
+            try
+            {
+                definition.Translations[locale] = Deserializer.Deserialize<SystemTranslation>(File.ReadAllText(file)) ?? new SystemTranslation();
+            }
+            catch (Exception ex) when (ex is YamlDotNet.Core.YamlException or IOException)
+            {
+                System.Diagnostics.Trace.TraceWarning($"Skipped translation {file}: {Describe(ex)}");
+            }
+        }
     }
 
     public static SystemDefinition Parse(string yaml, string? sourceName = null)

@@ -301,6 +301,103 @@ public class SystemDefinition
     /// fields). Null means "no rules": any value goes, which is what a loose homebrew wants.</summary>
     public SheetRules? SheetRules { get; set; }
 
+    /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
+    public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
+
+    private static string LanguageOf(string? culture)
+    {
+        var language = (culture ?? "").Trim().Split('-', '_')[0].ToLowerInvariant();
+        return language switch { "en" => "", "iw" => "he", _ => language };
+    }
+
+    private SystemTranslation? TranslationFor(string? culture) =>
+        Translations.TryGetValue(LanguageOf(culture), out var t) ? t : null;
+
+    /// <summary>
+    /// A copy whose labels, descriptions and categories are shown in <paramref name="culture"/>; the original when the system
+    /// has no translation for it. Keys, field types, options and every rule are untouched, so the copy is for display only:
+    /// run the rules engine on the original.
+    /// </summary>
+    public SystemDefinition Localize(string? culture)
+    {
+        var language = LanguageOf(culture);
+        if (language.Length == 0 || !Translations.TryGetValue(language, out var t)) return this;
+        return _localized.GetOrAdd(language, _ => Apply(t));
+    }
+
+    /// <summary>The text to show for a dropdown/tag value such as "Evocation"; the value itself when untranslated.</summary>
+    public string DisplayOption(string? culture, string fieldKey, string value)
+    {
+        var t = TranslationFor(culture);
+        if (t == null) return value;
+        foreach (var fields in new[] { t.ActorFields }.Concat(t.EntityTypes.Values.Select(x => x.Fields)))
+        {
+            if (fields.TryGetValue(fieldKey, out var f) && f.Options.TryGetValue(value, out var shown)) return shown;
+        }
+
+        return t.Values.TryGetValue(value, out var common) ? common : value;
+    }
+
+    /// <summary>The text to show for a condition name ("Poisoned"); the name itself when untranslated.</summary>
+    public string DisplayCondition(string? culture, string condition) =>
+        TranslationFor(culture) is { } t && t.Conditions.TryGetValue(condition, out var shown) ? shown : condition;
+
+    private SystemDefinition Apply(SystemTranslation t)
+    {
+        static FieldDefinition Field(FieldDefinition f, LabelTranslation? x) => new()
+        {
+            Key = f.Key,
+            Label = x?.Label ?? f.Label,
+            Type = f.Type,
+            Description = x?.Description ?? f.Description,
+            Options = f.Options,
+            DefaultValue = f.DefaultValue,
+            IsRequired = f.IsRequired,
+            TargetEntityType = f.TargetEntityType,
+            Category = x?.Category ?? f.Category,
+            Min = f.Min,
+            Max = f.Max
+        };
+
+        static LabelTranslation? Find(Dictionary<string, LabelTranslation> map, string key) =>
+            map.TryGetValue(key, out var hit) ? hit : null;
+
+        var copy = (SystemDefinition)MemberwiseClone();
+        copy.Name = t.Name ?? Name;
+        copy.Description = t.Description ?? Description;
+        copy.Compatibility = t.Compatibility ?? Compatibility;
+        copy.Attributes = Attributes.Select(a => new AttributeDefinition
+        {
+            Key = a.Key, Default = a.Default, Min = a.Min, Max = a.Max, Modifier = a.Modifier,
+            Label = Find(t.Attributes, a.Key)?.Label ?? a.Label,
+            Abbreviation = Find(t.Attributes, a.Key)?.Abbreviation ?? a.Abbreviation
+        }).ToList();
+        copy.Resources = Resources.Select(r => new ResourceDefinition
+        {
+            Key = r.Key, MaxKey = r.MaxKey, Default = r.Default, IsPrimary = r.IsPrimary,
+            Label = Find(t.Resources, r.Key)?.Label ?? r.Label
+        }).ToList();
+        copy.ActorFields = ActorFields.Select(f => Field(f, Find(t.ActorFields, f.Key))).ToList();
+        copy.EntityTypes = EntityTypes.Select(e =>
+        {
+            t.EntityTypes.TryGetValue(e.Type, out var et);
+            return new ContentTypeDefinition
+            {
+                Type = e.Type, Folder = e.Folder, Icon = e.Icon,
+                Label = et?.Label ?? e.Label,
+                PluralLabel = et?.PluralLabel ?? e.PluralLabel,
+                Description = et?.Description ?? e.Description,
+                Fields = e.Fields.Select(f => Field(f, et == null ? null : Find(et.Fields, f.Key))).ToList(),
+                SummaryFields = e.SummaryFields, FilterFields = e.FilterFields, ActorBlueprint = e.ActorBlueprint,
+                HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing
+            };
+        }).ToList();
+        copy.Translations = Translations;
+        return copy;
+    }
+
     public ContentTypeDefinition? FindType(string typeOrFolder)
     {
         foreach (var type in EntityTypes)

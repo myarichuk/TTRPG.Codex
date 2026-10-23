@@ -1,0 +1,179 @@
+using Codex.Core;
+using Codex.Core.Scripting;
+using Codex.Plugin.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Codex.Tests;
+
+/// <summary>A translation pack overlays display text on entries other packs define, and never changes what the rules see.</summary>
+public class ContentTranslationTests : IDisposable
+{
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "translation-pack-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_root)) Directory.Delete(_root, true);
+    }
+
+    private static readonly SystemDefinition Demo = Codex.Core.Systems.SystemDefinitionLoader.Parse("""
+        id: demo
+        name: Demo
+        entityTypes:
+          - type: spell
+            label: Spell
+            folder: spells
+            fields:
+              - { key: level, label: Level, type: Number }
+              - { key: school, label: School, type: Dropdown, options: [Evocation, Illusion] }
+              - { key: material, label: Material, type: Text }
+        """);
+
+    private void Write(string relative, string content)
+    {
+        var path = Path.Combine(_root, relative);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, content);
+    }
+
+    private async Task<ContentRegistry> LoadAsync()
+    {
+        Write("base/manifest.yaml", "id: base\nname: Base\nversion: 1.0.0\nsystemId: demo\n");
+        Write("base/spells/bolt.yaml", "id: bolt\ntype: spell\nname: Bolt\ndescription: Rules text.\ntags: [evocation]\nproperties:\n  level: 1\n  school: Evocation\n  material: a feather\n");
+        Write("base/spells/mist.yaml", "id: mist\ntype: spell\nname: Mist\ndescription: Fog.\n");
+        Write("ru/manifest.yaml", "id: base-ru\nname: Base (ru)\nversion: 1.0.0\nsystemId: demo\nkind: translation\nlocale: ru\ntranslationOf: base\ndependencies: [base]\npriority: 5\n");
+        Write("ru/spells/spells.yaml", """
+            - id: bolt
+              name: Стрела
+              description: Текст правил.
+              tags: [hacked]
+              properties:
+                level: 9
+                school: Воплощение
+                material: перо
+            - id: nothing-here
+              name: Призрак
+            """);
+
+        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var loader = new YamlContentPackLoader(registry);
+        await loader.LoadPackAsync(Path.Combine(_root, "base"), Demo);
+        await loader.LoadPackAsync(Path.Combine(_root, "ru"), Demo);
+        return registry;
+    }
+
+    [Fact]
+    public async Task Translation_OverlaysDisplayText_AndOnlyText()
+    {
+        var registry = await LoadAsync();
+        var original = registry.GetEntry("demo", "spell", "bolt")!;
+
+        var shown = registry.Localize(original, "ru-RU");
+
+        Assert.Equal("Стрела", shown.Name);
+        Assert.Equal("Текст правил.", shown.Description);
+        Assert.Equal("перо", shown.Properties["material"]);        // free text: translated
+        Assert.Equal("Evocation", shown.Properties["school"]);      // dropdown value: the rules compare it, so never replaced
+        Assert.Equal(1L, shown.Properties["level"]);                // number untouched
+        Assert.Equal(new[] { "evocation" }, shown.Tags);            // tags untouched
+    }
+
+    [Fact]
+    public async Task Localize_NeverMutatesTheSharedEntry_AndFallsBack()
+    {
+        var registry = await LoadAsync();
+        var original = registry.GetEntry("demo", "spell", "bolt")!;
+
+        _ = registry.Localize(original, "ru");
+
+        Assert.Equal("Bolt", original.Name);
+        Assert.Equal("a feather", original.Properties["material"]);
+        Assert.Same(original, registry.Localize(original, "en"));                                       // English is the original
+        Assert.Same(original, registry.Localize(original, "he"));                                       // no Hebrew pack: falls back
+        var mist = registry.GetEntry("demo", "spell", "mist")!;
+        Assert.Same(mist, registry.Localize(mist, "ru"));                                               // untranslated entry
+    }
+
+    [Fact]
+    public async Task TranslationPack_NeverCreatesOrReplacesEntries()
+    {
+        var registry = await LoadAsync();
+
+        Assert.Null(registry.GetEntry("demo", "spell", "nothing-here"));
+        Assert.Equal("Bolt", registry.GetEntry("demo", "spell", "bolt")!.Name);
+        Assert.Equal(2, registry.GetEntries("demo", "spell").Count());
+    }
+
+    [Fact]
+    public async Task Search_FindsEntriesByTranslatedAndOriginalName()
+    {
+        var registry = await LoadAsync();
+
+        var byRussian = registry.Search("demo", "стрел", culture: "ru").Select(e => e.Name).ToList();
+        var byEnglish = registry.Search("demo", "bolt", culture: "ru").Select(e => e.Name).ToList();
+        var plainEnglishUi = registry.Search("demo", "стрел").ToList();
+
+        Assert.Equal(new[] { "Стрела" }, byRussian);
+        Assert.Equal(new[] { "Стрела" }, byEnglish);
+        Assert.Empty(plainEnglishUi);
+    }
+
+    [Theory]
+    [InlineData("Ёж", "Еж")]
+    [InlineData("שָׁלוֹם", "שלומ")]
+    [InlineData("plain ascii", "plain ascii")]
+    public void Fold_MakesRussianAndHebrewSearchForgiving(string input, string expected) =>
+        Assert.Equal(expected, ContentRegistry.Fold(input));
+
+    [Fact]
+    public void SystemTranslation_LocalizesLabels_ButNotKeysOrOptions()
+    {
+        var system = Codex.Core.Systems.SystemDefinitionLoader.Parse("""
+            id: demo
+            name: Demo
+            attributes:
+              - { key: str, label: Strength, abbreviation: STR }
+            conditions: [Poisoned]
+            entityTypes:
+              - type: spell
+                label: Spell
+                fields:
+                  - { key: school, label: School, type: Dropdown, options: [Evocation] }
+            """);
+        system.Translations["ru"] = new SystemTranslation
+        {
+            Name = "Демо",
+            Attributes = { ["str"] = new LabelTranslation { Label = "Сила", Abbreviation = "СИЛ" } },
+            Conditions = { ["Poisoned"] = "Отравлен" },
+            Values = { ["Evocation"] = "Воплощение" },
+            EntityTypes = { ["spell"] = new TypeTranslation { Label = "Заклинание", Fields = { ["school"] = new LabelTranslation { Label = "Школа" } } } }
+        };
+
+        var ru = system.Localize("ru-RU");
+
+        Assert.Equal("Демо", ru.Name);
+        Assert.Equal("str", ru.Attributes[0].Key);
+        Assert.Equal("Сила", ru.Attributes[0].Label);
+        Assert.Equal("Школа", ru.EntityTypes[0].Fields[0].Label);
+        Assert.Equal(new[] { "Evocation" }, ru.EntityTypes[0].Fields[0].Options);
+        Assert.Equal("Воплощение", system.DisplayOption("ru", "school", "Evocation"));
+        Assert.Equal("Отравлен", system.DisplayCondition("ru", "Poisoned"));
+        Assert.Equal("Evocation", system.DisplayOption("he", "school", "Evocation"));
+        Assert.Equal("Strength", system.Localize("en").Attributes[0].Label);
+        Assert.Same(system.Localize("he"), system);
+        Assert.Equal("Strength", system.Attributes[0].Label); // the original is untouched
+    }
+
+    [Fact]
+    public void SystemYamlTranslationFiles_AreLoadedNextToSystemYaml()
+    {
+        Write("sys/system.yaml", "id: demo\nname: Demo\nattributes:\n  - { key: str, label: Strength }\n");
+        Write("sys/system.ru.yaml", "name: Демо\nattributes:\n  str: { label: Сила }\n");
+        Write("sys/system.he.yaml", "name: [broken\n");
+
+        var system = Codex.Core.Systems.SystemDefinitionLoader.Load(Path.Combine(_root, "sys", "system.yaml"));
+
+        Assert.Equal("Сила", system.Localize("ru").Attributes[0].Label);
+        Assert.False(system.Translations.ContainsKey("he")); // a broken translation falls back instead of failing the system
+        Assert.Equal("Demo", system.Name);
+    }
+}
