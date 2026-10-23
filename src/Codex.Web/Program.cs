@@ -374,6 +374,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
             Username = baseUsername,
             Email = email ?? "",
             Roles = new List<string> { "Player" },
+            Culture = Codex.Localization.SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name),
             ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
         };
 
@@ -411,6 +412,8 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     await context.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, newPrincipal);
     await context.SignOutAsync("External");
+    if (user.Culture is not null)
+        Codex.Web.CultureCookie.Write(context, user.Culture);
 
     if (!Codex.Web.UrlHelper.IsLocalUrl(returnUrl))
     {

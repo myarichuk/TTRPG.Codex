@@ -238,7 +238,7 @@ else
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var rest in Rests)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"party-rest-{Slug(rest)}")" OnClick="() => PartyRestAsync(rest)">@L["Combat.PartyRestButton", rest]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"party-rest-{Slug(rest)}")" OnClick="() => PartyRestAsync(rest)">@L["Combat.PartyRestButton", RestLabel(rest)]</CodexButton>
                             }
                         </div>
                     </section>
@@ -342,6 +342,9 @@ else
 
     private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
     private VitalsRules? Vitals => Definition?.Vitals;
+    /// <summary>A rest as the table reads it ("Long Rest"); the rules still get the system's own name.</summary>
+    private string RestLabel(string rest) => Definition?.DisplayValue(rest) ?? rest;
+
     /// <summary>A condition as the table reads it. The stored effect id stays the rules' own word.</summary>
     private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
 
@@ -919,7 +922,7 @@ else
                     <span class="small-muted pb-1">@L["Combat.Rest"]</span>
                     @foreach (var rest in Rests)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{Slug(rest)}")" OnClick="() => RestAsync(actorId, rest)">@rest</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{Slug(rest)}")" OnClick="() => RestAsync(actorId, rest)">@RestLabel(rest)</CodexButton>
                     }
                     @if (hitDice is { Max: > 0 } dice)
                     {

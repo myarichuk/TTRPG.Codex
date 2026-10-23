@@ -110,7 +110,9 @@
         {
             Id = Guid.NewGuid().ToString(),
             Username = Model.Username,
-            Roles = new List<string> { "Player" }
+            Roles = new List<string> { "Player" },
+            // Whatever language the person has been reading the sign-up page in becomes their saved choice.
+            Culture = SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name)
         };
 
         // ServerAdmin goes to the configured Codex:AdminUsername, or to the very first account.

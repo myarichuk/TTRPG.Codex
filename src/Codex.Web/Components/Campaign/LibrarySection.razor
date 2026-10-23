@@ -220,7 +220,7 @@
     private Task<ArtImage> GenerateArtAsync(LibraryItem item)
     {
         var visual = YamlValues.GetString(item.Entry.Properties, "imagePrompt") ?? TextFormatting.Summary(item.Entry.Description, 300);
-        var kind = (Ctx.System?.FindType(item.Entry.Type)?.Label ?? CampaignLibrary.Humanize(item.Entry.Type)).ToLowerInvariant();
+        var kind = (Ctx.System?.Canonical.FindType(item.Entry.Type)?.Label ?? CampaignLibrary.Humanize(item.Entry.Type)).ToLowerInvariant();
         return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, IsCreatureType(item.Entry.Type) ? ArtShape.Tall : ArtShape.Wide);
     }
 

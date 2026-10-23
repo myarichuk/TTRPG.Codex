@@ -174,6 +174,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// <summary>Turns a one-line concept into a draft sheet. Reference fields get the ids the campaign's Library offers, so the model can only pick real content.</summary>
     public async Task<CharacterDraft> CreateCharacterAsync(string concept, ActorKind kind, CampaignDocument campaign, SystemDefinition? system, string userId, Func<string, Task<IReadOnlyList<(string Id, string Name)>>> optionsFor)
     {
+        system = system?.Canonical; // the prompt names fields in one language, whatever the reader sees
         var assistant = await providers.AssistantForAsync(userId);
         var attributes = (system?.Attributes ?? new List<AttributeDefinition>())
             .Select(a => new CharacterFieldSpec(a.Key, a.Label, "Number", null, a.Min, a.Max))
@@ -220,6 +221,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// <param name="entryName">Resolves a reference field's id to the entry's name (a species, a class); null keeps the id.</param>
     public static string PortraitVisual(ActorDocument actor, SystemDefinition? system, Func<string, string, string?> entryName)
     {
+        system = system?.Canonical; // image prompts stay in one language
         // Choices that show on a person (species, class, background, size, alignment), not numbers or notes.
         var looks = new List<string>();
         foreach (var field in system?.ActorFields ?? new List<FieldDefinition>())
@@ -245,6 +247,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// <summary>The sheet as readable lines: attributes with labels, resources, and reference fields resolved to names.</summary>
     public IEnumerable<string> SheetFacts(ActorDocument actor, string systemId, SystemDefinition? system)
     {
+        system = system?.Canonical;
         yield return $"Kind: {KindLabel(actor.Kind)}";
         foreach (var attribute in system?.Attributes ?? new List<AttributeDefinition>())
         {

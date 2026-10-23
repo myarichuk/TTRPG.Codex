@@ -84,4 +84,49 @@ public class ShippedTranslationTests
             Assert.NotEqual(system.Attributes[0].Label, shown.Attributes[0].Label);
         }
     }
+
+    private static readonly System.Text.RegularExpressions.Regex Cyrillic = new(@"[\u0400-\u04FF]");
+    private static readonly System.Text.RegularExpressions.Regex Hebrew = new(@"[\u0590-\u05FF]");
+
+    private static IEnumerable<string> TranslationFiles(string language)
+    {
+        var root = TestPaths.RepoRoot;
+        foreach (var f in Directory.EnumerateFiles(Path.Combine(root, "src", "Codex.Localization", "Resources"), $"*.{language}.resx"))
+            yield return f;
+        foreach (var f in Directory.EnumerateFiles(TestPaths.ContentRoot, "*.yaml", SearchOption.AllDirectories))
+        {
+            var name = Path.GetFileName(f);
+            if (name == $"system.{language}.yaml" || f.Contains($"{Path.DirectorySeparatorChar}codex-flavor-{language}{Path.DirectorySeparatorChar}"))
+                yield return f;
+        }
+    }
+
+    [Theory]
+    [InlineData("ru", "Hebrew")]
+    [InlineData("he", "Cyrillic")]
+    public void Translations_NeverMixInTheOtherLanguagesScript(string language, string foreign)
+    {
+        var foreignScript = foreign == "Hebrew" ? Hebrew : Cyrillic;
+        var files = TranslationFiles(language).ToList();
+        Assert.True(files.Count >= 10, $"expected the {language} resource and content files, found {files.Count}");
+
+        var offenders = files
+            .SelectMany(f => File.ReadLines(f).Select((line, i) => (f, line, i + 1)))
+            .Where(x => foreignScript.IsMatch(x.line))
+            .Select(x => $"{Path.GetRelativePath(TestPaths.RepoRoot, x.f)}:{x.Item3}: {x.line.Trim()[..Math.Min(80, x.line.Trim().Length)]}")
+            .ToList();
+
+        Assert.Empty(offenders);
+    }
+
+    [Fact]
+    public void NoWordMixesCyrillicAndHebrewLetters()
+    {
+        var mixed = new System.Text.RegularExpressions.Regex(@"[\u0400-\u04FF][\u0590-\u05FF]|[\u0590-\u05FF][\u0400-\u04FF]");
+        var offenders = new[] { "ru", "he" }.SelectMany(TranslationFiles)
+            .SelectMany(f => File.ReadLines(f).Where(l => mixed.IsMatch(l)).Select(l => $"{Path.GetFileName(f)}: {l.Trim()}"))
+            .ToList();
+
+        Assert.Empty(offenders);
+    }
 }

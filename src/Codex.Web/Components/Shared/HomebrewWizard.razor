@@ -375,7 +375,9 @@
     /// <summary>"homebrew creature (Large dragon)": the type label plus the size and kind when the entry has them.</summary>
     private string KindLabel(ContentTypeDefinition? type)
     {
-        var label = "homebrew " + (type?.Label.ToLowerInvariant() ?? "entry");
+        // The prompt is for an AI model, so the type is named as system.yaml names it, not as the reader sees it.
+        var canonical = type == null ? null : Ctx.System?.Canonical.FindType(type.Type) ?? type;
+        var label = "homebrew " + (canonical?.Label.ToLowerInvariant() ?? "entry");
         var detail = string.Join(' ', new[] { "size", "creatureType" }.Select(k => YamlValues.GetString(draft!.Properties, k)).Where(v => !string.IsNullOrWhiteSpace(v)));
         return detail.Length == 0 ? label : $"{label} ({detail})";
     }

@@ -77,4 +77,29 @@ public class LocalizationE2ETests : IClassFixture<AppFixture>
         Assert.Equal("he", await AttributeAsync(fresh, "lang"));
         Assert.Equal("rtl", await AttributeAsync(fresh, "dir"));
     }
+
+    [Fact]
+    public async Task RegisteringInHebrew_IsRememberedOnTheNextSignIn()
+    {
+        var username = "ivrit_" + Guid.NewGuid().ToString("N")[..8];
+        const string password = "Correct-Horse-1";
+
+        await using var first = await _app.Browser.NewContextAsync(new() { BaseURL = _app.BaseUrl });
+        var page = await first.NewPageAsync();
+        await page.GotoAsync("/set-culture?culture=he&returnUrl=/register");
+        Assert.Equal("rtl", await AttributeAsync(page, "dir"));
+        await page.Locator("#username").FillAsync(username);
+        await page.Locator("#password").FillAsync(password);
+        await page.Locator("#confirmPassword").FillAsync(password);
+        await page.Locator("form[method=post] button[type=submit], form[method=post] input[type=submit]").First.ClickAsync();
+        await page.WaitForURLAsync(url => !url.Contains("/register"));
+
+        // A different browser, sign-in page still in English: the language saved at sign-up wins once signed in.
+        await using var second = await _app.Browser.NewContextAsync(new() { BaseURL = _app.BaseUrl });
+        var fresh = await second.NewPageAsync();
+        await E2EHelpers.LoginAsync(fresh, username, password);
+
+        Assert.Equal("he", await AttributeAsync(fresh, "lang"));
+        Assert.Equal("rtl", await AttributeAsync(fresh, "dir"));
+    }
 }

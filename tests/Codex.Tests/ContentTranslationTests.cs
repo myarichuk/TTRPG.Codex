@@ -205,6 +205,9 @@ public class ContentTranslationTests : IDisposable
         Assert.Equal("Huge", size.Display("Huge"));        // untranslated: unchanged
         Assert.Equal(new[] { "Tiny", "Large" }, size.Options);
         Assert.Equal("Отравлен", ru.DisplayCondition("Poisoned"));
+        Assert.Equal("Крошечный", ru.DisplayValue("Tiny"));   // a shared word the console shows (a rest, a damage type)
+        Assert.Equal("Huge", ru.DisplayValue("Huge"));
+        Assert.Equal("Tiny", system.DisplayValue("Tiny"));
         Assert.Equal("Poisoned", ru.Conditions[0]);
         Assert.Equal("Strength", ru.Attributes[0].CanonicalLabel);
         Assert.Equal("STR", ru.Attributes[0].CanonicalAbbreviation);

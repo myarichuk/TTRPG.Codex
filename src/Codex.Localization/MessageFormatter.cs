@@ -60,7 +60,7 @@ public static class MessageFormatter
             if (rest.StartsWith("plural", StringComparison.Ordinal))
             {
                 var branches = rest[(rest.IndexOf(',') + 1)..];
-                return Plural(branches, arg, language, culture);
+                return Plural(branches, arg, language, culture, args);
             }
         }
 
@@ -68,7 +68,7 @@ public static class MessageFormatter
         return arg is IFormattable f ? f.ToString(format, culture) : arg?.ToString() ?? "";
     }
 
-    private static string Plural(string branches, object? arg, string language, CultureInfo culture)
+    private static string Plural(string branches, object? arg, string language, CultureInfo culture, object?[] args)
     {
         var number = arg switch
         {
@@ -92,10 +92,16 @@ public static class MessageFormatter
             i = close + 1;
         }
 
+        // A language missing the exact category falls back to "other", then to whatever branch exists, so text never vanishes.
         if (!map.TryGetValue(category, out var chosen) && !map.TryGetValue("other", out chosen))
-            return "";
+        {
+            if (map.Count == 0) return "";
+            chosen = map.Values.First();
+        }
 
+        // "#" is the number; it is replaced before the other arguments go in, so a "#" inside one of them is left alone.
+        // {0}, {1}... inside a branch are the message's own arguments.
         var shown = number.ToString("N0", culture);
-        return Format(chosen, culture, number).Replace("#", shown, StringComparison.Ordinal);
+        return Format(chosen.Replace("#", shown, StringComparison.Ordinal), culture, args);
     }
 }

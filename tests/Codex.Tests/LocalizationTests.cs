@@ -108,6 +108,42 @@ public class LocalizationTests
         Assert.Empty(missing);
     }
 
+    [Fact]
+    public void PluralBranches_CanUseTheMessagesOtherArguments()
+    {
+        var c = CultureInfo.GetCultureInfo("ru");
+        const string template = "{1}: {0, plural, one{# шаг для {1}} few{# шага для {1}} many{# шагов для {1}} other{# шага для {1}}}";
+
+        Assert.Equal("Ари: 3 шага для Ари", MessageFormatter.Format(template, c, 3, "Ари"));
+        Assert.Equal("Ари: 5 шагов для Ари", MessageFormatter.Format(template, c, 5, "Ари"));
+        Assert.Equal("C#: 1 item", MessageFormatter.Format("{1}: {0, plural, one{# item} other{# items}}", CultureInfo.InvariantCulture, 1, "C#"));
+    }
+
+    [Fact]
+    public void PluralWithAMissingCategory_FallsBackInsteadOfVanishing()
+    {
+        var c = CultureInfo.GetCultureInfo("ru");
+
+        Assert.Equal("5 раундов", MessageFormatter.Format("{0, plural, one{# раунд} other{# раундов}}", c, 5));  // "many" falls back to "other"
+        Assert.Equal("2 round", MessageFormatter.Format("{0, plural, one{# round}}", CultureInfo.InvariantCulture, 2)); // no "other": any branch beats nothing
+    }
+
+    [Fact]
+    public void EveryMessage_FormatsToSomething_ForEveryCount_InEveryLanguage()
+    {
+        foreach (var language in SupportedCultures.Tags)
+        {
+            var text = Localizer.For(language);
+            foreach (var key in Localizer.Keys("en"))
+            foreach (var n in new[] { 0, 1, 2, 3, 5, 11, 21, 100 })
+            {
+                var shown = text.Get(key, Enumerable.Repeat<object?>(n, 8).ToArray());
+                Assert.False(string.IsNullOrWhiteSpace(shown), $"{language}:{key} is empty for n={n}");
+                Assert.DoesNotMatch(@"\{\d", shown); // no placeholder left unfilled, including inside plural branches
+            }
+        }
+    }
+
     [Theory]
     [InlineData("he", true)]
     [InlineData("ru", false)]

@@ -311,6 +311,11 @@ public class SystemDefinition
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
+    private SystemDefinition? _canonical;
+
+    /// <summary>The definition as system.yaml wrote it: this one, or the original a localized copy was made from. Prompts for AI
+    /// models and images take their wording from here, so they stay in one language whatever the reader's.</summary>
+    public SystemDefinition Canonical => _canonical ?? this;
 
     private static string LanguageOf(string? culture)
     {
@@ -372,6 +377,7 @@ public class SystemDefinition
             map.TryGetValue(key, out var hit) ? hit : null;
 
         var copy = (SystemDefinition)MemberwiseClone();
+        copy._canonical = Canonical;
         copy.Name = t.Name ?? Name;
         copy.Description = t.Description ?? Description;
         copy.Compatibility = t.Compatibility ?? Compatibility;
@@ -406,6 +412,7 @@ public class SystemDefinition
         copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules);
         copy.Translations = Translations;
         copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);
+        copy.ValueLabels = new Dictionary<string, string>(t.Values);
         return copy;
     }
 
@@ -457,6 +464,13 @@ public class SystemDefinition
 
     /// <summary>Set on a localized copy: condition name as the rules know it -> name to show.</summary>
     public Dictionary<string, string>? ConditionLabels { get; set; }
+
+    /// <summary>Set on a localized copy: shared word (a rest, a damage type, a school) as the rules know it -> text to show.</summary>
+    public Dictionary<string, string>? ValueLabels { get; set; }
+
+    /// <summary>The text to show for one of the system's own words ("Long Rest"); the word itself when this copy has no translation.</summary>
+    public string DisplayValue(string value) =>
+        ValueLabels != null && ValueLabels.TryGetValue(value, out var shown) ? shown : value;
 
     /// <summary>The name to show for a condition ("Poisoned"); the name itself when this copy has no translation for it.</summary>
     public string DisplayCondition(string condition) =>

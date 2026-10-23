@@ -11,7 +11,7 @@ namespace Codex.Tests;
 /// <summary>Hit points, armor class and inventory, against a small in-memory system (the rules are data).</summary>
 public class SheetVitalsTests
 {
-    private const string Yaml = """
+    protected const string Yaml = """
         id: demo
         name: Demo
         attributes:
@@ -68,9 +68,12 @@ public class SheetVitalsTests
         public IEnumerable<ContentEntry> Candidates(string type) => _entries.Where(e => e.Type == type);
     }
 
-    private static SheetRuleEngine Engine() => new(System, new Resolver());
+    /// <summary>The system under test; <see cref="LocalizedSheetVitalsTests"/> swaps in a pseudo-translated copy.</summary>
+    protected virtual SystemDefinition Sys => System;
 
-    private static Dictionary<string, object> Sheet(string cls, int level, int dex = 10, int con = 10, params string[] inventory)
+    private SheetRuleEngine Engine() => new(Sys, new Resolver());
+
+    private Dictionary<string, object> Sheet(string cls, int level, int dex = 10, int con = 10, params string[] inventory)
     {
         var sheet = new Dictionary<string, object> { ["class"] = cls, ["level"] = (long)level, ["dex"] = (long)dex, ["con"] = (long)con };
         Engine().InitializeSheet(sheet);
@@ -78,7 +81,7 @@ public class SheetVitalsTests
         return sheet;
     }
 
-    private static SheetEvaluation Run(Dictionary<string, object> sheet)
+    private SheetEvaluation Run(Dictionary<string, object> sheet)
     {
         var engine = Engine();
         var evaluation = engine.Evaluate(sheet);
