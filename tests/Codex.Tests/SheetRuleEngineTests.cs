@@ -8,7 +8,7 @@ namespace Codex.Tests;
 /// the shape of the SRD rules (class → subclass, class spell list, level tables, point buy, bonuses).</summary>
 public class SheetRuleEngineTests
 {
-    private const string Yaml = """
+    protected const string Yaml = """
         id: demo
         name: Demo
         attributes:
@@ -85,6 +85,7 @@ public class SheetRuleEngineTests
             Add("class", "fighter", "Fighter", p => p["featSlots"] = new List<object> { Row(("level", 1L), ("slots", 0L)), Row(("level", 4L), ("slots", 1L)), Row(("level", 6L), ("slots", 2L)) });
             Add("subclass", "evoker", "Evoker", p => p["class"] = "wizard");
             Add("subclass", "champion", "Champion", p => p["class"] = "fighter");
+            Add("background", "scholar", "Scholar", p => { p["abilityScores"] = new List<object> { "Intelligence", "Dexterity" }; });
             Add("background", "sage", "Sage", p => { p["abilityScores"] = new List<object> { "CON", "INT", "WIS" }; p["feat"] = "magic-initiate"; });
             Add("feat", "magic-initiate", "Magic Initiate", p => { p["category"] = "origin"; p["minLevel"] = 1L; });
             Add("feat", "alert", "Alert", p => { p["category"] = "origin"; p["minLevel"] = 1L; });
@@ -109,7 +110,10 @@ public class SheetRuleEngineTests
         public IEnumerable<ContentEntry> Candidates(string type) => _entries.Where(e => e.Type == type);
     }
 
-    private static SheetRuleEngine Engine() => new(System, new Resolver());
+    /// <summary>The system the tests run against; <see cref="LocalizedSheetRuleEngineTests"/> swaps in a translated copy.</summary>
+    protected virtual SystemDefinition Sys => System;
+
+    private SheetRuleEngine Engine() => new(Sys, new Resolver());
 
     private static Dictionary<string, object> Sheet(params (string Key, object Value)[] values)
     {
@@ -244,6 +248,16 @@ public class SheetRuleEngineTests
         var capped = engine.Evaluate(Sheet(("attrMethod", "manual"), ("background", "sage"), ("base_int", 19L), ("bonus_int", 2L), ("bonus_dex", 1L)));
         Assert.Contains(capped.Violations, v => v.FieldKey == "int" && v.Message.Contains("exceed 20"));
         Assert.Equal(21, capped.Attributes!.Totals["int"]);
+    }
+
+    [Fact]
+    public void Bonuses_AcceptAttributeNamesWrittenInFull()
+    {
+        // Packs may name an attribute by its label ("Intelligence") rather than its key or abbreviation; that must keep
+        // working when the system is shown in another language.
+        var result = Engine().Evaluate(Sheet(("attrMethod", "manual"), ("background", "scholar")));
+
+        Assert.Equal(new[] { "dex", "int" }, result.Attributes!.EligibleBonusAttributes.Order());
     }
 
     [Fact]
