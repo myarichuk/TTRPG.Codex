@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\..\src\Codex.Persistence\Codex.Persistence.csproj" />
     <ProjectReference Include="..\..\src\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Codex.Localization\Codex.Localization.csproj" />
     <ProjectReference Include="..\..\src\Codex.Launcher\Codex.Launcher.csproj" />
     <ProjectReference Include="..\..\src\Codex.Web\Codex.Web.csproj" />
     <ProjectReference Include="..\..\tools\Codex.ContentImport\Codex.ContentImport.csproj" />
