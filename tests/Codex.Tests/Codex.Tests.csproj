@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\src\Codex.Launcher\Codex.Launcher.csproj" />
     <ProjectReference Include="..\..\src\Codex.Web\Codex.Web.csproj" />
     <ProjectReference Include="..\..\tools\Codex.ContentImport\Codex.ContentImport.csproj" />
+    <ProjectReference Include="..\..\tools\Codex.TranslationCheck\Codex.TranslationCheck.csproj" />
   </ItemGroup>
 
 </Project>
