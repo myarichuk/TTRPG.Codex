@@ -1,0 +1,23 @@
+id: srd-5.2.1-ru
+name: 'System Reference Document 5.2.1 (Русский)'
+version: 1.0.0
+systemId: srd5e
+minAppVersion: 0.0.0
+priority: 1
+kind: translation
+locale: ru
+translationOf: srd-5.2.1
+dependencies:
+- srd-5.2.1
+description: 'Machine-drafted Russian translation of the SRD 5.2.1 spells (names and rules text). Other entry types are not translated yet.'
+authors:
+- Wizards of the Coast LLC (original rules text)
+- TTRPG.Codex contributors (machine-drafted translation, checked by tools/Codex.TranslationCheck)
+license:
+  name: CC-BY-4.0
+  url: https://creativecommons.org/licenses/by/4.0/legalcode
+  attribution: This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
+  sourceUrl: https://www.dndbeyond.com/srd
+  modified: true
+  notices:
+  - 'Modified from the original: translated into Russian by machine and checked by script (numbers, dice, layout and agreed terms). The translation has not been reviewed by a native speaker; the English text remains the authoritative rules text.'

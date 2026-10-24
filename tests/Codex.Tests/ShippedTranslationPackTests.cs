@@ -39,7 +39,7 @@ public class ShippedTranslationPackTests : IAsyncLifetime
     [InlineData("he")]
     public void TranslationPacks_NameOnlyEntriesThatExist_AndLoadCleanly(string locale)
     {
-        var pack = _registry.GetPacks("srd5e").Single(p => p.Locale == locale);
+        var pack = _registry.GetPacks("srd5e").Single(p => p.Locale == locale && p.TranslationOf == "codex-flavor");
         Assert.True(pack.IsTranslation);
         Assert.Equal("codex-flavor", pack.TranslationOf);
 
@@ -63,5 +63,30 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         Assert.Contains("barbarian", byRussian);
         Assert.Contains("barbarian", byEnglish);
         Assert.Empty(_registry.Search("srd5e", "варвар", type: "class"));
+    }
+
+    [Fact]
+    public void RussianSpells_AreTranslated_AndTheRulesDataIsUntouched()
+    {
+        var original = _registry.GetEntry("srd5e", "spell", "fireball")!;
+        var shown = _registry.Localize(original, "ru");
+
+        Assert.Equal("Огненный шар", shown.Name);
+        Assert.Contains("8d6", shown.Description);                              // dice unchanged
+        Assert.Equal(original.Properties["school"], shown.Properties["school"]);
+        Assert.Equal(original.Properties["damageType"], shown.Properties["damageType"]);
+        Assert.Equal(original.Properties["level"], shown.Properties["level"]);
+        Assert.DoesNotContain("Огненн", original.Description);               // the English entry is not mutated
+    }
+
+    [Fact]
+    public void RussianSpellPack_CoversEverySpell_AndCarriesTheCcByNotice()
+    {
+        var pack = _registry.GetPacks("srd5e").Single(p => p.Locale == "ru" && p.TranslationOf == "srd-5.2.1");
+        Assert.True(pack.IsTranslation);
+        Assert.True(pack.License?.Modified);
+
+        var translated = _registry.GetEntries("srd5e", "spell").Select(e => _registry.Localize(e, "ru")).Count(e => e.Name != _registry.GetEntry("srd5e", "spell", e.Id)!.Name);
+        Assert.Equal(_registry.GetEntries("srd5e", "spell").Count(), translated);
     }
 }

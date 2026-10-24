@@ -39,6 +39,36 @@ if (!File.Exists(systemFile) && !File.Exists(systemFile = Path.Combine(contentRo
 
 var system = SystemDefinitionLoader.Load(systemFile);
 
+// --prepare <type> --batch-size N --out <dir>: writes batch-NN/input.md with the exact English text (blank lines visible)
+// of every entry of the type, for translators to work from.
+if (Arg("--prepare") is { } prepareType)
+{
+    var size = int.TryParse(Arg("--batch-size"), out var n) && n > 0 ? n : 12;
+    var outDir = Arg("--out") ?? "batches";
+    var def = system.FindType(prepareType);
+    var textKeys = (def?.Fields ?? new List<FieldDefinition>()).Where(f => f.Type is FieldType.Text or FieldType.LongText).Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var entries = registry.GetEntries(systemId, prepareType).OrderBy(e => e.Id, StringComparer.Ordinal).ToList();
+    var batchNo = 0;
+    foreach (var batch in entries.Chunk(size))
+    {
+        var dir = Path.Combine(outDir, $"batch-{++batchNo:00}");
+        Directory.CreateDirectory(dir);
+        var sb = new System.Text.StringBuilder();
+        foreach (var e in batch)
+        {
+            sb.AppendLine($"## id: {e.Id}").AppendLine($"name: {e.Name}").AppendLine("description (exact text, blank lines and trailing double spaces matter):").AppendLine("<<<");
+            sb.AppendLine((e.Description ?? "").Replace("\r\n", "\n")).AppendLine(">>>");
+            foreach (var (key, value) in e.Properties.Where(kv => textKeys.Contains(kv.Key) && kv.Value is string { Length: > 0 }))
+                sb.AppendLine($"property {key}: {value}");
+            sb.AppendLine();
+        }
+        File.WriteAllText(Path.Combine(dir, "input.md"), sb.ToString());
+    }
+
+    Console.WriteLine($"{entries.Count} {prepareType} entries in {batchNo} batches under {outDir}");
+    return 0;
+}
+
 var checker = new TranslationChecker(language, TranslationChecker.GlossaryOf(system, language));
 var deserializer = new DeserializerBuilder().Build();
 var findings = new List<Finding>();

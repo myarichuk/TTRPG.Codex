@@ -143,9 +143,20 @@ public class TranslationCheckerTests
     }
 
     [Fact]
+    public void Force_is_a_term_only_as_a_damage_type()
+    {
+        var glossary = new Dictionary<string, string> { ["force"] = "силовое поле" };
+        var verb = new ContentEntry { Id = "bolt", Type = "spell", Name = "Fire Bolt", Description = "You can force the target to roll." };
+        Assert.Empty(new TranslationChecker("ru", glossary).Check(verb, "spell", Item("Вы можете заставить цель бросить кость."), Fields));
+        var damage = new ContentEntry { Id = "bolt", Type = "spell", Name = "Fire Bolt", Description = "The target takes Force damage." };
+        Assert.True(Has(new TranslationChecker("ru", glossary).Check(damage, "spell", Item("Цель получает урон."), Fields), "terms", Severity.Warning));
+    }
+
+    [Fact]
     public void Stems_cut_short_words_less()
     {
         Assert.Equal("урон", TranslationChecker.Stem("урон"));       // short: kept whole
+        Assert.Equal("Сил", TranslationChecker.Stem("Сила"));       // 4 letters ending in a vowel: Силы, Силу
         Assert.Equal("кос", TranslationChecker.Stem("костер"[..5])); // 5 letters: two cut
         Assert.Equal("сущес", TranslationChecker.Stem("существо"));  // 8 letters: three cut
         Assert.Equal("сущес", TranslationChecker.Stem("существо магическое"));

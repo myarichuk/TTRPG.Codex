@@ -146,7 +146,10 @@ public sealed class TranslationChecker
         var wrongTerms = new List<string>();
         foreach (var (english, shown) in _glossary)
         {
-            if (english.Length < 4 || shown.Length < 3 || !Regex.IsMatch(original, $@"\b{Regex.Escape(english)}\b")) continue;
+            if (english.Length < 4 || shown.Length < 3) continue;
+            // "force" is also a plain verb and noun; only the damage type is an agreed term.
+            var pattern = english.Equals("force", StringComparison.OrdinalIgnoreCase) ? @"\b[Ff]orce damage\b" : $@"\b{Regex.Escape(english)}\b";
+            if (!Regex.IsMatch(original, pattern)) continue;
             var stem = Stem(shown);
             if (stem.Length >= 3 && translated.IndexOf(stem, StringComparison.OrdinalIgnoreCase) < 0) wrongTerms.Add($"{english} → {shown}");
         }
@@ -181,7 +184,8 @@ public sealed class TranslationChecker
     internal static string Stem(string term)
     {
         var firstWord = term.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? term;
-        var cut = firstWord.Length >= 7 ? 3 : firstWord.Length >= 5 ? 2 : 0;
+        // Drop an ending that inflection changes (Сила/Силы/Силу, existing/exist-ing); short words lose only a final vowel.
+        var cut = firstWord.Length >= 7 ? 3 : firstWord.Length >= 5 ? 2 : firstWord.Length == 4 && "аяоеьйыуюи".Contains(firstWord[^1]) ? 1 : 0;
         return firstWord[..(firstWord.Length - cut)];
     }
 
