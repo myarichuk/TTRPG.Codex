@@ -2,14 +2,16 @@
 import json, os, re
 
 
-def blocks(path):
+def blocks(path, level=3):
+    """The "### Heading" blocks (or "#### " with level=4) whose body opens with an italic line, as (heading, body)."""
+    marker, stop = "#" * level + " ", re.compile(r"^#{1,%d} " % (level - 1))
     out, current = [], None
     for line in open(path, encoding="utf-8").read().replace("\r\n", "\n").split("\n"):
-        if line.startswith("### "):
-            current = [line[4:].strip(), []]
+        if line.startswith(marker):
+            current = [line[len(marker):].strip(), []]
             out.append(current)
         elif current is not None:
-            if line.startswith("## ") or line.startswith("# "):
+            if stop.match(line):
                 current = None
             else:
                 current[1].append(line)

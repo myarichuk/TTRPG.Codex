@@ -23,7 +23,9 @@ Before machine-translating a content type, check for an existing translation (se
 or the translation's sentence count differs from its own English:
 
 ```bash
-python3 -I tools/omnisgm-import/import_spells.py <omnisgm>/src/dnd/srd-5.2 content/systems/srd5e/packs/srd-5.2.1 /tmp/omnis-pack /tmp/divergent.txt
+python3 tools/omnisgm-import/import_spells.py <omnisgm>/src/dnd/srd-5.2 content/systems/srd5e/packs/srd-5.2.1 /tmp/omnis-pack /tmp/divergent.txt
 dotnet run --project tools/Codex.TranslationCheck -- --lang ru --translation /tmp/omnis-pack > /tmp/omnis-report.txt
-python3 -I tools/omnisgm-import/merge_with_fallback.py /tmp/omnis-pack/spell/spells.yaml <machine-draft spells.yaml> /tmp/omnis-report.txt /tmp/divergent.txt <output spells.yaml>
+python3 tools/omnisgm-import/merge_with_fallback.py /tmp/omnis-pack/spell/spells.yaml <machine-draft spells.yaml> /tmp/omnis-report.txt /tmp/divergent.txt <output spells.yaml>
 ```
+
+`import_monsters.py` and `import_items.py` work the same way for creatures and magic items (no fallback: pass `-` to `merge_with_fallback.py` and entries that fail stay English).

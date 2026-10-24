@@ -28,7 +28,7 @@ def items(path):
 
 def main():
     primary, fallback = items(sys.argv[1]), (items(sys.argv[2]) if sys.argv[2] != "-" else {})
-    failing = set(re.findall(r"^ERROR \w+:(\S+)", open(sys.argv[3], encoding="utf-8").read(), re.M))
+    failing = set(re.findall(r"^ERROR [\w-]+:(\S+)", open(sys.argv[3], encoding="utf-8").read(), re.M))
     divergent = set(open(sys.argv[4]).read().split())
     excluded = failing | divergent
     use_fallback = excluded & set(fallback)

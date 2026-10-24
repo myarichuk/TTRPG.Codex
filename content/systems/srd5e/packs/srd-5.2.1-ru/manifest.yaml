@@ -9,10 +9,10 @@ locale: ru
 translationOf: srd-5.2.1
 dependencies:
 - srd-5.2.1
-description: 'Russian translation of the SRD 5.2.1 spells and creatures (names and rules text), mostly from the OmnisGM translation. Spells that failed a check use a machine draft; creatures that failed stay in English. Other entry types are not translated yet.'
+description: 'Russian translation of the SRD 5.2.1 spells, creatures and magic items (names and rules text), mostly from the OmnisGM translation. Spells that failed a check use a machine draft; creatures and items that failed stay in English. Other entry types are not translated yet.'
 authors:
 - Wizards of the Coast LLC (original rules text)
-- OmnisGM / Petr Radilov (Russian translation of most spells and 276 creatures, CC BY 4.0, https://rules.omnisgm.com)
+- OmnisGM / Petr Radilov (Russian translation of most spells, 276 creatures and the magic items, CC BY 4.0, https://rules.omnisgm.com)
 - TTRPG.Codex contributors (machine-drafted translation of the remaining spells, checked by tools/Codex.TranslationCheck)
 license:
   name: CC-BY-4.0
@@ -21,4 +21,4 @@ license:
   sourceUrl: https://www.dndbeyond.com/srd
   modified: true
   notices:
-  - 'Modified from the original: translated into Russian. Most spells and the translated creatures use the Russian translation by OmnisGM (© 2026 Petr Radilov, licensed CC BY 4.0, https://rules.omnisgm.com, source https://github.com/OmnisGM-App/OmnisGM-Rules), converted to this pack''s layout by tools/omnisgm-import; each item in spell/spells.yaml and monster/monsters.yaml names its source. The rest is machine-drafted. Everything was checked by script (numbers, dice, layout, agreed terms) but not reviewed by a native speaker; the English text remains the authoritative rules text.'
+  - 'Modified from the original: translated into Russian. Most spells, the translated creatures and the magic items use the Russian translation by OmnisGM (© 2026 Petr Radilov, licensed CC BY 4.0, https://rules.omnisgm.com, source https://github.com/OmnisGM-App/OmnisGM-Rules), converted to this pack''s layout by tools/omnisgm-import; each entry in spell/spells.yaml, monster/monsters.yaml and magic-item/magic-items.yaml names its source. The rest is machine-drafted. Everything was checked by script (numbers, dice, layout, agreed terms) but not reviewed by a native speaker; the English text remains the authoritative rules text.'

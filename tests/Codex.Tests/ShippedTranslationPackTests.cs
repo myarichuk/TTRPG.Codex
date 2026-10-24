@@ -109,4 +109,20 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         Assert.True(original.Properties.ContainsKey("actions"));                     // the rules data is untouched
         Assert.DoesNotContain("Амфибия", original.Description);
     }
+
+    [Fact]
+    public void RussianMagicItems_AreTranslated_AndTheirFilterPropertiesStayEnglish()
+    {
+        var original = _registry.GetEntry("srd5e", "magic-item", "adamantine-armor")!;
+        var shown = _registry.Localize(original, "ru");
+
+        Assert.Equal("Адамантиновый доспех", shown.Name);
+        Assert.Contains("адамантин", shown.Description);
+        Assert.Equal("Uncommon", shown.Properties["rarity"]);   // filtered on, so never replaced
+        Assert.Equal("Armor", shown.Properties["category"]);
+        Assert.DoesNotContain("адамантин", original.Description);
+
+        var translated = _registry.GetEntries("srd5e", "magic-item").Count(e => _registry.Localize(e, "ru").Name != e.Name);
+        Assert.True(translated >= 230, $"only {translated} magic items are translated");
+    }
 }
