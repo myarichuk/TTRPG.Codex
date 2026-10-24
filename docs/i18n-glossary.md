@@ -23,7 +23,7 @@ Use these terms everywhere so the interface reads consistently. Machine-drafted 
 | Condition | Состояние | מצב |
 | Short rest / Long rest | Короткий отдых / Долгий отдых | מנוחה קצרה / מנוחה ארוכה |
 | Library | Библиотека | ספרייה |
-| Homebrew | Собственный контент (хоумбрю) | תוכן ביתי (Homebrew) |
+| Homebrew | Собственный материал («Собственный» на метках) | תוכן ביתי (Homebrew) |
 | Content pack | Набор материалов | חבילת תוכן |
 | Wiki | Вики | ויקי |
 | Journal | Журнал | יומן |

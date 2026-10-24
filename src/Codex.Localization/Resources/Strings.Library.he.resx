@@ -49,5 +49,6 @@
   <data name="Library.Detail.Modified" xml:space="preserve"><value>שונה ביחס למקור</value></data>
   <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>נוצר בשולחן הזה. מנהל המשחק מחליט מי רשאי להשתמש בזה שוב.</value></data>
   <data name="Library.Detail.LoreText" xml:space="preserve"><value>טקסט אגדות:</value></data>
+  <data name="Library.Detail.Translation" xml:space="preserve"><value>תרגום:</value></data>
   <data name="Library.Detail.LicenceName" xml:space="preserve"><value>רישיון {0}</value></data>
 </root>

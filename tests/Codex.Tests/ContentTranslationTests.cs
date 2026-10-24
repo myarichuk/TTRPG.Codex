@@ -26,6 +26,12 @@ public class ContentTranslationTests : IDisposable
               - { key: level, label: Level, type: Number }
               - { key: school, label: School, type: Dropdown, options: [Evocation, Illusion] }
               - { key: material, label: Material, type: Text }
+          - type: monster
+            label: Monster
+            folder: monsters
+            fields:
+              - { key: actions, label: Actions, type: Collection }
+              - { key: traits, label: Traits, type: Collection }
         """);
 
     private void Write(string relative, string content)
@@ -287,5 +293,45 @@ public class ContentTranslationTests : IDisposable
         Assert.True(skill.Proficient);
         Assert.Equal(2 + 3, skill.Bonus); // Strength 14 is +2, proficiency at level 5 is +3
         Assert.DoesNotContain(result.Warnings, w => w.Message.Contains("is not a skill"));
+    }
+
+    [Fact]
+    public async Task TranslatedDescription_DropsTheEnglishRowsItAlreadyContained_ButKeepsTranslatedRows()
+    {
+        Write("base/manifest.yaml", "id: base\nname: Base\nversion: 1.0.0\nsystemId: demo\n");
+        Write("base/monsters/imp.yaml", """
+            id: imp
+            type: monster
+            name: Imp
+            description: "**Sting.** Hits hard.\n\n**Fly.** It flies."
+            properties:
+              actions:
+                - { name: Sting, description: Hits hard. }
+              traits:
+                - { name: Fly, description: It flies. }
+            """);
+        Write("ru/manifest.yaml", "id: base-ru\nname: Base (ru)\nversion: 1.0.0\nsystemId: demo\nkind: translation\nlocale: ru\ntranslationOf: base\ndependencies: [base]\npriority: 5\n");
+        Write("ru/monsters/imp.yaml", """
+            - id: imp
+              name: Бес
+              description: "**Жало.** Бьёт сильно.\n\n**Полёт.** Он летает."
+              properties:
+                traits:
+                  - { name: Полёт, description: Он летает. }
+            """);
+
+        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var loader = new YamlContentPackLoader(registry);
+        await loader.LoadPackAsync(Path.Combine(_root, "base"), Demo);
+        await loader.LoadPackAsync(Path.Combine(_root, "ru"), Demo);
+        var original = registry.GetEntry("demo", "monster", "imp")!;
+
+        var shown = registry.Localize(original, "ru");
+
+        Assert.False(shown.Properties.ContainsKey("actions"));       // English rows the translated description makes redundant
+        Assert.True(shown.Properties.ContainsKey("traits"));         // the translation supplied these rows itself
+        Assert.Equal("Полёт", ((IEnumerable<object>)shown.Properties["traits"]).OfType<IDictionary<string, object>>().Single()["name"]);
+        Assert.True(original.Properties.ContainsKey("actions"));     // the shared entry is untouched
+        Assert.Equal(registry.Localize(original, "en").Properties.Count, original.Properties.Count);
     }
 }

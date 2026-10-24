@@ -15,7 +15,7 @@
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>Монстр</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>Список ({0})</value></data>
   <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Список пуст. Найдите существ в Библиотеке справа и закрепите их для будущих столкновений.</value></data>
-  <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Хоумбрю</value></data>
+  <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Собственный</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>Заметка для: {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>Где вы это используете…</value></data>
   <data name="Campaign.Bestiary.HowMany" xml:space="preserve"><value>Сколько</value></data>
@@ -130,7 +130,7 @@
   <data name="Campaign.Library.ArtFor" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
   <data name="Campaign.Library.Edit" xml:space="preserve"><value>Изменить</value></data>
   <data name="Campaign.Library.CloneTitle" xml:space="preserve"><value>Начать собственный вариант с этими полями</value></data>
-  <data name="Campaign.Library.HomebrewCopy" xml:space="preserve"><value>Копия в хоумбрю</value></data>
+  <data name="Campaign.Library.HomebrewCopy" xml:space="preserve"><value>Копия среди собственных материалов</value></data>
   <data name="Campaign.Library.AddToCast" xml:space="preserve"><value>Добавить в состав</value></data>
   <data name="Campaign.Library.InNotes" xml:space="preserve"><value>В заметках</value></data>
   <data name="Campaign.Library.Import.Title" xml:space="preserve"><value>Импорт собственного контента</value></data>
@@ -142,7 +142,7 @@
   <data name="Campaign.Library.Import.None" xml:space="preserve"><value>Снять выбор</value></data>
   <data name="Campaign.Library.Import.Importing" xml:space="preserve"><value>Импорт…</value></data>
   <data name="Campaign.Library.Import.Button" xml:space="preserve"><value>Импортировать: {0}</value></data>
-  <data name="Campaign.Library.EditingCopy" xml:space="preserve"><value>Вы редактируете копию «{0}» в хоумбрю. Она остаётся черновиком (скрыта от игроков), пока вы не отметите «Видно игрокам».</value></data>
+  <data name="Campaign.Library.EditingCopy" xml:space="preserve"><value>Вы редактируете копию «{0}» среди собственных материалов. Она остаётся черновиком (скрыта от игроков), пока вы не отметите «Видно игрокам».</value></data>
   <data name="Campaign.Library.Saved" xml:space="preserve"><value>«{0}» сохранено.</value></data>
   <data name="Campaign.Library.Deleted" xml:space="preserve"><value>«{0}» удалено.</value></data>
   <data name="Campaign.Library.ArtSaved" xml:space="preserve"><value>Иллюстрация для «{0}» сохранена.</value></data>

@@ -89,4 +89,24 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         var translated = _registry.GetEntries("srd5e", "spell").Select(e => _registry.Localize(e, "ru")).Count(e => e.Name != _registry.GetEntry("srd5e", "spell", e.Id)!.Name);
         Assert.Equal(_registry.GetEntries("srd5e", "spell").Count(), translated);
     }
+
+    [Fact]
+    public void RussianCreatures_ShowTheTranslatedStatBlock_WithoutAnEnglishCopyOfItsRows()
+    {
+        var original = _registry.GetEntry("srd5e", "monster", "aboleth")!;
+        var shown = _registry.Localize(original, "ru");
+
+        Assert.Equal("Аболет", shown.Name);
+        Assert.Contains("Амфибия", shown.Description);
+        Assert.Contains("5d10", shown.Description);                                  // dice unchanged
+        Assert.Equal(original.Properties["hitPoints"], shown.Properties["hitPoints"]);
+        Assert.Equal(original.Properties["challengeRating"], shown.Properties["challengeRating"]);
+        Assert.Equal("Large", shown.Properties["size"]);                             // filtered on, so left in English
+        Assert.Equal("srd-5.2.1-ru", shown.Properties[ContentEntry.TranslationSourceKey]); // the footer credits the translator
+        Assert.False(original.Properties.ContainsKey(ContentEntry.TranslationSourceKey));
+        Assert.False(shown.Properties.ContainsKey("traits"));                        // the translated description already lists them
+        Assert.False(shown.Properties.ContainsKey("actions"));
+        Assert.True(original.Properties.ContainsKey("actions"));                     // the rules data is untouched
+        Assert.DoesNotContain("Амфибия", original.Description);
+    }
 }

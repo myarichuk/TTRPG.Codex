@@ -14,7 +14,7 @@
   <data name="Library.Browser.NothingMatches" xml:space="preserve"><value>Ничего не найдено</value></data>
   <data name="Library.Browser.EmptyType" xml:space="preserve"><value>Для этой системы не загружено материалов этого типа.</value></data>
   <data name="Library.Browser.TryDifferent" xml:space="preserve"><value>Попробуйте другое слово или сбросьте фильтр по типу.</value></data>
-  <data name="Library.Homebrew" xml:space="preserve"><value>Хоумбрю</value></data>
+  <data name="Library.Homebrew" xml:space="preserve"><value>Собственный</value></data>
   <data name="Library.ShowMore" xml:space="preserve"><value>Показать ещё {0}</value></data>
   <data name="Library.Browser.CloseDetail" xml:space="preserve"><value>Закрыть описание</value></data>
   <data name="Library.Browser.ChooseEntry" xml:space="preserve"><value>Выберите запись, чтобы прочитать её здесь.</value></data>
@@ -49,5 +49,6 @@
   <data name="Library.Detail.Modified" xml:space="preserve"><value>изменено относительно оригинала</value></data>
   <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>Создано за этим столом. Мастер решает, кто может использовать это повторно.</value></data>
   <data name="Library.Detail.LoreText" xml:space="preserve"><value>Текст преданий:</value></data>
+  <data name="Library.Detail.Translation" xml:space="preserve"><value>Перевод:</value></data>
   <data name="Library.Detail.LicenceName" xml:space="preserve"><value>лицензия {0}</value></data>
 </root>

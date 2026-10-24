@@ -112,6 +112,21 @@
         {
             <div class="mt-1">@L["Library.Detail.HomebrewNote"]</div>
         }
+        @if (TranslationPack is { } translationPack)
+        {
+            <div class="mt-1" data-testid="translation-attribution">
+                <strong>@L["Library.Detail.Translation"]</strong> @translationPack.Name@(translationPack.License != null ? " · " + L["Library.Detail.LicenceName", translationPack.License.Name] : string.Empty)
+                @if (translationPack.License?.Modified == true) { <span> · @L["Library.Detail.Modified"]</span> }
+                @if (!string.IsNullOrWhiteSpace(translationPack.License?.Attribution))
+                {
+                    <div>@translationPack.License!.Attribution</div>
+                }
+                @foreach (var notice in translationPack.License?.Notices ?? new List<string>())
+                {
+                    <div>@notice</div>
+                }
+            </div>
+        }
         @if (FlavorPack is { } lorePack)
         {
             <div class="mt-1" data-testid="flavor-attribution">
@@ -142,6 +157,12 @@
             ? Registry.GetPack(source.ToString()!)
             : null;
 
+    /// <summary>The translation pack the shown text came from, when the entry is displayed translated.</summary>
+    private PackManifest? TranslationPack =>
+        Item.Entry.Properties.TryGetValue(ContentEntry.TranslationSourceKey, out var source) && !string.IsNullOrWhiteSpace(source?.ToString())
+            ? Registry.GetPack(source.ToString()!)
+            : null;
+
     private string? Flavor => Item.Entry.Properties.TryGetValue("flavor", out var value) && !string.IsNullOrWhiteSpace(value?.ToString()) ? value.ToString() : null;
 
     private string TypeLabel => Type?.Label ?? CampaignLibrary.Humanize(Item.Entry.Type);
@@ -162,7 +183,7 @@
             foreach (var key in ordered)
             {
                 // Shown as the quote above (flavor), kept for art generation (imagePrompt), or bookkeeping (flavorSource).
-                if (key is "flavor" or "imagePrompt" or ContentEntry.FlavorSourceKey) continue;
+                if (key is "flavor" or "imagePrompt" or ContentEntry.FlavorSourceKey or ContentEntry.TranslationSourceKey) continue;
                 if (!Item.Entry.Properties.TryGetValue(key, out var value) || value == null) continue;
                 var fieldDef = fields.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase));
                 if (fieldDef?.Type == FieldType.Collection || IsRows(value)) continue;

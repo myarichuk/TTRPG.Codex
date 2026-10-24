@@ -135,15 +135,18 @@ public class ContentRegistry : IContentRegistry
         if (language.Length == 0) return entry;
 
         Dictionary<string, object> fields;
+        string translationPack;
         lock (_gate)
         {
             if (!_translations.TryGetValue((entry.SystemId, EntryKey(entry.Type, entry.Id)), out var byLocale)
                 || !byLocale.TryGetValue(language, out var hit))
                 return entry;
             fields = hit.Fields;
+            translationPack = hit.PackId;
         }
 
         var copy = entry.Clone();
+        copy.Properties[ContentEntry.TranslationSourceKey] = translationPack;
         foreach (var (name, value) in fields)
         {
             switch (name)
@@ -159,7 +162,32 @@ public class ContentRegistry : IContentRegistry
                     break;
             }
         }
+
+        // The importer writes a stat block's rows both into the description and as row tables. The translated description carries
+        // the translated rows, so the English rows the original description already held would show a second, English copy.
+        if (fields.ContainsKey("description") && entry.Description != null)
+        {
+            foreach (var (name, value) in copy.Properties.ToList())
+            {
+                if (!fields.ContainsKey(name) && IsRows(value, out var rows) && rows.All(r => r.TryGetValue("name", out var rowName) && rowName is string n && entry.Description.Contains(n)))
+                    copy.Properties.Remove(name);
+            }
+        }
+
         return copy;
+    }
+
+    private static bool IsRows(object value, out List<IDictionary<string, object>> rows)
+    {
+        rows = new List<IDictionary<string, object>>();
+        if (value is not IEnumerable<object> list || value is string) return false;
+        foreach (var item in list)
+        {
+            if (item is not IDictionary<string, object> row) return false;
+            rows.Add(row);
+        }
+
+        return rows.Count > 0;
     }
 
     public bool IsLocalized(string? culture) => LanguageOf(culture).Length > 0;

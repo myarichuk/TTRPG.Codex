@@ -12,23 +12,11 @@ to our entry id. (The Russian file is sorted by Russian name, so blocks cannot b
 the description is laid out like ours (header line, label lines joined by two-space line breaks, body paragraphs).
 Run tools/Codex.TranslationCheck on the result: spells that fail its checks should not be shipped.
 """
-import json, os, re, sys
+import os, re, sys
+
+from omnisgm_common import blocks, norm, scalar, sentences
 
 LABELS = {"Время накладывания": "castingTime", "Время сотворения": "castingTime", "Дистанция": "range", "Длительность": "duration"}
-
-
-def blocks(path):
-    out, current = [], None
-    for line in open(path, encoding="utf-8").read().replace("\r\n", "\n").split("\n"):
-        if line.startswith("### "):
-            current = [line[4:].strip(), []]
-            out.append(current)
-        elif current is not None:
-            if line.startswith("## ") or line.startswith("# "):
-                current = None
-            else:
-                current[1].append(line)
-    return [(h, "\n".join(b).strip("\n")) for h, b in out if b and re.match(r"^\s*\*[^*]", "\n".join(b).strip("\n"))]
 
 
 def our_ids(pack):
@@ -39,10 +27,6 @@ def our_ids(pack):
         has = {k: re.search(rf"^  {k}:", text, re.M) is not None for k in ("material", "higherLevel", "castingTime", "range", "duration")}
         names[norm(name)] = (f[:-5], has)
     return names
-
-
-def norm(s):
-    return re.sub(r"[^a-z0-9]", "", s.lower().replace("’", "'"))
 
 
 def convert(heading, body, has):
@@ -71,15 +55,6 @@ def convert(heading, body, has):
                 props["higherLevel"] = " ".join(mm.group(1).split())
     description = header + "\n\n" + "  \n".join(labels) + "\n\n" + "\n\n".join(rest)
     return ru_name, description.strip(), props
-
-
-def sentences(text):
-    text = re.sub(r"\*\*[^*]*\*\*|\*|_|\|[^\n]*", "", text)
-    return len([x for x in re.split(r"(?<=[.!?])\s+", text) if len(x.strip()) > 3])
-
-
-def scalar(value):
-    return json.dumps(value, ensure_ascii=False)
 
 
 def main():

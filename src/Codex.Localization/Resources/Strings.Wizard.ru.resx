@@ -4,8 +4,8 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Wizard.New" xml:space="preserve"><value>Новый хоумбрю</value></data>
-  <data name="Wizard.Edit" xml:space="preserve"><value>Редактирование хоумбрю</value></data>
+  <data name="Wizard.New" xml:space="preserve"><value>Новый собственный материал</value></data>
+  <data name="Wizard.Edit" xml:space="preserve"><value>Редактирование собственного материала</value></data>
   <data name="Wizard.Unnamed" xml:space="preserve"><value>Без названия: {0}</value></data>
   <data name="Wizard.Untitled" xml:space="preserve"><value>Запись без названия</value></data>
   <data name="Wizard.CloseWithoutSaving" xml:space="preserve"><value>Закрыть без сохранения</value></data>
@@ -59,7 +59,7 @@
   <data name="Wizard.Placeholder.Other" xml:space="preserve"><value>Что это делает — теми словами, которые прочтут игроки.</value></data>
   <data name="Wizard.Error.TypeNameFirst" xml:space="preserve"><value>Сначала выберите тип и дайте название.</value></data>
   <data name="Wizard.Error.TypeNameRequired" xml:space="preserve"><value>Нужны тип и название.</value></data>
-  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>Редактировать хоумбрю может только мастер.</value></data>
+  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>Редактировать собственные материалы может только мастер.</value></data>
   <data name="Wizard.Error.ArtFailed" xml:space="preserve"><value>Сохранено, но иллюстрацию сохранить не удалось. Попробуйте добавить её снова из библиотеки.</value></data>
   <data name="Wizard.Error.DeleteFailed" xml:space="preserve"><value>Не удалось удалить эту запись.</value></data>
   <data name="Wizard.DiscardTitle" xml:space="preserve"><value>Отбросить изменения?</value></data>
