@@ -9,10 +9,11 @@ locale: ru
 translationOf: srd-5.2.1
 dependencies:
 - srd-5.2.1
-description: 'Machine-drafted Russian translation of the SRD 5.2.1 spells (names and rules text). Other entry types are not translated yet.'
+description: 'Russian translation of the SRD 5.2.1 spells (names and rules text): most from the OmnisGM translation, the rest machine-drafted and checked by script. Other entry types are not translated yet.'
 authors:
 - Wizards of the Coast LLC (original rules text)
-- TTRPG.Codex contributors (machine-drafted translation, checked by tools/Codex.TranslationCheck)
+- OmnisGM / Petr Radilov (Russian translation of most spells, CC BY 4.0, https://rules.omnisgm.com)
+- TTRPG.Codex contributors (machine-drafted translation of the remaining spells, checked by tools/Codex.TranslationCheck)
 license:
   name: CC-BY-4.0
   url: https://creativecommons.org/licenses/by/4.0/legalcode
@@ -20,4 +21,4 @@ license:
   sourceUrl: https://www.dndbeyond.com/srd
   modified: true
   notices:
-  - 'Modified from the original: translated into Russian by machine and checked by script (numbers, dice, layout and agreed terms). The translation has not been reviewed by a native speaker; the English text remains the authoritative rules text.'
+  - 'Modified from the original: translated into Russian. Most spells use the Russian translation by OmnisGM (© 2026 Petr Radilov, licensed CC BY 4.0, https://rules.omnisgm.com, source https://github.com/OmnisGM-App/OmnisGM-Rules), converted to this pack''s layout by tools/omnisgm-import; each item in spell/spells.yaml names its source. The rest is machine-drafted. Everything was checked by script (numbers, dice, layout, agreed terms) but not reviewed by a native speaker; the English text remains the authoritative rules text.'

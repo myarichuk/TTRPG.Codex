@@ -102,11 +102,15 @@ public sealed class TranslationChecker
         return findings;
     }
 
+    /// <summary>Thousands separators differ by language ("1,000", "1 000", "1.000"); read them all as the plain number.</summary>
+    private static readonly Regex ThousandsSeparator = new(@"(?<=\d)[,\u00a0\u202f\u2009 ](?=\d{3}(?!\d))", RegexOptions.Compiled);
+    internal static string Unseparated(string text) => ThousandsSeparator.Replace(text, "");
+
     private void CheckProse(string original, string translated, Action<Severity, string, string> add, bool light = false)
     {
         // Numbers: a changed number changes a rule.
-        var wanted = Count(original, Number, normalize: n => n.Replace(',', '.'));
-        var got = Count(translated, Number, normalize: n => n.Replace(',', '.'));
+        var wanted = Count(Unseparated(original), Number, normalize: n => n.Replace(',', '.'));
+        var got = Count(Unseparated(translated), Number, normalize: n => n.Replace(',', '.'));
         var missing = Difference(wanted, got);
         var extra = Difference(got, wanted);
         if (missing.Count > 0) add(Severity.Error, "numbers-missing", $"numbers in the original but not the translation: {string.Join(", ", missing)}");
@@ -115,8 +119,10 @@ public sealed class TranslationChecker
         // Dice must be reproduced exactly.
         var diceMissing = Difference(Count(original, Dice, d => d.ToLowerInvariant()), Count(translated, Dice, d => d.ToLowerInvariant()));
         var diceExtra = Difference(Count(translated, Dice, d => d.ToLowerInvariant()), Count(original, Dice, d => d.ToLowerInvariant()));
-        if (diceMissing.Count > 0 || diceExtra.Count > 0)
-            add(Severity.Error, "dice", $"dice differ (missing: {string.Join(", ", diceMissing)}; extra: {string.Join(", ", diceExtra)})");
+        if (diceMissing.Count > 0)
+            add(Severity.Error, "dice", $"dice missing or changed (missing: {string.Join(", ", diceMissing)}; extra: {string.Join(", ", diceExtra)})");
+        else if (diceExtra.Count > 0)
+            add(Severity.Warning, "dice", $"dice in the translation but not the original: {string.Join(", ", diceExtra)}");
 
         CheckScript(translated, add);
 
@@ -125,8 +131,9 @@ public sealed class TranslationChecker
         // Markdown shape: headings, table rows and bullets must survive; bold may move around, so only warn.
         var a = Structure(original);
         var b = Structure(translated);
+        // Lost structure is an error. Gained structure is only a warning: some originals have tables and lists flattened into prose.
         foreach (var part in new[] { "headings", "table rows", "bullets", "paragraphs" })
-            if (a[part] != b[part]) add(part == "paragraphs" ? Severity.Warning : Severity.Error, "structure", $"{part}: {a[part]} in the original, {b[part]} in the translation");
+            if (a[part] != b[part]) add(part == "paragraphs" || b[part] > a[part] ? Severity.Warning : Severity.Error, "structure", $"{part}: {a[part]} in the original, {b[part]} in the translation");
         if (a["bold"] != b["bold"]) add(Severity.Warning, "structure", $"bold markers: {a["bold"]} in the original, {b["bold"]} in the translation");
 
         // Length: a big shrink usually means a dropped sentence.

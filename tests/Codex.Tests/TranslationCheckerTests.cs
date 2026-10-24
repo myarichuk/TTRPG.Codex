@@ -55,6 +55,25 @@ public class TranslationCheckerTests
     }
 
     [Fact]
+    public void Extra_dice_only_warn_and_thousands_separators_are_ignored()
+    {
+        Assert.True(Has(Check(Item(Russian + " Бросьте d8.")), "dice", Severity.Warning));
+        Assert.False(Has(Check(Item(Russian + " Бросьте d8.")), "dice"));
+
+        var source = Source();
+        source.Description = "It costs 1,000 gp and lasts 10 minutes.";
+        foreach (var written in new[] { "1,000", "1 000", "1\u00a0000" })
+            Assert.False(Has(Check(Item($"Это стоит {written} зм и длится 10 минут."), source: source), "numbers-missing"), written);
+    }
+
+    [Fact]
+    public void Structure_gained_warns_and_structure_lost_is_an_error()
+    {
+        Assert.True(Has(Check(Item(Russian + "\n\n- лишний пункт")), "structure", Severity.Warning));
+        Assert.False(Has(Check(Item(Russian + "\n\n- лишний пункт")), "structure"));
+    }
+
+    [Fact]
     public void Dice_case_does_not_matter() => Assert.False(Has(Check(Item(Russian.Replace("3d6", "3D6"))), "dice"));
 
     [Fact]
@@ -62,7 +81,7 @@ public class TranslationCheckerTests
     {
         Assert.True(Has(Check(Item(Russian.Replace("\n- Дистанция 60", ""))), "numbers-missing")); // the 60 went with it
         Assert.True(Has(Check(Item(Russian.Replace("- Спасбросок СЛ 15", "Спасбросок СЛ 15"))), "structure"));
-        Assert.True(Has(Check(Item("# Заголовок\n" + Russian)), "structure"));
+        Assert.True(Has(Check(Item("# Заголовок\n" + Russian)), "structure", Severity.Warning)); // gained, not lost
     }
 
     [Fact]
