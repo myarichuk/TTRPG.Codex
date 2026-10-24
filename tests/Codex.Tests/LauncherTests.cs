@@ -25,6 +25,31 @@ public class LauncherTests
     }
 
     [Fact]
+    public void Links_are_told_apart_by_kind_and_labelled_in_the_current_language()
+    {
+        var links = new LauncherSettings { AllowLan = true }.Links("192.168.1.20", "100.101.102.103");
+
+        Assert.Equal(new[] { LinkKind.This, LinkKind.Network, LinkKind.Tailscale }, links.Select(l => l.Kind));
+        Assert.Equal(new[] { "This computer", "Players on your network", "Players on Tailscale" }, links.Select(l => l.Label));
+    }
+
+    [Fact]
+    public void The_language_is_saved_and_unset_means_follow_the_system()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "codex-launcher-" + Guid.NewGuid() + ".json");
+        try
+        {
+            Assert.Null(new LauncherSettings().Language);
+            new LauncherSettings { Language = "ru" }.Save(path);
+            Assert.Equal("ru", LauncherSettings.Load(path).Language);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void Invite_links_use_the_address_players_can_reach()
     {
         var settings = new LauncherSettings { AllowLan = true };

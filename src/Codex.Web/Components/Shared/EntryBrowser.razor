@@ -13,16 +13,16 @@
     <div class="d-flex gap-2 align-items-end flex-wrap">
         <div class="flex-grow-1 search" style="min-width: 220px">
             <LucideIcon IconName="search" Size="18" Class="search-icon" />
-            <label for="@(id)-search" class="visually-hidden">Filter @Label by name</label>
-            <input id="@(id)-search" type="search" class="field-input field-sm" placeholder="@(Disabled ? DisabledText : $"Filter {Label.ToLowerInvariant()}…")"
+            <label for="@(id)-search" class="visually-hidden">@L["Library.Entries.FilterByName", LabelText]</label>
+            <input id="@(id)-search" type="search" class="field-input field-sm" placeholder="@(Disabled ? DisabledTextValue : L["Library.Entries.FilterPlaceholder", LabelText.ToLowerInvariant()])"
                    disabled="@Disabled" value="@query" @oninput="e => { query = e.Value?.ToString() ?? string.Empty; visible = PageSize; }" autocomplete="off" data-testid="@TestId-search" />
         </div>
         @foreach (var facet in facets)
         {
             <div>
-                <label for="@(id)-f-@facet.Key" class="visually-hidden">Filter by @facet.Label</label>
+                <label for="@(id)-f-@facet.Key" class="visually-hidden">@L["Library.Entries.FilterBy", facet.Label]</label>
                 <select id="@(id)-f-@facet.Key" class="field-select field-sm" disabled="@Disabled" @onchange="e => SetFacet(facet.Key, e.Value?.ToString())" data-testid="@TestId-filter-@facet.Key">
-                    <option value="">Any @facet.Label.ToLowerInvariant()</option>
+                    <option value="">@L["Library.Entries.Any", facet.Label.ToLowerInvariant()]</option>
                     @foreach (var value in facet.Values)
                     {
                         <option value="@value" selected="@(filters.GetValueOrDefault(facet.Key) == value)">@value</option>
@@ -33,22 +33,22 @@
     </div>
     @if (!Disabled)
     {
-        <p class="small-muted mt-1 mb-0" aria-live="polite">@matches.Count of @Options.Count available</p>
+        <p class="small-muted mt-1 mb-0" aria-live="polite">@L["Library.Entries.Available", matches.Count, Options.Count]</p>
         <ul class="list-unstyled mb-0 mt-1 picker-results" data-testid="@TestId-options">
             @if (matches.Count == 0)
             {
-                <li class="small-muted">@(Options.Count == 0 ? EmptyText : "No allowed entry matches that filter.")</li>
+                <li class="small-muted">@(Options.Count == 0 ? EmptyTextValue : L["Library.Entries.NoMatch"])</li>
             }
             @foreach (var option in shown)
             {
                 <li class="list-row py-1">
                     <span>@option.Name <span class="small-muted">@Summary(option)</span></span>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnAdd.InvokeAsync(option.Id)" aria-label="@($"{AddLabel} {option.Name}")">@AddLabel</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnAdd.InvokeAsync(option.Id)" aria-label="@(AddLabel == null ? L["Library.Entries.AddNamed", option.Name] : $"{AddLabel} {option.Name}")">@AddLabelValue</CodexButton>
                 </li>
             }
             @if (matches.Count > shown.Count)
             {
-                <li class="py-1"><CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => visible += PageSize">Show @Math.Min(PageSize, matches.Count - shown.Count) more</CodexButton></li>
+                <li class="py-1"><CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => visible += PageSize">@L["Library.ShowMore", Math.Min(PageSize, matches.Count - shown.Count)]</CodexButton></li>
             }
         </ul>
     }
@@ -59,14 +59,19 @@
     [Parameter] public ContentTypeDefinition? Type { get; set; }
 
     /// <summary>What the entries are called, plural ("spells"); used in labels and the placeholder.</summary>
-    [Parameter] public string Label { get; set; } = "entries";
+    [Parameter] public string? Label { get; set; }
 
     /// <summary>Prefix of the data-testid values: {TestId}-search, -options, -filter-{field}.</summary>
     [Parameter] public string TestId { get; set; } = "entries";
     [Parameter] public bool Disabled { get; set; }
-    [Parameter] public string DisabledText { get; set; } = "Nothing can be added";
-    [Parameter] public string EmptyText { get; set; } = "Nothing to choose from.";
-    [Parameter] public string AddLabel { get; set; } = "Add";
+    [Parameter] public string? DisabledText { get; set; }
+    [Parameter] public string? EmptyText { get; set; }
+    [Parameter] public string? AddLabel { get; set; }
+
+    private string LabelText => Label ?? L["Library.Entries.Default"];
+    private string DisabledTextValue => DisabledText ?? L["Library.Entries.Disabled"];
+    private string EmptyTextValue => EmptyText ?? L["Library.Entries.Empty"];
+    private string AddLabelValue => AddLabel ?? L["Library.Entries.Add"];
 
     /// <summary>Called with the id of the entry whose Add button was pressed.</summary>
     [Parameter] public EventCallback<string> OnAdd { get; set; }

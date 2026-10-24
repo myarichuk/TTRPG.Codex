@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Library.Browser.Search" xml:space="preserve"><value>חיפוש: {0}</value></data>
+  <data name="Library.Browser.Content" xml:space="preserve"><value>תוכן</value></data>
+  <data name="Library.Browser.SearchPlaceholder" xml:space="preserve"><value>חיפוש לפי שם, תגית או טקסט…</value></data>
+  <data name="Library.Browser.Showing" xml:space="preserve"><value>מוצגות {0} מתוך {1} תוצאות</value></data>
+  <data name="Library.Browser.Results" xml:space="preserve"><value>{0, plural, one{תוצאה #} two{# תוצאות} other{# תוצאות}}</value></data>
+  <data name="Library.Browser.ContentType" xml:space="preserve"><value>סוג תוכן</value></data>
+  <data name="Library.Browser.All" xml:space="preserve"><value>הכול</value></data>
+  <data name="Library.Browser.NothingMatches" xml:space="preserve"><value>אין התאמות</value></data>
+  <data name="Library.Browser.EmptyType" xml:space="preserve"><value>לא נטענו תכנים מסוג זה עבור המערכת הזו.</value></data>
+  <data name="Library.Browser.TryDifferent" xml:space="preserve"><value>נסו מילה אחרת, או נקו את מסנן הסוג.</value></data>
+  <data name="Library.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="Library.ShowMore" xml:space="preserve"><value>הצג עוד {0}</value></data>
+  <data name="Library.Browser.CloseDetail" xml:space="preserve"><value>סגירת הפרטים</value></data>
+  <data name="Library.Browser.ChooseEntry" xml:space="preserve"><value>בחרו רשומה כדי לקרוא אותה כאן.</value></data>
+  <data name="Library.Entries.Default" xml:space="preserve"><value>רשומות</value></data>
+  <data name="Library.Entries.FilterByName" xml:space="preserve"><value>סינון {0} לפי שם</value></data>
+  <data name="Library.Entries.FilterPlaceholder" xml:space="preserve"><value>סינון {0}…</value></data>
+  <data name="Library.Entries.FilterBy" xml:space="preserve"><value>סינון לפי {0}</value></data>
+  <data name="Library.Entries.Any" xml:space="preserve"><value>כל {0}</value></data>
+  <data name="Library.Entries.Available" xml:space="preserve"><value>{0} מתוך {1} זמינים</value></data>
+  <data name="Library.Entries.NoMatch" xml:space="preserve"><value>אין רשומה מותרת שמתאימה למסנן הזה.</value></data>
+  <data name="Library.Entries.AddNamed" xml:space="preserve"><value>הוספת {0}</value></data>
+  <data name="Library.Entries.Add" xml:space="preserve"><value>הוספה</value></data>
+  <data name="Library.Entries.Disabled" xml:space="preserve"><value>אי אפשר להוסיף כלום</value></data>
+  <data name="Library.Entries.Empty" xml:space="preserve"><value>אין מה לבחור.</value></data>
+  <data name="Library.Ai.Description" xml:space="preserve"><value>תיאור</value></data>
+  <data name="Library.Ai.Writing" xml:space="preserve"><value>כותב…</value></data>
+  <data name="Library.Ai.Write" xml:space="preserve"><value>כתיבה עם בינה מלאכותית</value></data>
+  <data name="Library.Ai.Enhance" xml:space="preserve"><value>שיפור עם בינה מלאכותית</value></data>
+  <data name="Library.Ai.AskLabel" xml:space="preserve"><value>מה על הבינה המלאכותית לשנות (לא חובה)</value></data>
+  <data name="Library.Ai.AskPlaceholder" xml:space="preserve"><value>לא חובה: ספרו לבינה המלאכותית מה אתם רוצים, למשל ״מאיים יותר, הזכר את הריח״</value></data>
+  <data name="Library.Ai.Undo" xml:space="preserve"><value>ביטול שינוי הבינה המלאכותית</value></data>
+  <data name="Library.Ai.Hint" xml:space="preserve"><value>טקסט רגיל. **מודגש**, *נטוי*, תבליטים עם "- " ו-| טבלאות | מוצגים.</value></data>
+  <data name="Library.Ai.Draft" xml:space="preserve"><value>טיוטה של הבינה המלאכותית בתיבה. אפשר לערוך אותה בחופשיות או לבטל.</value></data>
+  <data name="Library.Ai.OpenSettings" xml:space="preserve"><value>פתיחת הגדרות הבינה המלאכותית</value></data>
+  <data name="Library.Ai.NotConfigured" xml:space="preserve"><value>עדיין לא הוגדר ספק בינה מלאכותית.</value></data>
+  <data name="Library.Ai.Failed" xml:space="preserve"><value>הבינה המלאכותית לא הצליחה לכתוב זאת: {0}</value></data>
+  <data name="Library.Detail.Level" xml:space="preserve"><value>רמה {0}</value></data>
+  <data name="Library.Detail.Yes" xml:space="preserve"><value>כן</value></data>
+  <data name="Library.Detail.No" xml:space="preserve"><value>לא</value></data>
+  <data name="Library.Detail.Source" xml:space="preserve"><value>מקור:</value></data>
+  <data name="Library.Detail.Licence" xml:space="preserve"><value>רישיון:</value></data>
+  <data name="Library.Detail.Modified" xml:space="preserve"><value>שונה ביחס למקור</value></data>
+  <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>נוצר בשולחן הזה. מנהל המשחק מחליט מי רשאי להשתמש בזה שוב.</value></data>
+  <data name="Library.Detail.LoreText" xml:space="preserve"><value>טקסט אגדות:</value></data>
+  <data name="Library.Detail.LicenceName" xml:space="preserve"><value>רישיון {0}</value></data>
+</root>

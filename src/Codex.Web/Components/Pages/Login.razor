@@ -13,11 +13,11 @@
 @inject NavigationManager NavManager
 @inject IAuthenticationSchemeProvider SchemeProvider
 
-<PageTitle>Sign in | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.Auth.SignIn"] | TTRPG.Codex</PageTitle>
 
 <div class="auth-card">
     <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
-    <h1>Sign in to TTRPG.Codex</h1>
+    <h1>@L["Page.Login.Heading"]</h1>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
@@ -32,41 +32,41 @@
             <DataAnnotationsValidator />
 
             <div class="mb-3">
-                <label for="username" class="field-label">Username</label>
+                <label for="username" class="field-label">@L["Page.Auth.Username"]</label>
                 <InputText id="username" class="field-input" autocomplete="username" required @bind-Value="Model!.Username" />
             </div>
 
             <div class="mb-4">
-                <label for="password" class="field-label">Password</label>
+                <label for="password" class="field-label">@L["Page.Auth.Password"]</label>
                 <InputText id="password" type="password" class="field-input" autocomplete="current-password" required @bind-Value="Model!.Password" />
             </div>
 
-            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100">Sign in</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100">@L["Page.Auth.SignIn"]</CodexButton>
         </EditForm>
     }
 
     @if (EnableLocalLogin && ExternalSchemes.Any())
     {
-        <div class="auth-divider"><span>or continue with</span></div>
+        <div class="auth-divider"><span>@L["Page.Login.Divider"]</span></div>
     }
 
     @foreach (var scheme in ExternalSchemes)
     {
         <a href="/login/external?provider=@scheme.Name&returnUrl=@Uri.EscapeDataString(ReturnUrl ?? "/")" class="oauth-btn">
-            Continue with @(scheme.DisplayName ?? scheme.Name)
+            @L["Page.Login.Continue", scheme.DisplayName ?? scheme.Name]
         </a>
     }
 
     @if (!EnableLocalLogin && !ExternalSchemes.Any())
     {
         <div class="status" role="alert">
-            <LucideIcon IconName="info" Size="18" /><span>No sign-in method is configured. Ask whoever runs this server.</span>
+            <LucideIcon IconName="info" Size="18" /><span>@L["Page.Login.NoMethod"]</span>
         </div>
     }
 
     @if (EnableLocalLogin)
     {
-        <p class="text-center small-muted mt-4 mb-0">New here? <a href="/register">Create an account</a></p>
+        <p class="text-center small-muted mt-4 mb-0">@L["Page.Login.NewHere"]<a href="/register">@L["Page.Login.CreateAccount"]</a></p>
     }
 </div>
 
@@ -112,7 +112,7 @@
     {
         if (HttpContext == null || Model == null)
         {
-            ErrorMessage = "The sign-in form must be submitted from a freshly loaded page. Reload and try again.";
+            ErrorMessage = L["Page.Login.Stale"];
             return;
         }
 
@@ -120,7 +120,7 @@
 
         if (user == null)
         {
-            ErrorMessage = "Invalid username or password.";
+            ErrorMessage = L["Page.Login.Invalid"];
             return;
         }
 
@@ -148,13 +148,15 @@
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            if (user.Culture is not null)
+                CultureCookie.Write(HttpContext, user.Culture);
 
             var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
             NavManager.NavigateTo(dest, forceLoad: true);
         }
         else
         {
-            ErrorMessage = "Invalid username or password.";
+            ErrorMessage = L["Page.Login.Invalid"];
         }
     }
 

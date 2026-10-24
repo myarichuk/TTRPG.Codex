@@ -19,13 +19,13 @@
             {
                 <div class="art-placeholder" aria-hidden="true">
                     <LucideIcon IconName="image-plus" Size="30" />
-                    <span>Drop an image here</span>
+                    <span>@L["Actor.Art.Drop"]</span>
                 </div>
             }
             @if (CanEdit)
             {
                 @* The file input covers the frame, so dropping a file anywhere on it works. *@
-                <InputFile OnChange="OnFileAsync" accept="@ArtService.Accept" class="art-drop" title="Drop an image, or click to choose one" aria-label="@($"Choose {Label.ToLowerInvariant()} (PNG, JPEG or WebP, up to 6 MB)")" disabled="@(busy != null)" data-testid="@($"{TestId}-file")" />
+                <InputFile OnChange="OnFileAsync" accept="@ArtService.Accept" class="art-drop" title="@L["Actor.Art.DropTitle"]" aria-label="@L["Actor.Art.Choose", LabelText.ToLowerInvariant()]" disabled="@(busy != null)" data-testid="@($"{TestId}-file")" />
             }
             @if (busy != null)
             {
@@ -35,24 +35,24 @@
         @if (CanEdit)
         {
             <figcaption class="art-actions">
-                <span class="label-caps">@Label</span>
+                <span class="label-caps">@LabelText</span>
                 <div class="d-flex flex-wrap gap-1">
                     @if (Generate != null)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GenerateAsync" Disabled="@(busy != null)" data-testid="@($"{TestId}-generate")">Generate with AI</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GenerateAsync" Disabled="@(busy != null)" data-testid="@($"{TestId}-generate")">@L["Actor.Art.Generate"]</CodexButton>
                     }
                     @if (Src != null && OnRemove.HasDelegate)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemoveAsync" Disabled="@(busy != null)">Remove</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemoveAsync" Disabled="@(busy != null)">@L["Actor.Art.Remove"]</CodexButton>
                     }
                 </div>
                 @if (error != null)
                 {
-                    <p class="text-danger small mb-0" role="alert">@error @if (notConfigured) { <a href="/settings/ai#images">Set up an image model</a> }</p>
+                    <p class="text-danger small mb-0" role="alert">@error @if (notConfigured) { <a href="/settings/ai#images">@L["Actor.Art.SetUp"]</a> }</p>
                 }
                 else
                 {
-                    <p class="field-hint mb-0">@(Landscape ? "Wide images look best." : "Tall images look best.") PNG, JPEG or WebP, up to 6 MB.</p>
+                    <p class="field-hint mb-0">@(Landscape ? L["Actor.Art.WideHint"] : L["Actor.Art.TallHint"]) @L["Actor.Art.FormatHint"]</p>
                 }
             </figcaption>
         }
@@ -67,7 +67,10 @@
     [Parameter] public ArtImage? Pending { get; set; }
 
     [Parameter] public string Alt { get; set; } = string.Empty;
-    [Parameter] public string Label { get; set; } = "Art";
+    /// <summary>Caption of the frame; null shows the localized default ("Art").</summary>
+    [Parameter] public string? Label { get; set; }
+
+    private string LabelText => Label ?? L["Actor.Art.Label"];
     [Parameter] public bool Landscape { get; set; }
     [Parameter] public bool CanEdit { get; set; }
     [Parameter] public string? Class { get; set; }
@@ -96,7 +99,7 @@
             return;
         }
 
-        busy = "Uploading…";
+        busy = L["Actor.Art.Uploading"];
         try
         {
             using var buffer = new MemoryStream();
@@ -110,7 +113,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Art upload failed");
-            error = "The upload failed: " + ex.Message;
+            error = L["Actor.Art.UploadFailed", L.Describe(ex)];
         }
         finally
         {
@@ -123,7 +126,7 @@
         if (Generate == null || busy != null) return;
         error = null;
         notConfigured = false;
-        busy = "Drawing… this can take a minute";
+        busy = L["Actor.Art.Drawing"];
         try
         {
             var image = await Generate();
@@ -132,12 +135,12 @@
         catch (AiImageNotConfiguredException)
         {
             notConfigured = true;
-            error = "No image model is set up yet.";
+            error = L["Actor.Art.NotConfigured"];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Art generation failed");
-            error = "The image model could not draw this: " + ex.Message;
+            error = L["Actor.Art.DrawFailed", L.Describe(ex)];
         }
         finally
         {

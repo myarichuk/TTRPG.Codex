@@ -75,6 +75,14 @@ public class FieldDefinition
 
     /// <summary>Upper bound for <see cref="FieldType.Number"/>.</summary>
     public double? Max { get; set; }
+
+    /// <summary>Set on a localized copy of a system: dropdown/tag value -> text to show. Values themselves never change,
+    /// because the rules compare them; use <see cref="Display"/> wherever one is shown.</summary>
+    public Dictionary<string, string>? OptionLabels { get; set; }
+
+    /// <summary>The text to show for a stored dropdown/tag value; the value itself when it has no translation.</summary>
+    public string Display(string value) =>
+        OptionLabels != null && OptionLabels.TryGetValue(value, out var shown) ? shown : value;
 }
 
 public record GraphEdgeSchema(

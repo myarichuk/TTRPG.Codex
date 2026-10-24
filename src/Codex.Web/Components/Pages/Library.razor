@@ -7,17 +7,17 @@
 @inject ISystemCatalog Catalog
 @inject NavigationManager Nav
 
-<PageTitle>Library | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.Library.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="page-header">
     <div>
-        <h1>Library</h1>
-        <p class="page-subtitle">Browse every loaded system's reference content. Inside a campaign, the Library also includes that table's homebrew.</p>
+        <h1>@L["Page.Library.Title"]</h1>
+        <p class="page-subtitle">@L["Page.Library.Subtitle"]</p>
     </div>
     @if (Catalog.Systems.Count() > 1)
     {
         <div>
-            <label for="library-system" class="field-label">System</label>
+            <label for="library-system" class="field-label">@L["Page.Library.System"]</label>
             <select id="library-system" class="field-select" value="@EffectiveSystemId" @onchange="OnSystemChanged">
                 @foreach (var system in Catalog.Systems)
                 {
@@ -32,8 +32,8 @@
 {
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
-        <h2>No game systems loaded</h2>
-        <p>Add a <code>system.yaml</code> under a content folder and restart the app.</p>
+        <h2>@L["Page.Library.NoneTitle"]</h2>
+        <p>@L["Page.Library.NoneBefore"]<code>system.yaml</code>@L["Page.Library.NoneAfter"]</p>
     </div>
 }
 else

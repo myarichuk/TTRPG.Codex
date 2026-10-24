@@ -30,7 +30,7 @@
 
     private int Pixels => Size switch { DomainIconSize.Small => 16, DomainIconSize.Large => 32, _ => 22 };
     private string Slug => Normalise(Key);
-    private string Initial => string.IsNullOrEmpty(Slug) ? "?" : char.ToUpperInvariant(Slug[0]).ToString();
+    private string Initial => string.IsNullOrEmpty(Slug) ? "?" : System.Globalization.StringInfo.GetNextTextElement(Slug).ToUpperInvariant();
 
     /// <summary>True when there is a drawn glyph, so callers can skip the placeholder in tight spots.</summary>
     public static bool Has(string domain, string? key) => Glyphs.ContainsKey(domain + "/" + Normalise(key));

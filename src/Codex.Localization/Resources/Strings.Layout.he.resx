@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Layout.Brand.Home" xml:space="preserve"><value>TTRPG.Codex: דף הבית</value></data>
+  <data name="Layout.Nav.Main" xml:space="preserve"><value>ראשי</value></data>
+  <data name="Layout.Nav.Campaigns" xml:space="preserve"><value>קמפיינים</value></data>
+  <data name="Layout.Nav.Library" xml:space="preserve"><value>ספרייה</value></data>
+  <data name="Layout.Nav.About" xml:space="preserve"><value>אודות ורישיונות</value></data>
+  <data name="Layout.Theme.ToParchment" xml:space="preserve"><value>מעבר לעיצוב קלף</value></data>
+  <data name="Layout.Theme.ToDark" xml:space="preserve"><value>מעבר לעיצוב כהה</value></data>
+  <data name="Layout.Theme.Parchment" xml:space="preserve"><value>עיצוב קלף</value></data>
+  <data name="Layout.Theme.Dark" xml:space="preserve"><value>עיצוב כהה</value></data>
+  <data name="Layout.User.Fallback" xml:space="preserve"><value>משתמש</value></data>
+  <data name="Layout.User.AiSettings" xml:space="preserve"><value>הגדרות בינה מלאכותית</value></data>
+  <data name="Layout.User.AiSettingsLabel" xml:space="preserve"><value>{0}: הגדרות בינה מלאכותית</value></data>
+  <data name="Layout.SignOut" xml:space="preserve"><value>התנתקות</value></data>
+  <data name="Layout.SignIn" xml:space="preserve"><value>התחברות</value></data>
+  <data name="Layout.SkipLink" xml:space="preserve"><value>דילוג לתוכן הראשי</value></data>
+  <data name="Layout.Reconnect.Title" xml:space="preserve"><value>החיבור אבד</value></data>
+  <data name="Layout.Reconnect.First" xml:space="preserve"><value>מתחברים מחדש לשרת…</value></data>
+  <data name="Layout.Reconnect.RetryBefore" xml:space="preserve"><value>החיבור לא יציב. ניסיון חוזר בעוד </value></data>
+  <data name="Layout.Reconnect.RetryAfter" xml:space="preserve"><value> שנ׳…</value></data>
+  <data name="Layout.Reconnect.Failed" xml:space="preserve"><value>לא ניתן היה לשחזר את החיבור לשרת.</value></data>
+  <data name="Layout.Reconnect.Paused" xml:space="preserve"><value>העבודה הושהתה בזמן שהלשונית הייתה ברקע.</value></data>
+  <data name="Layout.Reconnect.ResumeFailed" xml:space="preserve"><value>לא ניתן היה לחדש את העבודה. טענו את הדף מחדש כדי להמשיך.</value></data>
+  <data name="Layout.Reconnect.TryAgain" xml:space="preserve"><value>נסו שוב</value></data>
+  <data name="Layout.Reconnect.Resume" xml:space="preserve"><value>המשך</value></data>
+  <data name="Layout.Reconnect.Reload" xml:space="preserve"><value>טעינת הדף מחדש</value></data>
+  <data name="Layout.Confirm.Confirm" xml:space="preserve"><value>אישור</value></data>
+  <data name="Layout.Picker.Count" xml:space="preserve"><value>{0} מתוך {1}</value></data>
+  <data name="Layout.Picker.Nothing" xml:space="preserve"><value>עוד לא נבחר דבר.</value></data>
+  <data name="Layout.Picker.Picked" xml:space="preserve"><value>נבחרו: {0}</value></data>
+  <data name="Layout.Picker.Remove" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>הגעתם למגבלה</value></data>
+  <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>כרגע אין אפשרויות זמינות. בדקו את המחלקה, הרמה והכללים שמעל.</value></data>
+</root>

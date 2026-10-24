@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Layout.Brand.Home" xml:space="preserve"><value>TTRPG.Codex: главная</value></data>
+  <data name="Layout.Nav.Main" xml:space="preserve"><value>Основное</value></data>
+  <data name="Layout.Nav.Campaigns" xml:space="preserve"><value>Кампании</value></data>
+  <data name="Layout.Nav.Library" xml:space="preserve"><value>Библиотека</value></data>
+  <data name="Layout.Nav.About" xml:space="preserve"><value>О проекте и лицензии</value></data>
+  <data name="Layout.Theme.ToParchment" xml:space="preserve"><value>Переключить на тему «пергамент»</value></data>
+  <data name="Layout.Theme.ToDark" xml:space="preserve"><value>Переключить на тёмную тему</value></data>
+  <data name="Layout.Theme.Parchment" xml:space="preserve"><value>Тема «пергамент»</value></data>
+  <data name="Layout.Theme.Dark" xml:space="preserve"><value>Тёмная тема</value></data>
+  <data name="Layout.User.Fallback" xml:space="preserve"><value>Пользователь</value></data>
+  <data name="Layout.User.AiSettings" xml:space="preserve"><value>Настройки ИИ</value></data>
+  <data name="Layout.User.AiSettingsLabel" xml:space="preserve"><value>{0}: настройки ИИ</value></data>
+  <data name="Layout.SignOut" xml:space="preserve"><value>Выйти</value></data>
+  <data name="Layout.SignIn" xml:space="preserve"><value>Войти</value></data>
+  <data name="Layout.SkipLink" xml:space="preserve"><value>Перейти к основному содержимому</value></data>
+  <data name="Layout.Reconnect.Title" xml:space="preserve"><value>Соединение потеряно</value></data>
+  <data name="Layout.Reconnect.First" xml:space="preserve"><value>Переподключение к серверу…</value></data>
+  <data name="Layout.Reconnect.RetryBefore" xml:space="preserve"><value>Соединение нестабильно. Повтор через </value></data>
+  <data name="Layout.Reconnect.RetryAfter" xml:space="preserve"><value> с…</value></data>
+  <data name="Layout.Reconnect.Failed" xml:space="preserve"><value>Не удалось восстановить соединение с сервером.</value></data>
+  <data name="Layout.Reconnect.Paused" xml:space="preserve"><value>Работа приостановлена, пока вкладка была в фоне.</value></data>
+  <data name="Layout.Reconnect.ResumeFailed" xml:space="preserve"><value>Не удалось возобновить работу. Перезагрузите страницу, чтобы продолжить.</value></data>
+  <data name="Layout.Reconnect.TryAgain" xml:space="preserve"><value>Повторить</value></data>
+  <data name="Layout.Reconnect.Resume" xml:space="preserve"><value>Продолжить</value></data>
+  <data name="Layout.Reconnect.Reload" xml:space="preserve"><value>Перезагрузить страницу</value></data>
+  <data name="Layout.Confirm.Confirm" xml:space="preserve"><value>Подтвердить</value></data>
+  <data name="Layout.Picker.Count" xml:space="preserve"><value>{0} из {1}</value></data>
+  <data name="Layout.Picker.Nothing" xml:space="preserve"><value>Пока ничего не выбрано.</value></data>
+  <data name="Layout.Picker.Picked" xml:space="preserve"><value>Выбрано: {0}</value></data>
+  <data name="Layout.Picker.Remove" xml:space="preserve"><value>Убрать: {0}</value></data>
+  <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Достигнут предел</value></data>
+  <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Сейчас ничего не доступно. Проверьте класс, уровень и правила выше.</value></data>
+</root>

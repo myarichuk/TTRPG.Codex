@@ -1,0 +1,49 @@
+name: d6 פשוט (מערכת ביתית לדוגמה)
+description: >-
+  מערכת לדוגמה עם שלוש תכונות ומאגר קוביות d6. נועדה להדגים את מבנה הקובץ system.yaml
+  ולשמש כנתוני בדיקה; זה אינו משחק שלם.
+
+attributes:
+  body: { label: גוף }
+  mind: { label: שכל }
+  luck: { label: מזל }
+
+resources:
+  HP: { label: עמידות }
+  Fate: { label: נקודות גורל }
+
+actorFields:
+  calling: { label: ייעוד }
+  concept:
+    label: קונספט
+    description: "במשפט אחד: מיהו האדם הזה?"
+
+entityTypes:
+  calling:
+    label: ייעוד
+    pluralLabel: ייעודים
+    fields:
+      bonus: { label: בונוס }
+  knack:
+    label: תכסיס
+    pluralLabel: תכסיסים
+    fields:
+      cost: { label: מחיר בנקודות גורל }
+  foe:
+    label: יריב
+    pluralLabel: יריבים
+    fields:
+      threat: { label: איום }
+      grit: { label: עמידות }
+      body: { label: גוף }
+      mind: { label: שכל }
+      luck: { label: מזל }
+  lore:
+    label: אגדות עולם
+    fields:
+      category: { label: קטגוריה }
+
+conditions:
+  Dazed: מבולבל
+  Scared: מבוהל
+  Wounded: פצוע

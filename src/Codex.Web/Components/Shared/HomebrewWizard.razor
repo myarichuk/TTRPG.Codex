@@ -23,13 +23,13 @@
         <form class="wizard" @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
             <header class="wizard-head">
                 <div>
-                    <div class="label-caps">@(isNew ? "New homebrew" : "Edit homebrew") @(TypeDef is { } t ? "· " + t.Label : "")</div>
-                    <h2 id="@(dialogId)-title">@(string.IsNullOrWhiteSpace(draft.Name) ? (TypeDef is { } td ? $"Unnamed {td.Label.ToLowerInvariant()}" : "Untitled entry") : draft.Name)</h2>
+                    <div class="label-caps">@(isNew ? L["Wizard.New"] : L["Wizard.Edit"]) @(TypeDef is { } t ? "· " + t.Label : "")</div>
+                    <h2 id="@(dialogId)-title">@(string.IsNullOrWhiteSpace(draft.Name) ? (TypeDef is { } td ? L["Wizard.Unnamed", td.Label.ToLowerInvariant()] : L["Wizard.Untitled"]) : draft.Name)</h2>
                 </div>
-                <CodexButton Variant="CodexButtonVariant.Rune" Icon="x" Label="Close without saving" OnClick="CancelAsync" />
+                <CodexButton Variant="CodexButtonVariant.Rune" Icon="x" Label="@L["Wizard.CloseWithoutSaving"]" OnClick="CancelAsync" />
             </header>
 
-            <nav class="wizard-steps" aria-label="Steps">
+            <nav class="wizard-steps" aria-label="@L["Wizard.Steps"]">
                 <ol>
                     @for (var i = 0; i < Steps.Count; i++)
                     {
@@ -58,9 +58,9 @@
                     case "basics":
                         <div class="field-grid mb-3">
                             <div>
-                                <label for="@(dialogId)-type" class="field-label">Type <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                                <label for="@(dialogId)-type" class="field-label">@L["Wizard.Type"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Wizard.Required"]</span></label>
                                 <select id="@(dialogId)-type" class="field-select" value="@draft.Type" @onchange="OnTypeChangedAsync" required data-testid="homebrew-type">
-                                    <option value="">— choose a type —</option>
+                                    <option value="">@L["Wizard.ChooseType"]</option>
                                     @foreach (var type in types)
                                     {
                                         <option value="@type.Type">@type.Label</option>
@@ -72,28 +72,28 @@
                                 }
                             </div>
                             <div>
-                                <label for="@(dialogId)-name" class="field-label">Name <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                                <label for="@(dialogId)-name" class="field-label">@L["Wizard.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Wizard.Required"]</span></label>
                                 <input id="@(dialogId)-name" class="field-input" value="@draft.Name" @oninput="e => draft.Name = e.Value?.ToString() ?? string.Empty" required maxlength="120" data-testid="homebrew-name" />
                             </div>
                             <div>
-                                <label for="@(dialogId)-tags" class="field-label">Tags</label>
-                                <input id="@(dialogId)-tags" class="field-input" placeholder="Comma-separated, e.g. undead, swamp" value="@string.Join(", ", draft.Tags)"
+                                <label for="@(dialogId)-tags" class="field-label">@L["Wizard.Tags"]</label>
+                                <input id="@(dialogId)-tags" class="field-input" placeholder="@L["Wizard.TagsPlaceholder"]" value="@string.Join(", ", draft.Tags)"
                                        @onchange="e => draft.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
                             </div>
                             <div class="field-wide">
                                 <div class="field-check">
                                     <input id="@(dialogId)-published" type="checkbox" class="field-box" @bind="draft.IsPublished" />
-                                    <label for="@(dialogId)-published">Visible to players</label>
+                                    <label for="@(dialogId)-published">@L["Wizard.Visible"]</label>
                                 </div>
-                                <div class="field-hint">@(TypeDef?.PlayerFacing == false ? $"{TypeDef.PluralOrLabel} stay out of the players' Library either way; this only matters if you change the type." : "Untick to keep it a draft only you can see.")</div>
+                                <div class="field-hint">@(TypeDef?.PlayerFacing == false ? L["Wizard.HiddenTypeHint", TypeDef.PluralOrLabel] : L["Wizard.DraftHint"])</div>
                             </div>
                         </div>
                         break;
 
                     case "story":
-                        <AiTextField Id="@(dialogId + "-desc")" Label="Description" Rows="7" @bind-Value="draft.Description" TestId="homebrew-description"
+                        <AiTextField Id="@(dialogId + "-desc")" Label="@L["Wizard.Description"]" Rows="7" @bind-Value="draft.Description" TestId="homebrew-description"
                                      Placeholder="@DescriptionPlaceholder" Generate="DescribeAsync"
-                                     Hint="@(draft.IsPublished ? "Players can read this once the entry is visible to them; the AI writes it for them. **bold**, *italic* and \"- \" bullets are rendered." : "A draft only you can see; the AI may add hooks and secrets. **bold**, *italic* and \"- \" bullets are rendered.")" />
+                                     Hint="@(draft.IsPublished ? L["Wizard.HintPublished"] : L["Wizard.HintDraft"])" />
                         @if (StepSchema(CurrentStep) is { } lore)
                         {
                             <div class="mt-3"><SchemaForm Schema="lore" Values="draft.Properties" ReferenceOptions="referenceOptions" ShowGroupHeadings="false" ValuesChanged="OnValuesChanged" /></div>
@@ -102,12 +102,12 @@
 
                     case "art":
                         <ArtSlot ImageUrl="@(removeArt ? null : StoredArtUrl)" Pending="pendingArt" CanEdit="true" Landscape="@(!IsCreature)"
-                                 Label="@(IsCreature ? "Portrait" : "Art")" Alt="@($"Art for {draft.Name}")" TestId="homebrew-art"
+                                 Label="@(IsCreature ? L["Wizard.Portrait"] : L["Wizard.Art"])" Alt="@L["Wizard.ArtAlt", draft.Name]" TestId="homebrew-art"
                                  OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = true; }"
                                  Generate="GenerateArtAsync" />
                         @if (!draft.Properties.ContainsKey("imagePrompt"))
                         {
-                            <p class="field-hint mt-2">Tip: an <strong>Art prompt</strong> on the Description step (one visual sentence) gives the image model a better brief than the description alone.</p>
+                            <p class="field-hint mt-2">@L["Wizard.TipA"] <strong>@L["Wizard.TipB"]</strong> @L["Wizard.TipC"]</p>
                         }
                         break;
 
@@ -123,7 +123,7 @@
                                     </li>
                                 }
                             </ul>
-                            <p class="small-muted mb-0">Empty steps are fine: only a type and a name are required. Everything can be changed later from the Library.</p>
+                            <p class="small-muted mb-0">@L["Wizard.ReviewNote"]</p>
                         </div>
                         break;
 
@@ -141,8 +141,8 @@
                 }
             </section>
 
-            <aside class="wizard-preview" aria-label="Preview">
-                <div class="label-caps mb-2"><LucideIcon IconName="eye" Size="14" /> Preview</div>
+            <aside class="wizard-preview" aria-label="@L["Wizard.Preview"]">
+                <div class="label-caps mb-2"><LucideIcon IconName="eye" Size="14" /> @L["Wizard.Preview"]</div>
                 @if (PreviewArt is { } src)
                 {
                     <img class="wizard-preview-art @(IsCreature ? "art-portrait" : "art-landscape")" src="@src" alt="" />
@@ -153,32 +153,32 @@
                 }
                 else
                 {
-                    <p class="small-muted mb-0">Choose a type and a name to see the entry take shape.</p>
+                    <p class="small-muted mb-0">@L["Wizard.PreviewEmpty"]</p>
                 }
             </aside>
 
             <footer class="wizard-foot">
                 <div class="d-flex gap-2">
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CancelAsync">Cancel</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CancelAsync">@L["Common.Cancel"]</CodexButton>
                     @if (!isNew)
                     {
-                        <CodexButton Variant="CodexButtonVariant.Blood" Icon="trash-2" OnClick="DeleteAsync">Delete</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Blood" Icon="trash-2" OnClick="DeleteAsync">@L["Wizard.Delete"]</CodexButton>
                     }
                 </div>
                 <div class="d-flex gap-2 align-items-center">
-                    <span class="small-muted d-none d-md-inline">Step @(current + 1) of @Steps.Count</span>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="() => GoTo(current - 1)" Disabled="@(current == 0)" data-testid="homebrew-back">Back</CodexButton>
+                    <span class="small-muted d-none d-md-inline">@L["Wizard.StepOf", current + 1, Steps.Count]</span>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="() => GoTo(current - 1)" Disabled="@(current == 0)" data-testid="homebrew-back">@L["Common.Back"]</CodexButton>
                     @if (current < Steps.Count - 1)
                     {
                         @if (BasicsValid)
                         {
-                            <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Icon="check" Disabled="@saving" data-testid="homebrew-save">Save</CodexButton>
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Icon="check" Disabled="@saving" data-testid="homebrew-save">@L["Common.Save"]</CodexButton>
                         }
-                        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NextAsync" data-testid="homebrew-next">Next: @Steps[current + 1].Label <LucideIcon IconName="arrow-right" Size="18" /></CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NextAsync" data-testid="homebrew-next">@L["Wizard.Next", Steps[current + 1].Label] <LucideIcon IconName="arrow-right" Size="18" /></CodexButton>
                     }
                     else
                     {
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" Disabled="@saving" data-testid="homebrew-save">@(saving ? "Saving…" : isNew ? "Create" : "Save changes")</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" Disabled="@saving" data-testid="homebrew-save">@(saving ? L["Wizard.Saving"] : isNew ? L["Wizard.Create"] : L["Wizard.SaveChanges"])</CodexButton>
                     }
                 </div>
             </footer>
@@ -250,20 +250,20 @@
         {
             var steps = new List<Step>
             {
-                new("basics", "Basics", "file-text", "What it is and what it's called."),
-                new("story", "Description", "feather", IsCreature ? "How it looks, what it wants, how it fights. Write it, or let the AI draft it from the stats." : "The rules text and the lore.", LoreCategory)
+                new("basics", L["Wizard.Step.Basics"], "file-text", L["Wizard.Intro.Basics"]),
+                new("story", L["Wizard.Description"], "feather", IsCreature ? L["Wizard.Intro.StoryCreature"] : L["Wizard.Intro.Story"], LoreCategory)
             };
 
             var categories = (TypeDef?.Fields ?? new List<FieldDefinition>())
                 .Select(f => f.Category ?? "General").Where(c => c != LoreCategory).Distinct().ToList();
             foreach (var category in categories)
             {
-                var label = category == "General" ? (categories.Count == 1 ? "Details" : "General") : category;
+                var label = category == "General" ? (categories.Count == 1 ? L["Wizard.Step.Details"] : L["Wizard.Step.General"]) : category;
                 steps.Add(new Step("cat-" + category, label, StepIcon(category), null, category));
             }
 
-            steps.Add(new Step("art", IsCreature ? "Portrait" : "Art", "image", "Optional. Shown at the top of the entry in the Library."));
-            steps.Add(new Step("review", "Review", "circle-check", "Check the preview, then save."));
+            steps.Add(new Step("art", IsCreature ? L["Wizard.Portrait"] : L["Wizard.Art"], "image", L["Wizard.Intro.Art"]));
+            steps.Add(new Step("review", L["Wizard.Step.Review"], "circle-check", L["Wizard.Intro.Review"]));
             return steps;
         }
     }
@@ -301,16 +301,16 @@
         if (draft == null) return string.Empty;
         return step.Key switch
         {
-            "basics" => BasicsValid ? $"{TypeDef?.Label ?? draft.Type} · {(draft.IsPublished ? "visible to players" : "draft")}" : "type and name needed",
-            "story" => string.IsNullOrWhiteSpace(draft.Description) ? "no description yet" : $"{draft.Description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length} words",
-            "art" => pendingArt != null ? "new image ready" : !removeArt && draft.HasArt ? "has art" : "no art",
-            _ => StepSchema(step) is { } s ? $"{s.Fields.Count(f => draft.Properties.ContainsKey(f.Key))} of {s.Fields.Count} filled" : string.Empty
+            "basics" => BasicsValid ? L[draft.IsPublished ? "Wizard.Sum.Visible" : "Wizard.Sum.Draft", TypeDef?.Label ?? draft.Type] : L["Wizard.Sum.NeedBasics"],
+            "story" => string.IsNullOrWhiteSpace(draft.Description) ? L["Wizard.Sum.NoDescription"] : L["Wizard.Sum.Words", draft.Description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length],
+            "art" => pendingArt != null ? L["Wizard.Sum.NewImage"] : !removeArt && draft.HasArt ? L["Wizard.Sum.HasArt"] : L["Wizard.Sum.NoArt"],
+            _ => StepSchema(step) is { } s ? L["Wizard.Sum.Filled", s.Fields.Count(f => draft.Properties.ContainsKey(f.Key)), s.Fields.Count] : string.Empty
         };
     }
 
     private string DescriptionPlaceholder => IsCreature
-        ? "e.g. A bloated toad the size of a cart, its back studded with glowing blisters…"
-        : "What it does, in the words players will read.";
+        ? L["Wizard.Placeholder.Creature"]
+        : L["Wizard.Placeholder.Other"];
 
     private LibraryItem PreviewItem => new(draft!.ToEntry(), null, draft);
 
@@ -331,7 +331,7 @@
         referenceOptions = new Dictionary<string, IReadOnlyList<(string, string)>>();
         foreach (var target in (TypeDef?.EditorFields() ?? new List<FieldDefinition>()).Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
-            referenceOptions[target] = (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, target)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
+            referenceOptions[target] = (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, target, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
         }
     }
 
@@ -348,7 +348,7 @@
     {
         if (!BasicsValid)
         {
-            error = "Choose a type and give it a name first.";
+            error = L["Wizard.Error.TypeNameFirst"];
             await JS.InvokeVoidAsync("codex.focus", $"{dialogId}-{(string.IsNullOrWhiteSpace(draft?.Type) ? "type" : "name")}");
             return;
         }
@@ -375,7 +375,9 @@
     /// <summary>"homebrew creature (Large dragon)": the type label plus the size and kind when the entry has them.</summary>
     private string KindLabel(ContentTypeDefinition? type)
     {
-        var label = "homebrew " + (type?.Label.ToLowerInvariant() ?? "entry");
+        // The prompt is for an AI model, so the type is named as system.yaml names it, not as the reader sees it.
+        var canonical = type == null ? null : Ctx.System?.Canonical.FindType(type.Type) ?? type;
+        var label = "homebrew " + (canonical?.Label.ToLowerInvariant() ?? "entry");
         var detail = string.Join(' ', new[] { "size", "creatureType" }.Select(k => YamlValues.GetString(draft!.Properties, k)).Where(v => !string.IsNullOrWhiteSpace(v)));
         return detail.Length == 0 ? label : $"{label} ({detail})";
     }
@@ -385,7 +387,7 @@
         if (draft == null || saving) return;
         if (!BasicsValid)
         {
-            error = "A type and a name are required.";
+            error = L["Wizard.Error.TypeNameRequired"];
             current = 0;
             return;
         }
@@ -399,13 +401,13 @@
             draft.AuthorUserId = Ctx.UserId;
             if (!await Homebrew.TrySaveAsync(draft, Ctx.Access))
             {
-                error = "Only the DM can edit homebrew.";
+                error = L["Wizard.Error.OnlyDm"];
                 return;
             }
 
             if (pendingArt != null && !await Art.PutHomebrewAsync(draft, Ctx.Access, pendingArt))
             {
-                error = "Saved, but the art could not be stored. Try adding it again from the Library.";
+                error = L["Wizard.Error.ArtFailed"];
             }
             else if (removeArt && draft.HasArt)
             {
@@ -429,7 +431,7 @@
     private async Task CancelAsync()
     {
         if (draft != null && (pendingArt != null || removeArt || Snapshot() != snapshot)
-            && !await confirm.ShowAsync("Discard your changes?", $"Nothing about “{(string.IsNullOrWhiteSpace(draft.Name) ? "this entry" : draft.Name)}” has been saved yet.", "Discard", isDestructive: true, cancel: "Keep editing"))
+            && !await confirm.ShowAsync(L["Wizard.DiscardTitle"], L["Wizard.DiscardBody", string.IsNullOrWhiteSpace(draft.Name) ? L["Wizard.ThisEntry"] : draft.Name], L["Wizard.Discard"], isDestructive: true, cancel: L["Wizard.KeepEditing"]))
         {
             // Browsers may close a dialog on Escape regardless (Chrome does without recent user input); put it back.
             await JS.InvokeVoidAsync("codex.showModal", dialogId);
@@ -443,14 +445,14 @@
     private async Task DeleteAsync()
     {
         if (draft == null || isNew) return;
-        if (!await confirm.ShowAsync($"Delete “{draft.Name}”?", "It disappears from the Library, and its art with it. Characters and creatures already made from it keep their sheets.", "Delete", isDestructive: true))
+        if (!await confirm.ShowAsync(L["Wizard.DeleteTitle", draft.Name], L["Wizard.DeleteBody"], L["Wizard.Delete"], isDestructive: true))
         {
             return;
         }
 
         if (!await Homebrew.TryDeleteAsync(draft.Id, Ctx.Access))
         {
-            error = "Could not delete that entry.";
+            error = L["Wizard.Error.DeleteFailed"];
             return;
         }
 

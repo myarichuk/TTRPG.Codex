@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page.Common.BackToCampaigns" xml:space="preserve"><value>К списку кампаний</value></data>
+  <data name="Page.Common.Breadcrumb" xml:space="preserve"><value>Навигационная цепочка</value></data>
+  <data name="Page.Role.DM" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Page.Role.Player" xml:space="preserve"><value>Игрок</value></data>
+  <data name="Page.Role.Observer" xml:space="preserve"><value>Наблюдатель</value></data>
+  <data name="Page.Home.Title" xml:space="preserve"><value>Кампании</value></data>
+  <data name="Page.Home.Subtitle" xml:space="preserve"><value>Все кампании, которые вы ведёте или в которых играете. Игроки присоединяются по ссылке-приглашению от мастера.</value></data>
+  <data name="Page.Home.New" xml:space="preserve"><value>Новая кампания</value></data>
+  <data name="Page.Home.EmptyTitle" xml:space="preserve"><value>Кампаний пока нет</value></data>
+  <data name="Page.Home.EmptyText" xml:space="preserve"><value>Создайте кампанию, чтобы вести игру, или попросите у мастера ссылку-приглашение в его кампанию.</value></data>
+  <data name="Page.Home.CreateFirst" xml:space="preserve"><value>Создать первую кампанию</value></data>
+  <data name="Page.Home.NoDescription" xml:space="preserve"><value>Описания пока нет.</value></data>
+  <data name="Page.Home.Members" xml:space="preserve"><value>{0, plural, one{# участник} few{# участника} many{# участников} other{# участника}}</value></data>
+  <data name="Page.Home.Updated" xml:space="preserve"><value>обновлено</value></data>
+  <data name="Page.Home.DeleteLabel" xml:space="preserve"><value>Удалить: {0}</value></data>
+  <data name="Page.Home.DeleteCampaign" xml:space="preserve"><value>Удалить кампанию</value></data>
+  <data name="Page.Home.Open" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Page.Home.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Page.Home.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Page.Home.System" xml:space="preserve"><value>Игровая система</value></data>
+  <data name="Page.Home.Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>Пара строк о кампании (необязательно)</value></data>
+  <data name="Page.Home.Creating" xml:space="preserve"><value>Создание…</value></data>
+  <data name="Page.Home.Create" xml:space="preserve"><value>Создать кампанию</value></data>
+  <data name="Page.Home.NameRequired" xml:space="preserve"><value>Дайте кампании название.</value></data>
+  <data name="Page.Home.NoSystem" xml:space="preserve"><value>Ни одна игровая система не загружена. Добавьте system.yaml в папку с материалами и перезапустите приложение.</value></data>
+  <data name="Page.Home.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Page.Home.DeleteBody" xml:space="preserve"><value>Кампания будет удалена вместе со всем содержимым: персонажами, сессиями, преданиями, заметками и собственным контентом. Если хотите что-то сохранить, сначала сделайте резервную копию. Это действие нельзя отменить.</value></data>
+  <data name="Page.Home.Deleted" xml:space="preserve"><value>Кампания «{0}» удалена.</value></data>
+  <data name="Page.Home.Forbidden" xml:space="preserve"><value>Удалить кампанию может только её владелец.</value></data>
+  <data name="Page.Home.Gone" xml:space="preserve"><value>Такой кампании больше нет.</value></data>
+  <data name="Page.Join.Title" xml:space="preserve"><value>Присоединиться к кампании</value></data>
+  <data name="Page.Join.Joining" xml:space="preserve"><value>Присоединяемся…</value></data>
+  <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>Эта ссылка-приглашение недействительна</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>Возможно, в ссылке опечатка или кампания была удалена. Попросите у мастера новую ссылку.</value></data>
+  <data name="Page.Join.InTitle" xml:space="preserve"><value>Вы в кампании!</value></data>
+  <data name="Page.Join.InText" xml:space="preserve"><value>Теперь вы игрок в этой кампании.</value></data>
+  <data name="Page.Join.Go" xml:space="preserve"><value>Перейти к кампании</value></data>
+  <data name="Page.Library.Title" xml:space="preserve"><value>Библиотека</value></data>
+  <data name="Page.Library.Subtitle" xml:space="preserve"><value>Справочные материалы всех загруженных систем. Внутри кампании в Библиотеке есть и собственный контент этого стола.</value></data>
+  <data name="Page.Library.System" xml:space="preserve"><value>Система</value></data>
+  <data name="Page.Library.NoneTitle" xml:space="preserve"><value>Игровые системы не загружены</value></data>
+  <data name="Page.Library.NoneBefore" xml:space="preserve"><value>Добавьте </value></data>
+  <data name="Page.Library.NoneAfter" xml:space="preserve"><value> в папку с материалами и перезапустите приложение.</value></data>
+  <data name="Page.Error.Title" xml:space="preserve"><value>Что-то пошло не так</value></data>
+  <data name="Page.Error.Text" xml:space="preserve"><value>Не удалось выполнить запрос. Обычно помогает перезагрузка страницы; если ошибка повторяется, подробности есть в журнале сервера.</value></data>
+  <data name="Page.Error.RequestId" xml:space="preserve"><value>Идентификатор запроса </value></data>
+  <data name="Page.NotFound.Title" xml:space="preserve"><value>Страница не найдена</value></data>
+  <data name="Page.NotFound.Text" xml:space="preserve"><value>По этому адресу ничего нет. Возможно, страницу переместили или удалили.</value></data>
+  <data name="Page.Loading.Text" xml:space="preserve"><value>Загрузка игровых систем и наборов материалов…</value></data>
+  <data name="Page.Auth.Username" xml:space="preserve"><value>Имя пользователя</value></data>
+  <data name="Page.Auth.Password" xml:space="preserve"><value>Пароль</value></data>
+  <data name="Page.Auth.SignIn" xml:space="preserve"><value>Войти</value></data>
+  <data name="Page.Login.Heading" xml:space="preserve"><value>Вход в TTRPG.Codex</value></data>
+  <data name="Page.Login.Divider" xml:space="preserve"><value>или продолжите через</value></data>
+  <data name="Page.Login.Continue" xml:space="preserve"><value>Продолжить через {0}</value></data>
+  <data name="Page.Login.NoMethod" xml:space="preserve"><value>Способ входа не настроен. Обратитесь к тому, кто управляет этим сервером.</value></data>
+  <data name="Page.Login.NewHere" xml:space="preserve"><value>Впервые здесь? </value></data>
+  <data name="Page.Login.CreateAccount" xml:space="preserve"><value>Создать учётную запись</value></data>
+  <data name="Page.Login.Stale" xml:space="preserve"><value>Форму входа нужно отправлять с только что загруженной страницы. Перезагрузите страницу и попробуйте снова.</value></data>
+  <data name="Page.Login.Invalid" xml:space="preserve"><value>Неверное имя пользователя или пароль.</value></data>
+  <data name="Page.Register.Title" xml:space="preserve"><value>Создать учётную запись</value></data>
+  <data name="Page.Register.Heading" xml:space="preserve"><value>Создайте учётную запись</value></data>
+  <data name="Page.Register.PasswordHelp" xml:space="preserve"><value>Не менее 8 символов, с заглавной буквой, строчной буквой и цифрой.</value></data>
+  <data name="Page.Register.Confirm" xml:space="preserve"><value>Подтвердите пароль</value></data>
+  <data name="Page.Register.HaveAccount" xml:space="preserve"><value>Уже есть учётная запись? </value></data>
+  <data name="Page.Register.Stale" xml:space="preserve"><value>Форму нужно отправлять с только что загруженной страницы. Перезагрузите страницу и попробуйте снова.</value></data>
+  <data name="Page.Register.Mismatch" xml:space="preserve"><value>Пароли не совпадают.</value></data>
+  <data name="Page.Register.Required" xml:space="preserve"><value>Нужны имя пользователя и пароль.</value></data>
+  <data name="Page.Register.TooShort" xml:space="preserve"><value>Пароль должен содержать не менее 8 символов.</value></data>
+  <data name="Page.Register.Weak" xml:space="preserve"><value>В пароле нужны заглавная буква, строчная буква и цифра.</value></data>
+  <data name="Page.Register.Taken" xml:space="preserve"><value>Это имя пользователя уже занято.</value></data>
+  <data name="Page.About.Title" xml:space="preserve"><value>О проекте и лицензии</value></data>
+  <data name="Page.About.Heading" xml:space="preserve"><value>О TTRPG.Codex</value></data>
+  <data name="Page.About.Subtitle" xml:space="preserve"><value>Помощник для кампаний и персонажей настольных ролевых игр, который вы запускаете у себя. Игровые системы и материалы — это данные, которые можно читать, редактировать и передавать другим.</value></data>
+  <data name="Page.About.Systems" xml:space="preserve"><value>Игровые системы</value></data>
+  <data name="Page.About.NoSystemsBefore" xml:space="preserve"><value>Игровые системы не загружены. Добавьте </value></data>
+  <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> в одну из папок с материалами и перезапустите приложение.</value></data>
+  <data name="Page.About.DataDriven" xml:space="preserve"><value>на данных</value></data>
+  <data name="Page.About.Compiled" xml:space="preserve"><value>скомпилированный плагин</value></data>
+  <data name="Page.About.Licence" xml:space="preserve"><value>Лицензия:</value></data>
+  <data name="Page.About.Modified" xml:space="preserve"><value>изменено относительно оригинала</value></data>
+  <data name="Page.About.Source" xml:space="preserve"><value>источник:</value></data>
+  <data name="Page.About.Packs" xml:space="preserve"><value>Наборы материалов</value></data>
+  <data name="Page.About.By" xml:space="preserve"><value>Авторы: {0}</value></data>
+  <data name="Page.About.Warnings" xml:space="preserve"><value>Предупреждения о содержимом</value></data>
+  <data name="Page.About.WarningsIntro" xml:space="preserve"><value>Проблемы, найденные при загрузке систем и наборов. Исправьте файл и перезапустите приложение.</value></data>
+  <data name="Page.About.Software" xml:space="preserve"><value>Программное обеспечение</value></data>
+  <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Кампания</value></data>
+  <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Кампания не найдена</value></data>
+  <data name="Page.Campaign.NotFoundText" xml:space="preserve"><value>Возможно, её удалили или ссылка неверна.</value></data>
+  <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>Вы не участвуете в этой кампании</value></data>
+  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Попросите у мастера ссылку-приглашение.</value></data>
+  <data name="Page.Campaign.Sections" xml:space="preserve"><value>Разделы кампании</value></data>
+  <data name="Page.Campaign.Live" xml:space="preserve"><value>Идёт игра</value></data>
+  <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>Стол запущен</value></data>
+  <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>Игра</value></data>
+  <data name="Page.Campaign.Group.World" xml:space="preserve"><value>Мир</value></data>
+  <data name="Page.Campaign.Group.Reference" xml:space="preserve"><value>Справочник</value></data>
+  <data name="Page.Campaign.Section.Overview" xml:space="preserve"><value>Обзор</value></data>
+  <data name="Page.Campaign.Section.Table" xml:space="preserve"><value>Стол</value></data>
+  <data name="Page.Campaign.Section.Sessions" xml:space="preserve"><value>Сессии</value></data>
+  <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>Мой журнал</value></data>
+  <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>Бестиарий</value></data>
+  <data name="Page.Campaign.Section.Creatures" xml:space="preserve"><value>Существа</value></data>
+  <data name="Page.Campaign.Section.Places" xml:space="preserve"><value>Места</value></data>
+  <data name="Page.Campaign.Section.Wiki" xml:space="preserve"><value>Вики</value></data>
+  <data name="Page.Campaign.Section.Lore" xml:space="preserve"><value>Предания</value></data>
+  <data name="Page.Campaign.Section.Library" xml:space="preserve"><value>Библиотека</value></data>
+  <data name="Page.Campaign.Section.Settings" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Page.AiSettings.Title" xml:space="preserve"><value>Настройки ИИ</value></data>
+  <data name="Page.AiSettings.Sub1" xml:space="preserve"><value>Два вида моделей, настраиваются отдельно: </value></data>
+  <data name="Page.AiSettings.SubTextModel" xml:space="preserve"><value>текстовая модель</value></data>
+  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> за каждой кнопкой «Write with AI» и «Enhance with AI», и </value></data>
+  <data name="Page.AiSettings.SubImageModel" xml:space="preserve"><value>модель изображений</value></data>
+  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> за кнопкой «Generate with AI» у иллюстраций. Ключи используются ваши. Ничего не отправляется в модель, пока вы не нажмёте одну из этих кнопок.</value></data>
+  <data name="Page.AiSettings.ServerHeading" xml:space="preserve"><value>Запасной вариант сервера</value></data>
+  <data name="Page.AiSettings.ServerText" xml:space="preserve"><value>Если у вас нет своей модели, используются настройки сервера. Ваши собственные модели всегда имеют приоритет.</value></data>
+  <data name="Page.AiSettings.ServerTextBefore" xml:space="preserve"><value>Текст (раздел </value></data>
+  <data name="Page.AiSettings.ServerTextAfter" xml:space="preserve"><value>):</value></data>
+  <data name="Page.AiSettings.ServerImageBefore" xml:space="preserve"><value>Изображения (раздел </value></data>
+  <data name="Page.AiSettings.ServerImageAfter" xml:space="preserve"><value>):</value></data>
+  <data name="Page.AiSettings.WhatHeading" xml:space="preserve"><value>Что умеет ИИ</value></data>
+  <data name="Page.AiSettings.FeatRecapsTitle" xml:space="preserve"><value>Краткие пересказы сессий</value></data>
+  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>Пересказ для игроков по журналу и заметкам группы и закрытая сводка для мастера, которая учитывает и секреты.</value></data>
+  <data name="Page.AiSettings.FeatHistoriesTitle" xml:space="preserve"><value>Предыстории и описания</value></data>
+  <data name="Page.AiSettings.FeatHistoriesText" xml:space="preserve"><value>Отшлифуйте предысторию, личные заметки о НПС, собственное существо или место, не противореча характеристикам.</value></data>
+  <data name="Page.AiSettings.FeatLevelTitle" xml:space="preserve"><value>Советы по повышению уровня</value></data>
+  <data name="Page.AiSettings.FeatLevelText" xml:space="preserve"><value>Что даёт следующий уровень, какие выборы он ставит и что подойдёт персонажу.</value></data>
+  <data name="Page.AiSettings.FeatCharsTitle" xml:space="preserve"><value>Персонажи по замыслу</value></data>
+  <data name="Page.AiSettings.FeatCharsText" xml:space="preserve"><value>Одна строка замысла превращается в черновик листа персонажа, собранный только из материалов Библиотеки кампании.</value></data>
+  <data name="Page.AiSettings.FeatWikiTitle" xml:space="preserve"><value>Страницы вики</value></data>
+  <data name="Page.AiSettings.FeatWikiText" xml:space="preserve"><value>Превратите черновые заметки в страницу вики мира со ссылками.</value></data>
+  <data name="Page.AiSettings.FeatArtTitle" xml:space="preserve"><value>Иллюстрации</value></data>
+  <data name="Page.AiSettings.FeatArtText" xml:space="preserve"><value>Портреты существ и картинки для записей Библиотеки и мест по их описанию для рисования или обычному описанию. Нужна модель изображений.</value></data>
+  <data name="Page.AiSettings.NewText" xml:space="preserve"><value>Новая текстовая модель</value></data>
+  <data name="Page.AiSettings.NewImage" xml:space="preserve"><value>Новая модель изображений</value></data>
+  <data name="Page.AiSettings.EditText" xml:space="preserve"><value>Изменение текстовой модели</value></data>
+  <data name="Page.AiSettings.EditImage" xml:space="preserve"><value>Изменение модели изображений</value></data>
+  <data name="Page.AiSettings.KindOfModel" xml:space="preserve"><value>Вид модели</value></data>
+  <data name="Page.AiSettings.Text" xml:space="preserve"><value>Текст</value></data>
+  <data name="Page.AiSettings.Images" xml:space="preserve"><value>Изображения</value></data>
+  <data name="Page.AiSettings.Service" xml:space="preserve"><value>Сервис</value></data>
+  <data name="Page.AiSettings.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Page.AiSettings.BaseUrl" xml:space="preserve"><value>Базовый URL</value></data>
+  <data name="Page.AiSettings.Model" xml:space="preserve"><value>Модель</value></data>
+  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>например, gpt-image-1</value></data>
+  <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>например, openai/gpt-4o-mini</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Любая модель изображений с openrouter.ai/models, например google/gemini-2.5-flash-image или qwen/qwen-image-2.1-turbo.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Любой идентификатор с openrouter.ai/models, например anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API-ключ</value></data>
+  <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(оставьте пустым, чтобы сохранить текущий ключ)</value></data>
+  <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>Для локального сервера не нужен</value></data>
+  <data name="Page.AiSettings.KeyHint" xml:space="preserve"><value>Хранится на этом сервере в зашифрованном виде (ASP.NET Data Protection). Отправляется только на базовый URL выше.</value></data>
+  <data name="Page.AiSettings.KeyReuse" xml:space="preserve"><value>Оставьте пустым, чтобы использовать ключ вашей текстовой модели «{0}».</value></data>
+  <data name="Page.AiSettings.SaveText" xml:space="preserve"><value>Сохранить текстовую модель</value></data>
+  <data name="Page.AiSettings.SaveImage" xml:space="preserve"><value>Сохранить модель изображений</value></data>
+  <data name="Page.AiSettings.Testing" xml:space="preserve"><value>Проверка…</value></data>
+  <data name="Page.AiSettings.TestConnection" xml:space="preserve"><value>Проверить соединение</value></data>
+  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>Для изображений кнопки проверки нет: каждая картинка стоит денег. Попробуйте вместо этого «Generate with AI» на записи Библиотеки.</value></data>
+  <data name="Page.AiSettings.ImageModels" xml:space="preserve"><value>Модели изображений</value></data>
+  <data name="Page.AiSettings.TextModels" xml:space="preserve"><value>Текстовые модели</value></data>
+  <data name="Page.AiSettings.Add" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>Модели изображений пока нет</value></data>
+  <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>Текстовой модели пока нет</value></data>
+  <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>Загружать иллюстрации можно и без неё. Добавьте её, чтобы картинки рисовались за вас; хорошие модели для текста редко рисуют, поэтому она настраивается отдельно.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Добавьте её справа. OpenRouter выбран заранее: одним ключом доступно большинство современных моделей.</value></data>
+  <data name="Page.AiSettings.InUse" xml:space="preserve"><value>Используется</value></data>
+  <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>нет ключа</value></data>
+  <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>ключ сохранён</value></data>
+  <data name="Page.AiSettings.Use" xml:space="preserve"><value>Использовать</value></data>
+  <data name="Page.AiSettings.Test" xml:space="preserve"><value>Проверить</value></data>
+  <data name="Page.AiSettings.EditLabel" xml:space="preserve"><value>Изменить: {0}</value></data>
+  <data name="Page.AiSettings.RemoveLabel" xml:space="preserve"><value>Удалить: {0}</value></data>
+  <data name="Page.AiSettings.Required" xml:space="preserve"><value>Нужны название, базовый URL и модель.</value></data>
+  <data name="Page.AiSettings.BadUrl" xml:space="preserve"><value>Базовый URL должен быть полным, например https://openrouter.ai/api/v1.</value></data>
+  <data name="Page.AiSettings.NeedsKey" xml:space="preserve"><value>Для этого сервиса нужен API-ключ.</value></data>
+  <data name="Page.AiSettings.Saved" xml:space="preserve"><value>«{0}» сохранено.</value></data>
+  <data name="Page.AiSettings.NowImage" xml:space="preserve"><value>Теперь иллюстрации рисует {0}.</value></data>
+  <data name="Page.AiSettings.NowText" xml:space="preserve"><value>Кнопки ИИ теперь используют {0}.</value></data>
+  <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Удалено: {0}.</value></data>
+  <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>не настроено</value></data>
+</root>

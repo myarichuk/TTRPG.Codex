@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\Codex.Persistence\Codex.Persistence.csproj" />
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\Codex.Localization\Codex.Localization.csproj" />
   </ItemGroup>
 
   <ItemGroup>

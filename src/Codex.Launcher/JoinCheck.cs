@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using static Codex.Launcher.Strings;
 
 namespace Codex.Launcher;
 
@@ -22,80 +24,77 @@ internal static class JoinCheck
     {
         var results = new List<CheckResult>();
         var running = state == ServerState.Running;
+        var start = L["Launcher.StartServer"];
+        var lanToggle = L["Launcher.Lan.Toggle"];
 
         switch (state)
         {
             case ServerState.Running:
-                results.Add(new(CheckStatus.Ok, "The server is running", $"It is up on this computer at {settings.LocalUrl}."));
+                results.Add(new(CheckStatus.Ok, L["Launcher.Join.Running.Title"], L["Launcher.Join.Running.Detail", Isolate(settings.LocalUrl)]));
                 break;
             case ServerState.Starting:
-                results.Add(new(CheckStatus.Warn, "The server is still starting", "Give it a minute (the first start is slower), then check again."));
+                results.Add(new(CheckStatus.Warn, L["Launcher.Join.Starting.Title"], L["Launcher.Join.Starting.Detail"]));
                 break;
             case ServerState.Failed:
-                results.Add(new(CheckStatus.Fail, "The server would not start", problem ?? "See the log for details."));
+                results.Add(new(CheckStatus.Fail, L["Launcher.Status.Failed"], problem ?? L["Launcher.Join.SeeLog"]));
                 if (!portIsFree(settings.Port))
                 {
-                    results.Add(new(CheckStatus.Fail, $"Another program is using port {settings.Port}", "Close the other program (it may be another copy of TTRPG.Codex), then press Start server."));
+                    results.Add(new(CheckStatus.Fail, L["Launcher.Join.PortBusy.Title", settings.Port.ToString(CultureInfo.InvariantCulture)], L["Launcher.Join.PortBusy.Detail", start]));
                 }
 
                 break;
             default:
-                results.Add(new(CheckStatus.Fail, "The server is stopped", "Press Start server."));
+                results.Add(new(CheckStatus.Fail, L["Launcher.Join.Stopped.Title"], L["Launcher.Join.Stopped.Detail", start]));
                 break;
         }
 
         if (settings.AllowLan)
         {
-            results.Add(new(CheckStatus.Ok, "Network access is on", "Players on your Wi-Fi are allowed in."));
+            results.Add(new(CheckStatus.Ok, L["Launcher.Join.LanOn.Title"], L["Launcher.Join.LanOn.Detail"]));
         }
         else
         {
-            results.Add(new(CheckStatus.Fail, "Network access is off", "Only this computer can open the table. Turn on “Let players on my network join”."));
+            results.Add(new(CheckStatus.Fail, L["Launcher.Join.LanOff.Title"], L["Launcher.Join.LanOff.Detail", lanToggle]));
         }
 
         if (addresses.Count == 0)
         {
-            results.Add(new(CheckStatus.Fail, "This computer has no network address",
-                "It does not look connected to Wi-Fi or a cable. Connect to your network, then check again."));
+            results.Add(new(CheckStatus.Fail, L["Launcher.Join.NoAddress.Title"], L["Launcher.Join.NoAddress.Detail"]));
         }
         else
         {
             var best = $"http://{addresses[0]}:{settings.Port}";
-            results.Add(new(CheckStatus.Ok, "Players use this link", best));
+            results.Add(new(CheckStatus.Ok, L["Launcher.Join.UseLink.Title"], Isolate(best)));
             if (!LanAddress.IsPrivate(IPAddress.Parse(addresses[0])))
             {
-                results.Add(new(CheckStatus.Warn, "That address does not look like a home network",
-                    "Home and office networks usually start with 192.168 or 10. A VPN may be on, or you may be on a public network. Players on your Wi-Fi may need to use a different address."));
+                results.Add(new(CheckStatus.Warn, L["Launcher.Join.Odd.Title"], L["Launcher.Join.Odd.Detail"]));
             }
 
             if (addresses.Count > 1)
             {
-                results.Add(new(CheckStatus.Info, "This computer has more than one address",
-                    "If the first link does not work, try one of these: " + string.Join(", ", addresses.Skip(1).Select(a => $"http://{a}:{settings.Port}")) + "."));
+                var others = string.Join(", ", addresses.Skip(1).Select(a => Isolate($"http://{a}:{settings.Port}")));
+                results.Add(new(CheckStatus.Info, L["Launcher.Join.Multi.Title"], L["Launcher.Join.Multi.Detail", others]));
             }
 
             if (running && settings.AllowLan)
             {
                 if (await reaches(best))
                 {
-                    results.Add(new(CheckStatus.Ok, "The server answers on your network address", "This computer can reach itself at that link."));
+                    results.Add(new(CheckStatus.Ok, L["Launcher.Join.Answers.Title"], L["Launcher.Join.Answers.Detail"]));
                 }
                 else
                 {
-                    results.Add(new(CheckStatus.Fail, "The server does not answer on your network address",
-                        "Network access may have been switched on after the server started: press Stop, then Start server."));
+                    results.Add(new(CheckStatus.Fail, L["Launcher.Join.NoAnswer.Title"], L["Launcher.Join.NoAnswer.Detail", L["Launcher.StopWord"], start]));
                 }
             }
         }
 
         if (tailnet != null)
         {
-            results.Add(new(CheckStatus.Info, "Tailscale is on",
-                $"Friends who are not on your Wi-Fi can use http://{tailnet}:{settings.Port} if they have Tailscale and you have shared this computer with them."));
+            results.Add(new(CheckStatus.Info, L["Launcher.Join.Tailscale.Title"], L["Launcher.Join.Tailscale.Detail", Isolate($"http://{tailnet}:{settings.Port}")]));
         }
 
-        results.Add(new(CheckStatus.Info, "What I cannot check from here",
-            "Your firewall and your Wi-Fi router. If everything above is fine and a player still cannot connect: allow TTRPG.Codex through the firewall for private networks when your computer asks, make sure their phone is on the same Wi-Fi (not mobile data), and avoid guest Wi-Fi, which often blocks devices from seeing each other."));
+        results.Add(new(CheckStatus.Info, L["Launcher.Join.Unknown.Title"], L["Launcher.Join.Unknown.Detail"]));
         return results;
     }
 

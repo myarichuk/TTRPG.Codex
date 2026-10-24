@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Campaign.Bestiary.Title.Dm" xml:space="preserve"><value>Bestiary</value></data>
+  <data name="Campaign.Bestiary.Title.Player" xml:space="preserve"><value>Creatures</value></data>
+  <data name="Campaign.Bestiary.Subtitle.Dm" xml:space="preserve"><value>Creatures in play and the ones you're saving for later. Shortlist from the Library, then drop them into the cast when the fight starts.</value></data>
+  <data name="Campaign.Bestiary.Subtitle.Player" xml:space="preserve"><value>Creatures the party has met.</value></data>
+  <data name="Campaign.Bestiary.NewHomebrew" xml:space="preserve"><value>New homebrew creature</value></data>
+  <data name="Campaign.Bestiary.Met.Title" xml:space="preserve"><value>Nothing met yet</value></data>
+  <data name="Campaign.Bestiary.Met.Body" xml:space="preserve"><value>Creatures appear here once the DM reveals them.</value></data>
+  <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>Not yet identified</value></data>
+  <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>Monster</value></data>
+  <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>Shortlist ({0})</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Nothing shortlisted. Search the Library on the right and pin creatures for upcoming encounters.</value></data>
+  <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>Note for {0}</value></data>
+  <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>Where you'll use it…</value></data>
+  <data name="Campaign.Bestiary.HowMany" xml:space="preserve"><value>How many</value></data>
+  <data name="Campaign.Bestiary.AddToCastLabel" xml:space="preserve"><value>Add {0} {1} to the cast</value></data>
+  <data name="Campaign.Bestiary.ToCast" xml:space="preserve"><value>To cast</value></data>
+  <data name="Campaign.Bestiary.RemoveFromShortlist" xml:space="preserve"><value>Remove {0} from the shortlist</value></data>
+  <data name="Campaign.Bestiary.InCast" xml:space="preserve"><value>In the cast ({0})</value></data>
+  <data name="Campaign.Bestiary.NoMonsters" xml:space="preserve"><value>No monsters in the cast right now.</value></data>
+  <data name="Campaign.Bestiary.Hidden" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Campaign.Bestiary.Unidentified" xml:space="preserve"><value>Unidentified</value></data>
+  <data name="Campaign.Bestiary.Find" xml:space="preserve"><value>Find creatures</value></data>
+  <data name="Campaign.Bestiary.Search" xml:space="preserve"><value>Search creatures</value></data>
+  <data name="Campaign.Bestiary.SearchPlaceholder" xml:space="preserve"><value>goblin, dragon, CR 3…</value></data>
+  <data name="Campaign.Bestiary.NoMatch" xml:space="preserve"><value>No creature matches. Homebrew ones you create in the Library show up here too.</value></data>
+  <data name="Campaign.Bestiary.IsShortlisted" xml:space="preserve"><value>{0} is shortlisted</value></data>
+  <data name="Campaign.Bestiary.ShortlistThis" xml:space="preserve"><value>Shortlist {0}</value></data>
+  <data name="Campaign.Bestiary.Listed" xml:space="preserve"><value>Listed</value></data>
+  <data name="Campaign.Bestiary.ShortlistBtn" xml:space="preserve"><value>Shortlist</value></data>
+  <data name="Campaign.Bestiary.Shortlisted" xml:space="preserve"><value>Shortlisted {0}.</value></data>
+  <data name="Campaign.Bestiary.GoneFromLibrary" xml:space="preserve"><value>“{0}” is no longer in the Library (pack switched off, or homebrew deleted).</value></data>
+  <data name="Campaign.Bestiary.CannotCreate" xml:space="preserve"><value>That entry can't be turned into a creature.</value></data>
+  <data name="Campaign.Bestiary.AddedToCast" xml:space="preserve"><value>Added {0} × {1} to the cast, hidden from players.</value></data>
+  <data name="Campaign.Cast.Title" xml:space="preserve"><value>Cast</value></data>
+  <data name="Campaign.Cast.Subtitle.Dm" xml:space="preserve"><value>Player characters, NPCs and monsters in this campaign.</value></data>
+  <data name="Campaign.Cast.Subtitle.Player" xml:space="preserve"><value>The party and everyone it has met.</value></data>
+  <data name="Campaign.Cast.NewDm" xml:space="preserve"><value>New character or NPC</value></data>
+  <data name="Campaign.Cast.NewPlayer" xml:space="preserve"><value>Create my character</value></data>
+  <data name="Campaign.Cast.CreateWithAi" xml:space="preserve"><value>Create with AI</value></data>
+  <data name="Campaign.Cast.Bestiary" xml:space="preserve"><value>Bestiary</value></data>
+  <data name="Campaign.Cast.PlayerCharacters" xml:space="preserve"><value>Player characters ({0})</value></data>
+  <data name="Campaign.Cast.NoPlayerCharacters" xml:space="preserve"><value>No player characters yet.</value></data>
+  <data name="Campaign.Cast.Others.Dm" xml:space="preserve"><value>NPCs and monsters ({0})</value></data>
+  <data name="Campaign.Cast.Others.Player" xml:space="preserve"><value>People and creatures met ({0})</value></data>
+  <data name="Campaign.Cast.OthersEmpty.Dm" xml:space="preserve"><value>Nobody yet. Add NPCs here or creatures from the Bestiary.</value></data>
+  <data name="Campaign.Cast.OthersEmpty.Player" xml:space="preserve"><value>The party has not met anyone of note yet.</value></data>
+  <data name="Campaign.Cast.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Campaign.Cast.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.Cast.Kind" xml:space="preserve"><value>Kind</value></data>
+  <data name="Campaign.Cast.Kind.PlayerCharacter" xml:space="preserve"><value>Player character</value></data>
+  <data name="Campaign.Cast.Kind.NonPlayerCharacter" xml:space="preserve"><value>Non-player character</value></data>
+  <data name="Campaign.Cast.Kind.Monster" xml:space="preserve"><value>Monster</value></data>
+  <data name="Campaign.Cast.PlayedBy" xml:space="preserve"><value>Played by</value></data>
+  <data name="Campaign.Cast.Nobody" xml:space="preserve"><value>— nobody yet —</value></data>
+  <data name="Campaign.Cast.SheetHint" xml:space="preserve"><value>Stats, class, species and the rest are filled in on the character sheet next.</value></data>
+  <data name="Campaign.Cast.Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Campaign.Cast.Ai.Hint" xml:space="preserve"><value>Describe the character in a line or two. The AI fills in the sheet using only classes, species and backgrounds from this campaign's Library, plus a short history you can edit afterwards.</value></data>
+  <data name="Campaign.Cast.Ai.Concept" xml:space="preserve"><value>Concept</value></data>
+  <data name="Campaign.Cast.Ai.Placeholder" xml:space="preserve"><value>e.g. A retired city guard turned reluctant cleric, haunted by a riot she failed to stop. Level 3.</value></data>
+  <data name="Campaign.Cast.Ai.Generating" xml:space="preserve"><value>Generating…</value></data>
+  <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>Generate character</value></data>
+  <data name="Campaign.Cast.Mine" xml:space="preserve"><value>Mine</value></data>
+  <data name="Campaign.Cast.HiddenFromPlayers" xml:space="preserve"><value>Hidden from players</value></data>
+  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>Identity unknown</value></data>
+  <data name="Campaign.Cast.Reveal" xml:space="preserve"><value>Reveal</value></data>
+  <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>Reveal {0} to players</value></data>
+  <data name="Campaign.Cast.Hide" xml:space="preserve"><value>Hide</value></data>
+  <data name="Campaign.Cast.HideLabel" xml:space="preserve"><value>Hide {0} from players</value></data>
+  <data name="Campaign.Cast.DeleteLabel" xml:space="preserve"><value>Delete {0}</value></data>
+  <data name="Campaign.Cast.EditSheet" xml:space="preserve"><value>Edit sheet</value></data>
+  <data name="Campaign.Cast.RetireLabel" xml:space="preserve"><value>Retire {0}</value></data>
+  <data name="Campaign.Cast.RetireTitle" xml:space="preserve"><value>Retire this character</value></data>
+  <data name="Campaign.Cast.Level" xml:space="preserve"><value>Level {0}</value></data>
+  <data name="Campaign.Cast.MissingContent" xml:space="preserve"><value>Missing content: {0}</value></data>
+  <data name="Campaign.Cast.From" xml:space="preserve"><value>From {0}</value></data>
+  <data name="Campaign.Cast.NameNeeded" xml:space="preserve"><value>Give them a name.</value></data>
+  <data name="Campaign.Cast.OwnOnly" xml:space="preserve"><value>You can only create a character you own.</value></data>
+  <data name="Campaign.Cast.NoAi" xml:space="preserve"><value>No AI provider is set up. Add one under AI settings (top right).</value></data>
+  <data name="Campaign.Cast.AiFailed" xml:space="preserve"><value>The AI could not produce a character: {0}</value></data>
+  <data name="Campaign.Cast.AiReady" xml:space="preserve"><value>{0} is ready. Check the sheet and adjust anything the AI got wrong.</value></data>
+  <data name="Campaign.Cast.NowVisible" xml:space="preserve"><value>{0} is now visible to players.</value></data>
+  <data name="Campaign.Cast.NowHidden" xml:space="preserve"><value>{0} is hidden from players.</value></data>
+  <data name="Campaign.Cast.RetireQ" xml:space="preserve"><value>Retire {0}?</value></data>
+  <data name="Campaign.Cast.DeleteQ" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>Your character and their sheet are removed from this campaign. This cannot be undone; the DM can't restore them either.</value></data>
+  <data name="Campaign.Cast.DeleteBody" xml:space="preserve"><value>Their sheet and state are removed from this campaign. This cannot be undone.</value></data>
+  <data name="Campaign.Cast.Retire" xml:space="preserve"><value>Retire</value></data>
+  <data name="Campaign.Cast.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Campaign.Cast.HasRetired" xml:space="preserve"><value>{0} has retired.</value></data>
+  <data name="Campaign.Cast.Deleted" xml:space="preserve"><value>Deleted {0}.</value></data>
+  <data name="Campaign.Cast.RetireOwnOnly" xml:space="preserve"><value>You can only retire a character you own.</value></data>
+  <data name="Campaign.Journal.Title" xml:space="preserve"><value>My journal</value></data>
+  <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>Your private notebook for this campaign. Only you can read it, not even the DM. One entry per session, plus anything else you want to keep.</value></data>
+  <data name="Campaign.Journal.NewEntry" xml:space="preserve"><value>New entry</value></data>
+  <data name="Campaign.Journal.Empty.Title" xml:space="preserve"><value>Nothing written yet</value></data>
+  <data name="Campaign.Journal.Empty.Body" xml:space="preserve"><value>Names, theories, who owes you money. Open a session and write there, or start a free entry.</value></data>
+  <data name="Campaign.Journal.WriteFirst" xml:space="preserve"><value>Write the first entry</value></data>
+  <data name="Campaign.Journal.Untitled" xml:space="preserve"><value>Untitled</value></data>
+  <data name="Campaign.Journal.EditEntry" xml:space="preserve"><value>Edit entry</value></data>
+  <data name="Campaign.Journal.DeleteEntry" xml:space="preserve"><value>Delete entry</value></data>
+  <data name="Campaign.Journal.Field.Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Campaign.Journal.Field.Session" xml:space="preserve"><value>Session</value></data>
+  <data name="Campaign.Journal.General" xml:space="preserve"><value>— general —</value></data>
+  <data name="Campaign.Journal.Field.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Journal.MentionHint" xml:space="preserve"><value>Mention someone with @, a place with # or an item with $.</value></data>
+  <data name="Campaign.Journal.Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Campaign.Journal.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>Journal entries are stored per player and never appear in the DM's view, exports or AI drafts.</value></data>
+  <data name="Campaign.Journal.Saved" xml:space="preserve"><value>Journal saved.</value></data>
+  <data name="Campaign.Journal.SaveFailed" xml:space="preserve"><value>Could not save that entry.</value></data>
+  <data name="Campaign.Journal.Delete.Title" xml:space="preserve"><value>Delete this entry?</value></data>
+  <data name="Campaign.Journal.Delete.Body" xml:space="preserve"><value>The entry is removed from your journal and cannot be brought back.</value></data>
+  <data name="Campaign.Journal.Deleted" xml:space="preserve"><value>Entry deleted.</value></data>
+  <data name="Campaign.Library.Title" xml:space="preserve"><value>Library</value></data>
+  <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>Reference content for this campaign's system, plus your homebrew: equipment, classes, subclasses, feats, spells, creatures and more.</value></data>
+  <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>Reference content for this campaign's system, including the DM's homebrew.</value></data>
+  <data name="Campaign.Library.NewHomebrew" xml:space="preserve"><value>New homebrew</value></data>
+  <data name="Campaign.Library.ImportFromCampaign" xml:space="preserve"><value>Import from another campaign</value></data>
+  <data name="Campaign.Library.ExportLabel" xml:space="preserve"><value>Export this campaign's homebrew as a content pack</value></data>
+  <data name="Campaign.Library.ExportPack" xml:space="preserve"><value>Export pack</value></data>
+  <data name="Campaign.Library.Portrait" xml:space="preserve"><value>Portrait</value></data>
+  <data name="Campaign.Library.Art" xml:space="preserve"><value>Art</value></data>
+  <data name="Campaign.Library.ArtFor" xml:space="preserve"><value>Art for {0}</value></data>
+  <data name="Campaign.Library.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.Library.CloneTitle" xml:space="preserve"><value>Start a homebrew variant with these fields</value></data>
+  <data name="Campaign.Library.HomebrewCopy" xml:space="preserve"><value>Homebrew copy</value></data>
+  <data name="Campaign.Library.AddToCast" xml:space="preserve"><value>Add to cast</value></data>
+  <data name="Campaign.Library.InNotes" xml:space="preserve"><value>In notes</value></data>
+  <data name="Campaign.Library.Import.Title" xml:space="preserve"><value>Import homebrew</value></data>
+  <data name="Campaign.Library.Import.NoSource" xml:space="preserve"><value>You don't run another campaign on this system yet. Homebrew can be imported from any campaign where you are the DM and the game system matches.</value></data>
+  <data name="Campaign.Library.Import.FromCampaign" xml:space="preserve"><value>From campaign</value></data>
+  <data name="Campaign.Library.Import.NoHomebrew" xml:space="preserve"><value>That campaign has no homebrew.</value></data>
+  <data name="Campaign.Library.Import.Selected" xml:space="preserve"><value>{0} of {1} selected</value></data>
+  <data name="Campaign.Library.Import.SelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="Campaign.Library.Import.None" xml:space="preserve"><value>None</value></data>
+  <data name="Campaign.Library.Import.Importing" xml:space="preserve"><value>Importing…</value></data>
+  <data name="Campaign.Library.Import.Button" xml:space="preserve"><value>Import {0}</value></data>
+  <data name="Campaign.Library.EditingCopy" xml:space="preserve"><value>Editing a homebrew copy of “{0}”. It stays a draft (hidden from players) until you tick “Visible to players”.</value></data>
+  <data name="Campaign.Library.Saved" xml:space="preserve"><value>Saved “{0}”.</value></data>
+  <data name="Campaign.Library.Deleted" xml:space="preserve"><value>Deleted “{0}”.</value></data>
+  <data name="Campaign.Library.ArtSaved" xml:space="preserve"><value>Art saved for “{0}”.</value></data>
+  <data name="Campaign.Library.ArtOnlyDm" xml:space="preserve"><value>Only the DM can change Library art.</value></data>
+  <data name="Campaign.Library.ArtRemoved" xml:space="preserve"><value>Art removed from “{0}”.</value></data>
+  <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>That entry can't be turned into a creature, or only the DM can add creatures.</value></data>
+  <data name="Campaign.Library.AddedToCast" xml:space="preserve"><value>Added {0} to the cast (hidden from players).</value></data>
+  <data name="Campaign.Library.NothingImported" xml:space="preserve"><value>Nothing imported: every selected entry already exists here.</value></data>
+  <data name="Campaign.Library.Imported" xml:space="preserve"><value>Imported {0, plural, one{# entry} other{# entries}}. Entries that already existed here were skipped.</value></data>
+  <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>There is no homebrew to export yet.</value></data>
+  <data name="Campaign.Library.Exported" xml:space="preserve"><value>Exported {0} entries. Drop the zip into a content folder to load it as a pack.</value></data>
+  <data name="Campaign.Lore.Title" xml:space="preserve"><value>Lore</value></data>
+  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>Facts about the world and who knows them. Reveal to the whole party or to one character.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>What your characters know. Facts appear here as the DM reveals them.</value></data>
+  <data name="Campaign.Lore.Search" xml:space="preserve"><value>Search lore</value></data>
+  <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>Search lore…</value></data>
+  <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>Filter by visibility</value></data>
+  <data name="Campaign.Lore.Chip.All" xml:space="preserve"><value>All</value></data>
+  <data name="Campaign.Lore.Chip.Party" xml:space="preserve"><value>Party</value></data>
+  <data name="Campaign.Lore.Chip.Revealed" xml:space="preserve"><value>Revealed</value></data>
+  <data name="Campaign.Lore.Chip.DmOnly" xml:space="preserve"><value>DM only</value></data>
+  <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>Revealed to me</value></data>
+  <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>Nothing here yet</value></data>
+  <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>No lore matches</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Write the first fact on the right.</value></data>
+  <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>Nothing has been revealed to you yet.</value></data>
+  <data name="Campaign.Lore.KnownBy" xml:space="preserve"><value>Known by: {0}</value></data>
+  <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>nobody yet</value></data>
+  <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>Reveal to</value></data>
+  <data name="Campaign.Lore.HowWell" xml:space="preserve"><value>How well</value></data>
+  <data name="Campaign.Lore.Level.None" xml:space="preserve"><value>None</value></data>
+  <data name="Campaign.Lore.Level.Rumor" xml:space="preserve"><value>Rumor</value></data>
+  <data name="Campaign.Lore.Level.Heard" xml:space="preserve"><value>Heard</value></data>
+  <data name="Campaign.Lore.Level.Witnessed" xml:space="preserve"><value>Witnessed</value></data>
+  <data name="Campaign.Lore.Level.Full" xml:space="preserve"><value>Full</value></data>
+  <data name="Campaign.Lore.RevealToCharacter" xml:space="preserve"><value>Reveal to character</value></data>
+  <data name="Campaign.Lore.RevealToParty" xml:space="preserve"><value>Reveal to party</value></data>
+  <data name="Campaign.Lore.NewFact" xml:space="preserve"><value>New fact</value></data>
+  <data name="Campaign.Lore.Summary" xml:space="preserve"><value>Summary</value></data>
+  <data name="Campaign.Lore.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Campaign.Lore.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Campaign.Lore.WhoCanSee" xml:space="preserve"><value>Who can see it</value></data>
+  <data name="Campaign.Lore.Vis.DmOnly" xml:space="preserve"><value>Only me (DM)</value></data>
+  <data name="Campaign.Lore.Vis.KnowersOnly" xml:space="preserve"><value>Characters I reveal it to</value></data>
+  <data name="Campaign.Lore.Vis.Public" xml:space="preserve"><value>The whole party</value></data>
+  <data name="Campaign.Lore.AddFact" xml:space="preserve"><value>Add fact</value></data>
+  <data name="Campaign.Lore.KnownToParty" xml:space="preserve"><value>Known to the whole party.</value></data>
+  <data name="Campaign.Lore.KnownTo" xml:space="preserve"><value>Known to {0} ({1}).</value></data>
+  <data name="Campaign.Lore.YourCharacter" xml:space="preserve"><value>your character</value></data>
+  <data name="Campaign.Lore.TheCharacter" xml:space="preserve"><value>the character</value></data>
+  <data name="Campaign.Lore.FactAdded" xml:space="preserve"><value>Fact added.</value></data>
+  <data name="Campaign.Lore.RevealedTo" xml:space="preserve"><value>Revealed to {0}.</value></data>
+  <data name="Campaign.Lore.RevealedToParty" xml:space="preserve"><value>Revealed to the whole party.</value></data>
+  <data name="Campaign.Overview.About" xml:space="preserve"><value>About this campaign</value></data>
+  <data name="Campaign.Overview.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.Overview.NoDescription" xml:space="preserve"><value>No description yet.</value></data>
+  <data name="Campaign.Overview.Cast.Dm" xml:space="preserve"><value>Cast at a glance</value></data>
+  <data name="Campaign.Overview.Cast.Player" xml:space="preserve"><value>My characters</value></data>
+  <data name="Campaign.Overview.OpenCast" xml:space="preserve"><value>Open cast</value></data>
+  <data name="Campaign.Overview.Cast.EmptyDm" xml:space="preserve"><value>No characters, NPCs or monsters yet.</value></data>
+  <data name="Campaign.Overview.Cast.EmptyPlayer" xml:space="preserve"><value>You have no character in this campaign yet.</value></data>
+  <data name="Campaign.Overview.Cast.AddDm" xml:space="preserve"><value>Add to the cast</value></data>
+  <data name="Campaign.Overview.Cast.AddPlayer" xml:space="preserve"><value>Create a character</value></data>
+  <data name="Campaign.Overview.Kind.PlayerCharacter" xml:space="preserve"><value>Player character</value></data>
+  <data name="Campaign.Overview.Kind.NonPlayerCharacter" xml:space="preserve"><value>Non-player character</value></data>
+  <data name="Campaign.Overview.Kind.Monster" xml:space="preserve"><value>Monster</value></data>
+  <data name="Campaign.Overview.Table" xml:space="preserve"><value>Table</value></data>
+  <data name="Campaign.Overview.Live" xml:space="preserve"><value>Live</value></data>
+  <data name="Campaign.Overview.TableRunning" xml:space="preserve"><value>The table is running.</value></data>
+  <data name="Campaign.Overview.JoinTable" xml:space="preserve"><value>Join the table</value></data>
+  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>No session is running right now.</value></data>
+  <data name="Campaign.Overview.GoToTable" xml:space="preserve"><value>Go to the table</value></data>
+  <data name="Campaign.Overview.WaitAtTable" xml:space="preserve"><value>Wait at the table</value></data>
+  <data name="Campaign.Overview.LatestSession" xml:space="preserve"><value>Latest session</value></data>
+  <data name="Campaign.Overview.Status.Planned" xml:space="preserve"><value>Planned</value></data>
+  <data name="Campaign.Overview.Status.Live" xml:space="preserve"><value>Live</value></data>
+  <data name="Campaign.Overview.Status.Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Campaign.Overview.Members" xml:space="preserve"><value>Members ({0})</value></data>
+  <data name="Campaign.Overview.Role.DM" xml:space="preserve"><value>DM</value></data>
+  <data name="Campaign.Overview.Role.Player" xml:space="preserve"><value>Player</value></data>
+  <data name="Campaign.Overview.Role.Observer" xml:space="preserve"><value>Observer</value></data>
+  <data name="Campaign.Overview.InviteLink" xml:space="preserve"><value>Invite link</value></data>
+  <data name="Campaign.Overview.CopyInvite" xml:space="preserve"><value>Copy invite link</value></data>
+  <data name="Campaign.Overview.InviteHint" xml:space="preserve"><value>Anyone with this link joins as a player.</value></data>
+  <data name="Campaign.Overview.InviteCopied" xml:space="preserve"><value>Invite link copied.</value></data>
+  <data name="Campaign.Overview.CopyFailed" xml:space="preserve"><value>Could not copy. Select the link and copy it manually.</value></data>
+  <data name="Campaign.Sessions.Title" xml:space="preserve"><value>Sessions</value></data>
+  <data name="Campaign.Sessions.Subtitle" xml:space="preserve"><value>Each session keeps its recap, notes, rolls and event log.</value></data>
+  <data name="Campaign.Sessions.Empty.Title" xml:space="preserve"><value>No sessions yet</value></data>
+  <data name="Campaign.Sessions.Empty.Dm" xml:space="preserve"><value>Plan one here, or start the table and a live session is created for you.</value></data>
+  <data name="Campaign.Sessions.Empty.Player" xml:space="preserve"><value>The DM has not planned a session yet.</value></data>
+  <data name="Campaign.Sessions.EventCount" xml:space="preserve"><value>{0, plural, one{# event} other{# events}}</value></data>
+  <data name="Campaign.Sessions.Status.Planned" xml:space="preserve"><value>Planned</value></data>
+  <data name="Campaign.Sessions.Status.Live" xml:space="preserve"><value>Live</value></data>
+  <data name="Campaign.Sessions.Status.Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Campaign.Sessions.Plan.Title" xml:space="preserve"><value>Plan a session</value></data>
+  <data name="Campaign.Sessions.Plan.TitleLabel" xml:space="preserve"><value>Title</value></data>
+  <data name="Campaign.Sessions.Plan.TitlePlaceholder" xml:space="preserve"><value>e.g. Into the Greyharbour sewers</value></data>
+  <data name="Campaign.Sessions.Plan.Date" xml:space="preserve"><value>Date</value></data>
+  <data name="Campaign.Sessions.Plan.Add" xml:space="preserve"><value>Add session</value></data>
+  <data name="Campaign.Sessions.Run.GoTo" xml:space="preserve"><value>Go to the table</value></data>
+  <data name="Campaign.Sessions.Run.Reopen" xml:space="preserve"><value>Reopen at the table</value></data>
+  <data name="Campaign.Sessions.Run.Start" xml:space="preserve"><value>Run at the table</value></data>
+  <data name="Campaign.Sessions.Planned" xml:space="preserve"><value>Session planned.</value></data>
+  <data name="Campaign.Settings.Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Campaign.Settings.Subtitle.Dm" xml:space="preserve"><value>Campaign details, content packs, members and backups.</value></data>
+  <data name="Campaign.Settings.Subtitle.Player" xml:space="preserve"><value>Campaign details. Only the DM can change them.</value></data>
+  <data name="Campaign.Settings.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Campaign.Settings.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.Settings.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Campaign.Settings.System" xml:space="preserve"><value>System</value></data>
+  <data name="Campaign.Settings.GameSystem" xml:space="preserve"><value>Game system</value></data>
+  <data name="Campaign.Settings.SystemHint" xml:space="preserve"><value>Changing the system does not convert existing character sheets.</value></data>
+  <data name="Campaign.Settings.Rules.Label" xml:space="preserve"><value>House rules: sheet checks</value></data>
+  <data name="Campaign.Settings.Rules.Inherit" xml:space="preserve"><value>Use the system's setting ({0})</value></data>
+  <data name="Campaign.Settings.Rules.Strict" xml:space="preserve"><value>Strict: players can't save a sheet that breaks a rule</value></data>
+  <data name="Campaign.Settings.Rules.Warn" xml:space="preserve"><value>Warn only: show problems, allow saving</value></data>
+  <data name="Campaign.Settings.Rules.Off" xml:space="preserve"><value>Off: no checks</value></data>
+  <data name="Campaign.Settings.Rules.Hint" xml:space="preserve"><value>Point buy, class spell lists, subclass and feat limits come from the system's rules. The DM can always save regardless.</value></data>
+  <data name="Campaign.Settings.SaveDetails" xml:space="preserve"><value>Save details</value></data>
+  <data name="Campaign.Settings.Cover.Title" xml:space="preserve"><value>Cover art</value></data>
+  <data name="Campaign.Settings.Cover.Current" xml:space="preserve"><value>Current cover art</value></data>
+  <data name="Campaign.Settings.Cover.None" xml:space="preserve"><value>No cover art yet</value></data>
+  <data name="Campaign.Settings.Cover.Hint" xml:space="preserve"><value>Shown on the campaign card and behind the campaign title. Landscape images around 1600 × 900 look best. PNG, JPEG or WebP, up to 6 MB.</value></data>
+  <data name="Campaign.Settings.Cover.Replace" xml:space="preserve"><value>Replace cover</value></data>
+  <data name="Campaign.Settings.Cover.Upload" xml:space="preserve"><value>Upload cover</value></data>
+  <data name="Campaign.Settings.Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Campaign.Settings.Packs.Title" xml:space="preserve"><value>Content packs</value></data>
+  <data name="Campaign.Settings.Packs.None" xml:space="preserve"><value>No packs are loaded for this system.</value></data>
+  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>Untick a pack to keep it out of this campaign's Library. With nothing ticked, every pack is in play.</value></data>
+  <data name="Campaign.Settings.Packs.Save" xml:space="preserve"><value>Save pack selection</value></data>
+  <data name="Campaign.Settings.Members" xml:space="preserve"><value>Members</value></data>
+  <data name="Campaign.Settings.Owner" xml:space="preserve"><value>(owner)</value></data>
+  <data name="Campaign.Settings.RoleFor" xml:space="preserve"><value>Role for {0}</value></data>
+  <data name="Campaign.Settings.Role.DM" xml:space="preserve"><value>DM</value></data>
+  <data name="Campaign.Settings.Role.Player" xml:space="preserve"><value>Player</value></data>
+  <data name="Campaign.Settings.Role.Observer" xml:space="preserve"><value>Observer</value></data>
+  <data name="Campaign.Settings.RemoveFromCampaign" xml:space="preserve"><value>Remove {0} from the campaign</value></data>
+  <data name="Campaign.Settings.InviteLink" xml:space="preserve"><value>Invite link</value></data>
+  <data name="Campaign.Settings.CopyInvite" xml:space="preserve"><value>Copy invite link</value></data>
+  <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>New link</value></data>
+  <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>Making a new link stops the old one from working.</value></data>
+  <data name="Campaign.Settings.Backup" xml:space="preserve"><value>Backup</value></data>
+  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>Export downloads the whole campaign (characters, sessions, lore, notes, homebrew) as one JSON file. Import restores a file exported from here, including after the campaign was deleted.</value></data>
+  <data name="Campaign.Settings.Export" xml:space="preserve"><value>Export campaign</value></data>
+  <data name="Campaign.Settings.Import" xml:space="preserve"><value>Import campaign</value></data>
+  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>The file is a backup of a different (for example deleted) campaign: restore that one</value></data>
+  <data name="Campaign.Settings.Delete.Title" xml:space="preserve"><value>Delete campaign</value></data>
+  <data name="Campaign.Settings.Delete.Hint" xml:space="preserve"><value>Removes the campaign and everything in it. Export first if you want to keep anything.</value></data>
+  <data name="Campaign.Settings.Delete.Button" xml:space="preserve"><value>Delete this campaign</value></data>
+  <data name="Campaign.Settings.Delete.OwnerOnlyHint" xml:space="preserve"><value>Only the campaign's owner can delete it.</value></data>
+  <data name="Campaign.Settings.NameRequired" xml:space="preserve"><value>The campaign needs a name.</value></data>
+  <data name="Campaign.Settings.Saved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="Campaign.Settings.PacksSaved" xml:space="preserve"><value>Pack selection saved.</value></data>
+  <data name="Campaign.Settings.RoleChanged" xml:space="preserve"><value>{0} is now a {1}.</value></data>
+  <data name="Campaign.Settings.RemoveQ" xml:space="preserve"><value>Remove {0}?</value></data>
+  <data name="Campaign.Settings.RemoveBody" xml:space="preserve"><value>They lose access to this campaign. Their characters stay in the cast.</value></data>
+  <data name="Campaign.Settings.Removed" xml:space="preserve"><value>Removed {0}.</value></data>
+  <data name="Campaign.Settings.InviteCopied" xml:space="preserve"><value>Invite link copied.</value></data>
+  <data name="Campaign.Settings.CopyFailed" xml:space="preserve"><value>Could not copy. Select the link and copy it manually.</value></data>
+  <data name="Campaign.Settings.NewInviteCreated" xml:space="preserve"><value>New invite link created. The old one no longer works.</value></data>
+  <data name="Campaign.Settings.BadImageType" xml:space="preserve"><value>Use a PNG, JPEG, WebP, GIF or AVIF image.</value></data>
+  <data name="Campaign.Settings.ImageTooBig" xml:space="preserve"><value>That image is over 6 MB. Resize it and try again.</value></data>
+  <data name="Campaign.Settings.CoverUpdated" xml:space="preserve"><value>Cover art updated.</value></data>
+  <data name="Campaign.Settings.UploadFailed" xml:space="preserve"><value>The upload failed: {0}</value></data>
+  <data name="Campaign.Settings.CoverRemoved" xml:space="preserve"><value>Cover art removed.</value></data>
+  <data name="Campaign.Settings.ExportFailed" xml:space="preserve"><value>Export failed.</value></data>
+  <data name="Campaign.Settings.ExportDone" xml:space="preserve"><value>Export downloaded.</value></data>
+  <data name="Campaign.Settings.NotExport" xml:space="preserve"><value>That file isn't a campaign export.</value></data>
+  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>That file is a backup of a different campaign. Tick “restore that one” if you meant to bring it back.</value></data>
+  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>Imported “{0}”.</value></data>
+  <data name="Campaign.Settings.ImportRejected" xml:space="preserve"><value>Import rejected: unrecognised format or you are not a DM of that campaign.</value></data>
+  <data name="Campaign.Settings.ImportFailed" xml:space="preserve"><value>Import failed: {0}</value></data>
+  <data name="Campaign.Settings.DeleteQ" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Campaign.Settings.DeleteBody" xml:space="preserve"><value>This removes the campaign and everything in it. Export a backup first if you want to keep any of it. This cannot be undone.</value></data>
+  <data name="Campaign.Settings.DeleteConfirm" xml:space="preserve"><value>Delete campaign</value></data>
+  <data name="Campaign.Wiki.Title" xml:space="preserve"><value>Wiki</value></data>
+  <data name="Campaign.Wiki.Breadcrumb" xml:space="preserve"><value>Breadcrumb</value></data>
+  <data name="Campaign.Wiki.NewPage" xml:space="preserve"><value>New page</value></data>
+  <data name="Campaign.Wiki.EditPage" xml:space="preserve"><value>Edit “{0}”</value></data>
+  <data name="Campaign.Wiki.Field.Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Campaign.Wiki.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Campaign.Wiki.Field.WhoCanRead" xml:space="preserve"><value>Who can read it</value></data>
+  <data name="Campaign.Wiki.Vis.DmOnly" xml:space="preserve"><value>Only me (DM)</value></data>
+  <data name="Campaign.Wiki.Vis.Party" xml:space="preserve"><value>The whole party</value></data>
+  <data name="Campaign.Wiki.Field.Tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>faction, city, legend…</value></data>
+  <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link.</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Link with `[[Page title]]` or `[[Page title|shown as]]`. `**bold**`, `*italic*`, "- " bullets, "### headings" and | tables | are rendered.</value></data>
+  <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>Save page</value></data>
+  <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>Writing…</value></data>
+  <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>Expand with AI</value></data>
+  <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>Delete page</value></data>
+  <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>Link to a page</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Click to append a link to the text.</value></data>
+  <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>No other pages yet. Write `[[A new page]]` and it becomes a create link.</value></data>
+  <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>AI instruction</value></data>
+  <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>Instruction for the AI</value></data>
+  <data name="Campaign.Wiki.AiInstructionPlaceholder" xml:space="preserve"><value>Optional: “make it a travel guide written by a nervous scholar”, “keep it under 200 words”…</value></data>
+  <data name="Campaign.Wiki.AiSees" xml:space="preserve"><value>The AI sees this page, the campaign description and the names of pages it links to. Nothing else.</value></data>
+  <data name="Campaign.Wiki.Missing.Title" xml:space="preserve"><value>No page called “{0}”</value></data>
+  <data name="Campaign.Wiki.Missing.Dm" xml:space="preserve"><value>It may have been deleted. You can write it now.</value></data>
+  <data name="Campaign.Wiki.Missing.Player" xml:space="preserve"><value>It may be DM-only, or not written yet.</value></data>
+  <data name="Campaign.Wiki.CreateIt" xml:space="preserve"><value>Create it</value></data>
+  <data name="Campaign.Wiki.BackToWiki" xml:space="preserve"><value>Back to the wiki</value></data>
+  <data name="Campaign.Wiki.Party" xml:space="preserve"><value>Party</value></data>
+  <data name="Campaign.Wiki.DmOnly" xml:space="preserve"><value>DM only</value></data>
+  <data name="Campaign.Wiki.SharePage" xml:space="preserve"><value>Share with party</value></data>
+  <data name="Campaign.Wiki.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.Wiki.PageEmpty" xml:space="preserve"><value>This page is empty.</value></data>
+  <data name="Campaign.Wiki.NotesOnPage" xml:space="preserve"><value>Notes on this page</value></data>
+  <data name="Campaign.Wiki.NoNotes.Dm" xml:space="preserve"><value>No notes yet. Players can leave theirs here.</value></data>
+  <data name="Campaign.Wiki.NoNotes.Player" xml:space="preserve"><value>No notes yet. Leave one for yourself and the DM, or for the whole party.</value></data>
+  <data name="Campaign.Wiki.Private" xml:space="preserve"><value>Private</value></data>
+  <data name="Campaign.Wiki.DeleteNote" xml:space="preserve"><value>Delete note</value></data>
+  <data name="Campaign.Wiki.AddNoteLabel" xml:space="preserve"><value>Add a note</value></data>
+  <data name="Campaign.Wiki.MentionHint" xml:space="preserve"><value>Mention someone with @, a place with # or an item with $.</value></data>
+  <data name="Campaign.Wiki.NoteVisibility" xml:space="preserve"><value>Note visibility</value></data>
+  <data name="Campaign.Wiki.NoteVis.Private" xml:space="preserve"><value>Private (you and the DM)</value></data>
+  <data name="Campaign.Wiki.NoteVis.Public" xml:space="preserve"><value>Party (everyone in the campaign)</value></data>
+  <data name="Campaign.Wiki.AddNote" xml:space="preserve"><value>Add note</value></data>
+  <data name="Campaign.Wiki.LinksFrom" xml:space="preserve"><value>Links from this page</value></data>
+  <data name="Campaign.Wiki.None" xml:space="preserve"><value>None yet.</value></data>
+  <data name="Campaign.Wiki.LinksHere" xml:space="preserve"><value>Pages linking here</value></data>
+  <data name="Campaign.Wiki.NothingLinksHere" xml:space="preserve"><value>Nothing links here yet.</value></data>
+  <data name="Campaign.Wiki.Subtitle.Dm" xml:space="preserve"><value>Your world, one linked page at a time. Pages start DM-only; share them when the party learns of them.</value></data>
+  <data name="Campaign.Wiki.Subtitle.Player" xml:space="preserve"><value>What the party knows of the world. Pages appear as the DM shares them.</value></data>
+  <data name="Campaign.Wiki.NewPageBtn" xml:space="preserve"><value>New page</value></data>
+  <data name="Campaign.Wiki.Search" xml:space="preserve"><value>Search the wiki</value></data>
+  <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>Search pages…</value></data>
+  <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>Filter by tag</value></data>
+  <data name="Campaign.Wiki.All" xml:space="preserve"><value>All</value></data>
+  <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>No pages yet</value></data>
+  <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>No page matches</value></data>
+  <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>Start with a place, a faction or a legend. Link pages with [[double brackets]].</value></data>
+  <data name="Campaign.Wiki.Empty.Player" xml:space="preserve"><value>The DM hasn't shared any pages yet.</value></data>
+  <data name="Campaign.Wiki.LinkCount" xml:space="preserve"><value>{0, plural, one{# link} other{# links}}</value></data>
+  <data name="Campaign.Wiki.TitleNeeded" xml:space="preserve"><value>The page needs a title.</value></data>
+  <data name="Campaign.Wiki.Saved" xml:space="preserve"><value>Saved “{0}”.</value></data>
+  <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>Only the DM can edit the wiki.</value></data>
+  <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>Shared with the party.</value></data>
+  <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>Deleted “{0}”.</value></data>
+  <data name="Campaign.Wiki.AiDraftReady" xml:space="preserve"><value>AI draft in the editor. Review and save.</value></data>
+  <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>No AI provider is set up. Add one under AI settings (top right).</value></data>
+  <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>The AI draft failed: {0}</value></data>
+  <data name="Campaign.Wiki.NoteAdded" xml:space="preserve"><value>Note added.</value></data>
+  <data name="Campaign.World.Title" xml:space="preserve"><value>World</value></data>
+  <data name="Campaign.World.Subtitle.Dm" xml:space="preserve"><value>Regions and the places in them. Hidden places stay yours until you reveal them.</value></data>
+  <data name="Campaign.World.Subtitle.Player" xml:space="preserve"><value>Places the party has discovered.</value></data>
+  <data name="Campaign.World.Empty.Dm.Title" xml:space="preserve"><value>No regions yet</value></data>
+  <data name="Campaign.World.Empty.Player.Title" xml:space="preserve"><value>Nothing discovered yet</value></data>
+  <data name="Campaign.World.Empty.Dm.Body" xml:space="preserve"><value>Add a region, then the places inside it.</value></data>
+  <data name="Campaign.World.Empty.Player.Body" xml:space="preserve"><value>The DM will reveal places as the party explores.</value></data>
+  <data name="Campaign.World.NewNameFor" xml:space="preserve"><value>New name for {0}</value></data>
+  <data name="Campaign.World.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Campaign.World.RenameLabel" xml:space="preserve"><value>Rename {0}</value></data>
+  <data name="Campaign.World.NoPlaces" xml:space="preserve"><value>No places here yet.</value></data>
+  <data name="Campaign.World.Hidden" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Campaign.World.NoDescription" xml:space="preserve"><value>No description yet.</value></data>
+  <data name="Campaign.World.InNotes" xml:space="preserve"><value>In {0, plural, one{# note} other{# notes}}</value></data>
+  <data name="Campaign.World.Reveal" xml:space="preserve"><value>Reveal</value></data>
+  <data name="Campaign.World.RevealLabel" xml:space="preserve"><value>Reveal {0} to players</value></data>
+  <data name="Campaign.World.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.World.EditLabel" xml:space="preserve"><value>Edit {0}</value></data>
+  <data name="Campaign.World.NewPlaceIn" xml:space="preserve"><value>New place in {0}</value></data>
+  <data name="Campaign.World.NewPlacePlaceholder" xml:space="preserve"><value>New place…</value></data>
+  <data name="Campaign.World.AddPlace" xml:space="preserve"><value>Add place</value></data>
+  <data name="Campaign.World.NewRegion" xml:space="preserve"><value>New region</value></data>
+  <data name="Campaign.World.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.World.Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Campaign.World.PackPlaces" xml:space="preserve"><value>Places from packs</value></data>
+  <data name="Campaign.World.PackPlacesHint" xml:space="preserve"><value>Setting packs for this system ship these. Add one to a region to use it.</value></data>
+  <data name="Campaign.World.AddInto" xml:space="preserve"><value>Add into</value></data>
+  <data name="Campaign.World.AddToRegionLabel" xml:space="preserve"><value>Add {0} to the selected region</value></data>
+  <data name="Campaign.World.PlaceFallback" xml:space="preserve"><value>Place</value></data>
+  <data name="Campaign.World.PlaceVisible" xml:space="preserve"><value>In {0} · players can see this place</value></data>
+  <data name="Campaign.World.PlaceHidden" xml:space="preserve"><value>In {0} · hidden from players until you reveal it</value></data>
+  <data name="Campaign.World.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Campaign.World.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Campaign.World.DescPlaceholder" xml:space="preserve"><value>What the party sees, hears and smells on arrival…</value></data>
+  <data name="Campaign.World.DescHint" xml:space="preserve"><value>Players read this once the place is revealed, so the AI writes what a visitor would notice. **bold**, *italic* and "- " bullets are rendered.</value></data>
+  <data name="Campaign.World.Art" xml:space="preserve"><value>Art</value></data>
+  <data name="Campaign.World.ArtFor" xml:space="preserve"><value>Art for {0}</value></data>
+  <data name="Campaign.World.SavePlace" xml:space="preserve"><value>Save place</value></data>
+  <data name="Campaign.World.Renamed" xml:space="preserve"><value>Renamed “{0}” to “{1}”.</value></data>
+  <data name="Campaign.World.RenameFailed" xml:space="preserve"><value>Could not rename the region.</value></data>
+  <data name="Campaign.World.RegionAdded" xml:space="preserve"><value>Added region “{0}”.</value></data>
+  <data name="Campaign.World.PlaceAdded" xml:space="preserve"><value>Added “{0}” (hidden from players until you reveal it).</value></data>
+  <data name="Campaign.World.PackPlaceAdded" xml:space="preserve"><value>Added “{0}” from the pack.</value></data>
+  <data name="Campaign.World.NameRequired" xml:space="preserve"><value>Give the place a name.</value></data>
+  <data name="Campaign.World.PlaceSaved" xml:space="preserve"><value>Saved “{0}”.</value></data>
+  <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>Only the DM can edit places.</value></data>
+  <data name="Campaign.World.ArtRemoved" xml:space="preserve"><value>Art removed.</value></data>
+  <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>Art saved.</value></data>
+  <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>That place no longer exists, or you can't change it.</value></data>
+  <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Revealed to the party.</value></data>
+</root>

@@ -15,13 +15,13 @@
 
 <div class="page-header mb-3">
     <div>
-        <h2 class="mb-0">@(Ctx.IsDm ? "Bestiary" : "Creatures")</h2>
-        <p class="page-subtitle">@(Ctx.IsDm ? "Creatures in play and the ones you're saving for later. Shortlist from the Library, then drop them into the cast when the fight starts." : "Creatures the party has met.")</p>
+        <h2 class="mb-0">@(Ctx.IsDm ? L["Campaign.Bestiary.Title.Dm"] : L["Campaign.Bestiary.Title.Player"])</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.Bestiary.Subtitle.Dm"] : L["Campaign.Bestiary.Subtitle.Player"])</p>
     </div>
     @if (Ctx.IsDm)
     {
         <div class="row-actions">
-            <a href="@Ctx.BasePath/library/monster?new=1" class="cx-btn cx-plaque" data-testid="new-homebrew-creature"><LucideIcon IconName="plus" Size="18" /> New homebrew creature</a>
+            <a href="@Ctx.BasePath/library/monster?new=1" class="cx-btn cx-plaque" data-testid="new-homebrew-creature"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Bestiary.NewHomebrew"]</a>
         </div>
     }
 </div>
@@ -32,8 +32,8 @@
     {
         <div class="empty">
             <div class="empty-icon"><LucideIcon IconName="paw-print" Size="28" /></div>
-            <h3>Nothing met yet</h3>
-            <p>Creatures appear here once the DM reveals them.</p>
+            <h3>@L["Campaign.Bestiary.Met.Title"]</h3>
+            <p>@L["Campaign.Bestiary.Met.Body"]</p>
         </div>
     }
     else
@@ -46,7 +46,7 @@
                         <ActorAvatar Actor="actor" DisplayName="@PublicName(actor)" Size="lg" />
                         <div>
                             <h3 class="h6 mb-0"><a href="@Ctx.BasePath/actors/@actor.Id">@PublicName(actor)</a></h3>
-                            <div class="small-muted">@(actor.Visibility == ActorVisibility.Unknown ? (actor.PublicDescription ?? "Not yet identified") : "Monster")</div>
+                            <div class="small-muted">@(actor.Visibility == ActorVisibility.Unknown ? (actor.PublicDescription ?? L["Campaign.Bestiary.NotIdentified"]) : L["Campaign.Bestiary.Monster"])</div>
                         </div>
                     </div>
                 </article>
@@ -59,10 +59,10 @@ else
     <div class="row g-3">
         <div class="col-lg-7">
             <section class="panel" aria-labelledby="shortlist-heading">
-                <div class="panel-title"><h3 id="shortlist-heading"><LucideIcon IconName="bookmark" Size="18" Class="title-icon" /> Shortlist (@Ctx.Campaign.Bestiary.Count)</h3></div>
+                <div class="panel-title"><h3 id="shortlist-heading"><LucideIcon IconName="bookmark" Size="18" Class="title-icon" /> @L["Campaign.Bestiary.Shortlist", Ctx.Campaign.Bestiary.Count]</h3></div>
                 @if (Ctx.Campaign.Bestiary.Count == 0)
                 {
-                    <p class="small-muted mb-0">Nothing shortlisted. Search the Library on the right and pin creatures for upcoming encounters.</p>
+                    <p class="small-muted mb-0">@L["Campaign.Bestiary.ShortlistEmpty"]</p>
                 }
                 <ul class="list-unstyled mb-0" data-testid="bestiary-shortlist">
                     @foreach (var entry in Ctx.Campaign.Bestiary.OrderBy(e => e.Name))
@@ -74,19 +74,19 @@ else
                                     <a href="@Ctx.BasePath/library/@entry.EntryType/@Uri.EscapeDataString(entry.EntryId)">@entry.Name</a>
                                     @if (entry.IsHomebrew)
                                     {
-                                        <span class="pill pill-accent ms-1">Homebrew</span>
+                                        <span class="pill pill-accent ms-1">@L["Campaign.Bestiary.Homebrew"]</span>
                                     }
                                 </div>
                                 <div class="row-sub">
-                                    <label for="bb-note-@entry.Key" class="visually-hidden">Note for @entry.Name</label>
-                                    <input id="bb-note-@entry.Key" class="field-input field-sm inline-input" placeholder="Where you'll use it…" value="@entry.Note" @onchange="e => SetNoteAsync(entry, e.Value?.ToString())" />
+                                    <label for="bb-note-@entry.Key" class="visually-hidden">@L["Campaign.Bestiary.NoteFor", entry.Name]</label>
+                                    <input id="bb-note-@entry.Key" class="field-input field-sm inline-input" placeholder="@L["Campaign.Bestiary.NotePlaceholder"]" value="@entry.Note" @onchange="e => SetNoteAsync(entry, e.Value?.ToString())" />
                                 </div>
                             </div>
                             <div class="row-actions">
-                                <label for="bb-count-@entry.Key" class="visually-hidden">How many</label>
+                                <label for="bb-count-@entry.Key" class="visually-hidden">@L["Campaign.Bestiary.HowMany"]</label>
                                 <input id="bb-count-@entry.Key" type="number" min="1" max="20" class="field-input field-sm count-input" value="@entry.Count" @onchange="e => SetCountAsync(entry, e.Value?.ToString())" />
-                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(entry)" aria-label="@($"Add {entry.Count} {entry.Name} to the cast")"><LucideIcon IconName="user-plus" Size="14" /> To cast</CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@($"Remove {entry.Name} from the shortlist")" OnClick="() => RemoveAsync(entry)" />
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(entry)" aria-label="@L["Campaign.Bestiary.AddToCastLabel", entry.Count, entry.Name]"><LucideIcon IconName="user-plus" Size="14" /> @L["Campaign.Bestiary.ToCast"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Campaign.Bestiary.RemoveFromShortlist", entry.Name]" OnClick="() => RemoveAsync(entry)" />
                             </div>
                         </li>
                     }
@@ -94,10 +94,10 @@ else
             </section>
 
             <section class="panel" aria-labelledby="inplay-heading">
-                <div class="panel-title"><h3 id="inplay-heading"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> In the cast (@inPlay.Count)</h3></div>
+                <div class="panel-title"><h3 id="inplay-heading"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> @L["Campaign.Bestiary.InCast", inPlay.Count]</h3></div>
                 @if (inPlay.Count == 0)
                 {
-                    <p class="small-muted mb-0">No monsters in the cast right now.</p>
+                    <p class="small-muted mb-0">@L["Campaign.Bestiary.NoMonsters"]</p>
                 }
                 <ul class="list-unstyled mb-0">
                     @foreach (var actor in inPlay)
@@ -109,7 +109,7 @@ else
                                 <div class="row-title"><a href="@Ctx.BasePath/actors/@actor.Id">@actor.Name</a>
                                     @if (actor.Visibility != ActorVisibility.Known)
                                     {
-                                        <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? "Hidden" : "Unidentified")</span>
+                                        <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Bestiary.Hidden"] : L["Campaign.Bestiary.Unidentified"])</span>
                                     }
                                 </div>
                                 <div class="row-sub">@(hp.Max > 0 ? $"{hp.Current}/{hp.Max} {hp.Label}" : "")</div>
@@ -122,11 +122,11 @@ else
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="find-heading">
-                <div class="panel-title"><h3 id="find-heading"><LucideIcon IconName="search" Size="18" Class="title-icon" /> Find creatures</h3></div>
+                <div class="panel-title"><h3 id="find-heading"><LucideIcon IconName="search" Size="18" Class="title-icon" /> @L["Campaign.Bestiary.Find"]</h3></div>
                 <div class="search mb-2">
                     <LucideIcon IconName="search" Size="18" Class="search-icon" />
-                    <label for="bestiary-search" class="visually-hidden">Search creatures</label>
-                    <input id="bestiary-search" type="search" class="field-input" placeholder="goblin, dragon, CR 3…" value="@query" @oninput="OnQueryChanged" data-testid="bestiary-search" />
+                    <label for="bestiary-search" class="visually-hidden">@L["Campaign.Bestiary.Search"]</label>
+                    <input id="bestiary-search" type="search" class="field-input" placeholder="@L["Campaign.Bestiary.SearchPlaceholder"]" value="@query" @oninput="OnQueryChanged" data-testid="bestiary-search" />
                 </div>
                 @if (results == null)
                 {
@@ -134,7 +134,7 @@ else
                 }
                 else if (results.Count == 0)
                 {
-                    <p class="small-muted mb-0">No creature matches. Homebrew ones you create in the Library show up here too.</p>
+                    <p class="small-muted mb-0">@L["Campaign.Bestiary.NoMatch"]</p>
                 }
                 else
                 {
@@ -147,13 +147,13 @@ else
                                     <div class="row-title"><a href="@Ctx.BasePath/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)">@item.Entry.Name</a>
                                         @if (item.IsHomebrew)
                                         {
-                                            <span class="pill pill-accent ms-1">Homebrew</span>
+                                            <span class="pill pill-accent ms-1">@L["Campaign.Bestiary.Homebrew"]</span>
                                         }
                                     </div>
                                     <div class="row-sub">@Summary(item)</div>
                                 </div>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => ShortlistAsync(item)" Disabled="@shortlisted" aria-label="@(shortlisted ? $"{item.Entry.Name} is shortlisted" : $"Shortlist {item.Entry.Name}")">
-                                    <LucideIcon IconName="@(shortlisted ? "check" : "bookmark-plus")" Size="14" /> @(shortlisted ? "Listed" : "Shortlist")
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => ShortlistAsync(item)" Disabled="@shortlisted" aria-label="@(shortlisted ? L["Campaign.Bestiary.IsShortlisted", item.Entry.Name] : L["Campaign.Bestiary.ShortlistThis", item.Entry.Name])">
+                                    <LucideIcon IconName="@(shortlisted ? "check" : "bookmark-plus")" Size="14" /> @(shortlisted ? L["Campaign.Bestiary.Listed"] : L["Campaign.Bestiary.ShortlistBtn"])
                                 </CodexButton>
                             </li>
                         }
@@ -186,7 +186,7 @@ else
         var found = new List<LibraryItem>();
         foreach (var type in CreatureTypes)
         {
-            found.AddRange(await Library.SearchAsync(Ctx.Campaign, Ctx.Access, query, type, limit: 60));
+            found.AddRange(await Library.SearchAsync(Ctx.Campaign, Ctx.Access, query, type, limit: 60, culture: L.Culture.Name));
         }
 
         results = found;
@@ -229,7 +229,7 @@ else
         {
             if (!list.Any(b => b.Key == entry.Key)) list.Add(entry);
         });
-        Ctx.Notify(Flash.Success($"Shortlisted {item.Entry.Name}."));
+        Ctx.Notify(Flash.Success(L["Campaign.Bestiary.Shortlisted", item.Entry.Name]));
     }
 
     private Task RemoveAsync(BestiaryEntry entry) => EditBestiaryAsync(list => list.RemoveAll(b => b.Key == entry.Key));
@@ -258,18 +258,18 @@ else
         var item = await Library.GetAsync(Ctx.Campaign, Ctx.Access, entry.EntryType, entry.EntryId);
         if (item == null)
         {
-            Ctx.Notify(Flash.Error($"“{entry.Name}” is no longer in the Library (pack switched off, or homebrew deleted)."));
+            Ctx.Notify(Flash.Error(L["Campaign.Bestiary.GoneFromLibrary", entry.Name]));
             return;
         }
 
         var created = await Cast.AddToCastAsync(item, Ctx.Campaign, Ctx.System, Ctx.Access, entry.Count);
         if (created.Count == 0)
         {
-            Ctx.Notify(Flash.Error("That entry can't be turned into a creature."));
+            Ctx.Notify(Flash.Error(L["Campaign.Bestiary.CannotCreate"]));
             return;
         }
 
-        Ctx.Notify(Flash.Success($"Added {created.Count} × {entry.Name} to the cast, hidden from players."));
+        Ctx.Notify(Flash.Success(L["Campaign.Bestiary.AddedToCast", created.Count, entry.Name]));
         await Ctx.ReloadAsync();
     }
 }

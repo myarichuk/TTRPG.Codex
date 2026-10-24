@@ -11,12 +11,12 @@
     </div>
     <div class="ref-rule" aria-hidden="true"></div>
     <dl class="ref-vitals">
-        <div><dt>Armor Class</dt><dd data-testid="card-ac">@RefCard.Int(Entry, "armorClass")</dd></div>
-        <div><dt>Hit Points</dt><dd data-testid="card-hp">@RefCard.Int(Entry, "hitPoints")@(RefCard.Text(Entry, "hitDice") is { } dice ? $" ({dice})" : "")</dd></div>
-        <div><dt>Speed</dt><dd>@RefCard.Text(Entry, "speed")</dd></div>
+        <div><dt>@L["Actor.Card.ArmorClass"]</dt><dd data-testid="card-ac">@RefCard.Int(Entry, "armorClass")</dd></div>
+        <div><dt>@L["Actor.Card.HitPoints"]</dt><dd data-testid="card-hp">@RefCard.Int(Entry, "hitPoints")@(RefCard.Text(Entry, "hitDice") is { } dice ? $" ({dice})" : "")</dd></div>
+        <div><dt>@L["Actor.Card.Speed"]</dt><dd>@RefCard.Text(Entry, "speed")</dd></div>
     </dl>
     <div class="ref-rule" aria-hidden="true"></div>
-    <table class="ref-scores" aria-label="Ability scores">
+    <table class="ref-scores" aria-label="@L["Actor.Card.AbilityScores"]">
         <thead>
             <tr>@foreach (var (label, _) in Abilities) {<th scope="col">@label</th>}</tr>
         </thead>
@@ -56,23 +56,40 @@
 @code {
     [Parameter, EditorRequired] public ContentEntry Entry { get; set; } = null!;
 
-    private static readonly (string Label, string Key)[] Abilities =
+    private (string Label, string Key)[] Abilities => new[]
     {
-        ("STR", "strength"), ("DEX", "dexterity"), ("CON", "constitution"),
-        ("INT", "intelligence"), ("WIS", "wisdom"), ("CHA", "charisma"),
+        (L["Actor.Card.Str"], "strength"), (L["Actor.Card.Dex"], "dexterity"), (L["Actor.Card.Con"], "constitution"),
+        (L["Actor.Card.Int"], "intelligence"), (L["Actor.Card.Wis"], "wisdom"), (L["Actor.Card.Cha"], "charisma"),
     };
 
-    private static readonly (string Key, string Label)[] SectionKeys =
+    private static readonly string[] SectionKeys = { "traits", "actions", "bonusActions", "reactions", "legendaryActions" };
+
+    private string SectionLabel(string key) => key switch
     {
-        ("traits", "Traits"), ("actions", "Actions"), ("bonusActions", "Bonus Actions"),
-        ("reactions", "Reactions"), ("legendaryActions", "Legendary Actions"),
+        "traits" => L["Actor.Card.Traits"],
+        "actions" => L["Actor.Card.Actions"],
+        "bonusActions" => L["Actor.Card.BonusActions"],
+        "reactions" => L["Actor.Card.Reactions"],
+        _ => L["Actor.Card.LegendaryActions"]
+    };
+
+    private string FactLabel(string key) => key switch
+    {
+        "savingThrows" => L["Actor.Card.SavingThrows"],
+        "skills" => L["Actor.Card.Skills"],
+        "damageVulnerabilities" => L["Actor.Card.DamageVulnerabilities"],
+        "damageResistances" => L["Actor.Card.DamageResistances"],
+        "damageImmunities" => L["Actor.Card.DamageImmunities"],
+        "conditionImmunities" => L["Actor.Card.ConditionImmunities"],
+        "senses" => L["Actor.Card.Senses"],
+        _ => L["Actor.Card.Languages"]
     };
 
     /// <summary>True when the entry carries the structured fields a stat block needs.</summary>
     public static bool CanShow(ContentEntry entry) =>
         entry.Type.Equals("monster", StringComparison.OrdinalIgnoreCase)
         && RefCard.Int(entry, "armorClass") != null && RefCard.Int(entry, "hitPoints") != null && RefCard.Int(entry, "strength") != null
-        && SectionKeys.Any(s => RefCard.Rows(entry, s.Key).Count > 0);
+        && SectionKeys.Any(s => RefCard.Rows(entry, s).Count > 0);
 
     private string TypeLine
     {
@@ -88,18 +105,18 @@
     {
         get
         {
-            foreach (var (label, key) in new[] { ("Saving Throws", "savingThrows"), ("Skills", "skills"), ("Damage Vulnerabilities", "damageVulnerabilities"), ("Damage Resistances", "damageResistances"), ("Damage Immunities", "damageImmunities"), ("Condition Immunities", "conditionImmunities"), ("Senses", "senses"), ("Languages", "languages") })
+            foreach (var key in new[] { "savingThrows", "skills", "damageVulnerabilities", "damageResistances", "damageImmunities", "conditionImmunities", "senses", "languages" })
             {
-                if (RefCard.Text(Entry, key) is { } text) yield return (label, text);
+                if (RefCard.Text(Entry, key) is { } text) yield return (FactLabel(key), text);
             }
 
             if (RefCard.Text(Entry, "challengeRating") is { } cr)
             {
-                yield return ("Challenge", RefCard.Int(Entry, "xp") is { } xp ? $"{cr} ({xp:N0} XP)" : cr);
+                yield return (L["Actor.Card.Challenge"], RefCard.Int(Entry, "xp") is { } xp ? L["Actor.Card.ChallengeXp", cr, xp] : cr);
             }
         }
     }
 
     private IEnumerable<(string Key, string Label, List<Dictionary<string, object>> Rows)> Sections =>
-        SectionKeys.Select(s => (s.Key, s.Label, Rows: RefCard.Rows(Entry, s.Key))).Where(s => s.Rows.Count > 0);
+        SectionKeys.Select(s => (Key: s, Label: SectionLabel(s), Rows: RefCard.Rows(Entry, s))).Where(s => s.Rows.Count > 0);
 }

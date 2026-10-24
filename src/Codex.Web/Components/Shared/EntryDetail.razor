@@ -20,7 +20,7 @@
             <div class="d-flex flex-wrap gap-1">
                 @if (Item.IsHomebrew)
                 {
-                    <span class="pill pill-accent">Homebrew</span>
+                    <span class="pill pill-accent">@L["Library.Homebrew"]</span>
                 }
                 @foreach (var tag in Item.Entry.Tags.Take(8))
                 {
@@ -80,7 +80,7 @@
                     <li>
                         @if (row.TryGetValue("level", out var level))
                         {
-                            <div class="feature-level">Level @level</div>
+                            <div class="feature-level">@L["Library.Detail.Level", level]</div>
                         }
                         <strong>@(row.GetValueOrDefault("name")?.ToString())</strong>
                         @if (row.GetValueOrDefault("description") is { } description)
@@ -94,7 +94,7 @@
     }
 
     <footer class="attribution" data-testid="entry-attribution">
-        <div><strong>Source:</strong> @Item.SourceName@(Item.Entry.Source != null && !Item.IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
+        <div><strong>@L["Library.Detail.Source"]</strong> @Item.SourceName@(Item.Entry.Source != null && !Item.IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
         @if (Item.License != null)
         {
             <div class="mt-1">
@@ -103,19 +103,19 @@
                     <div>@Item.License.Attribution</div>
                 }
                 <div>
-                    Licence: @if (Item.License.Url != null) { <a href="@Item.License.Url" rel="license noopener" target="_blank">@Item.License.Name</a> } else { @Item.License.Name }
-                    @if (Item.License.Modified) { <span> · modified from the original</span> }
+                    @L["Library.Detail.Licence"] @if (Item.License.Url != null) { <a href="@Item.License.Url" rel="license noopener" target="_blank">@Item.License.Name</a> } else { @Item.License.Name }
+                    @if (Item.License.Modified) { <span> · @L["Library.Detail.Modified"]</span> }
                 </div>
             </div>
         }
         else if (Item.IsHomebrew)
         {
-            <div class="mt-1">Created at this table. The DM decides who may reuse it.</div>
+            <div class="mt-1">@L["Library.Detail.HomebrewNote"]</div>
         }
         @if (FlavorPack is { } lorePack)
         {
             <div class="mt-1" data-testid="flavor-attribution">
-                <strong>Lore text:</strong> @lorePack.Name@(lorePack.License != null ? $" · licence {lorePack.License.Name}" : string.Empty)
+                <strong>@L["Library.Detail.LoreText"]</strong> @lorePack.Name@(lorePack.License != null ? " · " + L["Library.Detail.LicenceName", lorePack.License.Name] : string.Empty)
                 @if (!string.IsNullOrWhiteSpace(lorePack.License?.Attribution))
                 {
                     <div>@lorePack.License!.Attribution</div>
@@ -170,9 +170,9 @@
 
                 var text = value switch
                 {
-                    bool b => b ? "Yes" : "No",
-                    IEnumerable<object> list => string.Join(", ", list.Select(o => o?.ToString())),
-                    _ => value.ToString() ?? string.Empty
+                    bool b => b ? L["Library.Detail.Yes"] : L["Library.Detail.No"],
+                    IEnumerable<object> list => string.Join(", ", list.Select(o => Shown(fieldDef, o?.ToString()))),
+                    _ => Shown(fieldDef, value.ToString())
                 };
                 if (text.Length == 0 || text.Length > 160) continue;
                 pairs.Add((fieldDef?.Label ?? CampaignLibrary.Humanize(key), text));
@@ -205,6 +205,10 @@
             return result;
         }
     }
+
+    /// <summary>A stored value as the reader should see it: dropdown and tag values are translated, never replaced.</summary>
+    private static string Shown(FieldDefinition? field, string? value) =>
+        value == null ? string.Empty : field?.Display(value) ?? value;
 
     private static bool IsRows(object value) =>
         value is IEnumerable<object> list && list.Any() && list.All(item => item is IDictionary<string, object>);

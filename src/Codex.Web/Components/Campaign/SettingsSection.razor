@@ -13,58 +13,58 @@
 
 <div class="page-header mb-3">
     <div>
-        <h2 class="mb-0">Settings</h2>
-        <p class="page-subtitle">@(Ctx.IsDm ? "Campaign details, content packs, members and backups." : "Campaign details. Only the DM can change them.")</p>
+        <h2 class="mb-0">@L["Campaign.Settings.Title"]</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.Settings.Subtitle.Dm"] : L["Campaign.Settings.Subtitle.Player"])</p>
     </div>
 </div>
 
 <div class="row g-3">
     <div class="col-lg-7">
         <section class="panel" aria-labelledby="details-heading">
-            <div class="panel-title"><h3 id="details-heading">Details</h3></div>
+            <div class="panel-title"><h3 id="details-heading">@L["Campaign.Settings.Details"]</h3></div>
             @if (Ctx.IsDm)
             {
                 <form @onsubmit="SaveDetailsAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
-                        <label for="cs-name" class="field-label">Name</label>
+                        <label for="cs-name" class="field-label">@L["Campaign.Settings.Name"]</label>
                         <input id="cs-name" class="field-input" @bind="name" required maxlength="120" data-testid="settings-name" />
                     </div>
                     <div class="mb-3">
-                        <label for="cs-desc" class="field-label">Description</label>
+                        <label for="cs-desc" class="field-label">@L["Campaign.Settings.Description"]</label>
                         <textarea id="cs-desc" class="field-input" rows="3" @bind="description"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="cs-system" class="field-label">Game system</label>
+                        <label for="cs-system" class="field-label">@L["Campaign.Settings.GameSystem"]</label>
                         <select id="cs-system" class="field-select" @bind="systemId" aria-describedby="cs-system-help">
                             @foreach (var system in Catalog.Systems)
                             {
                                 <option value="@system.Id">@system.Name</option>
                             }
                         </select>
-                        <div id="cs-system-help" class="field-hint">Changing the system does not convert existing character sheets.</div>
+                        <div id="cs-system-help" class="field-hint">@L["Campaign.Settings.SystemHint"]</div>
                     </div>
                     @if (Ctx.System?.SheetRules != null)
                     {
                         <div class="mb-3">
-                            <label for="cs-rules" class="field-label">House rules: sheet checks</label>
+                            <label for="cs-rules" class="field-label">@L["Campaign.Settings.Rules.Label"]</label>
                             <select id="cs-rules" class="field-select" @bind="rulesEnforcement" aria-describedby="cs-rules-help" data-testid="settings-rules">
-                                <option value="inherit">Use the system's setting (@Ctx.System.SheetRules.Enforcement)</option>
-                                <option value="strict">Strict: players can't save a sheet that breaks a rule</option>
-                                <option value="warn">Warn only: show problems, allow saving</option>
-                                <option value="off">Off: no checks</option>
+                                <option value="inherit">@L["Campaign.Settings.Rules.Inherit", Ctx.System.SheetRules.Enforcement]</option>
+                                <option value="strict">@L["Campaign.Settings.Rules.Strict"]</option>
+                                <option value="warn">@L["Campaign.Settings.Rules.Warn"]</option>
+                                <option value="off">@L["Campaign.Settings.Rules.Off"]</option>
                             </select>
-                            <div id="cs-rules-help" class="field-hint">Point buy, class spell lists, subclass and feat limits come from the system's rules. The DM can always save regardless.</div>
+                            <div id="cs-rules-help" class="field-hint">@L["Campaign.Settings.Rules.Hint"]</div>
                         </div>
                     }
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="settings-save">Save details</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="settings-save">@L["Campaign.Settings.SaveDetails"]</CodexButton>
                 </form>
             }
             else
             {
                 <dl class="prop-list mb-0">
-                    <dt>Name</dt><dd>@Ctx.Campaign.Name</dd>
-                    <dt>System</dt><dd>@Catalog.GetDisplayName(Ctx.Campaign.SystemId)</dd>
-                    <dt>Description</dt><dd>@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? "—" : Ctx.Campaign.Description)</dd>
+                    <dt>@L["Campaign.Settings.Name"]</dt><dd>@Ctx.Campaign.Name</dd>
+                    <dt>@L["Campaign.Settings.System"]</dt><dd>@Catalog.GetDisplayName(Ctx.Campaign.SystemId)</dd>
+                    <dt>@L["Campaign.Settings.Description"]</dt><dd>@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? "—" : Ctx.Campaign.Description)</dd>
                 </dl>
             }
         </section>
@@ -72,24 +72,24 @@
         @if (Ctx.IsDm)
         {
             <section class="panel" aria-labelledby="art-heading">
-                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="18" Class="title-icon" /> Cover art</h3></div>
+                <div class="panel-title"><h3 id="art-heading"><LucideIcon IconName="image" Size="18" Class="title-icon" /> @L["Campaign.Settings.Cover.Title"]</h3></div>
                 <div class="cover-settings">
-                    <div class="cover-preview @(Ctx.Campaign.HasCover ? "has-cover" : "")" style="@(Ctx.Campaign.HasCover ? $"background-image:url('{MediaEndpoints.CoverUrl(Ctx.Campaign)}')" : "")" role="img" aria-label="@(Ctx.Campaign.HasCover ? "Current cover art" : "No cover art yet")">
+                    <div class="cover-preview @(Ctx.Campaign.HasCover ? "has-cover" : "")" style="@(Ctx.Campaign.HasCover ? $"background-image:url('{MediaEndpoints.CoverUrl(Ctx.Campaign)}')" : "")" role="img" aria-label="@(Ctx.Campaign.HasCover ? L["Campaign.Settings.Cover.Current"] : L["Campaign.Settings.Cover.None"])">
                         @if (!Ctx.Campaign.HasCover)
                         {
                             <LucideIcon IconName="image" Size="28" />
                         }
                     </div>
                     <div>
-                        <p class="small-muted">Shown on the campaign card and behind the campaign title. Landscape images around 1600 × 900 look best. PNG, JPEG or WebP, up to 6 MB.</p>
+                        <p class="small-muted">@L["Campaign.Settings.Cover.Hint"]</p>
                         <div class="d-flex gap-2 flex-wrap">
                             <label class="cx-btn cx-etched cx-sm mb-0">
-                                <LucideIcon IconName="upload" Size="14" /> @(Ctx.Campaign.HasCover ? "Replace cover" : "Upload cover")
+                                <LucideIcon IconName="upload" Size="14" /> @(Ctx.Campaign.HasCover ? L["Campaign.Settings.Cover.Replace"] : L["Campaign.Settings.Cover.Upload"])
                                 <InputFile OnChange="UploadCoverAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
                             </label>
                             @if (Ctx.Campaign.HasCover)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="RemoveCoverAsync">Remove</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="RemoveCoverAsync">@L["Campaign.Settings.Remove"]</CodexButton>
                             }
                         </div>
                     </div>
@@ -97,17 +97,17 @@
             </section>
 
             <section class="panel" aria-labelledby="packs-heading">
-                <div class="panel-title"><h3 id="packs-heading">Content packs</h3></div>
+                <div class="panel-title"><h3 id="packs-heading">@L["Campaign.Settings.Packs.Title"]</h3></div>
                 @{
-                    var packs = Registry.GetPacks(Ctx.Campaign.SystemId).ToList();
+                    var packs = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).ToList();
                 }
                 @if (packs.Count == 0)
                 {
-                    <p class="small-muted mb-0">No packs are loaded for this system.</p>
+                    <p class="small-muted mb-0">@L["Campaign.Settings.Packs.None"]</p>
                 }
                 else
                 {
-                    <p class="small-muted">Untick a pack to keep it out of this campaign's Library. With nothing ticked, every pack is in play.</p>
+                    <p class="small-muted">@L["Campaign.Settings.Packs.Hint"]</p>
                     @foreach (var pack in packs)
                     {
                         <div class="field-check mb-1">
@@ -115,37 +115,37 @@
                             <label for="pack-@pack.Id" >@pack.Name <span class="pill ms-1">@pack.Kind</span></label>
                         </div>
                     }
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-2" OnClick="SavePacksAsync">Save pack selection</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-2" OnClick="SavePacksAsync">@L["Campaign.Settings.Packs.Save"]</CodexButton>
                 }
             </section>
         }
 
         <section class="panel" aria-labelledby="members-heading">
-            <div class="panel-title"><h3 id="members-heading">Members</h3></div>
+            <div class="panel-title"><h3 id="members-heading">@L["Campaign.Settings.Members"]</h3></div>
             <ul class="list-unstyled mb-0">
                 @foreach (var member in Ctx.Campaign.Members)
                 {
                     var isOwner = member.UserId == Ctx.Campaign.OwnerId;
                     <li class="list-row">
                         <div class="row-main">
-                            <div class="row-title">@usernames.GetValueOrDefault(member.UserId, member.UserId) @(isOwner ? "(owner)" : "")</div>
+                            <div class="row-title">@usernames.GetValueOrDefault(member.UserId, member.UserId) @(isOwner ? L["Campaign.Settings.Owner"] : "")</div>
                         </div>
                         @if (Ctx.IsDm && !isOwner)
                         {
                             <div class="row-actions">
-                                <label for="role-@member.UserId" class="visually-hidden">Role for @usernames.GetValueOrDefault(member.UserId, member.UserId)</label>
+                                <label for="role-@member.UserId" class="visually-hidden">@L["Campaign.Settings.RoleFor", usernames.GetValueOrDefault(member.UserId, member.UserId)]</label>
                                 <select id="role-@member.UserId" class="field-select field-sm" value="@member.Role" @onchange="e => ChangeRoleAsync(member, e.Value?.ToString())">
                                     @foreach (CampaignRole role in Enum.GetValues<CampaignRole>())
                                     {
-                                        <option value="@role">@role</option>
+                                        <option value="@role">@RoleLabel(role)</option>
                                     }
                                 </select>
-                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="() => RemoveMemberAsync(member)" aria-label="@($"Remove {usernames.GetValueOrDefault(member.UserId, member.UserId)} from the campaign")">Remove</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="() => RemoveMemberAsync(member)" aria-label="@L["Campaign.Settings.RemoveFromCampaign", usernames.GetValueOrDefault(member.UserId, member.UserId)]">@L["Campaign.Settings.Remove"]</CodexButton>
                             </div>
                         }
                         else
                         {
-                            <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@member.Role</span>
+                            <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role)</span>
                         }
                     </li>
                 }
@@ -153,13 +153,13 @@
             @if (Ctx.IsDm)
             {
                 <hr />
-                <label for="cs-invite" class="field-label">Invite link</label>
+                <label for="cs-invite" class="field-label">@L["Campaign.Settings.InviteLink"]</label>
                 <div class="input-group input-group-sm">
                     <input id="cs-invite" class="field-input" readonly value="@InviteLink" />
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></CodexButton>
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RegenerateInviteAsync">New link</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="@L["Campaign.Settings.CopyInvite"]"><LucideIcon IconName="copy" Size="14" /></CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RegenerateInviteAsync">@L["Campaign.Settings.NewLink"]</CodexButton>
                 </div>
-                <div class="field-hint">Making a new link stops the old one from working.</div>
+                <div class="field-hint">@L["Campaign.Settings.NewLinkHint"]</div>
             }
         </section>
     </div>
@@ -168,28 +168,28 @@
     {
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="backup-heading">
-                <div class="panel-title"><h3 id="backup-heading">Backup</h3></div>
-                <p class="small-muted">Export downloads the whole campaign (characters, sessions, lore, notes, homebrew) as one JSON file. Import restores a file exported from here, including after the campaign was deleted.</p>
+                <div class="panel-title"><h3 id="backup-heading">@L["Campaign.Settings.Backup"]</h3></div>
+                <p class="small-muted">@L["Campaign.Settings.BackupHint"]</p>
                 <div class="d-flex gap-2 flex-wrap">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ExportAsync"><LucideIcon IconName="download" Size="14" /> Export campaign</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ExportAsync"><LucideIcon IconName="download" Size="14" /> @L["Campaign.Settings.Export"]</CodexButton>
                     <label class="cx-btn cx-etched cx-sm mb-0">
-                        <LucideIcon IconName="upload" Size="14" /> Import campaign
+                        <LucideIcon IconName="upload" Size="14" /> @L["Campaign.Settings.Import"]
                         <InputFile OnChange="ImportAsync" accept=".json" class="visually-hidden" />
                     </label>
                 </div>
                 <div class="field-check mt-2">
                     <input id="restore-as-new" type="checkbox" class="field-box" @bind="restoreAsNew" />
-                    <label for="restore-as-new" class="small-muted">The file is a backup of a different (for example deleted) campaign: restore that one</label>
+                    <label for="restore-as-new" class="small-muted">@L["Campaign.Settings.RestoreAsNew"]</label>
                 </div>
             </section>
 
             <section class="panel" aria-labelledby="danger-heading">
-                <div class="panel-title"><h3 id="danger-heading">Delete campaign</h3></div>
-                <p class="small-muted">Removes the campaign and everything in it. Export first if you want to keep anything.</p>
-                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="DeleteAsync" Disabled="@(Ctx.Campaign.OwnerId != Ctx.UserId)" data-testid="settings-delete">Delete this campaign</CodexButton>
+                <div class="panel-title"><h3 id="danger-heading">@L["Campaign.Settings.Delete.Title"]</h3></div>
+                <p class="small-muted">@L["Campaign.Settings.Delete.Hint"]</p>
+                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="DeleteAsync" Disabled="@(Ctx.Campaign.OwnerId != Ctx.UserId)" data-testid="settings-delete">@L["Campaign.Settings.Delete.Button"]</CodexButton>
                 @if (Ctx.Campaign.OwnerId != Ctx.UserId)
                 {
-                    <div class="field-hint">Only the campaign's owner can delete it.</div>
+                    <div class="field-hint">@L["Campaign.Settings.Delete.OwnerOnlyHint"]</div>
                 }
             </section>
         </div>
@@ -227,6 +227,13 @@
         }
     }
 
+    private string RoleLabel(CampaignRole role) => role switch
+    {
+        CampaignRole.DM => L["Campaign.Settings.Role.DM"],
+        CampaignRole.Player => L["Campaign.Settings.Role.Player"],
+        _ => L["Campaign.Settings.Role.Observer"]
+    };
+
     private bool IsActive(string packId) => activePacks.Count == 0 || activePacks.Contains(packId);
 
     private void TogglePack(string packId, bool on)
@@ -234,7 +241,7 @@
         if (activePacks.Count == 0)
         {
             // Going from "everything" to an explicit list: start from all packs, then apply the change.
-            activePacks = Registry.GetPacks(Ctx.Campaign.SystemId).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            activePacks = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         if (on) activePacks.Add(packId); else activePacks.Remove(packId);
@@ -244,7 +251,7 @@
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            Ctx.Notify(Flash.Error("The campaign needs a name."));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.NameRequired"]));
             return;
         }
 
@@ -261,21 +268,21 @@
                 campaign.SystemId = newSystemId;
                 campaign.RulesEnforcement = newEnforcement;
             });
-            Ctx.Notify(Flash.Success("Saved."));
+            Ctx.Notify(Flash.Success(L["Campaign.Settings.Saved"]));
             await Ctx.ReloadAsync();
         }
         catch (InvalidOperationException ex)
         {
-            Ctx.Notify(Flash.Error(ex.Message));
+            Ctx.Notify(Flash.Error(L.Describe(ex)));
         }
     }
 
     private async Task SavePacksAsync()
     {
-        var all = Registry.GetPacks(Ctx.Campaign.SystemId).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var all = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var packs = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
         await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.ActivePacks = packs.ToList());
-        Ctx.Notify(Flash.Success("Pack selection saved."));
+        Ctx.Notify(Flash.Success(L["Campaign.Settings.PacksSaved"]));
         await Ctx.ReloadAsync();
     }
 
@@ -286,30 +293,30 @@
         {
             if (campaign.Members.FirstOrDefault(m => m.UserId == member.UserId) is { } stored) stored.Role = parsed;
         });
-        Ctx.Notify(Flash.Success($"{usernames.GetValueOrDefault(member.UserId, member.UserId)} is now a {parsed}."));
+        Ctx.Notify(Flash.Success(L["Campaign.Settings.RoleChanged", usernames.GetValueOrDefault(member.UserId, member.UserId), RoleLabel(parsed)]));
         await Ctx.ReloadAsync();
     }
 
     private async Task RemoveMemberAsync(CampaignMember member)
     {
         var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
-        if (!await confirm.ShowAsync($"Remove {who}?", "They lose access to this campaign. Their characters stay in the cast.", "Remove", isDestructive: true)) return;
+        if (!await confirm.ShowAsync(L["Campaign.Settings.RemoveQ", who], L["Campaign.Settings.RemoveBody"], L["Campaign.Settings.Remove"], isDestructive: true)) return;
         await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.Members.RemoveAll(m => m.UserId == member.UserId));
-        Ctx.Notify(Flash.Success($"Removed {who}."));
+        Ctx.Notify(Flash.Success(L["Campaign.Settings.Removed", who]));
         await Ctx.ReloadAsync();
     }
 
     private async Task CopyInviteAsync()
     {
         var ok = await JS.InvokeAsync<bool>("codex.copyText", InviteLink);
-        Ctx.Notify(ok ? Flash.Success("Invite link copied.") : Flash.Error("Could not copy. Select the link and copy it manually."));
+        Ctx.Notify(ok ? Flash.Success(L["Campaign.Settings.InviteCopied"]) : Flash.Error(L["Campaign.Settings.CopyFailed"]));
     }
 
     private async Task RegenerateInviteAsync()
     {
         var code = Guid.NewGuid().ToString("N")[..8];
         await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.InviteCode = code);
-        Ctx.Notify(Flash.Success("New invite link created. The old one no longer works."));
+        Ctx.Notify(Flash.Success(L["Campaign.Settings.NewInviteCreated"]));
         await Ctx.ReloadAsync();
     }
 
@@ -318,13 +325,13 @@
         var file = e.File;
         if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
         {
-            Ctx.Notify(Flash.Error("Use a PNG, JPEG, WebP, GIF or AVIF image."));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.BadImageType"]));
             return;
         }
 
         if (file.Size > RavenMediaStore.MaxBytes)
         {
-            Ctx.Notify(Flash.Error("That image is over 6 MB. Resize it and try again."));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.ImageTooBig"]));
             return;
         }
 
@@ -337,12 +344,12 @@
                 campaign.HasCover = true;
                 campaign.CoverVersion++;
             });
-            Ctx.Notify(Flash.Success("Cover art updated."));
+            Ctx.Notify(Flash.Success(L["Campaign.Settings.CoverUpdated"]));
             await Ctx.ReloadAsync();
         }
         catch (Exception ex)
         {
-            Ctx.Notify(Flash.Error("The upload failed: " + ex.Message));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.UploadFailed", L.Describe(ex)]));
         }
     }
 
@@ -354,7 +361,7 @@
             campaign.HasCover = false;
             campaign.CoverVersion++;
         });
-        Ctx.Notify(Flash.Success("Cover art removed."));
+        Ctx.Notify(Flash.Success(L["Campaign.Settings.CoverRemoved"]));
         await Ctx.ReloadAsync();
     }
 
@@ -363,14 +370,14 @@
         var bundle = await ExportService.ExportAsync(Ctx.Access);
         if (bundle == null)
         {
-            Ctx.Notify(Flash.Error("Export failed."));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.ExportFailed"]));
             return;
         }
 
         var json = CampaignExportService.Serialize(bundle);
         var href = "data:application/json;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
         await JS.InvokeVoidAsync("codex.download", href, $"{RavenHomebrewRepository.Slugify(Ctx.Campaign.Name)}-export.json");
-        Ctx.Notify(Flash.Success("Export downloaded."));
+        Ctx.Notify(Flash.Success(L["Campaign.Settings.ExportDone"]));
     }
 
     private async Task ImportAsync(InputFileChangeEventArgs e)
@@ -382,19 +389,19 @@
             var bundle = CampaignExportService.Deserialize(await reader.ReadToEndAsync());
             if (bundle == null)
             {
-                Ctx.Notify(Flash.Error("That file isn't a campaign export."));
+                Ctx.Notify(Flash.Error(L["Campaign.Settings.NotExport"]));
                 return;
             }
 
             if (bundle.Campaign?.Id != Ctx.Campaign.Id && !restoreAsNew)
             {
-                Ctx.Notify(Flash.Error("That file is a backup of a different campaign. Tick “restore that one” if you meant to bring it back."));
+                Ctx.Notify(Flash.Error(L["Campaign.Settings.OtherCampaign"]));
                 return;
             }
 
             if (await ExportService.ImportAsync(bundle, Ctx.UserId))
             {
-                Ctx.Notify(Flash.Success($"Imported “{bundle.Campaign?.Name}”."));
+                Ctx.Notify(Flash.Success(L["Campaign.Settings.Imported", bundle.Campaign?.Name]));
                 if (bundle.Campaign!.Id == Ctx.Campaign.Id)
                 {
                     await Ctx.ReloadAsync();
@@ -406,20 +413,20 @@
             }
             else
             {
-                Ctx.Notify(Flash.Error("Import rejected: unrecognised format or you are not a DM of that campaign."));
+                Ctx.Notify(Flash.Error(L["Campaign.Settings.ImportRejected"]));
             }
         }
         catch (Exception ex)
         {
-            Ctx.Notify(Flash.Error($"Import failed: {ex.Message}"));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.ImportFailed", L.Describe(ex)]));
         }
     }
 
     private async Task DeleteAsync()
     {
-        var ok = await confirm.ShowAsync($"Delete “{Ctx.Campaign.Name}”?",
-            "This removes the campaign and everything in it. Export a backup first if you want to keep any of it. This cannot be undone.",
-            "Delete campaign", isDestructive: true);
+        var ok = await confirm.ShowAsync(L["Campaign.Settings.DeleteQ", Ctx.Campaign.Name],
+            L["Campaign.Settings.DeleteBody"],
+            L["Campaign.Settings.DeleteConfirm"], isDestructive: true);
         if (!ok) return;
 
         var result = await CampaignRepo.DeleteAsync(Ctx.Campaign.Id, Ctx.UserId);
@@ -429,7 +436,7 @@
         }
         else
         {
-            Ctx.Notify(Flash.Error("Only the campaign's owner can delete it."));
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.Delete.OwnerOnlyHint"]));
         }
     }
 }

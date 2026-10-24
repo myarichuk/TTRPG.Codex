@@ -1,0 +1,19 @@
+id: codex-flavor-ru
+name: 'TTRPG.Codex flavor text (Русский)'
+version: 1.0.0
+systemId: srd5e
+minAppVersion: 0.0.0
+priority: 2
+kind: translation
+locale: ru
+translationOf: codex-flavor
+dependencies:
+- srd-5.2.1
+- codex-flavor
+description: 'Machine-drafted Russian translation of the original flavor text and entry names for backgrounds, classes, conditions, feats, species and subclasses.'
+authors:
+- TTRPG.Codex contributors
+license:
+  name: MIT
+  url: https://opensource.org/licenses/MIT
+  attribution: All flavor text and image prompts in this pack are original work by TTRPG.Codex contributors, released under the MIT License (https://opensource.org/licenses/MIT), independent of the repository licence. They do not quote or paraphrase the SRD rules text. Machine-drafted translation; native review welcome.

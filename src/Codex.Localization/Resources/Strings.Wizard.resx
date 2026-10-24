@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Wizard.New" xml:space="preserve"><value>New homebrew</value></data>
+  <data name="Wizard.Edit" xml:space="preserve"><value>Edit homebrew</value></data>
+  <data name="Wizard.Unnamed" xml:space="preserve"><value>Unnamed {0}</value></data>
+  <data name="Wizard.Untitled" xml:space="preserve"><value>Untitled entry</value></data>
+  <data name="Wizard.CloseWithoutSaving" xml:space="preserve"><value>Close without saving</value></data>
+  <data name="Wizard.Steps" xml:space="preserve"><value>Steps</value></data>
+  <data name="Wizard.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Wizard.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Wizard.ChooseType" xml:space="preserve"><value>— choose a type —</value></data>
+  <data name="Wizard.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Wizard.Tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="Wizard.TagsPlaceholder" xml:space="preserve"><value>Comma-separated, e.g. undead, swamp</value></data>
+  <data name="Wizard.Visible" xml:space="preserve"><value>Visible to players</value></data>
+  <data name="Wizard.HiddenTypeHint" xml:space="preserve"><value>{0} stay out of the players' Library either way; this only matters if you change the type.</value></data>
+  <data name="Wizard.DraftHint" xml:space="preserve"><value>Untick to keep it a draft only you can see.</value></data>
+  <data name="Wizard.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Wizard.HintPublished" xml:space="preserve"><value>Players can read this once the entry is visible to them; the AI writes it for them. **bold**, *italic* and "- " bullets are rendered.</value></data>
+  <data name="Wizard.HintDraft" xml:space="preserve"><value>A draft only you can see; the AI may add hooks and secrets. **bold**, *italic* and "- " bullets are rendered.</value></data>
+  <data name="Wizard.Portrait" xml:space="preserve"><value>Portrait</value></data>
+  <data name="Wizard.Art" xml:space="preserve"><value>Art</value></data>
+  <data name="Wizard.ArtAlt" xml:space="preserve"><value>Art for {0}</value></data>
+  <data name="Wizard.TipA" xml:space="preserve"><value>Tip: an</value></data>
+  <data name="Wizard.TipB" xml:space="preserve"><value>Art prompt</value></data>
+  <data name="Wizard.TipC" xml:space="preserve"><value>on the Description step (one visual sentence) gives the image model a better brief than the description alone.</value></data>
+  <data name="Wizard.ReviewNote" xml:space="preserve"><value>Empty steps are fine: only a type and a name are required. Everything can be changed later from the Library.</value></data>
+  <data name="Wizard.Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Wizard.PreviewEmpty" xml:space="preserve"><value>Choose a type and a name to see the entry take shape.</value></data>
+  <data name="Wizard.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Wizard.StepOf" xml:space="preserve"><value>Step {0} of {1}</value></data>
+  <data name="Wizard.Next" xml:space="preserve"><value>Next: {0}</value></data>
+  <data name="Wizard.Saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="Wizard.Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Wizard.SaveChanges" xml:space="preserve"><value>Save changes</value></data>
+  <data name="Wizard.Step.Basics" xml:space="preserve"><value>Basics</value></data>
+  <data name="Wizard.Step.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Wizard.Step.General" xml:space="preserve"><value>General</value></data>
+  <data name="Wizard.Step.Review" xml:space="preserve"><value>Review</value></data>
+  <data name="Wizard.Intro.Basics" xml:space="preserve"><value>What it is and what it's called.</value></data>
+  <data name="Wizard.Intro.StoryCreature" xml:space="preserve"><value>How it looks, what it wants, how it fights. Write it, or let the AI draft it from the stats.</value></data>
+  <data name="Wizard.Intro.Story" xml:space="preserve"><value>The rules text and the lore.</value></data>
+  <data name="Wizard.Intro.Art" xml:space="preserve"><value>Optional. Shown at the top of the entry in the Library.</value></data>
+  <data name="Wizard.Intro.Review" xml:space="preserve"><value>Check the preview, then save.</value></data>
+  <data name="Wizard.Sum.Visible" xml:space="preserve"><value>{0} · visible to players</value></data>
+  <data name="Wizard.Sum.Draft" xml:space="preserve"><value>{0} · draft</value></data>
+  <data name="Wizard.Sum.NeedBasics" xml:space="preserve"><value>type and name needed</value></data>
+  <data name="Wizard.Sum.NoDescription" xml:space="preserve"><value>no description yet</value></data>
+  <data name="Wizard.Sum.Words" xml:space="preserve"><value>{0, plural, one{# word} other{# words}}</value></data>
+  <data name="Wizard.Sum.NewImage" xml:space="preserve"><value>new image ready</value></data>
+  <data name="Wizard.Sum.HasArt" xml:space="preserve"><value>has art</value></data>
+  <data name="Wizard.Sum.NoArt" xml:space="preserve"><value>no art</value></data>
+  <data name="Wizard.Sum.Filled" xml:space="preserve"><value>{0} of {1} filled</value></data>
+  <data name="Wizard.Placeholder.Creature" xml:space="preserve"><value>e.g. A bloated toad the size of a cart, its back studded with glowing blisters…</value></data>
+  <data name="Wizard.Placeholder.Other" xml:space="preserve"><value>What it does, in the words players will read.</value></data>
+  <data name="Wizard.Error.TypeNameFirst" xml:space="preserve"><value>Choose a type and give it a name first.</value></data>
+  <data name="Wizard.Error.TypeNameRequired" xml:space="preserve"><value>A type and a name are required.</value></data>
+  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>Only the DM can edit homebrew.</value></data>
+  <data name="Wizard.Error.ArtFailed" xml:space="preserve"><value>Saved, but the art could not be stored. Try adding it again from the Library.</value></data>
+  <data name="Wizard.Error.DeleteFailed" xml:space="preserve"><value>Could not delete that entry.</value></data>
+  <data name="Wizard.DiscardTitle" xml:space="preserve"><value>Discard your changes?</value></data>
+  <data name="Wizard.DiscardBody" xml:space="preserve"><value>Nothing about “{0}” has been saved yet.</value></data>
+  <data name="Wizard.ThisEntry" xml:space="preserve"><value>this entry</value></data>
+  <data name="Wizard.Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Wizard.KeepEditing" xml:space="preserve"><value>Keep editing</value></data>
+  <data name="Wizard.DeleteTitle" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Wizard.DeleteBody" xml:space="preserve"><value>It disappears from the Library, and its art with it. Characters and creatures already made from it keep their sheets.</value></data>
+</root>

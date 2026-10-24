@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Launcher.Language" xml:space="preserve"><value>שפה</value></data>
+  <data name="Launcher.Help.Title" xml:space="preserve"><value>איך השחקנים שלי מצטרפים?</value></data>
+  <data name="Launcher.Help.Automation" xml:space="preserve"><value>עזרה: איך השחקנים שלי מצטרפים?</value></data>
+  <data name="Launcher.Status.Starting" xml:space="preserve"><value>מדליקים את הנרות… (ההפעלה הראשונה אורכת קצת יותר)</value></data>
+  <data name="Launcher.Status.Running" xml:space="preserve"><value>השולחן מוכן בכתובת {0}</value></data>
+  <data name="Launcher.Status.Stopping" xml:space="preserve"><value>מכבים את הנרות…</value></data>
+  <data name="Launcher.Status.Failed" xml:space="preserve"><value>השרת לא עלה</value></data>
+  <data name="Launcher.Status.Stopped" xml:space="preserve"><value>השרת הופסק</value></data>
+  <data name="Launcher.StartServer" xml:space="preserve"><value>הפעלת השרת</value></data>
+  <data name="Launcher.StopServer" xml:space="preserve"><value>עצירת השרת</value></data>
+  <data name="Launcher.StopWord" xml:space="preserve"><value>עצירת השרת</value></data>
+  <data name="Launcher.OpenTable" xml:space="preserve"><value>פתיחת השולחן</value></data>
+  <data name="Launcher.Quit" xml:space="preserve"><value>יציאה</value></data>
+  <data name="Launcher.Done" xml:space="preserve"><value>סיום</value></data>
+  <data name="Launcher.Lan.Toggle" xml:space="preserve"><value>לאפשר לשחקנים ברשת שלי להצטרף</value></data>
+  <data name="Launcher.Lan.Hint" xml:space="preserve"><value>חומת האש עשויה לשאול בפעם הראשונה: אשרו רשתות פרטיות. שחקנים ברשתות אחרות זקוקים ל-VPN או למנהרה, כמו Tailscale.</value></data>
+  <data name="Launcher.OpenLabel" xml:space="preserve"><value>פתיחה</value></data>
+  <data name="Launcher.Log" xml:space="preserve"><value>לוג</value></data>
+  <data name="Launcher.CampaignData" xml:space="preserve"><value>נתוני הקמפיין</value></data>
+  <data name="Launcher.Backups" xml:space="preserve"><value>גיבויים</value></data>
+  <data name="Launcher.MyContent" xml:space="preserve"><value>התוכן שלי</value></data>
+  <data name="Launcher.CantJoin" xml:space="preserve"><value>לא מצליחים להצטרף?</value></data>
+  <data name="Launcher.CopyLink" xml:space="preserve"><value>העתקת קישור</value></data>
+  <data name="Launcher.Copied" xml:space="preserve"><value>הועתק ✓</value></data>
+  <data name="Launcher.QrCode" xml:space="preserve"><value>קוד QR</value></data>
+  <data name="Launcher.Link.This" xml:space="preserve"><value>המחשב הזה</value></data>
+  <data name="Launcher.Link.Network" xml:space="preserve"><value>שחקנים ברשת שלך</value></data>
+  <data name="Launcher.Link.Tailscale" xml:space="preserve"><value>שחקנים ב-Tailscale</value></data>
+  <data name="Launcher.Tray.Open" xml:space="preserve"><value>פתיחת TTRPG.Codex</value></data>
+  <data name="Launcher.Tray.CopyPlayers" xml:space="preserve"><value>העתקת קישור לשחקנים</value></data>
+  <data name="Launcher.Tray.CopyLocal" xml:space="preserve"><value>העתקת קישור למחשב הזה</value></data>
+  <data name="Launcher.Tray.ContentFolder" xml:space="preserve"><value>פתיחת תיקיית התוכן שלי</value></data>
+  <data name="Launcher.Tray.BackupsFolder" xml:space="preserve"><value>פתיחת תיקיית הגיבויים</value></data>
+  <data name="Launcher.Tray.Show" xml:space="preserve"><value>הצגת החלון</value></data>
+  <data name="Launcher.Tray.Help" xml:space="preserve"><value>איך שחקנים מצטרפים?</value></data>
+  <data name="Launcher.Tray.Check" xml:space="preserve"><value>שחקנים לא מצליחים להצטרף?</value></data>
+  <data name="Launcher.Tray.Log" xml:space="preserve"><value>פתיחת הלוג</value></data>
+  <data name="Launcher.Tray.Data" xml:space="preserve"><value>פתיחת תיקיית הנתונים</value></data>
+  <data name="Launcher.Welcome.Title" xml:space="preserve"><value>ברוכים הבאים ל-TTRPG.Codex</value></data>
+  <data name="Launcher.Welcome.Intro" xml:space="preserve"><value>דמויות, חוקים, העולם שלכם ושולחן חי, הכול רץ על המחשב הזה. מי ישחק?</value></data>
+  <data name="Launcher.Welcome.HostTitle" xml:space="preserve"><value>לארח משחק לחברים</value></data>
+  <data name="Launcher.Welcome.HostBody" xml:space="preserve"><value>השחקנים מצטרפים מהטלפונים או מהמחשבים הניידים שלהם ב-Wi-Fi שלכם. אציג לכם קוד לסריקה.</value></data>
+  <data name="Launcher.Welcome.SoloTitle" xml:space="preserve"><value>רק אני בינתיים</value></data>
+  <data name="Launcher.Welcome.SoloBody" xml:space="preserve"><value>רק המחשב הזה יכול לפתוח אותו. אפשר לפתוח אותו לשחקנים בהמשך.</value></data>
+  <data name="Launcher.Welcome.Footer" xml:space="preserve"><value>אפשר לשנות זאת בכל עת בחלון ההפעלה. הכפתור ? מסביר איך שחקנים מצטרפים.</value></data>
+  <data name="Launcher.Check.Title" xml:space="preserve"><value>למה שחקנים לא מצליחים להצטרף?</value></data>
+  <data name="Launcher.Check.Checking" xml:space="preserve"><value>בודקים…</value></data>
+  <data name="Launcher.Check.Again" xml:space="preserve"><value>בדיקה חוזרת</value></data>
+  <data name="Launcher.Check.SummaryProblems" xml:space="preserve"><value>נמצא משהו לתיקון. התחילו מהפריט האדום הראשון.</value></data>
+  <data name="Launcher.Check.SummaryWarnings" xml:space="preserve"><value>שום דבר לא מקולקל, אבל כדאי לבדוק את הפריטים הצהובים.</value></data>
+  <data name="Launcher.Check.SummaryOk" xml:space="preserve"><value>כל מה שאני יכול לבדוק נראה תקין. אם שחקן עדיין לא מצליח להתחבר, ראו את הפריט האחרון.</value></data>
+  <data name="Launcher.Qr.Title" xml:space="preserve"><value>סרקו כדי להצטרף</value></data>
+  <data name="Launcher.Qr.Instruction" xml:space="preserve"><value>כוונו את מצלמת הטלפון לכאן. השולחן ייפתח בדפדפן.</value></data>
+  <data name="Launcher.Qr.SameWifi" xml:space="preserve"><value>הטלפונים צריכים להיות באותה רשת Wi-Fi כמו המחשב הזה.</value></data>
+  <data name="Launcher.Help.Got" xml:space="preserve"><value>הבנתי</value></data>
+  <data name="Launcher.Help.Intro" xml:space="preserve"><value>TTRPG.Codex רץ על המחשב הזה. השחקנים שלכם פותחים אותו בדפדפן: אין מה להתקין.</value></data>
+  <data name="Launcher.Help.Head.Room" xml:space="preserve"><value>משחקים באותו חדר או באותה רשת Wi-Fi</value></data>
+  <data name="Launcher.Help.Room1" xml:space="preserve"><value>לחצו על “{0}” בחלון ההפעלה.</value></data>
+  <data name="Launcher.Help.Room2" xml:space="preserve"><value>לחצו על “{0}” ליד “{1}” ותנו להם לסרוק אותו במצלמת הטלפון. או לחצו על “{2}” ושלחו להם את הקישור.</value></data>
+  <data name="Launcher.Help.Room3" xml:space="preserve"><value>הם פותחים את הקישור בדפדפן בטלפון, בטאבלט או במחשב נייד. המכשיר חייב להיות באותה רשת Wi-Fi כמוכם.</value></data>
+  <data name="Launcher.Help.Room4" xml:space="preserve"><value>בקמפיין שלכם, העתיקו את קישור ההזמנה מעמוד הסקירה ושלחו גם אותו. הם פותחים חשבון והם בפנים.</value></data>
+  <data name="Launcher.Help.Head.Away" xml:space="preserve"><value>שחקנים במקום אחר</value></data>
+  <data name="Launcher.Help.AwayIntro" xml:space="preserve"><value>המחשב שלכם אינו חשוף לאינטרנט, ולכן שחקנים במקום אחר צריכים קישור פרטי אליו. הדרך החינמית הקלה ביותר היא Tailscale (tailscale.com):</value></data>
+  <data name="Launcher.Help.Away1" xml:space="preserve"><value>אתם וכל שחקן מתקינים את Tailscale ומתחברים (כמה דקות, חינם לקבוצות קטנות).</value></data>
+  <data name="Launcher.Help.Away2" xml:space="preserve"><value>ב-Tailscale, שתפו את המחשב הזה עם כל שחקן.</value></data>
+  <data name="Launcher.Help.Away3" xml:space="preserve"><value>הפעילו את “{0}”. יופיע קישור “{1}”: העתיקו אותו ושלחו להם. הם פותחים אותו בדפדפן כש-Tailscale פועל.</value></data>
+  <data name="Launcher.Help.Head.Trouble" xml:space="preserve"><value>אם שחקן לא מצליח להתחבר</value></data>
+  <data name="Launcher.Help.Trouble1" xml:space="preserve"><value>המחשב שאל לגבי הרשת או חומת האש? אשרו עבור רשתות פרטיות או ביתיות.</value></data>
+  <data name="Launcher.Help.Trouble2" xml:space="preserve"><value>ב-Wi-Fi של אורחים או של בית קפה המכשירים לרוב לא רואים זה את זה. השתמשו ב-Wi-Fi הרגיל שלכם, או ב-Tailscale.</value></data>
+  <data name="Launcher.Help.Trouble3" xml:space="preserve"><value>לחצו על “{0}” בחלון ההפעלה: הוא בודק את השרת, הרשת והכתובת, ואומר מה לתקן.</value></data>
+  <data name="Launcher.Help.Trouble4" xml:space="preserve"><value>כתובת המחשב שלכם עשויה להשתנות כשמפעילים אותו מחדש או מתחברים לרשת אחרת. אם זה קרה, העתיקו את הקישור החדש מחלון ההפעלה ושלחו שוב.</value></data>
+  <data name="Launcher.Help.Trouble5" xml:space="preserve"><value>השאירו את המחשב הזה ער ומחובר לחשמל בזמן המשחק. אם הוא נרדם, השחקנים מתנתקים.</value></data>
+  <data name="Launcher.Help.Head.Good" xml:space="preserve"><value>טוב לדעת</value></data>
+  <data name="Launcher.Help.Good1" xml:space="preserve"><value>סגירת החלון הזה לא עוצרת את המשחק. הוא ממשיך לרוץ מסמל המגש (שורת התפריטים ב-Mac). השתמשו ב“{0}” כדי לעצור אותו לגמרי.</value></data>
+  <data name="Launcher.Help.Good2" xml:space="preserve"><value>הקמפיינים שלכם נשמרים במחשב הזה ({0}), עם גיבוי יומי ({1}).</value></data>
+  <data name="Launcher.Help.Good3" xml:space="preserve"><value>רק מי שיש לו את הקישור שלכם יכול להגיע אליו, ורק כשחלון ההפעלה פועל.</value></data>
+  <data name="Launcher.Help.Good4" xml:space="preserve"><value>משהו לא עובד? פתחו את ה“{0}” ושלחו אותו למי שעוזר לכם.</value></data>
+  <data name="Launcher.Join.Running.Title" xml:space="preserve"><value>השרת פועל</value></data>
+  <data name="Launcher.Join.Running.Detail" xml:space="preserve"><value>הוא פועל על המחשב הזה בכתובת {0}.</value></data>
+  <data name="Launcher.Join.Starting.Title" xml:space="preserve"><value>השרת עדיין עולה</value></data>
+  <data name="Launcher.Join.Starting.Detail" xml:space="preserve"><value>תנו לו דקה (ההפעלה הראשונה איטית יותר) ואז בדקו שוב.</value></data>
+  <data name="Launcher.Join.SeeLog" xml:space="preserve"><value>פרטים בלוג.</value></data>
+  <data name="Launcher.Join.PortBusy.Title" xml:space="preserve"><value>תוכנה אחרת משתמשת בפורט {0}</value></data>
+  <data name="Launcher.Join.PortBusy.Detail" xml:space="preserve"><value>סגרו את התוכנה האחרת (ייתכן שזה עותק נוסף של TTRPG.Codex) ואז לחצו על “{0}”.</value></data>
+  <data name="Launcher.Join.Stopped.Title" xml:space="preserve"><value>השרת עצור</value></data>
+  <data name="Launcher.Join.Stopped.Detail" xml:space="preserve"><value>לחצו על “{0}”.</value></data>
+  <data name="Launcher.Join.LanOn.Title" xml:space="preserve"><value>הגישה מהרשת פעילה</value></data>
+  <data name="Launcher.Join.LanOn.Detail" xml:space="preserve"><value>שחקנים ברשת ה-Wi-Fi שלכם יכולים להיכנס.</value></data>
+  <data name="Launcher.Join.LanOff.Title" xml:space="preserve"><value>הגישה מהרשת כבויה</value></data>
+  <data name="Launcher.Join.LanOff.Detail" xml:space="preserve"><value>רק המחשב הזה יכול לפתוח את השולחן. הפעילו את “{0}”.</value></data>
+  <data name="Launcher.Join.NoAddress.Title" xml:space="preserve"><value>למחשב הזה אין כתובת רשת</value></data>
+  <data name="Launcher.Join.NoAddress.Detail" xml:space="preserve"><value>נראה שהוא לא מחובר ל-Wi-Fi או לכבל. התחברו לרשת ואז בדקו שוב.</value></data>
+  <data name="Launcher.Join.UseLink.Title" xml:space="preserve"><value>השחקנים משתמשים בקישור הזה</value></data>
+  <data name="Launcher.Join.Odd.Title" xml:space="preserve"><value>הכתובת הזו לא נראית כמו רשת ביתית</value></data>
+  <data name="Launcher.Join.Odd.Detail" xml:space="preserve"><value>רשתות ביתיות ומשרדיות מתחילות בדרך כלל ב-192.168 או ב-10. ייתכן ש-VPN פעיל, או שאתם ברשת ציבורית. שחקנים ב-Wi-Fi שלכם אולי יצטרכו להשתמש בכתובת אחרת.</value></data>
+  <data name="Launcher.Join.Multi.Title" xml:space="preserve"><value>למחשב הזה יש יותר מכתובת אחת</value></data>
+  <data name="Launcher.Join.Multi.Detail" xml:space="preserve"><value>אם הקישור הראשון לא עובד, נסו אחד מאלה: {0}.</value></data>
+  <data name="Launcher.Join.Answers.Title" xml:space="preserve"><value>השרת עונה בכתובת הרשת שלכם</value></data>
+  <data name="Launcher.Join.Answers.Detail" xml:space="preserve"><value>המחשב הזה יכול להגיע לעצמו דרך הקישור הזה.</value></data>
+  <data name="Launcher.Join.NoAnswer.Title" xml:space="preserve"><value>השרת לא עונה בכתובת הרשת שלכם</value></data>
+  <data name="Launcher.Join.NoAnswer.Detail" xml:space="preserve"><value>ייתכן שהגישה מהרשת הופעלה אחרי שהשרת עלה: לחצו על “{0}” ואז על “{1}”.</value></data>
+  <data name="Launcher.Join.Tailscale.Title" xml:space="preserve"><value>Tailscale פועל</value></data>
+  <data name="Launcher.Join.Tailscale.Detail" xml:space="preserve"><value>חברים שלא ב-Wi-Fi שלכם יכולים להשתמש ב-{0} אם יש להם Tailscale ושיתפתם איתם את המחשב הזה.</value></data>
+  <data name="Launcher.Join.Unknown.Title" xml:space="preserve"><value>מה שאני לא יכול לבדוק מכאן</value></data>
+  <data name="Launcher.Join.Unknown.Detail" xml:space="preserve"><value>חומת האש והנתב של ה-Wi-Fi שלכם. אם הכול למעלה תקין ושחקן עדיין לא מצליח להתחבר: אשרו ל-TTRPG.Codex לעבור בחומת האש ברשתות פרטיות כשהמחשב שואל, ודאו שהטלפון שלו באותה רשת Wi-Fi (ולא בנתונים סלולריים), והימנעו מ-Wi-Fi של אורחים, שלרוב חוסם מכשירים מלראות זה את זה.</value></data>
+  <data name="Launcher.Server.NotFound" xml:space="preserve"><value>הקובץ Codex.Web.dll לא נמצא ב-{0}.</value></data>
+  <data name="Launcher.Server.RuntimeIncomplete" xml:space="preserve"><value>סביבת ההרצה של .NET המצורפת אינה שלמה.</value></data>
+  <data name="Launcher.Server.StartFailed" xml:space="preserve"><value>לא ניתן היה להפעיל את השרת: {0}</value></data>
+  <data name="Launcher.Server.NoAnswer" xml:space="preserve"><value>השרת לא ענה בזמן. פרטים בלוג.</value></data>
+  <data name="Launcher.Server.Unexpected" xml:space="preserve"><value>השרת נעצר באופן בלתי צפוי. ייתכן שתוכנה אחרת משתמשת בפורט. פרטים בלוג.</value></data>
+</root>

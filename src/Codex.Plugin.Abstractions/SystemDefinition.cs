@@ -34,6 +34,12 @@ public class AttributeDefinition
     public string Key { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
     public string? Abbreviation { get; set; }
+
+    /// <summary>The label and abbreviation as system.yaml wrote them. A localized copy shows translated text in
+    /// <see cref="Label"/>, but sheet data and pack entries refer to the original words ("STR 13+", "Strength"),
+    /// so rules match on these as well.</summary>
+    public string? CanonicalLabel { get; set; }
+    public string? CanonicalAbbreviation { get; set; }
     public int Default { get; set; } = 10;
     public int? Min { get; set; }
     public int? Max { get; set; }
@@ -300,6 +306,175 @@ public class SystemDefinition
     /// <summary>Character-sheet rules (attribute generation, pick constraints, lists, derived
     /// fields). Null means "no rules": any value goes, which is what a loose homebrew wants.</summary>
     public SheetRules? SheetRules { get; set; }
+
+    /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
+    public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
+    private SystemDefinition? _canonical;
+
+    /// <summary>The definition as system.yaml wrote it: this one, or the original a localized copy was made from. Prompts for AI
+    /// models and images take their wording from here, so they stay in one language whatever the reader's.</summary>
+    public SystemDefinition Canonical => _canonical ?? this;
+
+    private static string LanguageOf(string? culture)
+    {
+        var language = (culture ?? "").Trim().Split('-', '_')[0].ToLowerInvariant();
+        return language switch { "en" => "", "iw" => "he", _ => language };
+    }
+
+    private SystemTranslation? TranslationFor(string? culture) =>
+        Translations.TryGetValue(LanguageOf(culture), out var t) ? t : null;
+
+    /// <summary>
+    /// A copy whose labels, descriptions and categories are shown in <paramref name="culture"/>; the original when the system
+    /// has no translation for it. Keys, field types, options and every rule are untouched, so the copy is for display only:
+    /// run the rules engine on the original.
+    /// </summary>
+    public SystemDefinition Localize(string? culture)
+    {
+        var language = LanguageOf(culture);
+        if (language.Length == 0 || !Translations.TryGetValue(language, out var t)) return this;
+        return _localized.GetOrAdd(language, _ => Apply(t));
+    }
+
+    /// <summary>The text to show for a dropdown/tag value such as "Evocation"; the value itself when untranslated.</summary>
+    public string DisplayOption(string? culture, string fieldKey, string value)
+    {
+        var t = TranslationFor(culture);
+        if (t == null) return value;
+        foreach (var fields in new[] { t.ActorFields }.Concat(t.EntityTypes.Values.Select(x => x.Fields)))
+        {
+            if (fields.TryGetValue(fieldKey, out var f) && f.Options.TryGetValue(value, out var shown)) return shown;
+        }
+
+        return t.Values.TryGetValue(value, out var common) ? common : value;
+    }
+
+    /// <summary>The text to show for a condition name ("Poisoned"); the name itself when untranslated.</summary>
+    public string DisplayCondition(string? culture, string condition) =>
+        TranslationFor(culture) is { } t && t.Conditions.TryGetValue(condition, out var shown) ? shown : condition;
+
+    private SystemDefinition Apply(SystemTranslation t)
+    {
+        FieldDefinition Field(FieldDefinition f, LabelTranslation? x) => new()
+        {
+            Key = f.Key,
+            Label = x?.Label ?? f.Label,
+            Type = f.Type,
+            Description = x?.Description ?? f.Description,
+            Options = f.Options,
+            DefaultValue = f.DefaultValue,
+            IsRequired = f.IsRequired,
+            TargetEntityType = f.TargetEntityType,
+            Category = x?.Category ?? f.Category,
+            Min = f.Min,
+            Max = f.Max,
+            OptionLabels = OptionLabelsFor(t, x)
+        };
+
+        static LabelTranslation? Find(Dictionary<string, LabelTranslation> map, string key) =>
+            map.TryGetValue(key, out var hit) ? hit : null;
+
+        var copy = (SystemDefinition)MemberwiseClone();
+        copy._canonical = Canonical;
+        copy.Name = t.Name ?? Name;
+        copy.Description = t.Description ?? Description;
+        copy.Compatibility = t.Compatibility ?? Compatibility;
+        copy.Attributes = Attributes.Select(a => new AttributeDefinition
+        {
+            Key = a.Key, Default = a.Default, Min = a.Min, Max = a.Max, Modifier = a.Modifier,
+            Label = Find(t.Attributes, a.Key)?.Label ?? a.Label,
+            Abbreviation = Find(t.Attributes, a.Key)?.Abbreviation ?? a.Abbreviation,
+            CanonicalLabel = a.CanonicalLabel ?? a.Label,
+            CanonicalAbbreviation = a.CanonicalAbbreviation ?? a.Abbreviation
+        }).ToList();
+        copy.Resources = Resources.Select(r => new ResourceDefinition
+        {
+            Key = r.Key, MaxKey = r.MaxKey, Default = r.Default, IsPrimary = r.IsPrimary,
+            Label = Find(t.Resources, r.Key)?.Label ?? r.Label
+        }).ToList();
+        copy.ActorFields = ActorFields.Select(f => Field(f, Find(t.ActorFields, f.Key))).ToList();
+        copy.EntityTypes = EntityTypes.Select(e =>
+        {
+            t.EntityTypes.TryGetValue(e.Type, out var et);
+            return new ContentTypeDefinition
+            {
+                Type = e.Type, Folder = e.Folder, Icon = e.Icon,
+                Label = et?.Label ?? e.Label,
+                PluralLabel = et?.PluralLabel ?? e.PluralLabel,
+                Description = et?.Description ?? e.Description,
+                Fields = e.Fields.Select(f => Field(f, et == null ? null : Find(et.Fields, f.Key))).ToList(),
+                SummaryFields = e.SummaryFields, FilterFields = e.FilterFields, ActorBlueprint = e.ActorBlueprint,
+                HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing
+            };
+        }).ToList();
+        copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules);
+        copy.Translations = Translations;
+        copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);
+        copy.ValueLabels = new Dictionary<string, string>(t.Values);
+        return copy;
+    }
+
+    private static readonly System.Reflection.MethodInfo ShallowCopy =
+        typeof(object).GetMethod("MemberwiseClone", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+    private static T Copy<T>(T value) where T : class => (T)ShallowCopy.Invoke(value, null)!;
+
+    private static string Pick(Dictionary<string, string> map, string key, string original) =>
+        map.TryGetValue(key, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : original;
+
+    /// <summary>The rules with their labels translated. Only the label-bearing objects on the way down are copied; every
+    /// formula, condition and key is shared with the original.</summary>
+    private static SheetRules ApplyRuleLabels(SheetRules rules, SheetRulesTranslation t)
+    {
+        var copy = Copy(rules);
+        copy.Derived = rules.Derived.Select(d => { var c = Copy(d); c.Label = Pick(t.Derived, d.Key, d.Label); return c; }).ToList();
+        copy.Lists = rules.Lists.Select(l => { var c = Copy(l); c.Label = Pick(t.Lists, l.Key, l.Label); return c; }).ToList();
+        copy.SlotPools = rules.SlotPools.Select(p => { var c = Copy(p); c.Label = Pick(t.SlotPools, p.Key, p.Label); return c; }).ToList();
+        if (rules.Inventory != null)
+        {
+            copy.Inventory = Copy(rules.Inventory);
+            copy.Inventory.Label = t.InventoryLabel ?? rules.Inventory.Label;
+        }
+        if (rules.Multiclass != null)
+        {
+            copy.Multiclass = Copy(rules.Multiclass);
+            copy.Multiclass.Label = t.MulticlassLabel ?? rules.Multiclass.Label;
+        }
+        if (rules.Skills != null)
+        {
+            var skills = Copy(rules.Skills);
+            skills.Label = t.SkillsLabel ?? rules.Skills.Label;
+            skills.List = rules.Skills.List.Select(s => { var c = Copy(s); c.CanonicalLabel = s.CanonicalLabel ?? s.Label; c.Label = Pick(t.Skills, s.Key, s.Label); return c; }).ToList();
+            skills.Passives = rules.Skills.Passives.Select(p => { var c = Copy(p); c.Label = Pick(t.Passives, p.Key, p.Label); return c; }).ToList();
+            copy.Skills = skills;
+        }
+        return copy;
+    }
+
+    /// <summary>Shared values first, then this field's own options, so a field can word a value differently.</summary>
+    private static Dictionary<string, string>? OptionLabelsFor(SystemTranslation t, LabelTranslation? field)
+    {
+        if (t.Values.Count == 0 && (field == null || field.Options.Count == 0)) return null;
+        var labels = new Dictionary<string, string>(t.Values);
+        if (field != null) foreach (var (value, shown) in field.Options) labels[value] = shown;
+        return labels;
+    }
+
+    /// <summary>Set on a localized copy: condition name as the rules know it -> name to show.</summary>
+    public Dictionary<string, string>? ConditionLabels { get; set; }
+
+    /// <summary>Set on a localized copy: shared word (a rest, a damage type, a school) as the rules know it -> text to show.</summary>
+    public Dictionary<string, string>? ValueLabels { get; set; }
+
+    /// <summary>The text to show for one of the system's own words ("Long Rest"); the word itself when this copy has no translation.</summary>
+    public string DisplayValue(string value) =>
+        ValueLabels != null && ValueLabels.TryGetValue(value, out var shown) ? shown : value;
+
+    /// <summary>The name to show for a condition ("Poisoned"); the name itself when this copy has no translation for it.</summary>
+    public string DisplayCondition(string condition) =>
+        ConditionLabels != null && ConditionLabels.TryGetValue(condition, out var shown) ? shown : condition;
 
     public ContentTypeDefinition? FindType(string typeOrFolder)
     {

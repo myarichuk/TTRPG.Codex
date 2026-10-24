@@ -442,7 +442,8 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     }
 
     private AttributeDefinition? MatchAttribute(string name) =>
-        system.Attributes.FirstOrDefault(a => name.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Label, StringComparison.OrdinalIgnoreCase));
+        system.Attributes.FirstOrDefault(a => name.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase) || name.Equals(a.Label, StringComparison.OrdinalIgnoreCase)
+            || name.Equals(a.CanonicalAbbreviation, StringComparison.OrdinalIgnoreCase) || name.Equals(a.CanonicalLabel, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The attribute keys a property value names, by key, abbreviation or label.</summary>
     private List<string> AttributesNamedIn(object? listed)
@@ -450,7 +451,8 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         if (listed == null) return new List<string>();
         var names = listed is not string and IEnumerable<object> list ? list.Select(o => o?.ToString() ?? "").ToList() : new List<string> { listed.ToString() ?? "" };
         return system.Attributes
-            .Where(a => names.Any(n => n.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || n.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase) || n.Equals(a.Label, StringComparison.OrdinalIgnoreCase)))
+            .Where(a => names.Any(n => n.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || n.Equals(a.Abbreviation, StringComparison.OrdinalIgnoreCase) || n.Equals(a.Label, StringComparison.OrdinalIgnoreCase)
+                                    || n.Equals(a.CanonicalAbbreviation, StringComparison.OrdinalIgnoreCase) || n.Equals(a.CanonicalLabel, StringComparison.OrdinalIgnoreCase)))
             .Select(a => a.Key)
             .ToList();
     }

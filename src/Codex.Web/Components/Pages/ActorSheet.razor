@@ -28,7 +28,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
-<PageTitle>@(actor?.Name ?? "Character") | TTRPG.Codex</PageTitle>
+<PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
 
 @if (loading)
 {
@@ -38,9 +38,9 @@ else if (campaign == null || actor == null || access == null)
 {
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="user" Size="28" /></div>
-        <h1 class="h4">Character not found</h1>
-        <p>It may not exist, or you may not have access to it.</p>
-        <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+        <h1 class="h4">@L["Actor.Sheet.NotFound"]</h1>
+        <p>@L["Actor.Sheet.NotFoundBody"]</p>
+        <a href="/" class="cx-btn cx-plaque">@L["Actor.Sheet.BackToCampaigns"]</a>
     </div>
 }
 else
@@ -49,17 +49,17 @@ else
         <div class="plate-top">
             <div class="plate-id">
                 <div class="portrait-wrap">
-                    <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" Alt="@($"Portrait of {DisplayName}")" />
+                    <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" Alt="@L["Actor.Avatar.Portrait", DisplayName]" />
                     @if (CanEdit)
                     {
-                        <label class="portrait-upload" title="Upload a portrait">
-                            <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">Upload a portrait (PNG, JPEG or WebP, up to 6 MB)</span>
+                        <label class="portrait-upload" title="@L["Actor.Sheet.UploadPortrait"]">
+                            <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">@L["Actor.Sheet.UploadPortraitHidden"]</span>
                             <InputFile OnChange="UploadPortraitAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
                         </label>
                     }
                 </div>
                 <div class="min-w-0">
-                    <nav aria-label="Breadcrumb" class="breadcrumb-nav"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">Cast</a></nav>
+                    <nav aria-label="@L["Actor.Sheet.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Actor.Sheet.Campaigns"]</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">@L["Actor.Sheet.Cast"]</a></nav>
                     <h1 data-testid="actor-name">@DisplayName</h1>
                     <div class="plate-plaques">
                         <span class="pill">@KindLabel</span>
@@ -69,7 +69,7 @@ else
                         }
                         @if (!string.IsNullOrEmpty(actor.BlueprintId))
                         {
-                            <span class="pill">From @actor.BlueprintId.Split(':').Last()</span>
+                            <span class="pill">@L["Actor.Sheet.From", actor.BlueprintId.Split(':').Last()]</span>
                         }
                         @foreach (var plaque in PlatePlaques())
                         {
@@ -77,11 +77,11 @@ else
                         }
                         @if (CanEdit)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GeneratePortraitAsync" Disabled="@(busy != null)" data-testid="portrait-generate">@(busy == "portrait" ? "Drawing… this can take a minute" : actor.HasPortrait ? "New portrait with AI" : "Portrait with AI")</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GeneratePortraitAsync" Disabled="@(busy != null)" data-testid="portrait-generate">@(busy == "portrait" ? L["Actor.Art.Drawing"] : actor.HasPortrait ? L["Actor.Sheet.PortraitNew"] : L["Actor.Sheet.PortraitAi"])</CodexButton>
                         }
                         @if (CanEdit && actor.HasPortrait)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemovePortraitAsync" Disabled="@(busy != null)">Remove portrait</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemovePortraitAsync" Disabled="@(busy != null)">@L["Actor.Sheet.RemovePortrait"]</CodexButton>
                         }
                     </div>
                 </div>
@@ -89,16 +89,16 @@ else
             <div class="plate-save">
                 @if (CanEdit && DirtyCount > 0)
                 {
-                    <span class="dirty-note" role="status" data-testid="sheet-dirty">@DirtyCount unsaved @(DirtyCount == 1 ? "change" : "changes")</span>
+                    <span class="dirty-note" role="status" data-testid="sheet-dirty">@L["Actor.Sheet.Dirty", DirtyCount]</span>
                 }
-                <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> Back to cast</a>
+                <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> @L["Actor.Sheet.BackToCast"]</a>
                 @if (CanEdit)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">Save changes</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">@L["Actor.Sheet.SaveChanges"]</CodexButton>
                 }
             </div>
         </div>
-        <div class="stat-strip" role="list" aria-label="Key numbers">
+        <div class="stat-strip" role="list" aria-label="@L["Actor.Sheet.KeyNumbers"]">
             @if (system?.PrimaryResource is { } vital)
             {
                 var hpNow = YamlValues.GetInt(editSheet, vital.Key) ?? 0;
@@ -107,7 +107,7 @@ else
                 var hpBand = hpPct < 25 ? "hp-low" : hpPct < 50 ? "hp-mid" : "hp-high";
                 <div class="stat-cell stat-hp" role="listitem">
                     <span class="stat-label">@vital.Label</span>
-                    <span class="stat-value" data-testid="plate-hp">@hpNow@(hpMax > 0 ? $" / {hpMax}" : "")</span>
+                    <span class="stat-value" data-testid="plate-hp">@Bidi.Ltr(hpNow + (hpMax > 0 ? $" / {hpMax}" : ""))</span>
                     @if (hpMax > 0)
                     {
                         <div class="hp-bar @hpBand" role="progressbar" aria-label="@vital.Label" aria-valuemin="0" aria-valuemax="@hpMax" aria-valuenow="@hpNow">
@@ -119,7 +119,7 @@ else
             @if (Rules?.ArmorClass is { } plateAc)
             {
                 <div class="stat-cell stat-ac" role="listitem">
-                    <span class="stat-label">AC</span>
+                    <span class="stat-label">@L["Actor.Sheet.AcShort"]</span>
                     <span class="stat-value" data-testid="plate-ac">@(evaluation?.ArmorClass is { Active: true } acSummary ? acSummary.Total : YamlValues.GetInt(editSheet, plateAc.Key) ?? 10)</span>
                 </div>
             }
@@ -145,13 +145,13 @@ else
     {
         <div class="status" role="note">
             <LucideIcon IconName="alert-triangle" Size="18" />
-            <span>Missing content: this character came from “@actor.BlueprintId”, which isn't in a loaded pack. The sheet still works.</span>
+            <span>@L["Actor.Sheet.Missing", actor.BlueprintId]</span>
         </div>
     }
 
     @if (!CanEdit)
     {
-        <p class="small-muted">Only the owner and the DM can edit this sheet.</p>
+        <p class="small-muted">@L["Actor.Sheet.ReadOnlyNote"]</p>
     }
 
     <div class="row g-3">
@@ -160,8 +160,8 @@ else
             {
                 <section class="panel panel-warn" aria-labelledby="rules-heading" data-testid="rule-violations">
                     <div class="panel-title">
-                        <h2 id="rules-heading" class="h5"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> Rules</h2>
-                        <span class="pill @(Enforcement == "strict" ? "pill-danger" : "pill-warning")">@(Enforcement == "strict" ? (access.IsDm ? "Strict (you can override)" : "Strict: fix before saving") : "Warnings only")</span>
+                        <h2 id="rules-heading" class="h5"><LucideIcon IconName="alert-triangle" Size="18" Class="title-icon" /> @L["Actor.Sheet.Rules"]</h2>
+                        <span class="pill @(Enforcement == "strict" ? "pill-danger" : "pill-warning")">@(Enforcement == "strict" ? (access.IsDm ? L["Actor.Sheet.StrictOverride"] : L["Actor.Sheet.StrictFix"]) : L["Actor.Sheet.WarningsOnly"])</span>
                     </div>
                     <ul class="mb-0 small">
                         @foreach (var violation in evaluation.Violations)
@@ -176,8 +176,8 @@ else
             {
                 <section class="panel" aria-labelledby="warnings-heading" data-testid="rule-warnings">
                     <div class="panel-title">
-                        <h2 id="warnings-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> Worth a look</h2>
-                        <span class="pill">Doesn't block saving</span>
+                        <h2 id="warnings-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> @L["Actor.Sheet.WorthLook"]</h2>
+                        <span class="pill">@L["Actor.Sheet.NotBlocking"]</span>
                     </div>
                     <ul class="mb-0 small">
                         @foreach (var warning in evaluation.Warnings)
@@ -191,31 +191,31 @@ else
             @if (ShowTray)
             {
                 <section class="panel dice-tray" aria-labelledby="tray-heading" data-testid="dice-tray">
-                    <div class="panel-title"><h2 id="tray-heading" class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> Dice</h2></div>
+                    <div class="panel-title"><h2 id="tray-heading" class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> @L["Actor.Sheet.Dice"]</h2></div>
                     <div class="tray-bar">
-                        <label for="roll-mode" class="field-label mb-0">Roll with</label>
+                        <label for="roll-mode" class="field-label mb-0">@L["Actor.Sheet.RollWith"]</label>
                         <select id="roll-mode" class="field-select field-sm" style="width:auto" @bind="rollMode" data-testid="roll-mode">
-                            <option value="1d20">Normal</option>
-                            <option value="adv">Advantage</option>
-                            <option value="dis">Disadvantage</option>
+                            <option value="1d20">@L["Actor.Sheet.RollNormal"]</option>
+                            <option value="adv">@L["Actor.Sheet.RollAdv"]</option>
+                            <option value="dis">@L["Actor.Sheet.RollDis"]</option>
                         </select>
-                        <span class="small-muted">Use the dice buttons beside a check, save or attack.</span>
+                        <span class="small-muted">@L["Actor.Sheet.TrayHint"]</span>
                     </div>
                     <div aria-live="polite">
                         @if (lastRoll != null)
                         {
                             <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" Total="lastRoll.Total" Text="@lastRoll.Result" />
-                            <p class="field-hint mb-0" data-testid="roll-where">@(lastRollShared ? "Shared with the table." : "Only you see this: no session is running.")</p>
+                            <p class="field-hint mb-0" data-testid="roll-where">@(lastRollShared ? L["Actor.Sheet.RollShared"] : L["Actor.Sheet.RollPrivate"])</p>
                         }
                         else
                         {
-                            <p class="small-muted tray-empty">No rolls yet.</p>
+                            <p class="small-muted tray-empty">@L["Actor.Sheet.NoRolls"]</p>
                         }
                     </div>
                 </section>
             }
 
-            <nav class="sheet-tabs" aria-label="Sheet sections" data-testid="sheet-tabs">
+            <nav class="sheet-tabs" aria-label="@L["Actor.Sheet.Sections"]" data-testid="sheet-tabs">
                 @foreach (var tab in Tabs)
                 {
                     <button type="button" class="sheet-tab" aria-current="@(ActiveTab == tab.Key ? "page" : null)" data-testid="@("tab-" + tab.Key)" @onclick="() => activeTab = tab.Key">
@@ -232,11 +232,11 @@ else
                 var summary = evaluation?.Attributes;
                 <section class="panel" aria-labelledby="attributes-heading">
                     <div class="panel-title">
-                        <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="18" Class="title-icon" /> Attributes</h2>
+                        <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="18" Class="title-icon" /> @L["Actor.Sheet.Attributes"]</h2>
                         @if (attributeRules != null && CanEdit)
                         {
                             <div class="d-flex align-items-center gap-2">
-                                <label for="attr-method" class="field-label">Method</label>
+                                <label for="attr-method" class="field-label">@L["Actor.Sheet.Method"]</label>
                                 <select id="attr-method" class="field-select field-sm" value="@AttrMethod" @onchange="e => SetMethod(e.Value?.ToString())" data-testid="attr-method">
                                     @foreach (var method in AvailableMethods)
                                     {
@@ -250,12 +250,12 @@ else
                     @if (attributeRules != null && summary != null && AttrMethod == "point-buy" && attributeRules.PointBuy != null)
                     {
                         <p class="small mb-2 @(summary.PointsSpent > summary.PointsBudget ? "text-danger fw-semibold" : "small-muted")" data-testid="point-buy-summary">
-                            Point buy: <strong>@summary.PointsSpent</strong> of @summary.PointsBudget points spent. Scores run from @attributeRules.PointBuy.Min to @attributeRules.PointBuy.Max before bonuses.
+                            @L["Actor.Sheet.PointBuyLead"]<strong>@summary.PointsSpent</strong>@L["Actor.Sheet.PointBuyTail", summary.PointsBudget, attributeRules.PointBuy.Min, attributeRules.PointBuy.Max]
                         </p>
                     }
                     else if (attributeRules != null && AttrMethod == "standard-array" && attributeRules.StandardArray.Count > 0)
                     {
-                        <p class="small small-muted mb-2">Standard array: assign @string.Join(", ", attributeRules.StandardArray), one score per attribute.</p>
+                        <p class="small small-muted mb-2">@L["Actor.Sheet.StdArrayLead"]<bdi>@string.Join(", ", attributeRules.StandardArray)</bdi>@L["Actor.Sheet.StdArrayTail"]</p>
                     }
 
                     <div class="attr-grid">
@@ -266,8 +266,8 @@ else
                             var bonus = summary?.Bonuses.GetValueOrDefault(attr.Key) ?? 0;
                             var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
                             var modifier = Modifier(attr, total);
-                            var modifierText = modifier == null ? null : (modifier >= 0 ? "+" : "") + modifier;
-                            var checkLabel = attr.Label + " check";
+                            var modifierText = modifier == null ? null : Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier);
+                            var checkLabel = L["Actor.Skills.Check", attr.Label];
                             var inputId = "attr-input-" + attr.Key;
                             var testId = "attr-" + attr.Key;
                             var invalid = evaluation?.Violations.Any(v => v.FieldKey == attr.Key) == true;
@@ -275,17 +275,17 @@ else
                                 <div class="attr-label" id="@("attr-" + attr.Key)">@(attr.Abbreviation ?? attr.Label)</div>
                                 @if (modifierText != null)
                                 {
-                                    <div class="attr-mod" aria-label="@(attr.Label + " modifier")">@modifierText</div>
+                                    <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]">@modifierText</div>
                                     @if (ShowTray)
                                     {
-                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@("Roll " + checkLabel)" data-testid="@("roll-" + attr.Key)"
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@L["Actor.Skills.Roll", checkLabel]" data-testid="@("roll-" + attr.Key)"
                                                      OnClick="() => RollAsync(new RollRequest(checkLabel, modifier ?? 0))" />
                                     }
                                 }
                                 @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
                                 {
                                     <div class="attr-medallion">
-                                    <label for="@inputId" class="visually-hidden">@(attr.Label + " score")</label>
+                                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
                                     <select id="@inputId" class="field-select field-sm" value="@baseScore" data-testid="@testId" @onchange="e => SetBase(attr, e.Value?.ToString())">
                                         @foreach (var value in attributeRules.StandardArray.Distinct().OrderByDescending(v => v))
                                         {
@@ -299,7 +299,7 @@ else
                                     var min = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Min : attr.Min;
                                     var max = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Max : attr.Max;
                                     <div class="attr-medallion">
-                                    <label for="@inputId" class="visually-hidden">@(attr.Label + " score")</label>
+                                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
                                     <input id="@inputId" type="number" class="field-input field-sm" min="@min" max="@max"
                                            value="@baseScore" data-testid="@testId"
                                            @onchange="e => SetBase(attr, e.Value?.ToString())" />
@@ -311,7 +311,7 @@ else
                                 }
                                 @if (attributeRules != null && (bonus != 0 || increase != 0 || CanEdit))
                                 {
-                                    <div class="attr-total small-muted" data-testid="@(testId + "-total")">@TotalText(baseScore, bonus, increase, total)</div>
+                                    <div class="attr-total small-muted" data-testid="@(testId + "-total")"><bdi>@TotalText(baseScore, bonus, increase, total)</bdi></div>
                                 }
                             </div>
                         }
@@ -323,11 +323,11 @@ else
                             <div class="field-label">@bonusRules.Label</div>
                             @if (summary.EligibleBonusAttributes.Count == 0)
                             {
-                                <p class="small-muted mb-0">Choose a @(system.ActorFields.FirstOrDefault(f => f.Key == bonusRules.FromField)?.Label.ToLowerInvariant() ?? bonusRules.FromField) under Sheet to unlock its bonuses.</p>
+                                <p class="small-muted mb-0">@L["Actor.Sheet.ChooseUnderSheet", system.ActorFields.FirstOrDefault(f => f.Key == bonusRules.FromField)?.Label.ToLowerInvariant() ?? bonusRules.FromField]</p>
                             }
                             else
                             {
-                                <p class="small-muted mb-2">Spread as @string.Join(" or ", bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v)))) across: @string.Join(", ", summary.EligibleBonusAttributes.Select(k => system.Attributes.First(a => a.Key == k).Label)).</p>
+                                <p class="small-muted mb-2">@L["Actor.Sheet.SpreadLead"]<bdi>@string.Join(L["Actor.Sheet.Or"], bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v))))</bdi>@L["Actor.Sheet.SpreadMid"]@string.Join(", ", summary.EligibleBonusAttributes.Select(k => system.Attributes.First(a => a.Key == k).Label)).</p>
                                 <div class="d-flex flex-wrap gap-3">
                                     @foreach (var key in summary.EligibleBonusAttributes)
                                     {
@@ -355,23 +355,23 @@ else
                             <div class="field-label">@increaseRules.Label</div>
                             @if (evaluation.Increases.Count == 0)
                             {
-                                <p class="small-muted mb-0">None yet. Picks that raise scores, such as Ability Score Improvement, show up here once you add them under Picks.</p>
+                                <p class="small-muted mb-0">@L["Actor.Sheet.IncNone"]</p>
                             }
                             @foreach (var grant in evaluation.Increases)
                             {
                                 var targets = PointTargets(grant);
                                 <div class="mb-2" data-testid="increase-@grant.Pick.Index">
-                                    <div class="small fw-semibold">@grant.Pick.Entry.Name <span class="small-muted fw-normal">· @grant.Points point@(grant.Points == 1 ? "" : "s")@(grant.Cap.HasValue ? $", up to {grant.Cap}" : "")</span></div>
+                                    <div class="small fw-semibold">@grant.Pick.Entry.Name <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
                                     <div class="d-flex flex-wrap gap-2">
                                         @for (var point = 0; point < grant.Points; point++)
                                         {
                                             var pointIndex = point;
                                             var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
                                             <div>
-                                                <label for="@selectId" class="field-label">+1 to<span class="visually-hidden"> (@grant.Pick.Entry.Name, point @(pointIndex + 1) of @grant.Points)</span></label>
+                                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", grant.Pick.Entry.Name, pointIndex + 1, grant.Points]</span></label>
                                                 <select id="@selectId" class="field-select field-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
                                                         @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
-                                                    <option value="">Choose…</option>
+                                                    <option value="">@L["Actor.Sheet.Choose"]</option>
                                                     @foreach (var key in grant.Options)
                                                     {
                                                         <option value="@key">@system.Attributes.First(a => a.Key == key).Label</option>
@@ -405,9 +405,9 @@ else
             }
 
             <section class="panel" aria-labelledby="sheet-heading">
-                <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="18" Class="title-icon" /> Sheet</h2></div>
+                <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="18" Class="title-icon" /> @L["Actor.Sheet.SheetHeading"]</h2></div>
                 <div class="mb-3">
-                    <label for="actor-name-input" class="field-label">Name</label>
+                    <label for="actor-name-input" class="field-label">@L["Actor.Sheet.Name"]</label>
                     <input id="actor-name-input" class="field-input" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
                 </div>
                 @if (schema != null)
@@ -426,7 +426,7 @@ else
                 }
                 else
                 {
-                    <p class="small-muted mb-0">No attributes recorded, and the system “@campaign.SystemId” declares no sheet.</p>
+                    <p class="small-muted mb-0">@L["Actor.Sheet.NoSheet", campaign.SystemId]</p>
                 }
             </section>
 
@@ -434,12 +434,12 @@ else
             {
                 <section class="panel" aria-labelledby="classes-heading" data-testid="multiclass">
                     <div class="panel-title">
-                        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="18" Class="title-icon" /> Classes</h2>
-                        <span class="pill">Level @CurrentLevel in all</span>
+                        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="18" Class="title-icon" /> @L["Actor.Sheet.Classes"]</h2>
+                        <span class="pill">@L["Actor.Sheet.LevelInAll", CurrentLevel]</span>
                     </div>
                     @if (evaluation.Classes.Count == 0)
                     {
-                        <p class="small-muted mb-0">Choose a class under Sheet first. You can add more classes here afterwards.</p>
+                        <p class="small-muted mb-0">@L["Actor.Sheet.ChooseClassFirst"]</p>
                     }
                     else
                     {
@@ -453,7 +453,7 @@ else
                                         <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(cls.Entry?.Name ?? classId)</a>
                                         @if (cls.IsFirst)
                                         {
-                                            <span class="small-muted"> · first class</span>
+                                            <span class="small-muted"> · @L["Actor.Sheet.FirstClass"]</span>
                                         }
                                         @if (cls.Subclass != null)
                                         {
@@ -462,15 +462,15 @@ else
                                     </span>
                                     @if (cls.IsFirst || !CanEdit)
                                     {
-                                        <span data-testid="class-level-@classId">@cls.Level level@(cls.Level == 1 ? "" : "s")</span>
+                                        <span data-testid="class-level-@classId">@L["Actor.Sheet.Levels", cls.Level]</span>
                                     }
                                     else
                                     {
                                         <span class="d-flex align-items-center gap-2">
-                                            <label for="@levelInputId" class="visually-hidden">@(cls.Entry?.Name ?? classId) levels</label>
+                                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", cls.Entry?.Name ?? classId]</label>
                                             <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
                                                    @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
-                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@("Remove " + (cls.Entry?.Name ?? classId))" OnClick="() => RemoveClass(multiclass, classId)" />
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", cls.Entry?.Name ?? classId]" OnClick="() => RemoveClass(multiclass, classId)" />
                                         </span>
                                     }
                                 </li>
@@ -478,10 +478,10 @@ else
                                 {
                                     var subclassId = "class-subclass-" + classId;
                                     <li class="py-1">
-                                        <label for="@subclassId" class="field-label">@(cls.Entry?.Name ?? classId) subclass</label>
+                                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", cls.Entry?.Name ?? classId]</label>
                                         <select id="@subclassId" class="field-select field-sm" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
                                                 @onchange="e => SetClassSubclass(multiclass, classId, e.Value?.ToString())">
-                                            <option value="">None yet</option>
+                                            <option value="">@L["Actor.Sheet.NoneYet"]</option>
                                             @foreach (var option in SubclassOptions(classId))
                                             {
                                                 <option value="@option.Id">@option.Name</option>
@@ -496,18 +496,18 @@ else
                             var firstLevel = evaluation.Classes.FirstOrDefault(c => c.IsFirst)?.Level ?? 0;
                             <div class="d-flex gap-2 align-items-end flex-wrap">
                                 <div>
-                                    <label for="add-class" class="field-label">Add a class</label>
+                                    <label for="add-class" class="field-label">@L["Actor.Sheet.AddClass"]</label>
                                     <select id="add-class" class="field-select field-sm" @bind="newClassId" data-testid="add-class-select">
-                                        <option value="">Choose…</option>
+                                        <option value="">@L["Actor.Sheet.Choose"]</option>
                                         @foreach (var option in evaluation.MulticlassOptions)
                                         {
                                             <option value="@option.Id">@option.Name</option>
                                         }
                                     </select>
                                 </div>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" OnClick="() => AddClass(multiclass)" data-testid="add-class">Add</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" OnClick="() => AddClass(multiclass)" data-testid="add-class">@L["Actor.Sheet.Add"]</CodexButton>
                             </div>
-                            <p class="field-hint">A new class takes one level from your first class@(firstLevel <= 1 ? " (raise the character level first)" : ""). Only classes whose prerequisites your scores meet are listed.</p>
+                            <p class="field-hint">@(firstLevel <= 1 ? L["Actor.Sheet.NewClassHintRaise"] : L["Actor.Sheet.NewClassHint"])</p>
                         }
                     }
                 </section>
@@ -517,7 +517,7 @@ else
             @if (linkedEntries.Count > 0)
             {
                 <section class="panel" aria-labelledby="linked-heading">
-                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> From the Library</h2></div>
+                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Actor.Sheet.FromLibrary"]</h2></div>
                     @foreach (var (label, item) in linkedEntries)
                     {
                         <div class="mb-3">
@@ -535,7 +535,7 @@ else
             @if (Rules != null && Rules.Lists.Count > 0 && evaluation != null)
             {
                 <section class="panel" aria-labelledby="picks-heading">
-                    <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> Picks</h2></div>
+                    <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> @L["Actor.Sheet.Picks"]</h2></div>
                     @foreach (var list in Rules.Lists)
                     {
                         <div class="mb-3">
@@ -570,24 +570,24 @@ else
             {
             <section class="panel" aria-labelledby="bio-heading">
                 <div class="panel-title">
-                    <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="18" Class="title-icon" /> History</h2>
+                    <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="18" Class="title-icon" /> @L["Actor.Sheet.History"]</h2>
                     @if (CanEdit)
                     {
-                        <span class="pill"><LucideIcon IconName="users" Size="14" /> Visible to whoever can see this character</span>
+                        <span class="pill"><LucideIcon IconName="users" Size="14" /> @L["Actor.Sheet.HistoryVisible"]</span>
                     }
                 </div>
                 @if (CanEdit)
                 {
-                    <label for="actor-bio" class="visually-hidden">History</label>
-                    <textarea id="actor-bio" class="field-input mb-2" rows="8" placeholder="Where they came from, what they want, who they owe…" @bind="editBiography" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="bio-mention-hint" data-testid="sheet-biography"></textarea>
+                    <label for="actor-bio" class="visually-hidden">@L["Actor.Sheet.History"]</label>
+                    <textarea id="actor-bio" class="field-input mb-2" rows="8" placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind="editBiography" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="bio-mention-hint" data-testid="sheet-biography"></textarea>
                     <div class="ai-row">
-                        <label for="bio-instruction" class="visually-hidden">Instruction for the AI</label>
-                        <input id="bio-instruction" class="field-input field-sm" placeholder="Optional instruction: “expand into three paragraphs”, “make it grimmer”, “add a rival”…" @bind="bioInstruction" />
+                        <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
+                        <input id="bio-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.BioInstructionPh"]" @bind="bioInstruction" />
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Players)" Disabled="@(busy != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "bio" ? "Writing…" : string.IsNullOrWhiteSpace(editBiography) ? "Write with AI" : "Rewrite with AI")
+                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "bio" ? L["Actor.Sheet.Writing"] : string.IsNullOrWhiteSpace(editBiography) ? L["Actor.Sheet.WriteAi"] : L["Actor.Sheet.RewriteAi"])
                         </CodexButton>
                     </div>
-                    <p id="bio-mention-hint" class="field-hint">Mention someone with @@, a place with # or an item with $. The AI sees the sheet and this text. Save changes to keep the result.</p>
+                    <p id="bio-mention-hint" class="field-hint">@L["Actor.Sheet.MentionHint"]</p>
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
@@ -595,7 +595,7 @@ else
                 }
                 else
                 {
-                    <p class="small-muted mb-0">No history written yet.</p>
+                    <p class="small-muted mb-0">@L["Actor.Sheet.NoHistory"]</p>
                 }
             </section>
 
@@ -605,8 +605,8 @@ else
             {
             <section class="panel" aria-labelledby="said-heading" data-testid="said-panel">
                 <div class="panel-title">
-                    <h2 id="said-heading" class="h5"><LucideIcon IconName="message-square-quote" Size="18" Class="title-icon" /> Said</h2>
-                    <span class="small-muted">@said.Count @(said.Count == 1 ? "line" : "lines") from the table</span>
+                    <h2 id="said-heading" class="h5"><LucideIcon IconName="message-square-quote" Size="18" Class="title-icon" /> @L["Actor.Sheet.Said"]</h2>
+                    <span class="small-muted">@L["Actor.Sheet.SaidLines", said.Count]</span>
                 </div>
                 @foreach (var group in said.GroupBy(x => x.Session.Id).OrderByDescending(g => g.First().Session.Date))
                 {
@@ -619,7 +619,7 @@ else
                                 <q><MentionText Text="@line.Text" Mentions="noteMentions" CampaignId="@CampaignId" /></q>
                                 @if (line.IsSecret)
                                 {
-                                    <span class="pill ms-1">secret</span>
+                                    <span class="pill ms-1">@L["Actor.Sheet.Secret"]</span>
                                 }
                             </li>
                         }
@@ -632,8 +632,8 @@ else
             {
             <section class="panel" aria-labelledby="mentioned-heading" data-testid="mentioned-panel">
                 <div class="panel-title">
-                    <h2 id="mentioned-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="18" Class="title-icon" /> In notes</h2>
-                    <span class="small-muted">@MentionCount @(MentionCount == 1 ? "note mentions" : "notes mention") @actor!.NameFor(access!.IsDm)</span>
+                    <h2 id="mentioned-heading" class="h5"><LucideIcon IconName="notebook-pen" Size="18" Class="title-icon" /> @L["Actor.Sheet.InNotes"]</h2>
+                    <span class="small-muted">@L["Actor.Sheet.MentionNotes", MentionCount, actor!.NameFor(access!.IsDm)]</span>
                 </div>
                 <NotesMentioning Lines="mentionedIn" Written="writtenIn" Mentions="noteMentions" Actors="noteActors" IsDm="access!.IsDm" CampaignId="@CampaignId" />
             </section>
@@ -645,16 +645,16 @@ else
             {
                 <section class="panel panel-dm" aria-labelledby="dm-notes-heading">
                     <div class="panel-title">
-                        <h2 id="dm-notes-heading" class="h5"><LucideIcon IconName="lock" Size="18" Class="title-icon" /> DM notes</h2>
-                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> Only you</span>
+                        <h2 id="dm-notes-heading" class="h5"><LucideIcon IconName="lock" Size="18" Class="title-icon" /> @L["Actor.Sheet.DmNotes"]</h2>
+                        <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> @L["Actor.Sheet.OnlyYou"]</span>
                     </div>
-                    <label for="actor-dm-notes" class="visually-hidden">DM notes</label>
-                    <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="Secret agenda, true identity, how they really feel about the party…" @bind="editDmNotes" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="sheet-dm-notes"></textarea>
+                    <label for="actor-dm-notes" class="visually-hidden">@L["Actor.Sheet.DmNotes"]</label>
+                    <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="@L["Actor.Sheet.DmNotesPlaceholder"]" @bind="editDmNotes" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="sheet-dm-notes"></textarea>
                     <div class="ai-row">
-                        <label for="dm-instruction" class="visually-hidden">Instruction for the AI</label>
-                        <input id="dm-instruction" class="field-input field-sm" placeholder="Optional instruction: “give them a secret that ties into the party”…" @bind="dmInstruction" />
+                        <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
+                        <input id="dm-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.DmInstructionPh"]" @bind="dmInstruction" />
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Dm)" Disabled="@(busy != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "dm" ? "Writing…" : "Draft with AI")
+                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "dm" ? L["Actor.Sheet.Writing"] : L["Actor.Sheet.DraftAi"])
                         </CodexButton>
                     </div>
                 </section>
@@ -685,7 +685,7 @@ else
                             <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
                         </div>
                     }
-                    <p class="small-muted mt-2 mb-0">Changes at the live table update this number@(Rules?.HitPoints == null ? "; edit the values under Sheet to set them directly." : ".")</p>
+                    <p class="small-muted mt-2 mb-0">@(Rules?.HitPoints == null ? L["Actor.Sheet.HpLiveNoteEdit"] : L["Actor.Sheet.HpLiveNote"])</p>
                     @if (Rules?.HitPoints is { } hitPointRules)
                     {
                         <HitPointRulesPanel Rules="hitPointRules" Summary="evaluation?.HitPoints" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
@@ -704,44 +704,44 @@ else
                     <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="18" Class="title-icon" /> @SlotTracker.Heading(Rules.SlotPools, editSheet.Keys)</h2></div>
                     <SlotTracker Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
                                  OnAdjust="AdjustSlot" OnRest="RestSlots" />
-                    <p class="small-muted mt-2 mb-0">During a session, use the Table tab: changes there reach everyone at once. Changes here need Save changes.</p>
+                    <p class="small-muted mt-2 mb-0">@L["Actor.Sheet.SlotsNote"]</p>
                 </section>
             }
 
             @if (CanEdit && HasLevel)
             {
                 <section class="panel panel-ai" aria-labelledby="levelup-heading">
-                    <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="18" Class="title-icon" /> Level up</h2></div>
-                    <p class="small-muted">Level @CurrentLevel now. Ask what level @(CurrentLevel + 1) brings and which picks fit this character, from the Library's class entry.</p>
+                    <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="18" Class="title-icon" /> @L["Actor.Sheet.LevelUp"]</h2></div>
+                    <p class="small-muted">@L["Actor.Sheet.LevelUpIntro", CurrentLevel, CurrentLevel + 1]</p>
                     @if (Rules?.Multiclass != null && evaluation is { Classes.Count: > 0 })
                     {
                         <div class="mb-2">
-                            <label for="levelup-class" class="field-label">Class gaining the level</label>
+                            <label for="levelup-class" class="field-label">@L["Actor.Sheet.ClassGaining"]</label>
                             <select id="levelup-class" class="field-select field-sm" @bind="levelUpClassId" data-testid="levelup-class">
                                 @foreach (var cls in evaluation.Classes)
                                 {
-                                    <option value="@cls.Id">@(cls.Entry?.Name ?? cls.Id) (level @(cls.Level + 1))</option>
+                                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", cls.Entry?.Name ?? cls.Id, cls.Level + 1]</option>
                                 }
                                 @foreach (var option in evaluation.MulticlassOptions)
                                 {
-                                    <option value="@option.Id">@option.Name (new, level 1)</option>
+                                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", option.Name]</option>
                                 }
                             </select>
                         </div>
                     }
                     <div class="d-flex gap-2 flex-wrap">
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "level" ? "Thinking…" : $"Suggest level {CurrentLevel + 1}")
+                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "level" ? L["Actor.Sheet.Thinking"] : L["Actor.Sheet.SuggestLevel", CurrentLevel + 1])
                         </CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ApplyLevelUp">Set level to @(CurrentLevel + 1)</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ApplyLevelUp">@L["Actor.Sheet.SetLevel", CurrentLevel + 1]</CodexButton>
                     </div>
                     @if (levelUpAdvice != null)
                     {
                         <div class="ai-output mt-3" data-testid="levelup-advice">
                             <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(levelUpAdvice))</div>
                             <div class="d-flex gap-2">
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => levelUpAdvice = null">Dismiss</CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AppendAdviceToNotes">Keep in notes</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => levelUpAdvice = null">@L["Actor.Sheet.Dismiss"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AppendAdviceToNotes">@L["Actor.Sheet.KeepInNotes"]</CodexButton>
                             </div>
                         </div>
                     }
@@ -751,36 +751,36 @@ else
             @if (access.IsDm)
             {
                 <section class="panel" aria-labelledby="visibility-heading">
-                    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="18" Class="title-icon" /> Visibility to players</h2></div>
+                    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="18" Class="title-icon" /> @L["Actor.Sheet.Visibility"]</h2></div>
                     <div class="mb-2">
-                        <label for="actor-visibility" class="field-label">Who sees this character</label>
+                        <label for="actor-visibility" class="field-label">@L["Actor.Sheet.WhoSees"]</label>
                         <select id="actor-visibility" class="field-select" @bind="editVisibility">
-                            <option value="@ActorVisibility.Hidden">Hidden (players don't know they exist)</option>
-                            <option value="@ActorVisibility.Unknown">Seen but not identified</option>
-                            <option value="@ActorVisibility.Known">Known</option>
+                            <option value="@ActorVisibility.Hidden">@L["Actor.Sheet.VisHidden"]</option>
+                            <option value="@ActorVisibility.Unknown">@L["Actor.Sheet.VisUnknown"]</option>
+                            <option value="@ActorVisibility.Known">@L["Actor.Sheet.VisKnown"]</option>
                         </select>
                     </div>
                     @if (editVisibility == ActorVisibility.Unknown)
                     {
                         <div class="mb-2">
-                            <label for="actor-public-name" class="field-label">Shown to players as</label>
-                            <input id="actor-public-name" class="field-input" @bind="editPublicName" placeholder="e.g. Hooded stranger" />
+                            <label for="actor-public-name" class="field-label">@L["Actor.Sheet.ShownAs"]</label>
+                            <input id="actor-public-name" class="field-input" @bind="editPublicName" placeholder="@L["Actor.Sheet.PublicNamePh"]" />
                         </div>
                     }
                     <div class="mb-2">
-                        <label for="actor-kind" class="field-label">Kind</label>
+                        <label for="actor-kind" class="field-label">@L["Actor.Sheet.Kind"]</label>
                         <select id="actor-kind" class="field-select" @bind="editKind">
-                            <option value="@ActorKind.PlayerCharacter">Player character</option>
-                            <option value="@ActorKind.NonPlayerCharacter">Non-player character</option>
-                            <option value="@ActorKind.Monster">Monster</option>
+                            <option value="@ActorKind.PlayerCharacter">@L["Actor.Sheet.KindPc"]</option>
+                            <option value="@ActorKind.NonPlayerCharacter">@L["Actor.Sheet.KindNpc"]</option>
+                            <option value="@ActorKind.Monster">@L["Actor.Sheet.KindMonster"]</option>
                         </select>
                     </div>
                     @if (editKind == ActorKind.PlayerCharacter)
                     {
                         <div class="mb-2">
-                            <label for="actor-owner" class="field-label">Played by</label>
+                            <label for="actor-owner" class="field-label">@L["Actor.Sheet.PlayedBy"]</label>
                             <select id="actor-owner" class="field-select" @bind="editOwnerId">
-                                <option value="">— nobody —</option>
+                                <option value="">@L["Actor.Sheet.Nobody"]</option>
                                 @foreach (var member in campaign.Members)
                                 {
                                     <option value="@member.UserId">@member.UserId</option>
@@ -883,13 +883,13 @@ else
     {
         get
         {
-            var tabs = new List<(string, string, string)> { ("attributes", "Attributes", "zap") };
-            if (Rules != null && Rules.Lists.Count > 0) tabs.Add(("picks", "Picks", "sparkles"));
-            if (Rules?.Inventory != null) tabs.Add(("inventory", "Inventory", "package"));
-            tabs.Add(("history", "History", "feather"));
-            if (said.Count > 0) tabs.Add(("said", "Said", "message-square-quote"));
-            if (MentionCount > 0) tabs.Add(("mentioned", "In notes", "notebook-pen"));
-            if (access?.IsDm == true) tabs.Add(("notes", "DM notes", "lock"));
+            var tabs = new List<(string, string, string)> { ("attributes", L["Actor.Sheet.Attributes"], "zap") };
+            if (Rules != null && Rules.Lists.Count > 0) tabs.Add(("picks", L["Actor.Sheet.Picks"], "sparkles"));
+            if (Rules?.Inventory != null) tabs.Add(("inventory", L["Actor.Sheet.Inventory"], "package"));
+            tabs.Add(("history", L["Actor.Sheet.History"], "feather"));
+            if (said.Count > 0) tabs.Add(("said", L["Actor.Sheet.Said"], "message-square-quote"));
+            if (MentionCount > 0) tabs.Add(("mentioned", L["Actor.Sheet.InNotes"], "notebook-pen"));
+            if (access?.IsDm == true) tabs.Add(("notes", L["Actor.Sheet.DmNotes"], "lock"));
             return tabs;
         }
     }
@@ -925,7 +925,7 @@ else
         }
         else if (HasLevel)
         {
-            yield return "Level " + CurrentLevel;
+            yield return L["Actor.Sheet.Level", CurrentLevel];
         }
     }
 
@@ -942,7 +942,7 @@ else
 
         if (system?.ActorFields.FirstOrDefault(f => f.Key == "speed") is { } speed && YamlValues.GetInt(editSheet, speed.Key) is { } feet)
         {
-            yield return (speed.Label.Replace(" (feet)", ""), feet + " ft");
+            yield return (speed.Label.Replace(" (feet)", ""), L["Actor.Sheet.Feet", feet]);
         }
     }
 
@@ -959,9 +959,9 @@ else
         var dirty = CanEdit ? DirtyCount : 0;
         if (dirty == 0) return;
         var leave = await leaveConfirm.ShowAsync(
-            $"Discard {dirty} unsaved {(dirty == 1 ? "change" : "changes")}?",
-            "You changed this sheet without saving. Leave now and those changes are lost.",
-            "Discard and leave", isDestructive: true, cancel: "Keep editing");
+            L["Actor.Sheet.ConfirmDiscardTitle", dirty],
+            L["Actor.Sheet.ConfirmDiscardBody"],
+            L["Actor.Sheet.DiscardLeave"], isDestructive: true, cancel: L["Actor.Sheet.KeepEditing"]);
         if (!leave) context.PreventNavigation();
     }
 
@@ -980,14 +980,14 @@ else
         }
     }
 
-    private static string MethodLabel(string method) => method switch
+    private string MethodLabel(string method) => method switch
     {
-        "point-buy" => "Point buy",
-        "standard-array" => "Standard array",
-        _ => "Manual"
+        "point-buy" => L["Actor.Sheet.MethodPointBuy"],
+        "standard-array" => L["Actor.Sheet.MethodStandardArray"],
+        _ => L["Actor.Sheet.MethodManual"]
     };
 
-    private static string FormatSigned(object value) => value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty;
+    private static string FormatSigned(object value) => Bidi.Ltr(value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty);
     private bool HasLevel => schema?.Fields.Any(f => f.Key == "level") == true;
     private int CurrentLevel => YamlValues.GetInt(editSheet, "level") ?? 1;
 
@@ -995,16 +995,16 @@ else
 
     private string KindLabel => actor?.Kind switch
     {
-        ActorKind.PlayerCharacter => "Player character",
-        ActorKind.Monster => "Monster",
-        _ => "Non-player character"
+        ActorKind.PlayerCharacter => L["Actor.Sheet.KindPc"],
+        ActorKind.Monster => L["Actor.Sheet.KindMonster"],
+        _ => L["Actor.Sheet.KindNpc"]
     };
 
     private string VisibilityLabel => actor?.Visibility switch
     {
-        ActorVisibility.Known => "Known to players",
-        ActorVisibility.Unknown => "Seen, not identified",
-        _ => "Hidden from players"
+        ActorVisibility.Known => L["Actor.Sheet.VisLabelKnown"],
+        ActorVisibility.Unknown => L["Actor.Sheet.VisLabelUnknown"],
+        _ => L["Actor.Sheet.VisLabelHidden"]
     };
 
     protected override async Task OnParametersSetAsync() => await ReloadAsync();
@@ -1023,8 +1023,11 @@ else
             actor = await ActorRepo.GetVisibleAsync(ActorId, access);
             if (actor != null)
             {
-                system = SystemCatalog.GetDefinition(campaign.SystemId);
-                schema = SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
+                // The sheet shows the system in the reader's language; the rules engine still matches the original words (see AttributeDefinition.CanonicalLabel).
+                system = SystemCatalog.GetLocalizedDefinition(campaign.SystemId);
+                schema = system != null
+                    ? DataDrivenSystemPlugin.BuildActorSchema(system)
+                    : SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
                 attributeKeys = (system?.Attributes.Select(a => a.Key) ?? Enumerable.Empty<string>()).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 hiddenKeys = attributeKeys
                     .Concat(attributeKeys.Select(k => SheetRuleEngine.BasePrefix + k))
@@ -1180,9 +1183,9 @@ else
         pick.Choices.Count == 0 || system == null ? null
             : string.Join(", ", pick.Choices.Select(c => $"+{c.Value} {system.Attributes.FirstOrDefault(a => a.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? c.Key}"));
 
-    private static string TotalText(int baseScore, int bonus, int increase, int total)
+    private string TotalText(int baseScore, int bonus, int increase, int total)
     {
-        if (bonus == 0 && increase == 0) return $"total {total}";
+        if (bonus == 0 && increase == 0) return L["Actor.Sheet.TotalOnly", total];
         var parts = new List<string> { baseScore.ToString() };
         if (bonus != 0) parts.Add(bonus.ToString());
         if (increase != 0) parts.Add(increase.ToString());
@@ -1253,7 +1256,7 @@ else
             if (YamlValues.GetInt(editSheet, key + "_Max") is { } max) editSheet[key] = (long)max;
         }
 
-        flash = Flash.Info($"{rest.Name}: slots refilled. Save changes to keep it.");
+        flash = Flash.Info(L["Actor.Sheet.SlotsRefilled", SlotTracker.RestName(L, rest.Name)]);
     }
 
     private async Task LoadReferenceOptionsAsync()
@@ -1262,7 +1265,7 @@ else
         if (campaign == null || access == null || schema == null) return;
         foreach (var target in schema.Fields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
-            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
+            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
         }
     }
 
@@ -1274,7 +1277,7 @@ else
         {
             var id = YamlValues.GetString(editSheet, field.Key);
             if (string.IsNullOrEmpty(id)) continue;
-            var item = await Library.GetAsync(campaign, access, field.TargetEntityType!, id);
+            var item = await Library.GetAsync(campaign, access, field.TargetEntityType!, id, L.Culture.Name);
             if (item != null) linkedEntries.Add((field.Label, item));
         }
     }
@@ -1315,13 +1318,13 @@ else
         {
             if (Enforcement == "strict" && !access.IsDm)
             {
-                flash = Flash.Error($"Not saved: {evaluation.Violations.Count} rule problem{(evaluation.Violations.Count == 1 ? "" : "s")} to fix first (see Rules above). The DM can relax this under Settings.");
+                flash = Flash.Error(L["Actor.Sheet.NotSavedStrict", evaluation.Violations.Count]);
                 return;
             }
 
             if (Enforcement != "off")
             {
-                flash = Flash.Info($"Saved with {evaluation.Violations.Count} rule warning{(evaluation.Violations.Count == 1 ? "" : "s")}.");
+                flash = Flash.Info(L["Actor.Sheet.SavedWarnings", evaluation.Violations.Count]);
             }
         }
 
@@ -1329,11 +1332,11 @@ else
 
         if (await TrySaveActorAsync())
         {
-            flash ??= Flash.Success("Saved.");
+            flash ??= Flash.Success(L["Actor.Sheet.Saved"]);
         }
         else
         {
-            flash = Flash.Error("You don't have permission to edit this sheet.");
+            flash = Flash.Error(L["Actor.Sheet.NoPermission"]);
         }
 
         await ReloadAsync();
@@ -1345,13 +1348,13 @@ else
         var file = e.File;
         if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
         {
-            flash = Flash.Error("Use a PNG, JPEG, WebP, GIF or AVIF image.");
+            flash = Flash.Error(L["Actor.Sheet.PortraitTypeError"]);
             return;
         }
 
         if (file.Size > RavenMediaStore.MaxBytes)
         {
-            flash = Flash.Error("That image is over 6 MB. Resize it and try again.");
+            flash = Flash.Error(L["Actor.Sheet.PortraitTooBig"]);
             return;
         }
 
@@ -1363,12 +1366,12 @@ else
             actor.PortraitVersion++;
             ApplyEdits(actor);
             await TrySaveActorAsync();
-            flash = Flash.Success("Portrait updated.");
+            flash = Flash.Success(L["Actor.Sheet.PortraitUpdated"]);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Portrait upload failed for actor {ActorId}", ActorId);
-            flash = Flash.Error("The upload failed: " + ex.Message);
+            flash = Flash.Error(L["Actor.Art.UploadFailed", L.Describe(ex)]);
         }
 
         await ReloadAsync();
@@ -1382,7 +1385,7 @@ else
         actor.PortraitVersion++;
         ApplyEdits(actor);
         await TrySaveActorAsync();
-        flash = Flash.Success("Portrait removed.");
+        flash = Flash.Success(L["Actor.Sheet.PortraitRemoved"]);
         await ReloadAsync();
     }
 
@@ -1392,9 +1395,9 @@ else
     {
         if (actor == null || campaign == null || currentUserId == null || !CanEdit || busy != null) return;
         if (actor.HasPortrait && !await leaveConfirm.ShowAsync(
-                "Replace the portrait?",
-                "The image model draws a new portrait from the sheet and the history, and it replaces the current one. Most image services charge for every picture.",
-                "Draw a new one", cancel: "Keep this one"))
+                L["Actor.Sheet.ReplacePortraitTitle"],
+                L["Actor.Sheet.ReplacePortraitBody"],
+                L["Actor.Sheet.DrawNew"], cancel: L["Actor.Sheet.KeepThis"]))
         {
             return;
         }
@@ -1410,17 +1413,17 @@ else
             actor.PortraitVersion++;
             ApplyEdits(actor);
             await TrySaveActorAsync();
-            flash = Flash.Success("New portrait drawn.");
+            flash = Flash.Success(L["Actor.Sheet.PortraitDrawn"]);
         }
         catch (AiImageNotConfiguredException)
         {
-            flash = Flash.Error("No image model is set up. Add one under AI settings (top right), in the Images section.");
+            flash = Flash.Error(L["Actor.Sheet.NoImageModel"]);
             return;
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Portrait generation failed for actor {ActorId}", ActorId);
-            flash = Flash.Error("The image model could not draw this: " + ex.Message);
+            flash = Flash.Error(L["Actor.Art.DrawFailed", L.Describe(ex)]);
             return;
         }
         finally
@@ -1451,16 +1454,16 @@ else
                 audience == AiAudience.Dm ? dmInstruction : bioInstruction,
                 audience, currentUserId);
             if (audience == AiAudience.Dm) editDmNotes = text; else editBiography = text;
-            flash = Flash.Info("AI draft in the editor. Review, then Save changes.");
+            flash = Flash.Info(L["Actor.Sheet.AiDraftReady"]);
         }
         catch (AiNotConfiguredException)
         {
-            flash = Flash.Error("No AI provider is set up. Add one under AI settings (top right).");
+            flash = Flash.Error(L["Actor.Sheet.NoAiProvider"]);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI rewrite failed for actor {ActorId}", ActorId);
-            flash = Flash.Error("The AI draft failed: " + ex.Message);
+            flash = Flash.Error(L["Actor.Sheet.AiDraftFailed", L.Describe(ex)]);
         }
         finally
         {
@@ -1479,12 +1482,12 @@ else
         }
         catch (AiNotConfiguredException)
         {
-            flash = Flash.Error("No AI provider is set up. Add one under AI settings (top right).");
+            flash = Flash.Error(L["Actor.Sheet.NoAiProvider"]);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI level-up failed for actor {ActorId}", ActorId);
-            flash = Flash.Error("The AI suggestion failed: " + ex.Message);
+            flash = Flash.Error(L["Actor.Sheet.AiSuggestFailed", L.Describe(ex)]);
         }
         finally
         {
@@ -1511,7 +1514,7 @@ else
         }
 
         levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
-        flash = Flash.Info($"Level set to {CurrentLevel}. Update hit points and features, then Save changes.");
+        flash = Flash.Info(L["Actor.Sheet.LevelSet", CurrentLevel]);
     }
 
     private void AppendAdviceToNotes()
@@ -1519,8 +1522,8 @@ else
         if (levelUpAdvice == null) return;
         var key = schema?.Fields.FirstOrDefault(f => f.Type == FieldType.LongText)?.Key ?? "notes";
         var existing = YamlValues.GetString(editSheet, key) ?? string.Empty;
-        editSheet[key] = (existing.TrimEnd() + $"\n\nLevel {CurrentLevel + 1} plan:\n{levelUpAdvice}").Trim();
+        editSheet[key] = (existing.TrimEnd() + "\n\n" + L["Actor.Sheet.LevelPlan", CurrentLevel + 1] + "\n" + levelUpAdvice).Trim();
         levelUpAdvice = null;
-        flash = Flash.Info("Added to the notes field. Save changes to keep it.");
+        flash = Flash.Info(L["Actor.Sheet.AddedNotes"]);
     }
 }

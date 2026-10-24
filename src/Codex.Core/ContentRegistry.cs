@@ -15,6 +15,7 @@ public class ContentRegistry : IContentRegistry
     private readonly Dictionary<string, Dictionary<string, (ContentEntry Entry, int Priority, string PackId)>> _entries = new();
     private readonly Dictionary<string, List<string>> _entryTypesBySystem = new();
     private readonly Dictionary<(string System, string Key), Dictionary<string, object>> _flavor = new();
+    private readonly Dictionary<(string System, string Key), Dictionary<string, (Dictionary<string, object> Fields, string PackId)>> _translations = new();
     private readonly Dictionary<string, PackManifest> _packs = new();
     private readonly HashSet<string> _loadedPacks = new();
     private readonly ScriptEvaluator _scriptEvaluator;
@@ -117,6 +118,59 @@ public class ContentRegistry : IContentRegistry
         }
     }
 
+    public void RegisterTranslation(string systemId, string type, string id, string locale, string packId, IReadOnlyDictionary<string, object> fields)
+    {
+        var language = LanguageOf(locale);
+        lock (_gate)
+        {
+            var key = (systemId, EntryKey(type, id));
+            if (!_translations.TryGetValue(key, out var byLocale)) _translations[key] = byLocale = new();
+            byLocale[language] = (new Dictionary<string, object>(fields), packId);
+        }
+    }
+
+    public ContentEntry Localize(ContentEntry entry, string? culture)
+    {
+        var language = LanguageOf(culture);
+        if (language.Length == 0) return entry;
+
+        Dictionary<string, object> fields;
+        lock (_gate)
+        {
+            if (!_translations.TryGetValue((entry.SystemId, EntryKey(entry.Type, entry.Id)), out var byLocale)
+                || !byLocale.TryGetValue(language, out var hit))
+                return entry;
+            fields = hit.Fields;
+        }
+
+        var copy = entry.Clone();
+        foreach (var (name, value) in fields)
+        {
+            switch (name)
+            {
+                case "name" when value is string n && n.Length > 0:
+                    copy.Name = n;
+                    break;
+                case "description" when value is string d:
+                    copy.Description = d;
+                    break;
+                default:
+                    copy.Properties[name] = value;
+                    break;
+            }
+        }
+        return copy;
+    }
+
+    public bool IsLocalized(string? culture) => LanguageOf(culture).Length > 0;
+
+    /// <summary>"ru-RU" -> "ru"; empty for English (the entries' own language) and for no culture.</summary>
+    private static string LanguageOf(string? culture)
+    {
+        var language = (culture ?? "").Trim().Split('-', '_')[0].ToLowerInvariant();
+        return language switch { "en" => "", "iw" => "he", _ => language };
+    }
+
     public ContentEntry? GetEntry(string systemId, string type, string id)
     {
         lock (_gate)
@@ -153,7 +207,7 @@ public class ContentRegistry : IContentRegistry
         }
     }
 
-    public IEnumerable<ContentEntry> Search(string systemId, string query, string? type = null, IReadOnlySet<string>? packIds = null, int limit = 200)
+    public IEnumerable<ContentEntry> Search(string systemId, string query, string? type = null, IReadOnlySet<string>? packIds = null, int limit = 200, string? culture = null)
     {
         List<ContentEntry> candidates;
         lock (_gate)
@@ -170,7 +224,22 @@ public class ContentRegistry : IContentRegistry
                 .ToList();
         }
 
-        return Rank(candidates, query).Take(limit).ToList();
+        if (LanguageOf(culture).Length == 0)
+        {
+            return Rank(candidates, query).Take(limit).ToList();
+        }
+
+        // A translated UI still has to find "Fireball" by its English name, so each entry scores as the better of both.
+        var trimmed = (query ?? string.Empty).Trim();
+        return candidates
+            .Select(e => (Original: e, Shown: Localize(e, culture)))
+            .Select(x => (x.Shown, Score: trimmed.Length == 0 ? 1 : Math.Max(Score(x.Shown, trimmed), Score(x.Original, trimmed))))
+            .Where(x => x.Score > 0)
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Shown.Name, StringComparer.CurrentCultureIgnoreCase)
+            .Select(x => x.Shown)
+            .Take(limit)
+            .ToList();
     }
 
     /// <summary>Ranks entries against a query: name prefix, then name substring, then tag, then
@@ -195,13 +264,35 @@ public class ContentRegistry : IContentRegistry
     private static int Score(ContentEntry entry, string query)
     {
         var comparison = StringComparison.OrdinalIgnoreCase;
-        if (entry.Name.Equals(query, comparison)) return 100;
-        if (entry.Name.StartsWith(query, comparison)) return 80;
-        if (entry.Name.Contains(query, comparison)) return 60;
-        if (entry.Tags.Any(t => t.Contains(query, comparison))) return 40;
-        if (entry.Properties.Values.Any(v => v is string s && s.Contains(query, comparison))) return 30;
-        if (entry.Description?.Contains(query, comparison) == true) return 20;
+        query = Fold(query);
+        var name = Fold(entry.Name);
+        if (name.Equals(query, comparison)) return 100;
+        if (name.StartsWith(query, comparison)) return 80;
+        if (name.Contains(query, comparison)) return 60;
+        if (entry.Tags.Any(t => Fold(t).Contains(query, comparison))) return 40;
+        if (entry.Properties.Values.Any(v => v is string s && Fold(s).Contains(query, comparison))) return 30;
+        if (entry.Description != null && Fold(entry.Description).Contains(query, comparison)) return 20;
         return 0;
+    }
+
+    /// <summary>Makes searching forgiving in Russian and Hebrew: ё matches е, Hebrew vowel points and cantillation marks
+    /// are ignored, and final letter forms match their ordinary forms. Text without such characters is returned as is.</summary>
+    internal static string Fold(string text)
+    {
+        var needs = false;
+        foreach (var c in text)
+        {
+            if (c == 'ё' || c == 'Ё' || (c >= '\u0591' && c <= '\u05C7') || c is 'ך' or 'ם' or 'ן' or 'ף' or 'ץ') { needs = true; break; }
+        }
+        if (!needs) return text;
+
+        var sb = new System.Text.StringBuilder(text.Length);
+        foreach (var c in text)
+        {
+            if (c >= '\u0591' && c <= '\u05C7') continue;
+            sb.Append(c switch { 'ё' => 'е', 'Ё' => 'Е', 'ך' => 'כ', 'ם' => 'מ', 'ן' => 'נ', 'ף' => 'פ', 'ץ' => 'צ', _ => c });
+        }
+        return sb.ToString();
     }
 
     private static string EntryKey(string type, string id) => $"{type.ToLowerInvariant()}:{id}";

@@ -18,7 +18,8 @@ public sealed record SessionSummaryRequest(
     IReadOnlyList<string> Notes,
     IReadOnlyList<string> Rolls,
     string? PreviousDmSummary = null,
-    IReadOnlyList<string>? Quotes = null);
+    IReadOnlyList<string>? Quotes = null,
+    string? Language = null);
 
 public sealed record RewriteRequest(
     string Subject,
@@ -27,7 +28,8 @@ public sealed record RewriteRequest(
     string CurrentText,
     string Instruction,
     AiAudience Audience,
-    string? CampaignContext = null);
+    string? CampaignContext = null,
+    string? Language = null);
 
 /// <summary>A description for a Library entry (a homebrew creature, spell, item) or a place on the world map.</summary>
 public sealed record DescribeRequest(
@@ -38,7 +40,8 @@ public sealed record DescribeRequest(
     string CurrentText,
     string Instruction,
     AiAudience Audience,
-    string? CampaignContext = null);
+    string? CampaignContext = null,
+    string? Language = null);
 
 public sealed record LevelUpRequest(
     string CharacterName,
@@ -51,7 +54,8 @@ public sealed record LevelUpRequest(
     IReadOnlyList<string> NextLevelFeatures,
     IReadOnlyList<string> SubclassFeatures,
     IReadOnlyList<string> AvailableSubclasses,
-    string? Biography);
+    string? Biography,
+    string? Language = null);
 
 public sealed record CharacterFieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max);
 
@@ -63,18 +67,39 @@ public sealed record CharacterConceptRequest(
     IReadOnlyList<CharacterFieldSpec> Fields,
     string? HitPointsKey,
     string? HitPointsMaxKey,
-    string? CampaignContext = null);
+    string? CampaignContext = null,
+    string? Language = null);
 
 /// <summary>Pure prompt builders: no network, no state, unit-testable.</summary>
 public static class AiPrompts
 {
     public const string Style = "Write in plain, concrete English. Use the markdown subset: **bold**, *italic*, \"- \" bullets, and short headings on their own line. No preamble, no closing remarks, no mention of being an AI.";
 
+    /// <summary>The language a text is written in: a tag ("ru", "he-IL") or null for English.</summary>
+    public static string LanguageName(string? language) =>
+        (language ?? "en").Split('-', '_')[0].ToLowerInvariant() switch
+        {
+            "ru" => "Russian",
+            "he" or "iw" => "Hebrew",
+            _ => "English"
+        };
+
+    /// <summary><see cref="Style"/> for the requested language. English is byte-for-byte the constant; any other
+    /// language is told to write everything in it, headings included, since the prompts name their headings in English.</summary>
+    public static string StyleFor(string? language)
+    {
+        var name = LanguageName(language);
+        return name == "English"
+            ? Style
+            : Style.Replace("plain, concrete English", $"plain, concrete {name}")
+                + $" Write the entire reply in {name}, and translate every heading you are asked for into {name}.";
+    }
+
     public static (string System, string User) SessionSummary(SessionSummaryRequest r)
     {
         var system = r.Audience == AiAudience.Players
-            ? "You are the chronicler of a tabletop role-playing campaign. Write the recap the players will read: an in-world account of what the party did and learned this session, in past tense, two to four short paragraphs, followed by a bullet list titled \"Loose threads\" with open questions the party is aware of. Only use what the log says; never invent events, names or outcomes, and never reveal anything the log marks as secret or private. " + Style
-            : "You are the campaign assistant of a tabletop role-playing game master. Write the DM's private session summary with these headings: \"What happened\" (bullets), \"NPCs and places\" (bullets), \"Secrets still hidden\" (what the players do not yet know, from the secret or private material), \"Loose threads\" and \"Hooks for next session\" (two or three concrete suggestions). Only use what the log says; mark anything you infer with \"(inference)\". " + Style;
+            ? "You are the chronicler of a tabletop role-playing campaign. Write the recap the players will read: an in-world account of what the party did and learned this session, in past tense, two to four short paragraphs, followed by a bullet list titled \"Loose threads\" with open questions the party is aware of. Only use what the log says; never invent events, names or outcomes, and never reveal anything the log marks as secret or private. " + StyleFor(r.Language)
+            : "You are the campaign assistant of a tabletop role-playing game master. Write the DM's private session summary with these headings: \"What happened\" (bullets), \"NPCs and places\" (bullets), \"Secrets still hidden\" (what the players do not yet know, from the secret or private material), \"Loose threads\" and \"Hooks for next session\" (two or three concrete suggestions). Only use what the log says; mark anything you infer with \"(inference)\". " + StyleFor(r.Language);
 
         var sb = new StringBuilder();
         sb.AppendLine($"Campaign: {r.CampaignName} ({r.SystemName})");
@@ -101,7 +126,7 @@ public static class AiPrompts
         var audience = r.Audience == AiAudience.Players
             ? "The text will be read by the players, so keep anything the facts mark as secret or DM-only out of it."
             : "The text is for the game master's eyes.";
-        var system = $"You are a writing assistant for a tabletop role-playing campaign. You rewrite or write the history, personality and background of a {r.SubjectKind}. Keep every fact given; do not contradict the sheet; keep names as spelled. {audience} Reply with the finished text only. {Style}";
+        var system = $"You are a writing assistant for a tabletop role-playing campaign. You rewrite or write the history, personality and background of a {r.SubjectKind}. Keep every fact given; do not contradict the sheet; keep names as spelled. {audience} Reply with the finished text only. {StyleFor(r.Language)}";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Subject: {r.Subject} ({r.SubjectKind})");
@@ -121,7 +146,7 @@ public static class AiPrompts
         var audience = r.Audience == AiAudience.Players
             ? "Players will read this, so describe only what someone standing there would see, hear and learn; no secrets, no game-master asides."
             : "The text is for the game master's eyes and may include hooks and secrets.";
-        var system = $"You are a writing assistant for a {r.SystemName} tabletop campaign. You write the description of a {r.SubjectKind}: vivid, concrete and usable at the table, two short paragraphs unless told otherwise. Keep every fact given and never contradict the numbers or names. {audience} Reply with the finished text only. {Style}";
+        var system = $"You are a writing assistant for a {r.SystemName} tabletop campaign. You write the description of a {r.SubjectKind}: vivid, concrete and usable at the table, two short paragraphs unless told otherwise. Keep every fact given and never contradict the numbers or names. {audience} Reply with the finished text only. {StyleFor(r.Language)}";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Subject: {r.Subject} ({r.SubjectKind})");
@@ -154,7 +179,7 @@ public static class AiPrompts
 
     public static (string System, string User) LevelUp(LevelUpRequest r)
     {
-        var system = $"You are a rules-savvy assistant for the {r.SystemName} tabletop game. A character is advancing from level {r.CurrentLevel} to {r.NextLevel}. Using only the features listed (they are the rules text), write: a heading \"What you gain at level {r.NextLevel}\" with bullets; a heading \"Choices to make\" listing every decision the features require (subclass, feats, spells, fighting styles...); a heading \"Suggested picks\" with one recommendation per choice and a one-line reason that fits the character's sheet and story; and a heading \"Sheet changes\" with the concrete numbers to update (hit points, proficiency bonus, new resources). If the features list is empty, say the Library has no entry for this class level and give general advice only. {Style}";
+        var system = $"You are a rules-savvy assistant for the {r.SystemName} tabletop game. A character is advancing from level {r.CurrentLevel} to {r.NextLevel}. Using only the features listed (they are the rules text), write: a heading \"What you gain at level {r.NextLevel}\" with bullets; a heading \"Choices to make\" listing every decision the features require (subclass, feats, spells, fighting styles...); a heading \"Suggested picks\" with one recommendation per choice and a one-line reason that fits the character's sheet and story; and a heading \"Sheet changes\" with the concrete numbers to update (hit points, proficiency bonus, new resources). If the features list is empty, say the Library has no entry for this class level and give general advice only. {StyleFor(r.Language)}";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Character: {r.CharacterName}");
@@ -177,7 +202,7 @@ public static class AiPrompts
 
     public static (string System, string User) CreateCharacter(CharacterConceptRequest r)
     {
-        var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string}}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use.";
+        var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string}}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use." + CharacterLanguageNote(r.Language);
 
         var sb = new StringBuilder();
         sb.AppendLine("Concept: " + r.Concept.Trim());
@@ -205,6 +230,14 @@ public static class AiPrompts
         }
 
         return (system, sb.ToString());
+    }
+
+    private static string CharacterLanguageNote(string? language)
+    {
+        var name = LanguageName(language);
+        return name == "English"
+            ? ""
+            : $" Write the name and the biography in {name}; keep every JSON key, field key and option id exactly as listed.";
     }
 
     private static void AppendList(StringBuilder sb, string heading, IReadOnlyList<string> lines)

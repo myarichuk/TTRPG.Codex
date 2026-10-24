@@ -22,12 +22,12 @@
     private readonly string id = "confirm-" + Guid.NewGuid().ToString("N")[..8];
     private string title = "";
     private string body = "";
-    private string confirmLabel = "Confirm";
-    private string cancelLabel = "Cancel";
+    private string confirmLabel = "";
+    private string cancelLabel = "";
     private bool destructive;
     private TaskCompletionSource<bool>? pending;
 
-    public async Task<bool> ShowAsync(string dialogTitle, string dialogBody, string confirm = "Confirm", bool isDestructive = false, string cancel = "Cancel")
+    public async Task<bool> ShowAsync(string dialogTitle, string dialogBody, string? confirm = null, bool isDestructive = false, string? cancel = null)
     {
         if (pending != null)
         {
@@ -36,8 +36,8 @@
 
         title = dialogTitle;
         body = dialogBody;
-        confirmLabel = confirm;
-        cancelLabel = cancel;
+        confirmLabel = confirm ?? L["Layout.Confirm.Confirm"];
+        cancelLabel = cancel ?? L["Common.Cancel"];
         destructive = isDestructive;
         pending = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         // Opened after the render that fills it in, so the browser focuses its first button.

@@ -2,17 +2,17 @@
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using System.Diagnostics
 
-<PageTitle>Something went wrong | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.Error.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="empty">
     <div class="empty-icon"><LucideIcon IconName="alert-triangle" Size="28" /></div>
-    <h1 class="h4">Something went wrong</h1>
-    <p>The request could not be completed. Reloading the page usually fixes it; if it keeps happening, the server log has the details.</p>
+    <h1 class="h4">@L["Page.Error.Title"]</h1>
+    <p>@L["Page.Error.Text"]</p>
     @if (!string.IsNullOrEmpty(RequestId))
     {
-        <p class="small-muted">Request ID <code>@RequestId</code></p>
+        <p class="small-muted">@L["Page.Error.RequestId"]<code>@RequestId</code></p>
     }
-    <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+    <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
 </div>
 
 @code {

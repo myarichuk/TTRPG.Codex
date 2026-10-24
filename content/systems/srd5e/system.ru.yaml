@@ -1,0 +1,395 @@
+name: Пятая редакция SRD (5.2.1)
+compatibility: Совместимо с 5E
+description: >-
+  Редакция 2024 года правил пятой редакции в том виде, как они опубликованы в Системном справочном
+  документе 5.2.1: двенадцать классов по одному подклассу, девять видов, четыре предыстории,
+  семнадцать черт, 339 заклинаний и 340 существ.
+
+attributes:
+  str: { label: Сила, abbreviation: СИЛ }
+  dex: { label: Ловкость, abbreviation: ЛОВ }
+  con: { label: Телосложение, abbreviation: ТЕЛ }
+  int: { label: Интеллект, abbreviation: ИНТ }
+  wis: { label: Мудрость, abbreviation: МУД }
+  cha: { label: Харизма, abbreviation: ХАР }
+
+resources:
+  HP: { label: Очки здоровья }
+  TempHP: { label: Временные очки здоровья }
+
+actorFields:
+  level: { label: Уровень, category: Общее }
+  class: { label: Класс, category: Общее }
+  subclass: { label: Подкласс, category: Общее }
+  species: { label: Вид, category: Общее }
+  background: { label: Предыстория, category: Общее }
+  alignment:
+    label: Мировоззрение
+    category: Общее
+    options:
+      Lawful Good: Законно-добрый
+      Neutral Good: Нейтрально-добрый
+      Chaotic Good: Хаотично-добрый
+      Lawful Neutral: Законно-нейтральный
+      Neutral: Нейтральный
+      Chaotic Neutral: Хаотично-нейтральный
+      Lawful Evil: Законно-злой
+      Neutral Evil: Нейтрально-злой
+      Chaotic Evil: Хаотично-злой
+      Unaligned: Без мировоззрения
+  originFeat:
+    label: Черта происхождения
+    category: Общее
+    description: Ваша предыстория даёт определённую черту происхождения.
+  armorClass: { label: Класс Брони, category: Бой }
+  armorClassMisc:
+    label: Прочие бонусы к Классу Брони
+    category: Бой
+    description: Магические эффекты и заклинания, не связанные с предметом, который вы несёте.
+  speed:
+    label: Скорость (футы)
+    category: Бой
+    description: Копируется из вашего вида при выборе; меняйте здесь для умений, которые её изменяют.
+  size:
+    label: Размер
+    category: Бой
+    options:
+      Tiny: Крошечный
+      Small: Маленький
+      Medium: Средний
+      Large: Большой
+      Huge: Огромный
+      Gargantuan: Гигантский
+  darkvision:
+    label: Тёмное зрение (футы)
+    category: Бой
+    description: Копируется из вашего вида при выборе.
+  notes: { label: Заметки, category: Заметки }
+
+conditions:
+  Blinded: Ослеплённый
+  Charmed: Очарованный
+  Deafened: Оглохший
+  Exhaustion: Истощение
+  Frightened: Испуганный
+  Grappled: Схваченный
+  Incapacitated: Выведенный из строя
+  Invisible: Невидимый
+  Paralyzed: Парализованный
+  Petrified: Окаменевший
+  Poisoned: Отравленный
+  Prone: Лежащий ничком
+  Restrained: Опутанный
+  Stunned: Ошеломлённый
+  Unconscious: Без сознания
+
+entityTypes:
+  class:
+    label: Класс
+    pluralLabel: Классы
+    fields:
+      hitDie: { label: Кость Хитов }
+      primaryAbility: { label: Основная характеристика }
+      savingThrows: { label: Спасброски }
+      armorProficiencies: { label: Владение доспехами }
+      weaponProficiencies: { label: Владение оружием }
+      skillChoices: { label: Владение навыками }
+      startingEquipment: { label: Начальное снаряжение }
+      multiclassing: { label: Мультиклассирование }
+      unarmoredDefense:
+        label: Защита без доспехов
+        description: Формула Класса Брони, когда доспехов нет, например 10 + mod(dex) + mod(con).
+      unarmoredDefenseShield: { label: Защита без доспехов допускает щит }
+      multiclassPrerequisites:
+        label: Требования для мультиклассирования
+        description: 'Варианты вроде "STR 13+" или "DEX 13+, WIS 13+"; достаточно выполнить любой один.'
+      subclasses: { label: Подклассы }
+      casterType: { label: Использование заклинаний }
+      spellcastingAbility:
+        label: Характеристика заклинаний
+        description: Характеристика, от которой зависят Сложность спасброска и бонус атаки заклинаний.
+      features:
+        label: Умения класса
+        description: "По строке на умение: уровень, название, описание."
+      spellcasting:
+        label: Таблица заклинаний
+        description: 'По строке на уровень: cantrips, preparedSpells, maxSpellLevel, slots.'
+      featSlots:
+        label: Ячейки черт
+        description: 'По строке на уровень: slots (черты Увеличения характеристик или дары) и styles (боевые стили), которые у вас есть к этому моменту.'
+
+  subclass:
+    label: Подкласс
+    pluralLabel: Подклассы
+    fields:
+      class: { label: Класс }
+      summary: { label: Краткое описание }
+      features: { label: Умения }
+      featSlots:
+        label: Ячейки черт
+        description: Дополнительные черты от класса, которые добавляет этот подкласс, по уровням (второй боевой стиль Чемпиона).
+
+  species:
+    label: Вид
+    pluralLabel: Виды
+    fields:
+      creatureType: { label: Тип существа }
+      size: { label: Размер }
+      speed: { label: Скорость }
+      darkvision: { label: Тёмное зрение (футы) }
+      hitPointsPerLevel:
+        label: Очки здоровья за уровень
+        description: Прибавляются к очкам здоровья на каждом уровне (Дварфийская стойкость).
+      extraOriginFeats:
+        label: Дополнительные черты происхождения
+        description: Черты происхождения сверх черты предыстории (Универсальность человека).
+      traits: { label: Особенности }
+      lineages: { label: Родословные }
+
+  background:
+    label: Предыстория
+    pluralLabel: Предыстории
+    fields:
+      abilityScores: { label: Значения характеристик }
+      feat: { label: Черта }
+      skillProficiencies: { label: Владение навыками }
+      toolProficiency: { label: Владение инструментом }
+      equipment: { label: Снаряжение }
+
+  feat:
+    label: Черта
+    pluralLabel: Черты
+    fields:
+      category:
+        label: Категория
+        options:
+          origin: Происхождение
+          general: Общая
+          fighting-style: Боевой стиль
+          epic-boon: Эпический дар
+      prerequisites: { label: Требования }
+      minLevel: { label: Минимальный уровень }
+      repeatable: { label: Можно брать повторно }
+      armorClassBonus:
+        label: Бонус к Классу Брони
+        description: Добавляется к Классу Брони.
+      armorClassRequiresArmor: { label: Бонус требует надетых доспехов }
+      abilityIncrease:
+        label: Очки характеристик
+        description: Сколько очков эта черта добавляет к характеристикам.
+      abilityIncreaseOptions:
+        label: Какие характеристики можно повысить
+        description: Оставьте пустым для любой характеристики.
+      abilityIncreaseCap: { label: Повышает значения до }
+
+  spell:
+    label: Заклинание
+    pluralLabel: Заклинания
+    fields:
+      level: { label: Уровень }
+      school:
+        label: Школа
+        options:
+          Abjuration: Ограждение
+          Conjuration: Вызов
+          Divination: Прорицание
+          Enchantment: Очарование
+          Evocation: Воплощение
+          Illusion: Иллюзия
+          Necromancy: Некромантия
+          Transmutation: Преобразование
+      castingTime: { label: Время сотворения }
+      range: { label: Дистанция }
+      components: { label: Компоненты }
+      material: { label: Материалы }
+      duration: { label: Длительность }
+      concentration: { label: Концентрация }
+      ritual: { label: Ритуал }
+      classes: { label: Классы }
+      damageType: { label: Тип урона }
+      higherLevel: { label: Использование ячейки более высокого уровня }
+
+  monster:
+    label: Существо
+    pluralLabel: Существа
+    fields:
+      size: { label: Размер, category: Профиль }
+      creatureType: { label: Тип, category: Профиль }
+      alignment: { label: Мировоззрение, category: Профиль }
+      armorClass: { label: Класс Брони, category: Защита }
+      hitPoints: { label: Очки здоровья, category: Защита }
+      hitDice: { label: Кости Хитов, category: Защита }
+      speed: { label: Скорость, category: Защита }
+      strength: { label: Сила, category: Характеристики }
+      dexterity: { label: Ловкость, category: Характеристики }
+      constitution: { label: Телосложение, category: Характеристики }
+      intelligence: { label: Интеллект, category: Характеристики }
+      wisdom: { label: Мудрость, category: Характеристики }
+      charisma: { label: Харизма, category: Характеристики }
+      challengeRating: { label: Показатель опасности, category: Профиль }
+      xp: { label: Опыт, category: Профиль }
+      senses: { label: Чувства, category: Чувства и навыки }
+      languages: { label: Языки, category: Чувства и навыки }
+      skills: { label: Навыки, category: Чувства и навыки }
+      savingThrows: { label: Спасброски, category: Защита }
+      resistances: { label: Сопротивления, category: Защита }
+      immunities: { label: Иммунитеты, category: Защита }
+      vulnerabilities: { label: Уязвимости, category: Защита }
+      gear: { label: Снаряжение, category: Чувства и навыки }
+      traits: { label: Особенности, category: Особенности и действия }
+      actions: { label: Действия, category: Особенности и действия }
+      bonusActions: { label: Бонусные действия, category: Особенности и действия }
+      reactions: { label: Реакции, category: Особенности и действия }
+      legendaryActions: { label: Легендарные действия, category: Особенности и действия }
+
+  condition:
+    label: Состояние
+    pluralLabel: Состояния
+
+  equipment:
+    label: Снаряжение
+    pluralLabel: Снаряжение
+    fields:
+      category: { label: Категория }
+      cost: { label: Стоимость }
+      weight: { label: Вес (фнт.) }
+      damage: { label: Урон }
+      properties: { label: Свойства }
+      mastery: { label: Мастерство оружия }
+      armorClass: { label: Класс Брони }
+      armorType:
+        label: Тип доспеха
+        options:
+          light: Лёгкий
+          medium: Средний
+          heavy: Тяжёлый
+          shield: Щит
+      armorBase:
+        label: Базовый КБ доспеха
+        description: Класс Брони в этом доспехе до учёта Ловкости.
+      armorDexCap:
+        label: Предел Ловкости
+        description: 'Наибольший бонус Ловкости, который он допускает. 0: никакого. Пусто: без ограничения.'
+      armorClassBonus:
+        label: Бонус к Классу Брони
+        description: Добавляется к Классу Брони, пока предмет экипирован (щит, магический предмет).
+      strength: { label: Минимальная Сила }
+      stealth: { label: Помеха на Скрытность }
+
+  magic-item:
+    label: Магический предмет
+    pluralLabel: Магические предметы
+    fields:
+      category: { label: Категория }
+      rarity:
+        label: Редкость
+        options:
+          Common: Обычный
+          Uncommon: Необычный
+          Rare: Редкий
+          Very Rare: Очень редкий
+          Legendary: Легендарный
+          Artifact: Артефакт
+          Varies: Различается
+      attunement: { label: Требует настройки }
+      armorClassBonus:
+        label: Бонус к Классу Брони
+        description: Добавляется к Классу Брони, пока предмет экипирован.
+
+  rule:
+    label: Правило
+    pluralLabel: Глоссарий правил
+    fields:
+      category: { label: Категория }
+
+  lore:
+    label: Предания
+    pluralLabel: Предания
+    fields:
+      category:
+        label: Категория
+        description: История, религия, фракция, легенда...
+
+values:
+  Tiny: Крошечный
+  Small: Маленький
+  Medium: Средний
+  Large: Большой
+  Huge: Огромный
+  Gargantuan: Гигантский
+  Abjuration: Ограждение
+  Conjuration: Вызов
+  Divination: Прорицание
+  Enchantment: Очарование
+  Evocation: Воплощение
+  Illusion: Иллюзия
+  Necromancy: Некромантия
+  Transmutation: Преобразование
+  acid: кислотный
+  bludgeoning: дробящий
+  cold: холод
+  fire: огонь
+  force: силовое поле
+  lightning: электричество
+  necrotic: некротическая энергия
+  piercing: колющий
+  poison: яд
+  psychic: психическая энергия
+  radiant: излучение
+  slashing: рубящий
+  thunder: звук
+  Strength: Сила
+  Dexterity: Ловкость
+  Constitution: Телосложение
+  Intelligence: Интеллект
+  Wisdom: Мудрость
+  Charisma: Харизма
+  Light Armor: Лёгкие доспехи
+  Medium Armor: Средние доспехи
+  Heavy Armor: Тяжёлые доспехи
+  Shields: Щиты
+  Short Rest: Короткий отдых
+  Long Rest: Продолжительный отдых
+  Dead: Мёртв
+  Stable: Стабилен
+
+sheetRules:
+  derived:
+    proficiencyBonus: Бонус мастерства
+    initiative: Инициатива
+  lists:
+    cantrips: Заговоры
+    spells: Подготовленные заклинания
+    grantedSpells: Дарованные заклинания
+    feats: Черты
+    fightingStyles: Боевые стили
+    extraOriginFeats: Дополнительные черты происхождения
+  skills:
+    acrobatics: Акробатика
+    animal-handling: Уход за животными
+    arcana: Магия
+    athletics: Атлетика
+    deception: Обман
+    history: История
+    insight: Проницательность
+    intimidation: Запугивание
+    investigation: Расследование
+    medicine: Медицина
+    nature: Природа
+    perception: Внимательность
+    performance: Выступление
+    persuasion: Убеждение
+    religion: Религия
+    sleight-of-hand: Ловкость рук
+    stealth: Скрытность
+    survival: Выживание
+  passives:
+    passivePerception: Пассивная внимательность
+    passiveInsight: Пассивная проницательность
+    passiveInvestigation: Пассивное расследование
+  slotPools:
+    slots: Ячейки заклинаний
+    pact: Ячейки договора
+  skillsLabel: Навыки
+  inventoryLabel: Снаряжение
+  multiclassLabel: Дополнительные классы

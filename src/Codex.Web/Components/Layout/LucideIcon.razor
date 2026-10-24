@@ -15,6 +15,7 @@
      role="@(Label == null ? null : "img")"
      aria-label="@Label"
      aria-hidden="@(Label == null ? "true" : null)"
+     data-dir="@(IsDirectional ? "" : null)"
      focusable="false">
     @((MarkupString)(Paths.TryGetValue(IconName?.ToLowerInvariant() ?? string.Empty, out var markup) ? markup : Paths["circle"]))
 </svg>
@@ -25,6 +26,14 @@
     [Parameter] public double StrokeWidth { get; set; } = 2.0;
     [Parameter] public string? Class { get; set; }
     [Parameter] public string? Label { get; set; }
+
+    // Icons that point somewhere ("back", "next", "enter") are mirrored by CSS in right-to-left layouts.
+    private static readonly HashSet<string> Directional = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "chevron-left", "chevron-right", "arrow-left", "arrow-right", "log-in", "log-out",
+    };
+
+    private bool IsDirectional => IconName is not null && Directional.Contains(IconName);
 
     private static readonly Dictionary<string, string> Paths = new(StringComparer.OrdinalIgnoreCase)
     {

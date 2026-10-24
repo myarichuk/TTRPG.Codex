@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Service.Ai.NotConfigured" xml:space="preserve"><value>Поставщик ИИ не настроен.</value></data>
+  <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>Поставщик изображений не настроен.</value></data>
+  <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>Краткие пересказы сессий составляет только мастер.</value></data>
+  <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>Поставщику нужны адрес, модель и (для облачных сервисов) API-ключ.</value></data>
+  <data name="Service.Ai.Connected" xml:space="preserve"><value>Соединение установлено. Модель ответила: «{0}»</value></data>
+  <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>Соединение установлено (пустой ответ).</value></data>
+  <data name="Service.Ai.Unreachable" xml:space="preserve"><value>Не удалось связаться с моделью: {0}</value></data>
+  <data name="Service.Art.BadType" xml:space="preserve"><value>Модель изображений прислала файл {0}, который нельзя сохранить. Попробуйте другую модель.</value></data>
+  <data name="Service.Art.TooBig" xml:space="preserve"><value>Созданное изображение больше 6 МБ. Выберите меньший размер или другую модель.</value></data>
+</root>

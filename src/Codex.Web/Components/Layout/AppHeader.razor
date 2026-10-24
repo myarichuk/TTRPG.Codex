@@ -2,33 +2,34 @@
 @inject IJSRuntime JS
 
 <header class="app-header">
-    <a href="/" class="brand" aria-label="TTRPG.Codex home">
+    <a href="/" class="brand" aria-label="@L["Layout.Brand.Home"]">
         <span class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="18" /></span>
         <span>TTRPG.Codex</span>
     </a>
 
-    <nav class="app-nav" aria-label="Main">
+    <nav class="app-nav" aria-label="@L["Layout.Nav.Main"]">
         <AuthorizeView>
             <Authorized>
                 <NavLink href="" Match="NavLinkMatch.All">
-                    <LucideIcon IconName="compass" Size="18" /><span>Campaigns</span>
+                    <LucideIcon IconName="compass" Size="18" /><span>@L["Layout.Nav.Campaigns"]</span>
                 </NavLink>
                 <NavLink href="library">
-                    <LucideIcon IconName="book-open" Size="18" /><span>Library</span>
+                    <LucideIcon IconName="book-open" Size="18" /><span>@L["Layout.Nav.Library"]</span>
                 </NavLink>
             </Authorized>
         </AuthorizeView>
         <NavLink href="about">
-            <LucideIcon IconName="info" Size="18" /><span>About &amp; licences</span>
+            <LucideIcon IconName="info" Size="18" /><span>@L["Layout.Nav.About"]</span>
         </NavLink>
     </nav>
 
     <div class="header-spacer"></div>
 
     <div class="header-actions">
+    <LanguagePicker />
     <button type="button" class="icon-btn theme-toggle" @onclick="ToggleThemeAsync"
-            aria-label="@(theme == "dark" ? "Switch to parchment theme" : "Switch to dark theme")"
-            title="@(theme == "dark" ? "Parchment theme" : "Dark theme")">
+            aria-label="@(theme == "dark" ? L["Layout.Theme.ToParchment"] : L["Layout.Theme.ToDark"])"
+            title="@(theme == "dark" ? L["Layout.Theme.Parchment"] : L["Layout.Theme.Dark"])">
         @* Keyed on the theme so the icon is re-created, and its entrance animation replays, on each toggle. *@
         <LucideIcon @key="theme" IconName="@(theme == "dark" ? "sun" : "moon")" Size="18" />
     </button>
@@ -36,22 +37,22 @@
     <AuthorizeView>
         <Authorized>
             @{
-                var username = context.User.Identity?.Name ?? "User";
+                var username = context.User.Identity?.Name ?? L["Layout.User.Fallback"];
             }
-            <a href="/settings/ai" class="user-chip" title="AI settings" aria-label="@username: AI settings">
+            <a href="/settings/ai" class="user-chip" title="@L["Layout.User.AiSettings"]" aria-label="@L["Layout.User.AiSettingsLabel", username]">
                 <span class="avatar" aria-hidden="true">@Initial(username)</span>
                 <span>@username</span>
                 <LucideIcon IconName="sparkles" Size="14" Class="chip-icon" />
             </a>
             <form method="post" action="/logout" class="d-inline">
                 <AntiforgeryToken />
-                <button type="submit" class="icon-btn" aria-label="Sign out" title="Sign out">
+                <button type="submit" class="icon-btn" aria-label="@L["Layout.SignOut"]" title="@L["Layout.SignOut"]">
                     <LucideIcon IconName="log-out" Size="18" />
                 </button>
             </form>
         </Authorized>
         <NotAuthorized>
-            <a href="/login" class="cx-btn cx-plaque cx-sm">Sign in</a>
+            <a href="/login" class="cx-btn cx-plaque cx-sm">@L["Layout.SignIn"]</a>
         </NotAuthorized>
     </AuthorizeView>
     </div>

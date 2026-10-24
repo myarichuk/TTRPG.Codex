@@ -6,18 +6,18 @@
    or is typed in. The numbers come from the rule engine. *@
 
 <section class="panel" aria-labelledby="@(id)-heading" data-testid="armor-class-panel">
-    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> Armor class</h2></div>
+    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> @L["Actor.Ac.Heading"]</h2></div>
     <div class="d-flex align-items-baseline gap-2">
         <span class="stat-numeral" data-testid="armor-class">@Value</span>
         @if (Auto)
         {
-            <span class="small-muted">worked out from your equipment</span>
+            <span class="small-muted">@L["Actor.Ac.Auto"]</span>
         }
     </div>
 
     @if (Auto && Summary != null)
     {
-        <ul class="list-unstyled small mt-2 mb-2" aria-label="What armor class is made of" data-testid="armor-class-lines">
+        <ul class="list-unstyled small mt-2 mb-2" aria-label="@L["Actor.Ac.LinesAria"]" data-testid="armor-class-lines">
             @foreach (var line in Summary.Lines)
             {
                 <li>@line</li>
@@ -29,12 +29,12 @@
     {
         <div class="field-check mt-2">
             <input id="@(id)-auto" class="field-box" type="checkbox" checked="@Auto" @onchange="e => SetAutoAsync((bool)e.Value!)" data-testid="armor-class-auto" />
-            <label for="@(id)-auto" >Work out from equipment and class</label>
+            <label for="@(id)-auto" >@L["Actor.Ac.AutoLabel"]</label>
         </div>
         @if (Auto)
         {
             <div class="mt-2">
-                <label for="@(id)-misc" class="field-label">Other bonuses (spells, magic effects)</label>
+                <label for="@(id)-misc" class="field-label">@L["Actor.Ac.Misc"]</label>
                 <input id="@(id)-misc" type="number" class="field-input field-sm" style="width:6rem" value="@(YamlValues.GetInt(Sheet, Rules.MiscField) ?? 0)"
                        @onchange="e => SetNumberAsync(Rules.MiscField, e.Value?.ToString())" data-testid="armor-class-misc" />
             </div>
@@ -42,7 +42,7 @@
         else
         {
             <div class="mt-2">
-                <label for="@(id)-manual" class="field-label">Armor class</label>
+                <label for="@(id)-manual" class="field-label">@L["Actor.Ac.Heading"]</label>
                 <input id="@(id)-manual" type="number" class="field-input field-sm" style="width:6rem" value="@Value"
                        @onchange="e => SetNumberAsync(Rules.Key, e.Value?.ToString())" data-testid="armor-class-input" />
             </div>

@@ -7,39 +7,39 @@
 
 <div class="ai-field">
     <div class="ai-field-head">
-        <label for="@Id" class="field-label">@Label</label>
+        <label for="@Id" class="field-label">@(Label ?? L["Library.Ai.Description"])</label>
         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="EnhanceAsync" Disabled="@busy" data-testid="@($"{TestId}-ai")">
-            @(busy ? "Writing…" : string.IsNullOrWhiteSpace(Value) ? "Write with AI" : "Enhance with AI")
+            @(busy ? L["Library.Ai.Writing"] : string.IsNullOrWhiteSpace(Value) ? L["Library.Ai.Write"] : L["Library.Ai.Enhance"])
         </CodexButton>
     </div>
     <textarea id="@Id" class="field-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput" aria-describedby="@(Id)-hint" aria-busy="@(busy ? "true" : "false")" data-testid="@TestId"></textarea>
     <div class="ai-field-foot">
-        <label for="@(Id)-ask" class="visually-hidden">What the AI should change (optional)</label>
-        <input id="@(Id)-ask" class="field-input field-sm" placeholder="Optional: tell the AI what you want, e.g. “more menacing, mention the smell”" @bind="instruction" @bind:event="oninput" />
+        <label for="@(Id)-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
+        <input id="@(Id)-ask" class="field-input field-sm" placeholder="@L["Library.Ai.AskPlaceholder"]" @bind="instruction" @bind:event="oninput" />
         @if (previous != null)
         {
-            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="undo-2" OnClick="UndoAsync" data-testid="@($"{TestId}-undo")">Undo AI</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="undo-2" OnClick="UndoAsync" data-testid="@($"{TestId}-undo")">@L["Library.Ai.Undo"]</CodexButton>
         }
     </div>
-    <div id="@(Id)-hint" class="field-hint">@Hint</div>
+    <div id="@(Id)-hint" class="field-hint">@(Hint ?? L["Library.Ai.Hint"])</div>
     @if (error != null)
     {
-        <p class="text-danger small mb-0 mt-1" role="alert">@error @if (notConfigured) { <a href="/settings/ai">Open AI settings</a> }</p>
+        <p class="text-danger small mb-0 mt-1" role="alert">@error @if (notConfigured) { <a href="/settings/ai">@L["Library.Ai.OpenSettings"]</a> }</p>
     }
     else if (previous != null)
     {
-        <p class="small-muted mb-0 mt-1" role="status">AI draft in the box. Edit it freely, or undo.</p>
+        <p class="small-muted mb-0 mt-1" role="status">@L["Library.Ai.Draft"]</p>
     }
 </div>
 
 @code {
     [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
-    [Parameter] public string Label { get; set; } = "Description";
+    [Parameter] public string? Label { get; set; }
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string?> ValueChanged { get; set; }
     [Parameter] public int Rows { get; set; } = 5;
     [Parameter] public string? Placeholder { get; set; }
-    [Parameter] public string Hint { get; set; } = "Plain text. **bold**, *italic*, \"- \" bullets and | tables | are rendered.";
+    [Parameter] public string? Hint { get; set; }
     [Parameter] public string? TestId { get; set; }
 
     /// <summary>Produces the new text from the current text and the optional instruction.</summary>
@@ -74,12 +74,12 @@
         catch (AiNotConfiguredException)
         {
             notConfigured = true;
-            error = "No AI provider is set up yet.";
+            error = L["Library.Ai.NotConfigured"];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI description failed for field {FieldId}", Id);
-            error = "The AI could not write this: " + ex.Message;
+            error = L["Library.Ai.Failed", L.Describe(ex)];
         }
         finally
         {

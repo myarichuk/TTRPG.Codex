@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Wizard.New" xml:space="preserve"><value>תוכן ביתי חדש</value></data>
+  <data name="Wizard.Edit" xml:space="preserve"><value>עריכת תוכן ביתי</value></data>
+  <data name="Wizard.Unnamed" xml:space="preserve"><value>{0} ללא שם</value></data>
+  <data name="Wizard.Untitled" xml:space="preserve"><value>רשומה ללא כותרת</value></data>
+  <data name="Wizard.CloseWithoutSaving" xml:space="preserve"><value>סגירה ללא שמירה</value></data>
+  <data name="Wizard.Steps" xml:space="preserve"><value>שלבים</value></data>
+  <data name="Wizard.Type" xml:space="preserve"><value>סוג</value></data>
+  <data name="Wizard.Required" xml:space="preserve"><value>(חובה)</value></data>
+  <data name="Wizard.ChooseType" xml:space="preserve"><value>— בחרו סוג —</value></data>
+  <data name="Wizard.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Wizard.Tags" xml:space="preserve"><value>תגיות</value></data>
+  <data name="Wizard.TagsPlaceholder" xml:space="preserve"><value>מופרדות בפסיקים, למשל: אל-מת, ביצה</value></data>
+  <data name="Wizard.Visible" xml:space="preserve"><value>גלוי לשחקנים</value></data>
+  <data name="Wizard.HiddenTypeHint" xml:space="preserve"><value>{0} בכל מקרה לא מופיעים בספרייה של השחקנים; זה משנה רק אם תחליפו את הסוג.</value></data>
+  <data name="Wizard.DraftHint" xml:space="preserve"><value>בטלו את הסימון כדי לשמור אותו כטיוטה שרק אתם רואים.</value></data>
+  <data name="Wizard.Description" xml:space="preserve"><value>תיאור</value></data>
+  <data name="Wizard.HintPublished" xml:space="preserve"><value>השחקנים יוכלו לקרוא זאת כשהרשומה תהיה גלויה להם; הבינה המלאכותית כותבת עבורם. **מודגש**, *נטוי* ותבליטים עם "- " מוצגים.</value></data>
+  <data name="Wizard.HintDraft" xml:space="preserve"><value>טיוטה שרק אתם רואים; הבינה המלאכותית עשויה להוסיף קרסי עלילה וסודות. **מודגש**, *נטוי* ותבליטים עם "- " מוצגים.</value></data>
+  <data name="Wizard.Portrait" xml:space="preserve"><value>דיוקן</value></data>
+  <data name="Wizard.Art" xml:space="preserve"><value>איור</value></data>
+  <data name="Wizard.ArtAlt" xml:space="preserve"><value>איור עבור {0}</value></data>
+  <data name="Wizard.TipA" xml:space="preserve"><value>טיפ:</value></data>
+  <data name="Wizard.TipB" xml:space="preserve"><value>הנחיית איור</value></data>
+  <data name="Wizard.TipC" xml:space="preserve"><value>בשלב התיאור (משפט חזותי אחד) נותנת למודל התמונות הנחיה טובה יותר מהתיאור לבדו.</value></data>
+  <data name="Wizard.ReviewNote" xml:space="preserve"><value>שלבים ריקים זה בסדר: חובה רק סוג ושם. אפשר לשנות הכול אחר כך מהספרייה.</value></data>
+  <data name="Wizard.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Wizard.PreviewEmpty" xml:space="preserve"><value>בחרו סוג ושם כדי לראות את הרשומה מתעצבת.</value></data>
+  <data name="Wizard.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Wizard.StepOf" xml:space="preserve"><value>שלב {0} מתוך {1}</value></data>
+  <data name="Wizard.Next" xml:space="preserve"><value>הבא: {0}</value></data>
+  <data name="Wizard.Saving" xml:space="preserve"><value>שומר…</value></data>
+  <data name="Wizard.Create" xml:space="preserve"><value>יצירה</value></data>
+  <data name="Wizard.SaveChanges" xml:space="preserve"><value>שמירת שינויים</value></data>
+  <data name="Wizard.Step.Basics" xml:space="preserve"><value>בסיס</value></data>
+  <data name="Wizard.Step.Details" xml:space="preserve"><value>פרטים</value></data>
+  <data name="Wizard.Step.General" xml:space="preserve"><value>כללי</value></data>
+  <data name="Wizard.Step.Review" xml:space="preserve"><value>סקירה</value></data>
+  <data name="Wizard.Intro.Basics" xml:space="preserve"><value>מה זה וכיצד זה נקרא.</value></data>
+  <data name="Wizard.Intro.StoryCreature" xml:space="preserve"><value>איך זה נראה, מה זה רוצה, איך זה נלחם. כתבו בעצמכם, או תנו לבינה המלאכותית לנסח לפי הנתונים.</value></data>
+  <data name="Wizard.Intro.Story" xml:space="preserve"><value>טקסט הכללים והאגדות.</value></data>
+  <data name="Wizard.Intro.Art" xml:space="preserve"><value>לא חובה. מוצג בראש הרשומה בספרייה.</value></data>
+  <data name="Wizard.Intro.Review" xml:space="preserve"><value>בדקו את התצוגה המקדימה ואז שמרו.</value></data>
+  <data name="Wizard.Sum.Visible" xml:space="preserve"><value>{0} · גלוי לשחקנים</value></data>
+  <data name="Wizard.Sum.Draft" xml:space="preserve"><value>{0} · טיוטה</value></data>
+  <data name="Wizard.Sum.NeedBasics" xml:space="preserve"><value>נדרשים סוג ושם</value></data>
+  <data name="Wizard.Sum.NoDescription" xml:space="preserve"><value>עדיין אין תיאור</value></data>
+  <data name="Wizard.Sum.Words" xml:space="preserve"><value>{0, plural, one{מילה #} two{# מילים} other{# מילים}}</value></data>
+  <data name="Wizard.Sum.NewImage" xml:space="preserve"><value>תמונה חדשה מוכנה</value></data>
+  <data name="Wizard.Sum.HasArt" xml:space="preserve"><value>יש איור</value></data>
+  <data name="Wizard.Sum.NoArt" xml:space="preserve"><value>אין איור</value></data>
+  <data name="Wizard.Sum.Filled" xml:space="preserve"><value>{0} מתוך {1} מולאו</value></data>
+  <data name="Wizard.Placeholder.Creature" xml:space="preserve"><value>למשל: קרפדה נפוחה בגודל עגלה, גבה זרוע שלפוחיות זוהרות…</value></data>
+  <data name="Wizard.Placeholder.Other" xml:space="preserve"><value>מה זה עושה, במילים שהשחקנים יקראו.</value></data>
+  <data name="Wizard.Error.TypeNameFirst" xml:space="preserve"><value>קודם בחרו סוג ותנו שם.</value></data>
+  <data name="Wizard.Error.TypeNameRequired" xml:space="preserve"><value>חובה לציין סוג ושם.</value></data>
+  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>רק מנהל המשחק יכול לערוך תוכן ביתי.</value></data>
+  <data name="Wizard.Error.ArtFailed" xml:space="preserve"><value>נשמר, אך לא ניתן היה לאחסן את האיור. נסו להוסיף אותו שוב מהספרייה.</value></data>
+  <data name="Wizard.Error.DeleteFailed" xml:space="preserve"><value>לא ניתן היה למחוק את הרשומה.</value></data>
+  <data name="Wizard.DiscardTitle" xml:space="preserve"><value>לבטל את השינויים?</value></data>
+  <data name="Wizard.DiscardBody" xml:space="preserve"><value>שום דבר מ-״{0}״ עדיין לא נשמר.</value></data>
+  <data name="Wizard.ThisEntry" xml:space="preserve"><value>הרשומה הזו</value></data>
+  <data name="Wizard.Discard" xml:space="preserve"><value>ביטול שינויים</value></data>
+  <data name="Wizard.KeepEditing" xml:space="preserve"><value>המשך עריכה</value></data>
+  <data name="Wizard.DeleteTitle" xml:space="preserve"><value>למחוק את ״{0}״?</value></data>
+  <data name="Wizard.DeleteBody" xml:space="preserve"><value>היא תיעלם מהספרייה, ואיתה האיור. דמויות ויצורים שכבר נוצרו ממנה ישמרו את הדפים שלהם.</value></data>
+</root>

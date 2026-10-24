@@ -12,11 +12,11 @@
 @inject NavigationManager NavManager
 @inject IConfiguration Configuration
 
-<PageTitle>Create account | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.Register.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="auth-card">
     <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
-    <h1>Create your account</h1>
+    <h1>@L["Page.Register.Heading"]</h1>
 
     <EditForm Model="@Model" OnValidSubmit="HandleRegister" FormName="RegisterForm">
         <DataAnnotationsValidator />
@@ -29,25 +29,25 @@
         }
 
         <div class="mb-3">
-            <label for="username" class="field-label">Username</label>
+            <label for="username" class="field-label">@L["Page.Auth.Username"]</label>
             <InputText id="username" class="field-input" autocomplete="username" required @bind-Value="Model!.Username" />
         </div>
 
         <div class="mb-3">
-            <label for="password" class="field-label">Password</label>
+            <label for="password" class="field-label">@L["Page.Auth.Password"]</label>
             <InputText id="password" type="password" class="field-input" autocomplete="new-password" required aria-describedby="password-help" @bind-Value="Model!.Password" />
-            <div id="password-help" class="field-hint">At least 8 characters with an upper-case letter, a lower-case letter and a number.</div>
+            <div id="password-help" class="field-hint">@L["Page.Register.PasswordHelp"]</div>
         </div>
 
         <div class="mb-4">
-            <label for="confirmPassword" class="field-label">Confirm password</label>
+            <label for="confirmPassword" class="field-label">@L["Page.Register.Confirm"]</label>
             <InputText id="confirmPassword" type="password" class="field-input" autocomplete="new-password" required @bind-Value="Model!.ConfirmPassword" />
         </div>
 
-        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100">Create account</CodexButton>
+        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100">@L["Page.Register.Title"]</CodexButton>
     </EditForm>
 
-    <p class="text-center small-muted mt-4 mb-0">Already have an account? <a href="/login">Sign in</a></p>
+    <p class="text-center small-muted mt-4 mb-0">@L["Page.Register.HaveAccount"]<a href="/login">@L["Page.Auth.SignIn"]</a></p>
 </div>
 
 @code {
@@ -71,38 +71,38 @@
     {
         if (HttpContext == null || Model == null)
         {
-            ErrorMessage = "The form must be submitted from a freshly loaded page. Reload and try again.";
+            ErrorMessage = L["Page.Register.Stale"];
             return;
         }
 
         if (Model.Password != Model.ConfirmPassword)
         {
-            ErrorMessage = "The two passwords do not match.";
+            ErrorMessage = L["Page.Register.Mismatch"];
             return;
         }
 
         if (string.IsNullOrWhiteSpace(Model.Username) || string.IsNullOrWhiteSpace(Model.Password))
         {
-            ErrorMessage = "A username and a password are required.";
+            ErrorMessage = L["Page.Register.Required"];
             return;
         }
 
         if (Model.Password.Length < 8)
         {
-            ErrorMessage = "The password must be at least 8 characters long.";
+            ErrorMessage = L["Page.Register.TooShort"];
             return;
         }
 
         if (!Model.Password.Any(char.IsUpper) || !Model.Password.Any(char.IsLower) || !Model.Password.Any(char.IsDigit))
         {
-            ErrorMessage = "The password needs an upper-case letter, a lower-case letter and a number.";
+            ErrorMessage = L["Page.Register.Weak"];
             return;
         }
 
         var existingUser = await UserRepository.GetUserByUsernameAsync(Model.Username);
         if (existingUser != null)
         {
-            ErrorMessage = "That username is already taken.";
+            ErrorMessage = L["Page.Register.Taken"];
             return;
         }
 
@@ -110,7 +110,9 @@
         {
             Id = Guid.NewGuid().ToString(),
             Username = Model.Username,
-            Roles = new List<string> { "Player" }
+            Roles = new List<string> { "Player" },
+            // Whatever language the person has been reading the sign-up page in becomes their saved choice.
+            Culture = SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name)
         };
 
         // ServerAdmin goes to the configured Codex:AdminUsername, or to the very first account.
@@ -129,7 +131,7 @@
 
         if (!await UserRepository.TryReserveUsernameAsync(user.Username, user.Id))
         {
-            ErrorMessage = "That username is already taken.";
+            ErrorMessage = L["Page.Register.Taken"];
             return;
         }
 
