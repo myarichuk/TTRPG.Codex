@@ -12,7 +12,7 @@ dependencies:
 description: 'Russian translation of the SRD 5.2.1 classes, subclasses, species, backgrounds, feats, spells, creatures and magic items (names and rules text), mostly from the OmnisGM translation. Spells that failed a check use a machine draft; creatures and items that failed stay in English. Other entry types are not translated yet.'
 authors:
 - Wizards of the Coast LLC (original rules text)
-- OmnisGM / Petr Radilov (Russian translation of the classes, subclasses, species, backgrounds, feats, most spells, 276 creatures and the magic items, CC BY 4.0, https://rules.omnisgm.com)
+- OmnisGM / Petr Radilov (Russian translation of the classes, subclasses, species, backgrounds, feats, most spells, 302 creatures and 242 magic items, CC BY 4.0, https://rules.omnisgm.com)
 - TTRPG.Codex contributors (machine-drafted translation of the remaining spells, checked by tools/Codex.TranslationCheck)
 license:
   name: CC-BY-4.0
