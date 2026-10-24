@@ -125,7 +125,18 @@ public class ContentRegistry : IContentRegistry
         {
             var key = (systemId, EntryKey(type, id));
             if (!_translations.TryGetValue(key, out var byLocale)) _translations[key] = byLocale = new();
-            byLocale[language] = (new Dictionary<string, object>(fields), packId);
+            // Several translation packs can cover one entry (the flavor pack names it, the rules pack translates its text): their
+            // fields merge, a later pack winning key by key, and every contributing pack is credited.
+            if (byLocale.TryGetValue(language, out var earlier))
+            {
+                var merged = new Dictionary<string, object>(earlier.Fields);
+                foreach (var (name, value) in fields) merged[name] = value;
+                byLocale[language] = (merged, earlier.PackId.Split(',').Contains(packId) ? earlier.PackId : earlier.PackId + "," + packId);
+            }
+            else
+            {
+                byLocale[language] = (new Dictionary<string, object>(fields), packId);
+            }
         }
     }
 

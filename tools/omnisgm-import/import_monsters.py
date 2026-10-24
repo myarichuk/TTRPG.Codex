@@ -12,7 +12,7 @@ English rows a translated description makes redundant).
 """
 import os, re, sys
 
-from omnisgm_common import blocks, norm, scalar, sentences
+from omnisgm_common import blocks, faithful, norm, scalar, sentences
 
 LABELS = {"Скорость": "speed", "Чувства": "senses", "Языки": "languages", "Навыки": "skills"}
 ABILITIES = {"STR": "СИЛ", "DEX": "ЛОВ", "CON": "ТЕЛ", "INT": "ИНТ", "WIS": "МДР", "CHA": "ХАР"}  # as system.ru.yaml writes them
@@ -53,7 +53,7 @@ def main():
     for f in ("12_MonstersA-Z.md", "13_Animals.md"):
         en.update({norm(h): b for h, b in blocks(os.path.join(omnis, "en", f))})
     ids = our_monsters(pack)
-    items, missing, seen, divergent = [], [], set(), []
+    items, missing, seen, divergent, faithful_ids = [], [], set(), [], []
     for rh, rb in ru:
         m = re.search(r"\(([^()]*)\)\s*$", rh)
         eh = m.group(1) if m else rh
@@ -69,6 +69,8 @@ def main():
         # bigger gap suggests a sentence was added or dropped.
         if norm(eh) in en and abs(sentences(rb) - sentences(en[norm(eh)]) + 1) >= 2:
             divergent.append(sid)
+        if norm(eh) in en and faithful(en[norm(eh)], rb):
+            faithful_ids.append(sid)
         items.append((sid,) + convert(rh, rb, ours))
     os.makedirs(os.path.join(out, "monster"), exist_ok=True)
     with open(os.path.join(out, "monster", "monsters.yaml"), "w", encoding="utf-8") as f:
@@ -81,6 +83,7 @@ def main():
                     f.write(f"    {k}: {scalar(v)}\n")
     if len(sys.argv) > 4:
         open(sys.argv[4], "w").write("\n".join(sorted(divergent)) + "\n")
+        open(sys.argv[4] + ".faithful", "w").write("\n".join(sorted(faithful_ids)) + "\n")
     notcovered = sorted(set(v[0] for v in ids.values()) - seen)
     print(f"{len(items)} creatures written; OmnisGM headings without an entry: {missing}")
     print(f"our creatures not covered ({len(notcovered)}): {notcovered}")

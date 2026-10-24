@@ -1,0 +1,8 @@
+# Entries whose English differs from the text OmnisGM translated, so a failed number check is not the translation's fault (see tools/omnisgm-import)
+dragonborn
+dwarf
+elf
+gnome
+goliath
+orc
+tiefling

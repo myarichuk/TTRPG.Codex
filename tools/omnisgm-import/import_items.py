@@ -10,7 +10,7 @@ written (an italic type, rarity and attunement line, then the text and any table
 """
 import os, re, sys
 
-from omnisgm_common import blocks, norm, scalar, sentences
+from omnisgm_common import blocks, faithful, norm, scalar, sentences
 
 
 def our_items(pack):
@@ -27,7 +27,7 @@ def main():
     ru = blocks(os.path.join(omnis, "ru", "10_MagicItems.md"), level=4)
     en = {norm(h): b for h, b in blocks(os.path.join(omnis, "en", "10_MagicItems.md"), level=4)}
     ids = our_items(pack)
-    items, missing, seen, divergent = [], [], set(), []
+    items, missing, seen, divergent, faithful_ids = [], [], set(), [], []
     for rh, rb in ru:
         m = re.search(r"\(([^()]*)\)\s*$", rh)
         eh = m.group(1) if m else rh
@@ -41,6 +41,8 @@ def main():
         seen.add(sid)
         if norm(eh) in en and abs(sentences(rb) - sentences(en[norm(eh)])) >= 2:
             divergent.append(sid)
+        if norm(eh) in en and faithful(en[norm(eh)], rb):
+            faithful_ids.append(sid)
         items.append((sid, re.sub(r"\s*\([^()]*\)\s*$", "", rh).strip(), rb.strip()))
     os.makedirs(os.path.join(out, "magic-item"), exist_ok=True)
     with open(os.path.join(out, "magic-item", "magic-items.yaml"), "w", encoding="utf-8") as f:
@@ -49,6 +51,7 @@ def main():
             f.write("".join(("    " + l if l else "") + "\n" for l in desc.split("\n")))
     if len(sys.argv) > 4:
         open(sys.argv[4], "w").write("\n".join(sorted(divergent)) + "\n")
+        open(sys.argv[4] + ".faithful", "w").write("\n".join(sorted(faithful_ids)) + "\n")
     notcovered = sorted(set(ids.values()) - seen)
     print(f"{len(items)} items written; OmnisGM headings without an entry ({len(missing)}): {missing}")
     print(f"our items not covered ({len(notcovered)}): {notcovered}")

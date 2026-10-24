@@ -30,8 +30,42 @@ public class ShippedTranslationPackTests : IAsyncLifetime
 
         Assert.Equal("Barbarian", original.Name);
         Assert.Equal(barbarian, shown.Name);
-        Assert.Equal(original.Description, shown.Description);                 // rules text stays English until the SRD is translated
         Assert.Equal(original.Properties["hitDie"], shown.Properties["hitDie"]); // rules data untouched
+        if (locale == "he") Assert.Equal(original.Description, shown.Description); // no Hebrew rules text yet
+        else Assert.NotEqual(original.Description, shown.Description);
+    }
+
+    [Fact]
+    public void RussianClasses_MergeTheRulesTranslationWithTheFlavorText_AndCreditBothPacks()
+    {
+        var original = _registry.GetEntry("srd5e", "class", "barbarian")!;
+        var shown = _registry.Localize(original, "ru");
+
+        Assert.Equal("Варвар", shown.Name);
+        Assert.Contains("Основная характеристика", shown.Description);
+        Assert.False(string.IsNullOrWhiteSpace(shown.Properties["flavor"] as string));          // from the flavor pack
+        Assert.Equal(new[] { "codex-flavor-ru", "srd-5.2.1-ru" }, shown.Properties[ContentEntry.TranslationSourceKey].ToString()!.Split(',').OrderBy(s => s));
+
+        var features = ((IEnumerable<object>)shown.Properties["features"]).OfType<IDictionary<string, object>>().ToList();
+        var english = ((IEnumerable<object>)original.Properties["features"]).OfType<IDictionary<string, object>>().ToList();
+        Assert.Equal(english.Count, features.Count);                                            // every row translated, none lost
+        Assert.Equal("Ярость", features[0]["name"]);
+        Assert.Equal(english.Select(r => r["level"].ToString()), features.Select(r => r["level"].ToString())); // levels untouched
+        Assert.Equal("Rage", english[0]["name"]);                                               // the shared entry is untouched
+    }
+
+    [Fact]
+    public void RussianSpeciesAndSubclasses_ShowTheTranslatedText_WithoutEnglishRows()
+    {
+        var dwarf = _registry.Localize(_registry.GetEntry("srd5e", "species", "dwarf")!, "ru");
+        Assert.Equal("Дварф", dwarf.Name);
+        Assert.Contains("Тёмное зрение", dwarf.Description);
+        Assert.False(dwarf.Properties.ContainsKey("traits"));                                   // the translated description lists them
+
+        var champion = _registry.Localize(_registry.GetEntry("srd5e", "subclass", "champion")!, "ru");
+        var rows = ((IEnumerable<object>)champion.Properties["features"]).OfType<IDictionary<string, object>>().ToList();
+        Assert.Equal("Чемпион", champion.Name);
+        Assert.All(rows, r => Assert.Matches("[А-Яа-я]", r["name"].ToString()!));
     }
 
     [Theory]

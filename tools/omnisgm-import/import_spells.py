@@ -14,7 +14,7 @@ Run tools/Codex.TranslationCheck on the result: spells that fail its checks shou
 """
 import os, re, sys
 
-from omnisgm_common import blocks, norm, scalar, sentences
+from omnisgm_common import blocks, faithful, norm, scalar, sentences
 
 LABELS = {"Время накладывания": "castingTime", "Время сотворения": "castingTime", "Дистанция": "range", "Длительность": "duration"}
 
@@ -61,7 +61,7 @@ def main():
     omnis, pack, out = sys.argv[1:4]
     ru, ids = blocks(os.path.join(omnis, "ru", "07_Spells.md")), our_ids(pack)
     en = {norm(h): b for h, b in blocks(os.path.join(omnis, "en", "07_Spells.md"))}
-    items, missing, seen, divergent = [], [], set(), []
+    items, missing, seen, divergent, faithful_ids = [], [], set(), [], []
     for rh, rb in ru:
         m = re.search(r"\(([^()]*)\)\s*$", rh)
         eh = m.group(1) if m else rh
@@ -75,6 +75,8 @@ def main():
         seen.add(sid)
         if norm(eh) in en and sentences(rb) != sentences(en[norm(eh)]):
             divergent.append(sid)
+        if norm(eh) in en and faithful(en[norm(eh)], rb):
+            faithful_ids.append(sid)
         name, desc, props = convert(rh, rb, has)
         items.append((sid, name, desc, props))
     os.makedirs(os.path.join(out, "spell"), exist_ok=True)
@@ -88,6 +90,7 @@ def main():
                     f.write(f"    {k}: {scalar(v)}\n")
     if len(sys.argv) > 4:
         open(sys.argv[4], "w").write("\n".join(sorted(divergent)) + "\n")
+        open(sys.argv[4] + ".faithful", "w").write("\n".join(sorted(faithful_ids)) + "\n")
     print(f"{len(items)} spells written, {len(missing)} English headings without an entry: {missing}")
     print(f"our spells not covered: {len(ids) - len(items)}")
 

@@ -110,6 +110,17 @@ foreach (var folder in Directory.GetDirectories(translationDir).Where(d => !Path
     }
 }
 
+// known-differences.txt in the pack: entries (id or type:id, # comments) whose English differs from the text the translation was made
+// from, so a failed number check there is not the translation's fault. Their errors are reported as warnings.
+var knownFile = Path.Combine(translationDir, "known-differences.txt");
+if (File.Exists(knownFile))
+{
+    var known = File.ReadAllLines(knownFile).Select(l => l.Split('#')[0].Trim()).Where(l => l.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    findings = findings.Select(f => f.Severity == Severity.Error && known.Any(k => f.Entry.Equals(k, StringComparison.OrdinalIgnoreCase) || f.Entry.EndsWith(":" + k, StringComparison.OrdinalIgnoreCase))
+        ? f with { Severity = Severity.Warning, Code = "known-difference/" + f.Code }
+        : f).ToList();
+}
+
 var errors = findings.Count(f => f.Severity == Severity.Error);
 var warnings = findings.Count - errors;
 if (!quiet)

@@ -112,7 +112,7 @@
         {
             <div class="mt-1">@L["Library.Detail.HomebrewNote"]</div>
         }
-        @if (TranslationPack is { } translationPack)
+        @foreach (var translationPack in TranslationPacks)
         {
             <div class="mt-1" data-testid="translation-attribution">
                 <strong>@L["Library.Detail.Translation"]</strong> @translationPack.Name@(translationPack.License != null ? " · " + L["Library.Detail.LicenceName", translationPack.License.Name] : string.Empty)
@@ -157,11 +157,11 @@
             ? Registry.GetPack(source.ToString()!)
             : null;
 
-    /// <summary>The translation pack the shown text came from, when the entry is displayed translated.</summary>
-    private PackManifest? TranslationPack =>
+    /// <summary>The translation packs the shown text came from, when the entry is displayed translated.</summary>
+    private IEnumerable<PackManifest> TranslationPacks =>
         Item.Entry.Properties.TryGetValue(ContentEntry.TranslationSourceKey, out var source) && !string.IsNullOrWhiteSpace(source?.ToString())
-            ? Registry.GetPack(source.ToString()!)
-            : null;
+            ? source.ToString()!.Split(',').Select(id => Registry.GetPack(id)).OfType<PackManifest>()
+            : Enumerable.Empty<PackManifest>();
 
     private string? Flavor => Item.Entry.Properties.TryGetValue("flavor", out var value) && !string.IsNullOrWhiteSpace(value?.ToString()) ? value.ToString() : null;
 
