@@ -21,7 +21,7 @@ Use these terms everywhere so the interface reads consistently. Machine-drafted 
 | Round | Раунд | סבב |
 | Turn | Ход | תור |
 | Condition | Состояние | מצב |
-| Short rest / Long rest | Короткий отдых / Продолжительный отдых | מנוחה קצרה / מנוחה ארוכה |
+| Short rest / Long rest | Короткий отдых / Долгий отдых | מנוחה קצרה / מנוחה ארוכה |
 | Library | Библиотека | ספרייה |
 | Homebrew | Собственный контент (хоумбрю) | תוכן ביתי (Homebrew) |
 | Content pack | Набор материалов | חבילת תוכן |

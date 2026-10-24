@@ -7,7 +7,7 @@
   <data name="Actor.Slots.Title" xml:space="preserve"><value>Ячейки</value></data>
   <data name="Actor.Slots.SpellSlots" xml:space="preserve"><value>Ячейки заклинаний</value></data>
   <data name="Actor.Slots.PactSlots" xml:space="preserve"><value>Ячейки договора</value></data>
-  <data name="Actor.Slots.LongRest" xml:space="preserve"><value>Продолжительный отдых</value></data>
+  <data name="Actor.Slots.LongRest" xml:space="preserve"><value>Долгий отдых</value></data>
   <data name="Actor.Slots.ShortRest" xml:space="preserve"><value>Короткий отдых</value></data>
   <data name="Actor.Slots.Level" xml:space="preserve"><value>Уровень {0}</value></data>
   <data name="Actor.Slots.LevelHidden" xml:space="preserve"><value>{0}, уровень {1}: </value></data>

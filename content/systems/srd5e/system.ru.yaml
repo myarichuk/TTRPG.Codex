@@ -73,7 +73,7 @@ conditions:
   Exhaustion: Истощение
   Frightened: Испуганный
   Grappled: Схваченный
-  Incapacitated: Выведенный из строя
+  Incapacitated: Недееспособный
   Invisible: Невидимый
   Paralyzed: Парализованный
   Petrified: Окаменевший
@@ -349,7 +349,7 @@ values:
   Heavy Armor: Тяжёлые доспехи
   Shields: Щиты
   Short Rest: Короткий отдых
-  Long Rest: Продолжительный отдых
+  Long Rest: Долгий отдых
   Dead: Мёртв
   Stable: Стабилен
 
