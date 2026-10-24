@@ -159,4 +159,34 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         var translated = _registry.GetEntries("srd5e", "magic-item").Count(e => _registry.Localize(e, "ru").Name != e.Name);
         Assert.True(translated >= 230, $"only {translated} magic items are translated");
     }
+
+    [Fact]
+    public void RussianEquipmentRulesAndConditions_AreTranslated_WithTheEnglishNumbersAndFiltersKept()
+    {
+        var battleaxe = _registry.GetEntry("srd5e", "equipment", "battleaxe")!;
+        var shown = _registry.Localize(battleaxe, "ru");
+        Assert.Equal("Боевой топор", shown.Name);
+        Assert.Contains("1d8 рубящий", shown.Description);
+        Assert.Contains("10 зм", shown.Description);
+        Assert.Equal("10 gp", shown.Properties["cost"]);       // filtered on, so never replaced
+        Assert.Equal("Topple", shown.Properties["mastery"]);
+
+        var poison = _registry.Localize(_registry.GetEntry("srd5e", "equipment", "torpor")!, "ru");
+        Assert.Equal("Оцепенение", poison.Name);
+
+        var skill = _registry.Localize(_registry.GetEntry("srd5e", "rule", "skill-arcana")!, "ru");
+        Assert.Equal("Магия", skill.Name);
+        Assert.Equal("Skill", skill.Properties["category"]);
+        Assert.Equal("Звук", _registry.Localize(_registry.GetEntry("srd5e", "rule", "damage-type-thunder")!, "ru").Name);
+
+        var blinded = _registry.Localize(_registry.GetEntry("srd5e", "condition", "blinded")!, "ru");
+        Assert.Equal("Ослеплённый", blinded.Name);
+        Assert.Contains("состоянии «Ослеплённый»", blinded.Description);
+        Assert.Equal("Недееспособный", _registry.Localize(_registry.GetEntry("srd5e", "condition", "incapacitated")!, "ru").Name);
+
+        var equipment = _registry.GetEntries("srd5e", "equipment").Count(e => _registry.Localize(e, "ru").Name != e.Name);
+        Assert.True(equipment >= 180, $"only {equipment} pieces of equipment are translated");
+        var rules = _registry.GetEntries("srd5e", "rule").Count(e => _registry.Localize(e, "ru").Name != e.Name);
+        Assert.True(rules >= 85, $"only {rules} rule entries are translated");
+    }
 }

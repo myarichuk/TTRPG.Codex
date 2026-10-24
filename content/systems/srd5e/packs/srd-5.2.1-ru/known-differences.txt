@@ -44,3 +44,7 @@ stone-giant
 summon-dragon
 tiefling
 warrior-veteran
+
+# Defects in our English text, not in the translation (the Russian is right):
+bottle-glass  # "11/2 pints" should be 1½ pints
+ladder  # a stray "Lamp (5 SP)" from the PDF layout got into the English description

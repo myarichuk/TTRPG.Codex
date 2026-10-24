@@ -30,6 +30,8 @@ python3 tools/omnisgm-import/merge_with_fallback.py /tmp/omnis-pack/spell/spells
 
 `import_monsters.py` and `import_items.py` work the same way for creatures and magic items (no fallback: pass `-` to `merge_with_fallback.py` and entries that fail stay English).
 
+`import_equipment.py` (equipment) and `import_rules.py` (skills, abilities, alignments, damage types, schools, languages, weapon properties and masteries, conditions) write straight into the pack folder: they take names and prose from OmnisGM and rebuild the stat lines (cost, weight, damage, properties) from our own English entry, so those numbers are always ours. Run both with `<omnisgm srd-5.2 dir> <srd-5.2.1 pack dir> <srd-5.2.1-ru pack dir>`.
+
 `import_origins.py` (feats, species, backgrounds) and `import_classes.py` (classes, subclasses and their feature rows) cover the character options.
 A pack folder may hold `known-differences.txt` (ids, one per line): entries whose English differs from the text OmnisGM translated, so a failed
 number check there is reported as a warning (`known-difference/...`). `merge_with_fallback.py` writes the list (`<output>.known`) for entries it keeps
