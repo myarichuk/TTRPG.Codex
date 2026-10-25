@@ -265,8 +265,9 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
     document.addEventListener("click", function (e) {
         const target = e.target instanceof Element ? e.target : null;
         const menu = target ? target.closest("details.popover-menu") : null;
-        // Following a link out of a menu (the phone section list) must not leave the menu open on the next page.
-        closeAll(menu && target.closest(".popover-panel a") ? null : menu);
+        // Following a link out of a menu (the phone section list) must not leave the menu open on the next page, and
+        // choosing an item (Build with AI's recipes) closes the menu behind the dialog it opens.
+        closeAll(menu && target.closest(".popover-panel a, .popover-panel .menu-item") ? null : menu);
     });
     document.addEventListener("keydown", function (e) {
         if (e.key !== "Escape") return;

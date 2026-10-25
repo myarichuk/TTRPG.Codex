@@ -356,8 +356,10 @@ public static class AiPrompts
         var links = r.Kind == DraftKinds.Fact
             ? ""
             : "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). ";
+        // The recipe's instructions and, for a secret, "no headings" come last, so they win over the general shape and style.
         var system = $"You write {shape}This is for a {r.SystemName} tabletop campaign. " + links +
-                     "Use original names only. Reply with the text only." + GuidanceNote(r.Guidance) + " " + StyleFor(r.Language);
+                     "Use original names only. Reply with the text only. " + StyleFor(r.Language) + GuidanceNote(r.Guidance) +
+                     (r.Kind == DraftKinds.Fact ? " This reply has no headings, lists or links: plain sentences only." : "");
 
         var sb = new StringBuilder();
         sb.AppendLine((r.Kind == DraftKinds.Fact ? "Secret: " : "Page: ") + r.Name);
@@ -374,7 +376,9 @@ public static class AiPrompts
     }
 
     private static string GuidanceNote(string? guidance) =>
-        string.IsNullOrWhiteSpace(guidance) ? "" : " " + string.Join(' ', guidance.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        string.IsNullOrWhiteSpace(guidance)
+            ? ""
+            : " Where the following differs from the above, follow it: " + string.Join(' ', guidance.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
     private static string CharacterLanguageNote(string? language)
     {

@@ -564,6 +564,23 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task RegionRepository_AsPlayer_HidesRegionsWithNothingRevealed_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        // A region the world builder made for a quest: its name is a spoiler until one of its places is revealed.
+        var planned = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Drowned Bell" };
+        planned.Locations.Add(new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "The Sunken Belfry", Visibility = ActorVisibility.Hidden });
+        var empty = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Unmapped" };
+        Assert.True(await _regionRepository.SaveAsync(planned, dmAccess));
+        Assert.True(await _regionRepository.SaveAsync(empty, dmAccess));
+
+        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        Assert.Empty(await _regionRepository.GetVisibleForCampaignAsync(playerAccess));
+        Assert.Equal(2, (await _regionRepository.GetVisibleForCampaignAsync(dmAccess)).Count());
+    }
+
+    [Fact]
     public async Task RegionRepository_RenameAsync_ChangesOnlyTheName_AndOnlyForTheDm_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

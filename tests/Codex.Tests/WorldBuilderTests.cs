@@ -196,6 +196,40 @@ public class WorldBuilderTests
             WorldBundleParser.ResolveLinks(text, Linked(), keepLinks: false));
     }
 
+    [Fact]
+    public void ResolveLinks_PrefersTheRef_ThenTheOutlineName_ThenTheRename()
+    {
+        var bundle = Linked();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Wiki, Name = "Old Varr", OutlineName = "Old Varr" });
+        bundle.Drafts[1].Name = "Old Varr"; // the DM renamed the glassworks to the other page's outline name
+
+        // A link meant for the old town still reaches it, not the page that took its name.
+        Assert.Equal("[[Old Varr]] and [[Old Varr]]", WorldBundleParser.ResolveLinks("[[Old Varr]] and [[d4]]", bundle));
+        Assert.Equal("[[Old Varr]]", WorldBundleParser.ResolveLinks("[[The Glassblowers of Varr]]", bundle));
+    }
+
+    [Fact]
+    public void ResolveLinks_ToADraftWhoseNameWasCleared_IsPlainText()
+    {
+        var bundle = Linked();
+        bundle.Drafts[1].Name = "  ";
+
+        Assert.Equal("See The Glassblowers of Varr and the makers.",
+            WorldBundleParser.ResolveLinks("See [[d2]] and [[The Glassblowers of Varr|the makers]].", bundle));
+    }
+
+    [Fact]
+    public void ParseOutline_KeepsAtMostTwentyDrafts_AndCutsLongText()
+    {
+        var drafts = Enumerable.Range(1, 25).Select(i => $$"""{"kind": "wiki", "name": "Page {{i}}{{(i == 1 ? new string('x', 500) : "")}}", "pitch": "{{new string('p', 900)}}"}""");
+        var bundle = WorldBundleParser.ParseOutline($$"""{"drafts": [{{string.Join(',', drafts)}}]}""", Rules);
+
+        Assert.Equal(WorldBundleParser.MaxDrafts, bundle.Drafts.Count);
+        Assert.Equal(5, bundle.Dropped.Count(d => d.Reason == DropReason.TooMany));
+        Assert.Equal(200, bundle.Drafts[0].Name.Length);
+        Assert.All(bundle.Drafts, d => Assert.Equal(500, d.Pitch.Length));
+    }
+
     // ---- Translated values ----
 
     [Fact]
@@ -320,6 +354,9 @@ public class WorldBuilderTests
         public List<RegionDocument> NewRegions { get; } = new();
         public List<(string RegionId, LocationDocument Place)> AddedPlaces { get; } = new();
 
+        /// <summary>While true, saving a homebrew entry fails, as a save that breaks half-way would.</summary>
+        public bool FailHomebrew { get; set; }
+
         /// <summary>The campaign as stored; its Bestiary shortlist is what saving added to it.</summary>
         public CampaignDocument Stored { get; } = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     }
@@ -350,7 +387,6 @@ public class WorldBuilderTests
         });
         var homebrew = Substitute.For<IHomebrewRepository>();
         homebrew.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existing.AsEnumerable());
-        homebrew.TrySaveAsync(Arg.Do<HomebrewEntryDocument>(entries.Add), Arg.Any<CampaignAccess>()).Returns(true);
         var factRepo = Substitute.For<IFactRepository>();
         factRepo.SaveAsync(Arg.Do<FactDocument>(facts.Add), Arg.Any<CampaignAccess>()).Returns(true);
         var actorRepo = Substitute.For<IActorRepository>();
@@ -373,6 +409,12 @@ public class WorldBuilderTests
         {
             ci.Arg<Action<CampaignDocument>>()(saving.Stored);
             return saving.Stored;
+        });
+        homebrew.TrySaveAsync(Arg.Any<HomebrewEntryDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
+        {
+            if (saving.FailHomebrew) return false;
+            entries.Add(ci.Arg<HomebrewEntryDocument>());
+            return true;
         });
         regions.SaveAsync(Arg.Do<RegionDocument>(saving.NewRegions.Add), Arg.Any<CampaignAccess>()).Returns(true);
         regions.UpsertLocationAsync(Arg.Any<string>(), Arg.Any<LocationDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
@@ -508,8 +550,10 @@ public class WorldBuilderTests
 
         var ilse = Assert.Single(actors); // only the person ticked for the cast
         Assert.Equal(("Mother Ilse", ActorKind.NonPlayerCharacter, ActorVisibility.Hidden), (ilse.Name, ilse.Kind, ilse.Visibility));
-        Assert.Equal("She leads The Salt Wardens.", ilse.Biography); // sheet prose has no wiki links
+        // Players read a revealed NPC's biography; the page tells what she hides, so it goes in the DM's notes, links flattened.
+        Assert.Null(ilse.Biography);
         Assert.Contains("Mother Ilse", ilse.DmNotes);
+        Assert.EndsWith("She leads The Salt Wardens.", ilse.DmNotes);
 
         var secret = Assert.Single(facts);
         Assert.Equal(("The wardens pay the harbour master", "Mother Ilse pays him in salt.", FactVisibility.DmOnly), (secret.Summary, secret.Details, secret.Visibility));
@@ -551,6 +595,19 @@ public class WorldBuilderTests
         Assert.Contains("three to six short sections", page);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("he")]
+    public void ExpandPrompt_ForASecret_EndsWithNoHeadings_AfterTheStyleNote(string? language)
+    {
+        var (secret, _) = AiPrompts.WorldExpandPage(new WorldExpandRequest("The bell", "It rings.", null, "SRD", Array.Empty<FieldSpec>(), Array.Empty<WorldAnswer>(),
+            Array.Empty<string>(), Array.Empty<string>(), Language: language, Kind: DraftKinds.Fact));
+
+        // The general style allows headings; the secret's own rule comes last, so it wins.
+        Assert.True(secret.IndexOf("short headings", StringComparison.Ordinal) < secret.IndexOf("no headings, lists or links", StringComparison.Ordinal));
+        Assert.EndsWith("plain sentences only.", secret);
+    }
+
     // ---- The settlement recipe: places on the World page ----
 
     [Fact]
@@ -567,7 +624,7 @@ public class WorldBuilderTests
     {
         var bundle = new WorldBundle();
         bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "Varr", OutlineName = "Varr", Body = "The [[Salt Market]] never closes." });
-        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Place, Name = "Salt Market", OutlineName = "Salt Market", Body = "## Sights\nStalls in [[Varr]].", OnMap = true });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Place, Name = "Salt Market", OutlineName = "Salt Market", Pitch = "Stalls by [[Varr]]'s quay.", Body = "## Sights\nStalls in [[Varr]].", OnMap = true });
         bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Place, Name = "The Drowned Bell", OutlineName = "The Drowned Bell", Pitch = "A flooded inn." });
         bundle.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Fact, Name = "The bell rings before every storm", OutlineName = "The bell rings before every storm", Links = { "d2", "d3" } });
         return bundle;
@@ -586,7 +643,8 @@ public class WorldBuilderTests
         Assert.Equal(("Varr", "c1"), (region.Name, region.CampaignId));
         var market = Assert.Single(region.Locations); // only the ticked place
         Assert.Equal(("Salt Market", ActorVisibility.Hidden), (market.Name, market.Visibility));
-        Assert.Equal("## Sights\nStalls in Varr.", market.Description); // place text has no wiki links
+        // Players read a revealed place's description, so it is the pitch (links flattened), not the page that tells what it hides.
+        Assert.Equal("Stalls by Varr's quay.", market.Description);
         Assert.Equal(new[] { "page-2", market.Id, "page-3" }, Assert.Single(saving.Facts).RelatedEntityIds);
         Assert.Equal(market, Assert.Single(result.Places));
     }
@@ -731,6 +789,45 @@ public class WorldBuilderTests
         // A spell cannot stand on the table and the unticked imp is not saved; the hag's id was taken, so the new one is listed.
         Assert.Equal(new[] { ("tide-eel", "act two"), ("gull-hag-2", null) }, saving.Stored.Bestiary.Select(b => (b.EntryId, b.Note)));
         Assert.Equal("gull-hag-2", Assert.Single(result.Shortlisted).EntryId);
+    }
+
+    [Fact]
+    public async Task Save_GivesEveryNewPageItsOwnTitle_AndLinksFollowTheRename()
+    {
+        var saving = Service(new[] { new WikiPageDocument { Id = "old", Title = "The Bell", Slug = "the-bell" } });
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "The Bell", OutlineName = "The Bell", Body = "Ask [[d2]]." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Npc, Name = "the bell ", OutlineName = "Maren", Body = "Rings [[The Bell]].", Cast = true });
+
+        await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("quest")!, bundle);
+
+        // Links go by title, so two pages called "The Bell" would both reach the old one.
+        Assert.Equal(new[] { "The Bell (2)", "the bell (3)" }, saving.Pages.Select(p => p.Title));
+        Assert.Equal("Ask [[the bell (3)]].", saving.Pages[0].Body);
+        Assert.Equal("Rings [[The Bell (2)]].", saving.Pages[1].Body);
+        var maren = Assert.Single(saving.Actors);
+        Assert.Equal("the bell", maren.Name); // a person keeps their name; only the page needs its own title
+        Assert.Contains("“the bell (3)”", maren.DmNotes); // and the notes point at the page by its title
+    }
+
+    [Fact]
+    public async Task Save_RetriedAfterAFailure_DoesNotWriteAnythingTwice()
+    {
+        var saving = Service();
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "The Drowned Bell", OutlineName = "The Drowned Bell", Body = "Fight the [[d2]]." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Bell-drowned", OutlineName = "Bell-drowned", Pitch = "A ringer." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Fact, Name = "The bell rings at dusk", OutlineName = "The bell rings at dusk", Links = { "d1" } });
+        saving.FailHomebrew = true;
+
+        await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("quest")!, bundle));
+        saving.FailHomebrew = false;
+        var retried = await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("quest")!, bundle);
+
+        Assert.Single(saving.Pages); // saved by the first attempt only
+        Assert.Single(saving.Entries);
+        Assert.Equal("page-1", Assert.Single(Assert.Single(saving.Facts).RelatedEntityIds)); // the secret still knows the page
+        Assert.Equal((0, 1, 1), (retried.Pages.Count, retried.Entries.Count, retried.Facts.Count));
     }
 
     [Fact]

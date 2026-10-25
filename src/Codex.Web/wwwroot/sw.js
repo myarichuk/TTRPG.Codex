@@ -2,7 +2,7 @@
 // never served from cache: this worker only (1) keeps the static shell (styles, scripts, icons)
 // fresh with a stale-while-revalidate strategy and (2) shows an offline page when the server
 // can't be reached. Anything private (/media, /_blazor, API calls) is never cached.
-const VERSION = 'codex-shell-v10';
+const VERSION = 'codex-shell-v11';
 const SHELL = [
     '/offline.html',
     '/app.css',
@@ -17,7 +17,8 @@ const SHELL = [
 ];
 
 self.addEventListener('install', event => {
-    event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+    // 'reload' skips the browser's HTTP cache, which may still hold the previous version's files.
+    event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL.map(url => new Request(url, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
@@ -55,7 +56,8 @@ self.addEventListener('fetch', event => {
         event.respondWith(
             caches.open(VERSION).then(async cache => {
                 const cached = await cache.match(request);
-                const network = fetch(request).then(response => {
+                // 'no-cache' revalidates with the server, so the refreshed copy is the server's, not the HTTP cache's.
+                const network = fetch(request, { cache: 'no-cache' }).then(response => {
                     if (response.ok) cache.put(request, response.clone());
                     return response;
                 }).catch(() => cached);
