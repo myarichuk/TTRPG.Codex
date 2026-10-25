@@ -2,6 +2,7 @@
 @using Codex.Plugin.Abstractions
 @using Codex.Web.Services
 @inject IContentRegistry Registry
+@inject ISystemCatalog Catalog
 
 @* Renders one Library item: its summary fields, the formatted rules text, any structured rows
    (features, traits, actions) and - always - the licence attribution for where it came from. *@
@@ -82,10 +83,10 @@
                         {
                             <div class="feature-level">@L["Library.Detail.Level", level]</div>
                         }
-                        <strong>@(row.GetValueOrDefault("name")?.ToString())</strong>
-                        @if (row.GetValueOrDefault("description") is { } description)
+                        <strong>@RefCard.Cell(row, "name")</strong>
+                        @if (RefCard.Cell(row, "description") is { } description)
                         {
-                            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(description.ToString()))</div>
+                            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(description))</div>
                         }
                     </li>
                 }
@@ -149,16 +150,7 @@
     [Parameter] public RenderFragment? Art { get; set; }
 
     /// <summary>A tag as the reader should see it: translated when one of the type's fields knows the word (the tag stays English in the data).</summary>
-    private string TagLabel(string tag)
-    {
-        foreach (var field in Type?.Fields ?? new List<FieldDefinition>())
-        {
-            var shown = field.Display(tag);
-            if (!ReferenceEquals(shown, tag) && shown != tag) return shown;
-        }
-
-        return tag;
-    }
+    private string TagLabel(string tag) => TagLabels.Show(tag, Type, Catalog.GetDefinition(Item.Entry.SystemId), L);
 
     private readonly string titleId = "entry-title-" + Guid.NewGuid().ToString("N")[..6];
 
@@ -198,7 +190,7 @@
                 if (key is "flavor" or "imagePrompt" or ContentEntry.FlavorSourceKey or ContentEntry.TranslationSourceKey) continue;
                 if (!Item.Entry.Properties.TryGetValue(key, out var value) || value == null) continue;
                 var fieldDef = fields.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase));
-                if (fieldDef?.Type == FieldType.Collection || IsRows(value)) continue;
+                if (fieldDef?.Type == FieldType.Collection || IsRows(value) || !RefCard.IsPlain(value)) continue;
                 if (fieldDef?.Type == FieldType.LongText && Item.Entry.Description?.Contains(value.ToString() ?? "\0") == true) continue;
 
                 var text = value switch

@@ -95,4 +95,14 @@ public class ImporterTests : IDisposable
         Assert.Null(ImportOptions.Parse(new[] { "srd5e", "--source", "in" }));
         Assert.Null(ImportOptions.Parse(new[] { "srd5e", "--source", "in", "--out", "o", "--edition", "1999" }));
     }
+
+    [Fact]
+    public void MergeUnclosedBold_JoinsAStraySentenceBackOntoItsParagraph()
+    {
+        const string text = "While Unconscious:\n\n**Inert.** You drop whatever you're holding.\n\n**When this condition ends, you remain Prone.\n\n**Speed 0.** Your Speed is 0.";
+
+        Assert.Equal("While Unconscious:\n\n**Inert.** You drop whatever you're holding. When this condition ends, you remain Prone.\n\n**Speed 0.** Your Speed is 0.",
+            Srd5eImporter.MergeUnclosedBold(text));
+        Assert.Equal("**Bold.** fine", Srd5eImporter.MergeUnclosedBold("**Bold.** fine"));
+    }
 }

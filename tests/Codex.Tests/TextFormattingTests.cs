@@ -58,4 +58,15 @@ public class TextFormattingTests
         Assert.Equal(string.Empty, TextFormatting.ToHtml(null));
         Assert.Equal(string.Empty, TextFormatting.ToHtml("   "));
     }
+
+    [Theory]
+    [InlineData("_Amphibious._ It can breathe air.", "<em>Amphibious.</em> It can breathe air.")]
+    [InlineData("**_Инертен._** Вы роняете всё.", "<strong><em>Инертен.</em></strong> Вы роняете всё.")]
+    [InlineData("_לחשים._ בכדור יש 7 מטענים.", "<em>לחשים.</em> בכדור יש 7 מטענים.")]
+    [InlineData("Set max_hit_points and file_name.yaml", "Set max_hit_points and file_name.yaml")]
+    [InlineData("A lone _ underscore _ stays", "A lone _ underscore _ stays")]
+    public void Inline_ReadsUnderscoreItalics_ButNotInsideWords(string text, string expected)
+    {
+        Assert.Equal(expected, TextFormatting.Inline(text));
+    }
 }

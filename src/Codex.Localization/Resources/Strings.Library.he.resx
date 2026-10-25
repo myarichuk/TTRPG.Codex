@@ -42,6 +42,7 @@
   <data name="Library.Ai.NotConfigured" xml:space="preserve"><value>עדיין לא הוגדר ספק בינה מלאכותית.</value></data>
   <data name="Library.Ai.Failed" xml:space="preserve"><value>הבינה המלאכותית לא הצליחה לכתוב זאת: {0}</value></data>
   <data name="Library.Detail.Level" xml:space="preserve"><value>דרגה {0}</value></data>
+  <data name="Library.Tag.Challenge" xml:space="preserve"><value>אתגר {0}</value></data>
   <data name="Library.Detail.Yes" xml:space="preserve"><value>כן</value></data>
   <data name="Library.Detail.No" xml:space="preserve"><value>לא</value></data>
   <data name="Library.Detail.Source" xml:space="preserve"><value>מקור:</value></data>

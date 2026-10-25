@@ -45,8 +45,8 @@
             @foreach (var row in section.Rows)
             {
                 <div class="ref-row">
-                    <strong>@(row.GetValueOrDefault("name")?.ToString()).</strong>
-                    @((MarkupString)TextFormatting.Inline(row.GetValueOrDefault("description")?.ToString() ?? string.Empty))
+                    <strong>@RefCard.Cell(row, "name").</strong>
+                    @((MarkupString)TextFormatting.Inline(RefCard.Cell(row, "description") ?? string.Empty))
                 </div>
             }
         </section>

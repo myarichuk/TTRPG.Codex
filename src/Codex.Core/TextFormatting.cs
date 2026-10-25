@@ -9,13 +9,16 @@ namespace Codex.Core;
 
 /// <summary>
 /// Renders the small Markdown subset rules text actually uses - paragraphs, <c>**bold**</c>,
-/// <c>*italic*</c>, <c>- </c> bullet lists, pipe tables - into HTML. Everything is HTML-encoded
+/// <c>*italic*</c> and <c>_italic_</c>, <c>- </c> bullet lists, pipe tables - into HTML. Everything is HTML-encoded
 /// first, so content from a pack or a homebrew author can never inject markup.
 /// </summary>
 public static class TextFormatting
 {
     private static readonly Regex Bold = new(@"\*\*(.+?)\*\*", RegexOptions.Compiled);
     private static readonly Regex Italic = new(@"(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)", RegexOptions.Compiled);
+
+    // _italic_ as the SRD writes trait names ("_Amphibious._"); not inside a word, so snake_case and file_names stay as written.
+    private static readonly Regex UnderscoreItalic = new(@"(?<![\p{L}\p{N}_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\p{L}\p{N}_])", RegexOptions.Compiled);
 
     public static string ToHtml(string? text)
     {
@@ -135,6 +138,7 @@ public static class TextFormatting
         var encoded = WebUtility.HtmlEncode(text);
         encoded = Bold.Replace(encoded, "<strong>$1</strong>");
         encoded = Italic.Replace(encoded, "<em>$1</em>");
+        encoded = UnderscoreItalic.Replace(encoded, "<em>$1</em>");
         return encoded;
     }
 
