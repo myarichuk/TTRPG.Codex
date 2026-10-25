@@ -119,9 +119,9 @@
   <data name="Page.AiSettings.Title" xml:space="preserve"><value>Настройки ИИ</value></data>
   <data name="Page.AiSettings.Sub1" xml:space="preserve"><value>Два вида моделей, настраиваются отдельно: </value></data>
   <data name="Page.AiSettings.SubTextModel" xml:space="preserve"><value>текстовая модель</value></data>
-  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> за каждой кнопкой «Write with AI» и «Enhance with AI», и </value></data>
+  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> за каждой кнопкой «{0}» и «{1}», и </value></data>
   <data name="Page.AiSettings.SubImageModel" xml:space="preserve"><value>модель изображений</value></data>
-  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> за кнопкой «Generate with AI» у иллюстраций. Ключи используются ваши. Ничего не отправляется в модель, пока вы не нажмёте одну из этих кнопок.</value></data>
+  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> за кнопкой «{0}» у иллюстраций. Ключи используются ваши. Ничего не отправляется в модель, пока вы не нажмёте одну из этих кнопок.</value></data>
   <data name="Page.AiSettings.ServerHeading" xml:space="preserve"><value>Запасной вариант сервера</value></data>
   <data name="Page.AiSettings.ServerText" xml:space="preserve"><value>Если у вас нет своей модели, используются настройки сервера. Ваши собственные модели всегда имеют приоритет.</value></data>
   <data name="Page.AiSettings.ServerTextBefore" xml:space="preserve"><value>Текст (раздел </value></data>
@@ -165,7 +165,7 @@
   <data name="Page.AiSettings.SaveImage" xml:space="preserve"><value>Сохранить модель изображений</value></data>
   <data name="Page.AiSettings.Testing" xml:space="preserve"><value>Проверка…</value></data>
   <data name="Page.AiSettings.TestConnection" xml:space="preserve"><value>Проверить соединение</value></data>
-  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>Для изображений кнопки проверки нет: каждая картинка стоит денег. Попробуйте вместо этого «Generate with AI» на записи Библиотеки.</value></data>
+  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>Для изображений кнопки проверки нет: каждая картинка стоит денег. Попробуйте вместо этого «{0}» на записи Библиотеки.</value></data>
   <data name="Page.AiSettings.ImageModels" xml:space="preserve"><value>Модели изображений</value></data>
   <data name="Page.AiSettings.TextModels" xml:space="preserve"><value>Текстовые модели</value></data>
   <data name="Page.AiSettings.Add" xml:space="preserve"><value>Добавить</value></data>
@@ -188,4 +188,19 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>Кнопки ИИ теперь используют {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Удалено: {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>не настроено</value></data>
+  <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>Один ключ — сотни моделей. Ключ можно получить на openrouter.ai/keys.</value></data>
+  <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Прямой доступ к OpenAI с вашим ключом.</value></data>
+  <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (локально)</value></data>
+  <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>Модель на вашем компьютере. Ключ не нужен.</value></data>
+  <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (локально)</value></data>
+  <data name="Page.AiSettings.Preset.Text.lmstudio.Hint" xml:space="preserve"><value>Локальный сервер LM Studio. Ключ не нужен.</value></data>
+  <data name="Page.AiSettings.Preset.Text.groq.Hint" xml:space="preserve"><value>Быстрые открытые модели в облаке.</value></data>
+  <data name="Page.AiSettings.Preset.Text.mistral.Hint" xml:space="preserve"><value>Модели Mistral в облаке.</value></data>
+  <data name="Page.AiSettings.Preset.Text.custom" xml:space="preserve"><value>Свой сервер (совместимый с OpenAI)</value></data>
+  <data name="Page.AiSettings.Preset.Text.custom.Hint" xml:space="preserve"><value>Любой сервер, который поддерживает {0}.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai" xml:space="preserve"><value>OpenAI (изображения)</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>Модели изображений OpenAI (gpt-image-1, dall-e-3) с вашим ключом.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>Любая модель изображений из списка OpenRouter, например google/gemini-2.5-flash-image или qwen/qwen-image-2.1-turbo. Использует ваш ключ OpenRouter.</value></data>
+  <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>Свой сервер (API изображений OpenAI)</value></data>
+  <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>Любой сервер, который поддерживает {0}, например LocalAI или мост к ComfyUI.</value></data>
 </root>
