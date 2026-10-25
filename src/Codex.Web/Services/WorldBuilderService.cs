@@ -9,14 +9,24 @@ using Codex.Plugin.Abstractions;
 namespace Codex.Web.Services;
 
 /// <summary>What saving a world-builder bundle stored.</summary>
-public sealed record WorldBuildResult(IReadOnlyList<HomebrewEntryDocument> Entries, IReadOnlyList<WikiPageDocument> Pages);
+public sealed record WorldBuildResult(
+    IReadOnlyList<HomebrewEntryDocument> Entries,
+    IReadOnlyList<WikiPageDocument> Pages,
+    IReadOnlyList<ActorDocument> Actors,
+    IReadOnlyList<FactDocument> Facts,
+    IReadOnlyList<LocationDocument> Places)
+{
+    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count;
+}
 
 /// <summary>
 /// The world builder (docs/WORLD_BUILDER.md): turns a recipe's answers into an outline of drafts, writes each draft in full,
 /// and saves the ones the DM keeps. The model only drafts; every write goes through the repositories with the DM's access,
-/// and what it saves starts hidden from players (homebrew unpublished, wiki pages DM-only). DM only, on the DM's own key.
+/// and what it saves starts hidden from players (homebrew unpublished; wiki pages, secrets, cast members and places DM-only). DM only,
+/// on the DM's own key.
 /// </summary>
-public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki)
+public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
+    IFactRepository facts, CastService cast, IRegionRepository regions)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -43,6 +53,9 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         {
             DraftKinds.Homebrew => "homebrew: a Library entry of one of the content types",
             DraftKinds.Wiki => "wiki: a page of the campaign's world wiki",
+            DraftKinds.Npc => "npc: a person (a leader, a member, a contact), written as a wiki page",
+            DraftKinds.Fact => "fact: a secret or rumour the party can uncover, stated in one sentence as its name",
+            DraftKinds.Place => "place: a district, landmark or building, written as a wiki page",
             _ => k
         }).ToList();
 
@@ -68,14 +81,14 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         var assistant = await providers.AssistantForAsync(access.UserId);
         var system = catalog.GetDefinition(campaign.SystemId);
         var related = bundle.Drafts.Where(d => d != draft && d.Selected)
-            .Select(d => $"{d.Name} ({(d.Kind == DraftKinds.Homebrew ? d.Type : "wiki page")}): {d.Pitch}")
+            .Select(d => $"{d.Name} ({KindForPrompt(d)}): {d.Pitch}")
             .ToList();
         var pages = (await wiki.GetVisibleForCampaignAsync(access)).Take(ContextCap).Select(p => p.Title).ToList();
 
-        if (draft.Kind == DraftKinds.Wiki)
+        if (draft.Kind != DraftKinds.Homebrew)
         {
             var request = new WorldExpandRequest(draft.Name, draft.Pitch, null, catalog.GetDisplayName(campaign.SystemId), Array.Empty<FieldSpec>(),
-                Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang);
+                Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, draft.Kind);
             await Unusable(async () =>
             {
                 await assistant.ExpandPageAsync(draft, request, ct);
@@ -98,20 +111,28 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         });
     }
 
-    /// <summary>Saves the selected drafts: wiki pages first (DM-only), so their slugs are settled before links are rewritten,
-    /// then homebrew entries (unpublished). A draft that was never written in full is saved with its pitch as its text.</summary>
+    /// <summary>Saves the selected drafts: wiki pages and people's pages first (DM-only), so their slugs are settled before
+    /// links are rewritten, then homebrew entries (unpublished), the people ticked for the cast (hidden), and secrets (DM-only
+    /// in Lore, related to what they link to). A draft that was never written in full is saved with its pitch as its text.</summary>
     public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, WorldBundle bundle)
     {
         DmOnly(access);
+        var l = Localizer.For(Lang);
+        // What each saved draft became, so a secret can point at the pages and cast members it is about.
+        var savedIds = new Dictionary<string, List<string>>();
+        void Saved(WorldDraft draft, string id) => (savedIds.TryGetValue(draft.Ref, out var ids) ? ids : savedIds[draft.Ref] = new List<string>()).Add(id);
+
         var pages = new List<WikiPageDocument>();
-        foreach (var draft in bundle.Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Wiki))
+        foreach (var draft in Kept(bundle).Where(d => DraftKinds.IsPage(d.Kind)))
         {
+            var tags = new List<string> { Tag(l, recipe.Key) };
+            if (draft.Kind is DraftKinds.Npc or DraftKinds.Place) tags.Add(Tag(l, draft.Kind));
             var page = new WikiPageDocument
             {
                 Title = draft.Name.Trim(),
                 Body = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle),
                 Visibility = WikiVisibility.DmOnly,
-                Tags = new List<string> { recipe.Key },
+                Tags = tags,
                 AuthorUserId = access.UserId
             };
             if (!await wiki.TrySaveAsync(page, access))
@@ -120,11 +141,12 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             }
 
             pages.Add(page);
+            Saved(draft, page.Id);
         }
 
         var entries = new List<HomebrewEntryDocument>();
         var existing = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
-        foreach (var draft in bundle.Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Homebrew && !string.IsNullOrEmpty(d.Type)))
+        foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Homebrew && !string.IsNullOrEmpty(d.Type)))
         {
             var entry = new HomebrewEntryDocument
             {
@@ -147,8 +169,105 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             entries.Add(entry);
         }
 
-        return new WorldBuildResult(entries, pages);
+        var actors = new List<ActorDocument>();
+        var system = catalog.GetDefinition(campaign.SystemId);
+        foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Npc && d.Cast))
+        {
+            // The sheet starts blank; the person's page is their biography, and the DM's notes point back to the page.
+            var actor = await cast.AddNpcAsync(draft.Name, WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false),
+                l["WorldBuilder.Cast.Note", draft.Name.Trim()], campaign, system, access)
+                ?? throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+            actors.Add(actor);
+            Saved(draft, actor.Id);
+        }
+
+        var places = await PlacesAsync(bundle, access);
+        foreach (var (draft, place) in places)
+        {
+            Saved(draft, place.Id);
+        }
+
+        var saved = new List<FactDocument>();
+        var known = Kept(bundle).Any(d => d.Kind == DraftKinds.Fact)
+            ? (await wiki.GetVisibleForCampaignAsync(access)).ToDictionary(p => p.Slug, p => p.Id, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>();
+        foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Fact))
+        {
+            var details = draft.Body ?? (string.Equals(draft.Pitch.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase) ? null : draft.Pitch);
+            var fact = new FactDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                CampaignId = campaign.Id,
+                Summary = draft.Name.Trim(),
+                Details = string.IsNullOrWhiteSpace(details) ? null : WorldBundleParser.ResolveLinks(details, bundle, keepLinks: false).Trim(),
+                Visibility = FactVisibility.DmOnly,
+                RelatedEntityIds = draft.Links
+                    .SelectMany(link => link.StartsWith(WorldBundle.ExistingPrefix, StringComparison.Ordinal)
+                        ? known.TryGetValue(link[WorldBundle.ExistingPrefix.Length..], out var id) ? new List<string> { id } : new List<string>()
+                        : savedIds.GetValueOrDefault(link) ?? new List<string>())
+                    .Where(id => !string.IsNullOrEmpty(id))
+                    .Distinct()
+                    .ToList()
+            };
+            if (!await facts.SaveAsync(fact, access))
+            {
+                throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+            }
+
+            saved.Add(fact);
+        }
+
+        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList());
     }
+
+    /// <summary>The places ticked for the World page, hidden, in a region named after the bundle's main page (the settlement);
+    /// a region of that name is reused. A place's description is its page's text, links flattened.</summary>
+    private async Task<List<(WorldDraft Draft, LocationDocument Place)>> PlacesAsync(WorldBundle bundle, CampaignAccess access)
+    {
+        var ticked = Kept(bundle).Where(d => d.Kind == DraftKinds.Place && d.OnMap).ToList();
+        if (ticked.Count == 0)
+        {
+            return new List<(WorldDraft, LocationDocument)>();
+        }
+
+        var placed = ticked.Select(d => (Draft: d, Place: new LocationDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = d.Name.Trim(),
+            Description = WorldBundleParser.ResolveLinks(d.Body ?? d.Pitch, bundle, keepLinks: false),
+            Visibility = ActorVisibility.Hidden
+        })).ToList();
+
+        var name = (Kept(bundle).FirstOrDefault(d => d.Kind == DraftKinds.Wiki) ?? ticked[0]).Name.Trim();
+        var region = (await regions.GetVisibleForCampaignAsync(access)).FirstOrDefault(r => string.Equals(r.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
+        if (region == null)
+        {
+            region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = access.CampaignId, Name = name, Locations = placed.Select(p => p.Place).ToList() };
+            if (!await regions.SaveAsync(region, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+            return placed;
+        }
+
+        foreach (var (_, place) in placed)
+        {
+            if (!await regions.UpsertLocationAsync(region.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+        }
+
+        return placed;
+    }
+
+    private static IEnumerable<WorldDraft> Kept(WorldBundle bundle) => bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Name));
+
+    // Wiki tags are the DM's own words, so the ones the builder adds are written in the DM's language.
+    private static string Tag(Localizer l, string key) => l.Has($"WorldBuilder.Tag.{key}") ? l[$"WorldBuilder.Tag.{key}"] : key;
+
+    private static string KindForPrompt(WorldDraft draft) => draft.Kind switch
+    {
+        DraftKinds.Homebrew => draft.Type ?? "homebrew",
+        DraftKinds.Npc => "person",
+        DraftKinds.Fact => "secret",
+        DraftKinds.Place => "place",
+        _ => "wiki page"
+    };
 
     /// <summary>The types a homebrew draft may have, as the DM reads them: the system's declared types (and any extra ones the Library has).</summary>
     public Task<IReadOnlyList<ContentTypeDefinition>> TypesAsync(CampaignDocument campaign, CampaignAccess access) => library.TypesAsync(campaign, access);

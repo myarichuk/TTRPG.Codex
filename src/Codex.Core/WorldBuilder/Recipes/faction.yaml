@@ -1,0 +1,52 @@
+# A faction for the campaign's world: its wiki page, the people who bring it to the table and, if asked, a secret the
+# party can uncover. Labels: Strings.WorldBuilder*.resx, WorldBuilder.Recipe.faction.*
+key: faction
+icon: shield
+drafts: [wiki, npc, fact]
+questions:
+  - key: group
+    type: text
+    ask: What kind of group is it?
+    surprise: true
+  - key: goal
+    type: longText
+    ask: What does it want?
+    surprise: true
+  - key: methods
+    type: choice
+    ask: Does it work openly or in secret?
+    options: [open, secret, mixed]
+    surprise: true
+  - key: reach
+    type: choice
+    ask: How far does its reach extend?
+    options: [local, regional, world]
+    surprise: true
+  - key: tone
+    type: choice
+    ask: What tone should it have?
+    options: [heroic, grim, whimsical, eerie]
+    surprise: true
+  - key: enemy
+    type: text
+    ask: Who or what stands against it?
+    surprise: true
+  - key: people
+    type: choice
+    ask: Which of its people should be written up?
+    options: [leader, leaderPlusOne, leaderPlusTwo]
+    default: leaderPlusOne
+  - key: secret
+    type: toggle
+    ask: Also write a secret about it that the party can uncover?
+    default: "true"
+prompt: |
+  Design one original faction for the campaign and the people who bring it to the table. Return exactly one draft of
+  kind "wiki" for the faction itself: its name is the faction's name, and its pitch says what it wants and how it acts.
+  Return the faction's people as drafts of kind "npc", as many as the game master asked for ("leader": the leader only;
+  "leaderPlusOne": the leader and one member; "leaderPlusTwo": the leader and two members), the leader first. Each
+  person's name is their own name, their pitch gives their role in the faction and one thing that makes them
+  memorable, and they link to the faction. The faction links to its people. If the game master asked for a secret, add
+  one draft of kind "fact" whose name is the secret itself, one sentence the party could uncover (for example "The
+  wardens pay the harbour master to look away"), linking to the faction and to the people it concerns; otherwise return
+  no fact. Where it fits, link the faction to existing wiki pages, such as a place it works in or a rival.

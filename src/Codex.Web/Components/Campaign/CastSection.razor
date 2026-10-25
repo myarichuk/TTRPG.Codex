@@ -7,8 +7,8 @@
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
 @inject IContentRegistry Registry
 @inject ComponentRegistry Components
-@inject ISystemCatalog Catalog
 @inject CampaignLibrary Library
+@inject CastService Cast
 @inject AiFeatures Ai
 @inject ILogger<CastSection> Logger
 @inject NavigationManager Nav
@@ -276,16 +276,7 @@
             Visibility = kind == ActorKind.PlayerCharacter ? ActorVisibility.Known : ActorVisibility.Hidden
         };
 
-        // Seed the sheet with the system's defaults so the first sheet view isn't a wall of blanks.
-        var schema = Catalog.GetUISchemas(Ctx.Campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
-        foreach (var field in schema?.Fields ?? new List<FieldDefinition>())
-        {
-            if (field.DefaultValue != null)
-            {
-                actor.Sheet[field.Key] = field.DefaultValue is int i ? (long)i : field.DefaultValue;
-            }
-        }
-
+        Cast.SeedDefaults(actor, Ctx.Campaign.SystemId);
         return actor;
     }
 

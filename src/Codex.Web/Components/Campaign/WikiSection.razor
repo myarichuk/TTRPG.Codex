@@ -15,6 +15,10 @@
 
 <ConfirmDialog @ref="confirm" />
 <UnsavedChangesGuard IsDirty="IsDirty" />
+@if (aiReady)
+{
+    <WorldBuilderWizard @ref="builder" OnSaved="OnBuiltAsync" />
+}
 
 @if (pages == null)
 {
@@ -227,7 +231,19 @@ else
         </div>
         @if (Ctx.IsDm)
         {
-            <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
+            <div class="d-flex gap-2 flex-wrap">
+                @if (aiReady)
+                {
+                    <details class="popover-menu" data-testid="wiki-build-ai">
+                        <summary class="cx-btn cx-etched cx-arcane"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Menu"] <LucideIcon IconName="chevron-down" Size="16" /></summary>
+                        <div class="popover-panel menu-panel">
+                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("faction"))" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></button>
+                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("settlement"))" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></button>
+                        </div>
+                    </details>
+                }
+                <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
+            </div>
         }
     </div>
 
@@ -267,7 +283,7 @@ else
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
                         <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
-                    <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
+                    <p class="mb-0 small">@TextFormatting.Summary(wp.Body, 150)</p>
                     <div class="card-foot">
                         <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
@@ -308,6 +324,8 @@ else
     private bool expanding;
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
+    private WorldBuilderWizard builder = null!;
+    private bool aiReady;
     // The editor's content as loaded or last saved, to tell whether leaving would lose anything.
     private string savedDraft = string.Empty;
 
@@ -321,6 +339,27 @@ else
     private IEnumerable<WikiPageDocument> Filtered => (pages ?? new())
         .Where(p => activeTag == null || p.Tags.Contains(activeTag, StringComparer.OrdinalIgnoreCase))
         .Where(p => string.IsNullOrWhiteSpace(search) || p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || p.Body.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        aiReady = Ctx.IsDm && await Ai.IsConfiguredAsync(Ctx.UserId);
+    }
+
+    /// <summary>The world builder saved its drafts hidden from players; open the first page it wrote.</summary>
+    private async Task OnBuiltAsync(WorldBuildResult result)
+    {
+        Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
+        if (result.Actors.Count > 0 || result.Places.Count > 0) await Ctx.ReloadAsync();
+        loadedKey = null;
+        if (result.Pages.FirstOrDefault() is { } page)
+        {
+            Nav.NavigateTo($"{Ctx.BasePath}/wiki/{page.Slug}");
+        }
+        else
+        {
+            await LoadAsync();
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {
