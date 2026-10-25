@@ -7,9 +7,9 @@ description: >-
 
   **Casting Time:** Action  
 
-  **Range:** Touch Component: V, S  
+  **Range:** Touch  
 
-  **Components:**   
+  **Components:** V, S  
 
   **Duration:** Concentration, up to 1 minute
 
@@ -24,8 +24,10 @@ properties:
   level: 0
   school: Divination
   castingTime: Action
-  range: 'Touch Component: V, S'
-  components: []
+  range: Touch
+  components:
+  - V
+  - S
   duration: up to 1 minute
   concentration: true
   ritual: false

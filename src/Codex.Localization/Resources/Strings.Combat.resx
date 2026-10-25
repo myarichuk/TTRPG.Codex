@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <data name="Combat.Table.Title" xml:space="preserve"><value>Table</value></data>
+  <data name="Combat.Table.Subtitle" xml:space="preserve"><value>Initiative, hit points, conditions, dice and session notes, live for everyone at the table.</value></data>
+  <data name="Combat.Console.NotRunning" xml:space="preserve"><value>The table is not running</value></data>
+  <data name="Combat.Console.NotRunningHint" xml:space="preserve"><value>Starting the table opens a live session: initiative, hit points and conditions update for every player as you change them.</value></data>
+  <data name="Combat.Console.Session" xml:space="preserve"><value>Session</value></data>
+  <data name="Combat.Console.NewSession" xml:space="preserve"><value>New session</value></data>
+  <data name="Combat.Console.SessionOption" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Combat.Console.StartTable" xml:space="preserve"><value>Start the table</value></data>
+  <data name="Combat.Console.WaitingDm" xml:space="preserve"><value>Waiting for the DM</value></data>
+  <data name="Combat.Console.WaitingDmHint" xml:space="preserve"><value>This page updates by itself when the DM starts the table.</value></data>
+  <data name="Combat.Status.Planned" xml:space="preserve"><value>Planned</value></data>
+  <data name="Combat.Status.Live" xml:space="preserve"><value>Live</value></data>
+  <data name="Combat.Status.Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Combat.Initiative" xml:space="preserve"><value>Initiative</value></data>
+  <data name="Combat.InitiativeRound" xml:space="preserve"><value>Initiative - Round {0}</value></data>
+  <data name="Combat.InitiativeTitle" xml:space="preserve"><value>Initiative {0}</value></data>
+  <data name="Combat.Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="Combat.NextTurn" xml:space="preserve"><value>Next turn</value></data>
+  <data name="Combat.EndEncounter" xml:space="preserve"><value>End encounter</value></data>
+  <data name="Combat.NowActing" xml:space="preserve"><value>Now acting:</value></data>
+  <data name="Combat.TurnOfCount" xml:space="preserve"><value>Turn {0} of {1}</value></data>
+  <data name="Combat.NobodyInOrder" xml:space="preserve"><value>Nobody is in the initiative order yet.</value></data>
+  <data name="Combat.Select" xml:space="preserve"><value>Select {0}</value></data>
+  <data name="Combat.Deselect" xml:space="preserve"><value>Deselect {0}</value></data>
+  <data name="Combat.TurnState.Delayed" xml:space="preserve"><value>Delayed</value></data>
+  <data name="Combat.TurnState.Readied" xml:space="preserve"><value>Readied</value></data>
+  <data name="Combat.Acted" xml:space="preserve"><value>Acted</value></data>
+  <data name="Combat.Down" xml:space="preserve"><value>Down</value></data>
+  <data name="Combat.CurrentTurn" xml:space="preserve"><value>(current turn)</value></data>
+  <data name="Combat.AddToInitiative" xml:space="preserve"><value>Add to initiative</value></data>
+  <data name="Combat.ChooseSomeone" xml:space="preserve"><value>Choose someone…</value></data>
+  <data name="Combat.Roll" xml:space="preserve"><value>Roll</value></data>
+  <data name="Combat.Roll.Normal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Combat.Roll.Advantage" xml:space="preserve"><value>Advantage</value></data>
+  <data name="Combat.Roll.Disadvantage" xml:space="preserve"><value>Disadvantage</value></data>
+  <data name="Combat.RollInitiative" xml:space="preserve"><value>Roll {0}</value></data>
+  <data name="Combat.Or" xml:space="preserve"><value>or</value></data>
+  <data name="Combat.EnterTotal" xml:space="preserve"><value>Enter total</value></data>
+  <data name="Combat.Set" xml:space="preserve"><value>Set</value></data>
+  <data name="Combat.QuickAdd" xml:space="preserve"><value>Quick-add a creature</value></data>
+  <data name="Combat.SearchCreatures" xml:space="preserve"><value>Search creatures</value></data>
+  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Search creatures in the Library…</value></data>
+  <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>Add {0} to the encounter</value></data>
+  <data name="Combat.AddToEncounter" xml:space="preserve"><value>Add to encounter</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Type to search. Creatures are added hidden and hydrated into the live table at once.</value></data>
+  <data name="Combat.PartyRest" xml:space="preserve"><value>Party rest</value></data>
+  <data name="Combat.PartyRestHint" xml:space="preserve"><value>Rests every player character at once. Hit dice are spent per character from their row.</value></data>
+  <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} for the party</value></data>
+  <data name="Combat.EndTable" xml:space="preserve"><value>End the table</value></data>
+  <data name="Combat.TempHpTitle" xml:space="preserve"><value>Temporary hit points</value></data>
+  <data name="Combat.TempHpBadge" xml:space="preserve"><value>+{0} temp</value></data>
+  <data name="Combat.SlotsTitle" xml:space="preserve"><value>{0}'s slots</value></data>
+  <data name="Combat.Hp.Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Combat.Hp.Critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="Combat.Hp.Bloodied" xml:space="preserve"><value>Bloodied</value></data>
+  <data name="Combat.Hp.Healthy" xml:space="preserve"><value>Healthy</value></data>
+  <data name="Combat.DeathSaves" xml:space="preserve"><value>Death saves</value></data>
+  <data name="Combat.DeathSavesLabel" xml:space="preserve"><value>Death saves: {0, plural, one{# success} other{# successes}}, {1, plural, one{# failure} other{# failures}}</value></data>
+  <data name="Combat.DeathSavesSuccessTitle" xml:space="preserve"><value>{0} of {1} successes</value></data>
+  <data name="Combat.DeathSavesFailureTitle" xml:space="preserve"><value>{0} of {1} failures</value></data>
+  <data name="Combat.RollDeathSave" xml:space="preserve"><value>Roll death save</value></data>
+  <data name="Combat.ConditionsOn" xml:space="preserve"><value>Conditions on {0}</value></data>
+  <data name="Combat.Exhaustion" xml:space="preserve"><value>Exhaustion</value></data>
+  <data name="Combat.ExhaustionTitle" xml:space="preserve"><value>{0}, level {1}</value></data>
+  <data name="Combat.UntilRemoved" xml:space="preserve"><value>Until removed</value></data>
+  <data name="Combat.EffectEndsStart" xml:space="preserve"><value>{0, plural, one{# round} other{# rounds}}, ends at the start of the turn</value></data>
+  <data name="Combat.EffectEndsEnd" xml:space="preserve"><value>{0, plural, one{# round} other{# rounds}}, ends at the end of the turn</value></data>
+  <data name="Combat.RemoveCondition" xml:space="preserve"><value>Remove {0} from {1}</value></data>
+  <data name="Combat.SomeoneUnseen" xml:space="preserve"><value>Someone you can't see</value></data>
+  <data name="Combat.CommandsFor" xml:space="preserve"><value>Commands for {0}</value></data>
+  <data name="Combat.Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Combat.AddToAmount" xml:space="preserve"><value>Add to the amount</value></data>
+  <data name="Combat.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Combat.Untyped" xml:space="preserve"><value>Untyped</value></data>
+  <data name="Combat.CriticalHit" xml:space="preserve"><value>Critical hit</value></data>
+  <data name="Combat.Damage" xml:space="preserve"><value>Damage</value></data>
+  <data name="Combat.DamageTo" xml:space="preserve"><value>Damage {0}</value></data>
+  <data name="Combat.Heal" xml:space="preserve"><value>Heal</value></data>
+  <data name="Combat.HealTo" xml:space="preserve"><value>Heal {0}</value></data>
+  <data name="Combat.TempHp" xml:space="preserve"><value>Temp HP</value></data>
+  <data name="Combat.TempHpTo" xml:space="preserve"><value>Give {0} temporary hit points</value></data>
+  <data name="Combat.IsDead" xml:space="preserve"><value>{0} is {1}.</value></data>
+  <data name="Combat.Revive" xml:space="preserve"><value>Revive (clear {0})</value></data>
+  <data name="Combat.ReviveTo" xml:space="preserve"><value>Revive {0}</value></data>
+  <data name="Combat.RemoveFromOrder" xml:space="preserve"><value>Remove from order</value></data>
+  <data name="Combat.RemoveFromOrderTo" xml:space="preserve"><value>Remove {0} from the order</value></data>
+  <data name="Combat.IsAtZero" xml:space="preserve"><value>{0} is at 0 {1}.</value></data>
+  <data name="Combat.Success" xml:space="preserve"><value>Success</value></data>
+  <data name="Combat.Failure" xml:space="preserve"><value>Failure</value></data>
+  <data name="Combat.Stabilize" xml:space="preserve"><value>Stabilize</value></data>
+  <data name="Combat.MarkDead" xml:space="preserve"><value>Mark dead</value></data>
+  <data name="Combat.MarkDeadTo" xml:space="preserve"><value>Mark {0} dead</value></data>
+  <data name="Combat.Condition" xml:space="preserve"><value>Condition</value></data>
+  <data name="Combat.Rounds" xml:space="preserve"><value>Rounds</value></data>
+  <data name="Combat.RoundsTitle" xml:space="preserve"><value>0 or blank: until removed</value></data>
+  <data name="Combat.EndsAt" xml:space="preserve"><value>Ends at</value></data>
+  <data name="Combat.EndOfTurn" xml:space="preserve"><value>End of their turn</value></data>
+  <data name="Combat.StartOfTurn" xml:space="preserve"><value>Start of their turn</value></data>
+  <data name="Combat.AddCondition" xml:space="preserve"><value>Add condition</value></data>
+  <data name="Combat.AddConditionTo" xml:space="preserve"><value>Add condition to {0}</value></data>
+  <data name="Combat.RaiseExhaustion" xml:space="preserve"><value>Raise {0}'s exhaustion</value></data>
+  <data name="Combat.LowerExhaustion" xml:space="preserve"><value>Lower {0}'s exhaustion</value></data>
+  <data name="Combat.TurnLabel" xml:space="preserve"><value>Turn</value></data>
+  <data name="Combat.ActNow" xml:space="preserve"><value>Act now</value></data>
+  <data name="Combat.ActsNow" xml:space="preserve"><value>{0} acts now</value></data>
+  <data name="Combat.Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="Combat.ClearTo" xml:space="preserve"><value>Clear {0}'s delay or ready state</value></data>
+  <data name="Combat.Delay" xml:space="preserve"><value>Delay</value></data>
+  <data name="Combat.DelayTo" xml:space="preserve"><value>{0} delays their turn</value></data>
+  <data name="Combat.Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Combat.ReadyTo" xml:space="preserve"><value>{0} readies an action</value></data>
+  <data name="Combat.Rest" xml:space="preserve"><value>Rest</value></data>
+  <data name="Combat.HitDice" xml:space="preserve"><value>Hit dice {0}/{1}</value></data>
+  <data name="Combat.HitDiceToSpend" xml:space="preserve"><value>Hit dice to spend</value></data>
+  <data name="Combat.Spend" xml:space="preserve"><value>Spend</value></data>
+  <data name="Combat.Dice" xml:space="preserve"><value>Dice</value></data>
+  <data name="Combat.DiceExpression" xml:space="preserve"><value>Dice expression</value></data>
+  <data name="Combat.SecretRoll" xml:space="preserve"><value>Secret roll (DM only)</value></data>
+  <data name="Combat.RollLog" xml:space="preserve"><value>Roll log</value></data>
+  <data name="Combat.You" xml:space="preserve"><value>You</value></data>
+  <data name="Combat.Dm" xml:space="preserve"><value>DM</value></data>
+  <data name="Combat.Player" xml:space="preserve"><value>Player</value></data>
+  <data name="Combat.EndTableTitle" xml:space="preserve"><value>End the table?</value></data>
+  <data name="Combat.EndTableCombat" xml:space="preserve"><value>The session is marked complete. The initiative order is kept and comes back when this session's table is started again.</value></data>
+  <data name="Combat.EndTableIdle" xml:space="preserve"><value>The session is marked complete. Players' table pages go back to waiting.</value></data>
+  <data name="Combat.TableEnded" xml:space="preserve"><value>The table has ended. The session is marked complete.</value></data>
+  <data name="Combat.EndEncounterTitle" xml:space="preserve"><value>End the encounter?</value></data>
+  <data name="Combat.EndEncounterText" xml:space="preserve"><value>The initiative order is cleared and conditions with a round count expire. Conditions that last until removed stay.</value></data>
+  <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>Only the DM can add creatures.</value></data>
+  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} added (hidden from players). Add them to initiative when ready.</value></data>
+  <data name="Combat.Notes.Tab" xml:space="preserve"><value>Notes</value></data>
+  <data name="Combat.Notes.TabTitle" xml:space="preserve"><value>Session notes (access key N)</value></data>
+  <data name="Combat.Notes.Count" xml:space="preserve"><value>{0} so far</value></data>
+  <data name="Combat.Notes.Title" xml:space="preserve"><value>Session notes</value></data>
+  <data name="Combat.Notes.Close" xml:space="preserve"><value>Close notes</value></data>
+  <data name="Combat.Notes.WhatWriting" xml:space="preserve"><value>What are you writing?</value></data>
+  <data name="Combat.Notes.Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Combat.Notes.Dialogue" xml:space="preserve"><value>Dialogue</value></data>
+  <data name="Combat.Notes.KindOfNote" xml:space="preserve"><value>Kind of note</value></data>
+  <data name="Combat.Notes.Kind.Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Combat.Notes.Kind.Clue" xml:space="preserve"><value>Clue</value></data>
+  <data name="Combat.Notes.Kind.Loot" xml:space="preserve"><value>Loot</value></data>
+  <data name="Combat.Notes.Kind.Ruling" xml:space="preserve"><value>Ruling</value></data>
+  <data name="Combat.Notes.Kind.FollowUp" xml:space="preserve"><value>Follow-up</value></data>
+  <data name="Combat.Notes.KindPlural.Note" xml:space="preserve"><value>Notes</value></data>
+  <data name="Combat.Notes.KindPlural.Clue" xml:space="preserve"><value>Clues</value></data>
+  <data name="Combat.Notes.KindPlural.Loot" xml:space="preserve"><value>Loot</value></data>
+  <data name="Combat.Notes.KindPlural.Ruling" xml:space="preserve"><value>Rulings</value></data>
+  <data name="Combat.Notes.KindPlural.FollowUp" xml:space="preserve"><value>Follow-ups</value></data>
+  <data name="Combat.Notes.Add.Note" xml:space="preserve"><value>Add note</value></data>
+  <data name="Combat.Notes.Add.Clue" xml:space="preserve"><value>Add clue</value></data>
+  <data name="Combat.Notes.Add.Loot" xml:space="preserve"><value>Add loot entry</value></data>
+  <data name="Combat.Notes.Add.Ruling" xml:space="preserve"><value>Add ruling</value></data>
+  <data name="Combat.Notes.Add.FollowUp" xml:space="preserve"><value>Add follow-up</value></data>
+  <data name="Combat.Notes.Prompt.Note" xml:space="preserve"><value>What happened?</value></data>
+  <data name="Combat.Notes.Prompt.Clue" xml:space="preserve"><value>What did they learn?</value></data>
+  <data name="Combat.Notes.Prompt.Loot" xml:space="preserve"><value>What did they find, and who took it?</value></data>
+  <data name="Combat.Notes.Prompt.Ruling" xml:space="preserve"><value>What did you rule, and on what?</value></data>
+  <data name="Combat.Notes.Prompt.FollowUp" xml:space="preserve"><value>What should be picked up later?</value></data>
+  <data name="Combat.Notes.MentionHint" xml:space="preserve"><value>Type @ for a character, # for a place, $ for an item.</value></data>
+  <data name="Combat.Notes.SubmitHint" xml:space="preserve"><value>Ctrl+Enter (⌘+Enter on a Mac) adds it.</value></data>
+  <data name="Combat.Notes.SecretDm" xml:space="preserve"><value>Secret (DM only)</value></data>
+  <data name="Combat.Notes.InConversation" xml:space="preserve"><value>In this conversation</value></data>
+  <data name="Combat.Notes.AddWhosTalking" xml:space="preserve"><value>Add who's talking. After that, each line only needs its speaker.</value></data>
+  <data name="Combat.Notes.TakeOut" xml:space="preserve"><value>Take {0} out of the conversation</value></data>
+  <data name="Combat.Notes.AddToConversation" xml:space="preserve"><value>Add someone to the conversation</value></data>
+  <data name="Combat.Notes.AddSomeone" xml:space="preserve"><value>Add someone…</value></data>
+  <data name="Combat.Notes.InTheFight" xml:space="preserve"><value>In the fight</value></data>
+  <data name="Combat.Notes.TheParty" xml:space="preserve"><value>The party</value></data>
+  <data name="Combat.Notes.EveryoneElse" xml:space="preserve"><value>Everyone else</value></data>
+  <data name="Combat.Notes.EveryoneInFight" xml:space="preserve"><value>Everyone in the fight</value></data>
+  <data name="Combat.Notes.LineSaid" xml:space="preserve"><value>What {0} said</value></data>
+  <data name="Combat.Notes.LineGeneric" xml:space="preserve"><value>Line of dialogue</value></data>
+  <data name="Combat.Notes.LinePlaceholder" xml:space="preserve"><value>What did {0} say?</value></data>
+  <data name="Combat.Notes.PickSpeakerFirst" xml:space="preserve"><value>Pick who's speaking first</value></data>
+  <data name="Combat.Notes.DialogueHint" xml:space="preserve"><value>Enter adds the line. ↑ and ↓ switch speaker; the speaker stays picked for the next line.</value></data>
+  <data name="Combat.Notes.AddLine" xml:space="preserve"><value>Add line</value></data>
+  <data name="Combat.Notes.ErrAddTalking" xml:space="preserve"><value>Add who's talking first.</value></data>
+  <data name="Combat.Notes.ErrPickSpeaker" xml:space="preserve"><value>Pick who said it.</value></data>
+  <data name="Combat.Notes.ThisSession" xml:space="preserve"><value>This session</value></data>
+  <data name="Combat.Notes.Show" xml:space="preserve"><value>Show</value></data>
+  <data name="Combat.Notes.Everything" xml:space="preserve"><value>Everything</value></data>
+  <data name="Combat.Notes.Mine" xml:space="preserve"><value>Mine</value></data>
+  <data name="Combat.Notes.NothingYet" xml:space="preserve"><value>Nothing yet. Anything you write here goes into the session's recap.</value></data>
+  <data name="Combat.Notes.NothingMatches" xml:space="preserve"><value>Nothing matches.</value></data>
+  <data name="Combat.Notes.BetweenEncounters" xml:space="preserve"><value>Between encounters</value></data>
+  <data name="Combat.Round" xml:space="preserve"><value>Round {0}</value></data>
+  <data name="Combat.TurnOf" xml:space="preserve"><value>Turn: {0}</value></data>
+  <data name="Combat.RoundTurn" xml:space="preserve"><value>Round {0} · turn: {1}</value></data>
+  <data name="Combat.Notes.SecretPill" xml:space="preserve"><value>secret</value></data>
+  <data name="Combat.Notes.Correct" xml:space="preserve"><value>Correct this note</value></data>
+  <data name="Combat.Notes.Remove" xml:space="preserve"><value>Remove this note</value></data>
+  <data name="Combat.Notes.CorrectedWords" xml:space="preserve"><value>Corrected words</value></data>
+  <data name="Combat.Notes.To" xml:space="preserve"><value>to {0}</value></data>
+  <data name="Combat.Notes.RemoveTitle" xml:space="preserve"><value>Remove this note?</value></data>
+  <data name="Combat.Notes.RemoveText" xml:space="preserve"><value>It is taken out of the session and won't be in the recap.</value></data>
+  <data name="Combat.Notes.RemoveConfirm" xml:space="preserve"><value>Remove</value></data>
+  <data name="Combat.Mention.Untitled" xml:space="preserve"><value>Untitled</value></data>
+  <data name="Combat.Mention.Private" xml:space="preserve"><value>private</value></data>
+  <data name="Combat.Mention.Home.Character" xml:space="preserve"><value>Character</value></data>
+  <data name="Combat.Mention.Home.Wiki" xml:space="preserve"><value>Wiki</value></data>
+  <data name="Combat.Mention.Home.Journal" xml:space="preserve"><value>Journal</value></data>
+  <data name="Combat.Mention.Source.Recap" xml:space="preserve"><value>Recap</value></data>
+  <data name="Combat.Mention.Source.DmSummary" xml:space="preserve"><value>DM summary</value></data>
+  <data name="Combat.Mention.Source.Comment" xml:space="preserve"><value>Comment</value></data>
+  <data name="Combat.Mention.Source.Biography" xml:space="preserve"><value>Biography</value></data>
+  <data name="Combat.Mention.Source.DmNotes" xml:space="preserve"><value>DM notes</value></data>
+</root>

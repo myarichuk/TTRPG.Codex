@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Wizard.New" xml:space="preserve"><value>Новый собственный материал</value></data>
+  <data name="Wizard.Edit" xml:space="preserve"><value>Редактирование собственного материала</value></data>
+  <data name="Wizard.Unnamed" xml:space="preserve"><value>Без названия: {0}</value></data>
+  <data name="Wizard.Untitled" xml:space="preserve"><value>Запись без названия</value></data>
+  <data name="Wizard.CloseWithoutSaving" xml:space="preserve"><value>Закрыть без сохранения</value></data>
+  <data name="Wizard.Steps" xml:space="preserve"><value>Шаги</value></data>
+  <data name="Wizard.Type" xml:space="preserve"><value>Тип</value></data>
+  <data name="Wizard.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Wizard.ChooseType" xml:space="preserve"><value>— выберите тип —</value></data>
+  <data name="Wizard.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Wizard.Tags" xml:space="preserve"><value>Теги</value></data>
+  <data name="Wizard.TagsPlaceholder" xml:space="preserve"><value>Через запятую, например: нежить, болото</value></data>
+  <data name="Wizard.Visible" xml:space="preserve"><value>Виден игрокам</value></data>
+  <data name="Wizard.HiddenTypeHint" xml:space="preserve"><value>{0} в любом случае не попадают в библиотеку игроков; это важно, только если вы смените тип.</value></data>
+  <data name="Wizard.DraftHint" xml:space="preserve"><value>Снимите отметку, чтобы это был черновик, который видите только вы.</value></data>
+  <data name="Wizard.Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="Wizard.HintPublished" xml:space="preserve"><value>Игроки смогут прочитать это, когда запись станет им видна; ИИ пишет текст для них. **жирный**, *курсив* и маркеры «- » отображаются.</value></data>
+  <data name="Wizard.HintDraft" xml:space="preserve"><value>Черновик, который видите только вы; ИИ может добавить зацепки и секреты. **жирный**, *курсив* и маркеры «- » отображаются.</value></data>
+  <data name="Wizard.Portrait" xml:space="preserve"><value>Портрет</value></data>
+  <data name="Wizard.Art" xml:space="preserve"><value>Иллюстрация</value></data>
+  <data name="Wizard.ArtAlt" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
+  <data name="Wizard.TipA" xml:space="preserve"><value>Совет: поле</value></data>
+  <data name="Wizard.TipB" xml:space="preserve"><value>Описание для иллюстрации</value></data>
+  <data name="Wizard.TipC" xml:space="preserve"><value>на шаге «Описание» (одно образное предложение) даёт модели изображений более точное задание, чем одно описание.</value></data>
+  <data name="Wizard.ReviewNote" xml:space="preserve"><value>Пустые шаги допустимы: обязательны только тип и название. Всё можно изменить позже в библиотеке.</value></data>
+  <data name="Wizard.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="Wizard.PreviewEmpty" xml:space="preserve"><value>Выберите тип и название, чтобы увидеть, как запись обретает форму.</value></data>
+  <data name="Wizard.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Wizard.StepOf" xml:space="preserve"><value>Шаг {0} из {1}</value></data>
+  <data name="Wizard.Next" xml:space="preserve"><value>Далее: {0}</value></data>
+  <data name="Wizard.Saving" xml:space="preserve"><value>Сохранение…</value></data>
+  <data name="Wizard.Create" xml:space="preserve"><value>Создать</value></data>
+  <data name="Wizard.SaveChanges" xml:space="preserve"><value>Сохранить изменения</value></data>
+  <data name="Wizard.Step.Basics" xml:space="preserve"><value>Основное</value></data>
+  <data name="Wizard.Step.Details" xml:space="preserve"><value>Подробности</value></data>
+  <data name="Wizard.Step.General" xml:space="preserve"><value>Общее</value></data>
+  <data name="Wizard.Step.Review" xml:space="preserve"><value>Проверка</value></data>
+  <data name="Wizard.Intro.Basics" xml:space="preserve"><value>Что это и как называется.</value></data>
+  <data name="Wizard.Intro.StoryCreature" xml:space="preserve"><value>Как выглядит, чего хочет, как сражается. Напишите сами или поручите ИИ набросать по характеристикам.</value></data>
+  <data name="Wizard.Intro.Story" xml:space="preserve"><value>Текст правил и предания.</value></data>
+  <data name="Wizard.Intro.Art" xml:space="preserve"><value>Необязательно. Показывается вверху записи в библиотеке.</value></data>
+  <data name="Wizard.Intro.Review" xml:space="preserve"><value>Проверьте предпросмотр и сохраните.</value></data>
+  <data name="Wizard.Sum.Visible" xml:space="preserve"><value>{0} · виден игрокам</value></data>
+  <data name="Wizard.Sum.Draft" xml:space="preserve"><value>{0} · черновик</value></data>
+  <data name="Wizard.Sum.NeedBasics" xml:space="preserve"><value>нужны тип и название</value></data>
+  <data name="Wizard.Sum.NoDescription" xml:space="preserve"><value>описания пока нет</value></data>
+  <data name="Wizard.Sum.Words" xml:space="preserve"><value>{0, plural, one{# слово} few{# слова} many{# слов} other{# слова}}</value></data>
+  <data name="Wizard.Sum.NewImage" xml:space="preserve"><value>новое изображение готово</value></data>
+  <data name="Wizard.Sum.HasArt" xml:space="preserve"><value>иллюстрация есть</value></data>
+  <data name="Wizard.Sum.NoArt" xml:space="preserve"><value>иллюстрации нет</value></data>
+  <data name="Wizard.Sum.Filled" xml:space="preserve"><value>заполнено {0} из {1}</value></data>
+  <data name="Wizard.Placeholder.Creature" xml:space="preserve"><value>Например: раздутая жаба размером с телегу, спина усеяна светящимися волдырями…</value></data>
+  <data name="Wizard.Placeholder.Other" xml:space="preserve"><value>Что это делает — теми словами, которые прочтут игроки.</value></data>
+  <data name="Wizard.Error.TypeNameFirst" xml:space="preserve"><value>Сначала выберите тип и дайте название.</value></data>
+  <data name="Wizard.Error.TypeNameRequired" xml:space="preserve"><value>Нужны тип и название.</value></data>
+  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>Редактировать собственные материалы может только мастер.</value></data>
+  <data name="Wizard.Error.ArtFailed" xml:space="preserve"><value>Сохранено, но иллюстрацию сохранить не удалось. Попробуйте добавить её снова из библиотеки.</value></data>
+  <data name="Wizard.Error.DeleteFailed" xml:space="preserve"><value>Не удалось удалить эту запись.</value></data>
+  <data name="Wizard.DiscardTitle" xml:space="preserve"><value>Отбросить изменения?</value></data>
+  <data name="Wizard.DiscardBody" xml:space="preserve"><value>Ничего из «{0}» ещё не сохранено.</value></data>
+  <data name="Wizard.ThisEntry" xml:space="preserve"><value>эта запись</value></data>
+  <data name="Wizard.Discard" xml:space="preserve"><value>Отбросить</value></data>
+  <data name="Wizard.KeepEditing" xml:space="preserve"><value>Продолжить правку</value></data>
+  <data name="Wizard.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Wizard.DeleteBody" xml:space="preserve"><value>Запись исчезнет из библиотеки вместе с иллюстрацией. Персонажи и существа, уже созданные на её основе, сохранят свои листы.</value></data>
+</root>

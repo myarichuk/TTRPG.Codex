@@ -29,6 +29,6 @@
 .progress-bar-inner { height: 100%; width: 30%; background: var(--accent); animation: slide 1.5s infinite ease-in-out; }
 
 @keyframes slide {
-    0% { transform: translateX(-150%); }
-    100% { transform: translateX(350%); }
+    0% { transform: translateX(calc(-150% * var(--dir, 1))); }
+    100% { transform: translateX(calc(350% * var(--dir, 1))); }
 }

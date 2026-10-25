@@ -20,3 +20,4 @@ license:
   - The text was read from the JSON transcription in https://github.com/5e-bits/5e-srd-api (commit 85acb251dad0b044a72c554c2d7f2d0c11e43504), packages/5e-database, MIT License, Copyright (c) 2018-2020 Adrian Padua, Christopher Ward.
   - This pack is “5E compatible”. It is not affiliated with or endorsed by Wizards of the Coast.
 kind: rules
+isTranslation: false

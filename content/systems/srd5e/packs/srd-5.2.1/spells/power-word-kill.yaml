@@ -7,9 +7,9 @@ description: >-
 
   **Casting Time:** Action  
 
-  **Range:** 60 feet Component: V  
+  **Range:** 60 feet  
 
-  **Components:**   
+  **Components:** V  
 
   **Duration:** Instantaneous
 
@@ -26,8 +26,9 @@ properties:
   level: 9
   school: Enchantment
   castingTime: Action
-  range: '60 feet Component: V'
-  components: []
+  range: 60 feet
+  components:
+  - V
   duration: Instantaneous
   concentration: false
   ritual: false

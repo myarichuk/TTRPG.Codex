@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App.Loading" xml:space="preserve"><value>Загрузка…</value></data>
+  <data name="Language.Label" xml:space="preserve"><value>Язык</value></data>
+  <data name="Language.Change" xml:space="preserve"><value>Сменить язык</value></data>
+  <data name="Language.Current" xml:space="preserve"><value>Язык: {0}</value></data>
+  <data name="Common.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Common.Next" xml:space="preserve"><value>Далее</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Common.Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="Common.Close" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="Common.Dismiss" xml:space="preserve"><value>Закрыть сообщение</value></data>
+  <data name="Common.Unsaved.Title" xml:space="preserve"><value>Уйти без сохранения?</value></data>
+  <data name="Common.Unsaved.Body" xml:space="preserve"><value>На этой странице есть несохранённые изменения. Если уйти сейчас, они пропадут.</value></data>
+  <data name="Common.Unsaved.Leave" xml:space="preserve"><value>Отменить изменения и уйти</value></data>
+  <data name="Common.Unsaved.Stay" xml:space="preserve"><value>Продолжить правку</value></data>
+  <data name="Common.Unsaved.DiscardTitle" xml:space="preserve"><value>Отменить изменения?</value></data>
+  <data name="Common.Unsaved.DiscardBody" xml:space="preserve"><value>Изменения не сохранены и будут потеряны.</value></data>
+  <data name="Common.Unsaved.Discard" xml:space="preserve"><value>Отменить изменения</value></data>
+  <data name="Count.Rounds" xml:space="preserve"><value>{0, plural, one{# раунд} few{# раунда} many{# раундов} other{# раунда}}</value></data>
+</root>

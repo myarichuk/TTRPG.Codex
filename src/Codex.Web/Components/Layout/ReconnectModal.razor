@@ -1,19 +1,19 @@
 <dialog id="components-reconnect-modal" data-nosnippet class="codex-dialog" aria-labelledby="reconnect-title">
     <div class="dialog-body">
-        <h2 id="reconnect-title">Connection lost</h2>
+        <h2 id="reconnect-title">@L["Layout.Reconnect.Title"]</h2>
         <div class="reconnect-status">
-            <p class="components-reconnect-first-attempt-visible">Reconnecting to the server…</p>
+            <p class="components-reconnect-first-attempt-visible">@L["Layout.Reconnect.First"]</p>
             <p class="components-reconnect-repeated-attempt-visible">
-                Connection unstable. Retrying in <span id="components-seconds-to-next-attempt"></span> s…
+                @L["Layout.Reconnect.RetryBefore"]<span id="components-seconds-to-next-attempt"></span>@L["Layout.Reconnect.RetryAfter"]
             </p>
-            <p class="components-reconnect-failed-visible">The connection to the server could not be restored.</p>
-            <p class="components-pause-visible">Your session was paused while this tab was in the background.</p>
-            <p class="components-resume-failed-visible">The session could not be resumed. Reload the page to continue.</p>
+            <p class="components-reconnect-failed-visible">@L["Layout.Reconnect.Failed"]</p>
+            <p class="components-pause-visible">@L["Layout.Reconnect.Paused"]</p>
+            <p class="components-resume-failed-visible">@L["Layout.Reconnect.ResumeFailed"]</p>
         </div>
     </div>
     <div class="dialog-actions">
-        <button id="components-reconnect-button" type="button" class="btn btn-primary components-reconnect-failed-visible">Try again</button>
-        <button id="components-resume-button" type="button" class="btn btn-primary components-pause-visible">Resume</button>
-        <button type="button" class="btn btn-outline-secondary components-reconnect-failed-visible" onclick="location.reload()">Reload page</button>
+        <button id="components-reconnect-button" type="button" class="btn btn-primary components-reconnect-failed-visible">@L["Layout.Reconnect.TryAgain"]</button>
+        <button id="components-resume-button" type="button" class="btn btn-primary components-pause-visible">@L["Layout.Reconnect.Resume"]</button>
+        <button type="button" class="btn btn-outline-secondary components-reconnect-failed-visible" onclick="location.reload()">@L["Layout.Reconnect.Reload"]</button>
     </div>
 </dialog>

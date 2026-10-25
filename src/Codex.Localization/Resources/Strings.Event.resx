@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Event.Damage.Immune" xml:space="preserve"><value>{0} is immune to {1} damage: {2} did nothing.</value></data>
+  <data name="Event.Damage.Took" xml:space="preserve"><value>{0} took {1} damage.</value></data>
+  <data name="Event.Damage.TookTyped" xml:space="preserve"><value>{0} took {1} {2} damage.</value></data>
+  <data name="Event.Damage.Resisted" xml:space="preserve"><value>Resisted: {0} rolled.</value></data>
+  <data name="Event.Damage.Vulnerable" xml:space="preserve"><value>Vulnerable: {0} rolled.</value></data>
+  <data name="Event.Damage.ResistedVulnerable" xml:space="preserve"><value>Resisted and vulnerable: {0} rolled.</value></data>
+  <data name="Event.Damage.Absorbed" xml:space="preserve"><value>{0} absorbed by temporary hit points.</value></data>
+  <data name="Event.Damage.Died" xml:space="preserve"><value>{0} died.</value></data>
+  <data name="Event.Damage.Down" xml:space="preserve"><value>{0} dropped to 0 and is down.</value></data>
+  <data name="Event.Damage.HitWhileDown" xml:space="preserve"><value>{0} was hit while down: {1, plural, one{# failed death save} other{# failed death saves}}.</value></data>
+  <data name="Event.Damage.PlayerDied" xml:space="preserve"><value>{0} took damage and died.</value></data>
+  <data name="Event.Damage.PlayerDown" xml:space="preserve"><value>{0} took damage and went down.</value></data>
+  <data name="Event.Damage.Player" xml:space="preserve"><value>{0} took damage.</value></data>
+  <data name="Event.Healing.Dead" xml:space="preserve"><value>{0} is dead; {1} healing did nothing.</value></data>
+  <data name="Event.Healing.Recovered" xml:space="preserve"><value>{0} recovered {1} {2}.</value></data>
+  <data name="Event.Healing.Revived" xml:space="preserve"><value>{0} is back on their feet.</value></data>
+  <data name="Event.Healing.Player" xml:space="preserve"><value>{0} was healed.</value></data>
+  <data name="Event.Healing.PlayerRevived" xml:space="preserve"><value>{0} was healed and is back up.</value></data>
+  <data name="Event.TempHp.Gained" xml:space="preserve"><value>{0} gained {1} temporary hit points.</value></data>
+  <data name="Event.TempHp.Kept" xml:space="preserve"><value>{0} already had at least {1} temporary hit points.</value></data>
+  <data name="Event.TempHp.PlayerGained" xml:space="preserve"><value>{0} gained temporary hit points.</value></data>
+  <data name="Event.TempHp.PlayerKept" xml:space="preserve"><value>{0} already had temporary hit points.</value></data>
+  <data name="Event.DeathSave.NotApplicable" xml:space="preserve"><value>{0} is not making death saves.</value></data>
+  <data name="Event.DeathSave.Revived" xml:space="preserve"><value>{0} rolled a natural {1} on a death save and is back up with 1 hit point.</value></data>
+  <data name="Event.DeathSave.Died" xml:space="preserve"><value>{0} failed a death save and died.</value></data>
+  <data name="Event.DeathSave.Stable" xml:space="preserve"><value>{0} succeeded on a death save and is stable.</value></data>
+  <data name="Event.DeathSave.Succeeded" xml:space="preserve"><value>{0} succeeded on a death save.</value></data>
+  <data name="Event.DeathSave.Failed" xml:space="preserve"><value>{0} failed a death save.</value></data>
+  <data name="Event.DeathSave.Rolled" xml:space="preserve"><value>Rolled {0}.</value></data>
+  <data name="Event.DeathSave.Tally" xml:space="preserve"><value>{0, plural, one{# success} other{# successes}}, {1, plural, one{# failure} other{# failures}}.</value></data>
+  <data name="Event.Stabilized.Done" xml:space="preserve"><value>{0} was stabilized.</value></data>
+  <data name="Event.Stabilized.None" xml:space="preserve"><value>{0} did not need stabilizing.</value></data>
+  <data name="Event.Exhaustion.Died" xml:space="preserve"><value>{0} reached the final level of exhaustion and died.</value></data>
+  <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0} is no longer exhausted.</value></data>
+  <data name="Event.Exhaustion.Level" xml:space="preserve"><value>{0} is at exhaustion level {1}.</value></data>
+  <data name="Event.Exhaustion.Failed" xml:space="preserve"><value>{0}'s exhaustion could not be changed.</value></data>
+  <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0} spent {1, plural, one{# hit die} other{# hit dice}} (d{2}: {3}) and recovered {4} hit points.</value></data>
+  <data name="Event.HitDice.None" xml:space="preserve"><value>{0} has no hit dice to spend.</value></data>
+  <data name="Event.HitDice.Player" xml:space="preserve"><value>{0} spent hit dice and recovered hit points.</value></data>
+  <data name="Event.Status.Gained" xml:space="preserve"><value>{0} gained {1}.</value></data>
+  <data name="Event.Status.Indefinite" xml:space="preserve"><value>It lasts until removed.</value></data>
+  <data name="Event.Status.Lost" xml:space="preserve"><value>{0} lost {1}.</value></data>
+  <data name="Event.Turn.Ended" xml:space="preserve"><value>{0}'s turn ended.</value></data>
+  <data name="Event.Turn.Passed" xml:space="preserve"><value>Turn passed to {0} (round {1}).</value></data>
+  <data name="Event.Turn.PassedNobody" xml:space="preserve"><value>Turn passed to nobody (round {0}).</value></data>
+  <data name="Event.Turn.Back" xml:space="preserve"><value>Turn moved back to {0}.</value></data>
+  <data name="Event.Turn.BackNobody" xml:space="preserve"><value>Turn moved back to nobody.</value></data>
+  <data name="Event.Turn.ActsNow" xml:space="preserve"><value>{0} acts now (round {1}).</value></data>
+  <data name="Event.Turn.Delayed" xml:space="preserve"><value>{0} delayed their turn.</value></data>
+  <data name="Event.Turn.Readied" xml:space="preserve"><value>{0} readied an action.</value></data>
+  <data name="Event.Turn.Normal" xml:space="preserve"><value>{0} is acting normally again.</value></data>
+  <data name="Event.Initiative.Rolled" xml:space="preserve"><value>{0} rolled {1} for initiative.</value></data>
+  <data name="Event.Initiative.Removed" xml:space="preserve"><value>{0} left the initiative order.</value></data>
+  <data name="Event.Initiative.NotIn" xml:space="preserve"><value>{0} was not in the initiative order.</value></data>
+  <data name="Event.Encounter.Ended" xml:space="preserve"><value>The encounter ended after {0, plural, one{# round} other{# rounds}}.</value></data>
+  <data name="Event.Encounter.None" xml:space="preserve"><value>There was no encounter to end.</value></data>
+  <data name="Event.Actor.Left" xml:space="preserve"><value>{0} left the table.</value></data>
+  <data name="Event.Actor.Joined" xml:space="preserve"><value>{0} joined the table.</value></data>
+  <data name="Event.Sheet.Edited" xml:space="preserve"><value>{0}'s sheet was edited.</value></data>
+  <data name="Event.Roll.Secret" xml:space="preserve"><value>{0} made a secret roll ({1}).</value></data>
+  <data name="Event.Roll.Plain" xml:space="preserve"><value>{0} rolled {1}: {2}.</value></data>
+  <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0} rolled {1} {2}: {3}.</value></data>
+  <data name="Event.Resource.Used" xml:space="preserve"><value>{0} used {1, plural, one{a {2}} other{# {2}s}}.</value></data>
+  <data name="Event.Resource.Regained" xml:space="preserve"><value>{0} regained {1, plural, one{a {2}} other{# {2}s}}.</value></data>
+  <data name="Event.Rest.Took" xml:space="preserve"><value>{0} took a {1}.</value></data>
+  <data name="Event.Rest.TookWith" xml:space="preserve"><value>{0} took a {1}: {2}.</value></data>
+  <data name="Event.Rest.Slots" xml:space="preserve"><value>slots refilled</value></data>
+  <data name="Event.Rest.Restored" xml:space="preserve"><value>{0} restored</value></data>
+  <data name="Event.Rest.Cleared" xml:space="preserve"><value>{0} cleared</value></data>
+  <data name="Event.Rest.HitDice" xml:space="preserve"><value>{0} hit dice regained</value></data>
+  <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>exhaustion gone</value></data>
+  <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>exhaustion now {0}</value></data>
+  <data name="Event.Rest.Lifted" xml:space="preserve"><value>{0} lifted</value></data>
+  <data name="Event.Note.Added" xml:space="preserve"><value>A {0} was added.</value></data>
+  <data name="Event.Note.AddedSecret" xml:space="preserve"><value>A secret {0} was added.</value></data>
+  <data name="Event.Note.Corrected" xml:space="preserve"><value>A {0} was corrected.</value></data>
+  <data name="Event.Note.CorrectedSecret" xml:space="preserve"><value>A secret {0} was corrected.</value></data>
+  <data name="Event.Note.Removed" xml:space="preserve"><value>A {0} was removed.</value></data>
+  <data name="Event.Note.RemovedSecret" xml:space="preserve"><value>A secret {0} was removed.</value></data>
+  <data name="Event.Note.Unchanged" xml:space="preserve"><value>A {0} was left unchanged.</value></data>
+  <data name="Event.Note.UnchangedSecret" xml:space="preserve"><value>A secret {0} was left unchanged.</value></data>
+  <data name="Event.Note.InPlace" xml:space="preserve"><value>A {0} was left in place.</value></data>
+  <data name="Event.Note.InPlaceSecret" xml:space="preserve"><value>A secret {0} was left in place.</value></data>
+  <data name="Event.Note.Noun.Quote" xml:space="preserve"><value>quote</value></data>
+  <data name="Event.Note.Noun.Note" xml:space="preserve"><value>note</value></data>
+  <data name="Event.Note.Noun.Clue" xml:space="preserve"><value>clue</value></data>
+  <data name="Event.Note.Noun.Loot" xml:space="preserve"><value>loot entry</value></data>
+  <data name="Event.Note.Noun.Ruling" xml:space="preserve"><value>ruling</value></data>
+  <data name="Event.Note.Noun.FollowUp" xml:space="preserve"><value>follow-up</value></data>
+  <data name="Event.Damage.ImmuneFrom" xml:space="preserve"><value>{0} is immune to {1} damage: {2} from {3} did nothing.</value></data>
+  <data name="Event.Damage.TookFrom" xml:space="preserve"><value>{0} took {1} damage from {2}.</value></data>
+  <data name="Event.Damage.TookTypedFrom" xml:space="preserve"><value>{0} took {1} {2} damage from {3}.</value></data>
+  <data name="Event.Healing.DeadFrom" xml:space="preserve"><value>{0} is dead; {1} healing from {2} did nothing.</value></data>
+  <data name="Event.Healing.RecoveredFrom" xml:space="preserve"><value>{0} recovered {1} {2} from {3}.</value></data>
+  <data name="Event.TempHp.GainedFrom" xml:space="preserve"><value>{0} gained {1} temporary hit points from {2}.</value></data>
+  <data name="Event.TempHp.KeptFrom" xml:space="preserve"><value>{0} already had at least {1} temporary hit points; {2} changed nothing.</value></data>
+  <data name="Event.Stabilized.DoneBy" xml:space="preserve"><value>{0} was stabilized by {1}.</value></data>
+  <data name="Event.Status.GainedFrom" xml:space="preserve"><value>{0} gained {1} from {2}.</value></data>
+  <data name="Event.Status.UntilStart" xml:space="preserve"><value>It lasts {0, plural, one{# round} other{# rounds}}, ending at the start of {1}'s turn.</value></data>
+  <data name="Event.Status.UntilEnd" xml:space="preserve"><value>It lasts {0, plural, one{# round} other{# rounds}}, ending at the end of {1}'s turn.</value></data>
+  <data name="Event.Slot.Spell" xml:space="preserve"><value>level {0} spell slot</value></data>
+  <data name="Event.Slot.Pact" xml:space="preserve"><value>level {0} pact slot</value></data>
+  <data name="Event.Slot.Other" xml:space="preserve"><value>level {0} {1}</value></data>
+  <data name="Event.Type.ActorJoined" xml:space="preserve"><value>Joined</value></data>
+  <data name="Event.Type.ActorLeft" xml:space="preserve"><value>Left</value></data>
+  <data name="Event.Type.Damage" xml:space="preserve"><value>Damage</value></data>
+  <data name="Event.Type.DeathSave" xml:space="preserve"><value>Death save</value></data>
+  <data name="Event.Type.DiceRoll" xml:space="preserve"><value>Roll</value></data>
+  <data name="Event.Type.EncounterEnded" xml:space="preserve"><value>Encounter end</value></data>
+  <data name="Event.Type.Exhaustion" xml:space="preserve"><value>Exhaustion</value></data>
+  <data name="Event.Type.Healing" xml:space="preserve"><value>Healing</value></data>
+  <data name="Event.Type.HitDice" xml:space="preserve"><value>Hit dice</value></data>
+  <data name="Event.Type.Initiative" xml:space="preserve"><value>Initiative</value></data>
+  <data name="Event.Type.InitiativeRemoved" xml:space="preserve"><value>Left initiative</value></data>
+  <data name="Event.Type.Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Event.Type.ResourceSpent" xml:space="preserve"><value>Used</value></data>
+  <data name="Event.Type.ResourceRegained" xml:space="preserve"><value>Regained</value></data>
+  <data name="Event.Type.Rest" xml:space="preserve"><value>Rest</value></data>
+  <data name="Event.Type.SheetEdited" xml:space="preserve"><value>Sheet</value></data>
+  <data name="Event.Type.Stabilized" xml:space="preserve"><value>Stabilized</value></data>
+  <data name="Event.Type.StatusEffect" xml:space="preserve"><value>Condition</value></data>
+  <data name="Event.Type.StatusEffectRemoved" xml:space="preserve"><value>Condition ended</value></data>
+  <data name="Event.Type.TemporaryHitPoints" xml:space="preserve"><value>Temporary HP</value></data>
+  <data name="Event.Type.TurnAdvance" xml:space="preserve"><value>Turn</value></data>
+  <data name="Event.Type.TurnState" xml:space="preserve"><value>Turn state</value></data>
+</root>

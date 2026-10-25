@@ -15,17 +15,17 @@
             }
         </div>
         <span class="pill @(Limit.HasValue && Picks.Count > Limit ? "pill-danger" : "")" data-testid="list-@Rule.Key-count">
-            @Picks.Count@(Limit.HasValue ? $" of {Limit}" : "")
+            @(Limit.HasValue ? L["Layout.Picker.Count", Picks.Count, Limit] : Picks.Count.ToString())
         </span>
     </div>
 
     @if (Picks.Count == 0)
     {
-        <p class="small-muted mb-2">Nothing picked yet.</p>
+        <p class="small-muted mb-2">@L["Layout.Picker.Nothing"]</p>
     }
     else
     {
-        <ul class="list-inline mb-2 mt-2" aria-label="@Rule.Label picked">
+        <ul class="list-inline mb-2 mt-2" aria-label="@L["Layout.Picker.Picked", Rule.Label]">
             @foreach (var pick in Picks)
             {
                 var entry = pick.Entry;
@@ -39,7 +39,7 @@
                         }
                         @if (!ReadOnly)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@($"Remove {entry.Name}")" OnClick="() => Removed.InvokeAsync(pick.Index)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Layout.Picker.Remove", entry.Name]" OnClick="() => Removed.InvokeAsync(pick.Index)" />
                         }
                     </span>
                 </li>
@@ -50,8 +50,8 @@
     @if (!ReadOnly)
     {
         var canAdd = !Limit.HasValue || Picks.Count < Limit;
-        <EntryBrowser Options="Options" Type="Type" Label="@Rule.Label" TestId="@($"list-{Rule.Key}")" Disabled="@(!canAdd)" DisabledText="Limit reached"
-                      EmptyText="Nothing is allowed right now. Check your class, level and the rules above." OnAdd="Added" />
+        <EntryBrowser Options="Options" Type="Type" Label="@Rule.Label" TestId="@($"list-{Rule.Key}")" Disabled="@(!canAdd)" DisabledText="@L["Layout.Picker.LimitReached"]"
+                      EmptyText="@L["Layout.Picker.EmptyOptions"]" OnAdd="Added" />
     }
 </div>
 

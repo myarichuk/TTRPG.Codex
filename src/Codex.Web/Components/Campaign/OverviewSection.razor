@@ -12,27 +12,27 @@
     <div class="col-lg-8">
         <section class="panel" aria-labelledby="about-heading">
             <div class="panel-title">
-                <h2 id="about-heading">About this campaign</h2>
+                <h2 id="about-heading">@L["Campaign.Overview.About"]</h2>
                 @if (Ctx.IsDm)
                 {
-                    <a href="@Ctx.BasePath/settings" class="cx-btn cx-etched cx-sm"><LucideIcon IconName="edit-3" Size="14" /> Edit</a>
+                    <a href="@Ctx.BasePath/settings" class="cx-btn cx-etched cx-sm"><LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Overview.Edit"]</a>
                 }
             </div>
-            <p class="mb-0">@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? "No description yet." : Ctx.Campaign.Description)</p>
+            <p class="mb-0">@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? L["Campaign.Overview.NoDescription"] : Ctx.Campaign.Description)</p>
         </section>
 
         <section class="panel" aria-labelledby="mine-heading">
             <div class="panel-title">
-                <h2 id="mine-heading">@(Ctx.IsDm ? "Cast at a glance" : "My characters")</h2>
-                <a href="@Ctx.BasePath/cast" class="cx-btn cx-etched cx-sm">Open cast</a>
+                <h2 id="mine-heading">@(Ctx.IsDm ? L["Campaign.Overview.Cast.Dm"] : L["Campaign.Overview.Cast.Player"])</h2>
+                <a href="@Ctx.BasePath/cast" class="cx-btn cx-etched cx-sm">@L["Campaign.Overview.OpenCast"]</a>
             </div>
             @{
                 var mine = Ctx.IsDm ? Ctx.Actors : Ctx.Actors.Where(a => a.OwnerUserId == Ctx.UserId).ToList();
             }
             @if (mine.Count == 0)
             {
-                <p class="mb-2">@(Ctx.IsDm ? "No characters, NPCs or monsters yet." : "You have no character in this campaign yet.")</p>
-                <a href="@Ctx.BasePath/cast" class="cx-btn cx-plaque cx-sm" data-testid="overview-create-character">@(Ctx.IsDm ? "Add to the cast" : "Create a character")</a>
+                <p class="mb-2">@(Ctx.IsDm ? L["Campaign.Overview.Cast.EmptyDm"] : L["Campaign.Overview.Cast.EmptyPlayer"])</p>
+                <a href="@Ctx.BasePath/cast" class="cx-btn cx-plaque cx-sm" data-testid="overview-create-character">@(Ctx.IsDm ? L["Campaign.Overview.Cast.AddDm"] : L["Campaign.Overview.Cast.AddPlayer"])</a>
             }
             else
             {
@@ -43,7 +43,7 @@
                         <li class="list-row">
                             <div class="row-main">
                                 <div class="row-title"><a href="@Ctx.BasePath/actors/@actor.Id">@actor.Name</a></div>
-                                <div class="row-sub">@actor.Kind.ToString().Replace("Character", " character").Replace("NonPlayer", "Non-player")</div>
+                                <div class="row-sub">@KindLabel(actor.Kind)</div>
                             </div>
                             @if (hp.Max > 0)
                             {
@@ -58,46 +58,46 @@
 
     <div class="col-lg-4">
         <section class="panel" aria-labelledby="table-heading">
-            <div class="panel-title"><h2 id="table-heading">Table</h2></div>
+            <div class="panel-title"><h2 id="table-heading">@L["Campaign.Overview.Table"]</h2></div>
             @if (RuntimeManager.TryGet(Ctx.Campaign.Id) != null)
             {
-                <p class="mb-2"><span class="pill pill-success"><span class="live-dot" aria-hidden="true"></span>Live</span> The table is running.</p>
-                <a href="@Ctx.BasePath/table" class="cx-btn cx-plaque cx-sm w-100">Join the table</a>
+                <p class="mb-2"><span class="pill pill-success"><span class="live-dot" aria-hidden="true"></span>@L["Campaign.Overview.Live"]</span> @L["Campaign.Overview.TableRunning"]</p>
+                <a href="@Ctx.BasePath/table" class="cx-btn cx-plaque cx-sm w-100">@L["Campaign.Overview.JoinTable"]</a>
             }
             else
             {
-                <p class="mb-2 small-muted">No session is running right now.</p>
-                <a href="@Ctx.BasePath/table" class="cx-btn cx-etched cx-sm w-100">@(Ctx.IsDm ? "Go to the table" : "Wait at the table")</a>
+                <p class="mb-2 small-muted">@L["Campaign.Overview.NoSessionRunning"]</p>
+                <a href="@Ctx.BasePath/table" class="cx-btn cx-etched cx-sm w-100">@(Ctx.IsDm ? L["Campaign.Overview.GoToTable"] : L["Campaign.Overview.WaitAtTable"])</a>
             }
             @if (latestSession != null)
             {
                 <hr />
-                <div class="small-muted">Latest session</div>
+                <div class="small-muted">@L["Campaign.Overview.LatestSession"]</div>
                 <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? Clock.Format(latestSession.Date, "d MMM yyyy") : latestSession.Title)</a>
-                <span class="pill ms-1">@latestSession.Status</span>
+                <span class="pill ms-1">@StatusLabel(latestSession.Status)</span>
             }
         </section>
 
         <section class="panel" aria-labelledby="members-heading">
-            <div class="panel-title"><h2 id="members-heading">Members (@Ctx.Campaign.Members.Count)</h2></div>
+            <div class="panel-title"><h2 id="members-heading">@L["Campaign.Overview.Members", Ctx.Campaign.Members.Count]</h2></div>
             <ul class="list-unstyled mb-0">
                 @foreach (var member in Ctx.Campaign.Members)
                 {
                     <li class="list-row">
                         <span>@usernames.GetValueOrDefault(member.UserId, member.UserId)</span>
-                        <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@member.Role</span>
+                        <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role)</span>
                     </li>
                 }
             </ul>
             @if (Ctx.IsDm)
             {
                 <hr />
-                <label for="invite-link" class="field-label">Invite link</label>
+                <label for="invite-link" class="field-label">@L["Campaign.Overview.InviteLink"]</label>
                 <div class="input-group input-group-sm">
                     <input id="invite-link" class="field-input" readonly value="@InviteLink" data-testid="invite-link" />
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="Copy invite link"><LucideIcon IconName="copy" Size="14" /></CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="@L["Campaign.Overview.CopyInvite"]"><LucideIcon IconName="copy" Size="14" /></CodexButton>
                 </div>
-                <div class="field-hint">Anyone with this link joins as a player.</div>
+                <div class="field-hint">@L["Campaign.Overview.InviteHint"]</div>
             }
         </section>
     </div>
@@ -106,26 +106,41 @@
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
-    private readonly Dictionary<string, string> usernames = new();
+    private Dictionary<string, string> usernames = new();
     private SessionDocument? latestSession;
 
     private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
     protected override async Task OnParametersSetAsync()
     {
-        usernames.Clear();
-        foreach (var member in Ctx.Campaign.Members)
-        {
-            var user = await UserRepo.GetUserByIdAsync(member.UserId);
-            usernames[member.UserId] = user?.Username ?? member.UserId;
-        }
-
+        usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
         latestSession = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).FirstOrDefault();
     }
+
+    private string KindLabel(ActorKind kind) => kind switch
+    {
+        ActorKind.PlayerCharacter => L["Campaign.Overview.Kind.PlayerCharacter"],
+        ActorKind.NonPlayerCharacter => L["Campaign.Overview.Kind.NonPlayerCharacter"],
+        _ => L["Campaign.Overview.Kind.Monster"]
+    };
+
+    private string StatusLabel(SessionStatus status) => status switch
+    {
+        SessionStatus.Live => L["Campaign.Overview.Status.Live"],
+        SessionStatus.Completed => L["Campaign.Overview.Status.Completed"],
+        _ => L["Campaign.Overview.Status.Planned"]
+    };
+
+    private string RoleLabel(CampaignRole role) => role switch
+    {
+        CampaignRole.DM => L["Campaign.Overview.Role.DM"],
+        CampaignRole.Player => L["Campaign.Overview.Role.Player"],
+        _ => L["Campaign.Overview.Role.Observer"]
+    };
 
     private async Task CopyInviteAsync()
     {
         var ok = await JS.InvokeAsync<bool>("codex.copyText", InviteLink);
-        Ctx.Notify(ok ? Flash.Success("Invite link copied.") : Flash.Error("Could not copy. Select the link and copy it manually."));
+        Ctx.Notify(ok ? Flash.Success(L["Campaign.Overview.InviteCopied"]) : Flash.Error(L["Campaign.Overview.CopyFailed"]));
     }
 }

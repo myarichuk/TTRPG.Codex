@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Service.Ai.NotConfigured" xml:space="preserve"><value>לא הוגדר ספק בינה מלאכותית.</value></data>
+  <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>לא הוגדר ספק תמונות.</value></data>
+  <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>רק שליט המבוך מנסח סיכומי מפגשים.</value></data>
+  <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>הספק זקוק לכתובת, למודל ו(בשירותים מתארחים) למפתח API.</value></data>
+  <data name="Service.Ai.Connected" xml:space="preserve"><value>החיבור הצליח. המודל ענה: “{0}”</value></data>
+  <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>החיבור הצליח (תשובה ריקה).</value></data>
+  <data name="Service.Ai.Unreachable" xml:space="preserve"><value>לא ניתן להגיע למודל: {0}</value></data>
+  <data name="Service.Art.BadType" xml:space="preserve"><value>מודל התמונות שלח קובץ {0}, שאי אפשר לשמור. נסו מודל אחר.</value></data>
+  <data name="Service.Art.TooBig" xml:space="preserve"><value>התמונה שנוצרה גדולה מ-6MB. בחרו גודל קטן יותר או מודל אחר.</value></data>
+</root>

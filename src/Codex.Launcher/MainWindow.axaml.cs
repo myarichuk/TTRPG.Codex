@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
@@ -6,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using static Codex.Launcher.Strings;
 
 namespace Codex.Launcher;
 
@@ -24,9 +26,34 @@ public partial class MainWindow : Window
 
         TryLoadBackdrop();
         LanBox.IsChecked = model.Settings.AllowLan;
-        SetLanText();
-        loading = false;
         model.Changed += () => Dispatcher.UIThread.Post(Refresh);
+        WindowText.Bind(this, Localize);
+        loading = false;
+    }
+
+    /// <summary>Sets every label in the current language; runs at start and whenever the language changes.</summary>
+    private void Localize()
+    {
+        var wasLoading = loading;
+        loading = true; // selecting the language below must not count as the DM choosing it
+        LanguagePicker.Sync(LanguageBox);
+        loading = wasLoading;
+
+        ToolTip.SetTip(LanguageBox, L["Launcher.Language"]);
+        AutomationProperties.SetName(LanguageBox, L["Launcher.Language"]);
+        ToolTip.SetTip(HelpButton, L["Launcher.Help.Title"]);
+        AutomationProperties.SetName(HelpButton, L["Launcher.Help.Automation"]);
+        OpenButton.Content = L["Launcher.OpenTable"];
+        QuitButton.Content = L["Launcher.Quit"];
+        LanHint.Text = L["Launcher.Lan.Hint"];
+        OpenLabel.Text = L["Launcher.OpenLabel"];
+        LogButton.Content = L["Launcher.Log"];
+        DataButton.Content = L["Launcher.CampaignData"];
+        BackupsButton.Content = L["Launcher.Backups"];
+        ContentButton.Content = L["Launcher.MyContent"];
+        CheckButton.Content = L["Launcher.CantJoin"];
+        SetLanText();
+        linksKey = ""; // the link rows carry text too: rebuild them
         Refresh();
     }
 
@@ -55,7 +82,7 @@ public partial class MainWindow : Window
     {
         StatusText.Text = model.StatusText;
         StatusDot.Fill = new SolidColorBrush(Color.Parse(model.StatusColor));
-        ToggleButton.Content = model.ToggleText == "Stop" ? "Stop server" : "Start server";
+        ToggleButton.Content = model.ToggleLabel;
         ToggleButton.IsEnabled = !model.Controller.IsBusy;
         OpenButton.IsEnabled = model.CanOpen;
         ProblemText.Text = model.Controller.Problem;
@@ -76,40 +103,41 @@ public partial class MainWindow : Window
         LinksPanel.Children.Clear();
         foreach (var link in links)
         {
-            var copy = new Button { Content = "Copy link", Padding = new Thickness(12, 4), FontSize = 13 };
+            var copy = new Button { Content = L["Launcher.CopyLink"], Padding = new Thickness(12, 4), FontSize = 13 };
             copy.Classes.Add("etched");
             copy.Click += async (_, _) =>
             {
                 await CopyAsync(link.Url);
-                copy.Content = "Copied ✓";
+                copy.Content = L["Launcher.Copied"];
                 await Task.Delay(1500);
-                copy.Content = "Copy link";
+                copy.Content = L["Launcher.CopyLink"];
             };
             var buttons = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
-            if (link.Label != "This computer")
+            if (link.Kind != LinkKind.This)
             {
-                var qr = new Button { Content = "QR code", Padding = new Thickness(12, 4), FontSize = 13 };
+                var qr = new Button { Content = L["Launcher.QrCode"], Padding = new Thickness(12, 4), FontSize = 13 };
                 qr.Classes.Add("etched");
-                qr.Click += (_, _) => ShowQr(link.Label, link.Url);
+                qr.Click += (_, _) => ShowQr(link.Kind, link.Url);
                 buttons.Children.Add(qr);
             }
 
             buttons.Children.Add(copy);
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("170,*,Auto") };
-            row.Children.Add(new TextBlock { Text = link.Label, Foreground = new SolidColorBrush(Color.Parse("#cbbfa5")), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
-            var url = new SelectableTextBlock { Text = link.Url, Foreground = new SolidColorBrush(Color.Parse("#ffe9ae")), FontWeight = FontWeight.Bold, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
-            Grid.SetColumn(url, 1);
-            Grid.SetColumn(buttons, 2);
-            row.Children.Add(url);
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            var text = new StackPanel { Spacing = 1, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+            text.Children.Add(new TextBlock { Text = link.Label, FontSize = 13, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Color.Parse("#cbbfa5")) });
+            text.Children.Add(new SelectableTextBlock { Text = link.Url, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Color.Parse("#ffe9ae")), FontWeight = FontWeight.Bold });
+            Grid.SetColumn(buttons, 1);
+            buttons.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center;
+            row.Children.Add(text);
             row.Children.Add(buttons);
             LinksPanel.Children.Add(row);
         }
     }
 
-    internal void ShowQr(string label, string url)
+    internal void ShowQr(LinkKind kind, string url)
     {
         if (!IsVisible) Show();
-        _ = new QrWindow(label, url).ShowDialog(this);
+        _ = new QrWindow(kind, url).ShowDialog(this);
     }
 
     internal void ShowCheck()
@@ -136,6 +164,12 @@ public partial class MainWindow : Window
     private void OnOpenLog(object? sender, RoutedEventArgs e) => model.OpenLog();
     private void OnQuit(object? sender, RoutedEventArgs e) => model.Quit();
 
+    private void OnLanguageSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (loading || model == null) return;
+        if (LanguagePicker.TagAt(LanguageBox) is { } tag && tag != Strings.Tag) model.SetLanguage(tag);
+    }
+
     private void OnLanChanged(object? sender, RoutedEventArgs e)
     {
         if (loading) return;
@@ -144,7 +178,7 @@ public partial class MainWindow : Window
     }
 
     private void SetLanText() =>
-        LanBox.Content = (LanBox.IsChecked == true ? "◆  " : "◇  ") + "Let players on my network join";
+        LanBox.Content = (LanBox.IsChecked == true ? "◆  " : "◇  ") + L["Launcher.Lan.Toggle"];
 
     internal async Task CopyAsync(string text)
     {

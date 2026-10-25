@@ -11,7 +11,7 @@
             <span>@Message.Text</span>
             @if (OnDismiss.HasDelegate)
             {
-                <button type="button" class="icon-btn" aria-label="Dismiss message" @onclick="OnDismiss">
+                <button type="button" class="icon-btn" aria-label="@L["Common.Dismiss"]" @onclick="OnDismiss">
                     <LucideIcon IconName="x" Size="18" />
                 </button>
             }

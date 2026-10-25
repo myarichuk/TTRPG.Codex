@@ -37,6 +37,11 @@ public class ContentEntry
     /// Library can credit the lore to its own author and licence instead of the pack that owns the rules.</summary>
     public const string FlavorSourceKey = "flavorSource";
 
+    /// <summary>Set by <c>IContentRegistry.Localize</c> on the display copy of a translated entry: the id of the translation pack (several
+    /// ids, comma-separated, when more than one pack translated the entry), so the Library can credit the translators and show
+    /// each translation's licence next to the translated text.</summary>
+    public const string TranslationSourceKey = "translationSource";
+
     /// <summary>
     /// Copies registered flavor onto this entry. With <paramref name="overwrite"/> false (an entry the table
     /// wrote itself) anything the entry already says is kept. The source pack is credited only when the

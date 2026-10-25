@@ -1,0 +1,21 @@
+@* The top bar of a detail pane that opens as a full-screen sheet on a phone (.phone-sheet): a way back to
+   the list and the detail's title. Hidden on wide screens, where the detail sits beside the list. *@
+<div class="sheet-bar">
+    @if (CloseHref != null)
+    {
+        <a href="@CloseHref" class="icon-btn" aria-label="@CloseLabel"><LucideIcon IconName="arrow-left" Size="20" /></a>
+    }
+    else
+    {
+        <button type="button" class="icon-btn" aria-label="@CloseLabel" @onclick="OnClose"><LucideIcon IconName="arrow-left" Size="20" /></button>
+    }
+    <span class="sheet-bar-title">@Title</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string CloseLabel { get; set; } = string.Empty;
+    /// <summary>Where Back goes when closing is a navigation (the Library keeps its selection in the URL).</summary>
+    [Parameter] public string? CloseHref { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

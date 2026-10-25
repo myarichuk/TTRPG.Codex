@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
+using static Codex.Launcher.Strings;
 
 namespace Codex.Launcher;
 
@@ -46,13 +47,13 @@ internal sealed class ServerController : IDisposable
     {
         if (!File.Exists(Path.Combine(serverDir, "Codex.Web.dll")))
         {
-            return $"Codex.Web.dll was not found in {serverDir}.";
+            return L["Launcher.Server.NotFound", serverDir];
         }
 
         if (LauncherPaths.DotnetHost(serverDir) == "dotnet" && !File.Exists(Path.Combine(serverDir, "runtime", "dotnet")) && !File.Exists(Path.Combine(serverDir, "runtime", "dotnet.exe")))
         {
             // Not fatal in a build tree (the PATH has dotnet), but a release always has its own runtime.
-            return Directory.Exists(Path.Combine(serverDir, "runtime")) ? "The bundled .NET runtime is incomplete." : null;
+            return Directory.Exists(Path.Combine(serverDir, "runtime")) ? L["Launcher.Server.RuntimeIncomplete"] : null;
         }
 
         return null;
@@ -95,6 +96,7 @@ internal sealed class ServerController : IDisposable
             info.Environment["ASPNETCORE_URLS"] = settings.BindUrl;
             info.Environment["Codex__DataDirectory"] = LauncherPaths.RavenData(dataHome);
             info.Environment["Codex__StopOnStdinClose"] = "true";
+            info.Environment["Codex__DefaultCulture"] = Effective(settings.Language);
             Directory.CreateDirectory(LauncherPaths.MyContent(dataHome));
             info.Environment["Codex__ContentDirectories__0"] = LauncherPaths.MyContent(dataHome);
             // Invite links must carry an address players can reach, not the DM's own "localhost".
@@ -115,7 +117,7 @@ internal sealed class ServerController : IDisposable
         }
         catch (Exception ex)
         {
-            Fail("The server could not be started: " + ex.Message);
+            Fail(L["Launcher.Server.StartFailed", ex.Message]);
         }
     }
 
@@ -183,7 +185,7 @@ internal sealed class ServerController : IDisposable
 
         if (!HasExited(child))
         {
-            Fail("The server did not answer in time. See the log for details.");
+            Fail(L["Launcher.Server.NoAnswer"]);
             await StopAsync();
         }
     }
@@ -202,7 +204,7 @@ internal sealed class ServerController : IDisposable
         logWriter?.Flush();
         if (unexpected && State != ServerState.Failed)
         {
-            Fail("The server stopped unexpectedly. Another program may be using the port. See the log for details.");
+            Fail(L["Launcher.Server.Unexpected"]);
         }
         else if (State != ServerState.Failed)
         {

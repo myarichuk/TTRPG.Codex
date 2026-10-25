@@ -8,7 +8,7 @@ namespace Codex.Tests;
 /// whose rules are all data: nothing here is specific to the SRD.</summary>
 public class SheetProgressionTests
 {
-    private const string Yaml = """
+    protected const string Yaml = """
         id: demo
         name: Demo
         attributes:
@@ -120,7 +120,10 @@ public class SheetProgressionTests
         public IEnumerable<ContentEntry> Candidates(string type) => _entries.Where(e => e.Type == type);
     }
 
-    private static SheetRuleEngine Engine() => new(System, new Resolver());
+    /// <summary>The system under test; <see cref="LocalizedSheetProgressionTests"/> swaps in a pseudo-translated copy.</summary>
+    protected virtual SystemDefinition Sys => System;
+
+    private SheetRuleEngine Engine() => new(Sys, new Resolver());
 
     private static Dictionary<string, object> Sheet(params (string Key, object Value)[] values)
     {
@@ -168,7 +171,7 @@ public class SheetProgressionTests
         var result = Engine().Evaluate(Sheet(("feats", List("asi|str:1", "wrestler|int:1", "lucky|str:1"))));
         var messages = Messages(result);
         Assert.Contains("1 remaining point goes", messages);
-        Assert.Contains("Wrestler can't raise Intelligence", messages);
+        Assert.Matches("Wrestler can't raise §?Intelligence", messages); // the label shown may be a translation (§ marks the pseudo one)
         Assert.Contains("Lucky doesn't raise any score", messages);
     }
 

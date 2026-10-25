@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Actor.Slots.Title" xml:space="preserve"><value>Ячейки</value></data>
+  <data name="Actor.Slots.SpellSlots" xml:space="preserve"><value>Ячейки заклинаний</value></data>
+  <data name="Actor.Slots.PactSlots" xml:space="preserve"><value>Ячейки договора</value></data>
+  <data name="Actor.Slots.LongRest" xml:space="preserve"><value>Долгий отдых</value></data>
+  <data name="Actor.Slots.ShortRest" xml:space="preserve"><value>Короткий отдых</value></data>
+  <data name="Actor.Slots.Level" xml:space="preserve"><value>Уровень {0}</value></data>
+  <data name="Actor.Slots.LevelHidden" xml:space="preserve"><value>{0}, уровень {1}: </value></data>
+  <data name="Actor.Slots.Count" xml:space="preserve"><value>{0} из {1}</value></data>
+  <data name="Actor.Slots.Use" xml:space="preserve"><value>Потратить</value></data>
+  <data name="Actor.Slots.Regain" xml:space="preserve"><value>Вернуть</value></data>
+  <data name="Actor.Slots.UseSpell" xml:space="preserve"><value>Потратить ячейку заклинаний {0} уровня</value></data>
+  <data name="Actor.Slots.RegainSpell" xml:space="preserve"><value>Вернуть ячейку заклинаний {0} уровня</value></data>
+  <data name="Actor.Slots.UsePact" xml:space="preserve"><value>Потратить ячейку договора {0} уровня</value></data>
+  <data name="Actor.Slots.RegainPact" xml:space="preserve"><value>Вернуть ячейку договора {0} уровня</value></data>
+  <data name="Actor.Slots.UseOther" xml:space="preserve"><value>Потратить: {1}, уровень {0}</value></data>
+  <data name="Actor.Slots.RegainOther" xml:space="preserve"><value>Вернуть: {1}, уровень {0}</value></data>
+  <data name="Actor.Hp.Max" xml:space="preserve"><value>Максимум очков здоровья</value></data>
+  <data name="Actor.Hp.ModeAverage" xml:space="preserve"><value>Расчёт: среднее за уровень</value></data>
+  <data name="Actor.Hp.ModeRolled" xml:space="preserve"><value>Расчёт: мои броски</value></data>
+  <data name="Actor.Hp.ModeManual" xml:space="preserve"><value>Ввод вручную</value></data>
+  <data name="Actor.Hp.NoteLead" xml:space="preserve"><value> за {0, plural, one{# уровень} few{# уровня} many{# уровней} other{# уровня}} (кость хитов + Телосложение </value></data>
+  <data name="Actor.Hp.NoteExtra" xml:space="preserve"><value> + {0} от {1}</value></data>
+  <data name="Actor.Hp.NoteTail" xml:space="preserve"><value> за каждый, на первом уровне берётся вся кость).</value></data>
+  <data name="Actor.Hp.HowSummary" xml:space="preserve"><value>Как это считается</value></data>
+  <data name="Actor.Hp.TableCaption" xml:space="preserve"><value>Очки здоровья, полученные на каждом уровне</value></data>
+  <data name="Actor.Hp.ColLevel" xml:space="preserve"><value>Уровень</value></data>
+  <data name="Actor.Hp.ColClass" xml:space="preserve"><value>Класс</value></data>
+  <data name="Actor.Hp.ColDie" xml:space="preserve"><value>Кость</value></data>
+  <data name="Actor.Hp.ColRoll" xml:space="preserve"><value>Бросок или среднее</value></data>
+  <data name="Actor.Hp.ColCon" xml:space="preserve"><value>Тел</value></data>
+  <data name="Actor.Hp.ColGain" xml:space="preserve"><value>Прирост</value></data>
+  <data name="Actor.Hp.RollAria" xml:space="preserve"><value>Бросок кости хитов для уровня {0}</value></data>
+  <data name="Actor.Hp.ChooseClass" xml:space="preserve"><value>Выберите класс, и максимум будет рассчитан по его кости хитов.</value></data>
+  <data name="Actor.Hp.ManualNote" xml:space="preserve"><value>Вводится вручную в разделе «Лист».</value></data>
+  <data name="Actor.Ac.Heading" xml:space="preserve"><value>Класс брони</value></data>
+  <data name="Actor.Ac.Auto" xml:space="preserve"><value>рассчитан по вашему снаряжению</value></data>
+  <data name="Actor.Ac.LinesAria" xml:space="preserve"><value>Из чего складывается класс брони</value></data>
+  <data name="Actor.Ac.AutoLabel" xml:space="preserve"><value>Рассчитывать по снаряжению и классу</value></data>
+  <data name="Actor.Ac.Misc" xml:space="preserve"><value>Прочие бонусы (заклинания, магические эффекты)</value></data>
+  <data name="Actor.Avatar.Portrait" xml:space="preserve"><value>Портрет: {0}</value></data>
+  <data name="Actor.Dice.Secret" xml:space="preserve"><value>секретный</value></data>
+  <data name="Actor.Dice.Faces" xml:space="preserve"><value>Кости</value></data>
+  <data name="Actor.Dice.Nat20" xml:space="preserve"><value>натуральная 20</value></data>
+  <data name="Actor.Dice.Nat1" xml:space="preserve"><value>натуральная 1</value></data>
+  <data name="Actor.Dice.Dropped" xml:space="preserve"><value>отброшена</value></data>
+  <data name="Actor.Dice.Plus" xml:space="preserve"><value>плюс {0}</value></data>
+  <data name="Actor.Dice.Minus" xml:space="preserve"><value>минус {0}</value></data>
+  <data name="Actor.Dice.Total" xml:space="preserve"><value>Итого {0}</value></data>
+  <data name="Actor.Skills.SpellSaveDc" xml:space="preserve"><value>Сл спасброска от заклинаний</value></data>
+  <data name="Actor.Skills.SpellSaveDcFor" xml:space="preserve"><value>Сл спасброска от заклинаний ({0})</value></data>
+  <data name="Actor.Skills.SpellAttackBonus" xml:space="preserve"><value>Бонус атаки заклинанием</value></data>
+  <data name="Actor.Skills.SpellAttackBonusFor" xml:space="preserve"><value>Бонус атаки заклинанием ({0})</value></data>
+  <data name="Actor.Skills.SpellAttack" xml:space="preserve"><value>Атака заклинанием</value></data>
+  <data name="Actor.Skills.SpellAttackFor" xml:space="preserve"><value>Атака заклинанием ({0})</value></data>
+  <data name="Actor.Skills.SavingThrows" xml:space="preserve"><value>Спасброски</value></data>
+  <data name="Actor.Skills.Proficient" xml:space="preserve"><value>владение</value></data>
+  <data name="Actor.Skills.Save" xml:space="preserve"><value>Спасбросок: {0}</value></data>
+  <data name="Actor.Skills.Check" xml:space="preserve"><value>Проверка: {0}</value></data>
+  <data name="Actor.Skills.Heading" xml:space="preserve"><value>Навыки</value></data>
+  <data name="Actor.Skills.Background" xml:space="preserve"><value>предыстория</value></data>
+  <data name="Actor.Skills.Expertise" xml:space="preserve"><value>мастерство</value></data>
+  <data name="Actor.Skills.Roll" xml:space="preserve"><value>Бросить: {0}</value></data>
+  <data name="Actor.Skills.Hint" xml:space="preserve"><value>Навыки вашей предыстории отмечены за вас. Отметьте навыки, которые дают класс и другие особенности.</value></data>
+  <data name="Actor.Inv.Empty" xml:space="preserve"><value>Пока ничего нет.</value></data>
+  <data name="Actor.Inv.Carried" xml:space="preserve"><value>{0}: переносимые предметы</value></data>
+  <data name="Actor.Inv.Quantity" xml:space="preserve"><value>Количество: {0}</value></data>
+  <data name="Actor.Inv.Equipped" xml:space="preserve"><value>Надето</value></data>
+  <data name="Actor.Inv.EquippedLower" xml:space="preserve"><value>надето</value></data>
+  <data name="Actor.Inv.Remove" xml:space="preserve"><value>Убрать: {0}</value></data>
+  <data name="Actor.Inv.Browse" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="Actor.Inv.Items" xml:space="preserve"><value>предметы</value></data>
+  <data name="Actor.Inv.NoneInLibrary" xml:space="preserve"><value>В Библиотеке нет предметов.</value></data>
+  <data name="Actor.Inv.Ac" xml:space="preserve"><value>КБ {0}</value></data>
+  <data name="Actor.Card.ArmorClass" xml:space="preserve"><value>Класс брони</value></data>
+  <data name="Actor.Card.HitPoints" xml:space="preserve"><value>Очки здоровья</value></data>
+  <data name="Actor.Card.Speed" xml:space="preserve"><value>Скорость</value></data>
+  <data name="Actor.Card.AbilityScores" xml:space="preserve"><value>Характеристики</value></data>
+  <data name="Actor.Card.Str" xml:space="preserve"><value>СИЛ</value></data>
+  <data name="Actor.Card.Dex" xml:space="preserve"><value>ЛОВ</value></data>
+  <data name="Actor.Card.Con" xml:space="preserve"><value>ТЕЛ</value></data>
+  <data name="Actor.Card.Int" xml:space="preserve"><value>ИНТ</value></data>
+  <data name="Actor.Card.Wis" xml:space="preserve"><value>МДР</value></data>
+  <data name="Actor.Card.Cha" xml:space="preserve"><value>ХАР</value></data>
+  <data name="Actor.Card.Traits" xml:space="preserve"><value>Особенности</value></data>
+  <data name="Actor.Card.Actions" xml:space="preserve"><value>Действия</value></data>
+  <data name="Actor.Card.BonusActions" xml:space="preserve"><value>Бонусные действия</value></data>
+  <data name="Actor.Card.Reactions" xml:space="preserve"><value>Реакции</value></data>
+  <data name="Actor.Card.LegendaryActions" xml:space="preserve"><value>Легендарные действия</value></data>
+  <data name="Actor.Card.SavingThrows" xml:space="preserve"><value>Спасброски</value></data>
+  <data name="Actor.Card.Skills" xml:space="preserve"><value>Навыки</value></data>
+  <data name="Actor.Card.DamageVulnerabilities" xml:space="preserve"><value>Уязвимость к урону</value></data>
+  <data name="Actor.Card.DamageResistances" xml:space="preserve"><value>Сопротивление урону</value></data>
+  <data name="Actor.Card.DamageImmunities" xml:space="preserve"><value>Иммунитет к урону</value></data>
+  <data name="Actor.Card.ConditionImmunities" xml:space="preserve"><value>Иммунитет к состояниям</value></data>
+  <data name="Actor.Card.Senses" xml:space="preserve"><value>Чувства</value></data>
+  <data name="Actor.Card.Languages" xml:space="preserve"><value>Языки</value></data>
+  <data name="Actor.Card.Challenge" xml:space="preserve"><value>Опасность</value></data>
+  <data name="Actor.Card.ChallengeXp" xml:space="preserve"><value>{0} ({1:N0} опыта)</value></data>
+  <data name="Actor.Card.Cost" xml:space="preserve"><value>Стоимость</value></data>
+  <data name="Actor.Card.Weight" xml:space="preserve"><value>Вес</value></data>
+  <data name="Actor.Card.WeightLb" xml:space="preserve"><value>{0} фнт.</value></data>
+  <data name="Actor.Card.Damage" xml:space="preserve"><value>Урон</value></data>
+  <data name="Actor.Card.DamageType" xml:space="preserve"><value>Тип урона</value></data>
+  <data name="Actor.Card.Mastery" xml:space="preserve"><value>Мастерство</value></data>
+  <data name="Actor.Card.Properties" xml:space="preserve"><value>Свойства</value></data>
+  <data name="Actor.Card.ArmorClassFact" xml:space="preserve"><value>Класс брони</value></data>
+  <data name="Actor.Card.Strength" xml:space="preserve"><value>Сила</value></data>
+  <data name="Actor.Card.Stealth" xml:space="preserve"><value>Скрытность</value></data>
+  <data name="Actor.Card.AttunementRequired" xml:space="preserve"><value>Требует настройки</value></data>
+  <data name="Actor.Card.Cantrip" xml:space="preserve"><value>{0}, заговор</value></data>
+  <data name="Actor.Card.SpellLevel" xml:space="preserve"><value>{1}, {0} уровень</value></data>
+  <data name="Actor.Card.SpellDetails" xml:space="preserve"><value>Сведения о заклинании</value></data>
+  <data name="Actor.Card.Classes" xml:space="preserve"><value>Классы</value></data>
+  <data name="Actor.Card.CastingTime" xml:space="preserve"><value>Время накладывания</value></data>
+  <data name="Actor.Card.Range" xml:space="preserve"><value>Дистанция</value></data>
+  <data name="Actor.Card.Components" xml:space="preserve"><value>Компоненты</value></data>
+  <data name="Actor.Card.Duration" xml:space="preserve"><value>Длительность</value></data>
+  <data name="Actor.Card.Concentration" xml:space="preserve"><value>Концентрация</value></data>
+  <data name="Actor.Card.Ritual" xml:space="preserve"><value>Ритуал</value></data>
+  <data name="Actor.Card.DamageTag" xml:space="preserve"><value>Урон: {0}</value></data>
+  <data name="Actor.Art.Label" xml:space="preserve"><value>Иллюстрация</value></data>
+  <data name="Actor.Art.Drop" xml:space="preserve"><value>Перетащите изображение сюда</value></data>
+  <data name="Actor.Art.DropTitle" xml:space="preserve"><value>Перетащите изображение или нажмите, чтобы выбрать</value></data>
+  <data name="Actor.Art.Choose" xml:space="preserve"><value>Выбрать: {0} (PNG, JPEG или WebP, до 6 МБ)</value></data>
+  <data name="Actor.Art.Generate" xml:space="preserve"><value>Создать с помощью ИИ</value></data>
+  <data name="Actor.Art.Remove" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Actor.Art.SetUp" xml:space="preserve"><value>Настроить модель изображений</value></data>
+  <data name="Actor.Art.WideHint" xml:space="preserve"><value>Лучше всего подходят широкие изображения.</value></data>
+  <data name="Actor.Art.TallHint" xml:space="preserve"><value>Лучше всего подходят высокие изображения.</value></data>
+  <data name="Actor.Art.FormatHint" xml:space="preserve"><value>PNG, JPEG или WebP, до 6 МБ.</value></data>
+  <data name="Actor.Art.Uploading" xml:space="preserve"><value>Загрузка…</value></data>
+  <data name="Actor.Art.Drawing" xml:space="preserve"><value>Рисуем… это может занять минуту</value></data>
+  <data name="Actor.Art.UploadFailed" xml:space="preserve"><value>Не удалось загрузить: {0}</value></data>
+  <data name="Actor.Art.NotConfigured" xml:space="preserve"><value>Модель изображений ещё не настроена.</value></data>
+  <data name="Actor.Art.DrawFailed" xml:space="preserve"><value>Модель изображений не смогла нарисовать это: {0}</value></data>
+  <data name="Actor.Form.WrongEditor" xml:space="preserve"><value>Этот тип записи рассчитан на редактор «{0}», который здесь недоступен.</value></data>
+  <data name="Actor.Form.General" xml:space="preserve"><value>Общее</value></data>
+  <data name="Actor.Form.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Actor.Form.None" xml:space="preserve"><value>— нет —</value></data>
+  <data name="Actor.Form.CommaSeparated" xml:space="preserve"><value>Через запятую</value></data>
+  <data name="Actor.Form.ImageUrl" xml:space="preserve"><value>Адрес изображения</value></data>
+  <data name="Actor.Form.NoRows" xml:space="preserve"><value>Нет.</value></data>
+  <data name="Actor.Form.LevelPlaceholder" xml:space="preserve"><value>Ур.</value></data>
+  <data name="Actor.Form.RowLevel" xml:space="preserve"><value>{0} {1}: уровень</value></data>
+  <data name="Actor.Form.RowName" xml:space="preserve"><value>{0} {1}: название</value></data>
+  <data name="Actor.Form.RowDescription" xml:space="preserve"><value>{0} {1}: описание</value></data>
+  <data name="Actor.Form.RowNamePlaceholder" xml:space="preserve"><value>Название: {0}</value></data>
+  <data name="Actor.Form.RowRemove" xml:space="preserve"><value>Удалить: {0} {1}</value></data>
+  <data name="Actor.Form.RowDescribePlaceholder" xml:space="preserve"><value>Что это делает, например: рукопашная атака +5, досягаемость 5 фт. Попадание: 8 (1d10 + 3) колющего урона.</value></data>
+  <data name="Actor.Form.AddRow" xml:space="preserve"><value>Добавить: {0}</value></data>
+  <data name="Actor.Form.NotAllowed" xml:space="preserve"><value>{0} (не разрешено)</value></data>
+  <data name="Actor.Sheet.TitleFallback" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Actor.Sheet.NotFound" xml:space="preserve"><value>Персонаж не найден</value></data>
+  <data name="Actor.Sheet.NotFoundBody" xml:space="preserve"><value>Возможно, его не существует или у вас нет к нему доступа.</value></data>
+  <data name="Actor.Sheet.BackToCampaigns" xml:space="preserve"><value>К кампаниям</value></data>
+  <data name="Actor.Sheet.UploadPortrait" xml:space="preserve"><value>Загрузить портрет</value></data>
+  <data name="Actor.Sheet.UploadPortraitHidden" xml:space="preserve"><value>Загрузить портрет (PNG, JPEG или WebP, до 6 МБ)</value></data>
+  <data name="Actor.Sheet.Breadcrumb" xml:space="preserve"><value>Навигационная цепочка</value></data>
+  <data name="Actor.Sheet.Campaigns" xml:space="preserve"><value>Кампании</value></data>
+  <data name="Actor.Sheet.Cast" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Actor.Sheet.From" xml:space="preserve"><value>Из: {0}</value></data>
+  <data name="Actor.Sheet.PortraitNew" xml:space="preserve"><value>Новый портрет с помощью ИИ</value></data>
+  <data name="Actor.Sheet.PortraitAi" xml:space="preserve"><value>Портрет с помощью ИИ</value></data>
+  <data name="Actor.Sheet.RemovePortrait" xml:space="preserve"><value>Удалить портрет</value></data>
+  <data name="Actor.Sheet.Dirty" xml:space="preserve"><value>{0, plural, one{# несохранённое изменение} few{# несохранённых изменения} many{# несохранённых изменений} other{# несохранённого изменения}}</value></data>
+  <data name="Actor.Sheet.BackToCast" xml:space="preserve"><value>Назад к персонажам</value></data>
+  <data name="Actor.Sheet.SaveChanges" xml:space="preserve"><value>Сохранить изменения</value></data>
+  <data name="Actor.Sheet.KeyNumbers" xml:space="preserve"><value>Ключевые показатели</value></data>
+  <data name="Actor.Sheet.AcShort" xml:space="preserve"><value>КБ</value></data>
+  <data name="Actor.Sheet.Missing" xml:space="preserve"><value>Отсутствует материал: этот персонаж создан из «{0}», которого нет в загруженных наборах. Лист по-прежнему работает.</value></data>
+  <data name="Actor.Sheet.ReadOnlyNote" xml:space="preserve"><value>Редактировать этот лист могут только владелец и мастер.</value></data>
+  <data name="Actor.Sheet.Rules" xml:space="preserve"><value>Правила</value></data>
+  <data name="Actor.Sheet.StrictOverride" xml:space="preserve"><value>Строгий режим (вы можете обойти)</value></data>
+  <data name="Actor.Sheet.StrictFix" xml:space="preserve"><value>Строгий режим: исправьте перед сохранением</value></data>
+  <data name="Actor.Sheet.WarningsOnly" xml:space="preserve"><value>Только предупреждения</value></data>
+  <data name="Actor.Sheet.WorthLook" xml:space="preserve"><value>Стоит обратить внимание</value></data>
+  <data name="Actor.Sheet.NotBlocking" xml:space="preserve"><value>Не мешает сохранению</value></data>
+  <data name="Actor.Sheet.Dice" xml:space="preserve"><value>Кости</value></data>
+  <data name="Actor.Sheet.RollWith" xml:space="preserve"><value>Бросать с</value></data>
+  <data name="Actor.Sheet.RollNormal" xml:space="preserve"><value>Обычный</value></data>
+  <data name="Actor.Sheet.RollAdv" xml:space="preserve"><value>Преимущество</value></data>
+  <data name="Actor.Sheet.RollDis" xml:space="preserve"><value>Помеха</value></data>
+  <data name="Actor.Sheet.TrayHint" xml:space="preserve"><value>Используйте кнопки костей рядом с проверкой, спасброском или атакой.</value></data>
+  <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>Виден всему столу.</value></data>
+  <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>Это видите только вы: сессия не идёт.</value></data>
+  <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>Бросков пока нет.</value></data>
+  <data name="Actor.Sheet.Sections" xml:space="preserve"><value>Разделы листа</value></data>
+  <data name="Actor.Sheet.Attributes" xml:space="preserve"><value>Характеристики</value></data>
+  <data name="Actor.Sheet.Picks" xml:space="preserve"><value>Выборы</value></data>
+  <data name="Actor.Sheet.Inventory" xml:space="preserve"><value>Инвентарь</value></data>
+  <data name="Actor.Sheet.History" xml:space="preserve"><value>История</value></data>
+  <data name="Actor.Sheet.Said" xml:space="preserve"><value>Реплики</value></data>
+  <data name="Actor.Sheet.InNotes" xml:space="preserve"><value>В заметках</value></data>
+  <data name="Actor.Sheet.DmNotes" xml:space="preserve"><value>Заметки мастера</value></data>
+  <data name="Actor.Sheet.Method" xml:space="preserve"><value>Способ</value></data>
+  <data name="Actor.Sheet.MethodPointBuy" xml:space="preserve"><value>Покупка очков</value></data>
+  <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>Стандартный набор</value></data>
+  <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>Вручную</value></data>
+  <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Покупка очков: </value></data>
+  <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> из {0, plural, one{# очка} few{# очков} many{# очков} other{# очка}} потрачено. Значения идут от {1} до {2} до учёта бонусов.</value></data>
+  <data name="Actor.Sheet.StdArrayLead" xml:space="preserve"><value>Стандартный набор: распределите </value></data>
+  <data name="Actor.Sheet.StdArrayTail" xml:space="preserve"><value>, по одному значению на характеристику.</value></data>
+  <data name="Actor.Sheet.TotalOnly" xml:space="preserve"><value>итого {0}</value></data>
+  <data name="Actor.Sheet.Modifier" xml:space="preserve"><value>{0}: модификатор</value></data>
+  <data name="Actor.Sheet.Score" xml:space="preserve"><value>{0}: значение</value></data>
+  <data name="Actor.Sheet.ChooseUnderSheet" xml:space="preserve"><value>Выберите «{0}» в разделе «Лист», чтобы открыть его бонусы.</value></data>
+  <data name="Actor.Sheet.SpreadLead" xml:space="preserve"><value>Распределите как </value></data>
+  <data name="Actor.Sheet.SpreadMid" xml:space="preserve"><value> по: </value></data>
+  <data name="Actor.Sheet.Or" xml:space="preserve"><value> или </value></data>
+  <data name="Actor.Sheet.IncNone" xml:space="preserve"><value>Пока нет. Выборы, повышающие значения (например, «Увеличение характеристик»), появятся здесь, когда вы добавите их в разделе «Выборы».</value></data>
+  <data name="Actor.Sheet.Points" xml:space="preserve"><value>{0, plural, one{# очко} few{# очка} many{# очков} other{# очка}}</value></data>
+  <data name="Actor.Sheet.UpTo" xml:space="preserve"><value>, максимум {0}</value></data>
+  <data name="Actor.Sheet.PlusOneTo" xml:space="preserve"><value>+1 к</value></data>
+  <data name="Actor.Sheet.PointOf" xml:space="preserve"><value> ({0}, очко {1} из {2})</value></data>
+  <data name="Actor.Sheet.Choose" xml:space="preserve"><value>Выбрать…</value></data>
+  <data name="Actor.Sheet.SheetHeading" xml:space="preserve"><value>Лист</value></data>
+  <data name="Actor.Sheet.Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="Actor.Sheet.NoSheet" xml:space="preserve"><value>Характеристики не записаны, а система «{0}» не описывает лист.</value></data>
+  <data name="Actor.Sheet.Classes" xml:space="preserve"><value>Классы</value></data>
+  <data name="Actor.Sheet.LevelInAll" xml:space="preserve"><value>Всего уровень {0}</value></data>
+  <data name="Actor.Sheet.ChooseClassFirst" xml:space="preserve"><value>Сначала выберите класс в разделе «Лист». После этого здесь можно добавить другие классы.</value></data>
+  <data name="Actor.Sheet.FirstClass" xml:space="preserve"><value>первый класс</value></data>
+  <data name="Actor.Sheet.Levels" xml:space="preserve"><value>{0, plural, one{# уровень} few{# уровня} many{# уровней} other{# уровня}}</value></data>
+  <data name="Actor.Sheet.ClassLevelsAria" xml:space="preserve"><value>{0}: уровни</value></data>
+  <data name="Actor.Sheet.Remove" xml:space="preserve"><value>Удалить: {0}</value></data>
+  <data name="Actor.Sheet.Subclass" xml:space="preserve"><value>{0}: подкласс</value></data>
+  <data name="Actor.Sheet.NoneYet" xml:space="preserve"><value>Пока нет</value></data>
+  <data name="Actor.Sheet.AddClass" xml:space="preserve"><value>Добавить класс</value></data>
+  <data name="Actor.Sheet.Add" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Actor.Sheet.NewClassHint" xml:space="preserve"><value>Новый класс забирает один уровень у первого класса. Показаны только классы, требования которых выполняют ваши значения.</value></data>
+  <data name="Actor.Sheet.NewClassHintRaise" xml:space="preserve"><value>Новый класс забирает один уровень у первого класса (сначала повысьте уровень персонажа). Показаны только классы, требования которых выполняют ваши значения.</value></data>
+  <data name="Actor.Sheet.ClassLevelOption" xml:space="preserve"><value>{0} (уровень {1})</value></data>
+  <data name="Actor.Sheet.ClassNewOption" xml:space="preserve"><value>{0} (новый, уровень 1)</value></data>
+  <data name="Actor.Sheet.FromLibrary" xml:space="preserve"><value>Из Библиотеки</value></data>
+  <data name="Actor.Sheet.HistoryVisible" xml:space="preserve"><value>Видно всем, кто видит этого персонажа</value></data>
+  <data name="Actor.Sheet.HistoryPlaceholder" xml:space="preserve"><value>Откуда они родом, чего хотят, кому обязаны…</value></data>
+  <data name="Actor.Sheet.AiInstruction" xml:space="preserve"><value>Указание для ИИ</value></data>
+  <data name="Actor.Sheet.BioInstructionPh" xml:space="preserve"><value>Необязательное указание: «расширь до трёх абзацев», «сделай мрачнее», «добавь соперника»…</value></data>
+  <data name="Actor.Sheet.Writing" xml:space="preserve"><value>Пишем…</value></data>
+  <data name="Actor.Sheet.WriteAi" xml:space="preserve"><value>Написать с помощью ИИ</value></data>
+  <data name="Actor.Sheet.RewriteAi" xml:space="preserve"><value>Переписать с помощью ИИ</value></data>
+  <data name="Actor.Sheet.MentionHint" xml:space="preserve"><value>Упомяните кого-то через @, место через # или предмет через $. ИИ видит лист и этот текст. Сохраните изменения, чтобы оставить результат.</value></data>
+  <data name="Actor.Sheet.NoHistory" xml:space="preserve"><value>История пока не написана.</value></data>
+  <data name="Actor.Sheet.SaidLines" xml:space="preserve"><value>{0, plural, one{# реплика со стола} few{# реплики со стола} many{# реплик со стола} other{# реплики со стола}}</value></data>
+  <data name="Actor.Sheet.Secret" xml:space="preserve"><value>секрет</value></data>
+  <data name="Actor.Sheet.MentionNotes" xml:space="preserve"><value>{1}: {0, plural, one{# заметка} few{# заметки} many{# заметок} other{# заметки}}</value></data>
+  <data name="Actor.Sheet.OnlyYou" xml:space="preserve"><value>Только вы</value></data>
+  <data name="Actor.Sheet.DmNotesPlaceholder" xml:space="preserve"><value>Тайные замыслы, истинная личность, что они на самом деле думают о партии…</value></data>
+  <data name="Actor.Sheet.DmInstructionPh" xml:space="preserve"><value>Необязательное указание: «придумай тайну, связанную с партией»…</value></data>
+  <data name="Actor.Sheet.DraftAi" xml:space="preserve"><value>Набросать с помощью ИИ</value></data>
+  <data name="Actor.Sheet.HpLiveNoteEdit" xml:space="preserve"><value>Изменения за столом обновляют это число; чтобы задать значения напрямую, измените их в разделе «Лист».</value></data>
+  <data name="Actor.Sheet.HpLiveNote" xml:space="preserve"><value>Изменения за столом обновляют это число.</value></data>
+  <data name="Actor.Sheet.SlotsNote" xml:space="preserve"><value>Во время сессии используйте вкладку «Стол»: изменения там сразу видны всем. Изменения здесь вступают в силу после «Сохранить изменения».</value></data>
+  <data name="Actor.Sheet.LevelUp" xml:space="preserve"><value>Повышение уровня</value></data>
+  <data name="Actor.Sheet.LevelUpIntro" xml:space="preserve"><value>Сейчас уровень {0}. Узнайте, что даст уровень {1} и какие выборы подходят персонажу, по записи класса из Библиотеки.</value></data>
+  <data name="Actor.Sheet.ClassGaining" xml:space="preserve"><value>Класс, получающий уровень</value></data>
+  <data name="Actor.Sheet.Thinking" xml:space="preserve"><value>Думаем…</value></data>
+  <data name="Actor.Sheet.SuggestLevel" xml:space="preserve"><value>Предложить уровень {0}</value></data>
+  <data name="Actor.Sheet.SetLevel" xml:space="preserve"><value>Установить уровень {0}</value></data>
+  <data name="Actor.Sheet.Dismiss" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="Actor.Sheet.KeepInNotes" xml:space="preserve"><value>Сохранить в заметках</value></data>
+  <data name="Actor.Sheet.Visibility" xml:space="preserve"><value>Видимость для игроков</value></data>
+  <data name="Actor.Sheet.WhoSees" xml:space="preserve"><value>Кто видит этого персонажа</value></data>
+  <data name="Actor.Sheet.VisHidden" xml:space="preserve"><value>Скрыт (игроки не знают о его существовании)</value></data>
+  <data name="Actor.Sheet.VisUnknown" xml:space="preserve"><value>Замечен, но не опознан</value></data>
+  <data name="Actor.Sheet.VisKnown" xml:space="preserve"><value>Известен</value></data>
+  <data name="Actor.Sheet.ShownAs" xml:space="preserve"><value>Показывается игрокам как</value></data>
+  <data name="Actor.Sheet.PublicNamePh" xml:space="preserve"><value>напр. Незнакомец в капюшоне</value></data>
+  <data name="Actor.Sheet.Kind" xml:space="preserve"><value>Тип</value></data>
+  <data name="Actor.Sheet.KindPc" xml:space="preserve"><value>Персонаж игрока</value></data>
+  <data name="Actor.Sheet.KindNpc" xml:space="preserve"><value>Неигровой персонаж (НПС)</value></data>
+  <data name="Actor.Sheet.KindMonster" xml:space="preserve"><value>Монстр</value></data>
+  <data name="Actor.Sheet.PlayedBy" xml:space="preserve"><value>Играет</value></data>
+  <data name="Actor.Sheet.Nobody" xml:space="preserve"><value>— никто —</value></data>
+  <data name="Actor.Sheet.VisLabelKnown" xml:space="preserve"><value>Известен игрокам</value></data>
+  <data name="Actor.Sheet.VisLabelUnknown" xml:space="preserve"><value>Замечен, не опознан</value></data>
+  <data name="Actor.Sheet.VisLabelHidden" xml:space="preserve"><value>Скрыт от игроков</value></data>
+  <data name="Actor.Sheet.Level" xml:space="preserve"><value>Уровень {0}</value></data>
+  <data name="Actor.Sheet.Feet" xml:space="preserve"><value>{0} фт</value></data>
+  <data name="Actor.Sheet.ConfirmDiscardTitle" xml:space="preserve"><value>Отменить {0, plural, one{# несохранённое изменение} few{# несохранённых изменения} many{# несохранённых изменений} other{# несохранённого изменения}}?</value></data>
+  <data name="Actor.Sheet.ConfirmDiscardBody" xml:space="preserve"><value>Вы изменили этот лист и не сохранили его. Если уйти сейчас, изменения будут потеряны.</value></data>
+  <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>Отменить и уйти</value></data>
+  <data name="Actor.Sheet.KeepEditing" xml:space="preserve"><value>Продолжить редактирование</value></data>
+  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: ячейки восстановлены. Сохраните изменения, чтобы оставить так.</value></data>
+  <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>Не сохранено: сначала нужно исправить {0, plural, one{# нарушение правил} few{# нарушения правил} many{# нарушений правил} other{# нарушения правил}} (см. «Правила» выше). Мастер может смягчить это в настройках.</value></data>
+  <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Сохранено с {0, plural, one{# предупреждением о правилах} few{# предупреждениями о правилах} many{# предупреждениями о правилах} other{# предупреждения о правилах}}.</value></data>
+  <data name="Actor.Sheet.Saved" xml:space="preserve"><value>Сохранено.</value></data>
+  <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>У вас нет прав редактировать этот лист.</value></data>
+  <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>Используйте изображение PNG, JPEG, WebP, GIF или AVIF.</value></data>
+  <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>Это изображение больше 6 МБ. Уменьшите его и попробуйте снова.</value></data>
+  <data name="Actor.Sheet.PortraitUpdated" xml:space="preserve"><value>Портрет обновлён.</value></data>
+  <data name="Actor.Sheet.PortraitRemoved" xml:space="preserve"><value>Портрет удалён.</value></data>
+  <data name="Actor.Sheet.PortraitDrawn" xml:space="preserve"><value>Новый портрет нарисован.</value></data>
+  <data name="Actor.Sheet.NoImageModel" xml:space="preserve"><value>Модель изображений не настроена. Добавьте её в настройках ИИ (справа вверху), в разделе «Изображения».</value></data>
+  <data name="Actor.Sheet.ReplacePortraitTitle" xml:space="preserve"><value>Заменить портрет?</value></data>
+  <data name="Actor.Sheet.ReplacePortraitBody" xml:space="preserve"><value>Модель изображений нарисует новый портрет по листу и истории и заменит текущий. Большинство сервисов изображений берут плату за каждую картинку.</value></data>
+  <data name="Actor.Sheet.DrawNew" xml:space="preserve"><value>Нарисовать новый</value></data>
+  <data name="Actor.Sheet.KeepThis" xml:space="preserve"><value>Оставить этот</value></data>
+  <data name="Actor.Sheet.AiDraftReady" xml:space="preserve"><value>Черновик ИИ в редакторе. Проверьте, затем сохраните изменения.</value></data>
+  <data name="Actor.Sheet.NoAiProvider" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ (справа вверху).</value></data>
+  <data name="Actor.Sheet.AiDraftFailed" xml:space="preserve"><value>Не удалось получить черновик ИИ: {0}</value></data>
+  <data name="Actor.Sheet.AiSuggestFailed" xml:space="preserve"><value>Не удалось получить предложение ИИ: {0}</value></data>
+  <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>Установлен уровень {0}. Обновите очки здоровья и особенности, затем сохраните изменения.</value></data>
+  <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>План на уровень {0}:</value></data>
+  <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Добавлено в поле заметок. Сохраните изменения, чтобы оставить.</value></data>
+</root>

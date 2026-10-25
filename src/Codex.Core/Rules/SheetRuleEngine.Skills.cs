@@ -35,7 +35,7 @@ public sealed partial class SheetRuleEngine
         var picked = RawList(sheet, rules.ProficienciesKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var expertise = RawList(sheet, rules.ExpertiseKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        bool Has(HashSet<string> names, SkillDefinition skill) => names.Contains(skill.Key) || names.Contains(skill.Label);
+        bool Has(HashSet<string> names, SkillDefinition skill) => names.Contains(skill.Key) || names.Contains(skill.Label) || (skill.CanonicalLabel != null && names.Contains(skill.CanonicalLabel));
 
         foreach (var skill in rules.List)
         {
@@ -50,7 +50,7 @@ public sealed partial class SheetRuleEngine
             result.Skills.Add(new SkillScore(skill.Key, skill.Label, skill.Attribute, proficient, expert, modifier + (expert ? bonus * 2 : proficient ? bonus : 0)));
         }
 
-        var known = rules.List.SelectMany(s => new[] { s.Key, s.Label }).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var known = rules.List.SelectMany(s => new[] { s.Key, s.Label, s.CanonicalLabel ?? s.Label }).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var unknown in picked.Concat(expertise).Where(n => !known.Contains(n)).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             result.Warnings.Add(new RuleViolation(rules.ProficienciesKey, $"{rules.Label}: \"{unknown}\" is not a skill this system has."));

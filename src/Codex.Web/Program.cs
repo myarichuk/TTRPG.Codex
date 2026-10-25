@@ -9,10 +9,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Codex.Core.AI;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Localization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddSingleton<Codex.Localization.Localizer>();
 builder.Services.AddCascadingAuthenticationState();
 
 // Authentication: a local cookie scheme plus whichever external providers are configured.
@@ -190,6 +193,20 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Language: the culture cookie (set by /set-culture) wins; then the install-wide default the launcher
+// passes as Codex:DefaultCulture; only without one does the browser's Accept-Language decide.
+var configuredCulture = app.Configuration["Codex:DefaultCulture"];
+var requestCultures = new RequestLocalizationOptions()
+    .SetDefaultCulture(Codex.Localization.SupportedCultures.Normalize(configuredCulture))
+    .AddSupportedCultures(Codex.Localization.SupportedCultures.Tags.ToArray())
+    .AddSupportedUICultures(Codex.Localization.SupportedCultures.Tags.ToArray());
+requestCultures.RequestCultureProviders.Clear();
+requestCultures.RequestCultureProviders.Add(new CookieRequestCultureProvider());
+if (string.IsNullOrWhiteSpace(configuredCulture))
+    requestCultures.RequestCultureProviders.Add(new AcceptLanguageHeaderRequestCultureProvider());
+app.UseRequestLocalization(requestCultures);
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -279,6 +296,23 @@ app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.
     return Results.Redirect("/login");
 });
 
+// Changing language is harmless, so a plain GET (a link in the header and on the sign-in pages) is enough.
+// It sets the cookie, remembers the choice on the signed-in user, then returns to a local page.
+app.MapGet("/set-culture", async (string culture, string? returnUrl, HttpContext ctx, IUserRepository users) =>
+{
+    var tag = Codex.Localization.SupportedCultures.Normalize(culture);
+    Codex.Web.CultureCookie.Write(ctx, tag);
+
+    var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (userId is not null && await users.GetUserByIdAsync(userId) is { } user && user.Culture != tag)
+    {
+        user.Culture = tag;
+        await users.UpdateUserAsync(user);
+    }
+
+    return Results.LocalRedirect(Codex.Web.UrlHelper.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+}).AllowAnonymous();
+
 app.MapGet("/login/external", async (string provider, string? returnUrl, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider) =>
 {
     var registeredSchemes = (await schemeProvider.GetAllSchemesAsync()).Select(s => s.Name);
@@ -340,6 +374,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
             Username = baseUsername,
             Email = email ?? "",
             Roles = new List<string> { "Player" },
+            Culture = Codex.Localization.SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name),
             ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
         };
 
@@ -377,6 +412,8 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     await context.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, newPrincipal);
     await context.SignOutAsync("External");
+    if (user.Culture is not null)
+        Codex.Web.CultureCookie.Write(context, user.Culture);
 
     if (!Codex.Web.UrlHelper.IsLocalUrl(returnUrl))
     {

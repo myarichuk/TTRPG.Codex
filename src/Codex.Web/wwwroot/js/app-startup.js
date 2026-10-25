@@ -256,6 +256,57 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
     }
 })();
 
+// <details class="popover-menu"> menus (header language and phone menu): one open at a time, closed by an
+// outside click or Escape, which then returns focus to the menu's summary.
+(function () {
+    function closeAll(except) {
+        document.querySelectorAll("details.popover-menu[open]").forEach(function (d) { if (d !== except) d.open = false; });
+    }
+    document.addEventListener("click", function (e) {
+        const target = e.target instanceof Element ? e.target : null;
+        const menu = target ? target.closest("details.popover-menu") : null;
+        // Following a link out of a menu (the phone section list) must not leave the menu open on the next page.
+        closeAll(menu && target.closest(".popover-panel a") ? null : menu);
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape") return;
+        const open = document.querySelector("details.popover-menu[open]");
+        if (!open) return;
+        open.open = false;
+        open.querySelector("summary")?.focus();
+    });
+})();
+
+// Phones never show title= tooltips, and some carry rules (a condition's expiry, an initiative roll, death
+// saves). On a screen without hover, tapping something that has a title shows it in a bubble; the next tap,
+// a scroll or Escape hides it. Controls keep their own tap behaviour.
+(function () {
+    if (!window.matchMedia || !window.matchMedia("(hover: none)").matches) return;
+    let tip = null;
+    function hide() { if (tip) { tip.remove(); tip = null; } }
+    document.addEventListener("click", function (e) {
+        const wasOpen = !!tip;
+        hide();
+        const target = e.target instanceof Element ? e.target : null;
+        const el = target ? target.closest("[title]") : null;
+        if (!el || wasOpen || !el.title.trim() || target.closest("button, a, input, select, textarea, label, summary")) return;
+        tip = document.createElement("div");
+        tip.className = "tap-tip";
+        tip.setAttribute("role", "tooltip");
+        tip.dir = "auto";
+        tip.textContent = el.title;
+        document.body.appendChild(tip);
+        const r = el.getBoundingClientRect();
+        const w = tip.offsetWidth, h = tip.offsetHeight;
+        const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+        const top = r.top - h - 8 > 8 ? r.top - h - 8 : r.bottom + 8;
+        tip.style.left = left + "px";
+        tip.style.top = top + "px";
+    });
+    window.addEventListener("scroll", hide, { passive: true, capture: true });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
+})();
+
 // ---- Interop used by components ----
 window.codex = {
     // Theme: persisted per browser; the inline <head> script applies it before first paint.
@@ -307,8 +358,33 @@ window.codex = {
     focus: function (id) {
         const el = document.getElementById(id);
         if (el) el.focus();
+    },
+    // A detail pane that is a full-screen sheet on a phone (.phone-sheet): move focus into it when it opens,
+    // so keyboards and screen readers follow. Beside the list on a wide screen it is left alone.
+    // Opening and closing a Library entry are navigations, and Blazor scrolls to the top after each one;
+    // sheetClosed puts the list back where it was when the entry was opened.
+    focusSheet: function (id) {
+        // Following a link inside an open entry (to another entry) keeps the list position of the first one.
+        if (sheetListScroll === null) sheetListScroll = lastLinkScroll;
+        const el = document.getElementById(id);
+        const sheet = el && el.closest(".phone-sheet");
+        if (!sheet || getComputedStyle(sheet).position !== "fixed") return;
+        sheet.scrollTop = 0;
+        el.focus({ preventScroll: true });
+    },
+    sheetClosed: function () {
+        if (sheetListScroll === null) return;
+        window.scrollTo({ top: sheetListScroll, behavior: "instant" });
+        sheetListScroll = null;
     }
 };
+
+// Where the page was scrolled when a link was last followed (captured before Blazor handles the click).
+let lastLinkScroll = 0;
+let sheetListScroll = null;
+document.addEventListener("click", function (e) {
+    if (e.target instanceof Element && e.target.closest("a[href]")) lastLinkScroll = window.scrollY;
+}, true);
 
 // Kept for backwards compatibility with earlier builds.
 window.codexDownload = window.codex.download;

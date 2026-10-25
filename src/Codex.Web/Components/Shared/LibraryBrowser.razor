@@ -6,6 +6,7 @@
 @inject IContentRegistry Registry
 @inject ISystemCatalog Catalog
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 @* The content browser: type chips, a search box, a result list and a detail pane. Works for a
    campaign (packs the campaign enabled + homebrew) and for the global, read-only Library (/library)
@@ -14,18 +15,18 @@
 <div class="toolbar">
     <div class="search">
         <LucideIcon IconName="search" Size="18" Class="search-icon" />
-        <label for="@searchId" class="visually-hidden">Search @(TypeLabel(selectedType) ?? "content")</label>
-        <input id="@searchId" type="search" class="field-input" placeholder="Search by name, tag or text…"
+        <label for="@searchId" class="visually-hidden">@L["Library.Browser.Search", TypeLabel(selectedType) ?? L["Library.Browser.Content"]]</label>
+        <input id="@searchId" type="search" class="field-input" placeholder="@L["Library.Browser.SearchPlaceholder"]"
                value="@query" @oninput="OnQueryChanged" autocomplete="off" data-testid="library-search" />
     </div>
     @if (ShowResultCount)
     {
-        <span class="small-muted" role="status">@(results.Count > shown ? $"Showing {shown} of {results.Count} results" : $"{results.Count} result{(results.Count == 1 ? "" : "s")}")</span>
+        <span class="small-muted" role="status">@(results.Count > shown ? L["Library.Browser.Showing", shown, results.Count] : L["Library.Browser.Results", results.Count])</span>
     }
 </div>
 
-<div class="chips mb-3" role="group" aria-label="Content type">
-    <button type="button" class="chip" aria-pressed="@((selectedType == null) ? "true" : "false")" @onclick="() => SelectTypeAsync(null)">All</button>
+<div class="chips mb-3" role="group" aria-label="@L["Library.Browser.ContentType"]">
+    <button type="button" class="chip" aria-pressed="@((selectedType == null) ? "true" : "false")" @onclick="() => SelectTypeAsync(null)">@L["Library.Browser.All"]</button>
     @foreach (var type in types)
     {
         <button type="button" class="chip" aria-pressed="@((selectedType == type.Type) ? "true" : "false")" data-testid="library-type-@type.Type" @onclick="() => SelectTypeAsync(type.Type)">
@@ -44,8 +45,8 @@
         {
             <div class="empty">
                 <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
-                <h3>Nothing matches</h3>
-                <p>@(string.IsNullOrWhiteSpace(query) ? "No content of this type is loaded for this system." : "Try a different word, or clear the type filter.")</p>
+                <h3>@L["Library.Browser.NothingMatches"]</h3>
+                <p>@(string.IsNullOrWhiteSpace(query) ? L["Library.Browser.EmptyType"] : L["Library.Browser.TryDifferent"])</p>
             </div>
         }
         else
@@ -66,7 +67,7 @@
                                 <a href="@link" aria-current="@ariaCurrent" data-testid="library-item">@item.Entry.Name</a>
                                 @if (item.IsHomebrew)
                                 {
-                                    <span class="pill pill-accent ms-1">Homebrew</span>
+                                    <span class="pill pill-accent ms-1">@L["Library.Homebrew"]</span>
                                 }
                             </div>
                             <div class="row-sub">@Summary(item)</div>
@@ -78,23 +79,24 @@
             @if (results.Count > shown)
             {
                 <div class="load-more">
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => shown += PageSize" data-testid="library-more">Show @Math.Min(PageSize, results.Count - shown) more</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => shown += PageSize" data-testid="library-more">@L["Library.ShowMore", Math.Min(PageSize, results.Count - shown)]</CodexButton>
                 </div>
             }
         }
     </div>
     @if (selected != null)
     {
-        <div class="col-lg-7 library-detail-col">
-            <div class="panel" data-testid="library-detail">
+        <div class="col-lg-7 library-detail-col phone-sheet">
+            <SheetBar Title="@selected.Entry.Name" CloseHref="@CloseHref" CloseLabel="@L["Library.Browser.CloseDetail"]" />
+            <div class="panel" id="@detailId" tabindex="-1" data-testid="library-detail">
                 <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)" Art="@(DetailArt?.Invoke(selected))">
                     <Actions>
                         @if (DetailActions != null)
                         {
                             @DetailActions(selected)
                         }
-                        <a href="@CloseHref" class="cx-btn cx-etched cx-sm" aria-label="Close detail">
-                            <LucideIcon IconName="x" Size="14" /> Close
+                        <a href="@CloseHref" class="cx-btn cx-etched cx-sm" aria-label="@L["Library.Browser.CloseDetail"]">
+                            <LucideIcon IconName="x" Size="14" /> @L["Common.Close"]
                         </a>
                     </Actions>
                 </EntryDetail>
@@ -110,7 +112,7 @@
         <div class="col-lg-7 d-none d-lg-block library-detail-col">
             <div class="empty empty-quiet" data-testid="library-placeholder">
                 <div class="empty-icon"><LucideIcon IconName="book-open" Size="28" /></div>
-                <p>Choose an entry to read it here.</p>
+                <p>@L["Library.Browser.ChooseEntry"]</p>
             </div>
         </div>
     }
@@ -145,6 +147,9 @@
     private const int PageSize = 150;
     private int shown = PageSize;
     private readonly string searchId = "lib-search-" + Guid.NewGuid().ToString("N")[..6];
+    private readonly string detailId = "lib-detail-" + Guid.NewGuid().ToString("N")[..6];
+    // The entry the detail last moved focus to, so a re-render of the same entry doesn't move it again.
+    private string? focusedKey;
     private List<ContentTypeDefinition> types = new();
     private List<LibraryItem> results = new();
     private LibraryItem? selected;
@@ -179,6 +184,15 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var key = selected == null ? null : $"{selected.Entry.Type}:{selected.Entry.Id}:{selected.IsHomebrew}";
+        if (key == focusedKey) return;
+        var closed = key == null;
+        focusedKey = key;
+        await JS.InvokeVoidAsync(closed ? "codex.sheetClosed" : "codex.focusSheet", detailId);
+    }
+
     private async Task<List<ContentTypeDefinition>> LoadTypesAsync()
     {
         if (Campaign != null && Access != null)
@@ -186,7 +200,7 @@
             return (await Library.TypesAsync(Campaign, Access)).Where(IsVisibleType).ToList();
         }
 
-        var definition = Catalog.GetDefinition(EffectiveSystemId);
+        var definition = Catalog.GetLocalizedDefinition(EffectiveSystemId);
         var declared = definition?.EntityTypes.ToList() ?? new List<ContentTypeDefinition>();
         var known = declared.Select(t => t.Type).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var extra = Registry.GetEntryTypes(EffectiveSystemId).Where(t => !known.Contains(t))
@@ -205,11 +219,11 @@
         {
             if (Campaign != null && Access != null)
             {
-                results = (await Library.SearchAsync(Campaign, Access, query, selectedType, limit: 5000)).ToList();
+                results = (await Library.SearchAsync(Campaign, Access, query, selectedType, limit: 5000, culture: L.Culture.Name)).ToList();
             }
             else
             {
-                results = Registry.Search(EffectiveSystemId, query, selectedType, limit: 5000)
+                results = Registry.Search(EffectiveSystemId, query, selectedType, limit: 5000, culture: L.Culture.Name)
                     .Select(e => new LibraryItem(e, Registry.GetPack(e.PackId), null))
                     .ToList();
             }
@@ -237,11 +251,11 @@
     {
         if (Campaign != null && Access != null)
         {
-            return await Library.GetAsync(Campaign, Access, type, id);
+            return await Library.GetAsync(Campaign, Access, type, id, L.Culture.Name);
         }
 
         var entry = Registry.GetEntry(EffectiveSystemId, type, id);
-        return entry == null ? null : new LibraryItem(entry, Registry.GetPack(entry.PackId), null);
+        return entry == null ? null : new LibraryItem(Registry.Localize(entry, L.Culture.Name), Registry.GetPack(entry.PackId), null);
     }
 
     private async Task OnQueryChanged(ChangeEventArgs e)
@@ -288,10 +302,12 @@
         {
             if (item.Entry.Properties.TryGetValue(key, out var value) && value != null)
             {
-                var text = value is IEnumerable<object> list ? string.Join(", ", list.Select(o => o?.ToString())) : value.ToString();
+                var field = type?.Fields.FirstOrDefault(f => f.Key == key);
+                string? Shown(object? o) => o?.ToString() is { } raw ? field?.Display(raw) ?? raw : null;
+                var text = value is IEnumerable<object> list ? string.Join(", ", list.Select(Shown)) : Shown(value);
                 if (!string.IsNullOrWhiteSpace(text))
                 {
-                    var label = type?.Fields.FirstOrDefault(f => f.Key == key)?.Label ?? CampaignLibrary.Humanize(key);
+                    var label = field?.Label ?? CampaignLibrary.Humanize(key);
                     parts.Add($"{label} {text}");
                 }
             }

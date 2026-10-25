@@ -6,7 +6,7 @@
    breakdown. The numbers come from the rule engine; this only edits the mode and the rolls. *@
 
 <div class="mt-3 pt-3 border-top" data-testid="hp-rules">
-    <label for="@(id)-mode" class="field-label">Maximum hit points</label>
+    <label for="@(id)-mode" class="field-label">@L["Actor.Hp.Max"]</label>
     <select id="@(id)-mode" class="field-select field-sm" disabled="@(!CanEdit)" value="@Mode" @onchange="e => SetModeAsync(e.Value?.ToString())" data-testid="hp-mode">
         @foreach (var mode in Modes)
         {
@@ -17,26 +17,26 @@
     @if (Summary is { Active: true } summary)
     {
         <p class="small mt-2 mb-1" data-testid="hp-max-note">
-            <strong>@summary.Max</strong> from @summary.Levels.Count level@(summary.Levels.Count == 1 ? "" : "s")
-            (hit die + Constitution @Signed(summary.Modifier)@(summary.LevelExtra != 0 ? $" + {summary.LevelExtra} from {summary.ExtraSource}" : "") each, first level takes the full die).
+            <strong>@summary.Max</strong>@L["Actor.Hp.NoteLead", summary.Levels.Count]<bdi>@Signed(summary.Modifier)@(summary.LevelExtra != 0 ? L["Actor.Hp.NoteExtra", summary.LevelExtra, summary.ExtraSource] : "")</bdi>@L["Actor.Hp.NoteTail"]
         </p>
         <details>
-            <summary class="small">How this is worked out</summary>
+            <summary class="small">@L["Actor.Hp.HowSummary"]</summary>
+            <div class="table-scroll">
             <table class="table table-sm small mt-2 mb-0">
-                <caption class="visually-hidden">Hit points gained at each level</caption>
-                <thead><tr><th scope="col">Level</th><th scope="col">Class</th><th scope="col">Die</th><th scope="col">Roll or average</th><th scope="col">Con</th><th scope="col">Gain</th></tr></thead>
+                <caption class="visually-hidden">@L["Actor.Hp.TableCaption"]</caption>
+                <thead><tr><th scope="col">@L["Actor.Hp.ColLevel"]</th><th scope="col">@L["Actor.Hp.ColClass"]</th><th scope="col">@L["Actor.Hp.ColDie"]</th><th scope="col">@L["Actor.Hp.ColRoll"]</th><th scope="col">@L["Actor.Hp.ColCon"]</th><th scope="col">@L["Actor.Hp.ColGain"]</th></tr></thead>
                 <tbody>
                     @foreach (var level in summary.Levels)
                     {
                         <tr>
                             <td>@level.Level</td>
                             <td>@level.ClassName</td>
-                            <td>d@(level.Die)</td>
+                            <td><bdi>d@(level.Die)</bdi></td>
                             <td>
                                 @if (Mode == "rolled" && level.Level > 1 && CanEdit)
                                 {
                                     <input type="number" class="field-input field-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.Die / 2 + 1)"
-                                           aria-label="Hit die roll for level @level.Level" @onchange="e => SetRollAsync(level.Level, e.Value?.ToString())" data-testid="hp-roll-@level.Level" />
+                                           aria-label="@L["Actor.Hp.RollAria", level.Level]" @onchange="e => SetRollAsync(level.Level, e.Value?.ToString())" data-testid="hp-roll-@level.Level" />
                                 }
                                 else
                                 {
@@ -49,15 +49,16 @@
                     }
                 </tbody>
             </table>
+            </div>
         </details>
     }
     else if (Mode != "manual")
     {
-        <p class="small-muted mt-2 mb-0">Choose a class and the maximum is worked out from its hit die.</p>
+        <p class="small-muted mt-2 mb-0">@L["Actor.Hp.ChooseClass"]</p>
     }
     else
     {
-        <p class="small-muted mt-2 mb-0">Typed in by hand under Sheet.</p>
+        <p class="small-muted mt-2 mb-0">@L["Actor.Hp.ManualNote"]</p>
     }
 </div>
 
@@ -75,14 +76,14 @@
     private string Mode => Summary?.Mode ?? (YamlValues.GetString(Sheet, Rules.ModeKey) ?? "manual").ToLowerInvariant();
     private IEnumerable<string> Modes => Rules.Modes.Contains("manual") ? Rules.Modes : Rules.Modes.Append("manual");
 
-    private static string ModeLabel(string mode) => mode switch
+    private string ModeLabel(string mode) => mode switch
     {
-        "average" => "Worked out: average per level",
-        "rolled" => "Worked out: my rolls",
-        _ => "Typed in by hand"
+        "average" => L["Actor.Hp.ModeAverage"],
+        "rolled" => L["Actor.Hp.ModeRolled"],
+        _ => L["Actor.Hp.ModeManual"]
     };
 
-    private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString();
+    private static string Signed(int value) => Bidi.Ltr(value >= 0 ? "+" + value : value.ToString());
 
     private async Task SetModeAsync(string? mode)
     {

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Layout.Brand.Home" xml:space="preserve"><value>TTRPG.Codex home</value></data>
+  <data name="Layout.Nav.Main" xml:space="preserve"><value>Main</value></data>
+  <data name="Layout.Nav.Campaigns" xml:space="preserve"><value>Campaigns</value></data>
+  <data name="Layout.Nav.Library" xml:space="preserve"><value>Library</value></data>
+  <data name="Layout.Nav.About" xml:space="preserve"><value>About &amp; licences</value></data>
+  <data name="Layout.Theme.ToParchment" xml:space="preserve"><value>Switch to parchment theme</value></data>
+  <data name="Layout.Theme.ToDark" xml:space="preserve"><value>Switch to dark theme</value></data>
+  <data name="Layout.Theme.Parchment" xml:space="preserve"><value>Parchment theme</value></data>
+  <data name="Layout.Theme.Dark" xml:space="preserve"><value>Dark theme</value></data>
+  <data name="Layout.User.Fallback" xml:space="preserve"><value>User</value></data>
+  <data name="Layout.User.AiSettings" xml:space="preserve"><value>AI settings</value></data>
+  <data name="Layout.User.AiSettingsLabel" xml:space="preserve"><value>{0}: AI settings</value></data>
+  <data name="Layout.SignOut" xml:space="preserve"><value>Sign out</value></data>
+  <data name="Layout.Menu" xml:space="preserve"><value>Menu</value></data>
+  <data name="Layout.SignIn" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Layout.SkipLink" xml:space="preserve"><value>Skip to main content</value></data>
+  <data name="Layout.Reconnect.Title" xml:space="preserve"><value>Connection lost</value></data>
+  <data name="Layout.Reconnect.First" xml:space="preserve"><value>Reconnecting to the server…</value></data>
+  <data name="Layout.Reconnect.RetryBefore" xml:space="preserve"><value>Connection unstable. Retrying in </value></data>
+  <data name="Layout.Reconnect.RetryAfter" xml:space="preserve"><value> s…</value></data>
+  <data name="Layout.Reconnect.Failed" xml:space="preserve"><value>The connection to the server could not be restored.</value></data>
+  <data name="Layout.Reconnect.Paused" xml:space="preserve"><value>Your session was paused while this tab was in the background.</value></data>
+  <data name="Layout.Reconnect.ResumeFailed" xml:space="preserve"><value>The session could not be resumed. Reload the page to continue.</value></data>
+  <data name="Layout.Reconnect.TryAgain" xml:space="preserve"><value>Try again</value></data>
+  <data name="Layout.Reconnect.Resume" xml:space="preserve"><value>Resume</value></data>
+  <data name="Layout.Reconnect.Reload" xml:space="preserve"><value>Reload page</value></data>
+  <data name="Layout.Confirm.Confirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="Layout.Picker.Count" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="Layout.Picker.Nothing" xml:space="preserve"><value>Nothing picked yet.</value></data>
+  <data name="Layout.Picker.Picked" xml:space="preserve"><value>{0} picked</value></data>
+  <data name="Layout.Picker.Remove" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Limit reached</value></data>
+  <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Nothing is allowed right now. Check your class, level and the rules above.</value></data>
+</root>

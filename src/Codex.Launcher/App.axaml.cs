@@ -5,6 +5,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Codex.Localization;
+using static Codex.Launcher.Strings;
 
 namespace Codex.Launcher;
 
@@ -16,6 +18,9 @@ public partial class App : Application
     private NativeMenuItem? openItem;
     private NativeMenuItem? copyItem;
     private NativeMenuItem? copyLocalItem;
+    private readonly List<(NativeMenuItem Item, string Key)> labelled = new();
+    private readonly List<(NativeMenuItem Item, string Tag)> languageItems = new();
+    private NativeMenuItem? languageMenu;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -26,9 +31,11 @@ public partial class App : Application
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             var dataHome = LauncherPaths.DataHome();
             model = new LauncherViewModel(LauncherPaths.ServerDir(), dataHome);
+            Strings.Use(model.Settings.Language); // before any window exists
             window = new MainWindow(model);
             model.QuitRequested = () => Dispatcher.UIThread.Post(() => Quit(desktop));
             model.Changed += () => Dispatcher.UIThread.Post(UpdateMenu);
+            Strings.Changed += LocalizeMenu;
             BuildTray(desktop);
             desktop.Exit += (_, _) => model.Controller.Dispose();
 
@@ -66,33 +73,44 @@ public partial class App : Application
 
     private void BuildTray(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        toggleItem = new NativeMenuItem("Stop");
+        NativeMenuItem Item(string key, Action onClick)
+        {
+            var item = new NativeMenuItem();
+            item.Click += (_, _) => onClick();
+            labelled.Add((item, key));
+            return item;
+        }
+
+        toggleItem = new NativeMenuItem();
         toggleItem.Click += (_, _) => model!.Toggle();
-        openItem = new NativeMenuItem("Open TTRPG.Codex");
-        openItem.Click += (_, _) => model!.OpenBrowser();
-        copyItem = new NativeMenuItem("Copy link for players");
+        openItem = Item("Launcher.Tray.Open", () => model!.OpenBrowser());
+        copyItem = new NativeMenuItem();
         copyItem.Click += async (_, _) => await window!.CopyAsync(model!.Links.Count > 1 ? model.Links[1].Url : model.Settings.LocalUrl);
-        copyLocalItem = new NativeMenuItem("Copy link for this computer");
+        labelled.Add((copyItem, "Launcher.Tray.CopyPlayers"));
+        copyLocalItem = new NativeMenuItem();
         copyLocalItem.Click += async (_, _) => await window!.CopyAsync(model!.Settings.LocalUrl);
-        var content = new NativeMenuItem("Open my content folder");
-        content.Click += (_, _) => model!.OpenMyContentFolder();
-        var backups = new NativeMenuItem("Open backups folder");
-        backups.Click += (_, _) => model!.OpenBackupsFolder();
-        var show = new NativeMenuItem("Show window");
-        show.Click += (_, _) => ShowWindow();
-        var help = new NativeMenuItem("How do players join?");
-        help.Click += (_, _) => window!.ShowHelp();
-        var check = new NativeMenuItem("Players can't join?");
-        check.Click += (_, _) => window!.ShowCheck();
-        var log = new NativeMenuItem("Open log");
-        log.Click += (_, _) => model!.OpenLog();
-        var data = new NativeMenuItem("Open data folder");
-        data.Click += (_, _) => model!.OpenDataFolder();
-        var quit = new NativeMenuItem("Quit");
-        quit.Click += (_, _) => model!.Quit();
+        labelled.Add((copyLocalItem, "Launcher.Tray.CopyLocal"));
+        var content = Item("Launcher.Tray.ContentFolder", () => model!.OpenMyContentFolder());
+        var backups = Item("Launcher.Tray.BackupsFolder", () => model!.OpenBackupsFolder());
+        var show = Item("Launcher.Tray.Show", ShowWindow);
+        var help = Item("Launcher.Tray.Help", () => window!.ShowHelp());
+        var check = Item("Launcher.Tray.Check", () => window!.ShowCheck());
+        var log = Item("Launcher.Tray.Log", () => model!.OpenLog());
+        var data = Item("Launcher.Tray.Data", () => model!.OpenDataFolder());
+        var quit = Item("Launcher.Quit", () => model!.Quit());
+
+        languageMenu = new NativeMenuItem { Menu = new NativeMenu() };
+        foreach (var (tag, nativeName) in SupportedCultures.All)
+        {
+            var language = new NativeMenuItem(nativeName) { ToggleType = MenuItemToggleType.Radio };
+            var chosen = tag;
+            language.Click += (_, _) => model!.SetLanguage(chosen);
+            languageMenu.Menu!.Items.Add(language);
+            languageItems.Add((language, tag));
+        }
 
         var menu = new NativeMenu();
-        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, help, check, new NativeMenuItemSeparator(), log, data, backups, content, new NativeMenuItemSeparator(), quit })
+        foreach (var item in new NativeMenuItemBase[] { openItem, show, new NativeMenuItemSeparator(), toggleItem, copyItem, copyLocalItem, help, check, new NativeMenuItemSeparator(), log, data, backups, content, new NativeMenuItemSeparator(), languageMenu, quit })
         {
             menu.Items.Add(item);
         }
@@ -106,6 +124,15 @@ public partial class App : Application
         };
         icon.Clicked += (_, _) => ShowWindow();
         TrayIcon.SetIcons(this, new TrayIcons { icon });
+        LocalizeMenu();
+    }
+
+    /// <summary>Relabels the tray menu in place for the current language (the items stay, their headers change).</summary>
+    private void LocalizeMenu()
+    {
+        foreach (var (item, key) in labelled) item.Header = L[key];
+        if (languageMenu != null) languageMenu.Header = L["Launcher.Language"];
+        foreach (var (item, tag) in languageItems) item.IsChecked = tag == Strings.Tag;
         UpdateMenu();
     }
 
@@ -114,7 +141,7 @@ public partial class App : Application
     {
         // CODEX_WELCOME_ANSWER=host|solo answers for an unattended first run (tests, managed installs).
         var scripted = Environment.GetEnvironmentVariable("CODEX_WELCOME_ANSWER");
-        var choice = scripted is WelcomeWindow.Host or WelcomeWindow.Solo ? scripted : await new WelcomeWindow().ShowDialog<string?>(window!);
+        var choice = scripted is WelcomeWindow.Host or WelcomeWindow.Solo ? scripted : await new WelcomeWindow(model).ShowDialog<string?>(window!);
         model!.Controller.Note($"welcome answered: {choice ?? "closed"}");
         model!.MarkWelcomeShown();
         if (choice != WelcomeWindow.Host)
@@ -133,7 +160,7 @@ public partial class App : Application
                 if (model.Links.Skip(1).FirstOrDefault() is { } link)
                 {
                     model.Controller.Note($"showing the QR code for {link.Url}");
-                    window!.ShowQr(link.Label, link.Url);
+                    window!.ShowQr(link.Kind, link.Url);
                 }
             });
         }
@@ -166,14 +193,14 @@ public partial class App : Application
         var stem = Path.ChangeExtension(path, null);
         await Shot(window!, path);
         await Shot(new HelpWindow(), stem + "-help.png");
-        await Shot(new WelcomeWindow(), stem + "-welcome.png");
+        await Shot(new WelcomeWindow(model), stem + "-welcome.png");
         var check = new CheckWindow();
         check.Show(await JoinCheck.RunAsync(new LauncherSettings { AllowLan = true }, ServerState.Running, null, new[] { "192.168.1.20", "10.8.0.4" }, "100.101.1.2", _ => Task.FromResult(true), _ => true));
         await Shot(check, stem + "-check.png");
         var broken = new CheckWindow();
         broken.Show(await JoinCheck.RunAsync(new LauncherSettings(), ServerState.Stopped, null, new[] { "192.168.1.20" }, null, _ => Task.FromResult(false), _ => true));
         await Shot(broken, stem + "-check-problems.png");
-        await Shot(new QrWindow("Players on your network", "http://192.168.1.20:5080"), stem + "-qr.png");
+        await Shot(new QrWindow(LinkKind.Network, "http://192.168.1.20:5080"), stem + "-qr.png");
         model!.Quit();
     }
 
@@ -188,7 +215,7 @@ public partial class App : Application
     private void UpdateMenu()
     {
         if (model == null || toggleItem == null || openItem == null || copyItem == null) return;
-        toggleItem.Header = model.ToggleText == "Stop" ? "Stop server" : "Start server";
+        toggleItem.Header = model.ToggleLabel;
         toggleItem.IsEnabled = !model.Controller.IsBusy;
         openItem.IsEnabled = model.CanOpen;
         copyItem.IsEnabled = model.Links.Count > 1;

@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Campaign.Bestiary.Title.Dm" xml:space="preserve"><value>Бестиарий</value></data>
+  <data name="Campaign.Bestiary.Title.Player" xml:space="preserve"><value>Существа</value></data>
+  <data name="Campaign.Bestiary.Subtitle.Dm" xml:space="preserve"><value>Существа в игре и те, которых вы приберегли на потом. Отберите их из Библиотеки, а когда начнётся бой, добавьте в состав.</value></data>
+  <data name="Campaign.Bestiary.Subtitle.Player" xml:space="preserve"><value>Существа, с которыми встретилась группа.</value></data>
+  <data name="Campaign.Bestiary.NewHomebrew" xml:space="preserve"><value>Новое собственное существо</value></data>
+  <data name="Campaign.Bestiary.Met.Title" xml:space="preserve"><value>Пока никого не встретили</value></data>
+  <data name="Campaign.Bestiary.Met.Body" xml:space="preserve"><value>Существа появятся здесь, когда мастер их раскроет.</value></data>
+  <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>Пока не опознано</value></data>
+  <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>Монстр</value></data>
+  <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>Список ({0})</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Список пуст. Найдите существ в Библиотеке справа и закрепите их для будущих столкновений.</value></data>
+  <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Собственный</value></data>
+  <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>Заметка для: {0}</value></data>
+  <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>Где вы это используете…</value></data>
+  <data name="Campaign.Bestiary.HowMany" xml:space="preserve"><value>Сколько</value></data>
+  <data name="Campaign.Bestiary.AddToCastLabel" xml:space="preserve"><value>Добавить в состав: {1} ×{0}</value></data>
+  <data name="Campaign.Bestiary.ToCast" xml:space="preserve"><value>В состав</value></data>
+  <data name="Campaign.Bestiary.RemoveFromShortlist" xml:space="preserve"><value>Убрать из списка: {0}</value></data>
+  <data name="Campaign.Bestiary.InCast" xml:space="preserve"><value>В составе ({0})</value></data>
+  <data name="Campaign.Bestiary.NoMonsters" xml:space="preserve"><value>Сейчас в составе нет монстров.</value></data>
+  <data name="Campaign.Bestiary.Hidden" xml:space="preserve"><value>Скрыт</value></data>
+  <data name="Campaign.Bestiary.Unidentified" xml:space="preserve"><value>Не опознан</value></data>
+  <data name="Campaign.Bestiary.Find" xml:space="preserve"><value>Поиск существ</value></data>
+  <data name="Campaign.Bestiary.Search" xml:space="preserve"><value>Искать существ</value></data>
+  <data name="Campaign.Bestiary.SearchPlaceholder" xml:space="preserve"><value>гоблин, дракон, CR 3…</value></data>
+  <data name="Campaign.Bestiary.NoMatch" xml:space="preserve"><value>Подходящих существ нет. Здесь также появляются собственные существа, созданные в Библиотеке.</value></data>
+  <data name="Campaign.Bestiary.IsShortlisted" xml:space="preserve"><value>{0} уже в списке</value></data>
+  <data name="Campaign.Bestiary.ShortlistThis" xml:space="preserve"><value>Добавить в список: {0}</value></data>
+  <data name="Campaign.Bestiary.Listed" xml:space="preserve"><value>В списке</value></data>
+  <data name="Campaign.Bestiary.ShortlistBtn" xml:space="preserve"><value>В список</value></data>
+  <data name="Campaign.Bestiary.Shortlisted" xml:space="preserve"><value>В список добавлено: {0}.</value></data>
+  <data name="Campaign.Bestiary.GoneFromLibrary" xml:space="preserve"><value>«{0}» больше нет в Библиотеке (набор отключён или собственный материал удалён).</value></data>
+  <data name="Campaign.Bestiary.CannotCreate" xml:space="preserve"><value>Из этой записи нельзя создать существо.</value></data>
+  <data name="Campaign.Bestiary.AddedToCast" xml:space="preserve"><value>В состав добавлено: {0} × {1}, скрыто от игроков.</value></data>
+  <data name="Campaign.Cast.Title" xml:space="preserve"><value>Состав</value></data>
+  <data name="Campaign.Cast.Subtitle.Dm" xml:space="preserve"><value>Персонажи игроков, НПС и монстры этой кампании.</value></data>
+  <data name="Campaign.Cast.Subtitle.Player" xml:space="preserve"><value>Группа и все, кого она встретила.</value></data>
+  <data name="Campaign.Cast.NewDm" xml:space="preserve"><value>Новый персонаж или НПС</value></data>
+  <data name="Campaign.Cast.NewPlayer" xml:space="preserve"><value>Создать моего персонажа</value></data>
+  <data name="Campaign.Cast.CreateWithAi" xml:space="preserve"><value>Создать с помощью ИИ</value></data>
+  <data name="Campaign.Cast.Bestiary" xml:space="preserve"><value>Бестиарий</value></data>
+  <data name="Campaign.Cast.PlayerCharacters" xml:space="preserve"><value>Персонажи игроков ({0})</value></data>
+  <data name="Campaign.Cast.NoPlayerCharacters" xml:space="preserve"><value>Персонажей игроков пока нет.</value></data>
+  <data name="Campaign.Cast.Others.Dm" xml:space="preserve"><value>НПС и монстры ({0})</value></data>
+  <data name="Campaign.Cast.Others.Player" xml:space="preserve"><value>Встреченные люди и существа ({0})</value></data>
+  <data name="Campaign.Cast.OthersEmpty.Dm" xml:space="preserve"><value>Пока никого. Добавьте сюда НПС или существ из Бестиария.</value></data>
+  <data name="Campaign.Cast.OthersEmpty.Player" xml:space="preserve"><value>Группа пока не встретила никого примечательного.</value></data>
+  <data name="Campaign.Cast.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Campaign.Cast.Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="Campaign.Cast.Kind" xml:space="preserve"><value>Тип</value></data>
+  <data name="Campaign.Cast.Kind.PlayerCharacter" xml:space="preserve"><value>Персонаж игрока</value></data>
+  <data name="Campaign.Cast.Kind.NonPlayerCharacter" xml:space="preserve"><value>Неигровой персонаж</value></data>
+  <data name="Campaign.Cast.Kind.Monster" xml:space="preserve"><value>Монстр</value></data>
+  <data name="Campaign.Cast.PlayedBy" xml:space="preserve"><value>Играет</value></data>
+  <data name="Campaign.Cast.Nobody" xml:space="preserve"><value>— пока никто —</value></data>
+  <data name="Campaign.Cast.SheetHint" xml:space="preserve"><value>Характеристики, класс, вид и остальное заполняются дальше в листе персонажа.</value></data>
+  <data name="Campaign.Cast.Create" xml:space="preserve"><value>Создать</value></data>
+  <data name="Campaign.Cast.Ai.Hint" xml:space="preserve"><value>Опишите персонажа в одной-двух строках. ИИ заполнит лист, используя только классы, виды и предыстории из Библиотеки этой кампании, а также короткую историю, которую вы потом сможете изменить.</value></data>
+  <data name="Campaign.Cast.Ai.Concept" xml:space="preserve"><value>Идея</value></data>
+  <data name="Campaign.Cast.Ai.Placeholder" xml:space="preserve"><value>напр. Бывшая городская стражница, неохотно ставшая жрицей, которую преследует мятеж, не остановленный ею. 3-й уровень.</value></data>
+  <data name="Campaign.Cast.Ai.Generating" xml:space="preserve"><value>Создание…</value></data>
+  <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>Создать персонажа</value></data>
+  <data name="Campaign.Cast.Mine" xml:space="preserve"><value>Мой</value></data>
+  <data name="Campaign.Cast.HiddenFromPlayers" xml:space="preserve"><value>Скрыт от игроков</value></data>
+  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>Личность неизвестна</value></data>
+  <data name="Campaign.Cast.Reveal" xml:space="preserve"><value>Раскрыть</value></data>
+  <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>Раскрыть игрокам: {0}</value></data>
+  <data name="Campaign.Cast.Hide" xml:space="preserve"><value>Скрыть</value></data>
+  <data name="Campaign.Cast.HideLabel" xml:space="preserve"><value>Скрыть от игроков: {0}</value></data>
+  <data name="Campaign.Cast.DeleteLabel" xml:space="preserve"><value>Удалить: {0}</value></data>
+  <data name="Campaign.Cast.EditSheet" xml:space="preserve"><value>Изменить лист</value></data>
+  <data name="Campaign.Cast.RetireLabel" xml:space="preserve"><value>Отправить в отставку: {0}</value></data>
+  <data name="Campaign.Cast.RetireTitle" xml:space="preserve"><value>Отправить этого персонажа в отставку</value></data>
+  <data name="Campaign.Cast.Level" xml:space="preserve"><value>Уровень {0}</value></data>
+  <data name="Campaign.Cast.MissingContent" xml:space="preserve"><value>Нет материала: {0}</value></data>
+  <data name="Campaign.Cast.From" xml:space="preserve"><value>Из: {0}</value></data>
+  <data name="Campaign.Cast.NameNeeded" xml:space="preserve"><value>Дайте им имя.</value></data>
+  <data name="Campaign.Cast.OwnOnly" xml:space="preserve"><value>Вы можете создавать только своего персонажа.</value></data>
+  <data name="Campaign.Cast.NoAi" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ (вверху справа).</value></data>
+  <data name="Campaign.Cast.AiFailed" xml:space="preserve"><value>ИИ не смог создать персонажа: {0}</value></data>
+  <data name="Campaign.Cast.AiReady" xml:space="preserve"><value>{0} готов. Проверьте лист и исправьте всё, в чём ИИ ошибся.</value></data>
+  <data name="Campaign.Cast.NowVisible" xml:space="preserve"><value>{0} теперь виден игрокам.</value></data>
+  <data name="Campaign.Cast.NowHidden" xml:space="preserve"><value>{0} скрыт от игроков.</value></data>
+  <data name="Campaign.Cast.RetireQ" xml:space="preserve"><value>Отправить в отставку: {0}?</value></data>
+  <data name="Campaign.Cast.DeleteQ" xml:space="preserve"><value>Удалить: {0}?</value></data>
+  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>Ваш персонаж и его лист будут удалены из этой кампании. Это нельзя отменить; мастер тоже не сможет их восстановить.</value></data>
+  <data name="Campaign.Cast.DeleteBody" xml:space="preserve"><value>Лист и состояние будут удалены из этой кампании. Это нельзя отменить.</value></data>
+  <data name="Campaign.Cast.Retire" xml:space="preserve"><value>В отставку</value></data>
+  <data name="Campaign.Cast.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Cast.HasRetired" xml:space="preserve"><value>{0} ушёл в отставку.</value></data>
+  <data name="Campaign.Cast.Deleted" xml:space="preserve"><value>Удалено: {0}.</value></data>
+  <data name="Campaign.Cast.RetireOwnOnly" xml:space="preserve"><value>Вы можете отправить в отставку только своего персонажа.</value></data>
+  <data name="Campaign.Journal.Title" xml:space="preserve"><value>Мой журнал</value></data>
+  <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>Ваш личный блокнот для этой кампании. Его можете читать только вы, даже мастер не видит. Одна запись на сессию и всё остальное, что захотите сохранить.</value></data>
+  <data name="Campaign.Journal.NewEntry" xml:space="preserve"><value>Новая запись</value></data>
+  <data name="Campaign.Journal.Empty.Title" xml:space="preserve"><value>Пока ничего не записано</value></data>
+  <data name="Campaign.Journal.Empty.Body" xml:space="preserve"><value>Имена, догадки, кто вам должен денег. Откройте сессию и пишите там или начните свободную запись.</value></data>
+  <data name="Campaign.Journal.WriteFirst" xml:space="preserve"><value>Написать первую запись</value></data>
+  <data name="Campaign.Journal.Untitled" xml:space="preserve"><value>Без названия</value></data>
+  <data name="Campaign.Journal.EditEntry" xml:space="preserve"><value>Изменить запись</value></data>
+  <data name="Campaign.Journal.DeleteEntry" xml:space="preserve"><value>Удалить запись</value></data>
+  <data name="Campaign.Journal.Field.Title" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Journal.Field.Session" xml:space="preserve"><value>Сессия</value></data>
+  <data name="Campaign.Journal.General" xml:space="preserve"><value>— общая —</value></data>
+  <data name="Campaign.Journal.Field.Text" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Journal.MentionHint" xml:space="preserve"><value>Упомяните персонажа через @, место через # или предмет через $.</value></data>
+  <data name="Campaign.Journal.Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="Campaign.Journal.Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>Записи журнала хранятся отдельно для каждого игрока и никогда не показываются мастеру, не попадают в экспорт и в черновики ИИ.</value></data>
+  <data name="Campaign.Journal.Saved" xml:space="preserve"><value>Журнал сохранён.</value></data>
+  <data name="Campaign.Journal.SaveFailed" xml:space="preserve"><value>Не удалось сохранить запись.</value></data>
+  <data name="Campaign.Journal.Delete.Title" xml:space="preserve"><value>Удалить эту запись?</value></data>
+  <data name="Campaign.Journal.Delete.Body" xml:space="preserve"><value>Запись будет удалена из вашего журнала, и вернуть её будет нельзя.</value></data>
+  <data name="Campaign.Journal.Deleted" xml:space="preserve"><value>Запись удалена.</value></data>
+  <data name="Campaign.Library.Title" xml:space="preserve"><value>Библиотека</value></data>
+  <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>Справочные материалы для системы этой кампании и ваш собственный контент: снаряжение, классы, подклассы, черты, заклинания, существа и многое другое.</value></data>
+  <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>Справочные материалы для системы этой кампании, включая собственный контент мастера.</value></data>
+  <data name="Campaign.Library.NewHomebrew" xml:space="preserve"><value>Новый собственный материал</value></data>
+  <data name="Campaign.Library.ImportFromCampaign" xml:space="preserve"><value>Импорт из другой кампании</value></data>
+  <data name="Campaign.Library.ExportLabel" xml:space="preserve"><value>Экспортировать собственный контент этой кампании как набор материалов</value></data>
+  <data name="Campaign.Library.ExportPack" xml:space="preserve"><value>Экспорт набора</value></data>
+  <data name="Campaign.Library.Portrait" xml:space="preserve"><value>Портрет</value></data>
+  <data name="Campaign.Library.Art" xml:space="preserve"><value>Иллюстрация</value></data>
+  <data name="Campaign.Library.ArtFor" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
+  <data name="Campaign.Library.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Library.CloneTitle" xml:space="preserve"><value>Начать собственный вариант с этими полями</value></data>
+  <data name="Campaign.Library.HomebrewCopy" xml:space="preserve"><value>Копия среди собственных материалов</value></data>
+  <data name="Campaign.Library.AddToCast" xml:space="preserve"><value>Добавить в состав</value></data>
+  <data name="Campaign.Library.InNotes" xml:space="preserve"><value>В заметках</value></data>
+  <data name="Campaign.Library.Import.Title" xml:space="preserve"><value>Импорт собственного контента</value></data>
+  <data name="Campaign.Library.Import.NoSource" xml:space="preserve"><value>Вы пока не ведёте другую кампанию по этой системе. Собственный контент можно импортировать из любой кампании, где вы мастер и система игры совпадает.</value></data>
+  <data name="Campaign.Library.Import.FromCampaign" xml:space="preserve"><value>Из кампании</value></data>
+  <data name="Campaign.Library.Import.NoHomebrew" xml:space="preserve"><value>В этой кампании нет собственного контента.</value></data>
+  <data name="Campaign.Library.Import.Selected" xml:space="preserve"><value>Выбрано {0} из {1}</value></data>
+  <data name="Campaign.Library.Import.SelectAll" xml:space="preserve"><value>Выбрать всё</value></data>
+  <data name="Campaign.Library.Import.None" xml:space="preserve"><value>Снять выбор</value></data>
+  <data name="Campaign.Library.Import.Importing" xml:space="preserve"><value>Импорт…</value></data>
+  <data name="Campaign.Library.Import.Button" xml:space="preserve"><value>Импортировать: {0}</value></data>
+  <data name="Campaign.Library.EditingCopy" xml:space="preserve"><value>Вы редактируете копию «{0}» среди собственных материалов. Она остаётся черновиком (скрыта от игроков), пока вы не отметите «Видно игрокам».</value></data>
+  <data name="Campaign.Library.Saved" xml:space="preserve"><value>«{0}» сохранено.</value></data>
+  <data name="Campaign.Library.Deleted" xml:space="preserve"><value>«{0}» удалено.</value></data>
+  <data name="Campaign.Library.ArtSaved" xml:space="preserve"><value>Иллюстрация для «{0}» сохранена.</value></data>
+  <data name="Campaign.Library.ArtOnlyDm" xml:space="preserve"><value>Только мастер может менять иллюстрации Библиотеки.</value></data>
+  <data name="Campaign.Library.ArtRemoved" xml:space="preserve"><value>Иллюстрация для «{0}» удалена.</value></data>
+  <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>Из этой записи нельзя создать существо, или добавлять существ может только мастер.</value></data>
+  <data name="Campaign.Library.AddedToCast" xml:space="preserve"><value>{0} добавлен в состав (скрыто от игроков).</value></data>
+  <data name="Campaign.Library.NothingImported" xml:space="preserve"><value>Ничего не импортировано: все выбранные записи уже есть здесь.</value></data>
+  <data name="Campaign.Library.Imported" xml:space="preserve"><value>{0, plural, one{Импортирована # запись} few{Импортировано # записи} many{Импортировано # записей} other{Импортировано # записи}}. Записи, которые уже были здесь, пропущены.</value></data>
+  <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>Экспортировать пока нечего: собственного контента нет.</value></data>
+  <data name="Campaign.Library.Exported" xml:space="preserve"><value>Экспортировано записей: {0}. Положите архив в папку с материалами, чтобы загрузить его как набор.</value></data>
+  <data name="Campaign.Lore.Title" xml:space="preserve"><value>Предания</value></data>
+  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>Факты о мире и о том, кто их знает. Раскрывайте всей группе или одному персонажу.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>Что знают ваши персонажи. Факты появляются здесь, когда мастер их раскрывает.</value></data>
+  <data name="Campaign.Lore.Search" xml:space="preserve"><value>Поиск по преданиям</value></data>
+  <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>Поиск по преданиям…</value></data>
+  <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>Фильтр по видимости</value></data>
+  <data name="Campaign.Lore.Chip.All" xml:space="preserve"><value>Все</value></data>
+  <data name="Campaign.Lore.Chip.Party" xml:space="preserve"><value>Группа</value></data>
+  <data name="Campaign.Lore.Chip.Revealed" xml:space="preserve"><value>Раскрыто</value></data>
+  <data name="Campaign.Lore.Chip.DmOnly" xml:space="preserve"><value>Только мастер</value></data>
+  <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>Раскрыто мне</value></data>
+  <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>Здесь пока пусто</value></data>
+  <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>Предания не найдены</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Запишите первый факт справа.</value></data>
+  <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>Вам пока ничего не раскрыто.</value></data>
+  <data name="Campaign.Lore.KnownBy" xml:space="preserve"><value>Известно: {0}</value></data>
+  <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>пока никому</value></data>
+  <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>Раскрыть</value></data>
+  <data name="Campaign.Lore.HowWell" xml:space="preserve"><value>Насколько хорошо</value></data>
+  <data name="Campaign.Lore.Level.None" xml:space="preserve"><value>Ничего</value></data>
+  <data name="Campaign.Lore.Level.Rumor" xml:space="preserve"><value>Слух</value></data>
+  <data name="Campaign.Lore.Level.Heard" xml:space="preserve"><value>Слышал</value></data>
+  <data name="Campaign.Lore.Level.Witnessed" xml:space="preserve"><value>Видел</value></data>
+  <data name="Campaign.Lore.Level.Full" xml:space="preserve"><value>Полностью</value></data>
+  <data name="Campaign.Lore.RevealToCharacter" xml:space="preserve"><value>Раскрыть персонажу</value></data>
+  <data name="Campaign.Lore.RevealToParty" xml:space="preserve"><value>Раскрыть группе</value></data>
+  <data name="Campaign.Lore.NewFact" xml:space="preserve"><value>Новый факт</value></data>
+  <data name="Campaign.Lore.Summary" xml:space="preserve"><value>Краткое описание</value></data>
+  <data name="Campaign.Lore.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Campaign.Lore.Details" xml:space="preserve"><value>Подробности</value></data>
+  <data name="Campaign.Lore.WhoCanSee" xml:space="preserve"><value>Кто может это видеть</value></data>
+  <data name="Campaign.Lore.Vis.DmOnly" xml:space="preserve"><value>Только я (мастер)</value></data>
+  <data name="Campaign.Lore.Vis.KnowersOnly" xml:space="preserve"><value>Персонажи, которым я раскрою</value></data>
+  <data name="Campaign.Lore.Vis.Public" xml:space="preserve"><value>Вся группа</value></data>
+  <data name="Campaign.Lore.AddFact" xml:space="preserve"><value>Добавить факт</value></data>
+  <data name="Campaign.Lore.KnownToParty" xml:space="preserve"><value>Известно всей группе.</value></data>
+  <data name="Campaign.Lore.KnownTo" xml:space="preserve"><value>Известно: {0} ({1}).</value></data>
+  <data name="Campaign.Lore.YourCharacter" xml:space="preserve"><value>вашему персонажу</value></data>
+  <data name="Campaign.Lore.TheCharacter" xml:space="preserve"><value>персонажу</value></data>
+  <data name="Campaign.Lore.FactAdded" xml:space="preserve"><value>Факт добавлен.</value></data>
+  <data name="Campaign.Lore.RevealedTo" xml:space="preserve"><value>Раскрыто: {0}.</value></data>
+  <data name="Campaign.Lore.RevealedToParty" xml:space="preserve"><value>Раскрыто всей группе.</value></data>
+  <data name="Campaign.Overview.About" xml:space="preserve"><value>О кампании</value></data>
+  <data name="Campaign.Overview.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Overview.NoDescription" xml:space="preserve"><value>Описания пока нет.</value></data>
+  <data name="Campaign.Overview.Cast.Dm" xml:space="preserve"><value>Состав с первого взгляда</value></data>
+  <data name="Campaign.Overview.Cast.Player" xml:space="preserve"><value>Мои персонажи</value></data>
+  <data name="Campaign.Overview.OpenCast" xml:space="preserve"><value>Открыть состав</value></data>
+  <data name="Campaign.Overview.Cast.EmptyDm" xml:space="preserve"><value>Персонажей, НПС и монстров пока нет.</value></data>
+  <data name="Campaign.Overview.Cast.EmptyPlayer" xml:space="preserve"><value>У вас пока нет персонажа в этой кампании.</value></data>
+  <data name="Campaign.Overview.Cast.AddDm" xml:space="preserve"><value>Добавить в состав</value></data>
+  <data name="Campaign.Overview.Cast.AddPlayer" xml:space="preserve"><value>Создать персонажа</value></data>
+  <data name="Campaign.Overview.Kind.PlayerCharacter" xml:space="preserve"><value>Персонаж игрока</value></data>
+  <data name="Campaign.Overview.Kind.NonPlayerCharacter" xml:space="preserve"><value>Неигровой персонаж</value></data>
+  <data name="Campaign.Overview.Kind.Monster" xml:space="preserve"><value>Монстр</value></data>
+  <data name="Campaign.Overview.Table" xml:space="preserve"><value>Стол</value></data>
+  <data name="Campaign.Overview.Live" xml:space="preserve"><value>Идёт</value></data>
+  <data name="Campaign.Overview.TableRunning" xml:space="preserve"><value>Стол запущен.</value></data>
+  <data name="Campaign.Overview.JoinTable" xml:space="preserve"><value>Присоединиться к столу</value></data>
+  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>Сейчас ни одна сессия не идёт.</value></data>
+  <data name="Campaign.Overview.GoToTable" xml:space="preserve"><value>Перейти к столу</value></data>
+  <data name="Campaign.Overview.WaitAtTable" xml:space="preserve"><value>Ждать за столом</value></data>
+  <data name="Campaign.Overview.LatestSession" xml:space="preserve"><value>Последняя сессия</value></data>
+  <data name="Campaign.Overview.Status.Planned" xml:space="preserve"><value>Запланирована</value></data>
+  <data name="Campaign.Overview.Status.Live" xml:space="preserve"><value>Идёт</value></data>
+  <data name="Campaign.Overview.Status.Completed" xml:space="preserve"><value>Завершена</value></data>
+  <data name="Campaign.Overview.Members" xml:space="preserve"><value>Участники ({0})</value></data>
+  <data name="Campaign.Overview.Role.DM" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Campaign.Overview.Role.Player" xml:space="preserve"><value>Игрок</value></data>
+  <data name="Campaign.Overview.Role.Observer" xml:space="preserve"><value>Наблюдатель</value></data>
+  <data name="Campaign.Overview.InviteLink" xml:space="preserve"><value>Ссылка-приглашение</value></data>
+  <data name="Campaign.Overview.CopyInvite" xml:space="preserve"><value>Скопировать ссылку-приглашение</value></data>
+  <data name="Campaign.Overview.InviteHint" xml:space="preserve"><value>Любой, у кого есть эта ссылка, присоединится как игрок.</value></data>
+  <data name="Campaign.Overview.InviteCopied" xml:space="preserve"><value>Ссылка-приглашение скопирована.</value></data>
+  <data name="Campaign.Overview.CopyFailed" xml:space="preserve"><value>Не удалось скопировать. Выделите ссылку и скопируйте её вручную.</value></data>
+  <data name="Campaign.Sessions.Title" xml:space="preserve"><value>Сессии</value></data>
+  <data name="Campaign.Sessions.Subtitle" xml:space="preserve"><value>В каждой сессии хранятся краткий пересказ, заметки, броски и журнал событий.</value></data>
+  <data name="Campaign.Sessions.Empty.Title" xml:space="preserve"><value>Сессий пока нет</value></data>
+  <data name="Campaign.Sessions.Empty.Dm" xml:space="preserve"><value>Запланируйте сессию здесь или запустите стол, и живая сессия создастся сама.</value></data>
+  <data name="Campaign.Sessions.Empty.Player" xml:space="preserve"><value>Мастер ещё не запланировал сессию.</value></data>
+  <data name="Campaign.Sessions.EventCount" xml:space="preserve"><value>{0, plural, one{# событие} few{# события} many{# событий} other{# события}}</value></data>
+  <data name="Campaign.Sessions.Status.Planned" xml:space="preserve"><value>Запланирована</value></data>
+  <data name="Campaign.Sessions.Status.Live" xml:space="preserve"><value>Идёт</value></data>
+  <data name="Campaign.Sessions.Status.Completed" xml:space="preserve"><value>Завершена</value></data>
+  <data name="Campaign.Sessions.Plan.Title" xml:space="preserve"><value>Запланировать сессию</value></data>
+  <data name="Campaign.Sessions.Plan.TitleLabel" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Sessions.Plan.TitlePlaceholder" xml:space="preserve"><value>напр. В канализацию Грейхарбора</value></data>
+  <data name="Campaign.Sessions.Plan.Date" xml:space="preserve"><value>Дата</value></data>
+  <data name="Campaign.Sessions.Plan.Add" xml:space="preserve"><value>Добавить сессию</value></data>
+  <data name="Campaign.Sessions.Run.GoTo" xml:space="preserve"><value>Перейти к столу</value></data>
+  <data name="Campaign.Sessions.Run.Reopen" xml:space="preserve"><value>Открыть заново за столом</value></data>
+  <data name="Campaign.Sessions.Run.Start" xml:space="preserve"><value>Провести за столом</value></data>
+  <data name="Campaign.Sessions.Planned" xml:space="preserve"><value>Сессия запланирована.</value></data>
+  <data name="Campaign.Settings.Title" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Campaign.Settings.Subtitle.Dm" xml:space="preserve"><value>Сведения о кампании, наборы материалов, участники и резервные копии.</value></data>
+  <data name="Campaign.Settings.Subtitle.Player" xml:space="preserve"><value>Сведения о кампании. Изменять их может только мастер.</value></data>
+  <data name="Campaign.Settings.Details" xml:space="preserve"><value>Сведения</value></data>
+  <data name="Campaign.Settings.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Settings.Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="Campaign.Settings.System" xml:space="preserve"><value>Система</value></data>
+  <data name="Campaign.Settings.GameSystem" xml:space="preserve"><value>Игровая система</value></data>
+  <data name="Campaign.Settings.SystemHint" xml:space="preserve"><value>Смена системы не преобразует существующие листы персонажей.</value></data>
+  <data name="Campaign.Settings.Rules.Label" xml:space="preserve"><value>Домашние правила: проверки листа</value></data>
+  <data name="Campaign.Settings.Rules.Inherit" xml:space="preserve"><value>Использовать настройку системы ({0})</value></data>
+  <data name="Campaign.Settings.Rules.Strict" xml:space="preserve"><value>Строго: игроки не могут сохранить лист, нарушающий правило</value></data>
+  <data name="Campaign.Settings.Rules.Warn" xml:space="preserve"><value>Только предупреждать: показывать проблемы, но разрешать сохранение</value></data>
+  <data name="Campaign.Settings.Rules.Off" xml:space="preserve"><value>Выключено: без проверок</value></data>
+  <data name="Campaign.Settings.Rules.Hint" xml:space="preserve"><value>Покупка очков, списки заклинаний классов, ограничения подклассов и черт берутся из правил системы. Мастер всегда может сохранить лист независимо от проверок.</value></data>
+  <data name="Campaign.Settings.SaveDetails" xml:space="preserve"><value>Сохранить сведения</value></data>
+  <data name="Campaign.Settings.Cover.Title" xml:space="preserve"><value>Обложка</value></data>
+  <data name="Campaign.Settings.Cover.Current" xml:space="preserve"><value>Текущая обложка</value></data>
+  <data name="Campaign.Settings.Cover.None" xml:space="preserve"><value>Обложки пока нет</value></data>
+  <data name="Campaign.Settings.Cover.Hint" xml:space="preserve"><value>Показывается на карточке кампании и за её названием. Лучше всего подходят горизонтальные изображения около 1600 × 900. PNG, JPEG или WebP, до 6 МБ.</value></data>
+  <data name="Campaign.Settings.Cover.Replace" xml:space="preserve"><value>Заменить обложку</value></data>
+  <data name="Campaign.Settings.Cover.Upload" xml:space="preserve"><value>Загрузить обложку</value></data>
+  <data name="Campaign.Settings.Remove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="Campaign.Settings.Packs.Title" xml:space="preserve"><value>Наборы материалов</value></data>
+  <data name="Campaign.Settings.Packs.None" xml:space="preserve"><value>Для этой системы не загружено ни одного набора.</value></data>
+  <data name="Campaign.Settings.Packs.Hint" xml:space="preserve"><value>Снимите отметку с набора, чтобы исключить его из Библиотеки этой кампании. Если ничего не отмечено, используются все наборы.</value></data>
+  <data name="Campaign.Settings.Packs.Save" xml:space="preserve"><value>Сохранить выбор наборов</value></data>
+  <data name="Campaign.Settings.Members" xml:space="preserve"><value>Участники</value></data>
+  <data name="Campaign.Settings.Owner" xml:space="preserve"><value>(владелец)</value></data>
+  <data name="Campaign.Settings.RoleFor" xml:space="preserve"><value>Роль: {0}</value></data>
+  <data name="Campaign.Settings.Role.DM" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Campaign.Settings.Role.Player" xml:space="preserve"><value>Игрок</value></data>
+  <data name="Campaign.Settings.Role.Observer" xml:space="preserve"><value>Наблюдатель</value></data>
+  <data name="Campaign.Settings.RemoveFromCampaign" xml:space="preserve"><value>Убрать из кампании: {0}</value></data>
+  <data name="Campaign.Settings.InviteLink" xml:space="preserve"><value>Ссылка-приглашение</value></data>
+  <data name="Campaign.Settings.CopyInvite" xml:space="preserve"><value>Скопировать ссылку-приглашение</value></data>
+  <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>Новая ссылка</value></data>
+  <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>После создания новой ссылки старая перестанет работать.</value></data>
+  <data name="Campaign.Settings.Backup" xml:space="preserve"><value>Резервная копия</value></data>
+  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>Экспорт скачивает всю кампанию (персонажей, сессии, предания, заметки, собственный контент) одним файлом JSON. Импорт восстанавливает файл, экспортированный отсюда, в том числе после удаления кампании.</value></data>
+  <data name="Campaign.Settings.Export" xml:space="preserve"><value>Экспорт кампании</value></data>
+  <data name="Campaign.Settings.Import" xml:space="preserve"><value>Импорт кампании</value></data>
+  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>Файл — резервная копия другой (например, удалённой) кампании: восстановить её</value></data>
+  <data name="Campaign.Settings.Delete.Title" xml:space="preserve"><value>Удаление кампании</value></data>
+  <data name="Campaign.Settings.Delete.Hint" xml:space="preserve"><value>Удаляет кампанию и всё, что в ней есть. Если хотите что-то сохранить, сначала сделайте экспорт.</value></data>
+  <data name="Campaign.Settings.Delete.Button" xml:space="preserve"><value>Удалить эту кампанию</value></data>
+  <data name="Campaign.Settings.Delete.OwnerOnlyHint" xml:space="preserve"><value>Удалить кампанию может только её владелец.</value></data>
+  <data name="Campaign.Settings.NameRequired" xml:space="preserve"><value>У кампании должно быть название.</value></data>
+  <data name="Campaign.Settings.Saved" xml:space="preserve"><value>Сохранено.</value></data>
+  <data name="Campaign.Settings.PacksSaved" xml:space="preserve"><value>Выбор наборов сохранён.</value></data>
+  <data name="Campaign.Settings.RoleChanged" xml:space="preserve"><value>Роль пользователя {0}: {1}.</value></data>
+  <data name="Campaign.Settings.RemoveQ" xml:space="preserve"><value>Убрать участника {0}?</value></data>
+  <data name="Campaign.Settings.RemoveBody" xml:space="preserve"><value>Он потеряет доступ к этой кампании. Его персонажи останутся в составе.</value></data>
+  <data name="Campaign.Settings.Removed" xml:space="preserve"><value>Участник {0} убран.</value></data>
+  <data name="Campaign.Settings.InviteCopied" xml:space="preserve"><value>Ссылка-приглашение скопирована.</value></data>
+  <data name="Campaign.Settings.CopyFailed" xml:space="preserve"><value>Не удалось скопировать. Выделите ссылку и скопируйте её вручную.</value></data>
+  <data name="Campaign.Settings.NewInviteCreated" xml:space="preserve"><value>Создана новая ссылка-приглашение. Старая больше не работает.</value></data>
+  <data name="Campaign.Settings.BadImageType" xml:space="preserve"><value>Используйте изображение PNG, JPEG, WebP, GIF или AVIF.</value></data>
+  <data name="Campaign.Settings.ImageTooBig" xml:space="preserve"><value>Это изображение больше 6 МБ. Уменьшите его и попробуйте снова.</value></data>
+  <data name="Campaign.Settings.CoverUpdated" xml:space="preserve"><value>Обложка обновлена.</value></data>
+  <data name="Campaign.Settings.UploadFailed" xml:space="preserve"><value>Не удалось загрузить: {0}</value></data>
+  <data name="Campaign.Settings.CoverRemoved" xml:space="preserve"><value>Обложка удалена.</value></data>
+  <data name="Campaign.Settings.ExportFailed" xml:space="preserve"><value>Не удалось выполнить экспорт.</value></data>
+  <data name="Campaign.Settings.ExportDone" xml:space="preserve"><value>Экспорт скачан.</value></data>
+  <data name="Campaign.Settings.NotExport" xml:space="preserve"><value>Этот файл не является экспортом кампании.</value></data>
+  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>Этот файл — резервная копия другой кампании. Отметьте «восстановить её», если вы хотели вернуть именно её.</value></data>
+  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>Импортировано: «{0}».</value></data>
+  <data name="Campaign.Settings.ImportRejected" xml:space="preserve"><value>Импорт отклонён: формат не распознан, или вы не мастер этой кампании.</value></data>
+  <data name="Campaign.Settings.ImportFailed" xml:space="preserve"><value>Не удалось выполнить импорт: {0}</value></data>
+  <data name="Campaign.Settings.DeleteQ" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.Settings.DeleteBody" xml:space="preserve"><value>Это удалит кампанию и всё, что в ней есть. Если хотите что-то сохранить, сначала сделайте резервную копию. Это нельзя отменить.</value></data>
+  <data name="Campaign.Settings.DeleteConfirm" xml:space="preserve"><value>Удалить кампанию</value></data>
+  <data name="Campaign.Wiki.Title" xml:space="preserve"><value>Вики</value></data>
+  <data name="Campaign.Wiki.Breadcrumb" xml:space="preserve"><value>Навигационная цепочка</value></data>
+  <data name="Campaign.Wiki.NewPage" xml:space="preserve"><value>Новая страница</value></data>
+  <data name="Campaign.Wiki.EditPage" xml:space="preserve"><value>Изменение: «{0}»</value></data>
+  <data name="Campaign.Wiki.Field.Title" xml:space="preserve"><value>Заголовок</value></data>
+  <data name="Campaign.Wiki.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Campaign.Wiki.Field.WhoCanRead" xml:space="preserve"><value>Кто может это читать</value></data>
+  <data name="Campaign.Wiki.Vis.DmOnly" xml:space="preserve"><value>Только я (мастер)</value></data>
+  <data name="Campaign.Wiki.Vis.Party" xml:space="preserve"><value>Вся группа</value></data>
+  <data name="Campaign.Wiki.Field.Tags" xml:space="preserve"><value>Теги</value></data>
+  <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>фракция, город, легенда…</value></data>
+  <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>Напишите страницу. Ссылайтесь на другие страницы так: [[Название страницы]]; ссылка на ещё не существующую страницу превращается в ссылку «создать».</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Ссылка: `[[Название страницы]]` или `[[Название страницы|что показать]]`. Поддерживаются `**жирный**`, `*курсив*`, маркеры «- », «### заголовки» и | таблицы |.</value></data>
+  <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>Сохранить страницу</value></data>
+  <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>Пишу…</value></data>
+  <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>Расширить с помощью ИИ</value></data>
+  <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>Удалить страницу</value></data>
+  <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>Ссылка на страницу</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Нажмите, чтобы добавить ссылку в текст.</value></data>
+  <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>Других страниц пока нет. Напишите `[[Новая страница]]`, и появится ссылка для создания.</value></data>
+  <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>Указание для ИИ</value></data>
+  <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>Указание для ИИ</value></data>
+  <data name="Campaign.Wiki.AiInstructionPlaceholder" xml:space="preserve"><value>Необязательно: «сделай путеводитель, написанный нервным учёным», «уложись в 200 слов»…</value></data>
+  <data name="Campaign.Wiki.AiSees" xml:space="preserve"><value>ИИ видит эту страницу, описание кампании и названия страниц, на которые она ссылается. Больше ничего.</value></data>
+  <data name="Campaign.Wiki.Missing.Title" xml:space="preserve"><value>Страницы «{0}» нет</value></data>
+  <data name="Campaign.Wiki.Missing.Dm" xml:space="preserve"><value>Возможно, её удалили. Вы можете написать её сейчас.</value></data>
+  <data name="Campaign.Wiki.Missing.Player" xml:space="preserve"><value>Возможно, она только для мастера или ещё не написана.</value></data>
+  <data name="Campaign.Wiki.CreateIt" xml:space="preserve"><value>Создать</value></data>
+  <data name="Campaign.Wiki.BackToWiki" xml:space="preserve"><value>Назад к вики</value></data>
+  <data name="Campaign.Wiki.Party" xml:space="preserve"><value>Группа</value></data>
+  <data name="Campaign.Wiki.DmOnly" xml:space="preserve"><value>Только мастер</value></data>
+  <data name="Campaign.Wiki.SharePage" xml:space="preserve"><value>Поделиться с группой</value></data>
+  <data name="Campaign.Wiki.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Wiki.PageEmpty" xml:space="preserve"><value>Эта страница пуста.</value></data>
+  <data name="Campaign.Wiki.NotesOnPage" xml:space="preserve"><value>Заметки к этой странице</value></data>
+  <data name="Campaign.Wiki.NoNotes.Dm" xml:space="preserve"><value>Заметок пока нет. Игроки могут оставлять их здесь.</value></data>
+  <data name="Campaign.Wiki.NoNotes.Player" xml:space="preserve"><value>Заметок пока нет. Оставьте заметку для себя и мастера или для всей группы.</value></data>
+  <data name="Campaign.Wiki.Private" xml:space="preserve"><value>Личная</value></data>
+  <data name="Campaign.Wiki.DeleteNote" xml:space="preserve"><value>Удалить заметку</value></data>
+  <data name="Campaign.Wiki.AddNoteLabel" xml:space="preserve"><value>Добавить заметку</value></data>
+  <data name="Campaign.Wiki.MentionHint" xml:space="preserve"><value>Упомяните персонажа через @, место через # или предмет через $.</value></data>
+  <data name="Campaign.Wiki.NoteVisibility" xml:space="preserve"><value>Видимость заметки</value></data>
+  <data name="Campaign.Wiki.NoteVis.Private" xml:space="preserve"><value>Личная (вы и мастер)</value></data>
+  <data name="Campaign.Wiki.NoteVis.Public" xml:space="preserve"><value>Для группы (все в кампании)</value></data>
+  <data name="Campaign.Wiki.AddNote" xml:space="preserve"><value>Добавить заметку</value></data>
+  <data name="Campaign.Wiki.LinksFrom" xml:space="preserve"><value>Ссылки с этой страницы</value></data>
+  <data name="Campaign.Wiki.None" xml:space="preserve"><value>Пока нет.</value></data>
+  <data name="Campaign.Wiki.LinksHere" xml:space="preserve"><value>Страницы, ссылающиеся сюда</value></data>
+  <data name="Campaign.Wiki.NothingLinksHere" xml:space="preserve"><value>Сюда пока никто не ссылается.</value></data>
+  <data name="Campaign.Wiki.Subtitle.Dm" xml:space="preserve"><value>Ваш мир, страница за страницей. Страницы создаются только для мастера; делитесь ими, когда группа о них узнает.</value></data>
+  <data name="Campaign.Wiki.Subtitle.Player" xml:space="preserve"><value>Что группа знает о мире. Страницы появляются, когда мастер делится ими.</value></data>
+  <data name="Campaign.Wiki.NewPageBtn" xml:space="preserve"><value>Новая страница</value></data>
+  <data name="Campaign.Wiki.Search" xml:space="preserve"><value>Поиск по вики</value></data>
+  <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>Поиск страниц…</value></data>
+  <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>Фильтр по тегу</value></data>
+  <data name="Campaign.Wiki.All" xml:space="preserve"><value>Все</value></data>
+  <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>Страниц пока нет</value></data>
+  <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>Подходящих страниц нет</value></data>
+  <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>Начните с места, фракции или легенды. Связывайте страницы с помощью [[двойных скобок]].</value></data>
+  <data name="Campaign.Wiki.Empty.Player" xml:space="preserve"><value>Мастер пока не поделился ни одной страницей.</value></data>
+  <data name="Campaign.Wiki.LinkCount" xml:space="preserve"><value>{0, plural, one{# ссылка} few{# ссылки} many{# ссылок} other{# ссылки}}</value></data>
+  <data name="Campaign.Wiki.TitleNeeded" xml:space="preserve"><value>У страницы должен быть заголовок.</value></data>
+  <data name="Campaign.Wiki.Saved" xml:space="preserve"><value>«{0}» сохранена.</value></data>
+  <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>Только мастер может изменять вики.</value></data>
+  <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>Страница доступна группе.</value></data>
+  <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>«{0}» удалена.</value></data>
+  <data name="Campaign.Wiki.Delete.Title" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.Wiki.Delete.Body" xml:space="preserve"><value>Страница будет удалена для всех, вернуть её нельзя.</value></data>
+  <data name="Campaign.Wiki.DeleteNote.Title" xml:space="preserve"><value>Удалить заметку?</value></data>
+  <data name="Campaign.Wiki.DeleteNote.Body" xml:space="preserve"><value>Заметка будет удалена для всех, кто мог её читать, вернуть её нельзя.</value></data>
+  <data name="Campaign.Wiki.AiDraftReady" xml:space="preserve"><value>Черновик ИИ в редакторе. Проверьте и сохраните.</value></data>
+  <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ (вверху справа).</value></data>
+  <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>Не удалось создать черновик ИИ: {0}</value></data>
+  <data name="Campaign.Wiki.NoteAdded" xml:space="preserve"><value>Заметка добавлена.</value></data>
+  <data name="Campaign.World.Title" xml:space="preserve"><value>Мир</value></data>
+  <data name="Campaign.World.Subtitle.Dm" xml:space="preserve"><value>Регионы и места в них. Скрытые места остаются только вашими, пока вы их не раскроете.</value></data>
+  <data name="Campaign.World.Subtitle.Player" xml:space="preserve"><value>Места, которые открыла группа.</value></data>
+  <data name="Campaign.World.Empty.Dm.Title" xml:space="preserve"><value>Регионов пока нет</value></data>
+  <data name="Campaign.World.Empty.Player.Title" xml:space="preserve"><value>Пока ничего не открыто</value></data>
+  <data name="Campaign.World.Empty.Dm.Body" xml:space="preserve"><value>Добавьте регион, а затем места в нём.</value></data>
+  <data name="Campaign.World.Empty.Player.Body" xml:space="preserve"><value>Мастер будет раскрывать места по мере того, как группа исследует мир.</value></data>
+  <data name="Campaign.World.NewNameFor" xml:space="preserve"><value>Новое название для: {0}</value></data>
+  <data name="Campaign.World.Rename" xml:space="preserve"><value>Переименовать</value></data>
+  <data name="Campaign.World.RenameLabel" xml:space="preserve"><value>Переименовать: {0}</value></data>
+  <data name="Campaign.World.NoPlaces" xml:space="preserve"><value>Мест здесь пока нет.</value></data>
+  <data name="Campaign.World.Hidden" xml:space="preserve"><value>Скрыто</value></data>
+  <data name="Campaign.World.NoDescription" xml:space="preserve"><value>Описания пока нет.</value></data>
+  <data name="Campaign.World.InNotes" xml:space="preserve"><value>В {0, plural, one{# заметке} few{# заметках} many{# заметках} other{# заметках}}</value></data>
+  <data name="Campaign.World.Reveal" xml:space="preserve"><value>Раскрыть</value></data>
+  <data name="Campaign.World.RevealLabel" xml:space="preserve"><value>Раскрыть игрокам: {0}</value></data>
+  <data name="Campaign.World.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.World.EditLabel" xml:space="preserve"><value>Изменить: {0}</value></data>
+  <data name="Campaign.World.NewPlaceIn" xml:space="preserve"><value>Новое место в: {0}</value></data>
+  <data name="Campaign.World.NewPlacePlaceholder" xml:space="preserve"><value>Новое место…</value></data>
+  <data name="Campaign.World.AddPlace" xml:space="preserve"><value>Добавить место</value></data>
+  <data name="Campaign.World.NewRegion" xml:space="preserve"><value>Новый регион</value></data>
+  <data name="Campaign.World.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.World.Add" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Campaign.World.PackPlaces" xml:space="preserve"><value>Места из наборов</value></data>
+  <data name="Campaign.World.PackPlacesHint" xml:space="preserve"><value>Эти места входят в наборы сеттингов для этой системы. Добавьте место в регион, чтобы использовать его.</value></data>
+  <data name="Campaign.World.AddInto" xml:space="preserve"><value>Добавить в</value></data>
+  <data name="Campaign.World.AddToRegionLabel" xml:space="preserve"><value>Добавить в выбранный регион: {0}</value></data>
+  <data name="Campaign.World.PlaceFallback" xml:space="preserve"><value>Место</value></data>
+  <data name="Campaign.World.PlaceVisible" xml:space="preserve"><value>В регионе {0} · игроки видят это место</value></data>
+  <data name="Campaign.World.PlaceHidden" xml:space="preserve"><value>В регионе {0} · скрыто от игроков, пока вы его не раскроете</value></data>
+  <data name="Campaign.World.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Campaign.World.Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="Campaign.World.DescPlaceholder" xml:space="preserve"><value>Что группа видит, слышит и чувствует по прибытии…</value></data>
+  <data name="Campaign.World.DescHint" xml:space="preserve"><value>Игроки прочитают это, когда место будет раскрыто, поэтому ИИ пишет то, что заметил бы посетитель. Поддерживаются **жирный**, *курсив* и маркеры «- ».</value></data>
+  <data name="Campaign.World.Art" xml:space="preserve"><value>Иллюстрация</value></data>
+  <data name="Campaign.World.ArtFor" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
+  <data name="Campaign.World.SavePlace" xml:space="preserve"><value>Сохранить место</value></data>
+  <data name="Campaign.World.Renamed" xml:space="preserve"><value>«{0}» переименовано в «{1}».</value></data>
+  <data name="Campaign.World.RenameFailed" xml:space="preserve"><value>Не удалось переименовать регион.</value></data>
+  <data name="Campaign.World.RegionAdded" xml:space="preserve"><value>Регион «{0}» добавлен.</value></data>
+  <data name="Campaign.World.PlaceAdded" xml:space="preserve"><value>«{0}» добавлено (скрыто от игроков, пока вы его не раскроете).</value></data>
+  <data name="Campaign.World.PackPlaceAdded" xml:space="preserve"><value>«{0}» добавлено из набора.</value></data>
+  <data name="Campaign.World.NameRequired" xml:space="preserve"><value>Дайте месту название.</value></data>
+  <data name="Campaign.World.PlaceSaved" xml:space="preserve"><value>«{0}» сохранено.</value></data>
+  <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>Только мастер может изменять места.</value></data>
+  <data name="Campaign.World.ArtRemoved" xml:space="preserve"><value>Иллюстрация удалена.</value></data>
+  <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>Иллюстрация сохранена.</value></data>
+  <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>Этого места больше нет, или вы не можете его изменить.</value></data>
+  <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Раскрыто группе.</value></data>
+</root>

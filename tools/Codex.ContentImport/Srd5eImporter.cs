@@ -575,6 +575,8 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
 
     // ---- Spells ----
 
+    private static readonly Regex SpellRangeWithComponents = new(@"^(?<range>.+?)\s+Components?:\s*(?<components>[VSM](?:,\s*[VSM])*)$", RegexOptions.Compiled);
+
     private IEnumerable<ContentEntry> Spells()
     {
         foreach (var spell in All("Spells"))
@@ -588,9 +590,19 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Properties["level"] = (long)level;
             entry.Properties["school"] = school;
             entry.Properties["castingTime"] = spell.Str("casting_time") ?? "";
-            entry.Properties["range"] = spell.Str("range") ?? "";
+            // The source sometimes runs "Touch Component: V, S" together in the range and leaves components empty.
+            var range = spell.Str("range") ?? "";
+            var glued = SpellRangeWithComponents.Match(range);
+            if (glued.Success)
+            {
+                range = glued.Groups["range"].Value;
+                if (components.Count == 0) components = glued.Groups["components"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            entry.Properties["range"] = range;
             entry.Properties["components"] = components.Cast<object>().ToList();
-            if (spell.Str("material") is { } material) entry.Properties["material"] = material;
+            // Some upstream materials keep a stray opening parenthesis ("(gold dust worth 25+ GP, which the spell consumes").
+            var materialText = spell.Str("material")?.TrimStart('(');
+            if (materialText != null) entry.Properties["material"] = materialText;
             entry.Properties["duration"] = spell.Str("duration") ?? "";
             entry.Properties["concentration"] = spell.Bool("concentration") ?? false;
             entry.Properties["ritual"] = spell.Bool("ritual") ?? false;
@@ -604,10 +616,10 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             sb.AppendLine();
             sb.AppendLine($"**Casting Time:** {entry.Properties["castingTime"]}{((spell.Bool("ritual") ?? false) ? " or Ritual" : "")}  ");
             sb.AppendLine($"**Range:** {entry.Properties["range"]}  ");
-            sb.AppendLine($"**Components:** {string.Join(", ", components)}{(spell.Str("material") is { } m ? $" ({m})" : "")}  ");
+            sb.AppendLine($"**Components:** {string.Join(", ", components)}{(materialText is { } m ? $" ({m})" : "")}  ");
             sb.AppendLine($"**Duration:** {((spell.Bool("concentration") ?? false) ? "Concentration, " : "")}{entry.Properties["duration"]}");
             sb.AppendLine();
-            sb.AppendLine(spell.Text("description"));
+            sb.AppendLine(SpellTextFixes.Descriptions.TryGetValue(entry.Id, out var fixedText) ? fixedText : spell.Text("description"));
             if (spell.Text("higher_level") is { } hl)
             {
                 sb.AppendLine();

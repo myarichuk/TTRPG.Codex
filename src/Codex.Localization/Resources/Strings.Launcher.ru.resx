@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Launcher.Language" xml:space="preserve"><value>Язык</value></data>
+  <data name="Launcher.Help.Title" xml:space="preserve"><value>Как присоединяются мои игроки?</value></data>
+  <data name="Launcher.Help.Automation" xml:space="preserve"><value>Справка: как присоединяются мои игроки?</value></data>
+  <data name="Launcher.Status.Starting" xml:space="preserve"><value>Зажигаем свечи… (первый запуск занимает чуть больше времени)</value></data>
+  <data name="Launcher.Status.Running" xml:space="preserve"><value>Стол готов: {0}</value></data>
+  <data name="Launcher.Status.Stopping" xml:space="preserve"><value>Гасим свечи…</value></data>
+  <data name="Launcher.Status.Failed" xml:space="preserve"><value>Сервер не запустился</value></data>
+  <data name="Launcher.Status.Stopped" xml:space="preserve"><value>Сервер остановлен</value></data>
+  <data name="Launcher.StartServer" xml:space="preserve"><value>Запустить сервер</value></data>
+  <data name="Launcher.StopServer" xml:space="preserve"><value>Остановить сервер</value></data>
+  <data name="Launcher.StopWord" xml:space="preserve"><value>Остановить сервер</value></data>
+  <data name="Launcher.OpenTable" xml:space="preserve"><value>Открыть стол</value></data>
+  <data name="Launcher.Quit" xml:space="preserve"><value>Выход</value></data>
+  <data name="Launcher.Done" xml:space="preserve"><value>Готово</value></data>
+  <data name="Launcher.Lan.Toggle" xml:space="preserve"><value>Разрешить игрокам из моей сети подключаться</value></data>
+  <data name="Launcher.Lan.Hint" xml:space="preserve"><value>Брандмауэр может спросить об этом при первом запуске: разрешите частные сети. Игрокам из других сетей понадобится VPN или туннель, например Tailscale.</value></data>
+  <data name="Launcher.OpenLabel" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Launcher.Log" xml:space="preserve"><value>Лог</value></data>
+  <data name="Launcher.CampaignData" xml:space="preserve"><value>Данные кампании</value></data>
+  <data name="Launcher.Backups" xml:space="preserve"><value>Резервные копии</value></data>
+  <data name="Launcher.MyContent" xml:space="preserve"><value>Мой контент</value></data>
+  <data name="Launcher.CantJoin" xml:space="preserve"><value>Не могут войти?</value></data>
+  <data name="Launcher.CopyLink" xml:space="preserve"><value>Копировать ссылку</value></data>
+  <data name="Launcher.Copied" xml:space="preserve"><value>Скопировано ✓</value></data>
+  <data name="Launcher.QrCode" xml:space="preserve"><value>QR-код</value></data>
+  <data name="Launcher.Link.This" xml:space="preserve"><value>Этот компьютер</value></data>
+  <data name="Launcher.Link.Network" xml:space="preserve"><value>Игроки в вашей сети</value></data>
+  <data name="Launcher.Link.Tailscale" xml:space="preserve"><value>Игроки в Tailscale</value></data>
+  <data name="Launcher.Tray.Open" xml:space="preserve"><value>Открыть TTRPG.Codex</value></data>
+  <data name="Launcher.Tray.CopyPlayers" xml:space="preserve"><value>Копировать ссылку для игроков</value></data>
+  <data name="Launcher.Tray.CopyLocal" xml:space="preserve"><value>Копировать ссылку для этого компьютера</value></data>
+  <data name="Launcher.Tray.ContentFolder" xml:space="preserve"><value>Открыть папку с моим контентом</value></data>
+  <data name="Launcher.Tray.BackupsFolder" xml:space="preserve"><value>Открыть папку с резервными копиями</value></data>
+  <data name="Launcher.Tray.Show" xml:space="preserve"><value>Показать окно</value></data>
+  <data name="Launcher.Tray.Help" xml:space="preserve"><value>Как присоединяются игроки?</value></data>
+  <data name="Launcher.Tray.Check" xml:space="preserve"><value>Игроки не могут войти?</value></data>
+  <data name="Launcher.Tray.Log" xml:space="preserve"><value>Открыть лог</value></data>
+  <data name="Launcher.Tray.Data" xml:space="preserve"><value>Открыть папку с данными</value></data>
+  <data name="Launcher.Welcome.Title" xml:space="preserve"><value>Добро пожаловать в TTRPG.Codex</value></data>
+  <data name="Launcher.Welcome.Intro" xml:space="preserve"><value>Персонажи, правила, ваш мир и живой стол — всё работает на этом компьютере. Кто будет играть?</value></data>
+  <data name="Launcher.Welcome.HostTitle" xml:space="preserve"><value>Провести игру для друзей</value></data>
+  <data name="Launcher.Welcome.HostBody" xml:space="preserve"><value>Игроки подключаются с телефонов или ноутбуков по вашему Wi-Fi. Я покажу код для сканирования.</value></data>
+  <data name="Launcher.Welcome.SoloTitle" xml:space="preserve"><value>Пока только я</value></data>
+  <data name="Launcher.Welcome.SoloBody" xml:space="preserve"><value>Открыть его можно только с этого компьютера. Позже вы сможете открыть доступ игрокам.</value></data>
+  <data name="Launcher.Welcome.Footer" xml:space="preserve"><value>Это можно изменить в любой момент в лаунчере. Кнопка ? объясняет, как присоединяются игроки.</value></data>
+  <data name="Launcher.Check.Title" xml:space="preserve"><value>Почему игроки не могут войти?</value></data>
+  <data name="Launcher.Check.Checking" xml:space="preserve"><value>Проверяем…</value></data>
+  <data name="Launcher.Check.Again" xml:space="preserve"><value>Проверить снова</value></data>
+  <data name="Launcher.Check.SummaryProblems" xml:space="preserve"><value>Найдено то, что нужно исправить. Начните с первого красного пункта.</value></data>
+  <data name="Launcher.Check.SummaryWarnings" xml:space="preserve"><value>Ничего не сломано, но проверьте жёлтые пункты.</value></data>
+  <data name="Launcher.Check.SummaryOk" xml:space="preserve"><value>Всё, что я могу проверить, в порядке. Если игрок всё равно не может подключиться, прочитайте последний пункт.</value></data>
+  <data name="Launcher.Qr.Title" xml:space="preserve"><value>Отсканируйте, чтобы присоединиться</value></data>
+  <data name="Launcher.Qr.Instruction" xml:space="preserve"><value>Наведите камеру телефона на код. Стол откроется в браузере.</value></data>
+  <data name="Launcher.Qr.SameWifi" xml:space="preserve"><value>Телефоны должны быть в той же сети Wi-Fi, что и этот компьютер.</value></data>
+  <data name="Launcher.Help.Got" xml:space="preserve"><value>Понятно</value></data>
+  <data name="Launcher.Help.Intro" xml:space="preserve"><value>TTRPG.Codex работает на этом компьютере. Ваши игроки открывают его в браузере: ничего устанавливать не нужно.</value></data>
+  <data name="Launcher.Help.Head.Room" xml:space="preserve"><value>Игра в одной комнате или в одной сети Wi-Fi</value></data>
+  <data name="Launcher.Help.Room1" xml:space="preserve"><value>Нажмите «{0}» в лаунчере.</value></data>
+  <data name="Launcher.Help.Room2" xml:space="preserve"><value>Нажмите «{0}» рядом с «{1}», и пусть игроки отсканируют код камерой телефона. Или нажмите «{2}» и отправьте им ссылку.</value></data>
+  <data name="Launcher.Help.Room3" xml:space="preserve"><value>Они открывают ссылку в браузере на телефоне, планшете или ноутбуке. Устройство должно быть в той же сети Wi-Fi, что и ваше.</value></data>
+  <data name="Launcher.Help.Room4" xml:space="preserve"><value>В своей кампании скопируйте ссылку-приглашение на странице «Обзор» и тоже отправьте её. Игроки создают аккаунт — и они в игре.</value></data>
+  <data name="Launcher.Help.Head.Away" xml:space="preserve"><value>Игроки в другом месте</value></data>
+  <data name="Launcher.Help.AwayIntro" xml:space="preserve"><value>Ваш компьютер не доступен из интернета, поэтому игрокам в другом месте нужна приватная ссылка на него. Проще всего бесплатно сделать это через Tailscale (tailscale.com):</value></data>
+  <data name="Launcher.Help.Away1" xml:space="preserve"><value>Вы и каждый игрок устанавливаете Tailscale и входите в аккаунт (несколько минут, для небольших групп бесплатно).</value></data>
+  <data name="Launcher.Help.Away2" xml:space="preserve"><value>В Tailscale откройте каждому игроку доступ к этому компьютеру.</value></data>
+  <data name="Launcher.Help.Away3" xml:space="preserve"><value>Включите «{0}». Появится ссылка «{1}»: скопируйте её и отправьте игрокам. Они открывают её в браузере при включённом Tailscale.</value></data>
+  <data name="Launcher.Help.Head.Trouble" xml:space="preserve"><value>Если игрок не может подключиться</value></data>
+  <data name="Launcher.Help.Trouble1" xml:space="preserve"><value>Компьютер спросил про сеть или брандмауэр? Разрешите доступ для частных или домашних сетей.</value></data>
+  <data name="Launcher.Help.Trouble2" xml:space="preserve"><value>Гостевой Wi-Fi или Wi-Fi в кафе часто не даёт устройствам видеть друг друга. Используйте обычный Wi-Fi или Tailscale.</value></data>
+  <data name="Launcher.Help.Trouble3" xml:space="preserve"><value>Нажмите «{0}» в лаунчере: он проверит сервер, сеть и адрес и подскажет, что исправить.</value></data>
+  <data name="Launcher.Help.Trouble4" xml:space="preserve"><value>Адрес компьютера может измениться после перезагрузки или при подключении к другой сети. Тогда скопируйте новую ссылку в лаунчере и отправьте её снова.</value></data>
+  <data name="Launcher.Help.Trouble5" xml:space="preserve"><value>Не давайте компьютеру засыпать и держите его подключённым к питанию во время игры. Если он уснёт, игроки отключатся.</value></data>
+  <data name="Launcher.Help.Head.Good" xml:space="preserve"><value>Полезно знать</value></data>
+  <data name="Launcher.Help.Good1" xml:space="preserve"><value>Закрытие этого окна не останавливает игру. Она продолжает работать из значка в трее (в строке меню на Mac). Чтобы остановить её совсем, нажмите «{0}».</value></data>
+  <data name="Launcher.Help.Good2" xml:space="preserve"><value>Ваши кампании сохраняются на этом компьютере ({0}) с ежедневной резервной копией ({1}).</value></data>
+  <data name="Launcher.Help.Good3" xml:space="preserve"><value>Попасть в игру могут только те, у кого есть ваша ссылка, и только пока работает лаунчер.</value></data>
+  <data name="Launcher.Help.Good4" xml:space="preserve"><value>Что-то не так? Откройте «{0}» и отправьте его тому, кто вам помогает.</value></data>
+  <data name="Launcher.Join.Running.Title" xml:space="preserve"><value>Сервер работает</value></data>
+  <data name="Launcher.Join.Running.Detail" xml:space="preserve"><value>Он запущен на этом компьютере по адресу {0}.</value></data>
+  <data name="Launcher.Join.Starting.Title" xml:space="preserve"><value>Сервер ещё запускается</value></data>
+  <data name="Launcher.Join.Starting.Detail" xml:space="preserve"><value>Подождите минуту (первый запуск медленнее) и проверьте снова.</value></data>
+  <data name="Launcher.Join.SeeLog" xml:space="preserve"><value>Подробности смотрите в логе.</value></data>
+  <data name="Launcher.Join.PortBusy.Title" xml:space="preserve"><value>Другая программа использует порт {0}</value></data>
+  <data name="Launcher.Join.PortBusy.Detail" xml:space="preserve"><value>Закройте другую программу (возможно, это другая копия TTRPG.Codex), затем нажмите «{0}».</value></data>
+  <data name="Launcher.Join.Stopped.Title" xml:space="preserve"><value>Сервер остановлен</value></data>
+  <data name="Launcher.Join.Stopped.Detail" xml:space="preserve"><value>Нажмите «{0}».</value></data>
+  <data name="Launcher.Join.LanOn.Title" xml:space="preserve"><value>Доступ из сети включён</value></data>
+  <data name="Launcher.Join.LanOn.Detail" xml:space="preserve"><value>Игроки из вашей сети Wi-Fi могут подключаться.</value></data>
+  <data name="Launcher.Join.LanOff.Title" xml:space="preserve"><value>Доступ из сети выключен</value></data>
+  <data name="Launcher.Join.LanOff.Detail" xml:space="preserve"><value>Стол может открыть только этот компьютер. Включите «{0}».</value></data>
+  <data name="Launcher.Join.NoAddress.Title" xml:space="preserve"><value>У этого компьютера нет сетевого адреса</value></data>
+  <data name="Launcher.Join.NoAddress.Detail" xml:space="preserve"><value>Похоже, он не подключён ни к Wi-Fi, ни к кабелю. Подключитесь к сети и проверьте снова.</value></data>
+  <data name="Launcher.Join.UseLink.Title" xml:space="preserve"><value>Игроки используют эту ссылку</value></data>
+  <data name="Launcher.Join.Odd.Title" xml:space="preserve"><value>Этот адрес не похож на домашнюю сеть</value></data>
+  <data name="Launcher.Join.Odd.Detail" xml:space="preserve"><value>Домашние и офисные сети обычно начинаются с 192.168 или 10. Возможно, включён VPN или вы в общедоступной сети. Игрокам в вашей сети Wi-Fi может понадобиться другой адрес.</value></data>
+  <data name="Launcher.Join.Multi.Title" xml:space="preserve"><value>У этого компьютера несколько адресов</value></data>
+  <data name="Launcher.Join.Multi.Detail" xml:space="preserve"><value>Если первая ссылка не работает, попробуйте одну из этих: {0}.</value></data>
+  <data name="Launcher.Join.Answers.Title" xml:space="preserve"><value>Сервер отвечает по вашему сетевому адресу</value></data>
+  <data name="Launcher.Join.Answers.Detail" xml:space="preserve"><value>Этот компьютер может открыть себя по этой ссылке.</value></data>
+  <data name="Launcher.Join.NoAnswer.Title" xml:space="preserve"><value>Сервер не отвечает по вашему сетевому адресу</value></data>
+  <data name="Launcher.Join.NoAnswer.Detail" xml:space="preserve"><value>Доступ из сети мог быть включён уже после запуска сервера: нажмите «{0}», затем «{1}».</value></data>
+  <data name="Launcher.Join.Tailscale.Title" xml:space="preserve"><value>Tailscale включён</value></data>
+  <data name="Launcher.Join.Tailscale.Detail" xml:space="preserve"><value>Друзья, которых нет в вашей сети Wi-Fi, могут использовать {0}, если у них есть Tailscale и вы открыли им доступ к этому компьютеру.</value></data>
+  <data name="Launcher.Join.Unknown.Title" xml:space="preserve"><value>Что я не могу проверить отсюда</value></data>
+  <data name="Launcher.Join.Unknown.Detail" xml:space="preserve"><value>Ваш брандмауэр и Wi-Fi-роутер. Если всё выше в порядке, а игрок всё равно не может подключиться: разрешите TTRPG.Codex доступ через брандмауэр для частных сетей, когда компьютер спросит; убедитесь, что его телефон в той же сети Wi-Fi (а не в мобильном интернете), и не используйте гостевой Wi-Fi, который часто не даёт устройствам видеть друг друга.</value></data>
+  <data name="Launcher.Server.NotFound" xml:space="preserve"><value>Файл Codex.Web.dll не найден в {0}.</value></data>
+  <data name="Launcher.Server.RuntimeIncomplete" xml:space="preserve"><value>Встроенная среда выполнения .NET неполная.</value></data>
+  <data name="Launcher.Server.StartFailed" xml:space="preserve"><value>Не удалось запустить сервер: {0}</value></data>
+  <data name="Launcher.Server.NoAnswer" xml:space="preserve"><value>Сервер не ответил вовремя. Подробности смотрите в логе.</value></data>
+  <data name="Launcher.Server.Unexpected" xml:space="preserve"><value>Сервер неожиданно остановился. Возможно, порт занят другой программой. Подробности смотрите в логе.</value></data>
+</root>

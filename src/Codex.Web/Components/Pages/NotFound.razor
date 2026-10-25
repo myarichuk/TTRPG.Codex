@@ -2,11 +2,11 @@
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @layout MainLayout
 
-<PageTitle>Page not found | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.NotFound.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="empty">
     <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
-    <h1 class="h4">Page not found</h1>
-    <p>There is nothing at this address. It may have been moved or deleted.</p>
-    <a href="/" class="cx-btn cx-plaque">Back to campaigns</a>
+    <h1 class="h4">@L["Page.NotFound.Title"]</h1>
+    <p>@L["Page.NotFound.Text"]</p>
+    <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
 </div>

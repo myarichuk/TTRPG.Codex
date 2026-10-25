@@ -75,6 +75,31 @@ public class FieldDefinition
 
     /// <summary>Upper bound for <see cref="FieldType.Number"/>.</summary>
     public double? Max { get; set; }
+
+    /// <summary>Set on a localized copy of a system: dropdown/tag value -> text to show. Values themselves never change,
+    /// because the rules compare them; use <see cref="Display"/> wherever one is shown.</summary>
+    public Dictionary<string, string>? OptionLabels { get; set; }
+
+    /// <summary>The text to show for a stored dropdown/tag value; the value itself when it has no translation.</summary>
+    public string Display(string value)
+    {
+        if (OptionLabels == null) return value;
+        if (OptionLabels.TryGetValue(value, out var shown)) return shown;
+        // Pack data and the system's own values differ in case ("lawful evil" vs "Lawful Evil").
+        foreach (var (key, label) in OptionLabels)
+        {
+            if (string.Equals(key, value, StringComparison.OrdinalIgnoreCase)) return label;
+        }
+
+        // A price such as "25 gp": the amount stays, the coin is shown by the translation of "gp".
+        var price = Price.Match(value);
+        if (price.Success && OptionLabels.TryGetValue(price.Groups[2].Value, out var coin)) return $"{price.Groups[1].Value} {coin}";
+
+        return value;
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex Price =
+        new(@"^([\d,]+) (cp|sp|ep|gp|pp)$", System.Text.RegularExpressions.RegexOptions.Compiled);
 }
 
 public record GraphEdgeSchema(

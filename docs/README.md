@@ -15,9 +15,11 @@ The Codex is designed to be **invisible but omnipresent**. It provides the DM wi
    - Screen-by-screen breakdown and design principles.
 4. [**Content packs & systems**](CONTENT_PACKS.md)
    - The data format: `system.yaml`, `manifest.yaml`, entries, homebrew, the SRD importer.
-5. [**Audit of 2026-10-18**](AUDIT_2026-10-18.md)
+5. [**Localization**](LOCALIZATION.md)
+   - English, Russian and Hebrew (RTL): UI resources, system label overlays, translation packs, the glossary.
+6. [**Audit of 2026-10-18**](AUDIT_2026-10-18.md)
    - Findings (incomplete features, UI/accessibility, licensing) and what was changed in response.
-6. [**Review & Remediation Plan (2026-09-25)**](REVIEW_AND_REMEDIATION_PLAN.md)
+7. [**Review & Remediation Plan (2026-09-25)**](REVIEW_AND_REMEDIATION_PLAN.md)
    - The earlier review; phases 0-4 landed, the rest is superseded by the audit above.
 
 ## Getting Started for Developers

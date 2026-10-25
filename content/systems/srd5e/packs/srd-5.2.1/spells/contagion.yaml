@@ -7,9 +7,9 @@ description: >-
 
   **Casting Time:** Action  
 
-  **Range:** Touch Component: V, S  
+  **Range:** Touch  
 
-  **Components:**   
+  **Components:** V, S  
 
   **Duration:** 7 days
 
@@ -28,8 +28,10 @@ properties:
   level: 5
   school: Necromancy
   castingTime: Action
-  range: 'Touch Component: V, S'
-  components: []
+  range: Touch
+  components:
+  - V
+  - S
   duration: 7 days
   concentration: false
   ritual: false

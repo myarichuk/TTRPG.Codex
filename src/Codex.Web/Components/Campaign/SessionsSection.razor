@@ -6,8 +6,8 @@
 
 <div class="page-header mb-3">
     <div>
-        <h2 class="mb-0">Sessions</h2>
-        <p class="page-subtitle">Each session keeps its recap, notes, rolls and event log.</p>
+        <h2 class="mb-0">@L["Campaign.Sessions.Title"]</h2>
+        <p class="page-subtitle">@L["Campaign.Sessions.Subtitle"]</p>
     </div>
 </div>
 
@@ -21,8 +21,8 @@
         {
             <div class="empty">
                 <div class="empty-icon"><LucideIcon IconName="calendar" Size="28" /></div>
-                <h3>No sessions yet</h3>
-                <p>@(Ctx.IsDm ? "Plan one here, or start the table and a live session is created for you." : "The DM has not planned a session yet.")</p>
+                <h3>@L["Campaign.Sessions.Empty.Title"]</h3>
+                <p>@(Ctx.IsDm ? L["Campaign.Sessions.Empty.Dm"] : L["Campaign.Sessions.Empty.Player"])</p>
             </div>
         }
         else
@@ -33,9 +33,9 @@
                     <li class="list-row">
                         <div class="row-main">
                             <div class="row-title"><a href="@Ctx.BasePath/sessions/@session.Id">@(string.IsNullOrWhiteSpace(session.Title) ? Clock.Format(session.Date, "d MMM yyyy") : session.Title)</a></div>
-                            <div class="row-sub"><LocalTime Value="session.Date" Format="dddd d MMM yyyy" /> · @session.Events.Count event@(session.Events.Count == 1 ? "" : "s")</div>
+                            <div class="row-sub"><LocalTime Value="session.Date" Format="dddd d MMM yyyy" /> · @L["Campaign.Sessions.EventCount", session.Events.Count]</div>
                         </div>
-                        <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@session.Status</span>
+                        <span class="pill @(session.Status == SessionStatus.Live ? "pill-success" : "")">@StatusLabel(session.Status)</span>
                         @if (Ctx.IsDm)
                         {
                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="ms-2" data-testid="run-session" OnClick="() => RunAtTableAsync(session)">@RunLabel(session)</CodexButton>
@@ -49,17 +49,17 @@
     {
         <div class="col-lg-4">
             <section class="panel" aria-labelledby="plan-heading">
-                <div class="panel-title"><h3 id="plan-heading">Plan a session</h3></div>
+                <div class="panel-title"><h3 id="plan-heading">@L["Campaign.Sessions.Plan.Title"]</h3></div>
                 <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
                     <div class="mb-2">
-                        <label for="session-title" class="field-label">Title</label>
-                        <input id="session-title" class="field-input" @bind="newTitle" placeholder="e.g. Into the Greyharbour sewers" data-testid="new-session-title" />
+                        <label for="session-title" class="field-label">@L["Campaign.Sessions.Plan.TitleLabel"]</label>
+                        <input id="session-title" class="field-input" @bind="newTitle" placeholder="@L["Campaign.Sessions.Plan.TitlePlaceholder"]" data-testid="new-session-title" />
                     </div>
                     <div class="mb-3">
-                        <label for="session-date" class="field-label">Date</label>
+                        <label for="session-date" class="field-label">@L["Campaign.Sessions.Plan.Date"]</label>
                         <input id="session-date" type="date" class="field-input" @bind="newDate" />
                     </div>
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100" data-testid="new-session-add">Add session</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100" data-testid="new-session-add">@L["Campaign.Sessions.Plan.Add"]</CodexButton>
                 </form>
             </section>
         </div>
@@ -79,8 +79,15 @@
         sessions = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).ToList();
 
     private string RunLabel(SessionDocument session) =>
-        RuntimeManager.TryGet(Ctx.Campaign.Id)?.ActiveSession?.Id == session.Id ? "Go to the table"
-        : session.Status == SessionStatus.Completed ? "Reopen at the table" : "Run at the table";
+        RuntimeManager.TryGet(Ctx.Campaign.Id)?.ActiveSession?.Id == session.Id ? L["Campaign.Sessions.Run.GoTo"]
+        : session.Status == SessionStatus.Completed ? L["Campaign.Sessions.Run.Reopen"] : L["Campaign.Sessions.Run.Start"];
+
+    private string StatusLabel(SessionStatus status) => status switch
+    {
+        SessionStatus.Live => L["Campaign.Sessions.Status.Live"],
+        SessionStatus.Completed => L["Campaign.Sessions.Status.Completed"],
+        _ => L["Campaign.Sessions.Status.Planned"]
+    };
 
     /// <summary>Starts the table on this session (a planned one begins, a completed one reopens) and goes there.</summary>
     private async Task RunAtTableAsync(SessionDocument session)
@@ -92,7 +99,7 @@
         }
         catch (InvalidOperationException ex)
         {
-            Ctx.Notify(Flash.Error(ex.Message));
+            Ctx.Notify(Flash.Error(L.Describe(ex)));
         }
     }
 
@@ -108,7 +115,7 @@
         };
         await SessionRepo.SaveAsync(session);
         newTitle = string.Empty;
-        Ctx.Notify(Flash.Success("Session planned."));
+        Ctx.Notify(Flash.Success(L["Campaign.Sessions.Planned"]));
         await LoadAsync();
     }
 }

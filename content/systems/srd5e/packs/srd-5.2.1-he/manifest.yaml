@@ -1,0 +1,23 @@
+id: srd-5.2.1-he
+name: 'System Reference Document 5.2.1 (עברית)'
+version: 1.0.0
+systemId: srd5e
+minAppVersion: 0.0.0
+priority: 3
+kind: translation
+locale: he
+translationOf: srd-5.2.1
+dependencies:
+- srd-5.2.1
+description: 'Machine-drafted Hebrew translation of the SRD 5.2.1 rules text and names of the spells, creatures, magic items, equipment, classes, subclasses, species, backgrounds, feats, conditions and the rule entries (skills, abilities, alignments, damage types, languages, weapon properties and masteries); the creature stat blocks, magic items and equipment included. Terminology follows docs/i18n-he-terms.md; numbers, dice and units are kept as in the English.'
+authors:
+- Wizards of the Coast LLC (original rules text)
+- TTRPG.Codex contributors (machine-drafted translation, checked by tools/Codex.TranslationCheck, edited by a language model; not reviewed by a native speaker)
+license:
+  name: CC-BY-4.0
+  url: https://creativecommons.org/licenses/by/4.0/legalcode
+  attribution: This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
+  sourceUrl: https://www.dndbeyond.com/srd
+  modified: true
+  notices:
+  - 'Modified from the original: translated into Hebrew by machine and edited by a language model. The Hebrew terms follow the community Hebrew SRD (5esrd.co.il) only as a vocabulary reference; none of its text is used. The English text remains the authoritative rules text.'

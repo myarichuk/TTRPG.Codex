@@ -52,6 +52,16 @@ public class PackManifest
     /// "homebrew" for table-made material. Purely informational; used for grouping in the UI.</summary>
     public string Kind { get; set; } = "rules";
 
+    /// <summary>Language tag ("ru", "he") of a pack that translates another pack. Empty for ordinary packs;
+    /// for homebrew and world packs it may also just say which language the material is written in.</summary>
+    public string? Locale { get; set; }
+
+    /// <summary>Id of the pack this one translates. A translation pack carries only display text (names,
+    /// descriptions, lore) keyed by the original entry ids, and never replaces the entries it translates.</summary>
+    public string? TranslationOf { get; set; }
+
+    public bool IsTranslation => !string.IsNullOrWhiteSpace(Locale) && !string.IsNullOrWhiteSpace(TranslationOf);
+
     public bool IsAppVersionCompatible(string currentAppVersion)
     {
         if (string.IsNullOrWhiteSpace(currentAppVersion)) currentAppVersion = "1.0.0";

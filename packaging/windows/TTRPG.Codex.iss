@@ -34,6 +34,24 @@ SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName=TTRPG.Codex
 
+[Languages]
+; The installer follows the language the user picks (or Windows') for its own pages; the app and launcher
+; then ask for their language on first run.
+Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "hebrew"; MessagesFile: "compiler:Languages\Hebrew.isl"
+
+[CustomMessages]
+english.ServerWindow=TTRPG.Codex (server window)
+english.Uninstall=Uninstall TTRPG.Codex
+english.StartNow=Start TTRPG.Codex now
+russian.ServerWindow=TTRPG.Codex (окно сервера)
+russian.Uninstall=Удалить TTRPG.Codex
+russian.StartNow=Запустить TTRPG.Codex
+hebrew.ServerWindow=TTRPG.Codex (חלון שרת)
+hebrew.Uninstall=הסרת TTRPG.Codex
+hebrew.StartNow=הפעלת TTRPG.Codex עכשיו
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
@@ -49,12 +67,12 @@ Type: filesandordirs; Name: "{app}\launcher"
 [Icons]
 ; The tray launcher starts and stops the server; TTRPG.Codex.cmd is the plain server window.
 Name: "{group}\TTRPG.Codex"; Filename: "{app}\launcher\ttrpg-codex-tray.exe"; WorkingDir: "{app}"
-Name: "{group}\TTRPG.Codex (server window)"; Filename: "{app}\TTRPG.Codex.cmd"; WorkingDir: "{app}"
-Name: "{group}\Uninstall TTRPG.Codex"; Filename: "{uninstallexe}"
+Name: "{group}\{cm:ServerWindow}"; Filename: "{app}\TTRPG.Codex.cmd"; WorkingDir: "{app}"
+Name: "{group}\{cm:Uninstall}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\TTRPG.Codex"; Filename: "{app}\launcher\ttrpg-codex-tray.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\launcher\ttrpg-codex-tray.exe"; Description: "Start TTRPG.Codex now"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\launcher\ttrpg-codex-tray.exe"; Description: "{cm:StartNow}"; Flags: postinstall nowait skipifsilent
 
 [UninstallRun]
 ; Stop the tray launcher (and with it the server) so its files can be removed.

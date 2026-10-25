@@ -168,6 +168,9 @@ public class UserDocument
     public List<AiProviderConfig> ImageProviders { get; set; } = new();
 
     public string? DefaultImageProviderId { get; set; }
+
+    /// <summary>The language this user picked for the interface (en, ru, he). Null follows the server default.</summary>
+    public string? Culture { get; set; }
 }
 
 /// <summary>One OpenAI-compatible chat endpoint a user has set up: OpenRouter, OpenAI, a local
@@ -277,7 +280,36 @@ public class SessionEvent
     /// they may not know (a monster's exact damage). Null means the description is safe as it stands.</summary>
     public string? PlayerDescription { get; set; }
 
+    /// <summary>The same account as <see cref="Description"/>, as messages to show in the reader's language. Empty for
+    /// events logged before messages existed; those show <see cref="Description"/>.</summary>
+    public List<EventMessage> Parts { get; set; } = new();
+
+    /// <summary>The messages behind <see cref="PlayerDescription"/>.</summary>
+    public List<EventMessage>? PlayerParts { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+    /// <summary>The event written for <paramref name="l"/>'s language, game terms named by <paramref name="terms"/>; the stored
+    /// English for an older event.</summary>
+    public string Text(Codex.Localization.Localizer l, EventTermText? terms = null) =>
+        Parts.Count == 0 ? Description : string.Join(" ", Parts.Select(p => p.Render(l, terms)));
+
+    /// <summary>An event built from messages. <see cref="Description"/> stays filled, in English, for logs, the AI digest
+    /// and anything that has no reader language.</summary>
+    public static SessionEvent From(string type, IEnumerable<EventMessage> parts, IEnumerable<string>? actorIds = null, IEnumerable<EventMessage>? playerParts = null)
+    {
+        var en = Codex.Localization.Localizer.For("en");
+        var evt = new SessionEvent { Type = type, Parts = parts.ToList() };
+        evt.Description = evt.Text(en);
+        if (actorIds != null) evt.ActorIds.AddRange(actorIds);
+        if (playerParts != null)
+        {
+            evt.PlayerParts = playerParts.ToList();
+            evt.PlayerDescription = string.Join(" ", evt.PlayerParts.Select(p => p.Render(en)));
+        }
+
+        return evt;
+    }
 }
 
 /// <summary>One resolved dice roll (3.6), logged regardless of secrecy so the DM always has the

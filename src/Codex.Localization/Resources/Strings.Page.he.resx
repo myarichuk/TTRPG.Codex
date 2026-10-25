@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page.Common.BackToCampaigns" xml:space="preserve"><value>חזרה לקמפיינים</value></data>
+  <data name="Page.Common.Breadcrumb" xml:space="preserve"><value>נתיב ניווט</value></data>
+  <data name="Page.Role.DM" xml:space="preserve"><value>שליט המבוך</value></data>
+  <data name="Page.Role.Player" xml:space="preserve"><value>שחקן</value></data>
+  <data name="Page.Role.Observer" xml:space="preserve"><value>צופה</value></data>
+  <data name="Page.Home.Title" xml:space="preserve"><value>קמפיינים</value></data>
+  <data name="Page.Home.Subtitle" xml:space="preserve"><value>כל הקמפיינים שאתם מנהלים או משחקים בהם. שחקנים מצטרפים באמצעות קישור הזמנה משליט המבוך.</value></data>
+  <data name="Page.Home.New" xml:space="preserve"><value>קמפיין חדש</value></data>
+  <data name="Page.Home.EmptyTitle" xml:space="preserve"><value>אין קמפיינים עדיין</value></data>
+  <data name="Page.Home.EmptyText" xml:space="preserve"><value>צרו קמפיין כדי לנהל שולחן משחק, או בקשו משליט המבוך קישור הזמנה כדי להצטרף לקמפיין שלו.</value></data>
+  <data name="Page.Home.CreateFirst" xml:space="preserve"><value>יצירת הקמפיין הראשון שלכם</value></data>
+  <data name="Page.Home.NoDescription" xml:space="preserve"><value>אין תיאור עדיין.</value></data>
+  <data name="Page.Home.Members" xml:space="preserve"><value>{0, plural, one{חבר אחד} two{# חברים} other{# חברים}}</value></data>
+  <data name="Page.Home.Updated" xml:space="preserve"><value>עודכן</value></data>
+  <data name="Page.Home.DeleteLabel" xml:space="preserve"><value>מחיקת {0}</value></data>
+  <data name="Page.Home.DeleteCampaign" xml:space="preserve"><value>מחיקת הקמפיין</value></data>
+  <data name="Page.Home.Open" xml:space="preserve"><value>פתיחה</value></data>
+  <data name="Page.Home.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Page.Home.Required" xml:space="preserve"><value>(חובה)</value></data>
+  <data name="Page.Home.System" xml:space="preserve"><value>מערכת משחק</value></data>
+  <data name="Page.Home.Description" xml:space="preserve"><value>תיאור</value></data>
+  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>שורה או שתיים על הקמפיין (לא חובה)</value></data>
+  <data name="Page.Home.Creating" xml:space="preserve"><value>יוצרים…</value></data>
+  <data name="Page.Home.Create" xml:space="preserve"><value>יצירת קמפיין</value></data>
+  <data name="Page.Home.NameRequired" xml:space="preserve"><value>תנו שם לקמפיין.</value></data>
+  <data name="Page.Home.NoSystem" xml:space="preserve"><value>לא נטענה מערכת משחק. הוסיפו קובץ system.yaml בתיקיית התוכן והפעילו מחדש.</value></data>
+  <data name="Page.Home.DeleteTitle" xml:space="preserve"><value>למחוק את “{0}”?</value></data>
+  <data name="Page.Home.DeleteBody" xml:space="preserve"><value>הפעולה תסיר את הקמפיין ואת כל מה שבתוכו: דמויות, מפגשים, אגדות עולם, הערות ותוכן ביתי. ייצאו גיבוי קודם אם תרצו לשמור משהו. אי אפשר לבטל את הפעולה.</value></data>
+  <data name="Page.Home.Deleted" xml:space="preserve"><value>“{0}” נמחק.</value></data>
+  <data name="Page.Home.Forbidden" xml:space="preserve"><value>רק הבעלים של הקמפיין יכול למחוק אותו.</value></data>
+  <data name="Page.Home.Gone" xml:space="preserve"><value>הקמפיין הזה כבר לא קיים.</value></data>
+  <data name="Page.Join.Title" xml:space="preserve"><value>הצטרפות לקמפיין</value></data>
+  <data name="Page.Join.Joining" xml:space="preserve"><value>מצטרפים…</value></data>
+  <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>קישור ההזמנה אינו תקין</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>ייתכן שנפלה טעות בהקלדה או שהקמפיין נמחק. בקשו משליט המבוך קישור חדש.</value></data>
+  <data name="Page.Join.InTitle" xml:space="preserve"><value>הצטרפתם!</value></data>
+  <data name="Page.Join.InText" xml:space="preserve"><value>כעת אתם שחקנים בקמפיין הזה.</value></data>
+  <data name="Page.Join.Go" xml:space="preserve"><value>מעבר לקמפיין</value></data>
+  <data name="Page.Library.Title" xml:space="preserve"><value>ספרייה</value></data>
+  <data name="Page.Library.Subtitle" xml:space="preserve"><value>עיינו בתוכן העזר של כל מערכת שנטענה. בתוך קמפיין, הספרייה כוללת גם את התוכן הביתי של אותו שולחן.</value></data>
+  <data name="Page.Library.System" xml:space="preserve"><value>מערכת</value></data>
+  <data name="Page.Library.NoneTitle" xml:space="preserve"><value>לא נטענו מערכות משחק</value></data>
+  <data name="Page.Library.NoneBefore" xml:space="preserve"><value>הוסיפו </value></data>
+  <data name="Page.Library.NoneAfter" xml:space="preserve"><value> בתיקיית תוכן והפעילו מחדש את האפליקציה.</value></data>
+  <data name="Page.Error.Title" xml:space="preserve"><value>משהו השתבש</value></data>
+  <data name="Page.Error.Text" xml:space="preserve"><value>לא ניתן היה להשלים את הבקשה. בדרך כלל טעינה מחדש של הדף פותרת את זה; אם זה ממשיך לקרות, הפרטים ביומן השרת.</value></data>
+  <data name="Page.Error.RequestId" xml:space="preserve"><value>מזהה בקשה </value></data>
+  <data name="Page.NotFound.Title" xml:space="preserve"><value>הדף לא נמצא</value></data>
+  <data name="Page.NotFound.Text" xml:space="preserve"><value>אין שום דבר בכתובת הזו. ייתכן שהדף הועבר או נמחק.</value></data>
+  <data name="Page.Loading.Text" xml:space="preserve"><value>טוענים מערכות משחק וחבילות תוכן…</value></data>
+  <data name="Page.Auth.Username" xml:space="preserve"><value>שם משתמש</value></data>
+  <data name="Page.Auth.Password" xml:space="preserve"><value>סיסמה</value></data>
+  <data name="Page.Auth.SignIn" xml:space="preserve"><value>התחברות</value></data>
+  <data name="Page.Login.Heading" xml:space="preserve"><value>התחברות ל-TTRPG.Codex</value></data>
+  <data name="Page.Login.Divider" xml:space="preserve"><value>או המשיכו עם</value></data>
+  <data name="Page.Login.Continue" xml:space="preserve"><value>המשך עם {0}</value></data>
+  <data name="Page.Login.NoMethod" xml:space="preserve"><value>לא הוגדרה שיטת התחברות. פנו למי שמפעיל את השרת הזה.</value></data>
+  <data name="Page.Login.NewHere" xml:space="preserve"><value>חדשים כאן? </value></data>
+  <data name="Page.Login.CreateAccount" xml:space="preserve"><value>יצירת חשבון</value></data>
+  <data name="Page.Login.Stale" xml:space="preserve"><value>יש לשלוח את טופס ההתחברות מדף שנטען זה עתה. טענו מחדש ונסו שוב.</value></data>
+  <data name="Page.Login.Invalid" xml:space="preserve"><value>שם המשתמש או הסיסמה שגויים.</value></data>
+  <data name="Page.Register.Title" xml:space="preserve"><value>יצירת חשבון</value></data>
+  <data name="Page.Register.Heading" xml:space="preserve"><value>יצירת החשבון שלכם</value></data>
+  <data name="Page.Register.PasswordHelp" xml:space="preserve"><value>לפחות 8 תווים, כולל אות גדולה, אות קטנה וספרה.</value></data>
+  <data name="Page.Register.Confirm" xml:space="preserve"><value>אימות סיסמה</value></data>
+  <data name="Page.Register.HaveAccount" xml:space="preserve"><value>כבר יש לכם חשבון? </value></data>
+  <data name="Page.Register.Stale" xml:space="preserve"><value>יש לשלוח את הטופס מדף שנטען זה עתה. טענו מחדש ונסו שוב.</value></data>
+  <data name="Page.Register.Mismatch" xml:space="preserve"><value>שתי הסיסמאות אינן תואמות.</value></data>
+  <data name="Page.Register.Required" xml:space="preserve"><value>נדרשים שם משתמש וסיסמה.</value></data>
+  <data name="Page.Register.TooShort" xml:space="preserve"><value>הסיסמה חייבת להכיל לפחות 8 תווים.</value></data>
+  <data name="Page.Register.Weak" xml:space="preserve"><value>הסיסמה חייבת לכלול אות גדולה, אות קטנה וספרה.</value></data>
+  <data name="Page.Register.Taken" xml:space="preserve"><value>שם המשתמש הזה כבר תפוס.</value></data>
+  <data name="Page.About.Title" xml:space="preserve"><value>אודות ורישיונות</value></data>
+  <data name="Page.About.Heading" xml:space="preserve"><value>אודות TTRPG.Codex</value></data>
+  <data name="Page.About.Subtitle" xml:space="preserve"><value>מלווה לקמפיינים ולדמויות במשחקי תפקידים שולחניים, שמופעל על השרת שלכם. מערכות משחק ותוכן הם נתונים שאפשר לקרוא, לערוך ולשתף.</value></data>
+  <data name="Page.About.Systems" xml:space="preserve"><value>מערכות משחק</value></data>
+  <data name="Page.About.NoSystemsBefore" xml:space="preserve"><value>לא נטענו מערכות משחק. הוסיפו </value></data>
+  <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> באחת מתיקיות התוכן והפעילו מחדש.</value></data>
+  <data name="Page.About.DataDriven" xml:space="preserve"><value>מבוסס נתונים</value></data>
+  <data name="Page.About.Compiled" xml:space="preserve"><value>תוסף מקומפל</value></data>
+  <data name="Page.About.Licence" xml:space="preserve"><value>רישיון:</value></data>
+  <data name="Page.About.Modified" xml:space="preserve"><value>שונה מהמקור</value></data>
+  <data name="Page.About.Source" xml:space="preserve"><value>מקור:</value></data>
+  <data name="Page.About.Packs" xml:space="preserve"><value>חבילות תוכן</value></data>
+  <data name="Page.About.By" xml:space="preserve"><value>מאת {0}</value></data>
+  <data name="Page.About.Warnings" xml:space="preserve"><value>אזהרות תוכן</value></data>
+  <data name="Page.About.WarningsIntro" xml:space="preserve"><value>בעיות שנמצאו בטעינת מערכות וחבילות. תקנו את הקובץ והפעילו מחדש.</value></data>
+  <data name="Page.About.Software" xml:space="preserve"><value>תוכנה</value></data>
+  <data name="Page.Campaign.Fallback" xml:space="preserve"><value>קמפיין</value></data>
+  <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>הקמפיין לא נמצא</value></data>
+  <data name="Page.Campaign.NotFoundText" xml:space="preserve"><value>ייתכן שהוא נמחק או שהקישור שגוי.</value></data>
+  <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>אינכם חברים בקמפיין הזה</value></data>
+  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>בקשו משליט המבוך קישור הזמנה.</value></data>
+  <data name="Page.Campaign.Sections" xml:space="preserve"><value>מדורי הקמפיין</value></data>
+  <data name="Page.Campaign.More" xml:space="preserve"><value>עוד</value></data>
+  <data name="Page.Campaign.Live" xml:space="preserve"><value>פעיל</value></data>
+  <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>השולחן פעיל</value></data>
+  <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>משחק</value></data>
+  <data name="Page.Campaign.Group.World" xml:space="preserve"><value>עולם</value></data>
+  <data name="Page.Campaign.Group.Reference" xml:space="preserve"><value>עזר</value></data>
+  <data name="Page.Campaign.Section.Overview" xml:space="preserve"><value>סקירה</value></data>
+  <data name="Page.Campaign.Section.Table" xml:space="preserve"><value>שולחן</value></data>
+  <data name="Page.Campaign.Section.Sessions" xml:space="preserve"><value>מפגשים</value></data>
+  <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>היומן שלי</value></data>
+  <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>ספר המפלצות</value></data>
+  <data name="Page.Campaign.Section.Creatures" xml:space="preserve"><value>יצורים</value></data>
+  <data name="Page.Campaign.Section.Places" xml:space="preserve"><value>מקומות</value></data>
+  <data name="Page.Campaign.Section.Wiki" xml:space="preserve"><value>ויקי</value></data>
+  <data name="Page.Campaign.Section.Lore" xml:space="preserve"><value>אגדות עולם</value></data>
+  <data name="Page.Campaign.Section.Library" xml:space="preserve"><value>ספרייה</value></data>
+  <data name="Page.Campaign.Section.Settings" xml:space="preserve"><value>הגדרות</value></data>
+  <data name="Page.AiSettings.Title" xml:space="preserve"><value>הגדרות בינה מלאכותית</value></data>
+  <data name="Page.AiSettings.Sub1" xml:space="preserve"><value>שני סוגי מודלים, שמוגדרים בנפרד: </value></data>
+  <data name="Page.AiSettings.SubTextModel" xml:space="preserve"><value>מודל טקסט</value></data>
+  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> שמאחורי כל כפתור “Write with AI” ו-“Enhance with AI”, ו</value></data>
+  <data name="Page.AiSettings.SubImageModel" xml:space="preserve"><value>מודל תמונות</value></data>
+  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> שמאחורי “Generate with AI” באיורים. הביאו מפתחות משלכם. שום דבר לא נשלח למודל עד שתלחצו על אחד הכפתורים האלה.</value></data>
+  <data name="Page.AiSettings.ServerHeading" xml:space="preserve"><value>ברירת מחדל של השרת</value></data>
+  <data name="Page.AiSettings.ServerText" xml:space="preserve"><value>כשאין לכם מודל משלכם, נעשה שימוש בהגדרות השרת. המודלים שלכם תמיד מקבלים עדיפות.</value></data>
+  <data name="Page.AiSettings.ServerTextBefore" xml:space="preserve"><value>טקסט (קטע </value></data>
+  <data name="Page.AiSettings.ServerTextAfter" xml:space="preserve"><value>):</value></data>
+  <data name="Page.AiSettings.ServerImageBefore" xml:space="preserve"><value>תמונות (קטע </value></data>
+  <data name="Page.AiSettings.ServerImageAfter" xml:space="preserve"><value>):</value></data>
+  <data name="Page.AiSettings.WhatHeading" xml:space="preserve"><value>מה הבינה המלאכותית יכולה לעשות</value></data>
+  <data name="Page.AiSettings.FeatRecapsTitle" xml:space="preserve"><value>סיכומי מפגשים</value></data>
+  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>סיכום לשחקנים מתוך היומן והערות הקבוצה, וסיכום פרטי לשליט המבוך שמכיר גם את הסודות.</value></data>
+  <data name="Page.AiSettings.FeatHistoriesTitle" xml:space="preserve"><value>היסטוריות ותיאורים</value></data>
+  <data name="Page.AiSettings.FeatHistoriesText" xml:space="preserve"><value>ליטוש של סיפור רקע, הערות פרטיות על דמות לא-שחקנית, יצור ביתי או מקום, בלי לסתור את הנתונים.</value></data>
+  <data name="Page.AiSettings.FeatLevelTitle" xml:space="preserve"><value>עצות לעליית דרגה</value></data>
+  <data name="Page.AiSettings.FeatLevelText" xml:space="preserve"><value>מה הדרגה הבאה מביאה, אילו בחירות היא מחייבת, ומה מתאים לדמות.</value></data>
+  <data name="Page.AiSettings.FeatCharsTitle" xml:space="preserve"><value>דמויות מרעיון</value></data>
+  <data name="Page.AiSettings.FeatCharsText" xml:space="preserve"><value>שורת רעיון הופכת לטיוטת דף דמות מלאה, שנבנית רק מתוכן הספרייה של הקמפיין.</value></data>
+  <data name="Page.AiSettings.FeatWikiTitle" xml:space="preserve"><value>דפי ויקי</value></data>
+  <data name="Page.AiSettings.FeatWikiText" xml:space="preserve"><value>הרחבת הערות גולמיות לדף ויקי עולם עם קישורים.</value></data>
+  <data name="Page.AiSettings.FeatArtTitle" xml:space="preserve"><value>איורים</value></data>
+  <data name="Page.AiSettings.FeatArtText" xml:space="preserve"><value>דיוקנאות ליצורים ותמונות לערכי ספרייה ולמקומות, לפי הנחיית האיור או התיאור שלהם. דורש מודל תמונות.</value></data>
+  <data name="Page.AiSettings.NewText" xml:space="preserve"><value>מודל טקסט חדש</value></data>
+  <data name="Page.AiSettings.NewImage" xml:space="preserve"><value>מודל תמונות חדש</value></data>
+  <data name="Page.AiSettings.EditText" xml:space="preserve"><value>עריכת מודל טקסט</value></data>
+  <data name="Page.AiSettings.EditImage" xml:space="preserve"><value>עריכת מודל תמונות</value></data>
+  <data name="Page.AiSettings.KindOfModel" xml:space="preserve"><value>סוג המודל</value></data>
+  <data name="Page.AiSettings.Text" xml:space="preserve"><value>טקסט</value></data>
+  <data name="Page.AiSettings.Images" xml:space="preserve"><value>תמונות</value></data>
+  <data name="Page.AiSettings.Service" xml:space="preserve"><value>שירות</value></data>
+  <data name="Page.AiSettings.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Page.AiSettings.BaseUrl" xml:space="preserve"><value>כתובת בסיס (URL)</value></data>
+  <data name="Page.AiSettings.Model" xml:space="preserve"><value>מודל</value></data>
+  <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>למשל gpt-image-1</value></data>
+  <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>למשל openai/gpt-4o-mini</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>כל מודל תמונות מ-openrouter.ai/models, למשל google/gemini-2.5-flash-image או qwen/qwen-image-2.1-turbo.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>כל מזהה מ-openrouter.ai/models, למשל anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>מפתח API</value></data>
+  <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(השאירו ריק כדי לשמור את המפתח הקיים)</value></data>
+  <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>לא נדרש לשרת מקומי</value></data>
+  <data name="Page.AiSettings.KeyHint" xml:space="preserve"><value>נשמר מוצפן בשרת הזה באמצעות ASP.NET Data Protection. נשלח רק לכתובת הבסיס שלמעלה.</value></data>
+  <data name="Page.AiSettings.KeyReuse" xml:space="preserve"><value>השאירו ריק כדי להשתמש במפתח של מודל הטקסט “{0}” שלכם.</value></data>
+  <data name="Page.AiSettings.SaveText" xml:space="preserve"><value>שמירת מודל הטקסט</value></data>
+  <data name="Page.AiSettings.SaveImage" xml:space="preserve"><value>שמירת מודל התמונות</value></data>
+  <data name="Page.AiSettings.Testing" xml:space="preserve"><value>בודקים…</value></data>
+  <data name="Page.AiSettings.TestConnection" xml:space="preserve"><value>בדיקת חיבור</value></data>
+  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>אין כפתור בדיקה לתמונות: כל תמונה עולה כסף. נסו במקום זאת “Generate with AI” בערך בספרייה.</value></data>
+  <data name="Page.AiSettings.ImageModels" xml:space="preserve"><value>מודלי תמונות</value></data>
+  <data name="Page.AiSettings.TextModels" xml:space="preserve"><value>מודלי טקסט</value></data>
+  <data name="Page.AiSettings.Add" xml:space="preserve"><value>הוספה</value></data>
+  <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>אין מודל תמונות עדיין</value></data>
+  <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>אין מודל טקסט עדיין</value></data>
+  <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>העלאת איורים עובדת גם בלעדיו. הוסיפו מודל כדי שיציירו עבורכם; מודלי כתיבה טובים כמעט לא מציירים, ולכן זה מוגדר בנפרד מהטקסט.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>הוסיפו מודל בצד. OpenRouter נבחר מראש: מפתח אחד נותן גישה לרוב המודלים העדכניים.</value></data>
+  <data name="Page.AiSettings.InUse" xml:space="preserve"><value>בשימוש</value></data>
+  <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>אין מפתח</value></data>
+  <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>המפתח שמור</value></data>
+  <data name="Page.AiSettings.Use" xml:space="preserve"><value>שימוש</value></data>
+  <data name="Page.AiSettings.Test" xml:space="preserve"><value>בדיקה</value></data>
+  <data name="Page.AiSettings.EditLabel" xml:space="preserve"><value>עריכת {0}</value></data>
+  <data name="Page.AiSettings.RemoveLabel" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Page.AiSettings.Required" xml:space="preserve"><value>נדרשים שם, כתובת בסיס ומודל.</value></data>
+  <data name="Page.AiSettings.BadUrl" xml:space="preserve"><value>כתובת הבסיס חייבת להיות כתובת מלאה, כמו https://openrouter.ai/api/v1.</value></data>
+  <data name="Page.AiSettings.NeedsKey" xml:space="preserve"><value>השירות הזה דורש מפתח API.</value></data>
+  <data name="Page.AiSettings.Saved" xml:space="preserve"><value>“{0}” נשמר.</value></data>
+  <data name="Page.AiSettings.NowImage" xml:space="preserve"><value>האיורים מצוירים כעת באמצעות {0}.</value></data>
+  <data name="Page.AiSettings.NowText" xml:space="preserve"><value>כפתורי הבינה המלאכותית משתמשים כעת ב-{0}.</value></data>
+  <data name="Page.AiSettings.Removed" xml:space="preserve"><value>{0} הוסר.</value></data>
+  <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
+</root>

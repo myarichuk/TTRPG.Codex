@@ -51,4 +51,21 @@ public class PortraitVisualTests
         Assert.Equal("Species: homebrew-merfolk.", AiFeatures.PortraitVisual(actor, System, EntryName));
         Assert.Equal(string.Empty, AiFeatures.PortraitVisual(new ActorDocument { Name = "Blank" }, System, EntryName));
     }
+
+    [Fact]
+    public void LocalizedSystem_StillPromptsTheImageModelInTheSystemsOwnWords()
+    {
+        var system = new SystemDefinition
+        {
+            ActorFields = { new FieldDefinition("species", "Species", FieldType.EntityReference, targetEntityType: "species") }
+        };
+        system.Translations["ru"] = new SystemTranslation { ActorFields = { ["species"] = new LabelTranslation { Label = "Вид" } } };
+        var shown = system.Localize("ru");
+        var actor = new ActorDocument { Name = "Aria", Sheet = { ["species"] = "elf" } };
+
+        Assert.Equal("Вид", shown.ActorFields[0].Label);                                        // what the reader sees
+        Assert.Equal("Species: Elf.", AiFeatures.PortraitVisual(actor, shown, EntryName));      // what the model is told
+        Assert.Same(system, shown.Canonical);
+        Assert.Same(system, system.Canonical);
+    }
 }

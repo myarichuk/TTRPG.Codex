@@ -9,7 +9,7 @@ description: >-
 
   **Range:** 90 feet  
 
-  **Components:** V, S, M ((a miniature sword worth 250+ GP)  
+  **Components:** V, S, M (a miniature sword worth 250+ GP)  
 
   **Duration:** Concentration, up to 1 minute
 
@@ -33,7 +33,7 @@ properties:
   - V
   - S
   - M
-  material: (a miniature sword worth 250+ GP
+  material: a miniature sword worth 250+ GP
   duration: up to 1 minute
   concentration: true
   ritual: false

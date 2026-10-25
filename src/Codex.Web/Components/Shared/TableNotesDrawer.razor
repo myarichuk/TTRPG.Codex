@@ -11,31 +11,31 @@
 
 <div class="notes-dock @(Open ? "open" : "")" data-testid="notes-dock">
     <button type="button" class="notes-tab" @ref="tabButton" aria-expanded="@(Open ? "true" : "false")" aria-controls="table-notes"
-            accesskey="n" title="Session notes (access key N)" data-testid="notes-toggle" @onclick="ToggleAsync">
+            accesskey="n" title="@L["Combat.Notes.TabTitle"]" data-testid="notes-toggle" @onclick="ToggleAsync">
         <LucideIcon IconName="notebook-pen" Size="18" />
-        <span class="notes-tab-label">Notes</span>
+        <span class="notes-tab-label">@L["Combat.Notes.Tab"]</span>
         @if (VisibleNotes.Count > 0)
         {
-            <span class="notes-tab-count" aria-label="@($"{VisibleNotes.Count} so far")">@VisibleNotes.Count</span>
+            <span class="notes-tab-count" aria-label="@(L["Combat.Notes.Count", VisibleNotes.Count])">@VisibleNotes.Count</span>
         }
     </button>
 
     <aside id="table-notes" class="notes-drawer" aria-labelledby="notes-drawer-title" inert="@(!Open)" @onkeydown="OnDrawerKeyDown">
         <header class="notes-drawer-head">
             <div>
-                <h2 id="notes-drawer-title" class="h5 mb-0">Session notes</h2>
+                <h2 id="notes-drawer-title" class="h5 mb-0">@L["Combat.Notes.Title"]</h2>
                 <div class="small-muted" data-testid="notes-now">@NowLabel</div>
             </div>
-            <button type="button" class="icon-btn" aria-label="Close notes" data-testid="notes-close" @onclick="CloseAsync"><LucideIcon IconName="x" Size="18" /></button>
+            <button type="button" class="icon-btn" aria-label="@L["Combat.Notes.Close"]" data-testid="notes-close" @onclick="CloseAsync"><LucideIcon IconName="x" Size="18" /></button>
         </header>
 
         <div class="notes-drawer-body">
-            <div class="notes-mode" role="group" aria-label="What are you writing?">
+            <div class="notes-mode" role="group" aria-label="@L["Combat.Notes.WhatWriting"]">
                 <button type="button" class="notes-mode-btn" aria-pressed="@(!dialogueMode ? "true" : "false")" data-testid="notes-mode-note" @onclick="() => SetMode(false)">
-                    <LucideIcon IconName="feather" Size="16" /> Note
+                    <LucideIcon IconName="feather" Size="16" /> @L["Combat.Notes.Note"]
                 </button>
                 <button type="button" class="notes-mode-btn" aria-pressed="@(dialogueMode ? "true" : "false")" data-testid="notes-mode-dialogue" @onclick="() => SetMode(true)">
-                    <LucideIcon IconName="message-square-quote" Size="16" /> Dialogue
+                    <LucideIcon IconName="message-square-quote" Size="16" /> @L["Combat.Notes.Dialogue"]
                 </button>
             </div>
 
@@ -43,36 +43,36 @@
                value is written by the server: the browser empties it on submit (app-startup.js), and the server only
                reads what is typed. A server-side clear would arrive late and wipe whatever was typed after Enter. *@
             <form class="notes-form" hidden="@dialogueMode" data-clear-on-submit="true" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
-                <div class="chips mb-2" role="group" aria-label="Kind of note" data-testid="note-kinds">
+                <div class="chips mb-2" role="group" aria-label="@L["Combat.Notes.KindOfNote"]" data-testid="note-kinds">
                     @foreach (var kind in SessionNotes.Kinds)
                     {
                         var k = kind;
                         <button type="button" class="chip" aria-pressed="@(noteKind == k ? "true" : "false")" data-testid="note-kind" @onclick="() => noteKind = k">
-                            <LucideIcon IconName="@KindIcon(k)" Size="13" /> @SessionNotes.KindLabel(k)
+                            <LucideIcon IconName="@KindIcon(k)" Size="13" /> @KindLabel(k)
                         </button>
                     }
                 </div>
-                <label for="quick-note" class="visually-hidden">@SessionNotes.KindLabel(noteKind)</label>
+                <label for="quick-note" class="visually-hidden">@KindLabel(noteKind)</label>
                 <textarea id="quick-note" class="field-input field-sm mb-1" rows="3" @ref="noteInput" @oninput="e => noteText = e.Value as string ?? string.Empty"
                           placeholder="@KindPrompt(noteKind)" aria-describedby="quick-note-hint" data-mentions="@mentionsJson" data-clear-on-submit-field data-submit-on-mod-enter data-testid="quick-note"></textarea>
-                <p id="quick-note-hint" class="field-hint mb-2">@MentionHint Ctrl+Enter (⌘+Enter on a Mac) adds it.</p>
+                <p id="quick-note-hint" class="field-hint mb-2">@MentionHint @L["Combat.Notes.SubmitHint"]</p>
                 <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                     @if (Access.IsDm)
                     {
                         <div class="field-check mb-0">
                             <input type="checkbox" class="field-box" id="noteSecret" @bind="secret" />
-                            <label class="small" for="noteSecret">Secret (DM only)</label>
+                            <label class="small" for="noteSecret">@L["Combat.Notes.SecretDm"]</label>
                         </div>
                     }
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="add-note">Add @SessionNotes.KindNoun(noteKind)</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="add-note">@AddKindLabel(noteKind)</CodexButton>
                 </div>
             </form>
 
             <form class="notes-form" hidden="@(!dialogueMode)" data-clear-on-submit="@(Speaker != null ? "true" : "false")" @onsubmit="AddLineAsync" @onsubmit:preventDefault="true">
-                <div class="field-label mb-1" id="cast-label">In this conversation</div>
+                <div class="field-label mb-1" id="cast-label">@L["Combat.Notes.InConversation"]</div>
                 @if (cast.Count == 0)
                 {
-                    <p class="field-hint mb-2">Add who's talking. After that, each line only needs its speaker.</p>
+                    <p class="field-hint mb-2">@L["Combat.Notes.AddWhosTalking"]</p>
                 }
                 else
                 {
@@ -87,7 +87,7 @@
                                     @if (i < 9) { <span class="chip-key" aria-hidden="true">@(i + 1)</span> }
                                     @name
                                 </button>
-                                <button type="button" class="chip-remove" aria-label="@($"Take {name} out of the conversation")" data-testid="cast-remove" @onclick="() => RemoveFromCast(memberId)"><LucideIcon IconName="x" Size="12" /></button>
+                                <button type="button" class="chip-remove" aria-label="@(L["Combat.Notes.TakeOut", name])" data-testid="cast-remove" @onclick="() => RemoveFromCast(memberId)"><LucideIcon IconName="x" Size="12" /></button>
                             </span>
                         }
                     </div>
@@ -96,9 +96,9 @@
                 @if (candidates.Any(g => g.Actors.Count > 0))
                 {
                     <div class="d-flex flex-wrap gap-2 mb-2">
-                        <label for="cast-add" class="visually-hidden">Add someone to the conversation</label>
+                        <label for="cast-add" class="visually-hidden">@L["Combat.Notes.AddToConversation"]</label>
                         <select id="cast-add" class="field-select field-sm" value="" @onchange="e => AddToCast(e.Value as string)" data-testid="speaker-other">
-                            <option value="">Add someone…</option>
+                            <option value="">@L["Combat.Notes.AddSomeone"]</option>
                             @foreach (var group in candidates.Where(g => g.Actors.Count > 0))
                             {
                                 <optgroup label="@group.Label">
@@ -111,17 +111,17 @@
                         </select>
                         @if (candidates[0].Actors.Count > 1)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="cast-add-fight" OnClick="AddFightToCast">Everyone in the fight</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="cast-add-fight" OnClick="AddFightToCast">@L["Combat.Notes.EveryoneInFight"]</CodexButton>
                         }
                     </div>
                 }
 
                 @{ var speaker = Speaker; }
-                <label for="dialogue-line" class="visually-hidden">@(speaker != null ? $"What {speaker.NameFor(Access.IsDm)} said" : "Line of dialogue")</label>
+                <label for="dialogue-line" class="visually-hidden">@(speaker != null ? L["Combat.Notes.LineSaid", speaker.NameFor(Access.IsDm)] : L["Combat.Notes.LineGeneric"])</label>
                 <input id="dialogue-line" class="field-input field-sm mb-1" autocomplete="off" @ref="lineInput" @oninput="e => lineText = e.Value as string ?? string.Empty"
-                       placeholder="@(speaker != null ? $"What did {speaker.NameFor(Access.IsDm)} say?" : "Pick who's speaking first")"
+                       placeholder="@(speaker != null ? L["Combat.Notes.LinePlaceholder", speaker.NameFor(Access.IsDm)] : L["Combat.Notes.PickSpeakerFirst"])"
                        aria-describedby="dialogue-hint" @onkeydown="OnLineKeyDown" data-mentions="@mentionsJson" data-clear-on-submit-field data-testid="dialogue-line" />
-                <p id="dialogue-hint" class="field-hint mb-2">Enter adds the line. ↑ and ↓ switch speaker; the speaker stays picked for the next line. @MentionHint</p>
+                <p id="dialogue-hint" class="field-hint mb-2">@L["Combat.Notes.DialogueHint"] @MentionHint</p>
                 @if (lineError != null)
                 {
                     <p class="text-danger small mb-2" role="alert">@lineError</p>
@@ -131,32 +131,32 @@
                     {
                         <div class="field-check mb-0">
                             <input type="checkbox" class="field-box" id="lineSecret" @bind="secret" />
-                            <label class="small" for="lineSecret">Secret (DM only)</label>
+                            <label class="small" for="lineSecret">@L["Combat.Notes.SecretDm"]</label>
                         </div>
                     }
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="add-line">Add line</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="add-line">@L["Combat.Notes.AddLine"]</CodexButton>
                 </div>
             </form>
 
             <section class="notes-timeline" aria-labelledby="notes-timeline-heading">
                 <div class="notes-timeline-head">
-                    <h3 id="notes-timeline-heading" class="h6 mb-0">This session</h3>
-                    <label for="notes-filter" class="visually-hidden">Show</label>
+                    <h3 id="notes-timeline-heading" class="h6 mb-0">@L["Combat.Notes.ThisSession"]</h3>
+                    <label for="notes-filter" class="visually-hidden">@L["Combat.Notes.Show"]</label>
                     <select id="notes-filter" class="field-select field-sm" @bind="filter" data-testid="notes-filter">
-                        <option value="">Everything</option>
-                        <option value="dialogue">Dialogue</option>
+                        <option value="">@L["Combat.Notes.Everything"]</option>
+                        <option value="dialogue">@L["Combat.Notes.Dialogue"]</option>
                         @foreach (var kind in SessionNotes.Kinds)
                         {
                             <option value="@kind">@KindPlural(kind)</option>
                         }
-                        <option value="mine">Mine</option>
+                        <option value="mine">@L["Combat.Notes.Mine"]</option>
                     </select>
                 </div>
 
                 @{ var shown = FilteredNotes(); }
                 @if (shown.Count == 0)
                 {
-                    <p class="small-muted mb-0">@(VisibleNotes.Count == 0 ? "Nothing yet. Anything you write here goes into the session's recap." : "Nothing matches.")</p>
+                    <p class="small-muted mb-0">@(VisibleNotes.Count == 0 ? L["Combat.Notes.NothingYet"] : L["Combat.Notes.NothingMatches"])</p>
                 }
                 @{ string? lastGroup = null; }
                 @foreach (var note in shown)
@@ -175,29 +175,29 @@
                             <LocalTime Value="note.Timestamp" Format="HH:mm" />
                             @if (SessionNotes.TurnName(note, ActorsById, Access.IsDm) is { } turn)
                             {
-                                <span>· @turn's turn</span>
+                                <span>· @L["Combat.TurnOf", turn]</span>
                             }
                             @if (note.Kind != NoteKind.Note)
                             {
-                                <span class="pill pill-kind">@SessionNotes.KindLabel(note.Kind)</span>
+                                <span class="pill pill-kind">@KindLabel(note.Kind)</span>
                             }
-                            @if (note.IsSecret) { <span class="pill">secret</span> }
+                            @if (note.IsSecret) { <span class="pill">@L["Combat.Notes.SecretPill"]</span> }
                             @if (SessionNotes.CanEdit(note, CurrentUserId, Access.IsDm) && editingId != noteId)
                             {
                                 <span class="notes-entry-actions">
-                                    <button type="button" class="icon-btn icon-btn-sm" aria-label="Correct this note" data-testid="note-edit" @onclick="() => StartEdit(note)"><LucideIcon IconName="edit-3" Size="14" /></button>
-                                    <button type="button" class="icon-btn icon-btn-sm" aria-label="Remove this note" data-testid="note-delete" @onclick="() => DeleteAsync(noteId)"><LucideIcon IconName="trash-2" Size="14" /></button>
+                                    <button type="button" class="icon-btn icon-btn-sm" aria-label="@L["Combat.Notes.Correct"]" data-testid="note-edit" @onclick="() => StartEdit(note)"><LucideIcon IconName="edit-3" Size="14" /></button>
+                                    <button type="button" class="icon-btn icon-btn-sm" aria-label="@L["Combat.Notes.Remove"]" data-testid="note-delete" @onclick="() => DeleteAsync(noteId)"><LucideIcon IconName="trash-2" Size="14" /></button>
                                 </span>
                             }
                         </div>
                         @if (editingId == noteId)
                         {
                             <form @onsubmit="SaveEditAsync" @onsubmit:preventDefault="true">
-                                <label for="note-edit-text" class="visually-hidden">Corrected words</label>
+                                <label for="note-edit-text" class="visually-hidden">@L["Combat.Notes.CorrectedWords"]</label>
                                 <textarea id="note-edit-text" class="field-input field-sm mb-2" rows="2" @bind="editText" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="note-edit-text"></textarea>
                                 <div class="d-flex gap-2">
-                                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="note-edit-save">Save</CodexButton>
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editingId = null">Cancel</CodexButton>
+                                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="note-edit-save">@L["Common.Save"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editingId = null">@L["Common.Cancel"]</CodexButton>
                                 </div>
                             </form>
                         }
@@ -205,7 +205,7 @@
                         {
                             var others = SessionNotes.WithNames(note, ActorsById, Access.IsDm);
                             <p class="mb-0">
-                                <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, ActorsById, Access.IsDm)</strong>@if (others.Count > 0) { <span class="small-muted"> to @string.Join(", ", others)</span> }:
+                                <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, ActorsById, Access.IsDm, L["Session.UnknownSpeaker"])</strong>@if (others.Count > 0) { <span class="small-muted">@(" " + L["Combat.Notes.To", string.Join(", ", others)])</span> }:
                                 <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q>
                             </p>
                         }
@@ -334,11 +334,10 @@
     {
         get
         {
-            if (Encounter is not { Participants.Count: > 0 } encounter) return "Between encounters";
-            var acting = encounter.Current is { } current && actorsById.TryGetValue(current.ActorId, out var actor) && (Access.IsDm || actor.Visibility != ActorVisibility.Hidden)
-                ? $" · {actor.NameFor(Access.IsDm)}'s turn"
-                : "";
-            return $"Round {encounter.Round}{acting}";
+            if (Encounter is not { Participants.Count: > 0 } encounter) return L["Combat.Notes.BetweenEncounters"];
+            return encounter.Current is { } current && actorsById.TryGetValue(current.ActorId, out var actor) && (Access.IsDm || actor.Visibility != ActorVisibility.Hidden)
+                ? L["Combat.RoundTurn", encounter.Round, actor.NameFor(Access.IsDm)]
+                : L["Combat.Round", encounter.Round];
         }
     }
 
@@ -364,20 +363,40 @@
         _ => "feather"
     };
 
-    private static string KindPrompt(NoteKind kind) => kind switch
+    private string KindPrompt(NoteKind kind) => kind switch
     {
-        NoteKind.Clue => "What did they learn?",
-        NoteKind.Loot => "What did they find, and who took it?",
-        NoteKind.Ruling => "What did you rule, and on what?",
-        NoteKind.FollowUp => "What should be picked up later?",
-        _ => "What happened?"
+        NoteKind.Clue => L["Combat.Notes.Prompt.Clue"],
+        NoteKind.Loot => L["Combat.Notes.Prompt.Loot"],
+        NoteKind.Ruling => L["Combat.Notes.Prompt.Ruling"],
+        NoteKind.FollowUp => L["Combat.Notes.Prompt.FollowUp"],
+        _ => L["Combat.Notes.Prompt.Note"]
     };
 
-    private static string KindPlural(NoteKind kind) => kind switch
+    private string KindPlural(NoteKind kind) => kind switch
     {
-        NoteKind.Loot => "Loot",
-        NoteKind.FollowUp => "Follow-ups",
-        _ => SessionNotes.KindLabel(kind) + "s"
+        NoteKind.Clue => L["Combat.Notes.KindPlural.Clue"],
+        NoteKind.Loot => L["Combat.Notes.KindPlural.Loot"],
+        NoteKind.Ruling => L["Combat.Notes.KindPlural.Ruling"],
+        NoteKind.FollowUp => L["Combat.Notes.KindPlural.FollowUp"],
+        _ => L["Combat.Notes.KindPlural.Note"]
+    };
+
+    private string KindLabel(NoteKind kind) => kind switch
+    {
+        NoteKind.Clue => L["Combat.Notes.Kind.Clue"],
+        NoteKind.Loot => L["Combat.Notes.Kind.Loot"],
+        NoteKind.Ruling => L["Combat.Notes.Kind.Ruling"],
+        NoteKind.FollowUp => L["Combat.Notes.Kind.FollowUp"],
+        _ => L["Combat.Notes.Kind.Note"]
+    };
+
+    private string AddKindLabel(NoteKind kind) => kind switch
+    {
+        NoteKind.Clue => L["Combat.Notes.Add.Clue"],
+        NoteKind.Loot => L["Combat.Notes.Add.Loot"],
+        NoteKind.Ruling => L["Combat.Notes.Add.Ruling"],
+        NoteKind.FollowUp => L["Combat.Notes.Add.FollowUp"],
+        _ => L["Combat.Notes.Add.Note"]
     };
 
     // ---- Dialogue ----
@@ -387,7 +406,7 @@
         if (string.IsNullOrWhiteSpace(lineText)) return;
         if (Speaker is not { } speaker)
         {
-            lineError = cast.Count == 0 ? "Add who's talking first." : "Pick who said it.";
+            lineError = cast.Count == 0 ? L["Combat.Notes.ErrAddTalking"] : L["Combat.Notes.ErrPickSpeaker"];
             return;
         }
 
@@ -443,15 +462,15 @@
         var rest = visible.Except(fight).OrderBy(a => a.NameFor(Access.IsDm), StringComparer.OrdinalIgnoreCase).ToList();
         return new()
         {
-            ("In the fight", fight),
-            ("The party", rest.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList()),
-            ("Everyone else", rest.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList())
+            (L["Combat.Notes.InTheFight"], fight),
+            (L["Combat.Notes.TheParty"], rest.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList()),
+            (L["Combat.Notes.EveryoneElse"], rest.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList())
         };
     }
 
     // ---- Mentions ----
 
-    private string MentionHint => Mentions.Candidates.Count == 0 ? "" : "Type @ for a character, # for a place, $ for an item.";
+    private string MentionHint => Mentions.Candidates.Count == 0 ? "" : L["Combat.Notes.MentionHint"];
 
     /// <summary>Suggestions, nearest first: who is in the fight, the party, everyone else, then places and items.</summary>
     private string MentionsJson() =>
@@ -469,7 +488,7 @@
     };
 
     /// <summary>Notes are grouped by the encounter round they were written in, newest first.</summary>
-    private static string GroupLabel(SessionNote note) => note.Round is { } round ? $"Round {round}" : "Between encounters";
+    private string GroupLabel(SessionNote note) => note.Round is { } round ? L["Combat.Round", round] : L["Combat.Notes.BetweenEncounters"];
 
     private void StartEdit(SessionNote note)
     {
@@ -488,7 +507,7 @@
 
     private async Task DeleteAsync(string noteId)
     {
-        if (!await confirm.ShowAsync("Remove this note?", "It is taken out of the session and won't be in the recap.", "Remove", isDestructive: true)) return;
+        if (!await confirm.ShowAsync(L["Combat.Notes.RemoveTitle"], L["Combat.Notes.RemoveText"], L["Combat.Notes.RemoveConfirm"], isDestructive: true)) return;
         await Send(new DeleteSessionNoteCommand(noteId, CurrentUserId, Access.IsDm));
     }
 }

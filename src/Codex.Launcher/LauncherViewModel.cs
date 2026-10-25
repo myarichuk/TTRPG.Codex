@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Codex.Localization;
+using static Codex.Launcher.Strings;
 
 namespace Codex.Launcher;
 
@@ -38,11 +40,11 @@ internal sealed class LauncherViewModel
 
     public string StatusText => Controller.State switch
     {
-        ServerState.Starting => "Lighting the candles… (the first start takes a little longer)",
-        ServerState.Running => $"The table is ready at {Settings.LocalUrl}",
-        ServerState.Stopping => "Putting out the candles…",
-        ServerState.Failed => "The server would not start",
-        _ => "Server stopped",
+        ServerState.Starting => L["Launcher.Status.Starting"],
+        ServerState.Running => L["Launcher.Status.Running", Isolate(Settings.LocalUrl)],
+        ServerState.Stopping => L["Launcher.Status.Stopping"],
+        ServerState.Failed => L["Launcher.Status.Failed"],
+        _ => L["Launcher.Status.Stopped"],
     };
 
     public string StatusColor => Controller.State switch
@@ -53,7 +55,10 @@ internal sealed class LauncherViewModel
         _ => "#8a8478",
     };
 
-    public string ToggleText => Controller.State is ServerState.Running or ServerState.Starting ? "Stop" : "Start";
+    /// <summary>True while the server is up or coming up, i.e. when the toggle would stop it.</summary>
+    public bool IsRunning => Controller.State is ServerState.Running or ServerState.Starting;
+
+    public string ToggleLabel => IsRunning ? L["Launcher.StopServer"] : L["Launcher.StartServer"];
     public bool CanOpen => Controller.State == ServerState.Running;
 
     public IReadOnlyList<LauncherLink> Links => Settings.Links(LanAddress.Best(), LanAddress.Tailnet());
@@ -72,7 +77,7 @@ internal sealed class LauncherViewModel
 
     public void Toggle()
     {
-        if (Controller.State is ServerState.Running or ServerState.Starting) _ = Controller.StopAsync();
+        if (IsRunning) _ = Controller.StopAsync();
         else StartServer(openBrowser: true);
     }
 
@@ -82,7 +87,18 @@ internal sealed class LauncherViewModel
         Settings.AllowLan = allow;
         Settings.Save(LauncherPaths.SettingsFile(dataHome));
         Changed?.Invoke();
-        if (Controller.State is ServerState.Running or ServerState.Starting) _ = RestartAsync();
+        if (IsRunning) _ = RestartAsync();
+    }
+
+    /// <summary>Saves the chosen language and relabels every open window and the tray menu. A running server keeps
+    /// the default language it was started with until its next start.</summary>
+    public void SetLanguage(string tag)
+    {
+        if (!SupportedCultures.IsSupported(tag)) return;
+        Settings.Language = SupportedCultures.Normalize(tag);
+        Settings.Save(LauncherPaths.SettingsFile(dataHome));
+        Strings.Set(Settings.Language);
+        Changed?.Invoke();
     }
 
     private async Task RestartAsync()

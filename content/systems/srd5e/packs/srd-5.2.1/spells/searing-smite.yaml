@@ -7,9 +7,9 @@ description: >-
 
   **Casting Time:** Bonus Action, which you take immediately after hitting a target with a Melee weapon or an Unarmed Strike  
 
-  **Range:** Self Component: V  
+  **Range:** Self  
 
-  **Components:**   
+  **Components:** V  
 
   **Duration:** 1 minute
 
@@ -26,8 +26,9 @@ properties:
   level: 1
   school: Evocation
   castingTime: Bonus Action, which you take immediately after hitting a target with a Melee weapon or an Unarmed Strike
-  range: 'Self Component: V'
-  components: []
+  range: Self
+  components:
+  - V
   duration: 1 minute
   concentration: false
   ritual: false

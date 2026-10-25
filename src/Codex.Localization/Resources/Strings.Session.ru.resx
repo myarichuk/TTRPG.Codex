@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <data name="Session.Title" xml:space="preserve"><value>Сессия</value></data>
+  <data name="Session.NotFound" xml:space="preserve"><value>Сессия не найдена</value></data>
+  <data name="Session.NotFoundHint" xml:space="preserve"><value>Возможно, её не существует или у вас нет к ней доступа.</value></data>
+  <data name="Session.BackToCampaigns" xml:space="preserve"><value>К кампаниям</value></data>
+  <data name="Session.Breadcrumb" xml:space="preserve"><value>Навигационная цепочка</value></data>
+  <data name="Session.Campaigns" xml:space="preserve"><value>Кампании</value></data>
+  <data name="Session.Sessions" xml:space="preserve"><value>Сессии</value></data>
+  <data name="Session.Status.Planned" xml:space="preserve"><value>Запланирована</value></data>
+  <data name="Session.Status.Live" xml:space="preserve"><value>Идёт игра</value></data>
+  <data name="Session.Status.Completed" xml:space="preserve"><value>Завершена</value></data>
+  <data name="Session.Events" xml:space="preserve"><value>{0, plural, one{# событие} few{# события} many{# событий} other{# события}}</value></data>
+  <data name="Session.GoToTable" xml:space="preserve"><value>Перейти к столу</value></data>
+  <data name="Session.ReopenTable" xml:space="preserve"><value>Открыть снова за столом</value></data>
+  <data name="Session.RunTable" xml:space="preserve"><value>Провести за столом</value></data>
+  <data name="Session.Details" xml:space="preserve"><value>Сведения</value></data>
+  <data name="Session.TitleLabel" xml:space="preserve"><value>Название</value></data>
+  <data name="Session.StatusLabel" xml:space="preserve"><value>Статус</value></data>
+  <data name="Session.SaveDetails" xml:space="preserve"><value>Сохранить сведения</value></data>
+  <data name="Session.Recap" xml:space="preserve"><value>Краткий пересказ</value></data>
+  <data name="Session.PlayersCanRead" xml:space="preserve"><value>Игроки могут это прочитать</value></data>
+  <data name="Session.RecapPlaceholder" xml:space="preserve"><value>Что произошло на сессии — так, как это прочитают игроки…</value></data>
+  <data name="Session.SaveRecap" xml:space="preserve"><value>Сохранить пересказ</value></data>
+  <data name="Session.Prefill" xml:space="preserve"><value>Заполнить по событиям</value></data>
+  <data name="Session.Drafting" xml:space="preserve"><value>Составляется черновик…</value></data>
+  <data name="Session.DraftAi" xml:space="preserve"><value>Черновик от ИИ</value></data>
+  <data name="Session.MentionHint" xml:space="preserve"><value>Упомяните персонажа через @, место через # или предмет через $; игроки видят только известные им имена.</value></data>
+  <data name="Session.AiHelp" xml:space="preserve"><value>Черновик для игроков строится только по журналу событий, заметкам отряда и открытым броскам. Тайные броски, личные заметки и тайные заметки стола в него не попадают.</value></data>
+  <data name="Session.NoRecap" xml:space="preserve"><value>Мастер ещё не написал краткий пересказ.</value></data>
+  <data name="Session.DmSummary" xml:space="preserve"><value>Заметки мастера о сессии</value></data>
+  <data name="Session.OnlyYou" xml:space="preserve"><value>Только вы</value></data>
+  <data name="Session.DmSummaryPlaceholder" xml:space="preserve"><value>Тайны, оборванные нити, зацепки на следующий раз…</value></data>
+  <data name="Session.SaveSummary" xml:space="preserve"><value>Сохранить заметки</value></data>
+  <data name="Session.DmDraftHint" xml:space="preserve"><value>Черновик для мастера видит всё: тайные броски, личные заметки и ваши прежние заметки.</value></data>
+  <data name="Session.TableNotes" xml:space="preserve"><value>Заметки стола</value></data>
+  <data name="Session.NoNotes" xml:space="preserve"><value>Заметок пока нет.</value></data>
+  <data name="Session.Label.Party" xml:space="preserve"><value>Отряд</value></data>
+  <data name="Session.Label.Private" xml:space="preserve"><value>Личная</value></data>
+  <data name="Session.Label.Secret" xml:space="preserve"><value>Тайная</value></data>
+  <data name="Session.AtTable" xml:space="preserve"><value>За столом</value></data>
+  <data name="Session.Kind.Clue" xml:space="preserve"><value>Улика</value></data>
+  <data name="Session.Kind.Loot" xml:space="preserve"><value>Добыча</value></data>
+  <data name="Session.Kind.Ruling" xml:space="preserve"><value>Решение</value></data>
+  <data name="Session.Kind.FollowUp" xml:space="preserve"><value>Задел</value></data>
+  <data name="Session.Round" xml:space="preserve"><value>Раунд {0}</value></data>
+  <data name="Session.RoundTurn" xml:space="preserve"><value>Раунд {0} · ход: {1}</value></data>
+  <data name="Session.To" xml:space="preserve"><value>— {0}</value></data>
+  <data name="Session.AddNoteLabel" xml:space="preserve"><value>Добавить заметку</value></data>
+  <data name="Session.NoteVisibility" xml:space="preserve"><value>Видимость заметки</value></data>
+  <data name="Session.VisPrivate" xml:space="preserve"><value>Личная (вы и мастер)</value></data>
+  <data name="Session.VisParty" xml:space="preserve"><value>Для отряда (все в кампании)</value></data>
+  <data name="Session.AddNote" xml:space="preserve"><value>Добавить заметку</value></data>
+  <data name="Session.MyJournal" xml:space="preserve"><value>Мой журнал</value></data>
+  <data name="Session.JournalHint" xml:space="preserve"><value>Ваш личный блокнот для этой сессии. Никто другой, даже мастер, не может его прочитать.</value></data>
+  <data name="Session.JournalEntry" xml:space="preserve"><value>Запись журнала</value></data>
+  <data name="Session.JournalPlaceholder" xml:space="preserve"><value>Имена, которые нужно запомнить, догадки, добыча, которая вам причитается…</value></data>
+  <data name="Session.SaveJournal" xml:space="preserve"><value>Сохранить журнал</value></data>
+  <data name="Session.Saved" xml:space="preserve"><value>Сохранено</value></data>
+  <data name="Session.AllJournal" xml:space="preserve"><value>Все мои записи журнала</value></data>
+  <data name="Session.EventsHeading" xml:space="preserve"><value>События ({0})</value></data>
+  <data name="Session.EventsEmpty" xml:space="preserve"><value>Пока ничего не записано. События записываются автоматически, пока идёт игра за столом.</value></data>
+  <data name="Session.Flash.Prefilled" xml:space="preserve"><value>Краткий пересказ заполнен по журналу событий. Отредактируйте и сохраните.</value></data>
+  <data name="Session.Flash.DetailsSaved" xml:space="preserve"><value>Сведения сохранены.</value></data>
+  <data name="Session.Flash.RecapSaved" xml:space="preserve"><value>Краткий пересказ сохранён.</value></data>
+  <data name="Session.Flash.SummarySaved" xml:space="preserve"><value>Заметки мастера сохранены.</value></data>
+  <data name="Session.Flash.DraftReady" xml:space="preserve"><value>Черновик от ИИ готов. Проверьте, отредактируйте и сохраните.</value></data>
+  <data name="Session.Flash.NoAi" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ вашей учётной записи (справа вверху).</value></data>
+  <data name="Session.Flash.DraftFailed" xml:space="preserve"><value>Не удалось создать черновик ИИ: {0}</value></data>
+  <data name="Session.Flash.JournalSaved" xml:space="preserve"><value>Журнал сохранён. Прочитать его можете только вы.</value></data>
+  <data name="Session.Flash.JournalFailed" xml:space="preserve"><value>Не удалось сохранить запись журнала.</value></data>
+  <data name="Session.Flash.NoteAdded" xml:space="preserve"><value>Заметка добавлена.</value></data>
+  <data name="Session.Label.Note" xml:space="preserve"><value>Заметка</value></data>
+  <data name="Session.UnknownSpeaker" xml:space="preserve"><value>Кто-то</value></data>
+</root>

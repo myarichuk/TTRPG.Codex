@@ -4,18 +4,20 @@
 @inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
 @inject MentionSources MentionSources
+@inject IJSRuntime JS
 
 @* The player's private notebook for this campaign: one entry per session plus free entries.
    Nobody but the owner can read these - the repository filters by owner in the query. *@
 
 <ConfirmDialog @ref="confirm" />
+<UnsavedChangesGuard @ref="guard" IsDirty="IsDirty" />
 
 <div class="page-header mb-3">
     <div>
-        <h2 class="mb-0">My journal</h2>
-        <p class="page-subtitle">Your private notebook for this campaign. Only you can read it, not even the DM. One entry per session, plus anything else you want to keep.</p>
+        <h2 class="mb-0">@L["Campaign.Journal.Title"]</h2>
+        <p class="page-subtitle">@L["Campaign.Journal.Subtitle"]</p>
     </div>
-    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="18" /> New entry</CodexButton>
+    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew" data-testid="journal-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Journal.NewEntry"]</CodexButton>
 </div>
 
 @if (entries == null)
@@ -30,9 +32,9 @@ else
             {
                 <div class="empty">
                     <div class="empty-icon"><LucideIcon IconName="notebook-pen" Size="28" /></div>
-                    <h3>Nothing written yet</h3>
-                    <p>Names, theories, who owes you money. Open a session and write there, or start a free entry.</p>
-                    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew">Write the first entry</CodexButton>
+                    <h3>@L["Campaign.Journal.Empty.Title"]</h3>
+                    <p>@L["Campaign.Journal.Empty.Body"]</p>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="StartNew">@L["Campaign.Journal.WriteFirst"]</CodexButton>
                 </div>
             }
             @foreach (var entry in entries)
@@ -40,7 +42,7 @@ else
                 <article class="panel journal-entry" aria-labelledby="journal-@entry.Id" data-testid="journal-entry">
                     <div class="panel-title">
                         <div>
-                            <h3 id="journal-@entry.Id" class="h6 mb-0">@(string.IsNullOrWhiteSpace(entry.Title) ? "Untitled" : entry.Title)</h3>
+                            <h3 id="journal-@entry.Id" class="h6 mb-0">@(string.IsNullOrWhiteSpace(entry.Title) ? L["Campaign.Journal.Untitled"] : entry.Title)</h3>
                             <div class="small-muted">
                                 <LocalTime Value="entry.UpdatedAt" Format="d MMM yyyy, HH:mm" />
                                 @if (entry.SessionId != null && sessionTitles.TryGetValue(entry.SessionId, out var title))
@@ -50,28 +52,29 @@ else
                             </div>
                         </div>
                         <div class="row-actions">
-                            <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="Edit entry" OnClick="() => StartEdit(entry)" />
-                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="Delete entry" OnClick="() => DeleteAsync(entry)" data-testid="delete-journal" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@L["Campaign.Journal.EditEntry"]" OnClick="() => StartEdit(entry)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.Journal.DeleteEntry"]" OnClick="() => DeleteAsync(entry)" data-testid="delete-journal" />
                         </div>
                     </div>
                     <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(entry.Body, mentions, Ctx.Campaign.Id))</div>
                 </article>
             }
         </div>
-        <div class="col-lg-5">
+        <div class="col-lg-5 @(editing != null ? "phone-sheet" : "")">
             @if (editing != null)
             {
-                <section class="panel panel-journal" aria-labelledby="journal-editor-heading">
-                    <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="edit-3" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? "New entry" : "Edit entry")</h3></div>
+                <SheetBar Title="@(editing.Id.Length == 0 ? L["Campaign.Journal.NewEntry"] : L["Campaign.Journal.EditEntry"])" CloseLabel="@L["Campaign.Journal.Cancel"]" OnClose="CancelAsync" />
+                <section class="panel panel-journal" id="journal-editor" tabindex="-1" aria-labelledby="journal-editor-heading">
+                    <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="edit-3" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? L["Campaign.Journal.NewEntry"] : L["Campaign.Journal.EditEntry"])</h3></div>
                     <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                         <div class="mb-2">
-                            <label for="journal-title" class="field-label">Title</label>
-                            <input id="journal-title" class="field-input" @bind="editing.Title" maxlength="160" data-testid="journal-title" />
+                            <label for="journal-title" class="field-label">@L["Campaign.Journal.Field.Title"]</label>
+                            <input id="journal-title" class="field-input" @bind="editing.Title" @bind:event="oninput" maxlength="160" data-testid="journal-title" />
                         </div>
                         <div class="mb-2">
-                            <label for="journal-session" class="field-label">Session</label>
+                            <label for="journal-session" class="field-label">@L["Campaign.Journal.Field.Session"]</label>
                             <select id="journal-session" class="field-select" @bind="editing.SessionId">
-                                <option value="">— general —</option>
+                                <option value="">@L["Campaign.Journal.General"]</option>
                                 @foreach (var (id, title) in sessionTitles)
                                 {
                                     <option value="@id">@title</option>
@@ -79,13 +82,13 @@ else
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="journal-text" class="field-label">Text</label>
+                            <label for="journal-text" class="field-label">@L["Campaign.Journal.Field.Text"]</label>
                             <textarea id="journal-text" class="field-input" rows="10" @bind="editing.Body" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="journal-mention-hint" data-testid="journal-body"></textarea>
-                            <p id="journal-mention-hint" class="field-hint">Mention someone with @@, a place with # or an item with $.</p>
+                            <p id="journal-mention-hint" class="field-hint">@L["Campaign.Journal.MentionHint"]</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save">Save</CodexButton>
-                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => editing = null">Cancel</CodexButton>
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save">@L["Campaign.Journal.Save"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CancelAsync">@L["Campaign.Journal.Cancel"]</CodexButton>
                         </div>
                     </form>
                 </section>
@@ -93,7 +96,7 @@ else
             else
             {
                 <section class="panel panel-plain">
-                    <p class="small-muted mb-0"><LucideIcon IconName="lock" Size="14" /> Journal entries are stored per player and never appear in the DM's view, exports or AI drafts.</p>
+                    <p class="small-muted mb-0"><LucideIcon IconName="lock" Size="14" /> @L["Campaign.Journal.PrivacyNote"]</p>
                 </section>
             }
         </div>
@@ -123,12 +126,43 @@ else
         }
     }
 
-    private void StartNew() => editing = new JournalEntryDocument { CampaignId = Ctx.Campaign.Id };
+    private UnsavedChangesGuard guard = null!;
+    // The open entry as it was when editing started, to tell whether closing it would lose anything.
+    private string editingSnapshot = string.Empty;
 
-    private void StartEdit(JournalEntryDocument entry) => editing = new JournalEntryDocument
+    private bool IsDirty() => editing != null && Snapshot(editing) != editingSnapshot;
+
+    private static string Snapshot(JournalEntryDocument entry) => string.Join('\u0001', entry.Title, entry.SessionId ?? "", entry.Body);
+
+    private async Task StartNew() => await OpenAsync(new JournalEntryDocument { CampaignId = Ctx.Campaign.Id });
+
+    private async Task StartEdit(JournalEntryDocument entry) => await OpenAsync(new JournalEntryDocument
     {
         Id = entry.Id, CampaignId = entry.CampaignId, OwnerUserId = entry.OwnerUserId, SessionId = entry.SessionId, Title = entry.Title, Body = mentions.ForEditing(entry.Body), CreatedAt = entry.CreatedAt
-    };
+    });
+
+    private async Task OpenAsync(JournalEntryDocument entry)
+    {
+        if (!await guard.ConfirmDiscardAsync()) return;
+        editing = entry;
+        editingSnapshot = Snapshot(entry);
+        focusEditor = true;
+    }
+
+    // Set when an entry opens, so the editor (a full-screen sheet on a phone) takes focus once it renders.
+    private bool focusEditor;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusEditor || editing == null) return;
+        focusEditor = false;
+        await JS.InvokeVoidAsync("codex.focusSheet", "journal-editor");
+    }
+
+    private async Task CancelAsync()
+    {
+        if (await guard.ConfirmDiscardAsync()) editing = null;
+    }
 
     private async Task SaveAsync()
     {
@@ -137,13 +171,13 @@ else
         editing.Body = mentions.Encode(editing.Body);
         if (await JournalRepo.TrySaveAsync(editing, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success("Journal saved."));
+            Ctx.Notify(Flash.Success(L["Campaign.Journal.Saved"]));
             editing = null;
             await LoadAsync();
         }
         else
         {
-            Ctx.Notify(Flash.Error("Could not save that entry."));
+            Ctx.Notify(Flash.Error(L["Campaign.Journal.SaveFailed"]));
         }
     }
 
@@ -151,10 +185,10 @@ else
 
     private async Task DeleteAsync(JournalEntryDocument entry)
     {
-        if (!await confirm.ShowAsync("Delete this entry?", "The entry is removed from your journal and cannot be brought back.", "Delete entry", isDestructive: true)) return;
+        if (!await confirm.ShowAsync(L["Campaign.Journal.Delete.Title"], L["Campaign.Journal.Delete.Body"], L["Campaign.Journal.DeleteEntry"], isDestructive: true)) return;
         if (await JournalRepo.TryDeleteAsync(entry.Id, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success("Entry deleted."));
+            Ctx.Notify(Flash.Success(L["Campaign.Journal.Deleted"]));
             await LoadAsync();
         }
     }

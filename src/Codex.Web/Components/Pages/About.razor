@@ -6,27 +6,27 @@
 @inject IContentRegistry Registry
 @inject PluginLoader Loader
 
-<PageTitle>About &amp; licences | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.About.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="page-narrow">
     <div class="page-header">
         <div>
-            <h1>About TTRPG.Codex</h1>
-            <p class="page-subtitle">A self-hosted campaign and character companion for tabletop role-playing games. Game systems and content are data you can read, edit and share.</p>
+            <h1>@L["Page.About.Heading"]</h1>
+            <p class="page-subtitle">@L["Page.About.Subtitle"]</p>
         </div>
     </div>
 
     <section class="panel" aria-labelledby="systems-heading">
-        <div class="panel-title"><h2 id="systems-heading">Game systems</h2></div>
+        <div class="panel-title"><h2 id="systems-heading">@L["Page.About.Systems"]</h2></div>
         @if (!Catalog.Systems.Any())
         {
-            <p class="mb-0">No game systems are loaded. Add a <code>system.yaml</code> under one of the content folders and restart.</p>
+            <p class="mb-0">@L["Page.About.NoSystemsBefore"]<code>system.yaml</code>@L["Page.About.NoSystemsAfter"]</p>
         }
         @foreach (var system in Catalog.Systems)
         {
             var packs = Registry.GetPacks(system.Id).ToList();
             <article class="mb-4" aria-labelledby="sys-@system.Id" data-testid="about-system">
-                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-1">@(system.IsDataDriven ? "data-driven" : "compiled plugin")</span></h3>
+                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-1">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span></h3>
                 @if (system.Compatibility != null)
                 {
                     <div class="small-muted">@system.Compatibility</div>
@@ -42,13 +42,13 @@
                         {
                             <div>@system.License.Attribution</div>
                         }
-                        <div>Licence: @License(system.License)</div>
+                        <div>@L["Page.About.Licence"] @License(system.License)</div>
                     </div>
                 }
 
                 @if (packs.Count > 0)
                 {
-                    <h4 class="h6 mt-3">Content packs</h4>
+                    <h4 class="h6 mt-3">@L["Page.About.Packs"]</h4>
                     <ul class="list-unstyled mb-0">
                         @foreach (var pack in packs)
                         {
@@ -61,7 +61,7 @@
                                     }
                                     @if (pack.Authors.Count > 0)
                                     {
-                                        <div class="row-sub">By @string.Join(", ", pack.Authors)</div>
+                                        <div class="row-sub">@L["Page.About.By", string.Join(", ", pack.Authors)]</div>
                                     }
                                     @if (pack.License != null)
                                     {
@@ -70,7 +70,7 @@
                                             {
                                                 <div>@pack.License.Attribution</div>
                                             }
-                                            <div>Licence: @License(pack.License)</div>
+                                            <div>@L["Page.About.Licence"] @License(pack.License)</div>
                                             @foreach (var notice in pack.License.Notices)
                                             {
                                                 <div class="mt-1">@notice</div>
@@ -89,8 +89,8 @@
     @if (Loader.LoadWarnings.Count > 0)
     {
         <section class="panel" aria-labelledby="warnings-heading">
-            <div class="panel-title"><h2 id="warnings-heading">Content warnings</h2></div>
-            <p class="small-muted">Problems found while loading systems and packs. Fix the file and restart.</p>
+            <div class="panel-title"><h2 id="warnings-heading">@L["Page.About.Warnings"]</h2></div>
+            <p class="small-muted">@L["Page.About.WarningsIntro"]</p>
             <ul class="mb-0">
                 @foreach (var warning in Loader.LoadWarnings)
                 {
@@ -101,14 +101,14 @@
     }
 
     <section class="panel" aria-labelledby="software-heading">
-        <div class="panel-title"><h2 id="software-heading">Software</h2></div>
-        <p>TTRPG.Codex is source-available under the PolyForm Noncommercial License 1.0.0: free for noncommercial use. It bundles <a href="https://getbootstrap.com/" rel="noopener" target="_blank">Bootstrap</a> (MIT) icons from <a href="https://lucide.dev/" rel="noopener" target="_blank">Lucide</a> (ISC) and the typefaces <a href="https://github.com/NDISCOVER/Cinzel" rel="noopener" target="_blank">Cinzel</a> and <a href="https://github.com/huertatipografica/Alegreya-Sans" rel="noopener" target="_blank">Alegreya Sans</a> (both SIL Open Font License 1.1); everything runs locally and nothing is loaded from the internet at the table.</p>
+        <div class="panel-title"><h2 id="software-heading">@L["Page.About.Software"]</h2></div>
+        <p>TTRPG.Codex is source-available under the PolyForm Noncommercial License 1.0.0: free for noncommercial use. It bundles <a href="https://getbootstrap.com/" rel="noopener" target="_blank">Bootstrap</a> (MIT) icons from <a href="https://lucide.dev/" rel="noopener" target="_blank">Lucide</a> (ISC) and the typefaces <a href="https://github.com/NDISCOVER/Cinzel" rel="noopener" target="_blank">Cinzel</a>, <a href="https://github.com/huertatipografica/Alegreya-Sans" rel="noopener" target="_blank">Alegreya Sans</a>, Forum, <a href="https://github.com/fontef/frankruhllibre" rel="noopener" target="_blank">Frank Ruhl Libre</a> and <a href="https://github.com/hafontia/Assistant" rel="noopener" target="_blank">Assistant</a> (all SIL Open Font License 1.1); everything runs locally and nothing is loaded from the internet at the table.</p>
         <p class="mb-0 small-muted">Product names belong to their owners. Where a system says it is “compatible with” a product, that is the only relationship: TTRPG.Codex is not affiliated with or endorsed by any publisher.</p>
     </section>
 </div>
 
 @code {
-    private static RenderFragment License(LicenseInfo license) => builder =>
+    private RenderFragment License(LicenseInfo license) => builder =>
     {
         if (license.Url != null)
         {
@@ -126,12 +126,12 @@
 
         if (license.Modified)
         {
-            builder.AddContent(6, " · modified from the original");
+            builder.AddContent(6, " · " + L["Page.About.Modified"]);
         }
 
         if (license.SourceUrl != null)
         {
-            builder.AddContent(7, " · source: ");
+            builder.AddContent(7, " · " + L["Page.About.Source"] + " ");
             builder.OpenElement(8, "a");
             builder.AddAttribute(9, "href", license.SourceUrl);
             builder.AddAttribute(10, "rel", "noopener");

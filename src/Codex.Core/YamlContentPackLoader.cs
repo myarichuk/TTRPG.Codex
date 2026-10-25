@@ -102,6 +102,12 @@ public class YamlContentPackLoader : IContentPackLoader
         var manifest = await ReadManifestAsync(packPath);
         _registry.RegisterPack(manifest);
 
+        if (manifest.IsTranslation)
+        {
+            await LoadTranslationAsync(packPath, manifest, system);
+            return;
+        }
+
         if (IsArchive(packPath))
         {
             await LoadFromZipAsync(packPath, manifest, system);
@@ -140,6 +146,107 @@ public class YamlContentPackLoader : IContentPackLoader
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// A translation pack (<c>locale</c> + <c>translationOf</c> in its manifest) uses the same type folders as the pack it
+    /// translates, but each file only carries an entry's <c>id</c> and display text. Nothing is registered as an entry, so a
+    /// translation can never replace or hide the original; it is overlaid on it at display time
+    /// (<see cref="IContentRegistry.Localize"/>).
+    /// </summary>
+    private async Task LoadTranslationAsync(string packPath, PackManifest manifest, SystemDefinition? system)
+    {
+        if (IsArchive(packPath))
+        {
+            _logger.LogWarning("Translation pack {PackId} is an archive; only folder translation packs are supported, so it was skipped.", manifest.Id);
+            return;
+        }
+
+        foreach (var folder in Directory.GetDirectories(packPath))
+        {
+            var folderName = Path.GetFileName(folder);
+            if (folderName.StartsWith('.')) continue;
+
+            foreach (var file in Directory.GetFiles(folder, "*.yaml", SearchOption.AllDirectories))
+            {
+                ApplyTranslation(folderName, await File.ReadAllTextAsync(file), manifest, system, file);
+            }
+        }
+    }
+
+    private void ApplyTranslation(string typeFolder, string yaml, PackManifest manifest, SystemDefinition? system, string source)
+    {
+        List<Dictionary<string, object>> items;
+        try
+        {
+            var parsed = _yamlDeserializer.Deserialize<object>(yaml);
+            items = parsed switch
+            {
+                System.Collections.IList list => list.OfType<System.Collections.IDictionary>().Select(ToStringKeyed).ToList(),
+                System.Collections.IDictionary map => new List<Dictionary<string, object>> { ToStringKeyed(map) },
+                _ => new List<Dictionary<string, object>>()
+            };
+        }
+        catch (YamlDotNet.Core.YamlException ex)
+        {
+            _logger.LogError(ex, "Could not parse translation file {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
+            return;
+        }
+
+        var type = system?.FindType(typeFolder);
+        var typeKey = type?.Type ?? typeFolder.ToLowerInvariant();
+
+        // Only display text may be translated: free text and row tables, never dropdown values, tags or references,
+        // which the rules compare against.
+        var textFields = new HashSet<string>(ContentEntry.FlavorKeys, StringComparer.OrdinalIgnoreCase);
+        foreach (var field in type?.Fields ?? new List<FieldDefinition>())
+        {
+            if (field.Type is FieldType.Text or FieldType.LongText or FieldType.Collection) textFields.Add(field.Key);
+        }
+
+        var missing = new List<string>();
+        foreach (var item in items)
+        {
+            var id = item.TryGetValue("id", out var rawId) ? rawId?.ToString() : null;
+            if (string.IsNullOrWhiteSpace(id)) continue;
+
+            var fields = new Dictionary<string, object>();
+            if (item.TryGetValue("name", out var name) && name?.ToString() is { Length: > 0 } translatedName) fields["name"] = translatedName;
+            if (item.TryGetValue("description", out var description) && description?.ToString() is { } translatedDescription) fields["description"] = translatedDescription;
+
+            foreach (var (key, value) in item)
+            {
+                if (textFields.Contains(key) && YamlValues.Normalize(value) is { } top) fields[key] = top;
+            }
+
+            if (item.TryGetValue("properties", out var props) && props is System.Collections.IDictionary propMap)
+            {
+                foreach (var (key, value) in ToStringKeyed(propMap))
+                {
+                    if (textFields.Contains(key) && YamlValues.Normalize(value) is { } normalized) fields[key] = normalized;
+                }
+            }
+
+            if (fields.Count == 0) continue;
+            _registry.RegisterTranslation(manifest.SystemId, typeKey, id, manifest.Locale!, manifest.Id, fields);
+            if (_registry.GetEntry(manifest.SystemId, typeKey, id) == null) missing.Add(id);
+        }
+
+        if (missing.Count > 0)
+        {
+            _logger.LogWarning("Translation {Source} (pack {PackId}, {Locale}) names {Count} {Type} entries that no loaded pack defines, such as {Ids}. Does the translation pack depend on {Original}?",
+                source, manifest.Id, manifest.Locale, missing.Count, typeKey, string.Join(", ", missing.Take(5)), manifest.TranslationOf);
+        }
+    }
+
+    private static Dictionary<string, object> ToStringKeyed(System.Collections.IDictionary map)
+    {
+        var result = new Dictionary<string, object>();
+        foreach (System.Collections.DictionaryEntry entry in map)
+        {
+            if (entry.Key?.ToString() is { } key && entry.Value != null) result[key] = entry.Value;
+        }
+        return result;
     }
 
     /// <summary>

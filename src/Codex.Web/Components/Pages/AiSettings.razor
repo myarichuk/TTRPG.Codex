@@ -8,13 +8,13 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
 
-<PageTitle>AI settings | TTRPG.Codex</PageTitle>
+<PageTitle>@L["Page.AiSettings.Title"] | TTRPG.Codex</PageTitle>
 
 <div class="page-header">
     <div>
-        <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-1"><a href="/">Campaigns</a><span class="crumb-sep" aria-hidden="true">/</span><span>AI settings</span></nav>
-        <h1><LucideIcon IconName="sparkles" Size="28" Class="title-icon" /> AI settings</h1>
-        <p class="page-subtitle">Two kinds of model, set up separately: a <strong>text model</strong> behind every “Write with AI” and “Enhance with AI” button, and an <strong>image model</strong> behind “Generate with AI” on art. Bring your own keys. Nothing is sent to a model until you click one of those buttons.</p>
+        <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="/">@L["Page.Home.Title"]</a><span class="crumb-sep" aria-hidden="true">/</span><span>@L["Page.AiSettings.Title"]</span></nav>
+        <h1><LucideIcon IconName="sparkles" Size="28" Class="title-icon" /> @L["Page.AiSettings.Title"]</h1>
+        <p class="page-subtitle">@L["Page.AiSettings.Sub1"]<strong>@L["Page.AiSettings.SubTextModel"]</strong>@L["Page.AiSettings.Sub2"]<strong>@L["Page.AiSettings.SubImageModel"]</strong>@L["Page.AiSettings.Sub3"]</p>
     </div>
 </div>
 
@@ -32,37 +32,37 @@ else
             @ProviderList(Purpose.Image)
 
             <section class="panel" aria-labelledby="server-heading">
-                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> Server fallback</h2></div>
-                <p class="mb-1 small">When you have no model of your own, the server's configuration is used. Your own models always take precedence.</p>
+                <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> @L["Page.AiSettings.ServerHeading"]</h2></div>
+                <p class="mb-1 small">@L["Page.AiSettings.ServerText"]</p>
                 <ul class="small mb-0">
-                    <li>Text (<code>AI</code> section): <strong>@Providers.ServerDescription</strong></li>
-                    <li>Images (<code>AIImage</code> section): <strong>@Providers.ServerImageDescription</strong></li>
+                    <li>@L["Page.AiSettings.ServerTextBefore"]<code>AI</code>@L["Page.AiSettings.ServerTextAfter"] <strong>@(Providers.ServerConfigured ? Providers.ServerDescription : L["Page.AiSettings.NotConfigured"])</strong></li>
+                    <li>@L["Page.AiSettings.ServerImageBefore"]<code>AIImage</code>@L["Page.AiSettings.ServerImageAfter"] <strong>@(Providers.ServerImageConfigured ? Providers.ServerImageDescription : L["Page.AiSettings.NotConfigured"])</strong></li>
                 </ul>
             </section>
 
             <section class="panel" aria-labelledby="what-heading">
-                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> What the AI can do</h2></div>
+                <div class="panel-title"><h2 id="what-heading" class="h5"><LucideIcon IconName="info" Size="18" Class="title-icon" /> @L["Page.AiSettings.WhatHeading"]</h2></div>
                 <ul class="feature-grid mb-0">
-                    <li><LucideIcon IconName="book-open" Size="18" /> <div><strong>Session recaps</strong><div class="small-muted">A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</div></div></li>
-                    <li><LucideIcon IconName="feather" Size="18" /> <div><strong>Histories and descriptions</strong><div class="small-muted">Polish a backstory, an NPC's private notes, a homebrew creature or a place, without contradicting the stats.</div></div></li>
-                    <li><LucideIcon IconName="trending-up" Size="18" /> <div><strong>Level-up advice</strong><div class="small-muted">What the next level brings, the choices it forces, and picks that fit the character.</div></div></li>
-                    <li><LucideIcon IconName="wand" Size="18" /> <div><strong>Characters from a concept</strong><div class="small-muted">A line of concept becomes a full draft sheet built only from content in the campaign's Library.</div></div></li>
-                    <li><LucideIcon IconName="globe" Size="18" /> <div><strong>Wiki pages</strong><div class="small-muted">Expand rough notes into a linked world-wiki page.</div></div></li>
-                    <li><LucideIcon IconName="image" Size="18" /> <div><strong>Art</strong><div class="small-muted">Portraits for creatures and pictures for Library entries and places, from their art prompt or description. Needs an image model.</div></div></li>
+                    <li><LucideIcon IconName="book-open" Size="18" /> <div><strong>@L["Page.AiSettings.FeatRecapsTitle"]</strong><div class="small-muted">@L["Page.AiSettings.FeatRecapsText"]</div></div></li>
+                    <li><LucideIcon IconName="feather" Size="18" /> <div><strong>@L["Page.AiSettings.FeatHistoriesTitle"]</strong><div class="small-muted">@L["Page.AiSettings.FeatHistoriesText"]</div></div></li>
+                    <li><LucideIcon IconName="trending-up" Size="18" /> <div><strong>@L["Page.AiSettings.FeatLevelTitle"]</strong><div class="small-muted">@L["Page.AiSettings.FeatLevelText"]</div></div></li>
+                    <li><LucideIcon IconName="wand" Size="18" /> <div><strong>@L["Page.AiSettings.FeatCharsTitle"]</strong><div class="small-muted">@L["Page.AiSettings.FeatCharsText"]</div></div></li>
+                    <li><LucideIcon IconName="globe" Size="18" /> <div><strong>@L["Page.AiSettings.FeatWikiTitle"]</strong><div class="small-muted">@L["Page.AiSettings.FeatWikiText"]</div></div></li>
+                    <li><LucideIcon IconName="image" Size="18" /> <div><strong>@L["Page.AiSettings.FeatArtTitle"]</strong><div class="small-muted">@L["Page.AiSettings.FeatArtText"]</div></div></li>
                 </ul>
             </section>
         </div>
 
         <div class="col-lg-5">
             <section class="panel" aria-labelledby="editor-heading" id="provider-editor">
-                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editingOriginalId != null ? "edit-3" : "plus")" Size="18" Class="title-icon" /> @(editingOriginalId != null ? "Edit" : "New") @(purpose == Purpose.Image ? "image model" : "text model")</h2></div>
-                <div class="segmented mb-3" role="group" aria-label="Kind of model">
-                    <button type="button" class="chip" aria-pressed="@(purpose == Purpose.Text ? "true" : "false")" @onclick="() => StartNew(Purpose.Text)" disabled="@(editingOriginalId != null)" data-testid="ai-purpose-text"><LucideIcon IconName="feather" Size="14" /> Text</button>
-                    <button type="button" class="chip" aria-pressed="@(purpose == Purpose.Image ? "true" : "false")" @onclick="() => StartNew(Purpose.Image)" disabled="@(editingOriginalId != null)" data-testid="ai-purpose-image"><LucideIcon IconName="image" Size="14" /> Images</button>
+                <div class="panel-title"><h2 id="editor-heading" class="h5"><LucideIcon IconName="@(editingOriginalId != null ? "edit-3" : "plus")" Size="18" Class="title-icon" /> @(editingOriginalId != null ? (purpose == Purpose.Image ? L["Page.AiSettings.EditImage"] : L["Page.AiSettings.EditText"]) : (purpose == Purpose.Image ? L["Page.AiSettings.NewImage"] : L["Page.AiSettings.NewText"]))</h2></div>
+                <div class="segmented mb-3" role="group" aria-label="@L["Page.AiSettings.KindOfModel"]">
+                    <button type="button" class="chip" aria-pressed="@(purpose == Purpose.Text ? "true" : "false")" @onclick="() => StartNew(Purpose.Text)" disabled="@(editingOriginalId != null)" data-testid="ai-purpose-text"><LucideIcon IconName="feather" Size="14" /> @L["Page.AiSettings.Text"]</button>
+                    <button type="button" class="chip" aria-pressed="@(purpose == Purpose.Image ? "true" : "false")" @onclick="() => StartNew(Purpose.Image)" disabled="@(editingOriginalId != null)" data-testid="ai-purpose-image"><LucideIcon IconName="image" Size="14" /> @L["Page.AiSettings.Images"]</button>
                 </div>
                 <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
-                        <label for="ai-kind" class="field-label">Service</label>
+                        <label for="ai-kind" class="field-label">@L["Page.AiSettings.Service"]</label>
                         @* `selected` on the option, not `value` on the select: the select's value is applied before
                            its options exist, so an edited model would show the first service instead of its own. *@
                         <select id="ai-kind" class="field-select" @onchange="OnPresetChanged" data-testid="ai-kind">
@@ -77,48 +77,48 @@ else
                         }
                     </div>
                     <div class="mb-3">
-                        <label for="ai-name" class="field-label">Name</label>
+                        <label for="ai-name" class="field-label">@L["Page.AiSettings.Name"]</label>
                         <input id="ai-name" class="field-input" @bind="editing.Name" required data-testid="ai-name" />
                     </div>
                     <div class="mb-3">
-                        <label for="ai-url" class="field-label">Base URL</label>
+                        <label for="ai-url" class="field-label">@L["Page.AiSettings.BaseUrl"]</label>
                         <input id="ai-url" class="field-input" @bind="editing.BaseUrl" placeholder="https://…/v1" required data-testid="ai-url" />
                     </div>
                     <div class="mb-3">
-                        <label for="ai-model" class="field-label">Model</label>
-                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="@(purpose == Purpose.Image ? "e.g. gpt-image-1" : "e.g. openai/gpt-4o-mini")" required data-testid="ai-model" />
+                        <label for="ai-model" class="field-label">@L["Page.AiSettings.Model"]</label>
+                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="@(purpose == Purpose.Image ? L["Page.AiSettings.ModelPhImage"] : L["Page.AiSettings.ModelPhText"])" required data-testid="ai-model" />
                         @if (editing.Kind == "openrouter")
                         {
                             <div class="field-hint">@(purpose == Purpose.Image
-                                ? "Any image model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo."
-                                : "Any id from openrouter.ai/models, e.g. anthropic/claude-sonnet-4, google/gemini-2.5-flash.")</div>
+                                ? L["Page.AiSettings.HintOpenRouterImage"]
+                                : L["Page.AiSettings.HintOpenRouterText"])</div>
                         }
                     </div>
                     <div class="mb-3">
-                        <label for="ai-key" class="field-label">API key @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? "(leave blank to keep the stored key)" : "")</label>
-                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(PresetFor(purpose, editing.Kind)?.RequiresKey == false ? "Not needed for a local server" : "sk-…")" data-testid="ai-key" />
+                        <label for="ai-key" class="field-label">@L["Page.AiSettings.ApiKey"] @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? L["Page.AiSettings.ApiKeyKeep"] : "")</label>
+                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(PresetFor(purpose, editing.Kind)?.RequiresKey == false ? L["Page.AiSettings.KeyPhLocal"] : "sk-…")" data-testid="ai-key" />
                         <div class="field-hint">
-                            Stored encrypted on this server with ASP.NET Data Protection. It is only ever sent to the base URL above.
+                            @L["Page.AiSettings.KeyHint"]
                             @if (SharedKeySource() is { } source)
                             {
-                                <span> Leave it blank to reuse the key of your “@source.Name” text model.</span>
+                                <span> @L["Page.AiSettings.KeyReuse", source.Name]</span>
                             }
                         </div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save">Save @(purpose == Purpose.Image ? "image model" : "text model")</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save">@(purpose == Purpose.Image ? L["Page.AiSettings.SaveImage"] : L["Page.AiSettings.SaveText"])</CodexButton>
                         @if (purpose == Purpose.Text)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? "Testing…" : "Test connection")</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? L["Page.AiSettings.Testing"] : L["Page.AiSettings.TestConnection"])</CodexButton>
                         }
                         @if (editingOriginalId != null)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => StartNew(purpose)">Cancel</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => StartNew(purpose)">@L["Common.Cancel"]</CodexButton>
                         }
                     </div>
                     @if (purpose == Purpose.Image)
                     {
-                        <p class="field-hint mt-2 mb-0">There is no test button for images: every picture costs money. Try “Generate with AI” on a Library entry instead.</p>
+                        <p class="field-hint mt-2 mb-0">@L["Page.AiSettings.NoImageTest"]</p>
                     }
                 </form>
             </section>
@@ -146,17 +146,17 @@ else
         var key = listPurpose == Purpose.Image ? "images" : "text";
         <section class="panel" aria-labelledby="@key-heading" id="@key">
             <div class="panel-title">
-                <h2 id="@key-heading" class="h5"><LucideIcon IconName="@(listPurpose == Purpose.Image ? "image" : "bot")" Size="18" Class="title-icon" /> @(listPurpose == Purpose.Image ? "Image models" : "Text models")</h2>
-                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => StartNew(listPurpose, focus: true)" data-testid="@(listPurpose == Purpose.Image ? "ai-add-image-provider" : "ai-add-provider")"><LucideIcon IconName="plus" Size="14" /> Add</CodexButton>
+                <h2 id="@key-heading" class="h5"><LucideIcon IconName="@(listPurpose == Purpose.Image ? "image" : "bot")" Size="18" Class="title-icon" /> @(listPurpose == Purpose.Image ? L["Page.AiSettings.ImageModels"] : L["Page.AiSettings.TextModels"])</h2>
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => StartNew(listPurpose, focus: true)" data-testid="@(listPurpose == Purpose.Image ? "ai-add-image-provider" : "ai-add-provider")"><LucideIcon IconName="plus" Size="14" /> @L["Page.AiSettings.Add"]</CodexButton>
             </div>
             @if (list.Count == 0)
             {
                 <div class="empty empty-compact">
                     <div class="empty-icon"><LucideIcon IconName="@(listPurpose == Purpose.Image ? "image" : "key-round")" Size="28" /></div>
-                    <h3>@(listPurpose == Purpose.Image ? "No image model yet" : "No text model yet")</h3>
+                    <h3>@(listPurpose == Purpose.Image ? L["Page.AiSettings.EmptyImageTitle"] : L["Page.AiSettings.EmptyTextTitle"])</h3>
                     <p>@(listPurpose == Purpose.Image
-                        ? "Uploading art works without one. Add one to have pictures drawn for you; good writing models rarely draw, so this is set up apart from text."
-                        : "Add one on the right. OpenRouter is pre-selected: one key gives you most current models.")</p>
+                        ? L["Page.AiSettings.EmptyImageText"]
+                        : L["Page.AiSettings.EmptyTextText"])</p>
                 </div>
             }
             else
@@ -172,22 +172,22 @@ else
                                 <div class="row-title">@provider.Name
                                     @if (isDefault)
                                     {
-                                        <span class="pill pill-accent ms-1">In use</span>
+                                        <span class="pill pill-accent ms-1">@L["Page.AiSettings.InUse"]</span>
                                     }
                                 </div>
-                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? "no key" : "key stored")</div>
+                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? L["Page.AiSettings.NoKey"] : L["Page.AiSettings.KeyStored"])</div>
                             </div>
                             <div class="row-actions">
                                 @if (!isDefault)
                                 {
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MakeDefaultAsync(provider, listPurpose)">Use</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MakeDefaultAsync(provider, listPurpose)">@L["Page.AiSettings.Use"]</CodexButton>
                                 }
                                 @if (listPurpose == Purpose.Text)
                                 {
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => TestAsync(provider, null)" disabled="@testing">Test</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => TestAsync(provider, null)" disabled="@testing">@L["Page.AiSettings.Test"]</CodexButton>
                                 }
-                                <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@($"Edit {provider.Name}")" OnClick="() => StartEdit(provider, listPurpose)" />
-                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@($"Remove {provider.Name}")" OnClick="() => RemoveAsync(provider, listPurpose)" />
+                                <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@L["Page.AiSettings.EditLabel", provider.Name]" OnClick="() => StartEdit(provider, listPurpose)" />
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Page.AiSettings.RemoveLabel", provider.Name]" OnClick="() => RemoveAsync(provider, listPurpose)" />
                             </div>
                         </li>
                     }
@@ -274,13 +274,13 @@ else
         if (user == null) return;
         if (string.IsNullOrWhiteSpace(editing.Name) || string.IsNullOrWhiteSpace(editing.BaseUrl) || string.IsNullOrWhiteSpace(editing.ModelId))
         {
-            flash = Flash.Error("Name, base URL and model are required.");
+            flash = Flash.Error(L["Page.AiSettings.Required"]);
             return;
         }
 
         if (!Uri.TryCreate(editing.BaseUrl.Trim(), UriKind.Absolute, out _))
         {
-            flash = Flash.Error("The base URL must be a full URL, like https://openrouter.ai/api/v1.");
+            flash = Flash.Error(L["Page.AiSettings.BadUrl"]);
             return;
         }
 
@@ -294,7 +294,7 @@ else
         }
         else if (editingOriginalId == null && PresetFor(purpose, editing.Kind)?.RequiresKey == true)
         {
-            flash = Flash.Error("This service needs an API key.");
+            flash = Flash.Error(L["Page.AiSettings.NeedsKey"]);
             return;
         }
 
@@ -307,7 +307,7 @@ else
         if (index >= 0) list[index] = editing; else list.Add(editing);
         if (purpose == Purpose.Image) user.DefaultImageProviderId ??= editing.Id; else user.DefaultAiProviderId ??= editing.Id;
         await UserRepo.UpdateUserAsync(user);
-        flash = Flash.Success($"Saved “{editing.Name}”.");
+        flash = Flash.Success(L["Page.AiSettings.Saved", editing.Name]);
         await StartNew(purpose);
     }
 
@@ -316,7 +316,7 @@ else
         if (user == null) return;
         if (p == Purpose.Image) user.DefaultImageProviderId = provider.Id; else user.DefaultAiProviderId = provider.Id;
         await UserRepo.UpdateUserAsync(user);
-        flash = Flash.Success(p == Purpose.Image ? $"Art is now drawn with {provider.Name}." : $"AI buttons now use {provider.Name}.");
+        flash = Flash.Success(p == Purpose.Image ? L["Page.AiSettings.NowImage", provider.Name] : L["Page.AiSettings.NowText", provider.Name]);
     }
 
     private async Task RemoveAsync(AiProviderConfig provider, Purpose p)
@@ -334,7 +334,7 @@ else
         }
 
         await UserRepo.UpdateUserAsync(user);
-        flash = Flash.Success($"Removed {provider.Name}.");
+        flash = Flash.Success(L["Page.AiSettings.Removed", provider.Name]);
         if (editingOriginalId == provider.Id) await StartNew(p);
     }
 
@@ -344,7 +344,7 @@ else
         try
         {
             var (ok, message) = await Providers.TestAsync(provider, string.IsNullOrWhiteSpace(key) ? null : key.Trim());
-            flash = ok ? Flash.Success(message) : Flash.Error(message);
+            flash = ok ? Flash.Success(L.Describe(message)) : Flash.Error(L.Describe(message));
         }
         finally
         {

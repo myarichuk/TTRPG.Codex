@@ -52,7 +52,8 @@ public static class SessionEventRedactor
                 Type = evt.Type,
                 Timestamp = evt.Timestamp,
                 ActorIds = evt.ActorIds,
-                Description = exact ? evt.Description : evt.PlayerDescription!
+                Description = exact ? evt.Description : evt.PlayerDescription!,
+                Parts = exact ? evt.Parts : evt.PlayerParts ?? new List<EventMessage>()
             });
         }
 

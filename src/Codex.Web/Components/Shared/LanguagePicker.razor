@@ -1,0 +1,46 @@
+@implements IDisposable
+@inject NavigationManager Nav
+
+@* A plain GET form, so it works on the static sign-in pages and in the interactive circuit alike:
+   /set-culture writes the cookie and bounces back to the page the user was on.
+   As a Dropdown it folds into a <details> menu that shows only the current language, which keeps the header narrow. *@
+@if (Dropdown)
+{
+    <details class="popover-menu lang-menu">
+        <summary class="lang-summary" aria-label="@L["Language.Current", CurrentName]">
+            <LucideIcon IconName="globe" Size="16" /><span lang="@Current">@CurrentName</span>
+        </summary>
+        <div class="popover-panel">@Form</div>
+    </details>
+}
+else
+{
+    @Form
+}
+
+@code {
+    /// <summary>Show the current language only, with the others in a menu.</summary>
+    [Parameter] public bool Dropdown { get; set; }
+
+    private string Current => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
+
+    private string CurrentName => SupportedCultures.All.FirstOrDefault(c => c.Tag == Current).NativeName ?? Current;
+
+    private string ReturnUrl => "/" + Nav.ToBaseRelativePath(Nav.Uri);
+
+    private RenderFragment Form => @<form method="get" action="/set-culture" class="lang-picker" aria-label="@L["Language.Label"]">
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        @foreach (var (tag, name) in SupportedCultures.All)
+        {
+            <button type="submit" name="culture" value="@tag" lang="@tag" class="lang-btn"
+                    aria-current="@(tag == Current ? "true" : null)">@name</button>
+        }
+    </form>;
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}
