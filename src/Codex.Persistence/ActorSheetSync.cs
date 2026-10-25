@@ -159,6 +159,8 @@ public static class ActorSheetSync
             actor.Sheet[key] = (long)value;
         }
 
+        // A stat block's scores are as printed, not rolled or bought, so the character-creation checks (point buy 8-15) do not apply.
+        actor.Sheet.TryAdd(Codex.Core.Rules.SheetRuleEngine.MethodKey, "manual");
         ApplySheetToState(actor, system, registry);
     }
 

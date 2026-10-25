@@ -1514,6 +1514,8 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .world-steer-row { display: flex; gap: 0.5rem; align-items: center; }
 .world-steer-row .field-input { flex: 1; min-width: 0; }
 .world-draft-ask { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+.world-draft-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-inline-start: 1.6rem; }
+.world-draft-stats + .world-draft-ask { margin-top: 0; margin-bottom: 0.6rem; }
 .link-button { background: none; border: 0; padding: 0; color: var(--text); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link-button:hover { color: var(--accent-hover); }
 @media (max-width: 1000px) {

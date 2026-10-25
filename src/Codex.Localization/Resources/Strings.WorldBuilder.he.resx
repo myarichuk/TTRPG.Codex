@@ -174,4 +174,12 @@
   <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>נשארו בלי סימון, כי כבר כתבתם אותן או שיניתם את שמן: {0}.</value></data>
   <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>הבינה המלאכותית משנה את הרעיונות…</value></data>
   <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>קודם כתבו מה לשנות.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Blank" xml:space="preserve"><value>דף הדמות יתחיל ריק.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.From" xml:space="preserve"><value>דף הדמות יתחיל מהנתונים של {0}.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Change" xml:space="preserve"><value>בחירת נתונים מהספרייה</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Clear" xml:space="preserve"><value>דף ריק</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>יצורים</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>בחירה</value></data>
+  <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>אין בספרייה יצורים לקמפיין הזה.</value></data>
+  <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>גם בצוות, עם הנתונים של {0}</value></data>
 </root>

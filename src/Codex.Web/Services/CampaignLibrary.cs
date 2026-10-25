@@ -119,6 +119,26 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         return brew == null ? null : new LibraryItem(ToEntry(brew), null, brew);
     }
 
+    /// <summary>One entry from the source the caller recorded: a homebrew entry and a pack entry may share a type and id, and
+    /// <see cref="GetAsync"/> would return the pack's.</summary>
+    public async Task<LibraryItem?> GetAsync(CampaignDocument campaign, CampaignAccess access, string type, string id, bool isHomebrew)
+    {
+        if (!isHomebrew)
+        {
+            var item = await GetAsync(campaign, access, type, id);
+            return item?.IsHomebrew == false ? item : null;
+        }
+
+        if (!CanRead(campaign, access, type))
+        {
+            return null;
+        }
+
+        var brew = (await homebrew.GetVisibleForCampaignAsync(access))
+            .FirstOrDefault(h => string.Equals(h.Type, type, StringComparison.OrdinalIgnoreCase) && h.EntryId == id);
+        return brew == null ? null : new LibraryItem(ToEntry(brew), null, brew);
+    }
+
     /// <summary>Options for an EntityReference picker: every entry of the target type, homebrew included.</summary>
     public async Task<IReadOnlyList<LibraryItem>> OptionsAsync(CampaignDocument campaign, CampaignAccess access, string type, string? culture = null) =>
         await SearchAsync(campaign, access, string.Empty, type, limit: 2000, culture);

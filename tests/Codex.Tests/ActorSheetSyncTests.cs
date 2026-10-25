@@ -1,6 +1,7 @@
 using Codex.Core;
 using Codex.Core.Components;
 using Codex.Core.Models;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
@@ -92,6 +93,8 @@ public class ActorSheetSyncTests
 
         Assert.Equal(7L, actor.Sheet["HP"]);
         Assert.Equal(15L, actor.Sheet["armorClass"]);
+        // Scores as the stat block prints them: the sheet's rules must not hold them to point buy.
+        Assert.Equal("manual", actor.Sheet[SheetRuleEngine.MethodKey]);
         var pool = registry.Hydrate(actor.State).OfType<ResourcePoolComponent>().Single();
         Assert.Equal(7, pool.Get("HP"));
         Assert.Equal(8, registry.Hydrate(actor.State).OfType<AttributesComponent>().Single().Get("str"));

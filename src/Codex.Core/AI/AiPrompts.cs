@@ -71,6 +71,7 @@ public sealed record WorldAnswer(string Question, string Answer);
 /// <param name="TakenNames">Names the campaign already uses, so the model does not repeat them.</param>
 /// <param name="Current">For a change to an outline: its drafts, one JSON object each in the reply's shape (no texts).</param>
 /// <param name="Instruction">For a change to an outline: what the game master asked to change.</param>
+/// <param name="CreatureStats">The system has creatures with stat blocks, so a person may name the one that plays like them.</param>
 public sealed record WorldOutlineRequest(
     string Brief,
     string SystemName,
@@ -82,7 +83,8 @@ public sealed record WorldOutlineRequest(
     string? CampaignContext = null,
     string? Language = null,
     IReadOnlyList<string>? Current = null,
-    string? Instruction = null);
+    string? Instruction = null,
+    bool CreatureStats = false);
 
 /// <summary>The expand call for one draft of an outline: write it in full.</summary>
 /// <param name="TypeLabel">For a homebrew draft, its content type as system.yaml names it ("Spell").</param>
@@ -294,6 +296,13 @@ public static class AiPrompts
                      "The pitch is one sentence the game master can judge the idea by. " +
                      "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company, and do not reuse the names already taken. " +
                      "Where an answer is \"surprise me\", decide it yourself." + language;
+        if (r.CreatureStats && r.Kinds.Any(k => k.StartsWith(DraftKinds.Npc + ":", StringComparison.Ordinal)))
+        {
+            // The stat block's name is looked up in the Library, so it must be the rules' own English name, not an invented one.
+            system += $" A \"npc\" draft may also have \"stats\": the English name of a generic creature from the {r.SystemName} rules whose game statistics suit the person " +
+                      "(such as Guard, Priest, Spy or Bandit Captain), exactly as the rules name it; leave it out when none fits.";
+        }
+
         var change = Instruction(r.Instruction);
         if (change != null)
         {
