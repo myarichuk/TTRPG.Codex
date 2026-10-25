@@ -373,13 +373,13 @@ internal static class TableRules
     /// <summary>Applies a named rest: the slot pools the caller passes, then whatever the rest rule says
     /// (resources refilled or cleared, hit dice regained, exhaustion eased, conditions lifted). Returns
     /// what happened, in words, for the log.</summary>
-    public static List<string> Rest(CampaignRuntime runtime, string actorId, Entity entity, string restName, IEnumerable<string> slotPools)
+    public static List<EventMessage> Rest(CampaignRuntime runtime, string actorId, Entity entity, string restName, IEnumerable<string> slotPools)
     {
-        var happened = new List<string>();
+        var happened = new List<EventMessage>();
         runtime.World.RestoreResources(entity, slotPools);
         if (slotPools.Any())
         {
-            happened.Add("slots refilled");
+            happened.Add(EventMessage.Of("Rest.Slots"));
         }
 
         if (runtime.System?.Vitals?.FindRest(restName) is not { } rule || !entity.Has<ResourcePoolComponent>())
@@ -399,7 +399,7 @@ internal static class TableRules
                     GetUp(runtime, entity);
                 }
 
-                happened.Add($"{Label(runtime, key)} restored");
+                happened.Add(EventMessage.Of("Rest.Restored", Label(runtime, key)));
             }
         }
 
@@ -408,7 +408,7 @@ internal static class TableRules
             if (pool.Get(key) != 0)
             {
                 pool.Set(key, 0);
-                happened.Add($"{Label(runtime, key)} cleared");
+                happened.Add(EventMessage.Of("Rest.Cleared", Label(runtime, key)));
             }
         }
 
@@ -424,7 +424,7 @@ internal static class TableRules
             if (regained > 0 && current < diceMax)
             {
                 pool.Set(hitDice.Key, Math.Min(diceMax, current + regained));
-                happened.Add($"{Math.Min(regained, diceMax - current)} hit dice regained");
+                happened.Add(EventMessage.Of("Rest.HitDice", Math.Min(regained, diceMax - current)));
             }
         }
 
@@ -433,7 +433,7 @@ internal static class TableRules
             var adjusted = AdjustExhaustion(runtime, actorId, entity, rule.ExhaustionDelta);
             if (adjusted is { } a)
             {
-                happened.Add(a.Level == 0 ? "exhaustion gone" : $"exhaustion now {a.Level}");
+                happened.Add(a.Level == 0 ? EventMessage.Of("Rest.ExhaustionGone") : EventMessage.Of("Rest.ExhaustionNow", a.Level));
             }
         }
 
@@ -441,7 +441,7 @@ internal static class TableRules
         {
             if (runtime.World.RemoveStatus(entity, condition) > 0)
             {
-                happened.Add($"{condition} lifted");
+                happened.Add(EventMessage.Of("Rest.Lifted", condition));
             }
         }
 

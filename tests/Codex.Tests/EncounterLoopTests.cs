@@ -271,9 +271,9 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(16, Hp(runtime, elemental.Id));
 
         var log = session.Events.Where(e => e.Type == "Damage").Select(e => e.Description).ToList();
-        Assert.Contains(log, d => d.Contains("5 fire damage") && d.Contains("resisted, 11 rolled"));
+        Assert.Contains(log, d => d.Contains("5 fire damage") && d.Contains("Resisted: 11 rolled"));
         Assert.Contains(log, d => d.Contains("immune to poison"));
-        Assert.Contains(log, d => d.Contains("20 cold damage") && d.Contains("vulnerable"));
+        Assert.Contains(log, d => d.Contains("20 cold damage") && d.Contains("Vulnerable"));
     }
 
     [Fact]
@@ -472,7 +472,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.False(Has(runtime, goblin.Id, "Prone"));
         for (var i = 0; i < 6; i++) await runtime.EnqueueAsync(new NextTurnCommand());
         Assert.True(Has(runtime, hero.Id, "Blinded"));
-        Assert.Contains(session.Events, e => e.Type == "StatusEffect" && e.Description.Contains("gained Blinded until removed"));
+        Assert.Contains(session.Events, e => e.Type == "StatusEffect" && e.Description.Contains("gained Blinded") && e.Description.Contains("until removed"));
 
         // The condition was persisted with the actor and comes back when the actor is hydrated again.
         var stored = (await StoredAsync(campaignId, hero.Id))!;

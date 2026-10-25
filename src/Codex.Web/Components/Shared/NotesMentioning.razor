@@ -31,7 +31,7 @@
                 </div>
                 @if (note.SpeakerActorId != null)
                 {
-                    <p class="mb-0"><strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, Actors, IsDm):</strong> <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q></p>
+                    <p class="mb-0"><strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, Actors, IsDm, L["Session.UnknownSpeaker"]):</strong> <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q></p>
                 }
                 else
                 {

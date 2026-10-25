@@ -217,7 +217,7 @@ else
                         <div class="log-entry">
                             <span class="small-muted"><LocalTime Value="evt.Timestamp" Format="HH:mm" /></span>
                             <span class="pill ms-1">@evt.Type</span>
-                            <div>@evt.Description</div>
+                            <div>@evt.Text(L)</div>
                         </div>
                     }
                 </div>
@@ -308,7 +308,7 @@ else
                     .Concat(session.Notes
                         .Where(n => access.IsDm || !n.IsSecret)
                         .Select(n => new NoteRow(n.AuthorId, n.Text, n.Timestamp, n.IsSecret ? L["Session.Label.Secret"] : L["Session.Label.Party"], AtTable: true,
-                            n.SpeakerActorId == null ? null : SessionQuotes.SpeakerName(n.SpeakerActorId, actorsById, access.IsDm),
+                            n.SpeakerActorId == null ? null : SessionQuotes.SpeakerName(n.SpeakerActorId, actorsById, access.IsDm, L["Session.UnknownSpeaker"]),
                             n.SpeakerActorId == null ? Array.Empty<string>() : SessionNotes.WithNames(n, actorsById, access.IsDm),
                             n.SpeakerActorId == null && n.Kind != NoteKind.Note ? KindLabel(n.Kind) : null,
                             RoundContext(n, actorsById, access.IsDm))))
@@ -358,7 +358,7 @@ else
 
     // The recap this fills in is what players read, so it starts from the player-safe log, not the DM's.
     private string SerializeEvents() => string.Join("\n",
-        SessionEventRedactor.ForPlayers(session!.Events, campaignActors).OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Description}"));
+        SessionEventRedactor.ForPlayers(session!.Events, campaignActors).OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Text(L)}"));
 
     private void PreFillRecap()
     {

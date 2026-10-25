@@ -15,10 +15,11 @@ public static class SessionQuotes
         !isDm && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
 
     /// <param name="visibleActors">The actors this viewer may see (a player's list already leaves Hidden ones out).</param>
-    public static string SpeakerName(string speakerActorId, IReadOnlyDictionary<string, ActorDocument> visibleActors, bool isDm) =>
+    /// <param name="unknownName">What to call a speaker the viewer can't see, in the viewer's language.</param>
+    public static string SpeakerName(string speakerActorId, IReadOnlyDictionary<string, ActorDocument> visibleActors, bool isDm, string unknownName = UnknownSpeaker) =>
         visibleActors.TryGetValue(speakerActorId, out var actor) && (isDm || actor.Visibility != ActorVisibility.Hidden)
             ? actor.NameFor(isDm)
-            : UnknownSpeaker;
+            : unknownName;
 
     /// <summary>Everything <paramref name="actorId"/> said in these sessions that the viewer may read, oldest first.</summary>
     public static IReadOnlyList<(SessionDocument Session, SessionNote Line)> SaidBy(IEnumerable<SessionDocument> sessions, string actorId, bool isDm) =>

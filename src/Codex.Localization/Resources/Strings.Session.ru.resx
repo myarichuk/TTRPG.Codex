@@ -75,4 +75,5 @@
   <data name="Session.Flash.JournalFailed" xml:space="preserve"><value>Не удалось сохранить запись журнала.</value></data>
   <data name="Session.Flash.NoteAdded" xml:space="preserve"><value>Заметка добавлена.</value></data>
   <data name="Session.Label.Note" xml:space="preserve"><value>Заметка</value></data>
+  <data name="Session.UnknownSpeaker" xml:space="preserve"><value>Кто-то</value></data>
 </root>

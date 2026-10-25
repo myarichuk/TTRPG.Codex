@@ -26,21 +26,29 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
-        var type = string.IsNullOrWhiteSpace(DamageType) ? "" : DamageType.ToLowerInvariant() + " ";
-        var text = _outcome.Modifier == "immune"
-            ? $"{name} is immune to {type}damage: {Amount} from {SourceId} did nothing."
-            : $"{name} took {_outcome.Dealt} {type}damage from {SourceId}{(_outcome.Modifier != null ? $" ({_outcome.Modifier}, {Amount} rolled)" : "")}{(_outcome.Absorbed > 0 ? $", {_outcome.Absorbed} absorbed by temporary hit points" : "")}.";
-        if (_outcome.Died) text += $" {name} died.";
-        else if (_outcome.WentDown) text += $" {name} dropped to 0 and is down.";
-        else if (_outcome.FailuresAdded > 0) text += $" {name} was hit while down: {_outcome.FailuresAdded} failed death save{(_outcome.FailuresAdded == 1 ? "" : "s")}.";
-
-        return new SessionEvent
+        var type = string.IsNullOrWhiteSpace(DamageType) ? "" : DamageType.ToLowerInvariant();
+        var parts = new List<EventMessage>();
+        if (_outcome.Modifier == "immune")
         {
-            Type = "Damage",
-            Description = text,
-            ActorIds = { ActorId },
-            PlayerDescription = _outcome.Died ? $"{name} took damage and died." : _outcome.WentDown ? $"{name} took damage and went down." : $"{name} took damage."
-        };
+            parts.Add(EventMessage.Of("Damage.Immune", name, type, Amount, SourceId));
+        }
+        else
+        {
+            parts.Add(type.Length == 0 ? EventMessage.Of("Damage.Took", name, _outcome.Dealt, SourceId) : EventMessage.Of("Damage.TookTyped", name, _outcome.Dealt, type, SourceId));
+            if (_outcome.Modifier != null)
+            {
+                parts.Add(EventMessage.Of(_outcome.Modifier == "resisted" ? "Damage.Resisted" : _outcome.Modifier == "vulnerable" ? "Damage.Vulnerable" : "Damage.ResistedVulnerable", Amount));
+            }
+
+            if (_outcome.Absorbed > 0) parts.Add(EventMessage.Of("Damage.Absorbed", _outcome.Absorbed));
+        }
+
+        if (_outcome.Died) parts.Add(EventMessage.Of("Damage.Died", name));
+        else if (_outcome.WentDown) parts.Add(EventMessage.Of("Damage.Down", name));
+        else if (_outcome.FailuresAdded > 0) parts.Add(EventMessage.Of("Damage.HitWhileDown", name, _outcome.FailuresAdded));
+
+        var player = EventMessage.Of(_outcome.Died ? "Damage.PlayerDied" : _outcome.WentDown ? "Damage.PlayerDown" : "Damage.Player", name);
+        return SessionEvent.From("Damage", parts, new[] { ActorId }, new[] { player });
     }
 }
 
@@ -61,15 +69,18 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
-        return new SessionEvent
+        var parts = new List<EventMessage>();
+        if (_outcome.WasDead)
         {
-            Type = "Healing",
-            Description = _outcome.WasDead
-                ? $"{name} is dead; {Amount} healing from {SourceId} did nothing."
-                : $"{name} recovered {_outcome.Healed} {PoolName} from {SourceId}.{(_outcome.Revived ? $" {name} is back on their feet." : "")}",
-            ActorIds = { ActorId },
-            PlayerDescription = _outcome.Revived ? $"{name} was healed and is back up." : $"{name} was healed."
-        };
+            parts.Add(EventMessage.Of("Healing.Dead", name, Amount, SourceId));
+        }
+        else
+        {
+            parts.Add(EventMessage.Of("Healing.Recovered", name, _outcome.Healed, PoolName, SourceId));
+            if (_outcome.Revived) parts.Add(EventMessage.Of("Healing.Revived", name));
+        }
+
+        return SessionEvent.From("Healing", parts, new[] { ActorId }, new[] { EventMessage.Of(_outcome.Revived ? "Healing.PlayerRevived" : "Healing.Player", name) });
     }
 }
 
@@ -88,15 +99,14 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
+    public SessionEvent Describe(CampaignRuntime runtime)
     {
-        Type = "TemporaryHitPoints",
-        Description = _applied
-            ? $"{runtime.GetActorName(ActorId)} gained {Amount} temporary hit points from {SourceId}."
-            : $"{runtime.GetActorName(ActorId)} already had at least {Amount} temporary hit points; {SourceId} changed nothing.",
-        ActorIds = { ActorId },
-        PlayerDescription = _applied ? $"{runtime.GetActorName(ActorId)} gained temporary hit points." : $"{runtime.GetActorName(ActorId)} already had temporary hit points."
-    };
+        var name = runtime.GetActorName(ActorId);
+        return SessionEvent.From("TemporaryHitPoints",
+            new[] { _applied ? EventMessage.Of("TempHp.Gained", name, Amount, SourceId) : EventMessage.Of("TempHp.Kept", name, Amount, SourceId) },
+            new[] { ActorId },
+            new[] { EventMessage.Of(_applied ? "TempHp.PlayerGained" : "TempHp.PlayerKept", name) });
+    }
 }
 
 /// <summary>Rolls a death save with the table's dice for a character at zero hit points.</summary>
@@ -151,17 +161,23 @@ internal static class DeathSaveEvents
     public static SessionEvent Describe(CampaignRuntime runtime, string actorId, TableRules.DeathSaveOutcome outcome)
     {
         var name = runtime.GetActorName(actorId);
-        var rolled = outcome.Roll is { } r ? $" (rolled {r})" : "";
-        var text = outcome.NotApplicable
-            ? $"{name} is not making death saves."
-            : outcome.Revived
-                ? $"{name} rolled a natural {outcome.Roll} on a death save and is back up with 1 hit point."
-                : outcome.Died
-                    ? $"{name} failed a death save{rolled} and died."
-                    : outcome.Stabilized
-                        ? $"{name} succeeded on a death save{rolled} and is stable."
-                        : $"{name} {(outcome.Success == true ? "succeeded on" : "failed")} a death save{rolled}: {outcome.Successes} success{(outcome.Successes == 1 ? "" : "es")}, {outcome.Failures} failure{(outcome.Failures == 1 ? "" : "s")}.";
-        return new SessionEvent { Type = "DeathSave", Description = text, ActorIds = { actorId } };
+        var parts = new List<EventMessage>();
+        if (outcome.NotApplicable)
+        {
+            parts.Add(EventMessage.Of("DeathSave.NotApplicable", name));
+        }
+        else if (outcome.Revived)
+        {
+            parts.Add(EventMessage.Of("DeathSave.Revived", name, outcome.Roll));
+        }
+        else
+        {
+            parts.Add(EventMessage.Of(outcome.Died ? "DeathSave.Died" : outcome.Stabilized ? "DeathSave.Stable" : outcome.Success == true ? "DeathSave.Succeeded" : "DeathSave.Failed", name));
+            if (outcome.Roll is { } r) parts.Add(EventMessage.Of("DeathSave.Rolled", r));
+            if (!outcome.Died && !outcome.Stabilized) parts.Add(EventMessage.Of("DeathSave.Tally", outcome.Successes, outcome.Failures));
+        }
+
+        return SessionEvent.From("DeathSave", parts, new[] { actorId });
     }
 }
 
@@ -180,12 +196,9 @@ public sealed record StabilizeCommand(string ActorId, string SourceId) : IRuntim
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "Stabilized",
-        Description = _applied ? $"{runtime.GetActorName(ActorId)} was stabilized by {SourceId}." : $"{runtime.GetActorName(ActorId)} did not need stabilizing.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Stabilized",
+        new[] { _applied ? EventMessage.Of("Stabilized.Done", runtime.GetActorName(ActorId), SourceId) : EventMessage.Of("Stabilized.None", runtime.GetActorName(ActorId)) },
+        new[] { ActorId });
 }
 
 /// <summary>Raises or lowers the exhaustion level; the top level kills.</summary>
@@ -206,14 +219,10 @@ public sealed record AdjustExhaustionCommand(string ActorId, int Delta) : IRunti
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
-        return new SessionEvent
-        {
-            Type = "Exhaustion",
-            Description = _outcome is { } o
-                ? o.Died ? $"{name} reached the final level of exhaustion and died." : o.Level == 0 ? $"{name} is no longer exhausted." : $"{name} is at exhaustion level {o.Level}."
-                : $"{name}'s exhaustion could not be changed.",
-            ActorIds = { ActorId }
-        };
+        var message = _outcome is { } o
+            ? o.Died ? EventMessage.Of("Exhaustion.Died", name) : o.Level == 0 ? EventMessage.Of("Exhaustion.None", name) : EventMessage.Of("Exhaustion.Level", name, o.Level)
+            : EventMessage.Of("Exhaustion.Failed", name);
+        return SessionEvent.From("Exhaustion", new[] { message }, new[] { ActorId });
     }
 }
 
@@ -246,15 +255,15 @@ public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
-        return new SessionEvent
+        if (_outcome is { Spent: > 0 } o)
         {
-            Type = "HitDice",
-            Description = _outcome is { Spent: > 0 } o
-                ? $"{name} spent {o.Spent} hit {(o.Spent == 1 ? "die" : "dice")} (d{DieSides}: {string.Join(", ", o.Rolls)}) and recovered {o.Healed} hit points."
-                : $"{name} has no hit dice to spend.",
-            ActorIds = { ActorId },
-            PlayerDescription = _outcome is { Spent: > 0 } ? $"{name} spent hit dice and recovered hit points." : null
-        };
+            return SessionEvent.From("HitDice",
+                new[] { EventMessage.Of("HitDice.Spent", name, o.Spent, DieSides, string.Join(", ", o.Rolls), o.Healed) },
+                new[] { ActorId },
+                new[] { EventMessage.Of("HitDice.Player", name) });
+        }
+
+        return SessionEvent.From("HitDice", new[] { EventMessage.Of("HitDice.None", name) }, new[] { ActorId });
     }
 }
 
@@ -276,15 +285,15 @@ public sealed record AddStatusEffectCommand(string ActorId, string EffectId, str
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var duration = Rounds < 1
-            ? "until removed"
-            : $"for {Rounds} round{(Rounds == 1 ? "" : "s")}, ending at the {(Expiry == EffectExpiry.StartOfTurn ? "start" : "end")} of {(AnchorActorId == ActorId ? "their" : runtime.GetActorName(AnchorActorId) + "'s")} turn";
-        return new SessionEvent
-        {
-            Type = "StatusEffect",
-            Description = $"{runtime.GetActorName(ActorId)} gained {EffectId} {duration} from {SourceId}.",
-            ActorIds = { ActorId }
-        };
+        var name = runtime.GetActorName(ActorId);
+        var parts = new List<EventMessage> { EventMessage.Of("Status.Gained", name, EffectId, SourceId) };
+        var start = Expiry == EffectExpiry.StartOfTurn;
+        parts.Add(Rounds < 1
+            ? EventMessage.Of("Status.Indefinite")
+            : AnchorActorId == ActorId
+                ? EventMessage.Of(start ? "Status.OwnStart" : "Status.OwnEnd", Rounds)
+                : EventMessage.Of(start ? "Status.OtherStart" : "Status.OtherEnd", Rounds, runtime.GetActorName(AnchorActorId)));
+        return SessionEvent.From("StatusEffect", parts, new[] { ActorId });
     }
 }
 
@@ -305,12 +314,8 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "TurnAdvance",
-        Description = $"{runtime.GetActorName(ActorId)}'s turn ended.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("TurnAdvance", new[] { EventMessage.Of("Turn.Ended", runtime.GetActorName(ActorId)) }, new[] { ActorId });
 }
 
 /// <summary>Removes every instance of a status effect from an actor (3.7 "remove conditions") -
@@ -328,12 +333,8 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "StatusEffectRemoved",
-        Description = $"{runtime.GetActorName(ActorId)} lost {EffectId}.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("StatusEffectRemoved", new[] { EventMessage.Of("Status.Lost", runtime.GetActorName(ActorId), EffectId) }, new[] { ActorId });
 }
 
 /// <summary>
@@ -371,12 +372,8 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
         runtime.MarkEncounterDirty();
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "Initiative",
-        Description = $"{runtime.GetActorName(ActorId)} rolled {InitiativeRoll} for initiative.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.GetActorName(ActorId), InitiativeRoll) }, new[] { ActorId });
 }
 
 /// <summary>Moves the encounter to the next participant's turn (3.5): end-of-turn effects
@@ -430,14 +427,10 @@ public sealed record NextTurnCommand : IRuntimeCommand
     {
         var encounter = runtime.ActiveEncounter;
         var upNextId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
-        var upNext = upNextId != null ? runtime.GetActorName(upNextId) : "nobody";
-        var evt = new SessionEvent { Type = "TurnAdvance", Description = $"Turn passed to {upNext} (round {encounter?.Round ?? 1})." };
-        if (upNextId != null)
-        {
-            evt.ActorIds.Add(upNextId);
-        }
-
-        return evt;
+        var round = encounter?.Round ?? 1;
+        return SessionEvent.From("TurnAdvance",
+            new[] { upNextId != null ? EventMessage.Of("Turn.Passed", runtime.GetActorName(upNextId), round) : EventMessage.Of("Turn.PassedNobody", round) },
+            upNextId != null ? new[] { upNextId } : null);
     }
 }
 
@@ -476,14 +469,9 @@ public sealed record PreviousTurnCommand : IRuntimeCommand
     {
         var encounter = runtime.ActiveEncounter;
         var currentId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
-        var current = currentId != null ? runtime.GetActorName(currentId) : "nobody";
-        var evt = new SessionEvent { Type = "TurnAdvance", Description = $"Turn moved back to {current}." };
-        if (currentId != null)
-        {
-            evt.ActorIds.Add(currentId);
-        }
-
-        return evt;
+        return SessionEvent.From("TurnAdvance",
+            new[] { currentId != null ? EventMessage.Of("Turn.Back", runtime.GetActorName(currentId)) : EventMessage.Of("Turn.BackNobody") },
+            currentId != null ? new[] { currentId } : null);
     }
 }
 
@@ -505,17 +493,9 @@ public sealed record SetTurnStateCommand(string ActorId, TurnState State) : IRun
         runtime.MarkEncounterDirty();
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "TurnState",
-        ActorIds = { ActorId },
-        Description = State switch
-        {
-            TurnState.Delayed => $"{runtime.GetActorName(ActorId)} delayed their turn.",
-            TurnState.Readied => $"{runtime.GetActorName(ActorId)} readied an action.",
-            _ => $"{runtime.GetActorName(ActorId)} is acting normally again."
-        }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("TurnState",
+        new[] { EventMessage.Of(State switch { TurnState.Delayed => "Turn.Delayed", TurnState.Readied => "Turn.Readied", _ => "Turn.Normal" }, runtime.GetActorName(ActorId)) },
+        new[] { ActorId });
 }
 
 /// <summary>A delayed or readied participant acts now: they move to just before whoever is acting,
@@ -553,12 +533,9 @@ public sealed record ActNowCommand(string ActorId) : IRuntimeCommand
         runtime.MarkEncounterDirty();
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "TurnAdvance",
-        Description = $"{runtime.GetActorName(ActorId)} acts now (round {runtime.ActiveEncounter?.Round ?? 1}).",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("TurnAdvance",
+        new[] { EventMessage.Of("Turn.ActsNow", runtime.GetActorName(ActorId), runtime.ActiveEncounter?.Round ?? 1) },
+        new[] { ActorId });
 }
 
 /// <summary>Takes a participant out of the initiative order (a dead monster, a creature that fled).
@@ -571,12 +548,9 @@ public sealed record RemoveParticipantCommand(string ActorId) : IRuntimeCommand
 
     public void Apply(CampaignRuntime runtime) => _removed = runtime.RemoveParticipant(ActorId);
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "InitiativeRemoved",
-        Description = _removed ? $"{runtime.GetActorName(ActorId)} left the initiative order." : $"{runtime.GetActorName(ActorId)} was not in the initiative order.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("InitiativeRemoved",
+        new[] { EventMessage.Of(_removed ? "Initiative.Removed" : "Initiative.NotIn", runtime.GetActorName(ActorId)) },
+        new[] { ActorId });
 }
 
 /// <summary>Ends the encounter: the order is closed (and kept with its end time), and conditions
@@ -606,11 +580,8 @@ public sealed record EndEncounterCommand : IRuntimeCommand
         runtime.MarkAllHydratedActorsDirty();
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "EncounterEnded",
-        Description = _ended != null ? $"The encounter ended after {_ended.Round} round{(_ended.Round == 1 ? "" : "s")}." : "There was no encounter to end."
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("EncounterEnded",
+        new[] { _ended != null ? EventMessage.Of("Encounter.Ended", _ended.Round) : EventMessage.Of("Encounter.None") });
 }
 
 /// <summary>Takes a deleted actor out of the live table: its entity and its place in the order go.</summary>
@@ -626,12 +597,8 @@ public sealed record RemoveActorCommand(string ActorId) : IRuntimeCommand
         runtime.RemoveActor(ActorId);
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "ActorLeft",
-        Description = $"{_name} left the table.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("ActorLeft", new[] { EventMessage.Of("Actor.Left", _name) }, new[] { ActorId });
 }
 
 /// <summary>
@@ -669,16 +636,12 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var roller = ActorId != null ? runtime.GetActorName(ActorId) : RollerUserId;
-        var description = IsSecret
-            ? $"{roller} made a secret roll ({Expression})."
-            : $"{roller} rolled {(Label != null ? Label + " " : "")}{Expression}: {_result?.Total}.";
-        var evt = new SessionEvent { Type = "DiceRoll", Description = description };
-        if (ActorId != null)
-        {
-            evt.ActorIds.Add(ActorId);
-        }
-
-        return evt;
+        var message = IsSecret
+            ? EventMessage.Of("Roll.Secret", roller, Expression)
+            : Label != null
+                ? EventMessage.Of("Roll.Labeled", roller, Label, Expression, _result?.Total)
+                : EventMessage.Of("Roll.Plain", roller, Expression, _result?.Total);
+        return SessionEvent.From("DiceRoll", new[] { message }, ActorId != null ? new[] { ActorId } : null);
     }
 }
 
@@ -709,7 +672,7 @@ public sealed record AddSessionNoteCommand(
 
     // The note's words stay out of the event log: they are in the notes list, read per viewer, and a note
     // corrected or removed later would otherwise live on here unchanged.
-    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(IsSecret ? "A secret" : "A", "added", Kind, SpeakerActorId);
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(IsSecret, "Added", Kind, SpeakerActorId);
 }
 
 /// <summary>Corrects a table note's words or kind. Only its author or the DM may; anyone else's edit is ignored.</summary>
@@ -721,7 +684,7 @@ public sealed record EditSessionNoteCommand(string NoteId, string EditorId, bool
 
     public void Apply(CampaignRuntime runtime) => _edited = runtime.EditSessionNote(NoteId, EditorId, EditorIsDm, Text, Kind);
 
-    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(_edited is { IsSecret: true } ? "A secret" : "A", _edited == null ? "left unchanged" : "corrected", Kind, _edited?.SpeakerActorId);
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(_edited is { IsSecret: true }, _edited == null ? "Unchanged" : "Corrected", Kind, _edited?.SpeakerActorId);
 }
 
 /// <summary>Takes a table note out of the session. Only its author or the DM may.</summary>
@@ -733,19 +696,21 @@ public sealed record DeleteSessionNoteCommand(string NoteId, string EditorId, bo
 
     public void Apply(CampaignRuntime runtime) => _removed = runtime.DeleteSessionNote(NoteId, EditorId, EditorIsDm);
 
-    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(_removed is { IsSecret: true } ? "A secret" : "A", _removed == null ? "left in place" : "removed", _removed?.Kind ?? NoteKind.Note, _removed?.SpeakerActorId);
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionNoteEvents.Describe(_removed is { IsSecret: true }, _removed == null ? "InPlace" : "Removed", _removed?.Kind ?? NoteKind.Note, _removed?.SpeakerActorId);
 }
 
 /// <summary>The one shape every note event takes: type "Note" (which the recap digest skips, since it reads the notes
 /// themselves), no words and no names, and the speaker's id so a player who can't see them doesn't get the event.</summary>
 internal static class SessionNoteEvents
 {
-    public static SessionEvent Describe(string article, string verb, NoteKind kind, string? speakerActorId) => new()
+    public static SessionEvent Describe(bool secret, string verb, NoteKind kind, string? speakerActorId)
     {
-        Type = "Note",
-        Description = $"{article} {(speakerActorId != null ? "quote" : SessionNotes.KindNoun(kind))} was {verb}.",
-        ActorIds = speakerActorId == null ? new List<string>() : new List<string> { speakerActorId }
-    };
+        var noun = speakerActorId != null
+            ? "Note.Noun.Quote"
+            : kind switch { NoteKind.Clue => "Note.Noun.Clue", NoteKind.Loot => "Note.Noun.Loot", NoteKind.Ruling => "Note.Noun.Ruling", NoteKind.FollowUp => "Note.Noun.FollowUp", _ => "Note.Noun.Note" };
+        var message = EventMessage.Of("Note." + verb + (secret ? "Secret" : "")).With(new[] { EventMessage.Of(noun) });
+        return SessionEvent.From("Note", new[] { message }, speakerActorId == null ? null : new[] { speakerActorId });
+    }
 }
 
 /// <summary>Hydrates an already-persisted <see cref="ActorDocument"/> into the already-running
@@ -758,12 +723,8 @@ public sealed record HydrateActorCommand(ActorDocument Actor) : IRuntimeCommand
 
     public void Apply(CampaignRuntime runtime) => runtime.HydrateOne(Actor);
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "ActorJoined",
-        Description = $"{Actor.Name} joined the table.",
-        ActorIds = { Actor.Id }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("ActorJoined", new[] { EventMessage.Of("Actor.Joined", Actor.Name) }, new[] { Actor.Id });
 }
 
 /// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, say),
@@ -781,14 +742,10 @@ public sealed record AdjustResourceCommand(string ActorId, string PoolName, int 
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = Delta < 0 ? "ResourceSpent" : "ResourceRegained",
-        ActorIds = { ActorId },
-        Description = Delta < 0
-            ? $"{runtime.GetActorName(ActorId)} used {(-Delta == 1 ? "a" : (-Delta).ToString())} {Label}{(-Delta == 1 ? "" : "s")}."
-            : $"{runtime.GetActorName(ActorId)} regained {(Delta == 1 ? "a" : Delta.ToString())} {Label}{(Delta == 1 ? "" : "s")}."
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From(
+        Delta < 0 ? "ResourceSpent" : "ResourceRegained",
+        new[] { EventMessage.Of(Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.GetActorName(ActorId), Math.Abs(Delta), Label) },
+        new[] { ActorId });
 }
 
 /// <summary>A rest: refills the named slot pools, then applies whatever the system's rest rule of that
@@ -797,7 +754,7 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
-    private List<string> _happened = new();
+    private List<EventMessage> _happened = new();
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -807,12 +764,9 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "Rest",
-        Description = $"{runtime.GetActorName(ActorId)} took a {RestName}{(_happened.Count > 0 ? ": " + string.Join(", ", _happened) : "")}.",
-        ActorIds = { ActorId }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
+        new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.GetActorName(ActorId), RestName).With(_happened) },
+        new[] { ActorId });
 }
 
 /// <summary>
@@ -833,10 +787,6 @@ public sealed record ReplaceActorCommand(
 
     public void Apply(CampaignRuntime runtime) => runtime.ReplaceActor(Edited, BaselineSheet, Access, System);
 
-    public SessionEvent Describe(CampaignRuntime runtime) => new()
-    {
-        Type = "SheetEdited",
-        Description = $"{runtime.GetActorName(Edited.Id)}'s sheet was edited.",
-        ActorIds = { Edited.Id }
-    };
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("SheetEdited", new[] { EventMessage.Of("Sheet.Edited", runtime.GetActorName(Edited.Id)) }, new[] { Edited.Id });
 }

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Event.Damage.Immune" xml:space="preserve"><value>{0} имеет иммунитет к урону ({1}): {2} от {3} не подействовало.</value></data>
+  <data name="Event.Damage.Took" xml:space="preserve"><value>{0} получает урон {1} от {2}.</value></data>
+  <data name="Event.Damage.TookTyped" xml:space="preserve"><value>{0} получает урон {1} ({2}) от {3}.</value></data>
+  <data name="Event.Damage.Resisted" xml:space="preserve"><value>Сопротивление: выпало {0}.</value></data>
+  <data name="Event.Damage.Vulnerable" xml:space="preserve"><value>Уязвимость: выпало {0}.</value></data>
+  <data name="Event.Damage.ResistedVulnerable" xml:space="preserve"><value>Сопротивление и уязвимость: выпало {0}.</value></data>
+  <data name="Event.Damage.Absorbed" xml:space="preserve"><value>{0} поглощено временными очками здоровья.</value></data>
+  <data name="Event.Damage.Died" xml:space="preserve"><value>{0} погибает.</value></data>
+  <data name="Event.Damage.Down" xml:space="preserve"><value>{0} падает до 0 и выходит из строя.</value></data>
+  <data name="Event.Damage.HitWhileDown" xml:space="preserve"><value>{0} получает удар в беспамятстве: {1, plural, one{# проваленный спасбросок от смерти} few{# проваленных спасброска от смерти} many{# проваленных спасбросков от смерти} other{# проваленного спасброска от смерти}}.</value></data>
+  <data name="Event.Damage.PlayerDied" xml:space="preserve"><value>{0} получает урон и погибает.</value></data>
+  <data name="Event.Damage.PlayerDown" xml:space="preserve"><value>{0} получает урон и выходит из строя.</value></data>
+  <data name="Event.Damage.Player" xml:space="preserve"><value>{0} получает урон.</value></data>
+  <data name="Event.Healing.Dead" xml:space="preserve"><value>{0} мёртв; лечение {1} от {2} не подействовало.</value></data>
+  <data name="Event.Healing.Recovered" xml:space="preserve"><value>{0} восстанавливает {1} ({2}) от {3}.</value></data>
+  <data name="Event.Healing.Revived" xml:space="preserve"><value>{0} снова на ногах.</value></data>
+  <data name="Event.Healing.Player" xml:space="preserve"><value>{0} исцелён.</value></data>
+  <data name="Event.Healing.PlayerRevived" xml:space="preserve"><value>{0} исцелён и снова на ногах.</value></data>
+  <data name="Event.TempHp.Gained" xml:space="preserve"><value>{0} получает {1} временных очков здоровья от {2}.</value></data>
+  <data name="Event.TempHp.Kept" xml:space="preserve"><value>У {0} уже есть не менее {1} временных очков здоровья; {2} ничего не изменило.</value></data>
+  <data name="Event.TempHp.PlayerGained" xml:space="preserve"><value>{0} получает временные очки здоровья.</value></data>
+  <data name="Event.TempHp.PlayerKept" xml:space="preserve"><value>У {0} уже были временные очки здоровья.</value></data>
+  <data name="Event.DeathSave.NotApplicable" xml:space="preserve"><value>{0} не совершает спасбросков от смерти.</value></data>
+  <data name="Event.DeathSave.Revived" xml:space="preserve"><value>{0} выбрасывает натуральную {1} в спасброске от смерти и встаёт с 1 очком здоровья.</value></data>
+  <data name="Event.DeathSave.Died" xml:space="preserve"><value>{0} проваливает спасбросок от смерти и погибает.</value></data>
+  <data name="Event.DeathSave.Stable" xml:space="preserve"><value>{0} проходит спасбросок от смерти и стабилизируется.</value></data>
+  <data name="Event.DeathSave.Succeeded" xml:space="preserve"><value>{0} проходит спасбросок от смерти.</value></data>
+  <data name="Event.DeathSave.Failed" xml:space="preserve"><value>{0} проваливает спасбросок от смерти.</value></data>
+  <data name="Event.DeathSave.Rolled" xml:space="preserve"><value>Выпало {0}.</value></data>
+  <data name="Event.DeathSave.Tally" xml:space="preserve"><value>Успехов: {0}, провалов: {1}.</value></data>
+  <data name="Event.Stabilized.Done" xml:space="preserve"><value>{0} стабилизирован: {1}.</value></data>
+  <data name="Event.Stabilized.None" xml:space="preserve"><value>{0} не нуждался в стабилизации.</value></data>
+  <data name="Event.Exhaustion.Died" xml:space="preserve"><value>{0} достигает последнего уровня истощения и погибает.</value></data>
+  <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0} больше не истощён.</value></data>
+  <data name="Event.Exhaustion.Level" xml:space="preserve"><value>У {0} истощение {1}-го уровня.</value></data>
+  <data name="Event.Exhaustion.Failed" xml:space="preserve"><value>Истощение {0} изменить не удалось.</value></data>
+  <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0} тратит кости хитов: {1} (d{2}: {3}) и восстанавливает {4} хитов.</value></data>
+  <data name="Event.HitDice.None" xml:space="preserve"><value>У {0} не осталось костей хитов.</value></data>
+  <data name="Event.HitDice.Player" xml:space="preserve"><value>{0} тратит кости хитов и восстанавливает хиты.</value></data>
+  <data name="Event.Status.Gained" xml:space="preserve"><value>{0} получает состояние «{1}» от {2}.</value></data>
+  <data name="Event.Status.Indefinite" xml:space="preserve"><value>Длится, пока не будет снято.</value></data>
+  <data name="Event.Status.OwnStart" xml:space="preserve"><value>Длится раундов: {0}, до начала собственного хода.</value></data>
+  <data name="Event.Status.OwnEnd" xml:space="preserve"><value>Длится раундов: {0}, до конца собственного хода.</value></data>
+  <data name="Event.Status.OtherStart" xml:space="preserve"><value>Длится раундов: {0}, до начала хода: {1}.</value></data>
+  <data name="Event.Status.OtherEnd" xml:space="preserve"><value>Длится раундов: {0}, до конца хода: {1}.</value></data>
+  <data name="Event.Status.Lost" xml:space="preserve"><value>{0} теряет состояние «{1}».</value></data>
+  <data name="Event.Turn.Ended" xml:space="preserve"><value>Ход {0} закончился.</value></data>
+  <data name="Event.Turn.Passed" xml:space="preserve"><value>Ход переходит к {0} (раунд {1}).</value></data>
+  <data name="Event.Turn.PassedNobody" xml:space="preserve"><value>Ход не перешёл ни к кому (раунд {0}).</value></data>
+  <data name="Event.Turn.Back" xml:space="preserve"><value>Ход возвращается к {0}.</value></data>
+  <data name="Event.Turn.BackNobody" xml:space="preserve"><value>Ход не вернулся ни к кому.</value></data>
+  <data name="Event.Turn.ActsNow" xml:space="preserve"><value>{0} действует сейчас (раунд {1}).</value></data>
+  <data name="Event.Turn.Delayed" xml:space="preserve"><value>{0} откладывает ход.</value></data>
+  <data name="Event.Turn.Readied" xml:space="preserve"><value>{0} готовит действие.</value></data>
+  <data name="Event.Turn.Normal" xml:space="preserve"><value>{0} снова действует как обычно.</value></data>
+  <data name="Event.Initiative.Rolled" xml:space="preserve"><value>{0} бросает инициативу: {1}.</value></data>
+  <data name="Event.Initiative.Removed" xml:space="preserve"><value>{0} выходит из порядка инициативы.</value></data>
+  <data name="Event.Initiative.NotIn" xml:space="preserve"><value>{0} не было в порядке инициативы.</value></data>
+  <data name="Event.Encounter.Ended" xml:space="preserve"><value>Схватка закончилась через раундов: {0}.</value></data>
+  <data name="Event.Encounter.None" xml:space="preserve"><value>Не было схватки, которую можно завершить.</value></data>
+  <data name="Event.Actor.Left" xml:space="preserve"><value>{0} покидает стол.</value></data>
+  <data name="Event.Actor.Joined" xml:space="preserve"><value>{0} присоединяется к столу.</value></data>
+  <data name="Event.Sheet.Edited" xml:space="preserve"><value>Лист персонажа {0} изменён.</value></data>
+  <data name="Event.Roll.Secret" xml:space="preserve"><value>{0} делает тайный бросок ({1}).</value></data>
+  <data name="Event.Roll.Plain" xml:space="preserve"><value>{0} бросает {1}: {2}.</value></data>
+  <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0} бросает {1} ({2}): {3}.</value></data>
+  <data name="Event.Resource.Used" xml:space="preserve"><value>{0} тратит: {2} ×{1}.</value></data>
+  <data name="Event.Resource.Regained" xml:space="preserve"><value>{0} восстанавливает: {2} ×{1}.</value></data>
+  <data name="Event.Rest.Took" xml:space="preserve"><value>{0}: {1}.</value></data>
+  <data name="Event.Rest.TookWith" xml:space="preserve"><value>{0}: {1} — {2}.</value></data>
+  <data name="Event.Rest.Slots" xml:space="preserve"><value>ячейки восстановлены</value></data>
+  <data name="Event.Rest.Restored" xml:space="preserve"><value>{0} восстановлено</value></data>
+  <data name="Event.Rest.Cleared" xml:space="preserve"><value>{0} снято</value></data>
+  <data name="Event.Rest.HitDice" xml:space="preserve"><value>костей хитов восстановлено: {0}</value></data>
+  <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>истощение прошло</value></data>
+  <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>истощение теперь {0}</value></data>
+  <data name="Event.Rest.Lifted" xml:space="preserve"><value>{0} снято</value></data>
+  <data name="Event.Note.Added" xml:space="preserve"><value>Добавлено: {0}.</value></data>
+  <data name="Event.Note.AddedSecret" xml:space="preserve"><value>Добавлено (секретно): {0}.</value></data>
+  <data name="Event.Note.Corrected" xml:space="preserve"><value>Исправлено: {0}.</value></data>
+  <data name="Event.Note.CorrectedSecret" xml:space="preserve"><value>Исправлено (секретно): {0}.</value></data>
+  <data name="Event.Note.Removed" xml:space="preserve"><value>Удалено: {0}.</value></data>
+  <data name="Event.Note.RemovedSecret" xml:space="preserve"><value>Удалено (секретно): {0}.</value></data>
+  <data name="Event.Note.Unchanged" xml:space="preserve"><value>Без изменений: {0}.</value></data>
+  <data name="Event.Note.UnchangedSecret" xml:space="preserve"><value>Без изменений (секретно): {0}.</value></data>
+  <data name="Event.Note.InPlace" xml:space="preserve"><value>Оставлено на месте: {0}.</value></data>
+  <data name="Event.Note.InPlaceSecret" xml:space="preserve"><value>Оставлено на месте (секретно): {0}.</value></data>
+  <data name="Event.Note.Noun.Quote" xml:space="preserve"><value>реплика</value></data>
+  <data name="Event.Note.Noun.Note" xml:space="preserve"><value>заметка</value></data>
+  <data name="Event.Note.Noun.Clue" xml:space="preserve"><value>улика</value></data>
+  <data name="Event.Note.Noun.Loot" xml:space="preserve"><value>запись о добыче</value></data>
+  <data name="Event.Note.Noun.Ruling" xml:space="preserve"><value>решение</value></data>
+  <data name="Event.Note.Noun.FollowUp" xml:space="preserve"><value>дело на потом</value></data>
+</root>
