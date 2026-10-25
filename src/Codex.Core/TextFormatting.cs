@@ -18,6 +18,8 @@ public static class TextFormatting
     private static readonly Regex Italic = new(@"(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)", RegexOptions.Compiled);
 
     // _italic_ as the SRD writes trait names ("_Amphibious._"); not inside a word, so snake_case and file_names stay as written.
+    private static readonly Regex BulletMark = new(@"^(?:[-*]|\d+\.)\s+", RegexOptions.Compiled);
+    private static readonly Regex SummaryLink = new(@"\[\[([^\[\]|]+?)(?:\|([^\[\]]+?))?\]\]", RegexOptions.Compiled);
     private static readonly Regex UnderscoreItalic = new(@"(?<![\p{L}\p{N}_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\p{L}\p{N}_])", RegexOptions.Compiled);
 
     public static string ToHtml(string? text)
@@ -142,12 +144,18 @@ public static class TextFormatting
         return encoded;
     }
 
-    /// <summary>First sentence or so, for list rows and cards, with markdown markers removed.</summary>
+    /// <summary>First sentence or so, for list rows and cards, with markdown removed: headings (labels, not content) are left
+    /// out unless nothing else is written, bullets and emphasis lose their markers, and a wiki link shows its text.</summary>
     public static string Summary(string? text, int maxLength = 140)
     {
         if (string.IsNullOrWhiteSpace(text)) return string.Empty;
-        var flat = text.Replace("**", string.Empty).Replace('\n', ' ').Trim();
-        flat = Regex.Replace(flat, @"\s+", " ");
+        var lines = text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+        var content = lines.Where(l => !l.StartsWith('#')).ToList();
+        var flat = string.Join(' ', (content.Count > 0 ? content : lines).Select(l => BulletMark.Replace(l.TrimStart('#').Trim(), string.Empty)));
+        flat = SummaryLink.Replace(flat, m => m.Groups[2].Success ? m.Groups[2].Value : m.Groups[1].Value);
+        flat = Italic.Replace(Bold.Replace(flat, "$1"), "$1");
+        flat = UnderscoreItalic.Replace(flat, "$1").Replace("**", string.Empty);
+        flat = Regex.Replace(flat, @"\s+", " ").Trim();
         if (flat.Length <= maxLength) return flat;
         var cut = flat.LastIndexOf(' ', maxLength);
         return flat.Substring(0, cut > 40 ? cut : maxLength).TrimEnd('.', ',', ';') + "…";

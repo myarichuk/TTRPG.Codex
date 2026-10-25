@@ -28,7 +28,14 @@
   <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>Show</value></data>
   <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{# idea was left out because it did not fit this wizard.} other{# ideas were left out because they did not fit this wizard.}}</value></data>
   <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>only the pitch</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Everything is saved hidden from players: Library entries as drafts only you can see, wiki pages and secrets for the DM only, and cast members hidden. You can share them later.</value></data>
+  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Everything is saved hidden from players: Library entries as drafts only you can see, wiki pages and secrets for the DM only, cast members and places hidden. You can share them later.</value></data>
+  <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>also on the World page</value></data>
+  <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>Also add to the World page as a place, hidden from players</value></data>
+  <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>place</value></data>
+  <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>settlement</value></data>
+  <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Build with AI</value></data>
+  <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>Design a settlement with AI</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>also in the cast</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Also add to the cast, hidden from players</value></data>
   <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>Made by the world builder; the wiki page “{0}” tells their story.</value></data>
@@ -107,4 +114,25 @@
   <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>The leader and one member</value></data>
   <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>The leader and two members</value></data>
   <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>Also write a secret the party can uncover (DM only, in Lore)</value></data>
+  <data name="WorldBuilder.Recipe.settlement.Title" xml:space="preserve"><value>Settlement with AI</value></data>
+  <data name="WorldBuilder.Recipe.settlement.Intro" xml:space="preserve"><value>Answer what you care about and leave the rest to the AI. It proposes the settlement, its places, people and powers, and rumours; rename, rewrite or untick any of them before anything is saved.</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size" xml:space="preserve"><value>Size</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.village" xml:space="preserve"><value>Village</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.town" xml:space="preserve"><value>Town</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.city" xml:space="preserve"><value>City</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.metropolis" xml:space="preserve"><value>Great city</value></data>
+  <data name="WorldBuilder.Recipe.settlement.land" xml:space="preserve"><value>Where is it?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.land.Hint" xml:space="preserve"><value>The land around it, e.g. a river delta, a mountain pass, an existing region's name.</value></data>
+  <data name="WorldBuilder.Recipe.settlement.knownFor" xml:space="preserve"><value>What is it known for?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.rulers" xml:space="preserve"><value>Who rules it?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.trouble" xml:space="preserve"><value>What trouble is brewing?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone" xml:space="preserve"><value>Tone</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.heroic" xml:space="preserve"><value>Heroic</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.grim" xml:space="preserve"><value>Grim</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.whimsical" xml:space="preserve"><value>Whimsical</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.eerie" xml:space="preserve"><value>Eerie</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail" xml:space="preserve"><value>How much to write</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>A sketch: 2 places, 3 people, 1 faction</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>In full: 4 places, 5 people, 2 factions</value></data>
+  <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>Also write rumours the party can chase (DM only, in Lore)</value></data>
 </root>

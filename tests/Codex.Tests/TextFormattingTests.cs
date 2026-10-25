@@ -52,6 +52,16 @@ public class TextFormattingTests
         Assert.EndsWith("…", summary);
     }
 
+    [Theory]
+    [InlineData("## Sights\nStilts creak over [[Varr|the port]].\n\n## What it hides\nA *trapdoor*.", "Stilts creak over the port. A trapdoor.")]
+    [InlineData("### The city\nA port ruled by the [[Harbour Council]].\n- Population: about 9,000", "A port ruled by the Harbour Council. Population: about 9,000")]
+    [InlineData("## Only a heading", "Only a heading")]
+    [InlineData("**Bold** and _quiet_ text", "Bold and quiet text")]
+    public void Summary_ReadsAsPlainText(string text, string expected)
+    {
+        Assert.Equal(expected, TextFormatting.Summary(text, 200));
+    }
+
     [Fact]
     public void ToHtml_EmptyInput_IsEmpty()
     {
