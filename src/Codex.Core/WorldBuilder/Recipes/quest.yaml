@@ -1,0 +1,65 @@
+# A quest or story arc: its page (a fixed outline: hook, stakes, acts, who's involved, rewards, if the party fails), the
+# people and places it needs, clues the party can uncover and, if asked, a homebrew creature and a reward item.
+# There is no quest document yet (docs/WORLD_BUILDER.md, 3.2), so the quest is a wiki page.
+# Labels: Strings.WorldBuilder*.resx, WorldBuilder.Recipe.quest.*
+key: quest
+icon: scroll
+drafts: [wiki, npc, place, fact, homebrew]
+questions:
+  - key: hook
+    type: longText
+    ask: How are the heroes drawn in?
+    surprise: true
+  - key: stakes
+    type: text
+    ask: What happens if nobody acts?
+    surprise: true
+  - key: villain
+    type: text
+    ask: Who or what is behind the trouble?
+    surprise: true
+  - key: length
+    type: choice
+    ask: How long should it run?
+    options: [oneShot, shortArc, longArc]
+    default: oneShot
+  - key: party
+    type: text
+    ask: What level is the party, or how experienced?
+    surprise: true
+  - key: tone
+    type: choice
+    ask: What tone should it have?
+    options: [heroic, grim, whimsical, eerie]
+    surprise: true
+  - key: tieIn
+    type: text
+    ask: Should it tie into anything already in the campaign? If so, link to it.
+  - key: creature
+    type: toggle
+    ask: Also write a homebrew creature for the villain or their servants?
+    default: "true"
+  - key: reward
+    type: toggle
+    ask: Also write a homebrew item as a reward?
+    default: "false"
+prompt: |
+  Design one original quest for the campaign and everything the game master needs to run it. Return exactly one draft
+  of kind "wiki" for the quest itself: its name is the quest's title, and its pitch is the hook in one sentence. How
+  much to return depends on the length the game master chose: for "oneShot", two people, one or two places and one
+  clue; for "shortArc", three people, two places and two clues; for "longArc", four people, three places and two
+  clues. People are drafts of kind "npc", the villain (or whoever is behind the trouble) first, each with their part in
+  the quest and one memorable trait in the pitch. Places are drafts of kind "place" where the quest's scenes happen.
+  Clues are drafts of kind "fact" whose name is the clue itself, one sentence the party can uncover that moves them
+  toward the truth. If the game master asked for a creature, add one draft of kind "homebrew" whose type is the
+  content type for creatures: the villain's own stat block or their servants'. If they asked for a reward, add one
+  draft of kind "homebrew" whose type is the content type for magic items. Pitch both to the party's level. Every
+  draft links to the quest, and the quest links to all of them. Where the game master named something already in the
+  campaign, link to its existing page.
+write:
+  wiki: |
+    This page is the quest itself. Use exactly these sections, in this order: Hook; Stakes; Acts, with one short
+    subsection per act or scene (three for a one-shot, three or four for a short arc, five to seven for a long arc),
+    each giving the goal, the obstacle and what moves the story on; Who's involved; Rewards; If the party fails.
+  homebrew: |
+    This entry belongs to a quest: match its power to the party's level from the game master's answers.

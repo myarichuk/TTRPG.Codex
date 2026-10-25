@@ -85,6 +85,7 @@ public sealed record WorldOutlineRequest(
 /// <param name="Fields">For a homebrew draft, the fields to fill.</param>
 /// <param name="Related">The bundle's other drafts, as "Name (kind): pitch".</param>
 /// <param name="Kind">The draft's kind (<see cref="DraftKinds"/>), which picks how a page or a secret is written.</param>
+/// <param name="Guidance">The recipe's own instructions for this kind (<see cref="WorldRecipe.Write"/>), if any.</param>
 public sealed record WorldExpandRequest(
     string Name,
     string Pitch,
@@ -96,7 +97,8 @@ public sealed record WorldExpandRequest(
     IReadOnlyList<string> ExistingPages,
     string? CampaignContext = null,
     string? Language = null,
-    string Kind = DraftKinds.Wiki);
+    string Kind = DraftKinds.Wiki,
+    string? Guidance = null);
 
 public sealed record CharacterConceptRequest(
     string Concept,
@@ -309,7 +311,7 @@ public static class AiPrompts
                      "Reply with ONE JSON object and nothing else, shaped exactly like {\"description\": string, \"tags\": [string], \"properties\": {field key: value}}. " +
                      "The description is the entry's full text as the rules print it: what it does, with every number and rule a table needs, in the markdown subset (**bold**, *italic*, \"- \" bullets). " +
                      "Fill every field that applies, following the field specification: numbers as numbers within min and max, dropdowns as one of the listed options, booleans as true/false, tag lists as arrays of strings, collections as arrays of objects with \"name\" and \"description\", text as a string. Leave out fields that do not apply. " +
-                     "Keep the numbers in line with official material of the same power. Tags are two to five short lower-case words. Use original names only." + language;
+                     "Keep the numbers in line with official material of the same power. Tags are two to five short lower-case words. Use original names only." + GuidanceNote(r.Guidance) + language;
 
         var sb = new StringBuilder();
         sb.AppendLine($"Entry: {r.Name} ({r.TypeLabel ?? "entry"})");
@@ -355,7 +357,7 @@ public static class AiPrompts
             ? ""
             : "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). ";
         var system = $"You write {shape}This is for a {r.SystemName} tabletop campaign. " + links +
-                     "Use original names only. Reply with the text only. " + StyleFor(r.Language);
+                     "Use original names only. Reply with the text only." + GuidanceNote(r.Guidance) + " " + StyleFor(r.Language);
 
         var sb = new StringBuilder();
         sb.AppendLine((r.Kind == DraftKinds.Fact ? "Secret: " : "Page: ") + r.Name);
@@ -370,6 +372,9 @@ public static class AiPrompts
         AppendList(sb, "Existing wiki pages", r.ExistingPages);
         return (system, sb.ToString());
     }
+
+    private static string GuidanceNote(string? guidance) =>
+        string.IsNullOrWhiteSpace(guidance) ? "" : " " + string.Join(' ', guidance.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
     private static string CharacterLanguageNote(string? language)
     {

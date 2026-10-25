@@ -64,6 +64,10 @@ public sealed class WorldRecipe
     /// <summary>The English brief for the outline call: what to design and how many drafts of each kind.</summary>
     public string Prompt { get; set; } = string.Empty;
 
+    /// <summary>Extra English instructions for writing a draft of a kind in full, keyed by kind (a quest page's fixed
+    /// sections, say); a kind without one is written the usual way.</summary>
+    public Dictionary<string, string> Write { get; set; } = new();
+
     public RecipeQuestion? Question(string key) =>
         Questions.FirstOrDefault(q => string.Equals(q.Key, key, StringComparison.OrdinalIgnoreCase));
 }
@@ -133,6 +137,7 @@ public static class WorldRecipes
         if (recipe.Drafts.Count == 0) problems.Add("drafts lists no kinds");
         problems.AddRange(recipe.Drafts.Where(k => !DraftKinds.All.Contains(k)).Select(k => $"unknown draft kind \"{k}\""));
         if (recipe.Questions.Count == 0) problems.Add("no questions");
+        problems.AddRange(recipe.Write.Keys.Where(k => !recipe.Drafts.Contains(k)).Select(k => $"write: \"{k}\" is not one of the recipe's drafts"));
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var q in recipe.Questions)

@@ -35,6 +35,8 @@
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>место</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>поселение</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Создать с ИИ</value></data>
+  <data name="WorldBuilder.Open.Quest" xml:space="preserve"><value>Создать задание с ИИ</value></data>
+  <data name="WorldBuilder.Tag.quest" xml:space="preserve"><value>задание</value></data>
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>Создать поселение с ИИ</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>также в составе</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Также добавить в состав, скрытым от игроков</value></data>
@@ -135,4 +137,26 @@
   <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>Набросок: 2 места, 3 персонажа, 1 фракция</value></data>
   <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>Подробно: 4 места, 5 персонажей, 2 фракции</value></data>
   <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>Также написать слухи, по которым может пойти группа (только для мастера, в преданиях)</value></data>
+  <data name="WorldBuilder.Recipe.quest.Title" xml:space="preserve"><value>Задание с ИИ</value></data>
+  <data name="WorldBuilder.Recipe.quest.Intro" xml:space="preserve"><value>Ответьте на то, что вам важно, остальное оставьте ИИ. Он предложит страницу задания, нужных людей и места, улики, а при желании существо или награду; до сохранения любой черновик можно переименовать, переписать или снять отметку.</value></data>
+  <data name="WorldBuilder.Recipe.quest.hook" xml:space="preserve"><value>Завязка</value></data>
+  <data name="WorldBuilder.Recipe.quest.hook.Hint" xml:space="preserve"><value>Как герои втягиваются, например: мольба незнакомца, кража, вызов.</value></data>
+  <data name="WorldBuilder.Recipe.quest.stakes" xml:space="preserve"><value>Что на кону?</value></data>
+  <data name="WorldBuilder.Recipe.quest.stakes.Hint" xml:space="preserve"><value>Что случится, если никто не вмешается.</value></data>
+  <data name="WorldBuilder.Recipe.quest.villain" xml:space="preserve"><value>Кто за этим стоит?</value></data>
+  <data name="WorldBuilder.Recipe.quest.length" xml:space="preserve"><value>Длительность</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.oneShot" xml:space="preserve"><value>Одна сессия</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>Короткая арка (несколько сессий)</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>Длинная арка</value></data>
+  <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>Группа</value></data>
+  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>Уровень или опыт, например: 3-й уровень или совсем новички.</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>Настроение</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>Мрачное</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.whimsical" xml:space="preserve"><value>Причудливое</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.eerie" xml:space="preserve"><value>Жуткое</value></data>
+  <data name="WorldBuilder.Recipe.quest.tieIn" xml:space="preserve"><value>Связать с</value></data>
+  <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>Необязательно: фракция, поселение или персонаж, уже описанные в вики.</value></data>
+  <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>Также написать собственное существо для злодея или его слуг (черновик в библиотеке)</value></data>
+  <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>Также написать собственный предмет-награду (черновик в библиотеке)</value></data>
 </root>

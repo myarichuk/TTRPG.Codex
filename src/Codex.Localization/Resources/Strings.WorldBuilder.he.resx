@@ -35,6 +35,8 @@
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>מקום</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>יישוב</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>
+  <data name="WorldBuilder.Open.Quest" xml:space="preserve"><value>עיצוב משימה עם בינה מלאכותית</value></data>
+  <data name="WorldBuilder.Tag.quest" xml:space="preserve"><value>משימה</value></data>
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>עיצוב יישוב עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>גם בצוות</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>להוסיף גם לצוות, מוסתר מהשחקנים</value></data>
@@ -135,4 +137,26 @@
   <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>סקיצה: 2 מקומות, 3 דמויות, פלג אחד</value></data>
   <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>מלא: 4 מקומות, 5 דמויות, 2 פלגים</value></data>
   <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>לכתוב גם שמועות שהחבורה יכולה לרדוף אחריהן (לשליט המבוך בלבד, באגדות עולם)</value></data>
+  <data name="WorldBuilder.Recipe.quest.Title" xml:space="preserve"><value>משימה עם בינה מלאכותית</value></data>
+  <data name="WorldBuilder.Recipe.quest.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע את דף המשימה, את האנשים והמקומות שהיא צריכה, רמזים, ואם תרצו גם יצור או פרס; לפני השמירה אפשר לשנות שם, לכתוב מחדש או לבטל סימון של כל אחד מהם.</value></data>
+  <data name="WorldBuilder.Recipe.quest.hook" xml:space="preserve"><value>הפתיחה</value></data>
+  <data name="WorldBuilder.Recipe.quest.hook.Hint" xml:space="preserve"><value>איך הגיבורים נמשכים פנימה, למשל: תחינה של זר, גניבה, זימון.</value></data>
+  <data name="WorldBuilder.Recipe.quest.stakes" xml:space="preserve"><value>מה מונח על הכף?</value></data>
+  <data name="WorldBuilder.Recipe.quest.stakes.Hint" xml:space="preserve"><value>מה יקרה אם אף אחד לא יפעל.</value></data>
+  <data name="WorldBuilder.Recipe.quest.villain" xml:space="preserve"><value>מי עומד מאחורי זה?</value></data>
+  <data name="WorldBuilder.Recipe.quest.length" xml:space="preserve"><value>אורך</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.oneShot" xml:space="preserve"><value>מפגש אחד</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>קשת קצרה (כמה מפגשים)</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>קשת ארוכה</value></data>
+  <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>החבורה</value></data>
+  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>הדרגה או הניסיון, למשל: דרגה 3, או הרפתקנים חדשים לגמרי.</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>אווירה</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>קודרת</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
+  <data name="WorldBuilder.Recipe.quest.tieIn" xml:space="preserve"><value>לקשר אל</value></data>
+  <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>לא חובה: פלג, יישוב או דמות שכבר נמצאים בוויקי.</value></data>
+  <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>לכתוב גם יצור ביתי לנבל או למשרתיו (טיוטה בספרייה)</value></data>
+  <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>לכתוב גם חפץ ביתי כפרס (טיוטה בספרייה)</value></data>
 </root>

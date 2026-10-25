@@ -35,6 +35,8 @@
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>place</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>settlement</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Build with AI</value></data>
+  <data name="WorldBuilder.Open.Quest" xml:space="preserve"><value>Design a quest with AI</value></data>
+  <data name="WorldBuilder.Tag.quest" xml:space="preserve"><value>quest</value></data>
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>Design a settlement with AI</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>also in the cast</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Also add to the cast, hidden from players</value></data>
@@ -135,4 +137,26 @@
   <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>A sketch: 2 places, 3 people, 1 faction</value></data>
   <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>In full: 4 places, 5 people, 2 factions</value></data>
   <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>Also write rumours the party can chase (DM only, in Lore)</value></data>
+  <data name="WorldBuilder.Recipe.quest.Title" xml:space="preserve"><value>Quest with AI</value></data>
+  <data name="WorldBuilder.Recipe.quest.Intro" xml:space="preserve"><value>Answer what you care about and leave the rest to the AI. It proposes the quest page, the people and places it needs, clues, and a creature or reward if you like; rename, rewrite or untick any of them before anything is saved.</value></data>
+  <data name="WorldBuilder.Recipe.quest.hook" xml:space="preserve"><value>The hook</value></data>
+  <data name="WorldBuilder.Recipe.quest.hook.Hint" xml:space="preserve"><value>How the heroes get drawn in, e.g. a stranger's plea, a theft, a summons.</value></data>
+  <data name="WorldBuilder.Recipe.quest.stakes" xml:space="preserve"><value>What's at stake?</value></data>
+  <data name="WorldBuilder.Recipe.quest.stakes.Hint" xml:space="preserve"><value>What happens if nobody acts.</value></data>
+  <data name="WorldBuilder.Recipe.quest.villain" xml:space="preserve"><value>Who is behind it?</value></data>
+  <data name="WorldBuilder.Recipe.quest.length" xml:space="preserve"><value>Length</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.oneShot" xml:space="preserve"><value>One session</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>A short arc (a few sessions)</value></data>
+  <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>A long arc</value></data>
+  <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>The party</value></data>
+  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>Their level or experience, e.g. level 3, or brand-new adventurers.</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>Tone</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>Heroic</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>Grim</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.whimsical" xml:space="preserve"><value>Whimsical</value></data>
+  <data name="WorldBuilder.Recipe.quest.tone.eerie" xml:space="preserve"><value>Eerie</value></data>
+  <data name="WorldBuilder.Recipe.quest.tieIn" xml:space="preserve"><value>Tie it into</value></data>
+  <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>Optional: a faction, settlement or person already in the wiki.</value></data>
+  <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>Also write a homebrew creature for the villain or their servants (a Library draft)</value></data>
+  <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>Also write a homebrew reward item (a Library draft)</value></data>
 </root>
