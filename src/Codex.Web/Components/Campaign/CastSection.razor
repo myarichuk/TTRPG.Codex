@@ -227,7 +227,7 @@
 
         if (!string.IsNullOrEmpty(actor.BlueprintId))
         {
-            parts.Add(Registry.GetActor(actor.BlueprintId) == null ? L["Campaign.Cast.MissingContent", actor.BlueprintId] : L["Campaign.Cast.From", actor.BlueprintId.Split(':').Last()]);
+            parts.Add(Registry.ActorName(actor.BlueprintId, L.Culture.Name) is { } from ? L["Campaign.Cast.From", from] : L["Campaign.Cast.MissingContent", actor.BlueprintId]);
         }
 
         return parts.Count == 0 ? KindLabel(actor.Kind) : string.Join(" · ", parts);
