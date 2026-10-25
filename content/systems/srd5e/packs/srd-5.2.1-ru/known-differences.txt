@@ -1,50 +1,29 @@
+# Reviewed against the SRD 5.2.1 PDF: in every entry below the Russian is right and the difference is in our English (tables merged into
+# paragraphs, text of a neighbouring entry, a dropped card, "1/2" read as two numbers) or only in how numbers are counted (species rows
+# named "Darkvision (60 ft.)" while the Russian row keeps the number in its text). The creatures
+# that OmnisGM's text lacked rows for were completed by tools/omnisgm-import/supplement_monsters.py.
 # Entries whose English differs from the text OmnisGM translated, so a failed number check is not the translation's fault (see tools/omnisgm-import)
-ancient-copper-dragon
 animate-objects
-awakened-tree
-axe-beak
-bandit-captain
 bead-of-force
-black-pudding
 control-water
 dragonborn
 dwarf
 elf
-erinyes
 find-steed
 forcecage
 giant-insect
-giant-octopus
-gladiator
 gnome
-goblin-boss
 goliath
-green-hag
-knight
-marilith
-mummy-lord
 mysterious-deck
-nalfeshnee
-night-hag
-noble
-ochre-jelly
 orc
-pirate-captain
 potion-of-flying
 potion-of-heroism
-priest
 prismatic-spray
 reincarnate
-rust-monster
-sea-hag
-shield-guardian
-shrieker-fungus
-sphinx-of-wonder
-stone-giant
 summon-dragon
 tiefling
-warrior-veteran
 
 # Defects in our English text, not in the translation (the Russian is right):
 bottle-glass  # "11/2 pints" should be 1½ pints
 ladder  # a stray "Lamp (5 SP)" from the PDF layout got into the English description
+ancient-copper-dragon  # PDF: Mind Jolt casts Mind Spike at level 5; our English says level 4 (the adult dragon's text)

@@ -73,7 +73,7 @@ public sealed class TranslationChecker
             Add(Severity.Error, "forbidden-field", $"'{field}' is not display text; a translation may only carry id, name, description, flavor text and text properties");
 
         var name = Text(item, "name");
-        if (string.IsNullOrWhiteSpace(name)) Add(Severity.Error, "no-name", "the translated name is empty");
+        if (string.IsNullOrWhiteSpace(name)) { if (!item.Keys.Any(k => ContentEntry.FlavorKeys.Contains(k, StringComparer.OrdinalIgnoreCase))) Add(Severity.Error, "no-name", "the translated name is empty"); }
         else if (name == source.Name && AnyLetter.IsMatch(name)) Add(Severity.Warning, "name-unchanged", $"name '{name}' is identical to the English one");
 
         var description = Text(item, "description");

@@ -83,7 +83,7 @@ public class ShippedTranslationPackTests : IAsyncLifetime
             .SelectMany(f => File.ReadLines(f).Where(l => l.StartsWith("- id: ")).Select(l => (Type: Path.GetFileName(Path.GetDirectoryName(f))!, Id: l[6..].Trim())))
             .ToList();
 
-        Assert.Equal(69, ids.Count);
+        Assert.Equal(locale == "ru" ? 991 : 69, ids.Count);   // ru also translates the spell, creature and magic-item flavor
         Assert.All(ids, x => Assert.NotNull(_registry.GetEntry("srd5e", x.Type, x.Id)));
         Assert.Empty(_loader.LoadWarnings);
     }
@@ -136,7 +136,7 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         Assert.Equal(original.Properties["hitPoints"], shown.Properties["hitPoints"]);
         Assert.Equal(original.Properties["challengeRating"], shown.Properties["challengeRating"]);
         Assert.Equal("Large", shown.Properties["size"]);                             // filtered on, so left in English
-        Assert.Equal("srd-5.2.1-ru", shown.Properties[ContentEntry.TranslationSourceKey]); // the footer credits the translator
+        Assert.Equal("codex-flavor-ru,srd-5.2.1-ru", shown.Properties[ContentEntry.TranslationSourceKey]); // the footer credits both translators
         Assert.False(original.Properties.ContainsKey(ContentEntry.TranslationSourceKey));
         Assert.False(shown.Properties.ContainsKey("traits"));                        // the translated description already lists them
         Assert.False(shown.Properties.ContainsKey("actions"));
@@ -188,5 +188,25 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         Assert.True(equipment >= 180, $"only {equipment} pieces of equipment are translated");
         var rules = _registry.GetEntries("srd5e", "rule").Count(e => _registry.Localize(e, "ru").Name != e.Name);
         Assert.True(rules >= 85, $"only {rules} rule entries are translated");
+    }
+
+    [Fact]
+    public void RussianCreatureForms_ReactionsAndMulticlassing_AreCovered()
+    {
+        var hybrid = _registry.Localize(_registry.GetEntry("srd5e", "monster", "werewolf-hybrid")!, "ru");
+        Assert.Equal("Вервольф, гибридная форма", hybrid.Name);
+        Assert.Contains("Укус", hybrid.Description);
+
+        var human = _registry.Localize(_registry.GetEntry("srd5e", "monster", "werewolf-human")!, "ru");
+        Assert.DoesNotContain("Укус", human.Description);   // the human form has no bite in our English either
+
+        var knight = _registry.Localize(_registry.GetEntry("srd5e", "monster", "knight")!, "ru");
+        Assert.Contains("Парирование", knight.Description);  // OmnisGM's text lacks the Reaction, we added it
+
+        var barbarian = _registry.Localize(_registry.GetEntry("srd5e", "class", "barbarian")!, "ru");
+        Assert.Equal("Требование: СИЛ 13+. Получаемые владения: Щиты, Воинское оружие", barbarian.Properties["multiclassing"]);
+
+        var untranslated = _registry.GetEntries("srd5e", "monster").Count(e => _registry.Localize(e, "ru").Name == e.Name);
+        Assert.True(untranslated <= 5, $"{untranslated} creatures are still English");
     }
 }

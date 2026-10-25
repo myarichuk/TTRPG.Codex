@@ -10,7 +10,7 @@ translationOf: codex-flavor
 dependencies:
 - srd-5.2.1
 - codex-flavor
-description: 'Machine-drafted Russian translation of the original flavor text and entry names for backgrounds, classes, conditions, feats, species and subclasses.'
+description: 'Machine-drafted Russian translation of the original flavor text (and, for the character options, entry names) for backgrounds, classes, conditions, feats, species, subclasses, spells, creatures and magic items.'
 authors:
 - TTRPG.Codex contributors
 license:

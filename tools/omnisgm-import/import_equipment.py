@@ -27,6 +27,21 @@ DAMAGE = {"Bludgeoning": "дробящий", "Piercing": "колющий", "Slas
 COINS = {"gp": "зм", "sp": "см", "cp": "мм", "ep": "эм", "pp": "пм"}
 
 
+# OmnisGM has no block of its own for these: the holy symbols share one block (the symbol table is dropped, our entries are the rows),
+# and the Spellbook, the two Spell Scrolls and the Lance's remark are translated here from our English text.
+SHARED_BLOCK = {"amulet": "holysymbol", "emblem": "holysymbol", "reliquary": "holysymbol"}
+MANUAL = {
+    "lance": ("Копьё для турнира", "Двуручное, если не верхом"),
+    "spellbook": ("Книга заклинаний", "Незаменимая для волшебников, книга заклинаний — это переплетённый в кожу том из 100 пустых пергаментных страниц, пригодных для записи заклинаний."),
+    "spell-scroll-cantrip": ("Свиток заклинания, заговор", None),
+    "spell-scroll-level-1": ("Свиток заклинания, 1-й уровень", None),
+}
+SCROLL = ("*Свиток заклинания* (заговор) или *свиток заклинания* (1-й уровень) — магический предмет, содержащий слова заговора или заклинания 1-го уровня "
+          "соответственно, определяемого создателем свитка. Если заклинание есть в списке заклинаний вашего класса, вы можете прочитать свиток и сотворить "
+          "заклинание с обычным временем сотворения и без предоставления материальных компонентов.\n\nЕсли заклинание требует спасброска или броска атаки, "
+          "СЛ спасброска заклинания равна 13, а бонус атаки +5. Свиток рассыпается в прах по завершении сотворения.")
+
+
 def tables(path):
     """Every pipe table of the file as a list of rows (each a list of cells), header and separator rows included."""
     out, current = [], None
@@ -152,6 +167,13 @@ def main():
         body_en = "\n\n\n".join(parts[2:]).strip() if len(parts) > 2 else ""
         ru_name = names.get(key)
         block = blocks.get(key)
+        if sid in SHARED_BLOCK:
+            shared = blocks[SHARED_BLOCK[sid]]
+            block = (shared[0], shared[1].split("Таблица:")[0].strip())
+        manual = MANUAL.get(sid)
+        if manual:
+            ru_name = manual[0]
+            block = (manual[0], manual[1] or SCROLL)
         if key in poisons:
             pname, pkind, pbody = poisons[key]
             cost = re.search(r"\*\*Cost:\*\*\s*([\d,.]+) (\w\w)", stats_part)

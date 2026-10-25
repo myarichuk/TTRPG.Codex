@@ -9,10 +9,10 @@ locale: ru
 translationOf: srd-5.2.1
 dependencies:
 - srd-5.2.1
-description: 'Russian translation of the SRD 5.2.1 classes, subclasses, species, backgrounds, feats, spells, creatures, magic items, equipment, conditions and the rule entries (skills, abilities, alignments, damage types, languages, weapon properties; names and rules text), mostly from the OmnisGM translation. Spells that failed a check use a machine draft; creatures and items that failed stay in English. The long rules glossary chapters are not translated yet.'
+description: 'Russian translation of the SRD 5.2.1 classes, subclasses, species, backgrounds, feats, spells, creatures, magic items, equipment, conditions and the rule entries (skills, abilities, alignments, damage types, languages, weapon properties; names and rules text), mostly from the OmnisGM translation. Spells that failed a check use a machine draft; the Reactions and hag Coven Magic rows that OmnisGM''s text lacks were translated by us from the English. The long rules glossary chapters are not part of this system content.'
 authors:
 - Wizards of the Coast LLC (original rules text)
-- OmnisGM / Petr Radilov (Russian translation of the classes, subclasses, species, backgrounds, feats, most spells, 302 creatures, 242 magic items, 189 pieces of equipment, the conditions and the rule entries, CC BY 4.0, https://rules.omnisgm.com)
+- OmnisGM / Petr Radilov (Russian translation of the classes, subclasses, species, backgrounds, feats, most spells, 340 creatures and creature forms, 243 magic items, 189 pieces of equipment, the conditions and the rule entries, CC BY 4.0, https://rules.omnisgm.com)
 - TTRPG.Codex contributors (machine-drafted translation of the remaining spells, checked by tools/Codex.TranslationCheck)
 license:
   name: CC-BY-4.0
