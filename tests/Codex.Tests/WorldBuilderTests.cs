@@ -413,7 +413,9 @@ public class WorldBuilderTests
         homebrew.TrySaveAsync(Arg.Any<HomebrewEntryDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
         {
             if (saving.FailHomebrew) return false;
-            entries.Add(ci.Arg<HomebrewEntryDocument>());
+            var entry = ci.Arg<HomebrewEntryDocument>();
+            entry.Id = $"entry-{entries.Count + 1}"; // as the repository does
+            entries.Add(entry);
             return true;
         });
         regions.SaveAsync(Arg.Do<RegionDocument>(saving.NewRegions.Add), Arg.Any<CampaignAccess>()).Returns(true);
@@ -817,7 +819,7 @@ public class WorldBuilderTests
         var bundle = new WorldBundle();
         bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "The Drowned Bell", OutlineName = "The Drowned Bell", Body = "Fight the [[d2]]." });
         bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Bell-drowned", OutlineName = "Bell-drowned", Pitch = "A ringer." });
-        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Fact, Name = "The bell rings at dusk", OutlineName = "The bell rings at dusk", Links = { "d1" } });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Fact, Name = "The bell rings at dusk", OutlineName = "The bell rings at dusk", Links = { "d1", "d2" } });
         saving.FailHomebrew = true;
 
         await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("quest")!, bundle));
@@ -826,7 +828,8 @@ public class WorldBuilderTests
 
         Assert.Single(saving.Pages); // saved by the first attempt only
         Assert.Single(saving.Entries);
-        Assert.Equal("page-1", Assert.Single(Assert.Single(saving.Facts).RelatedEntityIds)); // the secret still knows the page
+        // The secret still knows the page from the first attempt, and the creature from the second.
+        Assert.Equal(new[] { "page-1", "entry-1" }, Assert.Single(saving.Facts).RelatedEntityIds);
         Assert.Equal((0, 1, 1), (retried.Pages.Count, retried.Entries.Count, retried.Facts.Count));
     }
 

@@ -166,9 +166,13 @@
                                     </li>
                                 }
                             </ul>
-                            @if (bundle.Dropped.Count > 0)
+                            @if (bundle.Dropped.Count(d => d.Reason != DropReason.TooMany) is > 0 and var unfit)
                             {
-                                <p class="small-muted mt-2 mb-0" data-testid="world-dropped">@L["WorldBuilder.Drafts.Dropped", bundle.Dropped.Count]</p>
+                                <p class="small-muted mt-2 mb-0" data-testid="world-dropped">@L["WorldBuilder.Drafts.Dropped", unfit]</p>
+                            }
+                            @if (bundle.Dropped.Any(d => d.Reason == DropReason.TooMany))
+                            {
+                                <p class="small-muted mt-2 mb-0" data-testid="world-too-many">@L["WorldBuilder.Drafts.TooMany", WorldBundleParser.MaxDrafts]</p>
                             }
                         }
                         break;

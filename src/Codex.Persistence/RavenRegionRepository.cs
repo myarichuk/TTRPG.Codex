@@ -39,6 +39,7 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         if (!access.IsDm)
         {
             region.Locations = region.Locations.Where(l => l.Visibility == ActorVisibility.Known).ToList();
+            if (region.Locations.Count == 0) return null; // nothing revealed yet, as in GetVisibleForCampaignAsync
         }
 
         return region;

@@ -66,6 +66,8 @@
   <data name="WorldBuilder.Error.Required" xml:space="preserve"><value>Сначала ответьте на обязательные вопросы.</value></data>
   <data name="WorldBuilder.Error.Unusable" xml:space="preserve"><value>Модель не вернула пригодный черновик. Попробуйте ещё раз или выберите другую модель в настройках ИИ.</value></data>
   <data name="WorldBuilder.Error.Unreachable" xml:space="preserve"><value>Не удалось связаться с поставщиком ИИ. Проверьте подключение и адрес в настройках ИИ, затем попробуйте ещё раз.</value></data>
+  <data name="WorldBuilder.Error.TooSlow" xml:space="preserve"><value>Модель слишком долго не отвечала. Попробуйте ещё раз или выберите более быструю модель в настройках ИИ.</value></data>
+  <data name="WorldBuilder.Drafts.TooMany" xml:space="preserve"><value>ИИ предложил больше {0} идей; оставлены только первые {0}.</value></data>
   <data name="WorldBuilder.Replace.Title" xml:space="preserve"><value>Заменить черновики?</value></data>
   <data name="WorldBuilder.Replace.Body" xml:space="preserve"><value>Новые идеи заменят текущие черновики, включая уже написанные.</value></data>
   <data name="WorldBuilder.Replace.Confirm" xml:space="preserve"><value>Заменить</value></data>

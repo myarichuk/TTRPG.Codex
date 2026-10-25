@@ -577,6 +577,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
         Assert.Empty(await _regionRepository.GetVisibleForCampaignAsync(playerAccess));
+        Assert.Null(await _regionRepository.GetAsync(planned.Id, playerAccess));
         Assert.Equal(2, (await _regionRepository.GetVisibleForCampaignAsync(dmAccess)).Count());
     }
 

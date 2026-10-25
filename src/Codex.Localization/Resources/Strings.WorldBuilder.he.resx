@@ -66,6 +66,8 @@
   <data name="WorldBuilder.Error.Required" xml:space="preserve"><value>קודם יש לענות על שאלות החובה.</value></data>
   <data name="WorldBuilder.Error.Unusable" xml:space="preserve"><value>המודל לא החזיר טיוטה שמישה. נסו שוב או בחרו מודל אחר בהגדרות הבינה המלאכותית.</value></data>
   <data name="WorldBuilder.Error.Unreachable" xml:space="preserve"><value>לא ניתן להתחבר לספק הבינה המלאכותית. בדקו את החיבור ואת הכתובת בהגדרות הבינה המלאכותית, ונסו שוב.</value></data>
+  <data name="WorldBuilder.Error.TooSlow" xml:space="preserve"><value>המודל לקח יותר מדי זמן לענות. נסו שוב או בחרו מודל מהיר יותר בהגדרות הבינה המלאכותית.</value></data>
+  <data name="WorldBuilder.Drafts.TooMany" xml:space="preserve"><value>הבינה המלאכותית הציעה יותר מ-{0} רעיונות; נשמרו רק {0} הראשונים.</value></data>
   <data name="WorldBuilder.Replace.Title" xml:space="preserve"><value>להחליף את הטיוטות?</value></data>
   <data name="WorldBuilder.Replace.Body" xml:space="preserve"><value>רעיונות חדשים יחליפו את הטיוטות הקיימות, גם את אלה שכבר נכתבו.</value></data>
   <data name="WorldBuilder.Replace.Confirm" xml:space="preserve"><value>החלפה</value></data>

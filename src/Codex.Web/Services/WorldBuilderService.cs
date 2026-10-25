@@ -466,5 +466,10 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         {
             throw new LocalizedException("WorldBuilder.Error.Unreachable");
         }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            // HttpClient's own timeout (a slow local model), not the DM closing the wizard.
+            throw new LocalizedException("WorldBuilder.Error.TooSlow");
+        }
     }
 }
