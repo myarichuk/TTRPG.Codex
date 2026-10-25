@@ -786,18 +786,19 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
     public static string? MergeUnclosedBold(string? text)
     {
         if (text == null) return null;
-        var paragraphs = text.Split("\n\n").ToList();
+        // Paragraphs are lines here; the pack's folded YAML shows each one as a blank-line-separated block.
+        var paragraphs = text.Split('\n').ToList();
         for (var i = paragraphs.Count - 1; i > 0; i--)
         {
             var paragraph = paragraphs[i].Trim();
-            if (paragraph.StartsWith("**", StringComparison.Ordinal) && paragraph.IndexOf("**", 2, StringComparison.Ordinal) < 0)
+            if (paragraph.StartsWith("**", StringComparison.Ordinal) && paragraph.IndexOf("**", 2, StringComparison.Ordinal) < 0 && paragraphs[i - 1].Trim().Length > 0)
             {
                 paragraphs[i - 1] = paragraphs[i - 1].TrimEnd() + " " + paragraph[2..].TrimStart();
                 paragraphs.RemoveAt(i);
             }
         }
 
-        return string.Join("\n\n", paragraphs);
+        return string.Join("\n", paragraphs);
     }
 
     /// <summary>Typed armor data for the sheet rules: armorType, armorBase (body armor) or armorClassBonus
