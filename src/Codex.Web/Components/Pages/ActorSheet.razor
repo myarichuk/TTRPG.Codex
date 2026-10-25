@@ -70,7 +70,7 @@ else
                         }
                         @if (!string.IsNullOrEmpty(actor.BlueprintId))
                         {
-                            <span class="pill">@L["Actor.Sheet.From", actor.BlueprintId.Split(':').Last()]</span>
+                            <span class="pill">@L["Actor.Sheet.From", ContentRegistry.ActorName(actor.BlueprintId, L.Culture.Name) ?? actor.BlueprintId.Split(':').Last()]</span>
                         }
                         @foreach (var plaque in PlatePlaques())
                         {
