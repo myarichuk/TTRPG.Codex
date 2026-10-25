@@ -62,13 +62,13 @@ What is translated today (all machine-drafted; the English text stays authoritat
 | UI, launcher, system labels | yes | yes |
 | Names and lore of classes, subclasses, species, backgrounds, feats, conditions (`codex-flavor-<lang>`) | yes | yes |
 | Flavor of spells | yes | yes (names too, in `srd-5.2.1-he`) |
-| Flavor of creatures and magic items | yes | not yet |
+| Flavor of creatures and magic items | yes | yes |
 | Rules text and names: classes, subclasses, species, backgrounds, feats, conditions, rule entries (`srd-5.2.1-<lang>`) | yes (OmnisGM, CC BY 4.0) | yes (own draft) |
 | Rules text and names: spells | yes | yes |
-| Rules text and names: creatures, magic items, equipment | yes | not yet |
+| Rules text and names: creatures, magic items, equipment | yes | yes (own draft) |
 
 Hebrew terminology follows the community Hebrew SRD (5esrd.co.il) as a vocabulary reference only: see
-[i18n-he-terms.md](i18n-he-terms.md) for every term decision. The Hebrew drafts keep numbers, dice (`8d6`) and units (feet)
-exactly as in the English so the checker can verify them; `tools/Codex.TranslationCheck/translator-prompt-he*.md`,
-`prepare_flavor.py` and `merge_he_batches.py` are the pipeline. Properties whose values are English display words used as data
+[i18n-he-terms.md](i18n-he-terms.md) for every term decision and [i18n-he-native-review.md](i18n-he-native-review.md) for the names a Hebrew speaker should confirm (languages, weapon masteries and properties, class and subclass feature names). The Hebrew drafts keep numbers, dice (`8d6`) and units (feet)
+exactly as in the English so the checker can verify them; `tools/Codex.TranslationCheck/translator-prompt-he*.md` (spells, character options, creatures, items and equipment),
+`prepare_flavor.py`, `merge_he_batches.py` and `harmonize_he_gear.py` (makes gear words in creatures and items match the equipment names) are the pipeline. Properties whose values are English display words used as data
 (`school`, `classes`, `size`, tags) stay canonical and are shown through the system's value translations.

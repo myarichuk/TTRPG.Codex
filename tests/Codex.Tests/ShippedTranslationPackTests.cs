@@ -82,7 +82,7 @@ public class ShippedTranslationPackTests : IAsyncLifetime
             .SelectMany(f => File.ReadLines(f).Where(l => l.StartsWith("- id: ")).Select(l => (Type: Path.GetFileName(Path.GetDirectoryName(f))!, Id: l[6..].Trim())))
             .ToList();
 
-        Assert.Equal(locale == "ru" ? 991 : 408, ids.Count);   // ru also translates the spell, creature and magic-item flavor; he so far the spell flavor
+        Assert.Equal(991, ids.Count);   // 69 character options + 339 spells + 340 creatures + 243 magic items
         Assert.All(ids, x => Assert.NotNull(_registry.GetEntry("srd5e", x.Type, x.Id)));
         Assert.Empty(_loader.LoadWarnings);
     }
@@ -168,6 +168,35 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         var translated = _registry.GetEntries("srd5e", "spell").Count(e => _registry.Localize(e, "he").Name != e.Name);
         Assert.Equal(_registry.GetEntries("srd5e", "spell").Count(), translated);
         Assert.Contains("fireball", _registry.Search("srd5e", "כדור אש", type: "spell", culture: "he").Select(e => e.Id));
+    }
+
+    [Fact]
+    public void HebrewCreaturesItemsAndEquipment_AreTranslated_AndTheRulesDataIsUntouched()
+    {
+        var aboleth = _registry.GetEntry("srd5e", "monster", "aboleth")!;
+        var shown = _registry.Localize(aboleth, "he");
+        Assert.Equal("אבולת", shown.Name);
+        Assert.Contains("5d10", shown.Description);                                   // dice unchanged
+        Assert.Contains("דרגת שריון", shown.Description);
+        Assert.Equal(aboleth.Properties["hitPoints"], shown.Properties["hitPoints"]);
+        Assert.Equal("Large", shown.Properties["size"]);                              // canonical value stays English
+        Assert.True(aboleth.Properties.ContainsKey("actions"));                       // the rules data is untouched
+        Assert.False(shown.Properties.ContainsKey("actions"));
+        Assert.Matches("[א-ת]", shown.Properties["flavor"]!.ToString()!);
+
+        var ring = _registry.Localize(_registry.GetEntry("srd5e", "magic-item", "ring-of-protection")!, "he");
+        Assert.Equal("טבעת הגנה", ring.Name);
+        Assert.Matches("[א-ת]", ring.Properties["flavor"]!.ToString()!);
+
+        var sword = _registry.Localize(_registry.GetEntry("srd5e", "equipment", "longsword")!, "he");
+        Assert.Equal("חרב ארוכה", sword.Name);
+        Assert.Contains("1d8", sword.Description);
+
+        foreach (var type in new[] { "monster", "magic-item", "equipment" })
+        {
+            var entries = _registry.GetEntries("srd5e", type).ToList();
+            Assert.Equal(entries.Count, entries.Count(e => _registry.Localize(e, "he").Name != e.Name));
+        }
     }
 
     [Fact]

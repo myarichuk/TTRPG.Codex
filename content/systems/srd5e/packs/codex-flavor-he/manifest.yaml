@@ -10,7 +10,7 @@ translationOf: codex-flavor
 dependencies:
 - srd-5.2.1
 - codex-flavor
-description: 'Machine-drafted Hebrew translation of the original flavor text and entry names for backgrounds, classes, conditions, feats, species and subclasses.'
+description: 'Machine-drafted Hebrew translation of the original flavor text and entry names for backgrounds, classes, conditions, feats, species and subclasses, and the flavor text of the spells, creatures (with habitat and behavior) and magic items.'
 authors:
 - TTRPG.Codex contributors
 license:

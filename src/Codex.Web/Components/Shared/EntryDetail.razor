@@ -24,7 +24,7 @@
                 }
                 @foreach (var tag in Item.Entry.Tags.Take(8))
                 {
-                    <span class="pill">@tag</span>
+                    <span class="pill">@TagLabel(tag)</span>
                 }
             </div>
         </div>
@@ -147,6 +147,18 @@
 
     /// <summary>The entry's art slot, rendered under the title (the Library passes an <see cref="ArtSlot"/>).</summary>
     [Parameter] public RenderFragment? Art { get; set; }
+
+    /// <summary>A tag as the reader should see it: translated when one of the type's fields knows the word (the tag stays English in the data).</summary>
+    private string TagLabel(string tag)
+    {
+        foreach (var field in Type?.Fields ?? new List<FieldDefinition>())
+        {
+            var shown = field.Display(tag);
+            if (!ReferenceEquals(shown, tag) && shown != tag) return shown;
+        }
+
+        return tag;
+    }
 
     private readonly string titleId = "entry-title-" + Guid.NewGuid().ToString("N")[..6];
 

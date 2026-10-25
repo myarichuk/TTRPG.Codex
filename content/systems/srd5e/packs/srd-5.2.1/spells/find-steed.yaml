@@ -7,9 +7,9 @@ description: >-
 
   **Casting Time:** Action  
 
-  **Range:** 30 feet Component: V, S  
+  **Range:** 30 feet  
 
-  **Components:**   
+  **Components:** V, S  
 
   **Duration:** Instantaneous
 
@@ -32,8 +32,10 @@ properties:
   level: 2
   school: Conjuration
   castingTime: Action
-  range: '30 feet Component: V, S'
-  components: []
+  range: 30 feet
+  components:
+  - V
+  - S
   duration: Instantaneous
   concentration: false
   ritual: false

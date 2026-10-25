@@ -17,6 +17,17 @@ Applied to `system.he.yaml`, `codex-flavor-he`, `Strings*.he.resx` and the gloss
 - Creature types, senses, combat actions and weapon properties follow the SRD site terms listed in section 3 onward; they are not in the Hebrew files yet.
 - Kept: שליט המבוך (שה״מ), קמפיין, מפגש, נקודות חיים, דרגת שריון, סבב, תא לחשים, פגיעה קריטית.
 
+## Decisions (stat blocks, items)
+
+Binding for the creature, magic item and equipment translations (full vocabulary in `tools/Codex.TranslationCheck/translator-prompt-he-monster.md` and `translator-prompt-he-item.md`).
+
+- Stat block lines: דרגת שריון, נקודות חיים, מהירות, יוזמה, אתגר (נק״נ for XP, תוסף שליטה for PB), זריקות הצלה, מיומנויות, עמידות / חסינות / רגישות, חושים, שפות, ציוד.
+- Sections: מאפיינים, פעולות, פעולות נוספות, תגובות, פעולות אגדיות, פעולות מאורה.
+- Attacks: התקפה בקרב פנים אל פנים / התקפה מרחוק, הישג, טווח, פגיעה, החטאה, כישלון, הצלחה, מחצית מהנזק; "Saving Throw: DC 14" is `זריקת הצלה בחוסן: דרגת קושי 14`.
+- Movement: חפירה, טיפוס, מעוף, שחייה, ריחוף. Senses: ראיית חושך, אל-ראייה, חוש-רעד, ראיית אמת, הבחנה קבועה.
+- Currency מ״ז / מ״כ / מ״נ / מ״פ (gp/sp/cp/pp); weight in פאונד (lb.), distances stay feet; dice stay Latin (`8d6`).
+- Magic items: חפץ קסום in prose (the type label stays פריט קסום); rarity words נפוץ / לא נפוץ / נדיר / נדיר מאוד / אגדי / חפץ עוצמה; attunement `דורש התאמה`.
+
 ---
 
 Purpose: decide which Hebrew terms Codex should use. This is a terminology reference only.

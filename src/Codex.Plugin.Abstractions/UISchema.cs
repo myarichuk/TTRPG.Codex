@@ -81,8 +81,18 @@ public class FieldDefinition
     public Dictionary<string, string>? OptionLabels { get; set; }
 
     /// <summary>The text to show for a stored dropdown/tag value; the value itself when it has no translation.</summary>
-    public string Display(string value) =>
-        OptionLabels != null && OptionLabels.TryGetValue(value, out var shown) ? shown : value;
+    public string Display(string value)
+    {
+        if (OptionLabels == null) return value;
+        if (OptionLabels.TryGetValue(value, out var shown)) return shown;
+        // Pack data and the system's own values differ in case ("lawful evil" vs "Lawful Evil").
+        foreach (var (key, label) in OptionLabels)
+        {
+            if (string.Equals(key, value, StringComparison.OrdinalIgnoreCase)) return label;
+        }
+
+        return value;
+    }
 }
 
 public record GraphEdgeSchema(

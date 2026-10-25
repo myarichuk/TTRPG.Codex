@@ -575,6 +575,8 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
 
     // ---- Spells ----
 
+    private static readonly Regex SpellRangeWithComponents = new(@"^(?<range>.+?)\s+Components?:\s*(?<components>[VSM](?:,\s*[VSM])*)$", RegexOptions.Compiled);
+
     private IEnumerable<ContentEntry> Spells()
     {
         foreach (var spell in All("Spells"))
@@ -588,7 +590,15 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Properties["level"] = (long)level;
             entry.Properties["school"] = school;
             entry.Properties["castingTime"] = spell.Str("casting_time") ?? "";
-            entry.Properties["range"] = spell.Str("range") ?? "";
+            // The source sometimes runs "Touch Component: V, S" together in the range and leaves components empty.
+            var range = spell.Str("range") ?? "";
+            var glued = SpellRangeWithComponents.Match(range);
+            if (glued.Success)
+            {
+                range = glued.Groups["range"].Value;
+                if (components.Count == 0) components = glued.Groups["components"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+            entry.Properties["range"] = range;
             entry.Properties["components"] = components.Cast<object>().ToList();
             if (spell.Str("material") is { } material) entry.Properties["material"] = material;
             entry.Properties["duration"] = spell.Str("duration") ?? "";

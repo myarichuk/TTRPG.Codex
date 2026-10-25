@@ -7,9 +7,9 @@ description: >-
 
   **Casting Time:** Action  
 
-  **Range:** 120 feet Component: V, S  
+  **Range:** 120 feet  
 
-  **Components:**   
+  **Components:** V, S  
 
   **Duration:** Instantaneous
 
@@ -27,8 +27,10 @@ properties:
   level: 0
   school: Evocation
   castingTime: Action
-  range: '120 feet Component: V, S'
-  components: []
+  range: 120 feet
+  components:
+  - V
+  - S
   duration: Instantaneous
   concentration: false
   ritual: false

@@ -348,6 +348,56 @@ values:
   Medium Armor: שריון בינוני
   Heavy Armor: שריון כבד
   Shields: מגנים
+  Medium or small: בינוני או קטן
+  Lawful Good: טוב וחוקי
+  Neutral Good: טוב וניטרלי
+  Chaotic Good: טוב וכאוטי
+  Lawful Neutral: ניטרלי וחוקי
+  Neutral: ניטרלי
+  Chaotic Neutral: ניטרלי וכאוטי
+  Lawful Evil: רע וחוקי
+  Neutral Evil: רע וניטרלי
+  Chaotic Evil: רע וכאוטי
+  Unaligned: ללא נטייה
+  Any Alignment: כל נטייה
+  aberration: שיקוץ
+  beast: חיה
+  celestial: יצור מרום
+  construct: יציר כפיים
+  dragon: דרקון
+  elemental: יסודן
+  fey: יצור פייה
+  fiend: בן-תופת
+  giant: ענק
+  humanoid: דמוי אדם
+  monstrosity: תפלץ
+  ooze: רפש
+  plant: צמח
+  undead: אל-מת
+  swarm of tiny beasts: נחיל של חיות קטנטנות
+  swarm of tiny undead: נחיל של אל-מתים קטנטנים
+  Rarity Varies: משתנה
+  Wondrous Items: חפצים פלאיים
+  Adventuring Gear: ציוד הרפתקנות
+  Weapons: נשקים
+  Armor: שריון
+  Rings: טבעות
+  Potions: שיקויים
+  Martial Melee Weapons: נשקי לחימה לקרב פנים אל פנים
+  Martial Ranged Weapons: נשקי לחימה לטווח
+  Martial Weapons: נשקי לחימה
+  Melee Weapons: נשקים לקרב פנים אל פנים
+  Ranged Weapons: נשקי טווח
+  Artisan's Tools: כלי אומן
+  Poison: רעל
+  Wands: שרביטים
+  Staffs: מטות
+  Musical Instruments: כלי נגינה
+  Arcane Foci: מוקדי קסם
+  Druidic Foci: מוקדים דרואידיים
+  Other Tools: כלים אחרים
+  Gaming Sets: ערכות משחק
+  Ammunition: תחמושת
   Short Rest: מנוחה קצרה
   Long Rest: מנוחה ארוכה
   Dead: מת

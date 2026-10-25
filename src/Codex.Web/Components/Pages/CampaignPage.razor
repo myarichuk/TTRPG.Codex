@@ -45,7 +45,7 @@ else
 
     <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "")">
         <header class="ws-head @(campaign.HasCover ? "has-cover" : "")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
-            <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a><span class="crumb-sep" aria-hidden="true">/</span><span>@campaign.Name</span></nav>
+            <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a></nav>
             <h1 data-testid="campaign-title">@campaign.Name</h1>
             <div class="pills">
                 <span class="pill">@Catalog.GetDisplayName(campaign.SystemId)</span>

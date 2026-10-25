@@ -288,10 +288,12 @@
         {
             if (item.Entry.Properties.TryGetValue(key, out var value) && value != null)
             {
-                var text = value is IEnumerable<object> list ? string.Join(", ", list.Select(o => o?.ToString())) : value.ToString();
+                var field = type?.Fields.FirstOrDefault(f => f.Key == key);
+                string? Shown(object? o) => o?.ToString() is { } raw ? field?.Display(raw) ?? raw : null;
+                var text = value is IEnumerable<object> list ? string.Join(", ", list.Select(Shown)) : Shown(value);
                 if (!string.IsNullOrWhiteSpace(text))
                 {
-                    var label = type?.Fields.FirstOrDefault(f => f.Key == key)?.Label ?? CampaignLibrary.Humanize(key);
+                    var label = field?.Label ?? CampaignLibrary.Humanize(key);
                     parts.Add($"{label} {text}");
                 }
             }

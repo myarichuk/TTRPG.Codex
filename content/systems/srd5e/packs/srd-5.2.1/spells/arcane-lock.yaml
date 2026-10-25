@@ -9,7 +9,7 @@ description: >-
 
   **Range:** Touch  
 
-  **Components:** V, S, M ((gold dust worth 25+ GP, which the spell consumes)  
+  **Components:** V, S, M (gold dust worth 25+ GP, which the spell consumes)  
 
   **Duration:** Until dispelled
 
@@ -28,7 +28,7 @@ properties:
   - V
   - S
   - M
-  material: (gold dust worth 25+ GP, which the spell consumes
+  material: gold dust worth 25+ GP, which the spell consumes
   duration: Until dispelled
   concentration: false
   ritual: false
