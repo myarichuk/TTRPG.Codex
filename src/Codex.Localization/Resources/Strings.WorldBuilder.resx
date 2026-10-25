@@ -32,6 +32,8 @@
   <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>also on the World page</value></data>
   <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>Also add to the World page as a place, hidden from players</value></data>
   <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="WorldBuilder.Drafts.Bestiary" xml:space="preserve"><value>Also add to the Bestiary shortlist</value></data>
+  <data name="WorldBuilder.Save.AlsoBestiary" xml:space="preserve"><value>also on the Bestiary shortlist</value></data>
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>place</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>settlement</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Build with AI</value></data>
@@ -63,6 +65,9 @@
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Only the DM can build the world.</value></data>
   <data name="WorldBuilder.Error.Required" xml:space="preserve"><value>Answer the required questions first.</value></data>
   <data name="WorldBuilder.Error.Unusable" xml:space="preserve"><value>The model did not return a usable draft. Try again, or pick another model in AI settings.</value></data>
+  <data name="WorldBuilder.Error.Unreachable" xml:space="preserve"><value>The AI provider could not be reached. Check the connection and the address in AI settings, then try again.</value></data>
+  <data name="WorldBuilder.Error.TooSlow" xml:space="preserve"><value>The model took too long to answer. Try again, or pick a faster model in AI settings.</value></data>
+  <data name="WorldBuilder.Drafts.TooMany" xml:space="preserve"><value>The AI proposed more than {0} ideas; only the first {0} are kept.</value></data>
   <data name="WorldBuilder.Replace.Title" xml:space="preserve"><value>Replace the drafts?</value></data>
   <data name="WorldBuilder.Replace.Body" xml:space="preserve"><value>New ideas replace the drafts you have, including the ones already written.</value></data>
   <data name="WorldBuilder.Replace.Confirm" xml:space="preserve"><value>Replace</value></data>

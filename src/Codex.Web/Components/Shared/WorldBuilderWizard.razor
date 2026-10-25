@@ -6,6 +6,7 @@
 @using Codex.Web.Services
 @inject WorldBuilderService Builder
 @inject IJSRuntime JS
+@implements IDisposable
 
 @* The world builder (docs/WORLD_BUILDER.md) in the homebrew wizard's frame: the recipe's questions, then the drafts the AI
    proposes (tick, rename, write each one in full), then Save. Nothing is stored before Save, and what Save stores starts
@@ -145,21 +146,33 @@
                                                 <label for="@mapId" class="small">@L["WorldBuilder.Drafts.OnMap"]</label>
                                             </div>
                                         }
+                                        else if (IsCreature(d))
+                                        {
+                                            var bestiaryId = $"{dialogId}-bestiary-{d.Ref}";
+                                            <div class="field-check mb-2">
+                                                <input id="@bestiaryId" type="checkbox" class="field-box" checked="@d.Bestiary" disabled="@(!d.Selected)" @onchange="e => d.Bestiary = (bool)(e.Value ?? false)" data-testid="world-draft-bestiary" />
+                                                <label for="@bestiaryId" class="small">@L["WorldBuilder.Drafts.Bestiary"]</label>
+                                            </div>
+                                        }
                                         <div class="d-flex gap-2 flex-wrap">
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="@(d.Expanded ? "refresh-cw" : "feather")" OnClick="() => WriteAsync(d)" Disabled="@(busy != null || !d.Selected)" data-testid="world-draft-write">
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="@(d.Expanded ? "refresh-cw" : "feather")" OnClick="() => WriteAsync(d)" Disabled="@(busy != null || !d.Selected)" aria-describedby="@nameId" data-testid="world-draft-write">
                                                 @(busy == d ? L["WorldBuilder.Drafts.Writing"] : d.Expanded ? L["WorldBuilder.Drafts.Rewrite"] : L["WorldBuilder.Drafts.Write"])
                                             </CodexButton>
                                             @if (d.Expanded)
                                             {
-                                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="eye" OnClick="() => focused = d">@L["WorldBuilder.Drafts.Show"]</CodexButton>
+                                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="eye" OnClick="() => focused = d" aria-describedby="@nameId">@L["WorldBuilder.Drafts.Show"]</CodexButton>
                                             }
                                         </div>
                                     </li>
                                 }
                             </ul>
-                            @if (bundle.Dropped.Count > 0)
+                            @if (bundle.Dropped.Count(d => d.Reason != DropReason.TooMany) is > 0 and var unfit)
                             {
-                                <p class="small-muted mt-2 mb-0" data-testid="world-dropped">@L["WorldBuilder.Drafts.Dropped", bundle.Dropped.Count]</p>
+                                <p class="small-muted mt-2 mb-0" data-testid="world-dropped">@L["WorldBuilder.Drafts.Dropped", unfit]</p>
+                            }
+                            @if (bundle.Dropped.Any(d => d.Reason == DropReason.TooMany))
+                            {
+                                <p class="small-muted mt-2 mb-0" data-testid="world-too-many">@L["WorldBuilder.Drafts.TooMany", WorldBundleParser.MaxDrafts]</p>
                             }
                         }
                         break;
@@ -173,7 +186,7 @@
                                     <li class="@(d.Expanded ? "done" : "")">
                                         <LucideIcon IconName="@(d.Expanded ? "circle-check" : "circle")" Size="16" />
                                         <span>@d.Name</span>
-                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + L["WorldBuilder.Save.AlsoCast"] : "")@(d.Kind == DraftKinds.Place && d.OnMap ? " · " + L["WorldBuilder.Save.AlsoOnMap"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
+                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + L["WorldBuilder.Save.AlsoCast"] : "")@(d.Kind == DraftKinds.Place && d.OnMap ? " · " + L["WorldBuilder.Save.AlsoOnMap"] : "")@(d.Bestiary && IsCreature(d) ? " · " + L["WorldBuilder.Save.AlsoBestiary"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
                                     </li>
                                 }
                             </ul>
@@ -267,10 +280,15 @@
     /// <summary>The draft being written, or this component itself while the outline is drafted; null when idle.</summary>
     private object? busy;
 
+    /// <summary>Cancelled when the wizard closes or opens again, so a model call still running stops, and its late reply is not
+    /// put into the next session's drafts.</summary>
+    private CancellationTokenSource calls = new();
+
     /// <summary>Opens the wizard on <paramref name="recipeKey"/>, with answers filled in from the caller (the Library's current type, say).</summary>
     public async Task OpenAsync(string recipeKey, IReadOnlyDictionary<string, string?>? preset = null)
     {
         recipe = WorldRecipes.Find(recipeKey) ?? throw new ArgumentException($"No world-builder recipe \"{recipeKey}\".", nameof(recipeKey));
+        StopCalls();
         types = await Builder.TypesAsync(Ctx.Campaign, Ctx.Access);
         answers = recipe.Questions.ToDictionary(q => q.Key, q => q.Default);
         foreach (var (key, value) in preset ?? new Dictionary<string, string?>())
@@ -326,6 +344,9 @@
         _ => L["WorldBuilder.Kind.Wiki"]
     };
 
+    /// <summary>A homebrew draft of a type that can stand on the table as a creature (a monster, say), so it can go on the Bestiary shortlist.</summary>
+    private bool IsCreature(WorldDraft draft) => draft.Kind == DraftKinds.Homebrew && PreviewType(draft)?.ActorBlueprint == true;
+
     private ContentTypeDefinition? PreviewType(WorldDraft draft) => types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase));
 
     private LibraryItem PreviewItem(WorldDraft draft)
@@ -363,37 +384,49 @@
             return;
         }
 
-        await RunAsync(this, async () =>
+        await RunAsync(this, async ct =>
         {
-            bundle = await Builder.OutlineAsync(Ctx.Campaign, Ctx.Access, recipe, answers);
+            var outline = await Builder.OutlineAsync(Ctx.Campaign, Ctx.Access, recipe, answers, ct);
+            ct.ThrowIfCancellationRequested();
+            bundle = outline;
             focused = null;
             current = 1;
         });
     }
 
-    private Task WriteAsync(WorldDraft draft) => RunAsync(draft, async () =>
+    private Task WriteAsync(WorldDraft draft)
     {
-        await Builder.ExpandAsync(Ctx.Campaign, Ctx.Access, recipe!, answers, bundle!, draft);
-        focused = draft;
-    });
+        var drafts = bundle!;
+        return RunAsync(draft, async ct =>
+        {
+            await Builder.ExpandAsync(Ctx.Campaign, Ctx.Access, recipe!, answers, drafts, draft, ct);
+            ct.ThrowIfCancellationRequested();
+            focused = draft;
+        });
+    }
 
     private async Task WriteAllAsync()
     {
         foreach (var draft in bundle!.Drafts.Where(d => d.Selected && !d.Expanded).ToList())
         {
             await WriteAsync(draft);
-            if (error != null) return;
+            if (error != null || bundle == null) return;
         }
     }
 
-    private async Task RunAsync(object what, Func<Task> work)
+    private async Task RunAsync(object what, Func<CancellationToken, Task> work)
     {
+        var ct = calls.Token;
         busy = what;
         error = null;
         StateHasChanged();
         try
         {
-            await work();
+            await work(ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // The wizard was closed or reopened while the model was writing; nothing to report.
         }
         catch (AiNotConfiguredException)
         {
@@ -405,7 +438,7 @@
         }
         finally
         {
-            busy = null;
+            if (!ct.IsCancellationRequested) busy = null;
         }
     }
 
@@ -441,8 +474,23 @@
             return;
         }
 
+        StopCalls();
+        busy = null;
         await JS.InvokeVoidAsync("codex.closeModal", dialogId);
         recipe = null;
         bundle = null;
+    }
+
+    private void StopCalls()
+    {
+        calls.Cancel();
+        calls.Dispose();
+        calls = new CancellationTokenSource();
+    }
+
+    public void Dispose()
+    {
+        calls.Cancel();
+        calls.Dispose();
     }
 }

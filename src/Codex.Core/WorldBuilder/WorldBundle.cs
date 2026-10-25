@@ -40,6 +40,17 @@ public sealed class WorldDraft
     /// <summary>For a place: also add it to the World page, hidden, besides its wiki page.</summary>
     public bool OnMap { get; set; }
 
+    /// <summary>For a homebrew creature: also put it on the campaign's Bestiary shortlist, besides the Library.</summary>
+    public bool Bestiary { get; set; }
+
+    /// <summary>The title its wiki page is saved under: the name, or "Name (2)" when a page of that name exists. Links go by
+    /// title, so they use it; a cast member or a place keeps the name itself.</summary>
+    public string? PageTitle { get; set; }
+
+    /// <summary>What saving already made of this draft, by step ("page", "homebrew", "cast", "place", "fact") to document id, so a
+    /// save that failed half-way can be retried without writing anything twice.</summary>
+    public Dictionary<string, string> SavedAs { get; set; } = new();
+
     /// <summary>A page's text, a homebrew entry's description (its rules text), or a secret's details.</summary>
     public string? Body { get; set; }
 
@@ -59,7 +70,10 @@ public enum DropReason
     Type,
 
     /// <summary>No name.</summary>
-    Unnamed
+    Unnamed,
+
+    /// <summary>Past the most drafts one outline may propose (<see cref="WorldBundleParser.MaxDrafts"/>).</summary>
+    TooMany
 }
 
 /// <summary>The drafts one outline call proposed.</summary>
@@ -84,6 +98,14 @@ public sealed record BundleRules(
 /// <summary>Reads the model's replies to the outline and expand calls. Pure, so every rule is unit-tested without a model.</summary>
 public static class WorldBundleParser
 {
+    /// <summary>The most drafts one outline keeps: every draft is a model call to write, so a runaway reply must not become hundreds.</summary>
+    public const int MaxDrafts = 20;
+
+    // Longest name, pitch and text kept from a reply; the rest is cut. A name becomes a page title and its slug.
+    private const int MaxName = 200;
+    private const int MaxPitch = 500;
+    private const int MaxBody = 20_000;
+
     /// <summary>
     /// Parses an outline reply: <c>{"drafts": [{"ref", "kind", "type", "name", "pitch", "links"}]}</c>. Drafts of a kind
     /// or type the rules do not allow are dropped (and listed in <see cref="WorldBundle.Dropped"/>); missing or repeated refs
@@ -105,7 +127,7 @@ public static class WorldBundleParser
         var rawLinks = new Dictionary<WorldDraft, List<string>>();
         foreach (var element in drafts.EnumerateArray().Where(e => e.ValueKind == JsonValueKind.Object))
         {
-            var name = FieldCoercion.String(element, "name") ?? string.Empty;
+            var name = Cut(FieldCoercion.String(element, "name"), MaxName);
             var kind = FieldCoercion.String(element, "kind")?.ToLowerInvariant() ?? string.Empty;
             if (name.Length == 0)
             {
@@ -116,6 +138,12 @@ public static class WorldBundleParser
             if (!kinds.Contains(kind))
             {
                 bundle.Dropped.Add(new DroppedDraft(name, DropReason.Kind));
+                continue;
+            }
+
+            if (bundle.Drafts.Count >= MaxDrafts)
+            {
+                bundle.Dropped.Add(new DroppedDraft(name, DropReason.TooMany));
                 continue;
             }
 
@@ -133,7 +161,7 @@ public static class WorldBundleParser
                 Type = type,
                 Name = name,
                 OutlineName = name,
-                Pitch = FieldCoercion.String(element, "pitch") ?? string.Empty
+                Pitch = Cut(FieldCoercion.String(element, "pitch"), MaxPitch)
             };
             if (FieldCoercion.String(element, "ref") is { } given)
             {
@@ -181,7 +209,7 @@ public static class WorldBundleParser
             throw new FormatException("The model returned an empty page.");
         }
 
-        draft.Body = body;
+        draft.Body = Cut(body, MaxBody);
         draft.Expanded = true;
     }
 
@@ -209,7 +237,7 @@ public static class WorldBundleParser
             }
         }
 
-        draft.Body = FieldCoercion.String(root, "description") ?? draft.Body;
+        draft.Body = FieldCoercion.String(root, "description") is { } description ? Cut(description, MaxBody) : draft.Body;
         draft.Tags = root.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array
             ? tags.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.String).Select(t => t.GetString()!.Trim()).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList()
             : new List<string>();
@@ -229,18 +257,25 @@ public static class WorldBundleParser
         {
             var target = match.Groups[1].Value.Trim();
             var shown = match.Groups[2].Success ? match.Groups[2].Value.Trim() : null;
-            var draft = bundle.Drafts.FirstOrDefault(d => string.Equals(d.Ref, target, StringComparison.OrdinalIgnoreCase)
-                                                          || string.Equals(d.OutlineName, target, StringComparison.OrdinalIgnoreCase)
-                                                          || string.Equals(d.Name, target, StringComparison.OrdinalIgnoreCase));
+            // The ref wins, then the name the outline gave, then the DM's rename: renaming one draft to another's outline name
+            // must not steal the links meant for the other.
+            var draft = bundle.Drafts.FirstOrDefault(d => string.Equals(d.Ref, target, StringComparison.OrdinalIgnoreCase))
+                        ?? bundle.Drafts.FirstOrDefault(d => string.Equals(d.OutlineName, target, StringComparison.OrdinalIgnoreCase))
+                        ?? bundle.Drafts.FirstOrDefault(d => string.Equals(d.Name.Trim(), target, StringComparison.OrdinalIgnoreCase));
             if (draft == null)
             {
                 return keepLinks ? match.Value : shown ?? target;
             }
 
-            var linked = keepLinks && draft.Selected && DraftKinds.IsPage(draft.Kind);
-            return linked ? (shown == null ? $"[[{draft.Name}]]" : $"[[{draft.Name}|{shown}]]") : shown ?? draft.Name;
+            // A draft whose name was cleared is not saved, so it is named as the outline named it, unlinked.
+            var name = string.IsNullOrWhiteSpace(draft.Name) ? draft.OutlineName : draft.Name.Trim();
+            var linked = keepLinks && draft.Selected && !string.IsNullOrWhiteSpace(draft.Name) && DraftKinds.IsPage(draft.Kind);
+            var title = draft.PageTitle ?? name;
+            return linked ? (shown == null ? $"[[{title}]]" : $"[[{title}|{shown}]]") : shown ?? name;
         });
     }
+
+    private static string Cut(string? text, int max) => text == null ? string.Empty : text.Length <= max ? text : text[..max].TrimEnd();
 
     private static readonly System.Text.RegularExpressions.Regex WikiLink = new(@"\[\[([^\[\]|]+?)(?:\|([^\[\]]+?))?\]\]", System.Text.RegularExpressions.RegexOptions.Compiled);
 }

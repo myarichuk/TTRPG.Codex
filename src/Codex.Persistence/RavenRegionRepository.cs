@@ -22,7 +22,9 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
             region.Locations = region.Locations.Where(l => l.Visibility == ActorVisibility.Known).ToList();
         }
 
-        return regions;
+        // A region with nothing revealed in it is the DM's planning (its name can be a spoiler, such as a quest's title),
+        // so players see a region once one of its places is revealed.
+        return regions.Where(r => r.Locations.Count > 0).ToList();
     }
 
     public async Task<RegionDocument?> GetAsync(string regionId, CampaignAccess access)
@@ -37,6 +39,7 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         if (!access.IsDm)
         {
             region.Locations = region.Locations.Where(l => l.Visibility == ActorVisibility.Known).ToList();
+            if (region.Locations.Count == 0) return null; // nothing revealed yet, as in GetVisibleForCampaignAsync
         }
 
         return region;

@@ -2,7 +2,8 @@
 
 Status: the **homebrew recipe** (Library → *Build with AI*) and the **faction**, **settlement** and **quest recipes**
 (Wiki → *Build with AI*) are built, shown to the DM once a text model is set up. People (`npc`), places (`place`) and
-secrets (`fact`) are draft kinds; a person can also join the cast, and a place can also go on the World page. The world
+secrets (`fact`) are draft kinds; a person can also join the cast, a place can also go on the World page, and a homebrew
+creature can also go on the Bestiary shortlist. The world
 recipe, Library blueprints for cast members and MCP are still design only.
 
 A set of guided wizards that help the DM create campaign material with the AI: a homebrew item, spell or creature,
@@ -60,9 +61,9 @@ side (stacked on phones, as the phone layout already does for sheets).
 
 | Recipe | Questions (examples) | Drafts it can propose | Saved as |
 |---|---|---|---|
-| **Item / spell / creature / any homebrew type** | type, role ("a cursed heirloom"), power level, theme | the entry; optionally a wiki page for its history | `HomebrewEntryDocument` (fields from the type's `ContentTypeDefinition.EditorFields()`); a creature can also be added to the `BestiaryEntry` shortlist |
+| **Item / spell / creature / any homebrew type** | type, role ("a cursed heirloom"), power level, theme | the entry; optionally a wiki page for its history | `HomebrewEntryDocument` (fields from the type's `ContentTypeDefinition.EditorFields()`); a creature (a type with `actorBlueprint`) ticked "also add to the Bestiary shortlist" also becomes a `BestiaryEntry` (built) |
 | **Faction** (built) | what kind of group, what it wants, open or secret, reach, tone, its enemy, how many people, a secret or not | the faction page, its leader and 0–2 members, a secret | the faction as a wiki page, people as wiki pages and, when ticked, cast members (§3.1), the secret as a `FactDocument`; pages are tagged with the recipe ("faction") and people also "person", in the DM's language |
-| **Settlement** (built) | size, where it is, what it is known for, who rules, trouble brewing, tone, a sketch or in full, rumours or not | the settlement page, 2 or 4 places, 3 or 5 people, 1 or 2 factions, 1 or 2 rumours | wiki pages (tag "settlement"; places also "place", people also "person"); a place ticked "also add to the World page" becomes a hidden `LocationDocument` in a region named after the settlement (an existing region of that name is reused); rumours as `FactDocument`s |
+| **Settlement** (built) | size, where it is, what it is known for, who rules, trouble brewing, tone, a sketch or in full, rumours or not | the settlement page, 2 or 4 places, 3 or 5 people, 1 or 2 factions, 1 or 2 rumours | wiki pages (tag "settlement"; places also "place", people also "person"); a place ticked "also add to the World page" becomes a hidden `LocationDocument` (its description, which players read once it is revealed, is the pitch, not the page) in a region named after the settlement (an existing region of that name is reused; players see a region only once one of its places is revealed); rumours as `FactDocument`s |
 | **World / region** | genre and tone, magic level, gods or not, the big conflict, scale | the overview page, 3–6 regions, powers (factions), a short history | wiki pages (tags `world`, `region`, `history`), linked from the overview |
 | **Quest / story arc** (built) | hook, stakes, villain, length (one session, a short or long arc), the party's level, tone, what to tie it into, a creature or reward or not | the quest page, 2–4 people (the villain first), 1–3 places, 1–2 clues, a homebrew creature and a reward item | the quest as a wiki page with a fixed outline (tag "quest", §3.2); people, places and clues as in the other recipes; the creature and item as unpublished homebrew |
 
@@ -74,7 +75,8 @@ recipes only write wiki pages, places and facts.
 Today an NPC is an `ActorDocument` (a sheet on the table) and lore lives in the wiki. The world builder writes NPCs as
 **wiki pages** by default (name, role, look, wants, secret), because most NPCs never need a sheet. On the review card
 the DM can tick "also add to the cast" to create a hidden `ActorDocument` (`CastService.AddNpcAsync`): the sheet starts on
-the system's defaults, the page's text (links flattened) goes into `Biography`, and `DmNotes` points back to the page. Not
+the system's defaults, and `DmNotes` points back to the page and holds its text (links flattened). `Biography` stays empty:
+players read it once the DM reveals the person, and the page tells what they hide. Not
 built yet: a Library creature as blueprint when the model suggests one that exists.
 
 ### 3.2 Quests
@@ -139,13 +141,16 @@ recipes in its folder later (for example a "deity" recipe for 5e); not needed fo
 - `ref` is a draft id that lives only until the save; `existing:<slug or id>` points at something already in the campaign.
   Unknown `existing:` targets are dropped, unknown kinds or homebrew types are dropped with a note on the review step.
 - On save the app writes pages first (so `UniqueSlugAsync` settles the slugs), then rewrites `[[d2]]` in bodies to
-  `[[Mother Ilse]]` with the final title, then writes homebrew, cast members, and facts (`RelatedEntityIds` holds the ids
+  `[[Mother Ilse]]` with the final title, then writes homebrew (and the ticked creatures' shortlist entries), cast members, and facts (`RelatedEntityIds` holds the ids
   of the pages, cast members, places and existing pages the secret links to), then places.
 - The expand call for a homebrew draft asks for its fields by key, with each field's type and allowed options
   (from `FieldDefinition`), and the reply goes through the same kind of coercion as `AiAssistant.ParseDraft`: numbers
   parsed, options matched to their canonical value (also through the system translation, so a Hebrew school name still
   maps to `Evocation`; `SystemDefinition.CanonicalOption`), anything else dropped. After saving, the Library opens the
   first saved entry in `HomebrewWizard` on its Review step, so the DM checks the rules and publishes it.
+- Before saving, a new page whose title is taken (by an existing page or another draft) is renamed "Name (2)", since links go
+  by title. Each draft remembers what it was saved as (`WorldDraft.SavedAs`), so Save after a failure skips what is already stored.
+- An outline keeps at most 20 drafts (the rest are listed as dropped); names, pitches and texts are cut to a sane length.
 - JSON mode with the plain retry, as `CreateCharacterAsync` does; a reply that does not parse gets one "return only the
   JSON" retry, then an error the DM can act on ("The model did not return a usable draft; try again or pick another model").
 

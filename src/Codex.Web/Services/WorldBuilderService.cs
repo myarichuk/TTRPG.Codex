@@ -14,7 +14,8 @@ public sealed record WorldBuildResult(
     IReadOnlyList<WikiPageDocument> Pages,
     IReadOnlyList<ActorDocument> Actors,
     IReadOnlyList<FactDocument> Facts,
-    IReadOnlyList<LocationDocument> Places)
+    IReadOnlyList<LocationDocument> Places,
+    IReadOnlyList<BestiaryEntry> Shortlisted)
 {
     public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count;
 }
@@ -26,7 +27,7 @@ public sealed record WorldBuildResult(
 /// on the DM's own key.
 /// </summary>
 public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
-    IFactRepository facts, CastService cast, IRegionRepository regions)
+    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -42,6 +43,15 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         var assistant = await providers.AssistantForAsync(access.UserId);
         var system = catalog.GetDefinition(campaign.SystemId);
         var types = await HomebrewTypesAsync(campaign, access, system);
+        // When the DM picked the type (the homebrew recipe's first question), that type is the only one the reply may use.
+        var chosen = recipe.Questions.Where(q => q.Type == QuestionTypes.ContentType)
+            .Select(q => answers.GetValueOrDefault(q.Key))
+            .FirstOrDefault(a => !string.IsNullOrWhiteSpace(a));
+        if (chosen != null && types.Where(t => string.Equals(t.Type, chosen, StringComparison.OrdinalIgnoreCase)).ToList() is { Count: > 0 } only)
+        {
+            types = only;
+        }
+
         var pages = (await wiki.GetVisibleForCampaignAsync(access)).ToList();
         var taken = (await homebrew.GetVisibleForCampaignAsync(access)).Select(h => h.Name)
             .Concat(pages.Select(p => p.Title))
@@ -64,7 +74,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             catalog.GetDisplayName(campaign.SystemId),
             Answers(recipe, answers, system),
             kinds,
-            recipe.Drafts.Contains(DraftKinds.Homebrew) ? types.Select(t => $"{t.Type} ({t.Label})").ToList() : Array.Empty<string>(),
+            recipe.Drafts.Contains(DraftKinds.Homebrew) ? types.Select(t => $"{t.Type} ({t.Label}{(t.ActorBlueprint ? ", a creature" : "")})").ToList() : Array.Empty<string>(),
             pages.Take(ContextCap).Select(p => $"{WorldBundle.ExistingPrefix}{p.Slug} ({p.Title})").ToList(),
             taken,
             CampaignContext(campaign),
@@ -112,24 +122,37 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     }
 
     /// <summary>Saves the selected drafts: wiki pages and people's pages first (DM-only), so their slugs are settled before
-    /// links are rewritten, then homebrew entries (unpublished), the people ticked for the cast (hidden), and secrets (DM-only
+    /// links are rewritten, then homebrew entries (unpublished; creatures ticked for it also on the Bestiary shortlist), the people ticked for the cast (hidden), and secrets (DM-only
     /// in Lore, related to what they link to). A draft that was never written in full is saved with its pitch as its text.</summary>
     public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, WorldBundle bundle)
     {
         DmOnly(access);
         var l = Localizer.For(Lang);
         // What each saved draft became, so a secret can point at the pages and cast members it is about.
-        var savedIds = new Dictionary<string, List<string>>();
-        void Saved(WorldDraft draft, string id) => (savedIds.TryGetValue(draft.Ref, out var ids) ? ids : savedIds[draft.Ref] = new List<string>()).Add(id);
+        // A retry after a failed save starts from what the first attempt stored (WorldDraft.SavedAs) and skips those steps.
+        var savedIds = Kept(bundle).ToDictionary(d => d.Ref, d => d.SavedAs.Values.ToList());
+        void Saved(WorldDraft draft, string step, string id)
+        {
+            draft.SavedAs[step] = id;
+            savedIds[draft.Ref].Add(id);
+        }
+
+        IEnumerable<WorldDraft> Pending(string step) => Kept(bundle).Where(d => !d.SavedAs.ContainsKey(step));
 
         var pages = new List<WikiPageDocument>();
-        foreach (var draft in Kept(bundle).Where(d => DraftKinds.IsPage(d.Kind)))
+        var newPages = Pending(PageStep).Where(d => DraftKinds.IsPage(d.Kind)).ToList();
+        if (newPages.Count > 0)
+        {
+            await UniqueTitlesAsync(newPages, Kept(bundle).Where(d => d.SavedAs.ContainsKey(PageStep)), access);
+        }
+
+        foreach (var draft in newPages)
         {
             var tags = new List<string> { Tag(l, recipe.Key) };
             if (draft.Kind is DraftKinds.Npc or DraftKinds.Place) tags.Add(Tag(l, draft.Kind));
             var page = new WikiPageDocument
             {
-                Title = draft.Name.Trim(),
+                Title = draft.PageTitle ?? draft.Name.Trim(),
                 Body = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle),
                 Visibility = WikiVisibility.DmOnly,
                 Tags = tags,
@@ -141,12 +164,14 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             }
 
             pages.Add(page);
-            Saved(draft, page.Id);
+            Saved(draft, PageStep, page.Id);
         }
 
+        var system = catalog.GetDefinition(campaign.SystemId);
         var entries = new List<HomebrewEntryDocument>();
-        var existing = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
-        foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Homebrew && !string.IsNullOrEmpty(d.Type)))
+        var shortlist = new List<BestiaryEntry>();
+        var existing =(await homebrew.GetVisibleForCampaignAsync(access)).ToList();
+        foreach (var draft in Pending("homebrew").Where(d => d.Kind == DraftKinds.Homebrew && !string.IsNullOrEmpty(d.Type)))
         {
             var entry = new HomebrewEntryDocument
             {
@@ -167,31 +192,38 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             }
 
             entries.Add(entry);
+            Saved(draft, "homebrew", entry.Id);
+            if (draft.Bestiary && system?.FindType(entry.Type)?.ActorBlueprint == true)
+            {
+                shortlist.Add(new BestiaryEntry { EntryType = entry.Type, EntryId = entry.EntryId, IsHomebrew = true, Name = entry.Name });
+            }
         }
+
+        var shortlisted = await ShortlistAsync(campaign, shortlist);
 
         var actors = new List<ActorDocument>();
-        var system = catalog.GetDefinition(campaign.SystemId);
-        foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Npc && d.Cast))
+        foreach (var draft in Pending("cast").Where(d => d.Kind == DraftKinds.Npc && d.Cast))
         {
-            // The sheet starts blank; the person's page is their biography, and the DM's notes point back to the page.
-            var actor = await cast.AddNpcAsync(draft.Name, WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false),
-                l["WorldBuilder.Cast.Note", draft.Name.Trim()], campaign, system, access)
+            // The sheet starts blank. The page tells what the person hides, so it goes in the DM's notes, not the biography
+            // players read once the DM reveals them.
+            var notes = l["WorldBuilder.Cast.Note", draft.PageTitle ?? draft.Name.Trim()] + "\n\n" + WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false);
+            var actor = await cast.AddNpcAsync(draft.Name, null, notes, campaign, system, access)
                 ?? throw new LocalizedException("WorldBuilder.Error.OnlyDm");
             actors.Add(actor);
-            Saved(draft, actor.Id);
+            Saved(draft, "cast", actor.Id);
         }
 
-        var places = await PlacesAsync(bundle, access);
+        var places = await PlacesAsync(bundle, Pending("place").ToList(), access);
         foreach (var (draft, place) in places)
         {
-            Saved(draft, place.Id);
+            Saved(draft, "place", place.Id);
         }
 
         var saved = new List<FactDocument>();
         var known = Kept(bundle).Any(d => d.Kind == DraftKinds.Fact)
             ? (await wiki.GetVisibleForCampaignAsync(access)).ToDictionary(p => p.Slug, p => p.Id, StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, string>();
-        foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Fact))
+        foreach (var draft in Pending("fact").Where(d => d.Kind == DraftKinds.Fact))
         {
             var details = draft.Body ?? (string.Equals(draft.Pitch.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase) ? null : draft.Pitch);
             var fact = new FactDocument
@@ -215,16 +247,42 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             }
 
             saved.Add(fact);
+            Saved(draft, "fact", fact.Id);
         }
 
-        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList());
+        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted);
+    }
+
+    /// <summary>Puts the creatures ticked for the Bestiary on the campaign's shortlist (reload-then-mutate, as the Bestiary page
+    /// does, so a concurrent edit is not overwritten) and refreshes the caller's copy of the campaign.</summary>
+    private async Task<IReadOnlyList<BestiaryEntry>> ShortlistAsync(CampaignDocument campaign, List<BestiaryEntry> shortlist)
+    {
+        if (shortlist.Count == 0)
+        {
+            return shortlist;
+        }
+
+        var stored = await campaigns.UpdateAsync(campaign.Id, c =>
+        {
+            foreach (var entry in shortlist.Where(e => c.Bestiary.All(b => b.Key != e.Key)))
+            {
+                c.Bestiary.Add(entry);
+            }
+        });
+        if (stored != null)
+        {
+            campaign.Bestiary = stored.Bestiary;
+        }
+
+        return shortlist;
     }
 
     /// <summary>The places ticked for the World page, hidden, in a region named after the bundle's main page (the settlement);
-    /// a region of that name is reused. A place's description is its page's text, links flattened.</summary>
-    private async Task<List<(WorldDraft Draft, LocationDocument Place)>> PlacesAsync(WorldBundle bundle, CampaignAccess access)
+    /// a region of that name is reused. A place's description is its pitch, links flattened: players read it once the place is
+    /// revealed, and the page's text tells what the place hides.</summary>
+    private async Task<List<(WorldDraft Draft, LocationDocument Place)>> PlacesAsync(WorldBundle bundle, List<WorldDraft> pending, CampaignAccess access)
     {
-        var ticked = Kept(bundle).Where(d => d.Kind == DraftKinds.Place && d.OnMap).ToList();
+        var ticked = pending.Where(d => d.Kind == DraftKinds.Place && d.OnMap).ToList();
         if (ticked.Count == 0)
         {
             return new List<(WorldDraft, LocationDocument)>();
@@ -234,11 +292,13 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         {
             Id = Guid.NewGuid().ToString(),
             Name = d.Name.Trim(),
-            Description = WorldBundleParser.ResolveLinks(d.Body ?? d.Pitch, bundle, keepLinks: false),
+            Description = string.IsNullOrWhiteSpace(d.Pitch) ? null : WorldBundleParser.ResolveLinks(d.Pitch, bundle, keepLinks: false),
             Visibility = ActorVisibility.Hidden
         })).ToList();
 
-        var name = (Kept(bundle).FirstOrDefault(d => d.Kind == DraftKinds.Wiki) ?? ticked[0]).Name.Trim();
+        // The recipe's main page comes first in the outline; it names the region even when the DM did not keep the page.
+        var main = bundle.Drafts.FirstOrDefault(d => d.Kind == DraftKinds.Wiki);
+        var name = main == null ? ticked[0].Name.Trim() : string.IsNullOrWhiteSpace(main.Name) ? main.OutlineName.Trim() : main.Name.Trim();
         var region = (await regions.GetVisibleForCampaignAsync(access)).FirstOrDefault(r => string.Equals(r.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
         if (region == null)
         {
@@ -253,6 +313,29 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         }
 
         return placed;
+    }
+
+    private const string PageStep = "page";
+
+    /// <summary>Gives each new page a title of its own: "Name (2)" when an existing page or another draft has the name, so links
+    /// (which go by title) reach it. The draft keeps its name, which a cast member or a place on the World page uses.</summary>
+    private async Task UniqueTitlesAsync(List<WorldDraft> drafts, IEnumerable<WorldDraft> saved, CampaignAccess access)
+    {
+        var taken = (await wiki.GetVisibleForCampaignAsync(access))
+            .SelectMany(p => new[] { p.Slug, WikiText.Slugify(p.Title) })
+            .Concat(saved.Select(d => WikiText.Slugify(d.PageTitle ?? d.Name.Trim())))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var draft in drafts)
+        {
+            var name = draft.Name.Trim();
+            for (var n = 2; taken.Contains(WikiText.Slugify(name)); n++)
+            {
+                name = $"{draft.Name.Trim()} ({n})";
+            }
+
+            draft.PageTitle = name;
+            taken.Add(WikiText.Slugify(name));
+        }
     }
 
     private static IEnumerable<WorldDraft> Kept(WorldBundle bundle) => bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Name));
@@ -373,6 +456,20 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         catch (FormatException)
         {
             throw new LocalizedException("WorldBuilder.Error.Unusable");
+        }
+        catch (InvalidOperationException)
+        {
+            // An empty reply, or a provider that answered with something other than text.
+            throw new LocalizedException("WorldBuilder.Error.Unusable");
+        }
+        catch (HttpRequestException)
+        {
+            throw new LocalizedException("WorldBuilder.Error.Unreachable");
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            // HttpClient's own timeout (a slow local model), not the DM closing the wizard.
+            throw new LocalizedException("WorldBuilder.Error.TooSlow");
         }
     }
 }
