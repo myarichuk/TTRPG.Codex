@@ -311,6 +311,18 @@ entityTypes:
         description: История, религия, фракция, легенда...
 
 values:
+  Barbarian: Варвар
+  Bard: Бард
+  Cleric: Жрец
+  Druid: Друид
+  Fighter: Воин
+  Monk: Монах
+  Paladin: Паладин
+  Ranger: Следопыт
+  Rogue: Плут
+  Sorcerer: Чародей
+  Warlock: Колдун
+  Wizard: Волшебник
   Tiny: Крошечный
   Small: Маленький
   Medium: Средний

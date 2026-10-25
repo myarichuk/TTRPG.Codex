@@ -311,6 +311,18 @@ entityTypes:
         description: היסטוריה, דת, פלג, אגדה...
 
 values:
+  Barbarian: ברברי
+  Bard: פייטן
+  Cleric: כוהן
+  Druid: דרואיד
+  Fighter: לוחם
+  Monk: נזיר
+  Paladin: פלאדין
+  Ranger: סייר
+  Rogue: נוכל
+  Sorcerer: כושף
+  Warlock: מכשף
+  Wizard: אשף
   Tiny: קטנטן
   Small: קטן
   Medium: בינוני
