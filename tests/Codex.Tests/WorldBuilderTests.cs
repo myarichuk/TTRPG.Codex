@@ -36,6 +36,15 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public void EveryRecipeIcon_IsOneTheAppDraws()
+    {
+        // LucideIcon draws a circle for a name it does not know, so an unknown icon would pass unnoticed.
+        var icons = File.ReadAllText(Path.Combine(TestPaths.RepoRoot, "src", "Codex.Web", "Components", "Layout", "LucideIcon.razor"));
+
+        Assert.All(WorldRecipes.All, r => Assert.Contains($"[\"{r.Icon}\"]", icons));
+    }
+
+    [Fact]
     public void EveryRecipeLabel_IsTranslated()
     {
         // Recipe labels are looked up by key at run time, so LocalizationTests' scan of L["..."] literals cannot see them.

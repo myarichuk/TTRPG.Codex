@@ -1,7 +1,7 @@
 # A faction for the campaign's world: its wiki page, the people who bring it to the table and, if asked, a secret the
 # party can uncover. Labels: Strings.WorldBuilder*.resx, WorldBuilder.Recipe.faction.*
 key: faction
-icon: flag
+icon: shield
 drafts: [wiki, npc, fact]
 questions:
   - key: group
