@@ -2,7 +2,8 @@
 
 Status: the **homebrew recipe** (Library → *Build with AI*) and the **faction**, **settlement** and **quest recipes**
 (Wiki → *Build with AI*) are built, shown to the DM once a text model is set up. People (`npc`), places (`place`) and
-secrets (`fact`) are draft kinds; a person can also join the cast, and a place can also go on the World page. The world
+secrets (`fact`) are draft kinds; a person can also join the cast, a place can also go on the World page, and a homebrew
+creature can also go on the Bestiary shortlist. The world
 recipe, Library blueprints for cast members and MCP are still design only.
 
 A set of guided wizards that help the DM create campaign material with the AI: a homebrew item, spell or creature,
@@ -60,7 +61,7 @@ side (stacked on phones, as the phone layout already does for sheets).
 
 | Recipe | Questions (examples) | Drafts it can propose | Saved as |
 |---|---|---|---|
-| **Item / spell / creature / any homebrew type** | type, role ("a cursed heirloom"), power level, theme | the entry; optionally a wiki page for its history | `HomebrewEntryDocument` (fields from the type's `ContentTypeDefinition.EditorFields()`); a creature can also be added to the `BestiaryEntry` shortlist |
+| **Item / spell / creature / any homebrew type** | type, role ("a cursed heirloom"), power level, theme | the entry; optionally a wiki page for its history | `HomebrewEntryDocument` (fields from the type's `ContentTypeDefinition.EditorFields()`); a creature (a type with `actorBlueprint`) ticked "also add to the Bestiary shortlist" also becomes a `BestiaryEntry` (built) |
 | **Faction** (built) | what kind of group, what it wants, open or secret, reach, tone, its enemy, how many people, a secret or not | the faction page, its leader and 0–2 members, a secret | the faction as a wiki page, people as wiki pages and, when ticked, cast members (§3.1), the secret as a `FactDocument`; pages are tagged with the recipe ("faction") and people also "person", in the DM's language |
 | **Settlement** (built) | size, where it is, what it is known for, who rules, trouble brewing, tone, a sketch or in full, rumours or not | the settlement page, 2 or 4 places, 3 or 5 people, 1 or 2 factions, 1 or 2 rumours | wiki pages (tag "settlement"; places also "place", people also "person"); a place ticked "also add to the World page" becomes a hidden `LocationDocument` in a region named after the settlement (an existing region of that name is reused); rumours as `FactDocument`s |
 | **World / region** | genre and tone, magic level, gods or not, the big conflict, scale | the overview page, 3–6 regions, powers (factions), a short history | wiki pages (tags `world`, `region`, `history`), linked from the overview |
@@ -139,7 +140,7 @@ recipes in its folder later (for example a "deity" recipe for 5e); not needed fo
 - `ref` is a draft id that lives only until the save; `existing:<slug or id>` points at something already in the campaign.
   Unknown `existing:` targets are dropped, unknown kinds or homebrew types are dropped with a note on the review step.
 - On save the app writes pages first (so `UniqueSlugAsync` settles the slugs), then rewrites `[[d2]]` in bodies to
-  `[[Mother Ilse]]` with the final title, then writes homebrew, cast members, and facts (`RelatedEntityIds` holds the ids
+  `[[Mother Ilse]]` with the final title, then writes homebrew (and the ticked creatures' shortlist entries), cast members, and facts (`RelatedEntityIds` holds the ids
   of the pages, cast members, places and existing pages the secret links to), then places.
 - The expand call for a homebrew draft asks for its fields by key, with each field's type and allowed options
   (from `FieldDefinition`), and the reply goes through the same kind of coercion as `AiAssistant.ParseDraft`: numbers

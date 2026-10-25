@@ -32,6 +32,8 @@
   <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>גם בעמוד העולם</value></data>
   <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>להוסיף גם לעמוד העולם כמקום, מוסתר מהשחקנים</value></data>
   <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="WorldBuilder.Drafts.Bestiary" xml:space="preserve"><value>להוסיף גם לרשימה הקצרה בבסטיאריום</value></data>
+  <data name="WorldBuilder.Save.AlsoBestiary" xml:space="preserve"><value>גם ברשימה הקצרה בבסטיאריום</value></data>
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>מקום</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>יישוב</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>

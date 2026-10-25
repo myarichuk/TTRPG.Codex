@@ -14,7 +14,8 @@ public sealed record WorldBuildResult(
     IReadOnlyList<WikiPageDocument> Pages,
     IReadOnlyList<ActorDocument> Actors,
     IReadOnlyList<FactDocument> Facts,
-    IReadOnlyList<LocationDocument> Places)
+    IReadOnlyList<LocationDocument> Places,
+    IReadOnlyList<BestiaryEntry> Shortlisted)
 {
     public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count;
 }
@@ -26,7 +27,7 @@ public sealed record WorldBuildResult(
 /// on the DM's own key.
 /// </summary>
 public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
-    IFactRepository facts, CastService cast, IRegionRepository regions)
+    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -112,7 +113,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     }
 
     /// <summary>Saves the selected drafts: wiki pages and people's pages first (DM-only), so their slugs are settled before
-    /// links are rewritten, then homebrew entries (unpublished), the people ticked for the cast (hidden), and secrets (DM-only
+    /// links are rewritten, then homebrew entries (unpublished; creatures ticked for it also on the Bestiary shortlist), the people ticked for the cast (hidden), and secrets (DM-only
     /// in Lore, related to what they link to). A draft that was never written in full is saved with its pitch as its text.</summary>
     public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, WorldBundle bundle)
     {
@@ -144,8 +145,10 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             Saved(draft, page.Id);
         }
 
+        var system = catalog.GetDefinition(campaign.SystemId);
         var entries = new List<HomebrewEntryDocument>();
-        var existing = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
+        var shortlist = new List<BestiaryEntry>();
+        var existing =(await homebrew.GetVisibleForCampaignAsync(access)).ToList();
         foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Homebrew && !string.IsNullOrEmpty(d.Type)))
         {
             var entry = new HomebrewEntryDocument
@@ -167,10 +170,15 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             }
 
             entries.Add(entry);
+            if (draft.Bestiary && system?.FindType(entry.Type)?.ActorBlueprint == true)
+            {
+                shortlist.Add(new BestiaryEntry { EntryType = entry.Type, EntryId = entry.EntryId, IsHomebrew = true, Name = entry.Name });
+            }
         }
 
+        var shortlisted = await ShortlistAsync(campaign, shortlist);
+
         var actors = new List<ActorDocument>();
-        var system = catalog.GetDefinition(campaign.SystemId);
         foreach (var draft in Kept(bundle).Where(d => d.Kind == DraftKinds.Npc && d.Cast))
         {
             // The sheet starts blank; the person's page is their biography, and the DM's notes point back to the page.
@@ -217,7 +225,31 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             saved.Add(fact);
         }
 
-        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList());
+        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted);
+    }
+
+    /// <summary>Puts the creatures ticked for the Bestiary on the campaign's shortlist (reload-then-mutate, as the Bestiary page
+    /// does, so a concurrent edit is not overwritten) and refreshes the caller's copy of the campaign.</summary>
+    private async Task<IReadOnlyList<BestiaryEntry>> ShortlistAsync(CampaignDocument campaign, List<BestiaryEntry> shortlist)
+    {
+        if (shortlist.Count == 0)
+        {
+            return shortlist;
+        }
+
+        var stored = await campaigns.UpdateAsync(campaign.Id, c =>
+        {
+            foreach (var entry in shortlist.Where(e => c.Bestiary.All(b => b.Key != e.Key)))
+            {
+                c.Bestiary.Add(entry);
+            }
+        });
+        if (stored != null)
+        {
+            campaign.Bestiary = stored.Bestiary;
+        }
+
+        return shortlist;
     }
 
     /// <summary>The places ticked for the World page, hidden, in a region named after the bundle's main page (the settlement);

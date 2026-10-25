@@ -32,6 +32,8 @@
   <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>также на странице «Мир»</value></data>
   <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>Также добавить на страницу «Мир» как место, скрытое от игроков</value></data>
   <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>Место</value></data>
+  <data name="WorldBuilder.Drafts.Bestiary" xml:space="preserve"><value>Также добавить в список бестиария</value></data>
+  <data name="WorldBuilder.Save.AlsoBestiary" xml:space="preserve"><value>также в списке бестиария</value></data>
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>место</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>поселение</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Создать с ИИ</value></data>

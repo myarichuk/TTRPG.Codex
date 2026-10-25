@@ -145,6 +145,14 @@
                                                 <label for="@mapId" class="small">@L["WorldBuilder.Drafts.OnMap"]</label>
                                             </div>
                                         }
+                                        else if (IsCreature(d))
+                                        {
+                                            var bestiaryId = $"{dialogId}-bestiary-{d.Ref}";
+                                            <div class="field-check mb-2">
+                                                <input id="@bestiaryId" type="checkbox" class="field-box" checked="@d.Bestiary" disabled="@(!d.Selected)" @onchange="e => d.Bestiary = (bool)(e.Value ?? false)" data-testid="world-draft-bestiary" />
+                                                <label for="@bestiaryId" class="small">@L["WorldBuilder.Drafts.Bestiary"]</label>
+                                            </div>
+                                        }
                                         <div class="d-flex gap-2 flex-wrap">
                                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="@(d.Expanded ? "refresh-cw" : "feather")" OnClick="() => WriteAsync(d)" Disabled="@(busy != null || !d.Selected)" data-testid="world-draft-write">
                                                 @(busy == d ? L["WorldBuilder.Drafts.Writing"] : d.Expanded ? L["WorldBuilder.Drafts.Rewrite"] : L["WorldBuilder.Drafts.Write"])
@@ -173,7 +181,7 @@
                                     <li class="@(d.Expanded ? "done" : "")">
                                         <LucideIcon IconName="@(d.Expanded ? "circle-check" : "circle")" Size="16" />
                                         <span>@d.Name</span>
-                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + L["WorldBuilder.Save.AlsoCast"] : "")@(d.Kind == DraftKinds.Place && d.OnMap ? " · " + L["WorldBuilder.Save.AlsoOnMap"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
+                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + L["WorldBuilder.Save.AlsoCast"] : "")@(d.Kind == DraftKinds.Place && d.OnMap ? " · " + L["WorldBuilder.Save.AlsoOnMap"] : "")@(d.Bestiary && IsCreature(d) ? " · " + L["WorldBuilder.Save.AlsoBestiary"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
                                     </li>
                                 }
                             </ul>
@@ -325,6 +333,9 @@
         DraftKinds.Place => L["WorldBuilder.Kind.Place"],
         _ => L["WorldBuilder.Kind.Wiki"]
     };
+
+    /// <summary>A homebrew draft of a type that can stand on the table as a creature (a monster, say), so it can go on the Bestiary shortlist.</summary>
+    private bool IsCreature(WorldDraft draft) => draft.Kind == DraftKinds.Homebrew && PreviewType(draft)?.ActorBlueprint == true;
 
     private ContentTypeDefinition? PreviewType(WorldDraft draft) => types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase));
 

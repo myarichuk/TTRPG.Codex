@@ -32,6 +32,8 @@
   <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>also on the World page</value></data>
   <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>Also add to the World page as a place, hidden from players</value></data>
   <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="WorldBuilder.Drafts.Bestiary" xml:space="preserve"><value>Also add to the Bestiary shortlist</value></data>
+  <data name="WorldBuilder.Save.AlsoBestiary" xml:space="preserve"><value>also on the Bestiary shortlist</value></data>
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>place</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>settlement</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Build with AI</value></data>

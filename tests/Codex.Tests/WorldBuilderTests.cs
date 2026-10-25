@@ -319,7 +319,17 @@ public class WorldBuilderTests
     {
         public List<RegionDocument> NewRegions { get; } = new();
         public List<(string RegionId, LocationDocument Place)> AddedPlaces { get; } = new();
+
+        /// <summary>The campaign as stored; its Bestiary shortlist is what saving added to it.</summary>
+        public CampaignDocument Stored { get; } = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     }
+
+    /// <summary>A system whose creatures ("monster") can stand on the table, and whose spells cannot.</summary>
+    private static readonly SystemDefinition CreatureSystem = new()
+    {
+        Id = "srd5e",
+        EntityTypes = new List<ContentTypeDefinition> { new() { Type = "monster", ActorBlueprint = true }, new() { Type = "spell" } }
+    };
 
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing) => Service(existingPages, Array.Empty<RegionDocument>(), existing);
 
@@ -347,6 +357,8 @@ public class WorldBuilderTests
         actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(actors.Add), Arg.Any<CampaignAccess>()).Returns(true);
         var catalog = Substitute.For<ISystemCatalog>();
         catalog.GetUISchemas(Arg.Any<string>()).Returns(Enumerable.Empty<UISchema>());
+        catalog.GetDefinition("srd5e").Returns(CreatureSystem);
+        var campaigns = Substitute.For<ICampaignRepository>();
         var library = new CampaignLibrary(new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance)), homebrew, catalog);
         var providers = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),
             Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance);
@@ -356,7 +368,12 @@ public class WorldBuilderTests
         var cast = new CastService(runtimes, Substitute.For<IContentRegistry>(), components, catalog);
         var regions = Substitute.For<IRegionRepository>();
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existingRegions.ToList().AsEnumerable());
-        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions), pages, entries, actors, facts);
+        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns), pages, entries, actors, facts);
+        campaigns.UpdateAsync("c1", Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
+        {
+            ci.Arg<Action<CampaignDocument>>()(saving.Stored);
+            return saving.Stored;
+        });
         regions.SaveAsync(Arg.Do<RegionDocument>(saving.NewRegions.Add), Arg.Any<CampaignAccess>()).Returns(true);
         regions.UpsertLocationAsync(Arg.Any<string>(), Arg.Any<LocationDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
         {
@@ -677,5 +694,55 @@ public class WorldBuilderTests
         Assert.All(entries, e => Assert.False(e.IsPublished));
         Assert.Equal("Haunts The Drowned Bell.", entries[0].Description);
         Assert.Equal(3, result.Count);
+    }
+
+    // ---- Creatures on the Bestiary shortlist ----
+
+    [Fact]
+    public async Task Save_PutsATickedCreatureOnTheBestiaryShortlist_AsHomebrew()
+    {
+        var saving = Service();
+        var campaign = new CampaignDocument { Id = "c1", SystemId = "srd5e" };
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Bell-drowned ", Pitch = "A drowned bell-ringer.", Bestiary = true });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Tide Eel", Pitch = "An eel." });
+
+        var result = await saving.Service.SaveAsync(campaign, Dm, WorldRecipes.Find("quest")!, bundle);
+
+        var listed = Assert.Single(saving.Stored.Bestiary); // the unticked eel stays in the Library only
+        Assert.Equal(("monster", "bell-drowned", true, "Bell-drowned", 1), (listed.EntryType, listed.EntryId, listed.IsHomebrew, listed.Name, listed.Count));
+        Assert.Equal(listed.Key, Assert.Single(result.Shortlisted).Key);
+        Assert.Equal(listed.Key, Assert.Single(campaign.Bestiary).Key); // the caller's copy is refreshed
+        Assert.Equal(2, result.Count); // the shortlist adds no new document
+    }
+
+    [Fact]
+    public async Task Save_ShortlistsOnlyCreatures_ThatAreKept_AndNotAlreadyListed()
+    {
+        var saving = Service(null, new HomebrewEntryDocument { Type = "monster", EntryId = "gull-hag", Name = "Gull Hag" });
+        saving.Stored.Bestiary.Add(new BestiaryEntry { EntryType = "monster", EntryId = "tide-eel", IsHomebrew = true, Name = "Tide Eel", Note = "act two" });
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Homebrew, Type = "spell", Name = "Bell Toll", Pitch = "A toll.", Bestiary = true });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Mud Imp", Pitch = "An imp.", Bestiary = true, Selected = false });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Gull Hag", Pitch = "A hag.", Bestiary = true });
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("homebrew")!, bundle);
+
+        // A spell cannot stand on the table and the unticked imp is not saved; the hag's id was taken, so the new one is listed.
+        Assert.Equal(new[] { ("tide-eel", "act two"), ("gull-hag-2", null) }, saving.Stored.Bestiary.Select(b => (b.EntryId, b.Note)));
+        Assert.Equal("gull-hag-2", Assert.Single(result.Shortlisted).EntryId);
+    }
+
+    [Fact]
+    public async Task Save_WithoutTickedCreatures_LeavesTheCampaignAlone()
+    {
+        var saving = Service();
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Tide Eel", Pitch = "An eel." });
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("homebrew")!, bundle);
+
+        Assert.Empty(result.Shortlisted);
+        Assert.Empty(saving.Stored.Bestiary);
     }
 }

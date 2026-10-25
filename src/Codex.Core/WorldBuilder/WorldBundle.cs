@@ -40,6 +40,9 @@ public sealed class WorldDraft
     /// <summary>For a place: also add it to the World page, hidden, besides its wiki page.</summary>
     public bool OnMap { get; set; }
 
+    /// <summary>For a homebrew creature: also put it on the campaign's Bestiary shortlist, besides the Library.</summary>
+    public bool Bestiary { get; set; }
+
     /// <summary>A page's text, a homebrew entry's description (its rules text), or a secret's details.</summary>
     public string? Body { get; set; }
 
