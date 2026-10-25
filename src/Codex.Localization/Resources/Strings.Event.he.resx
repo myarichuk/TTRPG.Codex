@@ -4,97 +4,129 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="Event.Damage.Immune" xml:space="preserve"><value>{0} חסין לנזק ({1}): {2} מ-{3} לא השפיעו.</value></data>
-  <data name="Event.Damage.Took" xml:space="preserve"><value>{0} קיבל {1} נזק מ-{2}.</value></data>
-  <data name="Event.Damage.TookTyped" xml:space="preserve"><value>{0} קיבל {1} נזק ({2}) מ-{3}.</value></data>
-  <data name="Event.Damage.Resisted" xml:space="preserve"><value>עמידות: הוטלו {0}.</value></data>
-  <data name="Event.Damage.Vulnerable" xml:space="preserve"><value>פגיעות: הוטלו {0}.</value></data>
-  <data name="Event.Damage.ResistedVulnerable" xml:space="preserve"><value>עמידות ופגיעות: הוטלו {0}.</value></data>
+  <data name="Event.Damage.Immune" xml:space="preserve"><value>{0}: חסינות לנזק ({1}); {2} לא השפיעו.</value></data>
+  <data name="Event.Damage.Took" xml:space="preserve"><value>{0}: {1} נזק.</value></data>
+  <data name="Event.Damage.TookTyped" xml:space="preserve"><value>{0}: {1} נזק ({2}).</value></data>
+  <data name="Event.Damage.Resisted" xml:space="preserve"><value>עמידות: בהטלה יצאו {0}.</value></data>
+  <data name="Event.Damage.Vulnerable" xml:space="preserve"><value>פגיעות: בהטלה יצאו {0}.</value></data>
+  <data name="Event.Damage.ResistedVulnerable" xml:space="preserve"><value>עמידות ופגיעות: בהטלה יצאו {0}.</value></data>
   <data name="Event.Damage.Absorbed" xml:space="preserve"><value>{0} נבלעו בנקודות חיים זמניות.</value></data>
-  <data name="Event.Damage.Died" xml:space="preserve"><value>{0} מת.</value></data>
-  <data name="Event.Damage.Down" xml:space="preserve"><value>{0} ירד ל-0 ונפל.</value></data>
-  <data name="Event.Damage.HitWhileDown" xml:space="preserve"><value>{0} נפגע כשהיה על הקרקע: {1, plural, one{כישלון # בזריקת הצלה ממוות} two{# כישלונות בזריקות הצלה ממוות} other{# כישלונות בזריקות הצלה ממוות}}.</value></data>
-  <data name="Event.Damage.PlayerDied" xml:space="preserve"><value>{0} קיבל נזק ומת.</value></data>
-  <data name="Event.Damage.PlayerDown" xml:space="preserve"><value>{0} קיבל נזק ונפל.</value></data>
-  <data name="Event.Damage.Player" xml:space="preserve"><value>{0} קיבל נזק.</value></data>
-  <data name="Event.Healing.Dead" xml:space="preserve"><value>{0} מת; ריפוי של {1} מ-{2} לא השפיע.</value></data>
-  <data name="Event.Healing.Recovered" xml:space="preserve"><value>{0} התאושש ב-{1} ({2}) מ-{3}.</value></data>
-  <data name="Event.Healing.Revived" xml:space="preserve"><value>{0} שוב על הרגליים.</value></data>
-  <data name="Event.Healing.Player" xml:space="preserve"><value>{0} רופא.</value></data>
-  <data name="Event.Healing.PlayerRevived" xml:space="preserve"><value>{0} רופא ושוב על הרגליים.</value></data>
-  <data name="Event.TempHp.Gained" xml:space="preserve"><value>{0} קיבל {1} נקודות חיים זמניות מ-{2}.</value></data>
-  <data name="Event.TempHp.Kept" xml:space="preserve"><value>ל-{0} כבר היו לפחות {1} נקודות חיים זמניות; {2} לא שינה דבר.</value></data>
-  <data name="Event.TempHp.PlayerGained" xml:space="preserve"><value>{0} קיבל נקודות חיים זמניות.</value></data>
+  <data name="Event.Damage.Died" xml:space="preserve"><value>{0}: מוות.</value></data>
+  <data name="Event.Damage.Down" xml:space="preserve"><value>{0}: ירידה ל-0 ונפילה.</value></data>
+  <data name="Event.Damage.HitWhileDown" xml:space="preserve"><value>{0}: פגיעה בזמן נפילה — {1, plural, one{כישלון # בזריקת הצלה ממוות} two{# כישלונות בזריקות הצלה ממוות} other{# כישלונות בזריקות הצלה ממוות}}.</value></data>
+  <data name="Event.Damage.PlayerDied" xml:space="preserve"><value>{0}: נזק ומוות.</value></data>
+  <data name="Event.Damage.PlayerDown" xml:space="preserve"><value>{0}: נזק ונפילה.</value></data>
+  <data name="Event.Damage.Player" xml:space="preserve"><value>{0}: נזק.</value></data>
+  <data name="Event.Healing.Dead" xml:space="preserve"><value>{0}: מוות; ריפוי של {1} לא השפיע.</value></data>
+  <data name="Event.Healing.Recovered" xml:space="preserve"><value>{0}: התאוששות ב-{1} ({2}).</value></data>
+  <data name="Event.Healing.Revived" xml:space="preserve"><value>{0}: שוב על הרגליים.</value></data>
+  <data name="Event.Healing.Player" xml:space="preserve"><value>{0}: ריפוי.</value></data>
+  <data name="Event.Healing.PlayerRevived" xml:space="preserve"><value>{0}: ריפוי, ושוב על הרגליים.</value></data>
+  <data name="Event.TempHp.Gained" xml:space="preserve"><value>{0}: {1} נקודות חיים זמניות.</value></data>
+  <data name="Event.TempHp.Kept" xml:space="preserve"><value>ל-{0} כבר היו לפחות {1} נקודות חיים זמניות.</value></data>
+  <data name="Event.TempHp.PlayerGained" xml:space="preserve"><value>{0}: נקודות חיים זמניות.</value></data>
   <data name="Event.TempHp.PlayerKept" xml:space="preserve"><value>ל-{0} כבר היו נקודות חיים זמניות.</value></data>
-  <data name="Event.DeathSave.NotApplicable" xml:space="preserve"><value>{0} לא מבצע זריקות הצלה ממוות.</value></data>
-  <data name="Event.DeathSave.Revived" xml:space="preserve"><value>{0} הטיל {1} טבעי בזריקת הצלה ממוות וקם עם נקודת חיים אחת.</value></data>
-  <data name="Event.DeathSave.Died" xml:space="preserve"><value>{0} נכשל בזריקת הצלה ממוות ומת.</value></data>
-  <data name="Event.DeathSave.Stable" xml:space="preserve"><value>{0} הצליח בזריקת הצלה ממוות והתייצב.</value></data>
-  <data name="Event.DeathSave.Succeeded" xml:space="preserve"><value>{0} הצליח בזריקת הצלה ממוות.</value></data>
-  <data name="Event.DeathSave.Failed" xml:space="preserve"><value>{0} נכשל בזריקת הצלה ממוות.</value></data>
-  <data name="Event.DeathSave.Rolled" xml:space="preserve"><value>הוטל {0}.</value></data>
+  <data name="Event.DeathSave.NotApplicable" xml:space="preserve"><value>{0}: אין זריקות הצלה ממוות.</value></data>
+  <data name="Event.DeathSave.Revived" xml:space="preserve"><value>{0}: {1} טבעי בזריקת הצלה ממוות — קימה עם נקודת חיים אחת.</value></data>
+  <data name="Event.DeathSave.Died" xml:space="preserve"><value>{0}: כישלון בזריקת הצלה ממוות, ומוות.</value></data>
+  <data name="Event.DeathSave.Stable" xml:space="preserve"><value>{0}: הצלחה בזריקת הצלה ממוות, ומצב יציב.</value></data>
+  <data name="Event.DeathSave.Succeeded" xml:space="preserve"><value>{0}: הצלחה בזריקת הצלה ממוות.</value></data>
+  <data name="Event.DeathSave.Failed" xml:space="preserve"><value>{0}: כישלון בזריקת הצלה ממוות.</value></data>
+  <data name="Event.DeathSave.Rolled" xml:space="preserve"><value>בהטלה יצא {0}.</value></data>
   <data name="Event.DeathSave.Tally" xml:space="preserve"><value>הצלחות: {0}, כישלונות: {1}.</value></data>
-  <data name="Event.Stabilized.Done" xml:space="preserve"><value>{0} יוצב על ידי {1}.</value></data>
-  <data name="Event.Stabilized.None" xml:space="preserve"><value>{0} לא היה צריך ייצוב.</value></data>
-  <data name="Event.Exhaustion.Died" xml:space="preserve"><value>{0} הגיע לדרגת התשישות האחרונה ומת.</value></data>
-  <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0} אינו תשוש עוד.</value></data>
-  <data name="Event.Exhaustion.Level" xml:space="preserve"><value>{0} בדרגת תשישות {1}.</value></data>
+  <data name="Event.Stabilized.Done" xml:space="preserve"><value>{0}: ייצוב.</value></data>
+  <data name="Event.Stabilized.None" xml:space="preserve"><value>{0}: אין צורך בייצוב.</value></data>
+  <data name="Event.Exhaustion.Died" xml:space="preserve"><value>{0}: דרגת התשישות האחרונה, ומוות.</value></data>
+  <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0}: ללא תשישות.</value></data>
+  <data name="Event.Exhaustion.Level" xml:space="preserve"><value>{0}: דרגת תשישות {1}.</value></data>
   <data name="Event.Exhaustion.Failed" xml:space="preserve"><value>לא ניתן היה לשנות את התשישות של {0}.</value></data>
-  <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0} ניצל קוביות חיים: {1} (d{2}: {3}) והתאושש ב-{4} נקודות חיים.</value></data>
+  <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0}: ניצול קוביות חיים: {1} (d{2}: {3}), התאוששות ב-{4} נקודות חיים.</value></data>
   <data name="Event.HitDice.None" xml:space="preserve"><value>ל-{0} לא נותרו קוביות חיים לניצול.</value></data>
-  <data name="Event.HitDice.Player" xml:space="preserve"><value>{0} ניצל קוביות חיים והתאושש בנקודות חיים.</value></data>
-  <data name="Event.Status.Gained" xml:space="preserve"><value>{0} קיבל {1} מ-{2}.</value></data>
-  <data name="Event.Status.Indefinite" xml:space="preserve"><value>נמשך עד להסרה.</value></data>
-  <data name="Event.Status.OwnStart" xml:space="preserve"><value>נמשך סבבים: {0}, עד תחילת התור שלו.</value></data>
-  <data name="Event.Status.OwnEnd" xml:space="preserve"><value>נמשך סבבים: {0}, עד סוף התור שלו.</value></data>
-  <data name="Event.Status.OtherStart" xml:space="preserve"><value>נמשך סבבים: {0}, עד תחילת התור של {1}.</value></data>
-  <data name="Event.Status.OtherEnd" xml:space="preserve"><value>נמשך סבבים: {0}, עד סוף התור של {1}.</value></data>
-  <data name="Event.Status.Lost" xml:space="preserve"><value>{0} איבד את {1}.</value></data>
+  <data name="Event.HitDice.Player" xml:space="preserve"><value>{0}: ניצול קוביות חיים והתאוששות.</value></data>
+  <data name="Event.Status.Gained" xml:space="preserve"><value>{0}: {1}.</value></data>
+  <data name="Event.Status.Indefinite" xml:space="preserve"><value>עד להסרה.</value></data>
+  <data name="Event.Status.Lost" xml:space="preserve"><value>{0}: הסרת {1}.</value></data>
   <data name="Event.Turn.Ended" xml:space="preserve"><value>התור של {0} הסתיים.</value></data>
   <data name="Event.Turn.Passed" xml:space="preserve"><value>התור עבר ל-{0} (סבב {1}).</value></data>
   <data name="Event.Turn.PassedNobody" xml:space="preserve"><value>התור לא עבר לאיש (סבב {0}).</value></data>
   <data name="Event.Turn.Back" xml:space="preserve"><value>התור חזר ל-{0}.</value></data>
   <data name="Event.Turn.BackNobody" xml:space="preserve"><value>התור לא חזר לאיש.</value></data>
-  <data name="Event.Turn.ActsNow" xml:space="preserve"><value>{0} פועל עכשיו (סבב {1}).</value></data>
-  <data name="Event.Turn.Delayed" xml:space="preserve"><value>{0} דחה את תורו.</value></data>
-  <data name="Event.Turn.Readied" xml:space="preserve"><value>{0} הכין פעולה.</value></data>
-  <data name="Event.Turn.Normal" xml:space="preserve"><value>{0} פועל שוב כרגיל.</value></data>
-  <data name="Event.Initiative.Rolled" xml:space="preserve"><value>{0} הטיל {1} ליוזמה.</value></data>
-  <data name="Event.Initiative.Removed" xml:space="preserve"><value>{0} יצא מסדר היוזמה.</value></data>
-  <data name="Event.Initiative.NotIn" xml:space="preserve"><value>{0} לא היה בסדר היוזמה.</value></data>
+  <data name="Event.Turn.ActsNow" xml:space="preserve"><value>התור של {0} עכשיו (סבב {1}).</value></data>
+  <data name="Event.Turn.Delayed" xml:space="preserve"><value>{0}: דחיית התור.</value></data>
+  <data name="Event.Turn.Readied" xml:space="preserve"><value>{0}: הכנת פעולה.</value></data>
+  <data name="Event.Turn.Normal" xml:space="preserve"><value>{0}: חזרה לפעולה רגילה.</value></data>
+  <data name="Event.Initiative.Rolled" xml:space="preserve"><value>{0}: יוזמה {1}.</value></data>
+  <data name="Event.Initiative.Removed" xml:space="preserve"><value>{0}: יציאה מסדר היוזמה.</value></data>
+  <data name="Event.Initiative.NotIn" xml:space="preserve"><value>{0}: לא בסדר היוזמה.</value></data>
   <data name="Event.Encounter.Ended" xml:space="preserve"><value>המפגש הסתיים אחרי סבבים: {0}.</value></data>
-  <data name="Event.Encounter.None" xml:space="preserve"><value>לא היה מפגש לסיים.</value></data>
-  <data name="Event.Actor.Left" xml:space="preserve"><value>{0} עזב את השולחן.</value></data>
-  <data name="Event.Actor.Joined" xml:space="preserve"><value>{0} הצטרף לשולחן.</value></data>
+  <data name="Event.Encounter.None" xml:space="preserve"><value>אין מפגש לסיים.</value></data>
+  <data name="Event.Actor.Left" xml:space="preserve"><value>{0}: עזיבת השולחן.</value></data>
+  <data name="Event.Actor.Joined" xml:space="preserve"><value>{0}: הצטרפות לשולחן.</value></data>
   <data name="Event.Sheet.Edited" xml:space="preserve"><value>דף הדמות של {0} נערך.</value></data>
-  <data name="Event.Roll.Secret" xml:space="preserve"><value>{0} הטיל הטלה סודית ({1}).</value></data>
-  <data name="Event.Roll.Plain" xml:space="preserve"><value>{0} הטיל {1}: {2}.</value></data>
-  <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0} הטיל {1} ({2}): {3}.</value></data>
-  <data name="Event.Resource.Used" xml:space="preserve"><value>{0} השתמש ב: {2} ×{1}.</value></data>
-  <data name="Event.Resource.Regained" xml:space="preserve"><value>{0} החזיר: {2} ×{1}.</value></data>
-  <data name="Event.Rest.Took" xml:space="preserve"><value>{0} נח: {1}.</value></data>
-  <data name="Event.Rest.TookWith" xml:space="preserve"><value>{0} נח: {1} — {2}.</value></data>
-  <data name="Event.Rest.Slots" xml:space="preserve"><value>התאים מולאו מחדש</value></data>
-  <data name="Event.Rest.Restored" xml:space="preserve"><value>{0} שוחזר</value></data>
-  <data name="Event.Rest.Cleared" xml:space="preserve"><value>{0} נוקה</value></data>
+  <data name="Event.Roll.Secret" xml:space="preserve"><value>{0}: הטלה סודית ({1}).</value></data>
+  <data name="Event.Roll.Plain" xml:space="preserve"><value>{0}: הטלת {1} — {2}.</value></data>
+  <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0}: הטלת {1} ({2}) — {3}.</value></data>
+  <data name="Event.Resource.Used" xml:space="preserve"><value>{0}: שימוש — {2} ×{1}.</value></data>
+  <data name="Event.Resource.Regained" xml:space="preserve"><value>{0}: החזרה — {2} ×{1}.</value></data>
+  <data name="Event.Rest.Took" xml:space="preserve"><value>{0}: {1}.</value></data>
+  <data name="Event.Rest.TookWith" xml:space="preserve"><value>{0}: {1} — {2}.</value></data>
+  <data name="Event.Rest.Slots" xml:space="preserve"><value>מילוי התאים מחדש</value></data>
+  <data name="Event.Rest.Restored" xml:space="preserve"><value>שחזור: {0}</value></data>
+  <data name="Event.Rest.Cleared" xml:space="preserve"><value>איפוס: {0}</value></data>
   <data name="Event.Rest.HitDice" xml:space="preserve"><value>קוביות חיים שהוחזרו: {0}</value></data>
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>התשישות חלפה</value></data>
-  <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>התשישות כעת {0}</value></data>
-  <data name="Event.Rest.Lifted" xml:space="preserve"><value>{0} הוסר</value></data>
-  <data name="Event.Note.Added" xml:space="preserve"><value>נוסף: {0}.</value></data>
-  <data name="Event.Note.AddedSecret" xml:space="preserve"><value>נוסף (סודי): {0}.</value></data>
-  <data name="Event.Note.Corrected" xml:space="preserve"><value>תוקן: {0}.</value></data>
-  <data name="Event.Note.CorrectedSecret" xml:space="preserve"><value>תוקן (סודי): {0}.</value></data>
-  <data name="Event.Note.Removed" xml:space="preserve"><value>הוסר: {0}.</value></data>
-  <data name="Event.Note.RemovedSecret" xml:space="preserve"><value>הוסר (סודי): {0}.</value></data>
+  <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>דרגת התשישות כעת {0}</value></data>
+  <data name="Event.Rest.Lifted" xml:space="preserve"><value>הסרה: {0}</value></data>
+  <data name="Event.Note.Added" xml:space="preserve"><value>הוספת {0}.</value></data>
+  <data name="Event.Note.AddedSecret" xml:space="preserve"><value>הוספת {0} בסוד.</value></data>
+  <data name="Event.Note.Corrected" xml:space="preserve"><value>תיקון {0}.</value></data>
+  <data name="Event.Note.CorrectedSecret" xml:space="preserve"><value>תיקון {0} בסוד.</value></data>
+  <data name="Event.Note.Removed" xml:space="preserve"><value>הסרת {0}.</value></data>
+  <data name="Event.Note.RemovedSecret" xml:space="preserve"><value>הסרת {0} בסוד.</value></data>
   <data name="Event.Note.Unchanged" xml:space="preserve"><value>ללא שינוי: {0}.</value></data>
-  <data name="Event.Note.UnchangedSecret" xml:space="preserve"><value>ללא שינוי (סודי): {0}.</value></data>
-  <data name="Event.Note.InPlace" xml:space="preserve"><value>נשאר במקומו: {0}.</value></data>
-  <data name="Event.Note.InPlaceSecret" xml:space="preserve"><value>נשאר במקומו (סודי): {0}.</value></data>
+  <data name="Event.Note.UnchangedSecret" xml:space="preserve"><value>ללא שינוי (בסוד): {0}.</value></data>
+  <data name="Event.Note.InPlace" xml:space="preserve"><value>השארת {0} במקום.</value></data>
+  <data name="Event.Note.InPlaceSecret" xml:space="preserve"><value>השארת {0} במקום (בסוד).</value></data>
   <data name="Event.Note.Noun.Quote" xml:space="preserve"><value>ציטוט</value></data>
   <data name="Event.Note.Noun.Note" xml:space="preserve"><value>הערה</value></data>
   <data name="Event.Note.Noun.Clue" xml:space="preserve"><value>רמז</value></data>
   <data name="Event.Note.Noun.Loot" xml:space="preserve"><value>רשומת שלל</value></data>
   <data name="Event.Note.Noun.Ruling" xml:space="preserve"><value>פסיקה</value></data>
   <data name="Event.Note.Noun.FollowUp" xml:space="preserve"><value>מעקב</value></data>
+  <data name="Event.Damage.ImmuneFrom" xml:space="preserve"><value>{0}: חסינות לנזק ({1}); {2} מ-{3} לא השפיעו.</value></data>
+  <data name="Event.Damage.TookFrom" xml:space="preserve"><value>{0}: {1} נזק מ-{2}.</value></data>
+  <data name="Event.Damage.TookTypedFrom" xml:space="preserve"><value>{0}: {1} נזק ({2}) מ-{3}.</value></data>
+  <data name="Event.Healing.DeadFrom" xml:space="preserve"><value>{0}: מוות; ריפוי של {1} מ-{2} לא השפיע.</value></data>
+  <data name="Event.Healing.RecoveredFrom" xml:space="preserve"><value>{0}: התאוששות ב-{1} ({2}) מ-{3}.</value></data>
+  <data name="Event.TempHp.GainedFrom" xml:space="preserve"><value>{0}: {1} נקודות חיים זמניות מ-{2}.</value></data>
+  <data name="Event.TempHp.KeptFrom" xml:space="preserve"><value>ל-{0} כבר היו לפחות {1} נקודות חיים זמניות; ללא שינוי מ-{2}.</value></data>
+  <data name="Event.Stabilized.DoneBy" xml:space="preserve"><value>{0}: ייצוב על ידי {1}.</value></data>
+  <data name="Event.Status.GainedFrom" xml:space="preserve"><value>{0}: {1}, מקור: {2}.</value></data>
+  <data name="Event.Status.UntilStart" xml:space="preserve"><value>למשך סבבים: {0}, עד תחילת התור של {1}.</value></data>
+  <data name="Event.Status.UntilEnd" xml:space="preserve"><value>למשך סבבים: {0}, עד סוף התור של {1}.</value></data>
+  <data name="Event.Slot.Spell" xml:space="preserve"><value>תא לחשים בדרגה {0}</value></data>
+  <data name="Event.Slot.Pact" xml:space="preserve"><value>תא ברית בדרגה {0}</value></data>
+  <data name="Event.Slot.Other" xml:space="preserve"><value>{1} (דרגה {0})</value></data>
+  <data name="Event.Type.ActorJoined" xml:space="preserve"><value>הצטרפות</value></data>
+  <data name="Event.Type.ActorLeft" xml:space="preserve"><value>עזיבה</value></data>
+  <data name="Event.Type.Damage" xml:space="preserve"><value>נזק</value></data>
+  <data name="Event.Type.DeathSave" xml:space="preserve"><value>הצלה ממוות</value></data>
+  <data name="Event.Type.DiceRoll" xml:space="preserve"><value>הטלה</value></data>
+  <data name="Event.Type.EncounterEnded" xml:space="preserve"><value>סוף מפגש</value></data>
+  <data name="Event.Type.Exhaustion" xml:space="preserve"><value>תשישות</value></data>
+  <data name="Event.Type.Healing" xml:space="preserve"><value>ריפוי</value></data>
+  <data name="Event.Type.HitDice" xml:space="preserve"><value>קוביות חיים</value></data>
+  <data name="Event.Type.Initiative" xml:space="preserve"><value>יוזמה</value></data>
+  <data name="Event.Type.InitiativeRemoved" xml:space="preserve"><value>יציאה מהיוזמה</value></data>
+  <data name="Event.Type.Note" xml:space="preserve"><value>הערה</value></data>
+  <data name="Event.Type.ResourceSpent" xml:space="preserve"><value>שימוש</value></data>
+  <data name="Event.Type.ResourceRegained" xml:space="preserve"><value>החזרה</value></data>
+  <data name="Event.Type.Rest" xml:space="preserve"><value>מנוחה</value></data>
+  <data name="Event.Type.SheetEdited" xml:space="preserve"><value>דף דמות</value></data>
+  <data name="Event.Type.Stabilized" xml:space="preserve"><value>ייצוב</value></data>
+  <data name="Event.Type.StatusEffect" xml:space="preserve"><value>מצב</value></data>
+  <data name="Event.Type.StatusEffectRemoved" xml:space="preserve"><value>הסרת מצב</value></data>
+  <data name="Event.Type.TemporaryHitPoints" xml:space="preserve"><value>נק' חיים זמניות</value></data>
+  <data name="Event.Type.TurnAdvance" xml:space="preserve"><value>תור</value></data>
+  <data name="Event.Type.TurnState" xml:space="preserve"><value>מצב תור</value></data>
 </root>

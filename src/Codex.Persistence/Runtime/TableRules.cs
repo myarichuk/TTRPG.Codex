@@ -399,7 +399,7 @@ internal static class TableRules
                     GetUp(runtime, entity);
                 }
 
-                happened.Add(EventMessage.Of("Rest.Restored", Label(runtime, key)));
+                happened.Add(EventMessage.Of("Rest.Restored", LogTerms.Resource(runtime, key)));
             }
         }
 
@@ -408,7 +408,7 @@ internal static class TableRules
             if (pool.Get(key) != 0)
             {
                 pool.Set(key, 0);
-                happened.Add(EventMessage.Of("Rest.Cleared", Label(runtime, key)));
+                happened.Add(EventMessage.Of("Rest.Cleared", LogTerms.Resource(runtime, key)));
             }
         }
 
@@ -441,7 +441,7 @@ internal static class TableRules
         {
             if (runtime.World.RemoveStatus(entity, condition) > 0)
             {
-                happened.Add(EventMessage.Of("Rest.Lifted", condition));
+                happened.Add(EventMessage.Of("Rest.Lifted", EventTerm.Condition(condition)));
             }
         }
 
@@ -511,7 +511,4 @@ internal static class TableRules
         pool.Pools.Remove(rules.SuccessesKey);
         pool.Pools.Remove(rules.FailuresKey);
     }
-
-    private static string Label(CampaignRuntime runtime, string key) =>
-        runtime.System?.Resources.FirstOrDefault(r => r.Key == key)?.Label ?? key;
 }

@@ -3,6 +3,7 @@
 @using Codex.Core
 @using Codex.Core.AI
 @using Codex.Persistence
+@using Codex.Plugin.Abstractions
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject Codex.Web.Services.ViewerClock Clock
@@ -12,6 +13,7 @@
 @inject IJournalRepository JournalRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject IUserRepository UserRepo
+@inject ISystemCatalog Catalog
 @inject AiFeatures Ai
 @inject MentionSources MentionSources
 @inject ILogger<SessionDetail> Logger
@@ -216,8 +218,8 @@ else
                     {
                         <div class="log-entry">
                             <span class="small-muted"><LocalTime Value="evt.Timestamp" Format="HH:mm" /></span>
-                            <span class="pill ms-1">@evt.Type</span>
-                            <div>@evt.Text(L)</div>
+                            <span class="pill ms-1">@TypeLabel(evt.Type)</span>
+                            <div>@evt.Text(L, terms)</div>
                         </div>
                     }
                 </div>
@@ -245,6 +247,7 @@ else
     private string mentionsJson = "[]";
     private IReadOnlyList<SessionEvent> visibleEvents = Array.Empty<SessionEvent>();
     private readonly Dictionary<string, string> memberUsernames = new();
+    private EventTermText? terms;
     private string newNoteContent = "";
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
     private string editRecap = "";
@@ -322,6 +325,8 @@ else
                     memberUsernames[member.UserId] = user?.Username ?? member.UserId;
                 }
 
+                terms = EventTerms.For(Catalog.GetDefinition(campaign.SystemId), L, memberUsernames);
+
                 journal = (await JournalRepo.GetMineAsync(access)).FirstOrDefault(j => j.SessionId == SessionId);
                 journalBody = mentions.ForEditing(journal?.Body ?? "");
                 journalSavedAt = journal?.UpdatedAt;
@@ -358,7 +363,10 @@ else
 
     // The recap this fills in is what players read, so it starts from the player-safe log, not the DM's.
     private string SerializeEvents() => string.Join("\n",
-        SessionEventRedactor.ForPlayers(session!.Events, campaignActors).OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Text(L)}"));
+        SessionEventRedactor.ForPlayers(session!.Events, campaignActors).OrderBy(e => e.Timestamp).Select(e => $"{e.Timestamp:HH:mm} [{TypeLabel(e.Type)}] {e.Text(L, terms)}"));
+
+    // An event type the log has no label for (one recorded by an older version) shows as stored.
+    private string TypeLabel(string type) => L.Has("Event.Type." + type) ? L.Get("Event.Type." + type) : type;
 
     private void PreFillRecap()
     {

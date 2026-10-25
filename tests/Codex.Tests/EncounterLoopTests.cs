@@ -174,6 +174,22 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Contains(session.Events, e => e.Type == "EncounterEnded");
     }
 
+    [Fact]
+    public async Task A_button_press_with_no_source_logs_no_source_And_a_turn_is_named_by_whose_it_is_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero });
+
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 3, ""));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(hero.Id, "Poisoned", "", 2, EffectExpiry.EndOfTurn, hero.Id));
+
+        Assert.Contains(session.Events, e => e.Description == "Aria took 3 damage.");
+        Assert.Contains(session.Events, e => e.Description == "Aria gained Poisoned. It lasts 2 rounds, ending at the end of Aria's turn.");
+    }
+
     // ---- Initiative (R2, F12) ----
 
     [Fact]

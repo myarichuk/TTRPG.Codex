@@ -289,9 +289,10 @@ public class SessionEvent
 
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
-    /// <summary>The event written for <paramref name="l"/>'s language; the stored English for an older event.</summary>
-    public string Text(Codex.Localization.Localizer l) =>
-        Parts.Count == 0 ? Description : string.Join(" ", Parts.Select(p => p.Render(l)));
+    /// <summary>The event written for <paramref name="l"/>'s language, game terms named by <paramref name="terms"/>; the stored
+    /// English for an older event.</summary>
+    public string Text(Codex.Localization.Localizer l, EventTermText? terms = null) =>
+        Parts.Count == 0 ? Description : string.Join(" ", Parts.Select(p => p.Render(l, terms)));
 
     /// <summary>An event built from messages. <see cref="Description"/> stays filled, in English, for logs, the AI digest
     /// and anything that has no reader language.</summary>

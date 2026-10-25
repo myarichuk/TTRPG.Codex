@@ -21,6 +21,10 @@ tags) against pack data.
   message with placeholders; never glue fragments together, because word order differs.
 - Errors a user should read are thrown as `LocalizedException(key, args)` and shown with `L.Describe(ex)`;
   the exception's `Message` stays English for logs.
+- The session log stores each event as `EventMessage`s (an `Event.*` key plus arguments) and renders them for the reader
+  with `SessionEvent.Text(L, EventTerms.For(...))`. Arguments that are game terms (conditions, damage types, rests, pools,
+  slots, users) are passed as `EventTerm`s so they are shown through the system translation; the stored English stays
+  for logs and the AI digest. Hebrew event sentences avoid gendered verbs ("{0}: …", construct nouns).
 - Never render resource text through `MarkupString`. Split sentences around markup instead.
 - Right-to-left: `<html dir>` follows the language and the CSS uses logical properties (`margin-inline-start`,
   `inset-inline-end`, `text-align: start`). Use `<LucideIcon>` for arrows (back/next icons mirror

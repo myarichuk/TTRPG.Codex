@@ -33,8 +33,11 @@ public sealed class SessionDigest
         nameOf ??= id => id;
         var sourceEvents = forDm ? session.Events : SessionEventRedactor.ForPlayers(session.Events, actors ?? Array.Empty<ActorDocument>());
         // Notes and quotes are in the digest in full below; their "Note" events would only repeat them.
+        // In English for the model (it writes in the reader's language anyway), but with people's names, not their user ids.
+        var english = Codex.Localization.Localizer.For("en");
+        EventTermText users = (kind, key) => kind == EventTerm.UserKind ? nameOf(key) : null;
         var events = sourceEvents.Where(e => e.Type != "Note").OrderBy(e => e.Timestamp)
-            .Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Description}")
+            .Select(e => $"{e.Timestamp:HH:mm} [{e.Type}] {e.Text(english, users)}")
             .ToList();
 
         // Mentions read as names; players' recap names only actors they fully know, as the player event log does.

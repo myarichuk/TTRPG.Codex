@@ -853,7 +853,7 @@ else
                     {
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-success" OnClick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, true))">@L["Combat.Success"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-failure" OnClick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, false))">@L["Combat.Failure"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="stabilize-btn" OnClick="() => runtime!.EnqueueAsync(new StabilizeCommand(actorId, CurrentUserId))">@L["Combat.Stabilize"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="stabilize-btn" OnClick="() => runtime!.EnqueueAsync(new StabilizeCommand(actorId, NoSource))">@L["Combat.Stabilize"]</CodexButton>
                     }
                     else
                     {
@@ -942,25 +942,28 @@ else
 
     private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
+    // The table's buttons name no source: the person who pressed one is not where the damage, healing or condition came from.
+    private const string NoSource = "";
+
     private async Task ApplyDamageAsync(string actorId)
     {
         if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
         var type = damageTypeInputs.GetValueOrDefault(actorId, "");
         var critical = criticalInputs.GetValueOrDefault(actorId);
         criticalInputs[actorId] = false;
-        await runtime!.EnqueueAsync(new ApplyDamageCommand(actorId, PrimaryKey, amount, CurrentUserId, string.IsNullOrEmpty(type) ? null : type, critical));
+        await runtime!.EnqueueAsync(new ApplyDamageCommand(actorId, PrimaryKey, amount, NoSource, string.IsNullOrEmpty(type) ? null : type, critical));
     }
 
     private async Task ApplyHealingAsync(string actorId)
     {
         if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
-        await runtime!.EnqueueAsync(new ApplyHealingCommand(actorId, PrimaryKey, amount, CurrentUserId));
+        await runtime!.EnqueueAsync(new ApplyHealingCommand(actorId, PrimaryKey, amount, NoSource));
     }
 
     private async Task GrantTempHpAsync(string actorId)
     {
         if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
-        await runtime!.EnqueueAsync(new GrantTemporaryHitPointsCommand(actorId, amount, CurrentUserId));
+        await runtime!.EnqueueAsync(new GrantTemporaryHitPointsCommand(actorId, amount, NoSource));
     }
 
     private async Task AddConditionAsync(string actorId)
@@ -969,11 +972,11 @@ else
         var rounds = GetConditionRounds(actorId);
         var expiry = conditionExpiryInputs.GetValueOrDefault(actorId, EffectExpiry.EndOfTurn);
         conditionInputs[actorId] = "";
-        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId.Trim(), CurrentUserId, rounds, expiry, actorId));
+        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId.Trim(), NoSource, rounds, expiry, actorId));
     }
 
     private Task AddConditionDirectAsync(string actorId, string effectId) =>
-        runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId, CurrentUserId, 0, EffectExpiry.EndOfTurn, actorId));
+        runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId, NoSource, 0, EffectExpiry.EndOfTurn, actorId));
 
     private int GetConditionRounds(string actorId) => conditionRoundsInputs.GetValueOrDefault(actorId, 1);
     private void SetConditionRounds(string actorId, string? raw) => conditionRoundsInputs[actorId] = int.TryParse(raw, out var value) && value > 0 ? value : 0;

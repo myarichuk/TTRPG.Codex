@@ -348,12 +348,24 @@ public class SystemDefinition
             if (fields.TryGetValue(fieldKey, out var f) && f.Options.TryGetValue(value, out var shown)) return shown;
         }
 
-        return t.Values.TryGetValue(value, out var common) ? common : value;
+        return Lookup(t.Values, value) ?? value;
     }
 
     /// <summary>The text to show for a condition name ("Poisoned"); the name itself when untranslated.</summary>
     public string DisplayCondition(string? culture, string condition) =>
-        TranslationFor(culture) is { } t && t.Conditions.TryGetValue(condition, out var shown) ? shown : condition;
+        TranslationFor(culture) is { } t ? Lookup(t.Conditions, condition) ?? condition : condition;
+
+    // Stored values and the translation's keys differ in case ("poisoned" typed at the table, "fire" vs "Fire").
+    private static string? Lookup(Dictionary<string, string> map, string key)
+    {
+        if (map.TryGetValue(key, out var hit)) return hit;
+        foreach (var (k, v) in map)
+        {
+            if (string.Equals(k, key, System.StringComparison.OrdinalIgnoreCase)) return v;
+        }
+
+        return null;
+    }
 
     private SystemDefinition Apply(SystemTranslation t)
     {

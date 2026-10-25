@@ -26,15 +26,22 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
-        var type = string.IsNullOrWhiteSpace(DamageType) ? "" : DamageType.ToLowerInvariant();
+        var type = string.IsNullOrWhiteSpace(DamageType) ? null : EventTerm.DamageType(DamageType.ToLowerInvariant());
+        var source = LogTerms.Source(runtime, SourceId);
         var parts = new List<EventMessage>();
         if (_outcome.Modifier == "immune")
         {
-            parts.Add(EventMessage.Of("Damage.Immune", name, type, Amount, SourceId));
+            parts.Add(source == null ? EventMessage.Of("Damage.Immune", name, type, Amount) : EventMessage.Of("Damage.ImmuneFrom", name, type, Amount, source));
         }
         else
         {
-            parts.Add(type.Length == 0 ? EventMessage.Of("Damage.Took", name, _outcome.Dealt, SourceId) : EventMessage.Of("Damage.TookTyped", name, _outcome.Dealt, type, SourceId));
+            parts.Add((type, source) switch
+            {
+                (null, null) => EventMessage.Of("Damage.Took", name, _outcome.Dealt),
+                (null, _) => EventMessage.Of("Damage.TookFrom", name, _outcome.Dealt, source),
+                (_, null) => EventMessage.Of("Damage.TookTyped", name, _outcome.Dealt, type),
+                _ => EventMessage.Of("Damage.TookTypedFrom", name, _outcome.Dealt, type, source)
+            });
             if (_outcome.Modifier != null)
             {
                 parts.Add(EventMessage.Of(_outcome.Modifier == "resisted" ? "Damage.Resisted" : _outcome.Modifier == "vulnerable" ? "Damage.Vulnerable" : "Damage.ResistedVulnerable", Amount));
@@ -69,14 +76,16 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
+        var source = LogTerms.Source(runtime, SourceId);
         var parts = new List<EventMessage>();
         if (_outcome.WasDead)
         {
-            parts.Add(EventMessage.Of("Healing.Dead", name, Amount, SourceId));
+            parts.Add(source == null ? EventMessage.Of("Healing.Dead", name, Amount) : EventMessage.Of("Healing.DeadFrom", name, Amount, source));
         }
         else
         {
-            parts.Add(EventMessage.Of("Healing.Recovered", name, _outcome.Healed, PoolName, SourceId));
+            var pool = LogTerms.Resource(runtime, PoolName);
+            parts.Add(source == null ? EventMessage.Of("Healing.Recovered", name, _outcome.Healed, pool) : EventMessage.Of("Healing.RecoveredFrom", name, _outcome.Healed, pool, source));
             if (_outcome.Revived) parts.Add(EventMessage.Of("Healing.Revived", name));
         }
 
@@ -102,8 +111,10 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
+        var source = LogTerms.Source(runtime, SourceId);
+        var key = (_applied ? "TempHp.Gained" : "TempHp.Kept") + (source == null ? "" : "From");
         return SessionEvent.From("TemporaryHitPoints",
-            new[] { _applied ? EventMessage.Of("TempHp.Gained", name, Amount, SourceId) : EventMessage.Of("TempHp.Kept", name, Amount, SourceId) },
+            new[] { source == null ? EventMessage.Of(key, name, Amount) : EventMessage.Of(key, name, Amount, source) },
             new[] { ActorId },
             new[] { EventMessage.Of(_applied ? "TempHp.PlayerGained" : "TempHp.PlayerKept", name) });
     }
@@ -197,7 +208,12 @@ public sealed record StabilizeCommand(string ActorId, string SourceId) : IRuntim
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Stabilized",
-        new[] { _applied ? EventMessage.Of("Stabilized.Done", runtime.GetActorName(ActorId), SourceId) : EventMessage.Of("Stabilized.None", runtime.GetActorName(ActorId)) },
+        new[]
+        {
+            !_applied ? EventMessage.Of("Stabilized.None", runtime.GetActorName(ActorId))
+                : LogTerms.Source(runtime, SourceId) is { } source ? EventMessage.Of("Stabilized.DoneBy", runtime.GetActorName(ActorId), source)
+                : EventMessage.Of("Stabilized.Done", runtime.GetActorName(ActorId))
+        },
         new[] { ActorId });
 }
 
@@ -286,13 +302,16 @@ public sealed record AddStatusEffectCommand(string ActorId, string EffectId, str
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.GetActorName(ActorId);
-        var parts = new List<EventMessage> { EventMessage.Of("Status.Gained", name, EffectId, SourceId) };
+        var effect = EventTerm.Condition(EffectId);
+        var parts = new List<EventMessage>
+        {
+            LogTerms.Source(runtime, SourceId) is { } source ? EventMessage.Of("Status.GainedFrom", name, effect, source) : EventMessage.Of("Status.Gained", name, effect)
+        };
         var start = Expiry == EffectExpiry.StartOfTurn;
+        // The turn is always named, even the creature's own: "their turn" has a gender in Hebrew.
         parts.Add(Rounds < 1
             ? EventMessage.Of("Status.Indefinite")
-            : AnchorActorId == ActorId
-                ? EventMessage.Of(start ? "Status.OwnStart" : "Status.OwnEnd", Rounds)
-                : EventMessage.Of(start ? "Status.OtherStart" : "Status.OtherEnd", Rounds, runtime.GetActorName(AnchorActorId)));
+            : EventMessage.Of(start ? "Status.UntilStart" : "Status.UntilEnd", Rounds, runtime.GetActorName(AnchorActorId)));
         return SessionEvent.From("StatusEffect", parts, new[] { ActorId });
     }
 }
@@ -334,7 +353,7 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("StatusEffectRemoved", new[] { EventMessage.Of("Status.Lost", runtime.GetActorName(ActorId), EffectId) }, new[] { ActorId });
+        SessionEvent.From("StatusEffectRemoved", new[] { EventMessage.Of("Status.Lost", runtime.GetActorName(ActorId), EventTerm.Condition(EffectId)) }, new[] { ActorId });
 }
 
 /// <summary>
@@ -635,7 +654,7 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var roller = ActorId != null ? runtime.GetActorName(ActorId) : RollerUserId;
+        object roller = ActorId != null ? runtime.GetActorName(ActorId) : EventTerm.User(RollerUserId);
         var message = IsSecret
             ? EventMessage.Of("Roll.Secret", roller, Expression)
             : Label != null
@@ -744,7 +763,7 @@ public sealed record AdjustResourceCommand(string ActorId, string PoolName, int 
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From(
         Delta < 0 ? "ResourceSpent" : "ResourceRegained",
-        new[] { EventMessage.Of(Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.GetActorName(ActorId), Math.Abs(Delta), Label) },
+        new[] { EventMessage.Of(Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.GetActorName(ActorId), Math.Abs(Delta), EventTerm.Slot(PoolName, Label)) },
         new[] { ActorId });
 }
 
@@ -765,7 +784,7 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
-        new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.GetActorName(ActorId), RestName).With(_happened) },
+        new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.GetActorName(ActorId), EventTerm.Rest(RestName)).With(_happened) },
         new[] { ActorId });
 }
 
@@ -789,4 +808,17 @@ public sealed record ReplaceActorCommand(
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
         SessionEvent.From("SheetEdited", new[] { EventMessage.Of("Sheet.Edited", runtime.GetActorName(Edited.Id)) }, new[] { Edited.Id });
+}
+
+/// <summary>The arguments of log messages that name something rather than count it.</summary>
+internal static class LogTerms
+{
+    /// <summary>The source to name in the log ("from the trap"), or null for none. The table sends no source when a
+    /// person just pressed the button: whoever clicked is not where the damage came from.</summary>
+    public static string? Source(CampaignRuntime runtime, string? sourceId) =>
+        string.IsNullOrWhiteSpace(sourceId) ? null : runtime.GetActorName(sourceId);
+
+    /// <summary>A resource pool by key, with the system's English label.</summary>
+    public static EventTerm Resource(CampaignRuntime runtime, string key) =>
+        EventTerm.Resource(key, runtime.System?.Resources.FirstOrDefault(r => r.Key == key)?.Label ?? key);
 }
