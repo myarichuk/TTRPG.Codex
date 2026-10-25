@@ -83,7 +83,7 @@ public class ShippedTranslationPackTests : IAsyncLifetime
             .SelectMany(f => File.ReadLines(f).Where(l => l.StartsWith("- id: ")).Select(l => (Type: Path.GetFileName(Path.GetDirectoryName(f))!, Id: l[6..].Trim())))
             .ToList();
 
-        Assert.Equal(locale == "ru" ? 991 : 69, ids.Count);   // ru also translates the spell, creature and magic-item flavor
+        Assert.Equal(locale == "ru" ? 991 : 408, ids.Count);   // ru also translates the spell, creature and magic-item flavor; he so far the spell flavor
         Assert.All(ids, x => Assert.NotNull(_registry.GetEntry("srd5e", x.Type, x.Id)));
         Assert.Empty(_loader.LoadWarnings);
     }
@@ -122,6 +122,28 @@ public class ShippedTranslationPackTests : IAsyncLifetime
 
         var translated = _registry.GetEntries("srd5e", "spell").Select(e => _registry.Localize(e, "ru")).Count(e => e.Name != _registry.GetEntry("srd5e", "spell", e.Id)!.Name);
         Assert.Equal(_registry.GetEntries("srd5e", "spell").Count(), translated);
+    }
+
+    [Fact]
+    public void HebrewSpells_AreTranslated_WithFlavor_AndTheRulesDataIsUntouched()
+    {
+        var pack = _registry.GetPacks("srd5e").Single(p => p.Locale == "he" && p.TranslationOf == "srd-5.2.1");
+        Assert.True(pack.License?.Modified);
+
+        var original = _registry.GetEntry("srd5e", "spell", "fireball")!;
+        var shown = _registry.Localize(original, "he");
+
+        Assert.Equal("כדור אש", shown.Name);
+        Assert.Contains("8d6", shown.Description);                                   // dice unchanged
+        Assert.Contains("150 רגל", shown.Description);                               // feet are not converted
+        Assert.Equal(original.Properties["school"], shown.Properties["school"]);      // canonical value stays English
+        Assert.False(string.IsNullOrWhiteSpace(shown.Properties["flavor"] as string));
+        Assert.Matches("[א-ת]", shown.Properties["flavor"]!.ToString()!);
+        Assert.Equal(new[] { "codex-flavor-he", "srd-5.2.1-he" }, shown.Properties[ContentEntry.TranslationSourceKey].ToString()!.Split(',').OrderBy(x => x));
+
+        var translated = _registry.GetEntries("srd5e", "spell").Count(e => _registry.Localize(e, "he").Name != e.Name);
+        Assert.Equal(_registry.GetEntries("srd5e", "spell").Count(), translated);
+        Assert.Contains("fireball", _registry.Search("srd5e", "כדור אש", type: "spell", culture: "he").Select(e => e.Id));
     }
 
     [Fact]
