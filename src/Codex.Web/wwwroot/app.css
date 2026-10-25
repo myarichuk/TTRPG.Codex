@@ -1502,6 +1502,14 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .wizard-checklist li { display: flex; align-items: center; gap: 0.55rem; color: var(--text-3); }
 .wizard-checklist li.done { color: var(--success); }
 .wizard-checklist .small-muted { margin-inline-start: auto; text-align: end; }
+/* World builder: the AI's drafts as cards to tick, rename and write in full. */
+.world-drafts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+.world-draft { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 0.75rem 0.9rem; }
+.world-draft.is-focused { border-color: var(--border-strong); box-shadow: var(--frame); }
+.world-draft.is-off { opacity: 0.6; }
+.world-draft-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.45rem; }
+.world-draft-state { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 0.3rem; color: var(--success); }
+.world-draft-name { font-weight: 700; margin-bottom: 0.35rem; }
 .link-button { background: none; border: 0; padding: 0; color: var(--text); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link-button:hover { color: var(--accent-hover); }
 @media (max-width: 1000px) {

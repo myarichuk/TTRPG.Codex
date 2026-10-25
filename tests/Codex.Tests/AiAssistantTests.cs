@@ -6,15 +6,15 @@ public class AiAssistantTests
 {
     private static readonly CharacterConceptRequest Request = new(
         "A tired guard", "player character", "SRD",
-        new[] { new CharacterFieldSpec("str", "Strength", "Number", null, 1, 30), new CharacterFieldSpec("dex", "Dexterity", "Number", null, 1, 30) },
+        new[] { new FieldSpec("str", "Strength", "Number", null, 1, 30), new FieldSpec("dex", "Dexterity", "Number", null, 1, 30) },
         new[]
         {
-            new CharacterFieldSpec("level", "Level", "Number", null, 1, 20),
-            new CharacterFieldSpec("class", "Class", "EntityReference", new[] { "fighter (Fighter)", "cleric (Cleric)" }, null, null),
-            new CharacterFieldSpec("alignment", "Alignment", "Dropdown", new[] { "Lawful Good", "Neutral" }, null, null),
-            new CharacterFieldSpec("languages", "Languages", "TagList", null, null, null),
-            new CharacterFieldSpec("ritual", "Ritual caster", "Boolean", null, null, null),
-            new CharacterFieldSpec("notes", "Notes", "LongText", null, null, null)
+            new FieldSpec("level", "Level", "Number", null, 1, 20),
+            new FieldSpec("class", "Class", "EntityReference", new[] { "fighter (Fighter)", "cleric (Cleric)" }, null, null),
+            new FieldSpec("alignment", "Alignment", "Dropdown", new[] { "Lawful Good", "Neutral" }, null, null),
+            new FieldSpec("languages", "Languages", "TagList", null, null, null),
+            new FieldSpec("ritual", "Ritual caster", "Boolean", null, null, null),
+            new FieldSpec("notes", "Notes", "LongText", null, null, null)
         },
         "HP", "HP_Max");
 

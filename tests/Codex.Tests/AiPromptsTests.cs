@@ -57,8 +57,8 @@ public class AiPromptsTests
     {
         var (system, user) = AiPrompts.CreateCharacter(new CharacterConceptRequest(
             "A tired guard", "player character", "SRD",
-            new[] { new CharacterFieldSpec("str", "Strength", "Number", null, 1, 30) },
-            new[] { new CharacterFieldSpec("class", "Class", "EntityReference", new[] { "fighter (Fighter)" }, null, null) },
+            new[] { new FieldSpec("str", "Strength", "Number", null, 1, 30) },
+            new[] { new FieldSpec("class", "Class", "EntityReference", new[] { "fighter (Fighter)" }, null, null) },
             "HP", "HP_Max"));
 
         Assert.Contains("ONE JSON object", system);

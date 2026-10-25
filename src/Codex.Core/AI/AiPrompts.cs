@@ -57,14 +57,50 @@ public sealed record LevelUpRequest(
     string? Biography,
     string? Language = null);
 
-public sealed record CharacterFieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max);
+/// <summary>A field the model fills, described the way a prompt lists it. <paramref name="Hint"/> is the field's own help text.</summary>
+public sealed record FieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max, string? Hint = null);
+
+/// <summary>A world-builder question as the model reads it, with the DM's answer ("surprise me" when left to the model).</summary>
+public sealed record WorldAnswer(string Question, string Answer);
+
+/// <summary>The outline call of a world-builder recipe: propose the drafts, by name and one-line pitch.</summary>
+/// <param name="Kinds">Draft kinds allowed, as "kind: what it is".</param>
+/// <param name="HomebrewTypes">Content types a homebrew draft may have, as "id (label)".</param>
+/// <param name="ExistingPages">Wiki pages already written, as "existing:slug (title)", which drafts may link to.</param>
+/// <param name="TakenNames">Names the campaign already uses, so the model does not repeat them.</param>
+public sealed record WorldOutlineRequest(
+    string Brief,
+    string SystemName,
+    IReadOnlyList<WorldAnswer> Answers,
+    IReadOnlyList<string> Kinds,
+    IReadOnlyList<string> HomebrewTypes,
+    IReadOnlyList<string> ExistingPages,
+    IReadOnlyList<string> TakenNames,
+    string? CampaignContext = null,
+    string? Language = null);
+
+/// <summary>The expand call for one draft of an outline: write it in full.</summary>
+/// <param name="TypeLabel">For a homebrew draft, its content type as system.yaml names it ("Spell").</param>
+/// <param name="Fields">For a homebrew draft, the fields to fill.</param>
+/// <param name="Related">The bundle's other drafts, as "Name (kind): pitch".</param>
+public sealed record WorldExpandRequest(
+    string Name,
+    string Pitch,
+    string? TypeLabel,
+    string SystemName,
+    IReadOnlyList<FieldSpec> Fields,
+    IReadOnlyList<WorldAnswer> Answers,
+    IReadOnlyList<string> Related,
+    IReadOnlyList<string> ExistingPages,
+    string? CampaignContext = null,
+    string? Language = null);
 
 public sealed record CharacterConceptRequest(
     string Concept,
     string Kind,
     string SystemName,
-    IReadOnlyList<CharacterFieldSpec> Attributes,
-    IReadOnlyList<CharacterFieldSpec> Fields,
+    IReadOnlyList<FieldSpec> Attributes,
+    IReadOnlyList<FieldSpec> Fields,
     string? HitPointsKey,
     string? HitPointsMaxKey,
     string? CampaignContext = null,
@@ -229,6 +265,90 @@ public static class AiPrompts
             sb.AppendLine().AppendLine($"Hit points: set \"{r.HitPointsKey}\"{(r.HitPointsMaxKey != null ? $" and \"{r.HitPointsMaxKey}\"" : "")} to a number appropriate for the level, class and constitution.");
         }
 
+        return (system, sb.ToString());
+    }
+
+    public static (string System, string User) WorldOutline(WorldOutlineRequest r)
+    {
+        var name = LanguageName(r.Language);
+        var language = name == "English"
+            ? ""
+            : $" Write the names and pitches in {name}; keep every JSON key, kind, type id, ref and existing key exactly as listed.";
+        var system = $"You help the game master of a {r.SystemName} tabletop campaign build their world. {r.Brief.Trim()} " +
+                     "Reply with ONE JSON object and nothing else, shaped exactly like {\"drafts\": [{\"ref\": \"d1\", \"kind\": string, \"type\": string, \"name\": string, \"pitch\": string, \"links\": [string]}]}. " +
+                     "\"kind\" is one of the listed kinds; \"type\" is only for kind \"homebrew\" and is one of the listed content type ids. " +
+                     "\"ref\" is a short id (\"d1\", \"d2\") that other drafts use in \"links\"; a link may also be one of the listed \"existing:\" keys. " +
+                     "The pitch is one sentence the game master can judge the idea by. " +
+                     "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company, and do not reuse the names already taken. " +
+                     "Where an answer is \"surprise me\", decide it yourself." + language;
+
+        var sb = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
+        {
+            sb.AppendLine("Campaign: " + r.CampaignContext);
+        }
+
+        AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
+        AppendList(sb, "Kinds", r.Kinds);
+        AppendList(sb, "Content type ids (label)", r.HomebrewTypes);
+        AppendList(sb, "Existing wiki pages (key (title))", r.ExistingPages);
+        AppendList(sb, "Names already taken", r.TakenNames);
+        return (system, sb.ToString());
+    }
+
+    public static (string System, string User) WorldExpandHomebrew(WorldExpandRequest r)
+    {
+        var name = LanguageName(r.Language);
+        var language = name == "English"
+            ? ""
+            : $" Write the description, the long text fields and the names and descriptions of collection rows in {name}. Keep every JSON key, field key and option exactly as listed, and write short stat fields (casting time, range, duration, size, creature type, speed, senses, damage types) in English, worded as the official rules word them; the app translates them for display.";
+        var system = $"You write homebrew content for the {r.SystemName} tabletop game: a {r.TypeLabel ?? "entry"} called “{r.Name}”. " +
+                     "Reply with ONE JSON object and nothing else, shaped exactly like {\"description\": string, \"tags\": [string], \"properties\": {field key: value}}. " +
+                     "The description is the entry's full text as the rules print it: what it does, with every number and rule a table needs, in the markdown subset (**bold**, *italic*, \"- \" bullets). " +
+                     "Fill every field that applies, following the field specification: numbers as numbers within min and max, dropdowns as one of the listed options, booleans as true/false, tag lists as arrays of strings, collections as arrays of objects with \"name\" and \"description\", text as a string. Leave out fields that do not apply. " +
+                     "Keep the numbers in line with official material of the same power. Tags are two to five short lower-case words. Use original names only." + language;
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Entry: {r.Name} ({r.TypeLabel ?? "entry"})");
+        sb.AppendLine("Pitch: " + r.Pitch);
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
+        {
+            sb.AppendLine("Campaign: " + r.CampaignContext);
+        }
+
+        AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
+        AppendList(sb, "Drafted alongside it", r.Related);
+        sb.AppendLine().AppendLine("Fields (key: label, type, options or range; help):");
+        foreach (var f in r.Fields)
+        {
+            var detail = f.Options is { Count: > 0 } ? ", options: " + string.Join(" | ", f.Options)
+                : f.Min.HasValue || f.Max.HasValue ? $", {f.Min?.ToString() ?? "?"}-{f.Max?.ToString() ?? "?"}"
+                : "";
+            var hint = string.IsNullOrWhiteSpace(f.Hint) ? "" : "; " + f.Hint.Trim();
+            sb.AppendLine($"- {f.Key}: {f.Label}, {f.Type}{detail}{hint}");
+        }
+
+        return (system, sb.ToString());
+    }
+
+    public static (string System, string User) WorldExpandPage(WorldExpandRequest r)
+    {
+        var system = $"You write a page of the world wiki of a {r.SystemName} tabletop campaign, for the game master's eyes. " +
+                     "Write it in three to six short sections with headings: concrete, usable at the table, with hooks and secrets the game master can use. " +
+                     "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). " +
+                     "Use original names only. Reply with the page text only. " + StyleFor(r.Language);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Page: " + r.Name);
+        sb.AppendLine("Pitch: " + r.Pitch);
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
+        {
+            sb.AppendLine("Campaign: " + r.CampaignContext);
+        }
+
+        AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
+        AppendList(sb, "Drafted alongside it", r.Related);
+        AppendList(sb, "Existing wiki pages", r.ExistingPages);
         return (system, sb.ToString());
     }
 

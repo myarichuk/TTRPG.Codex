@@ -11,6 +11,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject MentionSources MentionSources
+@inject AiFeatures Ai
 
 <div class="page-header mb-3">
     <div>
@@ -21,6 +22,10 @@
     {
         <div class="row-actions">
             <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NewHomebrew" data-testid="new-homebrew"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Library.NewHomebrew"]</CodexButton>
+            @if (aiReady)
+            {
+                <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="BuildWithAiAsync" data-testid="build-homebrew-ai"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Homebrew"]</CodexButton>
+            }
             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="18" /> @L["Campaign.Library.ImportFromCampaign"]</CodexButton>
             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="@L["Campaign.Library.ExportLabel"]"><LucideIcon IconName="download" Size="18" /> @L["Campaign.Library.ExportPack"]</CodexButton>
         </div>
@@ -63,6 +68,7 @@
 @if (Ctx.IsDm)
 {
     <HomebrewWizard @ref="wizard" OnSaved="OnSavedAsync" OnDeleted="OnDeletedAsync" />
+    <WorldBuilderWizard @ref="builder" OnSaved="OnBuiltAsync" />
 }
 
 <dialog id="import-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="import-homebrew-title">
@@ -135,6 +141,8 @@
     [SupplyParameterFromQuery(Name = "new")] public string? OpenNew { get; set; }
 
     private HomebrewWizard wizard = null!;
+    private WorldBuilderWizard builder = null!;
+    private bool aiReady;
     private int version;
     private List<CampaignDocument>? sourceCampaigns;
     private string sourceCampaignId = string.Empty;
@@ -152,6 +160,7 @@
     {
         (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
         noteActors = Ctx.Actors.ToDictionary(a => a.Id);
+        aiReady = Ctx.IsDm && await Ai.IsConfiguredAsync(Ctx.UserId);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -171,6 +180,21 @@
         Type = RouteType ?? string.Empty,
         AuthorUserId = Ctx.UserId
     });
+
+    private Task BuildWithAiAsync() =>
+        builder.OpenAsync("homebrew", new Dictionary<string, string?> { ["type"] = RouteType });
+
+    /// <summary>The world builder saved its drafts hidden from players; open the entry in the editor so the DM checks the rules and publishes it.</summary>
+    private async Task OnBuiltAsync(WorldBuildResult result)
+    {
+        version++;
+        Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Entries.Count + result.Pages.Count]));
+        if (result.Entries.FirstOrDefault() is { } entry)
+        {
+            Nav.NavigateTo($"{Ctx.BasePath}/library/{entry.Type}/{Uri.EscapeDataString(entry.EntryId)}");
+            await wizard.OpenAsync(entry, startAt: "review");
+        }
+    }
 
     private async Task CloneAsHomebrew(LibraryItem item)
     {

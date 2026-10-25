@@ -136,6 +136,7 @@ builder.Services.AddSingleton(aiImageConfig);
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<AiProviderService>();
 builder.Services.AddSingleton<AiFeatures>();
+builder.Services.AddSingleton<WorldBuilderService>();
 builder.Services.AddScoped<HomebrewImportService>();
 builder.Services.AddSingleton<ArtService>();
 builder.Services.AddSingleton<CastService>();

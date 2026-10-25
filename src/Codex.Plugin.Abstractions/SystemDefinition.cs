@@ -355,6 +355,31 @@ public class SystemDefinition
     public string DisplayCondition(string? culture, string condition) =>
         TranslationFor(culture) is { } t ? Lookup(t.Conditions, condition) ?? condition : condition;
 
+    /// <summary>The reverse of <see cref="DisplayOption"/>: the stored value whose translation is <paramref name="shown"/>
+    /// ("Воплощение" -> "Evocation"), or <paramref name="shown"/> itself when no translation matches. For text written in the
+    /// reader's language (an AI draft) that has to be stored the way the rules compare it.</summary>
+    public string CanonicalOption(string? culture, string fieldKey, string shown)
+    {
+        var t = TranslationFor(culture);
+        if (t == null) return shown;
+        foreach (var fields in new[] { t.ActorFields }.Concat(t.EntityTypes.Values.Select(x => x.Fields)))
+        {
+            if (fields.TryGetValue(fieldKey, out var f) && ReverseLookup(f.Options, shown) is { } stored) return stored;
+        }
+
+        return ReverseLookup(t.Values, shown) ?? ReverseLookup(t.Conditions, shown) ?? shown;
+    }
+
+    private static string? ReverseLookup(Dictionary<string, string> map, string shown)
+    {
+        foreach (var (k, v) in map)
+        {
+            if (string.Equals(v, shown, System.StringComparison.CurrentCultureIgnoreCase)) return k;
+        }
+
+        return null;
+    }
+
     // Stored values and the translation's keys differ in case ("poisoned" typed at the table, "fire" vs "Fire").
     private static string? Lookup(Dictionary<string, string> map, string key)
     {
