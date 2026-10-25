@@ -31,7 +31,7 @@ public class AiPromptsLanguageTests
     [Fact]
     public void CharacterJson_KeepsItsKeysWhateverTheLanguage()
     {
-        var request = new CharacterConceptRequest("a thief", "NPC", "demo", Array.Empty<CharacterFieldSpec>(), Array.Empty<CharacterFieldSpec>(), null, null, Language: "he");
+        var request = new CharacterConceptRequest("a thief", "NPC", "demo", Array.Empty<FieldSpec>(), Array.Empty<FieldSpec>(), null, null, Language: "he");
 
         var system = AiPrompts.CreateCharacter(request).System;
 

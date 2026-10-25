@@ -42,6 +42,7 @@
   <data name="Library.Ai.NotConfigured" xml:space="preserve"><value>No AI provider is set up yet.</value></data>
   <data name="Library.Ai.Failed" xml:space="preserve"><value>The AI could not write this: {0}</value></data>
   <data name="Library.Detail.Level" xml:space="preserve"><value>Level {0}</value></data>
+  <data name="Library.Tag.Challenge" xml:space="preserve"><value>Challenge {0}</value></data>
   <data name="Library.Detail.Yes" xml:space="preserve"><value>Yes</value></data>
   <data name="Library.Detail.No" xml:space="preserve"><value>No</value></data>
   <data name="Library.Detail.Source" xml:space="preserve"><value>Source:</value></data>

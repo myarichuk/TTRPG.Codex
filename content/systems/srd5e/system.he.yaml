@@ -419,6 +419,40 @@ values:
   Long Rest: מנוחה ארוכה
   Dead: מת
   Stable: יציב
+  # Entry tags (shown translated; the tags themselves stay as the packs wrote them)
+  "ability-score": "ערך תכונה"
+  "alignment": "נטייה"
+  "artifact": "חפץ עוצמה"
+  "cantrip": "לחשון"
+  "class": "מקצוע"
+  "common": "נפוץ"
+  "contact": "רעל מגע"
+  "damage-type": "סוג נזק"
+  "epic-boon": "מתת אפית"
+  "equipment packs": "ערכות ציוד"
+  "fighting-style": "סגנון לחימה"
+  "general": "כללי"
+  "holy symbols": "סמלים קדושים"
+  "ingested": "רעל בליעה"
+  "inhaled": "רעל שאיפה"
+  "injury": "רעל פציעה"
+  "language": "שפה"
+  "legendary": "אגדי"
+  "origin": "מוצא"
+  "rare": "נדיר"
+  "rare (+1), very rare (+2), or legendary (+3)": "נדיר (+1), נדיר מאוד (+2) או אגדי (+3)"
+  "rare (silver or brass), very rare (bronze), or legendary (iron)": "נדיר (כסף או פליז), נדיר מאוד (ארד) או אגדי (ברזל)"
+  "school-of-magic": "אסכולת קסם"
+  "simple melee weapons": "נשקים פשוטים לקרב פנים אל פנים"
+  "simple ranged weapons": "נשקי טווח פשוטים"
+  "simple weapons": "נשקים פשוטים"
+  "skill": "מיומנות"
+  "tools": "כלים"
+  "uncommon": "לא נפוץ"
+  "uncommon (+1), rare (+2), or very rare (+3)": "לא נפוץ (+1), נדיר (+2) או נדיר מאוד (+3)"
+  "very rare": "נדיר מאוד"
+  "weapon-mastery": "אומנות נשק"
+  "weapon-property": "תכונת נשק"
 
 sheetRules:
   derived:

@@ -7,7 +7,20 @@ namespace Codex.Web.Components.Shared;
 public static class RefCard
 {
     public static string? Text(ContentEntry entry, string key) =>
-        entry.Properties.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v?.ToString()) ? v!.ToString() : null;
+        entry.Properties.TryGetValue(key, out var v) && v is IConvertible && !string.IsNullOrWhiteSpace(v.ToString()) ? v.ToString() : null;
+
+    /// <summary>A row's cell as text; null when it is missing or not a plain value (a nested map or list has no text of its own,
+    /// and its <c>ToString()</c> is a type name).</summary>
+    public static string? Cell(IReadOnlyDictionary<string, object> row, string key) =>
+        row.TryGetValue(key, out var v) && v is IConvertible && !string.IsNullOrWhiteSpace(v.ToString()) ? v.ToString() : null;
+
+    /// <summary>True for a value that reads as text: a string, number or flag, or a list of those.</summary>
+    public static bool IsPlain(object? value) => value switch
+    {
+        null or IConvertible => true,
+        IEnumerable<object> list => list.All(item => item is null or IConvertible),
+        _ => false
+    };
 
     public static int? Int(ContentEntry entry, string key) =>
         entry.Properties.TryGetValue(key, out var v) && v != null && int.TryParse(v.ToString(), out var n) ? n : null;
@@ -17,7 +30,7 @@ public static class RefCard
 
     public static List<string> List(ContentEntry entry, string key) =>
         entry.Properties.TryGetValue(key, out var v) && v is IEnumerable<object> items && v is not string
-            ? items.Select(o => o?.ToString() ?? string.Empty).Where(s => s.Length > 0).ToList()
+            ? items.OfType<IConvertible>().Select(o => o.ToString() ?? string.Empty).Where(s => s.Length > 0).ToList()
             : new List<string>();
 
     public static List<Dictionary<string, object>> Rows(ContentEntry entry, string key) =>

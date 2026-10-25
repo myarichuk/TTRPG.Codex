@@ -177,10 +177,10 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         system = system?.Canonical; // the prompt names fields in one language, whatever the reader sees
         var assistant = await providers.AssistantForAsync(userId);
         var attributes = (system?.Attributes ?? new List<AttributeDefinition>())
-            .Select(a => new CharacterFieldSpec(a.Key, a.Label, "Number", null, a.Min, a.Max))
+            .Select(a => new FieldSpec(a.Key, a.Label, "Number", null, a.Min, a.Max))
             .ToList();
 
-        var fields = new List<CharacterFieldSpec>();
+        var fields = new List<FieldSpec>();
         var schema = catalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
         var attributeKeys = attributes.Select(a => a.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var resourceKeys = (system?.Resources ?? new List<ResourceDefinition>()).SelectMany(r => new[] { r.Key, r.MaxKey }).Where(k => k != null).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -197,7 +197,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
                 FieldType.EntityReference when field.TargetEntityType != null => (await optionsFor(field.TargetEntityType)).Take(80).Select(o => $"{o.Id} ({o.Name})").ToList(),
                 _ => null
             };
-            fields.Add(new CharacterFieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max));
+            fields.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max));
         }
 
         var primary = system?.PrimaryResource;

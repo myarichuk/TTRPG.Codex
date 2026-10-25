@@ -419,6 +419,40 @@ values:
   Long Rest: Долгий отдых
   Dead: Мёртв
   Stable: Стабилен
+  # Entry tags (shown translated; the tags themselves stay as the packs wrote them)
+  "ability-score": "Характеристика"
+  "alignment": "Мировоззрение"
+  "artifact": "Артефакт"
+  "cantrip": "Заговор"
+  "class": "Класс"
+  "common": "Обычный"
+  "contact": "Контактный яд"
+  "damage-type": "Вид урона"
+  "epic-boon": "Эпический дар"
+  "equipment packs": "Наборы снаряжения"
+  "fighting-style": "Боевой стиль"
+  "general": "Общая"
+  "holy symbols": "Священные символы"
+  "ingested": "Проглатываемый яд"
+  "inhaled": "Вдыхаемый яд"
+  "injury": "Раневой яд"
+  "language": "Язык"
+  "legendary": "Легендарный"
+  "origin": "Происхождение"
+  "rare": "Редкий"
+  "rare (+1), very rare (+2), or legendary (+3)": "редкий (+1), очень редкий (+2) или легендарный (+3)"
+  "rare (silver or brass), very rare (bronze), or legendary (iron)": "редкий (серебро или латунь), очень редкий (бронза) или легендарный (железо)"
+  "school-of-magic": "Школа магии"
+  "simple melee weapons": "Простое рукопашное оружие"
+  "simple ranged weapons": "Простое дальнобойное оружие"
+  "simple weapons": "Простое оружие"
+  "skill": "Навык"
+  "tools": "Инструменты"
+  "uncommon": "Необычный"
+  "uncommon (+1), rare (+2), or very rare (+3)": "необычный (+1), редкий (+2) или очень редкий (+3)"
+  "very rare": "Очень редкий"
+  "weapon-mastery": "Мастерство оружия"
+  "weapon-property": "Свойство оружия"
 
 sheetRules:
   derived:
