@@ -66,7 +66,7 @@ else
                     <div class="field-grid">
                         <div>
                             <label for="session-title" class="field-label">@L["Session.TitleLabel"]</label>
-                            <input id="session-title" class="field-input" @bind="editTitle" />
+                            <input id="session-title" class="field-input" @bind="editTitle" @bind:event="oninput" />
                         </div>
                         <div>
                             <label for="session-status" class="field-label">@L["Session.StatusLabel"]</label>

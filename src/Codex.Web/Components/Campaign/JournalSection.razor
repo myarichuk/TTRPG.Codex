@@ -67,7 +67,7 @@ else
                     <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                         <div class="mb-2">
                             <label for="journal-title" class="field-label">@L["Campaign.Journal.Field.Title"]</label>
-                            <input id="journal-title" class="field-input" @bind="editing.Title" maxlength="160" data-testid="journal-title" />
+                            <input id="journal-title" class="field-input" @bind="editing.Title" @bind:event="oninput" maxlength="160" data-testid="journal-title" />
                         </div>
                         <div class="mb-2">
                             <label for="journal-session" class="field-label">@L["Campaign.Journal.Field.Session"]</label>

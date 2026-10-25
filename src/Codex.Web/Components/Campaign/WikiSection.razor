@@ -36,7 +36,7 @@ else if (Mode == "edit")
                     <div class="field-grid mb-3">
                         <div class="field-wide">
                             <label for="wiki-title" class="field-label">@L["Campaign.Wiki.Field.Title"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.Wiki.Required"]</span></label>
-                            <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" required maxlength="160" data-testid="wiki-title" />
+                            <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" @bind:event="oninput" required maxlength="160" data-testid="wiki-title" />
                         </div>
                         <div>
                             <label for="wiki-visibility" class="field-label">@L["Campaign.Wiki.Field.WhoCanRead"]</label>

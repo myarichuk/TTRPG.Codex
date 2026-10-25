@@ -505,7 +505,8 @@ hr { border-color: var(--border); opacity: 1; }
 .panel:nth-child(2) { animation-delay: 50ms; }
 .panel:nth-child(3) { animation-delay: 100ms; }
 .panel:nth-child(4) { animation-delay: 150ms; }
-.panel-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+/* Wraps so a title's controls (method pickers, buttons) drop below it on a phone instead of widening the page. */
+.panel-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin-bottom: 1rem; }
 .panel-title h2, .panel-title h3 { margin: 0; }
 .panel-plain { background: transparent; border: 1px dashed var(--border); box-shadow: none; }
 
@@ -763,6 +764,7 @@ dialog.codex-dialog::backdrop {
 .attribution {
     margin-top: 1.5rem; padding: 0.85rem 1rem; font-size: 0.9rem; color: var(--text-2);
     background: var(--surface-2); border-radius: var(--radius-md); border: 1px solid var(--border);
+    overflow-wrap: anywhere; /* licence URLs are one long word */
 }
 .attribution a { color: var(--accent); }
 
@@ -892,6 +894,8 @@ dialog.codex-dialog::backdrop {
     .page { padding: 1.25rem var(--gutter) 4rem; }
     .panel { padding: 1.1rem 1rem; }
     .list-row { flex-direction: column; align-items: flex-start; }
+    /* Stacked, the text takes the row's width and long words (licence URLs) wrap instead of widening the page. */
+    .list-row .row-main { width: 100%; overflow-wrap: anywhere; }
     .row-actions { justify-content: flex-start; }
     .dialog-body { padding: 1.3rem 1.2rem 1rem; }
     .dialog-actions { padding: 0 1.2rem 1.2rem; }

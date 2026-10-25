@@ -180,7 +180,7 @@ else
                     <p class="small-muted">@(editingLocation.Visibility == ActorVisibility.Known ? L["Campaign.World.PlaceVisible", editingRegion.Name] : L["Campaign.World.PlaceHidden", editingRegion.Name])</p>
                     <div class="mb-3">
                         <label for="loc-edit-name" class="field-label">@L["Campaign.World.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.World.Required"]</span></label>
-                        <input id="loc-edit-name" class="field-input" @bind="editingLocation.Name" required maxlength="120" data-testid="location-name" />
+                        <input id="loc-edit-name" class="field-input" @bind="editingLocation.Name" @bind:event="oninput" required maxlength="120" data-testid="location-name" />
                     </div>
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
