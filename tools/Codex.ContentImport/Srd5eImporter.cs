@@ -600,7 +600,9 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             }
             entry.Properties["range"] = range;
             entry.Properties["components"] = components.Cast<object>().ToList();
-            if (spell.Str("material") is { } material) entry.Properties["material"] = material;
+            // Some upstream materials keep a stray opening parenthesis ("(gold dust worth 25+ GP, which the spell consumes").
+            var materialText = spell.Str("material")?.TrimStart('(');
+            if (materialText != null) entry.Properties["material"] = materialText;
             entry.Properties["duration"] = spell.Str("duration") ?? "";
             entry.Properties["concentration"] = spell.Bool("concentration") ?? false;
             entry.Properties["ritual"] = spell.Bool("ritual") ?? false;
@@ -614,10 +616,10 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             sb.AppendLine();
             sb.AppendLine($"**Casting Time:** {entry.Properties["castingTime"]}{((spell.Bool("ritual") ?? false) ? " or Ritual" : "")}  ");
             sb.AppendLine($"**Range:** {entry.Properties["range"]}  ");
-            sb.AppendLine($"**Components:** {string.Join(", ", components)}{(spell.Str("material") is { } m ? $" ({m})" : "")}  ");
+            sb.AppendLine($"**Components:** {string.Join(", ", components)}{(materialText is { } m ? $" ({m})" : "")}  ");
             sb.AppendLine($"**Duration:** {((spell.Bool("concentration") ?? false) ? "Concentration, " : "")}{entry.Properties["duration"]}");
             sb.AppendLine();
-            sb.AppendLine(spell.Text("description"));
+            sb.AppendLine(SpellTextFixes.Descriptions.TryGetValue(entry.Id, out var fixedText) ? fixedText : spell.Text("description"));
             if (spell.Text("higher_level") is { } hl)
             {
                 sb.AppendLine();
