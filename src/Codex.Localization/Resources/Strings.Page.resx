@@ -98,6 +98,7 @@
   <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>You're not a member of this campaign</value></data>
   <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Ask the DM for an invite link.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>Campaign sections</value></data>
+  <data name="Page.Campaign.More" xml:space="preserve"><value>More</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>Live</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>The table is running</value></data>
   <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>Play</value></data>

@@ -107,7 +107,8 @@ public static class TextFormatting
 
         if (cells.Count == 0) return string.Empty;
 
-        var sb = new StringBuilder("<table class=\"rules-table\"><thead><tr>");
+        // The wrapper scrolls a wide table on its own instead of widening a phone screen.
+        var sb = new StringBuilder("<div class=\"table-scroll\"><table class=\"rules-table\"><thead><tr>");
         foreach (var header in cells[0])
         {
             sb.Append("<th scope=\"col\">").Append(Inline(header)).Append("</th>");
@@ -125,7 +126,7 @@ public static class TextFormatting
             sb.Append("</tr>");
         }
 
-        return sb.Append("</tbody></table>").ToString();
+        return sb.Append("</tbody></table></div>").ToString();
     }
 
     /// <summary>HTML-encode, then apply bold/italic.</summary>

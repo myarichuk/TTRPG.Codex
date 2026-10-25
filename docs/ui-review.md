@@ -35,6 +35,17 @@ The app has the right look already (the frames, plaques and token avatars). What
 
 The phone layout is the weakest area. A player at the table holds a phone, so this matters more than desktop polish.
 
+> **Status:** items 1–9 are addressed, along with the P7 shell (without P2's window routes):
+> - **Sections:** campaign sections are a bottom tab bar (Table, Sessions, Journal, Places, More), and the campaign title is one line inside a section.
+> - **Sheets:** Library entries and the journal editor open as full-screen sheets with a Back bar.
+> - **Actor sheet:** tabs scroll in one row, abilities are a 3×2 grid, and Save sticks to the bottom when there are unsaved changes.
+> - **Combat:** the command panel is a bottom sheet with +1/+5/+10 amount buttons.
+> - **Touch:** targets are at least 40px on touch screens, and note actions no longer wait for a hover.
+> - **Tooltips:** tapping anything with a `title` shows it as a bubble.
+> - **Tables:** wide tables scroll on their own.
+>
+> `PhoneLayoutE2ETests` covers the tab bar, the sheets and the command panel.
+
 1. **Horizontal page scroll everywhere** (B2).
 2. **Chrome eats the screen.**
    - On campaign pages, the campaign title (4 lines in display font), badges and the section strip come before the content.

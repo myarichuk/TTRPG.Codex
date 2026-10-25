@@ -248,9 +248,12 @@
 /* ---------------------------------------------------------------------------
    Motion primitives
    --------------------------------------------------------------------------- */
+/* Entrance animations fill "backwards", never "both": a finished animation that kept its end transform and
+   opacity would leave every panel a containing block and a layer, trapping the fixed-position phone sheets
+   (Library entry, journal editor, command panel) inside it. */
 @keyframes rise {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; transform: none; }
 }
 @keyframes fade-in {
     from { opacity: 0; }
@@ -373,7 +376,7 @@ hr { border-color: var(--border); opacity: 1; }
     background: var(--bg);
     z-index: 99999;
 }
-.boot-card { text-align: center; color: var(--text); animation: pop-in var(--dur-slow) var(--ease-out) both; }
+.boot-card { text-align: center; color: var(--text); animation: pop-in var(--dur-slow) var(--ease-out) backwards; }
 .boot-mark {
     width: 64px; height: 64px; margin: 0 auto 1rem;
     border-radius: var(--radius-lg); color: var(--accent);
@@ -480,7 +483,7 @@ hr { border-color: var(--border); opacity: 1; }
 
 .page { max-width: var(--content-max); margin: 0 auto; padding: 2rem var(--gutter) 5rem; }
 .page-narrow { max-width: 760px; }
-.page-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; animation: rise var(--dur-slow) var(--ease-out) both; }
+.page-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; animation: rise var(--dur-slow) var(--ease-out) backwards; }
 .page-header h1, .page-header h2 { margin: 0; }
 .page-subtitle { color: var(--text-2); margin: 0.35rem 0 0; max-width: 60ch; }
 .muted { color: var(--text-3); }
@@ -500,7 +503,7 @@ hr { border-color: var(--border); opacity: 1; }
     box-shadow: var(--frame), var(--shadow-1);
     padding: 1.35rem 1.4rem;
     margin-bottom: 1.25rem;
-    animation: rise var(--dur-slow) var(--ease-out) both;
+    animation: rise var(--dur-slow) var(--ease-out) backwards;
 }
 .panel:nth-child(2) { animation-delay: 50ms; }
 .panel:nth-child(3) { animation-delay: 100ms; }
@@ -516,7 +519,7 @@ hr { border-color: var(--border); opacity: 1; }
     display: flex; flex-direction: column; gap: 0.6rem;
     background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
     padding: 1.3rem 1.3rem 1.1rem; box-shadow: var(--frame), var(--shadow-1); min-height: 172px;
-    animation: rise var(--dur-slow) var(--ease-out) both;
+    animation: rise var(--dur-slow) var(--ease-out) backwards;
     transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 .card-grid > :nth-child(2) { animation-delay: 40ms; }
@@ -576,7 +579,7 @@ hr { border-color: var(--border); opacity: 1; }
 .empty {
     text-align: center; padding: 3rem 1.5rem; color: var(--text-2);
     border: 1px dashed var(--border); border-radius: var(--radius-lg); background: transparent;
-    animation: rise var(--dur-slow) var(--ease-out) both;
+    animation: rise var(--dur-slow) var(--ease-out) backwards;
 }
 .empty h1, .empty h2, .empty h3 { font-size: 1.15rem; margin: 0.8rem 0 0.4rem; }
 .empty p { margin: 0 auto 1.1rem; max-width: 420px; }
@@ -613,14 +616,14 @@ hr { border-color: var(--border); opacity: 1; }
     column-gap: 2.25rem; row-gap: 1.1rem;
     align-items: start;
 }
-.ws-head { grid-area: head; animation: rise var(--dur-slow) var(--ease-out) both; }
+.ws-head { grid-area: head; animation: rise var(--dur-slow) var(--ease-out) backwards; }
 .ws-head h1 { font-size: 1.45rem; margin: 0.2rem 0 0.5rem; overflow-wrap: anywhere; }
 .ws-head .pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .ws-nav {
     grid-area: nav;
     position: sticky; top: calc(var(--header-h) + 1rem);
     display: flex; flex-direction: column; gap: 2px;
-    animation: rise var(--dur-slow) var(--ease-out) 60ms both;
+    animation: rise var(--dur-slow) var(--ease-out) 60ms backwards;
 }
 .ws-nav a {
     position: relative;
@@ -712,7 +715,7 @@ fieldset.field-group legend { margin-bottom: 0.6rem; float: none; width: auto; }
     padding: 0.75rem 0.95rem; border-radius: var(--radius-md); margin-bottom: 1rem;
     border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
     box-shadow: var(--frame), var(--shadow-1);
-    animation: rise var(--dur-slow) var(--ease-out) both;
+    animation: rise var(--dur-slow) var(--ease-out) backwards;
 }
 .status > .lucide-icon { flex: 0 0 auto; margin-top: 2px; color: var(--text-3); }
 .status-success { background: var(--success-soft); border-color: var(--success); }
@@ -747,7 +750,7 @@ dialog.codex-dialog::backdrop {
 /* ---------------------------------------------------------------------------
    Rules text (rendered Markdown subset) and attribution
    --------------------------------------------------------------------------- */
-.entry-detail { animation: rise var(--dur-slow) var(--ease-out) both; }
+.entry-detail { animation: rise var(--dur-slow) var(--ease-out) backwards; }
 .entry-flavor { margin: 0 0 1rem; padding: .25rem 0 .25rem 1rem; border-inline-start: 3px solid var(--accent); color: var(--text-2); font-style: italic; line-height: 1.55; }
 .rules-text p { margin: 0 0 0.75rem; }
 .rules-text ul { margin: 0 0 0.75rem 1.1rem; padding: 0; }
@@ -775,14 +778,14 @@ dialog.codex-dialog::backdrop {
     position: relative;
     border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 0.65rem;
     background: var(--surface); box-shadow: var(--frame);
-    animation: rise var(--dur-slow) var(--ease-out) both;
+    animation: rise var(--dur-slow) var(--ease-out) backwards;
     transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 .participant.current {
     border-color: var(--accent);
     background: var(--surface-2);
     box-shadow: var(--frame), inset 0 0 0 2px var(--accent-soft);
-    animation: rise var(--dur-slow) var(--ease-out) both, turn-pulse 2.6s ease-in-out infinite;
+    animation: rise var(--dur-slow) var(--ease-out) backwards, turn-pulse 2.6s ease-in-out infinite;
 }
 .participant .participant-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .participant .participant-name { font-weight: 700; }
@@ -797,6 +800,29 @@ dialog.codex-dialog::backdrop {
 .participant-select:hover .participant-name, .participant-select:focus-visible .participant-name { color: var(--accent); }
 .command-panel { margin-top: 0.75rem; padding-top: 0.35rem; border-top: 1px dashed var(--border-strong); }
 .command-panel .console-row { margin-top: 0.5rem; }
+.command-head { display: none; }
+/* On a phone the command panel is a sheet above the tab bar instead of growing the row and pushing the
+   rest of the order off screen. Its row, panel and section drop their entrance animation and the dead
+   row's fade: each would make a layer that later rows paint over. */
+@media (max-width: 720px) {
+    .command-panel {
+        position: fixed; inset-inline: 0; bottom: calc(var(--tabbar-h, 0px) + env(safe-area-inset-bottom)); z-index: 940;
+        max-height: 58dvh; overflow-y: auto; overscroll-behavior: contain;
+        margin: 0; padding: 0.4rem var(--gutter) 1rem;
+        background: var(--surface); border: 1px solid var(--border-strong); border-top: 2px solid var(--accent);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+        animation: sheet-in var(--dur) var(--ease-out) backwards;
+    }
+    .command-head {
+        position: sticky; top: -0.4rem; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+        margin: -0.4rem calc(-1 * var(--gutter)) 0; padding: 0.2rem var(--gutter); background: var(--surface); border-bottom: 1px solid var(--rule);
+    }
+    .command-name { font-family: var(--font-display); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .command-panel .console-row > div:has(> .field-input, > .field-select) { flex: 1 1 7rem; }
+    .command-panel .console-row .field-input, .command-panel .console-row .field-select, .command-panel .w-8 { width: 100% !important; }
+    .participant:has(.command-panel), .panel:has(.command-panel), .ws-main > :has(.command-panel) { animation: none; opacity: 1; }
+    .ws-main:has(.command-panel) { padding-bottom: calc(58dvh + var(--tabbar-h, 0px)); }
+}
 .death-saves { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.85rem; }
 .death-save-pips { display: inline-flex; gap: 3px; }
 .death-save-pips .pip { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--border-strong); background: transparent; }
@@ -813,7 +839,7 @@ dialog.codex-dialog::backdrop {
 .w-5 { width: 5.5rem !important; }
 .w-8 { width: 9rem !important; }
 .log { max-height: 280px; overflow-y: auto; font-size: 0.9rem; overscroll-behavior: contain; }
-.log .log-entry { padding: 0.45rem 0; border-bottom: 1px solid var(--rule); animation: rise var(--dur-slow) var(--ease-out) both; }
+.log .log-entry { padding: 0.45rem 0; border-bottom: 1px solid var(--rule); animation: rise var(--dur-slow) var(--ease-out) backwards; }
 .log .log-entry:last-child { border-bottom: 0; }
 
 /* ---------------------------------------------------------------------------
@@ -825,7 +851,7 @@ dialog.codex-dialog::backdrop {
 .auth-card {
     width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border-strong);
     border-radius: var(--radius-xl); padding: 2.4rem; box-shadow: var(--frame), var(--shadow-3);
-    animation: pop-in var(--dur-slow) var(--ease-out) both;
+    animation: pop-in var(--dur-slow) var(--ease-out) backwards;
 }
 .auth-card .brand-mark { width: 52px; height: 52px; margin: 0 auto 0.9rem; border-radius: var(--radius-lg); }
 .auth-card h1 { text-align: center; font-size: 1.35rem; margin-bottom: 1.6rem; }
@@ -911,7 +937,7 @@ h1 .title-icon { vertical-align: -4px; }
 .ai-output {
     border: 1px solid var(--arcane); border-radius: var(--radius-md); padding: 1rem;
     background: var(--surface-2); box-shadow: var(--frame);
-    animation: rise var(--dur-slow) var(--ease-out) both;
+    animation: rise var(--dur-slow) var(--ease-out) backwards;
 }
 .panel-ai { border-color: var(--arcane); }
 .panel-dm { border-inline-start: 3px solid var(--warning); }
@@ -1011,7 +1037,7 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 .journal-entry::before { content: ""; position: absolute; inset-inline-start: 0; top: 1.2rem; bottom: 1.2rem; width: 3px; border-radius: 1px; background: var(--accent); opacity: 0.6; }
 
 /* Section switches: the main column slides in whenever a different section renders. */
-.ws-main > * { animation: rise var(--dur-slow) var(--ease-out) both; }
+.ws-main > * { animation: rise var(--dur-slow) var(--ease-out) backwards; }
 
 /* Installed as an app: respect the notch and the home indicator. */
 @media (display-mode: standalone) {
@@ -1026,7 +1052,79 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
     .ws-nav-label { display: none; }
     .ws-head.has-cover { margin-top: 0.25rem; }
 }
+/* A detail that sits beside its list on a wide screen (a Library entry, the journal editor) opens as a
+   full-screen sheet over the list on a narrow one, instead of rendering far below it. */
+.sheet-bar { display: none; }
+@media (max-width: 991px) {
+    .phone-sheet {
+        position: fixed; inset: var(--header-h) 0 0 0; z-index: 960; margin: 0 !important;
+        width: auto; max-width: none; overflow-y: auto; overscroll-behavior: contain;
+        padding: 0 var(--gutter) calc(1.5rem + env(safe-area-inset-bottom));
+        background: var(--bg);
+        animation: sheet-in var(--dur) var(--ease-out) backwards;
+    }
+    .phone-sheet > .panel { margin-bottom: 0; }
+    .phone-sheet > .panel:focus { outline: none; }
+    .sheet-bar {
+        position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 0.5rem;
+        margin: 0 calc(-1 * var(--gutter)) 0.75rem; padding: 0.35rem var(--gutter);
+        background: var(--surface); border-bottom: 1px solid var(--border-strong);
+    }
+    .sheet-bar-title { min-width: 0; font-family: var(--font-display); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body:has(.phone-sheet) { overflow: hidden; }
+    /* A section's entrance animation would trap a sheet inside it: the transform holds it to the section
+       instead of the screen, and the animated opacity puts it in a layer under the tab bar. */
+    .ws-main > :has(.phone-sheet), .page > :has(.phone-sheet) { animation: none; }
+}
+@keyframes sheet-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@media (display-mode: standalone) and (max-width: 991px) {
+    .phone-sheet { top: calc(var(--header-h) + env(safe-area-inset-top)); }
+}
+
+/* Phone tab bar: replaces the section strip at the bottom of the screen, where a thumb reaches. */
+.ws-tabbar { display: none; }
 @media (max-width: 720px) {
+    :root { --tabbar-h: 60px; }
+    .ws-nav { display: none; }
+    .workspace { grid-template-rows: auto 1fr; grid-template-areas: "head" "main"; row-gap: 0.6rem; }
+    .ws-main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+    .ws-tabbar {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 950;
+        display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+        height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+        background: var(--surface); border-top: 1px solid var(--border-strong); box-shadow: 0 -1px 0 var(--frame-inner), 0 -6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .ws-tabbar > a, .ws-tabbar .tabbar-more > summary {
+        position: relative; height: var(--tabbar-h);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+        color: var(--text-3); text-decoration: none; font-size: 0.72rem; font-weight: 600; line-height: 1.1;
+    }
+    .ws-tabbar span:not(.live-dot):not(.visually-hidden) { max-width: 100%; padding: 0 0.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ws-tabbar > a[aria-current="page"], .ws-tabbar .tabbar-more > summary.current, .tabbar-more[open] > summary { color: var(--accent); }
+    .ws-tabbar > a[aria-current="page"]::before, .ws-tabbar .tabbar-more > summary.current::before {
+        content: ""; position: absolute; top: 0; inset-inline: 22%; height: 3px; border-radius: 0 0 2px 2px; background: var(--accent);
+    }
+    .tabbar-live { position: absolute; top: 0.55rem; inset-inline-start: calc(50% + 0.55rem); color: var(--success); }
+    .tabbar-more .popover-panel {
+        position: fixed; top: auto; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 0.4rem); inset-inline: var(--gutter);
+        max-height: calc(100dvh - var(--header-h) - var(--tabbar-h) - 1.5rem); overflow-y: auto;
+    }
+    .tabbar-more .popover-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+    .tabbar-more-label { grid-column: 1 / -1; padding: 0.5rem 0.75rem 0.15rem; }
+    /* Dims the page behind the open menu; it is part of the summary, so a tap on it closes the menu. */
+    .tabbar-more[open] > summary::after {
+        content: ""; position: fixed; inset: 0; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); z-index: 1;
+        background: rgba(8, 8, 14, 0.55); cursor: default;
+    }
+    .tabbar-more .popover-panel { z-index: 2; }
+    .tabbar-more .menu-item { text-decoration: none; }
+    .tabbar-more .menu-item[aria-current="page"] { background: var(--accent-soft); color: var(--text); font-weight: 700; }
+    /* Inside a section the campaign name is one line; its role and system pills live on the overview. */
+    .ws-head-inner .breadcrumb-nav, .ws-head-inner .pills { display: none; }
+    .ws-head-inner h1 { font-size: 1.05rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ws-head-inner.has-cover { padding: 0.55rem 0.8rem; }
+    /* Floated beside the text the art left the rules a two-word column; on a phone it sits above them. */
+    .entry-detail .entry-art.art-portrait { float: none; width: min(12rem, 100%); margin-inline: 0; }
     .cover-settings { grid-template-columns: 1fr; }
     .avatar-xl { width: 84px; height: 84px; font-size: 1.7rem; border-radius: 20px; }
     .card-cover { height: 96px; }
@@ -1211,6 +1309,27 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
     .turn-banner { top: calc(var(--header-h) + 0.25rem); }
     .stat-cell { min-width: 4.4rem; }
     .stat-hp { min-width: 7.5rem; flex: 1 1 7.5rem; }
+    /* The plate fills less of the first screen: Back to cast replaces the breadcrumb, the tabs scroll
+       sideways in one row instead of wrapping to four, and the six abilities are a 3x2 block. */
+    .sheet-plate { margin-top: -0.5rem; padding: 0.6rem 0.75rem 0.7rem; }
+    .sheet-plate .breadcrumb-nav { display: none; }
+    .plate-id { flex-basis: 100%; }
+    .plate-save { width: 100%; }
+    .plate-save .cx-btn { flex: 1 1 0; min-width: 0; padding-inline: 0.6rem; }
+    .stat-cell { flex: 1 1 4.4rem; }
+    /* With unsaved changes, Save stays under the thumb at the bottom of the screen. */
+    .plate-save:has(.dirty-note) {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 950; justify-content: space-between;
+        padding: 0.6rem var(--gutter) calc(0.6rem + env(safe-area-inset-bottom));
+        background: var(--surface); border-top: 1px solid var(--border-strong); box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .plate-save:has(.dirty-note) [data-testid="sheet-back"] { display: none; }
+    main:has(.plate-save .dirty-note) { padding-bottom: 6rem; }
+    .sheet-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+    .sheet-tabs::-webkit-scrollbar { display: none; }
+    .sheet-tab { flex: 0 0 auto; padding: 0.35rem 0.8rem; }
+    .attr-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+    .attr-box .attr-mod { font-size: 1.6rem; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -1289,7 +1408,7 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .dice-tray .tray-empty { margin: 0; }
 .roll-btn { margin-inline-start: 0.5rem; vertical-align: middle; }
 .list-row .roll-end { display: inline-flex; align-items: center; gap: 0.25rem; }
-@media (prefers-reduced-motion: no-preference) { .dice-tray .dice-result { animation: rise var(--dur-slow) var(--ease-out) both; } }
+@media (prefers-reduced-motion: no-preference) { .dice-tray .dice-result { animation: rise var(--dur-slow) var(--ease-out) backwards; } }
 .sheet-plate .plate-roll { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--rule); }
 .sheet-plate .plate-roll .dice-head { display: inline-flex; margin-inline-end: 0.75rem; }
 .sheet-plate .plate-roll .dice-result { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
@@ -1452,6 +1571,8 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
     transition: transform var(--dur) var(--ease-out);
 }
 .notes-dock.open { transform: none; }
+/* On a phone the open drawer is a full-screen sheet like the others: over the tab bar, not under it. */
+@media (max-width: 720px) { .notes-dock { z-index: 960; } }
 .notes-tab {
     position: absolute; top: 5.5rem; inset-inline-end: 100%;
     display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
@@ -1521,7 +1642,7 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
     margin: 0.9rem 0 0.2rem; color: var(--text-3);
     font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
 }
-.notes-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); animation: rise var(--dur-slow) var(--ease-out) both; }
+.notes-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); animation: rise var(--dur-slow) var(--ease-out) backwards; }
 .notes-entry.secret { border-inline-start: 2px solid var(--border); padding-inline-start: 0.5rem; }
 .notes-entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; color: var(--text-3); font-size: 0.8rem; margin-bottom: 0.15rem; }
 .notes-entry-actions { margin-inline-start: auto; display: inline-flex; gap: 0.1rem; opacity: 0.55; transition: opacity var(--transition); }
@@ -1602,3 +1723,34 @@ bdi, .dice, .stat-token { unicode-bidi: isolate; }
 .ms-2 { margin-inline-start: 0.5rem !important; margin-left: 0 !important; }
 .ms-auto { margin-inline-start: auto !important; margin-left: 0 !important; }
 .text-start { text-align: start !important; }
+
+/* ---------------------------------------------------------------------------
+   Touch screens: fingers need ~40px targets, and nothing may wait for a hover.
+   --------------------------------------------------------------------------- */
+.table-scroll { max-width: 100%; overflow-x: auto; }
+.table-scroll > .rules-table { margin: 0.5rem 0 0; }
+.table-scroll:has(> .rules-table) { margin-bottom: 1rem; }
+@media (max-width: 720px) {
+    /* "18 (+4)" breaks under its score instead of pushing six columns past the screen edge. */
+    .ref-scores td { white-space: normal; }
+}
+@media (pointer: coarse) {
+    .chip { min-height: 40px; }
+    .chip-remove { min-width: 40px; justify-content: center; }
+    .cx-sm, .field-sm { min-height: 40px; }
+    .cx-rune.cx-sm, .cond-chip .cx-btn, .cond-chip .cx-rune { min-width: 40px; min-height: 40px; }
+    .lang-btn { min-height: 40px; padding-inline: 0.6rem; }
+    /* The whole name, not just its letters, selects a combatant. */
+    .participant-select { min-height: 40px; padding: 0.35rem 0.5rem; margin: -0.35rem -0.5rem; border-radius: var(--radius-sm); }
+}
+@media (hover: none) {
+    .notes-entry-actions { opacity: 1; }
+    /* iOS Safari only sends a tap on a plain element to the page's click handler (the tap tooltip) when it looks clickable. */
+    [title] { cursor: pointer; }
+}
+.tap-tip {
+    position: fixed; z-index: 1200; max-width: min(18rem, calc(100vw - 16px)); padding: 0.45rem 0.7rem;
+    background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+    box-shadow: var(--shadow-2, 0 8px 24px rgba(0, 0, 0, 0.45)); font-size: 0.9rem; line-height: 1.35; pointer-events: none;
+    animation: fade-in var(--dur-fast, 120ms) ease-out both;
+}

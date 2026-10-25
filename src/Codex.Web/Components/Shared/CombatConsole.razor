@@ -327,6 +327,7 @@ else
     private List<SessionDocument> openSessions = new();
     private bool sessionsLoadedFor;
     private readonly Dictionary<string, int> damageInputs = new();
+    private static readonly int[] QuickAmounts = { 1, 5, 10 };
     private readonly Dictionary<string, string> damageTypeInputs = new();
     private readonly Dictionary<string, bool> criticalInputs = new();
     private readonly Dictionary<string, string> conditionInputs = new();
@@ -801,12 +802,24 @@ else
     private RenderFragment CommandPanel(string actorId, string name, ParticipantSnapshot participant, bool dead, bool down) => __builder =>
     {
         <div class="command-panel" data-testid="command-panel" data-actor-id="@actorId" aria-label="@(L["Combat.CommandsFor", name])">
+            @* On a phone the panel is a sheet at the bottom of the screen, away from its row: it says whose it is. *@
+            <div class="command-head">
+                <span class="command-name">@name</span>
+                <CodexButton Variant="CodexButtonVariant.Rune" Icon="x" Label="@L["Combat.Deselect", name]" OnClick="() => ToggleSelected(actorId)" />
+            </div>
             <div class="console-row mt-0">
                 <div>
                     <label for="dmg-@actorId" class="field-label">@L["Combat.Amount"]</label>
-                    <input id="dmg-@actorId" type="number" min="0" class="field-input field-sm" data-testid="damage-input"
+                    <input id="dmg-@actorId" type="number" min="0" inputmode="numeric" class="field-input field-sm" data-testid="damage-input"
                            value="@GetDamageInput(actorId)"
                            @oninput="e => SetDamageInput(actorId, e.Value?.ToString())" />
+                </div>
+                @* Tapping +5 twice is quicker than the number keyboard when the dice are already on the table. *@
+                <div class="chips quick-amounts" role="group" aria-label="@L["Combat.AddToAmount"]">
+                    @foreach (var step in QuickAmounts)
+                    {
+                        <button type="button" class="chip" data-testid="@($"quick-amount-{step}")" @onclick="() => damageInputs[actorId] = GetDamageInput(actorId) + step"><bdi>+@step</bdi></button>
+                    }
                 </div>
                 @if (DamageTypes.Count > 0)
                 {
@@ -872,7 +885,7 @@ else
                 </div>
                 <div>
                     <label for="rounds-@actorId" class="field-label">@L["Combat.Rounds"]</label>
-                    <input id="rounds-@actorId" type="number" min="0" class="field-input field-sm" data-testid="condition-rounds-input" placeholder="∞"
+                    <input id="rounds-@actorId" type="number" min="0" inputmode="numeric" class="field-input field-sm" data-testid="condition-rounds-input" placeholder="∞"
                            value="@GetConditionRounds(actorId)" title="@L["Combat.RoundsTitle"]"
                            @oninput="e => SetConditionRounds(actorId, e.Value?.ToString())" />
                 </div>

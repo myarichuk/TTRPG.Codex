@@ -75,6 +75,7 @@
   <data name="Combat.SomeoneUnseen" xml:space="preserve"><value>מישהו שאינכם רואים</value></data>
   <data name="Combat.CommandsFor" xml:space="preserve"><value>פקודות עבור {0}</value></data>
   <data name="Combat.Amount" xml:space="preserve"><value>כמות</value></data>
+  <data name="Combat.AddToAmount" xml:space="preserve"><value>הוספה לכמות</value></data>
   <data name="Combat.Type" xml:space="preserve"><value>סוג</value></data>
   <data name="Combat.Untyped" xml:space="preserve"><value>ללא סוג</value></data>
   <data name="Combat.CriticalHit" xml:space="preserve"><value>פגיעה קריטית</value></data>

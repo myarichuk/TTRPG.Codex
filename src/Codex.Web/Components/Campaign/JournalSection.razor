@@ -4,6 +4,7 @@
 @inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
 @inject MentionSources MentionSources
+@inject IJSRuntime JS
 
 @* The player's private notebook for this campaign: one entry per session plus free entries.
    Nobody but the owner can read these - the repository filters by owner in the query. *@
@@ -59,10 +60,11 @@ else
                 </article>
             }
         </div>
-        <div class="col-lg-5">
+        <div class="col-lg-5 @(editing != null ? "phone-sheet" : "")">
             @if (editing != null)
             {
-                <section class="panel panel-journal" aria-labelledby="journal-editor-heading">
+                <SheetBar Title="@(editing.Id.Length == 0 ? L["Campaign.Journal.NewEntry"] : L["Campaign.Journal.EditEntry"])" CloseLabel="@L["Campaign.Journal.Cancel"]" OnClose="CancelAsync" />
+                <section class="panel panel-journal" id="journal-editor" tabindex="-1" aria-labelledby="journal-editor-heading">
                     <div class="panel-title"><h3 id="journal-editor-heading" class="h6"><LucideIcon IconName="edit-3" Size="14" Class="title-icon" /> @(editing.Id.Length == 0 ? L["Campaign.Journal.NewEntry"] : L["Campaign.Journal.EditEntry"])</h3></div>
                     <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true">
                         <div class="mb-2">
@@ -144,6 +146,17 @@ else
         if (!await guard.ConfirmDiscardAsync()) return;
         editing = entry;
         editingSnapshot = Snapshot(entry);
+        focusEditor = true;
+    }
+
+    // Set when an entry opens, so the editor (a full-screen sheet on a phone) takes focus once it renders.
+    private bool focusEditor;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusEditor || editing == null) return;
+        focusEditor = false;
+        await JS.InvokeVoidAsync("codex.focusSheet", "journal-editor");
     }
 
     private async Task CancelAsync()

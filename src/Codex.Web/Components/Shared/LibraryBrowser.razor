@@ -6,6 +6,7 @@
 @inject IContentRegistry Registry
 @inject ISystemCatalog Catalog
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 @* The content browser: type chips, a search box, a result list and a detail pane. Works for a
    campaign (packs the campaign enabled + homebrew) and for the global, read-only Library (/library)
@@ -85,8 +86,9 @@
     </div>
     @if (selected != null)
     {
-        <div class="col-lg-7 library-detail-col">
-            <div class="panel" data-testid="library-detail">
+        <div class="col-lg-7 library-detail-col phone-sheet">
+            <SheetBar Title="@selected.Entry.Name" CloseHref="@CloseHref" CloseLabel="@L["Library.Browser.CloseDetail"]" />
+            <div class="panel" id="@detailId" tabindex="-1" data-testid="library-detail">
                 <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)" Art="@(DetailArt?.Invoke(selected))">
                     <Actions>
                         @if (DetailActions != null)
@@ -145,6 +147,9 @@
     private const int PageSize = 150;
     private int shown = PageSize;
     private readonly string searchId = "lib-search-" + Guid.NewGuid().ToString("N")[..6];
+    private readonly string detailId = "lib-detail-" + Guid.NewGuid().ToString("N")[..6];
+    // The entry the detail last moved focus to, so a re-render of the same entry doesn't move it again.
+    private string? focusedKey;
     private List<ContentTypeDefinition> types = new();
     private List<LibraryItem> results = new();
     private LibraryItem? selected;
@@ -177,6 +182,15 @@
         {
             selected = await GetAsync(RouteType, RouteId);
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var key = selected == null ? null : $"{selected.Entry.Type}:{selected.Entry.Id}:{selected.IsHomebrew}";
+        if (key == focusedKey) return;
+        var closed = key == null;
+        focusedKey = key;
+        await JS.InvokeVoidAsync(closed ? "codex.sheetClosed" : "codex.focusSheet", detailId);
     }
 
     private async Task<List<ContentTypeDefinition>> LoadTypesAsync()

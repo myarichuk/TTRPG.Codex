@@ -44,7 +44,7 @@ else
     var tableLive = RuntimeManager.TryGet(CampaignId) != null;
 
     <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "")">
-        <header class="ws-head @(campaign.HasCover ? "has-cover" : "")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
+        <header class="ws-head @(campaign.HasCover ? "has-cover" : "") @(CurrentSection == "overview" ? "" : "ws-head-inner")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
             <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a></nav>
             <h1 data-testid="campaign-title">@campaign.Name</h1>
             <div class="pills">
@@ -74,6 +74,39 @@ else
                     }
                 </div>
             }
+        </nav>
+
+        @* On a phone the side rail is replaced by a tab bar at the bottom of the screen: the sections used at
+           the table, plus a More menu with every section. *@
+        <nav class="ws-tabbar" aria-label="@L["Page.Campaign.Sections"]">
+            @foreach (var key in TabBarSections)
+            {
+                var section = Sections.First(s => s.Key == key);
+                <a href="@(BasePath + "/" + key)" aria-current="@(CurrentSection == key ? "page" : null)" data-testid="@("tabbar-" + key)">
+                    <LucideIcon IconName="@section.Icon" Size="20" /><span>@SectionLabel(key)</span>
+                    @if (key == "table" && tableLive)
+                    {
+                        <span class="live-dot tabbar-live" aria-hidden="true"></span><span class="visually-hidden">@L["Page.Campaign.TableRunning"]</span>
+                    }
+                </a>
+            }
+            <details class="popover-menu tabbar-more">
+                <summary class="@(TabBarSections.Contains(CurrentSection) ? "" : "current")" data-testid="tabbar-more">
+                    <LucideIcon IconName="layout-grid" Size="20" /><span>@L["Page.Campaign.More"]</span>
+                </summary>
+                <div class="popover-panel">
+                    @foreach (var group in Groups)
+                    {
+                        <div class="tabbar-more-label eyebrow" aria-hidden="true">@GroupLabel(group.Label)</div>
+                        @foreach (var section in group.Sections)
+                        {
+                            var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
+                            var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
+                            <a class="menu-item" href="@href" aria-current="@(CurrentSection == section.Key ? "page" : null)"><LucideIcon IconName="@section.Icon" Size="18" />@label</a>
+                        }
+                    }
+                </div>
+            </details>
         </nav>
 
         <div class="ws-main">
@@ -154,6 +187,9 @@ else
     };
 
     private static readonly (string Key, string Label, string Icon)[] Sections = Groups.SelectMany(g => g.Sections).ToArray();
+
+    // The phone tab bar: what a player reaches for at the table; everything else is under More.
+    private static readonly string[] TabBarSections = { "table", "sessions", "journal", "world" };
 
     private bool loading = true;
     private CampaignDocument? campaign;

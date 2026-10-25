@@ -98,6 +98,7 @@
   <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>Вы не участвуете в этой кампании</value></data>
   <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Попросите у мастера ссылку-приглашение.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>Разделы кампании</value></data>
+  <data name="Page.Campaign.More" xml:space="preserve"><value>Ещё</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>Идёт игра</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>Стол запущен</value></data>
   <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>Игра</value></data>

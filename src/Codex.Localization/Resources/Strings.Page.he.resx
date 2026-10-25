@@ -98,6 +98,7 @@
   <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>אינכם חברים בקמפיין הזה</value></data>
   <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>בקשו משליט המבוך קישור הזמנה.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>מדורי הקמפיין</value></data>
+  <data name="Page.Campaign.More" xml:space="preserve"><value>עוד</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>פעיל</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>השולחן פעיל</value></data>
   <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>משחק</value></data>
