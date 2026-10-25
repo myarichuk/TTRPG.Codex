@@ -28,7 +28,16 @@
   <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>הצגה</value></data>
   <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{רעיון אחד הושמט כי אינו מתאים לאשף הזה.} two{שני רעיונות הושמטו כי אינם מתאימים לאשף הזה.} other{# רעיונות הושמטו כי אינם מתאימים לאשף הזה.}}</value></data>
   <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>רק התקציר</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>הכול נשמר מוסתר מהשחקנים: ערכי ספרייה כטיוטות שרק אתם רואים ({0}), דפי ויקי לשליט המבוך בלבד ({1}). אפשר לשתף אותם מאוחר יותר.</value></data>
+  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>הכול נשמר מוסתר מהשחקנים: ערכי ספרייה כטיוטות שרק אתם רואים, דפי ויקי וסודות לשליט המבוך בלבד, ודמויות בצוות מוסתרות. אפשר לשתף אותם מאוחר יותר.</value></data>
+  <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>גם בצוות</value></data>
+  <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>להוסיף גם לצוות, מוסתר מהשחקנים</value></data>
+  <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>נוצר על ידי בונה העולם; הסיפור המלא בדף הוויקי „{0}”.</value></data>
+  <data name="WorldBuilder.Kind.Npc" xml:space="preserve"><value>דמות</value></data>
+  <data name="WorldBuilder.Kind.Fact" xml:space="preserve"><value>סוד (אגדות עולם)</value></data>
+  <data name="WorldBuilder.Tag.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="WorldBuilder.Tag.faction" xml:space="preserve"><value>פלג</value></data>
+  <data name="WorldBuilder.Tag.npc" xml:space="preserve"><value>דמות</value></data>
+  <data name="WorldBuilder.Open.Faction" xml:space="preserve"><value>עיצוב פלג עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Busy.Writing" xml:space="preserve"><value>הבינה המלאכותית כותבת את {0}…</value></data>
   <data name="WorldBuilder.Busy.Outline" xml:space="preserve"><value>הבינה המלאכותית מנסחת רעיונות…</value></data>
   <data name="WorldBuilder.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
@@ -73,4 +82,29 @@
   <data name="WorldBuilder.Recipe.homebrew.origin" xml:space="preserve"><value>מאין זה בא</value></data>
   <data name="WorldBuilder.Recipe.homebrew.origin.Hint" xml:space="preserve"><value>מקום, יוצר או אגדה.</value></data>
   <data name="WorldBuilder.Recipe.homebrew.history" xml:space="preserve"><value>לכתוב גם דף ויקי על ההיסטוריה שלו (לשליט המבוך בלבד)</value></data>
+  <data name="WorldBuilder.Recipe.faction.Title" xml:space="preserve"><value>פלג עם בינה מלאכותית</value></data>
+  <data name="WorldBuilder.Recipe.faction.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע את הפלג, את אנשיו וסוד; לפני השמירה אפשר לשנות שם, לכתוב מחדש או לבטל סימון של כל אחד מהם.</value></data>
+  <data name="WorldBuilder.Recipe.faction.group" xml:space="preserve"><value>מה סוג הקבוצה?</value></data>
+  <data name="WorldBuilder.Recipe.faction.group.Hint" xml:space="preserve"><value>למשל: גילדת סוחרים, כת, מסדר אבירים, כנופיית מבריחים.</value></data>
+  <data name="WorldBuilder.Recipe.faction.goal" xml:space="preserve"><value>מה הוא רוצה?</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods" xml:space="preserve"><value>בגלוי או בסתר?</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods.open" xml:space="preserve"><value>בגלוי</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods.secret" xml:space="preserve"><value>בסתר</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods.mixed" xml:space="preserve"><value>פנים גלויות ומטרות נסתרות</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach" xml:space="preserve"><value>טווח השפעה</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach.local" xml:space="preserve"><value>עיר או רובע אחד</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach.regional" xml:space="preserve"><value>אזור שלם</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach.world" xml:space="preserve"><value>העולם כולו</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone" xml:space="preserve"><value>אווירה</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.grim" xml:space="preserve"><value>קודרת</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
+  <data name="WorldBuilder.Recipe.faction.enemy" xml:space="preserve"><value>מי עומד מולו?</value></data>
+  <data name="WorldBuilder.Recipe.faction.enemy.Hint" xml:space="preserve"><value>יריב, שליט, מפלצת או שם של דף ויקי קיים.</value></data>
+  <data name="WorldBuilder.Recipe.faction.people" xml:space="preserve"><value>את מי לתאר</value></data>
+  <data name="WorldBuilder.Recipe.faction.people.leader" xml:space="preserve"><value>רק את המנהיג</value></data>
+  <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>את המנהיג וחבר אחד</value></data>
+  <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>את המנהיג ושני חברים</value></data>
+  <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>לכתוב גם סוד שהחבורה יכולה לגלות (לשליט המבוך בלבד, באגדות עולם)</value></data>
 </root>

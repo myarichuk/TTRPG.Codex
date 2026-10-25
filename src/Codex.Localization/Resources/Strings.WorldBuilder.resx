@@ -28,7 +28,16 @@
   <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>Show</value></data>
   <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{# idea was left out because it did not fit this wizard.} other{# ideas were left out because they did not fit this wizard.}}</value></data>
   <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>only the pitch</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Everything is saved hidden from players: Library entries as drafts only you can see ({0}), wiki pages for the DM only ({1}). You can share them later.</value></data>
+  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Everything is saved hidden from players: Library entries as drafts only you can see, wiki pages and secrets for the DM only, and cast members hidden. You can share them later.</value></data>
+  <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>also in the cast</value></data>
+  <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Also add to the cast, hidden from players</value></data>
+  <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>Made by the world builder; the wiki page “{0}” tells their story.</value></data>
+  <data name="WorldBuilder.Kind.Npc" xml:space="preserve"><value>Person</value></data>
+  <data name="WorldBuilder.Kind.Fact" xml:space="preserve"><value>Secret (Lore)</value></data>
+  <data name="WorldBuilder.Tag.homebrew" xml:space="preserve"><value>homebrew</value></data>
+  <data name="WorldBuilder.Tag.faction" xml:space="preserve"><value>faction</value></data>
+  <data name="WorldBuilder.Tag.npc" xml:space="preserve"><value>person</value></data>
+  <data name="WorldBuilder.Open.Faction" xml:space="preserve"><value>Design a faction with AI</value></data>
   <data name="WorldBuilder.Busy.Writing" xml:space="preserve"><value>The AI is writing {0}…</value></data>
   <data name="WorldBuilder.Busy.Outline" xml:space="preserve"><value>The AI is drafting ideas…</value></data>
   <data name="WorldBuilder.Preview" xml:space="preserve"><value>Preview</value></data>
@@ -73,4 +82,29 @@
   <data name="WorldBuilder.Recipe.homebrew.origin" xml:space="preserve"><value>Where it comes from</value></data>
   <data name="WorldBuilder.Recipe.homebrew.origin.Hint" xml:space="preserve"><value>A place, a maker or a legend.</value></data>
   <data name="WorldBuilder.Recipe.homebrew.history" xml:space="preserve"><value>Also write a wiki page about its history (DM only)</value></data>
+  <data name="WorldBuilder.Recipe.faction.Title" xml:space="preserve"><value>Faction with AI</value></data>
+  <data name="WorldBuilder.Recipe.faction.Intro" xml:space="preserve"><value>Answer what you care about and leave the rest to the AI. It proposes the faction, its people and a secret; rename, rewrite or untick any of them before anything is saved.</value></data>
+  <data name="WorldBuilder.Recipe.faction.group" xml:space="preserve"><value>What kind of group is it?</value></data>
+  <data name="WorldBuilder.Recipe.faction.group.Hint" xml:space="preserve"><value>E.g. a merchant guild, a cult, a knightly order, a smugglers' ring.</value></data>
+  <data name="WorldBuilder.Recipe.faction.goal" xml:space="preserve"><value>What does it want?</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods" xml:space="preserve"><value>Openly or in secret?</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods.open" xml:space="preserve"><value>Openly</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods.secret" xml:space="preserve"><value>In secret</value></data>
+  <data name="WorldBuilder.Recipe.faction.methods.mixed" xml:space="preserve"><value>A public face with hidden aims</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach" xml:space="preserve"><value>Reach</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach.local" xml:space="preserve"><value>One town or district</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach.regional" xml:space="preserve"><value>A region</value></data>
+  <data name="WorldBuilder.Recipe.faction.reach.world" xml:space="preserve"><value>The whole world</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone" xml:space="preserve"><value>Tone</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.heroic" xml:space="preserve"><value>Heroic</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.grim" xml:space="preserve"><value>Grim</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.whimsical" xml:space="preserve"><value>Whimsical</value></data>
+  <data name="WorldBuilder.Recipe.faction.tone.eerie" xml:space="preserve"><value>Eerie</value></data>
+  <data name="WorldBuilder.Recipe.faction.enemy" xml:space="preserve"><value>Who stands against it?</value></data>
+  <data name="WorldBuilder.Recipe.faction.enemy.Hint" xml:space="preserve"><value>A rival, a ruler, a monster, or an existing wiki page's name.</value></data>
+  <data name="WorldBuilder.Recipe.faction.people" xml:space="preserve"><value>People to write up</value></data>
+  <data name="WorldBuilder.Recipe.faction.people.leader" xml:space="preserve"><value>Just the leader</value></data>
+  <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>The leader and one member</value></data>
+  <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>The leader and two members</value></data>
+  <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>Also write a secret the party can uncover (DM only, in Lore)</value></data>
 </root>

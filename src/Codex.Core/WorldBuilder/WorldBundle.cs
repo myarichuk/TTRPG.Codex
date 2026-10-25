@@ -4,7 +4,7 @@ using Codex.Core.AI;
 namespace Codex.Core.WorldBuilder;
 
 /// <summary>
-/// One thing the model proposed: a homebrew entry or a wiki page. The outline call fills the name, pitch and links;
+/// One thing the model proposed: a homebrew entry, a wiki page, a person or a secret. The outline call fills the name, pitch and links;
 /// the expand call fills <see cref="Body"/> (and, for homebrew, <see cref="Properties"/> and <see cref="Tags"/>).
 /// Nothing is stored until the DM saves the bundle.
 /// </summary>
@@ -34,7 +34,10 @@ public sealed class WorldDraft
 
     public bool Expanded { get; set; }
 
-    /// <summary>A wiki page's text, or a homebrew entry's description (its rules text).</summary>
+    /// <summary>For a person: also add them to the cast, hidden from players, besides their wiki page.</summary>
+    public bool Cast { get; set; }
+
+    /// <summary>A page's text, a homebrew entry's description (its rules text), or a secret's details.</summary>
     public string? Body { get; set; }
 
     public Dictionary<string, object> Properties { get; set; } = new();
@@ -213,8 +216,8 @@ public static class WorldBundleParser
 
     /// <summary>
     /// The text to save for <paramref name="text"/>: a <c>[[link]]</c> to another draft (by its ref or its outline name) is
-    /// rewritten to the draft's final name when that draft is saved as a wiki page, and left as plain text otherwise (a homebrew
-    /// entry or an unticked draft has no page to link to). Other links are kept, unless <paramref name="keepLinks"/> is false
+    /// rewritten to the draft's final name when that draft is saved as a wiki page (a page or a person), and left as plain text
+    /// otherwise (a homebrew entry, a secret or an unticked draft has no page to link to). Other links are kept, unless <paramref name="keepLinks"/> is false
     /// (homebrew text, which is not wiki text), when every link becomes plain text.
     /// </summary>
     public static string ResolveLinks(string text, WorldBundle bundle, bool keepLinks = true)
@@ -231,7 +234,7 @@ public static class WorldBundleParser
                 return keepLinks ? match.Value : shown ?? target;
             }
 
-            var linked = keepLinks && draft.Selected && draft.Kind == DraftKinds.Wiki;
+            var linked = keepLinks && draft.Selected && DraftKinds.IsPage(draft.Kind);
             return linked ? (shown == null ? $"[[{draft.Name}]]" : $"[[{draft.Name}|{shown}]]") : shown ?? draft.Name;
         });
     }

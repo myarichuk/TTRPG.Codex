@@ -127,8 +127,16 @@
                                             }
                                         </div>
                                         <label for="@nameId" class="visually-hidden">@L["WorldBuilder.Drafts.Name"]</label>
-                                        <input id="@nameId" class="field-input world-draft-name" value="@d.Name" @oninput="e => d.Name = e.Value?.ToString() ?? string.Empty" maxlength="120" data-testid="world-draft-name" />
+                                        <input id="@nameId" class="field-input world-draft-name" value="@d.Name" @oninput="e => d.Name = e.Value?.ToString() ?? string.Empty" maxlength="200" data-testid="world-draft-name" />
                                         <p class="small mb-2">@d.Pitch</p>
+                                        @if (d.Kind == DraftKinds.Npc)
+                                        {
+                                            var castId = $"{dialogId}-cast-{d.Ref}";
+                                            <div class="field-check mb-2">
+                                                <input id="@castId" type="checkbox" class="field-box" checked="@d.Cast" disabled="@(!d.Selected)" @onchange="e => d.Cast = (bool)(e.Value ?? false)" data-testid="world-draft-cast" />
+                                                <label for="@castId" class="small">@L["WorldBuilder.Drafts.Cast"]</label>
+                                            </div>
+                                        }
                                         <div class="d-flex gap-2 flex-wrap">
                                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="@(d.Expanded ? "refresh-cw" : "feather")" OnClick="() => WriteAsync(d)" Disabled="@(busy != null || !d.Selected)" data-testid="world-draft-write">
                                                 @(busy == d ? L["WorldBuilder.Drafts.Writing"] : d.Expanded ? L["WorldBuilder.Drafts.Rewrite"] : L["WorldBuilder.Drafts.Write"])
@@ -151,19 +159,17 @@
                     case "save":
                         @if (bundle != null)
                         {
-                            var entries = bundle.Drafts.Count(d => d.Selected && d.Kind == DraftKinds.Homebrew);
-                            var pages = bundle.Drafts.Count(d => d.Selected && d.Kind == DraftKinds.Wiki);
                             <ul class="wizard-checklist">
                                 @foreach (var d in bundle.Drafts.Where(d => d.Selected))
                                 {
                                     <li class="@(d.Expanded ? "done" : "")">
                                         <LucideIcon IconName="@(d.Expanded ? "circle-check" : "circle")" Size="16" />
                                         <span>@d.Name</span>
-                                        <span class="small-muted">@KindLabel(d)@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
+                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + L["WorldBuilder.Save.AlsoCast"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
                                     </li>
                                 }
                             </ul>
-                            <p class="small-muted mb-0">@L["WorldBuilder.Save.Note", entries, pages]</p>
+                            <p class="small-muted mb-0">@L["WorldBuilder.Save.Note"]</p>
                         }
                         break;
                 }
@@ -184,7 +190,12 @@
                 {
                     <EntryDetail Item="PreviewItem(shownEntry)" Type="PreviewType(shownEntry)" />
                 }
-                else if (focused is { Kind: DraftKinds.Wiki } shownPage)
+                else if (focused is { Kind: DraftKinds.Fact } shownFact)
+                {
+                    <h2 class="h6">@shownFact.Name</h2>
+                    <p class="mb-0">@WorldBundleParser.ResolveLinks(shownFact.Body ?? shownFact.Pitch, bundle!, keepLinks: false)</p>
+                }
+                else if (focused is { Kind: DraftKinds.Wiki or DraftKinds.Npc } shownPage)
                 {
                     <h2 class="h5">@shownPage.Name</h2>
                     @* Links are shown as their text: a link inside the dialog would navigate away from the unsaved drafts. *@
@@ -298,9 +309,13 @@
 
     private string? Answer(RecipeQuestion q) => answers.TryGetValue(q.Key, out var value) ? value : null;
 
-    private string KindLabel(WorldDraft draft) => draft.Kind == DraftKinds.Homebrew
-        ? types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase))?.Label ?? CampaignLibrary.Humanize(draft.Type ?? string.Empty)
-        : L["WorldBuilder.Kind.Wiki"];
+    private string KindLabel(WorldDraft draft) => draft.Kind switch
+    {
+        DraftKinds.Homebrew => types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase))?.Label ?? CampaignLibrary.Humanize(draft.Type ?? string.Empty),
+        DraftKinds.Npc => L["WorldBuilder.Kind.Npc"],
+        DraftKinds.Fact => L["WorldBuilder.Kind.Fact"],
+        _ => L["WorldBuilder.Kind.Wiki"]
+    };
 
     private ContentTypeDefinition? PreviewType(WorldDraft draft) => types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase));
 

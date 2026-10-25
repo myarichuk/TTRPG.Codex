@@ -188,7 +188,7 @@
     private async Task OnBuiltAsync(WorldBuildResult result)
     {
         version++;
-        Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Entries.Count + result.Pages.Count]));
+        Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
         if (result.Entries.FirstOrDefault() is { } entry)
         {
             Nav.NavigateTo($"{Ctx.BasePath}/library/{entry.Type}/{Uri.EscapeDataString(entry.EntryId)}");

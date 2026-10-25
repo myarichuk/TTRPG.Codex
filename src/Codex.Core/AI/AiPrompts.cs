@@ -1,4 +1,5 @@
 using System.Text;
+using Codex.Core.WorldBuilder;
 
 namespace Codex.Core.AI;
 
@@ -83,6 +84,7 @@ public sealed record WorldOutlineRequest(
 /// <param name="TypeLabel">For a homebrew draft, its content type as system.yaml names it ("Spell").</param>
 /// <param name="Fields">For a homebrew draft, the fields to fill.</param>
 /// <param name="Related">The bundle's other drafts, as "Name (kind): pitch".</param>
+/// <param name="Kind">The draft's kind (<see cref="DraftKinds"/>), which picks how a page or a secret is written.</param>
 public sealed record WorldExpandRequest(
     string Name,
     string Pitch,
@@ -93,7 +95,8 @@ public sealed record WorldExpandRequest(
     IReadOnlyList<string> Related,
     IReadOnlyList<string> ExistingPages,
     string? CampaignContext = null,
-    string? Language = null);
+    string? Language = null,
+    string Kind = DraftKinds.Wiki);
 
 public sealed record CharacterConceptRequest(
     string Concept,
@@ -331,15 +334,28 @@ public static class AiPrompts
         return (system, sb.ToString());
     }
 
+    /// <summary>A page (kind "wiki"), a person's page (kind "npc"), or a secret's details (kind "fact"), as plain reply text.</summary>
     public static (string System, string User) WorldExpandPage(WorldExpandRequest r)
     {
-        var system = $"You write a page of the world wiki of a {r.SystemName} tabletop campaign, for the game master's eyes. " +
-                     "Write it in three to six short sections with headings: concrete, usable at the table, with hooks and secrets the game master can use. " +
-                     "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). " +
-                     "Use original names only. Reply with the page text only. " + StyleFor(r.Language);
+        var shape = r.Kind switch
+        {
+            DraftKinds.Npc =>
+                "a page about one person, for the game master's eyes. Write it in short sections with headings: who they are and their role, how they look and sound, what they want, " +
+                "what they hide, and how the party might meet them. Keep it concrete and usable at the table. ",
+            DraftKinds.Fact =>
+                "the details of one secret the party can uncover, for the game master's eyes. Write two to four plain sentences: what is true, who knows it, and how the party could learn it. " +
+                "No headings, lists or links. ",
+            _ =>
+                "a page of the world wiki, for the game master's eyes. Write it in three to six short sections with headings: concrete, usable at the table, with hooks and secrets the game master can use. "
+        };
+        var links = r.Kind == DraftKinds.Fact
+            ? ""
+            : "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). ";
+        var system = $"You write {shape}This is for a {r.SystemName} tabletop campaign. " + links +
+                     "Use original names only. Reply with the text only. " + StyleFor(r.Language);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Page: " + r.Name);
+        sb.AppendLine((r.Kind == DraftKinds.Fact ? "Secret: " : "Page: ") + r.Name);
         sb.AppendLine("Pitch: " + r.Pitch);
         if (!string.IsNullOrWhiteSpace(r.CampaignContext))
         {

@@ -305,20 +305,40 @@ public class WorldBuilderTests
 
     // ---- Saving ----
 
-    private static (WorldBuilderService Service, List<WikiPageDocument> Pages, List<HomebrewEntryDocument> Entries) Service(params HomebrewEntryDocument[] existing)
+    private sealed record Saving(WorldBuilderService Service, List<WikiPageDocument> Pages, List<HomebrewEntryDocument> Entries, List<ActorDocument> Actors, List<FactDocument> Facts);
+
+    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing)
     {
         var pages = new List<WikiPageDocument>();
         var entries = new List<HomebrewEntryDocument>();
+        var actors = new List<ActorDocument>();
+        var facts = new List<FactDocument>();
         var wiki = Substitute.For<IWikiRepository>();
-        wiki.TrySaveAsync(Arg.Do<WikiPageDocument>(pages.Add), Arg.Any<CampaignAccess>()).Returns(ci => ci.Arg<CampaignAccess>().IsDm);
+        wiki.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns((existingPages ?? Array.Empty<WikiPageDocument>()).ToList().AsEnumerable());
+        wiki.TrySaveAsync(Arg.Any<WikiPageDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
+        {
+            var page = ci.Arg<WikiPageDocument>();
+            page.Id = $"page-{pages.Count + 1}";
+            pages.Add(page);
+            return ci.Arg<CampaignAccess>().IsDm;
+        });
         var homebrew = Substitute.For<IHomebrewRepository>();
         homebrew.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existing.AsEnumerable());
         homebrew.TrySaveAsync(Arg.Do<HomebrewEntryDocument>(entries.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        var factRepo = Substitute.For<IFactRepository>();
+        factRepo.SaveAsync(Arg.Do<FactDocument>(facts.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        var actorRepo = Substitute.For<IActorRepository>();
+        actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(actors.Add), Arg.Any<CampaignAccess>()).Returns(true);
         var catalog = Substitute.For<ISystemCatalog>();
+        catalog.GetUISchemas(Arg.Any<string>()).Returns(Enumerable.Empty<UISchema>());
         var library = new CampaignLibrary(new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance)), homebrew, catalog);
         var providers = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),
             Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance);
-        return (new WorldBuilderService(providers, catalog, library, homebrew, wiki), pages, entries);
+        var components = new ComponentRegistry();
+        var runtimes = new Codex.Persistence.Runtime.CampaignRuntimeManager(actorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
+            Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);
+        var cast = new CastService(runtimes, Substitute.For<IContentRegistry>(), components, catalog);
+        return new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast), pages, entries, actors, facts);
     }
 
     private static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
@@ -327,7 +347,7 @@ public class WorldBuilderTests
     [Fact]
     public async Task Save_StoresTheTickedDraftsHiddenFromPlayers_WithLinksRewritten()
     {
-        var (service, pages, entries) = Service(new HomebrewEntryDocument { Type = "magic-item", EntryId = "tide-glass", Name = "Tide-glass" });
+        var (service, pages, entries, _, _) = Service(null, new HomebrewEntryDocument { Type = "magic-item", EntryId = "tide-glass", Name = "Tide-glass" });
         var bundle = Linked();
         bundle.Drafts[0].Body = "Made by [[The Glassblowers of Varr]].";
         bundle.Drafts[0].Properties["rarity"] = "Rare";
@@ -354,7 +374,7 @@ public class WorldBuilderTests
     [Fact]
     public async Task Save_UsesThePitch_ForADraftNeverWrittenInFull()
     {
-        var (service, _, entries) = Service();
+        var (service, _, entries, _, _) = Service();
         var bundle = new WorldBundle();
         bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Homebrew, Type = "spell", Name = "Ember Step", Pitch = "Step through a fire." });
 
@@ -366,12 +386,126 @@ public class WorldBuilderTests
     [Fact]
     public async Task Save_IsForTheDmOnly()
     {
-        var (service, pages, entries) = Service();
+        var (service, pages, entries, _, _) = Service();
 
         var ex = await Assert.ThrowsAsync<LocalizedException>(() => service.SaveAsync(Campaign, new CampaignAccess("c1", "p", CampaignRole.Player), WorldRecipes.Find("homebrew")!, Linked()));
 
         Assert.Equal("WorldBuilder.Error.OnlyDm", ex.Key);
         Assert.Empty(pages);
         Assert.Empty(entries);
+    }
+
+    // ---- The faction recipe: people, the cast and secrets ----
+
+    private static readonly BundleRules FactionRules = new(new[] { DraftKinds.Wiki, DraftKinds.Npc, DraftKinds.Fact }, new Dictionary<string, string>(), new[] { "port-varr" });
+
+    [Fact]
+    public void FactionRecipe_WritesAPageItsPeopleAndASecret()
+    {
+        var faction = WorldRecipes.Find("faction")!;
+
+        Assert.Equal(new[] { DraftKinds.Wiki, DraftKinds.Npc, DraftKinds.Fact }, faction.Drafts);
+        Assert.Equal("leaderPlusOne", faction.Question("people")!.Default);
+        Assert.Equal("true", faction.Question("secret")!.Default);
+        Assert.DoesNotContain(faction.Questions, q => q.Required); // everything can be left to the model
+    }
+
+    [Fact]
+    public void ParseOutline_KeepsPeopleAndSecrets_WithTheirLinks()
+    {
+        const string reply = """
+            {"drafts": [
+              {"ref": "f", "kind": "wiki", "name": "The Salt Wardens", "pitch": "Smugglers who police the docks they rob.", "links": ["l", "existing:port-varr"]},
+              {"ref": "l", "kind": "npc", "name": "Mother Ilse", "pitch": "Their leader, a retired harbour pilot.", "links": ["f"]},
+              {"ref": "s", "kind": "fact", "name": "The wardens pay the harbour master", "links": ["f", "l", "existing:nowhere"]},
+              {"kind": "homebrew", "type": "spell", "name": "Not this recipe"}
+            ]}
+            """;
+
+        var bundle = WorldBundleParser.ParseOutline(reply, FactionRules);
+
+        Assert.Equal(new[] { DraftKinds.Wiki, DraftKinds.Npc, DraftKinds.Fact }, bundle.Drafts.Select(d => d.Kind));
+        Assert.Equal(new[] { "d1", "d2" }, bundle.Drafts[2].Links); // the unknown existing page is dropped
+        Assert.Equal(DropReason.Kind, Assert.Single(bundle.Dropped).Reason);
+        Assert.All(bundle.Drafts, d => Assert.False(d.Cast)); // the DM decides who joins the cast
+    }
+
+    private static WorldBundle Faction()
+    {
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "The Salt Wardens", OutlineName = "The Salt Wardens", Body = "Led by [[Mother Ilse]].", Links = { "d2", "d3" } });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Npc, Name = "Mother Ilse", OutlineName = "Mother Ilse", Body = "She leads [[The Salt Wardens]].", Cast = true, Links = { "d1" } });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Npc, Name = "Brann", OutlineName = "Brann", Pitch = "Her nephew, a lookout." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Fact, Name = "The wardens pay the harbour master", OutlineName = "The wardens pay the harbour master",
+            Body = "[[Mother Ilse]] pays him in salt.", Links = { "d1", "d2", "existing:port-varr" } });
+        return bundle;
+    }
+
+    [Fact]
+    public void ResolveLinks_LinksToPeople_ButNotToSecrets()
+    {
+        var bundle = Faction();
+
+        Assert.Equal("[[Mother Ilse]] knows that the wardens pay the harbour master.",
+            WorldBundleParser.ResolveLinks("[[d2]] knows that [[d4|the wardens pay the harbour master]].", bundle));
+    }
+
+    [Fact]
+    public async Task Save_WritesPeoplesPages_TicksThemIntoTheCast_AndFilesTheSecretUnderWhatItConcerns()
+    {
+        var (service, pages, _, actors, facts) = Service(new[] { new WikiPageDocument { Id = "page-port", Slug = "port-varr", Title = "Port Varr" } });
+
+        var result = await service.SaveAsync(Campaign, Dm, WorldRecipes.Find("faction")!, Faction());
+
+        Assert.Equal(new[] { "The Salt Wardens", "Mother Ilse", "Brann" }, pages.Select(p => p.Title));
+        Assert.All(pages, p => Assert.Equal(WikiVisibility.DmOnly, p.Visibility));
+        Assert.Equal(new[] { "faction" }, pages[0].Tags);
+        Assert.Equal(new[] { "faction", "person" }, pages[1].Tags);
+        Assert.Equal("Led by [[Mother Ilse]].", pages[0].Body);
+        Assert.Equal("Her nephew, a lookout.", pages[2].Body); // never written in full: the pitch
+
+        var ilse = Assert.Single(actors); // only the person ticked for the cast
+        Assert.Equal(("Mother Ilse", ActorKind.NonPlayerCharacter, ActorVisibility.Hidden), (ilse.Name, ilse.Kind, ilse.Visibility));
+        Assert.Equal("She leads The Salt Wardens.", ilse.Biography); // sheet prose has no wiki links
+        Assert.Contains("Mother Ilse", ilse.DmNotes);
+
+        var secret = Assert.Single(facts);
+        Assert.Equal(("The wardens pay the harbour master", "Mother Ilse pays him in salt.", FactVisibility.DmOnly), (secret.Summary, secret.Details, secret.Visibility));
+        Assert.Equal(new[] { "page-1", "page-2", ilse.Id, "page-port" }, secret.RelatedEntityIds);
+        Assert.Equal(5, result.Count); // 3 pages, 1 cast member, 1 secret
+    }
+
+    [Fact]
+    public async Task Save_LeavesOutUntickedPeople_AndTheirCastMember()
+    {
+        var (service, pages, _, actors, facts) = Service();
+        var bundle = Faction();
+        bundle.Drafts[1].Selected = false;
+
+        await service.SaveAsync(Campaign, Dm, WorldRecipes.Find("faction")!, bundle);
+
+        Assert.DoesNotContain(pages, p => p.Title == "Mother Ilse");
+        Assert.Empty(actors);
+        Assert.Equal("Led by Mother Ilse.", pages[0].Body); // no page left to link to
+        Assert.Equal(new[] { "page-1" }, Assert.Single(facts).RelatedEntityIds);
+    }
+
+    [Fact]
+    public void ExpandPrompts_WriteAPersonInSections_AndASecretAsPlainSentences()
+    {
+        WorldExpandRequest For(string kind) => new("Mother Ilse", "Their leader.", null, "SRD", Array.Empty<FieldSpec>(), Array.Empty<WorldAnswer>(),
+            Array.Empty<string>(), Array.Empty<string>(), Kind: kind);
+
+        var (person, _) = AiPrompts.WorldExpandPage(For(DraftKinds.Npc));
+        var (secret, secretUser) = AiPrompts.WorldExpandPage(For(DraftKinds.Fact));
+        var (page, _) = AiPrompts.WorldExpandPage(For(DraftKinds.Wiki));
+
+        Assert.Contains("one person", person);
+        Assert.Contains("what they hide", person);
+        Assert.Contains("[[Name]]", person);
+        Assert.Contains("two to four plain sentences", secret);
+        Assert.DoesNotContain("[[Name]]", secret);
+        Assert.StartsWith("Secret: Mother Ilse", secretUser);
+        Assert.Contains("three to six short sections", page);
     }
 }
