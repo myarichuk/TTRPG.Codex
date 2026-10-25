@@ -35,6 +35,10 @@ public sealed class AiAssistant(IChatClient chat)
     public Task<WorldBundle> OutlineWorldAsync(WorldOutlineRequest request, BundleRules rules, CancellationToken ct = default) =>
         JsonAsync(AiPrompts.WorldOutline(request), text => WorldBundleParser.ParseOutline(text, rules), 0.9f, ct);
 
+    /// <summary>The outline <paramref name="previous"/> with the change in <paramref name="request"/> made, its drafts kept where the reply keeps them.</summary>
+    public Task<WorldBundle> ReviseWorldAsync(WorldOutlineRequest request, BundleRules rules, WorldBundle previous, CancellationToken ct = default) =>
+        JsonAsync(AiPrompts.WorldOutline(request), text => WorldBundleParser.ParseRevision(text, rules, previous), 0.8f, ct);
+
     /// <summary>Writes a homebrew draft in full: its description, tags and fields.</summary>
     /// <param name="canonical">Maps a value the model wrote in the reader's language back to the stored one (field key, value).</param>
     public Task ExpandHomebrewAsync(WorldDraft draft, WorldExpandRequest request, Func<string, string, string>? canonical = null, CancellationToken ct = default) =>

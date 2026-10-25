@@ -69,6 +69,8 @@ public sealed record WorldAnswer(string Question, string Answer);
 /// <param name="HomebrewTypes">Content types a homebrew draft may have, as "id (label)".</param>
 /// <param name="ExistingPages">Wiki pages already written, as "existing:slug (title)", which drafts may link to.</param>
 /// <param name="TakenNames">Names the campaign already uses, so the model does not repeat them.</param>
+/// <param name="Current">For a change to an outline: its drafts, one JSON object each in the reply's shape (no texts).</param>
+/// <param name="Instruction">For a change to an outline: what the game master asked to change.</param>
 public sealed record WorldOutlineRequest(
     string Brief,
     string SystemName,
@@ -78,7 +80,9 @@ public sealed record WorldOutlineRequest(
     IReadOnlyList<string> ExistingPages,
     IReadOnlyList<string> TakenNames,
     string? CampaignContext = null,
-    string? Language = null);
+    string? Language = null,
+    IReadOnlyList<string>? Current = null,
+    string? Instruction = null);
 
 /// <summary>The expand call for one draft of an outline: write it in full.</summary>
 /// <param name="TypeLabel">For a homebrew draft, its content type as system.yaml names it ("Spell").</param>
@@ -86,6 +90,8 @@ public sealed record WorldOutlineRequest(
 /// <param name="Related">The bundle's other drafts, as "Name (kind): pitch".</param>
 /// <param name="Kind">The draft's kind (<see cref="DraftKinds"/>), which picks how a page or a secret is written.</param>
 /// <param name="Guidance">The recipe's own instructions for this kind (<see cref="WorldRecipe.Write"/>), if any.</param>
+/// <param name="Instruction">A change the game master asked for, made to <paramref name="CurrentText"/>.</param>
+/// <param name="CurrentText">The draft as written so far: a page's text, or a homebrew entry as its reply JSON.</param>
 public sealed record WorldExpandRequest(
     string Name,
     string Pitch,
@@ -98,7 +104,9 @@ public sealed record WorldExpandRequest(
     string? CampaignContext = null,
     string? Language = null,
     string Kind = DraftKinds.Wiki,
-    string? Guidance = null);
+    string? Guidance = null,
+    string? Instruction = null,
+    string? CurrentText = null);
 
 public sealed record CharacterConceptRequest(
     string Concept,
@@ -286,6 +294,13 @@ public static class AiPrompts
                      "The pitch is one sentence the game master can judge the idea by. " +
                      "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company, and do not reuse the names already taken. " +
                      "Where an answer is \"surprise me\", decide it yourself." + language;
+        var change = Instruction(r.Instruction);
+        if (change != null)
+        {
+            system += " The game master already has an outline, listed as JSON, and asks for a change to it. Reply with the whole revised outline in the same shape: " +
+                      "keep every draft the change does not touch as it is, with its ref; keep the ref of a draft you change; give new drafts new refs; " +
+                      "leave out the drafts the change removes.";
+        }
 
         var sb = new StringBuilder();
         if (!string.IsNullOrWhiteSpace(r.CampaignContext))
@@ -298,6 +313,13 @@ public static class AiPrompts
         AppendList(sb, "Content type ids (label)", r.HomebrewTypes);
         AppendList(sb, "Existing wiki pages (key (title))", r.ExistingPages);
         AppendList(sb, "Names already taken", r.TakenNames);
+        if (change != null)
+        {
+            // The change comes last, so it wins over everything above.
+            AppendList(sb, "The current outline", r.Current ?? Array.Empty<string>());
+            sb.AppendLine().AppendLine("The change the game master asks for: " + change);
+        }
+
         return (system, sb.ToString());
     }
 
@@ -312,6 +334,12 @@ public static class AiPrompts
                      "The description is the entry's full text as the rules print it: what it does, with every number and rule a table needs, in the markdown subset (**bold**, *italic*, \"- \" bullets). " +
                      "Fill every field that applies, following the field specification: numbers as numbers within min and max, dropdowns as one of the listed options, booleans as true/false, tag lists as arrays of strings, collections as arrays of objects with \"name\" and \"description\", text as a string. Leave out fields that do not apply. " +
                      "Keep the numbers in line with official material of the same power. Tags are two to five short lower-case words. Use original names only." + GuidanceNote(r.Guidance) + language;
+        var change = Instruction(r.Instruction);
+        if (change != null)
+        {
+            system += " The game master asks for a change to the entry as written so far: make it, keep everything the change does not touch, " +
+                      "and reply with the whole entry, every field included, not only what changed.";
+        }
 
         var sb = new StringBuilder();
         sb.AppendLine($"Entry: {r.Name} ({r.TypeLabel ?? "entry"})");
@@ -333,6 +361,7 @@ public static class AiPrompts
             sb.AppendLine($"- {f.Key}: {f.Label}, {f.Type}{detail}{hint}");
         }
 
+        AppendChange(sb, change, r.CurrentText);
         return (system, sb.ToString());
     }
 
@@ -356,9 +385,12 @@ public static class AiPrompts
         var links = r.Kind == DraftKinds.Fact
             ? ""
             : "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). ";
-        // The recipe's instructions and, for a secret, "no headings" come last, so they win over the general shape and style.
+        // The recipe's instructions, the game master's change and, for a secret, "no headings" come last, so they win over the
+        // general shape and style; a secret is saved as plain sentences, whatever the change asks.
+        var change = Instruction(r.Instruction);
         var system = $"You write {shape}This is for a {r.SystemName} tabletop campaign. " + links +
                      "Use original names only. Reply with the text only. " + StyleFor(r.Language) + GuidanceNote(r.Guidance) +
+                     (change == null ? "" : " The game master asks for a change to the text as written so far: make it, keep everything the change does not touch, and reply with the whole revised text.") +
                      (r.Kind == DraftKinds.Fact ? " This reply has no headings, lists or links: plain sentences only." : "");
 
         var sb = new StringBuilder();
@@ -372,7 +404,26 @@ public static class AiPrompts
         AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
         AppendList(sb, "Drafted alongside it", r.Related);
         AppendList(sb, "Existing wiki pages", r.ExistingPages);
+        AppendChange(sb, change, r.CurrentText);
         return (system, sb.ToString());
+    }
+
+    /// <summary>The longest change a game master may ask for in one go.</summary>
+    public const int MaxInstruction = 1000;
+
+    // The game master's change, trimmed and capped, or null when there is none.
+    private static string? Instruction(string? instruction)
+    {
+        var text = instruction?.Trim();
+        return string.IsNullOrEmpty(text) ? null : text.Length <= MaxInstruction ? text : text[..MaxInstruction];
+    }
+
+    // The text so far and the change asked of it, last in the message, so the change wins over the context above.
+    private static void AppendChange(StringBuilder sb, string? change, string? currentText)
+    {
+        if (change == null) return;
+        sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(currentText) ? "(none yet - write it with the change)" : currentText.Trim());
+        sb.AppendLine().AppendLine("The change the game master asks for: " + change);
     }
 
     private static string GuidanceNote(string? guidance) =>

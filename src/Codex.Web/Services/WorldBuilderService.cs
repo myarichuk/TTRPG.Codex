@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Codex.Core;
 using Codex.Core.AI;
 using Codex.Core.WorldBuilder;
@@ -37,7 +38,17 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     public IReadOnlyList<WorldRecipe> Recipes => WorldRecipes.All;
 
     /// <summary>Asks for the recipe's drafts. <paramref name="answers"/> is keyed by question key; an empty answer is left to the model.</summary>
-    public async Task<WorldBundle> OutlineAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, CancellationToken ct = default)
+    public Task<WorldBundle> OutlineAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, CancellationToken ct = default) =>
+        OutlineAsync(campaign, access, recipe, answers, null, null, ct);
+
+    /// <summary>Makes the change the DM asked for to <paramref name="bundle"/>'s ideas (add, drop, darker...), keeping every draft
+    /// the reply keeps with what was written, renamed or ticked on it (<see cref="WorldBundleParser.ParseRevision"/>). Only the
+    /// drafts' names, pitches and links are sent, not their texts.</summary>
+    public Task<WorldBundle> ReviseAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, WorldBundle bundle, string instruction, CancellationToken ct = default) =>
+        OutlineAsync(campaign, access, recipe, answers, bundle, RequireInstruction(instruction), ct);
+
+    private async Task<WorldBundle> OutlineAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers,
+        WorldBundle? previous, string? instruction, CancellationToken ct)
     {
         DmOnly(access);
         var assistant = await providers.AssistantForAsync(access.UserId);
@@ -78,14 +89,45 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             pages.Take(ContextCap).Select(p => $"{WorldBundle.ExistingPrefix}{p.Slug} ({p.Title})").ToList(),
             taken,
             CampaignContext(campaign),
-            Lang);
+            Lang,
+            previous?.Drafts.Select(d => JsonSerializer.Serialize(new
+            {
+                @ref = d.Ref,
+                kind = d.Kind,
+                type = d.Type,
+                name = string.IsNullOrWhiteSpace(d.Name) ? d.OutlineName : d.Name.Trim(),
+                pitch = d.Pitch,
+                links = d.Links
+            }, PromptJson)).ToList(),
+            instruction);
 
         var rules = new BundleRules(recipe.Drafts, TypeSpellings(types, campaign.SystemId), pages.Select(p => p.Slug).ToList());
-        return await Unusable(() => assistant.OutlineWorldAsync(request, rules, ct));
+        return await Unusable(() => previous == null
+            ? assistant.OutlineWorldAsync(request, rules, ct)
+            : assistant.ReviseWorldAsync(request, rules, previous, ct));
     }
 
+    // Names in the DM's language stay readable in the prompt rather than becoming \u escapes.
+    private static readonly JsonSerializerOptions PromptJson = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private static string RequireInstruction(string? instruction) =>
+        string.IsNullOrWhiteSpace(instruction) ? throw new LocalizedException("WorldBuilder.Error.NoChange") : instruction.Trim();
+
     /// <summary>Writes one draft of <paramref name="bundle"/> in full: a wiki page's text, or a homebrew entry's description, tags and fields.</summary>
-    public async Task ExpandAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, WorldBundle bundle, WorldDraft draft, CancellationToken ct = default)
+    public Task ExpandAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, WorldBundle bundle, WorldDraft draft, CancellationToken ct = default) =>
+        ExpandAsync(campaign, access, recipe, answers, bundle, draft, null, ct);
+
+    /// <summary>Rewrites one draft with the change the DM asked for, starting from what is written so far (or from its pitch).
+    /// For a homebrew entry the model returns the whole entry again, so fields the change does not touch are kept.</summary>
+    public Task ChangeAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, WorldBundle bundle, WorldDraft draft, string instruction, CancellationToken ct = default) =>
+        ExpandAsync(campaign, access, recipe, answers, bundle, draft, RequireInstruction(instruction), ct);
+
+    private async Task ExpandAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, IReadOnlyDictionary<string, string?> answers, WorldBundle bundle, WorldDraft draft,
+        string? instruction, CancellationToken ct)
     {
         DmOnly(access);
         var assistant = await providers.AssistantForAsync(access.UserId);
@@ -98,7 +140,8 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         if (draft.Kind != DraftKinds.Homebrew)
         {
             var request = new WorldExpandRequest(draft.Name, draft.Pitch, null, catalog.GetDisplayName(campaign.SystemId), Array.Empty<FieldSpec>(),
-                Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, draft.Kind, recipe.Write.GetValueOrDefault(draft.Kind));
+                Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, draft.Kind, recipe.Write.GetValueOrDefault(draft.Kind),
+                instruction, draft.Expanded ? draft.Body : null);
             await Unusable(async () =>
             {
                 await assistant.ExpandPageAsync(draft, request, ct);
@@ -112,7 +155,8 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
                    ?? new ContentTypeDefinition { Type = draft.Type ?? string.Empty, Label = CampaignLibrary.Humanize(draft.Type ?? "entry") };
         var fields = await FieldSpecsAsync(campaign, access, system, type);
         var homebrewRequest = new WorldExpandRequest(draft.Name, draft.Pitch, type.Label, catalog.GetDisplayName(campaign.SystemId), fields,
-            Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, DraftKinds.Homebrew, recipe.Write.GetValueOrDefault(DraftKinds.Homebrew));
+            Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, DraftKinds.Homebrew, recipe.Write.GetValueOrDefault(DraftKinds.Homebrew),
+            instruction, draft.Expanded ? JsonSerializer.Serialize(new { description = draft.Body, tags = draft.Tags, properties = draft.Properties }, PromptJson) : null);
         var culture = Lang;
         await Unusable(async () =>
         {

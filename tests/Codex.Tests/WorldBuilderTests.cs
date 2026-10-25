@@ -845,4 +845,135 @@ public class WorldBuilderTests
         Assert.Empty(result.Shortlisted);
         Assert.Empty(saving.Stored.Bestiary);
     }
+
+    // ---- Changes the DM asks for ----
+
+    private static WorldBundle Previous()
+    {
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "Glassblowers", OutlineName = "Glassblowers", Pitch = "Who made it.", Body = "Old text.", Expanded = true });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Homebrew, Type = "magic-item", Name = "Sea Lens", OutlineName = "Tide-glass", Pitch = "A lens.", Selected = false });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Wiki, Name = "Harbour", OutlineName = "Harbour", Pitch = "Docks." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Wiki, Name = "The Eel", OutlineName = "The Eel", Pitch = "An eel." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d5", Kind = DraftKinds.Wiki, Name = "The Bell", OutlineName = "The Bell", Pitch = "It rings.", Body = "Bell text.", Expanded = true, Links = { "d4", "d1", "existing:port-varr" } });
+        return bundle;
+    }
+
+    [Fact]
+    public void ParseRevision_KeepsTheDraftsTheReplyKeeps_WithTheirTextRenamesAndTicks()
+    {
+        var previous = Previous();
+        var (glass, lens, harbour, bell) = (previous.Drafts[0], previous.Drafts[1], previous.Drafts[2], previous.Drafts[4]);
+        const string reply = """
+            {"drafts": [
+              {"ref": "d1", "kind": "wiki", "name": "The Glassblowers' Guild", "pitch": "A darker guild.", "links": ["d3", "n1"]},
+              {"ref": "d2", "kind": "homebrew", "type": "magic-item", "name": "Tide-glass", "pitch": "A cursed lens."},
+              {"ref": "d3", "kind": "wiki", "name": "The Drowned Harbour", "pitch": "Flooded docks."},
+              {"ref": "n1", "kind": "wiki", "name": "The Rival", "pitch": "A rival guild.", "links": ["d1"]}
+            ]}
+            """;
+
+        var revised = WorldBundleParser.ParseRevision(reply, Rules, previous);
+
+        Assert.Equal(new[] { "d1", "d2", "d3", "d6", "d5" }, revised.Drafts.Select(d => d.Ref));
+        Assert.Same(glass, revised.Drafts[0]);
+        // Written: its name, pitch and text stay, so they keep matching each other.
+        Assert.Equal(("Glassblowers", "Who made it.", "Old text."), (glass.Name, glass.Pitch, glass.Body));
+        // Renamed by the DM and unticked: the rename and the tick stay, the pitch follows the change.
+        Assert.Equal(("Sea Lens", "A cursed lens.", false), (lens.Name, lens.Pitch, lens.Selected));
+        // Untouched by the DM: takes the new name, and still answers to the old one for links in written texts.
+        Assert.Equal(("The Drowned Harbour", "Harbour", "Flooded docks."), (harbour.Name, harbour.OutlineName, harbour.Pitch));
+        Assert.Equal(new[] { "d3", "d6" }, glass.Links);
+        Assert.Equal(new[] { "d1" }, revised.Drafts[3].Links);
+        // Left out: the written bell stays unticked, without its link to the eel; the eel, never worked on, is gone.
+        Assert.Same(bell, revised.Drafts[4]);
+        Assert.False(bell.Selected);
+        Assert.Equal(new[] { "d1", "existing:port-varr" }, bell.Links);
+        Assert.Equal(new[] { "The Bell" }, revised.SetAside);
+        Assert.DoesNotContain(revised.Drafts, d => d.Name == "The Eel");
+    }
+
+    [Fact]
+    public void ParseRevision_MatchesByName_WhenTheReplyRenumbers_AndOnlyOnce_AndNeverAcrossKinds()
+    {
+        var previous = Previous();
+        const string reply = """
+            {"drafts": [
+              {"ref": "a", "kind": "wiki", "name": "Harbour", "pitch": "Docks again."},
+              {"ref": "b", "kind": "wiki", "name": "Harbour", "pitch": "A second harbour."},
+              {"ref": "d1", "kind": "homebrew", "type": "spell", "name": "Glassblowers", "pitch": "Now a spell."}
+            ]}
+            """;
+
+        var revised = WorldBundleParser.ParseRevision(reply, Rules, previous);
+
+        Assert.Same(previous.Drafts[2], revised.Drafts[0]);
+        Assert.Equal("d6", revised.Drafts[1].Ref);
+        Assert.Equal(("d7", "spell"), (revised.Drafts[2].Ref, revised.Drafts[2].Type));
+        // The written guild page the reply turned into a spell is kept as it was, unticked, beside the new spell.
+        Assert.Contains(previous.Drafts[0], revised.Drafts);
+        Assert.False(previous.Drafts[0].Selected);
+    }
+
+    [Fact]
+    public void ParseRevision_OfAnUnusableReply_LeavesThePreviousOutlineAlone()
+    {
+        var previous = Previous();
+
+        Assert.Throws<FormatException>(() => WorldBundleParser.ParseRevision("""{"ideas": []}""", Rules, previous));
+
+        Assert.Equal(5, previous.Drafts.Count);
+        Assert.All(previous.Drafts.Where(d => d.Ref != "d2"), d => Assert.True(d.Selected));
+        Assert.Equal("Harbour", previous.Drafts[2].Name);
+    }
+
+    [Fact]
+    public void OutlinePrompt_ForAChange_ListsTheCurrentOutline_AndEndsWithTheChange()
+    {
+        var change = AnyOutline with { Current = new[] { """{"ref":"d1","kind":"wiki","name":"Harbour","pitch":"Docks.","links":[]}""" }, Instruction = "  darker, and drop the eel  " };
+
+        var (system, user) = AiPrompts.WorldOutline(change);
+        var (plainSystem, plainUser) = AiPrompts.WorldOutline(AnyOutline);
+
+        Assert.Contains("keep the ref of a draft you change", system);
+        Assert.Contains("- {\"ref\":\"d1\",\"kind\":\"wiki\",\"name\":\"Harbour\"", user);
+        Assert.EndsWith("The change the game master asks for: darker, and drop the eel" + Environment.NewLine, user);
+        Assert.DoesNotContain("asks for a change", plainSystem);
+        Assert.DoesNotContain("current outline", plainUser);
+    }
+
+    [Fact]
+    public void ExpandPrompts_ForAChange_SendTheTextSoFar_AndEndWithTheChange()
+    {
+        var page = new WorldExpandRequest("The bell", "It rings.", null, "SRD", Array.Empty<FieldSpec>(), Array.Empty<WorldAnswer>(),
+            Array.Empty<string>(), Array.Empty<string>(), Kind: DraftKinds.Fact, Instruction: "make it about the harbour master", CurrentText: "The bell is cursed.");
+
+        var (secret, secretUser) = AiPrompts.WorldExpandPage(page);
+        var (_, unwritten) = AiPrompts.WorldExpandPage(page with { CurrentText = null });
+        var (homebrew, homebrewUser) = AiPrompts.WorldExpandHomebrew(page with { Kind = DraftKinds.Homebrew, TypeLabel = "Magic Item", CurrentText = """{"description":"A lens."}""" });
+        var (plain, _) = AiPrompts.WorldExpandPage(page with { Instruction = "   " });
+
+        Assert.Contains("Current text:" + Environment.NewLine + "The bell is cursed.", secretUser);
+        Assert.EndsWith("The change the game master asks for: make it about the harbour master" + Environment.NewLine, secretUser);
+        // A secret is saved as plain sentences, whatever the change asks, so that rule still comes last.
+        Assert.EndsWith("plain sentences only.", secret);
+        Assert.Contains("asks for a change", secret);
+        Assert.Contains("(none yet - write it with the change)", unwritten);
+        Assert.Contains("every field included", homebrew);
+        Assert.EndsWith("The change the game master asks for: make it about the harbour master" + Environment.NewLine, homebrewUser);
+        Assert.DoesNotContain("asks for a change", plain);
+    }
+
+    [Fact]
+    public async Task Changes_WithoutAnInstruction_AreRefused()
+    {
+        var saving = Service();
+        var bundle = Previous();
+
+        var draft = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.ChangeAsync(Campaign, Dm, WorldRecipes.Find("homebrew")!, new Dictionary<string, string?>(), bundle, bundle.Drafts[0], " "));
+        var outline = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.ReviseAsync(Campaign, Dm, WorldRecipes.Find("homebrew")!, new Dictionary<string, string?>(), bundle, ""));
+
+        Assert.Equal("WorldBuilder.Error.NoChange", draft.Key);
+        Assert.Equal("WorldBuilder.Error.NoChange", outline.Key);
+    }
 }
