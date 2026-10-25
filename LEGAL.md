@@ -41,7 +41,13 @@ files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource 
   HP/AC numerals - `src/Codex.Web/wwwroot/fonts/cinzel/OFL.txt`
 - Alegreya Sans (regular, medium, bold, regular italic), Copyright 2013 The Alegreya Sans Project
   Authors (https://github.com/huertatipografica/Alegreya-Sans) - the body face -
-  `src/Codex.Web/wwwroot/fonts/alegreya-sans/OFL.txt`
+  `src/Codex.Web/wwwroot/fonts/alegreya-sans/OFL.txt` (the bundled files also include its Cyrillic subset)
+- Forum, Copyright (c) 2011 Denis Masharov (https://fonts.google.com/specimen/Forum) - Cyrillic headings beside
+  Cinzel - `src/Codex.Web/wwwroot/fonts/forum/OFL.txt`
+- Frank Ruhl Libre, Copyright 2015 The Frank Ruhl Libre Project Authors (https://github.com/fontef/frankruhllibre) -
+  Hebrew headings beside Cinzel - `src/Codex.Web/wwwroot/fonts/frank-ruhl-libre/OFL.txt`
+- Assistant, Copyright 2020 The Assistant Project Authors (https://github.com/hafontia/Assistant) - Hebrew body
+  text beside Alegreya Sans - `src/Codex.Web/wwwroot/fonts/assistant/OFL.txt`
 
 ### Launcher artwork
 

@@ -6,7 +6,7 @@ Use these terms everywhere so the interface reads consistently. Machine-drafted 
 |---|---|---|
 | Campaign | Кампания | קמפיין |
 | Session | Сессия | מפגש |
-| Dungeon Master (DM) | Мастер (DM) | מנהל המשחק (DM) |
+| Dungeon Master (DM) | Мастер (DM) | שליט המבוך (שה״מ, DM) |
 | Player | Игрок | שחקן |
 | Character | Персонаж | דמות |
 | NPC | НПС | דמות לא-שחקנית (NPC) |
@@ -15,9 +15,23 @@ Use these terms everywhere so the interface reads consistently. Machine-drafted 
 | Temporary HP | Временные очки здоровья | נקודות חיים זמניות |
 | Armor Class (AC) | Класс брони (КБ) | דרגת שריון (AC) |
 | Spell | Заклинание | לחש |
-| Cantrip | Заговор | לחש בסיס |
+| Cantrip | Заговор | לחשון (לחשונים) |
 | Spell slot | Ячейка заклинаний | תא לחשים |
 | Initiative | Инициатива | יוזמה |
+| Saving throw | Спасбросок | זריקת הצלה (זריקות הצלה) |
+| Death saving throw | Спасбросок от смерти | זריקת הצלה ממוות |
+| Spell save DC | Сл спасброска от заклинаний | דרגת קושי להצלה נגד לחשים |
+| Proficiency | Владение | שליטה |
+| Proficiency bonus | Бонус мастерства | תוסף שליטה |
+| Species | Вид | גזע (גזעים) |
+| Feat | Черта | כשרון (כשרונות) |
+| Origin feat | Черта происхождения | כשרון מוצא |
+| Bonus action | Бонусное действие | פעולה נוספת |
+| Level | Уровень | דרגה |
+| Class | Класс | מקצוע |
+| Ability modifier | Модификатор | מתאם |
+| Intelligence / Charisma | Интеллект / Харизма | תבונה (תבנ) / כריזמה (כרז) |
+| Weapon mastery | Мастерство оружия | אומנות נשק |
 | Round | Раунд | סבב |
 | Turn | Ход | תור |
 | Condition | Состояние | מצב |

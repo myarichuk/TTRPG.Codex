@@ -6,14 +6,14 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Page.Common.BackToCampaigns" xml:space="preserve"><value>חזרה לקמפיינים</value></data>
   <data name="Page.Common.Breadcrumb" xml:space="preserve"><value>נתיב ניווט</value></data>
-  <data name="Page.Role.DM" xml:space="preserve"><value>מנהל המשחק</value></data>
+  <data name="Page.Role.DM" xml:space="preserve"><value>שליט המבוך</value></data>
   <data name="Page.Role.Player" xml:space="preserve"><value>שחקן</value></data>
   <data name="Page.Role.Observer" xml:space="preserve"><value>צופה</value></data>
   <data name="Page.Home.Title" xml:space="preserve"><value>קמפיינים</value></data>
-  <data name="Page.Home.Subtitle" xml:space="preserve"><value>כל הקמפיינים שאתם מנהלים או משחקים בהם. שחקנים מצטרפים באמצעות קישור הזמנה ממנהל המשחק.</value></data>
+  <data name="Page.Home.Subtitle" xml:space="preserve"><value>כל הקמפיינים שאתם מנהלים או משחקים בהם. שחקנים מצטרפים באמצעות קישור הזמנה משליט המבוך.</value></data>
   <data name="Page.Home.New" xml:space="preserve"><value>קמפיין חדש</value></data>
   <data name="Page.Home.EmptyTitle" xml:space="preserve"><value>אין קמפיינים עדיין</value></data>
-  <data name="Page.Home.EmptyText" xml:space="preserve"><value>צרו קמפיין כדי לנהל שולחן משחק, או בקשו ממנהל המשחק קישור הזמנה כדי להצטרף לקמפיין שלו.</value></data>
+  <data name="Page.Home.EmptyText" xml:space="preserve"><value>צרו קמפיין כדי לנהל שולחן משחק, או בקשו משליט המבוך קישור הזמנה כדי להצטרף לקמפיין שלו.</value></data>
   <data name="Page.Home.CreateFirst" xml:space="preserve"><value>יצירת הקמפיין הראשון שלכם</value></data>
   <data name="Page.Home.NoDescription" xml:space="preserve"><value>אין תיאור עדיין.</value></data>
   <data name="Page.Home.Members" xml:space="preserve"><value>{0, plural, one{חבר אחד} two{# חברים} other{# חברים}}</value></data>
@@ -38,7 +38,7 @@
   <data name="Page.Join.Title" xml:space="preserve"><value>הצטרפות לקמפיין</value></data>
   <data name="Page.Join.Joining" xml:space="preserve"><value>מצטרפים…</value></data>
   <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>קישור ההזמנה אינו תקין</value></data>
-  <data name="Page.Join.InvalidText" xml:space="preserve"><value>ייתכן שנפלה טעות בהקלדה או שהקמפיין נמחק. בקשו ממנהל המשחק קישור חדש.</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>ייתכן שנפלה טעות בהקלדה או שהקמפיין נמחק. בקשו משליט המבוך קישור חדש.</value></data>
   <data name="Page.Join.InTitle" xml:space="preserve"><value>הצטרפתם!</value></data>
   <data name="Page.Join.InText" xml:space="preserve"><value>כעת אתם שחקנים בקמפיין הזה.</value></data>
   <data name="Page.Join.Go" xml:space="preserve"><value>מעבר לקמפיין</value></data>
@@ -96,7 +96,7 @@
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>הקמפיין לא נמצא</value></data>
   <data name="Page.Campaign.NotFoundText" xml:space="preserve"><value>ייתכן שהוא נמחק או שהקישור שגוי.</value></data>
   <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>אינכם חברים בקמפיין הזה</value></data>
-  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>בקשו ממנהל המשחק קישור הזמנה.</value></data>
+  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>בקשו משליט המבוך קישור הזמנה.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>מדורי הקמפיין</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>פעיל</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>השולחן פעיל</value></data>
@@ -129,11 +129,11 @@
   <data name="Page.AiSettings.ServerImageAfter" xml:space="preserve"><value>):</value></data>
   <data name="Page.AiSettings.WhatHeading" xml:space="preserve"><value>מה הבינה המלאכותית יכולה לעשות</value></data>
   <data name="Page.AiSettings.FeatRecapsTitle" xml:space="preserve"><value>סיכומי מפגשים</value></data>
-  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>סיכום לשחקנים מתוך היומן והערות הקבוצה, וסיכום פרטי למנהל המשחק שמכיר גם את הסודות.</value></data>
+  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>סיכום לשחקנים מתוך היומן והערות הקבוצה, וסיכום פרטי לשליט המבוך שמכיר גם את הסודות.</value></data>
   <data name="Page.AiSettings.FeatHistoriesTitle" xml:space="preserve"><value>היסטוריות ותיאורים</value></data>
   <data name="Page.AiSettings.FeatHistoriesText" xml:space="preserve"><value>ליטוש של סיפור רקע, הערות פרטיות על דמות לא-שחקנית, יצור ביתי או מקום, בלי לסתור את הנתונים.</value></data>
-  <data name="Page.AiSettings.FeatLevelTitle" xml:space="preserve"><value>עצות לעליית רמה</value></data>
-  <data name="Page.AiSettings.FeatLevelText" xml:space="preserve"><value>מה הרמה הבאה מביאה, אילו בחירות היא מחייבת, ומה מתאים לדמות.</value></data>
+  <data name="Page.AiSettings.FeatLevelTitle" xml:space="preserve"><value>עצות לעליית דרגה</value></data>
+  <data name="Page.AiSettings.FeatLevelText" xml:space="preserve"><value>מה הדרגה הבאה מביאה, אילו בחירות היא מחייבת, ומה מתאים לדמות.</value></data>
   <data name="Page.AiSettings.FeatCharsTitle" xml:space="preserve"><value>דמויות מרעיון</value></data>
   <data name="Page.AiSettings.FeatCharsText" xml:space="preserve"><value>שורת רעיון הופכת לטיוטת דף דמות מלאה, שנבנית רק מתוכן הספרייה של הקמפיין.</value></data>
   <data name="Page.AiSettings.FeatWikiTitle" xml:space="preserve"><value>דפי ויקי</value></data>

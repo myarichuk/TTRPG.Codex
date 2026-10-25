@@ -31,12 +31,12 @@
   <data name="Session.DraftAi" xml:space="preserve"><value>טיוטה עם בינה מלאכותית</value></data>
   <data name="Session.MentionHint" xml:space="preserve"><value>הזכירו מישהו עם @, מקום עם # או פריט עם $; השחקנים קוראים רק את השמות שהם מכירים.</value></data>
   <data name="Session.AiHelp" xml:space="preserve"><value>טיוטת השחקנים נבנית רק מיומן האירועים, הערות הצוות והטלות גלויות. הטלות סודיות, הערות פרטיות והערות שולחן סודיות לעולם לא מגיעות אליה.</value></data>
-  <data name="Session.NoRecap" xml:space="preserve"><value>מנהל המשחק עדיין לא כתב סיכום.</value></data>
-  <data name="Session.DmSummary" xml:space="preserve"><value>סיכום מנהל המשחק</value></data>
+  <data name="Session.NoRecap" xml:space="preserve"><value>שליט המבוך עדיין לא כתב סיכום.</value></data>
+  <data name="Session.DmSummary" xml:space="preserve"><value>סיכום שליט המבוך</value></data>
   <data name="Session.OnlyYou" xml:space="preserve"><value>רק אתם</value></data>
   <data name="Session.DmSummaryPlaceholder" xml:space="preserve"><value>סודות, קצוות פתוחים, עוגנים למפגש הבא…</value></data>
   <data name="Session.SaveSummary" xml:space="preserve"><value>שמירת הסיכום</value></data>
-  <data name="Session.DmDraftHint" xml:space="preserve"><value>טיוטת מנהל המשחק רואה הכול: הטלות סודיות, הערות פרטיות והסיכום הקודם שלכם.</value></data>
+  <data name="Session.DmDraftHint" xml:space="preserve"><value>טיוטת שליט המבוך רואה הכול: הטלות סודיות, הערות פרטיות והסיכום הקודם שלכם.</value></data>
   <data name="Session.TableNotes" xml:space="preserve"><value>הערות שולחן</value></data>
   <data name="Session.NoNotes" xml:space="preserve"><value>עדיין אין הערות.</value></data>
   <data name="Session.Label.Party" xml:space="preserve"><value>צוות</value></data>
@@ -52,11 +52,11 @@
   <data name="Session.To" xml:space="preserve"><value>אל {0}</value></data>
   <data name="Session.AddNoteLabel" xml:space="preserve"><value>הוספת הערה</value></data>
   <data name="Session.NoteVisibility" xml:space="preserve"><value>נראות ההערה</value></data>
-  <data name="Session.VisPrivate" xml:space="preserve"><value>פרטי (אתם ומנהל המשחק)</value></data>
+  <data name="Session.VisPrivate" xml:space="preserve"><value>פרטי (אתם ושליט המבוך)</value></data>
   <data name="Session.VisParty" xml:space="preserve"><value>צוות (כל מי שבקמפיין)</value></data>
   <data name="Session.AddNote" xml:space="preserve"><value>הוספת הערה</value></data>
   <data name="Session.MyJournal" xml:space="preserve"><value>היומן שלי</value></data>
-  <data name="Session.JournalHint" xml:space="preserve"><value>המחברת הפרטית שלכם למפגש הזה. אף אחד אחר, אפילו לא מנהל המשחק, לא יכול לקרוא אותה.</value></data>
+  <data name="Session.JournalHint" xml:space="preserve"><value>המחברת הפרטית שלכם למפגש הזה. אף אחד אחר, אפילו לא שליט המבוך, לא יכול לקרוא אותה.</value></data>
   <data name="Session.JournalEntry" xml:space="preserve"><value>רשומת יומן</value></data>
   <data name="Session.JournalPlaceholder" xml:space="preserve"><value>שמות לזכור, תיאוריות, שלל שמגיע לכם…</value></data>
   <data name="Session.SaveJournal" xml:space="preserve"><value>שמירת היומן</value></data>
@@ -67,7 +67,7 @@
   <data name="Session.Flash.Prefilled" xml:space="preserve"><value>הסיכום מולא מיומן האירועים. ערכו ושמרו.</value></data>
   <data name="Session.Flash.DetailsSaved" xml:space="preserve"><value>הפרטים נשמרו.</value></data>
   <data name="Session.Flash.RecapSaved" xml:space="preserve"><value>הסיכום נשמר.</value></data>
-  <data name="Session.Flash.SummarySaved" xml:space="preserve"><value>סיכום מנהל המשחק נשמר.</value></data>
+  <data name="Session.Flash.SummarySaved" xml:space="preserve"><value>סיכום שליט המבוך נשמר.</value></data>
   <data name="Session.Flash.DraftReady" xml:space="preserve"><value>הטיוטה מהבינה המלאכותית מוכנה. עיינו, ערכו ושמרו.</value></data>
   <data name="Session.Flash.NoAi" xml:space="preserve"><value>לא הוגדר ספק בינה מלאכותית. הוסיפו אחד בהגדרות הבינה המלאכותית של החשבון (למעלה בצד).</value></data>
   <data name="Session.Flash.DraftFailed" xml:space="preserve"><value>הטיוטה מהבינה המלאכותית נכשלה: {0}</value></data>

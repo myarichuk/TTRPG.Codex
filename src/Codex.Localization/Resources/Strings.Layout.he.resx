@@ -35,5 +35,5 @@
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>נבחרו: {0}</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>הסרת {0}</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>הגעתם למגבלה</value></data>
-  <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>כרגע אין אפשרויות זמינות. בדקו את המחלקה, הרמה והכללים שמעל.</value></data>
+  <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>כרגע אין אפשרויות זמינות. בדקו את המקצוע, הדרגה והכללים שמעל.</value></data>
 </root>

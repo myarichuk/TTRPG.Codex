@@ -10,7 +10,7 @@
   <data name="Campaign.Bestiary.Subtitle.Player" xml:space="preserve"><value>יצורים שהקבוצה פגשה.</value></data>
   <data name="Campaign.Bestiary.NewHomebrew" xml:space="preserve"><value>יצור ביתי חדש</value></data>
   <data name="Campaign.Bestiary.Met.Title" xml:space="preserve"><value>עדיין לא פגשתם דבר</value></data>
-  <data name="Campaign.Bestiary.Met.Body" xml:space="preserve"><value>יצורים יופיעו כאן כשמנהל המשחק יחשוף אותם.</value></data>
+  <data name="Campaign.Bestiary.Met.Body" xml:space="preserve"><value>יצורים יופיעו כאן כששליט המבוך יחשוף אותם.</value></data>
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>עדיין לא זוהה</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>מפלצת</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>רשימה קצרה ({0})</value></data>
@@ -59,11 +59,11 @@
   <data name="Campaign.Cast.Kind.Monster" xml:space="preserve"><value>מפלצת</value></data>
   <data name="Campaign.Cast.PlayedBy" xml:space="preserve"><value>מגלם/ת</value></data>
   <data name="Campaign.Cast.Nobody" xml:space="preserve"><value>— עדיין אף אחד —</value></data>
-  <data name="Campaign.Cast.SheetHint" xml:space="preserve"><value>מאפיינים, מחלקה, מין וכל השאר ימולאו בהמשך בדף הדמות.</value></data>
+  <data name="Campaign.Cast.SheetHint" xml:space="preserve"><value>מאפיינים, מקצוע, גזע וכל השאר ימולאו בהמשך בדף הדמות.</value></data>
   <data name="Campaign.Cast.Create" xml:space="preserve"><value>יצירה</value></data>
-  <data name="Campaign.Cast.Ai.Hint" xml:space="preserve"><value>תארו את הדמות בשורה או שתיים. ה-AI ימלא את הדף תוך שימוש רק במחלקות, מינים ורקעים מהספרייה של הקמפיין הזה, וכן בהיסטוריה קצרה שתוכלו לערוך אחר כך.</value></data>
+  <data name="Campaign.Cast.Ai.Hint" xml:space="preserve"><value>תארו את הדמות בשורה או שתיים. ה-AI ימלא את הדף תוך שימוש רק במקצועות, גזעים ורקעים מהספרייה של הקמפיין הזה, וכן בהיסטוריה קצרה שתוכלו לערוך אחר כך.</value></data>
   <data name="Campaign.Cast.Ai.Concept" xml:space="preserve"><value>רעיון</value></data>
-  <data name="Campaign.Cast.Ai.Placeholder" xml:space="preserve"><value>לדוגמה: שומרת עיר לשעבר שהפכה לכוהנת בעל כורחה, רדופה בגלל מהומה שלא הצליחה לעצור. רמה 3.</value></data>
+  <data name="Campaign.Cast.Ai.Placeholder" xml:space="preserve"><value>לדוגמה: שומרת עיר לשעבר שהפכה לכוהנת בעל כורחה, רדופה בגלל מהומה שלא הצליחה לעצור. דרגה 3.</value></data>
   <data name="Campaign.Cast.Ai.Generating" xml:space="preserve"><value>יוצר…</value></data>
   <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>יצירת דמות</value></data>
   <data name="Campaign.Cast.Mine" xml:space="preserve"><value>שלי</value></data>
@@ -77,7 +77,7 @@
   <data name="Campaign.Cast.EditSheet" xml:space="preserve"><value>עריכת הדף</value></data>
   <data name="Campaign.Cast.RetireLabel" xml:space="preserve"><value>פרישת {0}</value></data>
   <data name="Campaign.Cast.RetireTitle" xml:space="preserve"><value>פרישת הדמות הזו</value></data>
-  <data name="Campaign.Cast.Level" xml:space="preserve"><value>רמה {0}</value></data>
+  <data name="Campaign.Cast.Level" xml:space="preserve"><value>דרגה {0}</value></data>
   <data name="Campaign.Cast.MissingContent" xml:space="preserve"><value>תוכן חסר: {0}</value></data>
   <data name="Campaign.Cast.From" xml:space="preserve"><value>מתוך {0}</value></data>
   <data name="Campaign.Cast.NameNeeded" xml:space="preserve"><value>תנו להם שם.</value></data>
@@ -89,7 +89,7 @@
   <data name="Campaign.Cast.NowHidden" xml:space="preserve"><value>{0} מוסתר/ת מהשחקנים.</value></data>
   <data name="Campaign.Cast.RetireQ" xml:space="preserve"><value>לפרוש את {0}?</value></data>
   <data name="Campaign.Cast.DeleteQ" xml:space="preserve"><value>למחוק את {0}?</value></data>
-  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>הדמות שלכם והדף שלה יוסרו מהקמפיין הזה. אי אפשר לבטל זאת; גם מנהל המשחק לא יוכל לשחזר אותם.</value></data>
+  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>הדמות שלכם והדף שלה יוסרו מהקמפיין הזה. אי אפשר לבטל זאת; גם שליט המבוך לא יוכל לשחזר אותם.</value></data>
   <data name="Campaign.Cast.DeleteBody" xml:space="preserve"><value>הדף והמצב שלהם יוסרו מהקמפיין הזה. אי אפשר לבטל זאת.</value></data>
   <data name="Campaign.Cast.Retire" xml:space="preserve"><value>פרישה</value></data>
   <data name="Campaign.Cast.Delete" xml:space="preserve"><value>מחיקה</value></data>
@@ -97,7 +97,7 @@
   <data name="Campaign.Cast.Deleted" xml:space="preserve"><value>{0} נמחק/ה.</value></data>
   <data name="Campaign.Cast.RetireOwnOnly" xml:space="preserve"><value>אפשר לפרוש רק דמות שבבעלותכם.</value></data>
   <data name="Campaign.Journal.Title" xml:space="preserve"><value>היומן שלי</value></data>
-  <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>המחברת הפרטית שלכם לקמפיין הזה. רק אתם יכולים לקרוא אותה, גם מנהל המשחק לא. רשומה אחת לכל מפגש, ועוד כל דבר אחר שתרצו לשמור.</value></data>
+  <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>המחברת הפרטית שלכם לקמפיין הזה. רק אתם יכולים לקרוא אותה, גם שליט המבוך לא. רשומה אחת לכל מפגש, ועוד כל דבר אחר שתרצו לשמור.</value></data>
   <data name="Campaign.Journal.NewEntry" xml:space="preserve"><value>רשומה חדשה</value></data>
   <data name="Campaign.Journal.Empty.Title" xml:space="preserve"><value>עדיין לא נכתב דבר</value></data>
   <data name="Campaign.Journal.Empty.Body" xml:space="preserve"><value>שמות, תיאוריות, מי חייב לכם כסף. פתחו מפגש וכתבו שם, או התחילו רשומה חופשית.</value></data>
@@ -112,15 +112,15 @@
   <data name="Campaign.Journal.MentionHint" xml:space="preserve"><value>הזכירו מישהו עם @, מקום עם # או חפץ עם $.</value></data>
   <data name="Campaign.Journal.Save" xml:space="preserve"><value>שמירה</value></data>
   <data name="Campaign.Journal.Cancel" xml:space="preserve"><value>ביטול</value></data>
-  <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>רשומות היומן נשמרות לכל שחקן בנפרד ולעולם אינן מופיעות בתצוגת מנהל המשחק, בייצואים או בטיוטות ה-AI.</value></data>
+  <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>רשומות היומן נשמרות לכל שחקן בנפרד ולעולם אינן מופיעות בתצוגת שליט המבוך, בייצואים או בטיוטות ה-AI.</value></data>
   <data name="Campaign.Journal.Saved" xml:space="preserve"><value>היומן נשמר.</value></data>
   <data name="Campaign.Journal.SaveFailed" xml:space="preserve"><value>לא ניתן לשמור את הרשומה.</value></data>
   <data name="Campaign.Journal.Delete.Title" xml:space="preserve"><value>למחוק את הרשומה הזו?</value></data>
   <data name="Campaign.Journal.Delete.Body" xml:space="preserve"><value>הרשומה תוסר מהיומן שלכם ולא ניתן יהיה לשחזר אותה.</value></data>
   <data name="Campaign.Journal.Deleted" xml:space="preserve"><value>הרשומה נמחקה.</value></data>
   <data name="Campaign.Library.Title" xml:space="preserve"><value>ספרייה</value></data>
-  <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>חומרי עזר למערכת של הקמפיין הזה, ובנוסף התוכן הביתי שלכם: ציוד, מחלקות, תת-מחלקות, כישרונות, לחשים, יצורים ועוד.</value></data>
-  <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>חומרי עזר למערכת של הקמפיין הזה, כולל התוכן הביתי של מנהל המשחק.</value></data>
+  <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>חומרי עזר למערכת של הקמפיין הזה, ובנוסף התוכן הביתי שלכם: ציוד, מקצועות, תת-מקצועות, כשרונות, לחשים, יצורים ועוד.</value></data>
+  <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>חומרי עזר למערכת של הקמפיין הזה, כולל התוכן הביתי של שליט המבוך.</value></data>
   <data name="Campaign.Library.NewHomebrew" xml:space="preserve"><value>תוכן ביתי חדש</value></data>
   <data name="Campaign.Library.ImportFromCampaign" xml:space="preserve"><value>ייבוא מקמפיין אחר</value></data>
   <data name="Campaign.Library.ExportLabel" xml:space="preserve"><value>ייצוא התוכן הביתי של הקמפיין הזה כחבילת תוכן</value></data>
@@ -146,9 +146,9 @@
   <data name="Campaign.Library.Saved" xml:space="preserve"><value>"{0}" נשמר.</value></data>
   <data name="Campaign.Library.Deleted" xml:space="preserve"><value>"{0}" נמחק.</value></data>
   <data name="Campaign.Library.ArtSaved" xml:space="preserve"><value>האיור עבור "{0}" נשמר.</value></data>
-  <data name="Campaign.Library.ArtOnlyDm" xml:space="preserve"><value>רק מנהל המשחק יכול לשנות איורים בספרייה.</value></data>
+  <data name="Campaign.Library.ArtOnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לשנות איורים בספרייה.</value></data>
   <data name="Campaign.Library.ArtRemoved" xml:space="preserve"><value>האיור הוסר מ"{0}".</value></data>
-  <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>אי אפשר להפוך את הרשומה הזו ליצור, או שרק מנהל המשחק יכול להוסיף יצורים.</value></data>
+  <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>אי אפשר להפוך את הרשומה הזו ליצור, או שרק שליט המבוך יכול להוסיף יצורים.</value></data>
   <data name="Campaign.Library.AddedToCast" xml:space="preserve"><value>{0} נוסף לצוות (מוסתר מהשחקנים).</value></data>
   <data name="Campaign.Library.NothingImported" xml:space="preserve"><value>לא יובא דבר: כל הרשומות שנבחרו כבר קיימות כאן.</value></data>
   <data name="Campaign.Library.Imported" xml:space="preserve"><value>{0, plural, one{יובאה רשומה אחת} two{יובאו שתי רשומות} other{יובאו # רשומות}}. רשומות שכבר היו כאן דולגו.</value></data>
@@ -156,14 +156,14 @@
   <data name="Campaign.Library.Exported" xml:space="preserve"><value>יוצאו רשומות: {0}. הניחו את קובץ ה-zip בתיקיית התוכן כדי לטעון אותו כחבילה.</value></data>
   <data name="Campaign.Lore.Title" xml:space="preserve"><value>אגדות עולם</value></data>
   <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>עובדות על העולם ומי מכיר אותן. אפשר לחשוף לכל הקבוצה או לדמות אחת.</value></data>
-  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>מה שהדמויות שלכם יודעות. עובדות מופיעות כאן כשמנהל המשחק חושף אותן.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>מה שהדמויות שלכם יודעות. עובדות מופיעות כאן כששליט המבוך חושף אותן.</value></data>
   <data name="Campaign.Lore.Search" xml:space="preserve"><value>חיפוש באגדות העולם</value></data>
   <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>חיפוש באגדות העולם…</value></data>
   <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>סינון לפי נראות</value></data>
   <data name="Campaign.Lore.Chip.All" xml:space="preserve"><value>הכול</value></data>
   <data name="Campaign.Lore.Chip.Party" xml:space="preserve"><value>הקבוצה</value></data>
   <data name="Campaign.Lore.Chip.Revealed" xml:space="preserve"><value>נחשף</value></data>
-  <data name="Campaign.Lore.Chip.DmOnly" xml:space="preserve"><value>מנהל המשחק בלבד</value></data>
+  <data name="Campaign.Lore.Chip.DmOnly" xml:space="preserve"><value>שליט המבוך בלבד</value></data>
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>נחשף בפניי</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>אין כאן עדיין כלום</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>לא נמצאו אגדות מתאימות</value></data>
@@ -185,7 +185,7 @@
   <data name="Campaign.Lore.Required" xml:space="preserve"><value>(חובה)</value></data>
   <data name="Campaign.Lore.Details" xml:space="preserve"><value>פרטים</value></data>
   <data name="Campaign.Lore.WhoCanSee" xml:space="preserve"><value>מי יכול לראות</value></data>
-  <data name="Campaign.Lore.Vis.DmOnly" xml:space="preserve"><value>רק אני (מנהל המשחק)</value></data>
+  <data name="Campaign.Lore.Vis.DmOnly" xml:space="preserve"><value>רק אני (שליט המבוך)</value></data>
   <data name="Campaign.Lore.Vis.KnowersOnly" xml:space="preserve"><value>דמויות שאחשוף בפניהן</value></data>
   <data name="Campaign.Lore.Vis.Public" xml:space="preserve"><value>כל הקבוצה</value></data>
   <data name="Campaign.Lore.AddFact" xml:space="preserve"><value>הוספת עובדה</value></data>
@@ -221,7 +221,7 @@
   <data name="Campaign.Overview.Status.Live" xml:space="preserve"><value>חי</value></data>
   <data name="Campaign.Overview.Status.Completed" xml:space="preserve"><value>הושלם</value></data>
   <data name="Campaign.Overview.Members" xml:space="preserve"><value>חברים ({0})</value></data>
-  <data name="Campaign.Overview.Role.DM" xml:space="preserve"><value>מנהל המשחק</value></data>
+  <data name="Campaign.Overview.Role.DM" xml:space="preserve"><value>שליט המבוך</value></data>
   <data name="Campaign.Overview.Role.Player" xml:space="preserve"><value>שחקן</value></data>
   <data name="Campaign.Overview.Role.Observer" xml:space="preserve"><value>צופה</value></data>
   <data name="Campaign.Overview.InviteLink" xml:space="preserve"><value>קישור הזמנה</value></data>
@@ -233,7 +233,7 @@
   <data name="Campaign.Sessions.Subtitle" xml:space="preserve"><value>כל מפגש שומר את הסיכום, ההערות, ההטלות ויומן האירועים שלו.</value></data>
   <data name="Campaign.Sessions.Empty.Title" xml:space="preserve"><value>עדיין אין מפגשים</value></data>
   <data name="Campaign.Sessions.Empty.Dm" xml:space="preserve"><value>תכננו מפגש כאן, או הפעילו את השולחן ומפגש חי ייווצר עבורכם.</value></data>
-  <data name="Campaign.Sessions.Empty.Player" xml:space="preserve"><value>מנהל המשחק עדיין לא תכנן מפגש.</value></data>
+  <data name="Campaign.Sessions.Empty.Player" xml:space="preserve"><value>שליט המבוך עדיין לא תכנן מפגש.</value></data>
   <data name="Campaign.Sessions.EventCount" xml:space="preserve"><value>{0, plural, one{אירוע #} two{# אירועים} other{# אירועים}}</value></data>
   <data name="Campaign.Sessions.Status.Planned" xml:space="preserve"><value>מתוכנן</value></data>
   <data name="Campaign.Sessions.Status.Live" xml:space="preserve"><value>חי</value></data>
@@ -249,7 +249,7 @@
   <data name="Campaign.Sessions.Planned" xml:space="preserve"><value>המפגש תוכנן.</value></data>
   <data name="Campaign.Settings.Title" xml:space="preserve"><value>הגדרות</value></data>
   <data name="Campaign.Settings.Subtitle.Dm" xml:space="preserve"><value>פרטי הקמפיין, חבילות תוכן, חברים וגיבויים.</value></data>
-  <data name="Campaign.Settings.Subtitle.Player" xml:space="preserve"><value>פרטי הקמפיין. רק מנהל המשחק יכול לשנות אותם.</value></data>
+  <data name="Campaign.Settings.Subtitle.Player" xml:space="preserve"><value>פרטי הקמפיין. רק שליט המבוך יכול לשנות אותם.</value></data>
   <data name="Campaign.Settings.Details" xml:space="preserve"><value>פרטים</value></data>
   <data name="Campaign.Settings.Name" xml:space="preserve"><value>שם</value></data>
   <data name="Campaign.Settings.Description" xml:space="preserve"><value>תיאור</value></data>
@@ -261,7 +261,7 @@
   <data name="Campaign.Settings.Rules.Strict" xml:space="preserve"><value>מחמיר: שחקנים לא יכולים לשמור דף שמפר כלל</value></data>
   <data name="Campaign.Settings.Rules.Warn" xml:space="preserve"><value>אזהרה בלבד: הצגת בעיות, שמירה מותרת</value></data>
   <data name="Campaign.Settings.Rules.Off" xml:space="preserve"><value>כבוי: ללא בדיקות</value></data>
-  <data name="Campaign.Settings.Rules.Hint" xml:space="preserve"><value>קניית נקודות, רשימות לחשי המחלקה והגבלות על תת-מחלקות וכישרונות נובעים מחוקי המערכת. מנהל המשחק יכול תמיד לשמור בכל מקרה.</value></data>
+  <data name="Campaign.Settings.Rules.Hint" xml:space="preserve"><value>קניית נקודות, רשימות לחשי המקצוע והגבלות על תת-מקצועות וכשרונות נובעים מחוקי המערכת. שליט המבוך יכול תמיד לשמור בכל מקרה.</value></data>
   <data name="Campaign.Settings.SaveDetails" xml:space="preserve"><value>שמירת הפרטים</value></data>
   <data name="Campaign.Settings.Cover.Title" xml:space="preserve"><value>תמונת שער</value></data>
   <data name="Campaign.Settings.Cover.Current" xml:space="preserve"><value>תמונת השער הנוכחית</value></data>
@@ -277,7 +277,7 @@
   <data name="Campaign.Settings.Members" xml:space="preserve"><value>חברים</value></data>
   <data name="Campaign.Settings.Owner" xml:space="preserve"><value>(בעלים)</value></data>
   <data name="Campaign.Settings.RoleFor" xml:space="preserve"><value>תפקיד עבור {0}</value></data>
-  <data name="Campaign.Settings.Role.DM" xml:space="preserve"><value>מנהל המשחק</value></data>
+  <data name="Campaign.Settings.Role.DM" xml:space="preserve"><value>שליט המבוך</value></data>
   <data name="Campaign.Settings.Role.Player" xml:space="preserve"><value>שחקן</value></data>
   <data name="Campaign.Settings.Role.Observer" xml:space="preserve"><value>צופה</value></data>
   <data name="Campaign.Settings.RemoveFromCampaign" xml:space="preserve"><value>הסרת {0} מהקמפיין</value></data>
@@ -326,7 +326,7 @@
   <data name="Campaign.Wiki.Field.Title" xml:space="preserve"><value>כותרת</value></data>
   <data name="Campaign.Wiki.Required" xml:space="preserve"><value>(חובה)</value></data>
   <data name="Campaign.Wiki.Field.WhoCanRead" xml:space="preserve"><value>מי יכול לקרוא</value></data>
-  <data name="Campaign.Wiki.Vis.DmOnly" xml:space="preserve"><value>רק אני (מנהל המשחק)</value></data>
+  <data name="Campaign.Wiki.Vis.DmOnly" xml:space="preserve"><value>רק אני (שליט המבוך)</value></data>
   <data name="Campaign.Wiki.Vis.Party" xml:space="preserve"><value>כל הקבוצה</value></data>
   <data name="Campaign.Wiki.Field.Tags" xml:space="preserve"><value>תגיות</value></data>
   <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>פלג, עיר, אגדה…</value></data>
@@ -347,31 +347,31 @@
   <data name="Campaign.Wiki.AiSees" xml:space="preserve"><value>ה-AI רואה את הדף הזה, את תיאור הקמפיין ואת שמות הדפים שהוא מקשר אליהם. שום דבר אחר.</value></data>
   <data name="Campaign.Wiki.Missing.Title" xml:space="preserve"><value>אין דף בשם "{0}"</value></data>
   <data name="Campaign.Wiki.Missing.Dm" xml:space="preserve"><value>ייתכן שהוא נמחק. אפשר לכתוב אותו עכשיו.</value></data>
-  <data name="Campaign.Wiki.Missing.Player" xml:space="preserve"><value>ייתכן שהוא למנהל המשחק בלבד, או שעדיין לא נכתב.</value></data>
+  <data name="Campaign.Wiki.Missing.Player" xml:space="preserve"><value>ייתכן שהוא לשליט המבוך בלבד, או שעדיין לא נכתב.</value></data>
   <data name="Campaign.Wiki.CreateIt" xml:space="preserve"><value>יצירה</value></data>
   <data name="Campaign.Wiki.BackToWiki" xml:space="preserve"><value>חזרה לוויקי</value></data>
   <data name="Campaign.Wiki.Party" xml:space="preserve"><value>הקבוצה</value></data>
-  <data name="Campaign.Wiki.DmOnly" xml:space="preserve"><value>מנהל המשחק בלבד</value></data>
+  <data name="Campaign.Wiki.DmOnly" xml:space="preserve"><value>שליט המבוך בלבד</value></data>
   <data name="Campaign.Wiki.SharePage" xml:space="preserve"><value>שיתוף עם הקבוצה</value></data>
   <data name="Campaign.Wiki.Edit" xml:space="preserve"><value>עריכה</value></data>
   <data name="Campaign.Wiki.PageEmpty" xml:space="preserve"><value>הדף הזה ריק.</value></data>
   <data name="Campaign.Wiki.NotesOnPage" xml:space="preserve"><value>הערות על הדף הזה</value></data>
   <data name="Campaign.Wiki.NoNotes.Dm" xml:space="preserve"><value>אין עדיין הערות. שחקנים יכולים להשאיר כאן את שלהם.</value></data>
-  <data name="Campaign.Wiki.NoNotes.Player" xml:space="preserve"><value>אין עדיין הערות. השאירו הערה לעצמכם ולמנהל המשחק, או לכל הקבוצה.</value></data>
+  <data name="Campaign.Wiki.NoNotes.Player" xml:space="preserve"><value>אין עדיין הערות. השאירו הערה לעצמכם ולשליט המבוך, או לכל הקבוצה.</value></data>
   <data name="Campaign.Wiki.Private" xml:space="preserve"><value>פרטי</value></data>
   <data name="Campaign.Wiki.DeleteNote" xml:space="preserve"><value>מחיקת הערה</value></data>
   <data name="Campaign.Wiki.AddNoteLabel" xml:space="preserve"><value>הוספת הערה</value></data>
   <data name="Campaign.Wiki.MentionHint" xml:space="preserve"><value>הזכירו מישהו עם @, מקום עם # או חפץ עם $.</value></data>
   <data name="Campaign.Wiki.NoteVisibility" xml:space="preserve"><value>נראות ההערה</value></data>
-  <data name="Campaign.Wiki.NoteVis.Private" xml:space="preserve"><value>פרטית (אתם ומנהל המשחק)</value></data>
+  <data name="Campaign.Wiki.NoteVis.Private" xml:space="preserve"><value>פרטית (אתם ושליט המבוך)</value></data>
   <data name="Campaign.Wiki.NoteVis.Public" xml:space="preserve"><value>לקבוצה (כל מי שבקמפיין)</value></data>
   <data name="Campaign.Wiki.AddNote" xml:space="preserve"><value>הוספת הערה</value></data>
   <data name="Campaign.Wiki.LinksFrom" xml:space="preserve"><value>קישורים מהדף הזה</value></data>
   <data name="Campaign.Wiki.None" xml:space="preserve"><value>אין עדיין.</value></data>
   <data name="Campaign.Wiki.LinksHere" xml:space="preserve"><value>דפים שמקשרים לכאן</value></data>
   <data name="Campaign.Wiki.NothingLinksHere" xml:space="preserve"><value>אין עדיין קישורים לכאן.</value></data>
-  <data name="Campaign.Wiki.Subtitle.Dm" xml:space="preserve"><value>העולם שלכם, דף מקושר אחר דף. דפים מתחילים כדפים למנהל המשחק בלבד; שתפו אותם כשהקבוצה לומדת עליהם.</value></data>
-  <data name="Campaign.Wiki.Subtitle.Player" xml:space="preserve"><value>מה שהקבוצה יודעת על העולם. דפים מופיעים כשמנהל המשחק משתף אותם.</value></data>
+  <data name="Campaign.Wiki.Subtitle.Dm" xml:space="preserve"><value>העולם שלכם, דף מקושר אחר דף. דפים מתחילים כדפים לשליט המבוך בלבד; שתפו אותם כשהקבוצה לומדת עליהם.</value></data>
+  <data name="Campaign.Wiki.Subtitle.Player" xml:space="preserve"><value>מה שהקבוצה יודעת על העולם. דפים מופיעים כששליט המבוך משתף אותם.</value></data>
   <data name="Campaign.Wiki.NewPageBtn" xml:space="preserve"><value>דף חדש</value></data>
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>חיפוש בוויקי</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>חיפוש דפים…</value></data>
@@ -380,11 +380,11 @@
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>עדיין אין דפים</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>לא נמצא דף מתאים</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>התחילו במקום, בפלג או באגדה. קשרו דפים עם [[סוגריים כפולים]].</value></data>
-  <data name="Campaign.Wiki.Empty.Player" xml:space="preserve"><value>מנהל המשחק עדיין לא שיתף אף דף.</value></data>
+  <data name="Campaign.Wiki.Empty.Player" xml:space="preserve"><value>שליט המבוך עדיין לא שיתף אף דף.</value></data>
   <data name="Campaign.Wiki.LinkCount" xml:space="preserve"><value>{0, plural, one{קישור אחד} two{שני קישורים} other{# קישורים}}</value></data>
   <data name="Campaign.Wiki.TitleNeeded" xml:space="preserve"><value>לדף חייבת להיות כותרת.</value></data>
   <data name="Campaign.Wiki.Saved" xml:space="preserve"><value>"{0}" נשמר.</value></data>
-  <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>רק מנהל המשחק יכול לערוך את הוויקי.</value></data>
+  <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לערוך את הוויקי.</value></data>
   <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>שותף עם הקבוצה.</value></data>
   <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>"{0}" נמחק.</value></data>
   <data name="Campaign.Wiki.AiDraftReady" xml:space="preserve"><value>טיוטת ה-AI בעורך. עיינו ושמרו.</value></data>
@@ -397,7 +397,7 @@
   <data name="Campaign.World.Empty.Dm.Title" xml:space="preserve"><value>עדיין אין אזורים</value></data>
   <data name="Campaign.World.Empty.Player.Title" xml:space="preserve"><value>עדיין לא התגלה דבר</value></data>
   <data name="Campaign.World.Empty.Dm.Body" xml:space="preserve"><value>הוסיפו אזור, ואז את המקומות שבתוכו.</value></data>
-  <data name="Campaign.World.Empty.Player.Body" xml:space="preserve"><value>מנהל המשחק יחשוף מקומות בזמן שהקבוצה חוקרת.</value></data>
+  <data name="Campaign.World.Empty.Player.Body" xml:space="preserve"><value>שליט המבוך יחשוף מקומות בזמן שהקבוצה חוקרת.</value></data>
   <data name="Campaign.World.NewNameFor" xml:space="preserve"><value>שם חדש עבור {0}</value></data>
   <data name="Campaign.World.Rename" xml:space="preserve"><value>שינוי שם</value></data>
   <data name="Campaign.World.RenameLabel" xml:space="preserve"><value>שינוי שם: {0}</value></data>
@@ -436,7 +436,7 @@
   <data name="Campaign.World.PackPlaceAdded" xml:space="preserve"><value>"{0}" נוסף מהחבילה.</value></data>
   <data name="Campaign.World.NameRequired" xml:space="preserve"><value>תנו למקום שם.</value></data>
   <data name="Campaign.World.PlaceSaved" xml:space="preserve"><value>"{0}" נשמר.</value></data>
-  <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>רק מנהל המשחק יכול לערוך מקומות.</value></data>
+  <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לערוך מקומות.</value></data>
   <data name="Campaign.World.ArtRemoved" xml:space="preserve"><value>האיור הוסר.</value></data>
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>האיור נשמר.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>המקום הזה כבר לא קיים, או שאין לכם הרשאה לשנות אותו.</value></data>

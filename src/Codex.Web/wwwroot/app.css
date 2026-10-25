@@ -58,12 +58,71 @@
     src: url("fonts/alegreya-sans/alegreya-sans-latin-400-italic.woff2") format("woff2");
 }
 
+/* Cyrillic and Hebrew: the same Alegreya Sans for Russian body text, Forum (classical capitals) beside Cinzel, Frank Ruhl Libre (a calligraphic
+   serif) beside Cinzel for Hebrew headings and Assistant (a humanist sans) beside Alegreya Sans for Hebrew body text. Each file is fetched only when the page contains that script. */
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-400-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-500-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-700-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-400-italic.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Forum";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/forum/forum-cyrillic-400-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Assistant";
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url("fonts/assistant/assistant-hebrew-wght-normal.woff2") format("woff2");
+    unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+    font-family: "Frank Ruhl Libre";
+    font-style: normal;
+    font-weight: 300 900;
+    font-display: swap;
+    src: url("fonts/frank-ruhl-libre/frank-ruhl-libre-hebrew-wght-normal.woff2") format("woff2");
+    unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+
 :root {
     color-scheme: dark;
     --dir: 1; /* 1 in left-to-right, -1 in right-to-left; multiplies horizontal offsets that cannot be logical */
 
-    --font-display: "Cinzel", "Trajan Pro 3", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-    --font-body: "Alegreya Sans", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --font-display: "Cinzel", "Forum", "Frank Ruhl Libre", "Trajan Pro 3", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --font-body: "Alegreya Sans", "Assistant", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 
     /* Surfaces */
     --bg: #0c0a08;
@@ -1475,12 +1534,9 @@ a.mention:hover { text-decoration: none; border-bottom-style: solid; }
 .mention-unknown { color: var(--text-3); font-style: italic; font-weight: 400; border-bottom: 0; }
 
 /* --- Languages ----------------------------------------------------------------------------
-   The bundled faces are Latin only, so Cyrillic and Hebrew fall through per glyph to the system
-   faces below. Hebrew gets its own stacks because Georgia/Palatino have no Hebrew glyphs. */
-:lang(he) {
-    --font-display: "Frank Ruhl Libre", "Noto Serif Hebrew", "David", "Times New Roman", serif;
-    --font-body: "Heebo", "Noto Sans Hebrew", "Arial Hebrew", "Arial", sans-serif;
-}
+   Cyrillic and Hebrew come from the bundled faces declared at the top (each only for its own script, so Latin names inside a
+   Hebrew page stay in Alegreya Sans and Cinzel). Hebrew has no italic: stop the browser slanting it artificially. */
+:lang(he) { font-synthesis-style: none; }
 :root[dir="rtl"] { --dir: -1; }
 :root[dir="rtl"] .field-select { background-position: left 0.7rem center; }
 

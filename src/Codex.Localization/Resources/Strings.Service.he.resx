@@ -6,7 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Service.Ai.NotConfigured" xml:space="preserve"><value>לא הוגדר ספק בינה מלאכותית.</value></data>
   <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>לא הוגדר ספק תמונות.</value></data>
-  <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>רק מנהל המשחק מנסח סיכומי מפגשים.</value></data>
+  <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>רק שליט המבוך מנסח סיכומי מפגשים.</value></data>
   <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>הספק זקוק לכתובת, למודל ו(בשירותים מתארחים) למפתח API.</value></data>
   <data name="Service.Ai.Connected" xml:space="preserve"><value>החיבור הצליח. המודל ענה: “{0}”</value></data>
   <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>החיבור הצליח (תשובה ריקה).</value></data>

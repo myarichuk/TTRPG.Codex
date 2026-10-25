@@ -59,7 +59,7 @@
   <data name="Wizard.Placeholder.Other" xml:space="preserve"><value>מה זה עושה, במילים שהשחקנים יקראו.</value></data>
   <data name="Wizard.Error.TypeNameFirst" xml:space="preserve"><value>קודם בחרו סוג ותנו שם.</value></data>
   <data name="Wizard.Error.TypeNameRequired" xml:space="preserve"><value>חובה לציין סוג ושם.</value></data>
-  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>רק מנהל המשחק יכול לערוך תוכן ביתי.</value></data>
+  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לערוך תוכן ביתי.</value></data>
   <data name="Wizard.Error.ArtFailed" xml:space="preserve"><value>נשמר, אך לא ניתן היה לאחסן את האיור. נסו להוסיף אותו שוב מהספרייה.</value></data>
   <data name="Wizard.Error.DeleteFailed" xml:space="preserve"><value>לא ניתן היה למחוק את הרשומה.</value></data>
   <data name="Wizard.DiscardTitle" xml:space="preserve"><value>לבטל את השינויים?</value></data>
