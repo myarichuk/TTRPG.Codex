@@ -370,8 +370,13 @@ public class WorldBuilderTests
 
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing) => Service(existingPages, Array.Empty<RegionDocument>(), existing);
 
-    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, params HomebrewEntryDocument[] existing)
+    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, params HomebrewEntryDocument[] existing) =>
+        Service(existingPages, existingRegions, null, existing);
+
+    /// <param name="registry">The packs' content, which the Library and the cast both read; empty when null.</param>
+    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, ContentRegistry? registry, params HomebrewEntryDocument[] existing)
     {
+        registry ??= new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
         var pages = new List<WikiPageDocument>();
         var entries = new List<HomebrewEntryDocument>();
         var actors = new List<ActorDocument>();
@@ -395,13 +400,13 @@ public class WorldBuilderTests
         catalog.GetUISchemas(Arg.Any<string>()).Returns(Enumerable.Empty<UISchema>());
         catalog.GetDefinition("srd5e").Returns(CreatureSystem);
         var campaigns = Substitute.For<ICampaignRepository>();
-        var library = new CampaignLibrary(new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance)), homebrew, catalog);
+        var library = new CampaignLibrary(registry, homebrew, catalog);
         var providers = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),
             Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance);
         var components = new ComponentRegistry();
         var runtimes = new Codex.Persistence.Runtime.CampaignRuntimeManager(actorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
             Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);
-        var cast = new CastService(runtimes, Substitute.For<IContentRegistry>(), components, catalog);
+        var cast = new CastService(runtimes, registry, components, catalog);
         var regions = Substitute.For<IRegionRepository>();
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existingRegions.ToList().AsEnumerable());
         var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns), pages, entries, actors, facts);
@@ -975,5 +980,135 @@ public class WorldBuilderTests
 
         Assert.Equal("WorldBuilder.Error.NoChange", draft.Key);
         Assert.Equal("WorldBuilder.Error.NoChange", outline.Key);
+    }
+
+    // ---- Stats from a Library creature ----
+
+    private static readonly ContentTypeDefinition MonsterType = new() { Type = "monster", ActorBlueprint = true };
+
+    /// <summary>A registry holding one pack creature, the Veteran (58 hit points), as a stat block the cast can start from.</summary>
+    private static ContentRegistry VeteranPack()
+    {
+        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var veteran = new ContentEntry { Id = "veteran", Type = "monster", SystemId = "srd5e", PackId = "srd", Name = "Veteran", Properties = { ["hitPoints"] = 58L, ["challenge"] = "3" } };
+        registry.RegisterEntry(veteran, 0);
+        registry.RegisterActor(YamlContentPackLoader.ToActorBlueprint(veteran, MonsterType), 0);
+        registry.RegisterEntry(new ContentEntry { Id = "veteran-captain", Type = "monster", SystemId = "srd5e", PackId = "srd", Name = "Veteran Captain" }, 0);
+        return registry;
+    }
+
+    [Fact]
+    public void ParseOutline_ReadsTheStatsAPersonPlaysLike_OnlyOnPeople()
+    {
+        const string reply = """
+            {"drafts": [
+              {"ref": "d1", "kind": "npc", "name": "Mother Ilse", "pitch": "A retired pilot.", "stats": " Veteran "},
+              {"ref": "d2", "kind": "npc", "name": "Brann", "pitch": "A lookout.", "stats": ""},
+              {"ref": "d3", "kind": "wiki", "name": "The Wardens", "pitch": "Smugglers.", "stats": "Bandit"}
+            ]}
+            """;
+
+        var bundle = WorldBundleParser.ParseOutline(reply, new BundleRules(WorldRecipes.Find("faction")!.Drafts, new Dictionary<string, string>(), Array.Empty<string>()));
+
+        Assert.Equal(new string?[] { "Veteran", null, null }, bundle.Drafts.Select(d => d.SuggestedStats));
+    }
+
+    [Fact]
+    public void ParseRevision_KeepsTheStatsTheDmPicked_EvenABlankSheet_AndOtherwiseFollowsTheReply()
+    {
+        var veteran = new CreatureRef("monster", "veteran", false, "Veteran", "Veteran");
+        var previous = new WorldBundle();
+        previous.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Npc, Name = "Ilse", OutlineName = "Ilse", Stats = veteran, StatsChosen = true });
+        previous.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Npc, Name = "Brann", OutlineName = "Brann", StatsChosen = true });
+        previous.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Npc, Name = "Oda", OutlineName = "Oda", Stats = veteran });
+        previous.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Npc, Name = "Pell", OutlineName = "Pell", Stats = veteran });
+        previous.Drafts.Add(new WorldDraft { Ref = "d5", Kind = DraftKinds.Npc, Name = "Tam", OutlineName = "Tam", Stats = veteran, StatsChosen = true });
+        const string reply = """
+            {"drafts": [
+              {"ref": "d1", "kind": "npc", "name": "Ilse", "pitch": "A priest now.", "stats": "Priest"},
+              {"ref": "d2", "kind": "npc", "name": "Brann", "pitch": "A thug.", "stats": "Thug"},
+              {"ref": "d3", "kind": "npc", "name": "Oda", "pitch": "A priest.", "stats": "Priest"},
+              {"ref": "d4", "kind": "npc", "name": "Pell", "pitch": "Unchanged.", "stats": "veteran"}
+            ]}
+            """;
+
+        var revised = WorldBundleParser.ParseRevision(reply, new BundleRules(new[] { DraftKinds.Npc }, new Dictionary<string, string>(), Array.Empty<string>()), previous);
+
+        var (ilse, brann, oda, pell) = (previous.Drafts[0], previous.Drafts[1], previous.Drafts[2], previous.Drafts[3]);
+        // Picked stats alone are not work worth keeping a removed person for.
+        Assert.DoesNotContain(revised.Drafts, d => d.Name == "Tam");
+        Assert.Empty(revised.SetAside);
+        Assert.Equal((veteran, (string?)null), (ilse.Stats, ilse.SuggestedStats));
+        Assert.Equal(((CreatureRef?)null, (string?)null), (brann.Stats, brann.SuggestedStats)); // the DM chose a blank sheet
+        Assert.Equal(((CreatureRef?)null, "Priest"), (oda.Stats, oda.SuggestedStats)); // left to the model: looked up again
+        Assert.Same(veteran, pell.Stats); // the same creature: nothing to look up
+    }
+
+    [Fact]
+    public void OutlinePrompt_AsksForStats_OnlyForPeople_InASystemWithCreatures()
+    {
+        var people = AnyOutline with { Kinds = new[] { "npc: a person" }, CreatureStats = true };
+
+        var (system, _) = AiPrompts.WorldOutline(people);
+        var (noCreatures, _) = AiPrompts.WorldOutline(people with { CreatureStats = false });
+        var (noPeople, _) = AiPrompts.WorldOutline(people with { Kinds = new[] { "wiki: a page" } });
+
+        Assert.Contains("\"stats\": the English name of a generic creature from the SRD rules", system);
+        Assert.DoesNotContain("\"stats\"", noCreatures);
+        Assert.DoesNotContain("\"stats\"", noPeople);
+    }
+
+    [Fact]
+    public async Task FindStats_TakesOnlyAnExactName_FromThePacksOrTheHomebrew()
+    {
+        var gullHag = new HomebrewEntryDocument { Type = "monster", EntryId = "gull-hag", Name = "Gull Hag", SystemId = "srd5e" };
+        var saving = Service(null, Array.Empty<RegionDocument>(), VeteranPack(), gullHag);
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Npc, Name = "Ilse", SuggestedStats = "veteran" });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Npc, Name = "Brann", SuggestedStats = "Vet" });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Npc, Name = "Oda", SuggestedStats = "Gull Hag" });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Npc, Name = "Pell", SuggestedStats = "Veteran", StatsChosen = true });
+
+        await saving.Service.FindStatsAsync(Campaign, Dm, bundle);
+
+        Assert.Equal(new CreatureRef("monster", "veteran", false, "Veteran", "Veteran"), bundle.Drafts[0].Stats);
+        Assert.Null(bundle.Drafts[1].Stats); // "Vet" is not a name the Library has; the nearest match would be a guess
+        Assert.Equal(new CreatureRef("monster", "gull-hag", true, "Gull Hag", "Gull Hag"), bundle.Drafts[2].Stats);
+        Assert.Null(bundle.Drafts[3].Stats); // the DM chose a blank sheet
+    }
+
+    [Fact]
+    public async Task Save_StartsACastMemberFromTheirCreature_KeepingTheirOwnName()
+    {
+        var gullHag = new HomebrewEntryDocument { Type = "monster", EntryId = "gull-hag", Name = "Gull Hag", SystemId = "srd5e", Properties = { ["hitPoints"] = 27L } };
+        var saving = Service(null, Array.Empty<RegionDocument>(), VeteranPack(), gullHag);
+        var bundle = Faction();
+        bundle.Drafts[1].Stats = new CreatureRef("monster", "veteran", false, "Veteran", "Veteran");
+        bundle.Drafts[2].Cast = true;
+        bundle.Drafts[2].Stats = new CreatureRef("monster", "gull-hag", true, "Gull Hag", "Gull Hag");
+
+        await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("faction")!, bundle);
+
+        var (ilse, brann) = (saving.Actors[0], saving.Actors[1]);
+        Assert.Equal(("Mother Ilse", ActorKind.NonPlayerCharacter, ActorVisibility.Hidden, "srd5e:veteran"), (ilse.Name, ilse.Kind, ilse.Visibility, ilse.BlueprintId));
+        Assert.Equal((58L, 58L, "3"), (ilse.Sheet["HP"], ilse.Sheet["HP_Max"], ilse.Sheet["challenge"]));
+        Assert.EndsWith("She leads The Salt Wardens.", ilse.DmNotes);
+        // A homebrew creature has no pack id to point back to, but its stats still fill the sheet.
+        Assert.Equal(("Brann", (string?)null, 27L), (brann.Name, brann.BlueprintId, brann.Sheet["HP"]));
+    }
+
+    [Fact]
+    public async Task Save_OfACastMemberWhoseCreatureIsGone_StartsBlank()
+    {
+        var saving = Service(null, Array.Empty<RegionDocument>(), VeteranPack());
+        var bundle = Faction();
+        // Recorded as homebrew, which the campaign no longer has; the pack's creature of that id is not the one picked.
+        bundle.Drafts[1].Stats = new CreatureRef("monster", "veteran", true, "Veteran", "Veteran");
+
+        await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("faction")!, bundle);
+
+        var ilse = Assert.Single(saving.Actors);
+        Assert.Null(ilse.BlueprintId);
+        Assert.False(ilse.Sheet.ContainsKey("challenge"));
     }
 }

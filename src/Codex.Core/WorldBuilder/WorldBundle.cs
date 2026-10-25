@@ -43,6 +43,15 @@ public sealed class WorldDraft
     /// <summary>For a homebrew creature: also put it on the campaign's Bestiary shortlist, besides the Library.</summary>
     public bool Bestiary { get; set; }
 
+    /// <summary>For a person: the creature the model said plays like them ("Veteran"), as it wrote it, until the app finds it in the Library.</summary>
+    public string? SuggestedStats { get; set; }
+
+    /// <summary>For a person added to the cast: the Library creature whose stat block their sheet starts from, instead of a blank sheet.</summary>
+    public CreatureRef? Stats { get; set; }
+
+    /// <summary>The DM picked <see cref="Stats"/> (or a blank sheet) themselves, so a change to the outline leaves it alone.</summary>
+    public bool StatsChosen { get; set; }
+
     /// <summary>The title its wiki page is saved under: the name, or "Name (2)" when a page of that name exists. Links go by
     /// title, so they use it; a cast member or a place keeps the name itself.</summary>
     public string? PageTitle { get; set; }
@@ -57,6 +66,10 @@ public sealed class WorldDraft
     public Dictionary<string, object> Properties { get; set; } = new();
     public List<string> Tags { get; set; } = new();
 }
+
+/// <summary>A Library creature, pack or homebrew: <see cref="Name"/> as the pack names it (what the model reads), <see cref="Shown"/>
+/// as the DM reads it.</summary>
+public sealed record CreatureRef(string Type, string Id, bool Homebrew, string Name, string Shown);
 
 /// <summary>A draft the parser left out, and why, so the review step can say so.</summary>
 public sealed record DroppedDraft(string Name, DropReason Reason);
@@ -109,6 +122,7 @@ public static class WorldBundleParser
     private const int MaxName = 200;
     private const int MaxPitch = 500;
     private const int MaxBody = 20_000;
+    private const int MaxStats = 100;
 
     /// <summary>
     /// Parses an outline reply: <c>{"drafts": [{"ref", "kind", "type", "name", "pitch", "links"}]}</c>. Drafts of a kind
@@ -143,7 +157,7 @@ public static class WorldBundleParser
         var renamed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var rawLinks = new Dictionary<WorldDraft, List<string>>();
         // Drafts of the previous outline the reply kept, with the name and pitch it gave them; applied only once the whole reply is read.
-        var kept = new Dictionary<WorldDraft, (string Name, string Pitch)>();
+        var kept = new Dictionary<WorldDraft, (string Name, string Pitch, string? Stats)>();
         var next = 1 + (previous?.Drafts.Select(d => int.TryParse(d.Ref.TrimStart('d'), out var n) ? n : 0).DefaultIfEmpty(0).Max() ?? 0);
         foreach (var element in drafts.EnumerateArray().Where(e => e.ValueKind == JsonValueKind.Object))
         {
@@ -175,16 +189,17 @@ public static class WorldBundleParser
             }
 
             var pitch = Cut(FieldCoercion.String(element, "pitch"), MaxPitch);
+            var stats = kind == DraftKinds.Npc && Cut(FieldCoercion.String(element, "stats"), MaxStats) is { Length: > 0 } s ? s : null;
             var given = FieldCoercion.String(element, "ref");
             WorldDraft draft;
             if (previous != null && Match(previous, kept, given, name, kind, type) is { } match)
             {
                 draft = match;
-                kept[draft] = (name, pitch);
+                kept[draft] = (name, pitch, stats);
             }
             else
             {
-                draft = new WorldDraft { Ref = $"d{next++}", Kind = kind, Type = type, Name = name, OutlineName = name, Pitch = pitch };
+                draft = new WorldDraft { Ref = $"d{next++}", Kind = kind, Type = type, Name = name, OutlineName = name, Pitch = pitch, SuggestedStats = stats };
             }
 
             if (given != null)
@@ -237,8 +252,15 @@ public static class WorldBundleParser
             draft.Links = list;
         }
 
-        foreach (var (draft, (name, pitch)) in kept)
+        foreach (var (draft, (name, pitch, stats)) in kept)
         {
+            // Stats the DM did not pick follow the reply, so a change such as "make her a priest" can bring new ones.
+            if (!draft.StatsChosen && !string.Equals(stats, draft.Stats?.Name ?? draft.SuggestedStats, StringComparison.OrdinalIgnoreCase))
+            {
+                draft.SuggestedStats = stats;
+                draft.Stats = null;
+            }
+
             if (draft.Expanded) continue;
             if (draft.Name == draft.OutlineName) draft.Name = name;
             draft.Pitch = pitch;
@@ -256,7 +278,7 @@ public static class WorldBundleParser
     }
 
     // The previous draft a reply draft is, if any: same kind and type, by the reply's ref, then the outline's name, then the current name.
-    private static WorldDraft? Match(WorldBundle previous, IReadOnlyDictionary<WorldDraft, (string, string)> kept, string? given, string name, string kind, string? type)
+    private static WorldDraft? Match(WorldBundle previous, IReadOnlyDictionary<WorldDraft, (string, string, string?)> kept, string? given, string name, string kind, string? type)
     {
         var open = previous.Drafts.Where(d => !kept.ContainsKey(d) && d.Kind == kind && string.Equals(d.Type, type, StringComparison.OrdinalIgnoreCase)).ToList();
         return (given == null ? null : open.FirstOrDefault(d => string.Equals(d.Ref, given, StringComparison.OrdinalIgnoreCase)))
@@ -264,7 +286,8 @@ public static class WorldBundleParser
                ?? open.FirstOrDefault(d => string.Equals(d.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Work a change to the outline must not throw away: a written text, the DM's rename, or something already saved.
+    // Work a change to the outline must not throw away: a written text, the DM's rename, or something already saved. Ticks and
+    // picked stats are quick to redo, so a draft the change removes does not stay for them.
     private static bool HasWork(WorldDraft draft) => draft.Expanded || draft.Name != draft.OutlineName || draft.SavedAs.Count > 0;
 
     /// <summary>Fills a wiki draft from the expand reply, which is the page text itself.</summary>

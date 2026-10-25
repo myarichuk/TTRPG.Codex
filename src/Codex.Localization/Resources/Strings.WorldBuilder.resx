@@ -174,4 +174,12 @@
   <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>Kept but unticked, because you had written or renamed them: {0}.</value></data>
   <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>The AI is changing the ideas…</value></data>
   <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>Say what to change first.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Blank" xml:space="preserve"><value>Their sheet starts blank.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.From" xml:space="preserve"><value>Their sheet starts from the {0} stat block.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Change" xml:space="preserve"><value>Pick stats from the Library</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Clear" xml:space="preserve"><value>Blank sheet</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Creatures</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Use</value></data>
+  <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>The Library has no creatures for this campaign.</value></data>
+  <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>also in the cast, with the {0} stats</value></data>
 </root>

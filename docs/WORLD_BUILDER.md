@@ -2,9 +2,9 @@
 
 Status: the **homebrew recipe** (Library → *Build with AI*) and the **faction**, **settlement** and **quest recipes**
 (Wiki → *Build with AI*) are built, shown to the DM once a text model is set up. People (`npc`), places (`place`) and
-secrets (`fact`) are draft kinds; a person can also join the cast, a place can also go on the World page, and a homebrew
+secrets (`fact`) are draft kinds; a person can also join the cast (with the stats of a Library creature, §3.1), a place can also go on the World page, and a homebrew
 creature can also go on the Bestiary shortlist. The world
-recipe, Library blueprints for cast members and MCP are still design only.
+recipe and MCP are still design only.
 
 A set of guided wizards that help the DM create campaign material with the AI: a homebrew item, spell or creature,
 a faction, a city, a world, a quest or story arc. The wizard asks a short series of questions, the AI proposes a
@@ -87,8 +87,17 @@ Today an NPC is an `ActorDocument` (a sheet on the table) and lore lives in the 
 **wiki pages** by default (name, role, look, wants, secret), because most NPCs never need a sheet. On the review card
 the DM can tick "also add to the cast" to create a hidden `ActorDocument` (`CastService.AddNpcAsync`): the sheet starts on
 the system's defaults, and `DmNotes` points back to the page and holds its text (links flattened). `Biography` stays empty:
-players read it once the DM reveals the person, and the page tells what they hide. Not
-built yet: a Library creature as blueprint when the model suggests one that exists.
+players read it once the DM reveals the person, and the page tells what they hide.
+
+A person's sheet can start from a Library creature's stat block instead of a blank one. In a system with creatures (a type with
+`actorBlueprint`), the outline may give a person `"stats"`: the English name of a generic creature from the rules ("Priest").
+The app looks it up in the campaign's Library (its active packs and its homebrew) and takes it only on an exact match of the
+name or id, in English or the DM's language, since a near miss would give the person the wrong stats. Once "also add to the
+cast" is ticked, the card says which stats the sheet starts from, and the DM can pick another creature or a blank sheet
+(`WorldDraft.Stats`, `StatsChosen`). A change to the outline keeps what the DM picked; stats the DM left to the model follow
+the reply. On save the cast member keeps the person's name and kind (NPC) and gets the creature's properties and hit points
+(`ActorSheetSync.SeedFromBlueprint`); a pack creature is also recorded as its `BlueprintId`. A creature that is gone by then
+(its pack switched off, the homebrew deleted) leaves the blank sheet.
 
 ### 3.2 Quests
 
@@ -178,7 +187,7 @@ recipes in its folder later (for example a "deity" recipe for 5e); not needed fo
 | Strings | `Strings.WorldBuilder{,.ru,.he}.resx` | All labels, question texts and errors |
 
 Tests: recipe loading, bundle parsing (bad JSON, unknown kinds, dangling refs), option coercion including translated
-values, link rewriting on save, merging a changed outline, the order of the DM's change in the prompts, DM-only
+values, link rewriting on save, merging a changed outline, the order of the DM's change in the prompts, finding a person's stats and seeding the cast member from them, DM-only
 enforcement and the one-retry rule (a scripted `IChatClient`), in `WorldBuilderTests`.
 There is no Playwright test yet; the faction, settlement and quest flows were checked by hand against a scripted model.
 

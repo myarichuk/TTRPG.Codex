@@ -66,25 +66,35 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         }
     }
 
-    /// <summary>Adds a non-player character with a blank sheet (the system's defaults and starting attributes), hidden from
-    /// players until revealed. Returns null when <paramref name="access"/> may not add to the cast.</summary>
-    public async Task<ActorDocument?> AddNpcAsync(string name, string? biography, string? dmNotes, CampaignDocument campaign, SystemDefinition? system, CampaignAccess access)
+    /// <summary>Adds a non-player character, hidden from players until revealed: with <paramref name="creature"/>'s stat block
+    /// (a Library creature that plays like them), or else a blank sheet (the system's defaults and starting attributes). The
+    /// character keeps their own name either way. Returns null when <paramref name="access"/> may not add to the cast.</summary>
+    public async Task<ActorDocument?> AddNpcAsync(string name, string? biography, string? dmNotes, CampaignDocument campaign, SystemDefinition? system, CampaignAccess access,
+        LibraryItem? creature = null)
     {
         if (!access.IsDm)
         {
             return null;
         }
 
+        var blueprint = creature == null ? null : Blueprint(creature, campaign, system);
         var actor = new ActorDocument
         {
             Id = Guid.NewGuid().ToString(),
             CampaignId = campaign.Id,
             Kind = ActorKind.NonPlayerCharacter,
+            BlueprintId = blueprint == null || creature!.IsHomebrew ? null : $"{blueprint.SystemId}:{blueprint.Id}",
             Name = name.Trim(),
             Visibility = ActorVisibility.Hidden,
             Biography = biography,
             DmNotes = dmNotes
         };
+        if (blueprint != null)
+        {
+            ActorSheetSync.SeedFromBlueprint(actor, blueprint, system, components);
+            return await runtimes.TryCreateActorAsync(actor, access) ? actor : null;
+        }
+
         SeedDefaults(actor, campaign.SystemId);
         if (system != null)
         {

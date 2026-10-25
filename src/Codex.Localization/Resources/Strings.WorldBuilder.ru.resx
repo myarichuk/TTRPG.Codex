@@ -174,4 +174,12 @@
   <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>Оставлены, но не отмечены, потому что вы их уже написали или переименовали: {0}.</value></data>
   <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>ИИ меняет идеи…</value></data>
   <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>Сначала напишите, что изменить.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Blank" xml:space="preserve"><value>Лист начнётся пустым.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.From" xml:space="preserve"><value>Лист начнётся с характеристик: {0}.</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Change" xml:space="preserve"><value>Выбрать характеристики из Библиотеки</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Clear" xml:space="preserve"><value>Пустой лист</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Существа</value></data>
+  <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Выбрать</value></data>
+  <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>В Библиотеке нет существ для этой кампании.</value></data>
+  <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>также в составе, с характеристиками: {0}</value></data>
 </root>

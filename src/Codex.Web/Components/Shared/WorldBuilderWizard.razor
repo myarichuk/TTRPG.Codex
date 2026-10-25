@@ -147,6 +147,25 @@
                                                 <input id="@castId" type="checkbox" class="field-box" checked="@d.Cast" disabled="@(!d.Selected)" @onchange="e => d.Cast = (bool)(e.Value ?? false)" data-testid="world-draft-cast" />
                                                 <label for="@castId" class="small">@L["WorldBuilder.Drafts.Cast"]</label>
                                             </div>
+                                            @if (d.Cast && d.Selected && HasCreatures)
+                                            {
+                                                var pickId = $"{dialogId}-stats-{d.Ref}";
+                                                <div class="world-draft-stats mb-2" data-testid="world-draft-stats">
+                                                    <span id="@($"{pickId}-now")" class="small" data-testid="world-draft-stats-name">@(d.Stats == null ? L["WorldBuilder.Drafts.Stats.Blank"] : L["WorldBuilder.Drafts.Stats.From", d.Stats.Shown])</span>
+                                                    <CodexButton id="@($"{pickId}-change")" Variant="CodexButtonVariant.Etched" Small="true" Icon="book-open" OnClick="() => TogglePickingAsync(d)" aria-expanded="@(picking == d ? "true" : "false")" aria-controls="@pickId" aria-describedby="@($"{nameId} {pickId}-now")" data-testid="world-draft-stats-change">@L["WorldBuilder.Drafts.Stats.Change"]</CodexButton>
+                                                    @if (d.Stats != null)
+                                                    {
+                                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="() => ClearStatsAsync(d)" aria-describedby="@nameId" data-testid="world-draft-stats-clear">@L["WorldBuilder.Drafts.Stats.Clear"]</CodexButton>
+                                                    }
+                                                </div>
+                                                @if (picking == d)
+                                                {
+                                                    <div id="@pickId" class="world-draft-ask">
+                                                        <EntryBrowser Options="creatureOptions" Type="CreatureType" Label="@L["WorldBuilder.Drafts.Stats.Creatures"]" TestId="world-draft-stats" AddLabel="@L["WorldBuilder.Drafts.Stats.Use"]"
+                                                                      EmptyText="@L["WorldBuilder.Drafts.Stats.None"]" OnAdd="key => PickStatsAsync(d, key)" />
+                                                    </div>
+                                                }
+                                            }
                                         }
                                         else if (d.Kind == DraftKinds.Place)
                                         {
@@ -213,7 +232,7 @@
                                     <li class="@(d.Expanded ? "done" : "")">
                                         <LucideIcon IconName="@(d.Expanded ? "circle-check" : "circle")" Size="16" />
                                         <span>@d.Name</span>
-                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + L["WorldBuilder.Save.AlsoCast"] : "")@(d.Kind == DraftKinds.Place && d.OnMap ? " · " + L["WorldBuilder.Save.AlsoOnMap"] : "")@(d.Bestiary && IsCreature(d) ? " · " + L["WorldBuilder.Save.AlsoBestiary"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
+                                        <span class="small-muted">@KindLabel(d)@(d.Kind == DraftKinds.Npc && d.Cast ? " · " + (d.Stats == null ? L["WorldBuilder.Save.AlsoCast"] : L["WorldBuilder.Save.AlsoCastAs", d.Stats.Shown]) : "")@(d.Kind == DraftKinds.Place && d.OnMap ? " · " + L["WorldBuilder.Save.AlsoOnMap"] : "")@(d.Bestiary && IsCreature(d) ? " · " + L["WorldBuilder.Save.AlsoBestiary"] : "")@(d.Expanded ? "" : " · " + L["WorldBuilder.Save.PitchOnly"])</span>
                                     </li>
                                 }
                             </ul>
@@ -334,6 +353,8 @@
         focused = null;
         outlineChange = null;
         asking = new();
+        picking = null;
+        creatures = null;
         current = 0;
         error = null;
         saving = false;
@@ -426,6 +447,7 @@
             ct.ThrowIfCancellationRequested();
             bundle = outline;
             focused = null;
+            picking = null;
             asking = new();
             current = 1;
         });
@@ -442,9 +464,66 @@
             bundle = revised;
             // Drafts the change kept are the same objects, so the shown one and the open boxes stay where they still apply.
             if (focused != null && !revised.Drafts.Contains(focused)) focused = null;
+            if (picking != null && !revised.Drafts.Contains(picking)) picking = null;
             asking = asking.Where(a => revised.Find(a.Key) != null).ToDictionary(a => a.Key, a => a.Value);
             outlineChange = null;
         });
+    }
+
+    /// <summary>The system has creatures with stat blocks, so a person added to the cast can start from one.</summary>
+    private bool HasCreatures => types.Any(t => t.ActorBlueprint);
+
+    private ContentTypeDefinition? CreatureType => types.FirstOrDefault(t => t.ActorBlueprint);
+
+    /// <summary>The draft whose stats are being picked, and the creatures to pick from: loaded the first time, keyed
+    /// "h|type|id" or "p|type|id" so a homebrew creature and a pack one with the same id stay apart.</summary>
+    private WorldDraft? picking;
+    private IReadOnlyList<ContentEntry> creatureOptions = Array.Empty<ContentEntry>();
+    private Dictionary<string, LibraryItem>? creatures;
+
+    private async Task TogglePickingAsync(WorldDraft draft)
+    {
+        if (picking == draft)
+        {
+            picking = null;
+            return;
+        }
+
+        if (creatures == null)
+        {
+            var items = await Builder.CreaturesAsync(Ctx.Campaign, Ctx.Access);
+            creatures = new Dictionary<string, LibraryItem>();
+            var options = new List<ContentEntry>();
+            foreach (var item in items)
+            {
+                var key = $"{(item.IsHomebrew ? "h" : "p")}|{item.Entry.Type}|{item.Entry.Id}";
+                if (!creatures.TryAdd(key, item)) continue;
+                options.Add(new ContentEntry { Id = key, Type = item.Entry.Type, Name = item.Entry.Name, Properties = item.Entry.Properties });
+            }
+
+            creatureOptions = options;
+        }
+
+        picking = draft;
+    }
+
+    private async Task PickStatsAsync(WorldDraft draft, string key)
+    {
+        if (creatures?.TryGetValue(key, out var item) != true) return;
+        draft.Stats = await Builder.CreatureAsync(Ctx.Campaign, Ctx.Access, item!);
+        draft.StatsChosen = true;
+        picking = null;
+        await JS.InvokeVoidAsync("codex.focus", $"{dialogId}-stats-{draft.Ref}-change");
+    }
+
+    private async Task ClearStatsAsync(WorldDraft draft)
+    {
+        draft.Stats = null;
+        draft.SuggestedStats = null;
+        draft.StatsChosen = true;
+        if (picking == draft) picking = null;
+        // The button pressed is gone with the stats, so focus goes to the one that picks them again.
+        await JS.InvokeVoidAsync("codex.focus", $"{dialogId}-stats-{draft.Ref}-change");
     }
 
     private void ToggleAsk(WorldDraft draft)

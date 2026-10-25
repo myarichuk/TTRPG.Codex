@@ -97,14 +97,66 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
                 type = d.Type,
                 name = string.IsNullOrWhiteSpace(d.Name) ? d.OutlineName : d.Name.Trim(),
                 pitch = d.Pitch,
-                links = d.Links
+                links = d.Links,
+                stats = d.Stats?.Name ?? d.SuggestedStats
             }, PromptJson)).ToList(),
-            instruction);
+            instruction,
+            CreatureTypes(system).Count > 0);
 
         var rules = new BundleRules(recipe.Drafts, TypeSpellings(types, campaign.SystemId), pages.Select(p => p.Slug).ToList());
-        return await Unusable(() => previous == null
+        var bundle = await Unusable(() => previous == null
             ? assistant.OutlineWorldAsync(request, rules, ct)
             : assistant.ReviseWorldAsync(request, rules, previous, ct));
+        await FindStatsAsync(campaign, access, bundle);
+        return bundle;
+    }
+
+    /// <summary>The system's types whose entries can stand on the table with a stat block (monsters).</summary>
+    private static List<string> CreatureTypes(SystemDefinition? system) =>
+        system?.EntityTypes.Where(t => t.ActorBlueprint).Select(t => t.Type).ToList() ?? new List<string>();
+
+    /// <summary>The Library creatures a person's stats may come from, as the DM reads them: the campaign's packs and its homebrew.</summary>
+    public async Task<IReadOnlyList<LibraryItem>> CreaturesAsync(CampaignDocument campaign, CampaignAccess access)
+    {
+        var items = new List<LibraryItem>();
+        foreach (var type in CreatureTypes(catalog.GetDefinition(campaign.SystemId)))
+        {
+            items.AddRange(await library.OptionsAsync(campaign, access, type, Lang));
+        }
+
+        return items;
+    }
+
+    /// <summary>Finds the creature each person's suggested stats name in the Library. Only an exact name (or id) counts: a near
+    /// miss would give the person the wrong stat block, and a blank sheet is the safer start.</summary>
+    public async Task FindStatsAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle)
+    {
+        var system = catalog.GetDefinition(campaign.SystemId);
+        var wanted = bundle.Drafts.Where(d => d.Kind == DraftKinds.Npc && d is { StatsChosen: false, Stats: null } && !string.IsNullOrWhiteSpace(d.SuggestedStats)).ToList();
+        foreach (var draft in wanted)
+        {
+            var name = draft.SuggestedStats!.Trim();
+            foreach (var type in CreatureTypes(system))
+            {
+                // As the packs name it (the prompt asks for the English name), then in the DM's language, for a model that translated it anyway.
+                var exact = (await library.SearchAsync(campaign, access, name, type, limit: 20)).FirstOrDefault(i => Names(i, name))
+                            ?? (await library.SearchAsync(campaign, access, name, type, limit: 20, culture: Lang)).FirstOrDefault(i => Names(i, name));
+                if (exact == null) continue;
+                draft.Stats = await CreatureAsync(campaign, access, exact);
+                break;
+            }
+        }
+
+        static bool Names(LibraryItem item, string name) =>
+            string.Equals(item.Entry.Name.Trim(), name, StringComparison.OrdinalIgnoreCase) || string.Equals(item.Entry.Id, name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>A Library creature as a draft records it: the pack's own name, which the model reads, and the one the DM reads.</summary>
+    public async Task<CreatureRef> CreatureAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item)
+    {
+        var shown = item.IsHomebrew ? item.Entry.Name : (await library.GetAsync(campaign, access, item.Entry.Type, item.Entry.Id, Lang))?.Entry.Name ?? item.Entry.Name;
+        var name = item.IsHomebrew ? item.Entry.Name : (await library.GetAsync(campaign, access, item.Entry.Type, item.Entry.Id))?.Entry.Name ?? item.Entry.Name;
+        return new CreatureRef(item.Entry.Type, item.Entry.Id, item.IsHomebrew, name, shown);
     }
 
     // Names in the DM's language stay readable in the prompt rather than becoming \u escapes.
@@ -248,10 +300,12 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         var actors = new List<ActorDocument>();
         foreach (var draft in Pending("cast").Where(d => d.Kind == DraftKinds.Npc && d.Cast))
         {
-            // The sheet starts blank. The page tells what the person hides, so it goes in the DM's notes, not the biography
-            // players read once the DM reveals them.
+            // The sheet starts from the creature picked for the person, or blank. The page tells what the person hides, so it
+            // goes in the DM's notes, not the biography players read once the DM reveals them.
             var notes = l["WorldBuilder.Cast.Note", draft.PageTitle ?? draft.Name.Trim()] + "\n\n" + WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false);
-            var actor = await cast.AddNpcAsync(draft.Name, null, notes, campaign, system, access)
+            // A creature that has gone since (its pack switched off, the homebrew deleted) leaves the blank sheet.
+            var creature = draft.Stats is { } stats ? await library.GetAsync(campaign, access, stats.Type, stats.Id, stats.Homebrew) : null;
+            var actor = await cast.AddNpcAsync(draft.Name, null, notes, campaign, system, access, creature)
                 ?? throw new LocalizedException("WorldBuilder.Error.OnlyDm");
             actors.Add(actor);
             Saved(draft, "cast", actor.Id);
