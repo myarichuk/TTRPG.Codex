@@ -1077,8 +1077,11 @@ else
         .OrderByDescending(entry => entry.Timestamp)
         .Take(20);
 
+    /// <summary>Who rolled. Like the turn banner, a creature the viewer can't see is never named (nor its id shown).</summary>
     private string ResolveRollerName(RollLogEntry entry) =>
-        entry.ActorId != null ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? entry.ActorId : (entry.RollerUserId == CurrentUserId ? L["Combat.You"] : entry.RollerUserId == Campaign.OwnerId ? L["Combat.Dm"] : L["Combat.Player"]);
+        entry.ActorId != null
+            ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? (Access.IsDm ? entry.ActorId : L["Combat.SomeoneUnseen"])
+            : (entry.RollerUserId == CurrentUserId ? L["Combat.You"] : entry.RollerUserId == Campaign.OwnerId ? L["Combat.Dm"] : L["Combat.Player"]);
 
     public async ValueTask DisposeAsync()
     {

@@ -17,6 +17,7 @@
   <data name="Layout.User.AiSettings" xml:space="preserve"><value>הגדרות בינה מלאכותית</value></data>
   <data name="Layout.User.AiSettingsLabel" xml:space="preserve"><value>{0}: הגדרות בינה מלאכותית</value></data>
   <data name="Layout.SignOut" xml:space="preserve"><value>התנתקות</value></data>
+  <data name="Layout.Menu" xml:space="preserve"><value>תפריט</value></data>
   <data name="Layout.SignIn" xml:space="preserve"><value>התחברות</value></data>
   <data name="Layout.SkipLink" xml:space="preserve"><value>דילוג לתוכן הראשי</value></data>
   <data name="Layout.Reconnect.Title" xml:space="preserve"><value>החיבור אבד</value></data>

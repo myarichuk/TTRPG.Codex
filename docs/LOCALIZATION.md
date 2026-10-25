@@ -68,7 +68,7 @@ What is translated today (all machine-drafted; the English text stays authoritat
 | Rules text and names: creatures, magic items, equipment | yes | yes (own draft) |
 
 Hebrew terminology follows the community Hebrew SRD (5esrd.co.il) as a vocabulary reference only: see
-[i18n-he-terms.md](i18n-he-terms.md) for every term decision and [i18n-he-native-review.md](i18n-he-native-review.md) for the names a Hebrew speaker should confirm (languages, weapon masteries and properties, class and subclass feature names). The Hebrew drafts keep numbers, dice (`8d6`) and units (feet)
+[i18n-he-terms.md](i18n-he-terms.md) for every term decision and [i18n-he-native-review.md](i18n-he-native-review.md) for the names a Hebrew speaker should confirm (languages, weapon masteries and properties, class and subclass feature names; all creature, item and equipment names are in [i18n-he-names.md](i18n-he-names.md)). The Hebrew drafts keep numbers, dice (`8d6`) and units (feet)
 exactly as in the English so the checker can verify them; `tools/Codex.TranslationCheck/translator-prompt-he*.md` (spells, character options, creatures, items and equipment),
 `prepare_flavor.py`, `merge_he_batches.py` and `harmonize_he_gear.py` (makes gear words in creatures and items match the equipment names) are the pipeline. Properties whose values are English display words used as data
 (`school`, `classes`, `size`, tags) stay canonical and are shown through the system's value translations.

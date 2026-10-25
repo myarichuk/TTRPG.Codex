@@ -7,11 +7,19 @@
   <data name="App.Loading" xml:space="preserve"><value>טוען…</value></data>
   <data name="Language.Label" xml:space="preserve"><value>שפה</value></data>
   <data name="Language.Change" xml:space="preserve"><value>החלפת שפה</value></data>
+  <data name="Language.Current" xml:space="preserve"><value>שפה: {0}</value></data>
   <data name="Common.Back" xml:space="preserve"><value>חזרה</value></data>
   <data name="Common.Next" xml:space="preserve"><value>הבא</value></data>
   <data name="Common.Cancel" xml:space="preserve"><value>ביטול</value></data>
   <data name="Common.Save" xml:space="preserve"><value>שמירה</value></data>
   <data name="Common.Close" xml:space="preserve"><value>סגירה</value></data>
   <data name="Common.Dismiss" xml:space="preserve"><value>סגירת ההודעה</value></data>
+  <data name="Common.Unsaved.Title" xml:space="preserve"><value>לצאת בלי לשמור?</value></data>
+  <data name="Common.Unsaved.Body" xml:space="preserve"><value>יש בדף הזה שינויים שעדיין לא נשמרו. אם תצאו עכשיו, הם יאבדו.</value></data>
+  <data name="Common.Unsaved.Leave" xml:space="preserve"><value>לבטל את השינויים ולצאת</value></data>
+  <data name="Common.Unsaved.Stay" xml:space="preserve"><value>להמשיך לערוך</value></data>
+  <data name="Common.Unsaved.DiscardTitle" xml:space="preserve"><value>לבטל את השינויים?</value></data>
+  <data name="Common.Unsaved.DiscardBody" xml:space="preserve"><value>השינויים כאן לא נשמרו ויאבדו.</value></data>
+  <data name="Common.Unsaved.Discard" xml:space="preserve"><value>לבטל את השינויים</value></data>
   <data name="Count.Rounds" xml:space="preserve"><value>{0, plural, one{סבב #} two{# סבבים} other{# סבבים}}</value></data>
 </root>

@@ -170,7 +170,8 @@ else
 
 @if (Ctx.IsDm)
 {
-    <dialog id="edit-location-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="edit-location-title" @oncancel="CloseLocationAsync">
+    <UnsavedChangesGuard @ref="guard" IsDirty="LocationDirty" />
+    <dialog id="edit-location-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="edit-location-title" @oncancel="BackFromLocationAsync">
         @if (editingLocation != null && editingRegion != null)
         {
             <form @onsubmit="SaveLocationAsync" @onsubmit:preventDefault="true">
@@ -194,7 +195,7 @@ else
                     }
                 </div>
                 <div class="dialog-actions">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="CloseLocationAsync">@L["Common.Back"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="BackFromLocationAsync">@L["Common.Back"]</CodexButton>
                     <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" data-testid="location-save">@L["Campaign.World.SavePlace"]</CodexButton>
                 </div>
             </form>
@@ -208,6 +209,13 @@ else
     private RegionDocument? editingRegion;
     private LocationDocument? editingLocation;
     private string? locationError;
+    private UnsavedChangesGuard guard = null!;
+    // The place's name and description as the dialog opened (its art is stored at once, so it never counts).
+    private string locationSnapshot = string.Empty;
+
+    private string LocationSnapshot() => editingLocation == null ? string.Empty : editingLocation.Name + '\u0001' + editingLocation.Description;
+
+    private bool LocationDirty() => editingLocation != null && LocationSnapshot() != locationSnapshot;
 
     private List<RegionDocument>? regions;
     private List<ILocationDefinition> packLocations = new();
@@ -351,9 +359,18 @@ else
             HasArt = location.HasArt,
             ArtVersion = location.ArtVersion
         };
+        locationSnapshot = LocationSnapshot();
         locationError = null;
+        // Escape goes through BackFromLocationAsync, which asks before throwing edits away.
+        await JS.InvokeVoidAsync("codex.guardModal", "edit-location-dialog");
         await JS.InvokeVoidAsync("codex.showModal", "edit-location-dialog");
         await JS.InvokeVoidAsync("codex.focus", "loc-edit-name");
+    }
+
+    /// <summary>Back or Escape: closes the dialog, asking first when the name or description was changed.</summary>
+    private async Task BackFromLocationAsync()
+    {
+        if (await guard.ConfirmDiscardAsync()) await CloseLocationAsync();
     }
 
     private async Task CloseLocationAsync()

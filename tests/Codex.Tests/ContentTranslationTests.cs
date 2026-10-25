@@ -199,7 +199,7 @@ public class ContentTranslationTests : IDisposable
         {
             Attributes = { ["str"] = new LabelTranslation { Label = "Сила", Abbreviation = "СИЛ" } },
             Conditions = { ["Poisoned"] = "Отравлен" },
-            Values = { ["Tiny"] = "Крошечный" },
+            Values = { ["Tiny"] = "Крошечный", ["gp"] = "зм" },
             ActorFields = { ["size"] = new LabelTranslation { Options = { ["Large"] = "Большой" } } }
         };
 
@@ -209,6 +209,8 @@ public class ContentTranslationTests : IDisposable
         Assert.Equal("Крошечный", size.Display("Tiny"));   // shared value
         Assert.Equal("Большой", size.Display("Large"));    // this field's own option
         Assert.Equal("Huge", size.Display("Huge"));        // untranslated: unchanged
+        Assert.Equal("25 зм", size.Display("25 gp"));      // a price: amount kept, coin translated
+        Assert.Equal("25 sp", size.Display("25 sp"));      // coin without a translation: unchanged
         Assert.Equal(new[] { "Tiny", "Large" }, size.Options);
         Assert.Equal("Отравлен", ru.DisplayCondition("Poisoned"));
         Assert.Equal("Крошечный", ru.DisplayValue("Tiny"));   // a shared word the console shows (a rest, a damage type)

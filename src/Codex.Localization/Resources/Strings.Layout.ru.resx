@@ -17,6 +17,7 @@
   <data name="Layout.User.AiSettings" xml:space="preserve"><value>Настройки ИИ</value></data>
   <data name="Layout.User.AiSettingsLabel" xml:space="preserve"><value>{0}: настройки ИИ</value></data>
   <data name="Layout.SignOut" xml:space="preserve"><value>Выйти</value></data>
+  <data name="Layout.Menu" xml:space="preserve"><value>Меню</value></data>
   <data name="Layout.SignIn" xml:space="preserve"><value>Войти</value></data>
   <data name="Layout.SkipLink" xml:space="preserve"><value>Перейти к основному содержимому</value></data>
   <data name="Layout.Reconnect.Title" xml:space="preserve"><value>Соединение потеряно</value></data>

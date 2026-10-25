@@ -13,6 +13,7 @@
 @inject ILogger<CastSection> Logger
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject IUserRepository UserRepo
 
 @{
     var pcs = Ctx.Actors.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList();
@@ -99,7 +100,7 @@
                             <option value="">@L["Campaign.Cast.Nobody"]</option>
                             @foreach (var member in Ctx.Campaign.Members)
                             {
-                                <option value="@member.UserId">@member.UserId</option>
+                                <option value="@member.UserId">@memberNames.GetValueOrDefault(member.UserId, member.UserId)</option>
                             }
                         </select>
                     </div>
@@ -157,6 +158,8 @@
     private string newName = string.Empty;
     private ActorKind newKind = ActorKind.NonPlayerCharacter;
     private string newOwnerId = string.Empty;
+    // Usernames for the DM's "Played by" picker, loaded when the create dialog opens.
+    private Dictionary<string, string> memberNames = new();
     private string? createError;
     private string aiConcept = string.Empty;
     private ActorKind aiKind = ActorKind.PlayerCharacter;
@@ -243,6 +246,7 @@
         newName = string.Empty;
         newKind = Ctx.IsDm ? ActorKind.NonPlayerCharacter : ActorKind.PlayerCharacter;
         newOwnerId = Ctx.IsDm ? string.Empty : Ctx.UserId;
+        if (Ctx.IsDm) memberNames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
         await JS.InvokeVoidAsync("codex.showModal", "create-actor-dialog");
         await JS.InvokeVoidAsync("codex.focus", "ca-name");
     }

@@ -1,0 +1,24 @@
+@* Asks before leaving a page with unsaved work: a link or back button inside the app opens a confirmation,
+   closing or reloading the tab gets the browser's own prompt. IsDirty is asked at the moment of navigation,
+   so text bound on change (committed by the blur a link click causes) still counts. *@
+<NavigationLock OnBeforeInternalNavigation="ConfirmAsync" ConfirmExternalNavigation="@IsDirty()" />
+<ConfirmDialog @ref="confirm" />
+
+@code {
+    [Parameter, EditorRequired] public Func<bool> IsDirty { get; set; } = () => false;
+
+    private ConfirmDialog confirm = null!;
+
+    /// <summary>For discards inside the page (Cancel, opening another entry): true when nothing is unsaved or the user agrees to lose it.</summary>
+    public async Task<bool> ConfirmDiscardAsync() =>
+        !IsDirty() || await confirm.ShowAsync(L["Common.Unsaved.DiscardTitle"], L["Common.Unsaved.DiscardBody"],
+            L["Common.Unsaved.Discard"], isDestructive: true, cancel: L["Common.Unsaved.Stay"]);
+
+    private async Task ConfirmAsync(LocationChangingContext context)
+    {
+        if (!IsDirty()) return;
+        var leave = await confirm.ShowAsync(L["Common.Unsaved.Title"], L["Common.Unsaved.Body"],
+            L["Common.Unsaved.Leave"], isDestructive: true, cancel: L["Common.Unsaved.Stay"]);
+        if (!leave) context.PreventNavigation();
+    }
+}

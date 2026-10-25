@@ -205,7 +205,7 @@
                         {
                             var others = SessionNotes.WithNames(note, ActorsById, Access.IsDm);
                             <p class="mb-0">
-                                <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, ActorsById, Access.IsDm)</strong>@if (others.Count > 0) { <span class="small-muted"> @L["Combat.Notes.To", string.Join(", ", others)]</span> }:
+                                <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, ActorsById, Access.IsDm)</strong>@if (others.Count > 0) { <span class="small-muted">@(" " + L["Combat.Notes.To", string.Join(", ", others)])</span> }:
                                 <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q>
                             </p>
                         }

@@ -27,6 +27,7 @@
 @inject ILogger<ActorSheet> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
+@inject IUserRepository UserRepo
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
 
@@ -783,7 +784,7 @@ else
                                 <option value="">@L["Actor.Sheet.Nobody"]</option>
                                 @foreach (var member in campaign.Members)
                                 {
-                                    <option value="@member.UserId">@member.UserId</option>
+                                    <option value="@member.UserId">@memberNames.GetValueOrDefault(member.UserId, member.UserId)</option>
                                 }
                             </select>
                         </div>
@@ -804,6 +805,8 @@ else
 
     private bool loading = true;
     private CampaignDocument? campaign;
+    // Usernames for the DM's "Played by" picker.
+    private Dictionary<string, string> memberNames = new();
     private ActorDocument? actor;
     private CampaignAccess? access;
     private SystemDefinition? system;
@@ -1020,6 +1023,7 @@ else
 
         if (campaign != null && access != null)
         {
+            if (access.IsDm) memberNames = await MemberNames.LoadAsync(UserRepo, campaign);
             actor = await ActorRepo.GetVisibleAsync(ActorId, access);
             if (actor != null)
             {

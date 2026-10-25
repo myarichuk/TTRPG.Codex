@@ -48,7 +48,7 @@
   <data name="Session.Kind.Ruling" xml:space="preserve"><value>Ruling</value></data>
   <data name="Session.Kind.FollowUp" xml:space="preserve"><value>Follow-up</value></data>
   <data name="Session.Round" xml:space="preserve"><value>Round {0}</value></data>
-  <data name="Session.RoundTurn" xml:space="preserve"><value>Round {0} · {1}'s turn</value></data>
+  <data name="Session.RoundTurn" xml:space="preserve"><value>Round {0} · turn: {1}</value></data>
   <data name="Session.To" xml:space="preserve"><value>to {0}</value></data>
   <data name="Session.AddNoteLabel" xml:space="preserve"><value>Add a note</value></data>
   <data name="Session.NoteVisibility" xml:space="preserve"><value>Note visibility</value></data>

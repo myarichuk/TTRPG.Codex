@@ -208,7 +208,7 @@
     private string systemId = string.Empty;
     private string rulesEnforcement = "inherit";
     private HashSet<string> activePacks = new();
-    private readonly Dictionary<string, string> usernames = new();
+    private Dictionary<string, string> usernames = new();
 
     private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
@@ -220,11 +220,7 @@
         rulesEnforcement = string.IsNullOrWhiteSpace(Ctx.Campaign.RulesEnforcement) ? "inherit" : Ctx.Campaign.RulesEnforcement;
         activePacks = Ctx.Campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        usernames.Clear();
-        foreach (var member in Ctx.Campaign.Members)
-        {
-            usernames[member.UserId] = (await UserRepo.GetUserByIdAsync(member.UserId))?.Username ?? member.UserId;
-        }
+        usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
     }
 
     private string RoleLabel(CampaignRole role) => role switch

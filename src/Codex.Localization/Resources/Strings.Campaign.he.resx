@@ -387,6 +387,10 @@
   <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לערוך את הוויקי.</value></data>
   <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>שותף עם הקבוצה.</value></data>
   <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>"{0}" נמחק.</value></data>
+  <data name="Campaign.Wiki.Delete.Title" xml:space="preserve"><value>למחוק את „{0}”?</value></data>
+  <data name="Campaign.Wiki.Delete.Body" xml:space="preserve"><value>הדף יימחק לכולם ולא יהיה אפשר להחזיר אותו.</value></data>
+  <data name="Campaign.Wiki.DeleteNote.Title" xml:space="preserve"><value>למחוק את ההערה?</value></data>
+  <data name="Campaign.Wiki.DeleteNote.Body" xml:space="preserve"><value>ההערה תימחק לכל מי שיכול היה לקרוא אותה ולא יהיה אפשר להחזיר אותה.</value></data>
   <data name="Campaign.Wiki.AiDraftReady" xml:space="preserve"><value>טיוטת ה-AI בעורך. עיינו ושמרו.</value></data>
   <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>לא הוגדר ספק AI. הוסיפו אחד בהגדרות ה-AI (למעלה בצד).</value></data>
   <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>טיוטת ה-AI נכשלה: {0}</value></data>

@@ -380,3 +380,7 @@ Machine-chosen Hebrew names where the community glossary was silent. A Hebrew-sp
 | warrior-of-the-open-hand | 6 | Wholeness of Body | 'שלמות הגוף' |
 | warrior-of-the-open-hand | 11 | Fleet Step | 'צעד זריז' |
 | warrior-of-the-open-hand | 17 | Quivering Palm | 'כף רועדת' |
+
+## Creature, magic item and equipment names
+
+The Sonnet agents coined or transliterated many of these (for example גלימן, בולט, דארקמנטל, אוג׳ר, וויברן). The full English | Hebrew list is in [i18n-he-names.md](i18n-he-names.md) (generated from `srd-5.2.1-he`). Corrections go in `content/systems/srd5e/packs/srd-5.2.1-he/{monster,magic-item,equipment}/`.

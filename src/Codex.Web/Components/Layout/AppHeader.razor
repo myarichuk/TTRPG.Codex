@@ -25,41 +25,65 @@
 
     <div class="header-spacer"></div>
 
+    @* Wide screens show language, theme and sign-out in the header; narrow ones fold them into one menu. *@
     <div class="header-actions">
-    <LanguagePicker />
-    <button type="button" class="icon-btn theme-toggle" @onclick="ToggleThemeAsync"
-            aria-label="@(theme == "dark" ? L["Layout.Theme.ToParchment"] : L["Layout.Theme.ToDark"])"
-            title="@(theme == "dark" ? L["Layout.Theme.Parchment"] : L["Layout.Theme.Dark"])">
-        @* Keyed on the theme so the icon is re-created, and its entrance animation replays, on each toggle. *@
-        <LucideIcon @key="theme" IconName="@(theme == "dark" ? "sun" : "moon")" Size="18" />
-    </button>
+        <div class="header-wide">
+            <LanguagePicker Dropdown="true" />
+            <button type="button" class="icon-btn theme-toggle" @onclick="ToggleThemeAsync"
+                    aria-label="@ThemeAction" title="@(theme == "dark" ? L["Layout.Theme.Parchment"] : L["Layout.Theme.Dark"])">
+                @* Keyed on the theme so the icon is re-created, and its entrance animation replays, on each toggle. *@
+                <LucideIcon @key="theme" IconName="@ThemeIcon" Size="18" />
+            </button>
+        </div>
 
-    <AuthorizeView>
-        <Authorized>
-            @{
-                var username = context.User.Identity?.Name ?? L["Layout.User.Fallback"];
-            }
-            <a href="/settings/ai" class="user-chip" title="@L["Layout.User.AiSettings"]" aria-label="@L["Layout.User.AiSettingsLabel", username]">
-                <span class="avatar" aria-hidden="true">@Initial(username)</span>
-                <span>@username</span>
-                <LucideIcon IconName="sparkles" Size="14" Class="chip-icon" />
-            </a>
-            <form method="post" action="/logout" class="d-inline">
-                <AntiforgeryToken />
-                <button type="submit" class="icon-btn" aria-label="@L["Layout.SignOut"]" title="@L["Layout.SignOut"]">
-                    <LucideIcon IconName="log-out" Size="18" />
+        <AuthorizeView>
+            <Authorized>
+                @{
+                    var username = context.User.Identity?.Name ?? L["Layout.User.Fallback"];
+                }
+                <a href="/settings/ai" class="user-chip" title="@L["Layout.User.AiSettings"]" aria-label="@L["Layout.User.AiSettingsLabel", username]">
+                    <span class="avatar" aria-hidden="true">@Initial(username)</span>
+                    <span>@username</span>
+                    <LucideIcon IconName="sparkles" Size="14" Class="chip-icon" />
+                </a>
+                <form method="post" action="/logout" class="d-inline header-wide">
+                    <AntiforgeryToken />
+                    <button type="submit" class="icon-btn" aria-label="@L["Layout.SignOut"]" title="@L["Layout.SignOut"]">
+                        <LucideIcon IconName="log-out" Size="18" />
+                    </button>
+                </form>
+            </Authorized>
+            <NotAuthorized>
+                <a href="/login" class="cx-btn cx-plaque cx-sm">@L["Layout.SignIn"]</a>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <details class="popover-menu header-narrow">
+            <summary class="icon-btn" aria-label="@L["Layout.Menu"]"><LucideIcon IconName="menu" Size="20" /></summary>
+            <div class="popover-panel menu-panel">
+                <LanguagePicker />
+                <button type="button" class="menu-item" @onclick="ToggleThemeAsync">
+                    <LucideIcon IconName="@ThemeIcon" Size="18" /><span>@ThemeAction</span>
                 </button>
-            </form>
-        </Authorized>
-        <NotAuthorized>
-            <a href="/login" class="cx-btn cx-plaque cx-sm">@L["Layout.SignIn"]</a>
-        </NotAuthorized>
-    </AuthorizeView>
+                <AuthorizeView>
+                    <Authorized>
+                        <form method="post" action="/logout">
+                            <AntiforgeryToken />
+                            <button type="submit" class="menu-item"><LucideIcon IconName="log-out" Size="18" /><span>@L["Layout.SignOut"]</span></button>
+                        </form>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </details>
     </div>
 </header>
 
 @code {
     private string theme = "dark";
+
+    private string ThemeIcon => theme == "dark" ? "sun" : "moon";
+
+    private string ThemeAction => theme == "dark" ? L["Layout.Theme.ToParchment"] : L["Layout.Theme.ToDark"];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

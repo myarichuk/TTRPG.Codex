@@ -428,6 +428,32 @@ hr { border-color: var(--border); opacity: 1; }
 .app-nav a.active, .app-nav a[aria-current="page"] { background: var(--accent-soft); border-color: var(--border-strong); color: var(--text); font-weight: 700; }
 .header-spacer { flex: 1; }
 .header-actions { display: flex; align-items: center; gap: 0.4rem; }
+.header-wide { display: flex; align-items: center; gap: 0.4rem; }
+.header-narrow { display: none; }
+
+/* A <details> menu: works without the circuit; app-startup.js closes it on an outside click or Escape. */
+.popover-menu { position: relative; }
+.popover-menu > summary { list-style: none; cursor: pointer; }
+.popover-menu > summary::-webkit-details-marker { display: none; }
+.popover-panel {
+    position: absolute; top: calc(100% + 0.4rem); inset-inline-end: 0; z-index: 1010; min-width: 12rem;
+    display: flex; flex-direction: column; gap: 0.25rem; padding: 0.5rem;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-2, 0 8px 24px rgba(0,0,0,.45));
+}
+.lang-summary {
+    display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; padding: 0 0.6rem;
+    border: 1px solid transparent; border-radius: var(--radius-md); color: var(--text-2); font-size: 0.9rem;
+}
+.lang-summary:hover, .lang-menu[open] > .lang-summary { background: var(--surface-2); color: var(--text); }
+.popover-panel .lang-picker { flex-direction: column; align-items: stretch; }
+.popover-panel .lang-btn { min-height: 40px; text-align: start; padding: 0 0.75rem; }
+.menu-panel .lang-picker { padding-bottom: 0.25rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--rule, var(--border)); }
+.menu-item {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: 44px; padding: 0 0.75rem;
+    background: none; border: 0; border-radius: var(--radius-sm, 4px); color: var(--text-2); font: inherit; text-align: start; cursor: pointer;
+}
+.menu-item:hover { background: var(--surface-2); color: var(--text); }
+.menu-panel form { margin: 0; }
 .user-chip {
     display: inline-flex; align-items: center; gap: 0.5rem;
     padding: 0.25rem 0.7rem 0.25rem 0.25rem; border-radius: 999px;
@@ -856,7 +882,11 @@ dialog.codex-dialog::backdrop {
     .app-header { gap: 0.5rem; }
     .app-nav { margin-inline-start: 0; }
     .app-nav a { padding: 0.5rem 0.6rem; }
-    .app-nav a span { display: none; }
+    /* Icon-only links keep their text for screen readers. */
+    .app-nav a span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .app-header .brand > span:not(.brand-mark) { display: none; }
+    .header-wide { display: none !important; }
+    .header-narrow { display: block; }
     .user-chip span:not(.avatar) { display: none; }
     .user-chip { padding-inline-end: 0.25rem; }
     .page { padding: 1.25rem var(--gutter) 4rem; }
@@ -1211,7 +1241,8 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .participant.current .init-plaque { background: var(--accent); color: var(--on-accent); }
 .hp-bar.hp-numbered { position: relative; height: 22px; margin-top: 0.4rem; }
 .hp-bar.hp-numbered .hp-over {
-    position: absolute; inset: 0; display: grid; place-items: center; font-size: 0.9rem; font-weight: 700;
+    /* not the fill: .hp-bar > span would otherwise paint this overlay full width in the band colour */
+    position: absolute; inset: 0; display: grid; place-items: center; background: none; font-size: 0.9rem; font-weight: 700;
     color: var(--text); text-shadow: 0 1px 2px #000; font-variant-numeric: lining-nums tabular-nums;
 }
 .cond-strip { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }

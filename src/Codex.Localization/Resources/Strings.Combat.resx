@@ -190,8 +190,8 @@
   <data name="Combat.Notes.NothingMatches" xml:space="preserve"><value>Nothing matches.</value></data>
   <data name="Combat.Notes.BetweenEncounters" xml:space="preserve"><value>Between encounters</value></data>
   <data name="Combat.Round" xml:space="preserve"><value>Round {0}</value></data>
-  <data name="Combat.TurnOf" xml:space="preserve"><value>{0}'s turn</value></data>
-  <data name="Combat.RoundTurn" xml:space="preserve"><value>Round {0} · {1}'s turn</value></data>
+  <data name="Combat.TurnOf" xml:space="preserve"><value>Turn: {0}</value></data>
+  <data name="Combat.RoundTurn" xml:space="preserve"><value>Round {0} · turn: {1}</value></data>
   <data name="Combat.Notes.SecretPill" xml:space="preserve"><value>secret</value></data>
   <data name="Combat.Notes.Correct" xml:space="preserve"><value>Correct this note</value></data>
   <data name="Combat.Notes.Remove" xml:space="preserve"><value>Remove this note</value></data>

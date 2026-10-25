@@ -20,6 +20,7 @@
 @inject NavigationManager Nav
 
 <PageTitle>@(Title ?? L["Session.Title"]) | TTRPG.Codex</PageTitle>
+<UnsavedChangesGuard IsDirty="IsDirty" />
 
 @if (loading)
 {
@@ -161,7 +162,7 @@ else
                             </div>
                             @if (note.Speaker != null)
                             {
-                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted"> @L["Session.To", string.Join(", ", note.With)]</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></q></p>
+                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted">@(" " + L["Session.To", string.Join(", ", note.With)])</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></q></p>
                             }
                             else
                             {
@@ -255,6 +256,16 @@ else
     private string journalBody = "";
     private DateTime? journalSavedAt;
     private Flash? flash;
+
+    /// <summary>Whether any box on the page (details, recap, summary, journal, a note being written) differs from what is stored.</summary>
+    private bool IsDirty()
+    {
+        if (session == null || access == null) return false;
+        if (!string.IsNullOrWhiteSpace(newNoteContent)) return true;
+        if (journalBody != mentions.ForEditing(journal?.Body ?? "")) return true;
+        return access.IsDm && (editTitle.Trim() != (session.Title ?? "").Trim() || editStatus != session.Status
+            || editRecap != mentions.ForEditing(session.Recap ?? "") || editDmSummary != mentions.ForEditing(session.DmSummary ?? ""));
+    }
 
     /// <summary>One note on the page. <see cref="Speaker"/> is set for a line of dialogue, already named for this viewer.</summary>
     private sealed record NoteRow(string AuthorId, string Text, DateTime When, string Label, bool AtTable, string? Speaker = null,

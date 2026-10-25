@@ -106,20 +106,14 @@
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
-    private readonly Dictionary<string, string> usernames = new();
+    private Dictionary<string, string> usernames = new();
     private SessionDocument? latestSession;
 
     private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
     protected override async Task OnParametersSetAsync()
     {
-        usernames.Clear();
-        foreach (var member in Ctx.Campaign.Members)
-        {
-            var user = await UserRepo.GetUserByIdAsync(member.UserId);
-            usernames[member.UserId] = user?.Username ?? member.UserId;
-        }
-
+        usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
         latestSession = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).FirstOrDefault();
     }
 

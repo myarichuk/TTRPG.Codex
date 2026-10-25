@@ -91,8 +91,15 @@ public class FieldDefinition
             if (string.Equals(key, value, StringComparison.OrdinalIgnoreCase)) return label;
         }
 
+        // A price such as "25 gp": the amount stays, the coin is shown by the translation of "gp".
+        var price = Price.Match(value);
+        if (price.Success && OptionLabels.TryGetValue(price.Groups[2].Value, out var coin)) return $"{price.Groups[1].Value} {coin}";
+
         return value;
     }
+
+    private static readonly System.Text.RegularExpressions.Regex Price =
+        new(@"^([\d,]+) (cp|sp|ep|gp|pp)$", System.Text.RegularExpressions.RegexOptions.Compiled);
 }
 
 public record GraphEdgeSchema(

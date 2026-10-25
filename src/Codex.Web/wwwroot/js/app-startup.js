@@ -256,6 +256,24 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
     }
 })();
 
+// <details class="popover-menu"> menus (header language and phone menu): one open at a time, closed by an
+// outside click or Escape, which then returns focus to the menu's summary.
+(function () {
+    function closeAll(except) {
+        document.querySelectorAll("details.popover-menu[open]").forEach(function (d) { if (d !== except) d.open = false; });
+    }
+    document.addEventListener("click", function (e) {
+        closeAll(e.target instanceof Element ? e.target.closest("details.popover-menu") : null);
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape") return;
+        const open = document.querySelector("details.popover-menu[open]");
+        if (!open) return;
+        open.open = false;
+        open.querySelector("summary")?.focus();
+    });
+})();
+
 // ---- Interop used by components ----
 window.codex = {
     // Theme: persisted per browser; the inline <head> script applies it before first paint.

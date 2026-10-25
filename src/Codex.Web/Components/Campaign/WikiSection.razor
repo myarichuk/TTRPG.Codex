@@ -13,6 +13,9 @@
 @* The world wiki: DM-written pages linked with [[Page title]], each DM-only or shared with the
    party; players discuss a page with notes (private to them and the DM, or for the whole party). *@
 
+<ConfirmDialog @ref="confirm" />
+<UnsavedChangesGuard IsDirty="IsDirty" />
+
 @if (pages == null)
 {
     <LoadingSkeleton />
@@ -304,6 +307,13 @@ else
     private string aiInstruction = string.Empty;
     private bool expanding;
     private string? loadedKey;
+    private ConfirmDialog confirm = null!;
+    // The editor's content as loaded or last saved, to tell whether leaving would lose anything.
+    private string savedDraft = string.Empty;
+
+    private bool IsDirty() => Mode == "edit" && DraftSnapshot() != savedDraft;
+
+    private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, string.Join(",", draft.Tags));
 
     private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
     private List<string> AllTags => (pages ?? new()).SelectMany(p => p.Tags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
@@ -330,6 +340,7 @@ else
         {
             var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
             draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty };
+            savedDraft = DraftSnapshot();
             return;
         }
 
@@ -343,6 +354,7 @@ else
                     Id = current.Id, CampaignId = current.CampaignId, Slug = current.Slug, Title = current.Title,
                     Body = current.Body, Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId
                 };
+                savedDraft = DraftSnapshot();
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTarget(current), Ctx.Access)).ToList();
                 if (mentions == null)
                 {
@@ -405,6 +417,7 @@ else
         if (await WikiRepo.TrySaveAsync(draft, Ctx.Access))
         {
             Ctx.Notify(Flash.Success(L["Campaign.Wiki.Saved", draft.Title]));
+            savedDraft = DraftSnapshot();
             loadedKey = null;
             Nav.NavigateTo($"{Ctx.BasePath}/wiki/{draft.Slug}");
         }
@@ -429,9 +442,12 @@ else
     private async Task DeleteAsync()
     {
         if (current == null) return;
+        if (!await confirm.ShowAsync(L["Campaign.Wiki.Delete.Title", current.Title], L["Campaign.Wiki.Delete.Body"], L["Campaign.Wiki.DeletePage"], isDestructive: true)) return;
         if (await WikiRepo.TryDeleteAsync(current.Id, Ctx.Access))
         {
             Ctx.Notify(Flash.Success(L["Campaign.Wiki.Deleted", current.Title]));
+            // the page is gone: nothing left to lose by leaving the editor
+            savedDraft = DraftSnapshot();
             loadedKey = null;
             Nav.NavigateTo($"{Ctx.BasePath}/wiki");
         }
@@ -483,6 +499,7 @@ else
     private async Task DeleteNoteAsync(NoteDocument note)
     {
         if (note.AuthorId != Ctx.UserId && !Ctx.IsDm) return;
+        if (!await confirm.ShowAsync(L["Campaign.Wiki.DeleteNote.Title"], L["Campaign.Wiki.DeleteNote.Body"], L["Campaign.Wiki.DeleteNote"], isDestructive: true)) return;
         await NoteRepo.DeleteNoteAsync(note.Id);
         loadedKey = null;
         await LoadAsync();

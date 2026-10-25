@@ -348,6 +348,61 @@ values:
   Medium Armor: Средние доспехи
   Heavy Armor: Тяжёлые доспехи
   Shields: Щиты
+  Medium or small: Средний или маленький
+  Lawful Good: Законно-добрый
+  Neutral Good: Нейтрально-добрый
+  Chaotic Good: Хаотично-добрый
+  Lawful Neutral: Законно-нейтральный
+  Neutral: Нейтральный
+  Chaotic Neutral: Хаотично-нейтральный
+  Lawful Evil: Законно-злой
+  Neutral Evil: Нейтрально-злой
+  Chaotic Evil: Хаотично-злой
+  Unaligned: Без мировоззрения
+  Any Alignment: Любое мировоззрение
+  aberration: аберрация
+  beast: зверь
+  celestial: небожитель
+  construct: конструкт
+  dragon: дракон
+  elemental: элементаль
+  fey: фея
+  fiend: исчадие
+  giant: великан
+  humanoid: гуманоид
+  monstrosity: чудовище
+  ooze: слизь
+  plant: растение
+  undead: нежить
+  swarm of tiny beasts: рой крошечных зверей
+  swarm of tiny undead: рой крошечной нежити
+  Rarity Varies: Различается
+  Wondrous Items: Чудесные предметы
+  Adventuring Gear: Снаряжение для приключений
+  Weapons: Оружие
+  Armor: Доспехи
+  Rings: Кольца
+  Potions: Зелья
+  Martial Melee Weapons: Воинское рукопашное оружие
+  Martial Ranged Weapons: Воинское дальнобойное оружие
+  Martial Weapons: Воинское оружие
+  Melee Weapons: Рукопашное оружие
+  Ranged Weapons: Дальнобойное оружие
+  Artisan's Tools: Инструменты ремесленников
+  Poison: Яд
+  Wands: Волшебные палочки
+  Staffs: Посохи
+  Musical Instruments: Музыкальные инструменты
+  Arcane Foci: Арканные фокусировки
+  Druidic Foci: Друидические фокусировки
+  Other Tools: Прочие инструменты
+  Gaming Sets: Игровые наборы
+  Ammunition: Боеприпасы
+  cp: мм
+  sp: см
+  ep: эм
+  gp: зм
+  pp: пм
   Short Rest: Короткий отдых
   Long Rest: Долгий отдых
   Dead: Мёртв

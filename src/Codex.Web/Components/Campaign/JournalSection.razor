@@ -9,6 +9,7 @@
    Nobody but the owner can read these - the repository filters by owner in the query. *@
 
 <ConfirmDialog @ref="confirm" />
+<UnsavedChangesGuard @ref="guard" IsDirty="IsDirty" />
 
 <div class="page-header mb-3">
     <div>
@@ -85,7 +86,7 @@ else
                         </div>
                         <div class="d-flex gap-2">
                             <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save">@L["Campaign.Journal.Save"]</CodexButton>
-                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => editing = null">@L["Campaign.Journal.Cancel"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CancelAsync">@L["Campaign.Journal.Cancel"]</CodexButton>
                         </div>
                     </form>
                 </section>
@@ -123,12 +124,32 @@ else
         }
     }
 
-    private void StartNew() => editing = new JournalEntryDocument { CampaignId = Ctx.Campaign.Id };
+    private UnsavedChangesGuard guard = null!;
+    // The open entry as it was when editing started, to tell whether closing it would lose anything.
+    private string editingSnapshot = string.Empty;
 
-    private void StartEdit(JournalEntryDocument entry) => editing = new JournalEntryDocument
+    private bool IsDirty() => editing != null && Snapshot(editing) != editingSnapshot;
+
+    private static string Snapshot(JournalEntryDocument entry) => string.Join('\u0001', entry.Title, entry.SessionId ?? "", entry.Body);
+
+    private async Task StartNew() => await OpenAsync(new JournalEntryDocument { CampaignId = Ctx.Campaign.Id });
+
+    private async Task StartEdit(JournalEntryDocument entry) => await OpenAsync(new JournalEntryDocument
     {
         Id = entry.Id, CampaignId = entry.CampaignId, OwnerUserId = entry.OwnerUserId, SessionId = entry.SessionId, Title = entry.Title, Body = mentions.ForEditing(entry.Body), CreatedAt = entry.CreatedAt
-    };
+    });
+
+    private async Task OpenAsync(JournalEntryDocument entry)
+    {
+        if (!await guard.ConfirmDiscardAsync()) return;
+        editing = entry;
+        editingSnapshot = Snapshot(entry);
+    }
+
+    private async Task CancelAsync()
+    {
+        if (await guard.ConfirmDiscardAsync()) editing = null;
+    }
 
     private async Task SaveAsync()
     {

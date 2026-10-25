@@ -387,6 +387,10 @@
   <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>Только мастер может изменять вики.</value></data>
   <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>Страница доступна группе.</value></data>
   <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>«{0}» удалена.</value></data>
+  <data name="Campaign.Wiki.Delete.Title" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.Wiki.Delete.Body" xml:space="preserve"><value>Страница будет удалена для всех, вернуть её нельзя.</value></data>
+  <data name="Campaign.Wiki.DeleteNote.Title" xml:space="preserve"><value>Удалить заметку?</value></data>
+  <data name="Campaign.Wiki.DeleteNote.Body" xml:space="preserve"><value>Заметка будет удалена для всех, кто мог её читать, вернуть её нельзя.</value></data>
   <data name="Campaign.Wiki.AiDraftReady" xml:space="preserve"><value>Черновик ИИ в редакторе. Проверьте и сохраните.</value></data>
   <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ (вверху справа).</value></data>
   <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>Не удалось создать черновик ИИ: {0}</value></data>
