@@ -234,7 +234,13 @@ else
             <div class="d-flex gap-2 flex-wrap">
                 @if (aiReady)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="@(() => builder.OpenAsync("faction"))" data-testid="build-faction-ai"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Faction"]</CodexButton>
+                    <details class="popover-menu" data-testid="wiki-build-ai">
+                        <summary class="cx-btn cx-etched cx-arcane"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Menu"] <LucideIcon IconName="chevron-down" Size="16" /></summary>
+                        <div class="popover-panel menu-panel">
+                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("faction"))" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></button>
+                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("settlement"))" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></button>
+                        </div>
+                    </details>
                 }
                 <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
             </div>
@@ -277,7 +283,7 @@ else
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
                         <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
-                    <p class="mb-0 small">@TextFormatting.Summary(wp.Body.Replace("[[", "").Replace("]]", ""), 150)</p>
+                    <p class="mb-0 small">@TextFormatting.Summary(wp.Body, 150)</p>
                     <div class="card-foot">
                         <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
@@ -343,7 +349,7 @@ else
     private async Task OnBuiltAsync(WorldBuildResult result)
     {
         Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
-        if (result.Actors.Count > 0) await Ctx.ReloadAsync();
+        if (result.Actors.Count > 0 || result.Places.Count > 0) await Ctx.ReloadAsync();
         loadedKey = null;
         if (result.Pages.FirstOrDefault() is { } page)
         {

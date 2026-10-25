@@ -13,19 +13,20 @@ public sealed record WorldBuildResult(
     IReadOnlyList<HomebrewEntryDocument> Entries,
     IReadOnlyList<WikiPageDocument> Pages,
     IReadOnlyList<ActorDocument> Actors,
-    IReadOnlyList<FactDocument> Facts)
+    IReadOnlyList<FactDocument> Facts,
+    IReadOnlyList<LocationDocument> Places)
 {
-    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count;
+    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count;
 }
 
 /// <summary>
 /// The world builder (docs/WORLD_BUILDER.md): turns a recipe's answers into an outline of drafts, writes each draft in full,
 /// and saves the ones the DM keeps. The model only drafts; every write goes through the repositories with the DM's access,
-/// and what it saves starts hidden from players (homebrew unpublished, wiki pages, secrets and cast members DM-only). DM only,
+/// and what it saves starts hidden from players (homebrew unpublished; wiki pages, secrets, cast members and places DM-only). DM only,
 /// on the DM's own key.
 /// </summary>
 public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
-    IFactRepository facts, CastService cast)
+    IFactRepository facts, CastService cast, IRegionRepository regions)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -54,6 +55,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             DraftKinds.Wiki => "wiki: a page of the campaign's world wiki",
             DraftKinds.Npc => "npc: a person (a leader, a member, a contact), written as a wiki page",
             DraftKinds.Fact => "fact: a secret or rumour the party can uncover, stated in one sentence as its name",
+            DraftKinds.Place => "place: a district, landmark or building, written as a wiki page",
             _ => k
         }).ToList();
 
@@ -124,7 +126,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         foreach (var draft in Kept(bundle).Where(d => DraftKinds.IsPage(d.Kind)))
         {
             var tags = new List<string> { Tag(l, recipe.Key) };
-            if (draft.Kind == DraftKinds.Npc && recipe.Key != DraftKinds.Npc) tags.Add(Tag(l, DraftKinds.Npc));
+            if (draft.Kind is DraftKinds.Npc or DraftKinds.Place) tags.Add(Tag(l, draft.Kind));
             var page = new WikiPageDocument
             {
                 Title = draft.Name.Trim(),
@@ -179,6 +181,12 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             Saved(draft, actor.Id);
         }
 
+        var places = await PlacesAsync(bundle, access);
+        foreach (var (draft, place) in places)
+        {
+            Saved(draft, place.Id);
+        }
+
         var saved = new List<FactDocument>();
         var known = Kept(bundle).Any(d => d.Kind == DraftKinds.Fact)
             ? (await wiki.GetVisibleForCampaignAsync(access)).ToDictionary(p => p.Slug, p => p.Id, StringComparer.OrdinalIgnoreCase)
@@ -209,7 +217,42 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             saved.Add(fact);
         }
 
-        return new WorldBuildResult(entries, pages, actors, saved);
+        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList());
+    }
+
+    /// <summary>The places ticked for the World page, hidden, in a region named after the bundle's main page (the settlement);
+    /// a region of that name is reused. A place's description is its page's text, links flattened.</summary>
+    private async Task<List<(WorldDraft Draft, LocationDocument Place)>> PlacesAsync(WorldBundle bundle, CampaignAccess access)
+    {
+        var ticked = Kept(bundle).Where(d => d.Kind == DraftKinds.Place && d.OnMap).ToList();
+        if (ticked.Count == 0)
+        {
+            return new List<(WorldDraft, LocationDocument)>();
+        }
+
+        var placed = ticked.Select(d => (Draft: d, Place: new LocationDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = d.Name.Trim(),
+            Description = WorldBundleParser.ResolveLinks(d.Body ?? d.Pitch, bundle, keepLinks: false),
+            Visibility = ActorVisibility.Hidden
+        })).ToList();
+
+        var name = (Kept(bundle).FirstOrDefault(d => d.Kind == DraftKinds.Wiki) ?? ticked[0]).Name.Trim();
+        var region = (await regions.GetVisibleForCampaignAsync(access)).FirstOrDefault(r => string.Equals(r.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
+        if (region == null)
+        {
+            region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = access.CampaignId, Name = name, Locations = placed.Select(p => p.Place).ToList() };
+            if (!await regions.SaveAsync(region, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+            return placed;
+        }
+
+        foreach (var (_, place) in placed)
+        {
+            if (!await regions.UpsertLocationAsync(region.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+        }
+
+        return placed;
     }
 
     private static IEnumerable<WorldDraft> Kept(WorldBundle bundle) => bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Name));
@@ -222,6 +265,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         DraftKinds.Homebrew => draft.Type ?? "homebrew",
         DraftKinds.Npc => "person",
         DraftKinds.Fact => "secret",
+        DraftKinds.Place => "place",
         _ => "wiki page"
     };
 

@@ -28,7 +28,14 @@
   <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>הצגה</value></data>
   <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{רעיון אחד הושמט כי אינו מתאים לאשף הזה.} two{שני רעיונות הושמטו כי אינם מתאימים לאשף הזה.} other{# רעיונות הושמטו כי אינם מתאימים לאשף הזה.}}</value></data>
   <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>רק התקציר</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>הכול נשמר מוסתר מהשחקנים: ערכי ספרייה כטיוטות שרק אתם רואים, דפי ויקי וסודות לשליט המבוך בלבד, ודמויות בצוות מוסתרות. אפשר לשתף אותם מאוחר יותר.</value></data>
+  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>הכול נשמר מוסתר מהשחקנים: ערכי ספרייה כטיוטות שרק אתם רואים, דפי ויקי וסודות לשליט המבוך בלבד, ודמויות בצוות ומקומות מוסתרים. אפשר לשתף אותם מאוחר יותר.</value></data>
+  <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>גם בעמוד העולם</value></data>
+  <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>להוסיף גם לעמוד העולם כמקום, מוסתר מהשחקנים</value></data>
+  <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>מקום</value></data>
+  <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>יישוב</value></data>
+  <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>
+  <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>עיצוב יישוב עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>גם בצוות</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>להוסיף גם לצוות, מוסתר מהשחקנים</value></data>
   <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>נוצר על ידי בונה העולם; הסיפור המלא בדף הוויקי „{0}”.</value></data>
@@ -107,4 +114,25 @@
   <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>את המנהיג וחבר אחד</value></data>
   <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>את המנהיג ושני חברים</value></data>
   <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>לכתוב גם סוד שהחבורה יכולה לגלות (לשליט המבוך בלבד, באגדות עולם)</value></data>
+  <data name="WorldBuilder.Recipe.settlement.Title" xml:space="preserve"><value>יישוב עם בינה מלאכותית</value></data>
+  <data name="WorldBuilder.Recipe.settlement.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע את היישוב, את המקומות, האנשים והכוחות שבו ושמועות; לפני השמירה אפשר לשנות שם, לכתוב מחדש או לבטל סימון של כל אחד מהם.</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size" xml:space="preserve"><value>גודל</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.village" xml:space="preserve"><value>כפר</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.town" xml:space="preserve"><value>עיירה</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.city" xml:space="preserve"><value>עיר</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.metropolis" xml:space="preserve"><value>כרך</value></data>
+  <data name="WorldBuilder.Recipe.settlement.land" xml:space="preserve"><value>איפה הוא נמצא?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.land.Hint" xml:space="preserve"><value>הסביבה שלו, למשל: שפך נהר, מעבר הרים, שם של אזור קיים.</value></data>
+  <data name="WorldBuilder.Recipe.settlement.knownFor" xml:space="preserve"><value>במה הוא ידוע?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.rulers" xml:space="preserve"><value>מי שולט בו?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.trouble" xml:space="preserve"><value>איזו צרה מתבשלת?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone" xml:space="preserve"><value>אווירה</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.grim" xml:space="preserve"><value>קודרת</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail" xml:space="preserve"><value>כמה לכתוב</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>סקיצה: 2 מקומות, 3 דמויות, פלג אחד</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>מלא: 4 מקומות, 5 דמויות, 2 פלגים</value></data>
+  <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>לכתוב גם שמועות שהחבורה יכולה לרדוף אחריהן (לשליט המבוך בלבד, באגדות עולם)</value></data>
 </root>

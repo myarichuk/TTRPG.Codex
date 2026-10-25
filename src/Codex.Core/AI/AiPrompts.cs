@@ -342,6 +342,9 @@ public static class AiPrompts
             DraftKinds.Npc =>
                 "a page about one person, for the game master's eyes. Write it in short sections with headings: who they are and their role, how they look and sound, what they want, " +
                 "what they hide, and how the party might meet them. Keep it concrete and usable at the table. ",
+            DraftKinds.Place =>
+                "a page about one place, for the game master's eyes. Write it in short sections with headings: what it looks, sounds and smells like, who is found there, " +
+                "what the party can do or learn there, and what it hides. Keep it concrete and usable at the table. ",
             DraftKinds.Fact =>
                 "the details of one secret the party can uncover, for the game master's eyes. Write two to four plain sentences: what is true, who knows it, and how the party could learn it. " +
                 "No headings, lists or links. ",

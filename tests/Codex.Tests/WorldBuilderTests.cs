@@ -314,9 +314,15 @@ public class WorldBuilderTests
 
     // ---- Saving ----
 
-    private sealed record Saving(WorldBuilderService Service, List<WikiPageDocument> Pages, List<HomebrewEntryDocument> Entries, List<ActorDocument> Actors, List<FactDocument> Facts);
+    private sealed record Saving(WorldBuilderService Service, List<WikiPageDocument> Pages, List<HomebrewEntryDocument> Entries, List<ActorDocument> Actors, List<FactDocument> Facts)
+    {
+        public List<RegionDocument> NewRegions { get; } = new();
+        public List<(string RegionId, LocationDocument Place)> AddedPlaces { get; } = new();
+    }
 
-    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing)
+    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing) => Service(existingPages, Array.Empty<RegionDocument>(), existing);
+
+    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, params HomebrewEntryDocument[] existing)
     {
         var pages = new List<WikiPageDocument>();
         var entries = new List<HomebrewEntryDocument>();
@@ -347,7 +353,16 @@ public class WorldBuilderTests
         var runtimes = new Codex.Persistence.Runtime.CampaignRuntimeManager(actorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
             Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);
         var cast = new CastService(runtimes, Substitute.For<IContentRegistry>(), components, catalog);
-        return new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast), pages, entries, actors, facts);
+        var regions = Substitute.For<IRegionRepository>();
+        regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existingRegions.ToList().AsEnumerable());
+        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions), pages, entries, actors, facts);
+        regions.SaveAsync(Arg.Do<RegionDocument>(saving.NewRegions.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        regions.UpsertLocationAsync(Arg.Any<string>(), Arg.Any<LocationDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
+        {
+            saving.AddedPlaces.Add((ci.ArgAt<string>(0), ci.ArgAt<LocationDocument>(1)));
+            return true;
+        });
+        return saving;
     }
 
     private static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
@@ -516,5 +531,80 @@ public class WorldBuilderTests
         Assert.DoesNotContain("[[Name]]", secret);
         Assert.StartsWith("Secret: Mother Ilse", secretUser);
         Assert.Contains("three to six short sections", page);
+    }
+
+    // ---- The settlement recipe: places on the World page ----
+
+    [Fact]
+    public void SettlementRecipe_WritesPlacesPeopleFactionsAndRumours()
+    {
+        var settlement = WorldRecipes.Find("settlement")!;
+
+        Assert.Equal(new[] { DraftKinds.Wiki, DraftKinds.Place, DraftKinds.Npc, DraftKinds.Fact }, settlement.Drafts);
+        Assert.Equal("sketch", settlement.Question("detail")!.Default);
+        Assert.DoesNotContain(settlement.Questions, q => q.Required);
+    }
+
+    private static WorldBundle Settlement()
+    {
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "Varr", OutlineName = "Varr", Body = "The [[Salt Market]] never closes." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Place, Name = "Salt Market", OutlineName = "Salt Market", Body = "## Sights\nStalls in [[Varr]].", OnMap = true });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Place, Name = "The Drowned Bell", OutlineName = "The Drowned Bell", Pitch = "A flooded inn." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Fact, Name = "The bell rings before every storm", OutlineName = "The bell rings before every storm", Links = { "d2", "d3" } });
+        return bundle;
+    }
+
+    [Fact]
+    public async Task Save_PutsTickedPlacesOnTheWorldPage_InANewRegionNamedAfterTheSettlement()
+    {
+        var saving = Service();
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("settlement")!, Settlement());
+
+        Assert.Equal("The [[Salt Market]] never closes.", saving.Pages[0].Body); // places are pages too, so links stay
+        Assert.Equal(new[] { "settlement", "place" }, saving.Pages[1].Tags);
+        var region = Assert.Single(saving.NewRegions);
+        Assert.Equal(("Varr", "c1"), (region.Name, region.CampaignId));
+        var market = Assert.Single(region.Locations); // only the ticked place
+        Assert.Equal(("Salt Market", ActorVisibility.Hidden), (market.Name, market.Visibility));
+        Assert.Equal("## Sights\nStalls in Varr.", market.Description); // place text has no wiki links
+        Assert.Equal(new[] { "page-2", market.Id, "page-3" }, Assert.Single(saving.Facts).RelatedEntityIds);
+        Assert.Equal(market, Assert.Single(result.Places));
+    }
+
+    [Fact]
+    public async Task Save_AddsPlacesToAnExistingRegionOfTheSameName()
+    {
+        var saving = Service(null, new[] { new RegionDocument { Id = "region-varr", CampaignId = "c1", Name = "varr " } });
+
+        await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("settlement")!, Settlement());
+
+        Assert.Empty(saving.NewRegions);
+        var (regionId, place) = Assert.Single(saving.AddedPlaces);
+        Assert.Equal(("region-varr", "Salt Market"), (regionId, place.Name));
+    }
+
+    [Fact]
+    public async Task Save_WithoutTickedPlaces_LeavesTheWorldPageAlone()
+    {
+        var saving = Service();
+        var bundle = Settlement();
+        bundle.Drafts[1].OnMap = false;
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, WorldRecipes.Find("settlement")!, bundle);
+
+        Assert.Empty(saving.NewRegions);
+        Assert.Empty(result.Places);
+    }
+
+    [Fact]
+    public void ExpandPrompt_WritesAPlaceAsAPageAboutOnePlace()
+    {
+        var (system, _) = AiPrompts.WorldExpandPage(new WorldExpandRequest("Salt Market", "Stalls.", null, "SRD", Array.Empty<FieldSpec>(), Array.Empty<WorldAnswer>(),
+            Array.Empty<string>(), Array.Empty<string>(), Kind: DraftKinds.Place));
+
+        Assert.Contains("one place", system);
+        Assert.Contains("[[Name]]", system);
     }
 }

@@ -28,7 +28,14 @@
   <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>Показать</value></data>
   <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{# идея пропущена: она не подходит для этого мастера.} few{# идеи пропущены: они не подходят для этого мастера.} many{# идей пропущено: они не подходят для этого мастера.} other{# идеи пропущено: они не подходят для этого мастера.}}</value></data>
   <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>только идея</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Всё сохраняется скрытым от игроков: записи библиотеки как черновики, которые видите только вы, страницы вики и тайны только для мастера, персонажи в составе скрыты. Открыть их можно позже.</value></data>
+  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Всё сохраняется скрытым от игроков: записи библиотеки как черновики, которые видите только вы, страницы вики и тайны только для мастера, персонажи в составе и места скрыты. Открыть их можно позже.</value></data>
+  <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>также на странице «Мир»</value></data>
+  <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>Также добавить на страницу «Мир» как место, скрытое от игроков</value></data>
+  <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>Место</value></data>
+  <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>место</value></data>
+  <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>поселение</value></data>
+  <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Создать с ИИ</value></data>
+  <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>Создать поселение с ИИ</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>также в составе</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Также добавить в состав, скрытым от игроков</value></data>
   <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>Создано конструктором мира; история — на странице вики «{0}».</value></data>
@@ -107,4 +114,25 @@
   <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>Лидера и одного члена</value></data>
   <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>Лидера и двух членов</value></data>
   <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>Также написать тайну, которую может раскрыть группа (только для мастера, в преданиях)</value></data>
+  <data name="WorldBuilder.Recipe.settlement.Title" xml:space="preserve"><value>Поселение с ИИ</value></data>
+  <data name="WorldBuilder.Recipe.settlement.Intro" xml:space="preserve"><value>Ответьте на то, что вам важно, остальное оставьте ИИ. Он предложит поселение, его места, людей, силы и слухи; до сохранения любой черновик можно переименовать, переписать или снять отметку.</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size" xml:space="preserve"><value>Размер</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.village" xml:space="preserve"><value>Деревня</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.town" xml:space="preserve"><value>Городок</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.city" xml:space="preserve"><value>Город</value></data>
+  <data name="WorldBuilder.Recipe.settlement.size.metropolis" xml:space="preserve"><value>Большой город</value></data>
+  <data name="WorldBuilder.Recipe.settlement.land" xml:space="preserve"><value>Где оно?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.land.Hint" xml:space="preserve"><value>Местность вокруг, например: дельта реки, горный перевал, название края из вики.</value></data>
+  <data name="WorldBuilder.Recipe.settlement.knownFor" xml:space="preserve"><value>Чем оно известно?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.rulers" xml:space="preserve"><value>Кто им правит?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.trouble" xml:space="preserve"><value>Какая беда назревает?</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone" xml:space="preserve"><value>Настроение</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.grim" xml:space="preserve"><value>Мрачное</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.whimsical" xml:space="preserve"><value>Причудливое</value></data>
+  <data name="WorldBuilder.Recipe.settlement.tone.eerie" xml:space="preserve"><value>Жуткое</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail" xml:space="preserve"><value>Сколько написать</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>Набросок: 2 места, 3 персонажа, 1 фракция</value></data>
+  <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>Подробно: 4 места, 5 персонажей, 2 фракции</value></data>
+  <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>Также написать слухи, по которым может пойти группа (только для мастера, в преданиях)</value></data>
 </root>

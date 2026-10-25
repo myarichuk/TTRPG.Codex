@@ -4,7 +4,7 @@ using Codex.Core.AI;
 namespace Codex.Core.WorldBuilder;
 
 /// <summary>
-/// One thing the model proposed: a homebrew entry, a wiki page, a person or a secret. The outline call fills the name, pitch and links;
+/// One thing the model proposed: a homebrew entry, a wiki page, a person, a place or a secret. The outline call fills the name, pitch and links;
 /// the expand call fills <see cref="Body"/> (and, for homebrew, <see cref="Properties"/> and <see cref="Tags"/>).
 /// Nothing is stored until the DM saves the bundle.
 /// </summary>
@@ -36,6 +36,9 @@ public sealed class WorldDraft
 
     /// <summary>For a person: also add them to the cast, hidden from players, besides their wiki page.</summary>
     public bool Cast { get; set; }
+
+    /// <summary>For a place: also add it to the World page, hidden, besides its wiki page.</summary>
+    public bool OnMap { get; set; }
 
     /// <summary>A page's text, a homebrew entry's description (its rules text), or a secret's details.</summary>
     public string? Body { get; set; }
@@ -216,7 +219,7 @@ public static class WorldBundleParser
 
     /// <summary>
     /// The text to save for <paramref name="text"/>: a <c>[[link]]</c> to another draft (by its ref or its outline name) is
-    /// rewritten to the draft's final name when that draft is saved as a wiki page (a page or a person), and left as plain text
+    /// rewritten to the draft's final name when that draft is saved as a wiki page (a page, a person or a place), and left as plain text
     /// otherwise (a homebrew entry, a secret or an unticked draft has no page to link to). Other links are kept, unless <paramref name="keepLinks"/> is false
     /// (homebrew text, which is not wiki text), when every link becomes plain text.
     /// </summary>

@@ -20,10 +20,14 @@ public static class DraftKinds
     /// <summary>A secret or rumour the party can uncover, saved DM-only in Lore; its name is the fact itself.</summary>
     public const string Fact = "fact";
 
-    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact };
+    /// <summary>A place (a district, a landmark, an inn), saved as a DM-only wiki page and, when the DM ticks it, also as a
+    /// hidden place on the World page.</summary>
+    public const string Place = "place";
+
+    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place };
 
     /// <summary>Kinds saved as wiki pages, which other drafts' text can link to.</summary>
-    public static bool IsPage(string kind) => kind is Wiki or Npc;
+    public static bool IsPage(string kind) => kind is Wiki or Npc or Place;
 }
 
 /// <summary>The kinds of question a recipe can ask.</summary>
