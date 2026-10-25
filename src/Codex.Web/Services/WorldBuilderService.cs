@@ -88,7 +88,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         if (draft.Kind != DraftKinds.Homebrew)
         {
             var request = new WorldExpandRequest(draft.Name, draft.Pitch, null, catalog.GetDisplayName(campaign.SystemId), Array.Empty<FieldSpec>(),
-                Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, draft.Kind);
+                Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, draft.Kind, recipe.Write.GetValueOrDefault(draft.Kind));
             await Unusable(async () =>
             {
                 await assistant.ExpandPageAsync(draft, request, ct);
@@ -102,7 +102,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
                    ?? new ContentTypeDefinition { Type = draft.Type ?? string.Empty, Label = CampaignLibrary.Humanize(draft.Type ?? "entry") };
         var fields = await FieldSpecsAsync(campaign, access, system, type);
         var homebrewRequest = new WorldExpandRequest(draft.Name, draft.Pitch, type.Label, catalog.GetDisplayName(campaign.SystemId), fields,
-            Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang);
+            Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, DraftKinds.Homebrew, recipe.Write.GetValueOrDefault(DraftKinds.Homebrew));
         var culture = Lang;
         await Unusable(async () =>
         {

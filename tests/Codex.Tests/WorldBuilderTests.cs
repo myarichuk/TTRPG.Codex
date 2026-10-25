@@ -67,6 +67,7 @@ public class WorldBuilderTests
 
     [Theory]
     [InlineData("key: x\ndrafts: [castle]\nprompt: p\nquestions: [{ key: a, ask: A? }]", "unknown draft kind")]
+    [InlineData("key: x\ndrafts: [wiki]\nprompt: p\nquestions: [{ key: a, ask: A? }]\nwrite: { npc: Be brief. }", "write: \"npc\" is not one of the recipe's drafts")]
     [InlineData("key: x\ndrafts: [wiki]\nprompt: p\nquestions: [{ key: a, type: choice, ask: A?, options: [one] }]", "at least two options")]
     [InlineData("key: x\ndrafts: [wiki]\nprompt: p\nquestions: [{ key: a, ask: A? }, { key: a, ask: B? }]", "duplicate key")]
     [InlineData("key: x\ndrafts: [wiki]\nprompt: p\nquestions: [{ key: a, type: choice, ask: A?, options: [one, two], default: three }]", "is not an option")]
@@ -606,5 +607,75 @@ public class WorldBuilderTests
 
         Assert.Contains("one place", system);
         Assert.Contains("[[Name]]", system);
+    }
+
+    // ---- The quest recipe: a fixed outline, and homebrew beside the pages ----
+
+    [Fact]
+    public void QuestRecipe_GivesThePageAFixedOutline_AndSizesHomebrewToTheParty()
+    {
+        var quest = WorldRecipes.Find("quest")!;
+
+        Assert.Equal(new[] { DraftKinds.Wiki, DraftKinds.Npc, DraftKinds.Place, DraftKinds.Fact, DraftKinds.Homebrew }, quest.Drafts);
+        Assert.Contains("Hook; Stakes; Acts", quest.Write[DraftKinds.Wiki]);
+        Assert.Contains("If the party fails", quest.Write[DraftKinds.Wiki]);
+        Assert.Contains("party's level", quest.Write[DraftKinds.Homebrew]);
+        Assert.Equal(("oneShot", "true", "false"), (quest.Question("length")!.Default, quest.Question("creature")!.Default, quest.Question("reward")!.Default));
+    }
+
+    [Fact]
+    public void ExpandPrompts_CarryTheRecipesInstructions_InEveryLanguage()
+    {
+        var guidance = "Use exactly these sections: Hook;\nStakes.";
+        var page = new WorldExpandRequest("The Bell", "A bell rings.", null, "SRD", Array.Empty<FieldSpec>(), Array.Empty<WorldAnswer>(),
+            Array.Empty<string>(), Array.Empty<string>(), Language: "he", Guidance: guidance);
+
+        var (pageSystem, _) = AiPrompts.WorldExpandPage(page);
+        var (homebrewSystem, _) = AiPrompts.WorldExpandHomebrew(page with { Kind = DraftKinds.Homebrew, TypeLabel = "Creature" });
+        var (plain, _) = AiPrompts.WorldExpandPage(page with { Guidance = null });
+
+        Assert.Contains("Use exactly these sections: Hook; Stakes.", pageSystem);
+        Assert.Contains("in Hebrew", pageSystem); // the headings it names are translated, too
+        Assert.Contains("Use exactly these sections: Hook; Stakes.", homebrewSystem);
+        Assert.DoesNotContain("Use exactly these sections", plain);
+    }
+
+    [Fact]
+    public void ParseOutline_ForAQuest_KeepsHomebrewBesideThePages()
+    {
+        var rules = new BundleRules(WorldRecipes.Find("quest")!.Drafts, new Dictionary<string, string> { ["monster"] = "monster", ["Magic Item"] = "magic-item" }, Array.Empty<string>());
+        const string reply = """
+            {"drafts": [
+              {"ref": "q", "kind": "wiki", "name": "The Drowned Bell", "pitch": "A bell rings under the harbour.", "links": ["v", "c"]},
+              {"ref": "v", "kind": "npc", "name": "Sister Maren", "pitch": "She rings it.", "links": ["q"]},
+              {"ref": "c", "kind": "homebrew", "type": "monster", "name": "Bell-drowned", "links": ["q"]},
+              {"ref": "i", "kind": "homebrew", "type": "Magic Item", "name": "The Clapper", "links": ["q"]}
+            ]}
+            """;
+
+        var bundle = WorldBundleParser.ParseOutline(reply, rules);
+
+        Assert.Equal(new[] { ("wiki", (string?)null), ("npc", null), ("homebrew", "monster"), ("homebrew", "magic-item") }, bundle.Drafts.Select(d => (d.Kind, d.Type)));
+        Assert.Empty(bundle.Dropped);
+    }
+
+    [Fact]
+    public async Task Save_AQuest_StoresItsPagesAndItsHomebrew_TaggedAsAQuest()
+    {
+        var (service, pages, entries, _, _) = Service();
+        var bundle = new WorldBundle();
+        bundle.Drafts.Add(new WorldDraft { Ref = "d1", Kind = DraftKinds.Wiki, Name = "The Drowned Bell", OutlineName = "The Drowned Bell", Body = "## Hook\nFight the [[Bell-drowned]] for [[The Clapper]]." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Homebrew, Type = "monster", Name = "Bell-drowned", OutlineName = "Bell-drowned", Body = "Haunts [[The Drowned Bell]]." });
+        bundle.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Homebrew, Type = "magic-item", Name = "The Clapper", OutlineName = "The Clapper", Pitch = "A bronze clapper." });
+
+        var result = await service.SaveAsync(Campaign, Dm, WorldRecipes.Find("quest")!, bundle);
+
+        var page = Assert.Single(pages);
+        Assert.Equal(new[] { "quest" }, page.Tags);
+        Assert.Equal("## Hook\nFight the Bell-drowned for The Clapper.", page.Body); // homebrew has no page to link to
+        Assert.Equal(new[] { ("monster", "bell-drowned"), ("magic-item", "the-clapper") }, entries.Select(e => (e.Type, e.EntryId)));
+        Assert.All(entries, e => Assert.False(e.IsPublished));
+        Assert.Equal("Haunts The Drowned Bell.", entries[0].Description);
+        Assert.Equal(3, result.Count);
     }
 }

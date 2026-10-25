@@ -1,9 +1,9 @@
 # World builder
 
-Status: the **homebrew recipe** (Library → *Build with AI*) and the **faction** and **settlement recipes** (Wiki →
-*Build with AI*) are built, shown to the DM once a text model is set up. People (`npc`), places (`place`) and secrets
-(`fact`) are draft kinds; a person can also join the cast, and a place can also go on the World page. World and quest
-recipes, Library blueprints for cast members and MCP are still design only.
+Status: the **homebrew recipe** (Library → *Build with AI*) and the **faction**, **settlement** and **quest recipes**
+(Wiki → *Build with AI*) are built, shown to the DM once a text model is set up. People (`npc`), places (`place`) and
+secrets (`fact`) are draft kinds; a person can also join the cast, and a place can also go on the World page. The world
+recipe, Library blueprints for cast members and MCP are still design only.
 
 A set of guided wizards that help the DM create campaign material with the AI: a homebrew item, spell or creature,
 a faction, a city, a world, a quest or story arc. The wizard asks a short series of questions, the AI proposes a
@@ -64,7 +64,7 @@ side (stacked on phones, as the phone layout already does for sheets).
 | **Faction** (built) | what kind of group, what it wants, open or secret, reach, tone, its enemy, how many people, a secret or not | the faction page, its leader and 0–2 members, a secret | the faction as a wiki page, people as wiki pages and, when ticked, cast members (§3.1), the secret as a `FactDocument`; pages are tagged with the recipe ("faction") and people also "person", in the DM's language |
 | **Settlement** (built) | size, where it is, what it is known for, who rules, trouble brewing, tone, a sketch or in full, rumours or not | the settlement page, 2 or 4 places, 3 or 5 people, 1 or 2 factions, 1 or 2 rumours | wiki pages (tag "settlement"; places also "place", people also "person"); a place ticked "also add to the World page" becomes a hidden `LocationDocument` in a region named after the settlement (an existing region of that name is reused); rumours as `FactDocument`s |
 | **World / region** | genre and tone, magic level, gods or not, the big conflict, scale | the overview page, 3–6 regions, powers (factions), a short history | wiki pages (tags `world`, `region`, `history`), linked from the overview |
-| **Quest / story arc** | hook, stakes, villain, length (one-shot … arc), level range | the quest page with acts or steps, the NPCs and places it needs, a creature or item it uses | a templated wiki page (tag `quest`) now; a quest document later (§3.2) |
+| **Quest / story arc** (built) | hook, stakes, villain, length (one session, a short or long arc), the party's level, tone, what to tie it into, a creature or reward or not | the quest page, 2–4 people (the villain first), 1–3 places, 1–2 clues, a homebrew creature and a reward item | the quest as a wiki page with a fixed outline (tag "quest", §3.2); people, places and clues as in the other recipes; the creature and item as unpublished homebrew |
 
 Every recipe works for any system: homebrew fields come from the system's own content types, and the setting
 recipes only write wiki pages, places and facts.
@@ -79,8 +79,8 @@ built yet: a Library creature as blueprint when the model suggests one that exis
 
 ### 3.2 Quests
 
-There is no quest document. The first version writes a quest as a wiki page with a fixed outline (Hook, Stakes, Acts,
-Who's involved, Rewards, If the party fails), so it is useful at once and can be edited like any page. A real quest
+There is no quest document. The quest recipe writes a quest as a wiki page with a fixed outline (Hook, Stakes, Acts,
+Who's involved, Rewards, If the party fails; the recipe's `write.wiki` instruction, §4), so it is useful at once and can be edited like any page. A real quest
 document (status, steps the DM ticks off, which the session log and the AI recap could refer to) is a separate feature and
 is not part of this design.
 
@@ -109,6 +109,9 @@ questions:
 prompt: |
   Design one faction for the campaign and the people and secret that bring it to the table. ...
 ```
+
+A recipe may also give `write:` instructions per draft kind, added to the call that writes a draft of that kind in
+full; the quest recipe uses it for the quest page's fixed sections and to size homebrew to the party.
 
 Each question also has an English `ask:`, which is what the model reads. Labels, help text and option labels come from
 `Strings.WorldBuilder*.resx` as `WorldBuilder.Recipe.<recipe>.<question>[.<option>|.Hint]`, plus `.Title` and `.Intro`.
@@ -160,7 +163,7 @@ recipes in its folder later (for example a "deity" recipe for 5e); not needed fo
 
 Tests: recipe loading, bundle parsing (bad JSON, unknown kinds, dangling refs), option coercion including translated
 values, link rewriting on save, DM-only enforcement and the one-retry rule (a scripted `IChatClient`), in `WorldBuilderTests`.
-There is no Playwright test yet; the faction and settlement flows were checked by hand against a scripted model.
+There is no Playwright test yet; the faction, settlement and quest flows were checked by hand against a scripted model.
 
 ## 7. Phase 2: the same operations over MCP
 

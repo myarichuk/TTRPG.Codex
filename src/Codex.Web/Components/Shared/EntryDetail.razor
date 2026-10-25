@@ -95,7 +95,7 @@
     }
 
     <footer class="attribution" data-testid="entry-attribution">
-        <div><strong>@L["Library.Detail.Source"]</strong> @Item.SourceName@(Item.Entry.Source != null && !Item.IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
+        <div><strong>@L["Library.Detail.Source"]</strong> @(Item.IsHomebrew ? L["Library.Homebrew"] : Item.SourceName)@(Item.Entry.Source != null && !Item.IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
         @if (Item.License != null)
         {
             <div class="mt-1">
