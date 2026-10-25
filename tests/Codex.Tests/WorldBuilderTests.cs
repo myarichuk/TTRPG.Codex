@@ -1022,6 +1022,7 @@ public class WorldBuilderTests
         previous.Drafts.Add(new WorldDraft { Ref = "d2", Kind = DraftKinds.Npc, Name = "Brann", OutlineName = "Brann", StatsChosen = true });
         previous.Drafts.Add(new WorldDraft { Ref = "d3", Kind = DraftKinds.Npc, Name = "Oda", OutlineName = "Oda", Stats = veteran });
         previous.Drafts.Add(new WorldDraft { Ref = "d4", Kind = DraftKinds.Npc, Name = "Pell", OutlineName = "Pell", Stats = veteran });
+        previous.Drafts.Add(new WorldDraft { Ref = "d5", Kind = DraftKinds.Npc, Name = "Tam", OutlineName = "Tam", Stats = veteran, StatsChosen = true });
         const string reply = """
             {"drafts": [
               {"ref": "d1", "kind": "npc", "name": "Ilse", "pitch": "A priest now.", "stats": "Priest"},
@@ -1031,9 +1032,12 @@ public class WorldBuilderTests
             ]}
             """;
 
-        WorldBundleParser.ParseRevision(reply, new BundleRules(new[] { DraftKinds.Npc }, new Dictionary<string, string>(), Array.Empty<string>()), previous);
+        var revised = WorldBundleParser.ParseRevision(reply, new BundleRules(new[] { DraftKinds.Npc }, new Dictionary<string, string>(), Array.Empty<string>()), previous);
 
         var (ilse, brann, oda, pell) = (previous.Drafts[0], previous.Drafts[1], previous.Drafts[2], previous.Drafts[3]);
+        // Picked stats alone are not work worth keeping a removed person for.
+        Assert.DoesNotContain(revised.Drafts, d => d.Name == "Tam");
+        Assert.Empty(revised.SetAside);
         Assert.Equal((veteran, (string?)null), (ilse.Stats, ilse.SuggestedStats));
         Assert.Equal(((CreatureRef?)null, (string?)null), (brann.Stats, brann.SuggestedStats)); // the DM chose a blank sheet
         Assert.Equal(((CreatureRef?)null, "Priest"), (oda.Stats, oda.SuggestedStats)); // left to the model: looked up again

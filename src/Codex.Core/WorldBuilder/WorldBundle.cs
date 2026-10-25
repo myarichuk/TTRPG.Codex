@@ -286,8 +286,9 @@ public static class WorldBundleParser
                ?? open.FirstOrDefault(d => string.Equals(d.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Work a change to the outline must not throw away: a written text, the DM's rename, stats they picked, or something already saved.
-    private static bool HasWork(WorldDraft draft) => draft.Expanded || draft.Name != draft.OutlineName || draft.StatsChosen || draft.SavedAs.Count > 0;
+    // Work a change to the outline must not throw away: a written text, the DM's rename, or something already saved. Ticks and
+    // picked stats are quick to redo, so a draft the change removes does not stay for them.
+    private static bool HasWork(WorldDraft draft) => draft.Expanded || draft.Name != draft.OutlineName || draft.SavedAs.Count > 0;
 
     /// <summary>Fills a wiki draft from the expand reply, which is the page text itself.</summary>
     public static void ApplyPage(WorldDraft draft, string text)

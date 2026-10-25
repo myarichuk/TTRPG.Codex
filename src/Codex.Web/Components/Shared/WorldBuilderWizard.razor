@@ -151,11 +151,11 @@
                                             {
                                                 var pickId = $"{dialogId}-stats-{d.Ref}";
                                                 <div class="world-draft-stats mb-2" data-testid="world-draft-stats">
-                                                    <span class="small" data-testid="world-draft-stats-name">@(d.Stats == null ? L["WorldBuilder.Drafts.Stats.Blank"] : L["WorldBuilder.Drafts.Stats.From", d.Stats.Shown])</span>
-                                                    <CodexButton id="@($"{pickId}-change")" Variant="CodexButtonVariant.Etched" Small="true" Icon="book-open" OnClick="() => TogglePickingAsync(d)" aria-expanded="@(picking == d ? "true" : "false")" aria-controls="@pickId" aria-describedby="@nameId" data-testid="world-draft-stats-change">@L["WorldBuilder.Drafts.Stats.Change"]</CodexButton>
+                                                    <span id="@($"{pickId}-now")" class="small" data-testid="world-draft-stats-name">@(d.Stats == null ? L["WorldBuilder.Drafts.Stats.Blank"] : L["WorldBuilder.Drafts.Stats.From", d.Stats.Shown])</span>
+                                                    <CodexButton id="@($"{pickId}-change")" Variant="CodexButtonVariant.Etched" Small="true" Icon="book-open" OnClick="() => TogglePickingAsync(d)" aria-expanded="@(picking == d ? "true" : "false")" aria-controls="@pickId" aria-describedby="@($"{nameId} {pickId}-now")" data-testid="world-draft-stats-change">@L["WorldBuilder.Drafts.Stats.Change"]</CodexButton>
                                                     @if (d.Stats != null)
                                                     {
-                                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="() => ClearStats(d)" aria-describedby="@nameId" data-testid="world-draft-stats-clear">@L["WorldBuilder.Drafts.Stats.Clear"]</CodexButton>
+                                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="() => ClearStatsAsync(d)" aria-describedby="@nameId" data-testid="world-draft-stats-clear">@L["WorldBuilder.Drafts.Stats.Clear"]</CodexButton>
                                                     }
                                                 </div>
                                                 @if (picking == d)
@@ -516,11 +516,14 @@
         await JS.InvokeVoidAsync("codex.focus", $"{dialogId}-stats-{draft.Ref}-change");
     }
 
-    private void ClearStats(WorldDraft draft)
+    private async Task ClearStatsAsync(WorldDraft draft)
     {
         draft.Stats = null;
+        draft.SuggestedStats = null;
         draft.StatsChosen = true;
         if (picking == draft) picking = null;
+        // The button pressed is gone with the stats, so focus goes to the one that picks them again.
+        await JS.InvokeVoidAsync("codex.focus", $"{dialogId}-stats-{draft.Ref}-change");
     }
 
     private void ToggleAsk(WorldDraft draft)
