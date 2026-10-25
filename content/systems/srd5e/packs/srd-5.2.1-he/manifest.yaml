@@ -9,7 +9,7 @@ locale: he
 translationOf: srd-5.2.1
 dependencies:
 - srd-5.2.1
-description: 'Machine-drafted Hebrew translation of the SRD 5.2.1 rules text and names (spells so far; further types are added as they are reviewed). Terminology follows docs/i18n-he-terms.md; numbers, dice and units are kept as in the English.'
+description: 'Machine-drafted Hebrew translation of the SRD 5.2.1 rules text and names of the spells, classes, subclasses, species, backgrounds, feats, conditions and the rule entries (skills, abilities, alignments, damage types, languages, weapon properties and masteries); creatures, magic items and equipment are not translated yet. Terminology follows docs/i18n-he-terms.md; numbers, dice and units are kept as in the English.'
 authors:
 - Wizards of the Coast LLC (original rules text)
 - TTRPG.Codex contributors (machine-drafted translation, checked by tools/Codex.TranslationCheck, edited by a language model; not reviewed by a native speaker)

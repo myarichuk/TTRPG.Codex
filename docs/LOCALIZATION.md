@@ -55,7 +55,20 @@ original) and `Search(..., culture)` matches both the translated and the origina
 be sibling folders of the pack they translate, because the SRD importer regenerates (and deletes)
 `packs/srd-5.2.1`. `content/systems/srd5e/packs/codex-flavor-ru` is an example.
 
-What is translated today: all UI, the launcher, the `srd5e` and `simple-d6` system labels, and the names and lore
-of the SRD classes, subclasses, species, backgrounds, feats and conditions. Not yet translated: SRD rules text,
-spells, monsters and items, and the lore for those. Properties whose values are English display words used as data
+What is translated today (all machine-drafted; the English text stays authoritative):
+
+| | Russian | Hebrew |
+|---|---|---|
+| UI, launcher, system labels | yes | yes |
+| Names and lore of classes, subclasses, species, backgrounds, feats, conditions (`codex-flavor-<lang>`) | yes | yes |
+| Flavor of spells | yes | yes (names too, in `srd-5.2.1-he`) |
+| Flavor of creatures and magic items | yes | not yet |
+| Rules text and names: classes, subclasses, species, backgrounds, feats, conditions, rule entries (`srd-5.2.1-<lang>`) | yes (OmnisGM, CC BY 4.0) | yes (own draft) |
+| Rules text and names: spells | yes | yes |
+| Rules text and names: creatures, magic items, equipment | yes | not yet |
+
+Hebrew terminology follows the community Hebrew SRD (5esrd.co.il) as a vocabulary reference only: see
+[i18n-he-terms.md](i18n-he-terms.md) for every term decision. The Hebrew drafts keep numbers, dice (`8d6`) and units (feet)
+exactly as in the English so the checker can verify them; `tools/Codex.TranslationCheck/translator-prompt-he*.md`,
+`prepare_flavor.py` and `merge_he_batches.py` are the pipeline. Properties whose values are English display words used as data
 (`school`, `classes`, `size`, tags) stay canonical and are shown through the system's value translations.

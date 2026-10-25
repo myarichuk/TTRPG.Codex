@@ -31,8 +31,7 @@ public class ShippedTranslationPackTests : IAsyncLifetime
         Assert.Equal("Barbarian", original.Name);
         Assert.Equal(barbarian, shown.Name);
         Assert.Equal(original.Properties["hitDie"], shown.Properties["hitDie"]); // rules data untouched
-        if (locale == "he") Assert.Equal(original.Description, shown.Description); // no Hebrew rules text yet
-        else Assert.NotEqual(original.Description, shown.Description);
+        Assert.NotEqual(original.Description, shown.Description);
     }
 
     [Fact]
@@ -122,6 +121,31 @@ public class ShippedTranslationPackTests : IAsyncLifetime
 
         var translated = _registry.GetEntries("srd5e", "spell").Select(e => _registry.Localize(e, "ru")).Count(e => e.Name != _registry.GetEntry("srd5e", "spell", e.Id)!.Name);
         Assert.Equal(_registry.GetEntries("srd5e", "spell").Count(), translated);
+    }
+
+    [Fact]
+    public void HebrewCharacterOptions_MergeTheRulesTranslationWithTheFlavorText_AndKeepEveryRow()
+    {
+        foreach (var (type, id) in new[] { ("class", "barbarian"), ("class", "sorcerer"), ("subclass", "champion"), ("species", "dragonborn"), ("feat", "grappler"), ("condition", "grappled"), ("background", "acolyte") })
+        {
+            var original = _registry.GetEntry("srd5e", type, id)!;
+            var shown = _registry.Localize(original, "he");
+
+            Assert.Matches("[א-ת]", shown.Name);
+            Assert.NotEqual(original.Name, shown.Name);
+            Assert.Matches("[א-ת]", shown.Description!);
+            if (original.Properties.TryGetValue("features", out var english))
+            {
+                var hebrewRows = ((IEnumerable<object>)shown.Properties["features"]).Count();
+                Assert.Equal(((IEnumerable<object>)english).Count(), hebrewRows);                // every row translated, none lost
+            }
+        }
+
+        var sorcerer = _registry.Localize(_registry.GetEntry("srd5e", "class", "sorcerer")!, "he");
+        Assert.Equal("כושף", sorcerer.Name);                                                       // the community SRD term, not קוסם
+        Assert.Contains("codex-flavor-he", sorcerer.Properties[ContentEntry.TranslationSourceKey].ToString()!);
+        Assert.Contains("srd-5.2.1-he", sorcerer.Properties[ContentEntry.TranslationSourceKey].ToString()!);
+
     }
 
     [Fact]

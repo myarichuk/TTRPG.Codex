@@ -209,7 +209,7 @@
             }
             else
             {
-                results = Registry.Search(EffectiveSystemId, query, selectedType, limit: 5000)
+                results = Registry.Search(EffectiveSystemId, query, selectedType, limit: 5000, culture: L.Culture.Name)
                     .Select(e => new LibraryItem(e, Registry.GetPack(e.PackId), null))
                     .ToList();
             }
@@ -241,7 +241,7 @@
         }
 
         var entry = Registry.GetEntry(EffectiveSystemId, type, id);
-        return entry == null ? null : new LibraryItem(entry, Registry.GetPack(entry.PackId), null);
+        return entry == null ? null : new LibraryItem(Registry.Localize(entry, L.Culture.Name), Registry.GetPack(entry.PackId), null);
     }
 
     private async Task OnQueryChanged(ChangeEventArgs e)
