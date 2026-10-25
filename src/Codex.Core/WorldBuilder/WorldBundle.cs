@@ -84,6 +84,10 @@ public sealed class WorldBundle
     public List<WorldDraft> Drafts { get; set; } = new();
     public List<DroppedDraft> Dropped { get; set; } = new();
 
+    /// <summary>After a change to the outline: drafts the reply left out but the DM had worked on (written or renamed), which
+    /// stay in the bundle unticked rather than being thrown away.</summary>
+    public List<string> SetAside { get; set; } = new();
+
     public WorldDraft? Find(string reference) => Drafts.FirstOrDefault(d => d.Ref == reference);
 }
 
@@ -111,7 +115,20 @@ public static class WorldBundleParser
     /// or type the rules do not allow are dropped (and listed in <see cref="WorldBundle.Dropped"/>); missing or repeated refs
     /// are renumbered; links to anything that is neither another draft nor a listed existing key are removed.
     /// </summary>
-    public static WorldBundle ParseOutline(string text, BundleRules rules)
+    public static WorldBundle ParseOutline(string text, BundleRules rules) => Parse(text, rules, null);
+
+    /// <summary>
+    /// Parses the reply to a change the DM asked of an outline: the whole revised outline, in the outline's shape. A reply draft
+    /// that is one of <paramref name="previous"/>'s (same kind and type, matched by its ref, then by the name the outline gave, then
+    /// by its current name) is that draft, kept with its ref, text, ticks and what saving made of it; it takes the reply's name
+    /// and pitch only while it is unwritten, and its name only while the DM has not renamed it. Other reply drafts are new, with
+    /// refs after the highest one in use. A draft the reply left out is removed, unless it was written or renamed: then it stays,
+    /// unticked, and is listed in <see cref="WorldBundle.SetAside"/>. Nothing in <paramref name="previous"/> changes when the
+    /// reply cannot be read.
+    /// </summary>
+    public static WorldBundle ParseRevision(string text, BundleRules rules, WorldBundle previous) => Parse(text, rules, previous);
+
+    private static WorldBundle Parse(string text, BundleRules rules, WorldBundle? previous)
     {
         using var doc = FieldCoercion.ParseObject(text);
         var root = doc.RootElement;
@@ -125,6 +142,9 @@ public static class WorldBundleParser
         var types = new Dictionary<string, string>(rules.HomebrewTypes, StringComparer.OrdinalIgnoreCase);
         var renamed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var rawLinks = new Dictionary<WorldDraft, List<string>>();
+        // Drafts of the previous outline the reply kept, with the name and pitch it gave them; applied only once the whole reply is read.
+        var kept = new Dictionary<WorldDraft, (string Name, string Pitch)>();
+        var next = 1 + (previous?.Drafts.Select(d => int.TryParse(d.Ref.TrimStart('d'), out var n) ? n : 0).DefaultIfEmpty(0).Max() ?? 0);
         foreach (var element in drafts.EnumerateArray().Where(e => e.ValueKind == JsonValueKind.Object))
         {
             var name = Cut(FieldCoercion.String(element, "name"), MaxName);
@@ -154,16 +174,20 @@ public static class WorldBundleParser
                 continue;
             }
 
-            var draft = new WorldDraft
+            var pitch = Cut(FieldCoercion.String(element, "pitch"), MaxPitch);
+            var given = FieldCoercion.String(element, "ref");
+            WorldDraft draft;
+            if (previous != null && Match(previous, kept, given, name, kind, type) is { } match)
             {
-                Ref = $"d{bundle.Drafts.Count + 1}",
-                Kind = kind,
-                Type = type,
-                Name = name,
-                OutlineName = name,
-                Pitch = Cut(FieldCoercion.String(element, "pitch"), MaxPitch)
-            };
-            if (FieldCoercion.String(element, "ref") is { } given)
+                draft = match;
+                kept[draft] = (name, pitch);
+            }
+            else
+            {
+                draft = new WorldDraft { Ref = $"d{next++}", Kind = kind, Type = type, Name = name, OutlineName = name, Pitch = pitch };
+            }
+
+            if (given != null)
             {
                 renamed.TryAdd(given, draft.Ref);
             }
@@ -174,9 +198,19 @@ public static class WorldBundleParser
             bundle.Drafts.Add(draft);
         }
 
+        // A kept draft is still known by its own ref, for a reply that links to it without repeating it.
+        foreach (var draft in kept.Keys)
+        {
+            renamed.TryAdd(draft.Ref, draft.Ref);
+        }
+
+        var setAside = previous?.Drafts.Where(d => !kept.ContainsKey(d) && HasWork(d)).ToList() ?? new List<WorldDraft>();
+        var final = bundle.Drafts.Concat(setAside).Select(d => d.Ref).ToHashSet();
         var existing = rules.Existing.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var resolvedLinks = new Dictionary<WorldDraft, List<string>>();
         foreach (var draft in bundle.Drafts)
         {
+            var list = resolvedLinks[draft] = new List<string>();
             foreach (var link in rawLinks[draft])
             {
                 string? resolved = null;
@@ -190,15 +224,48 @@ public static class WorldBundleParser
                     resolved = target;
                 }
 
-                if (resolved != null && !draft.Links.Contains(resolved))
+                if (resolved != null && !list.Contains(resolved))
                 {
-                    draft.Links.Add(resolved);
+                    list.Add(resolved);
                 }
             }
         }
 
+        // The whole reply is read: only now do the previous outline's drafts change.
+        foreach (var (draft, list) in resolvedLinks)
+        {
+            draft.Links = list;
+        }
+
+        foreach (var (draft, (name, pitch)) in kept)
+        {
+            if (draft.Expanded) continue;
+            if (draft.Name == draft.OutlineName) draft.Name = name;
+            draft.Pitch = pitch;
+        }
+
+        foreach (var draft in setAside)
+        {
+            draft.Selected = false;
+            draft.Links = draft.Links.Where(l => l.StartsWith(WorldBundle.ExistingPrefix, StringComparison.OrdinalIgnoreCase) || final.Contains(l)).ToList();
+            bundle.Drafts.Add(draft);
+            bundle.SetAside.Add(string.IsNullOrWhiteSpace(draft.Name) ? draft.OutlineName : draft.Name);
+        }
+
         return bundle;
     }
+
+    // The previous draft a reply draft is, if any: same kind and type, by the reply's ref, then the outline's name, then the current name.
+    private static WorldDraft? Match(WorldBundle previous, IReadOnlyDictionary<WorldDraft, (string, string)> kept, string? given, string name, string kind, string? type)
+    {
+        var open = previous.Drafts.Where(d => !kept.ContainsKey(d) && d.Kind == kind && string.Equals(d.Type, type, StringComparison.OrdinalIgnoreCase)).ToList();
+        return (given == null ? null : open.FirstOrDefault(d => string.Equals(d.Ref, given, StringComparison.OrdinalIgnoreCase)))
+               ?? open.FirstOrDefault(d => string.Equals(d.OutlineName, name, StringComparison.OrdinalIgnoreCase))
+               ?? open.FirstOrDefault(d => string.Equals(d.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Work a change to the outline must not throw away: a written text, the DM's rename, or something already saved.
+    private static bool HasWork(WorldDraft draft) => draft.Expanded || draft.Name != draft.OutlineName || draft.SavedAs.Count > 0;
 
     /// <summary>Fills a wiki draft from the expand reply, which is the page text itself.</summary>
     public static void ApplyPage(WorldDraft draft, string text)

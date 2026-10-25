@@ -164,4 +164,14 @@
   <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>לא חובה: פלג, יישוב או דמות שכבר נמצאים בוויקי.</value></data>
   <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>לכתוב גם יצור ביתי לנבל או למשרתיו (טיוטה בספרייה)</value></data>
   <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>לכתוב גם חפץ ביתי כפרס (טיוטה בספרייה)</value></data>
+  <data name="WorldBuilder.Drafts.ChangeIdeas" xml:space="preserve"><value>מה לשנות ברעיונות האלה?</value></data>
+  <data name="WorldBuilder.Drafts.ChangeIdeas.Hint" xml:space="preserve"><value>למשל „יותר אפל”, „הוסיפו יריב” או „בלי הצלופח”. טיוטות שכבר נכתבו או ששיניתם את שמן שומרות על הטקסט והשם.</value></data>
+  <data name="WorldBuilder.Drafts.ChangeIdeas.Button" xml:space="preserve"><value>שינוי הרעיונות</value></data>
+  <data name="WorldBuilder.Drafts.Ask" xml:space="preserve"><value>בקשת שינוי</value></data>
+  <data name="WorldBuilder.Drafts.Ask.Label" xml:space="preserve"><value>מה לשנות בטיוטה „{0}”?</value></data>
+  <data name="WorldBuilder.Drafts.Ask.Hint" xml:space="preserve"><value>הבינה המלאכותית תכתוב מחדש את הטיוטה הזו על בסיס מה שכבר נכתב; שאר הטיוטות יישארו כפי שהן.</value></data>
+  <data name="WorldBuilder.Drafts.Ask.Button" xml:space="preserve"><value>כתיבה מחדש עם השינוי</value></data>
+  <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>נשארו בלי סימון, כי כבר כתבתם אותן או שיניתם את שמן: {0}.</value></data>
+  <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>הבינה המלאכותית משנה את הרעיונות…</value></data>
+  <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>קודם כתבו מה לשנות.</value></data>
 </root>

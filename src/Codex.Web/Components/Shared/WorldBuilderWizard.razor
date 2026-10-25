@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Core.AI
 @using Codex.Core.WorldBuilder
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
@@ -113,6 +114,15 @@
                                 <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="feather" OnClick="WriteAllAsync" Disabled="@(busy != null || !bundle.Drafts.Any(d => d.Selected && !d.Expanded))" data-testid="world-write-all">@L["WorldBuilder.Drafts.WriteAll"]</CodexButton>
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="refresh-cw" OnClick="OutlineAsync" Disabled="@(busy != null)" data-testid="world-new-ideas">@L["WorldBuilder.Drafts.NewIdeas"]</CodexButton>
                             </div>
+                            @* A change to the whole outline: the model returns the ideas again with it made, and what the DM wrote, renamed or ticked stays. *@
+                            <form class="world-steer mb-3" @onsubmit="ReviseAsync">
+                                <label for="@(dialogId)-steer" class="field-label">@L["WorldBuilder.Drafts.ChangeIdeas"]</label>
+                                <div class="world-steer-row">
+                                    <input id="@(dialogId)-steer" class="field-input" value="@outlineChange" @oninput="e => outlineChange = e.Value?.ToString()" maxlength="@AiPrompts.MaxInstruction" aria-describedby="@(dialogId)-steer-hint" data-testid="world-steer" />
+                                    <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" Disabled="@(busy != null || string.IsNullOrWhiteSpace(outlineChange))" data-testid="world-steer-go">@L["WorldBuilder.Drafts.ChangeIdeas.Button"]</CodexButton>
+                                </div>
+                                <div id="@(dialogId)-steer-hint" class="field-hint">@L["WorldBuilder.Drafts.ChangeIdeas.Hint"]</div>
+                            </form>
                             <ul class="world-drafts">
                                 @foreach (var item in bundle.Drafts)
                                 {
@@ -162,7 +172,20 @@
                                             {
                                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="eye" OnClick="() => focused = d" aria-describedby="@nameId">@L["WorldBuilder.Drafts.Show"]</CodexButton>
                                             }
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="message-square" OnClick="() => ToggleAsk(d)" Disabled="@(!d.Selected)" aria-expanded="@(asking.ContainsKey(d.Ref) ? "true" : "false")" aria-controls="@($"{dialogId}-ask-{d.Ref}")" aria-describedby="@nameId" data-testid="world-draft-ask">@L["WorldBuilder.Drafts.Ask"]</CodexButton>
                                         </div>
+                                        @if (asking.TryGetValue(d.Ref, out var ask))
+                                        {
+                                            var askId = $"{dialogId}-ask-{d.Ref}";
+                                            <form id="@askId" class="world-steer world-draft-ask" @onsubmit="() => ChangeAsync(d)">
+                                                <label for="@(askId)-text" class="field-label">@L["WorldBuilder.Drafts.Ask.Label", d.Name]</label>
+                                                <div class="world-steer-row">
+                                                    <input id="@(askId)-text" class="field-input" value="@ask" @oninput="e => asking[d.Ref] = e.Value?.ToString() ?? string.Empty" maxlength="@AiPrompts.MaxInstruction" aria-describedby="@(askId)-hint" data-testid="world-draft-ask-text" />
+                                                    <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Small="true" Icon="feather" Disabled="@(busy != null || !d.Selected || string.IsNullOrWhiteSpace(ask))" data-testid="world-draft-ask-go">@L["WorldBuilder.Drafts.Ask.Button"]</CodexButton>
+                                                </div>
+                                                <div id="@(askId)-hint" class="field-hint">@L["WorldBuilder.Drafts.Ask.Hint"]</div>
+                                            </form>
+                                        }
                                     </li>
                                 }
                             </ul>
@@ -173,6 +196,10 @@
                             @if (bundle.Dropped.Any(d => d.Reason == DropReason.TooMany))
                             {
                                 <p class="small-muted mt-2 mb-0" data-testid="world-too-many">@L["WorldBuilder.Drafts.TooMany", WorldBundleParser.MaxDrafts]</p>
+                            }
+                            @if (bundle.SetAside.Count > 0)
+                            {
+                                <p class="small-muted mt-2 mb-0" data-testid="world-set-aside">@L["WorldBuilder.Drafts.SetAside", string.Join(", ", bundle.SetAside)]</p>
                             }
                         }
                         break;
@@ -197,7 +224,7 @@
 
                 @if (busy != null)
                 {
-                    <p class="small-muted mt-3 mb-0" role="status"><LucideIcon IconName="sparkles" Size="14" /> @(busy is WorldDraft writing ? L["WorldBuilder.Busy.Writing", writing.Name] : L["WorldBuilder.Busy.Outline"])</p>
+                    <p class="small-muted mt-3 mb-0" role="status"><LucideIcon IconName="sparkles" Size="14" /> @(busy is WorldDraft writing ? L["WorldBuilder.Busy.Writing", writing.Name] : busy == Revising ? L["WorldBuilder.Busy.Revise"] : L["WorldBuilder.Busy.Outline"])</p>
                 }
                 @if (error != null)
                 {
@@ -277,8 +304,15 @@
     private string? error;
     private bool saving;
 
-    /// <summary>The draft being written, or this component itself while the outline is drafted; null when idle.</summary>
+    /// <summary>The draft being written, this component itself while the outline is drafted, or <see cref="Revising"/> while it
+    /// is changed; null when idle.</summary>
     private object? busy;
+
+    private static readonly object Revising = new();
+
+    /// <summary>The change asked of the whole outline, and of each draft whose "ask for a change" box is open (by ref).</summary>
+    private string? outlineChange;
+    private Dictionary<string, string> asking = new();
 
     /// <summary>Cancelled when the wizard closes or opens again, so a model call still running stops, and its late reply is not
     /// put into the next session's drafts.</summary>
@@ -298,6 +332,8 @@
 
         bundle = null;
         focused = null;
+        outlineChange = null;
+        asking = new();
         current = 0;
         error = null;
         saving = false;
@@ -390,7 +426,45 @@
             ct.ThrowIfCancellationRequested();
             bundle = outline;
             focused = null;
+            asking = new();
             current = 1;
+        });
+    }
+
+    private Task ReviseAsync()
+    {
+        if (recipe == null || bundle == null || busy != null || string.IsNullOrWhiteSpace(outlineChange)) return Task.CompletedTask;
+        var drafts = bundle;
+        return RunAsync(Revising, async ct =>
+        {
+            var revised = await Builder.ReviseAsync(Ctx.Campaign, Ctx.Access, recipe, answers, drafts, outlineChange, ct);
+            ct.ThrowIfCancellationRequested();
+            bundle = revised;
+            // Drafts the change kept are the same objects, so the shown one and the open boxes stay where they still apply.
+            if (focused != null && !revised.Drafts.Contains(focused)) focused = null;
+            asking = asking.Where(a => revised.Find(a.Key) != null).ToDictionary(a => a.Key, a => a.Value);
+            outlineChange = null;
+        });
+    }
+
+    private void ToggleAsk(WorldDraft draft)
+    {
+        if (!asking.Remove(draft.Ref))
+        {
+            asking[draft.Ref] = string.Empty;
+        }
+    }
+
+    private Task ChangeAsync(WorldDraft draft)
+    {
+        if (bundle == null || busy != null || !asking.TryGetValue(draft.Ref, out var change) || string.IsNullOrWhiteSpace(change)) return Task.CompletedTask;
+        var drafts = bundle;
+        return RunAsync(draft, async ct =>
+        {
+            await Builder.ChangeAsync(Ctx.Campaign, Ctx.Access, recipe!, answers, drafts, draft, change, ct);
+            ct.ThrowIfCancellationRequested();
+            asking.Remove(draft.Ref);
+            focused = draft;
         });
     }
 

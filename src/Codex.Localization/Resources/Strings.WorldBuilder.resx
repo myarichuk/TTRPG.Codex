@@ -164,4 +164,14 @@
   <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>Optional: a faction, settlement or person already in the wiki.</value></data>
   <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>Also write a homebrew creature for the villain or their servants (a Library draft)</value></data>
   <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>Also write a homebrew reward item (a Library draft)</value></data>
+  <data name="WorldBuilder.Drafts.ChangeIdeas" xml:space="preserve"><value>What should change in these ideas?</value></data>
+  <data name="WorldBuilder.Drafts.ChangeIdeas.Hint" xml:space="preserve"><value>For example “darker”, “add a rival” or “drop the eel”. Drafts you wrote or renamed keep their text and name.</value></data>
+  <data name="WorldBuilder.Drafts.ChangeIdeas.Button" xml:space="preserve"><value>Change the ideas</value></data>
+  <data name="WorldBuilder.Drafts.Ask" xml:space="preserve"><value>Ask for a change</value></data>
+  <data name="WorldBuilder.Drafts.Ask.Label" xml:space="preserve"><value>What should change in “{0}”?</value></data>
+  <data name="WorldBuilder.Drafts.Ask.Hint" xml:space="preserve"><value>The AI rewrites this draft from what is written so far; the other drafts stay as they are.</value></data>
+  <data name="WorldBuilder.Drafts.Ask.Button" xml:space="preserve"><value>Rewrite with this change</value></data>
+  <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>Kept but unticked, because you had written or renamed them: {0}.</value></data>
+  <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>The AI is changing the ideas…</value></data>
+  <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>Say what to change first.</value></data>
 </root>

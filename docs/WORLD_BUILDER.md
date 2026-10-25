@@ -42,15 +42,26 @@ Choose a recipe ─▶ Questions (2–6 steps) ─▶ Outline ─▶ Review & ex
    from the wiki page *Port Varr* links the faction to Port Varr.
 2. **Questions.** Each recipe is a short list of questions: choices (tone, size, power level), short text ("what does
    the faction want?") and "surprise me" on every question. The questions are data (§4), so they are translated and
-   always the same; the model does not invent the form. An optional last step, "Anything else?", is free text.
+   always the same; the model does not invent the form. Free-text wishes go on the review step instead (step 4).
 3. **Outline (pass 1).** One call returns the bundle: each draft with a kind, a name, a one-line pitch and its links
    to the other drafts and to existing pages. The prompt includes the campaign's description, the names of existing
    wiki pages, homebrew entries, places and NPCs (capped, like `ExpandWikiAsync` caps related titles), so the model
    links to them instead of inventing duplicates.
-4. **Review & expand (pass 2).** The DM sees the outline as cards with a checkbox each (all ticked), can drop, rename or
-   "regenerate" one, and asks for the full text of each draft separately: a wiki page body, or a homebrew entry's fields.
+4. **Review & expand (pass 2).** The DM sees the outline as cards with a checkbox each (all ticked), can drop or rename
+   one, and asks for the full text of each draft separately: a wiki page body, or a homebrew entry's fields.
    Expanding one draft at a time keeps each call small enough for local models with short context windows, and lets
    the DM stop after the outline. The full text is shown in the same preview the entry will have when saved.
+   The DM can also talk back, in two narrow ways rather than a free chat (so a small local model, without tool calling or
+   a long context, still copes, and nothing is saved before Save):
+   - **Change the ideas**: one line for the whole outline ("darker", "add a rival", "drop the eel"). The model gets the
+     drafts' refs, kinds, names, pitches and links (no texts) and returns the whole revised outline;
+     `WorldBundleParser.ParseRevision` matches its drafts to the old ones (by ref, then outline name, then name; same kind
+     and type; each once). A matched draft keeps its text, ticks and the DM's rename, and takes the new name and pitch only
+     while unwritten. A draft the reply leaves out is dropped, unless it was written or renamed: then it stays, unticked, with a note.
+   - **Ask for a change** on one card: the model rewrites that draft from its text so far (or its pitch) with the change made.
+     A homebrew entry is sent and returned whole, so fields the change does not touch stay. A secret stays plain sentences.
+
+   In both prompts the DM's words come last, after the recipe's own instructions, and are capped at 1,000 characters.
 5. **Save.** The app writes the ticked drafts through the repositories with the DM's `CampaignAccess`, turns draft ids
    into real `[[links]]` and ids (§5), and opens the first saved page. Undo is per item (delete), as today.
 
@@ -161,13 +172,14 @@ recipes in its folder later (for example a "deity" recipe for 5e); not needed fo
 | `WorldRecipe`, `WorldRecipes` | `Codex.Core/WorldBuilder` | Loads and validates the embedded `Recipes/*.yaml` |
 | `WorldBundle`, `WorldDraft` | `Codex.Core/WorldBuilder` | The bundle shape and its parser/validator (pure, unit-tested without a model) |
 | `AiPrompts.WorldOutline`, `AiPrompts.WorldExpand` | `Codex.Core/AI/AiPrompts.cs` | Prompts, written like the existing ones, with `StyleFor` |
-| `AiAssistant.OutlineWorldAsync`, `ExpandHomebrewAsync`, `ExpandPageAsync` | `Codex.Core/AI/AiAssistant.cs` | JSON calls with the existing fallback and one retry; `FieldCoercion` is shared with character creation |
+| `AiAssistant.OutlineWorldAsync`, `ReviseWorldAsync`, `ExpandHomebrewAsync`, `ExpandPageAsync` | `Codex.Core/AI/AiAssistant.cs` | JSON calls with the existing fallback and one retry; `FieldCoercion` is shared with character creation |
 | `WorldBuilderService` | `Codex.Web/Services` | Gathers campaign context, calls the assistant, commits a reviewed bundle through the repositories (DM access) |
 | `WorldBuilderWizard.razor` | `Codex.Web/Components/Shared` | The dialog (questions, outline cards, expand, save) |
 | Strings | `Strings.WorldBuilder{,.ru,.he}.resx` | All labels, question texts and errors |
 
 Tests: recipe loading, bundle parsing (bad JSON, unknown kinds, dangling refs), option coercion including translated
-values, link rewriting on save, DM-only enforcement and the one-retry rule (a scripted `IChatClient`), in `WorldBuilderTests`.
+values, link rewriting on save, merging a changed outline, the order of the DM's change in the prompts, DM-only
+enforcement and the one-retry rule (a scripted `IChatClient`), in `WorldBuilderTests`.
 There is no Playwright test yet; the faction, settlement and quest flows were checked by hand against a scripted model.
 
 ## 7. Phase 2: the same operations over MCP
