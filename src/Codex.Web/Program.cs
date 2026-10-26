@@ -428,6 +428,33 @@ Codex.Web.MediaEndpoints.MapMedia(app);
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 
+// The database is the app: without it nothing works, and a half-alive server that answers every request
+// with a stack trace is worse than a clear failure. Check the folders, open the store now, and stop with
+// a message in the log (the launcher reports the stop) rather than failing on the first sign-in.
+{
+    var problem = RavenDbService.CheckWritable(dataDir);
+    if (problem == null)
+    {
+        try
+        {
+            _ = app.Services.GetRequiredService<RavenDbService>().Store;
+        }
+        catch (Exception ex)
+        {
+            problem = $"The database could not be started: {ex.GetBaseException().Message.Split('\n')[0]}";
+            app.Logger.LogError(ex, "RavenDB failed to start.");
+        }
+    }
+
+    if (problem != null)
+    {
+        app.Logger.LogCritical("{Problem} Shutting down.", problem);
+        // The launcher shows this line to the user (ServerController.StartupProblemPrefix).
+        Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + problem);
+        Environment.Exit(1);
+    }
+}
+
 // Daily RavenDB backup into the data dir. Best-effort: a backup that can't be configured must never
 // keep the table from starting.
 try

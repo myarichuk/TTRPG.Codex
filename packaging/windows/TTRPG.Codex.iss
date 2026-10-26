@@ -33,6 +33,8 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName=TTRPG.Codex
+SetupIconFile=..\assets\ttrpg-codex.ico
+UninstallDisplayIcon={app}\launcher\ttrpg-codex-tray.exe
 
 [Languages]
 ; The installer follows the language the user picks (or Windows') for its own pages; the app and launcher

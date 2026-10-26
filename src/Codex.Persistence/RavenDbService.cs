@@ -28,6 +28,16 @@ public class RavenDbService : IDisposable
                 DotNetPath = ResolveDotNetHost()
             };
             options.CommandLineArgs.Add("--Setup.Mode=None");
+            if (!runInMemory)
+            {
+                // Raven resolves these against the folder holding Raven.Server.dll, which for an installed
+                // app is read-only (/Applications, Program Files). Keep everything it writes beside the data.
+                var serverFiles = Path.Combine(Path.GetFullPath(dataDirectory), "..", "RavenServer");
+                options.LogsPath = Path.GetFullPath(Path.Combine(serverFiles, "Logs"));
+                var packages = Path.GetFullPath(Path.Combine(serverFiles, "Packages", "NuGet"));
+                options.CommandLineArgs.Add($"--Logs.NuGet.PackagesPath={Path.Combine(packages, "Logging")}");
+                options.CommandLineArgs.Add($"--Indexing.NuGetPackagesPath={Path.Combine(packages, "Indexing")}");
+            }
             if (runInMemory)
             {
                 options.CommandLineArgs.Add("--RunInMemory=True");
@@ -88,6 +98,34 @@ public class RavenDbService : IDisposable
         };
 
         return candidates.FirstOrDefault(c => !string.IsNullOrEmpty(c) && File.Exists(c)) ?? "dotnet";
+    }
+
+    /// <summary>
+    /// Checks up front that every folder the embedded server writes to (the data and its own logs and
+    /// packages, see the constructor) can be created and written, and returns a plain-language problem
+    /// for the first one that can't - so an install into a read-only place fails at startup with the
+    /// folder named, not on the first request with a RavenDB stack trace. Null when all is well.
+    /// </summary>
+    public static string? CheckWritable(string dataDirectory)
+    {
+        var data = Path.GetFullPath(dataDirectory);
+        foreach (var folder in new[] { data, Path.GetFullPath(Path.Combine(data, "..", "RavenServer")) })
+        {
+            try
+            {
+                Directory.CreateDirectory(folder);
+                var probe = Path.Combine(folder, $".write-test-{Environment.ProcessId}");
+                File.WriteAllText(probe, "");
+                File.Delete(probe);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                return $"TTRPG.Codex cannot write to '{folder}' ({ex.Message}). Choose a folder you own with the " +
+                       "Codex__DataDirectory setting (or CODEX_DATA_HOME for the launcher), or fix its permissions.";
+            }
+        }
+
+        return null;
     }
 
     public void Dispose()

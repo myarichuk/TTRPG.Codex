@@ -5,6 +5,7 @@
     <AssemblyName>ttrpg-codex-tray</AssemblyName>
     <RootNamespace>Codex.Launcher</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\packaging\assets\ttrpg-codex.ico</ApplicationIcon>
     <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <InvariantGlobalization>true</InvariantGlobalization>
