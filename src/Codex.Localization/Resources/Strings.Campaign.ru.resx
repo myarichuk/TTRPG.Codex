@@ -445,4 +445,18 @@
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>Иллюстрация сохранена.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>Этого места больше нет, или вы не можете его изменить.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Раскрыто группе.</value></data>
+  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>На карте</value></data>
+  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>Эта страница о месте</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>Место появится на странице «Мир» с названием и картинкой этой страницы. Если поделиться страницей, место откроется отряду; то, что вы пишете здесь, остаётся на странице.</value></data>
+  <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Регион</value></data>
+  <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Места</value></data>
+  <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Картинка</value></data>
+  <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Картинка: {0}</value></data>
+  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>На карте: {0}</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но место на карте не удалось добавить или обновить.</value></data>
+  <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Страница вики</value></data>
+  <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Открыть страницу вики: {0}</value></data>
+  <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Создать страницу</value></data>
+  <data name="Campaign.World.CreatePageLabel" xml:space="preserve"><value>Создать страницу вики: {0}</value></data>
+  <data name="Campaign.World.PageCreated" xml:space="preserve"><value>Страница вики создана: {0}.</value></data>
 </root>

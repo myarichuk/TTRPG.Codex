@@ -445,4 +445,18 @@
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>Art saved.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>That place no longer exists, or you can't change it.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Revealed to the party.</value></data>
+  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>On the map</value></data>
+  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>This page is about a place</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>The place is added to the World page with this page's name and picture. Sharing the page reveals the place to the party; what you write here stays on the page.</value></data>
+  <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Region</value></data>
+  <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Places</value></data>
+  <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Picture</value></data>
+  <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Picture of {0}</value></data>
+  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>On the map: {0}</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its place could not be added or updated on the map.</value></data>
+  <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Wiki page</value></data>
+  <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Open the wiki page for {0}</value></data>
+  <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Create page</value></data>
+  <data name="Campaign.World.CreatePageLabel" xml:space="preserve"><value>Create a wiki page for {0}</value></data>
+  <data name="Campaign.World.PageCreated" xml:space="preserve"><value>Created the wiki page for {0}.</value></data>
 </root>

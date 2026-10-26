@@ -316,7 +316,8 @@
         try
         {
             var draft = await Ai.CreateCharacterAsync(aiConcept, Ctx.IsDm ? aiKind : ActorKind.PlayerCharacter, Ctx.Campaign, Ctx.System, Ctx.UserId,
-                async type => (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList());
+                async type => (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList(),
+                async type => (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type, L.Culture.Name)).Select(i => i.Entry).ToList());
 
             var actor = NewActor(draft.Name, aiKind, Ctx.IsDm ? null : Ctx.UserId);
             foreach (var (key, value) in draft.Sheet)

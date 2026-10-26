@@ -150,6 +150,24 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
             }).slice(0, MAX);
         }
 
+        // Where the caret is inside a textarea, measured on a hidden copy of its text (a textarea doesn't say).
+        const COPIED = ["boxSizing", "width", "fontFamily", "fontSize", "fontWeight", "fontStyle", "letterSpacing", "lineHeight", "textTransform", "wordSpacing",
+            "textIndent", "tabSize", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth"];
+        function caretRect(el) {
+            const style = getComputedStyle(el), mirror = document.createElement("div");
+            COPIED.forEach(function (name) { mirror.style[name] = style[name]; });
+            mirror.style.cssText += ";position:absolute;visibility:hidden;top:0;left:-9999px;white-space:pre-wrap;overflow-wrap:break-word;";
+            mirror.textContent = el.value.slice(0, el.selectionStart);
+            const marker = document.createElement("span");
+            marker.textContent = "\u200b";
+            mirror.appendChild(marker);
+            document.body.appendChild(mirror);
+            const height = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.4;
+            const rect = { left: marker.offsetLeft, top: marker.offsetTop, height: height };
+            mirror.remove();
+            return rect;
+        }
+
         function close() {
             if (list) list.hidden = true;
             if (field) {
@@ -190,10 +208,23 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
                 return li;
             }));
             const box = field.getBoundingClientRect();
-            list.style.left = box.left + "px";
-            list.style.width = box.width + "px";
-            list.style.top = (box.bottom + 4) + "px";
             list.hidden = false;
+            if (box.height > 200) {
+                // A tall box (a wiki page): its bottom edge can be off screen, so the list follows the caret instead.
+                const caret = caretRect(field);
+                const width = Math.min(box.width, 320);
+                const line = box.top + caret.top - field.scrollTop;
+                list.style.width = width + "px";
+                list.style.left = Math.max(box.left, Math.min(box.left + caret.left, box.right - width)) + "px";
+                list.style.top = (line + caret.height + 4) + "px";
+                if (list.getBoundingClientRect().bottom > window.innerHeight - 8) {
+                    list.style.top = Math.max(8, line - list.offsetHeight - 4) + "px";
+                }
+            } else {
+                list.style.left = box.left + "px";
+                list.style.width = box.width + "px";
+                list.style.top = (box.bottom + 4) + "px";
+            }
             field.setAttribute("aria-controls", "mention-list");
             field.setAttribute("aria-expanded", "true");
             field.setAttribute("aria-activedescendant", "mention-option-" + active);

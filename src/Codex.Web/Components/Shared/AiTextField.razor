@@ -12,7 +12,7 @@
             @(busy ? L["Library.Ai.Writing"] : string.IsNullOrWhiteSpace(Value) ? L["Library.Ai.Write"] : L["Library.Ai.Enhance"])
         </CodexButton>
     </div>
-    <textarea id="@Id" class="field-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput" aria-describedby="@(Id)-hint" aria-busy="@(busy ? "true" : "false")" data-testid="@TestId"></textarea>
+    <textarea id="@Id" class="field-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput" aria-describedby="@(Id)-hint" aria-busy="@(busy ? "true" : "false")" data-mentions="@Mentions" data-testid="@TestId"></textarea>
     <div class="ai-field-foot">
         <label for="@(Id)-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
         <input id="@(Id)-ask" class="field-input field-sm" placeholder="@L["Library.Ai.AskPlaceholder"]" @bind="instruction" @bind:event="oninput" />
@@ -41,6 +41,9 @@
     [Parameter] public string? Placeholder { get; set; }
     [Parameter] public string? Hint { get; set; }
     [Parameter] public string? TestId { get; set; }
+
+    /// <summary>The box's @, # and $ suggestions as JSON (see <c>MentionLinks.Json</c>); null for a box that takes none.</summary>
+    [Parameter] public string? Mentions { get; set; }
 
     /// <summary>Produces the new text from the current text and the optional instruction.</summary>
     [Parameter, EditorRequired] public Func<string, string, Task<string>> Generate { get; set; } = null!;

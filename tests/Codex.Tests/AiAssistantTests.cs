@@ -66,4 +66,56 @@ public class AiAssistantTests
     {
         Assert.Throws<FormatException>(() => AiAssistant.ParseDraft("Sorry, I can't do that.", Request));
     }
+
+    private static readonly CharacterConceptRequest WithGear = Request with
+    {
+        Equipment = new[] { "longsword", "chain-mail", "shield", "rope" },
+        OneArmorAndShield = true
+    };
+
+    [Fact]
+    public void ParseDraft_Equipment_KeepsListedIdsAddsRepeatsAndClampsQuantity()
+    {
+        const string reply = """
+            {"name":"X","sheet":{},"equipment":[
+              {"id":"Longsword","quantity":1,"equipped":true},
+              {"id":"rope","quantity":"3"},
+              {"id":"rope","quantity":2},
+              {"id":"vorpal-blade","quantity":1,"equipped":true},
+              "shield",
+              {"id":"chain-mail","quantity":500,"equipped":"true"}
+            ]}
+            """;
+
+        var draft = AiAssistant.ParseDraft(reply, WithGear);
+
+        Assert.NotNull(draft.Equipment);
+        Assert.Equal(new[] { "longsword", "rope", "shield", "chain-mail" }, draft.Equipment!.Select(i => i.Id));
+        Assert.Equal(new DraftItem("longsword", 1, true), draft.Equipment[0]);
+        Assert.Equal(5, draft.Equipment[1].Quantity);
+        Assert.False(draft.Equipment[2].Equipped);
+        Assert.Equal(99, draft.Equipment[3].Quantity);
+        Assert.True(draft.Equipment[3].Equipped);
+    }
+
+    [Fact]
+    public void ParseDraft_WithoutAnInventory_IgnoresEquipment()
+    {
+        var draft = AiAssistant.ParseDraft("""{"name":"X","equipment":[{"id":"longsword"}]}""", Request);
+
+        Assert.Null(draft.Equipment);
+    }
+
+    [Fact]
+    public void CreateCharacter_AsksForEquipmentOnlyWhenTheSystemHasAnInventory()
+    {
+        var (without, withoutUser) = AiPrompts.CreateCharacter(Request);
+        var (system, user) = AiPrompts.CreateCharacter(WithGear);
+
+        Assert.DoesNotContain("equipment", without);
+        Assert.DoesNotContain("Item ids", withoutUser);
+        Assert.Contains("\"equipment\"", system);
+        Assert.Contains("one suit of body armor and one shield", system);
+        Assert.Contains("- chain-mail", user);
+    }
 }
