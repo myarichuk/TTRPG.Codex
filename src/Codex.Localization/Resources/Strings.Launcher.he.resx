@@ -114,4 +114,5 @@
   <data name="Launcher.Server.StartFailed" xml:space="preserve"><value>לא ניתן היה להפעיל את השרת: {0}</value></data>
   <data name="Launcher.Server.NoAnswer" xml:space="preserve"><value>השרת לא ענה בזמן. פרטים בלוג.</value></data>
   <data name="Launcher.Server.Unexpected" xml:space="preserve"><value>השרת נעצר באופן בלתי צפוי. ייתכן שתוכנה אחרת משתמשת בפורט. פרטים בלוג.</value></data>
+  <data name="Launcher.Server.StartupProblem" xml:space="preserve"><value>השרת לא הצליח לעלות: {0} פרטים בלוג.</value></data>
 </root>

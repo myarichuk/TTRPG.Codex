@@ -114,4 +114,5 @@
   <data name="Launcher.Server.StartFailed" xml:space="preserve"><value>Не удалось запустить сервер: {0}</value></data>
   <data name="Launcher.Server.NoAnswer" xml:space="preserve"><value>Сервер не ответил вовремя. Подробности смотрите в логе.</value></data>
   <data name="Launcher.Server.Unexpected" xml:space="preserve"><value>Сервер неожиданно остановился. Возможно, порт занят другой программой. Подробности смотрите в логе.</value></data>
+  <data name="Launcher.Server.StartupProblem" xml:space="preserve"><value>Сервер не смог запуститься: {0} Подробности смотрите в логе.</value></data>
 </root>

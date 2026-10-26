@@ -24,6 +24,10 @@ internal sealed class ServerController : IDisposable
     private Process? process;
     private StreamWriter? logWriter;
     private bool stopRequested;
+    private string? startupProblem;
+
+    /// <summary>The server prints this prefix, then why it is stopping, when it cannot start (see Program.cs).</summary>
+    internal const string StartupProblemPrefix = "CODEX_STARTUP_ERROR: ";
 
     public ServerController(string serverDir, string dataHome)
     {
@@ -65,6 +69,7 @@ internal sealed class ServerController : IDisposable
         {
             if (State is ServerState.Starting or ServerState.Running or ServerState.Stopping) return;
             Problem = null;
+            startupProblem = null;
             stopRequested = false;
         }
 
@@ -200,11 +205,15 @@ internal sealed class ServerController : IDisposable
             process = null;
         }
 
+        // Exited can fire before the last output lines are read; the startup problem arrives in those.
+        try { child.WaitForExit(); }
+        catch (InvalidOperationException) { }
+
         Log($"--- server exited ({SafeExitCode(child)}) ---");
         logWriter?.Flush();
         if (unexpected && State != ServerState.Failed)
         {
-            Fail(L["Launcher.Server.Unexpected"]);
+            Fail(startupProblem is { } why ? L["Launcher.Server.StartupProblem", why] : L["Launcher.Server.Unexpected"]);
         }
         else if (State != ServerState.Failed)
         {
@@ -256,6 +265,7 @@ internal sealed class ServerController : IDisposable
     private void Log(string? line)
     {
         if (line == null) return;
+        if (line.StartsWith(StartupProblemPrefix, StringComparison.Ordinal)) startupProblem = line[StartupProblemPrefix.Length..].Trim();
         recentLines.Enqueue(line);
         while (recentLines.Count > LogLinesKept && recentLines.TryDequeue(out _)) { }
         lock (gate)

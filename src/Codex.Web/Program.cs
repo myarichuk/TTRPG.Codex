@@ -449,6 +449,8 @@ app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMod
     if (problem != null)
     {
         app.Logger.LogCritical("{Problem} Shutting down.", problem);
+        // The launcher shows this line to the user (ServerController.StartupProblemPrefix).
+        Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + problem);
         Environment.Exit(1);
     }
 }
