@@ -1,0 +1,44 @@
+# A made-up system that is not a d20 game: no levels or classes, Wounds instead of hit points, "foes" instead of monsters.
+# A test fixture for checking that nothing the app sends to an AI model assumes any other game.
+id: ashfall
+name: Ashfall
+version: 1.0.0
+description: A tiny fixture system of grit and scars. Not a complete game.
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+attributes:
+  - { key: grit, label: Grit, default: 3, min: 1, max: 6 }
+  - { key: wits, label: Wits, default: 3, min: 1, max: 6 }
+
+resources:
+  - { key: Wounds, label: Wounds, maxKey: Wounds_Max, default: 4, isPrimary: true }
+
+actorFields:
+  - { key: trade, label: Trade, type: Text }
+
+conditions: [Bleeding, Shaken]
+
+ai:
+  creature: foe
+  creatureExamples: [a ferryman, a smith, a courier]
+  primaryResourceBasis: their Grit
+
+entityTypes:
+  - type: foe
+    label: Foe
+    pluralLabel: Foes
+    folder: creatures
+    actorBlueprint: true
+    hitPointsProperty: wounds
+    attributeProperties: { grit: grit, wits: wits }
+    fields:
+      - { key: wounds, label: Wounds, type: Number }
+      - { key: grit, label: Grit, type: Number }
+      - { key: wits, label: Wits, type: Number }
+  - type: relic
+    label: Relic
+    folder: relics
+    fields:
+      - { key: burden, label: Burden, type: Number, min: 0, max: 5 }

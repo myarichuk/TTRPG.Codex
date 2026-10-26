@@ -55,7 +55,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
 
         return await assistant.RewriteAsync(new RewriteRequest(
             actor.Name,
-            KindLabel(actor.Kind),
+            KindLabel(actor.Kind, system),
             facts,
             currentText,
             instruction,
@@ -94,7 +94,9 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             FeaturesAtLevel(subclassEntry, next),
             subclassId == null ? subclasses : new List<string>(),
             actor.Biography,
-            Language: Lang));
+            Language: Lang,
+            Choices: system?.Canonical.Ai.AdvancementChoices,
+            SheetChanges: system?.Canonical.Ai.AdvancementChanges));
     }
 
     /// <summary>Expands or rewrites a wiki page from its current text, the campaign blurb and the titles it links to.</summary>
@@ -203,14 +205,16 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         var primary = system?.PrimaryResource;
         return await assistant.CreateCharacterAsync(new CharacterConceptRequest(
             concept,
-            KindLabel(kind),
+            KindLabel(kind, system),
             catalog.GetDisplayName(campaign.SystemId),
             attributes,
             fields,
             primary?.Key,
             primary?.MaxKey,
             $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
-            Language: Lang));
+            Language: Lang,
+            HitPointsLabel: primary?.Label,
+            HitPointsBasis: system?.Ai.PrimaryResourceBasis));
     }
 
     /// <summary>What a character's portrait is drawn from. Everyone who can see the character sees the picture, so only
@@ -248,7 +252,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     public IEnumerable<string> SheetFacts(ActorDocument actor, string systemId, SystemDefinition? system)
     {
         system = system?.Canonical;
-        yield return $"Kind: {KindLabel(actor.Kind)}";
+        yield return $"Kind: {KindLabel(actor.Kind, system)}";
         foreach (var attribute in system?.Attributes ?? new List<AttributeDefinition>())
         {
             var score = YamlValues.GetInt(actor.Sheet, attribute.Key);
@@ -313,10 +317,11 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         return result;
     }
 
-    public static string KindLabel(ActorKind kind) => kind switch
+    /// <summary>The kind as a prompt words it; a creature takes the system's own word for one (<see cref="AiVocabulary.Creature"/>).</summary>
+    public static string KindLabel(ActorKind kind, SystemDefinition? system = null) => kind switch
     {
         ActorKind.PlayerCharacter => "player character",
-        ActorKind.Monster => "monster",
+        ActorKind.Monster => system?.Canonical.Ai.Creature ?? "creature",
         _ => "non-player character"
     };
 }

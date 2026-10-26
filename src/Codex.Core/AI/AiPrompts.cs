@@ -56,7 +56,9 @@ public sealed record LevelUpRequest(
     IReadOnlyList<string> SubclassFeatures,
     IReadOnlyList<string> AvailableSubclasses,
     string? Biography,
-    string? Language = null);
+    string? Language = null,
+    IReadOnlyList<string>? Choices = null,
+    IReadOnlyList<string>? SheetChanges = null);
 
 /// <summary>A field the model fills, described the way a prompt lists it. <paramref name="Hint"/> is the field's own help text.</summary>
 public sealed record FieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max, string? Hint = null);
@@ -72,6 +74,8 @@ public sealed record WorldAnswer(string Question, string Answer);
 /// <param name="Current">For a change to an outline: its drafts, one JSON object each in the reply's shape (no texts).</param>
 /// <param name="Instruction">For a change to an outline: what the game master asked to change.</param>
 /// <param name="CreatureStats">The system has creatures with stat blocks, so a person may name the one that plays like them.</param>
+/// <param name="Creature">What the system calls such a creature (<see cref="Codex.Plugin.Abstractions.AiVocabulary.Creature"/>).</param>
+/// <param name="CreatureExamples">Plain roles to show the model, as the system words them; null for the neutral few.</param>
 public sealed record WorldOutlineRequest(
     string Brief,
     string SystemName,
@@ -84,7 +88,9 @@ public sealed record WorldOutlineRequest(
     string? Language = null,
     IReadOnlyList<string>? Current = null,
     string? Instruction = null,
-    bool CreatureStats = false);
+    bool CreatureStats = false,
+    string Creature = "creature",
+    IReadOnlyList<string>? CreatureExamples = null);
 
 /// <summary>The expand call for one draft of an outline: write it in full.</summary>
 /// <param name="TypeLabel">For a homebrew draft, its content type as system.yaml names it ("Spell").</param>
@@ -119,7 +125,9 @@ public sealed record CharacterConceptRequest(
     string? HitPointsKey,
     string? HitPointsMaxKey,
     string? CampaignContext = null,
-    string? Language = null);
+    string? Language = null,
+    string? HitPointsLabel = null,
+    string? HitPointsBasis = null);
 
 /// <summary>Pure prompt builders: no network, no state, unit-testable.</summary>
 public static class AiPrompts
@@ -230,7 +238,7 @@ public static class AiPrompts
 
     public static (string System, string User) LevelUp(LevelUpRequest r)
     {
-        var system = $"You are a rules-savvy assistant for the {r.SystemName} tabletop game. A character is advancing from level {r.CurrentLevel} to {r.NextLevel}. Using only the features listed (they are the rules text), write: a heading \"What you gain at level {r.NextLevel}\" with bullets; a heading \"Choices to make\" listing every decision the features require (subclass, feats, spells, fighting styles...); a heading \"Suggested picks\" with one recommendation per choice and a one-line reason that fits the character's sheet and story; and a heading \"Sheet changes\" with the concrete numbers to update (hit points, proficiency bonus, new resources). If the features list is empty, say the Library has no entry for this class level and give general advice only. {StyleFor(r.Language)}";
+        var system = $"You are a rules-savvy assistant for the {r.SystemName} tabletop game. A character is advancing from level {r.CurrentLevel} to {r.NextLevel}. Using only the features listed (they are the rules text), write: a heading \"What you gain at level {r.NextLevel}\" with bullets; a heading \"Choices to make\" listing every decision the features require{ListOf(r.Choices)}; a heading \"Suggested picks\" with one recommendation per choice and a one-line reason that fits the character's sheet and story; and a heading \"Sheet changes\" with the concrete numbers to update{ListOf(r.SheetChanges)}. If the features list is empty, say the Library has no entry for this level and give general advice only. {StyleFor(r.Language)}";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Character: {r.CharacterName}");
@@ -277,7 +285,8 @@ public static class AiPrompts
 
         if (r.HitPointsKey != null)
         {
-            sb.AppendLine().AppendLine($"Hit points: set \"{r.HitPointsKey}\"{(r.HitPointsMaxKey != null ? $" and \"{r.HitPointsMaxKey}\"" : "")} to a number appropriate for the level, class and constitution.");
+            var basis = string.IsNullOrWhiteSpace(r.HitPointsBasis) ? "the rest of the sheet" : r.HitPointsBasis.Trim();
+            sb.AppendLine().AppendLine($"{(string.IsNullOrWhiteSpace(r.HitPointsLabel) ? "Starting resource" : r.HitPointsLabel.Trim())}: set \"{r.HitPointsKey}\"{(r.HitPointsMaxKey != null ? $" and \"{r.HitPointsMaxKey}\"" : "")} to a number appropriate for {basis}.");
         }
 
         return (system, sb.ToString());
@@ -299,8 +308,9 @@ public static class AiPrompts
         if (r.CreatureStats && r.Kinds.Any(k => k.StartsWith(DraftKinds.Npc + ":", StringComparison.Ordinal)))
         {
             // The stat block's name is looked up in the Library, so it must be the rules' own English name, not an invented one.
-            system += $" A \"npc\" draft may also have \"stats\": the English name of a generic creature from the {r.SystemName} rules whose game statistics suit the person " +
-                      "(such as Guard, Priest, Spy or Bandit Captain), exactly as the rules name it; leave it out when none fits.";
+            var examples = r.CreatureExamples is { Count: > 0 } ? r.CreatureExamples : DefaultCreatureExamples;
+            system += $" A \"npc\" draft may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose game statistics suit the person " +
+                      $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as the rules name it; leave it out when none fits.";
         }
 
         var change = Instruction(r.Instruction);
@@ -416,6 +426,15 @@ public static class AiPrompts
         AppendChange(sb, change, r.CurrentText);
         return (system, sb.ToString());
     }
+
+    /// <summary>Roles named when a system lists none of its own: plain jobs, not any game's creature names.</summary>
+    private static readonly string[] DefaultCreatureExamples = { "a guard", "a priest", "a spy", "a bandit leader" };
+
+    // " (a, b...)" for the system's own list; nothing when it has none, so the prompt names no decision or number the game does not have.
+    private static string ListOf(IReadOnlyList<string>? items) =>
+        items is not { Count: > 0 }
+            ? ""
+            : $" ({string.Join(", ", items)}...)";
 
     /// <summary>The longest change a game master may ask for in one go.</summary>
     public const int MaxInstruction = 1000;

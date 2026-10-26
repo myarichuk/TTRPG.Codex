@@ -54,6 +54,14 @@ actorFields:
   - { key: darkvision,       label: Darkvision (feet),  type: Number,  defaultValue: 0, category: Combat, description: "Copied from your species when you choose it." }
   - { key: notes,            label: Notes,              type: LongText, category: Notes }
 
+# What AI prompts call this system's things. Prompts carry no game's words of their own; they take them from here.
+ai:
+  creature: monster
+  creatureExamples: [a guard, a priest, a spy, a bandit leader]
+  advancementChoices: [subclass, feats, spells, fighting styles]
+  advancementChanges: [hit points, proficiency bonus, new resources]
+  primaryResourceBasis: the level, class and constitution
+
 conditions:
   [Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible,
    Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious]

@@ -25,7 +25,7 @@ questions:
     default: oneShot
   - key: party
     type: text
-    ask: What level is the party, or how experienced?
+    ask: How experienced is the party, in whatever measure the game uses?
     surprise: true
   - key: tone
     type: choice
@@ -53,7 +53,7 @@ prompt: |
   Clues are drafts of kind "fact" whose name is the clue itself, one sentence the party can uncover that moves them
   toward the truth. If the game master asked for a creature, add one draft of kind "homebrew" whose type is the
   content type for creatures: the villain's own stat block or their servants'. If they asked for a reward, add one
-  draft of kind "homebrew" whose type is the content type for magic items. Pitch both to the party's level. Every
+  draft of kind "homebrew" whose type is the content type for magic items. Pitch both to the party's experience. Every
   draft links to the quest, and the quest links to all of them. Where the game master named something already in the
   campaign, link to its existing page.
 write:
@@ -62,4 +62,4 @@ write:
     subsection per act or scene (three for a one-shot, three or four for a short arc, five to seven for a long arc),
     each giving the goal, the obstacle and what moves the story on; Who's involved; Rewards; If the party fails.
   homebrew: |
-    This entry belongs to a quest: match its power to the party's level from the game master's answers.
+    This entry belongs to a quest: match its power to the party's experience from the game master's answers.

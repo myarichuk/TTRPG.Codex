@@ -154,7 +154,7 @@
   <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>Короткая арка (несколько сессий)</value></data>
   <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>Длинная арка</value></data>
   <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>Группа</value></data>
-  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>Уровень или опыт, например: 3-й уровень или совсем новички.</value></data>
+  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>Насколько они опытны, в той мере, которой пользуется ваша игра, или совсем новички.</value></data>
   <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>Настроение</value></data>
   <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
   <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>Мрачное</value></data>

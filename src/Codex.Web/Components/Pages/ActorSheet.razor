@@ -1410,7 +1410,7 @@ else
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, PublicDescription = actor.PublicDescription });
-            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind), Ai.PortraitVisual(ForAi(snapshot), campaign.SystemId, system), ArtShape.Square);
+            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind, system), Ai.PortraitVisual(ForAi(snapshot), campaign.SystemId, system), ArtShape.Square);
             using var stream = new MemoryStream(image.Bytes);
             await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, image.ContentType);
             actor.HasPortrait = true;

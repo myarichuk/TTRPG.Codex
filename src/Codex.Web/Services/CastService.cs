@@ -19,7 +19,7 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         }
 
         var type = system?.FindType(item.Entry.Type);
-        return type is { ActorBlueprint: true } ? YamlContentPackLoader.ToActorBlueprint(item.Entry, type) : null;
+        return type is { ActorBlueprint: true } ? YamlContentPackLoader.ToActorBlueprint(item.Entry, type, system?.PrimaryResource) : null;
     }
 
     /// <summary>Adds <paramref name="count"/> copies, numbered when more than one, hidden from players until revealed. Returns the actors created.</summary>
