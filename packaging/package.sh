@@ -152,7 +152,30 @@ EOF
 EOF
     cp "$app/ttrpg-codex" "$root/TTRPG.Codex/Start TTRPG.Codex.command"
     pkg_version=$(echo "$version" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-    pkgbuild --root "$root" --install-location /Applications --identifier io.github.myarichuk.ttrpg-codex \
+    # An upgrade has to replace the app wholesale: Installer otherwise skips an app bundle whose version
+    # isn't newer (every pre-release of 1.4.0 is "1.4.0" here) or updates a relocated copy elsewhere,
+    # and it never removes files a newer release dropped. The preinstall step quits a running copy and
+    # clears the old folder; user data lives outside /Applications and is untouched.
+    scripts="$stage/pkgscripts"
+    mkdir -p "$scripts"
+    cat > "$scripts/preinstall" <<'EOF'
+#!/bin/sh
+pkill -f "/Applications/TTRPG.Codex/" 2>/dev/null
+sleep 1
+rm -rf /Applications/TTRPG.Codex
+exit 0
+EOF
+    chmod +x "$scripts/preinstall"
+    components="$stage/components.plist"
+    pkgbuild --analyze --root "$root" "$components" >/dev/null
+    count=$(/usr/libexec/PlistBuddy -c "Print" "$components" | grep -c "RootRelativeBundlePath" || true)
+    for i in $(seq 0 $((count - 1))); do
+        /usr/libexec/PlistBuddy -c "Set :$i:BundleIsRelocatable false" "$components"
+        /usr/libexec/PlistBuddy -c "Set :$i:BundleIsVersionChecked false" "$components"
+        /usr/libexec/PlistBuddy -c "Set :$i:BundleOverwriteAction overwrite" "$components"
+    done
+    pkgbuild --root "$root" --component-plist "$components" --scripts "$scripts" \
+        --install-location /Applications --identifier io.github.myarichuk.ttrpg-codex \
         --version "$pkg_version" "$out/$name.pkg"
 fi
 
