@@ -28,6 +28,16 @@ public class RavenDbService : IDisposable
                 DotNetPath = ResolveDotNetHost()
             };
             options.CommandLineArgs.Add("--Setup.Mode=None");
+            if (!runInMemory)
+            {
+                // Raven resolves these against the folder holding Raven.Server.dll, which for an installed
+                // app is read-only (/Applications, Program Files). Keep everything it writes beside the data.
+                var serverFiles = Path.Combine(Path.GetFullPath(dataDirectory), "..", "RavenServer");
+                options.LogsPath = Path.GetFullPath(Path.Combine(serverFiles, "Logs"));
+                var packages = Path.GetFullPath(Path.Combine(serverFiles, "Packages", "NuGet"));
+                options.CommandLineArgs.Add($"--Logs.NuGet.PackagesPath={Path.Combine(packages, "Logging")}");
+                options.CommandLineArgs.Add($"--Indexing.NuGetPackagesPath={Path.Combine(packages, "Indexing")}");
+            }
             if (runInMemory)
             {
                 options.CommandLineArgs.Add("--RunInMemory=True");

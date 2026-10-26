@@ -131,6 +131,7 @@ exec "$here/../../../launcher/ttrpg-codex-tray" "$@"
 EOF
     chmod +x "$bundle/MacOS/TTRPG.Codex"
     pkg_short=$(echo "$version" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+    cp "$repo/packaging/assets/ttrpg-codex.icns" "$bundle/Resources/ttrpg-codex.icns"
     cat > "$bundle/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -140,6 +141,7 @@ EOF
     <key>CFBundleDisplayName</key><string>TTRPG.Codex</string>
     <key>CFBundleIdentifier</key><string>io.github.myarichuk.ttrpg-codex.launcher</string>
     <key>CFBundleExecutable</key><string>TTRPG.Codex</string>
+    <key>CFBundleIconFile</key><string>ttrpg-codex</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$pkg_short</string>
     <key>CFBundleVersion</key><string>$pkg_short</string>
