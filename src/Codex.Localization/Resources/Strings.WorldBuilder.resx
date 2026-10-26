@@ -154,7 +154,7 @@
   <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>A short arc (a few sessions)</value></data>
   <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>A long arc</value></data>
   <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>The party</value></data>
-  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>Their level or experience, e.g. level 3, or brand-new adventurers.</value></data>
+  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>How experienced they are, in whatever measure your game uses, or brand-new adventurers.</value></data>
   <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>Tone</value></data>
   <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>Heroic</value></data>
   <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>Grim</value></data>

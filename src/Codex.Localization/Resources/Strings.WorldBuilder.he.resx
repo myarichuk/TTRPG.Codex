@@ -154,7 +154,7 @@
   <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>קשת קצרה (כמה מפגשים)</value></data>
   <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>קשת ארוכה</value></data>
   <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>החבורה</value></data>
-  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>הדרגה או הניסיון, למשל: דרגה 3, או הרפתקנים חדשים לגמרי.</value></data>
+  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>עד כמה הם מנוסים, במדד שבו המשחק שלכם משתמש, או הרפתקנים חדשים לגמרי.</value></data>
   <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>אווירה</value></data>
   <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
   <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>קודרת</value></data>

@@ -271,6 +271,28 @@ public class RestRule
 }
 
 /// <summary>
+/// The words and hints the AI features take from a system instead of assuming one game (<c>ai:</c> in system.yaml). Every part
+/// is optional; a system that says nothing gets neutral wording, so a game with no levels, classes or hit points still reads right.
+/// </summary>
+public class AiVocabulary
+{
+    /// <summary>What the game calls a creature with a stat block, singular and lower-case ("monster", "foe"). Null: "creature".</summary>
+    public string? Creature { get; set; }
+
+    /// <summary>Plain roles whose stat blocks suit an ordinary person ("guard", "priest"), offered to the model as examples. Null: a neutral few.</summary>
+    public List<string> CreatureExamples { get; set; } = new();
+
+    /// <summary>Decisions a character makes on advancing ("subclass", "feats", "spells"), listed for the level-up advice.</summary>
+    public List<string> AdvancementChoices { get; set; } = new();
+
+    /// <summary>Numbers that change on advancing ("hit points", "proficiency bonus"), listed for the level-up advice.</summary>
+    public List<string> AdvancementChanges { get; set; } = new();
+
+    /// <summary>What a starting value of the primary resource should depend on ("the level, class and constitution"). Null: the sheet as a whole.</summary>
+    public string? PrimaryResourceBasis { get; set; }
+}
+
+/// <summary>
 /// A whole game system described as data (<c>system.yaml</c>). This is what lets a homebrew system
 /// exist without compiling a plugin: attributes, resources, the actor sheet, the content types its
 /// packs may contain, conditions, and the licence the rules text is under.
@@ -299,6 +321,9 @@ public class SystemDefinition
     public List<string> Conditions { get; set; } = new();
 
     public DiceConventions Dice { get; set; } = new();
+
+    /// <summary>How the system's own words are put to AI models, so prompts carry no assumptions about any one game.</summary>
+    public AiVocabulary Ai { get; set; } = new();
 
     /// <summary>Table rules for hit points, death, damage types, exhaustion, hit dice and rests. Null: none.</summary>
     public VitalsRules? Vitals { get; set; }

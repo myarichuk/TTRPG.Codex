@@ -1,0 +1,7 @@
+- id: ash-ferryman
+  name: Ash Ferryman
+  description: Poles a black barge across the cinder flats.
+  properties:
+    wounds: 5
+    grit: 4
+    wits: 2

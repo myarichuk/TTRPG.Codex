@@ -705,7 +705,7 @@ public class WorldBuilderTests
         Assert.Equal(new[] { DraftKinds.Wiki, DraftKinds.Npc, DraftKinds.Place, DraftKinds.Fact, DraftKinds.Homebrew }, quest.Drafts);
         Assert.Contains("Hook; Stakes; Acts", quest.Write[DraftKinds.Wiki]);
         Assert.Contains("If the party fails", quest.Write[DraftKinds.Wiki]);
-        Assert.Contains("party's level", quest.Write[DraftKinds.Homebrew]);
+        Assert.Contains("party's experience", quest.Write[DraftKinds.Homebrew]);
         Assert.Equal(("oneShot", "true", "false"), (quest.Question("length")!.Default, quest.Question("creature")!.Default, quest.Question("reward")!.Default));
     }
 

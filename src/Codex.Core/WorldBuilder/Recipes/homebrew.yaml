@@ -33,7 +33,7 @@ questions:
 prompt: |
   Design one original homebrew entry of the content type the game master chose, fit for their campaign. Return exactly
   one draft of kind "homebrew" whose "type" is that content type. Power: "minor" suits early adventures, "moderate"
-  a seasoned party, "major" high-level play and "legendary" the end of a campaign; keep the numbers in line with
+  a seasoned party, "major" the later part of a campaign and "legendary" its end; keep the numbers in line with
   official material of that power. If the game master asked for a history page, add one draft of kind "wiki" about its
   history, the people tied to it and where it might be found, which links to the homebrew draft; otherwise return no
   wiki draft.

@@ -131,7 +131,7 @@ public class YamlContentPackLoader : IContentPackLoader
             foreach (var file in Directory.GetFiles(folder, "*.yaml", SearchOption.AllDirectories))
             {
                 var yaml = await File.ReadAllTextAsync(file);
-                DeserializeAndRegister<ContentEntry>(yaml, manifest, (entry, prio) => RegisterEntry(entry, typeKey, type, prio), file);
+                DeserializeAndRegister<ContentEntry>(yaml, manifest, (entry, prio) => RegisterEntry(entry, typeKey, type, system?.PrimaryResource, prio), file);
             }
         }
 
@@ -340,7 +340,7 @@ public class YamlContentPackLoader : IContentPackLoader
         _registry.RegisterActor(item, prio);
     }
 
-    private void RegisterEntry(ContentEntry entry, string typeKey, ContentTypeDefinition? type, int prio)
+    private void RegisterEntry(ContentEntry entry, string typeKey, ContentTypeDefinition? type, ResourceDefinition? primary, int prio)
     {
         if (string.IsNullOrWhiteSpace(entry.Type))
         {
@@ -380,7 +380,7 @@ public class YamlContentPackLoader : IContentPackLoader
 
         if (type is { ActorBlueprint: true })
         {
-            _registry.RegisterActor(ToActorBlueprint(entry, type), prio);
+            _registry.RegisterActor(ToActorBlueprint(entry, type, primary), prio);
         }
     }
 
@@ -388,9 +388,10 @@ public class YamlContentPackLoader : IContentPackLoader
     /// Projects a creature entry (a monster stat block) onto the <see cref="IActorDefinition"/> shape
     /// the encounter tooling instantiates: hit points become the primary resource pool, mapped
     /// attributes land in <c>Properties</c> under the system's attribute keys, and the rest of the
-    /// stat block rides along in <c>Properties</c> untouched.
+    /// stat block rides along in <c>Properties</c> untouched. The pool is the system's primary resource
+    /// (<paramref name="primary"/>: "Wounds", say); without one it is the conventional "HP".
     /// </summary>
-    public static ActorDefinition ToActorBlueprint(ContentEntry entry, ContentTypeDefinition type)
+    public static ActorDefinition ToActorBlueprint(ContentEntry entry, ContentTypeDefinition type, ResourceDefinition? primary = null)
     {
         var actor = new ActorDefinition
         {
@@ -408,8 +409,11 @@ public class YamlContentPackLoader : IContentPackLoader
         var hp = YamlValues.GetInt(entry.Properties, type.HitPointsProperty ?? "hitPoints");
         if (hp.HasValue)
         {
-            actor.Resources["HP"] = hp.Value;
-            actor.Resources["HP_Max"] = hp.Value;
+            actor.Resources[primary?.Key ?? "HP"] = hp.Value;
+            if (primary == null || primary.MaxKey != null)
+            {
+                actor.Resources[primary?.MaxKey ?? "HP_Max"] = hp.Value;
+            }
         }
 
         foreach (var (property, attributeKey) in type.AttributeProperties)
@@ -460,7 +464,7 @@ public class YamlContentPackLoader : IContentPackLoader
                 {
                     var type = system?.FindType(firstSegment);
                     var typeKey = type?.Type ?? firstSegment.ToLowerInvariant();
-                    DeserializeAndRegister<ContentEntry>(yaml, manifest, (item, prio) => RegisterEntry(item, typeKey, type, prio), entry.FullName);
+                    DeserializeAndRegister<ContentEntry>(yaml, manifest, (item, prio) => RegisterEntry(item, typeKey, type, system?.PrimaryResource, prio), entry.FullName);
                     break;
                 }
             }

@@ -95,6 +95,24 @@ entityTypes:                  # what packs for this system may contain
 Field types: `Text`, `LongText`, `Number` (honours `min`/`max`), `Boolean`, `Dropdown` (`options`),
 `TagList` (comma-separated), `EntityReference` (`targetEntityType`), `Collection` (rows), `ImagePicker`.
 
+### AI vocabulary (`ai`)
+
+Prompts sent to an AI model carry no game's words of their own. A system names its things here, and every part is optional;
+what is left out gets neutral wording ("creature", no list of level-up choices), so a game with no levels, classes or hit
+points reads right.
+
+```yaml
+ai:
+  creature: monster                         # what the game calls a stat-blocked creature
+  creatureExamples: [a guard, a priest]     # plain roles whose stat blocks suit an ordinary person
+  advancementChoices: [subclass, feats]     # decisions asked about in level-up advice
+  advancementChanges: [hit points]          # numbers listed as changing in level-up advice
+  primaryResourceBasis: the level and class # what a new character's primary resource should depend on
+```
+
+A creature's starting points go to the system's primary resource (`resources`, `isPrimary`), so a "Wounds" system
+shows `Wounds 5/5` on a cast member made from a creature, not a stray `HP`.
+
 ### Sheet rules (`sheetRules`)
 
 What a character sheet may contain is data too, so a homebrew can be as strict or as loose as it

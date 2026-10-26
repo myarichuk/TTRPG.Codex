@@ -1,0 +1,10 @@
+id: ashfall-core
+name: Ashfall Core
+version: 1.0.0
+systemId: ashfall
+kind: rules
+description: One foe, for tests.
+authors: [TTRPG.Codex project]
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.

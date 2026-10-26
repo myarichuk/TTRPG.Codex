@@ -85,7 +85,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             catalog.GetDisplayName(campaign.SystemId),
             Answers(recipe, answers, system),
             kinds,
-            recipe.Drafts.Contains(DraftKinds.Homebrew) ? types.Select(t => $"{t.Type} ({PromptLabel(t.Type, t)}{(t.ActorBlueprint ? ", a creature" : "")})").ToList() : Array.Empty<string>(),
+            recipe.Drafts.Contains(DraftKinds.Homebrew) ? types.Select(t => $"{t.Type} ({PromptLabel(t.Type, t)}{(t.ActorBlueprint ? ", a " + (system?.Canonical.Ai.Creature ?? "creature") : "")})").ToList() : Array.Empty<string>(),
             pages.Take(ContextCap).Select(p => $"{WorldBundle.ExistingPrefix}{p.Slug} ({p.Title})").ToList(),
             taken,
             CampaignContext(campaign),
@@ -101,7 +101,9 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
                 stats = d.Stats?.Name ?? d.SuggestedStats
             }, PromptJson)).ToList(),
             instruction,
-            CreatureTypes(system).Count > 0);
+            CreatureTypes(system).Count > 0,
+            system?.Canonical.Ai.Creature ?? "creature",
+            system?.Canonical.Ai.CreatureExamples);
 
         var rules = new BundleRules(recipe.Drafts, TypeSpellings(types, campaign.SystemId), pages.Select(p => p.Slug).ToList());
         var bundle = await Unusable(() => previous == null
