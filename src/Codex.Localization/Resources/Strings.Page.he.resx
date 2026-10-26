@@ -119,9 +119,9 @@
   <data name="Page.AiSettings.Title" xml:space="preserve"><value>הגדרות בינה מלאכותית</value></data>
   <data name="Page.AiSettings.Sub1" xml:space="preserve"><value>שני סוגי מודלים, שמוגדרים בנפרד: </value></data>
   <data name="Page.AiSettings.SubTextModel" xml:space="preserve"><value>מודל טקסט</value></data>
-  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> שמאחורי כל כפתור “Write with AI” ו-“Enhance with AI”, ו</value></data>
+  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> שמאחורי כל כפתור “{0}” ו-“{1}”, ו</value></data>
   <data name="Page.AiSettings.SubImageModel" xml:space="preserve"><value>מודל תמונות</value></data>
-  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> שמאחורי “Generate with AI” באיורים. הביאו מפתחות משלכם. שום דבר לא נשלח למודל עד שתלחצו על אחד הכפתורים האלה.</value></data>
+  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> שמאחורי “{0}” באיורים. הביאו מפתחות משלכם. שום דבר לא נשלח למודל עד שתלחצו על אחד הכפתורים האלה.</value></data>
   <data name="Page.AiSettings.ServerHeading" xml:space="preserve"><value>ברירת מחדל של השרת</value></data>
   <data name="Page.AiSettings.ServerText" xml:space="preserve"><value>כשאין לכם מודל משלכם, נעשה שימוש בהגדרות השרת. המודלים שלכם תמיד מקבלים עדיפות.</value></data>
   <data name="Page.AiSettings.ServerTextBefore" xml:space="preserve"><value>טקסט (קטע </value></data>
@@ -165,7 +165,7 @@
   <data name="Page.AiSettings.SaveImage" xml:space="preserve"><value>שמירת מודל התמונות</value></data>
   <data name="Page.AiSettings.Testing" xml:space="preserve"><value>בודקים…</value></data>
   <data name="Page.AiSettings.TestConnection" xml:space="preserve"><value>בדיקת חיבור</value></data>
-  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>אין כפתור בדיקה לתמונות: כל תמונה עולה כסף. נסו במקום זאת “Generate with AI” בערך בספרייה.</value></data>
+  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>אין כפתור בדיקה לתמונות: כל תמונה עולה כסף. נסו במקום זאת “{0}” בערך בספרייה.</value></data>
   <data name="Page.AiSettings.ImageModels" xml:space="preserve"><value>מודלי תמונות</value></data>
   <data name="Page.AiSettings.TextModels" xml:space="preserve"><value>מודלי טקסט</value></data>
   <data name="Page.AiSettings.Add" xml:space="preserve"><value>הוספה</value></data>
@@ -188,4 +188,19 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>כפתורי הבינה המלאכותית משתמשים כעת ב-{0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>{0} הוסר.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
+  <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>מפתח אחד, מאות מודלים. אפשר לקבל מפתח ב-openrouter.ai/keys.</value></data>
+  <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>גישה ישירה ל-OpenAI עם מפתח משלכם.</value></data>
+  <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (מקומי)</value></data>
+  <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>מודל שרץ על המחשב שלכם. לא צריך מפתח.</value></data>
+  <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (מקומי)</value></data>
+  <data name="Page.AiSettings.Preset.Text.lmstudio.Hint" xml:space="preserve"><value>השרת המקומי של LM Studio. לא צריך מפתח.</value></data>
+  <data name="Page.AiSettings.Preset.Text.groq.Hint" xml:space="preserve"><value>מודלים פתוחים ומהירים בענן.</value></data>
+  <data name="Page.AiSettings.Preset.Text.mistral.Hint" xml:space="preserve"><value>המודלים של Mistral בענן.</value></data>
+  <data name="Page.AiSettings.Preset.Text.custom" xml:space="preserve"><value>שרת אחר (תואם OpenAI)</value></data>
+  <data name="Page.AiSettings.Preset.Text.custom.Hint" xml:space="preserve"><value>כל שרת שתומך ב-{0}.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai" xml:space="preserve"><value>OpenAI (תמונות)</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>מודלי התמונות של OpenAI (gpt-image-1, dall-e-3) עם מפתח משלכם.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>כל מודל תמונות ש-OpenRouter מציע, למשל google/gemini-2.5-flash-image או qwen/qwen-image-2.1-turbo. משתמש במפתח ה-OpenRouter שלכם.</value></data>
+  <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>שרת אחר (API התמונות של OpenAI)</value></data>
+  <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>כל שרת שתומך ב-{0}, כמו LocalAI או גשר ל-ComfyUI.</value></data>
 </root>

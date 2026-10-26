@@ -14,7 +14,7 @@
     <div>
         <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="/">@L["Page.Home.Title"]</a><span class="crumb-sep" aria-hidden="true">/</span><span>@L["Page.AiSettings.Title"]</span></nav>
         <h1><LucideIcon IconName="sparkles" Size="28" Class="title-icon" /> @L["Page.AiSettings.Title"]</h1>
-        <p class="page-subtitle">@L["Page.AiSettings.Sub1"]<strong>@L["Page.AiSettings.SubTextModel"]</strong>@L["Page.AiSettings.Sub2"]<strong>@L["Page.AiSettings.SubImageModel"]</strong>@L["Page.AiSettings.Sub3"]</p>
+        <p class="page-subtitle">@L["Page.AiSettings.Sub1"]<strong>@L["Page.AiSettings.SubTextModel"]</strong>@L["Page.AiSettings.Sub2", L["Library.Ai.Write"], L["Library.Ai.Enhance"]]<strong>@L["Page.AiSettings.SubImageModel"]</strong>@L["Page.AiSettings.Sub3", L["Actor.Art.Generate"]]</p>
     </div>
 </div>
 
@@ -118,7 +118,7 @@ else
                     </div>
                     @if (purpose == Purpose.Image)
                     {
-                        <p class="field-hint mt-2 mb-0">@L["Page.AiSettings.NoImageTest"]</p>
+                        <p class="field-hint mt-2 mb-0">@L["Page.AiSettings.NoImageTest", L["Actor.Art.Generate"]]</p>
                     }
                 </form>
             </section>
@@ -200,11 +200,19 @@ else
 
     private string? DefaultIdFor(Purpose p) => user == null ? null : (p == Purpose.Image ? Providers.DefaultImageProvider(user) : Providers.DefaultProvider(user))?.Id;
 
-    private static IEnumerable<PresetView> Presets(Purpose p) => p == Purpose.Image
-        ? AiImageGenerator.Presets.Select(x => new PresetView(x.Kind, x.Label, x.DefaultEndpoint, x.DefaultModel, x.RequiresKey, x.Hint))
-        : AIClientFactory.Presets.Select(x => new PresetView(x.Kind, x.Label, x.DefaultEndpoint, x.DefaultModel, x.RequiresKey, x.Hint));
+    private IEnumerable<PresetView> Presets(Purpose p) => p == Purpose.Image
+        ? AiImageGenerator.Presets.Select(x => new PresetView(x.Kind, Shown(p, x.Kind, null, x.Label), x.DefaultEndpoint, x.DefaultModel, x.RequiresKey, Shown(p, x.Kind, ".Hint", x.Hint)))
+        : AIClientFactory.Presets.Select(x => new PresetView(x.Kind, Shown(p, x.Kind, null, x.Label), x.DefaultEndpoint, x.DefaultModel, x.RequiresKey, Shown(p, x.Kind, ".Hint", x.Hint)));
 
-    private static PresetView? PresetFor(Purpose p, string? kind) =>
+    // A service's name and hint in the reader's language (Page.AiSettings.Preset.Text.ollama[.Hint]); brand names have no entry
+    // and stay as the preset gives them, and so does a preset added without one. A hint may name the API path ({0}), kept
+    // left to right inside Hebrew text.
+    private string Shown(Purpose p, string kind, string? part, string fallback) =>
+        L.Has($"Page.AiSettings.Preset.{p}.{kind}{part}")
+            ? L[$"Page.AiSettings.Preset.{p}.{kind}{part}", Bidi.Ltr(p == Purpose.Image ? "/v1/images/generations" : "/v1/chat/completions")]
+            : fallback;
+
+    private PresetView? PresetFor(Purpose p, string? kind) =>
         Presets(p).FirstOrDefault(x => string.Equals(x.Kind, kind, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>A text model on the same service with a stored key, which a new image model may reuse (one OpenRouter key does both).</summary>
@@ -264,7 +272,9 @@ else
         var editingExisting = editingOriginalId != null;
         bool Replaceable(string current, string? oldDefault) =>
             !editingExisting || string.IsNullOrWhiteSpace(current) || string.Equals(current.Trim(), oldDefault, StringComparison.OrdinalIgnoreCase);
-        if (Replaceable(editing.Name, previous?.Label)) editing.Name = preset.Label;
+        // A model saved before the names were translated carries the English one, which is just as much a default.
+        var englishName = purpose == Purpose.Image ? AiImageGenerator.Preset(previous?.Kind)?.Label : AIClientFactory.Preset(previous?.Kind)?.Label;
+        if (Replaceable(editing.Name, previous?.Label) || Replaceable(editing.Name, englishName)) editing.Name = preset.Label;
         if (Replaceable(editing.BaseUrl, previous?.DefaultEndpoint)) editing.BaseUrl = preset.DefaultEndpoint;
         if (Replaceable(editing.ModelId, previous?.DefaultModel)) editing.ModelId = preset.DefaultModel;
     }

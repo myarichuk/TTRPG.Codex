@@ -84,6 +84,17 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void EveryAiService_HasATranslatedHint()
+    {
+        // The settings page shows these by key, falling back to the English in code, so a new service would otherwise ship untranslated.
+        var keys = Localizer.Keys("en").ToHashSet();
+        var expected = Codex.Core.AI.AIClientFactory.Presets.Select(p => $"Page.AiSettings.Preset.Text.{p.Kind}.Hint")
+            .Concat(Codex.Core.AI.AiImageGenerator.Presets.Select(p => $"Page.AiSettings.Preset.Image.{p.Kind}.Hint"));
+
+        Assert.DoesNotContain(expected, k => !keys.Contains(k));
+    }
+
+    [Fact]
     public void EveryKeyUsedInSource_ExistsInEveryLanguage()
     {
         var root = AppContext.BaseDirectory;

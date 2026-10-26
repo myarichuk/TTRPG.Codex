@@ -119,9 +119,9 @@
   <data name="Page.AiSettings.Title" xml:space="preserve"><value>AI settings</value></data>
   <data name="Page.AiSettings.Sub1" xml:space="preserve"><value>Two kinds of model, set up separately: a </value></data>
   <data name="Page.AiSettings.SubTextModel" xml:space="preserve"><value>text model</value></data>
-  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> behind every “Write with AI” and “Enhance with AI” button, and an </value></data>
+  <data name="Page.AiSettings.Sub2" xml:space="preserve"><value> behind every “{0}” and “{1}” button, and an </value></data>
   <data name="Page.AiSettings.SubImageModel" xml:space="preserve"><value>image model</value></data>
-  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> behind “Generate with AI” on art. Bring your own keys. Nothing is sent to a model until you click one of those buttons.</value></data>
+  <data name="Page.AiSettings.Sub3" xml:space="preserve"><value> behind “{0}” on art. Bring your own keys. Nothing is sent to a model until you click one of those buttons.</value></data>
   <data name="Page.AiSettings.ServerHeading" xml:space="preserve"><value>Server fallback</value></data>
   <data name="Page.AiSettings.ServerText" xml:space="preserve"><value>When you have no model of your own, the server's configuration is used. Your own models always take precedence.</value></data>
   <data name="Page.AiSettings.ServerTextBefore" xml:space="preserve"><value>Text (</value></data>
@@ -165,7 +165,7 @@
   <data name="Page.AiSettings.SaveImage" xml:space="preserve"><value>Save image model</value></data>
   <data name="Page.AiSettings.Testing" xml:space="preserve"><value>Testing…</value></data>
   <data name="Page.AiSettings.TestConnection" xml:space="preserve"><value>Test connection</value></data>
-  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>There is no test button for images: every picture costs money. Try “Generate with AI” on a Library entry instead.</value></data>
+  <data name="Page.AiSettings.NoImageTest" xml:space="preserve"><value>There is no test button for images: every picture costs money. Try “{0}” on a Library entry instead.</value></data>
   <data name="Page.AiSettings.ImageModels" xml:space="preserve"><value>Image models</value></data>
   <data name="Page.AiSettings.TextModels" xml:space="preserve"><value>Text models</value></data>
   <data name="Page.AiSettings.Add" xml:space="preserve"><value>Add</value></data>
@@ -188,4 +188,19 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>AI buttons now use {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Removed {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
+  <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>One key, hundreds of models. Get a key at openrouter.ai/keys.</value></data>
+  <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Direct OpenAI access with your own key.</value></data>
+  <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (local)</value></data>
+  <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>A model running on your own machine. No key needed.</value></data>
+  <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (local)</value></data>
+  <data name="Page.AiSettings.Preset.Text.lmstudio.Hint" xml:space="preserve"><value>LM Studio's local server. No key needed.</value></data>
+  <data name="Page.AiSettings.Preset.Text.groq.Hint" xml:space="preserve"><value>Fast hosted open models.</value></data>
+  <data name="Page.AiSettings.Preset.Text.mistral.Hint" xml:space="preserve"><value>Mistral's hosted models.</value></data>
+  <data name="Page.AiSettings.Preset.Text.custom" xml:space="preserve"><value>Custom (OpenAI-compatible)</value></data>
+  <data name="Page.AiSettings.Preset.Text.custom.Hint" xml:space="preserve"><value>Any server that implements {0}.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai" xml:space="preserve"><value>OpenAI Images</value></data>
+  <data name="Page.AiSettings.Preset.Image.openai.Hint" xml:space="preserve"><value>OpenAI's image models (gpt-image-1, dall-e-3) with your own key.</value></data>
+  <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>Any image model OpenRouter lists, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo. Uses your OpenRouter key.</value></data>
+  <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>Custom (OpenAI images API)</value></data>
+  <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>Any server that implements {0}, such as LocalAI or a ComfyUI bridge.</value></data>
 </root>
