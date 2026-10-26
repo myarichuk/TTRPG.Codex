@@ -150,6 +150,10 @@
   <data name="Campaign.Library.ArtRemoved" xml:space="preserve"><value>האיור הוסר מ"{0}".</value></data>
   <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>אי אפשר להפוך את הרשומה הזו ליצור, או שרק שליט המבוך יכול להוסיף יצורים.</value></data>
   <data name="Campaign.Library.AddedToCast" xml:space="preserve"><value>{0} נוסף לצוות (מוסתר מהשחקנים).</value></data>
+  <data name="Campaign.Library.ImportPack" xml:space="preserve"><value>ייבוא חבילה (.zip)</value></data>
+  <data name="Campaign.Library.PackImported" xml:space="preserve"><value>יובאו {0} רשומות מתוך “{1}”. אלו טיוטות: בדקו ופרסמו אותן כשתהיו מוכנים. דולגו: {2} (כבר קיימות או לא קריאות).</value></data>
+  <data name="Campaign.Library.PackNotAPack" xml:space="preserve"><value>הקובץ הזה אינו חבילת homebrew שיוצאה מהאפליקציה.</value></data>
+  <data name="Campaign.Library.PackWrongSystem" xml:space="preserve"><value>החבילה מיועדת למערכת משחק אחרת ({0}), ולכן אי אפשר להוסיף אותה לקמפיין הזה.</value></data>
   <data name="Campaign.Library.NothingImported" xml:space="preserve"><value>לא יובא דבר: כל הרשומות שנבחרו כבר קיימות כאן.</value></data>
   <data name="Campaign.Library.Imported" xml:space="preserve"><value>{0, plural, one{יובאה רשומה אחת} two{יובאו שתי רשומות} other{יובאו # רשומות}}. רשומות שכבר היו כאן דולגו.</value></data>
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>עדיין אין תוכן ביתי לייצוא.</value></data>

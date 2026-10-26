@@ -27,6 +27,10 @@
                 <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="BuildWithAiAsync" data-testid="build-homebrew-ai"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Homebrew"]</CodexButton>
             }
             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenImportAsync" data-testid="import-homebrew"><LucideIcon IconName="folder-input" Size="18" /> @L["Campaign.Library.ImportFromCampaign"]</CodexButton>
+            <label class="cx-btn cx-etched mb-0" data-testid="import-pack">
+                <LucideIcon IconName="upload" Size="18" /> @L["Campaign.Library.ImportPack"]
+                <InputFile OnChange="ImportPackAsync" accept=".zip" class="visually-hidden" />
+            </label>
             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="@L["Campaign.Library.ExportLabel"]"><LucideIcon IconName="download" Size="18" /> @L["Campaign.Library.ExportPack"]</CodexButton>
         </div>
     }
@@ -309,6 +313,40 @@
         finally
         {
             importing = false;
+        }
+    }
+
+    private async Task ImportPackAsync(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            using var stream = e.File.OpenReadStream(20 * 1024 * 1024);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            buffer.Position = 0;
+            var result = await Importer.ImportPackAsync(buffer, Ctx.Campaign, Ctx.Access);
+            switch (result.Error)
+            {
+                case PackImportError.WrongSystem:
+                    Ctx.Notify(Flash.Error(L["Campaign.Library.PackWrongSystem", result.Detail ?? "?"]));
+                    return;
+                case not null:
+                    Ctx.Notify(Flash.Error(L["Campaign.Library.PackNotAPack"]));
+                    return;
+            }
+
+            if (result.Imported == 0)
+            {
+                Ctx.Notify(Flash.Info(L["Campaign.Library.NothingImported"]));
+                return;
+            }
+
+            version++;
+            Ctx.Notify(Flash.Success(L["Campaign.Library.PackImported", result.Imported, result.Detail ?? "", result.Skipped]));
+        }
+        catch (Exception ex)
+        {
+            Ctx.Notify(Flash.Error(L["Campaign.Settings.ImportFailed", L.Describe(ex)]));
         }
     }
 

@@ -150,6 +150,10 @@
   <data name="Campaign.Library.ArtRemoved" xml:space="preserve"><value>Иллюстрация для «{0}» удалена.</value></data>
   <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>Из этой записи нельзя создать существо, или добавлять существ может только мастер.</value></data>
   <data name="Campaign.Library.AddedToCast" xml:space="preserve"><value>{0} добавлен в состав (скрыто от игроков).</value></data>
+  <data name="Campaign.Library.ImportPack" xml:space="preserve"><value>Импорт набора (.zip)</value></data>
+  <data name="Campaign.Library.PackImported" xml:space="preserve"><value>Импортировано записей из «{1}»: {0}. Это черновики: проверьте и опубликуйте их. Пропущено: {2} (уже есть или нечитаемы).</value></data>
+  <data name="Campaign.Library.PackNotAPack" xml:space="preserve"><value>Этот файл не является набором homebrew, экспортированным из приложения.</value></data>
+  <data name="Campaign.Library.PackWrongSystem" xml:space="preserve"><value>Этот набор для другой игровой системы ({0}), его нельзя добавить в эту кампанию.</value></data>
   <data name="Campaign.Library.NothingImported" xml:space="preserve"><value>Ничего не импортировано: все выбранные записи уже есть здесь.</value></data>
   <data name="Campaign.Library.Imported" xml:space="preserve"><value>{0, plural, one{Импортирована # запись} few{Импортировано # записи} many{Импортировано # записей} other{Импортировано # записи}}. Записи, которые уже были здесь, пропущены.</value></data>
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>Экспортировать пока нечего: собственного контента нет.</value></data>
