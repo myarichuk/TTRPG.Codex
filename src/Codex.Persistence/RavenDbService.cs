@@ -35,8 +35,10 @@ public class RavenDbService : IDisposable
                 var serverFiles = Path.Combine(Path.GetFullPath(dataDirectory), "..", "RavenServer");
                 options.LogsPath = Path.GetFullPath(Path.Combine(serverFiles, "Logs"));
                 var packages = Path.GetFullPath(Path.Combine(serverFiles, "Packages", "NuGet"));
-                options.CommandLineArgs.Add($"--Logs.NuGet.PackagesPath={Path.Combine(packages, "Logging")}");
-                options.CommandLineArgs.Add($"--Indexing.NuGetPackagesPath={Path.Combine(packages, "Indexing")}");
+                // Raven joins these into one command line without quoting, and the installed data folder
+                // can contain spaces ("Application Support"), so quote the paths ourselves.
+                options.CommandLineArgs.Add($"--Logs.NuGet.PackagesPath=\"{Path.Combine(packages, "Logging")}\"");
+                options.CommandLineArgs.Add($"--Indexing.NuGetPackagesPath=\"{Path.Combine(packages, "Indexing")}\"");
             }
             if (runInMemory)
             {
