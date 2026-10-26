@@ -182,4 +182,6 @@
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>בחירה</value></data>
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>אין בספרייה יצורים לקמפיין הזה.</value></data>
   <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>גם בצוות, עם הנתונים של {0}</value></data>
+  <data name="WorldBuilder.Kind.Entry" xml:space="preserve"><value>ערך ספרייה</value></data>
+  <data name="WorldBuilder.Preview.Showing" xml:space="preserve"><value>מוצג: {0}</value></data>
 </root>

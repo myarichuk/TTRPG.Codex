@@ -42,7 +42,7 @@
             </nav>
 
             <section class="wizard-body" aria-labelledby="@(dialogId)-step" aria-busy="@(busy != null ? "true" : "false")">
-                <h3 id="@(dialogId)-step" class="wizard-step-title">@StepLabel(current)</h3>
+                <h3 id="@(dialogId)-step" class="wizard-step-title" tabindex="-1">@StepLabel(current)</h3>
 
                 @switch (StepKeys[current])
                 {
@@ -72,7 +72,7 @@
                                                     <option value="">@L["WorldBuilder.ChooseType"]</option>
                                                     @foreach (var type in types)
                                                     {
-                                                        <option value="@type.Type">@type.Label</option>
+                                                        <option value="@type.Type">@TypeName(type.Type)</option>
                                                     }
                                                 </select>
                                                 break;
@@ -253,6 +253,8 @@
 
             <aside class="wizard-preview" aria-label="@L["WorldBuilder.Preview"]">
                 <div class="label-caps mb-2"><LucideIcon IconName="eye" Size="14" /> @L["WorldBuilder.Preview"]</div>
+                @* Says which draft the preview now shows, not the whole text, which would talk over whatever the DM is doing. *@
+                <p class="visually-hidden" aria-live="polite" data-testid="world-preview-status">@(focused == null ? "" : L["WorldBuilder.Preview.Showing", focused.Name])</p>
                 @if (focused is { Kind: DraftKinds.Homebrew } shownEntry)
                 {
                     <EntryDetail Item="PreviewItem(shownEntry)" Type="PreviewType(shownEntry)" />
@@ -394,17 +396,25 @@
 
     private string KindLabel(WorldDraft draft) => draft.Kind switch
     {
-        DraftKinds.Homebrew => types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase))?.Label ?? CampaignLibrary.Humanize(draft.Type ?? string.Empty),
+        DraftKinds.Homebrew => TypeName(draft.Type),
         DraftKinds.Npc => L["WorldBuilder.Kind.Npc"],
         DraftKinds.Fact => L["WorldBuilder.Kind.Fact"],
         DraftKinds.Place => L["WorldBuilder.Kind.Place"],
         _ => L["WorldBuilder.Kind.Wiki"]
     };
 
+    /// <summary>A content type as the DM reads it: its translated label, else the label the system gives it, else "Library entry".
+    /// A system plugin shipped without labels in the DM's language never shows its raw key ("magic-item") in their language.</summary>
+    private string TypeName(string? type) =>
+        new[] { PreviewTypeOf(type)?.Label, Ctx.System?.Canonical.FindType(type ?? string.Empty)?.Label }
+            .FirstOrDefault(label => !string.IsNullOrWhiteSpace(label)) ?? L["WorldBuilder.Kind.Entry"];
+
+    private ContentTypeDefinition? PreviewTypeOf(string? type) => types.FirstOrDefault(t => string.Equals(t.Type, type, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>A homebrew draft of a type that can stand on the table as a creature (a monster, say), so it can go on the Bestiary shortlist.</summary>
     private bool IsCreature(WorldDraft draft) => draft.Kind == DraftKinds.Homebrew && PreviewType(draft)?.ActorBlueprint == true;
 
-    private ContentTypeDefinition? PreviewType(WorldDraft draft) => types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase));
+    private ContentTypeDefinition? PreviewType(WorldDraft draft) => PreviewTypeOf(draft.Type);
 
     private LibraryItem PreviewItem(WorldDraft draft)
     {
@@ -451,6 +461,8 @@
             asking = new();
             current = 1;
         });
+        // The questions are gone and the drafts are in: start a keyboard or screen-reader user at the top of the new step.
+        if (current == 1 && error == null) await JS.InvokeVoidAsync("codex.focus", $"{dialogId}-step");
     }
 
     private Task ReviseAsync()

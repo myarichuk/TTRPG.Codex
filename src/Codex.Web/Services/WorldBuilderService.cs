@@ -28,7 +28,7 @@ public sealed record WorldBuildResult(
 /// on the DM's own key.
 /// </summary>
 public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
-    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns)
+    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -85,7 +85,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             catalog.GetDisplayName(campaign.SystemId),
             Answers(recipe, answers, system),
             kinds,
-            recipe.Drafts.Contains(DraftKinds.Homebrew) ? types.Select(t => $"{t.Type} ({t.Label}{(t.ActorBlueprint ? ", a creature" : "")})").ToList() : Array.Empty<string>(),
+            recipe.Drafts.Contains(DraftKinds.Homebrew) ? types.Select(t => $"{t.Type} ({PromptLabel(t.Type, t)}{(t.ActorBlueprint ? ", a creature" : "")})").ToList() : Array.Empty<string>(),
             pages.Take(ContextCap).Select(p => $"{WorldBundle.ExistingPrefix}{p.Slug} ({p.Title})").ToList(),
             taken,
             CampaignContext(campaign),
@@ -206,7 +206,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         var type = system?.Canonical.FindType(draft.Type ?? string.Empty)
                    ?? new ContentTypeDefinition { Type = draft.Type ?? string.Empty, Label = CampaignLibrary.Humanize(draft.Type ?? "entry") };
         var fields = await FieldSpecsAsync(campaign, access, system, type);
-        var homebrewRequest = new WorldExpandRequest(draft.Name, draft.Pitch, type.Label, catalog.GetDisplayName(campaign.SystemId), fields,
+        var homebrewRequest = new WorldExpandRequest(draft.Name, draft.Pitch, PromptLabel(type.Type, type), catalog.GetDisplayName(campaign.SystemId), fields,
             Answers(recipe, answers, system), related, pages, CampaignContext(campaign), Lang, DraftKinds.Homebrew, recipe.Write.GetValueOrDefault(DraftKinds.Homebrew),
             instruction, draft.Expanded ? JsonSerializer.Serialize(new { description = draft.Body, tags = draft.Tags, properties = draft.Properties }, PromptJson) : null);
         var culture = Lang;
@@ -227,6 +227,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         // What each saved draft became, so a secret can point at the pages and cast members it is about.
         // A retry after a failed save starts from what the first attempt stored (WorldDraft.SavedAs) and skips those steps.
         var savedIds = Kept(bundle).ToDictionary(d => d.Ref, d => d.SavedAs.Values.ToList());
+        var earlier = Kept(bundle).SelectMany(d => d.SavedAs.Select(s => (Draft: d, Step: s.Key, Id: s.Value))).ToList();
         void Saved(WorldDraft draft, string step, string id)
         {
             draft.SavedAs[step] = id;
@@ -289,7 +290,13 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
 
             entries.Add(entry);
             Saved(draft, "homebrew", entry.Id);
-            if (draft.Bestiary && system?.FindType(entry.Type)?.ActorBlueprint == true)
+        }
+
+        // Creatures an earlier attempt stored are shortlisted too: that attempt may have failed before it got this far.
+        var stored = existing.Concat(entries).ToDictionary(e => e.Id);
+        foreach (var draft in Kept(bundle).Where(d => d.Bestiary && d.SavedAs.ContainsKey("homebrew")))
+        {
+            if (stored.TryGetValue(draft.SavedAs["homebrew"], out var entry) && system?.FindType(entry.Type)?.ActorBlueprint == true)
             {
                 shortlist.Add(new BestiaryEntry { EntryType = entry.Type, EntryId = entry.EntryId, IsHomebrew = true, Name = entry.Name });
             }
@@ -346,6 +353,36 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
 
             saved.Add(fact);
             Saved(draft, "fact", fact.Id);
+        }
+
+        // A retry reports the whole save, the earlier attempt's documents first, so the count is right and "open the first
+        // saved page" opens the bundle's first page even when the first attempt stored it.
+        var ids = earlier.ToLookup(e => e.Step, e => e.Id);
+        if (ids.Count > 0)
+        {
+            if (ids.Contains(PageStep))
+            {
+                var all = (await wiki.GetVisibleForCampaignAsync(access)).ToDictionary(page => page.Id);
+                pages.InsertRange(0, ids[PageStep].Where(all.ContainsKey).Select(id => all[id]));
+            }
+
+            entries.InsertRange(0, ids["homebrew"].Where(stored.ContainsKey).Select(id => stored[id]));
+            foreach (var id in ids["cast"].Reverse())
+            {
+                if (await actorRepository.GetVisibleAsync(id, access) is { } actor) actors.Insert(0, actor);
+            }
+
+            if (ids.Contains("place"))
+            {
+                var all = (await regions.GetVisibleForCampaignAsync(access)).SelectMany(r => r.Locations).ToDictionary(place => place.Id);
+                places.InsertRange(0, earlier.Where(e => e.Step == "place" && all.ContainsKey(e.Id)).Select(e => (e.Draft, all[e.Id])));
+            }
+
+            if (ids.Contains("fact"))
+            {
+                var all = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).ToDictionary(fact => fact.Id);
+                saved.InsertRange(0, ids["fact"].Where(all.ContainsKey).Select(id => all[id]));
+            }
         }
 
         return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted);
@@ -517,13 +554,17 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             result.Add(new WorldAnswer(question.Ask, question.Type switch
             {
                 QuestionTypes.Toggle => answer == "true" ? "yes" : "no",
-                QuestionTypes.ContentType => $"{system?.Canonical.FindType(answer)?.Label ?? CampaignLibrary.Humanize(answer)} (type id: {answer})",
+                QuestionTypes.ContentType => $"{PromptLabel(answer, system?.Canonical.FindType(answer))} (type id: {answer})",
                 _ => answer
             }));
         }
 
         return result;
     }
+
+    /// <summary>A type as the model reads it: the label system.yaml gives it, or its key made readable when it has none.</summary>
+    private static string PromptLabel(string key, ContentTypeDefinition? type) =>
+        string.IsNullOrWhiteSpace(type?.Label) ? CampaignLibrary.Humanize(key) : type.Label;
 
     private static string UniqueEntryId(IEnumerable<HomebrewEntryDocument> existing, string type, string name)
     {

@@ -182,4 +182,6 @@
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Use</value></data>
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>The Library has no creatures for this campaign.</value></data>
   <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>also in the cast, with the {0} stats</value></data>
+  <data name="WorldBuilder.Kind.Entry" xml:space="preserve"><value>Library entry</value></data>
+  <data name="WorldBuilder.Preview.Showing" xml:space="preserve"><value>Showing {0}</value></data>
 </root>

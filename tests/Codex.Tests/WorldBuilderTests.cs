@@ -382,20 +382,24 @@ public class WorldBuilderTests
         var actors = new List<ActorDocument>();
         var facts = new List<FactDocument>();
         var wiki = Substitute.For<IWikiRepository>();
-        wiki.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns((existingPages ?? Array.Empty<WikiPageDocument>()).ToList().AsEnumerable());
+        // The fakes return what was saved, as the repositories do, so a retried save can find what its first attempt stored.
+        wiki.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => (existingPages ?? Array.Empty<WikiPageDocument>()).Concat(pages).ToList().AsEnumerable());
         wiki.TrySaveAsync(Arg.Any<WikiPageDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
         {
             var page = ci.Arg<WikiPageDocument>();
             page.Id = $"page-{pages.Count + 1}";
+            page.Slug = WikiText.Slugify(page.Title);
             pages.Add(page);
             return ci.Arg<CampaignAccess>().IsDm;
         });
         var homebrew = Substitute.For<IHomebrewRepository>();
-        homebrew.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existing.AsEnumerable());
+        homebrew.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existing.Concat(entries).ToList().AsEnumerable());
         var factRepo = Substitute.For<IFactRepository>();
         factRepo.SaveAsync(Arg.Do<FactDocument>(facts.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        factRepo.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>(), Arg.Any<IReadOnlySet<string>>()).Returns(_ => facts.ToList().AsEnumerable());
         var actorRepo = Substitute.For<IActorRepository>();
         actorRepo.TrySaveAsync(Arg.Do<ActorDocument>(actors.Add), Arg.Any<CampaignAccess>()).Returns(true);
+        actorRepo.GetVisibleAsync(Arg.Any<string>(), Arg.Any<CampaignAccess>()).Returns(ci => actors.FirstOrDefault(a => a.Id == ci.ArgAt<string>(0)));
         var catalog = Substitute.For<ISystemCatalog>();
         catalog.GetUISchemas(Arg.Any<string>()).Returns(Enumerable.Empty<UISchema>());
         catalog.GetDefinition("srd5e").Returns(CreatureSystem);
@@ -408,8 +412,8 @@ public class WorldBuilderTests
             Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);
         var cast = new CastService(runtimes, registry, components, catalog);
         var regions = Substitute.For<IRegionRepository>();
-        regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(existingRegions.ToList().AsEnumerable());
-        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns), pages, entries, actors, facts);
+        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo), pages, entries, actors, facts);
+        regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
         campaigns.UpdateAsync("c1", Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
         {
             ci.Arg<Action<CampaignDocument>>()(saving.Stored);
@@ -835,7 +839,9 @@ public class WorldBuilderTests
         Assert.Single(saving.Entries);
         // The secret still knows the page from the first attempt, and the creature from the second.
         Assert.Equal(new[] { "page-1", "entry-1" }, Assert.Single(saving.Facts).RelatedEntityIds);
-        Assert.Equal((0, 1, 1), (retried.Pages.Count, retried.Entries.Count, retried.Facts.Count));
+        // The retry reports the whole save, the page the first attempt stored included, so the DM is told 3 and taken to it.
+        Assert.Equal((1, 1, 1, 3), (retried.Pages.Count, retried.Entries.Count, retried.Facts.Count, retried.Count));
+        Assert.Equal("The Drowned Bell", retried.Pages[0].Title);
     }
 
     [Fact]
@@ -1110,5 +1116,41 @@ public class WorldBuilderTests
         var ilse = Assert.Single(saving.Actors);
         Assert.Null(ilse.BlueprintId);
         Assert.False(ilse.Sheet.ContainsKey("challenge"));
+    }
+
+    /// <summary>A model that answers only when the call is cancelled, as a slow model the DM gives up on.</summary>
+    private sealed class HangingChat : IChatClient
+    {
+        public async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            throw new InvalidOperationException("unreachable");
+        }
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+    }
+
+    [Fact]
+    public async Task CancelledCalls_StopAsCancelled_AndLeaveTheDraftsAlone()
+    {
+        var assistant = new AiAssistant(new HangingChat());
+        var previous = Previous();
+        var page = previous.Drafts[2];
+        using var cancel = new CancellationTokenSource();
+
+        var revising = assistant.ReviseWorldAsync(AnyOutline with { Current = new[] { "{}" }, Instruction = "darker" }, Rules, previous, cancel.Token);
+        var writing = assistant.ExpandPageAsync(page, new WorldExpandRequest(page.Name, page.Pitch, null, "SRD", Array.Empty<FieldSpec>(), Array.Empty<WorldAnswer>(),
+            Array.Empty<string>(), Array.Empty<string>()), cancel.Token);
+        cancel.Cancel();
+
+        // Cancelled, not "the model returned nothing usable", which the wizard would show as an error.
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => revising);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => writing);
+        Assert.Equal(5, previous.Drafts.Count);
+        Assert.Equal(("Harbour", "Docks.", false), (page.Name, page.Pitch, page.Expanded));
     }
 }
