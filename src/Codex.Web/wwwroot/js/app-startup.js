@@ -391,6 +391,16 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // A growing log (the world-building chat): keep its end in view, but only if the reader is already at the end, so scrolling
+    // back up to re-read is not undone by every new word.
+    keepInView: function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > window.innerHeight - 160) {
+            el.scrollIntoView({ block: "end", behavior: "instant" });
+        }
+    },
     // MarkdownEditor's toolbar: wrap the selection (or the word "text" when nothing is selected) in a marker, or start
     // each selected line with a prefix. "input" is raised so Blazor's oninput sees the new value, and Undo still works
     // where the browser supports execCommand on a textarea.

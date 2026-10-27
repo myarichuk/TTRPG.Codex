@@ -190,6 +190,7 @@
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>не настроено</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>Один ключ — сотни моделей. Ключ можно получить на openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Прямой доступ к OpenAI с вашим ключом.</value></data>
+  <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude через собственный API Anthropic. Ключ можно получить на console.anthropic.com.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (локально)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>Модель на вашем компьютере. Ключ не нужен.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (локально)</value></data>

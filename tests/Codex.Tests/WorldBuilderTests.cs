@@ -733,8 +733,14 @@ public class WorldBuilderTests
             return Task.FromResult(new ChatResponse(replies[next++](sent)));
         }
 
-        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+        // The chat streams its turns; the scripted reply comes as the updates a real model would send.
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            foreach (var update in (await GetResponseAsync(messages, options, cancellationToken)).ToChatResponseUpdates())
+            {
+                yield return update;
+            }
+        }
 
         public object? GetService(Type serviceType, object? serviceKey = null) => null;
         public void Dispose() { }
@@ -784,6 +790,23 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_HandsTheReplyAndTheReasoningOn_AsTheyArrive()
+    {
+        var model = new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, new List<AIContent>
+        {
+            new TextReasoningContent("A harbour wants a pier."),
+            new TextContent("Varr, then.")
+        }));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        var deltas = new List<WorldChatDelta>();
+
+        await chat.SendAsync("A harbour, please.", _ => { }, CancellationToken.None, deltas.Add);
+
+        Assert.Equal(new[] { new WorldChatDelta(true, "A harbour wants a pier."), new WorldChatDelta(false, "Varr, then.") }, deltas);
+        Assert.Equal("Varr, then.", chat.Lines[^1].Text); // what was streamed is what the log keeps
+    }
+
+    [Fact]
     public async Task Chat_ThatHitsTheToolLimit_LeavesNoCallWithoutItsResult_ForTheNextMessage()
     {
         var saving = Service();
@@ -823,7 +846,36 @@ public class WorldBuilderTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => chat.SendAsync("Hello", _ => { }, stop.Token));
 
         Assert.Null(chat.Proposal);
-        Assert.Equal(WorldChatSpeaker.Tool, chat.Lines[^1].Speaker); // "that message wasn't answered"
+        Assert.Empty(chat.Lines); // the message was never answered, so it is not in the log; the page gives it back to the DM
+    }
+
+    [Fact]
+    public async Task Chat_ThatFailsAfterProposing_ForgetsThatProposal_AndKeepsTheEarlierOne()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string kell = """{"proposal": {"region": "The Coast", "entries": [{"ref": "k", "kind": "place", "placeKind": "settlement", "name": "Kell", "text": "A fort."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Varr is ready."),
+            _ => Calls("c2", "propose_changes", kell),
+            _ => throw new IOException("connection lost"),
+            _ => new ChatMessage(ChatRole.Assistant, "Kell, then."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
+        var lines = chat.Lines.Count;
+
+        await Assert.ThrowsAsync<IOException>(() => chat.SendAsync("A fort, please.", _ => { }, CancellationToken.None));
+
+        // The abandoned turn proposed Kell, but the model never got to say so and the DM never saw a reply: Varr is still what waits.
+        Assert.Equal(new[] { "Varr" }, chat.Proposal!.Drafts.Select(d => d.Name));
+        Assert.Equal(lines, chat.Lines.Count);
+
+        await chat.SendAsync("A fort, please.", _ => { }, CancellationToken.None);
+
+        // Sent again, the message is in the conversation once, with nothing of the turn that was cut off.
+        var sent = model.Calls[^1];
+        Assert.Single(sent, m => m.Role == ChatRole.User && m.Text == "A fort, please.");
+        Assert.DoesNotContain(sent.SelectMany(m => m.Contents).OfType<FunctionCallContent>(), c => c.CallId == "c2");
     }
 
     [Fact]

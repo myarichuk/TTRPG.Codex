@@ -166,7 +166,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Art generation failed");
-            error = L["Actor.Art.DrawFailed", L.Describe(ex)];
+            error = L["Actor.Art.DrawFailed", AiFailureText.For(L, ex)];
         }
         finally
         {

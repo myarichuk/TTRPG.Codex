@@ -1,4 +1,7 @@
 using System.ClientModel;
+using System.Net;
+using System.Runtime.CompilerServices;
+using Anthropic.Exceptions;
 using Microsoft.Extensions.AI;
 
 namespace Codex.Core.AI;
@@ -34,9 +37,42 @@ internal sealed class TemperatureFallbackChatClient(IChatClient inner) : Delegat
         }
     }
 
-    // A stream cannot be replayed once it has started, so it only benefits from a verdict reached earlier.
-    public override IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-        base.GetStreamingResponseAsync(messages, rejected ? Without(options) : options, cancellationToken);
+    // A stream cannot be replayed once an update has gone out, but a refusal arrives before the first one: the request is
+    // rejected as a whole, so that is the window in which to try again without the temperature.
+    public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var history = messages as IList<ChatMessage> ?? messages.ToList();
+        var (source, any) = await OpenAsync(history, options, cancellationToken);
+        await using (source)
+        {
+            if (!any)
+            {
+                yield break;
+            }
+
+            yield return source.Current;
+            while (await source.MoveNextAsync())
+            {
+                yield return source.Current;
+            }
+        }
+    }
+
+    private async Task<(IAsyncEnumerator<ChatResponseUpdate> Source, bool Any)> OpenAsync(IList<ChatMessage> history, ChatOptions? options, CancellationToken cancellationToken)
+    {
+        var source = base.GetStreamingResponseAsync(history, Without(options), cancellationToken).GetAsyncEnumerator(cancellationToken);
+        try
+        {
+            return (source, await source.MoveNextAsync());
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested && !rejected && options?.Temperature is not null && RefusesTemperature(ex))
+        {
+            await source.DisposeAsync();
+            rejected = true;
+            var again = base.GetStreamingResponseAsync(history, Without(options), cancellationToken).GetAsyncEnumerator(cancellationToken);
+            return (again, await again.MoveNextAsync());
+        }
+    }
 
     private ChatOptions? Without(ChatOptions? options)
     {
@@ -51,7 +87,15 @@ internal sealed class TemperatureFallbackChatClient(IChatClient inner) : Delegat
     }
 
     /// <summary>True for a service error that names <c>temperature</c> ("HTTP 400 ... `temperature` is deprecated for this model").
-    /// The message, not the status, is what tells it apart: servers differ in how they word it, but they all say which parameter.</summary>
-    internal static bool RefusesTemperature(Exception ex) =>
-        ex is ClientResultException && ex.Message.Contains("temperature", StringComparison.OrdinalIgnoreCase);
+    /// The message, not the status, is what tells it apart on the OpenAI side: servers differ in how they word it, but they all
+    /// say which parameter. Anthropic's SDK keeps the API's error body apart from the message, so that is read too.
+    /// (Never <c>ex.ToString()</c>: the stack trace names this class.)</summary>
+    internal static bool RefusesTemperature(Exception ex) => ex switch
+    {
+        ClientResultException => Mentions(ex.Message),
+        AnthropicApiException api => api.StatusCode == HttpStatusCode.BadRequest && (Mentions(api.Message) || Mentions(api.ResponseBody)),
+        _ => false
+    };
+
+    private static bool Mentions(string? text) => text?.Contains("temperature", StringComparison.OrdinalIgnoreCase) == true;
 }

@@ -29,6 +29,7 @@
   <data name="WorldChat.Model" xml:space="preserve"><value>ИИ</value></data>
   <data name="WorldChat.Working" xml:space="preserve"><value>Обдумываю…</value></data>
   <data name="WorldChat.Error" xml:space="preserve"><value>ИИ не смог ответить: {0}</value></data>
+  <data name="WorldChat.Retry" xml:space="preserve"><value>Повторить</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>Эта модель не умеет вызывать инструменты, а строителю мира это нужно. Выберите в настройках ИИ модель с поддержкой вызова инструментов.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>Нет предложения для применения.</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Ваше сообщение</value></data>

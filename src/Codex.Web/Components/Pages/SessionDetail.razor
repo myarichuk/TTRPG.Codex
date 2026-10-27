@@ -452,7 +452,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI summary failed for session {SessionId}", SessionId);
-            flash = Flash.Error(L["Session.Flash.DraftFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Session.Flash.DraftFailed", AiFailureText.For(L, ex)]);
         }
         finally
         {

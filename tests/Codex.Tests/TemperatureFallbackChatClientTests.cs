@@ -67,6 +67,18 @@ public class TemperatureFallbackChatClientTests
         Assert.Equal(50, inner.LastOptions!.MaxOutputTokens);
     }
 
+    [Fact]
+    public async Task Streaming_RefusedBeforeItsFirstUpdate_IsOpenedAgainWithoutTemperature()
+    {
+        var inner = new FakeChat(refuseTemperature: true);
+        var client = new TemperatureFallbackChatClient(inner);
+
+        var updates = await client.GetStreamingResponseAsync(Hello, new ChatOptions { Temperature = 0.8f }).ToListAsync();
+
+        Assert.Equal("ok", string.Concat(updates.Select(u => u.Text)));
+        Assert.Equal(new float?[] { 0.8f, null }, inner.Temperatures);
+    }
+
     private sealed class FakeChat(bool refuseTemperature) : IChatClient
     {
         public List<float?> Temperatures { get; } = new();
@@ -90,8 +102,13 @@ public class TemperatureFallbackChatClientTests
             return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "ok")));
         }
 
-        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            foreach (var update in (await GetResponseAsync(messages, options, cancellationToken)).ToChatResponseUpdates())
+            {
+                yield return update;
+            }
+        }
 
         public object? GetService(Type serviceType, object? serviceKey = null) => null;
         public void Dispose() { }

@@ -22,6 +22,9 @@ public enum WorldChatSpeaker
     Tool
 }
 
+/// <summary>A piece of the model's turn as it is written: more of its reply, or more of its reasoning (for models that share it).</summary>
+public sealed record WorldChatDelta(bool Reasoning, string Text);
+
 /// <summary>
 /// One world-building conversation (docs/WORLD_BUILDER.md): the DM talks with their own model, which reads the campaign through
 /// tools and proposes related entries with <c>propose_changes</c>. A proposal is only held here, never saved, until the DM
@@ -59,8 +62,9 @@ public sealed class WorldChat
     public IReadOnlyList<string> ProposalWarnings { get; private set; } = Array.Empty<string>();
 
     /// <summary>Sends the DM's message and runs the model, with its tool calls, until it answers. <paramref name="progress"/>
-    /// hears each tool the model calls, as a line the page shows while it works.</summary>
-    public async Task SendAsync(string text, Action<WorldChatLine> progress, CancellationToken ct)
+    /// hears each tool the model calls, as a line the page shows while it works; <paramref name="stream"/>, when given, hears the
+    /// reply and the reasoning as they arrive, so the page can show them being written instead of a wait.</summary>
+    public async Task SendAsync(string text, Action<WorldChatLine> progress, CancellationToken ct, Action<WorldChatDelta>? stream = null)
     {
         if (!access.IsDm) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
         var message = text.Trim();
@@ -82,11 +86,14 @@ public sealed class WorldChat
             .Build();
 
         history.Add(new ChatMessage(ChatRole.User, message));
+        var turnStart = lines.Count;
+        var heldProposal = Proposal;
+        var heldWarnings = ProposalWarnings;
         lines.Add(new WorldChatLine(WorldChatSpeaker.Dm, message));
         var before = history.Count;
         try
         {
-            var response = await client.GetResponseAsync(history, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, ct);
+            var response = await StreamAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
             var cutShort = KeepAnswered(response.Messages);
             var reply = response.Text?.Trim();
             lines.Add(new WorldChatLine(WorldChatSpeaker.Model, !string.IsNullOrEmpty(reply) ? reply
@@ -94,16 +101,44 @@ public sealed class WorldChat
         }
         catch (Exception ex) when (ex is not OperationCanceledException && !(ex is LocalizedException) && SaysNoTools(ex))
         {
-            history.RemoveRange(before - 1, history.Count - before + 1);
+            Undo();
             throw new LocalizedException("WorldChat.Error.NoTools");
         }
         catch
         {
-            // A stopped or failed turn leaves the conversation as it was, so the DM can send it again.
-            history.RemoveRange(before - 1, history.Count - before + 1);
-            lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.NotAnswered"]));
+            // A stopped or failed turn leaves the conversation as it was, message included: the page hands the text back to the
+            // DM to send again, so the log doesn't also keep a line for a message that was never answered.
+            Undo();
             throw;
         }
+
+        void Undo()
+        {
+            history.RemoveRange(before - 1, history.Count - before + 1);
+            lines.RemoveRange(turnStart, lines.Count - turnStart);
+            // propose_changes holds its proposal the moment the model makes it, mid-turn. The turn is being forgotten, so
+            // what it proposed goes with it, and what was waiting for the DM before it comes back.
+            Proposal = heldProposal;
+            ProposalWarnings = heldWarnings;
+        }
+    }
+
+    // The turn as one response, the way GetResponseAsync would give it, with each piece of text handed on as it arrives.
+    private async Task<ChatResponse> StreamAsync(IChatClient client, ChatOptions options, Action<WorldChatDelta>? stream, CancellationToken ct)
+    {
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in client.GetStreamingResponseAsync(history, options, ct))
+        {
+            updates.Add(update);
+            if (stream == null) continue;
+            foreach (var content in update.Contents)
+            {
+                if (content is TextReasoningContent { Text: { Length: > 0 } thought }) stream(new WorldChatDelta(true, thought));
+                else if (content is TextContent { Text: { Length: > 0 } words }) stream(new WorldChatDelta(false, words));
+            }
+        }
+
+        return updates.ToChatResponse();
     }
 
     /// <summary>Adds the turn's messages to the history without a tool call the model made after its last round (the limit cut

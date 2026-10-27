@@ -25,6 +25,12 @@
   <data name="Common.Ai.Writing" xml:space="preserve"><value>Пишу…</value></data>
   <data name="Common.Ai.Stop" xml:space="preserve"><value>Остановить</value></data>
   <data name="Common.Ai.Stopped" xml:space="preserve"><value>Остановлено. Ничего не изменилось.</value></data>
+  <data name="Common.Ai.Problem.Timeout" xml:space="preserve"><value>Модель слишком долго не отвечала. Так бывает с длинным сообщением или медленной моделью: попробуйте ещё раз, сократите сообщение или выберите модель быстрее в настройках ИИ.</value></data>
+  <data name="Common.Ai.Problem.Auth" xml:space="preserve"><value>Провайдер не принял ваш API-ключ. Проверьте его в настройках ИИ.</value></data>
+  <data name="Common.Ai.Problem.NotFound" xml:space="preserve"><value>Провайдер не знает такую модель или адрес. Проверьте их в настройках ИИ.</value></data>
+  <data name="Common.Ai.Problem.RateLimit" xml:space="preserve"><value>Провайдер сообщает о слишком большом числе запросов или об исчерпанном балансе. Подождите немного и попробуйте снова.</value></data>
+  <data name="Common.Ai.Problem.Server" xml:space="preserve"><value>У провайдера сейчас неполадки. Попробуйте ещё раз через минуту.</value></data>
+  <data name="Common.Ai.Problem.Network" xml:space="preserve"><value>Не удаётся связаться с провайдером. Проверьте адрес в настройках ИИ и подключение.</value></data>
   <data name="Common.Editor.Toolbar" xml:space="preserve"><value>Форматирование</value></data>
   <data name="Common.Editor.Bold" xml:space="preserve"><value>Жирный (Ctrl+B)</value></data>
   <data name="Common.Editor.Italic" xml:space="preserve"><value>Курсив (Ctrl+I)</value></data>

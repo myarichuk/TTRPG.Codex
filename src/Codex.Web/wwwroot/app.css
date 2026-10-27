@@ -725,6 +725,8 @@ fieldset.field-group legend { margin-bottom: 0.6rem; float: none; width: auto; }
 .status-error { background: var(--danger-soft); border-color: var(--danger); color: var(--text); }
 .status-error > .lucide-icon { color: var(--danger); }
 .status .icon-btn { margin-inline-start: auto; width: 30px; height: 30px; }
+.status > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.status > .cx-btn { flex: none; align-self: center; }
 
 dialog.codex-dialog {
     border: 1px solid var(--border-strong); border-radius: var(--radius-xl); padding: 0;
@@ -1533,6 +1535,7 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .world-chat-bubble { max-width: min(46rem, 90%); padding: 0.6rem 0.85rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); overflow-wrap: anywhere; }
 .world-chat-dm .world-chat-bubble { background: var(--accent-soft); border-color: var(--accent); white-space: pre-wrap; }
 .world-chat-model .world-chat-bubble > :last-child { margin-bottom: 0; }
+.world-chat-thought { font-style: italic; }
 .world-chat-note { font-size: 0.85rem; color: var(--text-3); display: inline-flex; gap: 0.35rem; align-items: center; }
 .world-proposal-entry { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
 .world-proposal-entry:last-child { border-bottom: 0; }

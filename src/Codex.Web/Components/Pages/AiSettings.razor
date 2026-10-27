@@ -308,6 +308,8 @@ else
             return;
         }
 
+        // An address (or key) that is Anthropic's belongs on Anthropic's own client, whichever service was picked.
+        if (purpose == Purpose.Text) editing.Kind = AIClientFactory.DetectKind(editing.Kind, editing.BaseUrl, plainKey);
         editing.Name = editing.Name.Trim();
         editing.BaseUrl = editing.BaseUrl.Trim();
         editing.ModelId = editing.ModelId.Trim();

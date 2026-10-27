@@ -190,6 +190,7 @@
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>One key, hundreds of models. Get a key at openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Direct OpenAI access with your own key.</value></data>
+  <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude through Anthropic's own API. Get a key at console.anthropic.com.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (local)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>A model running on your own machine. No key needed.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (local)</value></data>

@@ -25,6 +25,12 @@
   <data name="Common.Ai.Writing" xml:space="preserve"><value>כותב…</value></data>
   <data name="Common.Ai.Stop" xml:space="preserve"><value>עצור</value></data>
   <data name="Common.Ai.Stopped" xml:space="preserve"><value>נעצר. שום דבר לא השתנה.</value></data>
+  <data name="Common.Ai.Problem.Timeout" xml:space="preserve"><value>המודל לקח יותר מדי זמן להשיב. הודעה ארוכה או מודל איטי יכולים לגרום לכך: נסו שוב, קצרו את ההודעה או בחרו מודל מהיר יותר בהגדרות הבינה המלאכותית.</value></data>
+  <data name="Common.Ai.Problem.Auth" xml:space="preserve"><value>הספק לא קיבל את מפתח ה-API שלכם. בדקו אותו בהגדרות הבינה המלאכותית.</value></data>
+  <data name="Common.Ai.Problem.NotFound" xml:space="preserve"><value>הספק לא מכיר את המודל או את הכתובת. בדקו אותם בהגדרות הבינה המלאכותית.</value></data>
+  <data name="Common.Ai.Problem.RateLimit" xml:space="preserve"><value>הספק מדווח על יותר מדי בקשות, או שהאשראי בחשבון נגמר. חכו רגע ונסו שוב.</value></data>
+  <data name="Common.Ai.Problem.Server" xml:space="preserve"><value>לספק יש בעיה כרגע. נסו שוב בעוד רגע.</value></data>
+  <data name="Common.Ai.Problem.Network" xml:space="preserve"><value>לא ניתן להגיע לספק. בדקו את הכתובת בהגדרות הבינה המלאכותית ואת החיבור שלכם.</value></data>
   <data name="Common.Editor.Toolbar" xml:space="preserve"><value>עיצוב</value></data>
   <data name="Common.Editor.Bold" xml:space="preserve"><value>מודגש (Ctrl+B)</value></data>
   <data name="Common.Editor.Italic" xml:space="preserve"><value>נטוי (Ctrl+I)</value></data>

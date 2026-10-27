@@ -29,6 +29,7 @@
   <data name="WorldChat.Model" xml:space="preserve"><value>בינה מלאכותית</value></data>
   <data name="WorldChat.Working" xml:space="preserve"><value>חושב על זה…</value></data>
   <data name="WorldChat.Error" xml:space="preserve"><value>הבינה המלאכותית לא הצליחה לענות: {0}</value></data>
+  <data name="WorldChat.Retry" xml:space="preserve"><value>נסו שוב</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>המודל הזה לא יודע לקרוא לכלים, ובונה העולם צריך זאת. בחרו בהגדרות מודל שתומך בקריאה לכלים.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>אין הצעה להחיל.</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>ההודעה שלכם</value></data>
