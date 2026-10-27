@@ -77,7 +77,7 @@ public static class AIClientFactory
         }
 
         var client = new OpenAIClient(new ApiKeyCredential(key!), options);
-        return client.GetChatClient(config.ModelId.Trim()).AsIChatClient();
+        return new TemperatureFallbackChatClient(client.GetChatClient(config.ModelId.Trim()).AsIChatClient());
     }
 
     private sealed class HeaderPolicy(params (string Name, string Value)[] headers) : PipelinePolicy
