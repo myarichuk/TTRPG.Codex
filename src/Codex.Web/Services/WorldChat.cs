@@ -31,7 +31,7 @@ public enum WorldChatSpeaker
 public sealed class WorldChat
 {
     /// <summary>Most model round trips one message may take (tool calls included), so a looping model can't run up a bill.</summary>
-    public const int MaxToolRounds = 8;
+    public const int MaxToolRounds = 16;
 
     private readonly WorldBuilderService builder;
     private readonly Func<Task<IChatClient>> model;
@@ -87,9 +87,10 @@ public sealed class WorldChat
         try
         {
             var response = await client.GetResponseAsync(history, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, ct);
-            history.AddRange(response.Messages);
+            var cutShort = KeepAnswered(response.Messages);
             var reply = response.Text?.Trim();
-            lines.Add(new WorldChatLine(WorldChatSpeaker.Model, string.IsNullOrEmpty(reply) ? Localizer.For(Lang)["WorldChat.NoReply"] : reply));
+            lines.Add(new WorldChatLine(WorldChatSpeaker.Model, !string.IsNullOrEmpty(reply) ? reply
+                : Localizer.For(Lang)[cutShort ? "WorldChat.TooManySteps" : "WorldChat.NoReply"]));
         }
         catch (Exception ex) when (ex is not OperationCanceledException && !(ex is LocalizedException) && SaysNoTools(ex))
         {
@@ -103,6 +104,26 @@ public sealed class WorldChat
             lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.NotAnswered"]));
             throw;
         }
+    }
+
+    /// <summary>Adds the turn's messages to the history without a tool call the model made after its last round (the limit cut
+    /// it off): OpenAI-compatible servers refuse a history where a call has no result. True when one was dropped.</summary>
+    private bool KeepAnswered(IList<ChatMessage> messages)
+    {
+        var answered = messages.SelectMany(m => m.Contents).OfType<FunctionResultContent>().Select(r => r.CallId).ToHashSet();
+        var dropped = false;
+        foreach (var message in messages)
+        {
+            foreach (var call in message.Contents.OfType<FunctionCallContent>().Where(c => !answered.Contains(c.CallId)).ToList())
+            {
+                message.Contents.Remove(call);
+                dropped = true;
+            }
+
+            if (message.Contents.Count > 0) history.Add(message);
+        }
+
+        return dropped;
     }
 
     /// <summary>Saves the proposal's ticked entries and tells the model what they became, so the conversation can build on them.</summary>

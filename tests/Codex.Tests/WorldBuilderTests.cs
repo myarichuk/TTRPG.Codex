@@ -784,6 +784,30 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_ThatHitsTheToolLimit_LeavesNoCallWithoutItsResult_ForTheNextMessage()
+    {
+        var saving = Service();
+        var turn = 0;
+        // A model that only ever looks things up, until the DM's second message.
+        var model = new ScriptedModel(Enumerable.Range(0, 60).Select<int, Func<IList<ChatMessage>, ChatMessage>>(_ => sent =>
+            sent.Count(m => m.Role == ChatRole.User) > 1 && !sent.Last().Contents.OfType<FunctionResultContent>().Any()
+                ? new ChatMessage(ChatRole.Assistant, "Done.")
+                : Calls($"c{++turn}", "search_world", """{"query": "salt"}""")).ToArray());
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("Look around.", _ => { }, CancellationToken.None);
+        await chat.SendAsync("Now just answer.", _ => { }, CancellationToken.None);
+
+        // Every tool call the model is shown again has its result: OpenAI-compatible servers refuse a history without one.
+        var history = model.Calls.Last();
+        var calls = history.SelectMany(m => m.Contents).OfType<FunctionCallContent>().Select(c => c.CallId).ToList();
+        var results = history.SelectMany(m => m.Contents).OfType<FunctionResultContent>().Select(r => r.CallId).ToHashSet();
+        Assert.NotEmpty(calls);
+        Assert.All(calls, id => Assert.Contains(id, results));
+        Assert.Equal("Done.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
     public async Task Chat_ThatIsStopped_LeavesTheConversationAsItWas()
     {
         var saving = Service();

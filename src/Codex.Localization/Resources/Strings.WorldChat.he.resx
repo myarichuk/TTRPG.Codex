@@ -65,4 +65,5 @@
   <data name="WorldChat.Kind.wiki" xml:space="preserve"><value>דפים</value></data>
   <data name="WorldChat.Kind.fact" xml:space="preserve"><value>סודות</value></data>
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(הבינה המלאכותית חיפשה הרבה בבת אחת ועצרה לפני שענתה. בקשו ממנה להמשיך.)</value></data>
 </root>

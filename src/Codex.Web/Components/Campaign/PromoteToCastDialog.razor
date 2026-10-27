@@ -144,7 +144,21 @@
     private async Task<IReadOnlyList<ContentEntry>> ItemsAsync(string type) =>
         (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type, L.Culture.Name)).Select(i => i.Entry).ToList();
 
-    private string About => $"{page!.Title}: {TextFormatting.Summary(plainBody, 1500)}";
+    // Gear is a nicety: when the model can't pick it, the character joins the cast without it.
+    private async Task<IReadOnlyList<object>?> GearAsync(CancellationToken ct)
+    {
+        try
+        {
+            return await Ai.EquipAsync(About, Ctx.Campaign, Ctx.System, Ctx.UserId, ItemsAsync, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogWarning(ex, "Picking gear for a promoted character failed");
+            return null;
+        }
+    }
+
+    private string About =>$"{page!.Title}: {TextFormatting.Summary(plainBody, 1500)}";
 
     private async Task PromoteAsync()
     {
@@ -168,7 +182,7 @@
                 npc = npc with
                 {
                     Creature = how == How.Stats ? creature : null,
-                    Equipment = aiReady && aiGear && hasInventory ? await Ai.EquipAsync(About, Ctx.Campaign, Ctx.System, Ctx.UserId, ItemsAsync, ct) : null
+                    Equipment = aiReady && aiGear && hasInventory ? await GearAsync(ct) : null
                 };
             }
 

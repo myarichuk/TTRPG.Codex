@@ -230,11 +230,21 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             return draft;
         }
 
-        // A model that left the gear out gets one short call that asks for nothing else.
-        var picked = draft.Equipment is { Count: > 0 } equipment
-            ? equipment
-            : await assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
-                catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
+        // A model that left the gear out gets one short call that asks for nothing else; if that fails too, the character is
+        // still worth keeping, without gear.
+        IReadOnlyList<DraftItem> picked;
+        try
+        {
+            picked = draft.Equipment is { Count: > 0 } equipment
+                ? equipment
+                : await assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
+                    catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            picked = Array.Empty<DraftItem>();
+        }
+
         if (picked.Count > 0)
         {
             draft.Sheet[inventory.Key] = StoredEquipment(picked, carriable, inventory, armor);

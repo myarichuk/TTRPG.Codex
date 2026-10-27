@@ -65,4 +65,5 @@
   <data name="WorldChat.Kind.wiki" xml:space="preserve"><value>Страницы</value></data>
   <data name="WorldChat.Kind.fact" xml:space="preserve"><value>Секреты</value></data>
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>Самоделки</value></data>
+  <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(ИИ слишком много искал за один раз и остановился, не ответив. Попросите его продолжить.)</value></data>
 </root>

@@ -65,4 +65,5 @@
   <data name="WorldChat.Kind.wiki" xml:space="preserve"><value>Pages</value></data>
   <data name="WorldChat.Kind.fact" xml:space="preserve"><value>Secrets</value></data>
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(The AI looked up a lot in one go and stopped before answering. Ask it to go on.)</value></data>
 </root>
