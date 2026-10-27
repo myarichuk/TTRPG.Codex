@@ -287,7 +287,6 @@
             Visibility = kind == ActorKind.PlayerCharacter ? ActorVisibility.Known : ActorVisibility.Hidden
         };
 
-        Cast.SeedDefaults(actor, Ctx.Campaign.SystemId);
         return actor;
     }
 
@@ -300,13 +299,8 @@
         }
 
         var actor = NewActor(newName, newKind, newOwnerId);
-        if (Ctx.System != null)
-        {
-            // Rule-driven systems start the sheet on the default attribute method (point buy at the
-            // minimum, say) rather than the attributes' plain defaults.
-            new Codex.Core.Rules.SheetRuleEngine(Ctx.System, Codex.Core.Rules.NullEntryResolver.Instance).InitializeSheet(actor.Sheet);
-        }
-
+        // Rule-driven systems start the sheet on the default attribute method (point buy at the minimum, say).
+        Cast.NewSheet(actor, Ctx.Campaign.SystemId, Ctx.System);
         ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
         if (!await RuntimeManager.TryCreateActorAsync(actor, Ctx.Access))
@@ -334,11 +328,7 @@
             ct.ThrowIfCancellationRequested();
 
             var actor = NewActor(draft.Name, aiKind, Ctx.IsDm ? null : Ctx.UserId);
-            foreach (var (key, value) in draft.Sheet)
-            {
-                actor.Sheet[key] = value;
-            }
-
+            Cast.NewSheet(actor, Ctx.Campaign.SystemId, Ctx.System, draft);
             actor.Biography = draft.Biography;
             ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
@@ -377,6 +367,13 @@
 
     private async Task SetVisibilityAsync(ActorDocument actor, ActorVisibility visibility)
     {
+        // A history written for the DM (a promoted wiki page often holds secrets) is what players read once the character shows.
+        if (visibility == ActorVisibility.Known && actor.Visibility == ActorVisibility.Hidden && !string.IsNullOrWhiteSpace(actor.Biography)
+            && !await confirm.ShowAsync(L["Campaign.Cast.RevealQ", actor.Name], L["Campaign.Cast.RevealHistory"], L["Campaign.Cast.Reveal"]))
+        {
+            return;
+        }
+
         // A field-level patch: this list's copy of the actor may be minutes old, and saving it whole
         // would write back the hit points the table has changed since.
         if (Ctx.IsDm && actor.CampaignId == Ctx.Campaign.Id && await ActorRepo.UpdateAsync(actor.Id, stored => stored.Visibility = visibility) != null)

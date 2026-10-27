@@ -1,0 +1,207 @@
+@using Codex.Core
+@using Codex.Core.AI
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject CastService Cast
+@inject WorldBuilderService Builder
+@inject CampaignLibrary Library
+@inject AiFeatures Ai
+@inject IJSRuntime JS
+@inject ILogger<PromoteToCastDialog> Logger
+@implements IDisposable
+
+@* Promotes a wiki page to the cast: the page's text becomes the character's history, and the sheet comes from a Library
+   creature, the model, or a blank sheet. The character starts hidden from players. *@
+
+<dialog id="promote-cast-dialog" class="codex-dialog" aria-labelledby="promote-cast-title" @onclose="aiCall.Stop" data-testid="promote-cast-dialog">
+    <form @onsubmit="PromoteAsync" @onsubmit:preventDefault="true">
+        <div class="dialog-body">
+            <h2 id="promote-cast-title"><LucideIcon IconName="user-plus" Size="18" Class="title-icon" /> @L["Campaign.Wiki.Promote.Title", page?.Title ?? string.Empty]</h2>
+            <p class="small-muted">@L["Campaign.Wiki.Promote.Hint"]</p>
+            <fieldset class="mb-3" disabled="@busy">
+                <legend class="field-label">@L["Campaign.Wiki.Promote.Sheet"]</legend>
+                @if (aiReady)
+                {
+                    <div class="field-check">
+                        <input id="promote-ai" type="radio" class="field-box" name="promote-how" checked="@(how == How.Ai)" @onchange="() => how = How.Ai" data-testid="promote-ai" />
+                        <label for="promote-ai">@L["Campaign.Wiki.Promote.Ai"]</label>
+                    </div>
+                }
+                <div class="field-check">
+                    <input id="promote-stats" type="radio" class="field-box" name="promote-how" checked="@(how == How.Stats)" @onchange="() => how = How.Stats" data-testid="promote-stats" />
+                    <label for="promote-stats">@L["Campaign.Wiki.Promote.Stats"]</label>
+                </div>
+                <div class="field-check">
+                    <input id="promote-blank" type="radio" class="field-box" name="promote-how" checked="@(how == How.Blank)" @onchange="() => how = How.Blank" data-testid="promote-blank" />
+                    <label for="promote-blank">@L["Campaign.Wiki.Promote.Blank"]</label>
+                </div>
+            </fieldset>
+
+            @if (how == How.Ai)
+            {
+                <p class="field-hint">@L["Campaign.Wiki.Promote.AiHint"]</p>
+            }
+            else if (how == How.Stats)
+            {
+                @if (creature != null)
+                {
+                    <p class="mb-2" data-testid="promote-stats-chosen">@L["Campaign.Wiki.Promote.StatsChosen", creature.Entry.Name] <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => creature = null">@L["Campaign.Wiki.Promote.StatsChange"]</CodexButton></p>
+                }
+                else
+                {
+                    <EntryBrowser Options="creatureOptions" Type="creatureType" Label="@L["WorldBuilder.Drafts.Stats.Creatures"]" TestId="promote-stats-browser" AddLabel="@L["WorldBuilder.Drafts.Stats.Use"]"
+                                  EmptyText="@L["WorldBuilder.Drafts.Stats.None"]" OnAdd="Pick" />
+                }
+            }
+
+            @if (how != How.Ai && aiReady && hasInventory)
+            {
+                <div class="field-check mt-2">
+                    <input id="promote-gear" type="checkbox" class="field-box" @bind="aiGear" disabled="@busy" data-testid="promote-gear" />
+                    <label for="promote-gear">@L["Campaign.Wiki.Promote.Gear"]</label>
+                </div>
+            }
+
+            @if (busy)
+            {
+                <AiWorking Text="@L["Campaign.Wiki.Promote.Working"]" OnStop="aiCall.Stop" TestId="promote-working" />
+            }
+            else if (error != null)
+            {
+                <p class="text-danger mb-0 mt-2" role="alert">@error</p>
+            }
+        </div>
+        <div class="dialog-actions">
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseAsync">@L["Common.Cancel"]</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || (how == How.Stats && creature == null))" data-testid="promote-submit">
+                <LucideIcon IconName="user-plus" Size="16" /> @L["Campaign.Wiki.Promote.Submit"]
+            </CodexButton>
+        </div>
+    </form>
+</dialog>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    /// <summary>The character the page became.</summary>
+    [Parameter] public EventCallback<ActorDocument> OnPromoted { get; set; }
+
+    private enum How { Ai, Stats, Blank }
+
+    private WikiPageDocument? page;
+    // The page's text with mentions as names, for the model.
+    private string plainBody = string.Empty;
+    private How how = How.Blank;
+    private bool aiReady;
+    private bool aiGear = true;
+    private bool hasInventory;
+    private bool busy;
+    private string? error;
+    private readonly AiCall aiCall = new();
+
+    private ContentTypeDefinition? creatureType;
+    private IReadOnlyList<ContentEntry> creatureOptions = Array.Empty<ContentEntry>();
+    // Keyed "h|type|id" or "p|type|id", so a homebrew creature and a pack one with the same id stay apart.
+    private Dictionary<string, LibraryItem>? creatures;
+    private LibraryItem? creature;
+
+    public async Task OpenAsync(WikiPageDocument promoted, string plainText)
+    {
+        page = promoted;
+        plainBody = plainText;
+        error = null;
+        creature = null;
+        aiReady = await Ai.IsConfiguredAsync(Ctx.UserId);
+        hasInventory = Ctx.System?.SheetRules?.Inventory != null;
+        how = aiReady ? How.Ai : How.Blank;
+        if (creatures == null)
+        {
+            creatureType = (await Builder.TypesAsync(Ctx.Campaign, Ctx.Access)).FirstOrDefault(t => t.ActorBlueprint);
+            creatures = new Dictionary<string, LibraryItem>();
+            var options = new List<ContentEntry>();
+            foreach (var item in await Builder.CreaturesAsync(Ctx.Campaign, Ctx.Access))
+            {
+                var key = $"{(item.IsHomebrew ? "h" : "p")}|{item.Entry.Type}|{item.Entry.Id}";
+                if (!creatures.TryAdd(key, item)) continue;
+                options.Add(new ContentEntry { Id = key, Type = item.Entry.Type, Name = item.Entry.Name, Properties = item.Entry.Properties });
+            }
+
+            creatureOptions = options;
+        }
+
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "promote-cast-dialog");
+    }
+
+    private void Pick(string key) => creature = creatures?.GetValueOrDefault(key);
+
+    private Task CloseAsync()
+    {
+        aiCall.Stop();
+        return JS.InvokeVoidAsync("codex.closeModal", "promote-cast-dialog").AsTask();
+    }
+
+    private async Task<IReadOnlyList<ContentEntry>> ItemsAsync(string type) =>
+        (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type, L.Culture.Name)).Select(i => i.Entry).ToList();
+
+    private string About => $"{page!.Title}: {TextFormatting.Summary(plainBody, 1500)}";
+
+    private async Task PromoteAsync()
+    {
+        if (page == null || busy || (how == How.Stats && creature == null)) return;
+        busy = true;
+        error = null;
+        var ct = aiCall.Begin();
+        try
+        {
+            var npc = new NewNpc(page.Title);
+            if (how == How.Ai)
+            {
+                // The model fills the sheet and the gear; the page stays the history, as written.
+                var draft = await Ai.CreateCharacterAsync(About, ActorKind.NonPlayerCharacter, Ctx.Campaign, Ctx.System, Ctx.UserId,
+                    async type => (await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList(),
+                    ItemsAsync, ct);
+                npc = npc with { Draft = draft };
+            }
+            else
+            {
+                npc = npc with
+                {
+                    Creature = how == How.Stats ? creature : null,
+                    Equipment = aiReady && aiGear && hasInventory ? await Ai.EquipAsync(About, Ctx.Campaign, Ctx.System, Ctx.UserId, ItemsAsync, ct) : null
+                };
+            }
+
+            ct.ThrowIfCancellationRequested();
+            var actor = await Cast.PromotePageAsync(page, npc, Ctx.Campaign, Ctx.System, Ctx.Access);
+            if (actor == null)
+            {
+                error = L["Campaign.Wiki.OnlyDm"];
+                return;
+            }
+
+            await CloseAsync();
+            await OnPromoted.InvokeAsync(actor);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            error = L["Common.Ai.Stopped"];
+        }
+        catch (AiNotConfiguredException)
+        {
+            error = L["Campaign.Wiki.NoAi"];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Promoting a wiki page to the cast failed");
+            error = L["Campaign.Wiki.Promote.Failed", L.Describe(ex)];
+        }
+        finally
+        {
+            aiCall.End(ct);
+            busy = false;
+        }
+    }
+
+    public void Dispose() => aiCall.Dispose();
+}

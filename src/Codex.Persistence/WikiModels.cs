@@ -13,6 +13,17 @@ public enum WikiVisibility
     Party
 }
 
+/// <summary>What a page is about. A person can be promoted to the cast and a place to the world map; the page then links to
+/// what it became (<see cref="WikiPageDocument.ActorId"/>, <see cref="WikiPageDocument.PlaceId"/>).</summary>
+public enum WikiPageKind
+{
+    General,
+    Person,
+    Place,
+    Faction,
+    Quest
+}
+
 /// <summary>
 /// One page of a campaign's world wiki. Pages link to each other with <c>[[Page title]]</c>;
 /// <see cref="Links"/> is the normalised list of slugs the body points at, kept up to date on
@@ -31,6 +42,11 @@ public class WikiPageDocument
     public string Body { get; set; } = string.Empty;
     public WikiVisibility Visibility { get; set; } = WikiVisibility.DmOnly;
     public List<string> Tags { get; set; } = new();
+    public WikiPageKind Kind { get; set; } = WikiPageKind.General;
+
+    /// <summary>The cast member this page is about (<see cref="ActorDocument.Id"/>), or empty. Set when the page is promoted to
+    /// the cast; the texts are copied once, not kept in step.</summary>
+    public string? ActorId { get; set; }
 
     /// <summary>The place on the world map this page is about (<see cref="LocationDocument.Id"/>), or empty. The page shows the
     /// place's picture, and sharing the page reveals the place.</summary>
@@ -146,6 +162,8 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             existing.Body = page.Body;
             existing.Visibility = page.Visibility;
             existing.Tags = page.Tags;
+            existing.Kind = page.Kind;
+            existing.ActorId = page.ActorId;
             existing.PlaceId = page.PlaceId;
             existing.Links = page.Links;
             existing.UpdatedAt = page.UpdatedAt;

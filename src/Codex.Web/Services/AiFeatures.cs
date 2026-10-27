@@ -205,17 +205,9 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             fields.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max));
         }
 
-        // The gear a sheet may carry: every entry of the system's inventory types, the everyday ones first.
         var inventory = itemsFor == null ? null : system?.SheetRules?.Inventory;
         var armor = system?.SheetRules?.ArmorClass;
-        var carriable = new Dictionary<string, ContentEntry>(StringComparer.OrdinalIgnoreCase);
-        foreach (var type in inventory?.Types ?? new List<string>())
-        {
-            foreach (var entry in await itemsFor!(type))
-            {
-                if (carriable.Count < MaxCarriable) carriable.TryAdd(entry.Id, entry);
-            }
-        }
+        var carriable = await CarriableAsync(inventory, itemsFor);
 
         var primary = system?.PrimaryResource;
         var draft = await assistant.CreateCharacterAsync(new CharacterConceptRequest(
@@ -230,10 +222,20 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             Language: Lang,
             HitPointsLabel: primary?.Label,
             HitPointsBasis: system?.Ai.PrimaryResourceBasis,
-            Equipment: carriable.Count == 0 ? null : carriable.Keys.ToList(),
+            Equipment: carriable.Count == 0 ? null : Options(carriable),
             OneArmorAndShield: armor != null), ct);
 
-        if (inventory != null && draft.Equipment is { Count: > 0 } picked)
+        if (inventory == null || carriable.Count == 0)
+        {
+            return draft;
+        }
+
+        // A model that left the gear out gets one short call that asks for nothing else.
+        var picked = draft.Equipment is { Count: > 0 } equipment
+            ? equipment
+            : await assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
+                catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
+        if (picked.Count > 0)
         {
             draft.Sheet[inventory.Key] = StoredEquipment(picked, carriable, inventory, armor);
         }
@@ -241,8 +243,51 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         return draft;
     }
 
+    /// <summary>Gear for a character who has none yet (one made from a stat block or a blank sheet), as the sheet stores it;
+    /// null when the system has no inventory or the model picked nothing usable.</summary>
+    /// <param name="character">Who they are: a name and a line or a paragraph about them.</param>
+    public async Task<List<object>?> EquipAsync(string character, CampaignDocument campaign, SystemDefinition? system, string userId,
+        Func<string, Task<IReadOnlyList<ContentEntry>>> itemsFor, CancellationToken ct = default)
+    {
+        system = system?.Canonical;
+        var inventory = system?.SheetRules?.Inventory;
+        var armor = system?.SheetRules?.ArmorClass;
+        var carriable = await CarriableAsync(inventory, itemsFor);
+        if (inventory == null || carriable.Count == 0)
+        {
+            return null;
+        }
+
+        var assistant = await providers.AssistantForAsync(userId);
+        var picked = await assistant.EquipAsync(new EquipRequest(character, catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
+        return picked.Count == 0 ? null : StoredEquipment(picked, carriable, inventory, armor);
+    }
+
     /// <summary>Most items a prompt lists; keeps a system with a vast Library from filling the model's input.</summary>
     private const int MaxCarriable = 600;
+
+    /// <summary>The gear a sheet may carry: every entry of the system's inventory types, the everyday ones first.</summary>
+    private static async Task<Dictionary<string, ContentEntry>> CarriableAsync(InventoryRules? inventory, Func<string, Task<IReadOnlyList<ContentEntry>>>? itemsFor)
+    {
+        var carriable = new Dictionary<string, ContentEntry>(StringComparer.OrdinalIgnoreCase);
+        if (inventory == null || itemsFor == null)
+        {
+            return carriable;
+        }
+
+        foreach (var type in inventory.Types)
+        {
+            foreach (var entry in await itemsFor(type))
+            {
+                if (carriable.Count < MaxCarriable) carriable.TryAdd(entry.Id, entry);
+            }
+        }
+
+        return carriable;
+    }
+
+    private static List<EquipmentOption> Options(Dictionary<string, ContentEntry> carriable) =>
+        carriable.Values.Select(e => new EquipmentOption(e.Id, e.Name)).ToList();
 
     /// <summary>The generated gear as the sheet stores it ("id|qty:2,equipped:1"). The rules allow one suit of body armor and one
     /// shield on at a time, so a second of either is carried, not worn.</summary>

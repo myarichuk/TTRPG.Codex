@@ -125,6 +125,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         {
             target.OwnerUserId = source.OwnerUserId;
             target.DmNotes = source.DmNotes;
+            target.WikiPageId = source.WikiPageId;
         }
 
         target.UpdatedAt = DateTime.UtcNow;

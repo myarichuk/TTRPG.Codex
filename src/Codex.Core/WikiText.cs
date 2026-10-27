@@ -35,6 +35,15 @@ public static class WikiText
             .ToList();
     }
 
+    /// <summary>The body with each page link replaced by its label, stored mentions kept: for text that leaves the wiki (a
+    /// character's history), where page links don't render.</summary>
+    public static string WithoutPageLinks(string? body) =>
+        string.IsNullOrEmpty(body)
+            ? string.Empty
+            : Link.Replace(body, m => IsMention(m.Groups[1].Value) && !m.Groups[2].Success
+                ? m.Value
+                : (m.Groups[2].Success ? m.Groups[2].Value : m.Groups[1].Value).Trim());
+
     public static string Slugify(string title)
     {
         var chars = title.Trim().ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray();

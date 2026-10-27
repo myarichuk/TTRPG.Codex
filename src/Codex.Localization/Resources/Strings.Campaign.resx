@@ -466,4 +466,28 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>Tagline</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>One or two short sentences for the campaign card and the header.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>The full write-up players see on the overview: setting, premise, what to expect.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>Add to cast</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>Add {0} to the cast</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>This page becomes their history. They join the cast hidden from players, and the page stays as it is.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>Stat block</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>Let the AI fill in the sheet and gear from this page</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>Use a creature from the Library</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>Start from a blank sheet</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>The AI reads the page and fills in the sheet and what they carry. The page's text becomes their history unchanged.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>Plays like: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>Change</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>Let the AI pick what they carry</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>Building the character…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>Add to cast</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} joined the cast, hidden from players.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>Couldn't add them to the cast: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>In the cast: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>About</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>Lore</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>Person</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>Faction</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Quest</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Reveal {0}?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Players will be able to read this character's history. If it came from a DM-only wiki page, check it for secrets first.</value></data>
 </root>

@@ -149,6 +149,9 @@ public class ActorDocument
     /// <summary>The DM's private notes on this actor. Stripped by the repository before a non-DM ever sees the document.</summary>
     public string? DmNotes { get; set; }
 
+    /// <summary>The wiki page this character was promoted from (<see cref="WikiPageDocument.Id"/>), or empty.</summary>
+    public string? WikiPageId { get; set; }
+
     /// <summary>True once a portrait is stored as the "portrait" attachment; <see cref="PortraitVersion"/> busts caches.</summary>
     public bool HasPortrait { get; set; }
     public int PortraitVersion { get; set; }

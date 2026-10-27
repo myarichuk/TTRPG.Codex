@@ -418,9 +418,11 @@ public class WorldBuilderTests
         var components = new ComponentRegistry();
         var runtimes = new Codex.Persistence.Runtime.CampaignRuntimeManager(actorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
             Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);
-        var cast = new CastService(runtimes, registry, components, catalog);
+        var cast = new CastService(runtimes, registry, components, catalog, actorRepo, wiki);
         var regions = Substitute.For<IRegionRepository>();
-        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo), pages, entries, actors, facts);
+        // No model is set up: picking a cast member's gear fails quietly and they are saved without it.
+        var ai = new AiFeatures(providers, registry, catalog);
+        var saving = new Saving(new WorldBuilderService(providers, catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai), pages, entries, actors, facts);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
         campaigns.UpdateAsync("c1", Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
         {
@@ -569,10 +571,11 @@ public class WorldBuilderTests
 
         var ilse = Assert.Single(actors); // only the person ticked for the cast
         Assert.Equal(("Mother Ilse", ActorKind.NonPlayerCharacter, ActorVisibility.Hidden), (ilse.Name, ilse.Kind, ilse.Visibility));
-        // Players read a revealed NPC's biography; the page tells what she hides, so it goes in the DM's notes, links flattened.
-        Assert.Null(ilse.Biography);
-        Assert.Contains("Mother Ilse", ilse.DmNotes);
-        Assert.EndsWith("She leads The Salt Wardens.", ilse.DmNotes);
+        // Her page becomes her history, links flattened, and the page and the character point at each other.
+        Assert.EndsWith("She leads The Salt Wardens.", ilse.Biography);
+        Assert.Null(ilse.DmNotes);
+        Assert.Equal((pages[1].Id, ilse.Id, WikiPageKind.Person), (ilse.WikiPageId, pages[1].ActorId, pages[1].Kind));
+        Assert.Equal(WikiPageKind.Faction, pages[0].Kind);
 
         var secret = Assert.Single(facts);
         Assert.Equal(("The wardens pay the harbour master", "Mother Ilse pays him in salt.", FactVisibility.DmOnly), (secret.Summary, secret.Details, secret.Visibility));
@@ -830,7 +833,8 @@ public class WorldBuilderTests
         Assert.Equal("Rings [[The Bell (2)]].", saving.Pages[1].Body);
         var maren = Assert.Single(saving.Actors);
         Assert.Equal("the bell", maren.Name); // a person keeps their name; only the page needs its own title
-        Assert.Contains("“the bell (3)”", maren.DmNotes); // and the notes point at the page by its title
+        Assert.Equal("Rings The Bell (2).", maren.Biography); // and the history names the page as it is titled
+        Assert.Equal(saving.Pages[1].Id, maren.WikiPageId);
     }
 
     [Fact]
@@ -1110,7 +1114,7 @@ public class WorldBuilderTests
         var (ilse, brann) = (saving.Actors[0], saving.Actors[1]);
         Assert.Equal(("Mother Ilse", ActorKind.NonPlayerCharacter, ActorVisibility.Hidden, "srd5e:veteran"), (ilse.Name, ilse.Kind, ilse.Visibility, ilse.BlueprintId));
         Assert.Equal((58L, 58L, "3"), (ilse.Sheet["HP"], ilse.Sheet["HP_Max"], ilse.Sheet["challenge"]));
-        Assert.EndsWith("She leads The Salt Wardens.", ilse.DmNotes);
+        Assert.EndsWith("She leads The Salt Wardens.", ilse.Biography);
         // A homebrew creature has no pack id to point back to, but its stats still fill the sheet.
         Assert.Equal(("Brann", (string?)null, 27L), (brann.Name, brann.BlueprintId, brann.Sheet["HP"]));
     }

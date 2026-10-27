@@ -28,7 +28,7 @@ public sealed record WorldBuildResult(
 /// on the DM's own key.
 /// </summary>
 public sealed class WorldBuilderService(AiProviderService providers, ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
-    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository)
+    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository, AiFeatures ai)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -222,7 +222,31 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     /// <summary>Saves the selected drafts: wiki pages and people's pages first (DM-only), so their slugs are settled before
     /// links are rewritten, then homebrew entries (unpublished; creatures ticked for it also on the Bestiary shortlist), the people ticked for the cast (hidden), and secrets (DM-only
     /// in Lore, related to what they link to). A draft that was never written in full is saved with its pitch as its text.</summary>
-    public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, WorldBundle bundle)
+    // A recipe's main page is about what the recipe makes.
+    private static WikiPageKind KindOf(string recipeKey) => recipeKey switch
+    {
+        "faction" => WikiPageKind.Faction,
+        "settlement" => WikiPageKind.Place,
+        "quest" => WikiPageKind.Quest,
+        _ => WikiPageKind.General
+    };
+
+    /// <summary>What a person added to the cast carries, picked by the model; none when the system has no inventory or the call
+    /// fails (the person is still worth saving without it).</summary>
+    private async Task<IReadOnlyList<object>?> GearAsync(string name, string text, CampaignDocument campaign, CampaignAccess access, CancellationToken ct)
+    {
+        try
+        {
+            return await ai.EquipAsync($"{name.Trim()}: {TextFormatting.Summary(text, 800)}", campaign, catalog.GetDefinition(campaign.SystemId), access.UserId,
+                async type => (await library.OptionsAsync(campaign, access, type)).Select(i => i.Entry).ToList(), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldRecipe recipe, WorldBundle bundle, CancellationToken ct = default)
     {
         DmOnly(access);
         var l = Localizer.For(Lang);
@@ -254,6 +278,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
                 Title = draft.PageTitle ?? draft.Name.Trim(),
                 Body = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle),
                 Visibility = WikiVisibility.DmOnly,
+                Kind = draft.Kind switch { DraftKinds.Npc => WikiPageKind.Person, DraftKinds.Place => WikiPageKind.Place, _ => KindOf(recipe.Key) },
                 Tags = tags,
                 AuthorUserId = access.UserId
             };
@@ -307,14 +332,20 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
         var shortlisted = await ShortlistAsync(campaign, shortlist);
 
         var actors = new List<ActorDocument>();
-        foreach (var draft in Pending("cast").Where(d => d.Kind == DraftKinds.Npc && d.Cast))
+        var castDrafts = Pending("cast").Where(d => d.Kind == DraftKinds.Npc && d.Cast).ToList();
+        var allPages = castDrafts.Count == 0 ? new List<WikiPageDocument>() : (await wiki.GetVisibleForCampaignAsync(access)).ToList();
+        foreach (var draft in castDrafts)
         {
-            // The sheet starts from the creature picked for the person, or blank. The page tells what the person hides, so it
-            // goes in the DM's notes, not the biography players read once the DM reveals them.
-            var notes = l["WorldBuilder.Cast.Note", draft.PageTitle ?? draft.Name.Trim()] + "\n\n" + WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false);
+            // The sheet starts from the creature picked for the person, or blank; either way the model picks what they carry.
             // A creature that has gone since (its pack switched off, the homebrew deleted) leaves the blank sheet.
             var creature = draft.Stats is { } stats ? await library.GetAsync(campaign, access, stats.Type, stats.Id, stats.Homebrew) : null;
-            var actor = await cast.AddNpcAsync(draft.Name, null, notes, campaign, system, access, creature)
+            var text = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false);
+            var npc = new NewNpc(draft.Name) { Creature = creature, Equipment = await GearAsync(draft.Name, text, campaign, access, ct) };
+            // The person's page becomes their history, as promoting a page from the wiki does; revealing them warns the DM first.
+            var page = draft.SavedAs.TryGetValue(PageStep, out var pageId) ? allPages.FirstOrDefault(p => p.Id == pageId) : null;
+            var actor = (page != null
+                    ? await cast.PromotePageAsync(page, npc, campaign, system, access)
+                    : await cast.AddNpcAsync(npc with { Biography = text }, campaign, system, access))
                 ?? throw new LocalizedException("WorldBuilder.Error.OnlyDm");
             actors.Add(actor);
             Saved(draft, "cast", actor.Id);

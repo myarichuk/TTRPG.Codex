@@ -42,7 +42,6 @@
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>Design a settlement with AI</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>also in the cast</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Also add to the cast, hidden from players</value></data>
-  <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>Made by the world builder; the wiki page “{0}” tells their story.</value></data>
   <data name="WorldBuilder.Kind.Npc" xml:space="preserve"><value>Person</value></data>
   <data name="WorldBuilder.Kind.Fact" xml:space="preserve"><value>Secret (Lore)</value></data>
   <data name="WorldBuilder.Tag.homebrew" xml:space="preserve"><value>homebrew</value></data>

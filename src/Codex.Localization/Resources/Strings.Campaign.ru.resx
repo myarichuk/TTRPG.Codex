@@ -466,4 +466,28 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>Слоган</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>Одна-две короткие фразы для карточки кампании и заголовка.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>Полное описание, которое игроки видят в обзоре: мир, завязка, чего ожидать.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>Добавить в состав</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>Добавить {0} в состав</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>Текст страницы станет их историей. Персонаж появится в составе скрытым от игроков, а страница останется как есть.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>Характеристики</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>ИИ заполнит лист и снаряжение по этой странице</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>Взять существо из библиотеки</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>Начать с пустого листа</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>ИИ прочтёт страницу и заполнит лист и снаряжение. Текст страницы станет историей без изменений.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>Играется как: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>Пусть ИИ подберёт снаряжение</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>Создаём персонажа…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>Добавить в состав</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} в составе, скрыт(а) от игроков.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>Не удалось добавить в состав: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>В составе: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>О чём</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>Предания</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>Место</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>Фракция</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Задание</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Открыть {0} игрокам?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Игроки смогут прочитать историю этого персонажа. Если она взята со страницы только для мастера, сначала проверьте, нет ли в ней секретов.</value></data>
 </root>

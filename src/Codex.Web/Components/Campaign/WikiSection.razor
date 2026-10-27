@@ -19,6 +19,10 @@
 
 <ConfirmDialog @ref="confirm" />
 <UnsavedChangesGuard IsDirty="IsDirty" />
+@if (Ctx.IsDm)
+{
+    <PromoteToCastDialog @ref="promote" OnPromoted="OnPromotedAsync" />
+}
 @if (aiReady)
 {
     <WorldBuilderWizard @ref="builder" OnSaved="OnBuiltAsync" />
@@ -45,6 +49,15 @@ else if (Mode == "edit")
                         <div class="field-wide">
                             <label for="wiki-title" class="field-label">@L["Campaign.Wiki.Field.Title"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.Wiki.Required"]</span></label>
                             <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" @bind:event="oninput" required maxlength="160" data-testid="wiki-title" />
+                        </div>
+                        <div>
+                            <label for="wiki-kind" class="field-label">@L["Campaign.Wiki.Field.Kind"]</label>
+                            <select id="wiki-kind" class="field-select" @bind="draft.Kind" data-testid="wiki-kind-select">
+                                @foreach (var kind in Enum.GetValues<WikiPageKind>())
+                                {
+                                    <option value="@kind">@KindLabel(kind)</option>
+                                }
+                            </select>
                         </div>
                         <div>
                             <label for="wiki-visibility" class="field-label">@L["Campaign.Wiki.Field.WhoCanRead"]</label>
@@ -161,6 +174,14 @@ else if (Slug != null)
                     {
                         <span class="pill">@tag</span>
                     }
+                    @if (current.Kind != WikiPageKind.General)
+                    {
+                        <span class="pill" data-testid="wiki-kind"><LucideIcon IconName="@KindIcon(current.Kind)" Size="14" /> @KindLabel(current.Kind)</span>
+                    }
+                    @if (CastMember(current) is { } member)
+                    {
+                        <a class="pill" href="@Ctx.BasePath/actors/@member.Id" data-testid="wiki-in-cast"><LucideIcon IconName="user" Size="14" /> @L["Campaign.Wiki.InCast", member.Name]</a>
+                    }
                     @if (linked != null)
                     {
                         <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", linked.Value.Region.Name]</a>
@@ -171,6 +192,10 @@ else if (Slug != null)
             @if (Ctx.IsDm)
             {
                 <div class="row-actions">
+                    @if (CastMember(current) == null && current.Kind is WikiPageKind.General or WikiPageKind.Person)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => promote.OpenAsync(current, mentions.Plain(current.Body))" data-testid="wiki-promote-cast"><LucideIcon IconName="user-plus" Size="18" /> @L["Campaign.Wiki.Promote.Open"]</CodexButton>
+                    }
                     @if (current.Visibility == WikiVisibility.DmOnly)
                     {
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="18" /> @L["Campaign.Wiki.SharePage"]</CodexButton>
@@ -463,7 +488,7 @@ else
                 {
                     Id = current.Id, CampaignId = current.CampaignId, Slug = current.Slug, Title = current.Title,
                     Body = mentions.ForEditing(current.Body), Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId,
-                    PlaceId = current.PlaceId
+                    PlaceId = current.PlaceId, Kind = current.Kind, ActorId = current.ActorId
                 };
                 linked = PlaceOf(current);
                 isPlace = linked != null;
@@ -501,6 +526,31 @@ else
     };
 
     private static string NotesTarget(WikiPageDocument page) => $"wiki:{page.Id}";
+
+    private PromoteToCastDialog promote = null!;
+
+    /// <summary>The character the page was promoted to, when the reader can see them.</summary>
+    private ActorDocument? CastMember(WikiPageDocument page) =>
+        string.IsNullOrEmpty(page.ActorId) ? null : Ctx.Actors.FirstOrDefault(a => a.Id == page.ActorId);
+
+    private async Task OnPromotedAsync(ActorDocument actor)
+    {
+        Ctx.Notify(Flash.Success(L["Campaign.Wiki.Promote.Done", actor.Name]));
+        await Ctx.ReloadAsync();
+        loadedKey = null;
+        await LoadAsync();
+    }
+
+    private string KindLabel(WikiPageKind kind) => L[$"Campaign.Wiki.Kind.{kind}"];
+
+    private static string KindIcon(WikiPageKind kind) => kind switch
+    {
+        WikiPageKind.Person => "user",
+        WikiPageKind.Place => "map-pin",
+        WikiPageKind.Faction => "shield",
+        WikiPageKind.Quest => "scroll",
+        _ => "book-open"
+    };
     private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
     private (RegionDocument Region, LocationDocument Place)? PlaceOf(WikiPageDocument page)

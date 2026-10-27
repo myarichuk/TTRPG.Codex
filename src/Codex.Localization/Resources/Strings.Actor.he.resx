@@ -309,4 +309,6 @@
   <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>הדרגה נקבעה ל-{0}. עדכנו נקודות חיים ויכולות ואז שמרו שינויים.</value></data>
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>תוכנית לדרגה {0}:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>נוסף לשדה ההערות. שמרו שינויים כדי לשמור זאת.</value></data>
+  <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>ויקי: {0}</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>אחרי השמירה השחקנים יוכלו לקרוא את ההיסטוריה של הדמות. כדאי לבדוק קודם שאין בה סודות.</value></data>
 </root>

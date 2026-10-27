@@ -466,4 +466,28 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>שורת תיאור</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>משפט או שניים קצרים לכרטיס הקמפיין ולכותרת.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>התיאור המלא שהשחקנים רואים בסקירה: העולם, הרעיון, למה לצפות.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>הוספה לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>הוספת {0} לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>הדף הזה יהפוך להיסטוריה של הדמות. הדמות תצטרף לרשימה מוסתרת מהשחקנים, והדף יישאר כפי שהוא.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>נתוני משחק</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>הבינה המלאכותית תמלא את הדף והציוד לפי הדף הזה</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>שימוש ביצור מהספרייה</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>התחלה מדף ריק</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>הבינה המלאכותית קוראת את הדף וממלאת את הנתונים ואת הציוד. טקסט הדף הופך להיסטוריה ללא שינוי.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>משחקת כמו: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>שינוי</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>הבינה המלאכותית תבחר את הציוד</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>בונים את הדמות…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>הוספה לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} נוספו לדמויות, מוסתרים מהשחקנים.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>לא ניתן היה להוסיף לדמויות: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>בדמויות: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>על מה</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>ידע</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>דמות</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>פלג</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>משימה</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>לחשוף את {0}?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>השחקנים יוכלו לקרוא את ההיסטוריה של הדמות. אם היא הגיעה מדף ויקי של מנחה בלבד, כדאי לבדוק קודם שאין בה סודות.</value></data>
 </root>

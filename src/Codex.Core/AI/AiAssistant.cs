@@ -133,22 +133,36 @@ public sealed class AiAssistant(IChatClient chat)
     private const int MaxItems = 40;
     private const int MaxQuantity = 99;
 
-    /// <summary>The reply's equipment, kept to the ids the request listed (case-insensitively, as listed); a repeated id adds up.</summary>
-    private static List<DraftItem>? ParseEquipment(JsonElement root, CharacterConceptRequest request)
+    /// <summary>Gear for an existing character: the listed items the model picked, none when it picked nothing usable.</summary>
+    public async Task<IReadOnlyList<DraftItem>> EquipAsync(EquipRequest request, CancellationToken ct = default)
     {
-        if (request.Equipment is not { Count: > 0 } allowed
-            || !root.TryGetProperty("equipment", out var array) || array.ValueKind != JsonValueKind.Array)
+        var text = await JsonReplyAsync(Messages(AiPrompts.Equip(request)), 0.7f, ct);
+        using var doc = FieldCoercion.ParseObject(text);
+        return ParseEquipment(doc.RootElement, request.Items) ?? new List<DraftItem>();
+    }
+
+    private static List<DraftItem>? ParseEquipment(JsonElement root, CharacterConceptRequest request) =>
+        request.Equipment is { Count: > 0 } allowed ? ParseEquipment(root, allowed) : null;
+
+    /// <summary>The reply's equipment, kept to the listed items (by id or, when the model wrote one, by name; case-insensitively,
+    /// as listed); a repeated item adds up.</summary>
+    private static List<DraftItem>? ParseEquipment(JsonElement root, IReadOnlyList<EquipmentOption> allowed)
+    {
+        if (!root.TryGetProperty("equipment", out var array) || array.ValueKind != JsonValueKind.Array)
         {
             return null;
         }
 
-        var known = allowed.ToDictionary(id => id, StringComparer.OrdinalIgnoreCase);
+        var known = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var option in allowed) known.TryAdd(option.Id, option.Id);
+        foreach (var option in allowed) known.TryAdd(option.Name, option.Id);
         var items = new Dictionary<string, DraftItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var element in array.EnumerateArray())
         {
             // A bare id is a single item; anything else is the object the prompt asked for.
             var id = element.ValueKind == JsonValueKind.String ? element.GetString()
                 : element.ValueKind == JsonValueKind.Object && element.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.String ? idElement.GetString()
+                : element.ValueKind == JsonValueKind.Object && element.TryGetProperty("name", out var nameElement) && nameElement.ValueKind == JsonValueKind.String ? nameElement.GetString()
                 : null;
             if (id == null || !known.TryGetValue(id.Trim(), out var listed))
             {

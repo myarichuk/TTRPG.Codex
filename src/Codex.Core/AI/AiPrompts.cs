@@ -117,7 +117,7 @@ public sealed record WorldExpandRequest(
     string? CurrentText = null);
 
 /// <summary>The character the model is asked to make from a concept.</summary>
-/// <param name="Equipment">The ids of the items a sheet may carry, or null when the system has no inventory (the reply then has no equipment).</param>
+/// <param name="Equipment">The items a sheet may carry, or null when the system has no inventory (the reply then has no equipment).</param>
 /// <param name="OneArmorAndShield">The rules let a character wear one suit of body armor and carry one shield, no more.</param>
 public sealed record CharacterConceptRequest(
     string Concept,
@@ -131,8 +131,15 @@ public sealed record CharacterConceptRequest(
     string? Language = null,
     string? HitPointsLabel = null,
     string? HitPointsBasis = null,
-    IReadOnlyList<string>? Equipment = null,
+    IReadOnlyList<EquipmentOption>? Equipment = null,
     bool OneArmorAndShield = false);
+
+/// <summary>An item a character may carry: its Library id and the name a model knows it by.</summary>
+public sealed record EquipmentOption(string Id, string Name);
+
+/// <summary>Gear for a character who already exists: one made by hand or from a stat block, or one whose model left the gear out.</summary>
+/// <param name="Character">Who they are, in a line or a paragraph.</param>
+public sealed record EquipRequest(string Character, string SystemName, IReadOnlyList<EquipmentOption> Items, bool OneArmorAndShield);
 
 /// <summary>Pure prompt builders: no network, no state, unit-testable.</summary>
 public static class AiPrompts
@@ -266,13 +273,16 @@ public static class AiPrompts
 
     public static (string System, string User) CreateCharacter(CharacterConceptRequest r)
     {
-        var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string}}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use." + CharacterLanguageNote(r.Language);
+        // The gear is part of the one shape the reply follows: asked for as an afterthought, models tend to leave it out.
+        var gear = r.Equipment is { Count: > 0 };
+        var shape = gear
+            ? $"{{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string, {EquipmentShape}}}"
+            : "{\"name\": string, \"sheet\": {field key: value}, \"biography\": string}";
+        var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {shape}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use." + CharacterLanguageNote(r.Language);
 
-        if (r.Equipment is { Count: > 0 })
+        if (gear)
         {
-            system += " The object also has \"equipment\": [{\"id\": string, \"quantity\": number, \"equipped\": boolean}], the gear this character carries, using only the listed item ids." +
-                      " Pick what a person like this would plausibly own and use: their weapons, protection, tools and everyday gear, with sensible quantities, and an extraordinary item only when the concept calls for one." +
-                      " Mark as equipped what they wield or wear" + (r.OneArmorAndShield ? " (at most one suit of body armor and one shield)" : "") + ".";
+            system += " " + EquipmentRules(r.OneArmorAndShield);
         }
 
         var sb = new StringBuilder();
@@ -301,8 +311,35 @@ public static class AiPrompts
             sb.AppendLine().AppendLine($"{(string.IsNullOrWhiteSpace(r.HitPointsLabel) ? "Starting resource" : r.HitPointsLabel.Trim())}: set \"{r.HitPointsKey}\"{(r.HitPointsMaxKey != null ? $" and \"{r.HitPointsMaxKey}\"" : "")} to a number appropriate for {basis}.");
         }
 
-        AppendList(sb, "Item ids (the only ids equipment may use)", r.Equipment ?? Array.Empty<string>());
+        AppendItems(sb, r.Equipment);
 
+        return (system, sb.ToString());
+    }
+
+    private const string EquipmentShape = "\"equipment\": [{\"id\": string, \"quantity\": number, \"equipped\": boolean}]";
+
+    private static string EquipmentRules(bool oneArmorAndShield) =>
+        "\"equipment\" is the gear the character carries and is never empty; each \"id\" is one of the listed item ids (the part before the colon)." +
+        " Pick what a person like this would plausibly own and use: their weapons, protection, tools and everyday gear (usually 3 to 10 entries), with sensible quantities, and an extraordinary item only when the concept calls for one." +
+        " Mark as equipped what they wield or wear" + (oneArmorAndShield ? " (at most one suit of body armor and one shield)" : "") + ".";
+
+    // "id: name", so the model can recognise an item it would otherwise have to guess from a slug.
+    private static void AppendItems(StringBuilder sb, IReadOnlyList<EquipmentOption>? items)
+    {
+        if (items is not { Count: > 0 }) return;
+        sb.AppendLine().AppendLine("Items (id: name; equipment may use only these ids):");
+        foreach (var item in items)
+        {
+            sb.AppendLine(string.Equals(item.Id, item.Name, StringComparison.OrdinalIgnoreCase) ? $"- {item.Id}" : $"- {item.Id}: {item.Name}");
+        }
+    }
+
+    public static (string System, string User) Equip(EquipRequest r)
+    {
+        var system = $"You equip characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{{EquipmentShape}}}. " + EquipmentRules(r.OneArmorAndShield);
+        var sb = new StringBuilder();
+        sb.AppendLine("Character: " + r.Character.Trim());
+        AppendItems(sb, r.Items);
         return (system, sb.ToString());
     }
 

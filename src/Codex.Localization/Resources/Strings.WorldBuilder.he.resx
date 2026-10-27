@@ -42,7 +42,6 @@
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>עיצוב יישוב עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>גם בצוות</value></data>
   <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>להוסיף גם לצוות, מוסתר מהשחקנים</value></data>
-  <data name="WorldBuilder.Cast.Note" xml:space="preserve"><value>נוצר על ידי בונה העולם; הסיפור המלא בדף הוויקי „{0}”.</value></data>
   <data name="WorldBuilder.Kind.Npc" xml:space="preserve"><value>דמות</value></data>
   <data name="WorldBuilder.Kind.Fact" xml:space="preserve"><value>סוד (אגדות עולם)</value></data>
   <data name="WorldBuilder.Tag.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
