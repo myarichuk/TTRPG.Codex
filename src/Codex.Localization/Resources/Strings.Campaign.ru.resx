@@ -450,8 +450,7 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>Этого места больше нет, или вы не можете его изменить.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Раскрыто группе.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>На карте</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>Эта страница о месте</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>Место появится на странице «Мир» с названием и картинкой этой страницы. Если поделиться страницей, место откроется отряду; то, что вы пишете здесь, остаётся на странице.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>При сохранении страница появится в списке мест с её названием и картинкой. Если открыть страницу группе, место тоже откроется; текст остаётся на странице.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Регион</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Места</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Картинка</value></data>
@@ -490,4 +489,13 @@
   <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Задание</value></data>
   <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Открыть {0} игрокам?</value></data>
   <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Игроки смогут прочитать историю этого персонажа. Если она взята со страницы только для мастера, сначала проверьте, нет ли в ней секретов.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>Где находится</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>Прямо в регионе {0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>в: {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>Тип</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>Местность</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Поселение</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>Район</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Место</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Нанести на карту</value></data>
 </root>

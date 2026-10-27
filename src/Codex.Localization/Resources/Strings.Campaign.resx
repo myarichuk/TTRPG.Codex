@@ -450,8 +450,7 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>That place no longer exists, or you can't change it.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Revealed to the party.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>On the map</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>This page is about a place</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>The place is added to the World page with this page's name and picture. Sharing the page reveals the place to the party; what you write here stays on the page.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>Saving puts this page on the Places list with its name and picture. Sharing the page reveals the place to the party; what you write here stays on the page.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Region</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Places</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Picture</value></data>
@@ -490,4 +489,13 @@
   <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Quest</value></data>
   <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Reveal {0}?</value></data>
   <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Players will be able to read this character's history. If it came from a DM-only wiki page, check it for secrets first.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>Inside</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>Straight in {0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>in {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>Type</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Settlement</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>District</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Location</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Put on the map</value></data>
 </root>

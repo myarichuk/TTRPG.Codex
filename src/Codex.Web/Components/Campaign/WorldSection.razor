@@ -63,10 +63,10 @@ else
                         <p class="small-muted mb-0">@L["Campaign.World.NoPlaces"]</p>
                     }
                     <ul class="list-unstyled mb-0">
-                        @foreach (var location in region.Locations)
+                        @foreach (var (location, depth) in PlaceTree.Ordered(region.Locations))
                         {
                             var art = ArtService.Url(region, location);
-                            <li class="list-row align-items-start" id="place-@location.Id" data-testid="location-row">
+                            <li class="list-row align-items-start place-row" id="place-@location.Id" style="--depth: @depth" data-testid="location-row" data-depth="@depth">
                                 @if (art != null)
                                 {
                                     <img class="place-thumb" src="@art" alt="" loading="lazy" />
@@ -77,6 +77,7 @@ else
                                 }
                                 <div class="row-main">
                                     <div class="row-title">@location.Name
+                                        <span class="pill ms-1" data-testid="location-kind">@L[$"Campaign.Places.Kind.{location.Kind}"]</span>
                                         @if (Ctx.IsDm && location.Visibility != ActorVisibility.Known)
                                         {
                                             <span class="pill pill-warning ms-1">@L["Campaign.World.Hidden"]</span>
@@ -128,6 +129,17 @@ else
                         <form class="input-group input-group-sm mt-3" @onsubmit="() => AddLocationAsync(region.Id)" @onsubmit:preventDefault="true">
                             <label for="loc-@region.Id" class="visually-hidden">@L["Campaign.World.NewPlaceIn", region.Name]</label>
                             <input id="loc-@region.Id" class="field-input" placeholder="@L["Campaign.World.NewPlacePlaceholder"]" @bind="newLocationNames[region.Id]" />
+                            @if (region.Locations.Count > 0)
+                            {
+                                <label for="loc-parent-@region.Id" class="visually-hidden">@L["Campaign.Places.Inside"]</label>
+                                <select id="loc-parent-@region.Id" class="field-select" @bind="newLocationParents[region.Id]" data-testid="new-location-parent">
+                                    <option value="">@L["Campaign.Places.InRegion", region.Name]</option>
+                                    @foreach (var (spot, depth) in PlaceTree.Ordered(region.Locations))
+                                    {
+                                        <option value="@spot.Id">@(new string(' ', depth))@L["Campaign.Places.InPlace", spot.Name]</option>
+                                    }
+                                </select>
+                            }
                             <CodexButton Type="submit" Variant="CodexButtonVariant.Etched">@L["Campaign.World.AddPlace"]</CodexButton>
                         </form>
                     }
@@ -192,6 +204,30 @@ else
                         <label for="loc-edit-name" class="field-label">@L["Campaign.World.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.World.Required"]</span></label>
                         <input id="loc-edit-name" class="field-input" @bind="editingLocation.Name" @bind:event="oninput" required maxlength="120" data-testid="location-name" />
                     </div>
+                    <div class="field-grid mb-3">
+                        <div>
+                            <label for="loc-edit-parent" class="field-label">@L["Campaign.Places.Inside"]</label>
+                            <select id="loc-edit-parent" class="field-select" @bind="editingParentId" data-testid="location-parent">
+                                <option value="">@L["Campaign.Places.InRegion", editingRegion.Name]</option>
+                                @foreach (var (spot, depth) in PlaceTree.Ordered(editingRegion.Locations))
+                                {
+                                    @if (PlaceTree.CanParent(editingRegion.Locations, editingLocation.Id, spot.Id))
+                                    {
+                                        <option value="@spot.Id">@(new string(' ', depth))@spot.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label for="loc-edit-kind" class="field-label">@L["Campaign.Places.Kind"]</label>
+                            <select id="loc-edit-kind" class="field-select" @bind="editingLocation.Kind" data-testid="location-kind-select">
+                                @foreach (var kind in Enum.GetValues<PlaceKind>())
+                                {
+                                    <option value="@kind">@L[$"Campaign.Places.Kind.{kind}"]</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
                                      Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson"
@@ -224,7 +260,10 @@ else
     // The place's name and description as the dialog opened (its art is stored at once, so it never counts).
     private string locationSnapshot = string.Empty;
 
-    private string LocationSnapshot() => editingLocation == null ? string.Empty : editingLocation.Name + '\u0001' + editingLocation.Description;
+    // The select needs a string; an empty one is "straight in the region".
+    private string editingParentId = string.Empty;
+
+    private string LocationSnapshot() => editingLocation == null ? string.Empty : string.Join('\u0001', editingLocation.Name, editingLocation.Description, editingParentId, editingLocation.Kind);
 
     private bool LocationDirty() => editingLocation != null && LocationSnapshot() != locationSnapshot;
 
@@ -232,6 +271,7 @@ else
     private List<ILocationDefinition> packLocations = new();
     private string newRegionName = string.Empty;
     private readonly Dictionary<string, string> newLocationNames = new();
+    private readonly Dictionary<string, string> newLocationParents = new();
     private string packTargetRegionId = string.Empty;
 
     // Session notes, to list under each place the ones that mention it.
@@ -250,6 +290,7 @@ else
         foreach (var region in regions)
         {
             newLocationNames.TryAdd(region.Id, string.Empty);
+            newLocationParents.TryAdd(region.Id, string.Empty);
         }
 
         if (string.IsNullOrEmpty(packTargetRegionId) || regions.All(r => r.Id != packTargetRegionId))
@@ -344,7 +385,11 @@ else
     {
         var name = newLocationNames.GetValueOrDefault(regionId, string.Empty);
         if (string.IsNullOrWhiteSpace(name)) return;
-        var location = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = name.Trim(), Visibility = ActorVisibility.Hidden };
+        var parent = regions?.FirstOrDefault(r => r.Id == regionId)?.Locations.FirstOrDefault(l => l.Id == newLocationParents.GetValueOrDefault(regionId));
+        var location = new LocationDocument
+        {
+            Id = Guid.NewGuid().ToString(), Name = name.Trim(), Visibility = ActorVisibility.Hidden, ParentId = parent?.Id, Kind = PlaceTree.ChildKind(parent)
+        };
         if (await RegionRepo.UpsertLocationAsync(regionId, location, Ctx.Access))
         {
             await PlaceSync.CreatePageAsync(regionId, location, L["WorldBuilder.Tag.place"], Ctx.Access);
@@ -357,12 +402,18 @@ else
     private async Task AddFromPackAsync(ILocationDefinition definition)
     {
         if (string.IsNullOrEmpty(packTargetRegionId)) return;
+        // The pack's own "inside" holds when its parent was added to this region already.
+        var parentBlueprint = string.IsNullOrEmpty(definition.ParentId) ? null : $"{definition.SystemId}:{definition.ParentId}";
+        var parent = parentBlueprint == null ? null : regions?.FirstOrDefault(r => r.Id == packTargetRegionId)?.Locations
+            .FirstOrDefault(l => l.Metadata.TryGetValue("blueprintId", out var id) && id?.ToString() == parentBlueprint);
         var location = new LocationDocument
         {
             Id = Guid.NewGuid().ToString(),
             Name = definition.Name,
             Description = definition.Description,
             Visibility = ActorVisibility.Hidden,
+            ParentId = parent?.Id,
+            Kind = PlaceTree.ChildKind(parent),
             Metadata = new Dictionary<string, object>(definition.Metadata) { ["blueprintId"] = $"{definition.SystemId}:{definition.Id}" }
         };
         if (await RegionRepo.UpsertLocationAsync(packTargetRegionId, location, Ctx.Access))
@@ -384,12 +435,15 @@ else
             // The box takes "#Name"; the place stores the mention as an id.
             Description = location.Description == null ? null : noteMentions.ForEditing(location.Description),
             WikiPageId = location.WikiPageId,
+            ParentId = location.ParentId,
+            Kind = location.Kind,
             Connections = location.Connections,
             Metadata = location.Metadata,
             Visibility = location.Visibility,
             HasArt = location.HasArt,
             ArtVersion = location.ArtVersion
         };
+        editingParentId = location.ParentId ?? string.Empty;
         locationSnapshot = LocationSnapshot();
         locationError = null;
         // Escape goes through BackFromLocationAsync, which asks before throwing edits away.
@@ -421,6 +475,8 @@ else
         }
 
         editingLocation.Name = editingLocation.Name.Trim();
+        // The list only offers parents that make no loop; the check stays for a region another tab changed meanwhile.
+        editingLocation.ParentId = PlaceTree.CanParent(editingRegion.Locations, editingLocation.Id, editingParentId) && editingParentId.Length > 0 ? editingParentId : null;
         var typed = editingLocation.Description;
         editingLocation.Description = typed == null ? null : noteMentions.Encode(typed);
         if (await RegionRepo.UpsertLocationAsync(editingRegion.Id, editingLocation, Ctx.Access))

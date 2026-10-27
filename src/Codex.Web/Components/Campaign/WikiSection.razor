@@ -106,17 +106,15 @@ else if (Mode == "edit")
                     <p class="small-muted mb-0">@Rich(L["Campaign.Wiki.NoOtherPages"])</p>
                 }
             </section>
-            <section class="panel" aria-labelledby="wiki-place-heading">
+            @if (IsPlace)
+            {
+            <section class="panel" aria-labelledby="wiki-place-heading" data-testid="wiki-place-panel">
                 <div class="panel-title"><h3 id="wiki-place-heading" class="h6"><LucideIcon IconName="map-pin" Size="14" Class="title-icon" /> @L["Campaign.Wiki.OnMap"]</h3></div>
-                <div class="form-check mb-2">
-                    <input id="wiki-is-place" type="checkbox" class="form-check-input" @bind="isPlace" disabled="@(linked != null)" aria-describedby="wiki-is-place-hint" data-testid="wiki-is-place" />
-                    <label for="wiki-is-place" class="form-check-label">@L["Campaign.Wiki.IsPlace"]</label>
-                </div>
-                <p id="wiki-is-place-hint" class="field-hint">@L["Campaign.Wiki.IsPlaceHint"]</p>
-                @if (isPlace && linked == null)
+                <p class="field-hint">@L["Campaign.Wiki.IsPlaceHint"]</p>
+                @if (linked == null)
                 {
                     <label for="wiki-place-region" class="field-label">@L["Campaign.Wiki.PlaceRegion"]</label>
-                    <select id="wiki-place-region" class="field-select field-sm mb-2" @bind="placeRegionId">
+                    <select id="wiki-place-region" class="field-select field-sm mb-2" @bind="placeRegionId" @bind:after="() => placeParentId = string.Empty">
                         @foreach (var region in regions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase))
                         {
                             <option value="@region.Id">@region.Name</option>
@@ -127,14 +125,30 @@ else if (Mode == "edit")
                         }
                     </select>
                 }
-                @if (isPlace)
-                {
+                <label for="wiki-place-parent" class="field-label">@L["Campaign.Places.Inside"]</label>
+                <select id="wiki-place-parent" class="field-select field-sm mb-2" @bind="placeParentId" @bind:after="() => placeKind = PlaceTree.ChildKind(PlaceRegion?.Locations.FirstOrDefault(l => l.Id == placeParentId))" data-testid="wiki-place-parent">
+                    <option value="">@L["Campaign.Places.InRegion", PlaceRegion?.Name ?? L["Campaign.Wiki.DefaultRegion"]]</option>
+                    @foreach (var (spot, depth) in PlaceTree.Ordered(PlaceRegion?.Locations ?? new List<LocationDocument>()))
+                    {
+                        @if (linked == null || PlaceTree.CanParent(PlaceRegion!.Locations, linked.Value.Place.Id, spot.Id))
+                        {
+                            <option value="@spot.Id">@(new string(' ', depth))@spot.Name</option>
+                        }
+                    }
+                </select>
+                <label for="wiki-place-kind" class="field-label">@L["Campaign.Places.Kind"]</label>
+                <select id="wiki-place-kind" class="field-select field-sm mb-2" @bind="placeKind" data-testid="wiki-place-kind">
+                    @foreach (var kind in Enum.GetValues<PlaceKind>())
+                    {
+                        <option value="@kind">@L[$"Campaign.Places.Kind.{kind}"]</option>
+                    }
+                </select>
                     <ArtSlot ImageUrl="@(removeArt || linked == null ? null : ArtService.Url(linked.Value.Region, linked.Value.Place))" Pending="pendingArt" CanEdit="true" Landscape="true"
                              Label="@L["Campaign.Wiki.PlaceArt"]" Class="art-compact" Alt="@L["Campaign.Wiki.PlaceArtAlt", draft.Title]" TestId="wiki-place-art"
                              OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = linked != null; }"
                              Generate="GenerateArtAsync" />
-                }
             </section>
+            }
             <section class="panel">
                 <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> @L["Campaign.Wiki.AiInstruction"]</h3></div>
                 <label for="wiki-ai-instruction" class="visually-hidden">@L["Campaign.Wiki.AiInstructionLabel"]</label>
@@ -184,7 +198,7 @@ else if (Slug != null)
                     }
                     @if (linked != null)
                     {
-                        <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", linked.Value.Region.Name]</a>
+                        <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", PlacePath(linked.Value)]</a>
                     }
                     <span class="pill"><LucideIcon IconName="clock" Size="14" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
                 </div>
@@ -195,6 +209,10 @@ else if (Slug != null)
                     @if (CastMember(current) == null && current.Kind is WikiPageKind.General or WikiPageKind.Person)
                     {
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => promote.OpenAsync(current, mentions.Plain(current.Body))" data-testid="wiki-promote-cast"><LucideIcon IconName="user-plus" Size="18" /> @L["Campaign.Wiki.Promote.Open"]</CodexButton>
+                    }
+                    @if (linked == null && current.Kind is WikiPageKind.General or WikiPageKind.Place)
+                    {
+                        <a href="@Ctx.BasePath/wiki/@current.Slug/edit?kind=place" class="cx-btn cx-etched" data-testid="wiki-promote-place"><LucideIcon IconName="map-pin" Size="18" /> @L["Campaign.Wiki.PutOnMap"]</a>
                     }
                     @if (current.Visibility == WikiVisibility.DmOnly)
                     {
@@ -393,8 +411,12 @@ else
     private List<RegionDocument> regions = new();
     // The place the open page is about, if it has one the viewer can see.
     private (RegionDocument Region, LocationDocument Place)? linked;
-    private bool isPlace;
+    // Where the page's place goes (or is): its region, the place it is inside, and its kind. A page about a place gets one on Save.
+    private bool IsPlace => draft.Kind == WikiPageKind.Place || linked != null;
     private string placeRegionId = string.Empty;
+    private string placeParentId = string.Empty;
+    private PlaceKind placeKind = PlaceKind.Site;
+    private RegionDocument? PlaceRegion => linked?.Region ?? regions.FirstOrDefault(r => r.Id == placeRegionId);
     // The picture picked in the editor, held until Save; removeArt drops the place's picture on Save.
     private ArtImage? pendingArt;
     private bool removeArt;
@@ -415,7 +437,7 @@ else
 
     private bool IsDirty() => Mode == "edit" && DraftSnapshot() != savedDraft;
 
-    private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, string.Join(",", draft.Tags), isPlace, pendingArt != null, removeArt);
+    private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, draft.Kind, string.Join(",", draft.Tags), placeParentId, placeKind, pendingArt != null, removeArt);
 
     private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
     private List<string> AllTags => (pages ?? new()).SelectMany(p => p.Tags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
@@ -462,8 +484,12 @@ else
         notes = new List<NoteDocument>();
         pendingArt = null;
         removeArt = false;
-        isPlace = false;
         placeRegionId = regions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault()?.Id ?? string.Empty;
+        placeParentId = string.Empty;
+        placeKind = PlaceKind.Site;
+        // "?kind=place" opens the editor ready to put the page on the map.
+        var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
+        var asPlace = query.TryGetValue("kind", out var askedKind) && string.Equals(askedKind, "place", StringComparison.OrdinalIgnoreCase);
 
         // A list of cards only needs the names when a page mentions something.
         mentions = Slug != null || pages.Any(p => WikiText.HasMentions(p.Body))
@@ -473,8 +499,7 @@ else
 
         if (Slug == "new")
         {
-            var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
-            draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty };
+            draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty, Kind = asPlace ? WikiPageKind.Place : WikiPageKind.General };
             savedDraft = DraftSnapshot();
             return;
         }
@@ -491,8 +516,14 @@ else
                     PlaceId = current.PlaceId, Kind = current.Kind, ActorId = current.ActorId
                 };
                 linked = PlaceOf(current);
-                isPlace = linked != null;
+                if (linked is { } on)
+                {
+                    placeParentId = on.Place.ParentId ?? string.Empty;
+                    placeKind = on.Place.Kind;
+                }
+
                 savedDraft = DraftSnapshot();
+                if (asPlace && linked == null) draft.Kind = WikiPageKind.Place; // after the snapshot: Leave asks before dropping it
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTarget(current), Ctx.Access)).ToList();
                 foreach (var authorId in notes.Select(n => n.AuthorId).Distinct())
                 {
@@ -540,6 +571,10 @@ else
         loadedKey = null;
         await LoadAsync();
     }
+
+    /// <summary>"Region › Area › Town": where the page's place sits, the place itself left out.</summary>
+    private static string PlacePath((RegionDocument Region, LocationDocument Place) on) =>
+        string.Join(" › ", PlaceTree.Ancestors(on.Region.Locations, on.Place).Select(p => p.Name).Prepend(on.Region.Name));
 
     private string KindLabel(WikiPageKind kind) => L[$"Campaign.Wiki.Kind.{kind}"];
 
@@ -604,7 +639,7 @@ else
         {
             if (linked is { } on)
             {
-                await PlaceSync.UpdatePlaceAsync(draft, Ctx.Access);
+                await PlaceSync.UpdatePlaceAsync(draft, Ctx.Access, new PlacePlacement(placeParentId, placeKind));
                 if (pendingArt != null || removeArt)
                 {
                     return await Art.SetLocationAsync(on.Region.Id, on.Place, Ctx.Access, removeArt ? null : pendingArt);
@@ -613,9 +648,9 @@ else
                 return true;
             }
 
-            if (isPlace)
+            if (draft.Kind == WikiPageKind.Place)
             {
-                return await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], pendingArt, Ctx.Access) != null;
+                return await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], pendingArt, Ctx.Access, new PlacePlacement(placeParentId, placeKind)) != null;
             }
 
             return true;

@@ -1633,6 +1633,10 @@ html:has(.md-full) { overflow: hidden; }
 
 /* Places: a thumbnail of the art, and the full description behind a disclosure. */
 .place-thumb { width: 64px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); flex: none; }
+/* A place inside another sits under it, indented by depth (capped so a deep tree still fits a phone), with a rule
+   along the start edge to show what it belongs to. */
+.place-row { margin-inline-start: calc(min(var(--depth, 0), 4) * 1.25rem); }
+.place-row:not([data-depth="0"]) { border-inline-start: 2px solid var(--border); padding-inline-start: 0.6rem; }
 .place-details summary { cursor: pointer; list-style: none; }
 .place-details summary::-webkit-details-marker { display: none; }
 .place-details summary::after { content: " ▾"; color: var(--text-3); }

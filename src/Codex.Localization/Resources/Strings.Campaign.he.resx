@@ -450,8 +450,7 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>המקום הזה כבר לא קיים, או שאין לכם הרשאה לשנות אותו.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>נחשף בפני הקבוצה.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>על המפה</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>הדף הזה עוסק במקום</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>המקום יתווסף לדף העולם עם שם הדף והתמונה שלו. שיתוף הדף חושף את המקום לצוות; מה שנכתב כאן נשאר בדף.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>בשמירה הדף יתווסף לרשימת המקומות עם השם והתמונה שלו. שיתוף הדף חושף את המקום לקבוצה; מה שכתוב כאן נשאר בדף.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>אזור</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>מקומות</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>תמונה</value></data>
@@ -490,4 +489,13 @@
   <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>משימה</value></data>
   <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>לחשוף את {0}?</value></data>
   <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>השחקנים יוכלו לקרוא את ההיסטוריה של הדמות. אם היא הגיעה מדף ויקי של מנחה בלבד, כדאי לבדוק קודם שאין בה סודות.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>בתוך</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>ישירות ב{0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>בתוך {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>סוג</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>אזור</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>יישוב</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>רובע</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למפה</value></data>
 </root>
