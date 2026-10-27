@@ -55,6 +55,11 @@ public class WikiPageDocument
     /// <summary>Slugs of the pages this one links to.</summary>
     public List<string> Links { get; set; } = new();
 
+    /// <summary>True once the page's illustration is stored as its "art" attachment; <see cref="ArtVersion"/> busts caches. A page
+    /// about a place shows the place's picture instead, so a place never has two.</summary>
+    public bool HasArt { get; set; }
+    public int ArtVersion { get; set; }
+
     public string AuthorUserId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -71,6 +76,9 @@ public interface IWikiRepository
     Task<bool> TrySaveAsync(WikiPageDocument page, CampaignAccess access);
 
     Task<bool> TryDeleteAsync(string id, CampaignAccess access);
+
+    /// <summary>Records that the page's illustration was stored (or removed) and bumps its version. DM only.</summary>
+    Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access);
 
     /// <summary>Every page regardless of visibility - export only.</summary>
     Task<IEnumerable<WikiPageDocument>> GetAllForCampaignAsync(string campaignId);
@@ -195,6 +203,26 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
                 return candidate;
             }
         }
+    }
+
+    public async Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var page = await session.LoadAsync<WikiPageDocument>(id);
+        if (page == null || page.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        page.HasArt = hasArt;
+        page.ArtVersion++;
+        await session.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)

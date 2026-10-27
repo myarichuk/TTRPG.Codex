@@ -22,7 +22,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
         _regions = new RegionRepository(_db);
         _wiki = new RavenWikiRepository(_db);
         // Art is only touched when a picture comes with the page, which these tests don't do.
-        _sync = new PlaceWikiSync(_regions, _wiki, new ArtService(null!, null!, null!, _regions, null!));
+        _sync = new PlaceWikiSync(_regions, _wiki, new ArtService(null!, null!, null!, _regions, null!, _wiki));
     }
 
     public void Dispose() => _db.Dispose();

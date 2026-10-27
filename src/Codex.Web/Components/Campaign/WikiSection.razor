@@ -106,6 +106,17 @@ else if (Mode == "edit")
                     <p class="small-muted mb-0">@Rich(L["Campaign.Wiki.NoOtherPages"])</p>
                 }
             </section>
+            @if (!IsPlace)
+            {
+                <section class="panel" aria-labelledby="wiki-art-heading">
+                    <div class="panel-title"><h3 id="wiki-art-heading" class="h6"><LucideIcon IconName="image" Size="14" Class="title-icon" /> @L["Campaign.Wiki.Illustration"]</h3></div>
+                    <ArtSlot ImageUrl="@(removeArt || current == null ? null : ArtService.Url(current))" Pending="pendingArt" CanEdit="true" Landscape="@(draft.Kind != WikiPageKind.Person)"
+                             Label="@L["Campaign.Wiki.Illustration"]" Class="art-compact" Alt="@L["Campaign.Wiki.ArtAlt", draft.Title]" TestId="wiki-art"
+                             OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = current?.HasArt == true; }"
+                             Generate="GeneratePageArtAsync" />
+                    <p class="field-hint mb-0">@L["Campaign.Wiki.IllustrationHint"]</p>
+                </section>
+            }
             @if (IsPlace)
             {
             <section class="panel" aria-labelledby="wiki-place-heading" data-testid="wiki-place-panel">
@@ -226,9 +237,12 @@ else if (Slug != null)
         <div class="row g-3">
             <div class="col-lg-8">
                 <article class="panel wiki-page" data-testid="wiki-page">
-                    @if (linked != null)
+                    @if (IllustrationOf(current) is { } picture)
                     {
-                        <ArtSlot ImageUrl="@ArtService.Url(linked.Value.Region, linked.Value.Place)" CanEdit="false" Landscape="true" Class="art-compact" Alt="@L["Campaign.Wiki.PlaceArtAlt", current.Title]" TestId="wiki-page-art" />
+                        @* Beside the text on a wide screen, above it on a phone; a person's portrait is narrower. *@
+                        <figure class="wiki-figure @(current.Kind == WikiPageKind.Person && linked == null ? "wiki-figure-tall" : null)" data-testid="wiki-page-art">
+                            <img src="@picture" alt="@L["Campaign.Wiki.ArtAlt", current.Title]" loading="lazy" />
+                        </figure>
                     }
                     @if (string.IsNullOrWhiteSpace(current.Body))
                     {
@@ -372,7 +386,7 @@ else
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
                         <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
-                    @if (PlaceOf(wp) is { } onMap && ArtService.Url(onMap.Region, onMap.Place) is { } thumb)
+                    @if (IllustrationOf(wp) is { } thumb)
                     {
                         <img class="place-thumb" src="@thumb" alt="" loading="lazy" />
                     }
@@ -599,6 +613,22 @@ else
         return null;
     }
 
+    /// <summary>The picture a page shows: its place's when it is about one (a place has one picture), else its own.</summary>
+    private string? IllustrationOf(WikiPageDocument page) =>
+        PlaceOf(page) is { } on ? ArtService.Url(on.Region, on.Place) : ArtService.Url(page);
+
+    private Task<ArtImage> GeneratePageArtAsync(CancellationToken ct)
+    {
+        var (subjectKind, shape) = draft.Kind switch
+        {
+            WikiPageKind.Person => ("person", ArtShape.Tall),
+            WikiPageKind.Faction => ("faction: its people, colours and emblem", ArtShape.Wide),
+            WikiPageKind.Quest => ("scene from an adventure", ArtShape.Wide),
+            _ => ("scene, object or idea from a fantasy world", ArtShape.Wide)
+        };
+        return Art.GenerateAsync(Ctx.UserId, draft.Title, subjectKind, TextFormatting.Summary(mentions.Plain(draft.Body), 300), shape, ct);
+    }
+
     private Task<ArtImage> GenerateArtAsync(CancellationToken ct) =>
         Art.GenerateAsync(Ctx.UserId, draft.Title, "place", TextFormatting.Summary(mentions.Plain(draft.Body), 300), ArtShape.Wide, ct);
 
@@ -650,7 +680,17 @@ else
 
             if (draft.Kind == WikiPageKind.Place)
             {
-                return await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], pendingArt, Ctx.Access, new PlacePlacement(placeParentId, placeKind)) != null;
+                // The page's own picture moves to the place, which then is the one picture both show.
+                var own = current?.HasArt == true ? current : null;
+                var image = pendingArt ?? (own == null ? null : await Art.WikiPageArtAsync(own));
+                var made = await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], image, Ctx.Access, new PlacePlacement(placeParentId, placeKind));
+                if (made != null && own != null) await Art.SetWikiPageAsync(own, Ctx.Access, null);
+                return made != null;
+            }
+
+            if (pendingArt != null || removeArt)
+            {
+                return await Art.SetWikiPageAsync(draft, Ctx.Access, removeArt ? null : pendingArt);
             }
 
             return true;

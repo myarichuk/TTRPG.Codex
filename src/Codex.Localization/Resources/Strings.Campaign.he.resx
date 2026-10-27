@@ -456,7 +456,7 @@
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>תמונה</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>תמונה של {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>על המפה: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה להוסיף או לעדכן את המקום במפה.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה לשמור את התמונה שלו או את המקום שלו במפה.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>דף ויקי</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>פתחו את דף הוויקי של {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>יצירת דף</value></data>
@@ -498,4 +498,7 @@
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>רובע</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>מקום</value></data>
   <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למפה</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>איור</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>מוצג לצד טקסט הדף. כל מי שיכול לקרוא את הדף רואה אותו.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>איור עבור {0}</value></data>
 </root>

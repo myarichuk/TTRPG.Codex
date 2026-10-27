@@ -456,7 +456,7 @@
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Picture</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Picture of {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>On the map: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its place could not be added or updated on the map.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its picture or its place on the map could not be stored.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Wiki page</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Open the wiki page for {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Create page</value></data>
@@ -498,4 +498,7 @@
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>District</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Location</value></data>
   <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Put on the map</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Illustration</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Shown beside the page's text. Whoever can read the page sees it.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Illustration for {0}</value></data>
 </root>

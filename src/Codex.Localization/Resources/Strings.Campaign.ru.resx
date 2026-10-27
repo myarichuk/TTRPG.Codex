@@ -456,7 +456,7 @@
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Картинка</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Картинка: {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>На карте: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но место на карте не удалось добавить или обновить.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но её картинку или место на карте сохранить не удалось.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Страница вики</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Открыть страницу вики: {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Создать страницу</value></data>
@@ -498,4 +498,7 @@
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>Район</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Место</value></data>
   <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Нанести на карту</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Иллюстрация</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Показывается рядом с текстом страницы. Её видят все, кто может читать страницу.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
 </root>
