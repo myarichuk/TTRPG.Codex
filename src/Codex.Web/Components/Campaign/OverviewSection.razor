@@ -18,7 +18,14 @@
                     <a href="@Ctx.BasePath/settings" class="cx-btn cx-etched cx-sm"><LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Overview.Edit"]</a>
                 }
             </div>
-            <p class="mb-0">@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? L["Campaign.Overview.NoDescription"] : Ctx.Campaign.Description)</p>
+            @if (string.IsNullOrWhiteSpace(Ctx.Campaign.Description))
+            {
+                <p class="mb-0">@(string.IsNullOrWhiteSpace(Ctx.Campaign.Tagline) ? L["Campaign.Overview.NoDescription"] : Ctx.Campaign.Tagline)</p>
+            }
+            else
+            {
+                <div class="rules-text mb-0" data-testid="campaign-description">@((MarkupString)Codex.Core.TextFormatting.ToHtml(Ctx.Campaign.Description))</div>
+            }
         </section>
 
         <section class="panel" aria-labelledby="mine-heading">

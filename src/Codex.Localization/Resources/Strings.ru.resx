@@ -22,4 +22,18 @@
   <data name="Common.Unsaved.DiscardBody" xml:space="preserve"><value>Изменения не сохранены и будут потеряны.</value></data>
   <data name="Common.Unsaved.Discard" xml:space="preserve"><value>Отменить изменения</value></data>
   <data name="Count.Rounds" xml:space="preserve"><value>{0, plural, one{# раунд} few{# раунда} many{# раундов} other{# раунда}}</value></data>
+  <data name="Common.Ai.Writing" xml:space="preserve"><value>Пишу…</value></data>
+  <data name="Common.Ai.Stop" xml:space="preserve"><value>Остановить</value></data>
+  <data name="Common.Ai.Stopped" xml:space="preserve"><value>Остановлено. Ничего не изменилось.</value></data>
+  <data name="Common.Editor.Toolbar" xml:space="preserve"><value>Форматирование</value></data>
+  <data name="Common.Editor.Bold" xml:space="preserve"><value>Жирный (Ctrl+B)</value></data>
+  <data name="Common.Editor.Italic" xml:space="preserve"><value>Курсив (Ctrl+I)</value></data>
+  <data name="Common.Editor.Heading" xml:space="preserve"><value>Заголовок</value></data>
+  <data name="Common.Editor.List" xml:space="preserve"><value>Маркированный список</value></data>
+  <data name="Common.Editor.View" xml:space="preserve"><value>Показать</value></data>
+  <data name="Common.Editor.Write" xml:space="preserve"><value>Текст</value></data>
+  <data name="Common.Editor.Preview" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="Common.Editor.FullScreen" xml:space="preserve"><value>Во весь экран</value></data>
+  <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Выйти из полноэкранного режима (Esc)</value></data>
+  <data name="Common.Editor.Nothing" xml:space="preserve"><value>Пока нечего показать.</value></data>
 </root>

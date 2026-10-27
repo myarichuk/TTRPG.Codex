@@ -1,5 +1,6 @@
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Rules;
 using Codex.Localization;
 using Codex.Core.Systems;
 using Codex.Persistence;
@@ -21,7 +22,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
 
     /// <summary>A session summary for the DM (everything) or the players (public notes and rolls only). DM only: it is the DM who publishes recaps.</summary>
     public async Task<string> SessionSummaryAsync(CampaignDocument campaign, SessionDocument session, IEnumerable<NoteDocument> notes, AiAudience audience, CampaignAccess access, Func<string, string> nameOf, IEnumerable<ActorDocument> actors,
-        IEnumerable<LocationDocument>? places = null, IEnumerable<MentionItem>? items = null)
+        IEnumerable<LocationDocument>? places = null, IEnumerable<MentionItem>? items = null, CancellationToken ct = default)
     {
         if (!access.IsDm)
         {
@@ -40,11 +41,11 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             digest.Rolls,
             digest.DmSummary,
             digest.Quotes,
-            Language: Lang));
+            Language: Lang), ct);
     }
 
     /// <summary>Rewrites a character's history (player-facing) or the DM's private notes on an NPC.</summary>
-    public async Task<string> RewriteAsync(ActorDocument actor, CampaignDocument campaign, SystemDefinition? system, string currentText, string instruction, AiAudience audience, string userId)
+    public async Task<string> RewriteAsync(ActorDocument actor, CampaignDocument campaign, SystemDefinition? system, string currentText, string instruction, AiAudience audience, string userId, CancellationToken ct = default)
     {
         var assistant = await providers.AssistantForAsync(userId);
         var facts = SheetFacts(actor, campaign.SystemId, system).ToList();
@@ -60,12 +61,12 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             currentText,
             instruction,
             audience,
-            $"{campaign.Name} ({catalog.GetDisplayName(campaign.SystemId)}){(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
-            Language: Lang));
+            $"{campaign.Name} ({catalog.GetDisplayName(campaign.SystemId)}){(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            Language: Lang), ct);
     }
 
     /// <summary>What the next level brings, with picks that fit the sheet, from the Library's class and subclass entries.</summary>
-    public async Task<string> LevelUpAsync(ActorDocument actor, CampaignDocument campaign, SystemDefinition? system, string userId)
+    public async Task<string> LevelUpAsync(ActorDocument actor, CampaignDocument campaign, SystemDefinition? system, string userId, CancellationToken ct = default)
     {
         var assistant = await providers.AssistantForAsync(userId);
         var level = YamlValues.GetInt(actor.Sheet, "level") ?? 1;
@@ -96,11 +97,11 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             actor.Biography,
             Language: Lang,
             Choices: system?.Canonical.Ai.AdvancementChoices,
-            SheetChanges: system?.Canonical.Ai.AdvancementChanges));
+            SheetChanges: system?.Canonical.Ai.AdvancementChanges), ct);
     }
 
     /// <summary>Expands or rewrites a wiki page from its current text, the campaign blurb and the titles it links to.</summary>
-    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, string body, IEnumerable<string> relatedTitles, string instruction, AiAudience audience, string userId)
+    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, string body, IEnumerable<string> relatedTitles, string instruction, AiAudience audience, string userId, CancellationToken ct = default)
     {
         var assistant = await providers.AssistantForAsync(userId);
         var facts = new List<string> { $"Setting: {catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”" };
@@ -117,14 +118,14 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             body,
             string.IsNullOrWhiteSpace(instruction) ? "Expand the current notes into a well-structured wiki page with short headings. Keep [[links]] as written and add [[links]] to the related pages where they fit." : instruction,
             audience,
-            string.IsNullOrWhiteSpace(campaign.Description) ? null : TextFormatting.Summary(campaign.Description, 400),
-            Language: Lang));
+            campaign.Blurb(400) is { Length: > 0 } blurb ? blurb : null,
+            Language: Lang), ct);
     }
 
     /// <summary>Writes or polishes the description of a Library entry or a place. The facts are the
     /// filled-in fields, so the prose agrees with the numbers; <paramref name="audience"/> Players
     /// keeps it to what someone there would see.</summary>
-    public async Task<string> DescribeAsync(CampaignDocument campaign, string subject, string subjectKind, IReadOnlyList<string> facts, string currentText, string instruction, AiAudience audience, string userId)
+    public async Task<string> DescribeAsync(CampaignDocument campaign, string subject, string subjectKind, IReadOnlyList<string> facts, string currentText, string instruction, AiAudience audience, string userId, CancellationToken ct = default)
     {
         var assistant = await providers.AssistantForAsync(userId);
         return await assistant.DescribeAsync(new DescribeRequest(
@@ -135,8 +136,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             currentText,
             instruction,
             audience,
-            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
-            Language: Lang));
+            $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            Language: Lang), ct);
     }
 
     /// <summary>An entry's filled-in fields as "Label: value" lines; collections become the names of their rows.</summary>
@@ -174,7 +175,9 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     }
 
     /// <summary>Turns a one-line concept into a draft sheet. Reference fields get the ids the campaign's Library offers, so the model can only pick real content.</summary>
-    public async Task<CharacterDraft> CreateCharacterAsync(string concept, ActorKind kind, CampaignDocument campaign, SystemDefinition? system, string userId, Func<string, Task<IReadOnlyList<(string Id, string Name)>>> optionsFor)
+    /// <param name="itemsFor">The Library entries of an inventory type, for the gear the character carries; without it (or without inventory rules) the sheet gets no equipment.</param>
+    public async Task<CharacterDraft> CreateCharacterAsync(string concept, ActorKind kind, CampaignDocument campaign, SystemDefinition? system, string userId, Func<string, Task<IReadOnlyList<(string Id, string Name)>>> optionsFor,
+        Func<string, Task<IReadOnlyList<ContentEntry>>>? itemsFor = null, CancellationToken ct = default)
     {
         system = system?.Canonical; // the prompt names fields in one language, whatever the reader sees
         var assistant = await providers.AssistantForAsync(userId);
@@ -202,8 +205,20 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             fields.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max));
         }
 
+        // The gear a sheet may carry: every entry of the system's inventory types, the everyday ones first.
+        var inventory = itemsFor == null ? null : system?.SheetRules?.Inventory;
+        var armor = system?.SheetRules?.ArmorClass;
+        var carriable = new Dictionary<string, ContentEntry>(StringComparer.OrdinalIgnoreCase);
+        foreach (var type in inventory?.Types ?? new List<string>())
+        {
+            foreach (var entry in await itemsFor!(type))
+            {
+                if (carriable.Count < MaxCarriable) carriable.TryAdd(entry.Id, entry);
+            }
+        }
+
         var primary = system?.PrimaryResource;
-        return await assistant.CreateCharacterAsync(new CharacterConceptRequest(
+        var draft = await assistant.CreateCharacterAsync(new CharacterConceptRequest(
             concept,
             KindLabel(kind, system),
             catalog.GetDisplayName(campaign.SystemId),
@@ -211,10 +226,45 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             fields,
             primary?.Key,
             primary?.MaxKey,
-            $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}",
+            $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
             Language: Lang,
             HitPointsLabel: primary?.Label,
-            HitPointsBasis: system?.Ai.PrimaryResourceBasis));
+            HitPointsBasis: system?.Ai.PrimaryResourceBasis,
+            Equipment: carriable.Count == 0 ? null : carriable.Keys.ToList(),
+            OneArmorAndShield: armor != null), ct);
+
+        if (inventory != null && draft.Equipment is { Count: > 0 } picked)
+        {
+            draft.Sheet[inventory.Key] = StoredEquipment(picked, carriable, inventory, armor);
+        }
+
+        return draft;
+    }
+
+    /// <summary>Most items a prompt lists; keeps a system with a vast Library from filling the model's input.</summary>
+    private const int MaxCarriable = 600;
+
+    /// <summary>The generated gear as the sheet stores it ("id|qty:2,equipped:1"). The rules allow one suit of body armor and one
+    /// shield on at a time, so a second of either is carried, not worn.</summary>
+    public static List<object> StoredEquipment(IEnumerable<DraftItem> items, IReadOnlyDictionary<string, ContentEntry> entries, InventoryRules inventory, ArmorClassRules? armor)
+    {
+        var stored = new List<object>();
+        var armorWorn = false;
+        var shieldWorn = false;
+        foreach (var item in items)
+        {
+            if (!entries.TryGetValue(item.Id, out var entry)) continue;
+            var equipped = item.Equipped;
+            if (equipped && armor != null)
+            {
+                if (SheetRuleEngine.IsBodyArmor(entry, armor)) { equipped = !armorWorn; armorWorn |= equipped; }
+                else if (SheetRuleEngine.IsShield(entry, armor)) { equipped = !shieldWorn; shieldWorn |= equipped; }
+            }
+
+            stored.Add(SheetRuleEngine.FormatItem(inventory, entry.Id, item.Quantity, equipped));
+        }
+
+        return stored;
     }
 
     /// <summary>What a character's portrait is drawn from. Everyone who can see the character sees the picture, so only

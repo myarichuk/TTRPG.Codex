@@ -32,6 +32,10 @@ public class WikiPageDocument
     public WikiVisibility Visibility { get; set; } = WikiVisibility.DmOnly;
     public List<string> Tags { get; set; } = new();
 
+    /// <summary>The place on the world map this page is about (<see cref="LocationDocument.Id"/>), or empty. The page shows the
+    /// place's picture, and sharing the page reveals the place.</summary>
+    public string? PlaceId { get; set; }
+
     /// <summary>Slugs of the pages this one links to.</summary>
     public List<string> Links { get; set; } = new();
 
@@ -142,6 +146,7 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             existing.Body = page.Body;
             existing.Visibility = page.Visibility;
             existing.Tags = page.Tags;
+            existing.PlaceId = page.PlaceId;
             existing.Links = page.Links;
             existing.UpdatedAt = page.UpdatedAt;
             page.Slug = existing.Slug;

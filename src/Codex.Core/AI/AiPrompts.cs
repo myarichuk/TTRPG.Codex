@@ -116,6 +116,9 @@ public sealed record WorldExpandRequest(
     string? Instruction = null,
     string? CurrentText = null);
 
+/// <summary>The character the model is asked to make from a concept.</summary>
+/// <param name="Equipment">The ids of the items a sheet may carry, or null when the system has no inventory (the reply then has no equipment).</param>
+/// <param name="OneArmorAndShield">The rules let a character wear one suit of body armor and carry one shield, no more.</param>
 public sealed record CharacterConceptRequest(
     string Concept,
     string Kind,
@@ -127,7 +130,9 @@ public sealed record CharacterConceptRequest(
     string? CampaignContext = null,
     string? Language = null,
     string? HitPointsLabel = null,
-    string? HitPointsBasis = null);
+    string? HitPointsBasis = null,
+    IReadOnlyList<string>? Equipment = null,
+    bool OneArmorAndShield = false);
 
 /// <summary>Pure prompt builders: no network, no state, unit-testable.</summary>
 public static class AiPrompts
@@ -263,6 +268,13 @@ public static class AiPrompts
     {
         var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string}}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use." + CharacterLanguageNote(r.Language);
 
+        if (r.Equipment is { Count: > 0 })
+        {
+            system += " The object also has \"equipment\": [{\"id\": string, \"quantity\": number, \"equipped\": boolean}], the gear this character carries, using only the listed item ids." +
+                      " Pick what a person like this would plausibly own and use: their weapons, protection, tools and everyday gear, with sensible quantities, and an extraordinary item only when the concept calls for one." +
+                      " Mark as equipped what they wield or wear" + (r.OneArmorAndShield ? " (at most one suit of body armor and one shield)" : "") + ".";
+        }
+
         var sb = new StringBuilder();
         sb.AppendLine("Concept: " + r.Concept.Trim());
         if (!string.IsNullOrWhiteSpace(r.CampaignContext))
@@ -288,6 +300,8 @@ public static class AiPrompts
             var basis = string.IsNullOrWhiteSpace(r.HitPointsBasis) ? "the rest of the sheet" : r.HitPointsBasis.Trim();
             sb.AppendLine().AppendLine($"{(string.IsNullOrWhiteSpace(r.HitPointsLabel) ? "Starting resource" : r.HitPointsLabel.Trim())}: set \"{r.HitPointsKey}\"{(r.HitPointsMaxKey != null ? $" and \"{r.HitPointsMaxKey}\"" : "")} to a number appropriate for {basis}.");
         }
+
+        AppendList(sb, "Item ids (the only ids equipment may use)", r.Equipment ?? Array.Empty<string>());
 
         return (system, sb.ToString());
     }

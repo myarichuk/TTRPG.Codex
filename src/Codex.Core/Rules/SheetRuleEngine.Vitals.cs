@@ -159,9 +159,9 @@ public sealed partial class SheetRuleEngine
 
     // ---- Armor class ----
 
-    private static bool IsBodyArmor(ContentEntry entry, ArmorClassRules rules) => ToDouble(Property(entry, rules.BaseProperty)).HasValue;
+    public static bool IsBodyArmor(ContentEntry entry, ArmorClassRules rules) => ToDouble(Property(entry, rules.BaseProperty)).HasValue;
 
-    private static bool IsShield(ContentEntry entry, ArmorClassRules rules) =>
+    public static bool IsShield(ContentEntry entry, ArmorClassRules rules) =>
         string.Equals(Property(entry, rules.TypeProperty)?.ToString(), rules.ShieldType, StringComparison.OrdinalIgnoreCase);
 
     private static object? Property(ContentEntry entry, string key) => entry.Properties.TryGetValue(key, out var value) ? value : null;

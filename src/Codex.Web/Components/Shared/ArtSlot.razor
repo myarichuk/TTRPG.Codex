@@ -1,11 +1,12 @@
 @using Codex.Persistence
 @using Codex.Web.Services
+@implements IDisposable
 @inject ILogger<ArtSlot> Logger
 
 @* The picture every Library entry and place reserves room for. Readers see the art, or nothing
    when there is none. Editors see the frame either way, and can drop a file on it, pick one,
-   have the image model draw one, or remove it. What happens to the picture (store it now, or
-   hold it until the wizard saves) is the caller's OnPicked. *@
+   have the image model draw one (and stop it while it draws), or remove it. What happens to the
+   picture (store it now, or hold it until the wizard saves) is the caller's OnPicked. *@
 
 @if (CanEdit || Src != null)
 {
@@ -29,7 +30,16 @@
             }
             @if (busy != null)
             {
-                <div class="art-busy" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> @busy</div>
+                <div class="art-busy">
+                    @if (drawing.IsRunning)
+                    {
+                        <AiWorking Text="@busy" OnStop="drawing.Stop" TestId="@($"{TestId}-working")" />
+                    }
+                    else
+                    {
+                        <div role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> @busy</div>
+                    }
+                </div>
             }
         </div>
         @if (CanEdit)
@@ -49,6 +59,10 @@
                 @if (error != null)
                 {
                     <p class="text-danger small mb-0" role="alert">@error @if (notConfigured) { <a href="/settings/ai#images">@L["Actor.Art.SetUp"]</a> }</p>
+                }
+                else if (stopped)
+                {
+                    <p class="small-muted mb-0" role="status">@L["Common.Ai.Stopped"]</p>
                 }
                 else
                 {
@@ -79,8 +93,11 @@
     [Parameter] public EventCallback<ArtImage> OnPicked { get; set; }
     [Parameter] public EventCallback OnRemove { get; set; }
 
-    /// <summary>Draws an image; null hides the button.</summary>
-    [Parameter] public Func<Task<ArtImage>>? Generate { get; set; }
+    /// <summary>Draws an image; null hides the button. The token is cancelled by Stop.</summary>
+    [Parameter] public Func<CancellationToken, Task<ArtImage>>? Generate { get; set; }
+
+    private readonly AiCall drawing = new();
+    private bool stopped;
 
     private string? busy;
     private string? error;
@@ -126,11 +143,20 @@
         if (Generate == null || busy != null) return;
         error = null;
         notConfigured = false;
+        stopped = false;
         busy = L["Actor.Art.Drawing"];
+        var ct = drawing.Begin();
         try
         {
-            var image = await Generate();
+            var image = await Generate(ct);
+            // Stopped just as the picture arrived: nothing is stored.
+            ct.ThrowIfCancellationRequested();
+            drawing.End(ct);
             await OnPicked.InvokeAsync(image);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            stopped = true;
         }
         catch (AiImageNotConfiguredException)
         {
@@ -144,9 +170,12 @@
         }
         finally
         {
+            drawing.End(ct);
             busy = null;
         }
     }
+
+    public void Dispose() => drawing.Dispose();
 
     private async Task RemoveAsync()
     {

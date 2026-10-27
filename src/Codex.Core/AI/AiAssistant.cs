@@ -4,8 +4,11 @@ using Microsoft.Extensions.AI;
 
 namespace Codex.Core.AI;
 
-/// <summary>A generated character: the sheet values keyed like the actor schema, plus prose.</summary>
-public sealed record CharacterDraft(string Name, Dictionary<string, object> Sheet, string? Biography);
+/// <summary>An item a generated character carries: a library id, how many, and whether it is wielded or worn.</summary>
+public sealed record DraftItem(string Id, int Quantity, bool Equipped);
+
+/// <summary>A generated character: the sheet values keyed like the actor schema, plus prose and the gear they carry.</summary>
+public sealed record CharacterDraft(string Name, Dictionary<string, object> Sheet, string? Biography, IReadOnlyList<DraftItem>? Equipment = null);
 
 /// <summary>
 /// The AI features, each one prompt in, one text out. Nothing here decides what the model may
@@ -124,7 +127,49 @@ public sealed class AiAssistant(IChatClient chat)
             }
         }
 
-        return new CharacterDraft(string.IsNullOrWhiteSpace(name) ? "Unnamed" : name, sheet, biography);
+        return new CharacterDraft(string.IsNullOrWhiteSpace(name) ? "Unnamed" : name, sheet, biography, ParseEquipment(root, request));
+    }
+
+    private const int MaxItems = 40;
+    private const int MaxQuantity = 99;
+
+    /// <summary>The reply's equipment, kept to the ids the request listed (case-insensitively, as listed); a repeated id adds up.</summary>
+    private static List<DraftItem>? ParseEquipment(JsonElement root, CharacterConceptRequest request)
+    {
+        if (request.Equipment is not { Count: > 0 } allowed
+            || !root.TryGetProperty("equipment", out var array) || array.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var known = allowed.ToDictionary(id => id, StringComparer.OrdinalIgnoreCase);
+        var items = new Dictionary<string, DraftItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var element in array.EnumerateArray())
+        {
+            // A bare id is a single item; anything else is the object the prompt asked for.
+            var id = element.ValueKind == JsonValueKind.String ? element.GetString()
+                : element.ValueKind == JsonValueKind.Object && element.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.String ? idElement.GetString()
+                : null;
+            if (id == null || !known.TryGetValue(id.Trim(), out var listed))
+            {
+                continue;
+            }
+
+            var quantity = element.ValueKind == JsonValueKind.Object && element.TryGetProperty("quantity", out var q) && FieldCoercion.TryNumber(q, out var n)
+                ? (int)Math.Clamp(Math.Round(n), 1, MaxQuantity)
+                : 1;
+            var equipped = element.ValueKind == JsonValueKind.Object && element.TryGetProperty("equipped", out var e)
+                && (e.ValueKind == JsonValueKind.True || (e.ValueKind == JsonValueKind.String && bool.TryParse(e.GetString(), out var flag) && flag));
+            items[listed] = items.TryGetValue(listed, out var before)
+                ? new DraftItem(listed, Math.Min(before.Quantity + quantity, MaxQuantity), before.Equipped || equipped)
+                : new DraftItem(listed, quantity, equipped);
+            if (items.Count >= MaxItems)
+            {
+                break;
+            }
+        }
+
+        return items.Values.ToList();
     }
 
     private async Task<string> CompleteAsync((string System, string User) prompt, CancellationToken ct)

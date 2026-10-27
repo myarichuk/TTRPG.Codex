@@ -22,4 +22,18 @@
   <data name="Common.Unsaved.DiscardBody" xml:space="preserve"><value>השינויים כאן לא נשמרו ויאבדו.</value></data>
   <data name="Common.Unsaved.Discard" xml:space="preserve"><value>לבטל את השינויים</value></data>
   <data name="Count.Rounds" xml:space="preserve"><value>{0, plural, one{סבב #} two{# סבבים} other{# סבבים}}</value></data>
+  <data name="Common.Ai.Writing" xml:space="preserve"><value>כותב…</value></data>
+  <data name="Common.Ai.Stop" xml:space="preserve"><value>עצור</value></data>
+  <data name="Common.Ai.Stopped" xml:space="preserve"><value>נעצר. שום דבר לא השתנה.</value></data>
+  <data name="Common.Editor.Toolbar" xml:space="preserve"><value>עיצוב</value></data>
+  <data name="Common.Editor.Bold" xml:space="preserve"><value>מודגש (Ctrl+B)</value></data>
+  <data name="Common.Editor.Italic" xml:space="preserve"><value>נטוי (Ctrl+I)</value></data>
+  <data name="Common.Editor.Heading" xml:space="preserve"><value>כותרת</value></data>
+  <data name="Common.Editor.List" xml:space="preserve"><value>רשימת תבליטים</value></data>
+  <data name="Common.Editor.View" xml:space="preserve"><value>הצג</value></data>
+  <data name="Common.Editor.Write" xml:space="preserve"><value>כתיבה</value></data>
+  <data name="Common.Editor.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Common.Editor.FullScreen" xml:space="preserve"><value>מסך מלא</value></data>
+  <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>יציאה ממסך מלא (Esc)</value></data>
+  <data name="Common.Editor.Nothing" xml:space="preserve"><value>אין עדיין מה להציג.</value></data>
 </root>

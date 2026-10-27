@@ -197,14 +197,20 @@ public sealed class MentionDirectory
             return $"\u0001{mentions.Count - 1}\u0002";
         });
 
-        return Placeholder.Replace(TextFormatting.ToHtml(marked), m =>
-        {
-            var mention = mentions[int.Parse(m.Groups[1].Value)];
-            var name = WebUtility.HtmlEncode(mention.Text);
-            return mention.Known
-                ? $"<a class=\"mention mention-{SessionMentions.KindName(mention.Kind!.Value)}\" href=\"{WebUtility.HtmlEncode(href(mention.Kind!.Value, mention.Id!))}\">{name}</a>"
-                : $"<span class=\"mention mention-unknown\">{name}</span>";
-        });
+        return Placeholder.Replace(TextFormatting.ToHtml(marked), m => Anchor(mentions[int.Parse(m.Groups[1].Value)], href));
+    }
+
+    /// <summary>One stored mention (<paramref name="kind"/> "actor", "place" or "item", and its id) as markup for this viewer:
+    /// a link when they can see it, "someone", "somewhere" or "something" when they can't.</summary>
+    public string Html(string kind, string id, Func<MentionKind, string, string> href) =>
+        Anchor(Read($"[[{kind}:{id}]]")[0], href);
+
+    private static string Anchor(MentionSegment mention, Func<MentionKind, string, string> href)
+    {
+        var name = WebUtility.HtmlEncode(mention.Text);
+        return mention.Known
+            ? $"<a class=\"mention mention-{SessionMentions.KindName(mention.Kind!.Value)}\" href=\"{WebUtility.HtmlEncode(href(mention.Kind!.Value, mention.Id!))}\">{name}</a>"
+            : $"<span class=\"mention mention-unknown\">{name}</span>";
     }
 
     private static readonly Regex Placeholder = new("\u0001(\\d+)\u0002", RegexOptions.Compiled);

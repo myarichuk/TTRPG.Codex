@@ -150,6 +150,24 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
             }).slice(0, MAX);
         }
 
+        // Where the caret is inside a textarea, measured on a hidden copy of its text (a textarea doesn't say).
+        const COPIED = ["boxSizing", "width", "fontFamily", "fontSize", "fontWeight", "fontStyle", "letterSpacing", "lineHeight", "textTransform", "wordSpacing",
+            "textIndent", "tabSize", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth"];
+        function caretRect(el) {
+            const style = getComputedStyle(el), mirror = document.createElement("div");
+            COPIED.forEach(function (name) { mirror.style[name] = style[name]; });
+            mirror.style.cssText += ";position:absolute;visibility:hidden;top:0;left:-9999px;white-space:pre-wrap;overflow-wrap:break-word;";
+            mirror.textContent = el.value.slice(0, el.selectionStart);
+            const marker = document.createElement("span");
+            marker.textContent = "\u200b";
+            mirror.appendChild(marker);
+            document.body.appendChild(mirror);
+            const height = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.4;
+            const rect = { left: marker.offsetLeft, top: marker.offsetTop, height: height };
+            mirror.remove();
+            return rect;
+        }
+
         function close() {
             if (list) list.hidden = true;
             if (field) {
@@ -190,10 +208,23 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
                 return li;
             }));
             const box = field.getBoundingClientRect();
-            list.style.left = box.left + "px";
-            list.style.width = box.width + "px";
-            list.style.top = (box.bottom + 4) + "px";
             list.hidden = false;
+            if (box.height > 200) {
+                // A tall box (a wiki page): its bottom edge can be off screen, so the list follows the caret instead.
+                const caret = caretRect(field);
+                const width = Math.min(box.width, 320);
+                const line = box.top + caret.top - field.scrollTop;
+                list.style.width = width + "px";
+                list.style.left = Math.max(box.left, Math.min(box.left + caret.left, box.right - width)) + "px";
+                list.style.top = (line + caret.height + 4) + "px";
+                if (list.getBoundingClientRect().bottom > window.innerHeight - 8) {
+                    list.style.top = Math.max(8, line - list.offsetHeight - 4) + "px";
+                }
+            } else {
+                list.style.left = box.left + "px";
+                list.style.width = box.width + "px";
+                list.style.top = (box.bottom + 4) + "px";
+            }
             field.setAttribute("aria-controls", "mention-list");
             field.setAttribute("aria-expanded", "true");
             field.setAttribute("aria-activedescendant", "mention-option-" + active);
@@ -360,6 +391,30 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // MarkdownEditor's toolbar: wrap the selection (or the word "text" when nothing is selected) in a marker, or start
+    // each selected line with a prefix. "input" is raised so Blazor's oninput sees the new value, and Undo still works
+    // where the browser supports execCommand on a textarea.
+    mdWrap: function (id, before, after) {
+        const el = document.getElementById(id);
+        if (!el || el.readOnly) return;
+        const s = el.selectionStart, e = el.selectionEnd;
+        const picked = el.value.slice(s, e) || "text";
+        mdReplace(el, s, e, before + picked + after);
+        el.setSelectionRange(s + before.length, s + before.length + picked.length);
+    },
+    mdPrefix: function (id, prefix) {
+        const el = document.getElementById(id);
+        if (!el || el.readOnly) return;
+        const v = el.value;
+        const s = v.lastIndexOf("\n", el.selectionStart - 1) + 1;
+        let e = v.indexOf("\n", el.selectionEnd);
+        if (e < 0) e = v.length;
+        const lines = v.slice(s, e).split("\n");
+        const all = lines.every(function (l) { return l.startsWith(prefix); });
+        const text = lines.map(function (l) { return all ? l.slice(prefix.length) : prefix + l.replace(/^(#+ |- )/, ""); }).join("\n");
+        mdReplace(el, s, e, text);
+        el.setSelectionRange(s, s + text.length);
+    },
     // A detail pane that is a full-screen sheet on a phone (.phone-sheet): move focus into it when it opens,
     // so keyboards and screen readers follow. Beside the list on a wide screen it is left alone.
     // Opening and closing a Library entry are navigations, and Blazor scrolls to the top after each one;
@@ -379,6 +434,25 @@ window.codex = {
         sheetListScroll = null;
     }
 };
+
+function mdReplace(el, start, end, text) {
+    el.focus();
+    el.setSelectionRange(start, end);
+    if (!document.execCommand || !document.execCommand("insertText", false, text)) {
+        el.setRangeText(text, start, end, "end");
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+}
+
+// Ctrl/Cmd+B and Ctrl/Cmd+I in a MarkdownEditor box.
+document.addEventListener("keydown", function (e) {
+    const el = e.target;
+    if (!(el instanceof HTMLTextAreaElement) || !el.hasAttribute("data-md") || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    const key = e.key.toLowerCase();
+    if (key !== "b" && key !== "i") return;
+    e.preventDefault();
+    if (key === "b") window.codex.mdWrap(el.id, "**", "**"); else window.codex.mdWrap(el.id, "*", "*");
+});
 
 // Where the page was scrolled when a link was last followed (captured before Blazor handles the click).
 let lastLinkScroll = 0;

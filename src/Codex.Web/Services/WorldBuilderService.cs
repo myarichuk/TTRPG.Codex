@@ -326,6 +326,8 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             Saved(draft, "place", place.Id);
         }
 
+        await LinkPagesToPlacesAsync(places.Select(p => p.Place), access);
+
         var saved = new List<FactDocument>();
         var known = Kept(bundle).Any(d => d.Kind == DraftKinds.Fact)
             ? (await wiki.GetVisibleForCampaignAsync(access)).ToDictionary(p => p.Slug, p => p.Id, StringComparer.OrdinalIgnoreCase)
@@ -430,7 +432,9 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
             Id = Guid.NewGuid().ToString(),
             Name = d.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(d.Pitch) ? null : WorldBundleParser.ResolveLinks(d.Pitch, bundle, keepLinks: false),
-            Visibility = ActorVisibility.Hidden
+            Visibility = ActorVisibility.Hidden,
+            // The page written for this draft is the place's page.
+            WikiPageId = d.SavedAs.GetValueOrDefault(PageStep)
         })).ToList();
 
         // The recipe's main page comes first in the outline; it names the region even when the DM did not keep the page.
@@ -453,6 +457,22 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     }
 
     private const string PageStep = "page";
+
+    /// <summary>Points each page at the place that names it, so the page shows the place's picture and sharing it reveals the place.</summary>
+    private async Task LinkPagesToPlacesAsync(IEnumerable<LocationDocument> places, CampaignAccess access)
+    {
+        var linked = places.Where(p => !string.IsNullOrEmpty(p.WikiPageId)).ToList();
+        if (linked.Count == 0) return;
+        var pages = (await wiki.GetVisibleForCampaignAsync(access)).GroupBy(p => p.Id).ToDictionary(g => g.Key, g => g.First());
+        foreach (var place in linked)
+        {
+            if (pages.TryGetValue(place.WikiPageId!, out var page) && page.PlaceId != place.Id)
+            {
+                page.PlaceId = place.Id;
+                await wiki.TrySaveAsync(page, access);
+            }
+        }
+    }
 
     /// <summary>Gives each new page a title of its own: "Name (2)" when an existing page or another draft has the name, so links
     /// (which go by title) reach it. The draft keeps its name, which a cast member or a place on the World page uses.</summary>
@@ -580,7 +600,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     }
 
     private static string CampaignContext(CampaignDocument campaign) =>
-        $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}";
+        $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}";
 
     private static void DmOnly(CampaignAccess access)
     {

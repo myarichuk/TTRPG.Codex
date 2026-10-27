@@ -27,7 +27,32 @@ public class CampaignDocument
     /// </summary>
     public string SystemId { get; set; } = string.Empty;
 
+    /// <summary>The one-line pitch on the campaign's card and under its title; at most <see cref="MaxTagline"/> characters.</summary>
+    public string Tagline { get; set; } = string.Empty;
+
+    public const int MaxTagline = 160;
+
+    /// <summary>A typed tagline as stored: one line, trimmed, cut to <see cref="MaxTagline"/>.</summary>
+    public static string CleanTagline(string? text)
+    {
+        var line = string.Join(' ', (text ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return line.Length <= MaxTagline ? line : line[..MaxTagline].TrimEnd();
+    }
+
+    /// <summary>The full write-up (Markdown) on the campaign's overview.</summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>What the AI is told about the campaign: the tagline, then as much of the description as fits in <paramref name="max"/> characters.</summary>
+    public string Blurb(int max)
+    {
+        var tagline = Tagline.Trim();
+        var room = max - tagline.Length - 1;
+        var description = room > 20 ? Codex.Core.TextFormatting.Summary(Description, room) : string.Empty;
+        return string.Join(' ', new[] { tagline, description }.Where(p => p.Length > 0));
+    }
+
+    /// <summary>The tagline, or the start of the description when none is set: what a card shows. A method, so it is not stored.</summary>
+    public string Pitch() => !string.IsNullOrWhiteSpace(Tagline) ? Tagline : Codex.Core.TextFormatting.Summary(Description, MaxTagline);
 
     /// <summary>Content pack ids active for this campaign, in load-priority order.</summary>
     public List<string> ActivePacks { get; set; } = new();

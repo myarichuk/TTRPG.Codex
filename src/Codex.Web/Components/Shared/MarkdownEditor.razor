@@ -1,0 +1,134 @@
+@using Codex.Core
+@inject IJSRuntime JS
+
+@* The box for long writing: histories, wiki pages, recaps, descriptions. It stays a plain textarea (the @, # and $
+   suggestions and every saved text depend on that) with a small toolbar for the Markdown the app renders, a Preview
+   that uses the same renderer the reader sees, and a full-screen mode with the preview beside the text.
+   While the AI writes into it (Busy), the text is read-only under a "Writing…" notice with a Stop button.
+   The owning page keeps its own label (for="Id") and saves as usual. *@
+
+<div class="md-editor @(fullscreen ? "md-full" : "") @(showPreview ? "md-mode-preview" : "md-mode-write") @Class"
+     role="@(fullscreen ? "dialog" : null)" aria-modal="@(fullscreen ? "true" : null)" aria-label="@(fullscreen ? Title : null)"
+     @onkeydown="OnKeyDown">
+    <div class="md-toolbar" role="toolbar" aria-label="@L["Common.Editor.Toolbar"]" aria-controls="@Id">
+        @if (fullscreen && Title != null)
+        {
+            <span class="md-title">@Title</span>
+        }
+        <div class="md-format">
+            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="bold" Label="@L["Common.Editor.Bold"]" title="@L["Common.Editor.Bold"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => WrapAsync("**", "**"))" />
+            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="italic" Label="@L["Common.Editor.Italic"]" title="@L["Common.Editor.Italic"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => WrapAsync("*", "*"))" />
+            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="heading" Label="@L["Common.Editor.Heading"]" title="@L["Common.Editor.Heading"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => PrefixAsync("## "))" />
+            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="list" Label="@L["Common.Editor.List"]" title="@L["Common.Editor.List"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => PrefixAsync("- "))" />
+        </div>
+        <div class="md-view">
+            <div class="md-tabs" role="group" aria-label="@L["Common.Editor.View"]">
+                <button type="button" class="md-tab" aria-pressed="@(showPreview ? "false" : "true")" @onclick="() => showPreview = false" data-testid="@($"{TestId}-write")">@L["Common.Editor.Write"]</button>
+                <button type="button" class="md-tab" aria-pressed="@(showPreview ? "true" : "false")" @onclick="() => showPreview = true" data-testid="@($"{TestId}-preview")">@L["Common.Editor.Preview"]</button>
+            </div>
+            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="@(fullscreen ? "minimize-2" : "maximize-2")" id="@($"{Id}-full")"
+                         Label="@(fullscreen ? L["Common.Editor.ExitFullScreen"] : L["Common.Editor.FullScreen"])" title="@(fullscreen ? L["Common.Editor.ExitFullScreen"] : L["Common.Editor.FullScreen"])"
+                         aria-pressed="@(fullscreen ? "true" : "false")" OnClick="ToggleFullscreen" data-testid="@($"{TestId}-fullscreen")" />
+        </div>
+    </div>
+    <div class="md-panes">
+        <div class="md-write">
+            <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput"
+                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-testid="@TestId"></textarea>
+            @if (Busy)
+            {
+                <div class="md-busy"><AiWorking Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
+            }
+        </div>
+        @if (showPreview || fullscreen)
+        {
+            <div class="md-preview rules-text" aria-live="off" data-testid="@($"{TestId}-preview-pane")">
+                @if (string.IsNullOrWhiteSpace(Value))
+                {
+                    <p class="small-muted mb-0">@L["Common.Editor.Nothing"]</p>
+                }
+                else
+                {
+                    @((MarkupString)(Preview?.Invoke(Value) ?? TextFormatting.ToHtml(Value)))
+                }
+            </div>
+        }
+    </div>
+    @if (ChildContent != null)
+    {
+        <div class="md-foot">@ChildContent</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public int Rows { get; set; } = 8;
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public string? DescribedBy { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>The heading shown in full screen (and its accessible name): usually the field's label.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>The box's @, # and $ suggestions as JSON (see <c>MentionLinks.Json</c>); null for a box that takes none.</summary>
+    [Parameter] public string? Mentions { get; set; }
+
+    /// <summary>The text as the reader will see it, as HTML. Defaults to the plain Markdown subset; a box with mentions or
+    /// wiki links passes the renderer its read view uses (encoding the typed @Names first).</summary>
+    [Parameter] public Func<string, string>? Preview { get; set; }
+
+    /// <summary>The AI is writing into the box: the text is read-only and a "Writing…" notice covers it.</summary>
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? BusyText { get; set; }
+    /// <summary>Stops the AI; without it the notice has no Stop button.</summary>
+    [Parameter] public EventCallback OnStop { get; set; }
+
+    /// <summary>Shown under the box, and kept in full screen: the AI row, hints.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool showPreview;
+    private bool fullscreen;
+    private string? focusAfterRender;
+    private bool ReadOnlyNow => ReadOnly || Busy;
+
+    private Task OnInput(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString() ?? string.Empty;
+        return ValueChanged.InvokeAsync(Value);
+    }
+
+    // The toolbar edits the textarea in the browser (keeping the selection) and raises "input", so OnInput sees the change.
+    private async Task WrapAsync(string before, string after) => await JS.InvokeVoidAsync("codex.mdWrap", Id, before, after);
+
+    private async Task PrefixAsync(string prefix) => await JS.InvokeVoidAsync("codex.mdPrefix", Id, prefix);
+
+    // The "Writing…" notice sits on the text, so the text is what shows while the AI writes.
+    protected override void OnParametersSet()
+    {
+        if (Busy) showPreview = false;
+    }
+
+    private void ToggleFullscreen()
+    {
+        fullscreen = !fullscreen;
+        if (fullscreen) showPreview = false;
+        focusAfterRender = fullscreen ? Id : $"{Id}-full";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusAfterRender is not { } id) return;
+        focusAfterRender = null;
+        await JS.InvokeVoidAsync("codex.focus", id);
+    }
+
+    // The suggestion list takes Escape first while it is open (app-startup.js), so this only leaves full screen.
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (fullscreen && e.Key == "Escape") ToggleFullscreen();
+    }
+}

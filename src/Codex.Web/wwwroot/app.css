@@ -619,6 +619,8 @@ hr { border-color: var(--border); opacity: 1; }
 .ws-head { grid-area: head; animation: rise var(--dur-slow) var(--ease-out) backwards; }
 .ws-head h1 { font-size: 1.45rem; margin: 0.2rem 0 0.5rem; overflow-wrap: anywhere; }
 .ws-head .pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ws-tagline { margin: -0.25rem 0 0.6rem; max-width: 60ch; color: var(--text-2); font-style: italic; }
+.campaign-pitch { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .ws-nav {
     grid-area: nav;
     position: sticky; top: calc(var(--header-h) + 1rem);
@@ -934,6 +936,7 @@ dialog.codex-dialog::backdrop {
 .title-icon { color: var(--accent); vertical-align: -3px; margin-inline-end: 0.15rem; }
 h1 .title-icon { vertical-align: -4px; }
 .ai-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.ai-row .field-input { flex: 1 1 14rem; min-width: 0; }
 .ai-output {
     border: 1px solid var(--arcane); border-radius: var(--radius-md); padding: 1rem;
     background: var(--surface-2); box-shadow: var(--frame);
@@ -1015,7 +1018,7 @@ a.user-chip:active { transform: scale(0.97); }
 .wiki-body { font-size: 1.02rem; line-height: 1.65; }
 .wiki-body h3 { font-size: 1.15rem; margin-top: 1.4rem; }
 .wiki-body h4 { font-size: 1rem; margin-top: 1.1rem; }
-.wiki-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92rem; line-height: 1.55; }
+.wiki-textarea, .wiki-editor .md-input { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92rem; line-height: 1.55; }
 .wiki-card .card-head h3 { margin: 0; font-size: 1.05rem; }
 .wiki-card .card-head h3 a { color: var(--text); text-decoration: none; }
 .wiki-card .card-head h3 a::after { content: ""; position: absolute; inset: 0; }
@@ -1120,7 +1123,7 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
     .tabbar-more .menu-item { text-decoration: none; }
     .tabbar-more .menu-item[aria-current="page"] { background: var(--accent-soft); color: var(--text); font-weight: 700; }
     /* Inside a section the campaign name is one line; its role and system pills live on the overview. */
-    .ws-head-inner .breadcrumb-nav, .ws-head-inner .pills { display: none; }
+    .ws-head-inner .breadcrumb-nav, .ws-head-inner .pills, .ws-head-inner .ws-tagline { display: none; }
     .ws-head-inner h1 { font-size: 1.05rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ws-head-inner.has-cover { padding: 0.55rem 0.8rem; }
     /* Floated beside the text the art left the rules a two-word column; on a phone it sits above them. */
@@ -1285,6 +1288,11 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 
 /* Ability plates: the modifier is the big number, the score sits in a medallion. */
 .attr-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 0.8rem; }
+/* The abilities read as one row of plates, as on a printed sheet, whenever the panel is wide enough for all of
+   them (--attr-count is set for up to eight); a narrow panel falls back to three a row. */
+.attr-panel { container-type: inline-size; }
+.attr-grid[style*="--attr-count"] { grid-template-columns: repeat(var(--attr-count), minmax(0, 1fr)); gap: 0.6rem; }
+@container (max-width: 36rem) { .attr-grid[style*="--attr-count"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .attr-box { padding: 0.55rem 0.4rem 0.6rem; border-width: 2px; border-radius: var(--radius-md); }
 .attr-box .attr-mod { font-size: 2rem; margin: 0.1rem 0 0; }
 .attr-box .attr-medallion {
@@ -1540,6 +1548,52 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .ai-field-head .field-label { margin-bottom: 0; }
 .ai-field-foot { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
 .ai-field-foot .field-input { flex: 1; }
+
+/* While the AI writes or draws: spinner, what is happening, Stop. */
+.ai-working {
+    display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.45rem 0.7rem;
+    border: 1px solid var(--arcane); border-radius: var(--radius-md); background: var(--surface-2);
+    color: var(--text); font-weight: 600; box-shadow: var(--shadow-1);
+}
+.ai-working .spinner-border { color: var(--arcane); }
+
+/* The long-writing box (MarkdownEditor): toolbar, the text, a preview, and a full-screen mode. */
+.md-editor { position: relative; margin-bottom: 0.5rem; }
+.md-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+.md-format, .md-view { display: flex; align-items: center; gap: 0.25rem; }
+.md-tabs { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.md-tab { border: 0; background: transparent; color: var(--text-3); padding: 0.2rem 0.6rem; font-size: 0.85rem; font-weight: 600; min-height: 30px; }
+.md-tab[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
+.md-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.md-write { position: relative; }
+.md-input { display: block; width: 100%; }
+.md-input[readonly] { opacity: 0.55; cursor: progress; }
+.md-busy { position: absolute; inset: 0; display: grid; place-items: center; padding: 0.5rem; pointer-events: none; }
+.md-busy .ai-working { pointer-events: auto; }
+.md-preview {
+    min-height: 8rem; max-height: 32rem; overflow-y: auto; padding: 0.6rem 0.8rem;
+    border: 1px dashed var(--border); border-radius: var(--radius-md); background: var(--surface-2);
+}
+.md-mode-preview:not(.md-full) .md-write { display: none; }
+.md-foot { margin-top: 0.4rem; }
+.md-title { font-family: var(--font-display); font-weight: 600; margin-inline-end: auto; }
+.md-full {
+    position: fixed; inset: 0; z-index: 1050; margin: 0; padding: 0.75rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
+    display: flex; flex-direction: column; background: var(--bg);
+}
+.md-full .md-panes { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.md-full .md-write, .md-full .md-input { height: 100%; }
+.md-full .md-input { resize: none; font-size: 1.05rem; line-height: 1.6; max-width: none; }
+.md-full .md-preview { max-height: none; height: 100%; }
+html:has(.md-full) { overflow: hidden; }
+@media (max-width: 899.98px) {
+    .md-full .md-panes { grid-template-columns: 1fr; }
+    .md-full.md-mode-write .md-preview, .md-full.md-mode-preview .md-write { display: none; }
+}
+@media (min-width: 900px) {
+    /* Both panes show side by side, so the Write/Preview switch has nothing to do. */
+    .md-full .md-tabs { display: none; }
+}
 
 /* The art slot every Library entry and place reserves. */
 .art-slot { margin: 0 0 1rem; }

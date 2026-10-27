@@ -30,8 +30,14 @@
                         <input id="cs-name" class="field-input" @bind="name" required maxlength="120" data-testid="settings-name" />
                     </div>
                     <div class="mb-3">
+                        <label for="cs-tagline" class="field-label">@L["Campaign.Settings.Tagline"]</label>
+                        <input id="cs-tagline" class="field-input" @bind="tagline" @bind:event="oninput" maxlength="@CampaignDocument.MaxTagline" aria-describedby="cs-tagline-hint" data-testid="settings-tagline" />
+                        <div id="cs-tagline-hint" class="field-hint d-flex justify-content-between gap-2"><span>@L["Campaign.Settings.TaglineHint"]</span><span aria-hidden="true">@tagline.Length / @CampaignDocument.MaxTagline</span></div>
+                    </div>
+                    <div class="mb-3">
                         <label for="cs-desc" class="field-label">@L["Campaign.Settings.Description"]</label>
-                        <textarea id="cs-desc" class="field-input" rows="3" @bind="description"></textarea>
+                        <MarkdownEditor Id="cs-desc" Title="@L["Campaign.Settings.Description"]" Rows="8" @bind-Value="description" DescribedBy="cs-desc-hint" TestId="settings-description" />
+                        <div id="cs-desc-hint" class="field-hint">@L["Campaign.Settings.DescriptionHint"]</div>
                     </div>
                     <div class="mb-3">
                         <label for="cs-system" class="field-label">@L["Campaign.Settings.GameSystem"]</label>
@@ -64,7 +70,8 @@
                 <dl class="prop-list mb-0">
                     <dt>@L["Campaign.Settings.Name"]</dt><dd>@Ctx.Campaign.Name</dd>
                     <dt>@L["Campaign.Settings.System"]</dt><dd>@Catalog.GetDisplayName(Ctx.Campaign.SystemId)</dd>
-                    <dt>@L["Campaign.Settings.Description"]</dt><dd>@(string.IsNullOrWhiteSpace(Ctx.Campaign.Description) ? "—" : Ctx.Campaign.Description)</dd>
+                    <dt>@L["Campaign.Settings.Tagline"]</dt><dd>@(string.IsNullOrWhiteSpace(Ctx.Campaign.Tagline) ? "—" : Ctx.Campaign.Tagline)</dd>
+                    <dt>@L["Campaign.Settings.Description"]</dt><dd>@if (string.IsNullOrWhiteSpace(Ctx.Campaign.Description)) { <text>—</text> } else { <div class="rules-text">@((MarkupString)Codex.Core.TextFormatting.ToHtml(Ctx.Campaign.Description))</div> }</dd>
                 </dl>
             }
         </section>
@@ -205,6 +212,7 @@
     private bool restoreAsNew;
     private string name = string.Empty;
     private string description = string.Empty;
+    private string tagline = string.Empty;
     private string systemId = string.Empty;
     private string rulesEnforcement = "inherit";
     private HashSet<string> activePacks = new();
@@ -216,6 +224,7 @@
     {
         name = Ctx.Campaign.Name;
         description = Ctx.Campaign.Description;
+        tagline = Ctx.Campaign.Tagline;
         systemId = Ctx.Campaign.SystemId;
         rulesEnforcement = string.IsNullOrWhiteSpace(Ctx.Campaign.RulesEnforcement) ? "inherit" : Ctx.Campaign.RulesEnforcement;
         activePacks = Ctx.Campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -253,6 +262,7 @@
 
         var newName = name.Trim();
         var newDescription = description.Trim();
+        var newTagline = CampaignDocument.CleanTagline(tagline);
         var newSystemId = systemId;
         var newEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
         try
@@ -261,6 +271,7 @@
             {
                 campaign.Name = newName;
                 campaign.Description = newDescription;
+                campaign.Tagline = newTagline;
                 campaign.SystemId = newSystemId;
                 campaign.RulesEnforcement = newEnforcement;
             });

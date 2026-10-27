@@ -12,6 +12,14 @@ public static class WikiText
 {
     private static readonly Regex Link = new(@"\[\[([^\[\]|]+?)(?:\|([^\[\]]+?))?\]\]", RegexOptions.Compiled);
 
+    // A stored mention ("[[actor:id]]", "[[place:id]]", "[[item:type/id]]"), which shares the brackets but is not a page link.
+    private static readonly Regex MentionToken = new(@"^(actor|place|item):\S+$", RegexOptions.Compiled);
+
+    private static bool IsMention(string target) => MentionToken.IsMatch(target.Trim());
+
+    /// <summary>Whether a body holds a stored mention of a character, place or item.</summary>
+    public static bool HasMentions(string? body) => !string.IsNullOrEmpty(body) && Link.Matches(body).Any(m => IsMention(m.Groups[1].Value));
+
     /// <summary>The link targets (titles, untrimmed duplicates removed) a body mentions.</summary>
     public static IReadOnlyList<string> ExtractLinks(string? body)
     {
@@ -22,7 +30,7 @@ public static class WikiText
 
         return Link.Matches(body)
             .Select(m => m.Groups[1].Value.Trim())
-            .Where(t => t.Length > 0)
+            .Where(t => t.Length > 0 && !IsMention(t))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
@@ -40,8 +48,10 @@ public static class WikiText
     /// Renders a page body to HTML. <paramref name="resolve"/> maps a link title to its href, or
     /// null when the page doesn't exist (or the reader may not see it); missing links render as
     /// a <c>wiki-missing</c> span, optionally with a create link when <paramref name="createHref"/> is given.
+    /// <paramref name="mention"/> turns a stored mention (kind "actor", "place" or "item", and its id) into markup for
+    /// the reader; without it a mention shows as plain text.
     /// </summary>
-    public static string ToHtml(string? body, Func<string, string?> resolve, Func<string, string?>? createHref = null)
+    public static string ToHtml(string? body, Func<string, string?> resolve, Func<string, string?>? createHref = null, Func<string, string, string>? mention = null)
     {
         if (string.IsNullOrWhiteSpace(body))
         {
@@ -52,6 +62,12 @@ public static class WikiText
         var withTokens = Link.Replace(body, m =>
         {
             var title = m.Groups[1].Value.Trim();
+            if (IsMention(title) && !m.Groups[2].Success)
+            {
+                links.Add((title, string.Empty));
+                return $"\u0001{links.Count - 1}\u0002";
+            }
+
             var label = m.Groups[2].Success ? m.Groups[2].Value.Trim() : title;
             links.Add((title, label));
             return $"\u0001{links.Count - 1}\u0002";
@@ -61,6 +77,13 @@ public static class WikiText
         for (var i = 0; i < links.Count; i++)
         {
             var (title, label) = links[i];
+            if (label.Length == 0 && IsMention(title))
+            {
+                var colon = title.IndexOf(':');
+                html = html.Replace($"\u0001{i}\u0002", mention?.Invoke(title[..colon], title[(colon + 1)..]) ?? string.Empty);
+                continue;
+            }
+
             var encodedLabel = WebUtility.HtmlEncode(label);
             var href = resolve(title);
             string replacement;

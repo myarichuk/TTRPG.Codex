@@ -449,4 +449,21 @@
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>האיור נשמר.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>המקום הזה כבר לא קיים, או שאין לכם הרשאה לשנות אותו.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>נחשף בפני הקבוצה.</value></data>
+  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>על המפה</value></data>
+  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>הדף הזה עוסק במקום</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>המקום יתווסף לדף העולם עם שם הדף והתמונה שלו. שיתוף הדף חושף את המקום לצוות; מה שנכתב כאן נשאר בדף.</value></data>
+  <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>אזור</value></data>
+  <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>מקומות</value></data>
+  <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>תמונה</value></data>
+  <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>תמונה של {0}</value></data>
+  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>על המפה: {0}</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה להוסיף או לעדכן את המקום במפה.</value></data>
+  <data name="Campaign.World.OpenPage" xml:space="preserve"><value>דף ויקי</value></data>
+  <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>פתחו את דף הוויקי של {0}</value></data>
+  <data name="Campaign.World.CreatePage" xml:space="preserve"><value>יצירת דף</value></data>
+  <data name="Campaign.World.CreatePageLabel" xml:space="preserve"><value>יצירת דף ויקי עבור {0}</value></data>
+  <data name="Campaign.World.PageCreated" xml:space="preserve"><value>דף הוויקי של {0} נוצר.</value></data>
+  <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>שורת תיאור</value></data>
+  <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>משפט או שניים קצרים לכרטיס הקמפיין ולכותרת.</value></data>
+  <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>התיאור המלא שהשחקנים רואים בסקירה: העולם, הרעיון, למה לצפות.</value></data>
 </root>

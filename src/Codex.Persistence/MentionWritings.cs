@@ -1,7 +1,7 @@
 namespace Codex.Persistence;
 
 /// <summary>Which box a mention was written in, besides a table note.</summary>
-public enum WrittenIn { Recap, DmSummary, Comment, Journal, Biography, DmNotes }
+public enum WrittenIn { Recap, DmSummary, Comment, Journal, Biography, DmNotes, WikiBody }
 
 /// <summary>The page that holds the writing: a session, a character sheet, a wiki page or a journal entry.</summary>
 public enum MentionHome { Session, Character, WikiPage, Journal }
@@ -48,7 +48,8 @@ public sealed class MentionWritings
         _sessions.Any(s => Has(s.Recap) || (_isDm && Has(s.DmSummary)))
         || _comments.Any(c => Has(c.Content))
         || _journals.Any(j => Has(j.Body))
-        || _actors.Any(a => Has(a.Biography) || (_isDm && Has(a.DmNotes)));
+        || _actors.Any(a => Has(a.Biography) || (_isDm && Has(a.DmNotes)))
+        || _wikiPages.Any(p => Has(p.Body));
 
     /// <summary>Every piece of writing that mentions <paramref name="id"/>, newest first.</summary>
     public IReadOnlyList<WrittenMention> Mentioning(MentionKind kind, string id)
@@ -92,6 +93,11 @@ public sealed class MentionWritings
             if (_isDm && Mentions(a.DmNotes)) found.Add(new(WrittenIn.DmNotes, MentionHome.Character, a.Id, a.NameFor(_isDm), a.UpdatedAt, a.UpdatedAt, Cut(a.DmNotes!), Private: true));
         }
 
+        foreach (var p in _wikiPages.Where(p => Mentions(p.Body)))
+        {
+            found.Add(new(WrittenIn.WikiBody, MentionHome.WikiPage, p.Slug, p.Title, p.UpdatedAt, p.UpdatedAt, Cut(p.Body), Private: p.Visibility == WikiVisibility.DmOnly));
+        }
+
         return found.OrderByDescending(m => m.When).ToList();
     }
 
@@ -102,6 +108,7 @@ public sealed class MentionWritings
         WrittenIn.Comment => "Comment",
         WrittenIn.Journal => "Journal",
         WrittenIn.Biography => "Biography",
+        WrittenIn.WikiBody => "Wiki page",
         _ => "DM notes"
     };
 

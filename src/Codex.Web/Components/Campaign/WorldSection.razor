@@ -8,6 +8,8 @@
 @inject ArtService Art
 @inject IJSRuntime JS
 @inject MentionSources MentionSources
+@inject IWikiRepository WikiRepo
+@inject PlaceWikiSync PlaceSync
 
 <div class="page-header mb-3">
     <div>
@@ -83,8 +85,8 @@ else
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
                                     {
                                         <details class="place-details">
-                                            <summary class="row-sub">@TextFormatting.Summary(location.Description, 140)</summary>
-                                            <div class="rules-text mt-2">@((MarkupString)TextFormatting.ToHtml(location.Description))</div>
+                                            <summary class="row-sub">@WikiRender.Summary(location.Description, noteMentions, 140)</summary>
+                                            <div class="rules-text mt-2">@((MarkupString)WikiRender.ToHtml(location.Description, wikiPages, noteMentions, Ctx.Campaign.Id, false))</div>
                                         </details>
                                     }
                                     else if (Ctx.IsDm)
@@ -92,6 +94,10 @@ else
                                         <div class="row-sub">@L["Campaign.World.NoDescription"]</div>
                                     }
                                     @{ var mentioned = SessionMentions.NotesMentioning(noteSessions, MentionKind.Place, location.Id, Ctx.IsDm); var written = noteWritings.Mentioning(MentionKind.Place, location.Id); var mentionCount = mentioned.Count + written.Count; }
+                                    @if (PageOf(location) is { } wikiPage)
+                                    {
+                                        <a class="row-sub d-inline-block mt-1" href="@Ctx.BasePath/wiki/@wikiPage.Slug" aria-label="@L["Campaign.World.OpenPageLabel", location.Name]" data-testid="place-page"><LucideIcon IconName="book-open" Size="14" /> @L["Campaign.World.OpenPage"]</a>
+                                    }
                                     @if (mentionCount > 0)
                                     {
                                         <details class="place-details mt-1" data-testid="place-mentions">
@@ -103,6 +109,10 @@ else
                                 @if (Ctx.IsDm)
                                 {
                                     <div class="row-actions">
+                                        @if (PageOf(location) == null)
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => CreatePageAsync(region, location)" aria-label="@L["Campaign.World.CreatePageLabel", location.Name]" data-testid="create-place-page"><LucideIcon IconName="plus" Size="14" /> @L["Campaign.World.CreatePage"]</CodexButton>
+                                        }
                                         @if (location.Visibility != ActorVisibility.Known)
                                         {
                                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@L["Campaign.World.RevealLabel", location.Name]"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.World.Reveal"]</CodexButton>
@@ -184,8 +194,9 @@ else
                     </div>
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
-                                     Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync"
-                                     Hint="@L["Campaign.World.DescHint"]" />
+                                     Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson"
+                                     Preview="@(text => WikiRender.ToHtml(noteMentions.Encode(text), wikiPages, noteMentions, Ctx.Campaign.Id, false))"
+                                     Hint="@($"{L["Campaign.World.DescHint"]} {L["Campaign.Wiki.MentionHint"]}")" />
                     </div>
                     <ArtSlot ImageUrl="@ArtService.Url(editingRegion, editingLocation)" CanEdit="true" Landscape="true" Label="@L["Campaign.World.Art"]" Class="art-compact" Alt="@L["Campaign.World.ArtFor", editingLocation.Name]" TestId="location-art"
                              OnPicked="img => SetLocationArtAsync(img)" OnRemove="() => SetLocationArtAsync(null)" Generate="GenerateLocationArtAsync" />
@@ -227,6 +238,8 @@ else
     private IReadOnlyList<SessionDocument> noteSessions = Array.Empty<SessionDocument>();
     private MentionWritings noteWritings = MentionWritings.Empty;
     private MentionDirectory noteMentions = MentionDirectory.Empty;
+    private string mentionsJson = "[]";
+    private IReadOnlyCollection<WikiPageDocument> wikiPages = Array.Empty<WikiPageDocument>();
     private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
 
     protected override async Task OnParametersSetAsync() => await LoadAsync();
@@ -244,10 +257,24 @@ else
             packTargetRegionId = regions.FirstOrDefault()?.Id ?? string.Empty;
         }
 
-        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
+        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors, forWriting: Ctx.IsDm);
         noteActors = Ctx.Actors.ToDictionary(a => a.Id);
+        mentionsJson = MentionLinks.Json(noteMentions, Ctx.Actors);
+        wikiPages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
 
         packLocations = Ctx.IsDm ? Registry.GetLocationsBySystem(Ctx.Campaign.SystemId).OrderBy(l => l.Name).ToList() : new List<ILocationDefinition>();
+    }
+
+    private WikiPageDocument? PageOf(LocationDocument location) =>
+        string.IsNullOrEmpty(location.WikiPageId) ? null : wikiPages.FirstOrDefault(p => p.Id == location.WikiPageId);
+
+    /// <summary>For a place from before places had pages: writes the page the others got when they were added.</summary>
+    private async Task CreatePageAsync(RegionDocument region, LocationDocument location)
+    {
+        var page = await PlaceSync.CreatePageAsync(region.Id, location, L["WorldBuilder.Tag.place"], Ctx.Access);
+        if (page == null) return;
+        Ctx.Notify(Flash.Success(L["Campaign.World.PageCreated", location.Name]));
+        await LoadAsync();
     }
 
     private string? renamingRegionId;
@@ -320,6 +347,7 @@ else
         var location = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = name.Trim(), Visibility = ActorVisibility.Hidden };
         if (await RegionRepo.UpsertLocationAsync(regionId, location, Ctx.Access))
         {
+            await PlaceSync.CreatePageAsync(regionId, location, L["WorldBuilder.Tag.place"], Ctx.Access);
             newLocationNames[regionId] = string.Empty;
             Ctx.Notify(Flash.Success(L["Campaign.World.PlaceAdded", location.Name]));
             await LoadAsync();
@@ -339,6 +367,7 @@ else
         };
         if (await RegionRepo.UpsertLocationAsync(packTargetRegionId, location, Ctx.Access))
         {
+            await PlaceSync.CreatePageAsync(packTargetRegionId, location, L["WorldBuilder.Tag.place"], Ctx.Access);
             Ctx.Notify(Flash.Success(L["Campaign.World.PackPlaceAdded", location.Name]));
             await LoadAsync();
         }
@@ -352,7 +381,9 @@ else
         {
             Id = location.Id,
             Name = location.Name,
-            Description = location.Description,
+            // The box takes "#Name"; the place stores the mention as an id.
+            Description = location.Description == null ? null : noteMentions.ForEditing(location.Description),
+            WikiPageId = location.WikiPageId,
             Connections = location.Connections,
             Metadata = location.Metadata,
             Visibility = location.Visibility,
@@ -390,24 +421,28 @@ else
         }
 
         editingLocation.Name = editingLocation.Name.Trim();
+        var typed = editingLocation.Description;
+        editingLocation.Description = typed == null ? null : noteMentions.Encode(typed);
         if (await RegionRepo.UpsertLocationAsync(editingRegion.Id, editingLocation, Ctx.Access))
         {
+            await PlaceSync.RenamePageAsync(editingLocation, Ctx.Access);
             Ctx.Notify(Flash.Success(L["Campaign.World.PlaceSaved", editingLocation.Name]));
             await CloseLocationAsync();
             await LoadAsync();
         }
         else
         {
+            editingLocation.Description = typed;
             locationError = L["Campaign.World.OnlyDm"];
         }
     }
 
-    private Task<string> DescribeLocationAsync(string text, string instruction)
+    private Task<string> DescribeLocationAsync(string text, string instruction, CancellationToken ct)
     {
         var facts = new List<string> { $"Region: {editingRegion!.Name}" };
         var neighbours = editingRegion.Locations.Where(l => l.Id != editingLocation!.Id).Select(l => l.Name).Take(12).ToList();
         if (neighbours.Count > 0) facts.Add("Other places in the region: " + string.Join(", ", neighbours));
-        return Ai.DescribeAsync(Ctx.Campaign, string.IsNullOrWhiteSpace(editingLocation!.Name) ? "an unnamed place" : editingLocation.Name, "place on the world map", facts, text, instruction, AiAudience.Players, Ctx.UserId);
+        return Ai.DescribeAsync(Ctx.Campaign, string.IsNullOrWhiteSpace(editingLocation!.Name) ? "an unnamed place" : editingLocation.Name, "place on the world map", facts, text, instruction, AiAudience.Players, Ctx.UserId, ct);
     }
 
     private async Task SetLocationArtAsync(ArtImage? image)
@@ -431,8 +466,8 @@ else
         }
     }
 
-    private Task<ArtImage> GenerateLocationArtAsync() =>
-        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide);
+    private Task<ArtImage> GenerateLocationArtAsync(CancellationToken ct) =>
+        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
 
     private async Task RevealAsync(string regionId, string locationId)
     {

@@ -387,6 +387,14 @@ public class WorldBuilderTests
         wiki.TrySaveAsync(Arg.Any<WikiPageDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
         {
             var page = ci.Arg<WikiPageDocument>();
+            // As the repository does: a page that already has an id is updated, not stored again.
+            var stored = string.IsNullOrEmpty(page.Id) ? -1 : pages.FindIndex(p => p.Id == page.Id);
+            if (stored >= 0)
+            {
+                pages[stored] = page;
+                return ci.Arg<CampaignAccess>().IsDm;
+            }
+
             page.Id = $"page-{pages.Count + 1}";
             page.Slug = WikiText.Slugify(page.Title);
             pages.Add(page);
@@ -658,6 +666,10 @@ public class WorldBuilderTests
         Assert.Equal("Stalls by Varr's quay.", market.Description);
         Assert.Equal(new[] { "page-2", market.Id, "page-3" }, Assert.Single(saving.Facts).RelatedEntityIds);
         Assert.Equal(market, Assert.Single(result.Places));
+        // The place and the page written for it point at each other.
+        var marketPage = saving.Pages.Single(p => p.Title == "Salt Market");
+        Assert.Equal(marketPage.Id, market.WikiPageId);
+        Assert.Equal(market.Id, marketPage.PlaceId);
     }
 
     [Fact]
