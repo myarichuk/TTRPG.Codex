@@ -37,7 +37,7 @@
                       readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-testid="@TestId"></textarea>
             @if (Busy)
             {
-                <div class="md-busy"><AiWorking Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
+                <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
             }
         </div>
         @if (showPreview || fullscreen)

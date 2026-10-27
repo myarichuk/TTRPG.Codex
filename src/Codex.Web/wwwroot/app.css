@@ -1529,20 +1529,44 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 }
 /* The AI is working: a bordered card with a pulsing orb and a sweeping bar, so a long wait never looks like a hang. */
 /* The world builder's conversation: the DM's lines at the end side, the AI's at the start, what it looked up as quiet notes. */
-.world-chat-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.world-chat-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;
+    /* A window once the conversation outgrows the screen; a short one keeps its natural height. */
+    max-height: max(14rem, calc(100dvh - var(--header-h, 4rem) - 21rem)); overflow-y: auto; overscroll-behavior: contain; padding-inline-end: 0.4rem; }
+.world-chat-log:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Beside the chat the proposal stays on screen however far the chat has scrolled, and scrolls inside itself when it is tall. */
+@media (min-width: 992px) {
+    .world-side { position: sticky; top: calc(var(--header-h, 4rem) + 0.75rem); max-height: calc(100dvh - var(--header-h, 4rem) - 1.5rem); overflow-y: auto; }
+}
 .world-chat-line { display: flex; }
 .world-chat-dm { justify-content: flex-end; }
 .world-chat-bubble { max-width: min(46rem, 90%); padding: 0.6rem 0.85rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); overflow-wrap: anywhere; }
 .world-chat-dm .world-chat-bubble { background: var(--accent-soft); border-color: var(--accent); white-space: pre-wrap; }
 .world-chat-model .world-chat-bubble > :last-child { margin-bottom: 0; }
-.world-chat-thought { font-style: italic; }
+.world-chat-turn { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; max-width: 100%; }
+.world-chat-trail { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.15rem 0.7rem; border-inline-start: 2px solid var(--arcane); font-size: 0.85rem; color: var(--text-3); }
+details.world-chat-trail > summary { cursor: pointer; }
+details.world-chat-trail[open] > summary { margin-bottom: 0.2rem; }
+.world-chat-step { display: flex; align-items: center; gap: 0.4rem; }
+.world-chat-earlier { padding-inline-start: 1.4rem; }
+.world-chat-aside { font-style: italic; color: var(--text-2); display: flex; gap: 0.4rem; align-items: baseline; overflow-wrap: anywhere; }
 .world-chat-note { font-size: 0.85rem; color: var(--text-3); display: inline-flex; gap: 0.35rem; align-items: center; }
 .world-proposal-entry { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
 .world-proposal-entry:last-child { border-bottom: 0; }
-.ai-working { position: relative; overflow: hidden; display: flex; align-items: center; gap: 0.75rem; margin: 0 0 1rem; padding: 0.85rem 1rem; border: 1px solid var(--arcane); border-radius: 10px; background: var(--arcane-soft); color: var(--text); font-weight: 600; }
+.ai-working {
+    position: relative; overflow: hidden; display: flex; align-items: center; gap: 0.75rem; margin: 0 0 1rem; padding: 0.7rem 0.9rem 0.8rem;
+    border: 1px solid color-mix(in srgb, var(--arcane) 60%, var(--border)); border-radius: var(--radius-md);
+    background: var(--arcane-soft); color: var(--text); font-weight: 600; box-shadow: var(--shadow-1);
+}
+.ai-working-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ai-working > .cx-btn { flex: none; }
 .ai-working-orb { display: inline-grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: 50%; color: var(--arcane); background: var(--surface); box-shadow: 0 0 0 0 var(--arcane); animation: ai-orb 1.6s ease-out infinite; }
+.ai-working .spinner-border { color: var(--arcane); }
 .ai-working-bar { position: absolute; inset-inline: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--arcane), transparent) 0 0 / 40% 100% no-repeat; animation: ai-sweep 1.4s linear infinite; }
-@keyframes ai-orb { 0% { box-shadow: 0 0 0 0 var(--arcane); } 70%, 100% { box-shadow: 0 0 0 12px transparent; } }
+/* Little room (a row of badges, over a portrait, over a text box): one tight chip, Stop as an icon. */
+.ai-working-compact { display: inline-flex; max-width: 100%; margin: 0; padding: 0.3rem 0.4rem 0.4rem 0.45rem; gap: 0.5rem; font-size: 0.9rem; }
+.ai-working-compact .ai-working-orb { width: 1.6rem; height: 1.6rem; }
+.ai-working-compact .ai-working-text { flex: 0 1 auto; }
+@keyframes ai-orb { 0% { box-shadow: 0 0 0 0 var(--arcane); } 70%, 100% { box-shadow: 0 0 0 10px transparent; } }
 @keyframes ai-sweep { from { background-position: -50% 0; } to { background-position: 150% 0; } }
 .wizard-checklist { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.45rem; }
 .wizard-checklist li { display: flex; align-items: center; gap: 0.55rem; color: var(--text-3); }
@@ -1573,13 +1597,6 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .ai-field-foot { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
 .ai-field-foot .field-input { flex: 1; }
 
-/* While the AI writes or draws: spinner, what is happening, Stop. */
-.ai-working {
-    display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.45rem 0.7rem;
-    border: 1px solid var(--arcane); border-radius: var(--radius-md); background: var(--surface-2);
-    color: var(--text); font-weight: 600; box-shadow: var(--shadow-1);
-}
-.ai-working .spinner-border { color: var(--arcane); }
 
 /* The long-writing box (MarkdownEditor): toolbar, the text, a preview, and a full-screen mode. */
 .md-editor { position: relative; margin-bottom: 0.5rem; }

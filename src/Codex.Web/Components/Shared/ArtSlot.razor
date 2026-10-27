@@ -33,7 +33,7 @@
                 <div class="art-busy">
                     @if (drawing.IsRunning)
                     {
-                        <AiWorking Text="@busy" OnStop="drawing.Stop" TestId="@($"{TestId}-working")" />
+                        <AiWorking Compact="true" Text="@busy" OnStop="drawing.Stop" TestId="@($"{TestId}-working")" />
                     }
                     else
                     {

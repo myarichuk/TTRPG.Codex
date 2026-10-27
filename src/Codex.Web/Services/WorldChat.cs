@@ -12,8 +12,9 @@ using Microsoft.Extensions.AI;
 namespace Codex.Web.Services;
 
 /// <summary>A line of the world-building conversation as the page shows it: the DM's message, the model's reply, or a note of
-/// what the model looked up.</summary>
-public sealed record WorldChatLine(WorldChatSpeaker Speaker, string Text);
+/// what the model looked up. A model reply carries the <paramref name="Steps"/> it took to get there; a note, the
+/// <paramref name="Icon"/> that says what kind of step it was.</summary>
+public sealed record WorldChatLine(WorldChatSpeaker Speaker, string Text, IReadOnlyList<WorldChatLine>? Steps = null, string? Icon = null);
 
 public enum WorldChatSpeaker
 {
@@ -42,6 +43,8 @@ public sealed class WorldChat
     private readonly CampaignAccess access;
     private readonly List<ChatMessage> history = new();
     private readonly List<WorldChatLine> lines = new();
+    // What the model looked up during the turn under way; it goes with the reply when the turn lands.
+    private readonly List<WorldChatLine> trail = new();
 
     /// <param name="model">The DM's own text model (<see cref="AiProviderService.ChatClientForAsync"/>), asked for at each message so a
     /// change in their AI settings counts at once.</param>
@@ -87,6 +90,7 @@ public sealed class WorldChat
 
         history.Add(new ChatMessage(ChatRole.User, message));
         var turnStart = lines.Count;
+        trail.Clear();
         var heldProposal = Proposal;
         var heldWarnings = ProposalWarnings;
         lines.Add(new WorldChatLine(WorldChatSpeaker.Dm, message));
@@ -95,9 +99,9 @@ public sealed class WorldChat
         {
             var response = await StreamAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
             var cutShort = KeepAnswered(response.Messages);
-            var reply = response.Text?.Trim();
+            var reply = FinalAnswer(response.Messages);
             lines.Add(new WorldChatLine(WorldChatSpeaker.Model, !string.IsNullOrEmpty(reply) ? reply
-                : Localizer.For(Lang)[cutShort ? "WorldChat.TooManySteps" : "WorldChat.NoReply"]));
+                : Localizer.For(Lang)[cutShort ? "WorldChat.TooManySteps" : "WorldChat.NoReply"], trail.ToList()));
         }
         catch (Exception ex) when (ex is not OperationCanceledException && !(ex is LocalizedException) && SaysNoTools(ex))
         {
@@ -141,6 +145,20 @@ public sealed class WorldChat
         return updates.ToChatResponse();
     }
 
+    /// <summary>What the model said after its last tool result: its answer. What it said before each call is a preamble ("Got it,
+    /// let me look"), often the same sentence each round, and run together with the answer (as <c>ChatResponse.Text</c> does) it
+    /// is noise the DM has to read past.</summary>
+    internal static string FinalAnswer(IList<ChatMessage> messages)
+    {
+        var last = -1;
+        for (var i = 0; i < messages.Count; i++)
+        {
+            if (messages[i].Contents.OfType<FunctionResultContent>().Any()) last = i;
+        }
+
+        return string.Concat(messages.Skip(last + 1).Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text)).Trim();
+    }
+
     /// <summary>Adds the turn's messages to the history without a tool call the model made after its last round (the limit cut
     /// it off): OpenAI-compatible servers refuse a history where a call has no result. True when one was dropped.</summary>
     private bool KeepAnswered(IList<ChatMessage> messages)
@@ -176,7 +194,7 @@ public sealed class WorldChat
         foreach (var entry in result.Entries) note.Append($" homebrew {entry.Type}/{entry.EntryId} \"{entry.Name}\";");
         if (result.Facts.Count > 0) note.Append($" {result.Facts.Count} secret(s) in Lore;");
         history.Add(new ChatMessage(ChatRole.User, note.ToString().TrimEnd(';') + ".)"));
-        lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Applied", result.Count]));
+        lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Applied", result.Count], Icon: "circle-check"));
         return result;
     }
 
@@ -187,7 +205,7 @@ public sealed class WorldChat
         Proposal = null;
         ProposalWarnings = Array.Empty<string>();
         history.Add(new ChatMessage(ChatRole.User, "(A note from the app: the game master discarded your last proposal; nothing from it was saved.)"));
-        lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Discarded"]));
+        lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Discarded"], Icon: "x"));
     }
 
     private static string Lang => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
@@ -200,14 +218,19 @@ public sealed class WorldChat
     private List<AITool> Tools(Action<WorldChatLine> progress)
     {
         var l = Localizer.For(Lang);
-        void Note(string key, params object[] args) => progress(new WorldChatLine(WorldChatSpeaker.Tool, l[key, args]));
+        void Note(string icon, string key, params object[] args)
+        {
+            var step = new WorldChatLine(WorldChatSpeaker.Tool, l[key, args], Icon: icon);
+            trail.Add(step);
+            progress(step);
+        }
 
         return new List<AITool>
         {
             AIFunctionFactory.Create(
                 async ([Description("Words to look for in names and page texts; empty for an overview of the whole campaign.")] string? query) =>
                 {
-                    Note("WorldChat.Tool.Search", string.IsNullOrWhiteSpace(query) ? "…" : query.Trim());
+                    Note("search", "WorldChat.Tool.Search", string.IsNullOrWhiteSpace(query) ? "…" : query.Trim());
                     return await builder.SearchWorldAsync(campaign, access, query);
                 },
                 "search_world",
@@ -215,7 +238,7 @@ public sealed class WorldChat
             AIFunctionFactory.Create(
                 async ([Description("The page's key (existing:slug) or title.")] string page) =>
                 {
-                    Note("WorldChat.Tool.Page", page);
+                    Note("file-text", "WorldChat.Tool.Page", page);
                     return await builder.PageAsync(access, page) ?? $"There is no page \"{page}\". Use search_world to find one.";
                 },
                 "get_page",
@@ -223,7 +246,7 @@ public sealed class WorldChat
             AIFunctionFactory.Create(
                 async () =>
                 {
-                    Note("WorldChat.Tool.Places");
+                    Note("map-pin", "WorldChat.Tool.Places");
                     return await builder.PlacesAsync(access);
                 },
                 "list_places",
@@ -232,7 +255,7 @@ public sealed class WorldChat
                 async ([Description("A creature's or entry's name, or part of it.")] string query,
                     [Description("A content type to search (\"monster\", \"spell\"); empty searches creatures.")] string? type) =>
                 {
-                    Note("WorldChat.Tool.Library", query);
+                    Note("book-marked", "WorldChat.Tool.Library", query);
                     return await builder.SearchLibraryAsync(campaign, access, query, type);
                 },
                 "search_library",
@@ -240,7 +263,7 @@ public sealed class WorldChat
             AIFunctionFactory.Create(
                 async ([Description("The homebrew type, as listed in the instructions.")] string type) =>
                 {
-                    Note("WorldChat.Tool.Fields", type);
+                    Note("list", "WorldChat.Tool.Fields", type);
                     return await builder.HomebrewFieldsAsync(campaign, access, type);
                 },
                 "homebrew_fields",
@@ -248,7 +271,7 @@ public sealed class WorldChat
             AIFunctionFactory.Create(
                 async (ProposalInput proposal) =>
                 {
-                    Note("WorldChat.Tool.Propose", proposal.Entries?.Count ?? 0);
+                    Note("clipboard-check", "WorldChat.Tool.Propose", proposal.Entries?.Count ?? 0);
                     return await ProposeAsync(proposal);
                 },
                 "propose_changes",
@@ -305,8 +328,11 @@ public sealed class ProposalEntry
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
-    [JsonPropertyName("text"), Description("The page's text in markdown (a fact's details; a homebrew entry's rules text). Link entries as [[ref]] and pages as [[existing:slug]].")]
+    [JsonPropertyName("text"), Description("The page's text in markdown (a fact's details; a homebrew entry's rules text), in full sentences under short headings, usually 150 to 350 words: written for a game master to run from, never clipped notes. Link entries as [[ref]] and pages as [[existing:slug]].")]
     public string? Text { get; set; }
+
+    [JsonPropertyName("pitch"), Description("One or two plain sentences, at most 300 characters, saying what the entry is: shown in lists and on the review card, and as a place's short description.")]
+    public string? Pitch { get; set; }
 
     [JsonPropertyName("links"), Description("Refs and existing:slug keys this entry is about (a fact's subjects).")]
     public List<string>? Links { get; set; }

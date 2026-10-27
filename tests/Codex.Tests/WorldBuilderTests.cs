@@ -38,6 +38,28 @@ public class WorldBuilderTests
         canonical);
 
     [Fact]
+    public void Place_WithoutAPitch_GetsOneWhoseRefsResolveToTheNamesTheEntriesWereSavedUnder()
+    {
+        // The model gives refs ([[p1]], [[n5]]) in the text and no pitch of its own, so the pitch is derived from the text.
+        // Derived by flattening links to words, it kept "p1" and "n5" and the Places list showed them verbatim.
+        const string json = """
+            {"entries": [
+              {"ref": "p1", "kind": "place", "name": "Cinderhaven", "placeKind": "settlement", "text": "The city."},
+              {"ref": "n5", "kind": "npc", "name": "Brell", "text": "A grain factor."},
+              {"ref": "p3", "kind": "place", "name": "Amphail", "placeKind": "settlement", "parent": "p1",
+               "text": "Look: walled farm town east of [[p1]]. Who is here: horse breeders, farmers, [[p1]] grain buyers, [[n5]]."}
+            ]}
+            """;
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        var amphail = check.Bundle.Drafts.Single(d => d.Ref == "p3");
+
+        var shown = WorldBundleParser.ResolveLinks(amphail.Pitch, check.Bundle, keepLinks: false);
+
+        Assert.Equal("Look: walled farm town east of Cinderhaven. Who is here: horse breeders, farmers, Cinderhaven grain buyers, Brell.", shown);
+    }
+
+    [Fact]
     public void ParseProposal_ReadsEachKind_WithItsOwnFields()
     {
         const string json = """
@@ -244,7 +266,9 @@ public class WorldBuilderTests
         Assert.Contains("propose_changes", english);
         Assert.Contains("existing:place:<id>", english);
         Assert.Contains("never say something was added or saved", english);
-        Assert.Contains("something they want, something they fear", english);
+        Assert.Contains("what they want and why; what they fear", english);
+        Assert.Contains("full, flowing sentences, never telegraphic notes", english); // a game master reads and runs these pages
+        Assert.Contains("\"pitch\"", english);
         Assert.Contains("generic monster from the SRD rules", english);
         Assert.Contains("Homebrew types: monster (Monster, a monster).", english);
         Assert.Contains("The campaign: Salt and Ash: a port.", english);
@@ -876,6 +900,23 @@ public class WorldBuilderTests
         var sent = model.Calls[^1];
         Assert.Single(sent, m => m.Role == ChatRole.User && m.Text == "A fort, please.");
         Assert.DoesNotContain(sent.SelectMany(m => m.Contents).OfType<FunctionCallContent>(), c => c.CallId == "c2");
+    }
+
+    [Fact]
+    public async Task Chat_KeepsOnlyTheFinalAnswer_NotTheGotItBeforeEachToolCall_AndKeepsTheSteps()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Got it, let me look."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Got it, one more look."), new FunctionCallContent("c2", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, "Here is the lay of the land."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        var reply = chat.Lines[^1];
+        Assert.Equal("Here is the lay of the land.", reply.Text); // not "Got it, let me look.Got it, one more look.Here is…"
+        Assert.Equal(2, reply.Steps!.Count);
+        Assert.All(reply.Steps, step => Assert.Equal("map-pin", step.Icon));
     }
 
     [Fact]

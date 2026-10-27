@@ -250,7 +250,7 @@ public static class WorldBundleParser
                     Name = name,
                     OutlineName = name,
                     Body = text.Length == 0 ? null : text,
-                    Pitch = Cut(FieldCoercion.String(element, "pitch") ?? TextFormatting.Summary(text, MaxPitch), MaxPitch)
+                    Pitch = Cut(FieldCoercion.String(element, "pitch") ?? TextFormatting.Summary(text, MaxPitch, keepLinks: true), MaxPitch)
                 };
 
                 switch (kind)
