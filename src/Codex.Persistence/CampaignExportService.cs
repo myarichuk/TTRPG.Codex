@@ -158,6 +158,7 @@ public class CampaignExportService(
         {
             foreach (var page in bundle.Wiki.Where(p => p.CampaignId == campaign.Id))
             {
+                page.HasArt = false;
                 await wiki.SaveAsync(page);
             }
         }
