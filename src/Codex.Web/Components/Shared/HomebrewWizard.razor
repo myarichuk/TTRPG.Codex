@@ -356,20 +356,20 @@
         GoTo(current + 1);
     }
 
-    private Task<string> DescribeAsync(string text, string instruction)
+    private Task<string> DescribeAsync(string text, string instruction, CancellationToken ct)
     {
         var type = TypeDef;
         var subject = string.IsNullOrWhiteSpace(draft!.Name) ? "an unnamed " + (type?.Label.ToLowerInvariant() ?? "entry") : draft.Name;
         return Ai.DescribeAsync(Ctx.Campaign, subject, KindLabel(type), AiFeatures.EntryFacts(draft.ToEntry(), type), text, instruction,
-            draft.IsPublished && type?.PlayerFacing != false ? AiAudience.Players : AiAudience.Dm, Ctx.UserId);
+            draft.IsPublished && type?.PlayerFacing != false ? AiAudience.Players : AiAudience.Dm, Ctx.UserId, ct);
     }
 
-    private Task<ArtImage> GenerateArtAsync()
+    private Task<ArtImage> GenerateArtAsync(CancellationToken ct)
     {
         var visual = draft!.Properties.TryGetValue("imagePrompt", out var prompt) && !string.IsNullOrWhiteSpace(prompt?.ToString())
             ? prompt.ToString()
             : TextFormatting.Summary(draft.Description, 300);
-        return Art.GenerateAsync(Ctx.UserId, draft.Name, KindLabel(TypeDef), visual, IsCreature ? ArtShape.Tall : ArtShape.Wide);
+        return Art.GenerateAsync(Ctx.UserId, draft.Name, KindLabel(TypeDef), visual, IsCreature ? ArtShape.Tall : ArtShape.Wide, ct);
     }
 
     /// <summary>"homebrew creature (Large dragon)": the type label plus the size and kind when the entry has them.</summary>

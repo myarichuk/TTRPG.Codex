@@ -459,4 +459,7 @@
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>יצירת דף</value></data>
   <data name="Campaign.World.CreatePageLabel" xml:space="preserve"><value>יצירת דף ויקי עבור {0}</value></data>
   <data name="Campaign.World.PageCreated" xml:space="preserve"><value>דף הוויקי של {0} נוצר.</value></data>
+  <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>שורת תיאור</value></data>
+  <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>משפט או שניים קצרים לכרטיס הקמפיין ולכותרת.</value></data>
+  <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>התיאור המלא שהשחקנים רואים בסקירה: העולם, הרעיון, למה לצפות.</value></data>
 </root>

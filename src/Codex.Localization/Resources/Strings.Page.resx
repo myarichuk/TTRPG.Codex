@@ -25,7 +25,7 @@
   <data name="Page.Home.Required" xml:space="preserve"><value>(required)</value></data>
   <data name="Page.Home.System" xml:space="preserve"><value>Game system</value></data>
   <data name="Page.Home.Description" xml:space="preserve"><value>Description</value></data>
-  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>A line or two about the campaign (optional)</value></data>
+  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>The setting, the premise, what players should know (optional)</value></data>
   <data name="Page.Home.Creating" xml:space="preserve"><value>Creating…</value></data>
   <data name="Page.Home.Create" xml:space="preserve"><value>Create campaign</value></data>
   <data name="Page.Home.NameRequired" xml:space="preserve"><value>Give the campaign a name.</value></data>
@@ -203,4 +203,8 @@
   <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>Any image model OpenRouter lists, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo. Uses your OpenRouter key.</value></data>
   <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>Custom (OpenAI images API)</value></data>
   <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>Any server that implements {0}, such as LocalAI or a ComfyUI bridge.</value></data>
+  <data name="Page.Home.Tagline" xml:space="preserve"><value>Tagline</value></data>
+  <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>One sentence that sells it, e.g. “A heist in a city that floats.”</value></data>
+  <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Shown on the campaign card and under its title.</value></data>
+  <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>The full write-up, shown on the campaign’s overview. Markdown works; you can expand it later in Settings.</value></data>
 </root>

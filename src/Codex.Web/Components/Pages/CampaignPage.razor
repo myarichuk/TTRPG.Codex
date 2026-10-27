@@ -47,6 +47,10 @@ else
         <header class="ws-head @(campaign.HasCover ? "has-cover" : "") @(CurrentSection == "overview" ? "" : "ws-head-inner")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
             <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a></nav>
             <h1 data-testid="campaign-title">@campaign.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(campaign.Tagline))
+            {
+                <p class="ws-tagline" data-testid="campaign-tagline">@campaign.Tagline</p>
+            }
             <div class="pills">
                 <span class="pill">@Catalog.GetDisplayName(campaign.SystemId)</span>
                 <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@RoleLabel(access.Role)</span>

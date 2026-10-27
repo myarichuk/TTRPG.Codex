@@ -37,7 +37,7 @@
     <DetailArt Context="item">
         <ArtSlot ImageUrl="@ArtService.Url(Ctx.Campaign, item)" CanEdit="Ctx.IsDm" Landscape="@(!IsCreatureType(item.Entry.Type))"
                  Label="@(IsCreatureType(item.Entry.Type) ? L["Campaign.Library.Portrait"] : L["Campaign.Library.Art"])" Alt="@L["Campaign.Library.ArtFor", item.Entry.Name]" Class="entry-art" TestId="entry-art"
-                 OnPicked="img => StoreArtAsync(item, img)" OnRemove="() => RemoveArtAsync(item)" Generate="() => GenerateArtAsync(item)" />
+                 OnPicked="img => StoreArtAsync(item, img)" OnRemove="() => RemoveArtAsync(item)" Generate="ct => GenerateArtAsync(item, ct)" />
     </DetailArt>
     <DetailActions Context="item">
         @if (Ctx.IsDm && item.IsHomebrew)
@@ -241,11 +241,11 @@
         }
     }
 
-    private Task<ArtImage> GenerateArtAsync(LibraryItem item)
+    private Task<ArtImage> GenerateArtAsync(LibraryItem item, CancellationToken ct)
     {
         var visual = YamlValues.GetString(item.Entry.Properties, "imagePrompt") ?? TextFormatting.Summary(item.Entry.Description, 300);
         var kind = (Ctx.System?.Canonical.FindType(item.Entry.Type)?.Label ?? CampaignLibrary.Humanize(item.Entry.Type)).ToLowerInvariant();
-        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, IsCreatureType(item.Entry.Type) ? ArtShape.Tall : ArtShape.Wide);
+        return Art.GenerateAsync(Ctx.UserId, item.Entry.Name, kind, visual, IsCreatureType(item.Entry.Type) ? ArtShape.Tall : ArtShape.Wide, ct);
     }
 
     private bool IsBlueprint(LibraryItem item) => Cast.Blueprint(item, Ctx.Campaign, Ctx.System) != null;

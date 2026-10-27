@@ -459,4 +459,7 @@
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Create page</value></data>
   <data name="Campaign.World.CreatePageLabel" xml:space="preserve"><value>Create a wiki page for {0}</value></data>
   <data name="Campaign.World.PageCreated" xml:space="preserve"><value>Created the wiki page for {0}.</value></data>
+  <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>Tagline</value></data>
+  <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>One or two short sentences for the campaign card and the header.</value></data>
+  <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>The full write-up players see on the overview: setting, premise, what to expect.</value></data>
 </root>

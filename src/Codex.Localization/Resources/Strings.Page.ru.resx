@@ -25,7 +25,7 @@
   <data name="Page.Home.Required" xml:space="preserve"><value>(обязательно)</value></data>
   <data name="Page.Home.System" xml:space="preserve"><value>Игровая система</value></data>
   <data name="Page.Home.Description" xml:space="preserve"><value>Описание</value></data>
-  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>Пара строк о кампании (необязательно)</value></data>
+  <data name="Page.Home.DescriptionPlaceholder" xml:space="preserve"><value>Мир, завязка, что стоит знать игрокам (необязательно)</value></data>
   <data name="Page.Home.Creating" xml:space="preserve"><value>Создание…</value></data>
   <data name="Page.Home.Create" xml:space="preserve"><value>Создать кампанию</value></data>
   <data name="Page.Home.NameRequired" xml:space="preserve"><value>Дайте кампании название.</value></data>
@@ -203,4 +203,8 @@
   <data name="Page.AiSettings.Preset.Image.openrouter.Hint" xml:space="preserve"><value>Любая модель изображений из списка OpenRouter, например google/gemini-2.5-flash-image или qwen/qwen-image-2.1-turbo. Использует ваш ключ OpenRouter.</value></data>
   <data name="Page.AiSettings.Preset.Image.custom" xml:space="preserve"><value>Свой сервер (API изображений OpenAI)</value></data>
   <data name="Page.AiSettings.Preset.Image.custom.Hint" xml:space="preserve"><value>Любой сервер, который поддерживает {0}, например LocalAI или мост к ComfyUI.</value></data>
+  <data name="Page.Home.Tagline" xml:space="preserve"><value>Слоган</value></data>
+  <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>Одна фраза, которая цепляет, например «Ограбление в летающем городе».</value></data>
+  <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Видно на карточке кампании и под её названием.</value></data>
+  <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>Полное описание на странице обзора кампании. Работает Markdown; дополнить можно позже в настройках.</value></data>
 </root>

@@ -28,6 +28,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IUserRepository UserRepo
+@implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
 
@@ -78,7 +79,14 @@ else
                         }
                         @if (CanEdit)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GeneratePortraitAsync" Disabled="@(busy != null)" data-testid="portrait-generate">@(busy == "portrait" ? L["Actor.Art.Drawing"] : actor.HasPortrait ? L["Actor.Sheet.PortraitNew"] : L["Actor.Sheet.PortraitAi"])</CodexButton>
+                            @if (busy == "portrait")
+                            {
+                                <AiWorking Text="@L["Actor.Art.Drawing"]" OnStop="aiCall.Stop" TestId="portrait-working" />
+                            }
+                            else
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GeneratePortraitAsync" Disabled="@(busy != null)" data-testid="portrait-generate">@(actor.HasPortrait ? L["Actor.Sheet.PortraitNew"] : L["Actor.Sheet.PortraitAi"])</CodexButton>
+                            }
                         }
                         @if (CanEdit && actor.HasPortrait)
                         {
@@ -231,7 +239,7 @@ else
             {
                 var attributeRules = Rules?.Attributes;
                 var summary = evaluation?.Attributes;
-                <section class="panel" aria-labelledby="attributes-heading">
+                <section class="panel attr-panel" aria-labelledby="attributes-heading">
                     <div class="panel-title">
                         <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="18" Class="title-icon" /> @L["Actor.Sheet.Attributes"]</h2>
                         @if (attributeRules != null && CanEdit)
@@ -259,7 +267,7 @@ else
                         <p class="small small-muted mb-2">@L["Actor.Sheet.StdArrayLead"]<bdi>@string.Join(", ", attributeRules.StandardArray)</bdi>@L["Actor.Sheet.StdArrayTail"]</p>
                     }
 
-                    <div class="attr-grid">
+                    <div class="attr-grid" style="@(system.Attributes.Count is > 0 and <= 8 ? $"--attr-count:{system.Attributes.Count}" : null)">
                         @foreach (var attr in system.Attributes)
                         {
                             var total = summary?.Totals.GetValueOrDefault(attr.Key) ?? (YamlValues.GetInt(editSheet, attr.Key) ?? attr.Default);
@@ -580,15 +588,18 @@ else
                 @if (CanEdit)
                 {
                     <label for="actor-bio" class="visually-hidden">@L["Actor.Sheet.History"]</label>
-                    <textarea id="actor-bio" class="field-input mb-2" rows="8" placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind="editBiography" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="bio-mention-hint" data-testid="sheet-biography"></textarea>
-                    <div class="ai-row">
-                        <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
-                        <input id="bio-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.BioInstructionPh"]" @bind="bioInstruction" />
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Players)" Disabled="@(busy != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "bio" ? L["Actor.Sheet.Writing"] : string.IsNullOrWhiteSpace(editBiography) ? L["Actor.Sheet.WriteAi"] : L["Actor.Sheet.RewriteAi"])
-                        </CodexButton>
-                    </div>
-                    <p id="bio-mention-hint" class="field-hint">@L["Actor.Sheet.MentionHint"]</p>
+                    <MarkdownEditor Id="actor-bio" Title="@L["Actor.Sheet.History"]" Rows="10" Placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind-Value="editBiography"
+                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography"
+                                    Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
+                        <div class="ai-row">
+                            <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
+                            <input id="bio-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.BioInstructionPh"]" @bind="bioInstruction" />
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Players)" Disabled="@(busy != null)" data-testid="sheet-biography-ai">
+                                <LucideIcon IconName="sparkles" Size="14" /> @(string.IsNullOrWhiteSpace(editBiography) ? L["Actor.Sheet.WriteAi"] : L["Actor.Sheet.RewriteAi"])
+                            </CodexButton>
+                        </div>
+                        <p id="bio-mention-hint" class="field-hint">@L["Actor.Sheet.MentionHint"]</p>
+                    </MarkdownEditor>
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
@@ -650,14 +661,17 @@ else
                         <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> @L["Actor.Sheet.OnlyYou"]</span>
                     </div>
                     <label for="actor-dm-notes" class="visually-hidden">@L["Actor.Sheet.DmNotes"]</label>
-                    <textarea id="actor-dm-notes" class="field-input mb-2" rows="6" placeholder="@L["Actor.Sheet.DmNotesPlaceholder"]" @bind="editDmNotes" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="sheet-dm-notes"></textarea>
-                    <div class="ai-row">
-                        <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
-                        <input id="dm-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.DmInstructionPh"]" @bind="dmInstruction" />
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Dm)" Disabled="@(busy != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "dm" ? L["Actor.Sheet.Writing"] : L["Actor.Sheet.DraftAi"])
-                        </CodexButton>
-                    </div>
+                    <MarkdownEditor Id="actor-dm-notes" Title="@L["Actor.Sheet.DmNotes"]" Rows="8" Placeholder="@L["Actor.Sheet.DmNotesPlaceholder"]" @bind-Value="editDmNotes"
+                                    Mentions="@mentionsJson" Preview="PreviewMentions" TestId="sheet-dm-notes"
+                                    Busy="@(busy == "dm")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
+                        <div class="ai-row">
+                            <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
+                            <input id="dm-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.DmInstructionPh"]" @bind="dmInstruction" />
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Dm)" Disabled="@(busy != null)" data-testid="sheet-dm-notes-ai">
+                                <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.DraftAi"]
+                            </CodexButton>
+                        </div>
+                    </MarkdownEditor>
                 </section>
             }
 
@@ -731,9 +745,16 @@ else
                         </div>
                     }
                     <div class="d-flex gap-2 flex-wrap">
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(busy == "level" ? L["Actor.Sheet.Thinking"] : L["Actor.Sheet.SuggestLevel", CurrentLevel + 1])
-                        </CodexButton>
+                        @if (busy == "level")
+                        {
+                            <AiWorking Text="@L["Actor.Sheet.Thinking"]" OnStop="aiCall.Stop" TestId="levelup-working" />
+                        }
+                        else
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
+                                <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.SuggestLevel", CurrentLevel + 1]
+                            </CodexButton>
+                        }
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ApplyLevelUp">@L["Actor.Sheet.SetLevel", CurrentLevel + 1]</CodexButton>
                     </div>
                     @if (levelUpAdvice != null)
@@ -828,6 +849,10 @@ else
     private string dmInstruction = "";
     private string? levelUpAdvice;
     private string? busy;
+    private readonly AiCall aiCall = new();
+
+    /// <summary>The history or notes as a reader will see them: the typed @Names become mentions first.</summary>
+    private string PreviewMentions(string text) => MentionLinks.ToHtml(noteMentions.Encode(text), noteMentions, CampaignId);
     private ActorVisibility editVisibility;
     private string editPublicName = "";
     private ActorKind editKind;
@@ -1407,10 +1432,14 @@ else
         }
 
         busy = "portrait";
+        var ct = aiCall.Begin();
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, PublicDescription = actor.PublicDescription });
-            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind, system), Ai.PortraitVisual(ForAi(snapshot), campaign.SystemId, system), ArtShape.Square);
+            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind, system), Ai.PortraitVisual(ForAi(snapshot), campaign.SystemId, system), ArtShape.Square, ct);
+            // Stopped just as the picture arrived: nothing is stored. Once storing starts, it finishes.
+            ct.ThrowIfCancellationRequested();
+            aiCall.End(ct);
             using var stream = new MemoryStream(image.Bytes);
             await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, image.ContentType);
             actor.HasPortrait = true;
@@ -1418,6 +1447,11 @@ else
             ApplyEdits(actor);
             await TrySaveActorAsync();
             flash = Flash.Success(L["Actor.Sheet.PortraitDrawn"]);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            flash = Flash.Info(L["Common.Ai.Stopped"]);
+            return;
         }
         catch (AiImageNotConfiguredException)
         {
@@ -1432,6 +1466,7 @@ else
         }
         finally
         {
+            aiCall.End(ct);
             busy = null;
         }
 
@@ -1450,15 +1485,20 @@ else
     {
         if (actor == null || campaign == null || currentUserId == null || busy != null) return;
         busy = audience == AiAudience.Dm ? "dm" : "bio";
+        var ct = aiCall.Begin();
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography });
             var text = await Ai.RewriteAsync(ForAi(snapshot), campaign, system,
                 audience == AiAudience.Dm ? editDmNotes : editBiography,
                 audience == AiAudience.Dm ? dmInstruction : bioInstruction,
-                audience, currentUserId);
+                audience, currentUserId, ct);
             if (audience == AiAudience.Dm) editDmNotes = text; else editBiography = text;
             flash = Flash.Info(L["Actor.Sheet.AiDraftReady"]);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            flash = Flash.Info(L["Common.Ai.Stopped"]);
         }
         catch (AiNotConfiguredException)
         {
@@ -1471,6 +1511,7 @@ else
         }
         finally
         {
+            aiCall.End(ct);
             busy = null;
         }
     }
@@ -1479,10 +1520,15 @@ else
     {
         if (actor == null || campaign == null || currentUserId == null || busy != null) return;
         busy = "level";
+        var ct = aiCall.Begin();
         try
         {
             var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name });
-            levelUpAdvice = await Ai.LevelUpAsync(ForAi(snapshot), campaign, system, currentUserId);
+            levelUpAdvice = await Ai.LevelUpAsync(ForAi(snapshot), campaign, system, currentUserId, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            flash = Flash.Info(L["Common.Ai.Stopped"]);
         }
         catch (AiNotConfiguredException)
         {
@@ -1495,9 +1541,12 @@ else
         }
         finally
         {
+            aiCall.End(ct);
             busy = null;
         }
     }
+
+    public void Dispose() => aiCall.Dispose();
 
     private void ApplyLevelUp()
     {

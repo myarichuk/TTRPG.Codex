@@ -83,8 +83,11 @@ else
                         </div>
                         <div class="mb-3">
                             <label for="journal-text" class="field-label">@L["Campaign.Journal.Field.Text"]</label>
-                            <textarea id="journal-text" class="field-input" rows="10" @bind="editing.Body" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="journal-mention-hint" data-testid="journal-body"></textarea>
-                            <p id="journal-mention-hint" class="field-hint">@L["Campaign.Journal.MentionHint"]</p>
+                            <MarkdownEditor Id="journal-text" Title="@(string.IsNullOrWhiteSpace(editing.Title) ? L["Campaign.Journal.Field.Text"] : editing.Title)" Rows="10" @bind-Value="editing.Body"
+                                            Mentions="@mentionsJson" DescribedBy="journal-mention-hint" TestId="journal-body"
+                                            Preview="@(text => MentionLinks.ToHtml(mentions.Encode(text), mentions, Ctx.Campaign.Id))">
+                                <p id="journal-mention-hint" class="field-hint">@L["Campaign.Journal.MentionHint"]</p>
+                            </MarkdownEditor>
                         </div>
                         <div class="d-flex gap-2">
                             <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save">@L["Campaign.Journal.Save"]</CodexButton>

@@ -20,6 +20,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
+@implements IDisposable
 
 <PageTitle>@(Title ?? L["Session.Title"]) | TTRPG.Codex</PageTitle>
 <UnsavedChangesGuard IsDirty="IsDirty" />
@@ -94,12 +95,14 @@ else
                 @if (access.IsDm)
                 {
                     <label for="recap" class="visually-hidden">@L["Session.Recap"]</label>
-                    <textarea id="recap" class="field-input mb-2" rows="8" placeholder="@L["Session.RecapPlaceholder"]" @bind="editRecap" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="mention-hint"></textarea>
+                    <MarkdownEditor Id="recap" Title="@L["Session.Recap"]" Rows="8" Placeholder="@L["Session.RecapPlaceholder"]" @bind-Value="editRecap" Mentions="@mentionsJson"
+                                    DescribedBy="mention-hint" Preview="PreviewMentions" TestId="session-recap"
+                                    Busy="@(drafting == AiAudience.Players)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync">@L["Session.SaveRecap"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">@L["Session.Prefill"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Players ? L["Session.Drafting"] : L["Session.DraftAi"])
+                            <LucideIcon IconName="sparkles" Size="14" /> @L["Session.DraftAi"]
                         </CodexButton>
                     </div>
                     <p id="mention-hint" class="field-hint">@L["Session.MentionHint"]</p>
@@ -123,11 +126,13 @@ else
                         <span class="pill pill-warning"><LucideIcon IconName="eye-off" Size="14" /> @L["Session.OnlyYou"]</span>
                     </div>
                     <label for="dm-summary" class="visually-hidden">@L["Session.DmSummary"]</label>
-                    <textarea id="dm-summary" class="field-input mb-2" rows="8" placeholder="@L["Session.DmSummaryPlaceholder"]" @bind="editDmSummary" @bind:event="oninput" data-mentions="@mentionsJson"></textarea>
+                    <MarkdownEditor Id="dm-summary" Title="@L["Session.DmSummary"]" Rows="8" Placeholder="@L["Session.DmSummaryPlaceholder"]" @bind-Value="editDmSummary" Mentions="@mentionsJson"
+                                    Preview="PreviewMentions" TestId="session-dm-summary"
+                                    Busy="@(drafting == AiAudience.Dm)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync">@L["Session.SaveSummary"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @(drafting == AiAudience.Dm ? L["Session.Drafting"] : L["Session.DraftAi"])
+                            <LucideIcon IconName="sparkles" Size="14" /> @L["Session.DraftAi"]
                         </CodexButton>
                     </div>
                     <p class="field-hint">@L["Session.DmDraftHint"]</p>
@@ -196,7 +201,8 @@ else
                 </div>
                 <p class="small-muted">@L["Session.JournalHint"]</p>
                 <label for="journal-body" class="visually-hidden">@L["Session.JournalEntry"]</label>
-                <textarea id="journal-body" class="field-input mb-2" rows="7" placeholder="@L["Session.JournalPlaceholder"]" @bind="journalBody" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="session-journal"></textarea>
+                <MarkdownEditor Id="journal-body" Title="@L["Session.MyJournal"]" Rows="7" Placeholder="@L["Session.JournalPlaceholder"]" @bind-Value="journalBody" Mentions="@mentionsJson"
+                                Preview="PreviewMentions" TestId="session-journal" />
                 <div class="d-flex align-items-center gap-2">
                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save">@L["Session.SaveJournal"]</CodexButton>
                     @if (journalSavedAt != null)
@@ -426,13 +432,18 @@ else
         if (session == null || access == null || campaign == null || !access.IsDm || drafting != null) return;
 
         drafting = audience;
+        var ct = aiCall.Begin();
         try
         {
             // The player digest is built from player-visible notes only; the DM digest from everything.
             var allNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
-            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"), campaignActors, places, items);
+            var text = await Ai.SessionSummaryAsync(campaign, session, allNotes, audience, access, id => memberUsernames.GetValueOrDefault(id, "someone"), campaignActors, places, items, ct);
             if (audience == AiAudience.Players) editRecap = text; else editDmSummary = text;
             flash = Flash.Info(L["Session.Flash.DraftReady"]);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            flash = Flash.Info(L["Common.Ai.Stopped"]);
         }
         catch (AiNotConfiguredException)
         {
@@ -445,9 +456,17 @@ else
         }
         finally
         {
+            aiCall.End(ct);
             drafting = null;
         }
     }
+
+    private readonly AiCall aiCall = new();
+
+    public void Dispose() => aiCall.Dispose();
+
+    /// <summary>The text as a reader will see it: the typed @Names become mentions first.</summary>
+    private string PreviewMentions(string text) => MentionLinks.ToHtml(mentions.Encode(text), mentions, CampaignId);
 
     private async Task SaveJournalAsync()
     {

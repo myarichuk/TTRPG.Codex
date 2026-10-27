@@ -391,6 +391,30 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // MarkdownEditor's toolbar: wrap the selection (or the word "text" when nothing is selected) in a marker, or start
+    // each selected line with a prefix. "input" is raised so Blazor's oninput sees the new value, and Undo still works
+    // where the browser supports execCommand on a textarea.
+    mdWrap: function (id, before, after) {
+        const el = document.getElementById(id);
+        if (!el || el.readOnly) return;
+        const s = el.selectionStart, e = el.selectionEnd;
+        const picked = el.value.slice(s, e) || "text";
+        mdReplace(el, s, e, before + picked + after);
+        el.setSelectionRange(s + before.length, s + before.length + picked.length);
+    },
+    mdPrefix: function (id, prefix) {
+        const el = document.getElementById(id);
+        if (!el || el.readOnly) return;
+        const v = el.value;
+        const s = v.lastIndexOf("\n", el.selectionStart - 1) + 1;
+        let e = v.indexOf("\n", el.selectionEnd);
+        if (e < 0) e = v.length;
+        const lines = v.slice(s, e).split("\n");
+        const all = lines.every(function (l) { return l.startsWith(prefix); });
+        const text = lines.map(function (l) { return all ? l.slice(prefix.length) : prefix + l.replace(/^(#+ |- )/, ""); }).join("\n");
+        mdReplace(el, s, e, text);
+        el.setSelectionRange(s, s + text.length);
+    },
     // A detail pane that is a full-screen sheet on a phone (.phone-sheet): move focus into it when it opens,
     // so keyboards and screen readers follow. Beside the list on a wide screen it is left alone.
     // Opening and closing a Library entry are navigations, and Blazor scrolls to the top after each one;
@@ -410,6 +434,25 @@ window.codex = {
         sheetListScroll = null;
     }
 };
+
+function mdReplace(el, start, end, text) {
+    el.focus();
+    el.setSelectionRange(start, end);
+    if (!document.execCommand || !document.execCommand("insertText", false, text)) {
+        el.setRangeText(text, start, end, "end");
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+}
+
+// Ctrl/Cmd+B and Ctrl/Cmd+I in a MarkdownEditor box.
+document.addEventListener("keydown", function (e) {
+    const el = e.target;
+    if (!(el instanceof HTMLTextAreaElement) || !el.hasAttribute("data-md") || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    const key = e.key.toLowerCase();
+    if (key !== "b" && key !== "i") return;
+    e.preventDefault();
+    if (key === "b") window.codex.mdWrap(el.id, "**", "**"); else window.codex.mdWrap(el.id, "*", "*");
+});
 
 // Where the page was scrolled when a link was last followed (captured before Blazor handles the click).
 let lastLinkScroll = 0;

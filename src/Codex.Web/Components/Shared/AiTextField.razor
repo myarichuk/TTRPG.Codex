@@ -1,9 +1,10 @@
 @using Codex.Web.Services
+@implements IDisposable
 @inject ILogger<AiTextField> Logger
 
 @* A description box with an "Enhance with AI" button beside its label. The AI's text replaces the
-   box's text and one Undo puts the previous text back, so trying it costs nothing. Nothing is
-   saved here: the owning form saves as usual. *@
+   box's text and one Undo puts the previous text back, so trying it costs nothing. While it writes, the box is
+   read-only and Stop cancels the request. Nothing is saved here: the owning form saves as usual. *@
 
 <div class="ai-field">
     <div class="ai-field-head">
@@ -12,7 +13,9 @@
             @(busy ? L["Library.Ai.Writing"] : string.IsNullOrWhiteSpace(Value) ? L["Library.Ai.Write"] : L["Library.Ai.Enhance"])
         </CodexButton>
     </div>
-    <textarea id="@Id" class="field-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput" aria-describedby="@(Id)-hint" aria-busy="@(busy ? "true" : "false")" data-mentions="@Mentions" data-testid="@TestId"></textarea>
+    <MarkdownEditor Id="@Id" Title="@(Label ?? L["Library.Ai.Description"])" Rows="@Rows" Placeholder="@Placeholder" Value="@Value" ValueChanged="OnValueChanged"
+                    DescribedBy="@($"{Id}-hint")" Mentions="@Mentions" Preview="Preview" TestId="@TestId" Class="mb-0"
+                    Busy="busy" BusyText="@L["Library.Ai.Writing"]" OnStop="call.Stop" />
     <div class="ai-field-foot">
         <label for="@(Id)-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
         <input id="@(Id)-ask" class="field-input field-sm" placeholder="@L["Library.Ai.AskPlaceholder"]" @bind="instruction" @bind:event="oninput" />
@@ -25,6 +28,10 @@
     @if (error != null)
     {
         <p class="text-danger small mb-0 mt-1" role="alert">@error @if (notConfigured) { <a href="/settings/ai">@L["Library.Ai.OpenSettings"]</a> }</p>
+    }
+    else if (stopped)
+    {
+        <p class="small-muted mb-0 mt-1" role="status">@L["Common.Ai.Stopped"]</p>
     }
     else if (previous != null)
     {
@@ -45,18 +52,24 @@
     /// <summary>The box's @, # and $ suggestions as JSON (see <c>MentionLinks.Json</c>); null for a box that takes none.</summary>
     [Parameter] public string? Mentions { get; set; }
 
-    /// <summary>Produces the new text from the current text and the optional instruction.</summary>
-    [Parameter, EditorRequired] public Func<string, string, Task<string>> Generate { get; set; } = null!;
+    /// <summary>The text as the reader will see it (see <see cref="MarkdownEditor.Preview"/>); null renders plain Markdown.</summary>
+    [Parameter] public Func<string, string>? Preview { get; set; }
+
+    /// <summary>Produces the new text from the current text and the optional instruction; the token is cancelled by Stop.</summary>
+    [Parameter, EditorRequired] public Func<string, string, CancellationToken, Task<string>> Generate { get; set; } = null!;
+
+    private readonly AiCall call = new();
 
     private bool busy;
     private bool notConfigured;
     private string? error;
     private string? previous;
+    private bool stopped;
     private string instruction = string.Empty;
 
-    private Task OnInput(ChangeEventArgs e)
+    private Task OnValueChanged(string? value)
     {
-        Value = e.Value?.ToString();
+        Value = value;
         return ValueChanged.InvokeAsync(Value);
     }
 
@@ -66,13 +79,19 @@
         busy = true;
         error = null;
         notConfigured = false;
+        stopped = false;
+        var ct = call.Begin();
         try
         {
             var before = Value ?? string.Empty;
-            var text = await Generate(before, instruction);
+            var text = await Generate(before, instruction, ct);
             previous = before;
             Value = text;
             await ValueChanged.InvokeAsync(Value);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            stopped = true;
         }
         catch (AiNotConfiguredException)
         {
@@ -86,9 +105,12 @@
         }
         finally
         {
+            call.End(ct);
             busy = false;
         }
     }
+
+    public void Dispose() => call.Dispose();
 
     private async Task UndoAsync()
     {

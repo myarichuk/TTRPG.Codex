@@ -195,6 +195,7 @@ else
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
                                      Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson"
+                                     Preview="@(text => WikiRender.ToHtml(noteMentions.Encode(text), wikiPages, noteMentions, Ctx.Campaign.Id, false))"
                                      Hint="@($"{L["Campaign.World.DescHint"]} {L["Campaign.Wiki.MentionHint"]}")" />
                     </div>
                     <ArtSlot ImageUrl="@ArtService.Url(editingRegion, editingLocation)" CanEdit="true" Landscape="true" Label="@L["Campaign.World.Art"]" Class="art-compact" Alt="@L["Campaign.World.ArtFor", editingLocation.Name]" TestId="location-art"
@@ -436,12 +437,12 @@ else
         }
     }
 
-    private Task<string> DescribeLocationAsync(string text, string instruction)
+    private Task<string> DescribeLocationAsync(string text, string instruction, CancellationToken ct)
     {
         var facts = new List<string> { $"Region: {editingRegion!.Name}" };
         var neighbours = editingRegion.Locations.Where(l => l.Id != editingLocation!.Id).Select(l => l.Name).Take(12).ToList();
         if (neighbours.Count > 0) facts.Add("Other places in the region: " + string.Join(", ", neighbours));
-        return Ai.DescribeAsync(Ctx.Campaign, string.IsNullOrWhiteSpace(editingLocation!.Name) ? "an unnamed place" : editingLocation.Name, "place on the world map", facts, text, instruction, AiAudience.Players, Ctx.UserId);
+        return Ai.DescribeAsync(Ctx.Campaign, string.IsNullOrWhiteSpace(editingLocation!.Name) ? "an unnamed place" : editingLocation.Name, "place on the world map", facts, text, instruction, AiAudience.Players, Ctx.UserId, ct);
     }
 
     private async Task SetLocationArtAsync(ArtImage? image)
@@ -465,8 +466,8 @@ else
         }
     }
 
-    private Task<ArtImage> GenerateLocationArtAsync() =>
-        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide);
+    private Task<ArtImage> GenerateLocationArtAsync(CancellationToken ct) =>
+        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
 
     private async Task RevealAsync(string regionId, string locationId)
     {

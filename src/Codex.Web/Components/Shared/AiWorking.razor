@@ -1,0 +1,19 @@
+@* What a box shows while the AI writes into it or draws for it: a spinner, what is happening, and a way to
+   stop. It is a live region, so a screen reader hears "Writing…" without moving focus. *@
+
+<div class="ai-working @Class" role="status" data-testid="@TestId">
+    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+    <span class="ai-working-text">@(Text ?? L["Common.Ai.Writing"])</span>
+    @if (OnStop.HasDelegate)
+    {
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="square" OnClick="OnStop" data-testid="@($"{TestId}-stop")">@L["Common.Ai.Stop"]</CodexButton>
+    }
+</div>
+
+@code {
+    /// <summary>What is happening; null reads "Writing…".</summary>
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public EventCallback OnStop { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? TestId { get; set; } = "ai-working";
+}

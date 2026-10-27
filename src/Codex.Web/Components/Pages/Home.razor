@@ -58,7 +58,7 @@ else
                     <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(role)</span>
                 </div>
                 <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
-                <p class="mb-0 small">@(string.IsNullOrWhiteSpace(campaign.Description) ? L["Page.Home.NoDescription"] : campaign.Description)</p>
+                <p class="mb-0 small campaign-pitch">@(campaign.Pitch() is { Length: > 0 } pitch ? pitch : L["Page.Home.NoDescription"])</p>
                 <div class="card-foot">
                     <span class="small-muted">@L["Page.Home.Members", campaign.Members.Count] · @L["Page.Home.Updated"] <LocalTime Value="campaign.UpdatedAt" Format="d MMM yyyy" /></span>
                     <div class="row-actions">
@@ -101,9 +101,15 @@ else
                     <div class="field-hint">@description</div>
                 }
             </div>
+            <div class="mb-3">
+                <label for="nc-tagline" class="field-label">@L["Page.Home.Tagline"]</label>
+                <input id="nc-tagline" class="field-input" @bind="newTagline" @bind:event="oninput" maxlength="@CampaignDocument.MaxTagline" placeholder="@L["Page.Home.TaglinePlaceholder"]" aria-describedby="nc-tagline-hint" data-testid="new-campaign-tagline" />
+                <div id="nc-tagline-hint" class="field-hint d-flex justify-content-between gap-2"><span>@L["Page.Home.TaglineHint"]</span><span aria-hidden="true">@newTagline.Length / @CampaignDocument.MaxTagline</span></div>
+            </div>
             <div class="mb-1">
                 <label for="nc-desc" class="field-label">@L["Page.Home.Description"]</label>
-                <textarea id="nc-desc" class="field-input" rows="2" @bind="newDescription" placeholder="@L["Page.Home.DescriptionPlaceholder"]"></textarea>
+                <textarea id="nc-desc" class="field-input" rows="4" @bind="newDescription" placeholder="@L["Page.Home.DescriptionPlaceholder"]" aria-describedby="nc-desc-hint"></textarea>
+                <div id="nc-desc-hint" class="field-hint">@L["Page.Home.DescriptionHint"]</div>
             </div>
             @if (createError != null)
             {
@@ -126,6 +132,7 @@ else
     private string newName = string.Empty;
     private string newSystemId = string.Empty;
     private string newDescription = string.Empty;
+    private string newTagline = string.Empty;
     private string? createError;
     private bool creating;
 
@@ -172,6 +179,7 @@ else
         createError = null;
         newName = string.Empty;
         newDescription = string.Empty;
+        newTagline = string.Empty;
         if (string.IsNullOrEmpty(newSystemId))
         {
             newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? string.Empty;
@@ -206,6 +214,7 @@ else
                 Id = Guid.NewGuid().ToString(),
                 OwnerId = currentUserId,
                 Name = newName.Trim(),
+                Tagline = CampaignDocument.CleanTagline(newTagline),
                 Description = newDescription.Trim(),
                 SystemId = newSystemId,
                 UpdatedAt = DateTime.UtcNow

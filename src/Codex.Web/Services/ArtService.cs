@@ -154,9 +154,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
     /// <summary>Draws a picture with the user's image model. <paramref name="visual"/> is the entry's
     /// art prompt when it has one, otherwise a short description.</summary>
-    public async Task<ArtImage> GenerateAsync(string userId, string subject, string subjectKind, string? visual, ArtShape shape)
+    public async Task<ArtImage> GenerateAsync(string userId, string subject, string subjectKind, string? visual, ArtShape shape, CancellationToken ct = default)
     {
-        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape);
+        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape, ct);
         if (!RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
         {
             throw new LocalizedException("Service.Art.BadType", image.ContentType);

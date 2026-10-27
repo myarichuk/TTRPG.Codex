@@ -12,6 +12,7 @@
 @inject ArtService Art
 @inject NavigationManager Nav
 @inject ILogger<WikiSection> Logger
+@implements IDisposable
 
 @* The world wiki: DM-written pages linked with [[Page title]], each DM-only or shared with the
    party; players discuss a page with notes (private to them and the DM, or for the whole party). *@
@@ -59,11 +60,15 @@ else if (Mode == "edit")
                         </div>
                     </div>
                     <label for="wiki-body" class="field-label">@L["Campaign.Wiki.Field.Text"]</label>
-                    <textarea id="wiki-body" class="field-input wiki-textarea mb-2" rows="18" @bind="draft.Body" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="wiki-body-hint" data-testid="wiki-body" placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"></textarea>
-                    <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"]</div>
+                    <MarkdownEditor Id="wiki-body" Title="@(string.IsNullOrWhiteSpace(draft.Title) ? L["Campaign.Wiki.Field.Text"] : draft.Title)" Rows="18" Class="wiki-editor"
+                                    @bind-Value="draft.Body" Mentions="@mentionsJson" DescribedBy="wiki-body-hint" TestId="wiki-body" Placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"
+                                    Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false))"
+                                    Busy="expanding" BusyText="@L["Campaign.Wiki.Writing"]" OnStop="aiCall.Stop">
+                        <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"]</div>
+                    </MarkdownEditor>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding"><LucideIcon IconName="sparkles" Size="14" /> @(expanding ? L["Campaign.Wiki.Writing"] : L["Campaign.Wiki.ExpandWithAi"])</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding" data-testid="wiki-expand"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Wiki.ExpandWithAi"]</CodexButton>
                         <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">@L["Campaign.Wiki.Cancel"]</a>
                         @if (current != null)
                         {
@@ -375,6 +380,7 @@ else
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
     private string aiInstruction = string.Empty;
     private bool expanding;
+    private readonly AiCall aiCall = new();
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
     private WorldBuilderWizard builder = null!;
@@ -508,8 +514,8 @@ else
         return null;
     }
 
-    private Task<ArtImage> GenerateArtAsync() =>
-        Art.GenerateAsync(Ctx.UserId, draft.Title, "place", TextFormatting.Summary(mentions.Plain(draft.Body), 300), ArtShape.Wide);
+    private Task<ArtImage> GenerateArtAsync(CancellationToken ct) =>
+        Art.GenerateAsync(Ctx.UserId, draft.Title, "place", TextFormatting.Summary(mentions.Plain(draft.Body), 300), ArtShape.Wide, ct);
 
     private void AppendLink(WikiPageDocument target) => draft.Body = (draft.Body.TrimEnd() + $" [[{target.Title}]]").Trim();
 
@@ -603,11 +609,16 @@ else
     {
         if (expanding) return;
         expanding = true;
+        var ct = aiCall.Begin();
         try
         {
             var related = WikiText.ExtractLinks(draft.Body).Concat((pages ?? new()).Select(p => p.Title)).Distinct(StringComparer.OrdinalIgnoreCase);
-            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, draft.Body, related, aiInstruction, draft.Visibility == WikiVisibility.Party ? AiAudience.Players : AiAudience.Dm, Ctx.UserId);
+            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, draft.Body, related, aiInstruction, draft.Visibility == WikiVisibility.Party ? AiAudience.Players : AiAudience.Dm, Ctx.UserId, ct);
             Ctx.Notify(Flash.Info(L["Campaign.Wiki.AiDraftReady"]));
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            Ctx.Notify(Flash.Info(L["Common.Ai.Stopped"]));
         }
         catch (AiNotConfiguredException)
         {
@@ -620,9 +631,12 @@ else
         }
         finally
         {
+            aiCall.End(ct);
             expanding = false;
         }
     }
+
+    public void Dispose() => aiCall.Dispose();
 
     private async Task AddNoteAsync()
     {

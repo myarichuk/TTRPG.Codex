@@ -459,4 +459,7 @@
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Создать страницу</value></data>
   <data name="Campaign.World.CreatePageLabel" xml:space="preserve"><value>Создать страницу вики: {0}</value></data>
   <data name="Campaign.World.PageCreated" xml:space="preserve"><value>Страница вики создана: {0}.</value></data>
+  <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>Слоган</value></data>
+  <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>Одна-две короткие фразы для карточки кампании и заголовка.</value></data>
+  <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>Полное описание, которое игроки видят в обзоре: мир, завязка, чего ожидать.</value></data>
 </root>

@@ -600,7 +600,7 @@ public sealed class WorldBuilderService(AiProviderService providers, ISystemCata
     }
 
     private static string CampaignContext(CampaignDocument campaign) =>
-        $"{campaign.Name}{(string.IsNullOrWhiteSpace(campaign.Description) ? "" : ": " + TextFormatting.Summary(campaign.Description, 300))}";
+        $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}";
 
     private static void DmOnly(CampaignAccess access)
     {
