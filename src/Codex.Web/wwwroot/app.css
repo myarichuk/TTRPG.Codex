@@ -1526,6 +1526,16 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
     padding: 0.85rem 1.4rem; border-top: 1px solid var(--border); background: var(--surface-2);
 }
 /* The AI is working: a bordered card with a pulsing orb and a sweeping bar, so a long wait never looks like a hang. */
+/* The world builder's conversation: the DM's lines at the end side, the AI's at the start, what it looked up as quiet notes. */
+.world-chat-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.world-chat-line { display: flex; }
+.world-chat-dm { justify-content: flex-end; }
+.world-chat-bubble { max-width: min(46rem, 90%); padding: 0.6rem 0.85rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); overflow-wrap: anywhere; }
+.world-chat-dm .world-chat-bubble { background: var(--accent-soft); border-color: var(--accent); white-space: pre-wrap; }
+.world-chat-model .world-chat-bubble > :last-child { margin-bottom: 0; }
+.world-chat-note { font-size: 0.85rem; color: var(--text-3); display: inline-flex; gap: 0.35rem; align-items: center; }
+.world-proposal-entry { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+.world-proposal-entry:last-child { border-bottom: 0; }
 .ai-working { position: relative; overflow: hidden; display: flex; align-items: center; gap: 0.75rem; margin: 0 0 1rem; padding: 0.85rem 1rem; border: 1px solid var(--arcane); border-radius: 10px; background: var(--arcane-soft); color: var(--text); font-weight: 600; }
 .ai-working-orb { display: inline-grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: 50%; color: var(--arcane); background: var(--surface); box-shadow: 0 0 0 0 var(--arcane); animation: ai-orb 1.6s ease-out infinite; }
 .ai-working-bar { position: absolute; inset-inline: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--arcane), transparent) 0 0 / 40% 100% no-repeat; animation: ai-sweep 1.4s linear infinite; }
@@ -1535,20 +1545,6 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .wizard-checklist li { display: flex; align-items: center; gap: 0.55rem; color: var(--text-3); }
 .wizard-checklist li.done { color: var(--success); }
 .wizard-checklist .small-muted { margin-inline-start: auto; text-align: end; }
-/* World builder: the AI's drafts as cards to tick, rename and write in full. */
-.world-drafts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
-.world-draft { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 0.75rem 0.9rem; }
-.world-draft.is-focused { border-color: var(--border-strong); box-shadow: var(--frame); }
-.world-draft.is-off { opacity: 0.6; }
-.world-draft-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.45rem; }
-.world-draft-state { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 0.3rem; color: var(--success); }
-.world-draft-name { font-weight: 700; margin-bottom: 0.35rem; }
-.world-steer { display: grid; gap: 0.3rem; }
-.world-steer-row { display: flex; gap: 0.5rem; align-items: center; }
-.world-steer-row .field-input { flex: 1; min-width: 0; }
-.world-draft-ask { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
-.world-draft-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-inline-start: 1.6rem; }
-.world-draft-stats + .world-draft-ask { margin-top: 0; margin-bottom: 0.6rem; }
 .link-button { background: none; border: 0; padding: 0; color: var(--text); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link-button:hover { color: var(--accent-hover); }
 @media (max-width: 1000px) {

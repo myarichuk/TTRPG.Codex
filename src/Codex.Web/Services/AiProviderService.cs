@@ -110,6 +110,10 @@ public sealed class AiProviderService(
         return new AiAssistant(client);
     }
 
+    /// <summary>The user's text model itself, for a conversation that calls tools (the world-building chat).</summary>
+    public async Task<IChatClient> ChatClientForAsync(string userId) =>
+        ClientFor(await users.GetUserByIdAsync(userId)) ?? throw new AiNotConfiguredException();
+
     public async Task<bool> IsConfiguredForAsync(string userId) => ClientFor(await users.GetUserByIdAsync(userId)) != null;
 
     public bool ServerImageConfigured => AiImageGenerator.Problem(serverImageConfig) == null;

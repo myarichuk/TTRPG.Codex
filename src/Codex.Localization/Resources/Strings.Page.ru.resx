@@ -207,4 +207,5 @@
   <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>Одна фраза, которая цепляет, например «Ограбление в летающем городе».</value></data>
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Видно на карточке кампании и под её названием.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>Полное описание на странице обзора кампании. Работает Markdown; дополнить можно позже в настройках.</value></data>
+  <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>Строитель мира</value></data>
 </root>

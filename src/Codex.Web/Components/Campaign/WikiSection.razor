@@ -23,10 +23,6 @@
 {
     <PromoteToCastDialog @ref="promote" OnPromoted="OnPromotedAsync" />
 }
-@if (aiReady)
-{
-    <WorldBuilderWizard @ref="builder" OnSaved="OnBuiltAsync" />
-}
 
 @if (pages == null)
 {
@@ -339,9 +335,10 @@ else
                     <details class="popover-menu" data-testid="wiki-build-ai">
                         <summary class="cx-btn cx-etched cx-arcane"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Menu"] <LucideIcon IconName="chevron-down" Size="16" /></summary>
                         <div class="popover-panel menu-panel">
-                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("faction"))" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></button>
-                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("settlement"))" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></button>
-                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("quest"))" data-testid="build-quest-ai"><LucideIcon IconName="scroll" Size="18" /><span>@L["WorldBuilder.Open.Quest"]</span></button>
+                            <a class="menu-item" href="@Ctx.BasePath/build/faction" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></a>
+                            <a class="menu-item" href="@Ctx.BasePath/build/settlement" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></a>
+                            <a class="menu-item" href="@Ctx.BasePath/build/quest" data-testid="build-quest-ai"><LucideIcon IconName="scroll" Size="18" /><span>@L["WorldBuilder.Open.Quest"]</span></a>
+                            <a class="menu-item" href="@Ctx.BasePath/build" data-testid="build-chat-ai"><LucideIcon IconName="message-square" Size="18" /><span>@L["WorldBuilder.Open.Chat"]</span></a>
                         </div>
                     </details>
                 }
@@ -444,7 +441,6 @@ else
     private readonly AiCall aiCall = new();
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
-    private WorldBuilderWizard builder = null!;
     private bool aiReady;
     // The editor's content as loaded or last saved, to tell whether leaving would lose anything.
     private string savedDraft = string.Empty;
@@ -463,22 +459,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         aiReady = Ctx.IsDm && await Ai.IsConfiguredAsync(Ctx.UserId);
-    }
-
-    /// <summary>The world builder saved its drafts hidden from players; open the first page it wrote.</summary>
-    private async Task OnBuiltAsync(WorldBuildResult result)
-    {
-        Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
-        if (result.Actors.Count > 0 || result.Places.Count > 0) await Ctx.ReloadAsync();
-        loadedKey = null;
-        if (result.Pages.FirstOrDefault() is { } page)
-        {
-            Nav.NavigateTo($"{Ctx.BasePath}/wiki/{page.Slug}");
-        }
-        else
-        {
-            await LoadAsync();
-        }
     }
 
     protected override async Task OnParametersSetAsync()

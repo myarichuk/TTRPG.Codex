@@ -4,183 +4,21 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="WorldBuilder.Title" xml:space="preserve"><value>Конструктор мира</value></data>
-  <data name="WorldBuilder.Close" xml:space="preserve"><value>Закрыть без сохранения</value></data>
-  <data name="WorldBuilder.Steps" xml:space="preserve"><value>Шаги</value></data>
-  <data name="WorldBuilder.Step.Questions" xml:space="preserve"><value>Вопросы</value></data>
-  <data name="WorldBuilder.Step.Drafts" xml:space="preserve"><value>Черновики</value></data>
-  <data name="WorldBuilder.Step.Save" xml:space="preserve"><value>Сохранение</value></data>
-  <data name="WorldBuilder.Required" xml:space="preserve"><value>(обязательно)</value></data>
-  <data name="WorldBuilder.ChooseType" xml:space="preserve"><value>— выберите тип —</value></data>
-  <data name="WorldBuilder.Surprise" xml:space="preserve"><value>На усмотрение ИИ</value></data>
-  <data name="WorldBuilder.NoPreference" xml:space="preserve"><value>Без разницы</value></data>
-  <data name="WorldBuilder.SurpriseText" xml:space="preserve"><value>Оставьте пустым, и решит ИИ</value></data>
-  <data name="WorldBuilder.Drafts.Empty" xml:space="preserve"><value>Ответьте на вопросы, затем попросите у ИИ идеи.</value></data>
-  <data name="WorldBuilder.Drafts.Intro" xml:space="preserve"><value>Отметьте, что оставить, переименуйте что угодно и попросите ИИ написать каждый черновик полностью. Ничего не сохраняется, пока вы не нажмёте «Сохранить».</value></data>
-  <data name="WorldBuilder.Drafts.WriteAll" xml:space="preserve"><value>Написать все отмеченные</value></data>
-  <data name="WorldBuilder.Drafts.NewIdeas" xml:space="preserve"><value>Другие идеи</value></data>
-  <data name="WorldBuilder.Drafts.Keep" xml:space="preserve"><value>Включить «{0}»</value></data>
-  <data name="WorldBuilder.Drafts.Written" xml:space="preserve"><value>Текст готов</value></data>
-  <data name="WorldBuilder.Drafts.Name" xml:space="preserve"><value>Название</value></data>
-  <data name="WorldBuilder.Drafts.Write" xml:space="preserve"><value>Написать</value></data>
-  <data name="WorldBuilder.Drafts.Rewrite" xml:space="preserve"><value>Переписать</value></data>
-  <data name="WorldBuilder.Drafts.Writing" xml:space="preserve"><value>Пишется…</value></data>
-  <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>Показать</value></data>
-  <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{# идея пропущена: она не подходит для этого мастера.} few{# идеи пропущены: они не подходят для этого мастера.} many{# идей пропущено: они не подходят для этого мастера.} other{# идеи пропущено: они не подходят для этого мастера.}}</value></data>
-  <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>только идея</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>Всё сохраняется скрытым от игроков: записи библиотеки как черновики, которые видите только вы, страницы вики и тайны только для мастера, персонажи в составе и места скрыты. Открыть их можно позже.</value></data>
-  <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>также на странице «Мир»</value></data>
-  <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>Также добавить на страницу «Мир» как место, скрытое от игроков</value></data>
-  <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>Место</value></data>
-  <data name="WorldBuilder.Drafts.Bestiary" xml:space="preserve"><value>Также добавить в список бестиария</value></data>
-  <data name="WorldBuilder.Save.AlsoBestiary" xml:space="preserve"><value>также в списке бестиария</value></data>
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>место</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>поселение</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>Создать с ИИ</value></data>
   <data name="WorldBuilder.Open.Quest" xml:space="preserve"><value>Создать задание с ИИ</value></data>
   <data name="WorldBuilder.Tag.quest" xml:space="preserve"><value>задание</value></data>
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>Создать поселение с ИИ</value></data>
-  <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>также в составе</value></data>
-  <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>Также добавить в состав, скрытым от игроков</value></data>
-  <data name="WorldBuilder.Kind.Npc" xml:space="preserve"><value>Персонаж</value></data>
-  <data name="WorldBuilder.Kind.Fact" xml:space="preserve"><value>Тайна (предания)</value></data>
   <data name="WorldBuilder.Tag.homebrew" xml:space="preserve"><value>собственный материал</value></data>
   <data name="WorldBuilder.Tag.faction" xml:space="preserve"><value>фракция</value></data>
   <data name="WorldBuilder.Tag.npc" xml:space="preserve"><value>персонаж</value></data>
   <data name="WorldBuilder.Open.Faction" xml:space="preserve"><value>Создать фракцию с ИИ</value></data>
-  <data name="WorldBuilder.Busy.Writing" xml:space="preserve"><value>ИИ пишет «{0}»…</value></data>
-  <data name="WorldBuilder.Busy.Outline" xml:space="preserve"><value>ИИ придумывает идеи…</value></data>
-  <data name="WorldBuilder.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
-  <data name="WorldBuilder.PreviewEmpty" xml:space="preserve"><value>Напишите черновик, чтобы увидеть его здесь.</value></data>
-  <data name="WorldBuilder.Outline" xml:space="preserve"><value>Попросить идеи</value></data>
-  <data name="WorldBuilder.OutlineAgain" xml:space="preserve"><value>Другие идеи</value></data>
-  <data name="WorldBuilder.Next" xml:space="preserve"><value>Далее: {0}</value></data>
-  <data name="WorldBuilder.Save" xml:space="preserve"><value>Сохранить</value></data>
-  <data name="WorldBuilder.Saving" xml:space="preserve"><value>Сохранение…</value></data>
-  <data name="WorldBuilder.Kind.Wiki" xml:space="preserve"><value>Страница вики</value></data>
-  <data name="WorldBuilder.Error.Answer" xml:space="preserve"><value>Сначала ответьте: «{0}».</value></data>
-  <data name="WorldBuilder.Error.NotConfigured" xml:space="preserve"><value>Поставщик ИИ ещё не настроен.</value></data>
-  <data name="WorldBuilder.Error.Failed" xml:space="preserve"><value>ИИ не смог это сделать: {0}</value></data>
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Строить мир может только мастер.</value></data>
-  <data name="WorldBuilder.Error.Required" xml:space="preserve"><value>Сначала ответьте на обязательные вопросы.</value></data>
-  <data name="WorldBuilder.Error.Unusable" xml:space="preserve"><value>Модель не вернула пригодный черновик. Попробуйте ещё раз или выберите другую модель в настройках ИИ.</value></data>
-  <data name="WorldBuilder.Error.Unreachable" xml:space="preserve"><value>Не удалось связаться с поставщиком ИИ. Проверьте подключение и адрес в настройках ИИ, затем попробуйте ещё раз.</value></data>
-  <data name="WorldBuilder.Error.TooSlow" xml:space="preserve"><value>Модель слишком долго не отвечала. Попробуйте ещё раз или выберите более быструю модель в настройках ИИ.</value></data>
-  <data name="WorldBuilder.Drafts.TooMany" xml:space="preserve"><value>ИИ предложил больше {0} идей; оставлены только первые {0}.</value></data>
-  <data name="WorldBuilder.Replace.Title" xml:space="preserve"><value>Заменить черновики?</value></data>
-  <data name="WorldBuilder.Replace.Body" xml:space="preserve"><value>Новые идеи заменят текущие черновики, включая уже написанные.</value></data>
-  <data name="WorldBuilder.Replace.Confirm" xml:space="preserve"><value>Заменить</value></data>
-  <data name="WorldBuilder.Replace.Keep" xml:space="preserve"><value>Оставить</value></data>
-  <data name="WorldBuilder.Discard.Title" xml:space="preserve"><value>Отбросить черновики?</value></data>
-  <data name="WorldBuilder.Discard.Body" xml:space="preserve"><value>Ещё ничего не сохранено. Закрыть и потерять эти черновики?</value></data>
-  <data name="WorldBuilder.Discard.Confirm" xml:space="preserve"><value>Отбросить</value></data>
-  <data name="WorldBuilder.Discard.Keep" xml:space="preserve"><value>Продолжить</value></data>
   <data name="WorldBuilder.Saved" xml:space="preserve"><value>{0, plural, one{Сохранён # черновик, скрытый от игроков.} few{Сохранено # черновика, скрытых от игроков.} many{Сохранено # черновиков, скрытых от игроков.} other{Сохранено # черновика, скрытых от игроков.}}</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>Создать с ИИ</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.Title" xml:space="preserve"><value>Собственный материал с ИИ</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.Intro" xml:space="preserve"><value>Ответьте на то, что вам важно, остальное оставьте ИИ. Он предложит запись, которую можно переименовать и переписать до сохранения.</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.type" xml:space="preserve"><value>Тип</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.concept" xml:space="preserve"><value>Что это?</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.concept.Hint" xml:space="preserve"><value>Одно-два предложения, например: проклятый фамильный меч, который шепчет своему владельцу.</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power" xml:space="preserve"><value>Сила</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.minor" xml:space="preserve"><value>Слабая (первые приключения)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.moderate" xml:space="preserve"><value>Средняя (опытная группа)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.major" xml:space="preserve"><value>Большая (высокие уровни)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.legendary" xml:space="preserve"><value>Легендарная (финал кампании)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone" xml:space="preserve"><value>Настроение</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.grim" xml:space="preserve"><value>Мрачное</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.whimsical" xml:space="preserve"><value>Причудливое</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.eerie" xml:space="preserve"><value>Жуткое</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.origin" xml:space="preserve"><value>Откуда это</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.origin.Hint" xml:space="preserve"><value>Место, создатель или легенда.</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.history" xml:space="preserve"><value>Также написать страницу вики о его истории (только для мастера)</value></data>
-  <data name="WorldBuilder.Recipe.faction.Title" xml:space="preserve"><value>Фракция с ИИ</value></data>
-  <data name="WorldBuilder.Recipe.faction.Intro" xml:space="preserve"><value>Ответьте на то, что вам важно, остальное оставьте ИИ. Он предложит фракцию, её людей и тайну; до сохранения любой черновик можно переименовать, переписать или снять отметку.</value></data>
-  <data name="WorldBuilder.Recipe.faction.group" xml:space="preserve"><value>Что это за группа?</value></data>
-  <data name="WorldBuilder.Recipe.faction.group.Hint" xml:space="preserve"><value>Например: торговая гильдия, культ, рыцарский орден, шайка контрабандистов.</value></data>
-  <data name="WorldBuilder.Recipe.faction.goal" xml:space="preserve"><value>Чего она хочет?</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods" xml:space="preserve"><value>Открыто или тайно?</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods.open" xml:space="preserve"><value>Открыто</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods.secret" xml:space="preserve"><value>Тайно</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods.mixed" xml:space="preserve"><value>Открытое лицо, скрытые цели</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach" xml:space="preserve"><value>Влияние</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach.local" xml:space="preserve"><value>Один город или квартал</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach.regional" xml:space="preserve"><value>Целый край</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach.world" xml:space="preserve"><value>Весь мир</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone" xml:space="preserve"><value>Настроение</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.grim" xml:space="preserve"><value>Мрачное</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.whimsical" xml:space="preserve"><value>Причудливое</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.eerie" xml:space="preserve"><value>Жуткое</value></data>
-  <data name="WorldBuilder.Recipe.faction.enemy" xml:space="preserve"><value>Кто ей противостоит?</value></data>
-  <data name="WorldBuilder.Recipe.faction.enemy.Hint" xml:space="preserve"><value>Соперник, правитель, чудовище или название страницы вики.</value></data>
-  <data name="WorldBuilder.Recipe.faction.people" xml:space="preserve"><value>Кого описать</value></data>
-  <data name="WorldBuilder.Recipe.faction.people.leader" xml:space="preserve"><value>Только лидера</value></data>
-  <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>Лидера и одного члена</value></data>
-  <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>Лидера и двух членов</value></data>
-  <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>Также написать тайну, которую может раскрыть группа (только для мастера, в преданиях)</value></data>
-  <data name="WorldBuilder.Recipe.settlement.Title" xml:space="preserve"><value>Поселение с ИИ</value></data>
-  <data name="WorldBuilder.Recipe.settlement.Intro" xml:space="preserve"><value>Ответьте на то, что вам важно, остальное оставьте ИИ. Он предложит поселение, его места, людей, силы и слухи; до сохранения любой черновик можно переименовать, переписать или снять отметку.</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size" xml:space="preserve"><value>Размер</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.village" xml:space="preserve"><value>Деревня</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.town" xml:space="preserve"><value>Городок</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.city" xml:space="preserve"><value>Город</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.metropolis" xml:space="preserve"><value>Большой город</value></data>
-  <data name="WorldBuilder.Recipe.settlement.land" xml:space="preserve"><value>Где оно?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.land.Hint" xml:space="preserve"><value>Местность вокруг, например: дельта реки, горный перевал, название края из вики.</value></data>
-  <data name="WorldBuilder.Recipe.settlement.knownFor" xml:space="preserve"><value>Чем оно известно?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.rulers" xml:space="preserve"><value>Кто им правит?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.trouble" xml:space="preserve"><value>Какая беда назревает?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone" xml:space="preserve"><value>Настроение</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.grim" xml:space="preserve"><value>Мрачное</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.whimsical" xml:space="preserve"><value>Причудливое</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.eerie" xml:space="preserve"><value>Жуткое</value></data>
-  <data name="WorldBuilder.Recipe.settlement.detail" xml:space="preserve"><value>Сколько написать</value></data>
-  <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>Набросок: 2 места, 3 персонажа, 1 фракция</value></data>
-  <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>Подробно: 4 места, 5 персонажей, 2 фракции</value></data>
-  <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>Также написать слухи, по которым может пойти группа (только для мастера, в преданиях)</value></data>
-  <data name="WorldBuilder.Recipe.quest.Title" xml:space="preserve"><value>Задание с ИИ</value></data>
-  <data name="WorldBuilder.Recipe.quest.Intro" xml:space="preserve"><value>Ответьте на то, что вам важно, остальное оставьте ИИ. Он предложит страницу задания, нужных людей и места, улики, а при желании существо или награду; до сохранения любой черновик можно переименовать, переписать или снять отметку.</value></data>
-  <data name="WorldBuilder.Recipe.quest.hook" xml:space="preserve"><value>Завязка</value></data>
-  <data name="WorldBuilder.Recipe.quest.hook.Hint" xml:space="preserve"><value>Как герои втягиваются, например: мольба незнакомца, кража, вызов.</value></data>
-  <data name="WorldBuilder.Recipe.quest.stakes" xml:space="preserve"><value>Что на кону?</value></data>
-  <data name="WorldBuilder.Recipe.quest.stakes.Hint" xml:space="preserve"><value>Что случится, если никто не вмешается.</value></data>
-  <data name="WorldBuilder.Recipe.quest.villain" xml:space="preserve"><value>Кто за этим стоит?</value></data>
-  <data name="WorldBuilder.Recipe.quest.length" xml:space="preserve"><value>Длительность</value></data>
-  <data name="WorldBuilder.Recipe.quest.length.oneShot" xml:space="preserve"><value>Одна сессия</value></data>
-  <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>Короткая арка (несколько сессий)</value></data>
-  <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>Длинная арка</value></data>
-  <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>Группа</value></data>
-  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>Насколько они опытны, в той мере, которой пользуется ваша игра, или совсем новички.</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>Настроение</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>Героическое</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>Мрачное</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.whimsical" xml:space="preserve"><value>Причудливое</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.eerie" xml:space="preserve"><value>Жуткое</value></data>
-  <data name="WorldBuilder.Recipe.quest.tieIn" xml:space="preserve"><value>Связать с</value></data>
-  <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>Необязательно: фракция, поселение или персонаж, уже описанные в вики.</value></data>
-  <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>Также написать собственное существо для злодея или его слуг (черновик в библиотеке)</value></data>
-  <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>Также написать собственный предмет-награду (черновик в библиотеке)</value></data>
-  <data name="WorldBuilder.Drafts.ChangeIdeas" xml:space="preserve"><value>Что изменить в этих идеях?</value></data>
-  <data name="WorldBuilder.Drafts.ChangeIdeas.Hint" xml:space="preserve"><value>Например: «мрачнее», «добавь соперника» или «убери угря». Написанные и переименованные черновики сохранят текст и название.</value></data>
-  <data name="WorldBuilder.Drafts.ChangeIdeas.Button" xml:space="preserve"><value>Изменить идеи</value></data>
-  <data name="WorldBuilder.Drafts.Ask" xml:space="preserve"><value>Попросить изменить</value></data>
-  <data name="WorldBuilder.Drafts.Ask.Label" xml:space="preserve"><value>Что изменить в «{0}»?</value></data>
-  <data name="WorldBuilder.Drafts.Ask.Hint" xml:space="preserve"><value>ИИ перепишет этот черновик на основе уже написанного; остальные черновики не изменятся.</value></data>
-  <data name="WorldBuilder.Drafts.Ask.Button" xml:space="preserve"><value>Переписать с этим изменением</value></data>
-  <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>Оставлены, но не отмечены, потому что вы их уже написали или переименовали: {0}.</value></data>
-  <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>ИИ меняет идеи…</value></data>
-  <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>Сначала напишите, что изменить.</value></data>
-  <data name="WorldBuilder.Drafts.Stats.Blank" xml:space="preserve"><value>Лист начнётся пустым.</value></data>
-  <data name="WorldBuilder.Drafts.Stats.From" xml:space="preserve"><value>Лист начнётся с характеристик: {0}.</value></data>
-  <data name="WorldBuilder.Drafts.Stats.Change" xml:space="preserve"><value>Выбрать характеристики из Библиотеки</value></data>
-  <data name="WorldBuilder.Drafts.Stats.Clear" xml:space="preserve"><value>Пустой лист</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Существа</value></data>
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Выбрать</value></data>
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>В Библиотеке нет существ для этой кампании.</value></data>
-  <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>также в составе, с характеристиками: {0}</value></data>
-  <data name="WorldBuilder.Kind.Entry" xml:space="preserve"><value>Запись библиотеки</value></data>
-  <data name="WorldBuilder.Preview.Showing" xml:space="preserve"><value>Показано: {0}</value></data>
+  <data name="WorldBuilder.Open.Chat" xml:space="preserve"><value>Что-то другое…</value></data>
 </root>

@@ -207,4 +207,5 @@
   <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>One sentence that sells it, e.g. “A heist in a city that floats.”</value></data>
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Shown on the campaign card and under its title.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>The full write-up, shown on the campaign’s overview. Markdown works; you can expand it later in Settings.</value></data>
+  <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>World builder</value></data>
 </root>

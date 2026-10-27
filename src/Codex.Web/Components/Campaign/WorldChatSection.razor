@@ -1,0 +1,391 @@
+@using Codex.Core
+@using Codex.Core.AI
+@using Codex.Core.WorldBuilder
+@using Codex.Persistence
+@using Microsoft.AspNetCore.WebUtilities
+@inject WorldChatSessions Sessions
+@inject WorldBuilderService Builder
+@inject IRegionRepository RegionRepo
+@inject AiFeatures Ai
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject ILogger<WorldChatSection> Logger
+@implements IDisposable
+
+@* The world builder: a conversation with the DM's own model, which reads the campaign through tools and proposes related
+   pages, places, people, secrets and homebrew. A proposal is saved only when the DM applies it, hidden from players. *@
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">@L["WorldChat.Title"]</h2>
+        <p class="page-subtitle">@L["WorldChat.Subtitle"]</p>
+    </div>
+    @if (chat != null && (chat.Lines.Count > 0 || chat.Proposal != null))
+    {
+        <div class="row-actions">
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RestartAsync" Disabled="@busy" data-testid="world-chat-restart"><LucideIcon IconName="rotate-ccw" Size="18" /> @L["WorldChat.Restart"]</CodexButton>
+        </div>
+    }
+</div>
+
+@if (!Ctx.IsDm)
+{
+    <div class="empty"><p>@L["WorldChat.DmOnly"]</p></div>
+}
+else if (!aiReady)
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="sparkles" Size="28" /></div>
+        <h3>@L["WorldChat.NoAi.Title"]</h3>
+        <p>@L["WorldChat.NoAi.Body"]</p>
+        <a href="/settings/ai" class="cx-btn cx-plaque">@L["WorldChat.NoAi.Settings"]</a>
+    </div>
+}
+else if (chat != null)
+{
+    <div class="row g-3">
+        <div class="@(chat.Proposal != null || result != null ? "col-lg-7" : "col-12")">
+            <section class="panel world-chat" aria-labelledby="world-chat-heading">
+                <h3 id="world-chat-heading" class="visually-hidden">@L["WorldChat.Conversation"]</h3>
+                @if (chat.Lines.Count == 0 && !busy)
+                {
+                    <p class="small-muted">@L["WorldChat.Intro"]</p>
+                    <div class="chips mb-3" role="group" aria-label="@L["WorldChat.Starters"]">
+                        @foreach (var key in StarterKeys)
+                        {
+                            <button type="button" class="chip" @onclick="() => UseStarter(key)" data-testid="world-chat-starter-@key">@L[$"WorldChat.Starter.{key}.Label"]</button>
+                        }
+                    </div>
+                }
+                <ol class="world-chat-log" role="log" aria-live="polite" aria-relevant="additions" data-testid="world-chat-log">
+                    @foreach (var line in chat.Lines)
+                    {
+                        <li class="world-chat-line world-chat-@line.Speaker.ToString().ToLowerInvariant()">
+                            @switch (line.Speaker)
+                            {
+                                case WorldChatSpeaker.Dm:
+                                    <span class="visually-hidden">@L["WorldChat.You"]: </span>
+                                    <div class="world-chat-bubble">@line.Text</div>
+                                    break;
+                                case WorldChatSpeaker.Model:
+                                    <span class="visually-hidden">@L["WorldChat.Model"]: </span>
+                                    <div class="world-chat-bubble rules-text">@((MarkupString)TextFormatting.ToHtml(line.Text))</div>
+                                    break;
+                                default:
+                                    <div class="world-chat-note"><LucideIcon IconName="search" Size="14" /> @line.Text</div>
+                                    break;
+                            }
+                        </li>
+                    }
+                    @foreach (var line in working)
+                    {
+                        <li class="world-chat-line world-chat-tool"><div class="world-chat-note"><LucideIcon IconName="search" Size="14" /> @line.Text</div></li>
+                    }
+                </ol>
+                @if (busy)
+                {
+                    <AiWorking Text="@L["WorldChat.Working"]" OnStop="aiCall.Stop" TestId="world-chat-working" />
+                }
+                else if (error != null)
+                {
+                    <p class="text-danger mt-2" role="alert">@error</p>
+                }
+                <form class="world-chat-form mt-3" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
+                    <label for="world-chat-input" class="visually-hidden">@L["WorldChat.MessageLabel"]</label>
+                    <textarea id="world-chat-input" class="field-input" rows="3" @bind="draft" @bind:event="oninput" readonly="@busy"
+                              placeholder="@L["WorldChat.Placeholder"]" aria-describedby="world-chat-hint" data-testid="world-chat-input"
+                              @onkeydown="OnKeyAsync"></textarea>
+                    <div class="d-flex gap-2 align-items-center flex-wrap mt-2">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || string.IsNullOrWhiteSpace(draft))" data-testid="world-chat-send"><LucideIcon IconName="send" Size="16" /> @L["WorldChat.Send"]</CodexButton>
+                        <span id="world-chat-hint" class="field-hint mb-0">@L["WorldChat.Hint"]</span>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        @if (chat.Proposal is { } proposal)
+        {
+            <div class="col-lg-5">
+                <section class="panel world-proposal" aria-labelledby="world-proposal-heading" data-testid="world-proposal">
+                    <div class="panel-title"><h3 id="world-proposal-heading" class="h6"><LucideIcon IconName="clipboard-check" Size="14" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3></div>
+                    @if (!string.IsNullOrWhiteSpace(proposal.Summary))
+                    {
+                        <p>@proposal.Summary</p>
+                    }
+                    <p class="field-hint">@L["WorldChat.Proposal.Hint"]</p>
+                    @if (chat.ProposalWarnings.Count > 0)
+                    {
+                        <details class="mb-2">
+                            <summary class="small text-warning">@L["WorldChat.Proposal.Warnings", chat.ProposalWarnings.Count]</summary>
+                            <ul class="small mb-0">
+                                @foreach (var warning in chat.ProposalWarnings)
+                                {
+                                    <li>@warning</li>
+                                }
+                            </ul>
+                        </details>
+                    }
+                    @foreach (var group in proposal.Drafts.GroupBy(d => d.Kind).OrderBy(g => Array.IndexOf(KindOrder, g.Key)))
+                    {
+                        <h4 class="eyebrow mt-3">@L[$"WorldChat.Kind.{group.Key}"]</h4>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var d in group)
+                            {
+                                var id = $"proposal-{d.Ref}";
+                                <li class="world-proposal-entry" data-testid="world-proposal-entry">
+                                    <div class="field-check">
+                                        <input id="@id" type="checkbox" class="field-box" checked="@d.Selected" @onchange="e => d.Selected = (bool)(e.Value ?? false)" disabled="@applying" />
+                                        <label for="@id"><strong>@d.Name</strong>@Detail(proposal, d)</label>
+                                    </div>
+                                    @if (d.Kind == DraftKinds.Npc)
+                                    {
+                                        <div class="field-check ms-4">
+                                            <input id="@id-cast" type="checkbox" class="field-box" checked="@d.Cast" disabled="@(!d.Selected || applying)" @onchange="e => d.Cast = (bool)(e.Value ?? false)" data-testid="world-proposal-cast" />
+                                            <label for="@id-cast" class="small">@(d.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"])</label>
+                                        </div>
+                                    }
+                                    else if (d.Kind == DraftKinds.Homebrew && d.Bestiary)
+                                    {
+                                        <div class="small-muted ms-4">@L["WorldChat.Proposal.Bestiary"]</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(d.Body))
+                                    {
+                                        <details class="ms-4">
+                                            <summary class="small">@L["WorldChat.Proposal.Read"]</summary>
+                                            <div class="rules-text small mt-1">@((MarkupString)TextFormatting.ToHtml(WorldBundleParser.ResolveLinks(d.Body, proposal, keepLinks: false)))</div>
+                                        </details>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                    @if (applyError != null)
+                    {
+                        <p class="text-danger mt-2" role="alert">@applyError</p>
+                    }
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="ApplyAsync" Disabled="@(applying || busy || !proposal.Drafts.Any(d => d.Selected))" data-testid="world-proposal-apply">
+                            <LucideIcon IconName="check" Size="16" /> @L["WorldChat.Proposal.Apply", proposal.Drafts.Count(d => d.Selected)]
+                        </CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="Discard" Disabled="@(applying || busy)" data-testid="world-proposal-discard">@L["WorldChat.Proposal.Discard"]</CodexButton>
+                    </div>
+                    @if (applying)
+                    {
+                        <AiWorking Text="@L["WorldChat.Proposal.Applying"]" TestId="world-proposal-applying" />
+                    }
+                </section>
+            </div>
+        }
+        else if (result != null)
+        {
+            <div class="col-lg-5">
+                <section class="panel" aria-labelledby="world-result-heading" data-testid="world-result">
+                    <div class="panel-title"><h3 id="world-result-heading" class="h6"><LucideIcon IconName="check" Size="14" Class="title-icon" /> @L["WorldChat.Result.Title", result.Count]</h3></div>
+                    <p class="field-hint">@L["WorldChat.Result.Hint"]</p>
+                    <ul class="link-list mb-0">
+                        @foreach (var written in result.Pages)
+                        {
+                            <li><a href="@Ctx.BasePath/wiki/@written.Slug"><LucideIcon IconName="book-open" Size="14" /> @written.Title</a></li>
+                        }
+                        @foreach (var actor in result.Actors)
+                        {
+                            <li><a href="@Ctx.BasePath/actors/@actor.Id"><LucideIcon IconName="user" Size="14" /> @actor.Name</a></li>
+                        }
+                        @foreach (var place in result.Places)
+                        {
+                            <li><a href="@Ctx.BasePath/world#place-@place.Id"><LucideIcon IconName="map-pin" Size="14" /> @place.Name</a></li>
+                        }
+                        @foreach (var entry in result.Entries)
+                        {
+                            <li><a href="@Ctx.BasePath/library/@entry.Type/@entry.EntryId"><LucideIcon IconName="book-marked" Size="14" /> @entry.Name</a></li>
+                        }
+                        @if (result.Facts.Count > 0)
+                        {
+                            <li><a href="@Ctx.BasePath/lore"><LucideIcon IconName="key-round" Size="14" /> @L["WorldChat.Result.Secrets", result.Facts.Count]</a></li>
+                        }
+                    </ul>
+                </section>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    /// <summary>A starter to put in the message box: "settlement", "faction", "quest", "people" or "homebrew" (with ?type=).</summary>
+    [Parameter] public string? Starter { get; set; }
+
+    private static readonly string[] StarterKeys = { "settlement", "faction", "quest", "people", "homebrew" };
+    private static readonly string[] KindOrder = { DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew };
+
+    private WorldChat? chat;
+    private bool aiReady;
+    private bool busy;
+    private bool applying;
+    private string draft = string.Empty;
+    private string? error;
+    private string? applyError;
+    private WorldBuildResult? result;
+    // What the model looked up during the turn under way, shown until its reply arrives.
+    private readonly List<WorldChatLine> working = new();
+    private readonly AiCall aiCall = new();
+    private string? startedWith;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Ctx.IsDm) return;
+        aiReady = await Ai.IsConfiguredAsync(Ctx.UserId);
+        chat = Sessions.For(Ctx.Campaign, Ctx.Access);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (chat == null || Starter == null || Starter == startedWith) return;
+        startedWith = Starter;
+        if (!StarterKeys.Contains(Starter)) return;
+        if (Starter == "homebrew")
+        {
+            var type = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("type", out var t) ? t.ToString() : null;
+            var label = type == null ? null : (await Builder.TypesAsync(Ctx.Campaign, Ctx.Access)).FirstOrDefault(x => string.Equals(x.Type, type, StringComparison.OrdinalIgnoreCase))?.Label;
+            draft = L["WorldChat.Starter.homebrew.Text", label ?? L["WorldChat.Starter.homebrew.Any"]];
+            return;
+        }
+
+        UseStarter(Starter);
+    }
+
+    private void UseStarter(string key)
+    {
+        draft = key == "homebrew" ? L["WorldChat.Starter.homebrew.Text", L["WorldChat.Starter.homebrew.Any"]] : L[$"WorldChat.Starter.{key}.Text"];
+        _ = JS.InvokeVoidAsync("codex.focus", "world-chat-input");
+    }
+
+    private async Task OnKeyAsync(KeyboardEventArgs e)
+    {
+        // Ctrl/Cmd+Enter sends; Enter alone makes a new line, as in the other long text boxes.
+        if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey)) await SendAsync();
+    }
+
+    private async Task SendAsync()
+    {
+        if (chat == null || busy || string.IsNullOrWhiteSpace(draft)) return;
+        var text = draft;
+        draft = string.Empty;
+        busy = true;
+        error = null;
+        result = null;
+        working.Clear();
+        var ct = aiCall.Begin();
+        try
+        {
+            await chat.SendAsync(text, line => InvokeAsync(() =>
+            {
+                working.Add(line);
+                StateHasChanged();
+            }), ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            error = L["Common.Ai.Stopped"];
+            draft = text;
+        }
+        catch (AiNotConfiguredException)
+        {
+            error = L["WorldChat.NoAi.Title"];
+            draft = text;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "World-building chat failed");
+            error = L["WorldChat.Error", L.Describe(ex)];
+            draft = text;
+        }
+        finally
+        {
+            aiCall.End(ct);
+            working.Clear();
+            busy = false;
+        }
+
+        if (chat.Proposal != null) await LoadPlacesAsync();
+    }
+
+    private async Task ApplyAsync()
+    {
+        if (chat?.Proposal == null || applying) return;
+        applying = true;
+        applyError = null;
+        try
+        {
+            result = await chat.ApplyAsync();
+            Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
+            if (result.Actors.Count > 0 || result.Places.Count > 0) await Ctx.ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            // What was stored stays stored (each entry remembers it), so Apply again only adds the rest.
+            Logger.LogError(ex, "Applying a world-building proposal failed");
+            applyError = L["WorldChat.Proposal.Failed", L.Describe(ex)];
+        }
+        finally
+        {
+            applying = false;
+        }
+    }
+
+    private void Discard()
+    {
+        chat?.Discard();
+        applyError = null;
+    }
+
+    private void RestartAsync()
+    {
+        aiCall.Stop();
+        chat = Sessions.Restart(Ctx.Campaign, Ctx.Access);
+        result = null;
+        error = null;
+        applyError = null;
+        draft = string.Empty;
+    }
+
+    /// <summary>" — settlement in Greyharbour": what kind of entry it is and, for a place, where it goes.</summary>
+    private string Detail(WorldBundle proposal, WorldDraft d)
+    {
+        var parts = new List<string>();
+        if (d.Kind == DraftKinds.Place)
+        {
+            if (d.PlaceKind != null) parts.Add(L[$"Campaign.Places.Kind.{(d.PlaceKind == "site" ? "Site" : char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..])}"]);
+            var parent = d.Parent == null ? null
+                : d.Parent.StartsWith(WorldBundle.ExistingPrefix, StringComparison.Ordinal) ? PlaceName(d.Parent)
+                : proposal.Find(d.Parent)?.Name;
+            if (parent != null) parts.Add(L["Campaign.Places.InPlace", parent]);
+            else if (!string.IsNullOrWhiteSpace(proposal.Region)) parts.Add(L["Campaign.Places.InPlace", proposal.Region]);
+        }
+        else if (d.Kind == DraftKinds.Wiki && d.PageKind is "faction" or "quest")
+        {
+            parts.Add(L[$"Campaign.Wiki.Kind.{(d.PageKind == "faction" ? "Faction" : "Quest")}"]);
+        }
+        else if (d.Kind == DraftKinds.Homebrew && d.Type != null)
+        {
+            parts.Add(d.Type);
+        }
+
+        return parts.Count == 0 ? string.Empty : " — " + string.Join(", ", parts);
+    }
+
+    private string? PlaceName(string key)
+    {
+        var id = key[(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix).Length..];
+        return placeNames.GetValueOrDefault(id) ?? L["WorldChat.Proposal.ExistingPlace"];
+    }
+
+    // The campaign's places by id, to name an existing parent on the proposal card; read again after each turn.
+    private Dictionary<string, string> placeNames = new();
+
+    private async Task LoadPlacesAsync() =>
+        placeNames = (await RegionRepo.GetVisibleForCampaignAsync(Ctx.Access)).SelectMany(r => r.Locations).GroupBy(l => l.Id).ToDictionary(g => g.Key, g => g.First().Name);
+
+    public void Dispose() => aiCall.Dispose();
+}

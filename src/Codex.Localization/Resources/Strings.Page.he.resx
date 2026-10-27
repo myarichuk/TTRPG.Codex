@@ -207,4 +207,5 @@
   <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>משפט אחד שמושך, למשל ״שוד בעיר שמרחפת באוויר״.</value></data>
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>מוצג בכרטיס הקמפיין ומתחת לשמו.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>התיאור המלא, מוצג בדף הסקירה של הקמפיין. אפשר להשתמש ב-Markdown ולהרחיב אחר כך בהגדרות.</value></data>
+  <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>בונה העולם</value></data>
 </root>

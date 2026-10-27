@@ -4,183 +4,21 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="WorldBuilder.Title" xml:space="preserve"><value>בונה העולם</value></data>
-  <data name="WorldBuilder.Close" xml:space="preserve"><value>סגירה בלי לשמור</value></data>
-  <data name="WorldBuilder.Steps" xml:space="preserve"><value>שלבים</value></data>
-  <data name="WorldBuilder.Step.Questions" xml:space="preserve"><value>שאלות</value></data>
-  <data name="WorldBuilder.Step.Drafts" xml:space="preserve"><value>טיוטות</value></data>
-  <data name="WorldBuilder.Step.Save" xml:space="preserve"><value>שמירה</value></data>
-  <data name="WorldBuilder.Required" xml:space="preserve"><value>(חובה)</value></data>
-  <data name="WorldBuilder.ChooseType" xml:space="preserve"><value>— בחרו סוג —</value></data>
-  <data name="WorldBuilder.Surprise" xml:space="preserve"><value>הפתיעו אותי</value></data>
-  <data name="WorldBuilder.NoPreference" xml:space="preserve"><value>ללא העדפה</value></data>
-  <data name="WorldBuilder.SurpriseText" xml:space="preserve"><value>השאירו ריק והבינה המלאכותית תחליט</value></data>
-  <data name="WorldBuilder.Drafts.Empty" xml:space="preserve"><value>ענו על השאלות ואז בקשו רעיונות מהבינה המלאכותית.</value></data>
-  <data name="WorldBuilder.Drafts.Intro" xml:space="preserve"><value>סמנו מה לשמור, שנו שמות כרצונכם ובקשו מהבינה המלאכותית לכתוב כל טיוטה במלואה. דבר לא נשמר עד שלוחצים על „שמירה”.</value></data>
-  <data name="WorldBuilder.Drafts.WriteAll" xml:space="preserve"><value>כתיבת כל המסומנים</value></data>
-  <data name="WorldBuilder.Drafts.NewIdeas" xml:space="preserve"><value>רעיונות חדשים</value></data>
-  <data name="WorldBuilder.Drafts.Keep" xml:space="preserve"><value>לכלול את {0}</value></data>
-  <data name="WorldBuilder.Drafts.Written" xml:space="preserve"><value>הטקסט מוכן</value></data>
-  <data name="WorldBuilder.Drafts.Name" xml:space="preserve"><value>שם</value></data>
-  <data name="WorldBuilder.Drafts.Write" xml:space="preserve"><value>כתיבה</value></data>
-  <data name="WorldBuilder.Drafts.Rewrite" xml:space="preserve"><value>כתיבה מחדש</value></data>
-  <data name="WorldBuilder.Drafts.Writing" xml:space="preserve"><value>בכתיבה…</value></data>
-  <data name="WorldBuilder.Drafts.Show" xml:space="preserve"><value>הצגה</value></data>
-  <data name="WorldBuilder.Drafts.Dropped" xml:space="preserve"><value>{0, plural, one{רעיון אחד הושמט כי אינו מתאים לאשף הזה.} two{שני רעיונות הושמטו כי אינם מתאימים לאשף הזה.} other{# רעיונות הושמטו כי אינם מתאימים לאשף הזה.}}</value></data>
-  <data name="WorldBuilder.Save.PitchOnly" xml:space="preserve"><value>רק התקציר</value></data>
-  <data name="WorldBuilder.Save.Note" xml:space="preserve"><value>הכול נשמר מוסתר מהשחקנים: ערכי ספרייה כטיוטות שרק אתם רואים, דפי ויקי וסודות לשליט המבוך בלבד, ודמויות בצוות ומקומות מוסתרים. אפשר לשתף אותם מאוחר יותר.</value></data>
-  <data name="WorldBuilder.Save.AlsoOnMap" xml:space="preserve"><value>גם בעמוד העולם</value></data>
-  <data name="WorldBuilder.Drafts.OnMap" xml:space="preserve"><value>להוסיף גם לעמוד העולם כמקום, מוסתר מהשחקנים</value></data>
-  <data name="WorldBuilder.Kind.Place" xml:space="preserve"><value>מקום</value></data>
-  <data name="WorldBuilder.Drafts.Bestiary" xml:space="preserve"><value>להוסיף גם לרשימה הקצרה בבסטיאריום</value></data>
-  <data name="WorldBuilder.Save.AlsoBestiary" xml:space="preserve"><value>גם ברשימה הקצרה בבסטיאריום</value></data>
   <data name="WorldBuilder.Tag.place" xml:space="preserve"><value>מקום</value></data>
   <data name="WorldBuilder.Tag.settlement" xml:space="preserve"><value>יישוב</value></data>
   <data name="WorldBuilder.Open.Menu" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Open.Quest" xml:space="preserve"><value>עיצוב משימה עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Tag.quest" xml:space="preserve"><value>משימה</value></data>
   <data name="WorldBuilder.Open.Settlement" xml:space="preserve"><value>עיצוב יישוב עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Save.AlsoCast" xml:space="preserve"><value>גם בצוות</value></data>
-  <data name="WorldBuilder.Drafts.Cast" xml:space="preserve"><value>להוסיף גם לצוות, מוסתר מהשחקנים</value></data>
-  <data name="WorldBuilder.Kind.Npc" xml:space="preserve"><value>דמות</value></data>
-  <data name="WorldBuilder.Kind.Fact" xml:space="preserve"><value>סוד (אגדות עולם)</value></data>
   <data name="WorldBuilder.Tag.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
   <data name="WorldBuilder.Tag.faction" xml:space="preserve"><value>פלג</value></data>
   <data name="WorldBuilder.Tag.npc" xml:space="preserve"><value>דמות</value></data>
   <data name="WorldBuilder.Open.Faction" xml:space="preserve"><value>עיצוב פלג עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Busy.Writing" xml:space="preserve"><value>הבינה המלאכותית כותבת את {0}…</value></data>
-  <data name="WorldBuilder.Busy.Outline" xml:space="preserve"><value>הבינה המלאכותית מנסחת רעיונות…</value></data>
-  <data name="WorldBuilder.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
-  <data name="WorldBuilder.PreviewEmpty" xml:space="preserve"><value>כתבו טיוטה כדי לראות אותה כאן.</value></data>
-  <data name="WorldBuilder.Outline" xml:space="preserve"><value>בקשת רעיונות</value></data>
-  <data name="WorldBuilder.OutlineAgain" xml:space="preserve"><value>רעיונות חדשים</value></data>
-  <data name="WorldBuilder.Next" xml:space="preserve"><value>הבא: {0}</value></data>
-  <data name="WorldBuilder.Save" xml:space="preserve"><value>שמירה</value></data>
-  <data name="WorldBuilder.Saving" xml:space="preserve"><value>שומר…</value></data>
-  <data name="WorldBuilder.Kind.Wiki" xml:space="preserve"><value>דף ויקי</value></data>
-  <data name="WorldBuilder.Error.Answer" xml:space="preserve"><value>קודם יש לענות: {0}</value></data>
-  <data name="WorldBuilder.Error.NotConfigured" xml:space="preserve"><value>עדיין לא הוגדר ספק בינה מלאכותית.</value></data>
-  <data name="WorldBuilder.Error.Failed" xml:space="preserve"><value>הבינה המלאכותית לא הצליחה לעשות זאת: {0}</value></data>
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>בניית העולם זמינה לשליט המבוך בלבד.</value></data>
-  <data name="WorldBuilder.Error.Required" xml:space="preserve"><value>קודם יש לענות על שאלות החובה.</value></data>
-  <data name="WorldBuilder.Error.Unusable" xml:space="preserve"><value>המודל לא החזיר טיוטה שמישה. נסו שוב או בחרו מודל אחר בהגדרות הבינה המלאכותית.</value></data>
-  <data name="WorldBuilder.Error.Unreachable" xml:space="preserve"><value>לא ניתן להתחבר לספק הבינה המלאכותית. בדקו את החיבור ואת הכתובת בהגדרות הבינה המלאכותית, ונסו שוב.</value></data>
-  <data name="WorldBuilder.Error.TooSlow" xml:space="preserve"><value>המודל לקח יותר מדי זמן לענות. נסו שוב או בחרו מודל מהיר יותר בהגדרות הבינה המלאכותית.</value></data>
-  <data name="WorldBuilder.Drafts.TooMany" xml:space="preserve"><value>הבינה המלאכותית הציעה יותר מ-{0} רעיונות; נשמרו רק {0} הראשונים.</value></data>
-  <data name="WorldBuilder.Replace.Title" xml:space="preserve"><value>להחליף את הטיוטות?</value></data>
-  <data name="WorldBuilder.Replace.Body" xml:space="preserve"><value>רעיונות חדשים יחליפו את הטיוטות הקיימות, גם את אלה שכבר נכתבו.</value></data>
-  <data name="WorldBuilder.Replace.Confirm" xml:space="preserve"><value>החלפה</value></data>
-  <data name="WorldBuilder.Replace.Keep" xml:space="preserve"><value>השארתן</value></data>
-  <data name="WorldBuilder.Discard.Title" xml:space="preserve"><value>לוותר על הטיוטות?</value></data>
-  <data name="WorldBuilder.Discard.Body" xml:space="preserve"><value>עדיין לא נשמר דבר. לסגור ולאבד את הטיוטות האלה?</value></data>
-  <data name="WorldBuilder.Discard.Confirm" xml:space="preserve"><value>ויתור</value></data>
-  <data name="WorldBuilder.Discard.Keep" xml:space="preserve"><value>המשך עבודה</value></data>
   <data name="WorldBuilder.Saved" xml:space="preserve"><value>{0, plural, one{טיוטה אחת נשמרה, מוסתרת מהשחקנים.} two{שתי טיוטות נשמרו, מוסתרות מהשחקנים.} other{# טיוטות נשמרו, מוסתרות מהשחקנים.}}</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.Title" xml:space="preserve"><value>תוכן ביתי עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע ערך שאפשר לשנות את שמו ולכתוב מחדש לפני שמירה.</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.type" xml:space="preserve"><value>סוג</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.concept" xml:space="preserve"><value>מה זה?</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.concept.Hint" xml:space="preserve"><value>משפט או שניים, למשל: חרב משפחתית מקוללת שלוחשת לנושא אותה.</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power" xml:space="preserve"><value>עוצמה</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.minor" xml:space="preserve"><value>חלשה (הרפתקאות ראשונות)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.moderate" xml:space="preserve"><value>בינונית (חבורה מנוסה)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.major" xml:space="preserve"><value>גבוהה (דרגות גבוהות)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.power.legendary" xml:space="preserve"><value>אגדית (סוף המערכה)</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone" xml:space="preserve"><value>אווירה</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.grim" xml:space="preserve"><value>קודרת</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.origin" xml:space="preserve"><value>מאין זה בא</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.origin.Hint" xml:space="preserve"><value>מקום, יוצר או אגדה.</value></data>
-  <data name="WorldBuilder.Recipe.homebrew.history" xml:space="preserve"><value>לכתוב גם דף ויקי על ההיסטוריה שלו (לשליט המבוך בלבד)</value></data>
-  <data name="WorldBuilder.Recipe.faction.Title" xml:space="preserve"><value>פלג עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Recipe.faction.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע את הפלג, את אנשיו וסוד; לפני השמירה אפשר לשנות שם, לכתוב מחדש או לבטל סימון של כל אחד מהם.</value></data>
-  <data name="WorldBuilder.Recipe.faction.group" xml:space="preserve"><value>מה סוג הקבוצה?</value></data>
-  <data name="WorldBuilder.Recipe.faction.group.Hint" xml:space="preserve"><value>למשל: גילדת סוחרים, כת, מסדר אבירים, כנופיית מבריחים.</value></data>
-  <data name="WorldBuilder.Recipe.faction.goal" xml:space="preserve"><value>מה הוא רוצה?</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods" xml:space="preserve"><value>בגלוי או בסתר?</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods.open" xml:space="preserve"><value>בגלוי</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods.secret" xml:space="preserve"><value>בסתר</value></data>
-  <data name="WorldBuilder.Recipe.faction.methods.mixed" xml:space="preserve"><value>פנים גלויות ומטרות נסתרות</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach" xml:space="preserve"><value>טווח השפעה</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach.local" xml:space="preserve"><value>עיר או רובע אחד</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach.regional" xml:space="preserve"><value>אזור שלם</value></data>
-  <data name="WorldBuilder.Recipe.faction.reach.world" xml:space="preserve"><value>העולם כולו</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone" xml:space="preserve"><value>אווירה</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.grim" xml:space="preserve"><value>קודרת</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
-  <data name="WorldBuilder.Recipe.faction.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
-  <data name="WorldBuilder.Recipe.faction.enemy" xml:space="preserve"><value>מי עומד מולו?</value></data>
-  <data name="WorldBuilder.Recipe.faction.enemy.Hint" xml:space="preserve"><value>יריב, שליט, מפלצת או שם של דף ויקי קיים.</value></data>
-  <data name="WorldBuilder.Recipe.faction.people" xml:space="preserve"><value>את מי לתאר</value></data>
-  <data name="WorldBuilder.Recipe.faction.people.leader" xml:space="preserve"><value>רק את המנהיג</value></data>
-  <data name="WorldBuilder.Recipe.faction.people.leaderPlusOne" xml:space="preserve"><value>את המנהיג וחבר אחד</value></data>
-  <data name="WorldBuilder.Recipe.faction.people.leaderPlusTwo" xml:space="preserve"><value>את המנהיג ושני חברים</value></data>
-  <data name="WorldBuilder.Recipe.faction.secret" xml:space="preserve"><value>לכתוב גם סוד שהחבורה יכולה לגלות (לשליט המבוך בלבד, באגדות עולם)</value></data>
-  <data name="WorldBuilder.Recipe.settlement.Title" xml:space="preserve"><value>יישוב עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Recipe.settlement.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע את היישוב, את המקומות, האנשים והכוחות שבו ושמועות; לפני השמירה אפשר לשנות שם, לכתוב מחדש או לבטל סימון של כל אחד מהם.</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size" xml:space="preserve"><value>גודל</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.village" xml:space="preserve"><value>כפר</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.town" xml:space="preserve"><value>עיירה</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.city" xml:space="preserve"><value>עיר</value></data>
-  <data name="WorldBuilder.Recipe.settlement.size.metropolis" xml:space="preserve"><value>כרך</value></data>
-  <data name="WorldBuilder.Recipe.settlement.land" xml:space="preserve"><value>איפה הוא נמצא?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.land.Hint" xml:space="preserve"><value>הסביבה שלו, למשל: שפך נהר, מעבר הרים, שם של אזור קיים.</value></data>
-  <data name="WorldBuilder.Recipe.settlement.knownFor" xml:space="preserve"><value>במה הוא ידוע?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.rulers" xml:space="preserve"><value>מי שולט בו?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.trouble" xml:space="preserve"><value>איזו צרה מתבשלת?</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone" xml:space="preserve"><value>אווירה</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.grim" xml:space="preserve"><value>קודרת</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
-  <data name="WorldBuilder.Recipe.settlement.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
-  <data name="WorldBuilder.Recipe.settlement.detail" xml:space="preserve"><value>כמה לכתוב</value></data>
-  <data name="WorldBuilder.Recipe.settlement.detail.sketch" xml:space="preserve"><value>סקיצה: 2 מקומות, 3 דמויות, פלג אחד</value></data>
-  <data name="WorldBuilder.Recipe.settlement.detail.full" xml:space="preserve"><value>מלא: 4 מקומות, 5 דמויות, 2 פלגים</value></data>
-  <data name="WorldBuilder.Recipe.settlement.rumours" xml:space="preserve"><value>לכתוב גם שמועות שהחבורה יכולה לרדוף אחריהן (לשליט המבוך בלבד, באגדות עולם)</value></data>
-  <data name="WorldBuilder.Recipe.quest.Title" xml:space="preserve"><value>משימה עם בינה מלאכותית</value></data>
-  <data name="WorldBuilder.Recipe.quest.Intro" xml:space="preserve"><value>ענו על מה שחשוב לכם והשאירו את השאר לבינה המלאכותית. היא תציע את דף המשימה, את האנשים והמקומות שהיא צריכה, רמזים, ואם תרצו גם יצור או פרס; לפני השמירה אפשר לשנות שם, לכתוב מחדש או לבטל סימון של כל אחד מהם.</value></data>
-  <data name="WorldBuilder.Recipe.quest.hook" xml:space="preserve"><value>הפתיחה</value></data>
-  <data name="WorldBuilder.Recipe.quest.hook.Hint" xml:space="preserve"><value>איך הגיבורים נמשכים פנימה, למשל: תחינה של זר, גניבה, זימון.</value></data>
-  <data name="WorldBuilder.Recipe.quest.stakes" xml:space="preserve"><value>מה מונח על הכף?</value></data>
-  <data name="WorldBuilder.Recipe.quest.stakes.Hint" xml:space="preserve"><value>מה יקרה אם אף אחד לא יפעל.</value></data>
-  <data name="WorldBuilder.Recipe.quest.villain" xml:space="preserve"><value>מי עומד מאחורי זה?</value></data>
-  <data name="WorldBuilder.Recipe.quest.length" xml:space="preserve"><value>אורך</value></data>
-  <data name="WorldBuilder.Recipe.quest.length.oneShot" xml:space="preserve"><value>מפגש אחד</value></data>
-  <data name="WorldBuilder.Recipe.quest.length.shortArc" xml:space="preserve"><value>קשת קצרה (כמה מפגשים)</value></data>
-  <data name="WorldBuilder.Recipe.quest.length.longArc" xml:space="preserve"><value>קשת ארוכה</value></data>
-  <data name="WorldBuilder.Recipe.quest.party" xml:space="preserve"><value>החבורה</value></data>
-  <data name="WorldBuilder.Recipe.quest.party.Hint" xml:space="preserve"><value>עד כמה הם מנוסים, במדד שבו המשחק שלכם משתמש, או הרפתקנים חדשים לגמרי.</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone" xml:space="preserve"><value>אווירה</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.heroic" xml:space="preserve"><value>הרואית</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.grim" xml:space="preserve"><value>קודרת</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.whimsical" xml:space="preserve"><value>משעשעת</value></data>
-  <data name="WorldBuilder.Recipe.quest.tone.eerie" xml:space="preserve"><value>מצמררת</value></data>
-  <data name="WorldBuilder.Recipe.quest.tieIn" xml:space="preserve"><value>לקשר אל</value></data>
-  <data name="WorldBuilder.Recipe.quest.tieIn.Hint" xml:space="preserve"><value>לא חובה: פלג, יישוב או דמות שכבר נמצאים בוויקי.</value></data>
-  <data name="WorldBuilder.Recipe.quest.creature" xml:space="preserve"><value>לכתוב גם יצור ביתי לנבל או למשרתיו (טיוטה בספרייה)</value></data>
-  <data name="WorldBuilder.Recipe.quest.reward" xml:space="preserve"><value>לכתוב גם חפץ ביתי כפרס (טיוטה בספרייה)</value></data>
-  <data name="WorldBuilder.Drafts.ChangeIdeas" xml:space="preserve"><value>מה לשנות ברעיונות האלה?</value></data>
-  <data name="WorldBuilder.Drafts.ChangeIdeas.Hint" xml:space="preserve"><value>למשל „יותר אפל”, „הוסיפו יריב” או „בלי הצלופח”. טיוטות שכבר נכתבו או ששיניתם את שמן שומרות על הטקסט והשם.</value></data>
-  <data name="WorldBuilder.Drafts.ChangeIdeas.Button" xml:space="preserve"><value>שינוי הרעיונות</value></data>
-  <data name="WorldBuilder.Drafts.Ask" xml:space="preserve"><value>בקשת שינוי</value></data>
-  <data name="WorldBuilder.Drafts.Ask.Label" xml:space="preserve"><value>מה לשנות בטיוטה „{0}”?</value></data>
-  <data name="WorldBuilder.Drafts.Ask.Hint" xml:space="preserve"><value>הבינה המלאכותית תכתוב מחדש את הטיוטה הזו על בסיס מה שכבר נכתב; שאר הטיוטות יישארו כפי שהן.</value></data>
-  <data name="WorldBuilder.Drafts.Ask.Button" xml:space="preserve"><value>כתיבה מחדש עם השינוי</value></data>
-  <data name="WorldBuilder.Drafts.SetAside" xml:space="preserve"><value>נשארו בלי סימון, כי כבר כתבתם אותן או שיניתם את שמן: {0}.</value></data>
-  <data name="WorldBuilder.Busy.Revise" xml:space="preserve"><value>הבינה המלאכותית משנה את הרעיונות…</value></data>
-  <data name="WorldBuilder.Error.NoChange" xml:space="preserve"><value>קודם כתבו מה לשנות.</value></data>
-  <data name="WorldBuilder.Drafts.Stats.Blank" xml:space="preserve"><value>דף הדמות יתחיל ריק.</value></data>
-  <data name="WorldBuilder.Drafts.Stats.From" xml:space="preserve"><value>דף הדמות יתחיל מהנתונים של {0}.</value></data>
-  <data name="WorldBuilder.Drafts.Stats.Change" xml:space="preserve"><value>בחירת נתונים מהספרייה</value></data>
-  <data name="WorldBuilder.Drafts.Stats.Clear" xml:space="preserve"><value>דף ריק</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>יצורים</value></data>
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>בחירה</value></data>
   <data name="WorldBuilder.Drafts.Stats.None" xml:space="preserve"><value>אין בספרייה יצורים לקמפיין הזה.</value></data>
-  <data name="WorldBuilder.Save.AlsoCastAs" xml:space="preserve"><value>גם בצוות, עם הנתונים של {0}</value></data>
-  <data name="WorldBuilder.Kind.Entry" xml:space="preserve"><value>ערך ספרייה</value></data>
-  <data name="WorldBuilder.Preview.Showing" xml:space="preserve"><value>מוצג: {0}</value></data>
+  <data name="WorldBuilder.Open.Chat" xml:space="preserve"><value>משהו אחר…</value></data>
 </root>
