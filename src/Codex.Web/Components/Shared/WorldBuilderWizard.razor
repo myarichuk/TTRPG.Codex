@@ -44,6 +44,16 @@
             <section class="wizard-body" aria-labelledby="@(dialogId)-step" aria-busy="@(busy != null ? "true" : "false")">
                 <h3 id="@(dialogId)-step" class="wizard-step-title" tabindex="-1">@StepLabel(current)</h3>
 
+                @if (busy != null)
+                {
+                    @* At the top, where the DM is looking: the old line under a long step sat below the fold. *@
+                    <div class="ai-working" role="status" data-testid="world-busy">
+                        <span class="ai-working-orb" aria-hidden="true"><LucideIcon IconName="sparkles" Size="18" /></span>
+                        <span class="ai-working-text">@(busy is WorldDraft writing ? L["WorldBuilder.Busy.Writing", writing.Name] : busy == Revising ? L["WorldBuilder.Busy.Revise"] : L["WorldBuilder.Busy.Outline"])</span>
+                        <span class="ai-working-bar" aria-hidden="true"></span>
+                    </div>
+                }
+
                 @switch (StepKeys[current])
                 {
                     case "questions":
@@ -241,10 +251,6 @@
                         break;
                 }
 
-                @if (busy != null)
-                {
-                    <p class="small-muted mt-3 mb-0" role="status"><LucideIcon IconName="sparkles" Size="14" /> @(busy is WorldDraft writing ? L["WorldBuilder.Busy.Writing", writing.Name] : busy == Revising ? L["WorldBuilder.Busy.Revise"] : L["WorldBuilder.Busy.Outline"])</p>
-                }
                 @if (error != null)
                 {
                     <p class="text-danger mt-3 mb-0" role="alert">@error</p>
