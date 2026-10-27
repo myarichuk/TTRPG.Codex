@@ -22,7 +22,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
         _regions = new RegionRepository(_db);
         _wiki = new RavenWikiRepository(_db);
         // Art is only touched when a picture comes with the page, which these tests don't do.
-        _sync = new PlaceWikiSync(_regions, _wiki, new ArtService(null!, null!, null!, _regions, null!));
+        _sync = new PlaceWikiSync(_regions, _wiki, new ArtService(null!, null!, null!, _regions, null!, _wiki));
     }
 
     public void Dispose() => _db.Dispose();
@@ -156,6 +156,79 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.NotNull(await _sync.FindPlaceAsync(place.Id, Dm));
         Assert.Null(await _sync.FindPlaceAsync(place.Id, new CampaignAccess(Dm.CampaignId, "player", CampaignRole.Player)));
         Assert.Null(await _sync.FindPlaceAsync(null, Dm));
+    }
+
+    [Fact]
+    public async Task CreatePlace_GoesInsideTheChosenPlace_AndMarksThePageAPlace()
+    {
+        var (region, town) = await SeedPlaceAsync(ActorVisibility.Hidden);
+        var page = new WikiPageDocument { Title = "The Salted Eel", Body = "A tavern." };
+        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+
+        var made = await _sync.CreatePlaceAsync(page, region.Id, "Places", null, Dm, new PlacePlacement(town.Id, PlaceKind.Site));
+
+        Assert.Equal((town.Id, PlaceKind.Site, WikiPageKind.Place), (made!.Value.Place.ParentId, made.Value.Place.Kind, page.Kind));
+        var stored = (await _regions.GetAsync(region.Id, Dm))!.Locations.Single(l => l.Id == made.Value.Place.Id);
+        Assert.Equal(town.Id, stored.ParentId);
+    }
+
+    [Fact]
+    public async Task UpdatePlace_MovesIt_ButNeverInsideItself()
+    {
+        var (region, town) = await SeedPlaceAsync(ActorVisibility.Hidden);
+        var page = new WikiPageDocument { Title = "Dock Ward" };
+        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+        var ward = (await _sync.CreatePlaceAsync(page, region.Id, "Places", null, Dm, new PlacePlacement(town.Id, PlaceKind.District)))!.Value.Place;
+
+        // The town can't go inside its own district...
+        var townPage = new WikiPageDocument { Title = town.Name, PlaceId = town.Id };
+        await _sync.UpdatePlaceAsync(townPage, Dm, new PlacePlacement(ward.Id, PlaceKind.Settlement));
+        var stored = (await _regions.GetAsync(region.Id, Dm))!.Locations;
+        Assert.Null(stored.Single(l => l.Id == town.Id).ParentId);
+        Assert.Equal(PlaceKind.Settlement, stored.Single(l => l.Id == town.Id).Kind);
+
+        // ...but the district can move out to the region.
+        await _sync.UpdatePlaceAsync(page, Dm, new PlacePlacement(null, PlaceKind.Area));
+        Assert.Null((await _regions.GetAsync(region.Id, Dm))!.Locations.Single(l => l.Id == ward.Id).ParentId);
+    }
+}
+
+public class PlaceTreeTests
+{
+    private static LocationDocument Place(string id, string name, string? parent = null) => new() { Id = id, Name = name, ParentId = parent };
+
+    [Fact]
+    public void Ordered_PutsChildrenUnderTheirParent_ByName_AndLiftsOrphans()
+    {
+        var places = new[]
+        {
+            Place("eel", "Salted Eel", "dock"), Place("town", "Greyharbour"), Place("dock", "Dock Ward", "town"),
+            Place("abbey", "Abbey", "town"), Place("lost", "Lost Cove", "gone")
+        };
+
+        var ordered = PlaceTree.Ordered(places).Select(p => (p.Place.Id, p.Depth)).ToList();
+
+        Assert.Equal(new[] { ("town", 0), ("abbey", 1), ("dock", 1), ("eel", 2), ("lost", 0) }, ordered);
+    }
+
+    [Fact]
+    public void Ordered_KeepsAParentLoop_InsteadOfLosingIt()
+    {
+        var places = new[] { Place("a", "A", "b"), Place("b", "B", "a") };
+
+        Assert.Equal(2, PlaceTree.Ordered(places).Count);
+    }
+
+    [Fact]
+    public void CanParent_RefusesItselfAndWhatIsInsideIt()
+    {
+        var places = new[] { Place("town", "Town"), Place("dock", "Dock", "town"), Place("eel", "Eel", "dock") };
+
+        Assert.False(PlaceTree.CanParent(places, "town", "town"));
+        Assert.False(PlaceTree.CanParent(places, "town", "eel"));
+        Assert.True(PlaceTree.CanParent(places, "eel", "town"));
+        Assert.True(PlaceTree.CanParent(places, "town", null));
+        Assert.Equal(new[] { "town", "dock" }, PlaceTree.Ancestors(places, places[2]).Select(p => p.Id));
     }
 }
 

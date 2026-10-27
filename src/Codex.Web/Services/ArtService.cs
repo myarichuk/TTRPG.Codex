@@ -8,12 +8,12 @@ namespace Codex.Web.Services;
 public sealed record ArtImage(byte[] Bytes, string ContentType);
 
 /// <summary>
-/// The art slot every Library entry and every place has. Homebrew keeps its picture on its own
+/// The art slot every Library entry, place and wiki page has. Homebrew and wiki pages keep their pictures on their own
 /// document and a place on its region, so the art lives and deletes with its owner; art for a
 /// pack entry belongs to the campaign (the pack itself is read-only). Serving goes through
 /// <see cref="MediaEndpoints"/>, which applies the Library's own visibility rules.
 /// </summary>
-public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, ICampaignRepository campaigns, IRegionRepository regions, AiProviderService providers)
+public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, ICampaignRepository campaigns, IRegionRepository regions, AiProviderService providers, IWikiRepository wiki)
 {
     public const string Accept = "image/png,image/jpeg,image/webp,image/gif,image/avif";
 
@@ -150,6 +150,46 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
         location.HasArt = stored.HasArt;
         location.ArtVersion = stored.ArtVersion;
         return true;
+    }
+
+    public static string? Url(WikiPageDocument page) =>
+        page.HasArt ? $"/media/wiki/{Uri.EscapeDataString(page.Id)}/art?v={page.ArtVersion}" : null;
+
+    /// <summary>Stores <paramref name="image"/> as the page's illustration, or removes it when null; false when the caller isn't
+    /// the DM, the page is gone, or the image can't be stored. <paramref name="page"/> takes the new version.</summary>
+    public async Task<bool> SetWikiPageAsync(WikiPageDocument page, CampaignAccess access, ArtImage? image)
+    {
+        if (!access.IsDm || string.IsNullOrEmpty(page.Id) || (image != null && Problem(image.ContentType, image.Bytes.Length) != null))
+        {
+            return false;
+        }
+
+        if (image == null)
+        {
+            await media.DeleteAsync(page.Id, RavenMediaStore.EntryArt);
+        }
+        else
+        {
+            using var stream = new MemoryStream(image.Bytes);
+            await media.PutAsync(page.Id, RavenMediaStore.EntryArt, stream, image.ContentType);
+        }
+
+        if (!await wiki.SetArtAsync(page.Id, image != null, access))
+        {
+            return false;
+        }
+
+        page.HasArt = image != null;
+        page.ArtVersion++;
+        return true;
+    }
+
+    /// <summary>The page's own illustration, to hand to the place it becomes; null when it has none.</summary>
+    public async Task<ArtImage?> WikiPageArtAsync(WikiPageDocument page)
+    {
+        if (!page.HasArt) return null;
+        var file = await media.GetAsync(page.Id, RavenMediaStore.EntryArt);
+        return file == null ? null : new ArtImage(file.Bytes, file.ContentType);
     }
 
     /// <summary>Draws a picture with the user's image model. <paramref name="visual"/> is the entry's

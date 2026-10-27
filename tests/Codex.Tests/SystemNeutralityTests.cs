@@ -103,21 +103,8 @@ public class SystemNeutralityTests
         Add("rewrite", AiPrompts.Rewrite(new RewriteRequest("Oda", AiFeatures.KindLabel(ActorKind.Monster, system), new[] { "Wounds: 3/5" }, "", "", AiAudience.Dm)));
         Add("describe", AiPrompts.Describe(new DescribeRequest("Oda", "foe", "Ashfall", new[] { "Wounds: 5" }, "", "", AiAudience.Players)));
 
-        foreach (var recipe in WorldRecipes.All)
-        {
-            var answers = recipe.Questions.Select(q => new WorldAnswer(q.Ask, "surprise me")).ToList();
-            var kinds = recipe.Drafts.Select(k => k + ": a draft").ToList();
-            var outline = new WorldOutlineRequest(recipe.Prompt, "Ashfall", answers, kinds, new[] { "foe (Foe, a foe)", "relic (Relic)" },
-                Array.Empty<string>(), Array.Empty<string>(), CreatureStats: true, Creature: system.Ai.Creature!, CreatureExamples: system.Ai.CreatureExamples);
-            Add($"outline {recipe.Key}", AiPrompts.WorldOutline(outline));
-
-            foreach (var kind in recipe.Drafts)
-            {
-                var expand = new WorldExpandRequest("Oda", "A ferrywoman.", kind == DraftKinds.Homebrew ? "Foe" : null, "Ashfall", Array.Empty<FieldSpec>(), answers,
-                    Array.Empty<string>(), Array.Empty<string>(), Kind: kind, Guidance: recipe.Write.GetValueOrDefault(kind));
-                Add($"expand {recipe.Key}/{kind}", kind == DraftKinds.Homebrew ? AiPrompts.WorldExpandHomebrew(expand) : AiPrompts.WorldExpandPage(expand));
-            }
-        }
+        Add("world chat", (AiPrompts.WorldChat(new WorldChatRequest("Ashfall", null, new[] { "foe (Foe, a foe)", "relic (Relic)" },
+            Creature: system.Ai.Creature!, CreatureExamples: system.Ai.CreatureExamples)), string.Empty));
 
         foreach (var (name, text) in prompts)
         {
@@ -128,9 +115,7 @@ public class SystemNeutralityTests
     [Fact]
     public void Prompts_WithNoVocabularyAtAll_StayNeutral()
     {
-        var outline = new WorldOutlineRequest("Design a person.", "Anything", Array.Empty<WorldAnswer>(), new[] { "npc: a person" }, Array.Empty<string>(),
-            Array.Empty<string>(), Array.Empty<string>(), CreatureStats: true);
-        var (system, _) = AiPrompts.WorldOutline(outline);
+        var system = AiPrompts.WorldChat(new WorldChatRequest("Anything", null, Array.Empty<string>()));
         var (levelUp, _) = AiPrompts.LevelUp(new LevelUpRequest("Aria", "Anything", null, null, 2, 3, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), null));
         var (_, character) = AiPrompts.CreateCharacter(new CharacterConceptRequest("a thief", "player character", "Anything", Array.Empty<FieldSpec>(), Array.Empty<FieldSpec>(), "Wounds", null));
 
@@ -150,14 +135,6 @@ public class SystemNeutralityTests
 
         Assert.Contains("(a path, a boon...)", system);
         Assert.Contains("(stamina...)", system);
-    }
-
-    [Fact]
-    public void QuestRecipe_AsksHowExperiencedThePartyIs_NotForALevel()
-    {
-        var party = WorldRecipes.Find("quest")!.Question("party")!;
-
-        Assert.Equal("How experienced is the party, in whatever measure the game uses?", party.Ask);
     }
 
     [Fact]

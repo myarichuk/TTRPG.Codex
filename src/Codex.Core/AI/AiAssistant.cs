@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Codex.Core.WorldBuilder;
 using Microsoft.Extensions.AI;
 
 namespace Codex.Core.AI;
@@ -28,32 +27,8 @@ public sealed class AiAssistant(IChatClient chat)
     public Task<string> SuggestLevelUpAsync(LevelUpRequest request, CancellationToken ct = default) =>
         CompleteAsync(AiPrompts.LevelUp(request), ct);
 
-    public async Task<CharacterDraft> CreateCharacterAsync(CharacterConceptRequest request, CancellationToken ct = default)
-    {
-        var text = await JsonReplyAsync(Messages(AiPrompts.CreateCharacter(request)), 0.8f, ct);
-        return ParseDraft(text, request);
-    }
-
-    /// <summary>The drafts a world-builder recipe proposes, checked against <paramref name="rules"/>.</summary>
-    public Task<WorldBundle> OutlineWorldAsync(WorldOutlineRequest request, BundleRules rules, CancellationToken ct = default) =>
-        JsonAsync(AiPrompts.WorldOutline(request), text => WorldBundleParser.ParseOutline(text, rules), 0.9f, ct);
-
-    /// <summary>The outline <paramref name="previous"/> with the change in <paramref name="request"/> made, its drafts kept where the reply keeps them.</summary>
-    public Task<WorldBundle> ReviseWorldAsync(WorldOutlineRequest request, BundleRules rules, WorldBundle previous, CancellationToken ct = default) =>
-        JsonAsync(AiPrompts.WorldOutline(request), text => WorldBundleParser.ParseRevision(text, rules, previous), 0.8f, ct);
-
-    /// <summary>Writes a homebrew draft in full: its description, tags and fields.</summary>
-    /// <param name="canonical">Maps a value the model wrote in the reader's language back to the stored one (field key, value).</param>
-    public Task ExpandHomebrewAsync(WorldDraft draft, WorldExpandRequest request, Func<string, string, string>? canonical = null, CancellationToken ct = default) =>
-        JsonAsync(AiPrompts.WorldExpandHomebrew(request), text =>
-        {
-            WorldBundleParser.ApplyHomebrew(draft, text, request.Fields, canonical);
-            return true;
-        }, 0.8f, ct);
-
-    /// <summary>Writes a wiki draft's page.</summary>
-    public async Task ExpandPageAsync(WorldDraft draft, WorldExpandRequest request, CancellationToken ct = default) =>
-        WorldBundleParser.ApplyPage(draft, await CompleteAsync(AiPrompts.WorldExpandPage(request), ct));
+    public Task<CharacterDraft> CreateCharacterAsync(CharacterConceptRequest request, CancellationToken ct = default) =>
+        JsonAsync(AiPrompts.CreateCharacter(request), text => ParseDraft(text, request), 0.8f, ct);
 
     // A JSON reply, parsed; a reply that does not parse gets one more chance, with the bad reply shown back to the model.
     private async Task<T> JsonAsync<T>((string System, string User) prompt, Func<string, T> parse, float temperature, CancellationToken ct)
@@ -133,22 +108,36 @@ public sealed class AiAssistant(IChatClient chat)
     private const int MaxItems = 40;
     private const int MaxQuantity = 99;
 
-    /// <summary>The reply's equipment, kept to the ids the request listed (case-insensitively, as listed); a repeated id adds up.</summary>
-    private static List<DraftItem>? ParseEquipment(JsonElement root, CharacterConceptRequest request)
+    /// <summary>Gear for an existing character: the listed items the model picked, none when it picked nothing usable.</summary>
+    public async Task<IReadOnlyList<DraftItem>> EquipAsync(EquipRequest request, CancellationToken ct = default)
     {
-        if (request.Equipment is not { Count: > 0 } allowed
-            || !root.TryGetProperty("equipment", out var array) || array.ValueKind != JsonValueKind.Array)
+        var text = await JsonReplyAsync(Messages(AiPrompts.Equip(request)), 0.7f, ct);
+        using var doc = FieldCoercion.ParseObject(text);
+        return ParseEquipment(doc.RootElement, request.Items) ?? new List<DraftItem>();
+    }
+
+    private static List<DraftItem>? ParseEquipment(JsonElement root, CharacterConceptRequest request) =>
+        request.Equipment is { Count: > 0 } allowed ? ParseEquipment(root, allowed) : null;
+
+    /// <summary>The reply's equipment, kept to the listed items (by id or, when the model wrote one, by name; case-insensitively,
+    /// as listed); a repeated item adds up.</summary>
+    private static List<DraftItem>? ParseEquipment(JsonElement root, IReadOnlyList<EquipmentOption> allowed)
+    {
+        if (!root.TryGetProperty("equipment", out var array) || array.ValueKind != JsonValueKind.Array)
         {
             return null;
         }
 
-        var known = allowed.ToDictionary(id => id, StringComparer.OrdinalIgnoreCase);
+        var known = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var option in allowed) known.TryAdd(option.Id, option.Id);
+        foreach (var option in allowed) known.TryAdd(option.Name, option.Id);
         var items = new Dictionary<string, DraftItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var element in array.EnumerateArray())
         {
             // A bare id is a single item; anything else is the object the prompt asked for.
             var id = element.ValueKind == JsonValueKind.String ? element.GetString()
                 : element.ValueKind == JsonValueKind.Object && element.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.String ? idElement.GetString()
+                : element.ValueKind == JsonValueKind.Object && element.TryGetProperty("name", out var nameElement) && nameElement.ValueKind == JsonValueKind.String ? nameElement.GetString()
                 : null;
             if (id == null || !known.TryGetValue(id.Trim(), out var listed))
             {

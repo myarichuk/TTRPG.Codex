@@ -107,6 +107,32 @@ public static class MediaEndpoints
             var file = await media.GetAsync(regionId, RavenMediaStore.LocationArtName(locationId));
             return file == null ? Results.NotFound() : Image(response, file);
         });
+
+        // A wiki page's illustration, for whoever may read the page: a DM-only page's picture stays the DM's.
+        app.MapGet("/media/wiki/{pageId}/art", async (string pageId, ClaimsPrincipal user, ICampaignAccessResolver resolver, IWikiRepository wiki, IMediaStore media, RavenDbService db, HttpResponse response) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Results.NotFound();
+            }
+
+            string? campaignId;
+            using (var session = db.Store.OpenAsyncSession())
+            {
+                campaignId = (await session.LoadAsync<WikiPageDocument>(pageId))?.CampaignId;
+            }
+
+            var access = campaignId == null ? null : await resolver.ResolveAsync(campaignId, userId);
+            var visible = access == null ? null : (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == pageId);
+            if (visible?.HasArt != true)
+            {
+                return Results.NotFound();
+            }
+
+            var file = await media.GetAsync(pageId, RavenMediaStore.EntryArt);
+            return file == null ? Results.NotFound() : Image(response, file);
+        });
     }
 
     private static IResult Image(HttpResponse response, MediaFile file)

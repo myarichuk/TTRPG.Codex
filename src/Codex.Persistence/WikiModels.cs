@@ -13,6 +13,17 @@ public enum WikiVisibility
     Party
 }
 
+/// <summary>What a page is about. A person can be promoted to the cast and a place to the world map; the page then links to
+/// what it became (<see cref="WikiPageDocument.ActorId"/>, <see cref="WikiPageDocument.PlaceId"/>).</summary>
+public enum WikiPageKind
+{
+    General,
+    Person,
+    Place,
+    Faction,
+    Quest
+}
+
 /// <summary>
 /// One page of a campaign's world wiki. Pages link to each other with <c>[[Page title]]</c>;
 /// <see cref="Links"/> is the normalised list of slugs the body points at, kept up to date on
@@ -31,6 +42,11 @@ public class WikiPageDocument
     public string Body { get; set; } = string.Empty;
     public WikiVisibility Visibility { get; set; } = WikiVisibility.DmOnly;
     public List<string> Tags { get; set; } = new();
+    public WikiPageKind Kind { get; set; } = WikiPageKind.General;
+
+    /// <summary>The cast member this page is about (<see cref="ActorDocument.Id"/>), or empty. Set when the page is promoted to
+    /// the cast; the texts are copied once, not kept in step.</summary>
+    public string? ActorId { get; set; }
 
     /// <summary>The place on the world map this page is about (<see cref="LocationDocument.Id"/>), or empty. The page shows the
     /// place's picture, and sharing the page reveals the place.</summary>
@@ -38,6 +54,11 @@ public class WikiPageDocument
 
     /// <summary>Slugs of the pages this one links to.</summary>
     public List<string> Links { get; set; } = new();
+
+    /// <summary>True once the page's illustration is stored as its "art" attachment; <see cref="ArtVersion"/> busts caches. A page
+    /// about a place shows the place's picture instead, so a place never has two.</summary>
+    public bool HasArt { get; set; }
+    public int ArtVersion { get; set; }
 
     public string AuthorUserId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -55,6 +76,9 @@ public interface IWikiRepository
     Task<bool> TrySaveAsync(WikiPageDocument page, CampaignAccess access);
 
     Task<bool> TryDeleteAsync(string id, CampaignAccess access);
+
+    /// <summary>Records that the page's illustration was stored (or removed) and bumps its version. DM only.</summary>
+    Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access);
 
     /// <summary>Every page regardless of visibility - export only.</summary>
     Task<IEnumerable<WikiPageDocument>> GetAllForCampaignAsync(string campaignId);
@@ -146,6 +170,8 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             existing.Body = page.Body;
             existing.Visibility = page.Visibility;
             existing.Tags = page.Tags;
+            existing.Kind = page.Kind;
+            existing.ActorId = page.ActorId;
             existing.PlaceId = page.PlaceId;
             existing.Links = page.Links;
             existing.UpdatedAt = page.UpdatedAt;
@@ -177,6 +203,26 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
                 return candidate;
             }
         }
+    }
+
+    public async Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var page = await session.LoadAsync<WikiPageDocument>(id);
+        if (page == null || page.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        page.HasArt = hasArt;
+        page.ArtVersion++;
+        await session.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)

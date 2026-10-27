@@ -63,61 +63,8 @@ public sealed record LevelUpRequest(
 /// <summary>A field the model fills, described the way a prompt lists it. <paramref name="Hint"/> is the field's own help text.</summary>
 public sealed record FieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max, string? Hint = null);
 
-/// <summary>A world-builder question as the model reads it, with the DM's answer ("surprise me" when left to the model).</summary>
-public sealed record WorldAnswer(string Question, string Answer);
-
-/// <summary>The outline call of a world-builder recipe: propose the drafts, by name and one-line pitch.</summary>
-/// <param name="Kinds">Draft kinds allowed, as "kind: what it is".</param>
-/// <param name="HomebrewTypes">Content types a homebrew draft may have, as "id (label)".</param>
-/// <param name="ExistingPages">Wiki pages already written, as "existing:slug (title)", which drafts may link to.</param>
-/// <param name="TakenNames">Names the campaign already uses, so the model does not repeat them.</param>
-/// <param name="Current">For a change to an outline: its drafts, one JSON object each in the reply's shape (no texts).</param>
-/// <param name="Instruction">For a change to an outline: what the game master asked to change.</param>
-/// <param name="CreatureStats">The system has creatures with stat blocks, so a person may name the one that plays like them.</param>
-/// <param name="Creature">What the system calls such a creature (<see cref="Codex.Plugin.Abstractions.AiVocabulary.Creature"/>).</param>
-/// <param name="CreatureExamples">Plain roles to show the model, as the system words them; null for the neutral few.</param>
-public sealed record WorldOutlineRequest(
-    string Brief,
-    string SystemName,
-    IReadOnlyList<WorldAnswer> Answers,
-    IReadOnlyList<string> Kinds,
-    IReadOnlyList<string> HomebrewTypes,
-    IReadOnlyList<string> ExistingPages,
-    IReadOnlyList<string> TakenNames,
-    string? CampaignContext = null,
-    string? Language = null,
-    IReadOnlyList<string>? Current = null,
-    string? Instruction = null,
-    bool CreatureStats = false,
-    string Creature = "creature",
-    IReadOnlyList<string>? CreatureExamples = null);
-
-/// <summary>The expand call for one draft of an outline: write it in full.</summary>
-/// <param name="TypeLabel">For a homebrew draft, its content type as system.yaml names it ("Spell").</param>
-/// <param name="Fields">For a homebrew draft, the fields to fill.</param>
-/// <param name="Related">The bundle's other drafts, as "Name (kind): pitch".</param>
-/// <param name="Kind">The draft's kind (<see cref="DraftKinds"/>), which picks how a page or a secret is written.</param>
-/// <param name="Guidance">The recipe's own instructions for this kind (<see cref="WorldRecipe.Write"/>), if any.</param>
-/// <param name="Instruction">A change the game master asked for, made to <paramref name="CurrentText"/>.</param>
-/// <param name="CurrentText">The draft as written so far: a page's text, or a homebrew entry as its reply JSON.</param>
-public sealed record WorldExpandRequest(
-    string Name,
-    string Pitch,
-    string? TypeLabel,
-    string SystemName,
-    IReadOnlyList<FieldSpec> Fields,
-    IReadOnlyList<WorldAnswer> Answers,
-    IReadOnlyList<string> Related,
-    IReadOnlyList<string> ExistingPages,
-    string? CampaignContext = null,
-    string? Language = null,
-    string Kind = DraftKinds.Wiki,
-    string? Guidance = null,
-    string? Instruction = null,
-    string? CurrentText = null);
-
 /// <summary>The character the model is asked to make from a concept.</summary>
-/// <param name="Equipment">The ids of the items a sheet may carry, or null when the system has no inventory (the reply then has no equipment).</param>
+/// <param name="Equipment">The items a sheet may carry, or null when the system has no inventory (the reply then has no equipment).</param>
 /// <param name="OneArmorAndShield">The rules let a character wear one suit of body armor and carry one shield, no more.</param>
 public sealed record CharacterConceptRequest(
     string Concept,
@@ -131,8 +78,27 @@ public sealed record CharacterConceptRequest(
     string? Language = null,
     string? HitPointsLabel = null,
     string? HitPointsBasis = null,
-    IReadOnlyList<string>? Equipment = null,
+    IReadOnlyList<EquipmentOption>? Equipment = null,
     bool OneArmorAndShield = false);
+
+/// <summary>What the world-building chat's model is told about the campaign.</summary>
+/// <param name="HomebrewTypes">Content types a homebrew entry may have, as "id (label)".</param>
+/// <param name="Creature">What the system calls a creature with a stat block (<see cref="Codex.Plugin.Abstractions.AiVocabulary.Creature"/>).</param>
+/// <param name="CreatureExamples">Plain roles to show the model, as the system words them; null for the neutral few.</param>
+public sealed record WorldChatRequest(
+    string SystemName,
+    string? CampaignContext,
+    IReadOnlyList<string> HomebrewTypes,
+    string? Language = null,
+    string Creature = "creature",
+    IReadOnlyList<string>? CreatureExamples = null);
+
+/// <summary>An item a character may carry: its Library id and the name a model knows it by.</summary>
+public sealed record EquipmentOption(string Id, string Name);
+
+/// <summary>Gear for a character who already exists: one made by hand or from a stat block, or one whose model left the gear out.</summary>
+/// <param name="Character">Who they are, in a line or a paragraph.</param>
+public sealed record EquipRequest(string Character, string SystemName, IReadOnlyList<EquipmentOption> Items, bool OneArmorAndShield);
 
 /// <summary>Pure prompt builders: no network, no state, unit-testable.</summary>
 public static class AiPrompts
@@ -266,13 +232,16 @@ public static class AiPrompts
 
     public static (string System, string User) CreateCharacter(CharacterConceptRequest r)
     {
-        var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string}}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use." + CharacterLanguageNote(r.Language);
+        // The gear is part of the one shape the reply follows: asked for as an afterthought, models tend to leave it out.
+        var gear = r.Equipment is { Count: > 0 };
+        var shape = gear
+            ? $"{{\"name\": string, \"sheet\": {{field key: value}}, \"biography\": string, {EquipmentShape}}}"
+            : "{\"name\": string, \"sheet\": {field key: value}, \"biography\": string}";
+        var system = $"You create {r.Kind} characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {shape}. Every sheet value must respect the field specification: numbers within min and max, dropdowns and references chosen from the listed options by their id, booleans as true/false, tag lists as arrays of strings, long text as a string. Omit a field rather than guessing an id that is not listed. The biography is two or three paragraphs of plain prose with a hook the game master can use." + CharacterLanguageNote(r.Language);
 
-        if (r.Equipment is { Count: > 0 })
+        if (gear)
         {
-            system += " The object also has \"equipment\": [{\"id\": string, \"quantity\": number, \"equipped\": boolean}], the gear this character carries, using only the listed item ids." +
-                      " Pick what a person like this would plausibly own and use: their weapons, protection, tools and everyday gear, with sensible quantities, and an extraordinary item only when the concept calls for one." +
-                      " Mark as equipped what they wield or wear" + (r.OneArmorAndShield ? " (at most one suit of body armor and one shield)" : "") + ".";
+            system += " " + EquipmentRules(r.OneArmorAndShield);
         }
 
         var sb = new StringBuilder();
@@ -301,143 +270,71 @@ public static class AiPrompts
             sb.AppendLine().AppendLine($"{(string.IsNullOrWhiteSpace(r.HitPointsLabel) ? "Starting resource" : r.HitPointsLabel.Trim())}: set \"{r.HitPointsKey}\"{(r.HitPointsMaxKey != null ? $" and \"{r.HitPointsMaxKey}\"" : "")} to a number appropriate for {basis}.");
         }
 
-        AppendList(sb, "Item ids (the only ids equipment may use)", r.Equipment ?? Array.Empty<string>());
+        AppendItems(sb, r.Equipment);
 
         return (system, sb.ToString());
     }
 
-    public static (string System, string User) WorldOutline(WorldOutlineRequest r)
+    private const string EquipmentShape = "\"equipment\": [{\"id\": string, \"quantity\": number, \"equipped\": boolean}]";
+
+    private static string EquipmentRules(bool oneArmorAndShield) =>
+        "\"equipment\" is the gear the character carries and is never empty; each \"id\" is one of the listed item ids (the part before the colon)." +
+        " Pick what a person like this would plausibly own and use: their weapons, protection, tools and everyday gear (usually 3 to 10 entries), with sensible quantities, and an extraordinary item only when the concept calls for one." +
+        " Mark as equipped what they wield or wear" + (oneArmorAndShield ? " (at most one suit of body armor and one shield)" : "") + ".";
+
+    // "id: name", so the model can recognise an item it would otherwise have to guess from a slug.
+    private static void AppendItems(StringBuilder sb, IReadOnlyList<EquipmentOption>? items)
     {
-        var name = LanguageName(r.Language);
-        var language = name == "English"
-            ? ""
-            : $" Write the names and pitches in {name}; keep every JSON key, kind, type id, ref and existing key exactly as listed.";
-        var system = $"You help the game master of a {r.SystemName} tabletop campaign build their world. {r.Brief.Trim()} " +
-                     "Reply with ONE JSON object and nothing else, shaped exactly like {\"drafts\": [{\"ref\": \"d1\", \"kind\": string, \"type\": string, \"name\": string, \"pitch\": string, \"links\": [string]}]}. " +
-                     "\"kind\" is one of the listed kinds; \"type\" is only for kind \"homebrew\" and is one of the listed content type ids. " +
-                     "\"ref\" is a short id (\"d1\", \"d2\") that other drafts use in \"links\"; a link may also be one of the listed \"existing:\" keys. " +
-                     "The pitch is one sentence the game master can judge the idea by. " +
-                     "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company, and do not reuse the names already taken. " +
-                     "Where an answer is \"surprise me\", decide it yourself." + language;
-        if (r.CreatureStats && r.Kinds.Any(k => k.StartsWith(DraftKinds.Npc + ":", StringComparison.Ordinal)))
+        if (items is not { Count: > 0 }) return;
+        sb.AppendLine().AppendLine("Items (id: name; equipment may use only these ids):");
+        foreach (var item in items)
         {
-            // The stat block's name is looked up in the Library, so it must be the rules' own English name, not an invented one.
-            var examples = r.CreatureExamples is { Count: > 0 } ? r.CreatureExamples : DefaultCreatureExamples;
-            system += $" A \"npc\" draft may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose game statistics suit the person " +
-                      $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as the rules name it; leave it out when none fits.";
+            sb.AppendLine(string.Equals(item.Id, item.Name, StringComparison.OrdinalIgnoreCase) ? $"- {item.Id}" : $"- {item.Id}: {item.Name}");
         }
-
-        var change = Instruction(r.Instruction);
-        if (change != null)
-        {
-            system += " The game master already has an outline, listed as JSON, and asks for a change to it. Reply with the whole revised outline in the same shape: " +
-                      "keep every draft the change does not touch as it is, with its ref; keep the ref of a draft you change; give new drafts new refs; " +
-                      "leave out the drafts the change removes.";
-        }
-
-        var sb = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
-        {
-            sb.AppendLine("Campaign: " + r.CampaignContext);
-        }
-
-        AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
-        AppendList(sb, "Kinds", r.Kinds);
-        AppendList(sb, "Content type ids (label)", r.HomebrewTypes);
-        AppendList(sb, "Existing wiki pages (key (title))", r.ExistingPages);
-        AppendList(sb, "Names already taken", r.TakenNames);
-        if (change != null)
-        {
-            // The change comes last, so it wins over everything above.
-            AppendList(sb, "The current outline", r.Current ?? Array.Empty<string>());
-            sb.AppendLine().AppendLine("The change the game master asks for: " + change);
-        }
-
-        return (system, sb.ToString());
     }
 
-    public static (string System, string User) WorldExpandHomebrew(WorldExpandRequest r)
+    /// <summary>The world-building chat: how the model works with the game master, reads the campaign through its tools, and
+    /// proposes what to add with <c>propose_changes</c>, which the game master reviews before anything is saved.</summary>
+    public static string WorldChat(WorldChatRequest r)
     {
-        var name = LanguageName(r.Language);
-        var language = name == "English"
-            ? ""
-            : $" Write the description, the long text fields and the names and descriptions of collection rows in {name}. Keep every JSON key, field key and option exactly as listed, and write short stat fields (casting time, range, duration, size, creature type, speed, senses, damage types) in English, worded as the official rules word them; the app translates them for display.";
-        var system = $"You write homebrew content for the {r.SystemName} tabletop game: a {r.TypeLabel ?? "entry"} called “{r.Name}”. " +
-                     "Reply with ONE JSON object and nothing else, shaped exactly like {\"description\": string, \"tags\": [string], \"properties\": {field key: value}}. " +
-                     "The description is the entry's full text as the rules print it: what it does, with every number and rule a table needs, in the markdown subset (**bold**, *italic*, \"- \" bullets). " +
-                     "Fill every field that applies, following the field specification: numbers as numbers within min and max, dropdowns as one of the listed options, booleans as true/false, tag lists as arrays of strings, collections as arrays of objects with \"name\" and \"description\", text as a string. Leave out fields that do not apply. " +
-                     "Keep the numbers in line with official material of the same power. Tags are two to five short lower-case words. Use original names only." + GuidanceNote(r.Guidance) + language;
-        var change = Instruction(r.Instruction);
-        if (change != null)
-        {
-            system += " The game master asks for a change to the entry as written so far: make it, keep everything the change does not touch, " +
-                      "and reply with the whole entry, every field included, not only what changed.";
-        }
-
+        var examples = r.CreatureExamples is { Count: > 0 } ? r.CreatureExamples : DefaultCreatureExamples;
         var sb = new StringBuilder();
-        sb.AppendLine($"Entry: {r.Name} ({r.TypeLabel ?? "entry"})");
-        sb.AppendLine("Pitch: " + r.Pitch);
-        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
-        {
-            sb.AppendLine("Campaign: " + r.CampaignContext);
-        }
-
-        AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
-        AppendList(sb, "Drafted alongside it", r.Related);
-        sb.AppendLine().AppendLine("Fields (key: label, type, options or range; help):");
-        foreach (var f in r.Fields)
-        {
-            var detail = f.Options is { Count: > 0 } ? ", options: " + string.Join(" | ", f.Options)
-                : f.Min.HasValue || f.Max.HasValue ? $", {f.Min?.ToString() ?? "?"}-{f.Max?.ToString() ?? "?"}"
-                : "";
-            var hint = string.IsNullOrWhiteSpace(f.Hint) ? "" : "; " + f.Hint.Trim();
-            sb.AppendLine($"- {f.Key}: {f.Label}, {f.Type}{detail}{hint}");
-        }
-
-        AppendChange(sb, change, r.CurrentText);
-        return (system, sb.ToString());
+        sb.Append($"You help the game master of a {r.SystemName} tabletop campaign build its world, in conversation. ");
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext)) sb.Append($"The campaign: {r.CampaignContext.Trim()} ");
+        sb.Append(
+            "Talk with the game master: ask a short question when a choice is really theirs, otherwise decide and say what you chose. " +
+            "Before you invent anything, look at what the campaign already has with the tools (search_world, get_page, list_places, list_cast), " +
+            "so new things fit, link to what exists, and repeat no names. " +
+            "When you have something to add, call propose_changes with every related entry in ONE proposal (a settlement with its districts, people and secrets together). " +
+            "Nothing is saved until the game master applies the proposal, so never say something was added or saved; say it is ready to review. " +
+            "If propose_changes reports errors, fix them and call it again. After the game master applies a proposal, its entries exist and you can link to them. " +
+            "To change a proposal, call propose_changes again with the whole revised proposal. " +
+            "Entries: \"place\" (placeKind area, settlement, district or site; \"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places), " +
+            "\"npc\" (a person; \"cast\": true for anyone the party will talk to or fight, which also adds them to the cast with their page as their history), " +
+            "\"wiki\" (pageKind lore, faction or quest), \"fact\" (a secret or rumour the party can uncover: its name is the fact in one sentence, its text who knows it and how it is learned), " +
+            "and \"homebrew\" (a Library entry of one of the homebrew types; get its fields with homebrew_fields and fill \"properties\" with them). " +
+            "Every entry has a short \"ref\" (\"p1\") that other entries use as a parent, in \"links\", and in text as [[ref]]; link existing pages as [[existing:slug]]. " +
+            "Write each page in markdown with short headings, for the game master's eyes, concrete and usable at the table: " +
+            "a place says what it looks, sounds and smells like, who is found there, what the party can do or learn there and what it hides, and it is never a dead end; " +
+            "a person who speaks has a role, a look and voice, something they want, something they fear and two things they remember, and a way the party meets them. " +
+            "Add secrets only where a plot lives in them, never as a quota, and put each secret in a \"fact\" linked to the entries it is about. " +
+            $"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
+            $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. " +
+            "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company. ");
+        if (r.HomebrewTypes.Count > 0) sb.Append($"Homebrew types: {string.Join(", ", r.HomebrewTypes)}. ");
+        var language = LanguageName(r.Language);
+        sb.Append(language == "English"
+            ? Style
+            : $"Write your replies, names and page texts in {language}; keep every JSON key, kind, ref, id and type exactly as given. " + StyleFor(r.Language));
+        return sb.ToString();
     }
 
-    /// <summary>A page (kind "wiki"), a person's page (kind "npc"), or a secret's details (kind "fact"), as plain reply text.</summary>
-    public static (string System, string User) WorldExpandPage(WorldExpandRequest r)
+    public static (string System, string User) Equip(EquipRequest r)
     {
-        var shape = r.Kind switch
-        {
-            DraftKinds.Npc =>
-                "a page about one person, for the game master's eyes. Write it in short sections with headings: who they are and their role, how they look and sound, what they want, " +
-                "what they hide, and how the party might meet them. Keep it concrete and usable at the table. ",
-            DraftKinds.Place =>
-                "a page about one place, for the game master's eyes. Write it in short sections with headings: what it looks, sounds and smells like, who is found there, " +
-                "what the party can do or learn there, and what it hides. Keep it concrete and usable at the table. ",
-            DraftKinds.Fact =>
-                "the details of one secret the party can uncover, for the game master's eyes. Write two to four plain sentences: what is true, who knows it, and how the party could learn it. " +
-                "No headings, lists or links. ",
-            _ =>
-                "a page of the world wiki, for the game master's eyes. Write it in three to six short sections with headings: concrete, usable at the table, with hooks and secrets the game master can use. "
-        };
-        var links = r.Kind == DraftKinds.Fact
-            ? ""
-            : "Where they fit, link to the other drafts and existing pages listed by writing their names in double brackets, exactly as spelled ([[Name]]). ";
-        // The recipe's instructions, the game master's change and, for a secret, "no headings" come last, so they win over the
-        // general shape and style; a secret is saved as plain sentences, whatever the change asks.
-        var change = Instruction(r.Instruction);
-        var system = $"You write {shape}This is for a {r.SystemName} tabletop campaign. " + links +
-                     "Use original names only. Reply with the text only. " + StyleFor(r.Language) + GuidanceNote(r.Guidance) +
-                     (change == null ? "" : " The game master asks for a change to the text as written so far: make it, keep everything the change does not touch, and reply with the whole revised text.") +
-                     (r.Kind == DraftKinds.Fact ? " This reply has no headings, lists or links: plain sentences only." : "");
-
+        var system = $"You equip characters for the {r.SystemName} tabletop game. Reply with ONE JSON object and nothing else, shaped exactly like {{{EquipmentShape}}}. " + EquipmentRules(r.OneArmorAndShield);
         var sb = new StringBuilder();
-        sb.AppendLine((r.Kind == DraftKinds.Fact ? "Secret: " : "Page: ") + r.Name);
-        sb.AppendLine("Pitch: " + r.Pitch);
-        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
-        {
-            sb.AppendLine("Campaign: " + r.CampaignContext);
-        }
-
-        AppendList(sb, "The game master's answers", r.Answers.Select(a => $"{a.Question} {a.Answer}").ToList());
-        AppendList(sb, "Drafted alongside it", r.Related);
-        AppendList(sb, "Existing wiki pages", r.ExistingPages);
-        AppendChange(sb, change, r.CurrentText);
+        sb.AppendLine("Character: " + r.Character.Trim());
+        AppendItems(sb, r.Items);
         return (system, sb.ToString());
     }
 
@@ -449,29 +346,6 @@ public static class AiPrompts
         items is not { Count: > 0 }
             ? ""
             : $" ({string.Join(", ", items)}...)";
-
-    /// <summary>The longest change a game master may ask for in one go.</summary>
-    public const int MaxInstruction = 1000;
-
-    // The game master's change, trimmed and capped, or null when there is none.
-    private static string? Instruction(string? instruction)
-    {
-        var text = instruction?.Trim();
-        return string.IsNullOrEmpty(text) ? null : text.Length <= MaxInstruction ? text : text[..MaxInstruction];
-    }
-
-    // The text so far and the change asked of it, last in the message, so the change wins over the context above.
-    private static void AppendChange(StringBuilder sb, string? change, string? currentText)
-    {
-        if (change == null) return;
-        sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(currentText) ? "(none yet - write it with the change)" : currentText.Trim());
-        sb.AppendLine().AppendLine("The change the game master asks for: " + change);
-    }
-
-    private static string GuidanceNote(string? guidance) =>
-        string.IsNullOrWhiteSpace(guidance)
-            ? ""
-            : " Where the following differs from the above, follow it: " + string.Join(' ', guidance.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
     private static string CharacterLanguageNote(string? language)
     {

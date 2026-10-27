@@ -28,6 +28,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IUserRepository UserRepo
+@inject IWikiRepository WikiRepo
 @implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
@@ -68,6 +69,10 @@ else
                         @if (access.IsDm)
                         {
                             <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
+                        }
+                        @if (wikiPage != null)
+                        {
+                            <a class="pill" href="/campaigns/@CampaignId/wiki/@wikiPage.Slug" data-testid="actor-wiki-page"><LucideIcon IconName="book-open" Size="14" /> @L["Actor.Sheet.WikiPage", wikiPage.Title]</a>
                         }
                         @if (!string.IsNullOrEmpty(actor.BlueprintId))
                         {
@@ -782,6 +787,10 @@ else
                             <option value="@ActorVisibility.Known">@L["Actor.Sheet.VisKnown"]</option>
                         </select>
                     </div>
+                    @if (editVisibility != ActorVisibility.Hidden && actor.Visibility == ActorVisibility.Hidden && !string.IsNullOrWhiteSpace(actor.Biography))
+                    {
+                        <p class="field-hint text-warning" role="status" data-testid="actor-reveal-history">@L["Actor.Sheet.RevealHistory"]</p>
+                    }
                     @if (editVisibility == ActorVisibility.Unknown)
                     {
                         <div class="mb-2">
@@ -830,6 +839,8 @@ else
     private Dictionary<string, string> memberNames = new();
     private ActorDocument? actor;
     private CampaignAccess? access;
+    // The wiki page this character was promoted from, when the reader can open it.
+    private WikiPageDocument? wikiPage;
     private SystemDefinition? system;
     private string? currentUserId;
     private UISchema? schema;
@@ -1072,6 +1083,8 @@ else
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
+                wikiPage = string.IsNullOrEmpty(actor.WikiPageId) || access == null ? null
+                    : (await WikiRepo.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == actor.WikiPageId);
                 editName = actor.Name;
                 editVisibility = actor.Visibility;
                 editPublicName = actor.PublicName ?? "";

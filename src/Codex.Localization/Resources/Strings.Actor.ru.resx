@@ -309,4 +309,6 @@
   <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>Установлен уровень {0}. Обновите очки здоровья и особенности, затем сохраните изменения.</value></data>
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>План на уровень {0}:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Добавлено в поле заметок. Сохраните изменения, чтобы оставить.</value></data>
+  <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Вики: {0}</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>После сохранения игроки смогут прочитать историю персонажа. Сначала проверьте, нет ли в ней секретов.</value></data>
 </root>

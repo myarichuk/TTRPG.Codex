@@ -450,14 +450,13 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>המקום הזה כבר לא קיים, או שאין לכם הרשאה לשנות אותו.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>נחשף בפני הקבוצה.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>על המפה</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>הדף הזה עוסק במקום</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>המקום יתווסף לדף העולם עם שם הדף והתמונה שלו. שיתוף הדף חושף את המקום לצוות; מה שנכתב כאן נשאר בדף.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>בשמירה הדף יתווסף לרשימת המקומות עם השם והתמונה שלו. שיתוף הדף חושף את המקום לקבוצה; מה שכתוב כאן נשאר בדף.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>אזור</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>מקומות</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>תמונה</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>תמונה של {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>על המפה: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה להוסיף או לעדכן את המקום במפה.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה לשמור את התמונה שלו או את המקום שלו במפה.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>דף ויקי</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>פתחו את דף הוויקי של {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>יצירת דף</value></data>
@@ -466,4 +465,40 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>שורת תיאור</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>משפט או שניים קצרים לכרטיס הקמפיין ולכותרת.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>התיאור המלא שהשחקנים רואים בסקירה: העולם, הרעיון, למה לצפות.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>הוספה לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>הוספת {0} לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>הדף הזה יהפוך להיסטוריה של הדמות. הדמות תצטרף לרשימה מוסתרת מהשחקנים, והדף יישאר כפי שהוא.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>נתוני משחק</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>הבינה המלאכותית תמלא את הדף והציוד לפי הדף הזה</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>שימוש ביצור מהספרייה</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>התחלה מדף ריק</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>הבינה המלאכותית קוראת את הדף וממלאת את הנתונים ואת הציוד. טקסט הדף הופך להיסטוריה ללא שינוי.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>משחקת כמו: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>שינוי</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>הבינה המלאכותית תבחר את הציוד</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>בונים את הדמות…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>הוספה לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} נוספו לדמויות, מוסתרים מהשחקנים.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>לא ניתן היה להוסיף לדמויות: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>בדמויות: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>על מה</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>ידע</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>דמות</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>פלג</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>משימה</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>לחשוף את {0}?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>השחקנים יוכלו לקרוא את ההיסטוריה של הדמות. אם היא הגיעה מדף ויקי של מנחה בלבד, כדאי לבדוק קודם שאין בה סודות.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>בתוך</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>ישירות ב{0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>בתוך {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>סוג</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>אזור</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>יישוב</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>רובע</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למפה</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>איור</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>מוצג לצד טקסט הדף. כל מי שיכול לקרוא את הדף רואה אותו.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>איור עבור {0}</value></data>
 </root>

@@ -19,9 +19,9 @@
 
 <ConfirmDialog @ref="confirm" />
 <UnsavedChangesGuard IsDirty="IsDirty" />
-@if (aiReady)
+@if (Ctx.IsDm)
 {
-    <WorldBuilderWizard @ref="builder" OnSaved="OnBuiltAsync" />
+    <PromoteToCastDialog @ref="promote" OnPromoted="OnPromotedAsync" />
 }
 
 @if (pages == null)
@@ -45,6 +45,15 @@ else if (Mode == "edit")
                         <div class="field-wide">
                             <label for="wiki-title" class="field-label">@L["Campaign.Wiki.Field.Title"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.Wiki.Required"]</span></label>
                             <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" @bind:event="oninput" required maxlength="160" data-testid="wiki-title" />
+                        </div>
+                        <div>
+                            <label for="wiki-kind" class="field-label">@L["Campaign.Wiki.Field.Kind"]</label>
+                            <select id="wiki-kind" class="field-select" @bind="draft.Kind" data-testid="wiki-kind-select">
+                                @foreach (var kind in Enum.GetValues<WikiPageKind>())
+                                {
+                                    <option value="@kind">@KindLabel(kind)</option>
+                                }
+                            </select>
                         </div>
                         <div>
                             <label for="wiki-visibility" class="field-label">@L["Campaign.Wiki.Field.WhoCanRead"]</label>
@@ -93,17 +102,26 @@ else if (Mode == "edit")
                     <p class="small-muted mb-0">@Rich(L["Campaign.Wiki.NoOtherPages"])</p>
                 }
             </section>
-            <section class="panel" aria-labelledby="wiki-place-heading">
+            @if (!IsPlace)
+            {
+                <section class="panel" aria-labelledby="wiki-art-heading">
+                    <div class="panel-title"><h3 id="wiki-art-heading" class="h6"><LucideIcon IconName="image" Size="14" Class="title-icon" /> @L["Campaign.Wiki.Illustration"]</h3></div>
+                    <ArtSlot ImageUrl="@(removeArt || current == null ? null : ArtService.Url(current))" Pending="pendingArt" CanEdit="true" Landscape="@(draft.Kind != WikiPageKind.Person)"
+                             Label="@L["Campaign.Wiki.Illustration"]" Class="art-compact" Alt="@L["Campaign.Wiki.ArtAlt", draft.Title]" TestId="wiki-art"
+                             OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = current?.HasArt == true; }"
+                             Generate="GeneratePageArtAsync" />
+                    <p class="field-hint mb-0">@L["Campaign.Wiki.IllustrationHint"]</p>
+                </section>
+            }
+            @if (IsPlace)
+            {
+            <section class="panel" aria-labelledby="wiki-place-heading" data-testid="wiki-place-panel">
                 <div class="panel-title"><h3 id="wiki-place-heading" class="h6"><LucideIcon IconName="map-pin" Size="14" Class="title-icon" /> @L["Campaign.Wiki.OnMap"]</h3></div>
-                <div class="form-check mb-2">
-                    <input id="wiki-is-place" type="checkbox" class="form-check-input" @bind="isPlace" disabled="@(linked != null)" aria-describedby="wiki-is-place-hint" data-testid="wiki-is-place" />
-                    <label for="wiki-is-place" class="form-check-label">@L["Campaign.Wiki.IsPlace"]</label>
-                </div>
-                <p id="wiki-is-place-hint" class="field-hint">@L["Campaign.Wiki.IsPlaceHint"]</p>
-                @if (isPlace && linked == null)
+                <p class="field-hint">@L["Campaign.Wiki.IsPlaceHint"]</p>
+                @if (linked == null)
                 {
                     <label for="wiki-place-region" class="field-label">@L["Campaign.Wiki.PlaceRegion"]</label>
-                    <select id="wiki-place-region" class="field-select field-sm mb-2" @bind="placeRegionId">
+                    <select id="wiki-place-region" class="field-select field-sm mb-2" @bind="placeRegionId" @bind:after="() => placeParentId = string.Empty">
                         @foreach (var region in regions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase))
                         {
                             <option value="@region.Id">@region.Name</option>
@@ -114,14 +132,30 @@ else if (Mode == "edit")
                         }
                     </select>
                 }
-                @if (isPlace)
-                {
+                <label for="wiki-place-parent" class="field-label">@L["Campaign.Places.Inside"]</label>
+                <select id="wiki-place-parent" class="field-select field-sm mb-2" @bind="placeParentId" @bind:after="() => placeKind = PlaceTree.ChildKind(PlaceRegion?.Locations.FirstOrDefault(l => l.Id == placeParentId))" data-testid="wiki-place-parent">
+                    <option value="">@L["Campaign.Places.InRegion", PlaceRegion?.Name ?? L["Campaign.Wiki.DefaultRegion"]]</option>
+                    @foreach (var (spot, depth) in PlaceTree.Ordered(PlaceRegion?.Locations ?? new List<LocationDocument>()))
+                    {
+                        @if (linked == null || PlaceTree.CanParent(PlaceRegion!.Locations, linked.Value.Place.Id, spot.Id))
+                        {
+                            <option value="@spot.Id">@(new string(' ', depth))@spot.Name</option>
+                        }
+                    }
+                </select>
+                <label for="wiki-place-kind" class="field-label">@L["Campaign.Places.Kind"]</label>
+                <select id="wiki-place-kind" class="field-select field-sm mb-2" @bind="placeKind" data-testid="wiki-place-kind">
+                    @foreach (var kind in Enum.GetValues<PlaceKind>())
+                    {
+                        <option value="@kind">@L[$"Campaign.Places.Kind.{kind}"]</option>
+                    }
+                </select>
                     <ArtSlot ImageUrl="@(removeArt || linked == null ? null : ArtService.Url(linked.Value.Region, linked.Value.Place))" Pending="pendingArt" CanEdit="true" Landscape="true"
                              Label="@L["Campaign.Wiki.PlaceArt"]" Class="art-compact" Alt="@L["Campaign.Wiki.PlaceArtAlt", draft.Title]" TestId="wiki-place-art"
                              OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = linked != null; }"
                              Generate="GenerateArtAsync" />
-                }
             </section>
+            }
             <section class="panel">
                 <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> @L["Campaign.Wiki.AiInstruction"]</h3></div>
                 <label for="wiki-ai-instruction" class="visually-hidden">@L["Campaign.Wiki.AiInstructionLabel"]</label>
@@ -161,9 +195,17 @@ else if (Slug != null)
                     {
                         <span class="pill">@tag</span>
                     }
+                    @if (current.Kind != WikiPageKind.General)
+                    {
+                        <span class="pill" data-testid="wiki-kind"><LucideIcon IconName="@KindIcon(current.Kind)" Size="14" /> @KindLabel(current.Kind)</span>
+                    }
+                    @if (CastMember(current) is { } member)
+                    {
+                        <a class="pill" href="@Ctx.BasePath/actors/@member.Id" data-testid="wiki-in-cast"><LucideIcon IconName="user" Size="14" /> @L["Campaign.Wiki.InCast", member.Name]</a>
+                    }
                     @if (linked != null)
                     {
-                        <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", linked.Value.Region.Name]</a>
+                        <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", PlacePath(linked.Value)]</a>
                     }
                     <span class="pill"><LucideIcon IconName="clock" Size="14" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
                 </div>
@@ -171,6 +213,14 @@ else if (Slug != null)
             @if (Ctx.IsDm)
             {
                 <div class="row-actions">
+                    @if (CastMember(current) == null && current.Kind is WikiPageKind.General or WikiPageKind.Person)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => promote.OpenAsync(current, mentions.Plain(current.Body))" data-testid="wiki-promote-cast"><LucideIcon IconName="user-plus" Size="18" /> @L["Campaign.Wiki.Promote.Open"]</CodexButton>
+                    }
+                    @if (linked == null && current.Kind is WikiPageKind.General or WikiPageKind.Place)
+                    {
+                        <a href="@Ctx.BasePath/wiki/@current.Slug/edit?kind=place" class="cx-btn cx-etched" data-testid="wiki-promote-place"><LucideIcon IconName="map-pin" Size="18" /> @L["Campaign.Wiki.PutOnMap"]</a>
+                    }
                     @if (current.Visibility == WikiVisibility.DmOnly)
                     {
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RevealAsync"><LucideIcon IconName="eye" Size="18" /> @L["Campaign.Wiki.SharePage"]</CodexButton>
@@ -183,9 +233,12 @@ else if (Slug != null)
         <div class="row g-3">
             <div class="col-lg-8">
                 <article class="panel wiki-page" data-testid="wiki-page">
-                    @if (linked != null)
+                    @if (IllustrationOf(current) is { } picture)
                     {
-                        <ArtSlot ImageUrl="@ArtService.Url(linked.Value.Region, linked.Value.Place)" CanEdit="false" Landscape="true" Class="art-compact" Alt="@L["Campaign.Wiki.PlaceArtAlt", current.Title]" TestId="wiki-page-art" />
+                        @* Beside the text on a wide screen, above it on a phone; a person's portrait is narrower. *@
+                        <figure class="wiki-figure @(current.Kind == WikiPageKind.Person && linked == null ? "wiki-figure-tall" : null)" data-testid="wiki-page-art">
+                            <img src="@picture" alt="@L["Campaign.Wiki.ArtAlt", current.Title]" loading="lazy" />
+                        </figure>
                     }
                     @if (string.IsNullOrWhiteSpace(current.Body))
                     {
@@ -282,9 +335,10 @@ else
                     <details class="popover-menu" data-testid="wiki-build-ai">
                         <summary class="cx-btn cx-etched cx-arcane"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Menu"] <LucideIcon IconName="chevron-down" Size="16" /></summary>
                         <div class="popover-panel menu-panel">
-                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("faction"))" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></button>
-                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("settlement"))" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></button>
-                            <button type="button" class="menu-item" @onclick="@(() => builder.OpenAsync("quest"))" data-testid="build-quest-ai"><LucideIcon IconName="scroll" Size="18" /><span>@L["WorldBuilder.Open.Quest"]</span></button>
+                            <a class="menu-item" href="@Ctx.BasePath/build/faction" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></a>
+                            <a class="menu-item" href="@Ctx.BasePath/build/settlement" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></a>
+                            <a class="menu-item" href="@Ctx.BasePath/build/quest" data-testid="build-quest-ai"><LucideIcon IconName="scroll" Size="18" /><span>@L["WorldBuilder.Open.Quest"]</span></a>
+                            <a class="menu-item" href="@Ctx.BasePath/build" data-testid="build-chat-ai"><LucideIcon IconName="message-square" Size="18" /><span>@L["WorldBuilder.Open.Chat"]</span></a>
                         </div>
                     </details>
                 }
@@ -329,7 +383,7 @@ else
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
                         <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
-                    @if (PlaceOf(wp) is { } onMap && ArtService.Url(onMap.Region, onMap.Place) is { } thumb)
+                    @if (IllustrationOf(wp) is { } thumb)
                     {
                         <img class="place-thumb" src="@thumb" alt="" loading="lazy" />
                     }
@@ -368,8 +422,12 @@ else
     private List<RegionDocument> regions = new();
     // The place the open page is about, if it has one the viewer can see.
     private (RegionDocument Region, LocationDocument Place)? linked;
-    private bool isPlace;
+    // Where the page's place goes (or is): its region, the place it is inside, and its kind. A page about a place gets one on Save.
+    private bool IsPlace => draft.Kind == WikiPageKind.Place || linked != null;
     private string placeRegionId = string.Empty;
+    private string placeParentId = string.Empty;
+    private PlaceKind placeKind = PlaceKind.Site;
+    private RegionDocument? PlaceRegion => linked?.Region ?? regions.FirstOrDefault(r => r.Id == placeRegionId);
     // The picture picked in the editor, held until Save; removeArt drops the place's picture on Save.
     private ArtImage? pendingArt;
     private bool removeArt;
@@ -383,14 +441,13 @@ else
     private readonly AiCall aiCall = new();
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
-    private WorldBuilderWizard builder = null!;
     private bool aiReady;
     // The editor's content as loaded or last saved, to tell whether leaving would lose anything.
     private string savedDraft = string.Empty;
 
     private bool IsDirty() => Mode == "edit" && DraftSnapshot() != savedDraft;
 
-    private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, string.Join(",", draft.Tags), isPlace, pendingArt != null, removeArt);
+    private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, draft.Kind, string.Join(",", draft.Tags), placeParentId, placeKind, pendingArt != null, removeArt);
 
     private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
     private List<string> AllTags => (pages ?? new()).SelectMany(p => p.Tags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
@@ -402,22 +459,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         aiReady = Ctx.IsDm && await Ai.IsConfiguredAsync(Ctx.UserId);
-    }
-
-    /// <summary>The world builder saved its drafts hidden from players; open the first page it wrote.</summary>
-    private async Task OnBuiltAsync(WorldBuildResult result)
-    {
-        Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
-        if (result.Actors.Count > 0 || result.Places.Count > 0) await Ctx.ReloadAsync();
-        loadedKey = null;
-        if (result.Pages.FirstOrDefault() is { } page)
-        {
-            Nav.NavigateTo($"{Ctx.BasePath}/wiki/{page.Slug}");
-        }
-        else
-        {
-            await LoadAsync();
-        }
     }
 
     protected override async Task OnParametersSetAsync()
@@ -437,8 +478,12 @@ else
         notes = new List<NoteDocument>();
         pendingArt = null;
         removeArt = false;
-        isPlace = false;
         placeRegionId = regions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault()?.Id ?? string.Empty;
+        placeParentId = string.Empty;
+        placeKind = PlaceKind.Site;
+        // "?kind=place" opens the editor ready to put the page on the map.
+        var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
+        var asPlace = query.TryGetValue("kind", out var askedKind) && string.Equals(askedKind, "place", StringComparison.OrdinalIgnoreCase);
 
         // A list of cards only needs the names when a page mentions something.
         mentions = Slug != null || pages.Any(p => WikiText.HasMentions(p.Body))
@@ -448,8 +493,7 @@ else
 
         if (Slug == "new")
         {
-            var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
-            draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty };
+            draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty, Kind = asPlace ? WikiPageKind.Place : WikiPageKind.General };
             savedDraft = DraftSnapshot();
             return;
         }
@@ -463,11 +507,17 @@ else
                 {
                     Id = current.Id, CampaignId = current.CampaignId, Slug = current.Slug, Title = current.Title,
                     Body = mentions.ForEditing(current.Body), Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId,
-                    PlaceId = current.PlaceId
+                    PlaceId = current.PlaceId, Kind = current.Kind, ActorId = current.ActorId
                 };
                 linked = PlaceOf(current);
-                isPlace = linked != null;
+                if (linked is { } on)
+                {
+                    placeParentId = on.Place.ParentId ?? string.Empty;
+                    placeKind = on.Place.Kind;
+                }
+
                 savedDraft = DraftSnapshot();
+                if (asPlace && linked == null) draft.Kind = WikiPageKind.Place; // after the snapshot: Leave asks before dropping it
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTarget(current), Ctx.Access)).ToList();
                 foreach (var authorId in notes.Select(n => n.AuthorId).Distinct())
                 {
@@ -501,6 +551,35 @@ else
     };
 
     private static string NotesTarget(WikiPageDocument page) => $"wiki:{page.Id}";
+
+    private PromoteToCastDialog promote = null!;
+
+    /// <summary>The character the page was promoted to, when the reader can see them.</summary>
+    private ActorDocument? CastMember(WikiPageDocument page) =>
+        string.IsNullOrEmpty(page.ActorId) ? null : Ctx.Actors.FirstOrDefault(a => a.Id == page.ActorId);
+
+    private async Task OnPromotedAsync(ActorDocument actor)
+    {
+        Ctx.Notify(Flash.Success(L["Campaign.Wiki.Promote.Done", actor.Name]));
+        await Ctx.ReloadAsync();
+        loadedKey = null;
+        await LoadAsync();
+    }
+
+    /// <summary>"Region › Area › Town": where the page's place sits, the place itself left out.</summary>
+    private static string PlacePath((RegionDocument Region, LocationDocument Place) on) =>
+        string.Join(" › ", PlaceTree.Ancestors(on.Region.Locations, on.Place).Select(p => p.Name).Prepend(on.Region.Name));
+
+    private string KindLabel(WikiPageKind kind) => L[$"Campaign.Wiki.Kind.{kind}"];
+
+    private static string KindIcon(WikiPageKind kind) => kind switch
+    {
+        WikiPageKind.Person => "user",
+        WikiPageKind.Place => "map-pin",
+        WikiPageKind.Faction => "shield",
+        WikiPageKind.Quest => "scroll",
+        _ => "book-open"
+    };
     private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
     private (RegionDocument Region, LocationDocument Place)? PlaceOf(WikiPageDocument page)
@@ -512,6 +591,22 @@ else
         }
 
         return null;
+    }
+
+    /// <summary>The picture a page shows: its place's when it is about one (a place has one picture), else its own.</summary>
+    private string? IllustrationOf(WikiPageDocument page) =>
+        PlaceOf(page) is { } on ? ArtService.Url(on.Region, on.Place) : ArtService.Url(page);
+
+    private Task<ArtImage> GeneratePageArtAsync(CancellationToken ct)
+    {
+        var (subjectKind, shape) = draft.Kind switch
+        {
+            WikiPageKind.Person => ("person", ArtShape.Tall),
+            WikiPageKind.Faction => ("faction: its people, colours and emblem", ArtShape.Wide),
+            WikiPageKind.Quest => ("scene from an adventure", ArtShape.Wide),
+            _ => ("scene, object or idea from a fantasy world", ArtShape.Wide)
+        };
+        return Art.GenerateAsync(Ctx.UserId, draft.Title, subjectKind, TextFormatting.Summary(mentions.Plain(draft.Body), 300), shape, ct);
     }
 
     private Task<ArtImage> GenerateArtAsync(CancellationToken ct) =>
@@ -554,7 +649,7 @@ else
         {
             if (linked is { } on)
             {
-                await PlaceSync.UpdatePlaceAsync(draft, Ctx.Access);
+                await PlaceSync.UpdatePlaceAsync(draft, Ctx.Access, new PlacePlacement(placeParentId, placeKind));
                 if (pendingArt != null || removeArt)
                 {
                     return await Art.SetLocationAsync(on.Region.Id, on.Place, Ctx.Access, removeArt ? null : pendingArt);
@@ -563,9 +658,19 @@ else
                 return true;
             }
 
-            if (isPlace)
+            if (draft.Kind == WikiPageKind.Place)
             {
-                return await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], pendingArt, Ctx.Access) != null;
+                // The page's own picture moves to the place, which then is the one picture both show.
+                var own = current?.HasArt == true ? current : null;
+                var image = pendingArt ?? (own == null ? null : await Art.WikiPageArtAsync(own));
+                var made = await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], image, Ctx.Access, new PlacePlacement(placeParentId, placeKind));
+                if (made != null && own != null) await Art.SetWikiPageAsync(own, Ctx.Access, null);
+                return made != null;
+            }
+
+            if (pendingArt != null || removeArt)
+            {
+                return await Art.SetWikiPageAsync(draft, Ctx.Access, removeArt ? null : pendingArt);
             }
 
             return true;

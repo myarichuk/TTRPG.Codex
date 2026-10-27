@@ -450,14 +450,13 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>That place no longer exists, or you can't change it.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Revealed to the party.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>On the map</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>This page is about a place</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>The place is added to the World page with this page's name and picture. Sharing the page reveals the place to the party; what you write here stays on the page.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>Saving puts this page on the Places list with its name and picture. Sharing the page reveals the place to the party; what you write here stays on the page.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Region</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Places</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Picture</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Picture of {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>On the map: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its place could not be added or updated on the map.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its picture or its place on the map could not be stored.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Wiki page</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Open the wiki page for {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Create page</value></data>
@@ -466,4 +465,40 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>Tagline</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>One or two short sentences for the campaign card and the header.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>The full write-up players see on the overview: setting, premise, what to expect.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>Add to cast</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>Add {0} to the cast</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>This page becomes their history. They join the cast hidden from players, and the page stays as it is.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>Stat block</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>Let the AI fill in the sheet and gear from this page</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>Use a creature from the Library</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>Start from a blank sheet</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>The AI reads the page and fills in the sheet and what they carry. The page's text becomes their history unchanged.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>Plays like: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>Change</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>Let the AI pick what they carry</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>Building the character…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>Add to cast</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} joined the cast, hidden from players.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>Couldn't add them to the cast: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>In the cast: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>About</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>Lore</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>Person</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>Faction</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Quest</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Reveal {0}?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Players will be able to read this character's history. If it came from a DM-only wiki page, check it for secrets first.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>Inside</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>Straight in {0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>in {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>Type</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Settlement</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>District</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Location</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Put on the map</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Illustration</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Shown beside the page's text. Whoever can read the page sees it.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Illustration for {0}</value></data>
 </root>
