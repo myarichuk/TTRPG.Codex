@@ -133,7 +133,7 @@ public class CampaignRepository(
         if (journalRepository != null) await journalRepository.DeleteAllForCampaignAsync(campaignId);
 
         // Attachments (cover art) are deleted with the document.
-        session.Delete(campaignId);
+        session.Delete(campaign);
         await session.SaveChangesAsync();
         return CampaignDeleteResult.Deleted;
     }

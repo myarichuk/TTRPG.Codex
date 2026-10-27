@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2219"/><stop offset="1" stop-color="#100c08"/></linearGradient>
+<radialGradient id="glow" cx="50%" cy="42%" r="55%"><stop offset="0" stop-color="#d4a84f" stop-opacity=".28"/><stop offset="1" stop-color="#d4a84f" stop-opacity="0"/></radialGradient>
+<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1d48a"/><stop offset="1" stop-color="#c9973a"/></linearGradient>
+<linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3be68"/><stop offset="1" stop-color="#a97a28"/></linearGradient>
+<linearGradient id="g3" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b98a30"/><stop offset="1" stop-color="#7d5a1c"/></linearGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000" flood-opacity=".5"/></filter>
+</defs>
+<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)" filter="url(#sh)"/>
+<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+<rect x="112" y="112" width="800" height="800" rx="173" fill="none" stroke="#9b7d44" stroke-width="6" stroke-opacity=".8"/>
+<g stroke="#17110a" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
+<polygon points="512,377.5 635.4,591.3 388.6,591.3" fill="url(#g1)"/>
+<polygon points="512,377.5 512,235 758.8,377.5" fill="url(#g2)"/>
+<polygon points="512,377.5 512,235 265.2,377.5" fill="url(#g1)"/>
+<polygon points="512,377.5 758.8,377.5 635.4,591.3" fill="url(#g3)"/>
+<polygon points="512,377.5 265.2,377.5 388.6,591.3" fill="url(#g2)"/>
+<polygon points="635.4,591.3 758.8,377.5 758.8,662.5" fill="url(#g2)"/>
+<polygon points="635.4,591.3 758.8,662.5 512,805" fill="url(#g3)"/>
+<polygon points="388.6,591.3 512,805 265.2,662.5" fill="url(#g3)"/>
+<polygon points="388.6,591.3 265.2,662.5 265.2,377.5" fill="url(#g1)"/>
+<polygon points="635.4,591.3 512,805 388.6,591.3" fill="url(#g2)"/>
+<polygon points="512,235 758.8,377.5 758.8,662.5 512,805 265.2,662.5 265.2,377.5" fill="none"/>
+</g></svg>

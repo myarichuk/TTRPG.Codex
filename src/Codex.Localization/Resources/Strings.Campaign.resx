@@ -150,6 +150,10 @@
   <data name="Campaign.Library.ArtRemoved" xml:space="preserve"><value>Art removed from “{0}”.</value></data>
   <data name="Campaign.Library.CannotCreate" xml:space="preserve"><value>That entry can't be turned into a creature, or only the DM can add creatures.</value></data>
   <data name="Campaign.Library.AddedToCast" xml:space="preserve"><value>Added {0} to the cast (hidden from players).</value></data>
+  <data name="Campaign.Library.ImportPack" xml:space="preserve"><value>Import pack (.zip)</value></data>
+  <data name="Campaign.Library.PackImported" xml:space="preserve"><value>Imported {0} entries from “{1}”. They are drafts: review and publish them when ready. {2} skipped (already here or unreadable).</value></data>
+  <data name="Campaign.Library.PackNotAPack" xml:space="preserve"><value>That file is not a homebrew pack exported from this app.</value></data>
+  <data name="Campaign.Library.PackWrongSystem" xml:space="preserve"><value>That pack is for a different game system ({0}), so it can't be added to this campaign.</value></data>
   <data name="Campaign.Library.NothingImported" xml:space="preserve"><value>Nothing imported: every selected entry already exists here.</value></data>
   <data name="Campaign.Library.Imported" xml:space="preserve"><value>Imported {0, plural, one{# entry} other{# entries}}. Entries that already existed here were skipped.</value></data>
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>There is no homebrew to export yet.</value></data>
