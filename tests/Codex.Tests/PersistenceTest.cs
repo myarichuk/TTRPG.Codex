@@ -1,5 +1,7 @@
 using Codex.Persistence;
 using Raven.Client.Documents;
+using Raven.Client.ServerWide.Operations;
+using Raven.Embedded;
 
 namespace Codex.Tests;
 
@@ -15,16 +17,37 @@ public class RavenDbFixture : IDisposable
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD_PRE_RELEASE", "1");
 
         // Runs killed before Dispose leave their data behind, so clear out the old ones first.
-        TestTempData.SweepStale(Path.GetTempPath(), "TestRavenData_*");
+        TestTempData.SweepStale(TestTempData.Root, "TestRavenData_*");
+        TestTempData.SweepOrphans(TestTempData.Root, "TestRavenData_");
         TestTempData.SweepStale(Path.Combine(AppContext.BaseDirectory, "RavenDBServer", "Temp"), "*");
+        TestTempData.SweepOrphanFiles(Path.Combine(AppContext.BaseDirectory, "RavenDBServer", "Temp"));
 
-        DbPath = Path.Combine(Path.GetTempPath(), "TestRavenData_" + Guid.NewGuid());
+        DbPath = Path.Combine(TestTempData.Root, TestTempData.OwnedName("TestRavenData_"));
+        TestTempData.DeleteOnExit(DbPath);
         DbName = "Campaigns_" + Guid.NewGuid().ToString();
     }
 
     public void Dispose()
     {
+        DropDatabase();
         TestTempData.DeleteDirectory(DbPath);
+    }
+
+    // The embedded server is one per process, so this class's database lives in the server's folder (the first fixture's), not in
+    // DbPath, and stays there, scratch files and all, until the process ends: a full run piles up gigabytes. Dropping it when the
+    // class is done keeps the footprint to one class's worth.
+    private void DropDatabase()
+    {
+        try
+        {
+            using var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(DbName) { SkipCreatingDatabase = true });
+            store.Maintenance.Server.Send(new DeleteDatabasesOperation(DbName, hardDelete: true));
+        }
+        catch (Exception ex)
+        {
+            // Nothing to drop (the server never started, or the class never made a database), or it is already gone.
+            Console.WriteLine($"Could not drop test database {DbName}: {ex.Message}");
+        }
     }
 }
 

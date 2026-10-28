@@ -20,7 +20,7 @@ public sealed class AppFixture : IAsyncLifetime
 {
     private Process? _process;
     private readonly StringBuilder _output = new();
-    private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "E2E_RavenData_" + Guid.NewGuid());
+    private readonly string _dataDir = Path.Combine(TestTempData.Root, TestTempData.OwnedName("E2E_RavenData_"));
     private IPlaywright? _playwright;
 
     public string BaseUrl { get; private set; } = string.Empty;
@@ -29,7 +29,8 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        TestTempData.SweepStale(Path.GetTempPath(), "E2E_RavenData_*");
+        TestTempData.SweepStale(TestTempData.Root, "E2E_RavenData_*");
+        TestTempData.SweepOrphans(TestTempData.Root, "E2E_RavenData_");
 
         var repoRoot = FindRepoRoot();
         var port = GetFreePort();
