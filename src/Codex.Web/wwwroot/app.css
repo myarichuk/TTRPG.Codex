@@ -1017,23 +1017,25 @@ a.user-chip:active { transform: scale(0.97); }
 .wiki-link { font-weight: 600; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); transition: border-color var(--transition), color var(--transition); }
 .wiki-link:hover { border-bottom-color: var(--accent); }
 .wiki-missing { color: var(--danger); border-bottom: 1px dashed var(--danger); text-decoration: none; }
-/* A page's illustration floats at the end side of the text (left in Hebrew), framed like the other art, and the text
-   wraps around it; on a phone it sits above the text at full width. The page grows to hold it. */
+/* A page's pictures float at the end side of the text (left in Hebrew), framed like the other art, and the text wraps around
+   them; a person's portrait sits above the page's own illustration. On a phone they sit above the text. The page grows to hold them. */
 .wiki-page { display: flow-root; }
+.wiki-aside {
+    float: inline-end; width: min(42%, 22rem); margin: 0.25rem 0 1rem; margin-inline-start: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
+}
 .wiki-figure {
-    float: inline-end; width: min(45%, 24rem); margin: 0.25rem 0 1rem; margin-inline-start: 1.5rem;
-    border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--frame), var(--shadow-2);
+    margin: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--frame), var(--shadow-2);
     overflow: hidden; background: var(--surface-sunken, var(--surface));
 }
 .wiki-figure img { display: block; width: 100%; height: auto; }
-.wiki-figure-tall { width: min(34%, 16rem); }
-.wiki-figure-portrait { display: flex; justify-content: center; padding: 0.75rem; }
+.wiki-figure-portrait { width: min(100%, 13rem); align-self: center; display: flex; justify-content: center; padding: 0.75rem; }
 .wiki-figure-portrait img { aspect-ratio: 1; object-fit: cover; }
 .wiki-figure-portrait .avatar-xl { width: 100%; height: auto; aspect-ratio: 1; }
 .wiki-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; color: var(--text-3); }
 @media (max-width: 640px) {
-    .wiki-figure, .wiki-figure-tall { float: none; width: 100%; margin-inline-start: 0; }
-    .wiki-figure-placeholder { width: min(100%, 12rem); margin-inline: auto; }
+    .wiki-aside { float: none; width: 100%; margin-inline-start: 0; }
+    .wiki-figure-placeholder { width: min(100%, 12rem); align-self: center; }
 }
 .wiki-body { font-size: 1.02rem; line-height: 1.65; }
 .wiki-body h3 { font-size: 1.15rem; margin-top: 1.4rem; }

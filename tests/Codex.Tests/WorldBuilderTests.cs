@@ -941,6 +941,35 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_WhoseOnlyWordsCameBeforeItsLastCall_IsAskedForTheAnswer()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Let me check the places."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, "The coast is empty; I would start with a harbour."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Contains("has not seen anything from you yet", model.Calls[2][^1].Text);
+        Assert.Equal("The coast is empty; I would start with a harbour.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
+    public async Task Chat_WhoseWordsCameBeforeItsLastCall_KeepsThemWhenTheNudgeBringsNothing()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("The coast is empty."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Equal("The coast is empty.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
     public async Task Chat_ThatStaysQuiet_IsNotAnswered_NotAPlaceholder_AndLeavesNoTraceForTheNextMessage()
     {
         var model = new ScriptedModel(
@@ -1224,7 +1253,8 @@ public class WorldBuilderTests
     {
         var model = new ScriptedModel(
             _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Here is the lay of the land."), new FunctionCallContent("c1", "list_places") }),
-            _ => new ChatMessage(ChatRole.Assistant, string.Empty));
+            _ => new ChatMessage(ChatRole.Assistant, string.Empty),
+            _ => new ChatMessage(ChatRole.Assistant, string.Empty)); // the nudge brings nothing either
         var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
 
         await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);

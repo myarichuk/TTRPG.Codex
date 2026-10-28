@@ -145,22 +145,31 @@ public sealed class WorldChat
 
     private const string ProposalReadyNote = "The proposal is ready for the game master to review.";
 
+    private const string PreambleNudge = "(A note from the app, not from the game master: the game master has not seen anything from you yet, only your tool calls. " +
+        "Reply to the game master now, in one short message, with what you found or decided. If you meant to propose something, call propose_changes now.)";
+
     /// <summary>Runs the model until it answers. A turn that ends with nothing to read (a small model that goes quiet after its
     /// tool results, or one whose proposal ran past the output limit) gets one nudge and one more go, so the DM isn't left
-    /// guessing. Returns an empty reply when even that brought nothing.</summary>
+    /// guessing. So does one whose only words came before its last tool call (as likely a "let me look" as a summary): the
+    /// nudge asks for the answer, and those words stand in only if it brings nothing. Returns an empty reply when there is
+    /// nothing at all.</summary>
     private async Task<(string Reply, bool CutShort)> RunTurnAsync(IChatClient client, ChatOptions options, Func<bool> proposed, Action<WorldChatDelta>? stream, CancellationToken ct)
     {
+        var earlier = string.Empty;
         for (var attempt = 0; ; attempt++)
         {
             var response = await StreamAsync(client, options, stream, ct);
             var cutShort = KeepAnswered(response.Messages);
             var reply = FinalAnswer(response.Messages);
-            // A model that wrote its summary in the same message as its last call and then said nothing: that summary is the answer.
-            // (Not when the round limit cut it off: what it said along the way is only preamble then.)
-            if (reply.Length == 0 && !cutShort) reply = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
+            if (reply.Length > 0 || cutShort) return (reply, cutShort);
+
+            // Not when the round limit cut it off: what it said along the way is only preamble then.
+            var said = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
+            if (said.Length > 0) earlier = said;
             // A proposal is an answer of a kind: nudging a model that just made one invites it to make another over the first.
-            if (reply.Length > 0 || cutShort || attempt == 1 || proposed()) return (reply, cutShort);
-            history.Add(new ChatMessage(ChatRole.User, response.FinishReason == ChatFinishReason.Length ? CutOffNudge : EmptyNudge));
+            if (attempt == 1 || proposed()) return (earlier, false);
+            history.Add(new ChatMessage(ChatRole.User, response.FinishReason == ChatFinishReason.Length ? CutOffNudge
+                : said.Length > 0 ? PreambleNudge : EmptyNudge));
         }
     }
 
