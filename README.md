@@ -74,6 +74,12 @@ What the AI does today:
 - **Characters from a concept**: one line of concept becomes a draft sheet using only classes,
   species and backgrounds loaded in the campaign's Library, plus a short history.
 - **Wiki pages**: expand rough notes into a linked page.
+- **World builder**: named chats with your model, kept per campaign, that read the campaign and the
+  Library and propose new places, people, factions, quests, secrets, spells, magic items, equipment
+  and creatures (or variants of the Library's), changes to existing pages, places, histories and
+  homebrew (reviewed as a word-by-word diff), Bestiary picks, and tags. Nothing is saved until you
+  apply it, and everything starts hidden. Each tool call the model makes can be opened, down to the
+  raw JSON. Tags then let the Library export one set of homebrew as a pack to share.
 
 ## Install on a phone
 

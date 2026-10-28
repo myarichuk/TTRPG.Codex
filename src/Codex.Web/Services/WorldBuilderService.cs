@@ -19,12 +19,16 @@ public sealed record WorldBuildResult(
     IReadOnlyList<FactDocument> Facts,
     IReadOnlyList<LocationDocument> Places,
     IReadOnlyList<BestiaryEntry> Shortlisted,
-    IReadOnlyList<WorldEdit>? Edits = null)
+    IReadOnlyList<WorldEdit>? Edits = null,
+    int Retagged = 0,
+    int Picked = 0)
 {
     /// <summary>The existing entries whose text the proposal replaced.</summary>
     public IReadOnlyList<WorldEdit> Changes => Edits ?? Array.Empty<WorldEdit>();
 
-    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count + Changes.Count;
+    /// <summary>Entries saved: <see cref="Retagged"/> counts the pages and homebrew entries whose tags changed, <see cref="Picked"/>
+    /// the Library creatures put on the Bestiary by an entry of their own (a new homebrew creature put there is one entry, not two).</summary>
+    public int Count => Entries.Count + Pages.Count + Actors.Count + Facts.Count + Places.Count + Changes.Count + Retagged + Picked;
 }
 
 /// <summary>An existing entry a proposal changed: what kind of text, its id (a page's slug), and its name.</summary>
@@ -200,10 +204,80 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         foreach (var t in searched)
         {
             lines.AddRange((await library.SearchAsync(campaign, access, query?.Trim() ?? string.Empty, t, limit: 20))
-                .Select(i => $"{i.Entry.Type}/{i.Entry.Id}: {i.Entry.Name}{(i.IsHomebrew ? " (homebrew)" : "")}"));
+                .Select(i => $"{i.Entry.Type}/{i.Entry.Id}: {i.Entry.Name}" + (i.Homebrew is { } brew
+                    ? $" (homebrew, key existing:{WorldBundle.HomebrewPrefix}{brew.Type}/{brew.EntryId}{(brew.Tags.Count > 0 ? "; tags: " + string.Join(", ", brew.Tags) : "")})"
+                    : "")));
         }
 
         return lines.Count == 0 ? "No Library entry matches." : string.Join('\n', lines.Take(ContextCap));
+    }
+
+    /// <summary>One Library entry in full, by <c>type/id</c> or a homebrew entry's key: where it comes from, its tags, every field
+    /// with its value (as JSON) and its rules text. What a variant starts from and what an edit of a homebrew entry changes.</summary>
+    public async Task<string> EntryAsync(CampaignDocument campaign, CampaignAccess access, string key)
+    {
+        DmOnly(access);
+        var text = key.Trim();
+        var homebrewKey = text.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix, StringComparison.OrdinalIgnoreCase);
+        if (homebrewKey) text = text[(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix).Length..];
+        if (text.Split('/') is not [var type, var id] || type.Length == 0 || id.Length == 0)
+        {
+            return $"\"{key}\" is not an entry key; give type/id as search_library lists it (\"spell/fireball\").";
+        }
+
+        var item = homebrewKey ? await library.GetAsync(campaign, access, type, id, isHomebrew: true) : await library.GetAsync(campaign, access, type, id);
+        if (item == null) return $"There is no Library entry {type}/{id}. Use search_library to find one.";
+
+        var sb = new StringBuilder($"# {item.Entry.Name}\n");
+        sb.AppendLine(item.Homebrew is { } brew
+            ? $"type: {brew.Type}; homebrew of this campaign, key existing:{WorldBundle.HomebrewPrefix}{brew.Type}/{brew.EntryId} (an edit can change it); {(brew.IsPublished ? "published: players can read it" : "a draft, hidden from players")}"
+            : $"type: {item.Entry.Type}; from the pack \"{item.SourceName}\", which cannot be changed: make a homebrew variant with \"basedOn\": \"{item.Entry.Type}/{item.Entry.Id}\"");
+        if (item.Entry.Tags.Count > 0) sb.AppendLine("tags: " + string.Join(", ", item.Entry.Tags));
+        if (item.Entry.Properties.Count > 0)
+        {
+            sb.AppendLine("properties:");
+            foreach (var (name, value) in item.Entry.Properties) sb.AppendLine($"- {name}: {PropertyJson(value)}");
+        }
+
+        var description = item.Entry.Description ?? string.Empty;
+        sb.AppendLine().Append(description.Length > MaxPageText ? description[..MaxPageText] + "\n[...]" : description);
+        return sb.ToString().TrimEnd();
+    }
+
+    /// <summary>A field's value as the model reads it: JSON, whatever shape the database or a pack gave it.</summary>
+    internal static string PropertyJson(object? value)
+    {
+        static System.Text.Json.Nodes.JsonNode? Node(object? v) => v switch
+        {
+            null => null,
+            string text => System.Text.Json.Nodes.JsonValue.Create(text),
+            bool b => System.Text.Json.Nodes.JsonValue.Create(b),
+            long or int or short or byte => System.Text.Json.Nodes.JsonValue.Create(Convert.ToInt64(v, CultureInfo.InvariantCulture)),
+            double or float or decimal => System.Text.Json.Nodes.JsonValue.Create(Convert.ToDouble(v, CultureInfo.InvariantCulture)),
+            JsonElement element => System.Text.Json.Nodes.JsonNode.Parse(element.GetRawText()),
+            System.Collections.IDictionary map => new System.Text.Json.Nodes.JsonObject(map.Keys.Cast<object>().Select(k => KeyValuePair.Create(k.ToString() ?? string.Empty, Node(map[k])))),
+            System.Collections.IEnumerable list => new System.Text.Json.Nodes.JsonArray(list.Cast<object?>().Select(Node).ToArray()),
+            _ => System.Text.Json.Nodes.JsonValue.Create(Convert.ToString(v, CultureInfo.InvariantCulture))
+        };
+
+        return Node(value)?.ToJsonString(new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) ?? "null";
+    }
+
+    /// <summary>The tags the campaign's wiki pages and homebrew entries use, most used first, so new ones match them.</summary>
+    public async Task<string> TagsAsync(CampaignAccess access)
+    {
+        DmOnly(access);
+        var pages = (await wiki.GetVisibleForCampaignAsync(access)).SelectMany(p => p.Tags).ToList();
+        var brews = (await homebrew.GetVisibleForCampaignAsync(access)).SelectMany(h => h.Tags).ToList();
+        var tags = pages.Select(t => (Tag: t, Page: true)).Concat(brews.Select(t => (Tag: t, Page: false)))
+            .GroupBy(t => t.Tag.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Tag: g.First().Tag.Trim(), Pages: g.Count(t => t.Page), Homebrew: g.Count(t => !t.Page)))
+            .OrderByDescending(t => t.Pages + t.Homebrew).ThenBy(t => t.Tag, StringComparer.OrdinalIgnoreCase)
+            .Take(ContextCap * 2)
+            .ToList();
+        return tags.Count == 0
+            ? "Nothing in the campaign is tagged yet."
+            : string.Join('\n', tags.Select(t => $"{t.Tag}: {(t.Pages > 0 ? $"{t.Pages} page(s)" : "")}{(t.Pages > 0 && t.Homebrew > 0 ? ", " : "")}{(t.Homebrew > 0 ? $"{t.Homebrew} homebrew" : "")}"));
     }
 
     /// <summary>The fields a homebrew entry of <paramref name="type"/> fills, as "key: label, type, options; help" lines.</summary>
@@ -237,7 +311,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
 
         // The parser is pure, so the fields of every type the proposal names are looked up first.
         var fields = new Dictionary<string, IReadOnlyList<FieldSpec>>(StringComparer.OrdinalIgnoreCase);
-        foreach (Match match in TypeField.Matches(json))
+        foreach (Match match in TypeField.Matches(json).Concat(HomebrewKey.Matches(json)))
         {
             if (spellings.GetValueOrDefault(match.Groups[1].Value) is { } key && !fields.ContainsKey(key))
             {
@@ -249,13 +323,18 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var pages = (await wiki.GetVisibleForCampaignAsync(access)).GroupBy(p => p.Slug, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Title, StringComparer.OrdinalIgnoreCase);
         var places = (await regions.GetVisibleForCampaignAsync(access)).SelectMany(r => r.Locations).Select(l => l.Id).ToList();
         var castIds = (await actorRepository.GetVisibleForCampaignAsync(access)).Where(a => a.Kind != ActorKind.PlayerCharacter).Select(a => a.Id).ToList();
+        var brews = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
+        var brewKeys = brews.GroupBy(h => $"{h.Type}/{h.EntryId}", StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
         var culture = Lang;
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
-            system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds);
+            system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys);
         var check = WorldBundleParser.ParseProposal(json, rules);
 
         await FindStatsAsync(campaign, access, check.Bundle);
         var editErrors = await FillEditsAsync(check.Bundle, access);
+        editErrors.AddRange(await VariantsAsync(campaign, access, check.Bundle));
+        editErrors.AddRange(await PicksAsync(campaign, access, check.Bundle));
+        FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
         var warnings = check.Warnings.ToList();
         foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Npc, Stats: null } && d.SuggestedStats != null))
         {
@@ -276,11 +355,27 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var pages = (await wiki.GetVisibleForCampaignAsync(access)).ToList();
         var allRegions = (await regions.GetVisibleForCampaignAsync(access)).ToList();
         var actors = (await actorRepository.GetVisibleForCampaignAsync(access)).ToList();
+        var brews = edits.Any(d => WorldBundle.ParseTarget(d.Target!, out _) == EditTarget.Homebrew) ? (await homebrew.GetVisibleForCampaignAsync(access)).ToList() : new List<HomebrewEntryDocument>();
         var names = Names(actors, allRegions);
         foreach (var draft in edits)
         {
             switch (WorldBundle.ParseTarget(draft.Target!, out var id))
             {
+                case EditTarget.Homebrew:
+                    if (brews.FirstOrDefault(h => string.Equals($"{h.Type}/{h.EntryId}", id, StringComparison.OrdinalIgnoreCase)) is { } brew)
+                    {
+                        draft.Name = brew.Name;
+                        draft.Before = brew.Description;
+                        draft.BeforeProperties = new Dictionary<string, object>(brew.Properties);
+                        draft.BeforeTags = new List<string>(brew.Tags);
+                        draft.BeforeStamp = HomebrewStamp(brew);
+                        draft.SharedWithPlayers = brew.IsPublished;
+                        draft.Type = brew.Type;
+                        // No new text: the review shows the text it keeps, not an empty one.
+                        if (draft.Body == null) draft.Body = brew.Description;
+                    }
+
+                    break;
                 case EditTarget.Place:
                     if (allRegions.SelectMany(r => r.Locations).FirstOrDefault(p => p.Id == id) is { } place)
                     {
@@ -333,6 +428,92 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
 
     private static readonly Regex TypeField = new("\"type\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.Compiled);
 
+    // An edit of a homebrew entry fills the fields of the entry's type, named in its key.
+    private static readonly Regex HomebrewKey = new("existing:homebrew:([^/\"]+)/", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>Starts each variant from the Library entry it is based on: its fields, with the ones the model gave on top, and its
+    /// text and tags unless the model wrote its own. The DM reviews the whole entry, not only what differs.</summary>
+    private async Task<List<string>> VariantsAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle)
+    {
+        var errors = new List<string>();
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Homebrew, BasedOn: not null }))
+        {
+            var key = draft.BasedOn!;
+            var homebrewKey = key.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix, StringComparison.OrdinalIgnoreCase);
+            if (homebrewKey) key = key[(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix).Length..];
+            var item = key.Split('/') is [var type, var id]
+                ? homebrewKey ? await library.GetAsync(campaign, access, type, id, isHomebrew: true) : await library.GetAsync(campaign, access, type, id)
+                : null;
+            if (item == null)
+            {
+                errors.Add($"{draft.Ref} (homebrew '{draft.Name}'): basedOn '{draft.BasedOn}' is not a Library entry; use type/id as search_library lists it.");
+                continue;
+            }
+
+            if (!string.Equals(item.Entry.Type, draft.Type, StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"{draft.Ref} (homebrew '{draft.Name}'): basedOn '{draft.BasedOn}' is a {item.Entry.Type}, but the entry is a {draft.Type}; a variant has its base's type.");
+                continue;
+            }
+
+            var properties = item.Entry.Properties.ToDictionary(p => p.Key, p => p.Value);
+            foreach (var (name, value) in draft.Properties) properties[name] = value;
+            draft.Properties = properties;
+            draft.Body ??= item.Entry.Description;
+            if (draft.Tags.Count == 0) draft.Tags = new List<string>(item.Entry.Tags);
+            if (string.IsNullOrWhiteSpace(draft.Pitch)) draft.Pitch = TextFormatting.Summary(draft.Body ?? string.Empty, 300);
+            draft.BasedOn = $"{item.Entry.Type}/{item.Entry.Id}";
+            draft.BasedOnName = item.IsHomebrew ? item.Entry.Name : (await library.GetAsync(campaign, access, item.Entry.Type, item.Entry.Id, Lang))?.Entry.Name ?? item.Entry.Name;
+            draft.ImportedFrom = item.IsHomebrew ? item.Homebrew!.ImportedFrom : item.SourceName;
+        }
+
+        return errors;
+    }
+
+    /// <summary>Finds the creature each Bestiary pick names in the Library. Unlike a person's stats, a pick that names nothing is an
+    /// error: it is the whole entry.</summary>
+    private async Task<List<string>> PicksAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle)
+    {
+        var errors = new List<string>();
+        var system = catalog.GetDefinition(campaign.SystemId);
+        foreach (var draft in bundle.Drafts.Where(d => d.Kind == DraftKinds.Bestiary))
+        {
+            draft.Stats = null;
+            await FindStatsAsync(campaign, access, bundle, draft);
+            if (draft.Stats is not { } creature)
+            {
+                errors.Add($"{draft.Ref} (bestiary '{draft.Name}'): '{draft.SuggestedStats}' is not a creature in the Library; use type/id as search_library lists it.");
+                continue;
+            }
+
+            if (system?.FindType(creature.Type)?.ActorBlueprint != true)
+            {
+                errors.Add($"{draft.Ref} (bestiary '{draft.Name}'): '{creature.Type}/{creature.Id}' is not a creature, so it cannot go on the Bestiary.");
+                continue;
+            }
+
+            draft.Name = draft.OutlineName = creature.Shown;
+            draft.SharedWithPlayers = campaign.Bestiary.Any(b => string.Equals(b.EntryType, creature.Type, StringComparison.OrdinalIgnoreCase) && b.EntryId == creature.Id && b.IsHomebrew == creature.Homebrew);
+        }
+
+        return errors;
+    }
+
+    /// <summary>Names each thing a tags entry changes and records its tags as they are now, for the review card.</summary>
+    private static void FillTagged(WorldBundle bundle, List<WikiPageDocument> pages, List<HomebrewEntryDocument> brews)
+    {
+        foreach (var draft in bundle.Drafts.Where(d => d.Kind == DraftKinds.Tags))
+        {
+            draft.Tagged = draft.Targets.Select(target =>
+            {
+                var kind = WorldBundle.ParseTarget(target, out var id);
+                var page = kind == EditTarget.Page ? pages.FirstOrDefault(p => string.Equals(p.Slug, id, StringComparison.OrdinalIgnoreCase)) : null;
+                var brew = kind == EditTarget.Homebrew ? brews.FirstOrDefault(h => string.Equals($"{h.Type}/{h.EntryId}", id, StringComparison.OrdinalIgnoreCase)) : null;
+                return new TaggedThing { Key = target, Name = page?.Title ?? brew?.Name ?? id, Before = new List<string>(page?.Tags ?? brew?.Tags ?? new List<string>()) };
+            }).ToList();
+        }
+    }
+
     /// <summary>The system's types whose entries can stand on the table with a stat block (monsters).</summary>
     private static List<string> CreatureTypes(SystemDefinition? system) =>
         system?.EntityTypes.Where(t => t.ActorBlueprint).Select(t => t.Type).ToList() ?? new List<string>();
@@ -351,10 +532,11 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
 
     /// <summary>Finds the creature each person's suggested stats name in the Library. Only an exact name (or id) counts: a near
     /// miss would give the person the wrong stat block, and a blank sheet is the safer start.</summary>
-    public async Task FindStatsAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle)
+    public async Task FindStatsAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, WorldDraft? only = null)
     {
         var system = catalog.GetDefinition(campaign.SystemId);
-        var wanted = bundle.Drafts.Where(d => d.Kind == DraftKinds.Npc && d.Stats == null && !string.IsNullOrWhiteSpace(d.SuggestedStats)).ToList();
+        var wanted = only != null ? new List<WorldDraft> { only }
+            : bundle.Drafts.Where(d => d.Kind == DraftKinds.Npc && d.Stats == null && !string.IsNullOrWhiteSpace(d.SuggestedStats)).ToList();
         foreach (var draft in wanted)
         {
             var name = draft.SuggestedStats!.Trim();
@@ -460,7 +642,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 Body = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle),
                 Visibility = WikiVisibility.DmOnly,
                 Kind = PageKindOf(draft),
-                Tags = TagKey(draft) is { } tag ? new List<string> { Tag(l, tag) } : new List<string>(),
+                Tags = (TagKey(draft) is { } tag ? new[] { Tag(l, tag) } : Array.Empty<string>()).Concat(draft.Tags).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 AuthorUserId = access.UserId
             };
             if (!await wiki.TrySaveAsync(page, access))
@@ -489,7 +671,8 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 Tags = new List<string>(draft.Tags),
                 Properties = new Dictionary<string, object>(draft.Properties),
                 IsPublished = false,
-                AuthorUserId = access.UserId
+                AuthorUserId = access.UserId,
+                ImportedFrom = draft.ImportedFrom
             };
             if (!await homebrew.TrySaveAsync(entry, access))
             {
@@ -510,7 +693,16 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             }
         }
 
+        // Library creatures picked for the Bestiary by an entry of their own; one already there is left as it is.
+        var picks = Pending("bestiary").Where(d => d is { Kind: DraftKinds.Bestiary, Stats: not null }).ToList();
+        foreach (var draft in picks)
+        {
+            var creature = draft.Stats!;
+            shortlist.Add(new BestiaryEntry { EntryType = creature.Type, EntryId = creature.Id, IsHomebrew = creature.Homebrew, Name = creature.Name });
+        }
+
         var shortlisted = await ShortlistAsync(campaign, shortlist);
+        foreach (var draft in picks) Saved(draft, "bestiary", $"{draft.Stats!.Type}/{draft.Stats.Id}");
 
         var actors = new List<ActorDocument>();
         var castDrafts = Pending("cast").Where(d => d.Kind == DraftKinds.Npc && d.Cast).ToList();
@@ -545,6 +737,13 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         {
             edited.Add(await ApplyEditAsync(draft, bundle, access));
             Saved(draft, "edit", draft.Target!);
+        }
+
+        var retagged = 0;
+        foreach (var draft in Pending("tags").Where(d => d.Kind == DraftKinds.Tags))
+        {
+            retagged += await RetagAsync(draft, access);
+            Saved(draft, "tags", string.Join(",", draft.Targets));
         }
 
         var saved = new List<FactDocument>();
@@ -610,8 +809,13 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
 
         // Edits an earlier attempt made are reported too, first.
         edited.InsertRange(0, earlier.Where(e => e.Step == "edit").Select(e => EditOf(e.Draft)));
-        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted, edited);
+        retagged += earlier.Where(e => e.Step == "tags").Sum(e => e.Draft.Targets.Count);
+        var picked = Kept(bundle).Count(d => d.Kind == DraftKinds.Bestiary && d.SavedAs.ContainsKey("bestiary"));
+        return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted, edited, retagged, picked);
     }
+
+    /// <summary>True when two field values say the same, however each was stored (a long from the model, a double from the database).</summary>
+    internal static bool Same(object? a, object? b) => PropertyJson(a) == PropertyJson(b);
 
     private static WorldEdit EditOf(WorldDraft draft)
     {
@@ -635,6 +839,22 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
 
         switch (target)
         {
+            case EditTarget.Homebrew:
+            {
+                var entry = (await homebrew.GetVisibleForCampaignAsync(access)).FirstOrDefault(h => string.Equals($"{h.Type}/{h.EntryId}", id, StringComparison.OrdinalIgnoreCase)) ?? throw gone;
+                if (draft.BeforeStamp != null && draft.BeforeStamp != HomebrewStamp(entry)) throw changed;
+                if (draft.Rename is { Length: > 0 } rename) entry.Name = rename.Trim();
+                // Rules text, not wiki text: links become plain names.
+                if (draft.Body != null) entry.Description = WorldBundleParser.ResolveLinks(draft.Body, bundle, keepLinks: false).Trim();
+                foreach (var (name, value) in draft.Properties.Where(p => draft.BeforeProperties == null || !Same(draft.BeforeProperties.GetValueOrDefault(p.Key), p.Value)))
+                {
+                    entry.Properties[name] = value;
+                }
+
+                if (draft.Retag) entry.Tags = new List<string>(draft.Tags);
+                if (!await homebrew.TrySaveAsync(entry, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                return new WorldEdit(target, $"{entry.Type}/{entry.EntryId}", entry.Name);
+            }
             case EditTarget.Place:
             {
                 foreach (var region in (await regions.GetVisibleForCampaignAsync(access)).ToList())
@@ -666,6 +886,40 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 return new WorldEdit(target, page.Slug, page.Title);
             }
         }
+    }
+
+    /// <summary>Adds and takes off a tags entry's tags on each page and homebrew entry it names. Returns how many changed; one
+    /// that has gone since is skipped (its tags no longer matter).</summary>
+    private async Task<int> RetagAsync(WorldDraft draft, CampaignAccess access)
+    {
+        static List<string>? Changed(List<string> tags, WorldDraft draft)
+        {
+            var next = tags.Where(t => !draft.TagsRemoved.Contains(t.Trim(), StringComparer.OrdinalIgnoreCase)).ToList();
+            next.AddRange(draft.TagsAdded.Where(t => !next.Contains(t, StringComparer.OrdinalIgnoreCase)));
+            return next.SequenceEqual(tags) ? null : next;
+        }
+
+        var changed = 0;
+        var pages = (await wiki.GetVisibleForCampaignAsync(access)).ToList();
+        var brews = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
+        foreach (var target in draft.Targets)
+        {
+            var kind = WorldBundle.ParseTarget(target, out var id);
+            if (kind == EditTarget.Page && pages.FirstOrDefault(p => string.Equals(p.Slug, id, StringComparison.OrdinalIgnoreCase)) is { } page && Changed(page.Tags, draft) is { } pageTags)
+            {
+                page.Tags = pageTags;
+                if (!await wiki.TrySaveAsync(page, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                changed++;
+            }
+            else if (kind == EditTarget.Homebrew && brews.FirstOrDefault(h => string.Equals($"{h.Type}/{h.EntryId}", id, StringComparison.OrdinalIgnoreCase)) is { } brew && Changed(brew.Tags, draft) is { } brewTags)
+            {
+                brew.Tags = brewTags;
+                if (!await homebrew.TrySaveAsync(brew, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                changed++;
+            }
+        }
+
+        return changed;
     }
 
     /// <summary>Puts the creatures ticked for the Bestiary on the campaign's shortlist (reload-then-mutate, as the Bestiary page
@@ -938,6 +1192,9 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         text = WorldBundleParser.ResolveLinks(text, bundle, keepLinks);
         return held.Count == 0 ? text : HeldMarker.Replace(text, m => held[int.Parse(m.Groups[1].Value)]);
     }
+
+    // A homebrew entry is stamped by its last save: an edit compares fields as well as text, and every save moves it.
+    private static string HomebrewStamp(HomebrewEntryDocument entry) => Stamp(entry.UpdatedAt.Ticks.ToString(CultureInfo.InvariantCulture) + "\n" + entry.Description);
 
     private static string Stamp(string? text) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(text ?? string.Empty)));
 

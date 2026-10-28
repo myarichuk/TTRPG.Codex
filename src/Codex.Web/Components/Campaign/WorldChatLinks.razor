@@ -1,0 +1,43 @@
+@using Codex.Persistence
+
+@* What an applied proposal made or changed, each a link to where it now lives. *@
+
+<ul class="wb-links" data-testid="world-result-links">
+    @foreach (var link in Links)
+    {
+        <li data-testid="@(link.Kind.StartsWith("change-", StringComparison.Ordinal) ? "world-result-change" : "world-result-link")">
+            <a href="@WorldChatView.Href(Ctx.BasePath, link)"><LucideIcon IconName="@WorldChatView.LinkIcon(link)" Size="14" /> @Name(link)</a>
+            @if (Note(link) is { } note)
+            {
+                <span class="small-muted">@note</span>
+            }
+        </li>
+    }
+</ul>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<WorldChatLink> Links { get; set; } = Array.Empty<WorldChatLink>();
+
+    private string Name(WorldChatLink link) => link.Kind switch
+    {
+        "lore" when int.TryParse(link.Name, out var count) => L["WorldChat.Result.Secrets", count],
+        "tags" when int.TryParse(link.Name, out var count) => L["WorldChat.Result.Retagged", count],
+        _ => link.Name
+    };
+
+    private string? Note(WorldChatLink link) => link.Kind switch
+    {
+        "bestiary" => L["WorldChat.Result.Bestiary"],
+        _ when link.Kind.StartsWith("change-", StringComparison.Ordinal) => L[$"WorldChat.Edit.{Target(link.Kind)}"],
+        _ => null
+    };
+
+    private static string Target(string kind) => kind["change-".Length..] switch
+    {
+        "place" => "Place",
+        "actor" => "Actor",
+        "homebrew" => "Homebrew",
+        _ => "Page"
+    };
+}

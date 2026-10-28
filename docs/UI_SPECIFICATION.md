@@ -88,12 +88,13 @@ rings and the HP bar's fill against its track need 3:1.
 | `/campaigns/{id}/bestiary` | DM: a shortlist of Library creatures for upcoming encounters (note, count, "to cast"), plus monsters in play. Players: the creatures they have met. |
 | `/campaigns/{id}/world` | Regions and places, reveal to party, add places from setting packs. |
 | `/campaigns/{id}/wiki[/{slug}[/edit]]` | The world wiki: DM-written pages linked with `[[Page title]]`, each DM-only or shared with the party; backlinks; player notes per page; "Expand with AI". |
+| `/campaigns/{id}/build[?chat={id}]` | DM: the world builder (docs/WORLD_BUILDER.md). A workbench filling the screen under the header: the DM's named chats, the conversation (each tool call the AI made, with its arguments, result and timing, and raw JSON on request), and the proposal to review entry by entry and apply. The chats fold into a drawer when the workbench is narrower than 1280px; under 760px one pane shows at a time, picked from tabs. Laid out by container queries on the workbench, not the viewport. |
 | `/campaigns/{id}/lore` | Facts with visibility: DM only, revealed to a character, or the whole party. |
 | `/campaigns/{id}/sessions` | Planned, live and completed sessions. |
 | `/campaigns/{id}/sessions/{sid}` | Player recap and DM-only summary (both with AI drafts), table notes (private or party), the reader's private journal for the session, event log. |
 | `/campaigns/{id}/journal` | The reader's private notebook for the campaign: one entry per session plus free entries. Never visible to anyone else, the DM included. |
 | `/campaigns/{id}/table` | The live table: initiative, hit points, conditions, dice, quick notes, quick-add creatures. |
-| `/campaigns/{id}/library[/{type}[/{entry}]]` | Reference content for the system plus homebrew; the DM authors homebrew, clones a pack entry as a variant, and imports homebrew from other campaigns they run. |
+| `/campaigns/{id}/library[/{type}[/{entry}]]` | Reference content for the system plus homebrew; the DM authors homebrew, clones a pack entry as a variant, imports homebrew from other campaigns they run, and exports it as a pack, all of it or only what carries chosen tags. |
 | `/campaigns/{id}/settings` | Name, system, cover art, active packs, members and roles, invite link, backup, delete. |
 | `/campaigns/{id}/actors/{aid}` | The character sheet, rendered from the system's `system.yaml`; portrait, history (AI rewrite), DM notes (DM only, AI draft), level-up advice. |
 | `/settings/ai` | The reader's AI providers: presets (OpenRouter first), key, model; test connection; which one is the default. |

@@ -294,7 +294,15 @@ public class WorldBuilderTests
     private static readonly SystemDefinition CreatureSystem = new()
     {
         Id = "srd5e",
-        EntityTypes = new List<ContentTypeDefinition> { new() { Type = "monster", ActorBlueprint = true }, new() { Type = "spell" } }
+        EntityTypes = new List<ContentTypeDefinition>
+        {
+            new() { Type = "monster", ActorBlueprint = true },
+            new()
+            {
+                Type = "spell",
+                Fields = { new FieldDefinition("level", "Level", FieldType.Number), new FieldDefinition("school", "School", FieldType.Text), new FieldDefinition("damageType", "Damage Type", FieldType.Text) }
+            }
+        }
     };
 
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages = null, params HomebrewEntryDocument[] existing) => Service(existingPages, Array.Empty<RegionDocument>(), existing);
@@ -796,7 +804,7 @@ public class WorldBuilderTests
             sent => ToolResult(sent).Contains("Nothing was proposed") ? Calls("c3", "propose_changes", fixedUp) : new ChatMessage(ChatRole.Assistant, "gave up"),
             _ => new ChatMessage(ChatRole.Assistant, "Varr and its market are ready to review."));
         var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
-        var progress = new List<WorldChatLine>();
+        var progress = new List<WorldChatStep>();
 
         await chat.SendAsync("A harbour town, please.", progress.Add, CancellationToken.None);
 
@@ -807,7 +815,15 @@ public class WorldBuilderTests
         Assert.Empty(saving.Pages);
         Assert.Equal(new[] { WorldChatSpeaker.Dm, WorldChatSpeaker.Model }, chat.Lines.Select(l => l.Speaker));
         Assert.Equal("Varr and its market are ready to review.", chat.Lines[^1].Text);
-        Assert.Equal(3, progress.Count); // list_places and two proposals
+        // list_places and two proposals, each heard when it starts and again when it ends; the first proposal was refused.
+        var steps = progress.Distinct().ToList();
+        Assert.Equal(6, progress.Count);
+        Assert.Equal(new[] { "list_places", "propose_changes", "propose_changes" }, steps.Select(s => s.Tool));
+        Assert.All(steps, s => Assert.Equal(WorldChatStepStatus.Done, s.Status));
+        Assert.Equal(new[] { false, true, false }, steps.Select(s => s.Rejected));
+        Assert.Contains("\"parent\": \"nowhere\"", steps[1].Arguments);
+        Assert.StartsWith("Nothing was proposed", steps[1].Result);
+        Assert.Equal(steps, chat.Lines[^1].Steps);
         Assert.StartsWith("You help the game master", model.Calls[0][0].Text);
 
         var result = await chat.ApplyAsync();
@@ -921,7 +937,8 @@ public class WorldBuilderTests
         var reply = chat.Lines[^1];
         Assert.Equal("Here is the lay of the land.", reply.Text); // not "Got it, let me look.Got it, one more look.Here is…"
         Assert.Equal(2, reply.Steps!.Count);
-        Assert.All(reply.Steps, step => Assert.Equal("map-pin", step.Icon));
+        Assert.All(reply.Steps, step => Assert.Equal(("list_places", WorldChatStepStatus.Done), (step.Tool, step.Status)));
+        Assert.All(reply.Steps, step => Assert.NotNull(step.Result));
     }
 
     [Fact]
@@ -1501,4 +1518,271 @@ public class WorldBuilderTests
 
         Assert.Equal("WorldBuilder.Error.OnlyDm", ex.Key);
     }
+
+    // ---- Changes to what exists: homebrew edits, tags, Bestiary picks and variants ----
+
+    private static ProposalRules ChangeRules() => Rules() with
+    {
+        ExistingHomebrew = new Dictionary<string, string> { ["spell/brine-ward"] = "Brine Ward", ["monster/gull-hag"] = "Gull Hag" }
+    };
+
+    [Fact]
+    public void ParseProposal_ReadsHomebrewEdits_Tags_BestiaryPicks_Variants_AndPageTags()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e", "kind": "edit", "target": "existing:homebrew:Spell/Brine-Ward", "rename": "Greater Brine Ward", "properties": {"level": "3", "school": "Evocation"}, "tags": ["salt", "ward"]},
+              {"ref": "g", "kind": "tags", "targets": ["existing:port-varr", "existing:homebrew:spell/brine-ward"], "add": ["Grey Coast", "grey  coast"], "remove": ["town"]},
+              {"ref": "b", "kind": "bestiary", "entry": "existing:homebrew:monster/gull-hag"},
+              {"ref": "v", "kind": "homebrew", "type": "spell", "name": "Rimeburst", "basedOn": "spell/fireball", "properties": {"damageType": "Cold"}},
+              {"ref": "w", "kind": "wiki", "name": "The Wardens", "tags": ["faction", "grey-coast"], "text": "Smugglers."}
+            ]}
+            """;
+
+        var check = WorldBundleParser.ParseProposal(json, ChangeRules());
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        var b = check.Bundle;
+        var edit = b.Find("e")!;
+        // The key as stored, whatever its case in the proposal; named after the entry it changes.
+        Assert.Equal(("existing:homebrew:spell/brine-ward", "spell", "Brine Ward", "Greater Brine Ward"), (edit.Target, edit.Type, edit.Name, edit.Rename));
+        Assert.Equal(3L, edit.Properties["level"]);
+        Assert.True(edit.Retag);
+        Assert.Equal(new[] { "salt", "ward" }, edit.Tags);
+        Assert.Null(edit.Body); // the rules text stays as it is
+
+        var tags = b.Find("g")!;
+        Assert.Equal(new[] { "existing:port-varr", "existing:homebrew:spell/brine-ward" }, tags.Targets);
+        Assert.Equal(new[] { "Grey Coast" }, tags.TagsAdded); // the same tag twice, spelled two ways, is one
+        Assert.Equal(new[] { "town" }, tags.TagsRemoved);
+        Assert.Equal("+Grey Coast −town", tags.Name);
+
+        Assert.Equal("monster/gull-hag", b.Find("b")!.SuggestedStats);
+        Assert.Equal(("spell/fireball", "Cold"), (b.Find("v")!.BasedOn, b.Find("v")!.Properties["damageType"]));
+        Assert.Equal(new[] { "faction", "grey-coast" }, b.Find("w")!.Tags);
+        // A variant without text of its own takes its base's; that is not worth a warning.
+        Assert.DoesNotContain(check.Warnings, w => w.Contains("'Rimeburst'"));
+    }
+
+    [Theory]
+    [InlineData("""{"ref": "e", "kind": "edit", "target": "existing:homebrew:spell/fireball", "text": "Hotter."}""", "make a homebrew variant of it instead")]
+    [InlineData("""{"ref": "e", "kind": "edit", "target": "existing:homebrew:spell/brine-ward"}""", "the edit changes nothing")]
+    [InlineData("""{"ref": "g", "kind": "tags", "targets": ["existing:nowhere"], "add": ["x"]}""", "target 'existing:nowhere' is not a wiki page")]
+    [InlineData("""{"ref": "g", "kind": "tags", "targets": ["existing:place:old-town"], "add": ["x"]}""", "only those carry tags")]
+    [InlineData("""{"ref": "g", "kind": "tags", "targets": ["existing:port-varr"]}""", "needs \"add\" or \"remove\"")]
+    [InlineData("""{"ref": "g", "kind": "tags", "add": ["x"]}""", "needs \"targets\"")]
+    [InlineData("""{"ref": "b", "kind": "bestiary"}""", "needs \"entry\"")]
+    public void ParseProposal_RefusesChangesItCannotMake(string entry, string error)
+    {
+        var check = WorldBundleParser.ParseProposal($$"""{"entries": [{{entry}}]}""", ChangeRules());
+
+        Assert.False(check.Ok);
+        Assert.Contains(check.Errors, e => e.Contains(error));
+    }
+
+    [Fact]
+    public void ParseProposal_RefusesTwoEditsOfOneHomebrewEntry()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "a", "kind": "edit", "target": "existing:homebrew:spell/brine-ward", "rename": "One"},
+              {"ref": "b", "kind": "edit", "target": "existing:homebrew:SPELL/brine-ward", "rename": "Two"}
+            ]}
+            """;
+
+        Assert.Contains(WorldBundleParser.ParseProposal(json, ChangeRules()).Errors, e => e.Contains("already changed by another entry"));
+    }
+
+    private static HomebrewEntryDocument BrineWard() => new()
+    {
+        Id = "hb-1", Type = "spell", EntryId = "brine-ward", Name = "Brine Ward", SystemId = "srd5e", Description = "A circle of salt.",
+        Tags = { "salt", "town" }, Properties = { ["level"] = 2L, ["school"] = "Abjuration" }, UpdatedAt = new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc)
+    };
+
+    [Fact]
+    public async Task Check_ShowsWhatAHomebrewEditChanges_AndSaveChangesOnlyThat()
+    {
+        var ward = BrineWard();
+        var saving = Service(null, ward);
+        const string json = """{"entries": [{"ref": "e", "kind": "edit", "target": "existing:homebrew:spell/brine-ward", "rename": "Greater Brine Ward", "properties": {"level": 3, "school": "Abjuration"}}]}""";
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        var edit = check.Bundle.Drafts.Single();
+        Assert.Equal(("Brine Ward", "A circle of salt.", "A circle of salt."), (edit.Name, edit.Before, edit.Body)); // no new text: the old one stays
+        Assert.Equal(2L, edit.BeforeProperties!["level"]);
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        Assert.Equal(("Greater Brine Ward", 3L, "Abjuration", "A circle of salt."), (ward.Name, ward.Properties["level"], ward.Properties["school"], ward.Description));
+        Assert.Equal(new[] { "salt", "town" }, ward.Tags); // tags not named: kept
+        var change = Assert.Single(result.Changes);
+        Assert.Equal((EditTarget.Homebrew, "spell/brine-ward", "Greater Brine Ward"), (change.Target, change.Id, change.Name));
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public async Task Save_OfAHomebrewEdit_RefusesWhenTheEntryWasSavedSinceTheReview()
+    {
+        var ward = BrineWard();
+        var saving = Service(null, ward);
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e", "kind": "edit", "target": "existing:homebrew:spell/brine-ward", "rename": "Mine"}]}""");
+        ward.UpdatedAt = ward.UpdatedAt.AddMinutes(5); // the DM edited it in the Library meanwhile
+
+        var error = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, check.Bundle));
+
+        Assert.Equal("WorldBuilder.Error.EditChanged", error.Key);
+        Assert.Equal("Brine Ward", ward.Name);
+    }
+
+    [Fact]
+    public async Task Tags_AreShownWithWhatEachTargetHasNow_AndSavedOntoPagesAndHomebrew()
+    {
+        var ward = BrineWard();
+        var varr = new WikiPageDocument { Id = "p-varr", Slug = "port-varr", Title = "Port Varr", Tags = { "Town", "harbour" } };
+        var saving = Service(new[] { varr }, ward);
+        const string json = """{"entries": [{"ref": "g", "kind": "tags", "targets": ["existing:port-varr", "existing:homebrew:spell/brine-ward"], "add": ["grey-coast"], "remove": ["town"]}]}""";
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal(new[] { ("Port Varr", "Town, harbour"), ("Brine Ward", "salt, town") },
+            check.Bundle.Drafts.Single().Tagged.Select(t => (t.Name, string.Join(", ", t.Before))));
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        Assert.Equal(new[] { "harbour", "grey-coast" }, saving.Pages.Single(p => p.Slug == "port-varr").Tags); // "town" goes whatever its case
+        Assert.Equal(new[] { "salt", "grey-coast" }, ward.Tags);
+        Assert.Equal((2, 2), (result.Retagged, result.Count));
+    }
+
+    [Fact]
+    public async Task Variant_StartsFromItsLibraryEntry_AndBestiaryPick_PutsAPackCreatureOnTheShortlist()
+    {
+        var registry = VeteranPack();
+        registry.RegisterEntry(new ContentEntry
+        {
+            Id = "fireball", Type = "spell", SystemId = "srd5e", PackId = "srd", Name = "Fireball", Description = "A bright streak.",
+            Tags = { "evocation" }, Properties = { ["level"] = 3L, ["damageType"] = "Fire" }
+        }, 0);
+        var saving = Service(null, Array.Empty<RegionDocument>(), registry);
+        const string json = """
+            {"entries": [
+              {"ref": "v", "kind": "homebrew", "type": "spell", "name": "Rimeburst", "basedOn": "spell/fireball", "properties": {"damageType": "Cold"}},
+              {"ref": "b", "kind": "bestiary", "entry": "monster/veteran"}
+            ]}
+            """;
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        var rime = check.Bundle.Find("v")!;
+        Assert.Equal((3L, "Cold", "A bright streak.", "Fireball"), (rime.Properties["level"], rime.Properties["damageType"], rime.Body, rime.BasedOnName));
+        Assert.Equal(new[] { "evocation" }, rime.Tags);
+        Assert.Equal(("Veteran", "veteran"), (check.Bundle.Find("b")!.Name, check.Bundle.Find("b")!.Stats?.Id));
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        var entry = Assert.Single(result.Entries);
+        Assert.Equal(("Rimeburst", "Cold", false), (entry.Name, entry.Properties["damageType"], entry.IsPublished));
+        Assert.Equal("srd", entry.ImportedFrom); // the pack it came from, for the attribution line
+        Assert.Contains(saving.Stored.Bestiary, s => s is { EntryType: "monster", EntryId: "veteran", IsHomebrew: false });
+        Assert.Equal((1, 2), (result.Picked, result.Count));
+    }
+
+    [Theory]
+    [InlineData("""{"ref": "v", "kind": "homebrew", "type": "spell", "name": "X", "basedOn": "spell/nothing"}""", "is not a Library entry")]
+    [InlineData("""{"ref": "v", "kind": "homebrew", "type": "spell", "name": "X", "basedOn": "monster/veteran"}""", "a variant has its base's type")]
+    [InlineData("""{"ref": "b", "kind": "bestiary", "entry": "monster/nobody"}""", "is not a creature in the Library")]
+    public async Task Check_RefusesAVariantOrAPickTheLibraryCannotBack(string entry, string error)
+    {
+        var saving = Service(null, Array.Empty<RegionDocument>(), VeteranPack());
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, $$"""{"entries": [{{entry}}]}""");
+
+        Assert.Contains(check.Errors, e => e.Contains(error));
+    }
+
+    // ---- The chat as it is stored ----
+
+    [Fact]
+    public async Task Chat_IsStoredAfterEachTurn_AndCarriesOnFromTheStoredHistory()
+    {
+        var saving = Service();
+        var stored = new List<WorldChatDocument>();
+        var first = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, "The coast is empty."));
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(first), Campaign, Dm, store: doc =>
+        {
+            stored.Add(doc);
+            return Task.CompletedTask;
+        });
+
+        await chat.SendAsync("What is there along the coast, and who lives by the water?", null, CancellationToken.None);
+
+        var doc = Assert.Single(stored);
+        Assert.Equal("What is there along the coast, and who lives by the water?", doc.Title);
+        // The DM's message, the call, its result and the answer; the system prompt is made afresh each time, so not stored.
+        Assert.Equal(new[] { "user", "assistant", "tool", "assistant" }, doc.History.Select(m => m.Role));
+        Assert.Equal("list_places", doc.History[1].Calls![0].Name);
+        Assert.StartsWith("The campaign has no places yet", doc.History[2].Results![0].Result);
+        Assert.Equal(2, doc.Lines[^1].Usage!.Rounds); // the round that called the tool, and the answer
+
+        // Opened again (another connection), the model reads the whole conversation so far after a fresh system prompt.
+        var second = new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, "Then a harbour."));
+        var again = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(second), Campaign, Dm, doc);
+        await again.SendAsync("Start with a harbour.", null, CancellationToken.None);
+
+        var sent = second.Calls.Single();
+        Assert.Equal(ChatRole.System, sent[0].Role);
+        Assert.Equal(new[] { "What is there along the coast, and who lives by the water?", "", "", "The coast is empty.", "Start with a harbour." }, sent.Skip(1).Select(m => m.Text));
+        Assert.Equal("c1", sent[2].Contents.OfType<FunctionCallContent>().Single().CallId);
+        Assert.Equal("c1", sent[3].Contents.OfType<FunctionResultContent>().Single().CallId);
+    }
+
+    [Fact]
+    public async Task Chat_ThatIsStopped_IsNotBusyAfterwards_AndKeepsNothingOfTheTurn()
+    {
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(new SilentModel()), Campaign, Dm);
+        var changes = 0;
+        chat.Changed += () => changes++;
+
+        var turn = chat.SendAsync("Hello", null, CancellationToken.None);
+        // The turn is under way once the model is asked; the system prompt is read first.
+        for (var waited = 0; !chat.IsBusy && waited < 200; waited++) await Task.Delay(10);
+        Assert.True(chat.IsBusy);
+        chat.Stop();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => turn);
+
+        Assert.False(chat.IsBusy);
+        Assert.Null(chat.Live);
+        Assert.Empty(chat.Lines);
+        Assert.Equal(string.Empty, chat.Title);
+        Assert.True(changes >= 2); // the turn started, and ended
+    }
+
+    /// <summary>A model that says nothing until it is stopped, as a slow one does.</summary>
+    private sealed class SilentModel : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            yield break;
+        }
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+    }
+
+    [Theory]
+    [InlineData("A harbour town", "A harbour town")]
+    [InlineData("A harbour town on the grey coast where the tide decides who eats tonight", "A harbour town on the grey coast where the tide decides who…")]
+    [InlineData("First line\nsecond line", "First line")]
+    public void ChatTitle_IsTheFirstLineOfTheFirstMessage_CutAtAWord(string message, string title) =>
+        Assert.Equal(title, WorldChat.TitleFrom(message));
 }

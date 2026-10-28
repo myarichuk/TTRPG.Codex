@@ -501,4 +501,9 @@
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>איור</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>מוצג לצד טקסט הדף. כל מי שיכול לקרוא את הדף רואה אותו.</value></data>
   <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>איור עבור {0}</value></data>
+  <data name="Campaign.Library.Export.Title" xml:space="preserve"><value>ייצוא תוכן ביתי כחבילה</value></data>
+  <data name="Campaign.Library.Export.Hint" xml:space="preserve"><value>בחרו תגיות כדי לייצא רק רשומות שיש להן אחת מהן, או אל תבחרו כלום כדי לייצא הכול.</value></data>
+  <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>לתוכן הביתי אין עדיין תגיות, ולכן הכול ייוצא. בונה העולם יכול לתייג אותו בשבילכם.</value></data>
+  <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>תגיות</value></data>
+  <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{ייצוא רשומה אחת} two{ייצוא # רשומות} other{ייצוא # רשומות}}</value></data>
 </root>

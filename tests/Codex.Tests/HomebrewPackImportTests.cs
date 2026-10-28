@@ -58,6 +58,32 @@ public class HomebrewPackImportTests
     }
 
     [Fact]
+    public async Task APackOfSomeTags_CarriesOnlyThoseEntries_WithTheirTagsAndFields()
+    {
+        // What Library's "Export by tag" does: pick the tagged homebrew of one campaign, export it, import it in another.
+        var source = new[]
+        {
+            new HomebrewEntryDocument { CampaignId = "c0", Type = "spell", EntryId = "brine-ward", Name = "Brine Ward", Tags = { "Grey Coast", "salt" }, Properties = { ["level"] = 1L, ["ritual"] = true } },
+            new HomebrewEntryDocument { CampaignId = "c0", Type = "item", EntryId = "gull-feather", Name = "Gull Feather", Tags = { "grey coast" } },
+            new HomebrewEntryDocument { CampaignId = "c0", Type = "spell", EntryId = "rimeburst", Name = "Rimeburst", Tags = { "cold" } }
+        };
+        var manifest = new PackManifest { Id = "homebrew-grey-coast", Name = "Grey homebrew (grey coast)", SystemId = "demo", Kind = "homebrew" };
+        var bytes = await new ContentPackExporter().ExportToZipBytesAsync(manifest, HomebrewTags.Tagged(source, new[] { "grey coast" }).Select(h => h.ToEntry()));
+
+        var (service, saved) = Build();
+        var result = await service.ImportPackAsync(new MemoryStream(bytes), Campaign, Dm);
+
+        Assert.Equal(2, result.Imported);
+        Assert.Equal(new[] { "brine-ward", "gull-feather" }, saved.Select(d => d.EntryId).Order());
+        var ward = saved.Single(d => d.EntryId == "brine-ward");
+        Assert.Equal(new[] { "Grey Coast", "salt" }, ward.Tags);
+        Assert.Equal(1L, Convert.ToInt64(ward.Properties["level"]));
+        Assert.True(Convert.ToBoolean(ward.Properties["ritual"]));
+        Assert.All(saved, d => Assert.Equal("c1", d.CampaignId));
+        Assert.Equal("item", saved.Single(d => d.EntryId == "gull-feather").Type);
+    }
+
+    [Fact]
     public async Task ExistingEntriesAreSkipped()
     {
         var (service, saved) = Build(new HomebrewEntryDocument { Type = "spell", EntryId = "flame-blade" });

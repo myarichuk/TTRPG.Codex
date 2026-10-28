@@ -1,0 +1,78 @@
+@using Codex.Persistence
+
+@* What the model did on its way to a reply, a line per tool call, like a combat log: what it looked up, how that came out and
+   how long it took. A line opens to the arguments the model sent and the result it got back, and from there to the raw JSON. *@
+
+<ol class="wb-steps @(Live ? "is-live" : null)" data-testid="@TestId">
+    @foreach (var step in Steps)
+    {
+        var open = expanded.Contains(step);
+        var tone = WorldChatView.Tone(step);
+        <li class="wb-step wb-step-@tone @(open ? "is-open" : null)" data-testid="world-step">
+            <button type="button" class="wb-step-line" aria-expanded="@(open ? "true" : "false")" @onclick="() => Toggle(step)" data-testid="world-step-toggle">
+                <span class="wb-step-mark" aria-hidden="true">
+                    @if (step.Status == WorldChatStepStatus.Running)
+                    {
+                        <span class="spinner-border spinner-border-sm"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon IconName="@(tone switch { "failed" => "circle-x", "rejected" => "alert-triangle", _ => WorldChatView.Icon(step) })" Size="14" />
+                    }
+                </span>
+                <span class="wb-step-label">@WorldChatView.Label(L, step)</span>
+                <span class="wb-step-meta">
+                    <span class="wb-step-outcome">@WorldChatView.Outcome(L, step)</span>
+                    @if (step.Status != WorldChatStepStatus.Running)
+                    {
+                        <span class="wb-step-time">@WorldChatView.Duration(L, step.DurationMs)</span>
+                    }
+                </span>
+                <LucideIcon IconName="chevron-down" Size="14" Class="wb-step-chevron" />
+            </button>
+            @if (open)
+            {
+                <div class="wb-step-detail" data-testid="world-step-detail">
+                    <div class="wb-step-block">
+                        <div class="label-caps">@L["WorldChat.Step.Arguments"] <code class="wb-step-tool">@step.Tool</code></div>
+                        <pre class="wb-code">@step.Arguments</pre>
+                    </div>
+                    @if (step.Error != null)
+                    {
+                        <div class="wb-step-block">
+                            <div class="label-caps">@L["WorldChat.Step.Error"]</div>
+                            <pre class="wb-code wb-code-error">@step.Error</pre>
+                        </div>
+                    }
+                    @if (step.Result != null)
+                    {
+                        <div class="wb-step-block">
+                            <div class="label-caps">@L["WorldChat.Step.Result"]</div>
+                            <pre class="wb-code">@step.Result</pre>
+                        </div>
+                    }
+                    <div class="wb-step-actions">
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="braces" OnClick="() => OnRaw.InvokeAsync(step)" data-testid="world-step-raw">@L["WorldChat.Step.Raw"]</CodexButton>
+                    </div>
+                </div>
+            }
+        </li>
+    }
+</ol>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<WorldChatStep> Steps { get; set; } = Array.Empty<WorldChatStep>();
+
+    /// <summary>The turn is still under way: the last line may still be running.</summary>
+    [Parameter] public bool Live { get; set; }
+
+    [Parameter] public EventCallback<WorldChatStep> OnRaw { get; set; }
+    [Parameter] public string TestId { get; set; } = "world-steps";
+
+    private readonly HashSet<WorldChatStep> expanded = new();
+
+    private void Toggle(WorldChatStep step)
+    {
+        if (!expanded.Remove(step)) expanded.Add(step);
+    }
+}

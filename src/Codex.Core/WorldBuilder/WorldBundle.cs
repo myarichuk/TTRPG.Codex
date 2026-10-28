@@ -27,7 +27,17 @@ public static class DraftKinds
     /// against the current text like any other entry.</summary>
     public const string Edit = "edit";
 
-    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place, Edit };
+    /// <summary>Tags to add to or take off things the campaign already has (wiki pages, homebrew entries), so they can be found and
+    /// exported together. <see cref="WorldDraft.Targets"/> says which; nothing else about them changes.</summary>
+    public const string Tags = "tags";
+
+    /// <summary>A Library creature, from a pack or the campaign's homebrew, to put on the campaign's Bestiary shortlist.</summary>
+    public const string Bestiary = "bestiary";
+
+    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place, Edit, Tags, Bestiary };
+
+    /// <summary>Kinds that change something the campaign has instead of adding a new thing.</summary>
+    public static bool ChangesExisting(string kind) => kind is Edit or Tags or Bestiary;
 
     /// <summary>Kinds saved as wiki pages, which other entries' text can link to.</summary>
     public static bool IsPage(string kind) => kind is Wiki or Npc or Place;
@@ -41,7 +51,9 @@ public enum EditTarget
     /// <summary>A place's description, which players read once the place is revealed.</summary>
     Place,
     /// <summary>A cast member's history, which players read once the character is revealed.</summary>
-    Actor
+    Actor,
+    /// <summary>A homebrew Library entry: its name, rules text, fields and tags (<c>existing:homebrew:&lt;type&gt;/&lt;entryId&gt;</c>).</summary>
+    Homebrew
 }
 
 /// <summary>
@@ -123,6 +135,44 @@ public sealed class WorldDraft
 
     public Dictionary<string, object> Properties { get; set; } = new();
     public List<string> Tags { get; set; } = new();
+
+    /// <summary>For a homebrew entry: the Library entry (<c>type/id</c>) it is a variant of, whose fields and text it starts from.</summary>
+    public string? BasedOn { get; set; }
+
+    /// <summary>For a variant: the name of the entry it starts from, as the DM reads it, once the check found it.</summary>
+    public string? BasedOnName { get; set; }
+
+    /// <summary>For a variant: where the entry it starts from comes from (a pack's name), kept as the homebrew's attribution.</summary>
+    public string? ImportedFrom { get; set; }
+
+    /// <summary>For an edit of a homebrew entry: its new name, when it gets one.</summary>
+    public string? Rename { get; set; }
+
+    /// <summary>For an edit of a homebrew entry: <see cref="Tags"/> are its complete new tags. Otherwise its tags stay.</summary>
+    public bool Retag { get; set; }
+
+    /// <summary>For an edit of a homebrew entry: its fields and tags as they are now, beside <see cref="Properties"/> and
+    /// <see cref="Tags"/> (the changed fields, and the complete new tags when they change), for the review card.</summary>
+    public Dictionary<string, object>? BeforeProperties { get; set; }
+    public List<string>? BeforeTags { get; set; }
+
+    /// <summary>For a tags entry: the keys of the pages and homebrew entries it tags.</summary>
+    public List<string> Targets { get; set; } = new();
+
+    /// <summary>For a tags entry: the tags to add and to take off.</summary>
+    public List<string> TagsAdded { get; set; } = new();
+    public List<string> TagsRemoved { get; set; } = new();
+
+    /// <summary>For a tags entry: what each target is called and the tags it has now, filled in by the check, for the review card.</summary>
+    public List<TaggedThing> Tagged { get; set; } = new();
+}
+
+/// <summary>Something a tags entry changes: its key, its name and its tags before the change.</summary>
+public sealed class TaggedThing
+{
+    public string Key { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public List<string> Before { get; set; } = new();
 }
 
 /// <summary>A Library creature, pack or homebrew: <see cref="Name"/> as the pack names it (what the model reads), <see cref="Shown"/>
@@ -140,6 +190,9 @@ public sealed class WorldBundle
     /// <summary>The prefix of an existing cast member's id, after <see cref="ExistingPrefix"/>: <c>existing:actor:&lt;id&gt;</c>.</summary>
     public const string ActorPrefix = "actor:";
 
+    /// <summary>The prefix of an existing homebrew entry, after <see cref="ExistingPrefix"/>: <c>existing:homebrew:&lt;type&gt;/&lt;entryId&gt;</c>.</summary>
+    public const string HomebrewPrefix = "homebrew:";
+
     /// <summary>What an <c>existing:</c> key points at: a place (<c>existing:place:id</c>), a cast member (<c>existing:actor:id</c>)
     /// or, otherwise, a wiki page by slug. <paramref name="id"/> is the key without its prefixes.</summary>
     public static EditTarget ParseTarget(string key, out string id)
@@ -156,6 +209,12 @@ public sealed class WorldBundle
         {
             id = rest[ActorPrefix.Length..];
             return EditTarget.Actor;
+        }
+
+        if (rest.StartsWith(HomebrewPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[HomebrewPrefix.Length..];
+            return EditTarget.Homebrew;
         }
 
         id = rest;
@@ -240,14 +299,16 @@ public sealed record MissingMention(string Name, IReadOnlyList<string> By, IRead
 
 /// <summary>What a proposal may refer to. <see cref="HomebrewTypes"/> maps every spelling the model might use for a type (its key,
 /// folder, English and translated labels) to the type key; <see cref="ExistingPages"/> maps the campaign's page slugs to their
-/// titles; <see cref="HomebrewFields"/> gives a type's fields.</summary>
+/// titles; <see cref="HomebrewFields"/> gives a type's fields; <see cref="ExistingHomebrew"/> maps the campaign's homebrew entries,
+/// as <c>type/entryId</c>, to their names.</summary>
 public sealed record ProposalRules(
     IReadOnlyDictionary<string, string> HomebrewTypes,
     IReadOnlyDictionary<string, string> ExistingPages,
     IReadOnlyCollection<string> ExistingPlaces,
     Func<string, IReadOnlyList<FieldSpec>> HomebrewFields,
     Func<string, string, string>? Canonical = null,
-    IReadOnlyCollection<string>? ExistingActors = null);
+    IReadOnlyCollection<string>? ExistingActors = null,
+    IReadOnlyDictionary<string, string>? ExistingHomebrew = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -333,8 +394,8 @@ public static class WorldBundleParser
                     continue;
                 }
 
-                // An edit is named by what it changes, which the review card looks up; the model need not repeat it.
-                if (name.Length == 0 && kind != DraftKinds.Edit)
+                // An edit, a retagging and a Bestiary pick are named by what they change, which the check looks up; the model need not repeat it.
+                if (name.Length == 0 && !DraftKinds.ChangesExisting(kind))
                 {
                     errors.Add($"{label}: has no name.");
                     continue;
@@ -395,6 +456,25 @@ public static class WorldBundleParser
                     case DraftKinds.Edit:
                         if (!ReadEdit(draft, element, label, pages, rules, bundle, errors, (FieldCoercion.String(element, "text") ?? FieldCoercion.String(element, "description"))?.Length ?? 0)) continue;
                         break;
+                    case DraftKinds.Tags:
+                        if (!ReadTags(draft, element, label, pages, rules, errors)) continue;
+                        break;
+                    case DraftKinds.Bestiary:
+                        draft.SuggestedStats = Cut(FieldCoercion.String(element, "entry") ?? FieldCoercion.String(element, "stats") ?? FieldCoercion.String(element, "target"), MaxStats) is { Length: > 0 } pick ? pick : null;
+                        if (draft.SuggestedStats == null && name.Length > 0) draft.SuggestedStats = name;
+                        if (draft.SuggestedStats == null)
+                        {
+                            errors.Add($"{label}: a bestiary entry needs \"entry\": the Library creature to shortlist, as search_library lists it (type/id).");
+                            continue;
+                        }
+
+                        if (draft.SuggestedStats.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix, StringComparison.OrdinalIgnoreCase))
+                        {
+                            draft.SuggestedStats = draft.SuggestedStats[(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix).Length..];
+                        }
+
+                        if (draft.Name.Length == 0) draft.Name = draft.OutlineName = draft.SuggestedStats;
+                        break;
                     case DraftKinds.Homebrew:
                         if (FieldCoercion.String(element, "type") is not { } typeText || !types.TryGetValue(typeText, out var type))
                         {
@@ -404,16 +484,20 @@ public static class WorldBundleParser
 
                         draft.Type = type;
                         draft.Bestiary = element.TryGetProperty("bestiary", out var bestiary) && bestiary.ValueKind == JsonValueKind.True;
+                        draft.BasedOn = Cut(FieldCoercion.String(element, "basedOn"), MaxStats) is { Length: > 0 } basedOn ? basedOn : null;
                         ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical);
                         break;
                 }
+
+                // A page's own tags, besides the one saying what kind of page it is.
+                if (DraftKinds.IsPage(kind)) draft.Tags = ReadTagList(element, "tags");
 
                 if (kind != DraftKinds.Place && FieldCoercion.String(element, "parent") is { Length: > 0 })
                 {
                     warnings.Add($"{label}: only a place has a parent; it was ignored.");
                 }
 
-                if (draft.Body == null && kind is not (DraftKinds.Fact or DraftKinds.Edit))
+                if (draft.Body == null && kind is not DraftKinds.Fact && !DraftKinds.ChangesExisting(kind) && draft.BasedOn == null)
                 {
                     warnings.Add($"{label}: has no text, so its page will only hold its name.");
                 }
@@ -441,7 +525,7 @@ public static class WorldBundleParser
                         var key = link[WorldBundle.ExistingPrefix.Length..];
                         if (pages.ContainsKey(key)) resolved = WorldBundle.ExistingPrefix + key;
                     }
-                    else if (bundle.Drafts.FirstOrDefault(d => d.Kind != DraftKinds.Edit && (string.Equals(d.Ref, link, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Name, link, StringComparison.OrdinalIgnoreCase))) is { } target)
+                    else if (bundle.Drafts.FirstOrDefault(d => !DraftKinds.ChangesExisting(d.Kind) && (string.Equals(d.Ref, link, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Name, link, StringComparison.OrdinalIgnoreCase))) is { } target)
                     {
                         if (target != draft) resolved = target.Ref;
                     }
@@ -493,13 +577,15 @@ public static class WorldBundleParser
         return new ProposalCheck(bundle, errors, warnings);
     }
 
-    /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and the complete new text.</summary>
+    /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and what changes. A page, a place's
+    /// description or a cast member's history takes the complete new text; a homebrew entry takes any of a new name, a new rules
+    /// text, the fields that change and its complete new tags.</summary>
     private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors, int textLength)
     {
         var key = FieldCoercion.String(element, "target")?.Trim();
         if (string.IsNullOrEmpty(key))
         {
-            errors.Add($"{label}: an edit needs a \"target\": the key of what to change (existing:<slug> for a page, existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history).");
+            errors.Add($"{label}: an edit needs a \"target\": the key of what to change (existing:<slug> for a page, existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history, existing:homebrew:<type>/<id> for a homebrew entry).");
             return false;
         }
 
@@ -509,30 +595,28 @@ public static class WorldBundleParser
         {
             EditTarget.Place => rules.ExistingPlaces.FirstOrDefault(p => string.Equals(p, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Actor => rules.ExistingActors?.FirstOrDefault(a => string.Equals(a, id, StringComparison.OrdinalIgnoreCase)),
+            EditTarget.Homebrew => rules.ExistingHomebrew?.Keys.FirstOrDefault(h => string.Equals(h, id, StringComparison.OrdinalIgnoreCase)),
             _ => pages.Keys.FirstOrDefault(slug => string.Equals(slug, id, StringComparison.OrdinalIgnoreCase))
         };
         if (stored == null)
         {
-            errors.Add($"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
+            errors.Add(kind == EditTarget.Homebrew
+                ? $"{label}: target '{key}' is not a homebrew entry of the campaign; a pack entry cannot be changed, so make a homebrew variant of it instead (kind homebrew with \"basedOn\")."
+                : $"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
             return false;
         }
 
         id = stored;
-        var canonical = kind switch
+        var canonical = WorldBundle.ExistingPrefix + kind switch
         {
-            EditTarget.Place => WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix + id,
-            EditTarget.Actor => WorldBundle.ExistingPrefix + WorldBundle.ActorPrefix + id,
-            _ => WorldBundle.ExistingPrefix + id
+            EditTarget.Place => WorldBundle.PlacePrefix + id,
+            EditTarget.Actor => WorldBundle.ActorPrefix + id,
+            EditTarget.Homebrew => WorldBundle.HomebrewPrefix + id,
+            _ => id
         };
         if (bundle.Drafts.Any(d => d.Kind == DraftKinds.Edit && string.Equals(d.Target, canonical, StringComparison.OrdinalIgnoreCase)))
         {
-            errors.Add($"{label}: '{key}' is already changed by another entry; give its complete new text in one.");
-            return false;
-        }
-
-        if (draft.Body == null)
-        {
-            errors.Add($"{label}: an edit needs its \"text\": the COMPLETE new text, which replaces the old one.");
+            errors.Add($"{label}: '{key}' is already changed by another entry; put every change to it in one.");
             return false;
         }
 
@@ -543,11 +627,107 @@ public static class WorldBundleParser
             return false;
         }
 
+        if (kind == EditTarget.Homebrew)
+        {
+            var type = id.Split('/')[0];
+            ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical);
+            draft.Type = type;
+            draft.Rename = Cut(FieldCoercion.String(element, "rename"), MaxName) is { Length: > 0 } rename ? rename : null;
+            // Tags only change when the model names them: an edit of the text alone keeps the entry's tags.
+            draft.Retag = element.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array;
+            if (draft.Body == null && draft.Properties.Count == 0 && draft.Rename == null && !draft.Retag)
+            {
+                errors.Add($"{label}: the edit changes nothing; give a new \"text\" (the complete rules text), the \"properties\" that change, a \"rename\" or the complete new \"tags\".");
+                return false;
+            }
+
+            draft.Target = canonical;
+            draft.Name = rules.ExistingHomebrew![id];
+            draft.OutlineName = draft.Name;
+            return true;
+        }
+
+        if (draft.Body == null)
+        {
+            errors.Add($"{label}: an edit needs its \"text\": the COMPLETE new text, which replaces the old one.");
+            return false;
+        }
+
         draft.Target = canonical;
         if (draft.Name.Length == 0) draft.Name = kind == EditTarget.Page && pages.TryGetValue(id, out var title) ? title : canonical;
         draft.OutlineName = draft.Name;
         return true;
     }
+
+    /// <summary>Reads a tags entry: the pages and homebrew entries it tags (each must exist) and the tags to add and take off.</summary>
+    private static bool ReadTags(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, List<string> errors)
+    {
+        var keys = new List<string>();
+        if (element.TryGetProperty("targets", out var list) && list.ValueKind == JsonValueKind.Array)
+        {
+            keys.AddRange(list.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.String).Select(t => t.GetString()!.Trim()));
+        }
+
+        if (FieldCoercion.String(element, "target") is { Length: > 0 } one) keys.Add(one.Trim());
+        draft.TagsAdded = ReadTagList(element, "add");
+        draft.TagsRemoved = ReadTagList(element, "remove");
+        if (draft.TagsAdded.Count == 0 && draft.TagsRemoved.Count == 0)
+        {
+            errors.Add($"{label}: a tags entry needs \"add\" or \"remove\": the tags to put on or take off.");
+            return false;
+        }
+
+        foreach (var key in keys.Where(k => k.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var kind = WorldBundle.ParseTarget(key, out var id);
+            var stored = kind switch
+            {
+                EditTarget.Homebrew => rules.ExistingHomebrew?.Keys.FirstOrDefault(h => string.Equals(h, id, StringComparison.OrdinalIgnoreCase)) is { } h ? WorldBundle.HomebrewPrefix + h : null,
+                EditTarget.Page => pages.Keys.FirstOrDefault(slug => string.Equals(slug, id, StringComparison.OrdinalIgnoreCase)),
+                _ => null
+            };
+            if (stored == null)
+            {
+                errors.Add($"{label}: target '{key}' is not a wiki page (existing:<slug>) or a homebrew entry (existing:homebrew:<type>/<id>) of the campaign; only those carry tags.");
+                return false;
+            }
+
+            draft.Targets.Add(WorldBundle.ExistingPrefix + stored);
+        }
+
+        if (draft.Targets.Count == 0)
+        {
+            errors.Add($"{label}: a tags entry needs \"targets\": the keys of the pages and homebrew entries to tag.");
+            return false;
+        }
+
+        if (draft.Targets.Count > MaxTagTargets)
+        {
+            errors.Add($"{label}: a tags entry changes at most {MaxTagTargets} things; split it.");
+            return false;
+        }
+
+        if (draft.Name.Length == 0)
+        {
+            draft.Name = string.Join(" ", draft.TagsAdded.Select(t => "+" + t).Concat(draft.TagsRemoved.Select(t => "−" + t)));
+            draft.OutlineName = draft.Name;
+        }
+
+        return true;
+    }
+
+    /// <summary>The most things one tags entry changes.</summary>
+    public const int MaxTagTargets = 100;
+
+    /// <summary>A list of tags as the model wrote it: trimmed, inner spaces collapsed, each at most 40 characters, no repeats
+    /// (whatever their case), at most 8.</summary>
+    internal static List<string> ReadTagList(JsonElement element, string key) =>
+        element.TryGetProperty(key, out var tags) && tags.ValueKind == JsonValueKind.Array
+            ? tags.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.String)
+                .Select(t => System.Text.RegularExpressions.Regex.Replace(t.GetString()!, @"\s+", " ").Trim())
+                .Select(t => t.Length > 40 ? t[..40].TrimEnd() : t)
+                .Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList()
+            : new List<string>();
 
     private static string? OneOf(string? value, string[] allowed, string? alias = null, string? aliasOf = null)
     {
@@ -579,9 +759,7 @@ public static class WorldBundleParser
             }
         }
 
-        draft.Tags = root.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array
-            ? tags.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.String).Select(t => t.GetString()!.Trim()).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList()
-            : new List<string>();
+        draft.Tags = ReadTagList(root, "tags");
         draft.Properties = properties;
     }
 
@@ -599,8 +777,9 @@ public static class WorldBundleParser
             var shown = match.Groups[2].Success ? match.Groups[2].Value.Trim() : null;
             // The ref wins, then the name it was proposed under, then the DM's rename: renaming one entry to another's proposed name
             // must not steal the links meant for the other.
-            // An edit has no page of its own to link to (it is named after the page it changes, which the link already reaches).
-            var linkable = bundle.Drafts.Where(d => d.Kind != DraftKinds.Edit).ToList();
+            // An edit, a retagging or a Bestiary pick has no page of its own to link to (an edit is named after the page it changes,
+            // which the link already reaches).
+            var linkable = bundle.Drafts.Where(d => !DraftKinds.ChangesExisting(d.Kind)).ToList();
             var draft = linkable.FirstOrDefault(d => string.Equals(d.Ref, target, StringComparison.OrdinalIgnoreCase))
                         ?? linkable.FirstOrDefault(d => string.Equals(d.OutlineName, target, StringComparison.OrdinalIgnoreCase))
                         ?? linkable.FirstOrDefault(d => string.Equals(d.Name.Trim(), target, StringComparison.OrdinalIgnoreCase));
@@ -637,7 +816,7 @@ public static class WorldBundleParser
         // One line per name however it is spelled, shown as it was first written.
         var missing = new Dictionary<string, (string Name, List<WorldDraft> By)>(StringComparer.Ordinal);
         var order = new List<string>();
-        foreach (var d in bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Body) && (d.Kind is DraftKinds.Wiki or DraftKinds.Npc or DraftKinds.Place or DraftKinds.Edit)))
+        foreach (var d in bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Body) && (DraftKinds.IsPage(d.Kind) || d is { Kind: DraftKinds.Edit } && WorldBundle.ParseTarget(d.Target ?? string.Empty, out _) != EditTarget.Homebrew)))
         {
             foreach (System.Text.RegularExpressions.Match match in WikiLink.Matches(d.Body!))
             {

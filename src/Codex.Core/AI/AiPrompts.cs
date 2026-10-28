@@ -303,7 +303,7 @@ public static class AiPrompts
         if (!string.IsNullOrWhiteSpace(r.CampaignContext)) sb.Append($"The campaign: {r.CampaignContext.Trim()} ");
         sb.Append(
             "Talk with the game master: ask a short question when a choice is really theirs, otherwise decide and say what you chose. " +
-            "Before you invent anything, look at what the campaign already has with the tools (search_world, get_page, list_places), " +
+            "Before you invent anything, look at what the campaign already has with the tools (search_world, get_page, list_places, search_library, get_entry, list_tags), " +
             "so new things fit, link to what exists, and repeat no names. " +
             "Do not narrate your lookups: call the tools without comment, then write ONE message when you are done, which is what the game master reads. " +
             "That message is never empty and never ends on a promise (\"now I'm preparing it\"): if there is more to do, do it with tool calls before you write it; if you are waiting on the game master, ask your question. " +
@@ -324,7 +324,13 @@ public static class AiPrompts
             "Entries: \"place\" (placeKind area, settlement, district or site; \"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places), " +
             "\"npc\" (a person; \"cast\": true for anyone the party will talk to or fight, which also adds them to the cast with their page as their history), " +
             "\"wiki\" (pageKind lore, faction or quest), \"fact\" (a secret or rumour the party can uncover: its name is the fact in one sentence, its text who knows it and how it is learned), " +
-            "and \"homebrew\" (a Library entry of one of the homebrew types; get its fields with homebrew_fields and fill \"properties\" with them). " +
+            "\"homebrew\" (a Library entry of one of the homebrew types, such as a spell, a magic item, a piece of equipment or a creature; get its fields with homebrew_fields and fill \"properties\" with them; " +
+            "for a variant of an entry the Library has, read it with get_entry and set \"basedOn\" to its type/id: it starts from that entry's fields and text, so give only the properties that differ, and the complete text if it changes), " +
+            "\"tags\" (tags for things the campaign already has: \"targets\" are the keys of wiki pages, existing:<slug>, and homebrew entries, existing:homebrew:<type>/<id>; \"add\" and \"remove\" are the tags), " +
+            "and \"bestiary\" (\"entry\": a Library creature, as search_library lists it, to put on the campaign's Bestiary shortlist; a new homebrew creature takes \"bestiary\": true instead). " +
+            "To change a homebrew entry the campaign has (its key comes from search_library or get_entry), use an \"edit\" with target existing:homebrew:<type>/<id> and any of: \"rename\", \"text\" (the complete new rules text), \"properties\" (only the fields that change) and \"tags\" (its complete new tags). " +
+            "Entries from a pack cannot be changed; make a homebrew variant of them instead. " +
+            "Give every new page and homebrew entry two to five short lower-case \"tags\" (a region, a faction, a theme), reusing the ones list_tags shows: the game master finds, shares and exports homebrew by tag. " +
             "Every entry has a short \"ref\" (\"p1\") that other entries use as a parent, in \"links\", and in text as [[ref]]; link existing pages as [[existing:slug]]. " +
             "Write each page in markdown with short headings, for the game master to read, run and read aloud from at the table. " +
             "Write in full, flowing sentences, never telegraphic notes or clipped fragments (\"Tall, weathered, horse voice. Short orders, fair.\" is not a description): " +

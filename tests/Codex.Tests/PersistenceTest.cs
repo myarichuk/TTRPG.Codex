@@ -85,6 +85,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenHomebrewRepository _homebrewRepository;
     private readonly RavenWikiRepository _wikiRepository;
     private readonly RavenJournalRepository _journalRepository;
+    private readonly RavenWorldChatRepository _worldChatRepository;
     private readonly RavenMediaStore _mediaStore;
     private readonly CampaignExportService _exportService;
 
@@ -101,8 +102,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _homebrewRepository = new RavenHomebrewRepository(_dbService);
         _wikiRepository = new RavenWikiRepository(_dbService);
         _journalRepository = new RavenJournalRepository(_dbService);
+        _worldChatRepository = new RavenWorldChatRepository(_dbService);
         _mediaStore = new RavenMediaStore(_dbService);
-        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository, _wikiRepository, _journalRepository);
+        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository, _wikiRepository, _journalRepository, _worldChatRepository);
         _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository, _wikiRepository);
     }
 
@@ -1126,5 +1128,92 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner"));
         Assert.Empty(await _wikiRepository.GetAllForCampaignAsync(campaignId));
         Assert.Empty(await _journalRepository.GetMineAsync(dm));
+    }
+
+    [Fact]
+    public async Task WorldChats_ArePrivateToTheirOwner_AndComeBackWithTheirProposalTicksAndSteps()
+    {
+        var campaignId = "camp-worldchat-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var coDm = new CampaignAccess(campaignId, "dm2", CampaignRole.DM);
+        var proposal = new Codex.Core.WorldBuilder.WorldBundle { Summary = "A town.", Region = "The Coast" };
+        proposal.Drafts.Add(new Codex.Core.WorldBuilder.WorldDraft
+        {
+            Ref = "n", Kind = "npc", Name = "Ilse", OutlineName = "Ilse", Cast = true, Selected = false,
+            Stats = new Codex.Core.WorldBuilder.CreatureRef("monster", "veteran", false, "Veteran", "Ветеран"),
+            SavedAs = { ["page"] = "pages/1" }
+        });
+        proposal.Drafts.Add(new Codex.Core.WorldBuilder.WorldDraft
+        {
+            Ref = "h", Kind = "homebrew", Type = "spell", Name = "Brine Ward", Tags = { "salt" },
+            Properties = { ["level"] = 2L, ["components"] = new List<object> { "V", "S" }, ["ritual"] = true }
+        });
+        var chat = new WorldChatDocument
+        {
+            Title = "Salt",
+            Proposal = proposal,
+            ProposalInput = "{\"entries\": []}",
+            Decided = { "n" },
+            History =
+            {
+                new WorldChatMessage { Role = "user", Text = "A town." },
+                new WorldChatMessage { Role = "assistant", Calls = new() { new WorldChatCall { Id = "c1", Name = "list_places", Arguments = "{}" } } },
+                new WorldChatMessage { Role = "tool", Results = new() { new WorldChatResult { CallId = "c1", Result = "Region: The Coast" } } }
+            },
+            Lines =
+            {
+                new WorldChatLine(WorldChatSpeaker.Dm, "A town."),
+                new WorldChatLine(WorldChatSpeaker.Model, "Here.", new List<WorldChatStep> { new() { Tool = "list_places", Arguments = "{}", Result = "Region: The Coast", Status = WorldChatStepStatus.Done, DurationMs = 12 } })
+                {
+                    Usage = new WorldChatUsage { Model = "m", InputTokens = 100, OutputTokens = 20, Rounds = 2, DurationMs = 900 }
+                }
+            },
+            Waiting = 1
+        };
+
+        Assert.True(await _worldChatRepository.TrySaveAsync(chat, dm));
+        Assert.StartsWith("worldchats/", chat.Id);
+
+        var listed = Assert.Single(await _worldChatRepository.ListMineAsync(dm));
+        Assert.Equal((chat.Id, "Salt", 1), (listed.Id, listed.Title, listed.Waiting));
+        // Another DM of the same campaign neither sees nor changes it.
+        Assert.Empty(await _worldChatRepository.ListMineAsync(coDm));
+        Assert.Null(await _worldChatRepository.GetMineAsync(chat.Id, coDm));
+        Assert.False(await _worldChatRepository.TrySaveAsync(chat, coDm));
+        Assert.False(await _worldChatRepository.TryDeleteAsync(chat.Id, coDm));
+
+        var loaded = await _worldChatRepository.GetMineAsync(chat.Id, dm);
+        Assert.NotNull(loaded);
+        var ilse = loaded!.Proposal!.Find("n")!;
+        Assert.Equal((false, true, "pages/1"), (ilse.Selected, ilse.Cast, ilse.SavedAs["page"]));
+        Assert.Equal(new Codex.Core.WorldBuilder.CreatureRef("monster", "veteran", false, "Veteran", "Ветеран"), ilse.Stats);
+        var ward = loaded.Proposal.Find("h")!;
+        Assert.Equal(2L, Convert.ToInt64(ward.Properties["level"]));
+        Assert.Equal(new[] { "V", "S" }, ((System.Collections.IEnumerable)ward.Properties["components"]).Cast<object>().Select(o => o.ToString()));
+        Assert.Equal(true, ward.Properties["ritual"]);
+        Assert.Equal(new[] { "n" }, loaded.Decided);
+        Assert.Equal("c1", loaded.History[1].Calls![0].Id);
+        Assert.Equal("Region: The Coast", loaded.History[2].Results![0].Result);
+        var step = Assert.Single(loaded.Lines[1].Steps!);
+        Assert.Equal((WorldChatStepStatus.Done, 12L), (step.Status, step.DurationMs));
+        Assert.Equal((100L, 20L, 2), (loaded.Lines[1].Usage!.InputTokens, loaded.Lines[1].Usage!.OutputTokens, loaded.Lines[1].Usage!.Rounds));
+
+        loaded.Title = "Salt and bells";
+        Assert.True(await _worldChatRepository.TrySaveAsync(loaded, dm));
+        Assert.Equal("Salt and bells", (await _worldChatRepository.GetMineAsync(chat.Id, dm))!.Title);
+        Assert.True(await _worldChatRepository.TryDeleteAsync(chat.Id, dm));
+        Assert.Empty(await _worldChatRepository.ListMineAsync(dm));
+    }
+
+    [Fact]
+    public async Task DeletingACampaign_RemovesItsWorldChats()
+    {
+        var campaignId = "camp-cascade3-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Gone", SystemId = "srd5e" });
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        await _worldChatRepository.TrySaveAsync(new WorldChatDocument { Title = "Mine" }, dm);
+
+        Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner"));
+        Assert.Empty(await _worldChatRepository.ListMineAsync(dm));
     }
 }

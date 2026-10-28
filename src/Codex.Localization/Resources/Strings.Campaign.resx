@@ -501,4 +501,9 @@
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Illustration</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Shown beside the page's text. Whoever can read the page sees it.</value></data>
   <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Illustration for {0}</value></data>
+  <data name="Campaign.Library.Export.Title" xml:space="preserve"><value>Export homebrew as a pack</value></data>
+  <data name="Campaign.Library.Export.Hint" xml:space="preserve"><value>Pick tags to export only the entries that carry one of them, or pick none to export everything.</value></data>
+  <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>None of the homebrew is tagged yet, so everything is exported. The world builder can tag it for you.</value></data>
+  <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{Export # entry} other{Export # entries}}</value></data>
 </root>

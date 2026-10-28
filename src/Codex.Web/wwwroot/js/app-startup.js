@@ -412,6 +412,29 @@ window.codex = {
         if (force) el.dataset.pinned = "true";
         if (el.dataset.pinned === "true") el.scrollTop = el.scrollHeight;
     },
+    // The world-building chat's message box: it grows with what is typed (to 40% of the screen, then scrolls), and Enter sends
+    // it where there is a keyboard to make new lines with Shift+Enter. On a touch screen Enter is a new line and the Send button
+    // sends. Never while an input method is composing a word (Enter picks the word there).
+    composer: function (id, sendId) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const grow = () => {
+            el.style.height = "auto";
+            el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight * 0.4)) + "px";
+        };
+        if (!el.dataset.composer) {
+            el.dataset.composer = "true";
+            el.addEventListener("input", grow);
+            el.addEventListener("keydown", e => {
+                if (e.key !== "Enter" || e.shiftKey || e.isComposing || e.keyCode === 229) return;
+                if (!e.ctrlKey && !e.metaKey && !window.matchMedia("(pointer: fine)").matches) return;
+                e.preventDefault();
+                const send = document.getElementById(sendId);
+                if (send && !send.disabled) send.click();
+            });
+        }
+        grow();
+    },
     // Bring a panel into view unless all of it already is (beside the chat on a wide screen it usually is).
     revealPanel: function (id) {
         const el = document.getElementById(id);

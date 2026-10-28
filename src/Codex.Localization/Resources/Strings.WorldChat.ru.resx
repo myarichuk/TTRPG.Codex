@@ -5,14 +5,12 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="WorldChat.Title" xml:space="preserve"><value>Строитель мира</value></data>
-  <data name="WorldChat.Subtitle" xml:space="preserve"><value>Создавайте места, персонажей, фракции и секреты вместе с ИИ. Он сначала читает вашу кампанию, и ничего не сохраняется, пока вы не примените предложение.</value></data>
-  <data name="WorldChat.Restart" xml:space="preserve"><value>Начать заново</value></data>
   <data name="WorldChat.DmOnly" xml:space="preserve"><value>Мир строит только мастер.</value></data>
   <data name="WorldChat.NoAi.Title" xml:space="preserve"><value>Модель ИИ ещё не настроена</value></data>
   <data name="WorldChat.NoAi.Body" xml:space="preserve"><value>Добавьте текстовую модель в настройках ИИ. Она должна поддерживать вызов инструментов.</value></data>
   <data name="WorldChat.NoAi.Settings" xml:space="preserve"><value>Открыть настройки ИИ</value></data>
   <data name="WorldChat.Conversation" xml:space="preserve"><value>Разговор</value></data>
-  <data name="WorldChat.Intro" xml:space="preserve"><value>Скажите, что хотите добавить, или начните с одного из вариантов. ИИ посмотрит, что уже есть в кампании, спросит, если выбор за вами, и предложит всё вместе на проверку.</value></data>
+  <data name="WorldChat.Intro" xml:space="preserve"><value>Опишите, что нужно, или выберите вариант ниже. ИИ сначала читает кампанию, спрашивает, когда выбор за вами, и предлагает всё вместе на проверку.</value></data>
   <data name="WorldChat.Starters" xml:space="preserve"><value>С чего начать</value></data>
   <data name="WorldChat.Starter.settlement.Label" xml:space="preserve"><value>Поселение</value></data>
   <data name="WorldChat.Starter.settlement.Text" xml:space="preserve"><value>Создай поселение для этой кампании: его районы и достопримечательности, людей, которых встретит группа, и пару секретов, которые стоит раскрыть.</value></data>
@@ -36,17 +34,15 @@
   <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>заменяет историю персонажа</value></data>
   <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>Текущий текст</value></data>
   <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>Игроки уже могут это читать, поэтому изменение сразу изменит то, что они видят.</value></data>
-  <data name="WorldChat.Steps" xml:space="preserve"><value>Выполнено шагов: {0}</value></data>
-  <data name="WorldChat.Earlier" xml:space="preserve"><value>Ранее: {0}</value></data>
+  <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{# шаг} few{# шага} many{# шагов} other{# шага}}</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>Эта модель не умеет вызывать инструменты, а строителю мира это нужно. Выберите в настройках ИИ модель с поддержкой вызова инструментов.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>Нет предложения для применения.</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Ваше сообщение</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>Что добавим в мир?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Отправить</value></data>
-  <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter — отправить.</value></data>
+  <data name="WorldChat.Hint" xml:space="preserve"><value>Enter — отправить · Shift+Enter — новая строка</value></data>
   <data name="WorldChat.Error.Empty" xml:space="preserve"><value>ИИ дважды ничего не ответил. Отправьте сообщение ещё раз или выберите в настройках ИИ модель посильнее.</value></data>
   <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Предложение готово к проверке.</value></data>
-  <data name="WorldChat.NotAnswered" xml:space="preserve"><value>На это сообщение не ответили; отправьте его снова, когда будете готовы.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Применено: добавлено {0}, скрыто от игроков.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Предложение отброшено.</value></data>
   <data name="WorldChat.Tool.Search" xml:space="preserve"><value>Поиск по кампании: «{0}»</value></data>
@@ -56,20 +52,17 @@
   <data name="WorldChat.Tool.Fields" xml:space="preserve"><value>Просмотрены поля типа {0}</value></data>
   <data name="WorldChat.Tool.Propose" xml:space="preserve"><value>Предложено записей: {0}</value></data>
   <data name="WorldChat.Proposal.Title" xml:space="preserve"><value>Предложение</value></data>
-  <data name="WorldChat.Proposal.Hint" xml:space="preserve"><value>Снимите отметку с ненужного. Всё сохраняется скрытым от игроков; потом можно отредактировать и открыть.</value></data>
-  <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>Стоит проверить: {0}</value></data>
+  <data name="WorldChat.Proposal.Hint" xml:space="preserve"><value>Откройте запись, чтобы прочитать её. Снимите отметку с ненужного; всё сохраняется скрытым от игроков.</value></data>
+  <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{# момент стоит проверить} few{# момента стоит проверить} many{# моментов стоит проверить} other{# момента стоит проверить}}</value></data>
   <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>Также добавить в состав</value></data>
   <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>Также добавить в состав, с характеристиками: {0}</value></data>
-  <data name="WorldChat.Proposal.Bestiary" xml:space="preserve"><value>Также попадёт в бестиарий</value></data>
-  <data name="WorldChat.Proposal.Read" xml:space="preserve"><value>Прочитать</value></data>
   <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>существующее место</value></data>
   <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>Применить ({0})</value></data>
   <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>Сохраняем и подбираем снаряжение…</value></data>
   <data name="WorldChat.Proposal.Discard" xml:space="preserve"><value>Отбросить</value></data>
   <data name="WorldChat.Proposal.Failed" xml:space="preserve"><value>Сохранено не всё: {0}. Примените снова, чтобы сохранить остальное.</value></data>
-  <data name="WorldChat.Result.Title" xml:space="preserve"><value>Добавлено: {0}</value></data>
   <data name="WorldChat.Result.Hint" xml:space="preserve"><value>Скрыто от игроков, пока вы не откроете.</value></data>
-  <data name="WorldChat.Result.Secrets" xml:space="preserve"><value>Секретов в преданиях: {0}</value></data>
+  <data name="WorldChat.Result.Secrets" xml:space="preserve"><value>{0, plural, one{# секрет в преданиях} few{# секрета в преданиях} many{# секретов в преданиях} other{# секрета в преданиях}}</value></data>
   <data name="WorldChat.Kind.place" xml:space="preserve"><value>Места</value></data>
   <data name="WorldChat.Kind.npc" xml:space="preserve"><value>Персонажи</value></data>
   <data name="WorldChat.Kind.wiki" xml:space="preserve"><value>Страницы</value></data>
@@ -77,19 +70,14 @@
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>Самоделки</value></data>
   <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(ИИ слишком много искал за один раз и остановился, не ответив. Попросите его продолжить.)</value></data>
   <data name="WorldChat.Tool.Add" xml:space="preserve"><value>Добавлено записей в предложение: {0}</value></data>
-  <data name="WorldChat.Review.Open" xml:space="preserve"><value>Просмотр по одному</value></data>
-  <data name="WorldChat.Review.Title" xml:space="preserve"><value>Просмотр предложения</value></data>
   <data name="WorldChat.Review.Step" xml:space="preserve"><value>{0} из {1}</value></data>
-  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>Принять</value></data>
+  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>Оставить</value></data>
   <data name="WorldChat.Review.Skip" xml:space="preserve"><value>Пропустить</value></data>
   <data name="WorldChat.Review.Back" xml:space="preserve"><value>Назад</value></data>
-  <data name="WorldChat.Review.AcceptRest" xml:space="preserve"><value>Принять все остальные</value></data>
-  <data name="WorldChat.Review.Close" xml:space="preserve"><value>Закрыть</value></data>
   <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>Принято</value></data>
   <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>Пропущено</value></data>
   <data name="WorldChat.Review.Pending" xml:space="preserve"><value>Ещё не просмотрено</value></data>
   <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>Пропуск также пропустит то, что внутри него или только о нём ({0}).</value></data>
-  <data name="WorldChat.Review.Done" xml:space="preserve"><value>Всё просмотрено: будет добавлено {0}.</value></data>
   <data name="WorldChat.Review.Rail" xml:space="preserve"><value>Записи</value></data>
   <data name="WorldChat.Missing.Title" xml:space="preserve"><value>Упомянуто, но ещё не написано</value></data>
   <data name="WorldChat.Missing.Write" xml:space="preserve"><value>Написать «{0}»</value></data>
@@ -97,4 +85,71 @@
   <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>упоминается в: {0}</value></data>
   <data name="WorldChat.Fill.Message" xml:space="preserve"><value>Добавь в предложение «{0}»: оно упоминается в: {1}, но ещё не написано. Сохрани тон и факты того, что уже в предложении.</value></data>
   <data name="WorldChat.Fill.All" xml:space="preserve"><value>Добавь в предложение всё это за один раз: {0}. Каждое упоминается в уже написанных записях, но ещё не написано. Сохрани тон и факты того, что уже есть.</value></data>
+  <data name="WorldChat.Welcome" xml:space="preserve"><value>Что будем строить?</value></data>
+  <data name="WorldChat.Chats" xml:space="preserve"><value>Беседы</value></data>
+  <data name="WorldChat.NewChat" xml:space="preserve"><value>Новая беседа</value></data>
+  <data name="WorldChat.Untitled" xml:space="preserve"><value>Новая беседа</value></data>
+  <data name="WorldChat.NoChats" xml:space="preserve"><value>Бесед пока нет. Первое сообщение начнёт новую.</value></data>
+  <data name="WorldChat.Rename" xml:space="preserve"><value>Переименовать беседу</value></data>
+  <data name="WorldChat.RenameLabel" xml:space="preserve"><value>Название беседы</value></data>
+  <data name="WorldChat.Delete" xml:space="preserve"><value>Удалить беседу</value></data>
+  <data name="WorldChat.DeleteConfirm.Title" xml:space="preserve"><value>Удалить эту беседу?</value></data>
+  <data name="WorldChat.DeleteConfirm.Body" xml:space="preserve"><value>«{0}» и ожидающее в ней предложение будут удалены. То, что вы уже применили, останется в кампании.</value></data>
+  <data name="WorldChat.Waiting" xml:space="preserve"><value>{0, plural, one{ждёт # запись} few{ждут # записи} many{ждут # записей} other{ждут # записи}}</value></data>
+  <data name="WorldChat.Reasoning" xml:space="preserve"><value>Рассуждения</value></data>
+  <data name="WorldChat.Thinking" xml:space="preserve"><value>Размышляю…</value></data>
+  <data name="WorldChat.Seconds" xml:space="preserve"><value>{0} с</value></data>
+  <data name="WorldChat.Minutes" xml:space="preserve"><value>{0} мин {1} с</value></data>
+  <data name="WorldChat.Usage.Calls" xml:space="preserve"><value>{0, plural, one{# обращение к модели} few{# обращения к модели} many{# обращений к модели} other{# обращения к модели}}</value></data>
+  <data name="WorldChat.Usage.Tokens" xml:space="preserve"><value>токены: {0} на входе / {1} на выходе</value></data>
+  <data name="WorldChat.Step.Arguments" xml:space="preserve"><value>Аргументы</value></data>
+  <data name="WorldChat.Step.Result" xml:space="preserve"><value>Результат</value></data>
+  <data name="WorldChat.Step.Error" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="WorldChat.Step.Raw" xml:space="preserve"><value>Исходный JSON</value></data>
+  <data name="WorldChat.Step.Copy" xml:space="preserve"><value>Копировать JSON</value></data>
+  <data name="WorldChat.Step.Copied" xml:space="preserve"><value>Скопировано</value></data>
+  <data name="WorldChat.Step.Title" xml:space="preserve"><value>Вызов инструмента: {0}</value></data>
+  <data name="WorldChat.Step.Running" xml:space="preserve"><value>выполняется</value></data>
+  <data name="WorldChat.Step.Failed" xml:space="preserve"><value>ошибка</value></data>
+  <data name="WorldChat.Step.Ready" xml:space="preserve"><value>принято</value></data>
+  <data name="WorldChat.Step.Rejected" xml:space="preserve"><value>{0, plural, one{# исправление} few{# исправления} many{# исправлений} other{# исправления}}</value></data>
+  <data name="WorldChat.Step.Lines" xml:space="preserve"><value>{0, plural, one{# строка} few{# строки} many{# строк} other{# строки}}</value></data>
+  <data name="WorldChat.Tool.Entry" xml:space="preserve"><value>Прочитана запись «{0}»</value></data>
+  <data name="WorldChat.Tool.Tags" xml:space="preserve"><value>Просмотрены метки</value></data>
+  <data name="WorldChat.Kind.tags" xml:space="preserve"><value>Метки</value></data>
+  <data name="WorldChat.Kind.bestiary" xml:space="preserve"><value>Бестиарий</value></data>
+  <data name="WorldChat.Edit.Homebrew" xml:space="preserve"><value>меняет собственную запись</value></data>
+  <data name="WorldChat.Proposal.Ready" xml:space="preserve"><value>{0, plural, one{# запись ждёт проверки} few{# записи ждут проверки} many{# записей ждут проверки} other{# записи ждут проверки}}</value></data>
+  <data name="WorldChat.Proposal.Show" xml:space="preserve"><value>Проверить</value></data>
+  <data name="WorldChat.Proposal.Empty.Title" xml:space="preserve"><value>Пока нечего проверять</value></data>
+  <data name="WorldChat.Proposal.Empty.Body" xml:space="preserve"><value>Когда ИИ что-то предложит, оно появится здесь: прочитайте записи, оставьте нужное и примените. Всё сохраняется скрытым от игроков.</value></data>
+  <data name="WorldChat.Can.World" xml:space="preserve"><value>Места, персонажи, фракции, задания и тайны — со ссылками на то, что уже есть в кампании.</value></data>
+  <data name="WorldChat.Can.Homebrew" xml:space="preserve"><value>Заклинания, магические предметы, снаряжение и существа: новые или варианты того, что есть в Библиотеке.</value></data>
+  <data name="WorldChat.Can.Revise" xml:space="preserve"><value>Правки страниц вики, мест, историй персонажей и собственных материалов — с изменениями по словам.</value></data>
+  <data name="WorldChat.Can.Tags" xml:space="preserve"><value>Метки на страницах и собственных материалах, чтобы набор материалов можно было экспортировать и передать.</value></data>
+  <data name="WorldChat.Reader.Back" xml:space="preserve"><value>Все записи</value></data>
+  <data name="WorldChat.Reader.Include" xml:space="preserve"><value>Включить «{0}»</value></data>
+  <data name="WorldChat.Reader.Keep" xml:space="preserve"><value>Включить в предложение</value></data>
+  <data name="WorldChat.Proposal.BasedOn" xml:space="preserve"><value>вариант «{0}»</value></data>
+  <data name="WorldChat.Proposal.Fields" xml:space="preserve"><value>Поля</value></data>
+  <data name="WorldChat.Proposal.TagsLabel" xml:space="preserve"><value>Метки</value></data>
+  <data name="WorldChat.Proposal.NoTags" xml:space="preserve"><value>без меток</value></data>
+  <data name="WorldChat.Proposal.Renamed" xml:space="preserve"><value>Новое название: «{0}»</value></data>
+  <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{Метки для # страницы или записи} few{Метки для # страниц и записей} many{Метки для # страниц и записей} other{Метки для # страницы или записи}}</value></data>
+  <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>Это существо уже в Бестиарии.</value></data>
+  <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>Добавляет «{0}» в Бестиарий кампании.</value></data>
+  <data name="WorldChat.Result.Bestiary" xml:space="preserve"><value>в Бестиарии</value></data>
+  <data name="WorldChat.Result.Retagged" xml:space="preserve"><value>{0, plural, one{Метки изменены у # страницы или записи} few{Метки изменены у # страниц и записей} many{Метки изменены у # страниц и записей} other{Метки изменены у # страницы или записи}}</value></data>
+  <data name="WorldChat.Diff.Changes" xml:space="preserve"><value>Изменения</value></data>
+  <data name="WorldChat.Diff.New" xml:space="preserve"><value>Новый текст</value></data>
+  <data name="WorldChat.Diff.View" xml:space="preserve"><value>Показать</value></data>
+  <data name="WorldChat.Diff.None" xml:space="preserve"><value>Текст остаётся прежним.</value></data>
+  <data name="WorldChat.Starter.variant.Label" xml:space="preserve"><value>Вариант заклинания или предмета</value></data>
+  <data name="WorldChat.Starter.variant.Text" xml:space="preserve"><value>Сделай собственный вариант заклинания или магического предмета из Библиотеки, подходящий этой кампании. Сначала посмотри, что есть в Библиотеке, потом скажи, что выбрал и почему.</value></data>
+  <data name="WorldChat.Starter.revise.Label" xml:space="preserve"><value>Доработать страницу</value></data>
+  <data name="WorldChat.Starter.revise.Text" xml:space="preserve"><value>Прочитай страницу вики, которую я назову, и доработай её: сохрани факты, заполни пробелы и свяжи с тем, что есть в кампании. Страница: </value></data>
+  <data name="WorldChat.Starter.tags.Label" xml:space="preserve"><value>Пометить материалы для обмена</value></data>
+  <data name="WorldChat.Starter.tags.Text" xml:space="preserve"><value>Посмотри собственные материалы и страницы вики кампании и предложи метки, которые их сгруппируют (по региону, фракции или теме), чтобы я мог экспортировать набор и поделиться им. Используй уже существующие метки.</value></data>
+  <data name="WorldChat.Step.Request" xml:space="preserve"><value>Запрос</value></data>
+  <data name="WorldChat.Steps.Trouble" xml:space="preserve"><value>{0, plural, one{# потребовал повтора} few{# потребовали повтора} many{# потребовали повтора} other{# потребовали повтора}}</value></data>
 </root>
