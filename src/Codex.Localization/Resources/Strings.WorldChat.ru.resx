@@ -88,13 +88,13 @@
   <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>Принято</value></data>
   <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>Пропущено</value></data>
   <data name="WorldChat.Review.Pending" xml:space="preserve"><value>Ещё не просмотрено</value></data>
-  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>Пропуск также пропустит записей внутри него или только о нём: {0}.</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>Пропуск также пропустит то, что внутри него или только о нём ({0}).</value></data>
   <data name="WorldChat.Review.Done" xml:space="preserve"><value>Всё просмотрено: будет добавлено {0}.</value></data>
   <data name="WorldChat.Review.Rail" xml:space="preserve"><value>Записи</value></data>
   <data name="WorldChat.Missing.Title" xml:space="preserve"><value>Упомянуто, но ещё не написано</value></data>
   <data name="WorldChat.Missing.Write" xml:space="preserve"><value>Написать «{0}»</value></data>
   <data name="WorldChat.Missing.All" xml:space="preserve"><value>Написать все ({0})</value></data>
   <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>упоминается в: {0}</value></data>
-  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>Добавь в предложение «{0}»: его упоминает {1}, но оно ещё не написано. Сохрани тон и факты того, что уже в предложении.</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>Добавь в предложение «{0}»: оно упоминается в: {1}, но ещё не написано. Сохрани тон и факты того, что уже в предложении.</value></data>
   <data name="WorldChat.Fill.All" xml:space="preserve"><value>Добавь в предложение всё это за один раз: {0}. Каждое упоминается в уже написанных записях, но ещё не написано. Сохрани тон и факты того, что уже есть.</value></data>
 </root>

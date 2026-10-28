@@ -68,6 +68,10 @@ public sealed class WorldChat
     // The proposal as the model wrote it, so add_entries can put more entries beside them without the model resending the rest.
     private ProposalInput? held;
 
+    /// <summary>Counts the proposals the model has made from scratch; adding entries to one doesn't change it. The page keeps the
+    /// DM's review decisions while it stays the same.</summary>
+    public int ProposalEpoch { get; private set; }
+
     /// <summary>Sends the DM's message and runs the model, with its tool calls, until it answers. <paramref name="progress"/>
     /// hears each tool the model calls, as a line the page shows while it works; <paramref name="stream"/>, when given, hears the
     /// reply and the reasoning as they arrive, so the page can show them being written instead of a wait.</summary>
@@ -98,6 +102,7 @@ public sealed class WorldChat
         var heldProposal = Proposal;
         var heldWarnings = ProposalWarnings;
         var heldInput = held;
+        var heldEpoch = ProposalEpoch;
         lines.Add(new WorldChatLine(WorldChatSpeaker.Dm, message));
         var before = history.Count;
         try
@@ -139,6 +144,7 @@ public sealed class WorldChat
             Proposal = heldProposal;
             ProposalWarnings = heldWarnings;
             held = heldInput;
+            ProposalEpoch = heldEpoch;
         }
     }
 
@@ -324,14 +330,14 @@ public sealed class WorldChat
                 "homebrew_fields",
                 "Lists the fields a homebrew entry of one type fills, for its \"properties\"."),
             AIFunctionFactory.Create(
-                async (ProposalInput proposal) =>
+                async (AdditionInput additions) =>
                 {
-                    Note("plus", "WorldChat.Tool.Add", proposal.Entries?.Count ?? 0);
-                    return await AddEntriesAsync(proposal);
+                    Note("plus", "WorldChat.Tool.Add", additions.Entries?.Count ?? 0);
+                    return await AddEntriesAsync(additions);
                 },
                 "add_entries",
-                "Adds entries to the proposal already waiting for the game master, without resending it: pass ONLY the new entries. They may use the refs already " +
-                "in the proposal as a place's parent, in \"links\" and as [[ref]]. The game master's ticks and renames are kept. With no proposal waiting, it makes one."),
+                "Adds entries to the proposal already waiting for the game master, without resending it: pass ONLY the new entries, each with a ref the proposal does not use yet. " +
+                "They may use the refs already in the proposal as a place's parent, in \"links\" and as [[ref]]. The game master's ticks are kept. With no proposal waiting, it makes one."),
             AIFunctionFactory.Create(
                 async (ProposalInput proposal) =>
                 {
@@ -344,19 +350,33 @@ public sealed class WorldChat
         };
     }
 
-    // New entries beside the waiting proposal's: checked together (a new place can sit inside an old one), then the game master's
-    // choices on the old entries (ticks, renames, the cast box) are put back on them.
-    private async Task<string> AddEntriesAsync(ProposalInput add)
+    // New entries beside the waiting proposal's: checked together (a new place can sit inside an old one), then what the game master
+    // did with the old entries (ticks, the cast box) and what saving already made of them are put back on them.
+    private async Task<string> AddEntriesAsync(AdditionInput additions)
     {
-        if (Proposal is not { } before || held is not { } input) return await ProposeAsync(add);
-        var added = add.Entries ?? new List<ProposalEntry>();
-        var merged = new ProposalInput
+        var added = additions.Entries ?? new List<ProposalEntry>();
+        if (Proposal is not { } before || held is not { } input) return await ProposeAsync(new ProposalInput { Entries = added });
+
+        // A ref the proposal already uses would replace that entry (and every link to it) without a word; a missing one would
+        // match every other missing one. Either way the game master's proposal would change under them.
+        var used = before.Drafts.Select(d => d.Ref).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var clash = added.Select(e => e.Ref?.Trim() ?? string.Empty).Where(r => r.Length == 0 || used.Contains(r)).ToList();
+        if (clash.Count > 0)
         {
-            Summary = add.Summary ?? input.Summary,
-            Region = add.Region ?? input.Region,
-            Entries = (input.Entries ?? new List<ProposalEntry>()).Where(e => !added.Any(a => string.Equals(a.Ref, e.Ref, StringComparison.OrdinalIgnoreCase))).Concat(added).ToList()
-        };
-        var result = await ProposeAsync(merged, "add_entries", "only the new entries");
+            return "Nothing was added: every new entry needs its own \"ref\" that the proposal does not use yet (" +
+                   (clash.Any(r => r.Length == 0) ? "one has none" : $"already used: {string.Join(", ", clash.Distinct(StringComparer.OrdinalIgnoreCase))}") +
+                   $"). The proposal has: {string.Join(", ", used)}. Call add_entries again.";
+        }
+
+        var room = WorldBundleParser.MaxDrafts - before.Drafts.Count;
+        if (added.Count > room)
+        {
+            return $"Nothing was added: the proposal already holds {before.Drafts.Count} entries and at most {WorldBundleParser.MaxDrafts} fit, so {Math.Max(room, 0)} more can. " +
+                   "Add fewer, or tell the game master to apply the proposal first and ask for the rest after.";
+        }
+
+        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
+        var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
         if (!ReferenceEquals(Proposal, before) && Proposal != null)
         {
             foreach (var draft in Proposal.Drafts)
@@ -364,6 +384,10 @@ public sealed class WorldChat
                 if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
                 draft.Selected = old.Selected;
                 draft.Cast = old.Cast;
+                draft.Bestiary = old.Bestiary;
+                draft.SavedAs = old.SavedAs;
+                draft.PageTitle = old.PageTitle;
+                draft.Stats ??= old.Stats;
                 if (!string.IsNullOrWhiteSpace(old.Name) && old.Name != old.OutlineName) draft.Name = old.Name;
             }
         }
@@ -371,7 +395,7 @@ public sealed class WorldChat
         return result;
     }
 
-    private async Task<string> ProposeAsync(ProposalInput input, string tool = "propose_changes", string with = "the whole proposal")
+    private async Task<string> ProposeAsync(ProposalInput input, string tool = "propose_changes", string with = "the whole proposal", bool fresh = true)
     {
         var json = JsonSerializer.Serialize(input, ProposalJson);
         var check = await builder.CheckAsync(campaign, access, json);
@@ -382,6 +406,7 @@ public sealed class WorldChat
         }
 
         held = input;
+        if (fresh) ProposalEpoch++;
         Proposal = check.Bundle;
         ProposalWarnings = check.Warnings;
         return $"The proposal ({check.Bundle.Drafts.Count} entries) is ready for the game master to review and apply; nothing is saved yet. Tell them in a sentence or two what it adds." +
@@ -405,6 +430,13 @@ public sealed class ProposalInput
     public string? Region { get; set; }
 
     [JsonPropertyName("entries"), Description("Every entry of the proposal; at most 30.")]
+    public List<ProposalEntry>? Entries { get; set; }
+}
+
+/// <summary>What <c>add_entries</c> takes: only the entries to put beside those already waiting.</summary>
+public sealed class AdditionInput
+{
+    [JsonPropertyName("entries"), Description("ONLY the new entries (a few at a time), each with a ref the waiting proposal does not use.")]
     public List<ProposalEntry>? Entries { get; set; }
 }
 

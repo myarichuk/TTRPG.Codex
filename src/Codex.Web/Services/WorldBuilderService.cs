@@ -108,7 +108,9 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             known.Add(page.Slug);
         }
 
-        known.AddRange((await regions.GetVisibleForCampaignAsync(access)).SelectMany(r => r.Locations).Select(l => l.Name));
+        var allRegions = (await regions.GetVisibleForCampaignAsync(access)).ToList();
+        known.AddRange(allRegions.Select(r => r.Name));
+        known.AddRange(allRegions.SelectMany(r => r.Locations).Select(l => l.Name));
         known.AddRange((await actorRepository.GetVisibleForCampaignAsync(access)).Select(a => a.Name));
         return WorldBundleParser.MissingMentions(bundle, known);
     }

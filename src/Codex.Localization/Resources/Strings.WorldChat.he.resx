@@ -88,13 +88,13 @@
   <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>אושר</value></data>
   <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>דולג</value></data>
   <data name="WorldChat.Review.Pending" xml:space="preserve"><value>טרם נסקר</value></data>
-  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>דילוג על הערך מדלג גם על {0} ערכים שבתוכו או שעוסקים רק בו.</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>דילוג על הערך מדלג גם על מה שבתוכו או שעוסק רק בו ({0}).</value></data>
   <data name="WorldChat.Review.Done" xml:space="preserve"><value>הכול נסקר: {0} ייווספו.</value></data>
   <data name="WorldChat.Review.Rail" xml:space="preserve"><value>ערכים</value></data>
   <data name="WorldChat.Missing.Title" xml:space="preserve"><value>הוזכר, ועדיין לא נכתב</value></data>
   <data name="WorldChat.Missing.Write" xml:space="preserve"><value>כתיבת “{0}”</value></data>
   <data name="WorldChat.Missing.All" xml:space="preserve"><value>כתיבת כולם ({0})</value></data>
-  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>מוזכר ב{0}</value></data>
-  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>הוסף להצעה את “{0}”: {1} מזכיר אותו, אבל הוא עוד לא נכתב. התאם לטון ולעובדות של מה שכבר בהצעה.</value></data>
+  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>מוזכר ב־{0}</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>הוסף להצעה את “{0}”: הוא מוזכר ב־{1}, אבל עוד לא נכתב. התאם לטון ולעובדות של מה שכבר בהצעה.</value></data>
   <data name="WorldChat.Fill.All" xml:space="preserve"><value>הוסף להצעה את כל אלה בבת אחת: {0}. ערכים שכבר בהצעה מזכירים כל אחד מהם, אבל אף אחד עוד לא נכתב. התאם לטון ולעובדות שכבר שם.</value></data>
 </root>

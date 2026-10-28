@@ -274,19 +274,20 @@ else if (chat != null)
                                         var state = ReviewState(x);
                                         <li>
                                             <button type="button" class="review-rail-item @(x.Ref == current?.Ref ? "is-current" : null)" aria-current="@(x.Ref == current?.Ref ? "step" : null)" @onclick="() => reviewRef = x.Ref" data-testid="world-review-rail-item">
-                                                <span class="review-dot review-dot-@state" title="@L[$"WorldChat.Review.{state}"]"></span>
+                                                <span class="review-dot review-dot-@state" aria-hidden="true"></span>
                                                 <span class="review-rail-name">@x.Name</span>
+                                                <span class="visually-hidden">(@L[$"WorldChat.Review.{state}"])</span>
                                             </button>
                                         </li>
                                     }
                                 </ol>
                             </nav>
-                            <section class="review-pane" aria-live="polite">
+                            <section class="review-pane">
                                 @if (current != null)
                                 {
                                     var state = ReviewState(current);
                                     var cascade = CascadeCount(proposal, current);
-                                    <p class="eyebrow mb-1">@L["WorldChat.Review.Step", position + 1, order.Count] · @L[$"WorldChat.Kind.{current.Kind}"]@Detail(proposal, current)</p>
+                                    <p class="eyebrow mb-1" role="status">@L["WorldChat.Review.Step", position + 1, order.Count] · @L[$"WorldChat.Kind.{current.Kind}"]@Detail(proposal, current)</p>
                                     <h3 class="review-name">@current.Name <span class="chip review-state review-state-@state">@L[$"WorldChat.Review.{state}"]</span></h3>
                                     @if (!string.IsNullOrWhiteSpace(current.Pitch))
                                     {
@@ -310,11 +311,11 @@ else if (chat != null)
                                     @if (current.Kind == DraftKinds.Npc)
                                     {
                                         <div class="field-check">
-                                            <input id="review-cast" type="checkbox" class="field-box" checked="@current.Cast" @onchange="e => current.Cast = (bool)(e.Value ?? false)" />
+                                            <input id="review-cast" type="checkbox" class="field-box" checked="@current.Cast" disabled="@(!current.Selected || applying)" @onchange="e => current.Cast = (bool)(e.Value ?? false)" />
                                             <label for="review-cast" class="small">@(current.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"])</label>
                                         </div>
                                     }
-                                    @if (missing.Where(m => m.By.Contains(current.Name)).ToList() is { Count: > 0 } here)
+                                    @if (missing.Where(m => m.ByRefs.Contains(current.Ref)).ToList() is { Count: > 0 } here)
                                     {
                                         <div class="world-missing mt-3">
                                             <h4 class="eyebrow">@L["WorldChat.Missing.Title"]</h4>
@@ -334,6 +335,17 @@ else if (chat != null)
                                 @if (busy)
                                 {
                                     <AiWorking Text="@L["WorldChat.Working"]" OnStop="aiCall.Stop" TestId="world-review-working" />
+                                }
+                                else if (notice != null)
+                                {
+                                    @* The dialog covers the page, so what went wrong with a turn it started is shown here too. *@
+                                    <div class="mt-2" data-testid="world-review-notice">
+                                        <StatusMessage Message="notice" OnDismiss="() => notice = null" />
+                                    </div>
+                                }
+                                @if (applyError != null)
+                                {
+                                    <p class="text-danger mt-2" role="alert" data-testid="world-review-error">@applyError</p>
                                 }
                             </section>
                         </div>
@@ -413,6 +425,7 @@ else if (chat != null)
     private IReadOnlyList<MissingMention> missing = Array.Empty<MissingMention>();
     // The entry the review shows, and the ones the DM has decided on (by ref). An unticked entry is skipped however it got that way.
     private string? reviewRef;
+    private int shownEpoch;
     private readonly HashSet<string> decided = new(StringComparer.OrdinalIgnoreCase);
 
     private static List<WorldDraft> ReviewOrder(WorldBundle proposal) =>
@@ -426,7 +439,7 @@ else if (chat != null)
     // Unticking an entry unticks what only exists because of it (the places inside it), so no place is left without its parent.
     private async Task SetSelected(WorldBundle proposal, WorldDraft d, bool on)
     {
-        if (on) d.Selected = true;
+        if (on) proposal.Select(d);
         else proposal.Skip(d);
         await RefreshMissingAsync();
     }
@@ -457,7 +470,7 @@ else if (chat != null)
 
     private async Task Accept(WorldBundle proposal, WorldDraft d)
     {
-        d.Selected = true;
+        foreach (var up in proposal.Select(d)) decided.Add(up.Ref); // the place it sits in comes back with it
         decided.Add(d.Ref);
         Advance(proposal, d);
         await RefreshMissingAsync();
@@ -477,22 +490,16 @@ else if (chat != null)
     }
 
     // How many other entries skipping this one would skip, for the note under it; nothing is changed.
-    private static int CascadeCount(WorldBundle proposal, WorldDraft d)
-    {
-        var was = proposal.Drafts.Select(x => x.Selected).ToList();
-        var count = proposal.Skip(d).Count;
-        for (var i = 0; i < was.Count; i++) proposal.Drafts[i].Selected = was[i];
-        return count;
-    }
+    private static int CascadeCount(WorldBundle proposal, WorldDraft d) => proposal.WouldSkip(d).Count;
 
     // Asks the model for what the proposal mentions and doesn't have, as the DM would: in the conversation, so it shows in the log.
     private async Task FillAsync(IReadOnlyList<MissingMention> wanted)
     {
         if (chat == null || busy || applying || wanted.Count == 0) return;
-        draft = wanted.Count == 1
+        var ask = wanted.Count == 1
             ? L["WorldChat.Fill.Message", wanted[0].Name, string.Join(", ", wanted[0].By)]
             : L["WorldChat.Fill.All", string.Join("; ", wanted.Select(m => $"“{m.Name}” ({string.Join(", ", m.By)})"))];
-        await SendAsync();
+        await SendTextAsync(ask, fromBox: false);
     }
 
     private async Task ApplyFromReviewAsync()
@@ -539,6 +546,7 @@ else if (chat != null)
         aiReady = await Ai.IsConfiguredAsync(Ctx.UserId);
         chat = Sessions.For(Ctx.Campaign, Ctx.Access);
         shownProposal = chat.Proposal;
+        shownEpoch = chat.ProposalEpoch;
         await RefreshMissingAsync();
     }
 
@@ -592,12 +600,15 @@ else if (chat != null)
         }
     }
 
-    private async Task SendAsync()
+    private Task SendAsync() => SendTextAsync(draft, fromBox: true);
+
+    // fromBox: the DM typed it, so it leaves the box and goes back there if the turn doesn't land. Anything else (a request to write
+    // what the proposal mentions) leaves what the DM is typing alone, and only takes the empty box to be retried from.
+    private async Task SendTextAsync(string text, bool fromBox)
     {
         // Not while a proposal is being applied: the apply writes to the conversation too, and a turn stopped meanwhile would undo it.
-        if (chat == null || busy || applying || string.IsNullOrWhiteSpace(draft)) return;
-        var text = draft;
-        draft = string.Empty;
+        if (chat == null || busy || applying || string.IsNullOrWhiteSpace(text)) return;
+        if (fromBox) draft = string.Empty;
         busy = true;
         forceFollow = true;
         notice = null;
@@ -609,6 +620,11 @@ else if (chat != null)
         thoughtLive = false;
         var ct = aiCall.Begin();
         var mine = ++run;
+        void Restore()
+        {
+            if (fromBox || string.IsNullOrWhiteSpace(draft)) draft = text;
+        }
+
         try
         {
             await chat.SendAsync(text, line => InvokeAsync(() =>
@@ -643,18 +659,18 @@ else if (chat != null)
         {
             // Whatever shape the SDK gave the cancellation (some wrap it), a stop the DM asked for is not an error.
             notice = new Flash(L["Common.Ai.Stopped"], FlashTone.Info);
-            draft = text;
+            Restore();
         }
         catch (AiNotConfiguredException)
         {
             notice = Flash.Error(L["WorldChat.NoAi.Title"]);
-            draft = text;
+            Restore();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "World-building chat failed");
             notice = Flash.Error(L["WorldChat.Error", AiFailureText.For(L, ex)]);
-            draft = text;
+            Restore();
         }
         finally
         {
@@ -671,8 +687,9 @@ else if (chat != null)
         if (chat.Proposal != null)
         {
             await LoadPlacesAsync();
-            // Entries added to the proposal keep the DM's decisions; a different proposal starts the review over.
-            if (shownProposal == null || !shownProposal.Drafts.All(old => chat.Proposal.Find(old.Ref) != null)) decided.Clear();
+            // Entries added to the proposal keep the DM's decisions; a proposal made afresh starts the review over (its refs may repeat).
+            if (chat.ProposalEpoch != shownEpoch) decided.Clear();
+            shownEpoch = chat.ProposalEpoch;
             await RefreshMissingAsync();
             if (!ReferenceEquals(chat.Proposal, shownProposal)) revealProposal = true;
         }
@@ -708,6 +725,8 @@ else if (chat != null)
         try
         {
             result = await chat.ApplyAsync();
+            decided.Clear();
+            missing = Array.Empty<MissingMention>();
             Ctx.Notify(Flash.Success(L["WorldBuilder.Saved", result.Count]));
             if (result.Actors.Count > 0 || result.Places.Count > 0) await Ctx.ReloadAsync();
         }

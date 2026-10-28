@@ -1050,7 +1050,7 @@ public class WorldBuilderTests
 
         var also = bundle.Skip(bundle.Find("t")!);
 
-        Assert.Equal(new[] { "m", "d", "f" }, also.Select(d => d.Ref).OrderBy(r => r == "m" ? 0 : r == "d" ? 1 : 2));
+        Assert.Equal(new[] { "d", "f", "m" }, also.Select(d => d.Ref).Order());
         Assert.False(bundle.Find("t")!.Selected);
         Assert.True(bundle.Find("x")!.Selected); // not inside Varr
         Assert.True(bundle.Find("g")!.Selected); // about Elsewhere too
@@ -1096,7 +1096,7 @@ public class WorldBuilderTests
     public async Task Chat_AddEntries_PutsNewEntriesBesideTheWaitingOnes_AndKeepsTheDmsChoices()
     {
         const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "South lies [[Amphail]]."}]}}""";
-        const string amphail = """{"proposal": {"entries": [{"ref": "a", "kind": "place", "placeKind": "settlement", "name": "Amphail", "text": "A fishing town south of [[t]]."}]}}""";
+        const string amphail = """{"additions": {"entries": [{"ref": "a", "kind": "place", "placeKind": "settlement", "name": "Amphail", "text": "A fishing town south of [[t]]."}]}}""";
         var model = new ScriptedModel(
             _ => Calls("c1", "propose_changes", varr),
             _ => new ChatMessage(ChatRole.Assistant, "Varr is ready."),
@@ -1114,6 +1114,118 @@ public class WorldBuilderTests
         Assert.Equal(new[] { "Port Varr", "Amphail" }, chat.Proposal!.Drafts.Select(d => d.Name));
         Assert.Empty(await saving.Service.MissingMentionsAsync(Dm, chat.Proposal)); // what was mentioned is now written
         Assert.Contains("ready for the game master", ToolResult(model.Calls[3]));
+    }
+
+    [Fact]
+    public void WouldSkip_ChangesNothing_AndSelectBringsBackThePlacesItSitsIn()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."},
+              {"ref": "m", "kind": "place", "name": "Salt Market", "parent": "t", "text": "Stalls."},
+              {"ref": "d", "kind": "place", "name": "Dock", "parent": "m", "text": "Ropes."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        Assert.Equal(2, bundle.WouldSkip(bundle.Find("t")!).Count);
+        Assert.All(bundle.Drafts, d => Assert.True(d.Selected)); // looking is not skipping
+
+        bundle.Skip(bundle.Find("t")!);
+        var back = bundle.Select(bundle.Find("d")!);
+
+        Assert.Equal(new[] { "m", "t" }, back.Select(d => d.Ref).Order()); // a Dock kept means its Market and town are kept
+        Assert.All(bundle.Drafts, d => Assert.True(d.Selected));
+    }
+
+    [Fact]
+    public void MissingMentions_KnowsRegionNames_AndAColonInANameIsNotAKey()
+    {
+        const string json = """
+            {"region": "The Coast", "entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "On [[The Coast]], near [[Order of the Gauntlet: Neverwinter]] and [[Hills]]; see [[existing:port-varr]] and [[place:x|Old Town]]."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        var missing = WorldBundleParser.MissingMentions(bundle, new[] { "Hills", "Port Varr" }); // the parser turns existing:port-varr into its title, which the campaign has
+
+        Assert.Equal("Order of the Gauntlet: Neverwinter", Assert.Single(missing).Name);
+        Assert.Equal(new[] { "t" }, missing[0].ByRefs);
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_RefusesARefTheProposalUsesOrNone_AndTooMany_WithoutChangingTheProposal()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string clash = """{"additions": {"entries": [{"ref": "T", "kind": "place", "placeKind": "settlement", "name": "Other", "text": "x"}]}}""";
+        const string none = """{"additions": {"entries": [{"kind": "place", "placeKind": "settlement", "name": "Other", "text": "x"}]}}""";
+        var many = "{\"additions\": {\"entries\": [" + string.Join(",", Enumerable.Range(0, 30).Select(i => $$"""{"ref": "n{{i}}", "kind": "wiki", "name": "Page {{i}}", "text": "x"}""")) + "]}}";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", clash),
+            _ => Calls("c3", "add_entries", none),
+            _ => Calls("c4", "add_entries", many),
+            _ => new ChatMessage(ChatRole.Assistant, "Sorry."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town.", _ => { }, CancellationToken.None);
+        var waiting = chat.Proposal;
+        var epoch = chat.ProposalEpoch;
+
+        await chat.SendAsync("More.", _ => { }, CancellationToken.None);
+
+        Assert.Same(waiting, chat.Proposal); // none of the three changed it
+        Assert.Equal(epoch, chat.ProposalEpoch);
+        var results = model.Calls[^1].SelectMany(m => m.Contents).OfType<FunctionResultContent>().Select(r => r.Result?.ToString() ?? string.Empty).ToList();
+        Assert.Contains("already used: T", results[^3]);
+        Assert.Contains("one has none", results[^2]);
+        Assert.Contains("at most 30 fit", results[^1]);
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_KeepsWhatSavingAlreadyMadeOfTheOldEntries()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", more),
+            _ => new ChatMessage(ChatRole.Assistant, "Added."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town.", _ => { }, CancellationToken.None);
+        chat.Proposal!.Find("t")!.SavedAs["page"] = "page-1"; // an apply that failed half-way
+        chat.Proposal.Find("t")!.PageTitle = "Varr (2)";
+        chat.Proposal.Find("t")!.Selected = false;
+
+        await chat.SendAsync("And Amphail.", _ => { }, CancellationToken.None);
+
+        var varrDraft = chat.Proposal.Find("t")!;
+        Assert.Equal("page-1", varrDraft.SavedAs["page"]); // or the next apply would write Varr twice
+        Assert.Equal("Varr (2)", varrDraft.PageTitle);
+        Assert.False(varrDraft.Selected);
+        Assert.True(chat.Proposal.Find("a")!.Selected);
+    }
+
+    [Fact]
+    public async Task Chat_ThatAddedEntriesAndThenFailed_GetsItsWaitingProposalBack_AndItsEpoch()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", more),
+            _ => throw new IOException("connection lost"));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town.", _ => { }, CancellationToken.None);
+        var waiting = chat.Proposal;
+
+        await Assert.ThrowsAsync<IOException>(() => chat.SendAsync("And Amphail.", _ => { }, CancellationToken.None));
+
+        Assert.Same(waiting, chat.Proposal);
+        Assert.Single(chat.Proposal!.Drafts);
     }
 
     // ---- Editing what exists ----

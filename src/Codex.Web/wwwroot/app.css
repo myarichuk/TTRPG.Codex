@@ -1062,8 +1062,8 @@ dialog.codex-dialog-review { width: min(960px, 96vw); max-height: calc(100vh - 2
 .review-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr; gap: 1.25rem; margin-top: 0.75rem; }
 .review-rail { max-height: 56vh; overflow-y: auto; border-inline-end: 1px solid var(--border); padding-inline-end: 0.75rem; }
 .review-rail-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); text-align: start; }
-.review-rail-item:hover { background: var(--surface-sunken, var(--surface)); color: var(--text); }
-.review-rail-item.is-current { background: var(--surface-sunken, var(--surface)); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+.review-rail-item:hover { background: var(--surface-2); color: var(--text); }
+.review-rail-item.is-current { background: var(--surface-2); color: var(--text); border-inline-start: 3px solid var(--accent); }
 .review-rail-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .review-dot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 2px solid var(--text-3); }
 .review-dot-Accepted { background: var(--accent); border-color: var(--accent); }

@@ -172,22 +172,22 @@ public sealed class WorldBundle
 
     public WorldDraft? Find(string reference) => Drafts.FirstOrDefault(d => d.Ref == reference);
 
-    /// <summary>Unticks <paramref name="draft"/> and what only exists because of it: the places inside it, and inside those, and the
-    /// secrets whose subjects are all skipped. (A secret that also points at a page the campaign has stays: it is still about
-    /// something.) Returns what was unticked besides <paramref name="draft"/>, so the review can say so.</summary>
-    public IReadOnlyList<WorldDraft> Skip(WorldDraft draft)
+    /// <summary>What unticking <paramref name="draft"/> would untick besides it, without changing anything: the ticked places inside
+    /// it, and inside those, and the secrets whose subjects would all be unticked. (A secret that also points at a page the campaign
+    /// has stays: it is still about something.)</summary>
+    public IReadOnlyList<WorldDraft> WouldSkip(WorldDraft draft)
     {
-        draft.Selected = false;
+        var gone = new HashSet<WorldDraft> { draft };
         var also = new List<WorldDraft>();
         var pending = new Queue<WorldDraft>();
         pending.Enqueue(draft);
         while (pending.Count > 0)
         {
             var parent = pending.Dequeue();
-            foreach (var child in Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Place
+            foreach (var child in Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Place && !gone.Contains(d)
                          && string.Equals(d.Parent, parent.Ref, StringComparison.OrdinalIgnoreCase)))
             {
-                child.Selected = false;
+                gone.Add(child);
                 also.Add(child);
                 pending.Enqueue(child);
             }
@@ -196,11 +196,38 @@ public sealed class WorldBundle
         foreach (var fact in Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Fact && d.Links.Count > 0))
         {
             var about = fact.Links.Select(l => l.StartsWith(ExistingPrefix, StringComparison.OrdinalIgnoreCase) ? null : Find(l)).ToList();
-            if (about.All(d => d is { Selected: false }))
+            if (about.All(d => d != null && (!d.Selected || gone.Contains(d)))) also.Add(fact);
+        }
+
+        return also;
+    }
+
+    /// <summary>Unticks <paramref name="draft"/> and <see cref="WouldSkip"/>'s others, so no place is left without the place it is
+    /// inside. Returns the others, so the review can say so.</summary>
+    public IReadOnlyList<WorldDraft> Skip(WorldDraft draft)
+    {
+        var also = WouldSkip(draft);
+        draft.Selected = false;
+        foreach (var d in also) d.Selected = false;
+        return also;
+    }
+
+    /// <summary>Ticks <paramref name="draft"/>, and the places it is inside (an entry kept while the place it sits in is skipped would
+    /// be saved straight in the region). Returns the places it ticked besides.</summary>
+    public IReadOnlyList<WorldDraft> Select(WorldDraft draft)
+    {
+        draft.Selected = true;
+        var also = new List<WorldDraft>();
+        var at = draft;
+        while (at.Kind == DraftKinds.Place && at.Parent is { Length: > 0 } parent && Find(parent) is { } up && !also.Contains(up) && up != draft)
+        {
+            if (!up.Selected)
             {
-                fact.Selected = false;
-                also.Add(fact);
+                up.Selected = true;
+                also.Add(up);
             }
+
+            at = up;
         }
 
         return also;
@@ -208,8 +235,8 @@ public sealed class WorldBundle
 }
 
 /// <summary>A <c>[[name]]</c> some entries' text links to that nothing in the proposal or the campaign is called: a place or a
-/// person the model mentioned but did not write. <see cref="By"/> names the entries that mention it.</summary>
-public sealed record MissingMention(string Name, IReadOnlyList<string> By);
+/// person the model mentioned but did not write. <see cref="By"/> names the entries that mention it and <see cref="ByRefs"/> says which they are.</summary>
+public sealed record MissingMention(string Name, IReadOnlyList<string> By, IReadOnlyList<string> ByRefs);
 
 /// <summary>What a proposal may refer to. <see cref="HomebrewTypes"/> maps every spelling the model might use for a type (its key,
 /// folder, English and translated labels) to the type key; <see cref="ExistingPages"/> maps the campaign's page slugs to their
@@ -597,6 +624,7 @@ public static class WorldBundleParser
     public static IReadOnlyList<MissingMention> MissingMentions(WorldBundle bundle, IReadOnlyCollection<string> known)
     {
         var have = new HashSet<string>(known, StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(bundle.Region)) have.Add(bundle.Region.Trim());
         foreach (var d in bundle.Drafts)
         {
             have.Add(d.Ref);
@@ -604,26 +632,29 @@ public static class WorldBundleParser
             have.Add(d.Name.Trim());
         }
 
-        var by = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var by = new Dictionary<string, List<WorldDraft>>(StringComparer.OrdinalIgnoreCase);
         var order = new List<string>();
         foreach (var d in bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Body) && (d.Kind is DraftKinds.Wiki or DraftKinds.Npc or DraftKinds.Place or DraftKinds.Edit)))
         {
             foreach (System.Text.RegularExpressions.Match match in WikiLink.Matches(d.Body!))
             {
                 var name = match.Groups[1].Value.Trim();
-                if (name.Length == 0 || name.Contains(':') || have.Contains(name)) continue;
+                // A link by key (existing:slug, actor:id, place:id, item:id) points at something that is there. A name may hold a colon.
+                if (name.Length == 0 || KeyLink.IsMatch(name) || have.Contains(name)) continue;
                 if (!by.TryGetValue(name, out var mentioners))
                 {
-                    by[name] = mentioners = new List<string>();
+                    by[name] = mentioners = new List<WorldDraft>();
                     order.Add(name);
                 }
 
-                if (!mentioners.Contains(d.Name)) mentioners.Add(d.Name);
+                if (!mentioners.Contains(d)) mentioners.Add(d);
             }
         }
 
-        return order.Select(n => new MissingMention(n, by[n])).ToList();
+        return order.Select(n => new MissingMention(n, by[n].Select(d => d.Name).ToList(), by[n].Select(d => d.Ref).ToList())).ToList();
     }
+
+    private static readonly System.Text.RegularExpressions.Regex KeyLink = new(@"^(existing|actor|place|item):", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static string Cut(string? text, int max) => text == null ? string.Empty : text.Length <= max ? text.Trim() : text[..max].TrimEnd();
 
