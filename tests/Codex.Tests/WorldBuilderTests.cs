@@ -1031,6 +1031,91 @@ public class WorldBuilderTests
         Assert.Equal("A shorter answer.", chat.Lines[^1].Text);
     }
 
+    // ---- Reviewing: skipping, and what is mentioned but not written ----
+
+    [Fact]
+    public void Skip_AlsoSkipsThePlacesInsideIt_AndSecretsOnlyAboutWhatWasSkipped()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."},
+              {"ref": "m", "kind": "place", "name": "Salt Market", "parent": "t", "text": "Stalls."},
+              {"ref": "d", "kind": "place", "name": "Dock", "parent": "m", "text": "Ropes."},
+              {"ref": "x", "kind": "place", "placeKind": "settlement", "name": "Elsewhere", "text": "Far."},
+              {"ref": "f", "kind": "fact", "name": "The harbourmaster takes bribes.", "links": ["m"], "text": "Everyone knows."},
+              {"ref": "g", "kind": "fact", "name": "Varr and Elsewhere trade in secret.", "links": ["t", "x"], "text": "Few know."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        var also = bundle.Skip(bundle.Find("t")!);
+
+        Assert.Equal(new[] { "m", "d", "f" }, also.Select(d => d.Ref).OrderBy(r => r == "m" ? 0 : r == "d" ? 1 : 2));
+        Assert.False(bundle.Find("t")!.Selected);
+        Assert.True(bundle.Find("x")!.Selected); // not inside Varr
+        Assert.True(bundle.Find("g")!.Selected); // about Elsewhere too
+    }
+
+    [Fact]
+    public void MissingMentions_ListsWhatTextsLinkToByNameThatNobodyHas_OnceEach()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "South lies [[Amphail]]. Ships come from [[Amphail]] and [[Port Varr]]; ask [[p]] or [[existing:port-varr]] or [[actor:a1|Mira]]."},
+              {"ref": "p", "kind": "npc", "name": "Old Hal", "text": "Fishes off [[Varr]] and sells to [[Brinewick]], like [[Amphail]]'s people."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules(actors: new[] { "a1" })).Bundle;
+
+        var missing = WorldBundleParser.MissingMentions(bundle, new[] { "Port Varr" });
+
+        Assert.Equal(new[] { "Amphail", "Brinewick" }, missing.Select(m => m.Name));
+        Assert.Equal(new[] { "Varr", "Old Hal" }, missing[0].By);
+        Assert.Equal(new[] { "Old Hal" }, missing[1].By);
+    }
+
+    [Fact]
+    public void MissingMentions_IgnoresAnEntryTheDmSkipped_AndNamesItWasRenamedTo()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "See [[Amphail]] and [[Kell]]."},
+              {"ref": "k", "kind": "place", "placeKind": "settlement", "name": "Kell", "text": "A fort."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+        bundle.Find("k")!.Name = "Fort Kell"; // renamed: the link still reaches it by the name it was proposed under
+
+        Assert.Equal("Amphail", Assert.Single(WorldBundleParser.MissingMentions(bundle, Array.Empty<string>())).Name);
+
+        bundle.Skip(bundle.Find("t")!); // a skipped entry's text is not going to be saved, so what it mentions is not missing
+        Assert.Empty(WorldBundleParser.MissingMentions(bundle, Array.Empty<string>()));
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_PutsNewEntriesBesideTheWaitingOnes_AndKeepsTheDmsChoices()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "South lies [[Amphail]]."}]}}""";
+        const string amphail = """{"proposal": {"entries": [{"ref": "a", "kind": "place", "placeKind": "settlement", "name": "Amphail", "text": "A fishing town south of [[t]]."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Varr is ready."),
+            _ => Calls("c2", "add_entries", amphail),
+            _ => new ChatMessage(ChatRole.Assistant, "Amphail is in too."));
+        var saving = Service();
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
+        Assert.Equal("Amphail", Assert.Single(await saving.Service.MissingMentionsAsync(Dm, chat.Proposal!)).Name);
+        chat.Proposal!.Find("t")!.Name = "Port Varr"; // the DM's rename
+        chat.Proposal.Find("t")!.Cast = true;
+
+        await chat.SendAsync("Write Amphail.", _ => { }, CancellationToken.None);
+
+        Assert.Equal(new[] { "Port Varr", "Amphail" }, chat.Proposal!.Drafts.Select(d => d.Name));
+        Assert.Empty(await saving.Service.MissingMentionsAsync(Dm, chat.Proposal)); // what was mentioned is now written
+        Assert.Contains("ready for the game master", ToolResult(model.Calls[3]));
+    }
+
     // ---- Editing what exists ----
 
     [Fact]

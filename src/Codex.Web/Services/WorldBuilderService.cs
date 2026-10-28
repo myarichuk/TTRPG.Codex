@@ -96,6 +96,23 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         return string.Join('\n', lines);
     }
 
+    /// <summary>What the ticked entries' text links to by name that neither the proposal nor the campaign has (a page's title or slug,
+    /// a place, a cast member): things the model mentioned and did not write. The DM can ask for them one by one.</summary>
+    public async Task<IReadOnlyList<MissingMention>> MissingMentionsAsync(CampaignAccess access, WorldBundle bundle)
+    {
+        DmOnly(access);
+        var known = new List<string>();
+        foreach (var page in await wiki.GetVisibleForCampaignAsync(access))
+        {
+            known.Add(page.Title);
+            known.Add(page.Slug);
+        }
+
+        known.AddRange((await regions.GetVisibleForCampaignAsync(access)).SelectMany(r => r.Locations).Select(l => l.Name));
+        known.AddRange((await actorRepository.GetVisibleForCampaignAsync(access)).Select(a => a.Name));
+        return WorldBundleParser.MissingMentions(bundle, known);
+    }
+
     /// <summary>One page's full text (mentions as names), by its slug or title; null when there is no such page.</summary>
     public async Task<string?> PageAsync(CampaignAccess access, string slugOrTitle)
     {

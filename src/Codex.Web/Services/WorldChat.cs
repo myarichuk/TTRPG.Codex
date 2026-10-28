@@ -65,6 +65,9 @@ public sealed class WorldChat
 
     public IReadOnlyList<string> ProposalWarnings { get; private set; } = Array.Empty<string>();
 
+    // The proposal as the model wrote it, so add_entries can put more entries beside them without the model resending the rest.
+    private ProposalInput? held;
+
     /// <summary>Sends the DM's message and runs the model, with its tool calls, until it answers. <paramref name="progress"/>
     /// hears each tool the model calls, as a line the page shows while it works; <paramref name="stream"/>, when given, hears the
     /// reply and the reasoning as they arrive, so the page can show them being written instead of a wait.</summary>
@@ -94,6 +97,7 @@ public sealed class WorldChat
         trail.Clear();
         var heldProposal = Proposal;
         var heldWarnings = ProposalWarnings;
+        var heldInput = held;
         lines.Add(new WorldChatLine(WorldChatSpeaker.Dm, message));
         var before = history.Count;
         try
@@ -134,6 +138,7 @@ public sealed class WorldChat
             // what it proposed goes with it, and what was waiting for the DM before it comes back.
             Proposal = heldProposal;
             ProposalWarnings = heldWarnings;
+            held = heldInput;
         }
     }
 
@@ -232,6 +237,7 @@ public sealed class WorldChat
         var proposal = Proposal ?? throw new LocalizedException("WorldChat.Error.NoProposal");
         var result = await builder.SaveAsync(campaign, access, proposal, ct);
         Proposal = null;
+        held = null;
         ProposalWarnings = Array.Empty<string>();
 
         var note = new StringBuilder("(A note from the app, not from the game master: the game master applied your proposal. These now exist, hidden from the players:");
@@ -251,6 +257,7 @@ public sealed class WorldChat
     {
         if (Proposal == null) return;
         Proposal = null;
+        held = null;
         ProposalWarnings = Array.Empty<string>();
         history.Add(new ChatMessage(ChatRole.User, "(A note from the app: the game master discarded your last proposal; nothing from it was saved.)"));
         lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Discarded"], Icon: "x"));
@@ -319,6 +326,15 @@ public sealed class WorldChat
             AIFunctionFactory.Create(
                 async (ProposalInput proposal) =>
                 {
+                    Note("plus", "WorldChat.Tool.Add", proposal.Entries?.Count ?? 0);
+                    return await AddEntriesAsync(proposal);
+                },
+                "add_entries",
+                "Adds entries to the proposal already waiting for the game master, without resending it: pass ONLY the new entries. They may use the refs already " +
+                "in the proposal as a place's parent, in \"links\" and as [[ref]]. The game master's ticks and renames are kept. With no proposal waiting, it makes one."),
+            AIFunctionFactory.Create(
+                async (ProposalInput proposal) =>
+                {
                     Note("clipboard-check", "WorldChat.Tool.Propose", proposal.Entries?.Count ?? 0);
                     return await ProposeAsync(proposal);
                 },
@@ -328,16 +344,44 @@ public sealed class WorldChat
         };
     }
 
-    private async Task<string> ProposeAsync(ProposalInput input)
+    // New entries beside the waiting proposal's: checked together (a new place can sit inside an old one), then the game master's
+    // choices on the old entries (ticks, renames, the cast box) are put back on them.
+    private async Task<string> AddEntriesAsync(ProposalInput add)
+    {
+        if (Proposal is not { } before || held is not { } input) return await ProposeAsync(add);
+        var added = add.Entries ?? new List<ProposalEntry>();
+        var merged = new ProposalInput
+        {
+            Summary = add.Summary ?? input.Summary,
+            Region = add.Region ?? input.Region,
+            Entries = (input.Entries ?? new List<ProposalEntry>()).Where(e => !added.Any(a => string.Equals(a.Ref, e.Ref, StringComparison.OrdinalIgnoreCase))).Concat(added).ToList()
+        };
+        var result = await ProposeAsync(merged, "add_entries", "only the new entries");
+        if (!ReferenceEquals(Proposal, before) && Proposal != null)
+        {
+            foreach (var draft in Proposal.Drafts)
+            {
+                if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
+                draft.Selected = old.Selected;
+                draft.Cast = old.Cast;
+                if (!string.IsNullOrWhiteSpace(old.Name) && old.Name != old.OutlineName) draft.Name = old.Name;
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<string> ProposeAsync(ProposalInput input, string tool = "propose_changes", string with = "the whole proposal")
     {
         var json = JsonSerializer.Serialize(input, ProposalJson);
         var check = await builder.CheckAsync(campaign, access, json);
         if (!check.Ok)
         {
-            return "Nothing was proposed. Fix these and call propose_changes again with the whole proposal:\n- " + string.Join("\n- ", check.Errors) +
+            return $"Nothing was proposed. Fix these and call {tool} again with {with}:\n- " + string.Join("\n- ", check.Errors) +
                    (check.Warnings.Count > 0 ? "\nAlso worth fixing:\n- " + string.Join("\n- ", check.Warnings) : "");
         }
 
+        held = input;
         Proposal = check.Bundle;
         ProposalWarnings = check.Warnings;
         return $"The proposal ({check.Bundle.Drafts.Count} entries) is ready for the game master to review and apply; nothing is saved yet. Tell them in a sentence or two what it adds." +

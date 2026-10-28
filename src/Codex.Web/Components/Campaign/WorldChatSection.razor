@@ -176,6 +176,25 @@ else if (chat != null)
                             </ul>
                         </details>
                     }
+                    @if (missing.Count > 0)
+                    {
+                        <div class="world-missing mb-2" data-testid="world-missing">
+                            <h4 class="eyebrow">@L["WorldChat.Missing.Title"]</h4>
+                            <ul class="list-unstyled mb-1">
+                                @foreach (var m in missing)
+                                {
+                                    <li class="world-missing-row">
+                                        <span><strong>@m.Name</strong> <span class="small-muted">@L["WorldChat.Missing.Mentions", string.Join(", ", m.By)]</span></span>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" OnClick="() => FillAsync(new[] { m })" Disabled="@(busy || applying)" data-testid="world-missing-write">@L["WorldChat.Missing.Write", m.Name]</CodexButton>
+                                    </li>
+                                }
+                            </ul>
+                            @if (missing.Count > 1)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" OnClick="() => FillAsync(missing)" Disabled="@(busy || applying)" data-testid="world-missing-all">@L["WorldChat.Missing.All", missing.Count]</CodexButton>
+                            }
+                        </div>
+                    }
                     @foreach (var group in proposal.Drafts.GroupBy(d => d.Kind).OrderBy(g => Array.IndexOf(KindOrder, g.Key)))
                     {
                         <h4 class="eyebrow mt-3">@L[$"WorldChat.Kind.{group.Key}"]</h4>
@@ -185,7 +204,7 @@ else if (chat != null)
                                 var id = $"proposal-{d.Ref}";
                                 <li class="world-proposal-entry" data-testid="world-proposal-entry">
                                     <div class="field-check">
-                                        <input id="@id" type="checkbox" class="field-box" checked="@d.Selected" @onchange="e => d.Selected = (bool)(e.Value ?? false)" disabled="@applying" />
+                                        <input id="@id" type="checkbox" class="field-box" checked="@d.Selected" @onchange="e => SetSelected(proposal, d, (bool)(e.Value ?? false))" disabled="@applying" />
                                         <label for="@id"><strong>@d.Name</strong>@Detail(proposal, d)</label>
                                     </div>
                                     @if (d is { Kind: DraftKinds.Edit, SharedWithPlayers: true })
@@ -229,6 +248,7 @@ else if (chat != null)
                         <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="ApplyAsync" Disabled="@(applying || busy || !proposal.Drafts.Any(d => d.Selected))" data-testid="world-proposal-apply">
                             <LucideIcon IconName="check" Size="16" /> @L["WorldChat.Proposal.Apply", proposal.Drafts.Count(d => d.Selected)]
                         </CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenReviewAsync" Disabled="@(applying || busy)" data-testid="world-proposal-review"><LucideIcon IconName="list" Size="16" /> @L["WorldChat.Review.Open"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="Discard" Disabled="@(applying || busy)" data-testid="world-proposal-discard">@L["WorldChat.Proposal.Discard"]</CodexButton>
                     </div>
                     @if (applying)
@@ -236,6 +256,110 @@ else if (chat != null)
                         <AiWorking Text="@L["WorldChat.Proposal.Applying"]" TestId="world-proposal-applying" />
                     }
                 </section>
+
+                <dialog id="world-review-dialog" class="codex-dialog codex-dialog-review" aria-labelledby="world-review-title" data-testid="world-review-dialog">
+                    @{
+                        var order = ReviewOrder(proposal);
+                        var current = order.FirstOrDefault(x => x.Ref == reviewRef) ?? order.FirstOrDefault();
+                        var position = current == null ? 0 : order.IndexOf(current);
+                        var left = order.Count(x => x.Selected && !decided.Contains(x.Ref));
+                    }
+                    <div class="dialog-body">
+                        <h2 id="world-review-title"><LucideIcon IconName="clipboard-check" Size="18" Class="title-icon" /> @L["WorldChat.Review.Title"]</h2>
+                        <div class="review-layout">
+                            <nav class="review-rail" aria-label="@L["WorldChat.Review.Rail"]">
+                                <ol class="list-unstyled mb-0">
+                                    @foreach (var x in order)
+                                    {
+                                        var state = ReviewState(x);
+                                        <li>
+                                            <button type="button" class="review-rail-item @(x.Ref == current?.Ref ? "is-current" : null)" aria-current="@(x.Ref == current?.Ref ? "step" : null)" @onclick="() => reviewRef = x.Ref" data-testid="world-review-rail-item">
+                                                <span class="review-dot review-dot-@state" title="@L[$"WorldChat.Review.{state}"]"></span>
+                                                <span class="review-rail-name">@x.Name</span>
+                                            </button>
+                                        </li>
+                                    }
+                                </ol>
+                            </nav>
+                            <section class="review-pane" aria-live="polite">
+                                @if (current != null)
+                                {
+                                    var state = ReviewState(current);
+                                    var cascade = CascadeCount(proposal, current);
+                                    <p class="eyebrow mb-1">@L["WorldChat.Review.Step", position + 1, order.Count] · @L[$"WorldChat.Kind.{current.Kind}"]@Detail(proposal, current)</p>
+                                    <h3 class="review-name">@current.Name <span class="chip review-state review-state-@state">@L[$"WorldChat.Review.{state}"]</span></h3>
+                                    @if (!string.IsNullOrWhiteSpace(current.Pitch))
+                                    {
+                                        <p class="review-pitch">@current.Pitch</p>
+                                    }
+                                    @if (current is { Kind: DraftKinds.Edit, SharedWithPlayers: true })
+                                    {
+                                        <div class="small text-warning mb-2"><LucideIcon IconName="eye" Size="14" /> @L["WorldChat.Proposal.Shared"]</div>
+                                    }
+                                    @if (current.Kind == DraftKinds.Edit && !string.IsNullOrWhiteSpace(current.Before))
+                                    {
+                                        <details class="mb-2">
+                                            <summary class="small">@L["WorldChat.Proposal.Current"]</summary>
+                                            <div class="rules-text small mt-1">@((MarkupString)TextFormatting.ToHtml(current.Before))</div>
+                                        </details>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(current.Body))
+                                    {
+                                        <div class="rules-text review-body" data-testid="world-review-body">@((MarkupString)TextFormatting.ToHtml(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false)))</div>
+                                    }
+                                    @if (current.Kind == DraftKinds.Npc)
+                                    {
+                                        <div class="field-check">
+                                            <input id="review-cast" type="checkbox" class="field-box" checked="@current.Cast" @onchange="e => current.Cast = (bool)(e.Value ?? false)" />
+                                            <label for="review-cast" class="small">@(current.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"])</label>
+                                        </div>
+                                    }
+                                    @if (missing.Where(m => m.By.Contains(current.Name)).ToList() is { Count: > 0 } here)
+                                    {
+                                        <div class="world-missing mt-3">
+                                            <h4 class="eyebrow">@L["WorldChat.Missing.Title"]</h4>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (var m in here)
+                                                {
+                                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" OnClick="() => FillAsync(new[] { m })" Disabled="@(busy || applying)" data-testid="world-review-write">@L["WorldChat.Missing.Write", m.Name]</CodexButton>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (cascade > 0 && current.Selected)
+                                    {
+                                        <p class="small-muted mt-3 mb-0">@L["WorldChat.Review.SkippedAlso", cascade]</p>
+                                    }
+                                }
+                                @if (busy)
+                                {
+                                    <AiWorking Text="@L["WorldChat.Working"]" OnStop="aiCall.Stop" TestId="world-review-working" />
+                                }
+                            </section>
+                        </div>
+                        @if (left == 0 && order.Count > 0)
+                        {
+                            <p class="review-done mb-0" role="status" data-testid="world-review-done">@L["WorldChat.Review.Done", order.Count(x => x.Selected)]</p>
+                        }
+                    </div>
+                    <div class="dialog-actions review-actions">
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => Step(order, position - 1)" Disabled="@(position == 0)" data-testid="world-review-back"><LucideIcon IconName="chevron-left" Size="16" /> @L["WorldChat.Review.Back"]</CodexButton>
+                        @if (current != null)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => SkipDraft(proposal, current)" Disabled="@(busy || applying)" data-testid="world-review-skip"><LucideIcon IconName="x" Size="16" /> @L["WorldChat.Review.Skip"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => Accept(proposal, current)" Disabled="@(busy || applying)" data-testid="world-review-accept"><LucideIcon IconName="check" Size="16" /> @L["WorldChat.Review.Accept"]</CodexButton>
+                        }
+                        @if (left > 1)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => AcceptRest(proposal)" Disabled="@(busy || applying)" data-testid="world-review-accept-rest">@L["WorldChat.Review.AcceptRest"]</CodexButton>
+                        }
+                        <span class="review-spacer"></span>
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseReviewAsync" data-testid="world-review-close">@L["WorldChat.Review.Close"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="ApplyFromReviewAsync" Disabled="@(applying || busy || !proposal.Drafts.Any(x => x.Selected))" data-testid="world-review-apply">
+                            <LucideIcon IconName="check" Size="16" /> @L["WorldChat.Proposal.Apply", proposal.Drafts.Count(x => x.Selected)]
+                        </CodexButton>
+                    </div>
+                </dialog>
             </div>
         }
         else if (result != null)
@@ -283,6 +407,100 @@ else if (chat != null)
     [Parameter] public string? Starter { get; set; }
 
     private static readonly string[] StarterKeys = { "settlement", "faction", "quest", "people", "homebrew" };
+    // ---- Reviewing a proposal one entry at a time ----
+
+    // What the ticked entries link to by name that nobody has written: the model mentioned them, the DM can ask for them.
+    private IReadOnlyList<MissingMention> missing = Array.Empty<MissingMention>();
+    // The entry the review shows, and the ones the DM has decided on (by ref). An unticked entry is skipped however it got that way.
+    private string? reviewRef;
+    private readonly HashSet<string> decided = new(StringComparer.OrdinalIgnoreCase);
+
+    private static List<WorldDraft> ReviewOrder(WorldBundle proposal) =>
+        proposal.Drafts.OrderBy(d => Array.IndexOf(KindOrder, d.Kind)).ToList();
+
+    private string ReviewState(WorldDraft d) => !d.Selected ? "Skipped" : decided.Contains(d.Ref) ? "Accepted" : "Pending";
+
+    private async Task RefreshMissingAsync() =>
+        missing = chat?.Proposal is { } proposal ? await Builder.MissingMentionsAsync(Ctx.Access, proposal) : Array.Empty<MissingMention>();
+
+    // Unticking an entry unticks what only exists because of it (the places inside it), so no place is left without its parent.
+    private async Task SetSelected(WorldBundle proposal, WorldDraft d, bool on)
+    {
+        if (on) d.Selected = true;
+        else proposal.Skip(d);
+        await RefreshMissingAsync();
+    }
+
+    private async Task OpenReviewAsync()
+    {
+        if (chat?.Proposal is not { } proposal) return;
+        var order = ReviewOrder(proposal);
+        reviewRef = (order.FirstOrDefault(d => d.Selected && !decided.Contains(d.Ref)) ?? order.FirstOrDefault())?.Ref;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "world-review-dialog");
+    }
+
+    private Task CloseReviewAsync() => JS.InvokeVoidAsync("codex.closeModal", "world-review-dialog").AsTask();
+
+    private void Step(List<WorldDraft> order, int to)
+    {
+        if (to >= 0 && to < order.Count) reviewRef = order[to].Ref;
+    }
+
+    // After a decision, the next entry still waiting; when none is, stay where the DM is.
+    private void Advance(WorldBundle proposal, WorldDraft from)
+    {
+        var order = ReviewOrder(proposal);
+        var after = order.Skip(order.IndexOf(from) + 1).Concat(order.Take(order.IndexOf(from)));
+        reviewRef = (after.FirstOrDefault(d => d.Selected && !decided.Contains(d.Ref)) ?? from).Ref;
+    }
+
+    private async Task Accept(WorldBundle proposal, WorldDraft d)
+    {
+        d.Selected = true;
+        decided.Add(d.Ref);
+        Advance(proposal, d);
+        await RefreshMissingAsync();
+    }
+
+    private async Task SkipDraft(WorldBundle proposal, WorldDraft d)
+    {
+        decided.Add(d.Ref);
+        foreach (var also in proposal.Skip(d)) decided.Add(also.Ref);
+        Advance(proposal, d);
+        await RefreshMissingAsync();
+    }
+
+    private void AcceptRest(WorldBundle proposal)
+    {
+        foreach (var d in proposal.Drafts.Where(d => d.Selected)) decided.Add(d.Ref);
+    }
+
+    // How many other entries skipping this one would skip, for the note under it; nothing is changed.
+    private static int CascadeCount(WorldBundle proposal, WorldDraft d)
+    {
+        var was = proposal.Drafts.Select(x => x.Selected).ToList();
+        var count = proposal.Skip(d).Count;
+        for (var i = 0; i < was.Count; i++) proposal.Drafts[i].Selected = was[i];
+        return count;
+    }
+
+    // Asks the model for what the proposal mentions and doesn't have, as the DM would: in the conversation, so it shows in the log.
+    private async Task FillAsync(IReadOnlyList<MissingMention> wanted)
+    {
+        if (chat == null || busy || applying || wanted.Count == 0) return;
+        draft = wanted.Count == 1
+            ? L["WorldChat.Fill.Message", wanted[0].Name, string.Join(", ", wanted[0].By)]
+            : L["WorldChat.Fill.All", string.Join("; ", wanted.Select(m => $"“{m.Name}” ({string.Join(", ", m.By)})"))];
+        await SendAsync();
+    }
+
+    private async Task ApplyFromReviewAsync()
+    {
+        await ApplyAsync();
+        if (chat?.Proposal == null) await CloseReviewAsync();
+    }
+
     private static readonly string[] KindOrder = { DraftKinds.Edit, DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew };
 
     private WorldChat? chat;
@@ -321,6 +539,7 @@ else if (chat != null)
         aiReady = await Ai.IsConfiguredAsync(Ctx.UserId);
         chat = Sessions.For(Ctx.Campaign, Ctx.Access);
         shownProposal = chat.Proposal;
+        await RefreshMissingAsync();
     }
 
     protected override async Task OnParametersSetAsync()
@@ -452,7 +671,14 @@ else if (chat != null)
         if (chat.Proposal != null)
         {
             await LoadPlacesAsync();
+            // Entries added to the proposal keep the DM's decisions; a different proposal starts the review over.
+            if (shownProposal == null || !shownProposal.Drafts.All(old => chat.Proposal.Find(old.Ref) != null)) decided.Clear();
+            await RefreshMissingAsync();
             if (!ReferenceEquals(chat.Proposal, shownProposal)) revealProposal = true;
+        }
+        else
+        {
+            missing = Array.Empty<MissingMention>();
         }
 
         shownProposal = chat.Proposal;
@@ -501,6 +727,8 @@ else if (chat != null)
     {
         chat?.Discard();
         applyError = null;
+        decided.Clear();
+        missing = Array.Empty<MissingMention>();
     }
 
     private void RestartAsync()

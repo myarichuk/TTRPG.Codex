@@ -1057,6 +1057,31 @@ a.user-chip:active { transform: scale(0.97); }
 .count-input { width: 68px; }
 .import-list { max-height: 50vh; overflow-y: auto; padding-inline-end: 0.5rem; }
 dialog.codex-dialog-wide { width: min(680px, 94vw); }
+/* The proposal review: the entries as a rail on one side, the entry as it will read on the other, the decision at the foot. */
+dialog.codex-dialog-review { width: min(960px, 96vw); max-height: calc(100vh - 2rem); }
+.review-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr; gap: 1.25rem; margin-top: 0.75rem; }
+.review-rail { max-height: 56vh; overflow-y: auto; border-inline-end: 1px solid var(--border); padding-inline-end: 0.75rem; }
+.review-rail-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); text-align: start; }
+.review-rail-item:hover { background: var(--surface-sunken, var(--surface)); color: var(--text); }
+.review-rail-item.is-current { background: var(--surface-sunken, var(--surface)); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+.review-rail-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.review-dot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 2px solid var(--text-3); }
+.review-dot-Accepted { background: var(--accent); border-color: var(--accent); }
+.review-dot-Skipped { border-style: dashed; opacity: 0.6; }
+.review-pane { min-width: 0; max-height: 56vh; overflow-y: auto; }
+.review-name { font-size: 1.25rem; margin: 0 0 0.25rem; }
+.review-state { margin-inline-start: 0.5rem; font-size: 0.7rem; vertical-align: middle; }
+.review-pitch { color: var(--text-2); font-style: italic; }
+.review-body { font-size: 1rem; line-height: 1.6; }
+.review-done { margin-top: 0.75rem; color: var(--accent); }
+.review-actions { flex-wrap: wrap; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border); margin: 0 1.6rem; padding-inline: 0; }
+.review-spacer { flex: 1 1 auto; }
+.world-missing { border: 1px dashed var(--border-strong); border-radius: var(--radius-md); padding: 0.6rem 0.75rem; }
+.world-missing-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.2rem 0; }
+@media (max-width: 720px) {
+    .review-layout { grid-template-columns: 1fr; }
+    .review-rail { max-height: 9rem; border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 0.5rem; }
+}
 .creature-card { min-height: auto; }
 .journal-entry { position: relative; }
 .journal-entry::before { content: ""; position: absolute; inset-inline-start: 0; top: 1.2rem; bottom: 1.2rem; width: 3px; border-radius: 1px; background: var(--accent); opacity: 0.6; }
