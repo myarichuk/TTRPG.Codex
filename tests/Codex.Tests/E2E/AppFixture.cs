@@ -144,6 +144,15 @@ public sealed class AppFixture : IAsyncLifetime
     }
 
     /// <summary>Where the app's console output is written on dispose, for post-mortems of a failed scenario.</summary>
+    /// <summary>What the app process has written so far, for a failing test to show alongside what the browser saw.</summary>
+    public string ServerOutput
+    {
+        get
+        {
+            lock (_output) return _output.Length <= 6000 ? _output.ToString() : "…" + _output.ToString(_output.Length - 6000, 6000);
+        }
+    }
+
     public string LogPath { get; } = Path.Combine(Path.GetTempPath(), $"codex-e2e-{Environment.ProcessId}-{Guid.NewGuid():N}.log");
 
     public async Task DisposeAsync()

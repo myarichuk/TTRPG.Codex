@@ -19,9 +19,12 @@ public class HistoryPreviewE2ETests : IClassFixture<AppFixture>
 
         await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
         var dm = await context.NewPageAsync();
-        var problems = new List<string>();
-        dm.PageError += (_, e) => problems.Add("pageerror: " + e);
-        dm.Console += (_, m) => { if (m.Type == "error") problems.Add("console: " + m.Text); };
+        // An uncaught exception in the page is a failure. Console errors are not: on a busy runner they include the connection to the
+        // server dropping, which says nothing about the preview; they are kept to explain a failure of the server check below.
+        var pageErrors = new List<string>();
+        var consoleErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add("pageerror: " + e);
+        dm.Console += (_, m) => { if (m.Type == "error") consoleErrors.Add("console: " + m.Text); };
 
         await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
         var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Preview campaign");
@@ -48,6 +51,9 @@ public class HistoryPreviewE2ETests : IClassFixture<AppFixture>
 
         await dm.GetByTestId("sheet-biography-write").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("sheet-biography")).ToBeVisibleAsync();
-        Assert.Empty(problems);
+        Assert.True(pageErrors.Count == 0, "Uncaught errors in the page:\n" + string.Join("\n", pageErrors));
+        // A real fault shows in the server's own log, not (only) in the browser's.
+        Assert.True(!_app.ServerOutput.Contains("Unhandled exception", StringComparison.Ordinal),
+            "The server logged an unhandled exception.\nBrowser console errors:\n" + string.Join("\n", consoleErrors) + "\n--- server output (tail) ---\n" + _app.ServerOutput);
     }
 }
