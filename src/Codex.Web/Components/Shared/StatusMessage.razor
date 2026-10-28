@@ -9,6 +9,7 @@
         <div class="status @ToneClass">
             <LucideIcon IconName="@Icon" Size="18" />
             <span>@Message.Text</span>
+            @Actions
             @if (OnDismiss.HasDelegate)
             {
                 <button type="button" class="icon-btn" aria-label="@L["Common.Dismiss"]" @onclick="OnDismiss">
@@ -22,6 +23,9 @@
 @code {
     [Parameter] public Flash? Message { get; set; }
     [Parameter] public EventCallback OnDismiss { get; set; }
+
+    /// <summary>What the person can do about it, shown after the text ("Try again").</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
 
     private string ToneClass => Message?.Tone switch
     {

@@ -57,7 +57,8 @@ else if (chat != null)
                         }
                     </div>
                 }
-                <ol class="world-chat-log" role="log" aria-live="polite" aria-relevant="additions" data-testid="world-chat-log">
+                @* A window of its own once the conversation is long, so the message box and the proposal stay in reach; tabindex so the keyboard can scroll it. *@
+                <ol id="world-chat-log" class="world-chat-log" role="log" tabindex="0" aria-label="@L["WorldChat.Conversation"]" aria-live="polite" aria-relevant="additions" data-testid="world-chat-log">
                     @foreach (var line in chat.Lines)
                     {
                         <li class="world-chat-line world-chat-@line.Speaker.ToString().ToLowerInvariant()">
@@ -68,27 +69,77 @@ else if (chat != null)
                                     <div class="world-chat-bubble">@line.Text</div>
                                     break;
                                 case WorldChatSpeaker.Model:
-                                    <span class="visually-hidden">@L["WorldChat.Model"]: </span>
-                                    <div class="world-chat-bubble rules-text">@((MarkupString)TextFormatting.ToHtml(line.Text))</div>
+                                    <div class="world-chat-turn">
+                                        @if (line.Steps is { Count: > 0 } steps)
+                                        {
+                                            @* What the model looked at to get here, folded away: there if the DM wonders, out of the way if not. *@
+                                            <details class="world-chat-trail" data-testid="world-chat-steps">
+                                                <summary>@L["WorldChat.Steps", steps.Count]</summary>
+                                                @foreach (var step in steps)
+                                                {
+                                                    <div class="world-chat-step"><LucideIcon IconName="@(step.Icon ?? "search")" Size="14" /> @step.Text</div>
+                                                }
+                                            </details>
+                                        }
+                                        <span class="visually-hidden">@L["WorldChat.Model"]: </span>
+                                        <div class="world-chat-bubble rules-text">@((MarkupString)TextFormatting.ToHtml(line.Text))</div>
+                                    </div>
                                     break;
                                 default:
-                                    <div class="world-chat-note"><LucideIcon IconName="search" Size="14" /> @line.Text</div>
+                                    <div class="world-chat-note"><LucideIcon IconName="@(line.Icon ?? "info")" Size="14" /> @line.Text</div>
                                     break;
                             }
                         </li>
                     }
-                    @foreach (var line in working)
+                    @if (busy && (working.Count > 0 || aside != null || (thoughtLive && thought.Length > 0)))
                     {
-                        <li class="world-chat-line world-chat-tool"><div class="world-chat-note"><LucideIcon IconName="search" Size="14" /> @line.Text</div></li>
+                        @* The turn under way: what the model has looked at so far, and on the last line what it is on now. *@
+                        <li class="world-chat-line world-chat-tool">
+                            <div class="world-chat-trail world-chat-trail-live" aria-live="off" data-testid="world-chat-trail">
+                                @if (working.Count > ShownSteps)
+                                {
+                                    <div class="world-chat-step world-chat-earlier">@L["WorldChat.Earlier", working.Count - ShownSteps]</div>
+                                }
+                                @foreach (var step in working.Skip(Math.Max(0, working.Count - ShownSteps)))
+                                {
+                                    <div class="world-chat-step"><LucideIcon IconName="@(step.Icon ?? "search")" Size="14" /> @step.Text</div>
+                                }
+                                @if (thoughtLive && thought.Length > 0)
+                                {
+                                    <div class="world-chat-aside" data-testid="world-chat-thinking"><LucideIcon IconName="sparkles" Size="14" /> @Tail(thought)</div>
+                                }
+                                else if (streamed.Length == 0 && aside != null)
+                                {
+                                    <div class="world-chat-aside">@aside</div>
+                                }
+                            </div>
+                        </li>
+                    }
+                    @if (busy && streamed.Length > 0)
+                    {
+                        @* The reply as it is written; aria-live off so a screen reader hears it once, when it lands in the log above. *@
+                        <li class="world-chat-line world-chat-model" aria-live="off" data-testid="world-chat-streaming">
+                            <div class="world-chat-bubble rules-text">@((MarkupString)TextFormatting.ToHtml(streamed.ToString()))</div>
+                        </li>
                     }
                 </ol>
                 @if (busy)
                 {
-                    <AiWorking Text="@L["WorldChat.Working"]" OnStop="aiCall.Stop" TestId="world-chat-working" />
+                    @* "Thinking" until the first words arrive, then "Writing": the label follows what the model is doing. *@
+                    <AiWorking Text="@(streamed.Length > 0 ? L["Common.Ai.Writing"] : L["WorldChat.Working"])" OnStop="aiCall.Stop" TestId="world-chat-working" />
                 }
-                else if (error != null)
+                else if (notice != null)
                 {
-                    <p class="text-danger mt-2" role="alert">@error</p>
+                    <div class="mt-2">
+                        <StatusMessage Message="notice" OnDismiss="() => notice = null">
+                            <Actions>
+                                @if (!string.IsNullOrWhiteSpace(draft))
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="refresh-cw" OnClick="SendAsync" data-testid="world-chat-retry">@L["WorldChat.Retry"]</CodexButton>
+                                }
+                            </Actions>
+                        </StatusMessage>
+                    </div>
                 }
                 <form class="world-chat-form mt-3" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
                     <label for="world-chat-input" class="visually-hidden">@L["WorldChat.MessageLabel"]</label>
@@ -96,7 +147,7 @@ else if (chat != null)
                               placeholder="@L["WorldChat.Placeholder"]" aria-describedby="world-chat-hint" data-testid="world-chat-input"
                               @onkeydown="OnKeyAsync"></textarea>
                     <div class="d-flex gap-2 align-items-center flex-wrap mt-2">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || string.IsNullOrWhiteSpace(draft))" data-testid="world-chat-send"><LucideIcon IconName="send" Size="16" /> @L["WorldChat.Send"]</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || applying || string.IsNullOrWhiteSpace(draft))" data-testid="world-chat-send"><LucideIcon IconName="send" Size="16" /> @L["WorldChat.Send"]</CodexButton>
                         <span id="world-chat-hint" class="field-hint mb-0">@L["WorldChat.Hint"]</span>
                     </div>
                 </form>
@@ -106,7 +157,7 @@ else if (chat != null)
         @if (chat.Proposal is { } proposal)
         {
             <div class="col-lg-5">
-                <section class="panel world-proposal" aria-labelledby="world-proposal-heading" data-testid="world-proposal">
+                <section id="world-proposal" class="panel world-proposal world-side" aria-labelledby="world-proposal-heading" data-testid="world-proposal">
                     <div class="panel-title"><h3 id="world-proposal-heading" class="h6"><LucideIcon IconName="clipboard-check" Size="14" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3></div>
                     @if (!string.IsNullOrWhiteSpace(proposal.Summary))
                     {
@@ -137,6 +188,17 @@ else if (chat != null)
                                         <input id="@id" type="checkbox" class="field-box" checked="@d.Selected" @onchange="e => d.Selected = (bool)(e.Value ?? false)" disabled="@applying" />
                                         <label for="@id"><strong>@d.Name</strong>@Detail(proposal, d)</label>
                                     </div>
+                                    @if (d is { Kind: DraftKinds.Edit, SharedWithPlayers: true })
+                                    {
+                                        <div class="small ms-4 text-warning" data-testid="world-proposal-shared"><LucideIcon IconName="eye" Size="14" /> @L["WorldChat.Proposal.Shared"]</div>
+                                    }
+                                    @if (d.Kind == DraftKinds.Edit && !string.IsNullOrWhiteSpace(d.Before))
+                                    {
+                                        <details class="ms-4">
+                                            <summary class="small">@L["WorldChat.Proposal.Current"]</summary>
+                                            <div class="rules-text small mt-1" data-testid="world-proposal-before">@((MarkupString)TextFormatting.ToHtml(d.Before))</div>
+                                        </details>
+                                    }
                                     @if (d.Kind == DraftKinds.Npc)
                                     {
                                         <div class="field-check ms-4">
@@ -179,7 +241,7 @@ else if (chat != null)
         else if (result != null)
         {
             <div class="col-lg-5">
-                <section class="panel" aria-labelledby="world-result-heading" data-testid="world-result">
+                <section class="panel world-side" aria-labelledby="world-result-heading" data-testid="world-result">
                     <div class="panel-title"><h3 id="world-result-heading" class="h6"><LucideIcon IconName="check" Size="14" Class="title-icon" /> @L["WorldChat.Result.Title", result.Count]</h3></div>
                     <p class="field-hint">@L["WorldChat.Result.Hint"]</p>
                     <ul class="link-list mb-0">
@@ -199,6 +261,10 @@ else if (chat != null)
                         {
                             <li><a href="@Ctx.BasePath/library/@entry.Type/@entry.EntryId"><LucideIcon IconName="book-marked" Size="14" /> @entry.Name</a></li>
                         }
+                        @foreach (var change in result.Changes)
+                        {
+                            <li data-testid="world-result-change"><a href="@ChangeHref(change)"><LucideIcon IconName="edit-3" Size="14" /> @change.Name</a> <span class="small-muted">@L[$"WorldChat.Edit.{change.Target}"]</span></li>
+                        }
                         @if (result.Facts.Count > 0)
                         {
                             <li><a href="@Ctx.BasePath/lore"><LucideIcon IconName="key-round" Size="14" /> @L["WorldChat.Result.Secrets", result.Facts.Count]</a></li>
@@ -217,18 +283,35 @@ else if (chat != null)
     [Parameter] public string? Starter { get; set; }
 
     private static readonly string[] StarterKeys = { "settlement", "faction", "quest", "people", "homebrew" };
-    private static readonly string[] KindOrder = { DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew };
+    private static readonly string[] KindOrder = { DraftKinds.Edit, DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew };
 
     private WorldChat? chat;
     private bool aiReady;
     private bool busy;
     private bool applying;
     private string draft = string.Empty;
-    private string? error;
+    // How the last turn ended when it didn't land: an error, or a stop the DM asked for. The message is back in the box either way.
+    private Flash? notice;
+    private bool followLog;
+    private bool forceFollow;
+    // The proposal the page has shown, so a new one can be brought into view (the columns stack on a narrow screen).
+    private WorldBundle? shownProposal;
+    private bool revealProposal;
+    // Which send is current. A callback from a stopped turn can still be queued when the next one starts; it must not write into it.
+    private int run;
+    private bool focusInput;
     private string? applyError;
     private WorldBuildResult? result;
     // What the model looked up during the turn under way, shown until its reply arrives.
     private readonly List<WorldChatLine> working = new();
+    // The reply and the reasoning of the turn under way, as far as they have arrived; thoughtLive while the model is still reasoning.
+    private readonly System.Text.StringBuilder streamed = new();
+    private readonly System.Text.StringBuilder thought = new();
+    // What the model said before its latest tool call ("Got it, let me look…"): one line, replaced by the next, never a pile.
+    private string? aside;
+    private const int ShownSteps = 5;
+    private bool thoughtLive;
+    private DateTime lastPaint;
     private readonly AiCall aiCall = new();
     private string? startedWith;
 
@@ -237,6 +320,7 @@ else if (chat != null)
         if (!Ctx.IsDm) return;
         aiReady = await Ai.IsConfiguredAsync(Ctx.UserId);
         chat = Sessions.For(Ctx.Campaign, Ctx.Access);
+        shownProposal = chat.Proposal;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -265,55 +349,134 @@ else if (chat != null)
     {
         // Ctrl/Cmd+Enter sends; Enter alone makes a new line, as in the other long text boxes.
         if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey)) await SendAsync();
+        else if (e.Key == "Escape" && busy) aiCall.Stop();
+    }
+
+    // Follows the reply as it is written inside the log (only while the DM is already at its end, so reading back up is left
+    // alone), brings a new proposal into view, and hands the keyboard back to the message box once the turn is over.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!busy && !followLog && !focusInput && !revealProposal) return;
+        var focus = focusInput && !busy;
+        var force = forceFollow;
+        var reveal = revealProposal;
+        followLog = forceFollow = revealProposal = false;
+        if (focus) focusInput = false;
+        try
+        {
+            await JS.InvokeVoidAsync("codex.followLog", "world-chat-log", force);
+            if (reveal) await JS.InvokeVoidAsync("codex.revealPanel", "world-proposal");
+            if (focus) await JS.InvokeVoidAsync("codex.focus", "world-chat-input");
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 
     private async Task SendAsync()
     {
-        if (chat == null || busy || string.IsNullOrWhiteSpace(draft)) return;
+        // Not while a proposal is being applied: the apply writes to the conversation too, and a turn stopped meanwhile would undo it.
+        if (chat == null || busy || applying || string.IsNullOrWhiteSpace(draft)) return;
         var text = draft;
         draft = string.Empty;
         busy = true;
-        error = null;
+        forceFollow = true;
+        notice = null;
         result = null;
         working.Clear();
+        streamed.Clear();
+        thought.Clear();
+        aside = null;
+        thoughtLive = false;
         var ct = aiCall.Begin();
+        var mine = ++run;
         try
         {
             await chat.SendAsync(text, line => InvokeAsync(() =>
             {
+                if (mine != run || !busy) return;
+                // A tool call ends the round: the words before it were a preamble, not the answer.
+                if (streamed.Length > 0) aside = streamed.ToString().Trim();
+                streamed.Clear();
+                thought.Clear();
+                thoughtLive = false;
                 working.Add(line);
-                StateHasChanged();
-            }), ct);
+                Paint(force: true);
+            }), ct, delta => InvokeAsync(() =>
+            {
+                if (mine != run || !busy) return;
+                if (delta.Reasoning)
+                {
+                    // Reasoning after a stretch of reply is a new round of thinking, not more of the old one.
+                    if (!thoughtLive) thought.Clear();
+                    thought.Append(delta.Text);
+                }
+                else
+                {
+                    streamed.Append(delta.Text);
+                }
+
+                thoughtLive = delta.Reasoning;
+                Paint();
+            }));
         }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        catch (Exception) when (ct.IsCancellationRequested)
         {
-            error = L["Common.Ai.Stopped"];
+            // Whatever shape the SDK gave the cancellation (some wrap it), a stop the DM asked for is not an error.
+            notice = new Flash(L["Common.Ai.Stopped"], FlashTone.Info);
             draft = text;
         }
         catch (AiNotConfiguredException)
         {
-            error = L["WorldChat.NoAi.Title"];
+            notice = Flash.Error(L["WorldChat.NoAi.Title"]);
             draft = text;
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "World-building chat failed");
-            error = L["WorldChat.Error", L.Describe(ex)];
+            notice = Flash.Error(L["WorldChat.Error", AiFailureText.For(L, ex)]);
             draft = text;
         }
         finally
         {
             aiCall.End(ct);
             working.Clear();
+            streamed.Clear();
+            thought.Clear();
+            aside = null;
             busy = false;
+            followLog = true;
+            focusInput = notice == null;
         }
 
-        if (chat.Proposal != null) await LoadPlacesAsync();
+        if (chat.Proposal != null)
+        {
+            await LoadPlacesAsync();
+            if (!ReferenceEquals(chat.Proposal, shownProposal)) revealProposal = true;
+        }
+
+        shownProposal = chat.Proposal;
+    }
+
+    // Every few words, not every token: each render is a round trip to the browser.
+    private void Paint(bool force = false)
+    {
+        if (!force && DateTime.UtcNow - lastPaint < TimeSpan.FromMilliseconds(80)) return;
+        lastPaint = DateTime.UtcNow;
+        StateHasChanged();
+    }
+
+    // The last stretch of the reasoning, which can run long; the note shows what the model is on now.
+    private static string Tail(System.Text.StringBuilder text)
+    {
+        const int Max = 400;
+        var all = text.ToString().Trim();
+        return all.Length <= Max ? all : "…" + all[^Max..].TrimStart();
     }
 
     private async Task ApplyAsync()
     {
-        if (chat?.Proposal == null || applying) return;
+        if (chat?.Proposal == null || applying || busy) return;
         applying = true;
         applyError = null;
         try
@@ -344,8 +507,9 @@ else if (chat != null)
     {
         aiCall.Stop();
         chat = Sessions.Restart(Ctx.Campaign, Ctx.Access);
+        shownProposal = null;
         result = null;
-        error = null;
+        notice = null;
         applyError = null;
         draft = string.Empty;
     }
@@ -354,7 +518,11 @@ else if (chat != null)
     private string Detail(WorldBundle proposal, WorldDraft d)
     {
         var parts = new List<string>();
-        if (d.Kind == DraftKinds.Place)
+        if (d.Kind == DraftKinds.Edit)
+        {
+            parts.Add(L[$"WorldChat.Edit.{WorldBundle.ParseTarget(d.Target ?? string.Empty, out _)}"]);
+        }
+        else if (d.Kind == DraftKinds.Place)
         {
             if (d.PlaceKind != null) parts.Add(L[$"Campaign.Places.Kind.{(d.PlaceKind == "site" ? "Site" : char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..])}"]);
             var parent = d.Parent == null ? null
@@ -374,6 +542,13 @@ else if (chat != null)
 
         return parts.Count == 0 ? string.Empty : " — " + string.Join(", ", parts);
     }
+
+    private string ChangeHref(WorldEdit change) => change.Target switch
+    {
+        EditTarget.Place => $"{Ctx.BasePath}/world#place-{change.Id}",
+        EditTarget.Actor => $"{Ctx.BasePath}/actors/{change.Id}",
+        _ => $"{Ctx.BasePath}/wiki/{change.Id}"
+    };
 
     private string? PlaceName(string key)
     {

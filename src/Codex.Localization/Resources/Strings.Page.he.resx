@@ -190,6 +190,7 @@
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>מפתח אחד, מאות מודלים. אפשר לקבל מפתח ב-openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>גישה ישירה ל-OpenAI עם מפתח משלכם.</value></data>
+  <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude דרך ה-API של Anthropic עצמה. מפתח אפשר לקבל ב-console.anthropic.com.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (מקומי)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>מודל שרץ על המחשב שלכם. לא צריך מפתח.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (מקומי)</value></data>

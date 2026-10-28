@@ -79,4 +79,77 @@ public class TextFormattingTests
     {
         Assert.Equal(expected, TextFormatting.Inline(text));
     }
+
+    [Fact]
+    public void ToHtml_RendersQuotesNumberedListsRulesCodeAndLinks()
+    {
+        var html = TextFormatting.ToHtml("""
+            > Never trust a ledger.
+            > - Mira
+
+            1. first
+            2. second
+
+            ---
+
+            See [the guild](https://example.com/a?x=1&y=2) and `a_b *c*`.
+
+            ```
+            raw <b>
+            ```
+            """);
+
+        Assert.Contains("<blockquote><p>Never trust a ledger.<br>- Mira</p></blockquote>", html);
+        Assert.Contains("<ol><li>first</li><li>second</li></ol>", html);
+        Assert.Contains("<hr>", html);
+        Assert.Contains("<a href=\"https://example.com/a?x=1&amp;y=2\" target=\"_blank\" rel=\"noopener noreferrer\">the guild</a>", html);
+        Assert.Contains("<code>a_b *c*</code>", html); // what is inside code is left as written
+        Assert.Contains("<pre><code>raw &lt;b&gt;</code></pre>", html);
+    }
+
+    [Theory]
+    [InlineData("[x](javascript:alert(1))")]
+    [InlineData("[x](data:text/html;base64,AAAA)")]
+    [InlineData("[x](https://a.com\" onmouseover=\"alert(1))")]
+    public void ToHtml_LinksOnlyToWebAddresses_AndCannotBreakOutOfTheAttribute(string text)
+    {
+        var html = TextFormatting.ToHtml(text);
+
+        Assert.DoesNotContain("href=\"javascript", html);
+        Assert.DoesNotContain("href=\"data:", html);
+        Assert.DoesNotContain("onmouseover=\"", html);
+    }
+
+    [Fact]
+    public void Summary_CanKeepLinksForALaterResolve_AndNeverLeavesHalfOfOne()
+    {
+        const string text = "Walled farm town east of [[p1]]. Who is here: horse breeders, farmers, [[p1]] grain buyers, [[n5]]. Plenty more follows after this point in the text.";
+
+        Assert.Contains("east of p1", TextFormatting.Summary(text, 400));           // the reading summary flattens a link to its text
+        Assert.Contains("east of [[p1]]", TextFormatting.Summary(text, 400, keepLinks: true));
+
+        var cut = TextFormatting.Summary("A long road runs to the north of the great city of [[Port Varr]] and on to the sea.", 55, keepLinks: true);
+        Assert.DoesNotContain("[[", cut); // the link would have been cut in half, so it is dropped whole
+    }
+
+    [Theory]
+    [InlineData("`a` and \u00035\u0004")]
+    [InlineData("`a` \u000399999999999\u0004")]
+    [InlineData("[x](https://a.com) \u00055\u0006")]
+    public void ToHtml_TextHoldingThePlaceholderCharacters_DoesNotThrow(string text)
+    {
+        var ex = Record.Exception(() => TextFormatting.ToHtml(text));
+
+        Assert.Null(ex);
+    }
+
+    [Fact]
+    public void ToHtml_EmphasisDoesNotReachInsideALinksAddress()
+    {
+        var html = TextFormatting.ToHtml("[x](https://a.com/*b*c) and **[y](https://e.com/**)");
+
+        Assert.Contains("href=\"https://a.com/*b*c\"", html);
+        Assert.DoesNotContain("<em>b</em>c\"", html);
+        Assert.Equal(html.Split("<a ").Length, html.Split("</a>").Length); // every link is closed
+    }
 }

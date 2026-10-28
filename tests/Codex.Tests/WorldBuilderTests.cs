@@ -30,12 +30,35 @@ public class WorldBuilderTests
         new("actions", "Actions", "Collection", null, null, null)
     };
 
-    private static ProposalRules Rules(Func<string, string, string>? canonical = null) => new(
+    private static ProposalRules Rules(Func<string, string, string>? canonical = null, IReadOnlyCollection<string>? actors = null) => new(
         new Dictionary<string, string> { ["magic-item"] = "magic-item", ["Magic Item"] = "magic-item", ["spell"] = "spell", ["monster"] = "monster" },
         new Dictionary<string, string> { ["port-varr"] = "Port Varr", ["sister-maren"] = "Sister Maren", ["sister-maren-2"] = "Sister Maren" },
         new[] { "old-town" },
         type => type == "spell" ? SpellFields : Array.Empty<FieldSpec>(),
-        canonical);
+        canonical,
+        actors);
+
+    [Fact]
+    public void Place_WithoutAPitch_GetsOneWhoseRefsResolveToTheNamesTheEntriesWereSavedUnder()
+    {
+        // The model gives refs ([[p1]], [[n5]]) in the text and no pitch of its own, so the pitch is derived from the text.
+        // Derived by flattening links to words, it kept "p1" and "n5" and the Places list showed them verbatim.
+        const string json = """
+            {"entries": [
+              {"ref": "p1", "kind": "place", "name": "Cinderhaven", "placeKind": "settlement", "text": "The city."},
+              {"ref": "n5", "kind": "npc", "name": "Brell", "text": "A grain factor."},
+              {"ref": "p3", "kind": "place", "name": "Amphail", "placeKind": "settlement", "parent": "p1",
+               "text": "Look: walled farm town east of [[p1]]. Who is here: horse breeders, farmers, [[p1]] grain buyers, [[n5]]."}
+            ]}
+            """;
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        var amphail = check.Bundle.Drafts.Single(d => d.Ref == "p3");
+
+        var shown = WorldBundleParser.ResolveLinks(amphail.Pitch, check.Bundle, keepLinks: false);
+
+        Assert.Equal("Look: walled farm town east of Cinderhaven. Who is here: horse breeders, farmers, Cinderhaven grain buyers, Brell.", shown);
+    }
 
     [Fact]
     public void ParseProposal_ReadsEachKind_WithItsOwnFields()
@@ -244,7 +267,9 @@ public class WorldBuilderTests
         Assert.Contains("propose_changes", english);
         Assert.Contains("existing:place:<id>", english);
         Assert.Contains("never say something was added or saved", english);
-        Assert.Contains("something they want, something they fear", english);
+        Assert.Contains("what they want and why; what they fear", english);
+        Assert.Contains("full, flowing sentences, never telegraphic notes", english); // a game master reads and runs these pages
+        Assert.Contains("\"pitch\"", english);
         Assert.Contains("generic monster from the SRD rules", english);
         Assert.Contains("Homebrew types: monster (Monster, a monster).", english);
         Assert.Contains("The campaign: Salt and Ash: a port.", english);
@@ -733,8 +758,14 @@ public class WorldBuilderTests
             return Task.FromResult(new ChatResponse(replies[next++](sent)));
         }
 
-        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+        // The chat streams its turns; the scripted reply comes as the updates a real model would send.
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            foreach (var update in (await GetResponseAsync(messages, options, cancellationToken)).ToChatResponseUpdates())
+            {
+                yield return update;
+            }
+        }
 
         public object? GetService(Type serviceType, object? serviceKey = null) => null;
         public void Dispose() { }
@@ -784,6 +815,23 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_HandsTheReplyAndTheReasoningOn_AsTheyArrive()
+    {
+        var model = new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, new List<AIContent>
+        {
+            new TextReasoningContent("A harbour wants a pier."),
+            new TextContent("Varr, then.")
+        }));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        var deltas = new List<WorldChatDelta>();
+
+        await chat.SendAsync("A harbour, please.", _ => { }, CancellationToken.None, deltas.Add);
+
+        Assert.Equal(new[] { new WorldChatDelta(true, "A harbour wants a pier."), new WorldChatDelta(false, "Varr, then.") }, deltas);
+        Assert.Equal("Varr, then.", chat.Lines[^1].Text); // what was streamed is what the log keeps
+    }
+
+    [Fact]
     public async Task Chat_ThatHitsTheToolLimit_LeavesNoCallWithoutItsResult_ForTheNextMessage()
     {
         var saving = Service();
@@ -823,7 +871,300 @@ public class WorldBuilderTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => chat.SendAsync("Hello", _ => { }, stop.Token));
 
         Assert.Null(chat.Proposal);
-        Assert.Equal(WorldChatSpeaker.Tool, chat.Lines[^1].Speaker); // "that message wasn't answered"
+        Assert.Empty(chat.Lines); // the message was never answered, so it is not in the log; the page gives it back to the DM
+    }
+
+    [Fact]
+    public async Task Chat_ThatFailsAfterProposing_ForgetsThatProposal_AndKeepsTheEarlierOne()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string kell = """{"proposal": {"region": "The Coast", "entries": [{"ref": "k", "kind": "place", "placeKind": "settlement", "name": "Kell", "text": "A fort."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Varr is ready."),
+            _ => Calls("c2", "propose_changes", kell),
+            _ => throw new IOException("connection lost"),
+            _ => new ChatMessage(ChatRole.Assistant, "Kell, then."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
+        var lines = chat.Lines.Count;
+
+        await Assert.ThrowsAsync<IOException>(() => chat.SendAsync("A fort, please.", _ => { }, CancellationToken.None));
+
+        // The abandoned turn proposed Kell, but the model never got to say so and the DM never saw a reply: Varr is still what waits.
+        Assert.Equal(new[] { "Varr" }, chat.Proposal!.Drafts.Select(d => d.Name));
+        Assert.Equal(lines, chat.Lines.Count);
+
+        await chat.SendAsync("A fort, please.", _ => { }, CancellationToken.None);
+
+        // Sent again, the message is in the conversation once, with nothing of the turn that was cut off.
+        var sent = model.Calls[^1];
+        Assert.Single(sent, m => m.Role == ChatRole.User && m.Text == "A fort, please.");
+        Assert.DoesNotContain(sent.SelectMany(m => m.Contents).OfType<FunctionCallContent>(), c => c.CallId == "c2");
+    }
+
+    [Fact]
+    public async Task Chat_KeepsOnlyTheFinalAnswer_NotTheGotItBeforeEachToolCall_AndKeepsTheSteps()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Got it, let me look."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Got it, one more look."), new FunctionCallContent("c2", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, "Here is the lay of the land."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        var reply = chat.Lines[^1];
+        Assert.Equal("Here is the lay of the land.", reply.Text); // not "Got it, let me look.Got it, one more look.Here is…"
+        Assert.Equal(2, reply.Steps!.Count);
+        Assert.All(reply.Steps, step => Assert.Equal("map-pin", step.Icon));
+    }
+
+    // ---- Editing what exists ----
+
+    [Fact]
+    public void ParseProposal_Edit_NamesATarget_AndTakesTheCompleteNewText()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Rewritten. See [[existing:sister-maren]]."},
+              {"ref": "e2", "kind": "edit", "target": "existing:place:old-town", "text": "A ruined gate."},
+              {"ref": "e3", "kind": "edit", "target": "existing:actor:a1", "text": "Born in the Wood."}
+            ]}
+            """;
+
+        var check = WorldBundleParser.ParseProposal(json, Rules(actors: new[] { "a1" }));
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal(new[] { "existing:port-varr", "existing:place:old-town", "existing:actor:a1" }, check.Bundle.Drafts.Select(d => d.Target));
+        Assert.Equal("Port Varr", check.Bundle.Drafts[0].Name); // named after what it changes; the model need not repeat it
+        Assert.Equal("Rewritten. See [[Sister Maren]].", check.Bundle.Drafts[0].Body);
+        Assert.Empty(check.Warnings);
+    }
+
+    [Theory]
+    [InlineData("""{"kind": "edit", "text": "x"}""", "needs a \"target\"")]
+    [InlineData("""{"kind": "edit", "target": "existing:nowhere", "text": "x"}""", "not something the campaign has")]
+    [InlineData("""{"kind": "edit", "target": "existing:place:gone", "text": "x"}""", "not something the campaign has")]
+    [InlineData("""{"kind": "edit", "target": "existing:actor:a9", "text": "x"}""", "not something the campaign has")]
+    [InlineData("""{"kind": "edit", "target": "existing:port-varr"}""", "COMPLETE new text")]
+    public void ParseProposal_Edit_NeedsARealTarget_AndItsText(string entry, string expected)
+    {
+        var check = WorldBundleParser.ParseProposal($$"""{"entries": [{{entry}}]}""", Rules(actors: new[] { "a1" }));
+
+        Assert.False(check.Ok);
+        Assert.Contains(expected, Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public void ParseProposal_Edit_ChangesATargetOnce()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "One."},
+              {"ref": "e2", "kind": "edit", "target": "port-varr", "text": "Two."}
+            ]}
+            """;
+
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+
+        Assert.Contains("already changed by another entry", Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public void ResolveLinks_AnEditNamedLikeAPage_DoesNotTurnLinksToThatPageIntoPlainText()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Rewritten."},
+              {"ref": "w", "kind": "wiki", "name": "Salt Wardens", "text": "They watch [[Port Varr]]."}
+            ]}
+            """;
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal("They watch [[Port Varr]].", WorldBundleParser.ResolveLinks(check.Bundle.Drafts[1].Body!, check.Bundle));
+    }
+
+    private static WikiPageDocument VarrPage() => new() { Id = "page-varr", Slug = "port-varr", Title = "Port Varr", Body = "Old text.", Visibility = WikiVisibility.Party };
+
+    private static RegionDocument HillRegion() => new()
+    {
+        Id = "region-hills", CampaignId = "c1", Name = "Hills",
+        Locations = { new LocationDocument { Id = "old-town", Name = "Old Town", Kind = PlaceKind.Settlement, Description = "Old description.", Visibility = ActorVisibility.Hidden } }
+    };
+
+    [Fact]
+    public async Task Check_Edit_ShowsTheCurrentText_AndSaysWhenPlayersCanAlreadyReadIt()
+    {
+        var saving = Service(new[] { VarrPage() }, new[] { HillRegion() });
+        saving.Actors.Add(new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Old history.", Visibility = ActorVisibility.Hidden, Kind = ActorKind.NonPlayerCharacter });
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "New page."},
+              {"ref": "e2", "kind": "edit", "target": "existing:place:old-town", "text": "New description."},
+              {"ref": "e3", "kind": "edit", "target": "existing:actor:a1", "text": "New history."}
+            ]}
+            """;
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal(new[] { "Old text.", "Old description.", "Old history." }, check.Bundle.Drafts.Select(d => d.Before));
+        Assert.Equal(new[] { "Port Varr", "Old Town", "Mira Greystone" }, check.Bundle.Drafts.Select(d => d.Name));
+        Assert.Equal(new[] { true, false, false }, check.Bundle.Drafts.Select(d => d.SharedWithPlayers)); // only the shared page
+    }
+
+    [Fact]
+    public async Task Save_Edit_ReplacesTheTextOfAPage_APlaceAndACastMember()
+    {
+        var page = VarrPage();
+        var region = HillRegion();
+        var saving = Service(new[] { page }, new[] { region });
+        var mira = new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Old history.", Kind = ActorKind.NonPlayerCharacter };
+        saving.Actors.Add(mira);
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "The port, rewritten, beside [[existing:port-varr]] and [[e2x]]."},
+              {"ref": "e2", "kind": "edit", "target": "existing:place:old-town", "text": "A walled farm town."},
+              {"ref": "e3", "kind": "edit", "target": "existing:actor:a1", "text": "Born in the Wood."}
+            ]}
+            """;
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        Assert.Equal("The port, rewritten, beside [[Port Varr]] and [[e2x]].", page.Body);
+        Assert.Equal("A walled farm town.", region.Locations[0].Description);
+        Assert.Contains(saving.AddedPlaces, p => p.RegionId == "region-hills" && p.Place.Description == "A walled farm town.");
+        Assert.Equal("Born in the Wood.", mira.Biography);
+        Assert.Equal(new[] { EditTarget.Page, EditTarget.Place, EditTarget.Actor }, result.Changes.Select(c => c.Target));
+        Assert.Equal(3, result.Count);
+    }
+
+    [Fact]
+    public async Task Save_Edit_OfSomethingThatWentAfterTheReview_SaysSoRatherThanSkippingIt()
+    {
+        var saving = Service(new[] { VarrPage() });
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "New."}]}""");
+        Assert.True(check.Ok);
+        saving.Pages.Clear();
+
+        // Service() lists its fixed existing pages, so point the draft at one that was never there.
+        check.Bundle.Drafts[0].Target = "existing:vanished";
+        var ex = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, check.Bundle));
+
+        Assert.Equal("WorldBuilder.Error.EditTargetGone", ex.Key);
+    }
+
+    [Fact]
+    public async Task Edit_KeepsTheMentionsInTheText_WhenTheModelCopiesThemBack()
+    {
+        var page = new WikiPageDocument { Id = "page-varr", Slug = "port-varr", Title = "Port Varr", Body = "Sworn to [[actor:a1]] at [[place:old-town]]. See [[Port Varr]]." };
+        var mira = new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Loyal to [[actor:a1]].", Kind = ActorKind.NonPlayerCharacter };
+        var saving = Service(new[] { page }, new[] { HillRegion() });
+        saving.Actors.Add(mira);
+
+        // What the model reads keeps each mention as a marker with its name, so copying a passage back keeps the link.
+        var read = await saving.Service.PageAsync(Dm, "existing:port-varr");
+        Assert.Contains("[[actor:a1|Mira Greystone]]", read);
+        Assert.Contains("[[place:old-town|Old Town]]", read);
+
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Sworn to [[actor:a1|Mira Greystone]] at [[place:old-town|Old Town]], and fearing fire. See [[Port Varr]]."},
+              {"ref": "e2", "kind": "edit", "target": "existing:actor:a1", "text": "Loyal to [[actor:a1|Mira Greystone]], who fears fire."}
+            ]}
+            """;
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+
+        await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        Assert.Equal("Sworn to [[actor:a1]] at [[place:old-town]], and fearing fire. See [[Port Varr]].", page.Body); // stored form, page link kept
+        Assert.Equal("Loyal to [[actor:a1]], who fears fire.", mira.Biography);                                       // not "actor:a1" as text
+    }
+
+    [Fact]
+    public async Task Check_Edit_RefusesATextTooLongToHaveBeenReadWhole()
+    {
+        var page = VarrPage();
+        page.Body = new string('x', 6001);
+        var saving = Service(new[] { page });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Short."}]}""");
+
+        Assert.False(check.Ok);
+        Assert.Contains("more than get_page shows", Assert.Single(check.Errors));
+        Assert.Contains("too long to show whole", await saving.Service.PageAsync(Dm, "existing:port-varr"));
+    }
+
+    [Fact]
+    public void ParseProposal_Edit_DoesNotQuietlyCutTheTextThatReplacesAnother()
+    {
+        var json = $$"""{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "{{new string('y', 20_001)}}"}]}""";
+
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+
+        Assert.Contains("holds at most", Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public async Task Save_Edit_OfTextChangedSinceTheReview_IsRefusedRatherThanOverwritingIt()
+    {
+        var page = VarrPage();
+        var saving = Service(new[] { page });
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "New."}]}""");
+        Assert.True(check.Ok);
+
+        page.Body = "Someone else edited this in another tab."; // after the DM reviewed the old text
+        var ex = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, check.Bundle));
+
+        Assert.Equal("WorldBuilder.Error.EditChanged", ex.Key);
+        Assert.Equal("Someone else edited this in another tab.", page.Body);
+    }
+
+    [Fact]
+    public async Task Check_Edit_OfAPlace_FindsItWhateverTheCaseOfTheKey()
+    {
+        var saving = Service(null, new[] { HillRegion() });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:place:OLD-TOWN", "text": "New."}]}""");
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal("existing:place:old-town", check.Bundle.Drafts[0].Target); // as stored, so the save finds it
+        Assert.Equal("Old description.", check.Bundle.Drafts[0].Before);
+    }
+
+    [Fact]
+    public async Task Chat_AnswerWrittenBesideTheLastToolCall_IsStillTheAnswer()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Here is the lay of the land."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, string.Empty));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Equal("Here is the lay of the land.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
+    public async Task GetPage_ReadsAPlacesDescription_AndACastMembersHistory_ByTheirKeys()
+    {
+        var saving = Service(new[] { VarrPage() }, new[] { HillRegion() });
+        saving.Actors.Add(new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Old history.", Kind = ActorKind.NonPlayerCharacter });
+
+        var place = await saving.Service.PageAsync(Dm, "existing:place:old-town");
+        var actor = await saving.Service.PageAsync(Dm, "existing:actor:a1");
+        var search = await saving.Service.SearchWorldAsync(Campaign, Dm, "Mira");
+
+        Assert.Contains("Old description.", place);
+        Assert.Contains("hidden from players", place);
+        Assert.Contains("Old history.", actor);
+        Assert.Contains("key: existing:actor:a1", actor);
+        Assert.Contains("existing:actor:a1", search); // search_world shows the key an edit needs
     }
 
     [Fact]

@@ -20,7 +20,7 @@ public sealed class AppFixture : IAsyncLifetime
 {
     private Process? _process;
     private readonly StringBuilder _output = new();
-    private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "E2E_RavenData_" + Guid.NewGuid());
+    private readonly string _dataDir = Path.Combine(TestTempData.Root, TestTempData.OwnedName("E2E_RavenData_"));
     private IPlaywright? _playwright;
 
     public string BaseUrl { get; private set; } = string.Empty;
@@ -29,7 +29,8 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        TestTempData.SweepStale(Path.GetTempPath(), "E2E_RavenData_*");
+        TestTempData.SweepStale(TestTempData.Root, "E2E_RavenData_*");
+        TestTempData.SweepOrphans(TestTempData.Root, "E2E_RavenData_");
 
         var repoRoot = FindRepoRoot();
         var port = GetFreePort();
@@ -143,6 +144,15 @@ public sealed class AppFixture : IAsyncLifetime
     }
 
     /// <summary>Where the app's console output is written on dispose, for post-mortems of a failed scenario.</summary>
+    /// <summary>What the app process has written so far, for a failing test to show alongside what the browser saw.</summary>
+    public string ServerOutput
+    {
+        get
+        {
+            lock (_output) return _output.Length <= 6000 ? _output.ToString() : "…" + _output.ToString(_output.Length - 6000, 6000);
+        }
+    }
+
     public string LogPath { get; } = Path.Combine(Path.GetTempPath(), $"codex-e2e-{Environment.ProcessId}-{Guid.NewGuid():N}.log");
 
     public async Task DisposeAsync()

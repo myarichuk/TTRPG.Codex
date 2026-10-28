@@ -732,7 +732,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "Wiki AI expansion failed");
-            Ctx.Notify(Flash.Error(L["Campaign.Wiki.AiFailed", L.Describe(ex)]));
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.AiFailed", AiFailureText.For(L, ex)]));
         }
         finally
         {

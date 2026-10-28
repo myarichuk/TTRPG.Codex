@@ -391,6 +391,35 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // A text box whose value the server changes from outside what the reader typed (AI text, an undo): the box itself is not
+    // re-sent its value on every keystroke, so this is the one way such a change reaches it.
+    setValue: function (id, value) {
+        const el = document.getElementById(id);
+        if (el && el.value !== value) el.value = value;
+    },
+    // A growing log that scrolls inside itself (the world-building chat): keep its end in view while the reader is at the end,
+    // so scrolling back up to re-read is not undone by every new word. force pins it again (the reader just sent something).
+    followLog: function (id, force) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!el.dataset.follows) {
+            el.dataset.follows = "true";
+            el.dataset.pinned = "true";
+            el.addEventListener("scroll", () => {
+                el.dataset.pinned = el.scrollHeight - el.scrollTop - el.clientHeight < 80 ? "true" : "false";
+            }, { passive: true });
+        }
+        if (force) el.dataset.pinned = "true";
+        if (el.dataset.pinned === "true") el.scrollTop = el.scrollHeight;
+    },
+    // Bring a panel into view unless all of it already is (beside the chat on a wide screen it usually is).
+    revealPanel: function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (r.top >= 0 && r.bottom <= window.innerHeight) return;
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    },
     // MarkdownEditor's toolbar: wrap the selection (or the word "text" when nothing is selected) in a marker, or start
     // each selected line with a prefix. "input" is raised so Blazor's oninput sees the new value, and Undo still works
     // where the browser supports execCommand on a textarea.

@@ -33,11 +33,11 @@
     </div>
     <div class="md-panes">
         <div class="md-write">
-            <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput"
+            <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@initial" @oninput="OnInput"
                       readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-testid="@TestId"></textarea>
             @if (Busy)
             {
-                <div class="md-busy"><AiWorking Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
+                <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
             }
         </div>
         @if (showPreview || fullscreen)
@@ -90,14 +90,27 @@
     /// <summary>Shown under the box, and kept in full screen: the AI row, hints.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    // The text the box starts with. It is rendered once and never changes: a value that followed every keystroke would be sent back
+    // to the browser after each one, and an answer older than what has been typed since overwrites it (letters vanish when the
+    // circuit is slow or the machine busy). Changes that come from outside the box (AI text, an undo) are put in by setValue.
+    private string initial = string.Empty;
+    private string? seen;
+    private bool changedOutside;
     private bool showPreview;
     private bool fullscreen;
     private string? focusAfterRender;
     private bool ReadOnlyNow => ReadOnly || Busy;
 
+    protected override void OnInitialized()
+    {
+        initial = Value ?? string.Empty;
+        seen = Value;
+    }
+
     private Task OnInput(ChangeEventArgs e)
     {
         Value = e.Value?.ToString() ?? string.Empty;
+        seen = Value; // the owner handing this same text back is not a change from outside
         return ValueChanged.InvokeAsync(Value);
     }
 
@@ -110,6 +123,11 @@
     protected override void OnParametersSet()
     {
         if (Busy) showPreview = false;
+        if (!string.Equals(Value ?? string.Empty, seen ?? string.Empty, StringComparison.Ordinal))
+        {
+            seen = Value;
+            changedOutside = true;
+        }
     }
 
     private void ToggleFullscreen()
@@ -121,6 +139,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (changedOutside)
+        {
+            changedOutside = false;
+            try
+            {
+                await JS.InvokeVoidAsync("codex.setValue", Id, Value ?? string.Empty);
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+
         if (focusAfterRender is not { } id) return;
         focusAfterRender = null;
         await JS.InvokeVoidAsync("codex.focus", id);

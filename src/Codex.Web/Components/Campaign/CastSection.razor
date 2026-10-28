@@ -354,7 +354,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI character creation failed");
-            aiError = L["Campaign.Cast.AiFailed", L.Describe(ex)];
+            aiError = L["Campaign.Cast.AiFailed", AiFailureText.For(L, ex)];
         }
         finally
         {

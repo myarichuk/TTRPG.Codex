@@ -101,7 +101,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI description failed for field {FieldId}", Id);
-            error = L["Library.Ai.Failed", L.Describe(ex)];
+            error = L["Library.Ai.Failed", AiFailureText.For(L, ex)];
         }
         finally
         {

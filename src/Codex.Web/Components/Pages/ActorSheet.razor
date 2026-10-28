@@ -86,7 +86,7 @@ else
                         {
                             @if (busy == "portrait")
                             {
-                                <AiWorking Text="@L["Actor.Art.Drawing"]" OnStop="aiCall.Stop" TestId="portrait-working" />
+                                <AiWorking Compact="true" Text="@L["Actor.Art.Drawing"]" OnStop="aiCall.Stop" TestId="portrait-working" />
                             }
                             else
                             {
@@ -1474,7 +1474,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "Portrait generation failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Art.DrawFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Actor.Art.DrawFailed", AiFailureText.For(L, ex)]);
             return;
         }
         finally
@@ -1520,7 +1520,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI rewrite failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Sheet.AiDraftFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Actor.Sheet.AiDraftFailed", AiFailureText.For(L, ex)]);
         }
         finally
         {
@@ -1550,7 +1550,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI level-up failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Sheet.AiSuggestFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Actor.Sheet.AiSuggestFailed", AiFailureText.For(L, ex)]);
         }
         finally
         {
