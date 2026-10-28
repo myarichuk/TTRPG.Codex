@@ -44,7 +44,8 @@
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>What should we add to the world?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Send</value></data>
   <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter sends.</value></data>
-  <data name="WorldChat.NoReply" xml:space="preserve"><value>(The AI didn't say anything.)</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>The AI returned nothing, twice. Send the message again, or pick a stronger model in your AI settings.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Proposal ready to review.</value></data>
   <data name="WorldChat.NotAnswered" xml:space="preserve"><value>That message wasn't answered; send it again when you're ready.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Applied: {0} added, hidden from players.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Proposal discarded.</value></data>

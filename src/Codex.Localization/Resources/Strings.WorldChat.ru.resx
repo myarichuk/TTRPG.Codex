@@ -44,7 +44,8 @@
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>Что добавим в мир?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Отправить</value></data>
   <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter — отправить.</value></data>
-  <data name="WorldChat.NoReply" xml:space="preserve"><value>(ИИ ничего не ответил.)</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>ИИ дважды ничего не ответил. Отправьте сообщение ещё раз или выберите в настройках ИИ модель посильнее.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Предложение готово к проверке.</value></data>
   <data name="WorldChat.NotAnswered" xml:space="preserve"><value>На это сообщение не ответили; отправьте его снова, когда будете готовы.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Применено: добавлено {0}, скрыто от игроков.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Предложение отброшено.</value></data>

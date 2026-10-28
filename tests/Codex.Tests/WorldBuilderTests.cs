@@ -920,6 +920,60 @@ public class WorldBuilderTests
         Assert.All(reply.Steps, step => Assert.Equal("map-pin", step.Icon));
     }
 
+    [Fact]
+    public async Task Chat_ThatGoesQuietAfterItsTools_IsNudgedOnce_AndTheNudgeGetsTheAnswer()
+    {
+        var model = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, "Here is the lay of the land."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Equal("Here is the lay of the land.", chat.Lines[^1].Text);
+        Assert.Contains("ended without a reply", model.Calls[2][^1].Text);
+        Assert.Equal(ChatRole.User, model.Calls[2][^1].Role);
+    }
+
+    [Fact]
+    public async Task Chat_ThatStaysQuiet_IsNotAnswered_NotAPlaceholder_AndLeavesNoTraceForTheNextMessage()
+    {
+        var model = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, "Now I can talk."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        var error = await Assert.ThrowsAsync<LocalizedException>(() => chat.SendAsync("What is there?", _ => { }, CancellationToken.None));
+
+        Assert.Contains("returned nothing", error.Message);
+        Assert.Empty(chat.Lines); // the page hands the message back; the log has no line for it or for a placeholder
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        var sent = model.Calls[^1];
+        Assert.Single(sent, m => m.Role == ChatRole.User && m.Text == "What is there?");
+        Assert.DoesNotContain(sent, m => m.Text.Contains("note from the app"));
+    }
+
+    [Fact]
+    public async Task Chat_ThatProposesAndSaysNothing_PointsAtTheProposal()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, ""));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
+
+        Assert.NotNull(chat.Proposal);
+        Assert.False(string.IsNullOrWhiteSpace(chat.Lines[^1].Text));
+    }
+
     // ---- Editing what exists ----
 
     [Fact]

@@ -97,14 +97,14 @@ public sealed class WorldChat
         var before = history.Count;
         try
         {
-            var response = await StreamAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
-            var cutShort = KeepAnswered(response.Messages);
-            var reply = FinalAnswer(response.Messages);
-            // A model that wrote its summary in the same message as its last call and then said nothing: that summary is the answer.
-            // (Not when the round limit cut it off: what it said along the way is only preamble then.)
-            if (reply.Length == 0 && !cutShort) reply = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
-            lines.Add(new WorldChatLine(WorldChatSpeaker.Model, !string.IsNullOrEmpty(reply) ? reply
-                : Localizer.For(Lang)[cutShort ? "WorldChat.TooManySteps" : "WorldChat.NoReply"], trail.ToList()));
+            var (reply, cutShort) = await RunTurnAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
+            var l = Localizer.For(Lang);
+            // A proposal made and then not a word about it: the proposal card is the news.
+            if (reply.Length == 0 && !cutShort && !ReferenceEquals(Proposal, heldProposal)) reply = l["WorldChat.ProposalReady"];
+            // Nothing even after the nudge: not an answer, so not a line in the log or a turn in the history. The message goes back
+            // to the DM (the Undo below), instead of a placeholder the model would then read as its own last word.
+            if (reply.Length == 0 && !cutShort) throw new LocalizedException("WorldChat.Error.Empty");
+            lines.Add(new WorldChatLine(WorldChatSpeaker.Model, reply.Length > 0 ? reply : l["WorldChat.TooManySteps"], trail.ToList()));
         }
         catch (Exception ex) when (ex is not OperationCanceledException && !(ex is LocalizedException) && SaysNoTools(ex))
         {
@@ -127,6 +127,30 @@ public sealed class WorldChat
             // what it proposed goes with it, and what was waiting for the DM before it comes back.
             Proposal = heldProposal;
             ProposalWarnings = heldWarnings;
+        }
+    }
+
+    private const string EmptyNudge = "(A note from the app, not from the game master: your last turn ended without a reply. " +
+        "Answer the game master now, in one short message. If you meant to propose something, call propose_changes now instead of describing it.)";
+
+    private const string CutOffNudge = "(A note from the app, not from the game master: your last turn was cut off by the length limit, so nothing came of it. " +
+        "Call propose_changes now with at most 5 entries, each page short, and say the rest can follow in a later proposal.)";
+
+    /// <summary>Runs the model until it answers. A turn that ends with nothing to read (a small model that goes quiet after its
+    /// tool results, or one whose proposal ran past the output limit) gets one nudge and one more go, so the DM isn't left
+    /// guessing. Returns an empty reply when even that brought nothing.</summary>
+    private async Task<(string Reply, bool CutShort)> RunTurnAsync(IChatClient client, ChatOptions options, Action<WorldChatDelta>? stream, CancellationToken ct)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            var response = await StreamAsync(client, options, stream, ct);
+            var cutShort = KeepAnswered(response.Messages);
+            var reply = FinalAnswer(response.Messages);
+            // A model that wrote its summary in the same message as its last call and then said nothing: that summary is the answer.
+            // (Not when the round limit cut it off: what it said along the way is only preamble then.)
+            if (reply.Length == 0 && !cutShort) reply = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
+            if (reply.Length > 0 || cutShort || attempt == 1) return (reply, cutShort);
+            history.Add(new ChatMessage(ChatRole.User, response.FinishReason == ChatFinishReason.Length ? CutOffNudge : EmptyNudge));
         }
     }
 

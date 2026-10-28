@@ -44,7 +44,8 @@
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>מה נוסיף לעולם?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>שליחה</value></data>
   <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter לשליחה.</value></data>
-  <data name="WorldChat.NoReply" xml:space="preserve"><value>(הבינה המלאכותית לא אמרה דבר.)</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>המודל לא החזיר תשובה, פעמיים. שלחו שוב את ההודעה, או בחרו בהגדרות מודל חזק יותר.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>ההצעה מוכנה לבדיקה.</value></data>
   <data name="WorldChat.NotAnswered" xml:space="preserve"><value>ההודעה לא נענתה; שלחו אותה שוב כשתהיו מוכנים.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>הוחל: נוספו {0}, מוסתרים מהשחקנים.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>ההצעה נמחקה.</value></data>
