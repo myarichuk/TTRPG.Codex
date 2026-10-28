@@ -43,7 +43,12 @@ tags) against pack data.
 `system.yaml` can have siblings `system.ru.yaml`, `system.he.yaml` (any two-letter language tag) holding display
 text keyed by the keys the system already uses (attribute/resource/field keys, entity `type`s, condition
 names, dropdown values). See `SystemTranslation` for the shape and `content/systems/srd5e/system.ru.yaml`
-for an example. `SystemDefinition.Localize(culture)` returns a display copy; the UI uses
+for an example. Beyond field labels it carries the words the sheet prints from the rules: `categories` (headings of field groups, including the built-in
+`Attributes` and `Resources`), `maxSuffix` (the "max" in "Hit Points (max)"), and under `sheetRules` the `listDescriptions`, `bonusesLabel`,
+`increasesLabel` and `messages` (a rule condition's `message`, keyed by its English text). A test fails when a language lacks one of them.
+Messages the rules engine itself raises carry a key and arguments (`RuleViolation.Key`/`Args`, resources `Actor.Rule.*`) and the sheet words them
+in the reader's language, naming entries by their translated names (`EntryDisplay.Show`); the same goes for the lines of the armor class breakdown.
+`SystemDefinition.Localize(culture)` returns a display copy; the UI uses
 `ISystemCatalog.GetLocalizedDefinition`. Rules code uses the original: the copy keeps each attribute's original
 words (`CanonicalLabel`) so rules that match "Intelligence" or "INT" in pack data still work, and dropdown
 values are shown with `FieldDefinition.Display(value)` but stored unchanged.

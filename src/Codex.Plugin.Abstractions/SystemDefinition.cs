@@ -429,7 +429,7 @@ public class SystemDefinition
             DefaultValue = f.DefaultValue,
             IsRequired = f.IsRequired,
             TargetEntityType = f.TargetEntityType,
-            Category = x?.Category ?? f.Category,
+            Category = x?.Category ?? (f.Category != null && t.Categories.TryGetValue(f.Category, out var group) ? group : f.Category),
             Min = f.Min,
             Max = f.Max,
             OptionLabels = OptionLabelsFor(t, x)
@@ -471,9 +471,12 @@ public class SystemDefinition
                 HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing
             };
         }).ToList();
-        copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules);
+        copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules, t.Categories);
         copy.Translations = Translations;
         copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);
+        copy.CategoryLabels = new Dictionary<string, string>(t.Categories);
+        copy.MessageLabels = new Dictionary<string, string>(t.SheetRules.Messages);
+        copy.MaxSuffix = t.MaxSuffix;
         copy.ValueLabels = new Dictionary<string, string>(t.Values);
         return copy;
     }
@@ -483,16 +486,41 @@ public class SystemDefinition
 
     private static T Copy<T>(T value) where T : class => (T)ShallowCopy.Invoke(value, null)!;
 
+    private static string? Group(Dictionary<string, string> categories, string? category) =>
+        category != null && categories.TryGetValue(category, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : category;
+
     private static string Pick(Dictionary<string, string> map, string key, string original) =>
         map.TryGetValue(key, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : original;
 
     /// <summary>The rules with their labels translated. Only the label-bearing objects on the way down are copied; every
     /// formula, condition and key is shared with the original.</summary>
-    private static SheetRules ApplyRuleLabels(SheetRules rules, SheetRulesTranslation t)
+    private static SheetRules ApplyRuleLabels(SheetRules rules, SheetRulesTranslation t, Dictionary<string, string> categories)
     {
         var copy = Copy(rules);
-        copy.Derived = rules.Derived.Select(d => { var c = Copy(d); c.Label = Pick(t.Derived, d.Key, d.Label); return c; }).ToList();
-        copy.Lists = rules.Lists.Select(l => { var c = Copy(l); c.Label = Pick(t.Lists, l.Key, l.Label); return c; }).ToList();
+        copy.Derived = rules.Derived.Select(d => { var c = Copy(d); c.Label = Pick(t.Derived, d.Key, d.Label); c.Category = Group(categories, d.Category); return c; }).ToList();
+        copy.Lists = rules.Lists.Select(l =>
+        {
+            var c = Copy(l);
+            c.Label = Pick(t.Lists, l.Key, l.Label);
+            if (l.Description != null) c.Description = Pick(t.ListDescriptions, l.Key, l.Description);
+            c.Category = Group(categories, l.Category);
+            return c;
+        }).ToList();
+        if (rules.Attributes != null)
+        {
+            copy.Attributes = Copy(rules.Attributes);
+            if (rules.Attributes.Bonuses != null)
+            {
+                copy.Attributes.Bonuses = Copy(rules.Attributes.Bonuses);
+                copy.Attributes.Bonuses.Label = t.BonusesLabel ?? rules.Attributes.Bonuses.Label;
+            }
+
+            if (rules.Attributes.Increases != null)
+            {
+                copy.Attributes.Increases = Copy(rules.Attributes.Increases);
+                copy.Attributes.Increases.Label = t.IncreasesLabel ?? rules.Attributes.Increases.Label;
+            }
+        }
         copy.SlotPools = rules.SlotPools.Select(p => { var c = Copy(p); c.Label = Pick(t.SlotPools, p.Key, p.Label); return c; }).ToList();
         if (rules.Inventory != null)
         {
@@ -530,9 +558,26 @@ public class SystemDefinition
     /// <summary>Set on a localized copy: shared word (a rest, a damage type, a school) as the rules know it -> text to show.</summary>
     public Dictionary<string, string>? ValueLabels { get; set; }
 
+    /// <summary>Set on a localized copy: group heading as the system names it ("Combat") -> heading to show.</summary>
+    public Dictionary<string, string>? CategoryLabels { get; set; }
+
+    /// <summary>Set on a localized copy: rule-condition message as system.yaml words it -> text to show.</summary>
+    public Dictionary<string, string>? MessageLabels { get; set; }
+
+    /// <summary>Set on a localized copy: the word after a resource's label in its maximum field ("(max)").</summary>
+    public string? MaxSuffix { get; set; }
+
+    /// <summary>The heading to show for a group of fields; the name itself when this copy has no translation.</summary>
+    public string DisplayCategory(string category) =>
+        CategoryLabels != null && CategoryLabels.TryGetValue(category, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : category;
+
+    /// <summary>The text to show for a rule condition's message; the message itself when untranslated.</summary>
+    public string DisplayRuleMessage(string message) =>
+        MessageLabels != null && MessageLabels.TryGetValue(message, out var shown) && !string.IsNullOrWhiteSpace(shown) ? shown : message;
+
     /// <summary>The text to show for one of the system's own words ("Long Rest"); the word itself when this copy has no translation.</summary>
     public string DisplayValue(string value) =>
-        ValueLabels != null && ValueLabels.TryGetValue(value, out var shown) ? shown : value;
+        ValueLabels != null && Lookup(ValueLabels, value) is { } shown ? shown : value;
 
     /// <summary>The name to show for a condition ("Poisoned"); the name itself when this copy has no translation for it.</summary>
     public string DisplayCondition(string condition) =>

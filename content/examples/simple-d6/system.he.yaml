@@ -43,6 +43,12 @@ entityTypes:
     fields:
       category: { label: קטגוריה }
 
+maxSuffix: מקס׳
+
+categories:
+  Attributes: תכונות
+  Resources: משאבים
+
 conditions:
   Dazed: מבולבל
   Scared: מבוהל

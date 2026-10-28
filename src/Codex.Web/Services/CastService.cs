@@ -89,6 +89,8 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
             actor.Sheet[key] = value;
         }
 
+        // The draft's scores are typed in. A score the model left out is the attribute's own default, not the point-buy floor the blank
+        // sheet starts from: a character with a few scores missing would otherwise sit at 8 in those and look unfinished.
         var scored = false;
         foreach (var attribute in system?.Attributes ?? new List<AttributeDefinition>())
         {
@@ -99,8 +101,14 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
             }
         }
 
-        if (scored)
+        if (system?.SheetRules?.Attributes != null || scored)
         {
+            foreach (var attribute in (system?.Attributes ?? new List<AttributeDefinition>()).Where(a => !draft.Sheet.ContainsKey(a.Key)))
+            {
+                actor.Sheet[SheetRuleEngine.BasePrefix + attribute.Key] = (long)attribute.Default;
+                actor.Sheet[attribute.Key] = (long)attribute.Default;
+            }
+
             actor.Sheet[SheetRuleEngine.MethodKey] = "manual";
         }
     }

@@ -64,15 +64,15 @@ public sealed class DataDrivenSystemPlugin(SystemDefinition definition) : ICodex
                 string.IsNullOrWhiteSpace(attribute.Abbreviation) ? attribute.Label : $"{attribute.Label} ({attribute.Abbreviation})",
                 FieldType.Number,
                 defaultValue: attribute.Default,
-                category: AttributesCategory));
+                category: definition.DisplayCategory(AttributesCategory)));
         }
 
         foreach (var resource in definition.Resources)
         {
-            fields.Add(new FieldDefinition(resource.Key, resource.Label, FieldType.Number, defaultValue: resource.Default, category: ResourcesCategory));
+            fields.Add(new FieldDefinition(resource.Key, resource.Label, FieldType.Number, defaultValue: resource.Default, category: definition.DisplayCategory(ResourcesCategory)));
             if (!string.IsNullOrWhiteSpace(resource.MaxKey))
             {
-                fields.Add(new FieldDefinition(resource.MaxKey, $"{resource.Label} (max)", FieldType.Number, defaultValue: resource.Default, category: ResourcesCategory));
+                fields.Add(new FieldDefinition(resource.MaxKey, $"{resource.Label} ({definition.MaxSuffix ?? "max"})", FieldType.Number, defaultValue: resource.Default, category: definition.DisplayCategory(ResourcesCategory)));
             }
         }
 

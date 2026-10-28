@@ -311,4 +311,31 @@
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Added to the notes field. Save changes to keep it.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Wiki: {0}</value></data>
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character's history. Check it for secrets first.</value></data>
+  <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
+  <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
+  <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>
+  <data name="Actor.Rule.Limit" xml:space="preserve"><value>{0}: {1} picked, but only {2} allowed at this level.</value></data>
+  <data name="Actor.Rule.PointBuyRange" xml:space="preserve"><value>{0}: point buy scores run from {1} to {2}.</value></data>
+  <data name="Actor.Rule.PointBuySpent" xml:space="preserve"><value>Point buy: {0} of {1} points spent.</value></data>
+  <data name="Actor.Rule.StandardArray" xml:space="preserve"><value>Standard array: assign exactly {0}, one score per attribute.</value></data>
+  <data name="Actor.Rule.BonusNotEligible" xml:space="preserve"><value>{0}: {1} is not one of the eligible attributes.</value></data>
+  <data name="Actor.Rule.BonusSpread" xml:space="preserve"><value>{0}: spread them as {1}, each on a different attribute.</value></data>
+  <data name="Actor.Rule.ScoreMax" xml:space="preserve"><value>{0}: scores can't exceed {1}.</value></data>
+  <data name="Actor.Rule.ScoreCap" xml:space="preserve"><value>{0}: scores can't exceed {1} with {2}.</value></data>
+  <data name="Actor.Rule.OneArmor" xml:space="preserve"><value>{0}: only one suit of armor can be worn at a time.</value></data>
+  <data name="Actor.Rule.OneShield" xml:space="preserve"><value>{0}: only one shield can be carried in hand.</value></data>
+  <data name="Actor.Rule.IncNone" xml:space="preserve"><value>{0}: {1} doesn't raise any score.</value></data>
+  <data name="Actor.Rule.IncRemaining" xml:space="preserve"><value>{0}: choose where {1}'s {2, plural, one{# remaining point goes} other{# remaining points go}}.</value></data>
+  <data name="Actor.Rule.IncGrants" xml:space="preserve"><value>{0}: {1} grants {2, plural, one{# point} other{# points}}, not {3}.</value></data>
+  <data name="Actor.Rule.IncCant" xml:space="preserve"><value>{0}: {1} can't raise {2}.</value></data>
+  <data name="Actor.Rule.ArmorUntrained" xml:space="preserve"><value>{0}: {1} isn't trained with {2}. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.</value></data>
+  <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: needs Strength {1}, or your Speed drops by 10 feet.</value></data>
+  <data name="Actor.Rule.ArmorStealth" xml:space="preserve"><value>{0}: gives disadvantage on Stealth checks.</value></data>
+  <data name="Actor.Rule.WeaponUntrained" xml:space="preserve"><value>{0}: {1} isn't trained with it, so you don't add your proficiency bonus to its attacks.</value></data>
+  <data name="Actor.Ac.Dex" xml:space="preserve"><value>Dexterity: {0}</value></data>
+  <data name="Actor.Ac.DexCapped" xml:space="preserve"><value>Dexterity: {0} (limited to +{1})</value></data>
+  <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>Unarmored</value></data>
+  <data name="Actor.Ac.Defense" xml:space="preserve"><value>{0} defense</value></data>
+  <data name="Actor.Ac.Other" xml:space="preserve"><value>Other bonuses</value></data>
 </root>

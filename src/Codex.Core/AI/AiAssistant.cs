@@ -82,9 +82,13 @@ public sealed class AiAssistant(IChatClient chat)
         if (root.TryGetProperty("sheet", out var sheetElement) && sheetElement.ValueKind == JsonValueKind.Object)
         {
             var specs = request.Attributes.Concat(request.Fields).ToDictionary(f => f.Key, StringComparer.OrdinalIgnoreCase);
+            // A model told "str: Strength" sometimes answers under "Strength": an attribute is found by its label too.
+            var byLabel = request.Attributes.Where(a => !string.IsNullOrWhiteSpace(a.Label)).GroupBy(a => a.Label.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
             foreach (var prop in sheetElement.EnumerateObject())
             {
-                if (!specs.TryGetValue(prop.Name, out var spec) || spec.Type == "Collection")
+                if (!specs.TryGetValue(prop.Name, out var spec)) byLabel.TryGetValue(prop.Name.Trim(), out spec);
+                if (spec == null || spec.Type == "Collection")
                 {
                     if (prop.Name == request.HitPointsKey || prop.Name == request.HitPointsMaxKey)
                     {
