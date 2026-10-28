@@ -1036,7 +1036,7 @@ a.user-chip:active { transform: scale(0.97); }
 .wiki-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; color: var(--text-3); }
 @media (max-width: 640px) {
     .wiki-aside { float: none; width: 100%; margin-inline-start: 0; }
-    .wiki-figure-portrait { width: min(100%, 9rem); }
+    .wiki-figure-portrait, .wiki-figure-portrait.wiki-figure-placeholder { width: min(100%, 9rem); }
     .wiki-figure-placeholder { width: min(100%, 12rem); align-self: center; }
 }
 .wiki-body { font-size: 1.02rem; line-height: 1.65; }
@@ -1062,11 +1062,11 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 /* The proposal review: the entries as a rail on one side, the entry as it will read on the other, the decision at the foot.
    The dialog is a column whose body scrolls and whose footer stays put, so Accept is always reachable, and it is anchored at the
    top with a steady height so the buttons don't move under the pointer from one entry to the next. */
-dialog.codex-dialog-review { width: min(960px, 96vw); max-height: calc(100dvh - 1rem); margin-block: 4vh auto; }
+dialog.codex-dialog-review { width: min(960px, 96vw); max-height: calc(100dvh - 4vh - 1rem); margin-block: 4vh auto; }
 dialog.codex-dialog-review[open] { display: flex; flex-direction: column; }
 dialog.codex-dialog-review .dialog-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-.review-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr; gap: 1.25rem; margin-top: 0.75rem; min-height: min(22rem, 50vh); }
-.review-rail { max-height: 56vh; overflow-y: auto; border-inline-end: 1px solid var(--border); padding-inline-end: 0.75rem; }
+.review-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr; gap: 1.25rem; margin-top: 0.75rem; height: min(26rem, 56vh); }
+.review-rail { min-height: 0; overflow-y: auto; border-inline-end: 1px solid var(--border); padding-inline-end: 0.75rem; }
 .review-rail-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-inline-start: 3px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); text-align: start; }
 .review-rail-item:hover { background: color-mix(in srgb, var(--surface-2) 55%, transparent); color: var(--text); }
 .review-rail-item.is-current { background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); color: var(--text); border-inline-start-color: var(--accent); }
@@ -1075,7 +1075,7 @@ dialog.codex-dialog-review .dialog-body { flex: 1 1 auto; min-height: 0; overflo
 .review-dot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 2px solid var(--text-3); }
 .review-dot-Accepted { background: var(--accent); border-color: var(--accent); }
 .review-dot-Skipped { border-style: dashed; opacity: 0.6; }
-.review-pane { min-width: 0; max-height: 56vh; overflow-x: hidden; overflow-y: auto; }
+.review-pane { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .review-name, .review-pitch, .review-body { overflow-wrap: anywhere; }
 .review-name { font-size: 1.25rem; margin: 0 0 0.25rem; }
 .review-state { display: inline-block; white-space: nowrap; margin-inline-start: 0.5rem; font-size: 0.7rem; vertical-align: middle; }
@@ -1088,13 +1088,17 @@ dialog.codex-dialog-review .dialog-body { flex: 1 1 auto; min-height: 0; overflo
 .world-missing-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.25rem 0.75rem; padding: 0.2rem 0; }
 .world-missing-row .cx-btn { white-space: nowrap; }
 @media (max-width: 720px) {
-    .review-layout { grid-template-columns: 1fr; min-height: 0; }
-    .review-rail { max-height: 9rem; border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 0.5rem; }
+    .review-layout { grid-template-columns: 1fr; height: auto; }
+    .review-rail { max-height: 9rem; min-height: auto; border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 0.5rem; }
     /* One scroller on a phone: the dialog body. The footer is two columns, the two decisions that matter each on a row of their own. */
-    .review-pane { max-height: none; overflow-y: visible; }
-    .review-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .review-pane { min-height: auto; overflow-y: visible; }
+    .review-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; align-items: stretch; }
     .review-actions .review-spacer { display: none; }
     .review-actions [data-testid="world-review-accept"], .review-actions [data-testid="world-review-apply"] { grid-column: 1 / -1; }
+}
+/* A short phone has no room for the rail as well as the footer; Back, Skip and "3 of 7" do its job there. */
+@media (max-width: 720px) and (max-height: 700px) {
+    .review-rail { display: none; }
 }
 .creature-card { min-height: auto; }
 .journal-entry { position: relative; }
