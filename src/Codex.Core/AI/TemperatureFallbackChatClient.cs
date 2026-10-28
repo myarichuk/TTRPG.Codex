@@ -60,17 +60,33 @@ internal sealed class TemperatureFallbackChatClient(IChatClient inner) : Delegat
 
     private async Task<(IAsyncEnumerator<ChatResponseUpdate> Source, bool Any)> OpenAsync(IList<ChatMessage> history, ChatOptions? options, CancellationToken cancellationToken)
     {
-        var source = base.GetStreamingResponseAsync(history, Without(options), cancellationToken).GetAsyncEnumerator(cancellationToken);
+        // Whether this attempt carried the temperature, not whether the verdict is in: two requests refused at once must both retry.
+        var attempt = Without(options);
+        var sentTemperature = attempt?.Temperature is not null;
+        var source = base.GetStreamingResponseAsync(history, attempt, cancellationToken).GetAsyncEnumerator(cancellationToken);
         try
         {
             return (source, await source.MoveNextAsync());
         }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested && !rejected && options?.Temperature is not null && RefusesTemperature(ex))
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested && sentTemperature && RefusesTemperature(ex))
         {
             await source.DisposeAsync();
             rejected = true;
             var again = base.GetStreamingResponseAsync(history, Without(options), cancellationToken).GetAsyncEnumerator(cancellationToken);
-            return (again, await again.MoveNextAsync());
+            try
+            {
+                return (again, await again.MoveNextAsync());
+            }
+            catch
+            {
+                await again.DisposeAsync();
+                throw;
+            }
+        }
+        catch
+        {
+            await source.DisposeAsync();
+            throw;
         }
     }
 

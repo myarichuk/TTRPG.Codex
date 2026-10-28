@@ -79,6 +79,17 @@ public class TemperatureFallbackChatClientTests
         Assert.Equal(new float?[] { 0.8f, null }, inner.Temperatures);
     }
 
+    [Fact]
+    public async Task Streaming_OtherFailures_AreNotRetried_AndTheClientStaysUsable()
+    {
+        var inner = new FakeChat(refuseTemperature: false) { Failure = new ClientResultException("HTTP 401 (invalid_api_key) bad key") };
+        var client = new TemperatureFallbackChatClient(inner);
+
+        await Assert.ThrowsAsync<ClientResultException>(async () => await client.GetStreamingResponseAsync(Hello, new ChatOptions { Temperature = 0.8f }).ToListAsync());
+
+        Assert.Single(inner.Temperatures); // no second attempt for something that is not about the temperature
+    }
+
     private sealed class FakeChat(bool refuseTemperature) : IChatClient
     {
         public List<float?> Temperatures { get; } = new();

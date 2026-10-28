@@ -147,7 +147,7 @@ else if (chat != null)
                               placeholder="@L["WorldChat.Placeholder"]" aria-describedby="world-chat-hint" data-testid="world-chat-input"
                               @onkeydown="OnKeyAsync"></textarea>
                     <div class="d-flex gap-2 align-items-center flex-wrap mt-2">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || string.IsNullOrWhiteSpace(draft))" data-testid="world-chat-send"><LucideIcon IconName="send" Size="16" /> @L["WorldChat.Send"]</CodexButton>
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || applying || string.IsNullOrWhiteSpace(draft))" data-testid="world-chat-send"><LucideIcon IconName="send" Size="16" /> @L["WorldChat.Send"]</CodexButton>
                         <span id="world-chat-hint" class="field-hint mb-0">@L["WorldChat.Hint"]</span>
                     </div>
                 </form>
@@ -375,7 +375,8 @@ else if (chat != null)
 
     private async Task SendAsync()
     {
-        if (chat == null || busy || string.IsNullOrWhiteSpace(draft)) return;
+        // Not while a proposal is being applied: the apply writes to the conversation too, and a turn stopped meanwhile would undo it.
+        if (chat == null || busy || applying || string.IsNullOrWhiteSpace(draft)) return;
         var text = draft;
         draft = string.Empty;
         busy = true;
@@ -475,7 +476,7 @@ else if (chat != null)
 
     private async Task ApplyAsync()
     {
-        if (chat?.Proposal == null || applying) return;
+        if (chat?.Proposal == null || applying || busy) return;
         applying = true;
         applyError = null;
         try

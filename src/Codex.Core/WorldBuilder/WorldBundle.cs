@@ -118,6 +118,9 @@ public sealed class WorldDraft
     /// <summary>For an edit: players can already read the text, so applying it changes what they see at once.</summary>
     public bool SharedWithPlayers { get; set; }
 
+    /// <summary>For an edit: a fingerprint of the stored text the review card showed, so applying can tell when it changed since.</summary>
+    public string? BeforeStamp { get; set; }
+
     public Dictionary<string, object> Properties { get; set; } = new();
     public List<string> Tags { get; set; } = new();
 }
@@ -325,7 +328,7 @@ public static class WorldBundleParser
                         draft.PageKind = OneOf(FieldCoercion.String(element, "pageKind"), PageKinds) ?? "lore";
                         break;
                     case DraftKinds.Edit:
-                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors)) continue;
+                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors, (FieldCoercion.String(element, "text") ?? FieldCoercion.String(element, "description"))?.Length ?? 0)) continue;
                         break;
                     case DraftKinds.Homebrew:
                         if (FieldCoercion.String(element, "type") is not { } typeText || !types.TryGetValue(typeText, out var type))
@@ -426,7 +429,7 @@ public static class WorldBundleParser
     }
 
     /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and the complete new text.</summary>
-    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors)
+    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors, int textLength)
     {
         var key = FieldCoercion.String(element, "target")?.Trim();
         if (string.IsNullOrEmpty(key))
@@ -436,18 +439,20 @@ public static class WorldBundleParser
         }
 
         var kind = WorldBundle.ParseTarget(key, out var id);
-        var found = kind switch
+        // The id as stored, whatever its case in the key: what is saved later matches it exactly.
+        var stored = kind switch
         {
-            EditTarget.Place => rules.ExistingPlaces.Contains(id, StringComparer.OrdinalIgnoreCase),
-            EditTarget.Actor => rules.ExistingActors?.Contains(id, StringComparer.OrdinalIgnoreCase) == true,
-            _ => pages.ContainsKey(id)
+            EditTarget.Place => rules.ExistingPlaces.FirstOrDefault(p => string.Equals(p, id, StringComparison.OrdinalIgnoreCase)),
+            EditTarget.Actor => rules.ExistingActors?.FirstOrDefault(a => string.Equals(a, id, StringComparison.OrdinalIgnoreCase)),
+            _ => pages.Keys.FirstOrDefault(slug => string.Equals(slug, id, StringComparison.OrdinalIgnoreCase))
         };
-        if (!found)
+        if (stored == null)
         {
             errors.Add($"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
             return false;
         }
 
+        id = stored;
         var canonical = kind switch
         {
             EditTarget.Place => WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix + id,
@@ -463,6 +468,13 @@ public static class WorldBundleParser
         if (draft.Body == null)
         {
             errors.Add($"{label}: an edit needs its \"text\": the COMPLETE new text, which replaces the old one.");
+            return false;
+        }
+
+        // Cut would drop the end of a text that replaces another: refuse instead of saving half of it.
+        if (textLength > MaxBody)
+        {
+            errors.Add($"{label}: the text is {textLength} characters; an edit holds at most {MaxBody}.");
             return false;
         }
 

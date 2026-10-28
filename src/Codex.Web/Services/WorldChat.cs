@@ -100,6 +100,9 @@ public sealed class WorldChat
             var response = await StreamAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
             var cutShort = KeepAnswered(response.Messages);
             var reply = FinalAnswer(response.Messages);
+            // A model that wrote its summary in the same message as its last call and then said nothing: that summary is the answer.
+            // (Not when the round limit cut it off: what it said along the way is only preamble then.)
+            if (reply.Length == 0 && !cutShort) reply = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
             lines.Add(new WorldChatLine(WorldChatSpeaker.Model, !string.IsNullOrEmpty(reply) ? reply
                 : Localizer.For(Lang)[cutShort ? "WorldChat.TooManySteps" : "WorldChat.NoReply"], trail.ToList()));
         }

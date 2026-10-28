@@ -1059,6 +1059,98 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Edit_KeepsTheMentionsInTheText_WhenTheModelCopiesThemBack()
+    {
+        var page = new WikiPageDocument { Id = "page-varr", Slug = "port-varr", Title = "Port Varr", Body = "Sworn to [[actor:a1]] at [[place:old-town]]. See [[Port Varr]]." };
+        var mira = new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Loyal to [[actor:a1]].", Kind = ActorKind.NonPlayerCharacter };
+        var saving = Service(new[] { page }, new[] { HillRegion() });
+        saving.Actors.Add(mira);
+
+        // What the model reads keeps each mention as a marker with its name, so copying a passage back keeps the link.
+        var read = await saving.Service.PageAsync(Dm, "existing:port-varr");
+        Assert.Contains("[[actor:a1|Mira Greystone]]", read);
+        Assert.Contains("[[place:old-town|Old Town]]", read);
+
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Sworn to [[actor:a1|Mira Greystone]] at [[place:old-town|Old Town]], and fearing fire. See [[Port Varr]]."},
+              {"ref": "e2", "kind": "edit", "target": "existing:actor:a1", "text": "Loyal to [[actor:a1|Mira Greystone]], who fears fire."}
+            ]}
+            """;
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+
+        await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        Assert.Equal("Sworn to [[actor:a1]] at [[place:old-town]], and fearing fire. See [[Port Varr]].", page.Body); // stored form, page link kept
+        Assert.Equal("Loyal to [[actor:a1]], who fears fire.", mira.Biography);                                       // not "actor:a1" as text
+    }
+
+    [Fact]
+    public async Task Check_Edit_RefusesATextTooLongToHaveBeenReadWhole()
+    {
+        var page = VarrPage();
+        page.Body = new string('x', 6001);
+        var saving = Service(new[] { page });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Short."}]}""");
+
+        Assert.False(check.Ok);
+        Assert.Contains("more than get_page shows", Assert.Single(check.Errors));
+        Assert.Contains("too long to show whole", await saving.Service.PageAsync(Dm, "existing:port-varr"));
+    }
+
+    [Fact]
+    public void ParseProposal_Edit_DoesNotQuietlyCutTheTextThatReplacesAnother()
+    {
+        var json = $$"""{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "{{new string('y', 20_001)}}"}]}""";
+
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+
+        Assert.Contains("holds at most", Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public async Task Save_Edit_OfTextChangedSinceTheReview_IsRefusedRatherThanOverwritingIt()
+    {
+        var page = VarrPage();
+        var saving = Service(new[] { page });
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "New."}]}""");
+        Assert.True(check.Ok);
+
+        page.Body = "Someone else edited this in another tab."; // after the DM reviewed the old text
+        var ex = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, check.Bundle));
+
+        Assert.Equal("WorldBuilder.Error.EditChanged", ex.Key);
+        Assert.Equal("Someone else edited this in another tab.", page.Body);
+    }
+
+    [Fact]
+    public async Task Check_Edit_OfAPlace_FindsItWhateverTheCaseOfTheKey()
+    {
+        var saving = Service(null, new[] { HillRegion() });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:place:OLD-TOWN", "text": "New."}]}""");
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal("existing:place:old-town", check.Bundle.Drafts[0].Target); // as stored, so the save finds it
+        Assert.Equal("Old description.", check.Bundle.Drafts[0].Before);
+    }
+
+    [Fact]
+    public async Task Chat_AnswerWrittenBesideTheLastToolCall_IsStillTheAnswer()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Here is the lay of the land."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, string.Empty));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Equal("Here is the lay of the land.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
     public async Task GetPage_ReadsAPlacesDescription_AndACastMembersHistory_ByTheirKeys()
     {
         var saving = Service(new[] { VarrPage() }, new[] { HillRegion() });

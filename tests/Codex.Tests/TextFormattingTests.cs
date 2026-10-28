@@ -131,4 +131,25 @@ public class TextFormattingTests
         var cut = TextFormatting.Summary("A long road runs to the north of the great city of [[Port Varr]] and on to the sea.", 55, keepLinks: true);
         Assert.DoesNotContain("[[", cut); // the link would have been cut in half, so it is dropped whole
     }
+
+    [Theory]
+    [InlineData("`a` and \u00035\u0004")]
+    [InlineData("`a` \u000399999999999\u0004")]
+    [InlineData("[x](https://a.com) \u00055\u0006")]
+    public void ToHtml_TextHoldingThePlaceholderCharacters_DoesNotThrow(string text)
+    {
+        var ex = Record.Exception(() => TextFormatting.ToHtml(text));
+
+        Assert.Null(ex);
+    }
+
+    [Fact]
+    public void ToHtml_EmphasisDoesNotReachInsideALinksAddress()
+    {
+        var html = TextFormatting.ToHtml("[x](https://a.com/*b*c) and **[y](https://e.com/**)");
+
+        Assert.Contains("href=\"https://a.com/*b*c\"", html);
+        Assert.DoesNotContain("<em>b</em>c\"", html);
+        Assert.Equal(html.Split("<a ").Length, html.Split("</a>").Length); // every link is closed
+    }
 }

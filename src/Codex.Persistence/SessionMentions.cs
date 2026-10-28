@@ -190,6 +190,8 @@ public sealed class MentionDirectory
     {
         if (string.IsNullOrWhiteSpace(text) || !SessionMentions.HasMentions(text)) return TextFormatting.ToHtml(text);
 
+        // The markers below are control characters; ones in the text itself would be taken for them.
+        text = text.Replace("\u0001", string.Empty).Replace("\u0002", string.Empty);
         var mentions = new List<MentionSegment>();
         var marked = SessionMentions.TokenPattern().Replace(text, m =>
         {

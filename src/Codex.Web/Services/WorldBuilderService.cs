@@ -119,8 +119,8 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         if (page == null) return null;
 
         var names = Names((await actorRepository.GetVisibleForCampaignAsync(access)).ToList(), (await regions.GetVisibleForCampaignAsync(access)).ToList());
-        var text = Plain(page.Body, names);
-        if (text.Length > MaxPageText) text = text[..MaxPageText] + "\n[...]";
+        var text = Editable(page.Body, names);
+        if (text.Length > MaxPageText) text = text[..MaxPageText] + "\n[...] (too long to show whole: it cannot be replaced by an edit)";
         return $"# {page.Title}\nkey: existing:{page.Slug}; kind: {page.Kind.ToString().ToLowerInvariant()}; {(page.Visibility == WikiVisibility.Party ? "shared with the party" : "DM only")}\n\n{text}";
     }
 
@@ -135,7 +135,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             var page = string.IsNullOrEmpty(place.WikiPageId) ? null : pages.FirstOrDefault(p => p.Id == place.WikiPageId);
             return $"# {place.Name}\nkey: existing:{WorldBundle.PlacePrefix}{place.Id}; place in {Path(region, place)}; " +
                    $"this is the place's short description, which players read once the place is revealed ({(place.Visibility == ActorVisibility.Known ? "revealed: players can read it now" : "hidden from players for now")})" +
-                   $"{(page != null ? $"; its page, which may hold what the place hides: existing:{page.Slug}" : "")}\n\n{Plain(place.Description, names)}";
+                   $"{(page != null ? $"; its page, which may hold what the place hides: existing:{page.Slug}" : "")}\n\n{Cap(Editable(place.Description, names))}";
         }
 
         return null;
@@ -147,8 +147,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var pages = (await wiki.GetVisibleForCampaignAsync(access)).ToList();
         var names = Names((await actorRepository.GetVisibleForCampaignAsync(access)).ToList(), (await regions.GetVisibleForCampaignAsync(access)).ToList());
         var page = PageOf(actor, pages);
-        var text = Plain(actor.Biography, names);
-        if (text.Length > MaxPageText) text = text[..MaxPageText] + "\n[...]";
+        var text = Cap(Editable(actor.Biography, names));
         return $"# {actor.Name}\nkey: existing:{WorldBundle.ActorPrefix}{actor.Id}; this is the character's history, which players read once the character is revealed " +
                $"({(actor.Visibility == ActorVisibility.Known ? "revealed: players can read it now" : "hidden from players for now")})" +
                $"{(page != null ? $"; their page: existing:{page.Slug}" : "")}\n\n{text}";
@@ -237,22 +236,23 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var check = WorldBundleParser.ParseProposal(json, rules);
 
         await FindStatsAsync(campaign, access, check.Bundle);
-        await FillEditsAsync(check.Bundle, access);
+        var editErrors = await FillEditsAsync(check.Bundle, access);
         var warnings = check.Warnings.ToList();
         foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Npc, Stats: null } && d.SuggestedStats != null))
         {
             warnings.Add($"{draft.Ref} (npc '{draft.Name}'): stats '{draft.SuggestedStats}' are not in the Library, so the sheet starts blank; use a name search_library finds.");
         }
 
-        return check with { Warnings = warnings };
+        return check with { Warnings = warnings, Errors = check.Errors.Concat(editErrors).ToList() };
     }
 
     /// <summary>Names each edit after what it changes and keeps that text as it is now, for the review card to show beside the new
     /// one, and notes when players can already read it (applying the edit changes what they see at once).</summary>
-    private async Task FillEditsAsync(WorldBundle bundle, CampaignAccess access)
+    private async Task<List<string>> FillEditsAsync(WorldBundle bundle, CampaignAccess access)
     {
+        var errors = new List<string>();
         var edits = bundle.Drafts.Where(d => d.Kind == DraftKinds.Edit && d.Target != null).ToList();
-        if (edits.Count == 0) return;
+        if (edits.Count == 0) return errors;
 
         var pages = (await wiki.GetVisibleForCampaignAsync(access)).ToList();
         var allRegions = (await regions.GetVisibleForCampaignAsync(access)).ToList();
@@ -267,7 +267,9 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                     {
                         draft.Name = place.Name;
                         draft.Before = Plain(place.Description, names);
+                        draft.BeforeStamp = Stamp(place.Description);
                         draft.SharedWithPlayers = place.Visibility == ActorVisibility.Known;
+                        TooLong(draft, place.Description);
                     }
 
                     break;
@@ -276,7 +278,9 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                     {
                         draft.Name = actor.Name;
                         draft.Before = Plain(actor.Biography, names);
+                        draft.BeforeStamp = Stamp(actor.Biography);
                         draft.SharedWithPlayers = actor.Visibility == ActorVisibility.Known;
+                        TooLong(draft, actor.Biography);
                     }
 
                     break;
@@ -285,10 +289,25 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                     {
                         draft.Name = page.Title;
                         draft.Before = Plain(page.Body, names);
+                        draft.BeforeStamp = Stamp(page.Body);
                         draft.SharedWithPlayers = page.Visibility == WikiVisibility.Party;
+                        TooLong(draft, page.Body);
                     }
 
                     break;
+            }
+        }
+
+        return errors;
+
+        // get_page shows only the first MaxPageText characters, so a longer text was never fully read, and "the complete new text"
+        // written from it would cut the rest off.
+        void TooLong(WorldDraft draft, string? stored)
+        {
+            if ((stored?.Length ?? 0) > MaxPageText)
+            {
+                errors.Add($"{draft.Ref} (edit '{draft.Name}'): the current text is {stored!.Length} characters, more than get_page shows ({MaxPageText}), " +
+                           "so it cannot be replaced as a whole without losing the end; put the new material in a new entry instead.");
             }
         }
     }
@@ -588,6 +607,13 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var target = WorldBundle.ParseTarget(draft.Target!, out var id);
         var gone = new LocalizedException("WorldBuilder.Error.EditTargetGone", draft.Name);
         var body = draft.Body ?? string.Empty;
+        var changed = new LocalizedException("WorldBuilder.Error.EditChanged", draft.Name);
+        // The text the DM reviewed must still be the text there: someone may have edited it since (another tab, a co-DM).
+        void Unchanged(string? stored)
+        {
+            if (draft.BeforeStamp != null && draft.BeforeStamp != Stamp(stored)) throw changed;
+        }
+
         switch (target)
         {
             case EditTarget.Place:
@@ -595,8 +621,9 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 foreach (var region in (await regions.GetVisibleForCampaignAsync(access)).ToList())
                 {
                     if (region.Locations.FirstOrDefault(p => p.Id == id) is not { } place) continue;
-                    // What players read once the place is revealed: plain text, no wiki links.
-                    place.Description = WorldBundleParser.ResolveLinks(body, bundle, keepLinks: false).Trim();
+                    Unchanged(place.Description);
+                    // What players read once the place is revealed: plain text, no wiki links (mentions stay).
+                    place.Description = ResolveEditText(body, bundle, keepLinks: false).Trim();
                     if (!await regions.UpsertLocationAsync(region.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                     return new WorldEdit(target, id, place.Name);
                 }
@@ -606,14 +633,16 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             case EditTarget.Actor:
             {
                 var actor = await actorRepository.GetVisibleAsync(id, access) ?? throw gone;
-                actor.Biography = WorldBundleParser.ResolveLinks(body, bundle, keepLinks: false).Trim();
+                Unchanged(actor.Biography);
+                actor.Biography = ResolveEditText(body, bundle, keepLinks: false).Trim();
                 if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                 return new WorldEdit(target, id, actor.Name);
             }
             default:
             {
                 var page = (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => string.Equals(p.Slug, id, StringComparison.OrdinalIgnoreCase)) ?? throw gone;
-                page.Body = WorldBundleParser.ResolveLinks(body, bundle).Trim();
+                Unchanged(page.Body);
+                page.Body = ResolveEditText(body, bundle, keepLinks: true).Trim();
                 if (!await wiki.TrySaveAsync(page, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                 return new WorldEdit(target, page.Slug, page.Title);
             }
@@ -865,6 +894,33 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         foreach (var place in allRegions.SelectMany(r => r.Locations)) names[$"place:{place.Id}"] = place.Name;
         return names;
     }
+
+    private static string Cap(string text) =>
+        text.Length > MaxPageText ? text[..MaxPageText] + "\n[...] (too long to show whole: it cannot be replaced by an edit)" : text;
+
+    // A text as the model reads it to edit it: a mention stays a marker, [[actor:id|Name]], so copying a passage back keeps the link.
+    private static string Editable(string? body, IReadOnlyDictionary<string, string> names) =>
+        Mention.Replace(body ?? string.Empty, m => $"[[{m.Groups[1].Value}|{names.GetValueOrDefault(m.Groups[1].Value) ?? m.Groups[1].Value.Split('/').Last().Split(':').Last()}]]");
+
+    private static readonly Regex MentionMarker = new(@"\[\[((?:actor|place|item):[^\]\s|]+)(?:\|[^\]]*)?\]\]", RegexOptions.Compiled);
+    private static readonly Regex HeldMarker = new("\u0007(\\d{1,6})\u0008", RegexOptions.Compiled);
+
+    /// <summary>The text an edit saves: links to the proposal's entries and pages resolved as for any entry, but mentions kept as the
+    /// stored <c>[[actor:id]]</c> they were (the model wrote them back as <c>[[actor:id|Name]]</c>); resolving them as wiki links
+    /// would turn the id into text.</summary>
+    internal static string ResolveEditText(string body, WorldBundle bundle, bool keepLinks)
+    {
+        var held = new List<string>();
+        var text = MentionMarker.Replace(body.Replace("\u0007", string.Empty).Replace("\u0008", string.Empty), m =>
+        {
+            held.Add($"[[{m.Groups[1].Value}]]");
+            return $"\u0007{held.Count - 1}\u0008";
+        });
+        text = WorldBundleParser.ResolveLinks(text, bundle, keepLinks);
+        return held.Count == 0 ? text : HeldMarker.Replace(text, m => held[int.Parse(m.Groups[1].Value)]);
+    }
+
+    private static string Stamp(string? text) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(text ?? string.Empty)));
 
     private static readonly Regex Mention = new(@"\[\[((?:actor|place|item):[^\]\s]+)\]\]", RegexOptions.Compiled);
 

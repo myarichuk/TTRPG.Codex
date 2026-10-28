@@ -16,6 +16,7 @@
   <data name="WorldBuilder.Open.Faction" xml:space="preserve"><value>עיצוב פלג עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>בניית העולם זמינה לשליט המבוך בלבד.</value></data>
   <data name="WorldBuilder.Error.EditTargetGone" xml:space="preserve"><value>“{0}” כבר אינו בקמפיין, ולכן אי אפשר להחיל את השינוי בו. בטלו את הסימון שלו והחילו את השאר.</value></data>
+  <data name="WorldBuilder.Error.EditChanged" xml:space="preserve"><value>“{0}” שונה אחרי שההצעה נוצרה, ולכן החלתה תדרוס את השינוי. בקשו את השינוי שוב מהטקסט הנוכחי.</value></data>
   <data name="WorldBuilder.Saved" xml:space="preserve"><value>{0, plural, one{טיוטה אחת נשמרה, מוסתרת מהשחקנים.} two{שתי טיוטות נשמרו, מוסתרות מהשחקנים.} other{# טיוטות נשמרו, מוסתרות מהשחקנים.}}</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>יצורים</value></data>

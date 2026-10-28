@@ -314,6 +314,7 @@ public static class AiPrompts
             "existing:place:<id> for a place's short description, existing:actor:<id> for a cast member's history) and \"text\": the COMPLETE new text, which replaces the old one entirely. " +
             "Read the target with get_page first, change only what the game master asked for and keep everything else word for word, and still link with [[ref]] or [[existing:slug]]. " +
             "A page, a place's description and a cast member's history are separate texts, so change each one that should change. " +
+            "People, places and items mentioned in a text appear as [[actor:ID|Name]], [[place:ID|Name]] or [[item:ID|Name]]: copy each one exactly as written, or the link is lost. " +
             "Players read a place's description and a character's history once they are revealed, so write those for players' eyes, with nothing the party must not know yet. " +
             "An edit is reviewed like any other entry, next to the current text; nothing changes until the game master applies it. " +
             "Entries: \"place\" (placeKind area, settlement, district or site; \"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places), " +

@@ -211,21 +211,31 @@ public static class TextFormatting
     /// inside it (<c>*</c>, <c>_</c>) stays as written.</summary>
     public static string Inline(string text)
     {
-        var encoded = WebUtility.HtmlEncode(text);
+        // The placeholders below are control characters, which HtmlEncode leaves alone: written ones would be mistaken for ours.
+        var encoded = WebUtility.HtmlEncode(text).Replace("\u0003", string.Empty).Replace("\u0004", string.Empty)
+            .Replace("\u0005", string.Empty).Replace("\u0006", string.Empty);
         var code = new List<string>();
+        var urls = new List<string>();
         encoded = CodeSpan.Replace(encoded, m =>
         {
             code.Add(m.Groups[1].Value);
             return $"\u0003{code.Count - 1}\u0004";
         });
-        encoded = MdLink.Replace(encoded, "<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>");
+        // The address is set aside too, so emphasis cannot rewrite inside the href ("https://a.com/*b*c") or leave tags unbalanced.
+        encoded = MdLink.Replace(encoded, m =>
+        {
+            urls.Add(m.Groups[2].Value);
+            return $"<a href=\"\u0005{urls.Count - 1}\u0006\" target=\"_blank\" rel=\"noopener noreferrer\">{m.Groups[1].Value}</a>";
+        });
         encoded = Bold.Replace(encoded, "<strong>$1</strong>");
         encoded = Italic.Replace(encoded, "<em>$1</em>");
         encoded = UnderscoreItalic.Replace(encoded, "<em>$1</em>");
+        if (urls.Count > 0) encoded = UrlPlaceholder.Replace(encoded, m => urls[int.Parse(m.Groups[1].Value)]);
         return code.Count == 0 ? encoded : CodePlaceholder.Replace(encoded, m => "<code>" + code[int.Parse(m.Groups[1].Value)] + "</code>");
     }
 
-    private static readonly Regex CodePlaceholder = new("\u0003(\\d+)\u0004", RegexOptions.Compiled);
+    private static readonly Regex CodePlaceholder = new("\u0003(\\d{1,6})\u0004", RegexOptions.Compiled);
+    private static readonly Regex UrlPlaceholder = new("\u0005(\\d{1,6})\u0006", RegexOptions.Compiled);
 
     /// <summary>First sentence or so, for list rows and cards, with markdown removed: headings (labels, not content) are left
     /// out unless nothing else is written, bullets and emphasis lose their markers, and a wiki link shows its text. With
