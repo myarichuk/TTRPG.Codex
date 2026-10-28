@@ -1139,6 +1139,22 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public void MissingMentions_MatchesTheWayTheWikiDoes_BySlug_AndListsASpellingsOnce()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "Near [[the kings’ road]], [[Brinewick]], [[BRINEWICK]], [[Brine wick]], [[Brine-wick]] and [[Hal's Rest]]."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        var missing = WorldBundleParser.MissingMentions(bundle, new[] { "The Kings' Road", "Hal’s Rest" });
+
+        // Curly or straight apostrophe, any case: the page the wiki finds. A space and a hyphen are one name, and listed once.
+        Assert.Equal(new[] { "Brinewick", "Brine wick" }, missing.Select(m => m.Name));
+    }
+
+    [Fact]
     public void MissingMentions_KnowsRegionNames_AndAColonInANameIsNotAKey()
     {
         const string json = """

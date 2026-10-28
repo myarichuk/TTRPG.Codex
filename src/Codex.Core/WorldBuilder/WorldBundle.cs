@@ -623,16 +623,19 @@ public static class WorldBundleParser
     /// appear.</summary>
     public static IReadOnlyList<MissingMention> MissingMentions(WorldBundle bundle, IReadOnlyCollection<string> known)
     {
-        var have = new HashSet<string>(known, StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(bundle.Region)) have.Add(bundle.Region.Trim());
+        // By slug, the way the wiki finds the page a link means: "Brinewick", "brinewick" and "Brine-wick" are one name, and a curly
+        // apostrophe is a straight one.
+        var have = new HashSet<string>(known.Select(WikiText.Slugify), StringComparer.Ordinal);
+        if (!string.IsNullOrWhiteSpace(bundle.Region)) have.Add(WikiText.Slugify(bundle.Region));
         foreach (var d in bundle.Drafts)
         {
-            have.Add(d.Ref);
-            have.Add(d.OutlineName);
-            have.Add(d.Name.Trim());
+            have.Add(WikiText.Slugify(d.Ref));
+            have.Add(WikiText.Slugify(d.OutlineName));
+            have.Add(WikiText.Slugify(d.Name));
         }
 
-        var by = new Dictionary<string, List<WorldDraft>>(StringComparer.OrdinalIgnoreCase);
+        // One line per name however it is spelled, shown as it was first written.
+        var missing = new Dictionary<string, (string Name, List<WorldDraft> By)>(StringComparer.Ordinal);
         var order = new List<string>();
         foreach (var d in bundle.Drafts.Where(d => d.Selected && !string.IsNullOrWhiteSpace(d.Body) && (d.Kind is DraftKinds.Wiki or DraftKinds.Npc or DraftKinds.Place or DraftKinds.Edit)))
         {
@@ -640,18 +643,20 @@ public static class WorldBundleParser
             {
                 var name = match.Groups[1].Value.Trim();
                 // A link by key (existing:slug, actor:id, place:id, item:id) points at something that is there. A name may hold a colon.
-                if (name.Length == 0 || KeyLink.IsMatch(name) || have.Contains(name)) continue;
-                if (!by.TryGetValue(name, out var mentioners))
+                if (name.Length == 0 || KeyLink.IsMatch(name)) continue;
+                var slug = WikiText.Slugify(name);
+                if (have.Contains(slug)) continue;
+                if (!missing.TryGetValue(slug, out var entry))
                 {
-                    by[name] = mentioners = new List<WorldDraft>();
-                    order.Add(name);
+                    missing[slug] = entry = (name, new List<WorldDraft>());
+                    order.Add(slug);
                 }
 
-                if (!mentioners.Contains(d)) mentioners.Add(d);
+                if (!entry.By.Contains(d)) entry.By.Add(d);
             }
         }
 
-        return order.Select(n => new MissingMention(n, by[n].Select(d => d.Name).ToList(), by[n].Select(d => d.Ref).ToList())).ToList();
+        return order.Select(slug => new MissingMention(missing[slug].Name, missing[slug].By.Select(d => d.Name).ToList(), missing[slug].By.Select(d => d.Ref).ToList())).ToList();
     }
 
     private static readonly System.Text.RegularExpressions.Regex KeyLink = new(@"^(existing|actor|place|item):", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
