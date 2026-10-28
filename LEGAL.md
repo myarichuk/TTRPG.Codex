@@ -86,8 +86,31 @@ domain under CC0 1.0 by the TTRPG.Codex project.
 ### What is deliberately not included
 
 - Non-SRD fifth-edition material (other subclasses, most feats, setting lore): proprietary.
-- Pathfinder Second Edition Remaster: its rules text is under the ORC License, but no ORC-licensed
-  machine-readable dataset exists, and the community datasets (Foundry VTT, Pf2ools, Archives of
-  Nethys) are distributed under Paizo's Community Use Policy, which cannot be re-licensed into this
-  project. A PF2E-shaped system can still be defined in `system.yaml` and filled from a local,
-  ORC-compliant transcription that is not redistributed here.
+- Pathfinder Second Edition Remaster: its mechanics (rules text, stat blocks, rules-affecting
+  descriptions) are licensed under the ORC License (https://paizo.com/orclicense), which is
+  perpetual and irrevocable, so the rules themselves could be bundled. What is missing is a clean
+  *source*: no ORC-licensed machine-readable dataset is published, and the community datasets
+  (Foundry VTT, Pf2ools, Archives of Nethys) reach the same text under other terms. Paizo's
+  Community Use Policy requires the project to be free, may be amended or withdrawn by Paizo at any
+  time, and cannot be transferred; Foundry's permission comes from an agreement between Paizo and
+  Foundry that does not pass to this project. Importing from them would trade an irrevocable grant
+  for revocable ones.
+  A Remaster pack would have to be transcribed or converted from the ORC-licensed books
+  themselves, under these conditions:
+  - the pack (including its data structure, which the ORC treats as Adapted Material) is released
+    under the ORC, with an ORC Notice and the upstream attribution; this project's code stays under
+    its own licence, since the ORC grants no rights to code and does not require source release;
+  - Reserved Material is left out: trademarks and trade dress, art, settings, deities, named
+    characters and places, and narrative text, as designated by the ORC Notice in each book;
+  - the system is not named "Pathfinder", which is Paizo's trademark.
+  Until such a pack exists, a PF2E-shaped system can still be defined in `system.yaml` and filled
+  from a local transcription that is not redistributed here.
+- Pre-remaster Pathfinder Second Edition (Core Rulebook, Bestiaries): published under the Open Game
+  License 1.0a, which carries its own notice and Product Identity obligations. Not used, to keep
+  to a single licence per system.
+- Cyberpunk RED: R. Talsorian Games publishes no open licence, only a Homebrew Content Policy
+  (https://rtalsoriangames.com/homebrew-content-policy/) that requires content to be free and bars
+  reproducing rules text, full stat blocks for monsters or NPCs, and its trademarks, art and trade
+  dress. No Cyberpunk RED content is included. A system definition limited to attributes,
+  resources and formulas, with no rules prose, falls under the policy's allowance for character
+  sheets and generators, and anything beyond that would come from the user's own copy of the books.
