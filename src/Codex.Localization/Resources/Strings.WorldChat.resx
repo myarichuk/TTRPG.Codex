@@ -44,7 +44,8 @@
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>What should we add to the world?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Send</value></data>
   <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter sends.</value></data>
-  <data name="WorldChat.NoReply" xml:space="preserve"><value>(The AI didn't say anything.)</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>The AI returned nothing, twice. Send the message again, or pick a stronger model in your AI settings.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Proposal ready to review.</value></data>
   <data name="WorldChat.NotAnswered" xml:space="preserve"><value>That message wasn't answered; send it again when you're ready.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Applied: {0} added, hidden from players.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Proposal discarded.</value></data>
@@ -75,4 +76,25 @@
   <data name="WorldChat.Kind.fact" xml:space="preserve"><value>Secrets</value></data>
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>Homebrew</value></data>
   <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(The AI looked up a lot in one go and stopped before answering. Ask it to go on.)</value></data>
+  <data name="WorldChat.Tool.Add" xml:space="preserve"><value>Added {0} entries to the proposal</value></data>
+  <data name="WorldChat.Review.Open" xml:space="preserve"><value>Review one by one</value></data>
+  <data name="WorldChat.Review.Title" xml:space="preserve"><value>Review the proposal</value></data>
+  <data name="WorldChat.Review.Step" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>Accept</value></data>
+  <data name="WorldChat.Review.Skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="WorldChat.Review.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="WorldChat.Review.AcceptRest" xml:space="preserve"><value>Accept all remaining</value></data>
+  <data name="WorldChat.Review.Close" xml:space="preserve"><value>Close</value></data>
+  <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>Accepted</value></data>
+  <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>Skipped</value></data>
+  <data name="WorldChat.Review.Pending" xml:space="preserve"><value>Not reviewed yet</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>Skipping this also skips what is inside it or only about it ({0})</value></data>
+  <data name="WorldChat.Review.Done" xml:space="preserve"><value>All reviewed: {0} will be added.</value></data>
+  <data name="WorldChat.Review.Rail" xml:space="preserve"><value>Entries</value></data>
+  <data name="WorldChat.Missing.Title" xml:space="preserve"><value>Mentioned, not written yet</value></data>
+  <data name="WorldChat.Missing.Write" xml:space="preserve"><value>Write “{0}”</value></data>
+  <data name="WorldChat.Missing.All" xml:space="preserve"><value>Write all {0}</value></data>
+  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>mentioned by {0}</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>Add “{0}” to the proposal: it is mentioned in {1}, but it isn't written yet. Match the tone and facts of what is already in the proposal.</value></data>
+  <data name="WorldChat.Fill.All" xml:space="preserve"><value>Add all of these to the proposal in one go: {0}. Entries already in it mention each, but none is written yet. Match the tone and facts of what is already there.</value></data>
 </root>

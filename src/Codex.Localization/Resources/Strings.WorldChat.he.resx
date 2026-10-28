@@ -44,7 +44,8 @@
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>מה נוסיף לעולם?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>שליחה</value></data>
   <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter לשליחה.</value></data>
-  <data name="WorldChat.NoReply" xml:space="preserve"><value>(הבינה המלאכותית לא אמרה דבר.)</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>המודל לא החזיר תשובה, פעמיים. שלחו שוב את ההודעה, או בחרו בהגדרות מודל חזק יותר.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>ההצעה מוכנה לבדיקה.</value></data>
   <data name="WorldChat.NotAnswered" xml:space="preserve"><value>ההודעה לא נענתה; שלחו אותה שוב כשתהיו מוכנים.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>הוחל: נוספו {0}, מוסתרים מהשחקנים.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>ההצעה נמחקה.</value></data>
@@ -75,4 +76,25 @@
   <data name="WorldChat.Kind.fact" xml:space="preserve"><value>סודות</value></data>
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
   <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(הבינה המלאכותית חיפשה הרבה בבת אחת ועצרה לפני שענתה. בקשו ממנה להמשיך.)</value></data>
+  <data name="WorldChat.Tool.Add" xml:space="preserve"><value>נוספו {0} רשומות להצעה</value></data>
+  <data name="WorldChat.Review.Open" xml:space="preserve"><value>סקירה אחת אחת</value></data>
+  <data name="WorldChat.Review.Title" xml:space="preserve"><value>סקירת ההצעה</value></data>
+  <data name="WorldChat.Review.Step" xml:space="preserve"><value>{0} מתוך {1}</value></data>
+  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>אישור</value></data>
+  <data name="WorldChat.Review.Skip" xml:space="preserve"><value>דילוג</value></data>
+  <data name="WorldChat.Review.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="WorldChat.Review.AcceptRest" xml:space="preserve"><value>אישור כל השאר</value></data>
+  <data name="WorldChat.Review.Close" xml:space="preserve"><value>סגירה</value></data>
+  <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>אושר</value></data>
+  <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>דולג</value></data>
+  <data name="WorldChat.Review.Pending" xml:space="preserve"><value>טרם נסקר</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>דילוג על הערך מדלג גם על מה שבתוכו או שעוסק רק בו ({0}).</value></data>
+  <data name="WorldChat.Review.Done" xml:space="preserve"><value>הכול נסקר: {0} ייווספו.</value></data>
+  <data name="WorldChat.Review.Rail" xml:space="preserve"><value>ערכים</value></data>
+  <data name="WorldChat.Missing.Title" xml:space="preserve"><value>הוזכר, ועדיין לא נכתב</value></data>
+  <data name="WorldChat.Missing.Write" xml:space="preserve"><value>כתיבת “{0}”</value></data>
+  <data name="WorldChat.Missing.All" xml:space="preserve"><value>כתיבת כולם ({0})</value></data>
+  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>מוזכר ב־{0}</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>הוסף להצעה את “{0}”: הוא מוזכר ב־{1}, אבל עוד לא נכתב. התאם לטון ולעובדות של מה שכבר בהצעה.</value></data>
+  <data name="WorldChat.Fill.All" xml:space="preserve"><value>הוסף להצעה את כל אלה בבת אחת: {0}. ערכים שכבר בהצעה מזכירים כל אחד מהם, אבל אף אחד עוד לא נכתב. התאם לטון ולעובדות שכבר שם.</value></data>
 </root>

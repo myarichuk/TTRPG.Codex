@@ -233,12 +233,48 @@ else if (Slug != null)
         <div class="row g-3">
             <div class="col-lg-8">
                 <article class="panel wiki-page" data-testid="wiki-page">
-                    @if (IllustrationOf(current) is { } picture)
+                    @* Beside the text on a wide screen, above it on a phone. A person shows the portrait their cast card has, and the
+                       page's own illustration too when it has one; a place shows its map picture. With nothing yet, the same placeholder
+                       the card and the map show. *@
+                    @{
+                        var cast = CastMember(current);
+                        var picture = IllustrationOf(current);
+                        var onMap = current.Kind == WikiPageKind.Place || PlaceOf(current) != null;
+                        var placeholder = picture == null && cast?.HasPortrait != true && (cast != null || onMap || current.Kind == WikiPageKind.Person);
+                    }
+                    @if (cast?.HasPortrait == true || picture != null || placeholder)
                     {
-                        @* Beside the text on a wide screen, above it on a phone; a person's portrait is narrower. *@
-                        <figure class="wiki-figure @(current.Kind == WikiPageKind.Person && linked == null ? "wiki-figure-tall" : null)" data-testid="wiki-page-art">
-                            <img src="@picture" alt="@L["Campaign.Wiki.ArtAlt", current.Title]" loading="lazy" />
-                        </figure>
+                        <div class="wiki-aside">
+                            @if (cast?.HasPortrait == true)
+                            {
+                                <figure class="wiki-figure wiki-figure-portrait" data-testid="wiki-page-portrait">
+                                    <img src="@MediaEndpoints.PortraitUrl(cast)" alt="@L["Campaign.Wiki.ArtAlt", current.Title]" loading="lazy" />
+                                </figure>
+                            }
+                            @if (picture != null)
+                            {
+                                <figure class="wiki-figure" data-testid="wiki-page-art">
+                                    <img src="@picture" alt="@L["Campaign.Wiki.ArtAlt", current.Title]" loading="lazy" />
+                                </figure>
+                            }
+                            else if (placeholder)
+                            {
+                                <figure class="wiki-figure wiki-figure-placeholder @(onMap ? null : "wiki-figure-portrait")" data-testid="wiki-page-art-placeholder">
+                                    @if (onMap)
+                                    {
+                                        <span class="wiki-placeholder" aria-hidden="true"><LucideIcon IconName="map-pin" Size="40" /></span>
+                                    }
+                                    else if (cast != null)
+                                    {
+                                        <ActorAvatar Actor="cast" DisplayName="@current.Title" Size="xl" />
+                                    }
+                                    else
+                                    {
+                                        <ActorAvatar Actor="new ActorDocument { Name = current.Title }" Size="xl" />
+                                    }
+                                </figure>
+                            }
+                        </div>
                     }
                     @if (string.IsNullOrWhiteSpace(current.Body))
                     {

@@ -750,12 +750,16 @@ public class WorldBuilderTests
         private int next;
         public List<List<ChatMessage>> Calls { get; } = new();
 
+        /// <summary>Finish reasons by the number of the call (0 first) that ends with one; the others end normally.</summary>
+        public Dictionary<int, ChatFinishReason> Finish { get; } = new();
+
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var sent = messages.ToList();
             Calls.Add(sent);
-            return Task.FromResult(new ChatResponse(replies[next++](sent)));
+            var call = next++;
+            return Task.FromResult(new ChatResponse(replies[call](sent)) { FinishReason = Finish.TryGetValue(call, out var reason) ? reason : null });
         }
 
         // The chat streams its turns; the scripted reply comes as the updates a real model would send.
@@ -918,6 +922,326 @@ public class WorldBuilderTests
         Assert.Equal("Here is the lay of the land.", reply.Text); // not "Got it, let me look.Got it, one more look.Here is…"
         Assert.Equal(2, reply.Steps!.Count);
         Assert.All(reply.Steps, step => Assert.Equal("map-pin", step.Icon));
+    }
+
+    [Fact]
+    public async Task Chat_ThatGoesQuietAfterItsTools_IsNudgedOnce_AndTheNudgeGetsTheAnswer()
+    {
+        var model = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, "Here is the lay of the land."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Equal("Here is the lay of the land.", chat.Lines[^1].Text);
+        Assert.Contains("ended without a reply", model.Calls[2][^1].Text);
+        Assert.Equal(ChatRole.User, model.Calls[2][^1].Role);
+    }
+
+    [Fact]
+    public async Task Chat_WhoseOnlyWordsCameBeforeItsLastCall_IsAskedForTheAnswer()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Let me check the places."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, "The coast is empty; I would start with a harbour."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Contains("has not seen anything from you yet", model.Calls[2][^1].Text);
+        Assert.Equal("The coast is empty; I would start with a harbour.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
+    public async Task Chat_WhoseWordsCameBeforeItsLastCall_KeepsThemWhenTheNudgeBringsNothing()
+    {
+        var model = new ScriptedModel(
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("The coast is empty."), new FunctionCallContent("c1", "list_places") }),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        Assert.Equal("The coast is empty.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
+    public async Task Chat_ThatStaysQuiet_IsNotAnswered_NotAPlaceholder_AndLeavesNoTraceForTheNextMessage()
+    {
+        var model = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, ""),
+            _ => new ChatMessage(ChatRole.Assistant, "Now I can talk."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        var error = await Assert.ThrowsAsync<LocalizedException>(() => chat.SendAsync("What is there?", _ => { }, CancellationToken.None));
+
+        Assert.Contains("returned nothing", error.Message);
+        Assert.Empty(chat.Lines); // the page hands the message back; the log has no line for it or for a placeholder
+
+        await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);
+
+        var sent = model.Calls[^1];
+        Assert.Single(sent, m => m.Role == ChatRole.User && m.Text == "What is there?");
+        Assert.DoesNotContain(sent, m => m.Text.Contains("note from the app"));
+    }
+
+    [Fact]
+    public async Task Chat_ThatProposesAndSaysNothing_PointsAtTheProposal_WithoutANudgeToProposeAgain()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, "Anything else?"));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
+
+        Assert.NotNull(chat.Proposal);
+        Assert.Equal("Proposal ready to review.", chat.Lines[^1].Text);
+        Assert.Equal(2, model.Calls.Count); // the proposal made the turn an answer: no second go
+
+        await chat.SendAsync("And a fort?", _ => { }, CancellationToken.None);
+
+        // The next message follows an assistant turn, not a bare tool result.
+        var sent = model.Calls[^1];
+        Assert.Equal(ChatRole.Assistant, sent[^2].Role);
+        Assert.DoesNotContain(sent, m => m.Text.Contains("note from the app"));
+    }
+
+    [Fact]
+    public async Task Chat_CutOffByTheLengthLimit_GetsTheShorterNudge()
+    {
+        var model = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, "A shorter answer."));
+        model.Finish[1] = ChatFinishReason.Length;
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("A whole kingdom, please.", _ => { }, CancellationToken.None);
+
+        Assert.Contains("length limit", model.Calls[2][^1].Text);
+        Assert.Equal("A shorter answer.", chat.Lines[^1].Text);
+    }
+
+    // ---- Reviewing: skipping, and what is mentioned but not written ----
+
+    [Fact]
+    public void Skip_AlsoSkipsThePlacesInsideIt_AndSecretsOnlyAboutWhatWasSkipped()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."},
+              {"ref": "m", "kind": "place", "name": "Salt Market", "parent": "t", "text": "Stalls."},
+              {"ref": "d", "kind": "place", "name": "Dock", "parent": "m", "text": "Ropes."},
+              {"ref": "x", "kind": "place", "placeKind": "settlement", "name": "Elsewhere", "text": "Far."},
+              {"ref": "f", "kind": "fact", "name": "The harbourmaster takes bribes.", "links": ["m"], "text": "Everyone knows."},
+              {"ref": "g", "kind": "fact", "name": "Varr and Elsewhere trade in secret.", "links": ["t", "x"], "text": "Few know."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        var also = bundle.Skip(bundle.Find("t")!);
+
+        Assert.Equal(new[] { "d", "f", "m" }, also.Select(d => d.Ref).Order());
+        Assert.False(bundle.Find("t")!.Selected);
+        Assert.True(bundle.Find("x")!.Selected); // not inside Varr
+        Assert.True(bundle.Find("g")!.Selected); // about Elsewhere too
+    }
+
+    [Fact]
+    public void MissingMentions_ListsWhatTextsLinkToByNameThatNobodyHas_OnceEach()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "South lies [[Amphail]]. Ships come from [[Amphail]] and [[Port Varr]]; ask [[p]] or [[existing:port-varr]] or [[actor:a1|Mira]]."},
+              {"ref": "p", "kind": "npc", "name": "Old Hal", "text": "Fishes off [[Varr]] and sells to [[Brinewick]], like [[Amphail]]'s people."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules(actors: new[] { "a1" })).Bundle;
+
+        var missing = WorldBundleParser.MissingMentions(bundle, new[] { "Port Varr" });
+
+        Assert.Equal(new[] { "Amphail", "Brinewick" }, missing.Select(m => m.Name));
+        Assert.Equal(new[] { "Varr", "Old Hal" }, missing[0].By);
+        Assert.Equal(new[] { "Old Hal" }, missing[1].By);
+    }
+
+    [Fact]
+    public void MissingMentions_IgnoresAnEntryTheDmSkipped_AndNamesItWasRenamedTo()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "See [[Amphail]] and [[Kell]]."},
+              {"ref": "k", "kind": "place", "placeKind": "settlement", "name": "Kell", "text": "A fort."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+        bundle.Find("k")!.Name = "Fort Kell"; // renamed: the link still reaches it by the name it was proposed under
+
+        Assert.Equal("Amphail", Assert.Single(WorldBundleParser.MissingMentions(bundle, Array.Empty<string>())).Name);
+
+        bundle.Skip(bundle.Find("t")!); // a skipped entry's text is not going to be saved, so what it mentions is not missing
+        Assert.Empty(WorldBundleParser.MissingMentions(bundle, Array.Empty<string>()));
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_PutsNewEntriesBesideTheWaitingOnes_AndKeepsTheDmsChoices()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "South lies [[Amphail]]."}]}}""";
+        const string amphail = """{"additions": {"entries": [{"ref": "a", "kind": "place", "placeKind": "settlement", "name": "Amphail", "text": "A fishing town south of [[t]]."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Varr is ready."),
+            _ => Calls("c2", "add_entries", amphail),
+            _ => new ChatMessage(ChatRole.Assistant, "Amphail is in too."));
+        var saving = Service();
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
+        Assert.Equal("Amphail", Assert.Single(await saving.Service.MissingMentionsAsync(Dm, chat.Proposal!)).Name);
+        chat.Proposal!.Find("t")!.Name = "Port Varr"; // the DM's rename
+        chat.Proposal.Find("t")!.Cast = true;
+
+        await chat.SendAsync("Write Amphail.", _ => { }, CancellationToken.None);
+
+        Assert.Equal(new[] { "Port Varr", "Amphail" }, chat.Proposal!.Drafts.Select(d => d.Name));
+        Assert.Empty(await saving.Service.MissingMentionsAsync(Dm, chat.Proposal)); // what was mentioned is now written
+        Assert.Contains("ready for the game master", ToolResult(model.Calls[3]));
+    }
+
+    [Fact]
+    public void WouldSkip_ChangesNothing_AndSelectBringsBackThePlacesItSitsIn()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."},
+              {"ref": "m", "kind": "place", "name": "Salt Market", "parent": "t", "text": "Stalls."},
+              {"ref": "d", "kind": "place", "name": "Dock", "parent": "m", "text": "Ropes."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        Assert.Equal(2, bundle.WouldSkip(bundle.Find("t")!).Count);
+        Assert.All(bundle.Drafts, d => Assert.True(d.Selected)); // looking is not skipping
+
+        bundle.Skip(bundle.Find("t")!);
+        var back = bundle.Select(bundle.Find("d")!);
+
+        Assert.Equal(new[] { "m", "t" }, back.Select(d => d.Ref).Order()); // a Dock kept means its Market and town are kept
+        Assert.All(bundle.Drafts, d => Assert.True(d.Selected));
+    }
+
+    [Fact]
+    public void MissingMentions_MatchesTheWayTheWikiDoes_BySlug_AndListsASpellingsOnce()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "Near [[the kings’ road]], [[Brinewick]], [[BRINEWICK]], [[Brine wick]], [[Brine-wick]] and [[Hal's Rest]]."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        var missing = WorldBundleParser.MissingMentions(bundle, new[] { "The Kings' Road", "Hal’s Rest" });
+
+        // Curly or straight apostrophe, any case: the page the wiki finds. A space and a hyphen are one name, and listed once.
+        Assert.Equal(new[] { "Brinewick", "Brine wick" }, missing.Select(m => m.Name));
+    }
+
+    [Fact]
+    public void MissingMentions_KnowsRegionNames_AndAColonInANameIsNotAKey()
+    {
+        const string json = """
+            {"region": "The Coast", "entries": [
+              {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "On [[The Coast]], near [[Order of the Gauntlet: Neverwinter]] and [[Hills]]; see [[existing:port-varr]] and [[place:x|Old Town]]."}
+            ]}
+            """;
+        var bundle = WorldBundleParser.ParseProposal(json, Rules()).Bundle;
+
+        var missing = WorldBundleParser.MissingMentions(bundle, new[] { "Hills", "Port Varr" }); // the parser turns existing:port-varr into its title, which the campaign has
+
+        Assert.Equal("Order of the Gauntlet: Neverwinter", Assert.Single(missing).Name);
+        Assert.Equal(new[] { "t" }, missing[0].ByRefs);
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_RefusesARefTheProposalUsesOrNone_AndTooMany_WithoutChangingTheProposal()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string clash = """{"additions": {"entries": [{"ref": "T", "kind": "place", "placeKind": "settlement", "name": "Other", "text": "x"}]}}""";
+        const string none = """{"additions": {"entries": [{"kind": "place", "placeKind": "settlement", "name": "Other", "text": "x"}]}}""";
+        var many = "{\"additions\": {\"entries\": [" + string.Join(",", Enumerable.Range(0, 30).Select(i => $$"""{"ref": "n{{i}}", "kind": "wiki", "name": "Page {{i}}", "text": "x"}""")) + "]}}";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", clash),
+            _ => Calls("c3", "add_entries", none),
+            _ => Calls("c4", "add_entries", many),
+            _ => new ChatMessage(ChatRole.Assistant, "Sorry."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town.", _ => { }, CancellationToken.None);
+        var waiting = chat.Proposal;
+        var epoch = chat.ProposalEpoch;
+
+        await chat.SendAsync("More.", _ => { }, CancellationToken.None);
+
+        Assert.Same(waiting, chat.Proposal); // none of the three changed it
+        Assert.Equal(epoch, chat.ProposalEpoch);
+        var results = model.Calls[^1].SelectMany(m => m.Contents).OfType<FunctionResultContent>().Select(r => r.Result?.ToString() ?? string.Empty).ToList();
+        Assert.Contains("already used: T", results[^3]);
+        Assert.Contains("one has none", results[^2]);
+        Assert.Contains("at most 30 fit", results[^1]);
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_KeepsWhatSavingAlreadyMadeOfTheOldEntries()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", more),
+            _ => new ChatMessage(ChatRole.Assistant, "Added."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town.", _ => { }, CancellationToken.None);
+        chat.Proposal!.Find("t")!.SavedAs["page"] = "page-1"; // an apply that failed half-way
+        chat.Proposal.Find("t")!.PageTitle = "Varr (2)";
+        chat.Proposal.Find("t")!.Selected = false;
+
+        await chat.SendAsync("And Amphail.", _ => { }, CancellationToken.None);
+
+        var varrDraft = chat.Proposal.Find("t")!;
+        Assert.Equal("page-1", varrDraft.SavedAs["page"]); // or the next apply would write Varr twice
+        Assert.Equal("Varr (2)", varrDraft.PageTitle);
+        Assert.False(varrDraft.Selected);
+        Assert.True(chat.Proposal.Find("a")!.Selected);
+    }
+
+    [Fact]
+    public async Task Chat_ThatAddedEntriesAndThenFailed_GetsItsWaitingProposalBack_AndItsEpoch()
+    {
+        const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", varr),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", more),
+            _ => throw new IOException("connection lost"));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("A town.", _ => { }, CancellationToken.None);
+        var waiting = chat.Proposal;
+
+        await Assert.ThrowsAsync<IOException>(() => chat.SendAsync("And Amphail.", _ => { }, CancellationToken.None));
+
+        Assert.Same(waiting, chat.Proposal);
+        Assert.Single(chat.Proposal!.Drafts);
     }
 
     // ---- Editing what exists ----
@@ -1142,7 +1466,8 @@ public class WorldBuilderTests
     {
         var model = new ScriptedModel(
             _ => new ChatMessage(ChatRole.Assistant, new List<AIContent> { new TextContent("Here is the lay of the land."), new FunctionCallContent("c1", "list_places") }),
-            _ => new ChatMessage(ChatRole.Assistant, string.Empty));
+            _ => new ChatMessage(ChatRole.Assistant, string.Empty),
+            _ => new ChatMessage(ChatRole.Assistant, string.Empty)); // the nudge brings nothing either
         var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
 
         await chat.SendAsync("What is there?", _ => { }, CancellationToken.None);

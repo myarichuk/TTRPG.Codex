@@ -44,7 +44,8 @@
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>Что добавим в мир?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Отправить</value></data>
   <data name="WorldChat.Hint" xml:space="preserve"><value>Ctrl+Enter — отправить.</value></data>
-  <data name="WorldChat.NoReply" xml:space="preserve"><value>(ИИ ничего не ответил.)</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>ИИ дважды ничего не ответил. Отправьте сообщение ещё раз или выберите в настройках ИИ модель посильнее.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Предложение готово к проверке.</value></data>
   <data name="WorldChat.NotAnswered" xml:space="preserve"><value>На это сообщение не ответили; отправьте его снова, когда будете готовы.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Применено: добавлено {0}, скрыто от игроков.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Предложение отброшено.</value></data>
@@ -75,4 +76,25 @@
   <data name="WorldChat.Kind.fact" xml:space="preserve"><value>Секреты</value></data>
   <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>Самоделки</value></data>
   <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(ИИ слишком много искал за один раз и остановился, не ответив. Попросите его продолжить.)</value></data>
+  <data name="WorldChat.Tool.Add" xml:space="preserve"><value>Добавлено записей в предложение: {0}</value></data>
+  <data name="WorldChat.Review.Open" xml:space="preserve"><value>Просмотр по одному</value></data>
+  <data name="WorldChat.Review.Title" xml:space="preserve"><value>Просмотр предложения</value></data>
+  <data name="WorldChat.Review.Step" xml:space="preserve"><value>{0} из {1}</value></data>
+  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>Принять</value></data>
+  <data name="WorldChat.Review.Skip" xml:space="preserve"><value>Пропустить</value></data>
+  <data name="WorldChat.Review.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="WorldChat.Review.AcceptRest" xml:space="preserve"><value>Принять все остальные</value></data>
+  <data name="WorldChat.Review.Close" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>Принято</value></data>
+  <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>Пропущено</value></data>
+  <data name="WorldChat.Review.Pending" xml:space="preserve"><value>Ещё не просмотрено</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>Пропуск также пропустит то, что внутри него или только о нём ({0}).</value></data>
+  <data name="WorldChat.Review.Done" xml:space="preserve"><value>Всё просмотрено: будет добавлено {0}.</value></data>
+  <data name="WorldChat.Review.Rail" xml:space="preserve"><value>Записи</value></data>
+  <data name="WorldChat.Missing.Title" xml:space="preserve"><value>Упомянуто, но ещё не написано</value></data>
+  <data name="WorldChat.Missing.Write" xml:space="preserve"><value>Написать «{0}»</value></data>
+  <data name="WorldChat.Missing.All" xml:space="preserve"><value>Написать все ({0})</value></data>
+  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>упоминается в: {0}</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>Добавь в предложение «{0}»: оно упоминается в: {1}, но ещё не написано. Сохрани тон и факты того, что уже в предложении.</value></data>
+  <data name="WorldChat.Fill.All" xml:space="preserve"><value>Добавь в предложение всё это за один раз: {0}. Каждое упоминается в уже написанных записях, но ещё не написано. Сохрани тон и факты того, что уже есть.</value></data>
 </root>

@@ -34,7 +34,8 @@ public sealed record WorldChatDelta(bool Reasoning, string Text);
 /// </summary>
 public sealed class WorldChat
 {
-    /// <summary>Most model round trips one message may take (tool calls included), so a looping model can't run up a bill.</summary>
+    /// <summary>Most model round trips one attempt at a message may take (tool calls included), so a looping model can't run up a bill.
+    /// A turn that ends empty gets one more attempt (<see cref="RunTurnAsync"/>), so a message costs at most twice this.</summary>
     public const int MaxToolRounds = 16;
 
     private readonly WorldBuilderService builder;
@@ -63,6 +64,13 @@ public sealed class WorldChat
     public WorldBundle? Proposal { get; private set; }
 
     public IReadOnlyList<string> ProposalWarnings { get; private set; } = Array.Empty<string>();
+
+    // The proposal as the model wrote it, so add_entries can put more entries beside them without the model resending the rest.
+    private ProposalInput? held;
+
+    /// <summary>Counts the proposals the model has made from scratch; adding entries to one doesn't change it. The page keeps the
+    /// DM's review decisions while it stays the same.</summary>
+    public int ProposalEpoch { get; private set; }
 
     /// <summary>Sends the DM's message and runs the model, with its tool calls, until it answers. <paramref name="progress"/>
     /// hears each tool the model calls, as a line the page shows while it works; <paramref name="stream"/>, when given, hears the
@@ -93,18 +101,26 @@ public sealed class WorldChat
         trail.Clear();
         var heldProposal = Proposal;
         var heldWarnings = ProposalWarnings;
+        var heldInput = held;
+        var heldEpoch = ProposalEpoch;
         lines.Add(new WorldChatLine(WorldChatSpeaker.Dm, message));
         var before = history.Count;
         try
         {
-            var response = await StreamAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
-            var cutShort = KeepAnswered(response.Messages);
-            var reply = FinalAnswer(response.Messages);
-            // A model that wrote its summary in the same message as its last call and then said nothing: that summary is the answer.
-            // (Not when the round limit cut it off: what it said along the way is only preamble then.)
-            if (reply.Length == 0 && !cutShort) reply = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
-            lines.Add(new WorldChatLine(WorldChatSpeaker.Model, !string.IsNullOrEmpty(reply) ? reply
-                : Localizer.For(Lang)[cutShort ? "WorldChat.TooManySteps" : "WorldChat.NoReply"], trail.ToList()));
+            var (reply, cutShort) = await RunTurnAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, () => !ReferenceEquals(Proposal, heldProposal), stream, ct);
+            var l = Localizer.For(Lang);
+            // A proposal made and then not a word about it: the proposal card is the news.
+            if (reply.Length == 0 && !cutShort && !ReferenceEquals(Proposal, heldProposal))
+            {
+                reply = l["WorldChat.ProposalReady"];
+                // The model gets its turn back too: a history that ends on tool results makes the next message two user turns in a row.
+                history.Add(new ChatMessage(ChatRole.Assistant, ProposalReadyNote));
+            }
+
+            // Nothing even after the nudge: not an answer, so not a line in the log or a turn in the history. The message goes back
+            // to the DM (the Undo below), instead of a placeholder the model would then read as its own last word.
+            if (reply.Length == 0 && !cutShort) throw new LocalizedException("WorldChat.Error.Empty");
+            lines.Add(new WorldChatLine(WorldChatSpeaker.Model, reply.Length > 0 ? reply : l["WorldChat.TooManySteps"], trail.ToList()));
         }
         catch (Exception ex) when (ex is not OperationCanceledException && !(ex is LocalizedException) && SaysNoTools(ex))
         {
@@ -127,6 +143,44 @@ public sealed class WorldChat
             // what it proposed goes with it, and what was waiting for the DM before it comes back.
             Proposal = heldProposal;
             ProposalWarnings = heldWarnings;
+            held = heldInput;
+            ProposalEpoch = heldEpoch;
+        }
+    }
+
+    private const string EmptyNudge = "(A note from the app, not from the game master: your last turn ended without a reply. " +
+        "Answer the game master now, in one short message. If you meant to propose something, call propose_changes now instead of describing it.)";
+
+    private const string CutOffNudge = "(A note from the app, not from the game master: your last turn was cut off by the length limit, so nothing came of it. " +
+        "Keep your reply short. If you were proposing, call propose_changes now with at most 5 entries, each page short, and say the rest can follow in a later proposal.)";
+
+    private const string ProposalReadyNote = "The proposal is ready for the game master to review.";
+
+    private const string PreambleNudge = "(A note from the app, not from the game master: the game master has not seen anything from you yet, only your tool calls. " +
+        "Reply to the game master now, in one short message, with what you found or decided. If you meant to propose something, call propose_changes now.)";
+
+    /// <summary>Runs the model until it answers. A turn that ends with nothing to read (a small model that goes quiet after its
+    /// tool results, or one whose proposal ran past the output limit) gets one nudge and one more go, so the DM isn't left
+    /// guessing. So does one whose only words came before its last tool call (as likely a "let me look" as a summary): the
+    /// nudge asks for the answer, and those words stand in only if it brings nothing. Returns an empty reply when there is
+    /// nothing at all.</summary>
+    private async Task<(string Reply, bool CutShort)> RunTurnAsync(IChatClient client, ChatOptions options, Func<bool> proposed, Action<WorldChatDelta>? stream, CancellationToken ct)
+    {
+        var earlier = string.Empty;
+        for (var attempt = 0; ; attempt++)
+        {
+            var response = await StreamAsync(client, options, stream, ct);
+            var cutShort = KeepAnswered(response.Messages);
+            var reply = FinalAnswer(response.Messages);
+            if (reply.Length > 0 || cutShort) return (reply, cutShort);
+
+            // Not when the round limit cut it off: what it said along the way is only preamble then.
+            var said = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
+            if (said.Length > 0) earlier = said;
+            // A proposal is an answer of a kind: nudging a model that just made one invites it to make another over the first.
+            if (attempt == 1 || proposed()) return (earlier, false);
+            history.Add(new ChatMessage(ChatRole.User, response.FinishReason == ChatFinishReason.Length ? CutOffNudge
+                : said.Length > 0 ? PreambleNudge : EmptyNudge));
         }
     }
 
@@ -176,7 +230,8 @@ public sealed class WorldChat
                 dropped = true;
             }
 
-            if (message.Contents.Count > 0) history.Add(message);
+            // A message with nothing in it (or only blank text, which Anthropic refuses) is not part of the conversation.
+            if (message.Contents.Any(c => c is not TextContent text || !string.IsNullOrWhiteSpace(text.Text))) history.Add(message);
         }
 
         return dropped;
@@ -188,6 +243,7 @@ public sealed class WorldChat
         var proposal = Proposal ?? throw new LocalizedException("WorldChat.Error.NoProposal");
         var result = await builder.SaveAsync(campaign, access, proposal, ct);
         Proposal = null;
+        held = null;
         ProposalWarnings = Array.Empty<string>();
 
         var note = new StringBuilder("(A note from the app, not from the game master: the game master applied your proposal. These now exist, hidden from the players:");
@@ -207,6 +263,7 @@ public sealed class WorldChat
     {
         if (Proposal == null) return;
         Proposal = null;
+        held = null;
         ProposalWarnings = Array.Empty<string>();
         history.Add(new ChatMessage(ChatRole.User, "(A note from the app: the game master discarded your last proposal; nothing from it was saved.)"));
         lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Discarded"], Icon: "x"));
@@ -273,6 +330,15 @@ public sealed class WorldChat
                 "homebrew_fields",
                 "Lists the fields a homebrew entry of one type fills, for its \"properties\"."),
             AIFunctionFactory.Create(
+                async (AdditionInput additions) =>
+                {
+                    Note("plus", "WorldChat.Tool.Add", additions.Entries?.Count ?? 0);
+                    return await AddEntriesAsync(additions);
+                },
+                "add_entries",
+                "Adds entries to the proposal already waiting for the game master, without resending it: pass ONLY the new entries, each with a ref the proposal does not use yet. " +
+                "They may use the refs already in the proposal as a place's parent, in \"links\" and as [[ref]]. The game master's ticks are kept. With no proposal waiting, it makes one."),
+            AIFunctionFactory.Create(
                 async (ProposalInput proposal) =>
                 {
                     Note("clipboard-check", "WorldChat.Tool.Propose", proposal.Entries?.Count ?? 0);
@@ -284,16 +350,63 @@ public sealed class WorldChat
         };
     }
 
-    private async Task<string> ProposeAsync(ProposalInput input)
+    // New entries beside the waiting proposal's: checked together (a new place can sit inside an old one), then what the game master
+    // did with the old entries (ticks, the cast box) and what saving already made of them are put back on them.
+    private async Task<string> AddEntriesAsync(AdditionInput additions)
+    {
+        var added = additions.Entries ?? new List<ProposalEntry>();
+        if (Proposal is not { } before || held is not { } input) return await ProposeAsync(new ProposalInput { Entries = added });
+
+        // A ref the proposal already uses would replace that entry (and every link to it) without a word; a missing one would
+        // match every other missing one. Either way the game master's proposal would change under them.
+        var used = before.Drafts.Select(d => d.Ref).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var clash = added.Select(e => e.Ref?.Trim() ?? string.Empty).Where(r => r.Length == 0 || used.Contains(r)).ToList();
+        if (clash.Count > 0)
+        {
+            return "Nothing was added: every new entry needs its own \"ref\" that the proposal does not use yet (" +
+                   (clash.Any(r => r.Length == 0) ? "one has none" : $"already used: {string.Join(", ", clash.Distinct(StringComparer.OrdinalIgnoreCase))}") +
+                   $"). The proposal has: {string.Join(", ", used)}. Call add_entries again.";
+        }
+
+        var room = WorldBundleParser.MaxDrafts - before.Drafts.Count;
+        if (added.Count > room)
+        {
+            return $"Nothing was added: the proposal already holds {before.Drafts.Count} entries and at most {WorldBundleParser.MaxDrafts} fit, so {Math.Max(room, 0)} more can. " +
+                   "Add fewer, or tell the game master to apply the proposal first and ask for the rest after.";
+        }
+
+        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
+        var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
+        if (!ReferenceEquals(Proposal, before) && Proposal != null)
+        {
+            foreach (var draft in Proposal.Drafts)
+            {
+                if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
+                draft.Selected = old.Selected;
+                draft.Cast = old.Cast;
+                draft.Bestiary = old.Bestiary;
+                draft.SavedAs = old.SavedAs;
+                draft.PageTitle = old.PageTitle;
+                draft.Stats ??= old.Stats;
+                if (!string.IsNullOrWhiteSpace(old.Name) && old.Name != old.OutlineName) draft.Name = old.Name;
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<string> ProposeAsync(ProposalInput input, string tool = "propose_changes", string with = "the whole proposal", bool fresh = true)
     {
         var json = JsonSerializer.Serialize(input, ProposalJson);
         var check = await builder.CheckAsync(campaign, access, json);
         if (!check.Ok)
         {
-            return "Nothing was proposed. Fix these and call propose_changes again with the whole proposal:\n- " + string.Join("\n- ", check.Errors) +
+            return $"Nothing was proposed. Fix these and call {tool} again with {with}:\n- " + string.Join("\n- ", check.Errors) +
                    (check.Warnings.Count > 0 ? "\nAlso worth fixing:\n- " + string.Join("\n- ", check.Warnings) : "");
         }
 
+        held = input;
+        if (fresh) ProposalEpoch++;
         Proposal = check.Bundle;
         ProposalWarnings = check.Warnings;
         return $"The proposal ({check.Bundle.Drafts.Count} entries) is ready for the game master to review and apply; nothing is saved yet. Tell them in a sentence or two what it adds." +
@@ -317,6 +430,13 @@ public sealed class ProposalInput
     public string? Region { get; set; }
 
     [JsonPropertyName("entries"), Description("Every entry of the proposal; at most 30.")]
+    public List<ProposalEntry>? Entries { get; set; }
+}
+
+/// <summary>What <c>add_entries</c> takes: only the entries to put beside those already waiting.</summary>
+public sealed class AdditionInput
+{
+    [JsonPropertyName("entries"), Description("ONLY the new entries (a few at a time), each with a ref the waiting proposal does not use.")]
     public List<ProposalEntry>? Entries { get; set; }
 }
 
