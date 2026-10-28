@@ -94,14 +94,24 @@ domain under CC0 1.0 by the TTRPG.Codex project.
   Community Use Policy requires the project to be free, may be amended or withdrawn by Paizo at any
   time, and cannot be transferred; Foundry's permission comes from an agreement between Paizo and
   Foundry that does not pass to this project. Importing from them would trade an irrevocable grant
-  for revocable ones.
+  for revocable ones, and their mix of OGL-era and Remaster entries would put OGL-only content,
+  which cannot be relicensed under the ORC, into an ORC pack.
   A Remaster pack would have to be transcribed or converted from the ORC-licensed books
   themselves, under these conditions:
-  - the pack (including its data structure, which the ORC treats as Adapted Material) is released
-    under the ORC, with an ORC Notice and the upstream attribution; this project's code stays under
-    its own licence, since the ORC grants no rights to code and does not require source release;
-  - Reserved Material is left out: trademarks and trade dress, art, settings, deities, named
-    characters and places, and narrative text, as designated by the ORC Notice in each book;
+  - the mechanical content of the pack (ORC section II.b), and the pack as a database to the extent
+    database rights apply (II.c), is released under the ORC with the four notices section III
+    requires: the ORC Notice, the upstream attribution, the Reserved Material notice and any
+    expressly designated Licensed Material. This project's code stays under its own licence,
+    because the ORC grants no rights to software code and requires no source release (ORC AxE,
+    "Digital Applications"); keeping the PF2E mechanics in data, not in engine code, keeps the pack
+    the only Derivative Work;
+  - Reserved Material (section I.h: trademarks, trade dress, art, settings, named characters,
+    proper nouns and the names and titles derived from them, and description not needed to play)
+    is left out, and proper nouns are stripped from otherwise licensed entries, as the AxE does
+    with "Bimbol's Bursting Bunion" becoming "Bursting Bunion". The ORC defines Licensed Material
+    itself (section I.e) and needs no SRD; a book's notice can only designate more material as
+    Licensed, never less;
+  - only Remaster material goes in, since OGL content cannot be relicensed under the ORC;
   - the system is not named "Pathfinder", which is Paizo's trademark.
   Until such a pack exists, a PF2E-shaped system can still be defined in `system.yaml` and filled
   from a local transcription that is not redistributed here.
