@@ -1032,9 +1032,11 @@ a.user-chip:active { transform: scale(0.97); }
 .wiki-figure-portrait { width: min(100%, 13rem); align-self: center; display: flex; justify-content: center; padding: 0.75rem; }
 .wiki-figure-portrait img { aspect-ratio: 1; object-fit: cover; }
 .wiki-figure-portrait .avatar-xl { width: 100%; height: auto; aspect-ratio: 1; }
+.wiki-body { overflow-wrap: anywhere; }
 .wiki-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; color: var(--text-3); }
 @media (max-width: 640px) {
     .wiki-aside { float: none; width: 100%; margin-inline-start: 0; }
+    .wiki-figure-portrait { width: min(100%, 9rem); }
     .wiki-figure-placeholder { width: min(100%, 12rem); align-self: center; }
 }
 .wiki-body { font-size: 1.02rem; line-height: 1.65; }
@@ -1057,30 +1059,42 @@ a.user-chip:active { transform: scale(0.97); }
 .count-input { width: 68px; }
 .import-list { max-height: 50vh; overflow-y: auto; padding-inline-end: 0.5rem; }
 dialog.codex-dialog-wide { width: min(680px, 94vw); }
-/* The proposal review: the entries as a rail on one side, the entry as it will read on the other, the decision at the foot. */
-dialog.codex-dialog-review { width: min(960px, 96vw); max-height: calc(100vh - 2rem); }
-.review-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr; gap: 1.25rem; margin-top: 0.75rem; }
+/* The proposal review: the entries as a rail on one side, the entry as it will read on the other, the decision at the foot.
+   The dialog is a column whose body scrolls and whose footer stays put, so Accept is always reachable, and it is anchored at the
+   top with a steady height so the buttons don't move under the pointer from one entry to the next. */
+dialog.codex-dialog-review { width: min(960px, 96vw); max-height: calc(100dvh - 1rem); margin-block: 4vh auto; }
+dialog.codex-dialog-review[open] { display: flex; flex-direction: column; }
+dialog.codex-dialog-review .dialog-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.review-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) 1fr; gap: 1.25rem; margin-top: 0.75rem; min-height: min(22rem, 50vh); }
 .review-rail { max-height: 56vh; overflow-y: auto; border-inline-end: 1px solid var(--border); padding-inline-end: 0.75rem; }
-.review-rail-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); text-align: start; }
-.review-rail-item:hover { background: var(--surface-2); color: var(--text); }
-.review-rail-item.is-current { background: var(--surface-2); color: var(--text); border-inline-start: 3px solid var(--accent); }
+.review-rail-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-inline-start: 3px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-2); text-align: start; }
+.review-rail-item:hover { background: color-mix(in srgb, var(--surface-2) 55%, transparent); color: var(--text); }
+.review-rail-item.is-current { background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); color: var(--text); border-inline-start-color: var(--accent); }
 .review-rail-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.review-rail-item:has(.review-dot-Skipped) .review-rail-name { text-decoration: line-through; opacity: 0.6; }
 .review-dot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 2px solid var(--text-3); }
 .review-dot-Accepted { background: var(--accent); border-color: var(--accent); }
 .review-dot-Skipped { border-style: dashed; opacity: 0.6; }
-.review-pane { min-width: 0; max-height: 56vh; overflow-y: auto; }
+.review-pane { min-width: 0; max-height: 56vh; overflow-x: hidden; overflow-y: auto; }
+.review-name, .review-pitch, .review-body { overflow-wrap: anywhere; }
 .review-name { font-size: 1.25rem; margin: 0 0 0.25rem; }
-.review-state { margin-inline-start: 0.5rem; font-size: 0.7rem; vertical-align: middle; }
+.review-state { display: inline-block; white-space: nowrap; margin-inline-start: 0.5rem; font-size: 0.7rem; vertical-align: middle; }
 .review-pitch { color: var(--text-2); font-style: italic; }
 .review-body { font-size: 1rem; line-height: 1.6; }
-.review-done { margin-top: 0.75rem; color: var(--accent); }
-.review-actions { flex-wrap: wrap; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border); margin: 0 1.6rem; padding-inline: 0; }
+.review-done { margin-top: 0.75rem; min-height: 1.5em; color: var(--accent); }
+.review-actions { flex: none; flex-wrap: wrap; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border); margin: 0 1.6rem; padding-inline: 0; }
 .review-spacer { flex: 1 1 auto; }
 .world-missing { border: 1px dashed var(--border-strong); border-radius: var(--radius-md); padding: 0.6rem 0.75rem; }
-.world-missing-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.2rem 0; }
+.world-missing-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.25rem 0.75rem; padding: 0.2rem 0; }
+.world-missing-row .cx-btn { white-space: nowrap; }
 @media (max-width: 720px) {
-    .review-layout { grid-template-columns: 1fr; }
+    .review-layout { grid-template-columns: 1fr; min-height: 0; }
     .review-rail { max-height: 9rem; border-inline-end: 0; border-bottom: 1px solid var(--border); padding-inline-end: 0; padding-bottom: 0.5rem; }
+    /* One scroller on a phone: the dialog body. The footer is two columns, the two decisions that matter each on a row of their own. */
+    .review-pane { max-height: none; overflow-y: visible; }
+    .review-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .review-actions .review-spacer { display: none; }
+    .review-actions [data-testid="world-review-accept"], .review-actions [data-testid="world-review-apply"] { grid-column: 1 / -1; }
 }
 .creature-card { min-height: auto; }
 .journal-entry { position: relative; }

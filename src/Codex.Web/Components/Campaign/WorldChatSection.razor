@@ -289,7 +289,7 @@ else if (chat != null)
                                     var cascade = CascadeCount(proposal, current);
                                     <p class="eyebrow mb-1" role="status">@L["WorldChat.Review.Step", position + 1, order.Count] · @L[$"WorldChat.Kind.{current.Kind}"]@Detail(proposal, current)</p>
                                     <h3 class="review-name">@current.Name <span class="chip review-state review-state-@state">@L[$"WorldChat.Review.{state}"]</span></h3>
-                                    @if (!string.IsNullOrWhiteSpace(current.Pitch))
+                                    @if (!string.IsNullOrWhiteSpace(current.Pitch) && !PitchRepeatsBody(current))
                                     {
                                         <p class="review-pitch">@current.Pitch</p>
                                     }
@@ -349,21 +349,19 @@ else if (chat != null)
                                 }
                             </section>
                         </div>
-                        @if (left == 0 && order.Count > 0)
-                        {
-                            <p class="review-done mb-0" role="status" data-testid="world-review-done">@L["WorldChat.Review.Done", order.Count(x => x.Selected)]</p>
-                        }
+                        @* Always there, so the dialog doesn't change height when the last entry is decided. *@
+                        <p class="review-done mb-0" role="status" data-testid="world-review-done">@(left == 0 && order.Count > 0 ? L["WorldChat.Review.Done", order.Count(x => x.Selected)] : null)</p>
                     </div>
                     <div class="dialog-actions review-actions">
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => Step(order, position - 1)" Disabled="@(position == 0)" data-testid="world-review-back"><LucideIcon IconName="chevron-left" Size="16" /> @L["WorldChat.Review.Back"]</CodexButton>
                         @if (current != null)
                         {
                             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => SkipDraft(proposal, current)" Disabled="@(busy || applying)" data-testid="world-review-skip"><LucideIcon IconName="x" Size="16" /> @L["WorldChat.Review.Skip"]</CodexButton>
-                            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => Accept(proposal, current)" Disabled="@(busy || applying)" data-testid="world-review-accept"><LucideIcon IconName="check" Size="16" /> @L["WorldChat.Review.Accept"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => Accept(proposal, current)" Disabled="@(busy || applying)" id="world-review-accept" data-testid="world-review-accept"><LucideIcon IconName="check" Size="16" /> @L["WorldChat.Review.Accept"]</CodexButton>
                         }
                         @if (left > 1)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => AcceptRest(proposal)" Disabled="@(busy || applying)" data-testid="world-review-accept-rest">@L["WorldChat.Review.AcceptRest"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => AcceptRestAsync(proposal)" Disabled="@(busy || applying)" data-testid="world-review-accept-rest">@L["WorldChat.Review.AcceptRest"]</CodexButton>
                         }
                         <span class="review-spacer"></span>
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseReviewAsync" data-testid="world-review-close">@L["WorldChat.Review.Close"]</CodexButton>
@@ -484,12 +482,22 @@ else if (chat != null)
         await RefreshMissingAsync();
     }
 
-    private void AcceptRest(WorldBundle proposal)
+    // The button that was pressed goes away with the last undecided entry; focus goes to Accept so the keyboard isn't left on the page.
+    private async Task AcceptRestAsync(WorldBundle proposal)
     {
+        await JS.InvokeVoidAsync("codex.focus", "world-review-accept");
         foreach (var d in proposal.Drafts.Where(d => d.Selected)) decided.Add(d.Ref);
     }
 
     // How many other entries skipping this one would skip, for the note under it; nothing is changed.
+    // A pitch the app made from the start of the text would only say the same thing twice, one above the other.
+    private static bool PitchRepeatsBody(WorldDraft d)
+    {
+        static string Flat(string text) => System.Text.RegularExpressions.Regex.Replace(text.Replace("[[", string.Empty).Replace("]]", string.Empty), @"\s+", " ").Trim().TrimEnd('…', '.', ' ');
+        var pitch = Flat(d.Pitch);
+        return pitch.Length > 0 && Flat(d.Body ?? string.Empty).StartsWith(pitch, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static int CascadeCount(WorldBundle proposal, WorldDraft d) => proposal.WouldSkip(d).Count;
 
     // Asks the model for what the proposal mentions and doesn't have, as the DM would: in the conversation, so it shows in the log.
