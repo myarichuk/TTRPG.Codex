@@ -1,6 +1,7 @@
 @using Codex.Core
 @using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
+@inject IContentRegistry Registry
 
 @* What a character carries: each item with a quantity and an Equipped box, and a browser to add more
    from the Library (and the campaign's homebrew). Equipped armor and shields feed armor class. *@
@@ -19,20 +20,20 @@
             {
                 <li class="list-row py-1" data-testid="inventory-item">
                     <span class="row-main">
-                        <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="text-reset">@item.Entry.Name</a>
-                        <span class="small-muted">@Detail(item.Entry)</span>
+                        <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="text-reset">@Shown(item.Entry).Name</a>
+                        <span class="small-muted">@Detail(Shown(item.Entry))</span>
                     </span>
                     @if (CanEdit)
                     {
                         <span class="d-flex align-items-center gap-2">
-                            <label class="visually-hidden" for="@(id)-q-@item.Index">@L["Actor.Inv.Quantity", item.Entry.Name]</label>
+                            <label class="visually-hidden" for="@(id)-q-@item.Index">@L["Actor.Inv.Quantity", Shown(item.Entry).Name]</label>
                             <input id="@(id)-q-@item.Index" type="number" min="1" class="field-input field-sm" style="width:4.5rem" value="@item.Quantity"
                                    @onchange="e => UpdateAsync(item, quantity: ParseQuantity(e.Value?.ToString()))" data-testid="inventory-qty" />
                             <span class="field-check mb-0">
                                 <input id="@(id)-e-@item.Index" class="field-box" type="checkbox" checked="@item.Equipped" @onchange="e => UpdateAsync(item, equipped: (bool)e.Value!)" data-testid="inventory-equip" />
                                 <label for="@(id)-e-@item.Index" >@L["Actor.Inv.Equipped"]</label>
                             </span>
-                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Inv.Remove", item.Entry.Name]" OnClick="() => RemoveAsync(item)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Inv.Remove", Shown(item.Entry).Name]" OnClick="() => RemoveAsync(item)" />
                         </span>
                     }
                     else
@@ -80,6 +81,8 @@
     private string? browseType;
 
     protected override void OnParametersSet() => browseType ??= Rules.Types.FirstOrDefault();
+
+    private ContentEntry Shown(ContentEntry entry) => Registry.Show(entry, L.Culture.Name);
 
     private ContentTypeDefinition? TypeOf(string? type) => type == null ? null : FindType?.Invoke(type);
 

@@ -223,7 +223,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             HitPointsLabel: primary?.Label,
             HitPointsBasis: system?.Ai.PrimaryResourceBasis,
             Equipment: carriable.Count == 0 ? null : Options(carriable),
-            OneArmorAndShield: armor != null), ct);
+            OneArmorAndShield: armor != null,
+            AttributeAdvice: AttributeAdvice(system?.SheetRules?.Attributes)), ct);
 
         if (inventory == null || carriable.Count == 0)
         {
@@ -251,6 +252,20 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         }
 
         return draft;
+    }
+
+    /// <summary>How the system generates scores, in a sentence for the prompt; null when it says nothing.</summary>
+    internal static string? AttributeAdvice(AttributeRules? rules)
+    {
+        if (rules == null) return null;
+        if (rules.StandardArray.Count > 0)
+        {
+            return $"use the standard array {string.Join(", ", rules.StandardArray)}, each value once, the best scores on what they do best";
+        }
+
+        return rules.PointBuy is { } pointBuy
+            ? $"scores from {pointBuy.Min} to {pointBuy.Max} as if bought with {pointBuy.Budget} points, the best scores on what they do best"
+            : null;
     }
 
     /// <summary>Gear for a character who has none yet (one made from a stat block or a blank sheet), as the sheet stores it;

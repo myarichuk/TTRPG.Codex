@@ -180,7 +180,7 @@ else
                     <ul class="mb-0 small">
                         @foreach (var violation in evaluation.Violations)
                         {
-                            <li>@violation.Message</li>
+                            <li>@Describe(violation)</li>
                         }
                     </ul>
                 </section>
@@ -196,7 +196,7 @@ else
                     <ul class="mb-0 small">
                         @foreach (var warning in evaluation.Warnings)
                         {
-                            <li>@warning.Message</li>
+                            <li>@Describe(warning)</li>
                         }
                     </ul>
                 </section>
@@ -375,14 +375,14 @@ else
                             {
                                 var targets = PointTargets(grant);
                                 <div class="mb-2" data-testid="increase-@grant.Pick.Index">
-                                    <div class="small fw-semibold">@grant.Pick.Entry.Name <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
+                                    <div class="small fw-semibold">@ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name) <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
                                     <div class="d-flex flex-wrap gap-2">
                                         @for (var point = 0; point < grant.Points; point++)
                                         {
                                             var pointIndex = point;
                                             var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
                                             <div>
-                                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", grant.Pick.Entry.Name, pointIndex + 1, grant.Points]</span></label>
+                                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name), pointIndex + 1, grant.Points]</span></label>
                                                 <select id="@selectId" class="field-select field-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
                                                         @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
                                                     <option value="">@L["Actor.Sheet.Choose"]</option>
@@ -406,7 +406,7 @@ else
                             {
                                 if (!evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
                                 <dt>@derived.Label</dt>
-                                <dd data-testid="derived-@derived.Key">@FormatSigned(value)</dd>
+                                <dd data-testid="derived-@derived.Key"><bdi dir="ltr">@FormatSigned(value)</bdi></dd>
                             }
                         </dl>
                     }
@@ -464,14 +464,14 @@ else
                                 var levelInputId = "class-level-" + classId;
                                 <li class="list-row py-1" data-testid="class-row">
                                     <span>
-                                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(cls.Entry?.Name ?? classId)</a>
+                                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(Nm(cls.Entry) ?? classId)</a>
                                         @if (cls.IsFirst)
                                         {
                                             <span class="small-muted"> · @L["Actor.Sheet.FirstClass"]</span>
                                         }
                                         @if (cls.Subclass != null)
                                         {
-                                            <span class="small-muted"> · @cls.Subclass.Name</span>
+                                            <span class="small-muted"> · @Nm(cls.Subclass)</span>
                                         }
                                     </span>
                                     @if (cls.IsFirst || !CanEdit)
@@ -481,10 +481,10 @@ else
                                     else
                                     {
                                         <span class="d-flex align-items-center gap-2">
-                                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", cls.Entry?.Name ?? classId]</label>
+                                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", Nm(cls.Entry) ?? classId]</label>
                                             <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
                                                    @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
-                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", cls.Entry?.Name ?? classId]" OnClick="() => RemoveClass(multiclass, classId)" />
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", Nm(cls.Entry) ?? classId]" OnClick="() => RemoveClass(multiclass, classId)" />
                                         </span>
                                     }
                                 </li>
@@ -492,13 +492,13 @@ else
                                 {
                                     var subclassId = "class-subclass-" + classId;
                                     <li class="py-1">
-                                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", cls.Entry?.Name ?? classId]</label>
+                                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", Nm(cls.Entry) ?? classId]</label>
                                         <select id="@subclassId" class="field-select field-sm" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
                                                 @onchange="e => SetClassSubclass(multiclass, classId, e.Value?.ToString())">
                                             <option value="">@L["Actor.Sheet.NoneYet"]</option>
                                             @foreach (var option in SubclassOptions(classId))
                                             {
-                                                <option value="@option.Id">@option.Name</option>
+                                                <option value="@option.Id">@Nm(option)</option>
                                             }
                                         </select>
                                     </li>
@@ -515,7 +515,7 @@ else
                                         <option value="">@L["Actor.Sheet.Choose"]</option>
                                         @foreach (var option in evaluation.MulticlassOptions)
                                         {
-                                            <option value="@option.Id">@option.Name</option>
+                                            <option value="@option.Id">@Nm(option)</option>
                                         }
                                     </select>
                                 </div>
@@ -536,7 +536,7 @@ else
                     {
                         <div class="mb-3">
                             <div class="label-caps">@label</div>
-                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@item.Entry.Name</a>
+                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
                             <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
                         </div>
                     }
@@ -740,7 +740,7 @@ else
                             <select id="levelup-class" class="field-select field-sm" @bind="levelUpClassId" data-testid="levelup-class">
                                 @foreach (var cls in evaluation.Classes)
                                 {
-                                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", cls.Entry?.Name ?? cls.Id, cls.Level + 1]</option>
+                                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", Nm(cls.Entry) ?? cls.Id, cls.Level + 1]</option>
                                 }
                                 @foreach (var option in evaluation.MulticlassOptions)
                                 {
@@ -960,7 +960,7 @@ else
     {
         if (evaluation is { Classes.Count: > 0 })
         {
-            foreach (var cls in evaluation.Classes) yield return $"{cls.Entry?.Name ?? cls.Id} {cls.Level}";
+            foreach (var cls in evaluation.Classes) yield return $"{Nm(cls.Entry) ?? cls.Id} {cls.Level}";
         }
         else if (HasLevel)
         {
@@ -1139,7 +1139,7 @@ else
         engine.ApplyArmorClass(editSheet, evaluation);
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
-            kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, e.Name)).ToList());
+            kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, Nm(e)!)).ToList());
     }
 
     private Task OnRulesInputChanged()
@@ -1221,6 +1221,23 @@ else
     }
 
     /// <summary>"+1 STR, +1 DEX" after a pick that raised scores.</summary>
+    private string? Nm(ContentEntry? entry) => entry == null ? null : ContentRegistry.Name(entry, L.Culture.Name);
+
+    /// <summary>A rule message in the reader's language: the localized sentence when the engine named one, built from its arguments (entries by their
+    /// translated names, rule texts and system words through the system's translation); else the engine's English.</summary>
+    private string Describe(RuleViolation violation)
+    {
+        if (violation.Key == null || violation.Args == null || !L.Has(violation.Key)) return violation.Message;
+        var culture = L.Culture.Name;
+        var args = violation.Args.Select(a => a switch
+        {
+            ContentEntry entry => ContentRegistry.Name(entry, culture),
+            string text when system != null => system.DisplayRuleMessage(text) is var message && message != text ? message : system.DisplayValue(text),
+            _ => a
+        }).ToArray();
+        return L[violation.Key, args];
+    }
+
     private string? PickNote(SheetPick pick) =>
         pick.Choices.Count == 0 || system == null ? null
             : string.Join(", ", pick.Choices.Select(c => $"+{c.Value} {system.Attributes.FirstOrDefault(a => a.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? c.Key}"));

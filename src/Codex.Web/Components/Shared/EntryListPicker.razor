@@ -1,5 +1,6 @@
 @using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
+@inject IContentRegistry Registry
 
 @* A multi-pick list of Library entries (spells, feats, knacks...) driven by a ListRule: the picked
    entries as removable chips, a count against the rule's limit, and a browsable, filterable list of
@@ -29,17 +30,18 @@
             @foreach (var pick in Picks)
             {
                 var entry = pick.Entry;
+                var shownName = Registry.Name(entry, L.Culture.Name);
                 var note = Note?.Invoke(pick);
                 <li class="list-inline-item mb-1">
                     <span class="pill pill-accent" data-testid="list-@Rule.Key-pick">
-                        <a href="@LibraryPath/@entry.Type/@Uri.EscapeDataString(entry.Id)" class="text-reset text-decoration-none">@entry.Name</a>
+                        <a href="@LibraryPath/@entry.Type/@Uri.EscapeDataString(entry.Id)" class="text-reset text-decoration-none">@shownName</a>
                         @if (!string.IsNullOrEmpty(note))
                         {
                             <span class="small ms-1">(@note)</span>
                         }
                         @if (!ReadOnly)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Layout.Picker.Remove", entry.Name]" OnClick="() => Removed.InvokeAsync(pick.Index)" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Layout.Picker.Remove", shownName]" OnClick="() => Removed.InvokeAsync(pick.Index)" />
                         }
                     </span>
                 </li>

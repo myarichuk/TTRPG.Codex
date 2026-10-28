@@ -14,8 +14,24 @@ public sealed record HitPointLevel(int Level, string ClassName, int Die, int Bas
 /// or while no class with a hit die is chosen: the sheet's own number stands.</summary>
 public sealed record HitPointSummary(string Mode, bool Active, int Max, int Modifier, IReadOnlyList<HitPointLevel> Levels, int LevelExtra = 0, string? ExtraSource = null);
 
+/// <summary>One contribution to armor class. <see cref="Kind"/> says what it is (body, dex, unarmored, defense, bonus, misc) so the UI words it in
+/// the reader's language; <see cref="Entry"/> is the item, class or feat behind it, whose name the UI shows translated.</summary>
+public sealed record ArmorClassLine(string Kind, string Label, int Value, ContentEntry? Entry = null, int? DexCap = null)
+{
+    /// <summary>The English line, for logs and tests.</summary>
+    public override string ToString() => Kind switch
+    {
+        "dex" => $"Dexterity: {(Value >= 0 ? "+" : "")}{Value}{(DexCap is > 0 ? $" (limited to +{DexCap})" : string.Empty)}",
+        "bonus" or "misc" => $"{Label}: {(Value >= 0 ? "+" : "")}{Value}",
+        _ => $"{Label}: {Value}"
+    };
+}
+
 /// <summary>Armor class as the rules work it out, with a line per contribution for display.</summary>
-public sealed record ArmorClassSummary(string Mode, bool Active, int Total, IReadOnlyList<string> Lines);
+public sealed record ArmorClassSummary(string Mode, bool Active, int Total, IReadOnlyList<ArmorClassLine> Parts)
+{
+    public IReadOnlyList<string> Lines => Parts.Select(p => p.ToString()).ToList();
+}
 
 public sealed partial class SheetRuleEngine
 {
@@ -34,7 +50,7 @@ public sealed partial class SheetRuleEngine
             var entry = rules.Types.Select(type => resolver.Resolve(type, id)).FirstOrDefault(e => e != null);
             if (entry == null)
             {
-                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: \"{id}\" is not in the Library."));
+                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: \"{id}\" is not in the Library.", "Actor.Rule.NotInLibrary", new object?[] { rules.Label, id }));
                 continue;
             }
 
@@ -48,12 +64,12 @@ public sealed partial class SheetRuleEngine
             var worn = result.Inventory.Where(i => i.Equipped).ToList();
             if (worn.Count(i => IsBodyArmor(i.Entry, armor)) > 1)
             {
-                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: only one suit of armor can be worn at a time."));
+                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: only one suit of armor can be worn at a time.", "Actor.Rule.OneArmor", new object?[] { rules.Label }));
             }
 
             if (worn.Count(i => IsShield(i.Entry, armor)) > 1)
             {
-                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: only one shield can be carried in hand."));
+                result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: only one shield can be carried in hand.", "Actor.Rule.OneShield", new object?[] { rules.Label }));
             }
         }
     }
@@ -172,7 +188,7 @@ public sealed partial class SheetRuleEngine
 
         var requested = (YamlValues.GetString(sheet, rules.ModeKey) ?? "manual").ToLowerInvariant();
         var mode = requested == "auto" ? "auto" : "manual";
-        var lines = new List<string>();
+        var lines = new List<ArmorClassLine>();
         var (interpreter, identifiers) = FormulaContext(sheet);
 
         var worn = result.Inventory.Where(i => i.Equipped).Select(i => i.Entry).ToList();
@@ -187,15 +203,15 @@ public sealed partial class SheetRuleEngine
             var cap = ToDouble(Property(body, rules.DexCapProperty));
             var dexPart = cap.HasValue ? (cap.Value <= 0 ? 0 : Math.Min(dex, (int)cap.Value)) : dex;
             total = baseValue + dexPart;
-            lines.Add($"{body.Name}: {baseValue}");
-            if (dexPart != 0 || !cap.HasValue) lines.Add($"Dexterity: {Signed(dexPart)}{(cap is > 0 ? $" (limited to +{(int)cap.Value})" : string.Empty)}");
+            lines.Add(new ArmorClassLine("body", body.Name, baseValue, body));
+            if (dexPart != 0 || !cap.HasValue) lines.Add(new ArmorClassLine("dex", "Dexterity", dexPart, null, cap is > 0 ? (int)cap.Value : null));
         }
         else
         {
-            var options = new List<(string Label, long Value)>();
+            var options = new List<(string Kind, string Label, long Value, ContentEntry? Entry)>();
             try
             {
-                options.Add(("Unarmored", EvaluateFormula(interpreter, identifiers, rules.Unarmored)));
+                options.Add(("unarmored", "Unarmored", EvaluateFormula(interpreter, identifiers, rules.Unarmored), null));
             }
             catch (Exception ex)
             {
@@ -209,7 +225,7 @@ public sealed partial class SheetRuleEngine
                 if (shielded && !shieldAllowed) continue;
                 try
                 {
-                    options.Add(($"{cls.Entry.Name} defense", EvaluateFormula(interpreter, identifiers, formula!.ToString()!)));
+                    options.Add(("defense", $"{cls.Entry.Name} defense", EvaluateFormula(interpreter, identifiers, formula!.ToString()!), cls.Entry));
                 }
                 catch (Exception ex)
                 {
@@ -217,10 +233,10 @@ public sealed partial class SheetRuleEngine
                 }
             }
 
-            if (options.Count == 0) options.Add(("Unarmored", 10 + dex));
+            if (options.Count == 0) options.Add(("unarmored", "Unarmored", 10 + dex, null));
             var best = options.OrderByDescending(o => o.Value).First();
             total = best.Value;
-            lines.Add($"{best.Label}: {best.Value}");
+            lines.Add(new ArmorClassLine(best.Kind, best.Label, (int)best.Value, best.Entry));
         }
 
         foreach (var entry in worn)
@@ -228,7 +244,7 @@ public sealed partial class SheetRuleEngine
             var bonus = ToDouble(Property(entry, rules.BonusProperty));
             if (!bonus.HasValue || bonus.Value == 0) continue;
             total += (long)bonus.Value;
-            lines.Add($"{entry.Name}: {Signed((int)bonus.Value)}");
+            lines.Add(new ArmorClassLine("bonus", entry.Name, (int)bonus.Value, entry));
         }
 
         foreach (var listKey in rules.BonusLists)
@@ -239,7 +255,7 @@ public sealed partial class SheetRuleEngine
                 if (!bonus.HasValue || bonus.Value == 0) continue;
                 if ((Property(pick.Entry, rules.RequiresArmorProperty) is true or "true" or "True") && body == null) continue;
                 total += (long)bonus.Value;
-                lines.Add($"{pick.Entry.Name}: {Signed((int)bonus.Value)}");
+                lines.Add(new ArmorClassLine("bonus", pick.Entry.Name, (int)bonus.Value, pick.Entry));
             }
         }
 
@@ -247,7 +263,7 @@ public sealed partial class SheetRuleEngine
         if (misc != 0)
         {
             total += misc;
-            lines.Add($"Other bonuses: {Signed(misc)}");
+            lines.Add(new ArmorClassLine("misc", "Other bonuses", misc));
         }
 
         result.ArmorClass = new ArmorClassSummary(mode, mode == "auto", (int)total, lines);

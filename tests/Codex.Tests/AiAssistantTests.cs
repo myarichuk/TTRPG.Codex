@@ -55,6 +55,24 @@ public class AiAssistantTests
     }
 
     [Fact]
+    public void ParseDraft_AttributeAnsweredUnderItsLabel_IsKept()
+    {
+        var draft = AiAssistant.ParseDraft("""{"name":"X","sheet":{"Strength":15,"DEX":"12"}}""", Request);
+
+        Assert.Equal(15L, draft.Sheet["str"]);
+        Assert.Equal(12L, draft.Sheet["dex"]);
+    }
+
+    [Fact]
+    public void CreateCharacterPrompt_AsksForEveryScore_WithTheSystemsGeneration()
+    {
+        var (_, user) = AiPrompts.CreateCharacter(Request with { AttributeAdvice = "use the standard array 15, 14, 13, 12, 10, 8" });
+
+        Assert.Contains("Give EVERY attribute", user);
+        Assert.Contains("standard array 15, 14, 13, 12, 10, 8", user);
+    }
+
+    [Fact]
     public void ParseDraft_UnknownReferenceId_IsDroppedNotSaved()
     {
         var draft = AiAssistant.ParseDraft("""{"name":"X","sheet":{"class":"paladin"}}""", Request);

@@ -79,7 +79,8 @@ public sealed record CharacterConceptRequest(
     string? HitPointsLabel = null,
     string? HitPointsBasis = null,
     IReadOnlyList<EquipmentOption>? Equipment = null,
-    bool OneArmorAndShield = false);
+    bool OneArmorAndShield = false,
+    string? AttributeAdvice = null);
 
 /// <summary>What the world-building chat's model is told about the campaign.</summary>
 /// <param name="HomebrewTypes">Content types a homebrew entry may have, as "id (label)".</param>
@@ -255,6 +256,12 @@ public static class AiPrompts
         foreach (var a in r.Attributes)
         {
             sb.AppendLine($"- {a.Key}: {a.Label}, {a.Min?.ToString() ?? "?"}-{a.Max?.ToString() ?? "?"}");
+        }
+
+        if (r.Attributes.Count > 0)
+        {
+            // Left to "respect the specification", models often leave the scores out, and the sheet then keeps its starting values.
+            sb.AppendLine($"Give EVERY attribute above a whole-number score in \"sheet\", under its key, chosen to suit the concept{(string.IsNullOrWhiteSpace(r.AttributeAdvice) ? "" : ": " + r.AttributeAdvice.Trim())}");
         }
 
         sb.AppendLine().AppendLine("Fields (key: label, type, options):");

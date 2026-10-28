@@ -1,4 +1,5 @@
 @using Codex.Plugin.Abstractions
+@inject IContentRegistry Registry
 
 @* A browsable list of Library entries to add from: everything is visible straight away, narrowed by a
    name filter and by dropdowns for the type's filter fields (level, school, category...). Used by the
@@ -25,7 +26,7 @@
                     <option value="">@L["Library.Entries.Any", facet.Label.ToLowerInvariant()]</option>
                     @foreach (var value in facet.Values)
                     {
-                        <option value="@value" selected="@(filters.GetValueOrDefault(facet.Key) == value)">@value</option>
+                        <option value="@value" selected="@(filters.GetValueOrDefault(facet.Key) == value)">@DisplayValue(facet.Key, value)</option>
                     }
                 </select>
             </div>
@@ -68,6 +69,20 @@
     [Parameter] public string? EmptyText { get; set; }
     [Parameter] public string? AddLabel { get; set; }
 
+    // The entries as the reader sees them (names, and the properties a translation pack words), made once per list of options.
+    private IReadOnlyList<ContentEntry>? shownFor;
+    private List<(ContentEntry Original, ContentEntry Shown)> shownOptions = new();
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(shownFor, Options)) return;
+        shownFor = Options;
+        var culture = L.Culture.Name;
+        shownOptions = Options.Select(o => (o, Registry.Show(o, culture))).ToList();
+    }
+
+    private string DisplayValue(string key, string value) => Type?.Fields.FirstOrDefault(f => f.Key == key)?.Display(value) ?? value;
+
     private string LabelText => Label ?? L["Library.Entries.Default"];
     private string DisabledTextValue => DisabledText ?? L["Library.Entries.Disabled"];
     private string EmptyTextValue => EmptyText ?? L["Library.Entries.Empty"];
@@ -90,7 +105,7 @@
         var facets = new List<Facet>();
         foreach (var key in Type?.FilterFields ?? new List<string>())
         {
-            var values = Options.SelectMany(o => FacetValues(o, key)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var values = shownOptions.SelectMany(o => FacetValues(o.Shown, key)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             values = values.All(v => int.TryParse(v, out _))
                 ? values.OrderBy(int.Parse).ToList()
                 : values.OrderBy(v => v, StringComparer.OrdinalIgnoreCase).ToList();
@@ -112,9 +127,11 @@
         else if (!string.IsNullOrWhiteSpace(value.ToString())) yield return value.ToString()!;
     }
 
+    // A translated list still finds "Fireball" by its English name.
     private List<ContentEntry> Matching() =>
-        Options.Where(o => (query.Length == 0 || o.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
-                           && filters.All(f => FacetValues(o, f.Key).Contains(f.Value, StringComparer.OrdinalIgnoreCase)))
+        shownOptions.Where(o => (query.Length == 0 || o.Shown.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || o.Original.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+                                && filters.All(f => FacetValues(o.Shown, f.Key).Contains(f.Value, StringComparer.OrdinalIgnoreCase)))
+            .Select(o => o.Shown)
             .ToList();
 
     private void SetFacet(string key, string? value)
@@ -131,7 +148,7 @@
         {
             if (entry.Properties.TryGetValue(key, out var value) && value != null)
             {
-                parts.Add(value is IEnumerable<object> list && value is not string ? string.Join(", ", list.Select(o => o?.ToString())) : value.ToString() ?? string.Empty);
+                parts.Add(value is IEnumerable<object> list && value is not string ? string.Join(", ", list.Select(o => DisplayValue(key, o?.ToString() ?? string.Empty))) : DisplayValue(key, value.ToString() ?? string.Empty));
             }
         }
 
