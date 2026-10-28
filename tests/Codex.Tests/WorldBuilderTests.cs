@@ -30,12 +30,13 @@ public class WorldBuilderTests
         new("actions", "Actions", "Collection", null, null, null)
     };
 
-    private static ProposalRules Rules(Func<string, string, string>? canonical = null) => new(
+    private static ProposalRules Rules(Func<string, string, string>? canonical = null, IReadOnlyCollection<string>? actors = null) => new(
         new Dictionary<string, string> { ["magic-item"] = "magic-item", ["Magic Item"] = "magic-item", ["spell"] = "spell", ["monster"] = "monster" },
         new Dictionary<string, string> { ["port-varr"] = "Port Varr", ["sister-maren"] = "Sister Maren", ["sister-maren-2"] = "Sister Maren" },
         new[] { "old-town" },
         type => type == "spell" ? SpellFields : Array.Empty<FieldSpec>(),
-        canonical);
+        canonical,
+        actors);
 
     [Fact]
     public void Place_WithoutAPitch_GetsOneWhoseRefsResolveToTheNamesTheEntriesWereSavedUnder()
@@ -917,6 +918,161 @@ public class WorldBuilderTests
         Assert.Equal("Here is the lay of the land.", reply.Text); // not "Got it, let me look.Got it, one more look.Here is…"
         Assert.Equal(2, reply.Steps!.Count);
         Assert.All(reply.Steps, step => Assert.Equal("map-pin", step.Icon));
+    }
+
+    // ---- Editing what exists ----
+
+    [Fact]
+    public void ParseProposal_Edit_NamesATarget_AndTakesTheCompleteNewText()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Rewritten. See [[existing:sister-maren]]."},
+              {"ref": "e2", "kind": "edit", "target": "existing:place:old-town", "text": "A ruined gate."},
+              {"ref": "e3", "kind": "edit", "target": "existing:actor:a1", "text": "Born in the Wood."}
+            ]}
+            """;
+
+        var check = WorldBundleParser.ParseProposal(json, Rules(actors: new[] { "a1" }));
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal(new[] { "existing:port-varr", "existing:place:old-town", "existing:actor:a1" }, check.Bundle.Drafts.Select(d => d.Target));
+        Assert.Equal("Port Varr", check.Bundle.Drafts[0].Name); // named after what it changes; the model need not repeat it
+        Assert.Equal("Rewritten. See [[Sister Maren]].", check.Bundle.Drafts[0].Body);
+        Assert.Empty(check.Warnings);
+    }
+
+    [Theory]
+    [InlineData("""{"kind": "edit", "text": "x"}""", "needs a \"target\"")]
+    [InlineData("""{"kind": "edit", "target": "existing:nowhere", "text": "x"}""", "not something the campaign has")]
+    [InlineData("""{"kind": "edit", "target": "existing:place:gone", "text": "x"}""", "not something the campaign has")]
+    [InlineData("""{"kind": "edit", "target": "existing:actor:a9", "text": "x"}""", "not something the campaign has")]
+    [InlineData("""{"kind": "edit", "target": "existing:port-varr"}""", "COMPLETE new text")]
+    public void ParseProposal_Edit_NeedsARealTarget_AndItsText(string entry, string expected)
+    {
+        var check = WorldBundleParser.ParseProposal($$"""{"entries": [{{entry}}]}""", Rules(actors: new[] { "a1" }));
+
+        Assert.False(check.Ok);
+        Assert.Contains(expected, Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public void ParseProposal_Edit_ChangesATargetOnce()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "One."},
+              {"ref": "e2", "kind": "edit", "target": "port-varr", "text": "Two."}
+            ]}
+            """;
+
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+
+        Assert.Contains("already changed by another entry", Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public void ResolveLinks_AnEditNamedLikeAPage_DoesNotTurnLinksToThatPageIntoPlainText()
+    {
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Rewritten."},
+              {"ref": "w", "kind": "wiki", "name": "Salt Wardens", "text": "They watch [[Port Varr]]."}
+            ]}
+            """;
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal("They watch [[Port Varr]].", WorldBundleParser.ResolveLinks(check.Bundle.Drafts[1].Body!, check.Bundle));
+    }
+
+    private static WikiPageDocument VarrPage() => new() { Id = "page-varr", Slug = "port-varr", Title = "Port Varr", Body = "Old text.", Visibility = WikiVisibility.Party };
+
+    private static RegionDocument HillRegion() => new()
+    {
+        Id = "region-hills", CampaignId = "c1", Name = "Hills",
+        Locations = { new LocationDocument { Id = "old-town", Name = "Old Town", Kind = PlaceKind.Settlement, Description = "Old description.", Visibility = ActorVisibility.Hidden } }
+    };
+
+    [Fact]
+    public async Task Check_Edit_ShowsTheCurrentText_AndSaysWhenPlayersCanAlreadyReadIt()
+    {
+        var saving = Service(new[] { VarrPage() }, new[] { HillRegion() });
+        saving.Actors.Add(new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Old history.", Visibility = ActorVisibility.Hidden, Kind = ActorKind.NonPlayerCharacter });
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "New page."},
+              {"ref": "e2", "kind": "edit", "target": "existing:place:old-town", "text": "New description."},
+              {"ref": "e3", "kind": "edit", "target": "existing:actor:a1", "text": "New history."}
+            ]}
+            """;
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal(new[] { "Old text.", "Old description.", "Old history." }, check.Bundle.Drafts.Select(d => d.Before));
+        Assert.Equal(new[] { "Port Varr", "Old Town", "Mira Greystone" }, check.Bundle.Drafts.Select(d => d.Name));
+        Assert.Equal(new[] { true, false, false }, check.Bundle.Drafts.Select(d => d.SharedWithPlayers)); // only the shared page
+    }
+
+    [Fact]
+    public async Task Save_Edit_ReplacesTheTextOfAPage_APlaceAndACastMember()
+    {
+        var page = VarrPage();
+        var region = HillRegion();
+        var saving = Service(new[] { page }, new[] { region });
+        var mira = new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Old history.", Kind = ActorKind.NonPlayerCharacter };
+        saving.Actors.Add(mira);
+        const string json = """
+            {"entries": [
+              {"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "The port, rewritten, beside [[existing:port-varr]] and [[e2x]]."},
+              {"ref": "e2", "kind": "edit", "target": "existing:place:old-town", "text": "A walled farm town."},
+              {"ref": "e3", "kind": "edit", "target": "existing:actor:a1", "text": "Born in the Wood."}
+            ]}
+            """;
+        var check = await saving.Service.CheckAsync(Campaign, Dm, json);
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+
+        var result = await saving.Service.SaveAsync(Campaign, Dm, check.Bundle);
+
+        Assert.Equal("The port, rewritten, beside [[Port Varr]] and [[e2x]].", page.Body);
+        Assert.Equal("A walled farm town.", region.Locations[0].Description);
+        Assert.Contains(saving.AddedPlaces, p => p.RegionId == "region-hills" && p.Place.Description == "A walled farm town.");
+        Assert.Equal("Born in the Wood.", mira.Biography);
+        Assert.Equal(new[] { EditTarget.Page, EditTarget.Place, EditTarget.Actor }, result.Changes.Select(c => c.Target));
+        Assert.Equal(3, result.Count);
+    }
+
+    [Fact]
+    public async Task Save_Edit_OfSomethingThatWentAfterTheReview_SaysSoRatherThanSkippingIt()
+    {
+        var saving = Service(new[] { VarrPage() });
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "New."}]}""");
+        Assert.True(check.Ok);
+        saving.Pages.Clear();
+
+        // Service() lists its fixed existing pages, so point the draft at one that was never there.
+        check.Bundle.Drafts[0].Target = "existing:vanished";
+        var ex = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, check.Bundle));
+
+        Assert.Equal("WorldBuilder.Error.EditTargetGone", ex.Key);
+    }
+
+    [Fact]
+    public async Task GetPage_ReadsAPlacesDescription_AndACastMembersHistory_ByTheirKeys()
+    {
+        var saving = Service(new[] { VarrPage() }, new[] { HillRegion() });
+        saving.Actors.Add(new ActorDocument { Id = "a1", Name = "Mira Greystone", Biography = "Old history.", Kind = ActorKind.NonPlayerCharacter });
+
+        var place = await saving.Service.PageAsync(Dm, "existing:place:old-town");
+        var actor = await saving.Service.PageAsync(Dm, "existing:actor:a1");
+        var search = await saving.Service.SearchWorldAsync(Campaign, Dm, "Mira");
+
+        Assert.Contains("Old description.", place);
+        Assert.Contains("hidden from players", place);
+        Assert.Contains("Old history.", actor);
+        Assert.Contains("key: existing:actor:a1", actor);
+        Assert.Contains("existing:actor:a1", search); // search_world shows the key an edit needs
     }
 
     [Fact]

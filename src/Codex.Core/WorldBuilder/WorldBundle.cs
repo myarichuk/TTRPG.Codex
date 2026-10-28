@@ -22,10 +22,26 @@ public static class DraftKinds
     /// <summary>A place, saved as a DM-only wiki page and a hidden place on the Places list, inside its parent.</summary>
     public const string Place = "place";
 
-    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place };
+    /// <summary>A change to something the campaign already has: the complete new text of a wiki page, a place's description or a
+    /// cast member's history, replacing the old (<see cref="WorldDraft.Target"/> says which). Nothing is made; the DM reviews it
+    /// against the current text like any other entry.</summary>
+    public const string Edit = "edit";
+
+    public static readonly IReadOnlyList<string> All = new[] { Homebrew, Wiki, Npc, Fact, Place, Edit };
 
     /// <summary>Kinds saved as wiki pages, which other entries' text can link to.</summary>
     public static bool IsPage(string kind) => kind is Wiki or Npc or Place;
+}
+
+/// <summary>What an edit entry changes the text of.</summary>
+public enum EditTarget
+{
+    /// <summary>A wiki page's body (also the page of a place or a person).</summary>
+    Page,
+    /// <summary>A place's description, which players read once the place is revealed.</summary>
+    Place,
+    /// <summary>A cast member's history, which players read once the character is revealed.</summary>
+    Actor
 }
 
 /// <summary>
@@ -90,8 +106,17 @@ public sealed class WorldDraft
     /// save that failed half-way can be retried without writing anything twice.</summary>
     public Dictionary<string, string> SavedAs { get; set; } = new();
 
-    /// <summary>A page's text, a homebrew entry's description (its rules text), or a secret's details.</summary>
+    /// <summary>A page's text, a homebrew entry's description (its rules text), a secret's details, or, for an edit, the complete new text.</summary>
     public string? Body { get; set; }
+
+    /// <summary>For an edit: what it changes, as <c>existing:&lt;slug&gt;</c>, <c>existing:place:&lt;id&gt;</c> or <c>existing:actor:&lt;id&gt;</c>.</summary>
+    public string? Target { get; set; }
+
+    /// <summary>For an edit: the text as it is now, for the review card to show beside the new one. Filled in when the proposal is checked.</summary>
+    public string? Before { get; set; }
+
+    /// <summary>For an edit: players can already read the text, so applying it changes what they see at once.</summary>
+    public bool SharedWithPlayers { get; set; }
 
     public Dictionary<string, object> Properties { get; set; } = new();
     public List<string> Tags { get; set; } = new();
@@ -108,6 +133,31 @@ public sealed class WorldBundle
 
     /// <summary>The prefix of an existing place's id, after <see cref="ExistingPrefix"/>: <c>existing:place:&lt;id&gt;</c>.</summary>
     public const string PlacePrefix = "place:";
+
+    /// <summary>The prefix of an existing cast member's id, after <see cref="ExistingPrefix"/>: <c>existing:actor:&lt;id&gt;</c>.</summary>
+    public const string ActorPrefix = "actor:";
+
+    /// <summary>What an <c>existing:</c> key points at: a place (<c>existing:place:id</c>), a cast member (<c>existing:actor:id</c>)
+    /// or, otherwise, a wiki page by slug. <paramref name="id"/> is the key without its prefixes.</summary>
+    public static EditTarget ParseTarget(string key, out string id)
+    {
+        var rest = key.Trim();
+        if (rest.StartsWith(ExistingPrefix, StringComparison.OrdinalIgnoreCase)) rest = rest[ExistingPrefix.Length..];
+        if (rest.StartsWith(PlacePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[PlacePrefix.Length..];
+            return EditTarget.Place;
+        }
+
+        if (rest.StartsWith(ActorPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[ActorPrefix.Length..];
+            return EditTarget.Actor;
+        }
+
+        id = rest;
+        return EditTarget.Page;
+    }
 
     /// <summary>What the proposal adds, in a sentence, for the review card.</summary>
     public string? Summary { get; set; }
@@ -128,7 +178,8 @@ public sealed record ProposalRules(
     IReadOnlyDictionary<string, string> ExistingPages,
     IReadOnlyCollection<string> ExistingPlaces,
     Func<string, IReadOnlyList<FieldSpec>> HomebrewFields,
-    Func<string, string, string>? Canonical = null);
+    Func<string, string, string>? Canonical = null,
+    IReadOnlyCollection<string>? ExistingActors = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -208,15 +259,16 @@ public static class WorldBundleParser
                     continue;
                 }
 
-                if (name.Length == 0)
-                {
-                    errors.Add($"{label}: has no name.");
-                    continue;
-                }
-
                 if (!DraftKinds.All.Contains(kind))
                 {
                     errors.Add($"{label}: kind must be one of {string.Join(", ", DraftKinds.All)}.");
+                    continue;
+                }
+
+                // An edit is named by what it changes, which the review card looks up; the model need not repeat it.
+                if (name.Length == 0 && kind != DraftKinds.Edit)
+                {
+                    errors.Add($"{label}: has no name.");
                     continue;
                 }
 
@@ -272,6 +324,9 @@ public static class WorldBundleParser
                     case DraftKinds.Wiki:
                         draft.PageKind = OneOf(FieldCoercion.String(element, "pageKind"), PageKinds) ?? "lore";
                         break;
+                    case DraftKinds.Edit:
+                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors)) continue;
+                        break;
                     case DraftKinds.Homebrew:
                         if (FieldCoercion.String(element, "type") is not { } typeText || !types.TryGetValue(typeText, out var type))
                         {
@@ -290,7 +345,7 @@ public static class WorldBundleParser
                     warnings.Add($"{label}: only a place has a parent; it was ignored.");
                 }
 
-                if (draft.Body == null && kind != DraftKinds.Fact)
+                if (draft.Body == null && kind is not (DraftKinds.Fact or DraftKinds.Edit))
                 {
                     warnings.Add($"{label}: has no text, so its page will only hold its name.");
                 }
@@ -318,7 +373,7 @@ public static class WorldBundleParser
                         var key = link[WorldBundle.ExistingPrefix.Length..];
                         if (pages.ContainsKey(key)) resolved = WorldBundle.ExistingPrefix + key;
                     }
-                    else if (bundle.Drafts.FirstOrDefault(d => string.Equals(d.Ref, link, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Name, link, StringComparison.OrdinalIgnoreCase)) is { } target)
+                    else if (bundle.Drafts.FirstOrDefault(d => d.Kind != DraftKinds.Edit && (string.Equals(d.Ref, link, StringComparison.OrdinalIgnoreCase) || string.Equals(d.Name, link, StringComparison.OrdinalIgnoreCase))) is { } target)
                     {
                         if (target != draft) resolved = target.Ref;
                     }
@@ -368,6 +423,53 @@ public static class WorldBundleParser
         }
 
         return new ProposalCheck(bundle, errors, warnings);
+    }
+
+    /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and the complete new text.</summary>
+    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors)
+    {
+        var key = FieldCoercion.String(element, "target")?.Trim();
+        if (string.IsNullOrEmpty(key))
+        {
+            errors.Add($"{label}: an edit needs a \"target\": the key of what to change (existing:<slug> for a page, existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history).");
+            return false;
+        }
+
+        var kind = WorldBundle.ParseTarget(key, out var id);
+        var found = kind switch
+        {
+            EditTarget.Place => rules.ExistingPlaces.Contains(id, StringComparer.OrdinalIgnoreCase),
+            EditTarget.Actor => rules.ExistingActors?.Contains(id, StringComparer.OrdinalIgnoreCase) == true,
+            _ => pages.ContainsKey(id)
+        };
+        if (!found)
+        {
+            errors.Add($"{label}: target '{key}' is not something the campaign has; use a key from search_world, get_page or list_places.");
+            return false;
+        }
+
+        var canonical = kind switch
+        {
+            EditTarget.Place => WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix + id,
+            EditTarget.Actor => WorldBundle.ExistingPrefix + WorldBundle.ActorPrefix + id,
+            _ => WorldBundle.ExistingPrefix + id
+        };
+        if (bundle.Drafts.Any(d => d.Kind == DraftKinds.Edit && string.Equals(d.Target, canonical, StringComparison.OrdinalIgnoreCase)))
+        {
+            errors.Add($"{label}: '{key}' is already changed by another entry; give its complete new text in one.");
+            return false;
+        }
+
+        if (draft.Body == null)
+        {
+            errors.Add($"{label}: an edit needs its \"text\": the COMPLETE new text, which replaces the old one.");
+            return false;
+        }
+
+        draft.Target = canonical;
+        if (draft.Name.Length == 0) draft.Name = kind == EditTarget.Page && pages.TryGetValue(id, out var title) ? title : canonical;
+        draft.OutlineName = draft.Name;
+        return true;
     }
 
     private static string? OneOf(string? value, string[] allowed, string? alias = null, string? aliasOf = null)
@@ -420,9 +522,11 @@ public static class WorldBundleParser
             var shown = match.Groups[2].Success ? match.Groups[2].Value.Trim() : null;
             // The ref wins, then the name it was proposed under, then the DM's rename: renaming one entry to another's proposed name
             // must not steal the links meant for the other.
-            var draft = bundle.Drafts.FirstOrDefault(d => string.Equals(d.Ref, target, StringComparison.OrdinalIgnoreCase))
-                        ?? bundle.Drafts.FirstOrDefault(d => string.Equals(d.OutlineName, target, StringComparison.OrdinalIgnoreCase))
-                        ?? bundle.Drafts.FirstOrDefault(d => string.Equals(d.Name.Trim(), target, StringComparison.OrdinalIgnoreCase));
+            // An edit has no page of its own to link to (it is named after the page it changes, which the link already reaches).
+            var linkable = bundle.Drafts.Where(d => d.Kind != DraftKinds.Edit).ToList();
+            var draft = linkable.FirstOrDefault(d => string.Equals(d.Ref, target, StringComparison.OrdinalIgnoreCase))
+                        ?? linkable.FirstOrDefault(d => string.Equals(d.OutlineName, target, StringComparison.OrdinalIgnoreCase))
+                        ?? linkable.FirstOrDefault(d => string.Equals(d.Name.Trim(), target, StringComparison.OrdinalIgnoreCase));
             if (draft == null)
             {
                 return keepLinks ? match.Value : shown ?? target;

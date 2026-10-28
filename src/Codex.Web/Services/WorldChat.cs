@@ -191,6 +191,7 @@ public sealed class WorldChat
         foreach (var page in result.Pages) note.Append($" page existing:{page.Slug} \"{page.Title}\";");
         foreach (var place in result.Places) note.Append($" place existing:{WorldBundle.PlacePrefix}{place.Id} \"{place.Name}\";");
         foreach (var actor in result.Actors) note.Append($" cast member \"{actor.Name}\";");
+        foreach (var change in result.Changes) note.Append($" changed: the {(change.Target switch { EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", _ => "text of the page" })} \"{change.Name}\" now reads as you wrote it;");
         foreach (var entry in result.Entries) note.Append($" homebrew {entry.Type}/{entry.EntryId} \"{entry.Name}\";");
         if (result.Facts.Count > 0) note.Append($" {result.Facts.Count} secret(s) in Lore;");
         history.Add(new ChatMessage(ChatRole.User, note.ToString().TrimEnd(';') + ".)"));
@@ -236,13 +237,13 @@ public sealed class WorldChat
                 "search_world",
                 "Finds the campaign's wiki pages, places and cast members by name or text. Each line gives the key a proposal uses to link to it."),
             AIFunctionFactory.Create(
-                async ([Description("The page's key (existing:slug) or title.")] string page) =>
+                async ([Description("The key of a page (existing:slug) or its title; or existing:place:<id> for a place's description, existing:actor:<id> for a cast member's history.")] string page) =>
                 {
                     Note("file-text", "WorldChat.Tool.Page", page);
                     return await builder.PageAsync(access, page) ?? $"There is no page \"{page}\". Use search_world to find one.";
                 },
                 "get_page",
-                "Reads one wiki page in full."),
+                "Reads one wiki page in full, or a place's description or a cast member's history by their key, which is what an edit replaces."),
             AIFunctionFactory.Create(
                 async () =>
                 {
@@ -322,7 +323,7 @@ public sealed class ProposalEntry
     [JsonPropertyName("ref"), Description("A short id other entries use: \"p1\", \"n2\".")]
     public string? Ref { get; set; }
 
-    [JsonPropertyName("kind"), Description("place, npc, wiki, fact or homebrew.")]
+    [JsonPropertyName("kind"), Description("place, npc, wiki, fact, homebrew or edit.")]
     public string? Kind { get; set; }
 
     [JsonPropertyName("name")]
@@ -333,6 +334,9 @@ public sealed class ProposalEntry
 
     [JsonPropertyName("pitch"), Description("One or two plain sentences, at most 300 characters, saying what the entry is: shown in lists and on the review card, and as a place's short description.")]
     public string? Pitch { get; set; }
+
+    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page or list_places show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description) or existing:actor:<id> (a cast member's history). The \"text\" is then the COMPLETE new text, replacing the old.")]
+    public string? Target { get; set; }
 
     [JsonPropertyName("links"), Description("Refs and existing:slug keys this entry is about (a fact's subjects).")]
     public List<string>? Links { get; set; }

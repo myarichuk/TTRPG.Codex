@@ -188,6 +188,17 @@ else if (chat != null)
                                         <input id="@id" type="checkbox" class="field-box" checked="@d.Selected" @onchange="e => d.Selected = (bool)(e.Value ?? false)" disabled="@applying" />
                                         <label for="@id"><strong>@d.Name</strong>@Detail(proposal, d)</label>
                                     </div>
+                                    @if (d is { Kind: DraftKinds.Edit, SharedWithPlayers: true })
+                                    {
+                                        <div class="small ms-4 text-warning" data-testid="world-proposal-shared"><LucideIcon IconName="eye" Size="14" /> @L["WorldChat.Proposal.Shared"]</div>
+                                    }
+                                    @if (d.Kind == DraftKinds.Edit && !string.IsNullOrWhiteSpace(d.Before))
+                                    {
+                                        <details class="ms-4">
+                                            <summary class="small">@L["WorldChat.Proposal.Current"]</summary>
+                                            <div class="rules-text small mt-1" data-testid="world-proposal-before">@((MarkupString)TextFormatting.ToHtml(d.Before))</div>
+                                        </details>
+                                    }
                                     @if (d.Kind == DraftKinds.Npc)
                                     {
                                         <div class="field-check ms-4">
@@ -250,6 +261,10 @@ else if (chat != null)
                         {
                             <li><a href="@Ctx.BasePath/library/@entry.Type/@entry.EntryId"><LucideIcon IconName="book-marked" Size="14" /> @entry.Name</a></li>
                         }
+                        @foreach (var change in result.Changes)
+                        {
+                            <li data-testid="world-result-change"><a href="@ChangeHref(change)"><LucideIcon IconName="edit-3" Size="14" /> @change.Name</a> <span class="small-muted">@L[$"WorldChat.Edit.{change.Target}"]</span></li>
+                        }
                         @if (result.Facts.Count > 0)
                         {
                             <li><a href="@Ctx.BasePath/lore"><LucideIcon IconName="key-round" Size="14" /> @L["WorldChat.Result.Secrets", result.Facts.Count]</a></li>
@@ -268,7 +283,7 @@ else if (chat != null)
     [Parameter] public string? Starter { get; set; }
 
     private static readonly string[] StarterKeys = { "settlement", "faction", "quest", "people", "homebrew" };
-    private static readonly string[] KindOrder = { DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew };
+    private static readonly string[] KindOrder = { DraftKinds.Edit, DraftKinds.Place, DraftKinds.Npc, DraftKinds.Wiki, DraftKinds.Fact, DraftKinds.Homebrew };
 
     private WorldChat? chat;
     private bool aiReady;
@@ -502,7 +517,11 @@ else if (chat != null)
     private string Detail(WorldBundle proposal, WorldDraft d)
     {
         var parts = new List<string>();
-        if (d.Kind == DraftKinds.Place)
+        if (d.Kind == DraftKinds.Edit)
+        {
+            parts.Add(L[$"WorldChat.Edit.{WorldBundle.ParseTarget(d.Target ?? string.Empty, out _)}"]);
+        }
+        else if (d.Kind == DraftKinds.Place)
         {
             if (d.PlaceKind != null) parts.Add(L[$"Campaign.Places.Kind.{(d.PlaceKind == "site" ? "Site" : char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..])}"]);
             var parent = d.Parent == null ? null
@@ -522,6 +541,13 @@ else if (chat != null)
 
         return parts.Count == 0 ? string.Empty : " — " + string.Join(", ", parts);
     }
+
+    private string ChangeHref(WorldEdit change) => change.Target switch
+    {
+        EditTarget.Place => $"{Ctx.BasePath}/world#place-{change.Id}",
+        EditTarget.Actor => $"{Ctx.BasePath}/actors/{change.Id}",
+        _ => $"{Ctx.BasePath}/wiki/{change.Id}"
+    };
 
     private string? PlaceName(string key)
     {

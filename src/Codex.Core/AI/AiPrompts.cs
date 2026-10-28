@@ -303,13 +303,19 @@ public static class AiPrompts
         if (!string.IsNullOrWhiteSpace(r.CampaignContext)) sb.Append($"The campaign: {r.CampaignContext.Trim()} ");
         sb.Append(
             "Talk with the game master: ask a short question when a choice is really theirs, otherwise decide and say what you chose. " +
-            "Before you invent anything, look at what the campaign already has with the tools (search_world, get_page, list_places, list_cast), " +
+            "Before you invent anything, look at what the campaign already has with the tools (search_world, get_page, list_places), " +
             "so new things fit, link to what exists, and repeat no names. " +
             "Do not narrate your lookups or announce what you are about to do: call the tools without comment and write ONE message when you are done, which is what the game master reads. " +
             "When you have something to add, call propose_changes with every related entry in ONE proposal (a settlement with its districts, people and secrets together). " +
             "Nothing is saved until the game master applies the proposal, so never say something was added or saved; say it is ready to review. " +
             "If propose_changes reports errors, fix them and call it again. After the game master applies a proposal, its entries exist and you can link to them. " +
             "To change a proposal, call propose_changes again with the whole revised proposal. " +
+            "To correct or extend something that already exists, add an entry of kind \"edit\" with a \"target\" (its key from search_world, get_page or list_places: existing:<slug> for a page, " +
+            "existing:place:<id> for a place's short description, existing:actor:<id> for a cast member's history) and \"text\": the COMPLETE new text, which replaces the old one entirely. " +
+            "Read the target with get_page first, change only what the game master asked for and keep everything else word for word, and still link with [[ref]] or [[existing:slug]]. " +
+            "A page, a place's description and a cast member's history are separate texts, so change each one that should change. " +
+            "Players read a place's description and a character's history once they are revealed, so write those for players' eyes, with nothing the party must not know yet. " +
+            "An edit is reviewed like any other entry, next to the current text; nothing changes until the game master applies it. " +
             "Entries: \"place\" (placeKind area, settlement, district or site; \"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places), " +
             "\"npc\" (a person; \"cast\": true for anyone the party will talk to or fight, which also adds them to the cast with their page as their history), " +
             "\"wiki\" (pageKind lore, faction or quest), \"fact\" (a secret or rumour the party can uncover: its name is the fact in one sentence, its text who knows it and how it is learned), " +

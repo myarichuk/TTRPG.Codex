@@ -30,6 +30,12 @@
   <data name="WorldChat.Working" xml:space="preserve"><value>חושב על זה…</value></data>
   <data name="WorldChat.Error" xml:space="preserve"><value>הבינה המלאכותית לא הצליחה לענות: {0}</value></data>
   <data name="WorldChat.Retry" xml:space="preserve"><value>נסו שוב</value></data>
+  <data name="WorldChat.Kind.edit" xml:space="preserve"><value>שינויים בערכים קיימים</value></data>
+  <data name="WorldChat.Edit.Page" xml:space="preserve"><value>מחליף את הטקסט של הדף</value></data>
+  <data name="WorldChat.Edit.Place" xml:space="preserve"><value>מחליף את תיאור המקום</value></data>
+  <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>מחליף את הרקע של הדמות</value></data>
+  <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>הטקסט הנוכחי</value></data>
+  <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>השחקנים כבר יכולים לקרוא את זה, ולכן החלה תשנה את מה שהם רואים.</value></data>
   <data name="WorldChat.Steps" xml:space="preserve"><value>שלבים שבוצעו: {0}</value></data>
   <data name="WorldChat.Earlier" xml:space="preserve"><value>{0} קודמים</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>המודל הזה לא יודע לקרוא לכלים, ובונה העולם צריך זאת. בחרו בהגדרות מודל שתומך בקריאה לכלים.</value></data>
