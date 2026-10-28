@@ -744,7 +744,7 @@ else
                                 }
                                 @foreach (var option in evaluation.MulticlassOptions)
                                 {
-                                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", option.Name]</option>
+                                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", Nm(option)]</option>
                                 }
                             </select>
                         </div>
@@ -1229,9 +1229,15 @@ else
     {
         if (violation.Key == null || violation.Args == null || !L.Has(violation.Key)) return violation.Message;
         var culture = L.Culture.Name;
-        var args = violation.Args.Select(a => a switch
+        var args = violation.Args.Select((a, index) => a switch
         {
             ContentEntry entry => ContentRegistry.Name(entry, culture),
+            // The spreads a bonus may take, each read left to right: "+2/+1 or +1/+1/+1".
+            List<List<int>> spreads => string.Join(L["Actor.Sheet.Or"], spreads.Select(s => Bidi.Ltr(string.Join("/", s.Select(v => "+" + v))))),
+            // Scores and signed numbers keep their order inside a right-to-left sentence.
+            string text when System.Text.RegularExpressions.Regex.IsMatch(text, @"^[\d+/, ]+$") => Bidi.Ltr(text),
+            // A system word ("Heavy armor") in the middle of a sentence is not capitalised.
+            string text when system != null && violation.Key == "Actor.Rule.ArmorUntrained" && index == 2 => system.DisplayValue(text).ToLower(L.Culture),
             string text when system != null => system.DisplayRuleMessage(text) is var message && message != text ? message : system.DisplayValue(text),
             _ => a
         }).ToArray();

@@ -78,7 +78,17 @@
         if (ReferenceEquals(shownFor, Options)) return;
         shownFor = Options;
         var culture = L.Culture.Name;
-        shownOptions = Options.Select(o => (o, Registry.Show(o, culture))).ToList();
+        // A sheet hands over a new list after every edit, of the same entries: each is translated once.
+        shownOptions = Options.Select(o => (o, Shown(o, culture))).ToList();
+    }
+
+    private readonly Dictionary<(string Type, string Id, bool Homebrew), ContentEntry> shownCache = new();
+
+    private ContentEntry Shown(ContentEntry entry, string culture)
+    {
+        var key = (entry.Type, entry.Id, entry.PackId.Length == 0);
+        if (!shownCache.TryGetValue(key, out var shown)) shownCache[key] = shown = Registry.Show(entry, culture);
+        return shown;
     }
 
     private string DisplayValue(string key, string value) => Type?.Fields.FirstOrDefault(f => f.Key == key)?.Display(value) ?? value;

@@ -350,7 +350,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 if (!allowed)
                 {
                     var options = string.Join(" or ", bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v))));
-                    result.Violations.Add(new RuleViolation(MethodKey, $"{bonusRules.Label}: spread them as {options}, each on a different attribute.", "Actor.Rule.BonusSpread", new object?[] { bonusRules.Label, string.Join(" / ", bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v)))) }));
+                    result.Violations.Add(new RuleViolation(MethodKey, $"{bonusRules.Label}: spread them as {options}, each on a different attribute.", "Actor.Rule.BonusSpread", new object?[] { bonusRules.Label, bonusRules.Allocations }));
                 }
             }
         }

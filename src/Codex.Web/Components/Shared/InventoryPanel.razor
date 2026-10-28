@@ -82,7 +82,13 @@
 
     protected override void OnParametersSet() => browseType ??= Rules.Types.FirstOrDefault();
 
-    private ContentEntry Shown(ContentEntry entry) => Registry.Show(entry, L.Culture.Name);
+    private readonly Dictionary<ContentEntry, ContentEntry> shown = new(ReferenceEqualityComparer.Instance);
+
+    private ContentEntry Shown(ContentEntry entry)
+    {
+        if (!shown.TryGetValue(entry, out var copy)) shown[entry] = copy = Registry.Show(entry, L.Culture.Name);
+        return copy;
+    }
 
     private ContentTypeDefinition? TypeOf(string? type) => type == null ? null : FindType?.Invoke(type);
 
