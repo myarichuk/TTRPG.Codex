@@ -34,7 +34,8 @@ public sealed record WorldChatDelta(bool Reasoning, string Text);
 /// </summary>
 public sealed class WorldChat
 {
-    /// <summary>Most model round trips one message may take (tool calls included), so a looping model can't run up a bill.</summary>
+    /// <summary>Most model round trips one attempt at a message may take (tool calls included), so a looping model can't run up a bill.
+    /// A turn that ends empty gets one more attempt (<see cref="RunTurnAsync"/>), so a message costs at most twice this.</summary>
     public const int MaxToolRounds = 16;
 
     private readonly WorldBuilderService builder;
@@ -97,10 +98,16 @@ public sealed class WorldChat
         var before = history.Count;
         try
         {
-            var (reply, cutShort) = await RunTurnAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, stream, ct);
+            var (reply, cutShort) = await RunTurnAsync(client, new ChatOptions { Tools = Tools(progress), Temperature = 0.8f }, () => !ReferenceEquals(Proposal, heldProposal), stream, ct);
             var l = Localizer.For(Lang);
             // A proposal made and then not a word about it: the proposal card is the news.
-            if (reply.Length == 0 && !cutShort && !ReferenceEquals(Proposal, heldProposal)) reply = l["WorldChat.ProposalReady"];
+            if (reply.Length == 0 && !cutShort && !ReferenceEquals(Proposal, heldProposal))
+            {
+                reply = l["WorldChat.ProposalReady"];
+                // The model gets its turn back too: a history that ends on tool results makes the next message two user turns in a row.
+                history.Add(new ChatMessage(ChatRole.Assistant, ProposalReadyNote));
+            }
+
             // Nothing even after the nudge: not an answer, so not a line in the log or a turn in the history. The message goes back
             // to the DM (the Undo below), instead of a placeholder the model would then read as its own last word.
             if (reply.Length == 0 && !cutShort) throw new LocalizedException("WorldChat.Error.Empty");
@@ -134,12 +141,14 @@ public sealed class WorldChat
         "Answer the game master now, in one short message. If you meant to propose something, call propose_changes now instead of describing it.)";
 
     private const string CutOffNudge = "(A note from the app, not from the game master: your last turn was cut off by the length limit, so nothing came of it. " +
-        "Call propose_changes now with at most 5 entries, each page short, and say the rest can follow in a later proposal.)";
+        "Keep your reply short. If you were proposing, call propose_changes now with at most 5 entries, each page short, and say the rest can follow in a later proposal.)";
+
+    private const string ProposalReadyNote = "The proposal is ready for the game master to review.";
 
     /// <summary>Runs the model until it answers. A turn that ends with nothing to read (a small model that goes quiet after its
     /// tool results, or one whose proposal ran past the output limit) gets one nudge and one more go, so the DM isn't left
     /// guessing. Returns an empty reply when even that brought nothing.</summary>
-    private async Task<(string Reply, bool CutShort)> RunTurnAsync(IChatClient client, ChatOptions options, Action<WorldChatDelta>? stream, CancellationToken ct)
+    private async Task<(string Reply, bool CutShort)> RunTurnAsync(IChatClient client, ChatOptions options, Func<bool> proposed, Action<WorldChatDelta>? stream, CancellationToken ct)
     {
         for (var attempt = 0; ; attempt++)
         {
@@ -149,7 +158,8 @@ public sealed class WorldChat
             // A model that wrote its summary in the same message as its last call and then said nothing: that summary is the answer.
             // (Not when the round limit cut it off: what it said along the way is only preamble then.)
             if (reply.Length == 0 && !cutShort) reply = response.Messages.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text.Trim()).LastOrDefault(t => t.Length > 0) ?? string.Empty;
-            if (reply.Length > 0 || cutShort || attempt == 1) return (reply, cutShort);
+            // A proposal is an answer of a kind: nudging a model that just made one invites it to make another over the first.
+            if (reply.Length > 0 || cutShort || attempt == 1 || proposed()) return (reply, cutShort);
             history.Add(new ChatMessage(ChatRole.User, response.FinishReason == ChatFinishReason.Length ? CutOffNudge : EmptyNudge));
         }
     }
@@ -200,7 +210,8 @@ public sealed class WorldChat
                 dropped = true;
             }
 
-            if (message.Contents.Count > 0) history.Add(message);
+            // A message with nothing in it (or only blank text, which Anthropic refuses) is not part of the conversation.
+            if (message.Contents.Any(c => c is not TextContent text || !string.IsNullOrWhiteSpace(text.Text))) history.Add(message);
         }
 
         return dropped;

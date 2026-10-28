@@ -1028,11 +1028,12 @@ a.user-chip:active { transform: scale(0.97); }
 .wiki-figure img { display: block; width: 100%; height: auto; }
 .wiki-figure-tall { width: min(34%, 16rem); }
 .wiki-figure-portrait { display: flex; justify-content: center; padding: 0.75rem; }
-.wiki-figure-portrait .avatar-img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+.wiki-figure-portrait img { aspect-ratio: 1; object-fit: cover; }
 .wiki-figure-portrait .avatar-xl { width: 100%; height: auto; aspect-ratio: 1; }
-.wiki-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; color: var(--text-muted, var(--muted)); }
+.wiki-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; color: var(--text-3); }
 @media (max-width: 640px) {
     .wiki-figure, .wiki-figure-tall { float: none; width: 100%; margin-inline-start: 0; }
+    .wiki-figure-placeholder { width: min(100%, 12rem); margin-inline: auto; }
 }
 .wiki-body { font-size: 1.02rem; line-height: 1.65; }
 .wiki-body h3 { font-size: 1.15rem; margin-top: 1.4rem; }

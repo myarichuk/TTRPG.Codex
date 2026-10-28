@@ -750,12 +750,16 @@ public class WorldBuilderTests
         private int next;
         public List<List<ChatMessage>> Calls { get; } = new();
 
+        /// <summary>Finish reasons by the number of the call (0 first) that ends with one; the others end normally.</summary>
+        public Dictionary<int, ChatFinishReason> Finish { get; } = new();
+
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var sent = messages.ToList();
             Calls.Add(sent);
-            return Task.FromResult(new ChatResponse(replies[next++](sent)));
+            var call = next++;
+            return Task.FromResult(new ChatResponse(replies[call](sent)) { FinishReason = Finish.TryGetValue(call, out var reason) ? reason : null });
         }
 
         // The chat streams its turns; the scripted reply comes as the updates a real model would send.
@@ -959,19 +963,43 @@ public class WorldBuilderTests
     }
 
     [Fact]
-    public async Task Chat_ThatProposesAndSaysNothing_PointsAtTheProposal()
+    public async Task Chat_ThatProposesAndSaysNothing_PointsAtTheProposal_WithoutANudgeToProposeAgain()
     {
         const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
         var model = new ScriptedModel(
             _ => Calls("c1", "propose_changes", varr),
-            _ => new ChatMessage(ChatRole.Assistant, ""),
-            _ => new ChatMessage(ChatRole.Assistant, ""));
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, "Anything else?"));
         var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
 
         await chat.SendAsync("A town, please.", _ => { }, CancellationToken.None);
 
         Assert.NotNull(chat.Proposal);
-        Assert.False(string.IsNullOrWhiteSpace(chat.Lines[^1].Text));
+        Assert.Equal("Proposal ready to review.", chat.Lines[^1].Text);
+        Assert.Equal(2, model.Calls.Count); // the proposal made the turn an answer: no second go
+
+        await chat.SendAsync("And a fort?", _ => { }, CancellationToken.None);
+
+        // The next message follows an assistant turn, not a bare tool result.
+        var sent = model.Calls[^1];
+        Assert.Equal(ChatRole.Assistant, sent[^2].Role);
+        Assert.DoesNotContain(sent, m => m.Text.Contains("note from the app"));
+    }
+
+    [Fact]
+    public async Task Chat_CutOffByTheLengthLimit_GetsTheShorterNudge()
+    {
+        var model = new ScriptedModel(
+            _ => Calls("c1", "list_places", "{}"),
+            _ => new ChatMessage(ChatRole.Assistant, new List<AIContent>()),
+            _ => new ChatMessage(ChatRole.Assistant, "A shorter answer."));
+        model.Finish[1] = ChatFinishReason.Length;
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("A whole kingdom, please.", _ => { }, CancellationToken.None);
+
+        Assert.Contains("length limit", model.Calls[2][^1].Text);
+        Assert.Equal("A shorter answer.", chat.Lines[^1].Text);
     }
 
     // ---- Editing what exists ----

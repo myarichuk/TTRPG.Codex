@@ -244,7 +244,7 @@ else if (Slug != null)
                             }
                             else
                             {
-                                <ActorAvatar Actor="cast" DisplayName="@current.Title" Size="xl" Alt="@L["Campaign.Wiki.ArtAlt", current.Title]" />
+                                <ActorAvatar Actor="cast" DisplayName="@current.Title" Size="xl" />
                             }
                         </figure>
                     }
@@ -260,11 +260,11 @@ else if (Slug != null)
                         <figure class="wiki-figure wiki-figure-placeholder @(place ? null : "wiki-figure-tall wiki-figure-portrait")" data-testid="wiki-page-art-placeholder">
                             @if (place)
                             {
-                                <span class="wiki-placeholder" role="img" aria-label="@L["Campaign.Wiki.ArtAlt", current.Title]"><LucideIcon IconName="map-pin" Size="40" /></span>
+                                <span class="wiki-placeholder" aria-hidden="true"><LucideIcon IconName="map-pin" Size="40" /></span>
                             }
                             else
                             {
-                                <span class="avatar avatar-xl wiki-placeholder-initial" role="img" aria-label="@L["Campaign.Wiki.ArtAlt", current.Title]">@Initial(current.Title)</span>
+                                <ActorAvatar Actor="new ActorDocument { Name = current.Title }" Size="xl" />
                             }
                         </figure>
                     }
