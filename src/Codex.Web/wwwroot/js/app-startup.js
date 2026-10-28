@@ -391,6 +391,12 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // A text box whose value the server changes from outside what the reader typed (AI text, an undo): the box itself is not
+    // re-sent its value on every keystroke, so this is the one way such a change reaches it.
+    setValue: function (id, value) {
+        const el = document.getElementById(id);
+        if (el && el.value !== value) el.value = value;
+    },
     // A growing log that scrolls inside itself (the world-building chat): keep its end in view while the reader is at the end,
     // so scrolling back up to re-read is not undone by every new word. force pins it again (the reader just sent something).
     followLog: function (id, force) {
