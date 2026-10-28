@@ -2,7 +2,7 @@
   "locale": "en_US",
   "meta": {
     "title": "TTRPG.Codex — a self-hosted companion for tabletop campaigns",
-    "description": "One DM, any number of players, one browser tab each: a live table with initiative and hit points, campaign prep, a rules Library with homebrew, and optional AI on your own key. Free for noncommercial use. English, Russian and Hebrew."
+    "description": "One DM, any number of players, one browser tab each: a live table with initiative and hit points, campaign prep, a rules Library with homebrew, and optional AI on your own key. Free for personal and noncommercial use. English, Russian and Hebrew."
   },
   "nav": {
     "home": "Home", "install": "Install", "guide": "Guide", "github": "GitHub",
@@ -18,9 +18,9 @@
   "banner": { "text": "This site is also available in English.", "cta": "Switch to English", "dismiss": "Dismiss" },
   "wip": "Work in progress: features and file formats may still change. Back up your campaigns with “{{ui:Campaign.Settings.Export}}”.",
   "hero": {
-    "eyebrow": "Self-hosted · Free for noncommercial use",
+    "eyebrow": "Self-hosted · Free for personal and noncommercial use",
     "title": "Run your whole table from one browser tab",
-    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One DM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew.",
+    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One DM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew. It ships with the Fifth Edition SRD 5.2.1, and other systems can be added as data.",
     "primary": "Download",
     "secondary": "Read the guide",
     "note": "Windows, macOS and Linux · English, Русский, עברית",
@@ -44,7 +44,7 @@
       { "icon": "notebook-pen", "title": "Sessions, recaps and journals", "text": "A player-facing recap and a separate DM summary, table notes (private or shared) and a private journal that not even the DM can read." },
       { "icon": "eye-off", "title": "Secrets stay secret", "text": "NPCs can be hidden, known by silhouette or revealed. Players only ever receive what they are allowed to see." },
       { "icon": "sparkles", "title": "Optional AI, on your own key", "text": "Draft recaps, histories and characters, or build the world in a chat. Nothing is sent to a model until you click, and nothing is saved until you apply it." },
-      { "icon": "library", "title": "Systems are data", "text": "A system is a YAML file plus packs of YAML content. Add your own rules and settings without touching the program." }
+      { "icon": "library", "title": "Systems are data", "text": "A system is a YAML file plus packs of YAML content: attributes, resources, sheet fields, content types and conditions. Define your own without touching the program." }
     ]
   },
   "tour": {
@@ -132,15 +132,20 @@
   "systems": {
     "eyebrow": "Systems and licences",
     "title": "What is in the box, in plain terms",
-    "lead": "What ships in the box, and what you may do with it.",
+    "lead": "What ships today, what you can add, and what you may do with it.",
     "panels": [
       {
-        "title": "The Fifth Edition SRD 5.2.1",
-        "text": "Twelve classes, nine species, four backgrounds, seventeen feats, 339 spells and 340 creatures from the System Reference Document 5.2.1, used under CC BY 4.0. TTRPG.Codex describes itself as \"5E compatible\" and has no connection to Wizards of the Coast."
+        "title": "Ships with the Fifth Edition SRD 5.2.1",
+        "text": "Twelve classes, nine species, four backgrounds, seventeen feats, 339 spells and 340 creatures from the System Reference Document 5.2.1, used under CC BY 4.0. It is the one complete game system included today. TTRPG.Codex describes itself as \"5E compatible\" and has no connection to Wizards of the Coast."
       },
       {
-        "title": "Source-available, free for noncommercial use",
-        "text": "The program is released under the PolyForm Noncommercial License 1.0.0. It is not an OSI open-source licence: you can run, study and change it for noncommercial purposes, not sell it.",
+        "title": "Built to take other systems",
+        "text": "A game system is data, not code: a YAML file for attributes, resources, sheet fields, content types and conditions, plus packs of entries. A small system, like the bundled d6 example, is one short file and a few entry files. Rules that need real logic, such as 5E's spell slots and level-ups, take a compiled plugin. Other publishers' content is not included.",
+        "link": { "href": "https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md", "label": "Read the content pack format" }
+      },
+      {
+        "title": "Free for personal and noncommercial use",
+        "text": "The program is source-available under the PolyForm Noncommercial License 1.0.0. Run it for your own table, your club or a class, and study and change it for noncommercial purposes. It is not an OSI open-source licence, and it does not allow selling it or using it commercially. Unsure whether your use counts? Open an issue and ask.",
         "link": { "href": "https://github.com/myarichuk/TTRPG.Codex/blob/main/LEGAL.md", "label": "Read the legal notices" }
       }
     ]
