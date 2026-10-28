@@ -15,6 +15,9 @@ of content a system has; packs of YAML files supply the content. The repository 
 pack). See [docs/CONTENT_PACKS.md](docs/CONTENT_PACKS.md) for the format and
 [LEGAL.md](LEGAL.md) for licences.
 
+The project website, with screenshots, an install guide and a usage guide in English, Russian and Hebrew, lives in
+[`site/`](site/README.md) and is published to GitHub Pages: <https://myarichuk.github.io/TTRPG.Codex/>.
+
 ## Run it
 
 **Download:** the [latest release](https://github.com/myarichuk/TTRPG.Codex/releases) has an

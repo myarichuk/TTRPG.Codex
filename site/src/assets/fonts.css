@@ -1,0 +1,94 @@
+@font-face {
+    font-family: "Cinzel";
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url("fonts/cinzel/cinzel-latin-wght-normal.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-latin-400-italic.woff2") format("woff2");
+}
+
+/* Cyrillic and Hebrew: the same Alegreya Sans for Russian body text, Forum (classical capitals) beside Cinzel, Frank Ruhl Libre (a calligraphic
+   serif) beside Cinzel for Hebrew headings and Assistant (a humanist sans) beside Alegreya Sans for Hebrew body text. Each file is fetched only when the page contains that script. */
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-400-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-500-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-700-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Alegreya Sans";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/alegreya-sans/alegreya-sans-cyrillic-400-italic.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Forum";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/forum/forum-cyrillic-400-normal.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+    font-family: "Assistant";
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url("fonts/assistant/assistant-hebrew-wght-normal.woff2") format("woff2");
+    unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+    font-family: "Frank Ruhl Libre";
+    font-style: normal;
+    font-weight: 300 900;
+    font-display: swap;
+    src: url("fonts/frank-ruhl-libre/frank-ruhl-libre-hebrew-wght-normal.woff2") format("woff2");
+    unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
