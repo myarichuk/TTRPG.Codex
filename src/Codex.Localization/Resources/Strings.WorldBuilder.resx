@@ -17,7 +17,6 @@
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Only the DM can build the world.</value></data>
   <data name="WorldBuilder.Error.EditTargetGone" xml:space="preserve"><value>“{0}” is no longer in the campaign, so its change can't be applied. Untick it and apply the rest.</value></data>
   <data name="WorldBuilder.Error.EditChanged" xml:space="preserve"><value>“{0}” was changed after this proposal was made, so applying it would overwrite that. Ask for the change again from the current text.</value></data>
-  <data name="WorldBuilder.Saved" xml:space="preserve"><value>{0, plural, one{# draft saved, hidden from players.} other{# drafts saved, hidden from players.}}</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>Build with AI</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Creatures</value></data>
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Use</value></data>

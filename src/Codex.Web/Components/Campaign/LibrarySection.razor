@@ -31,7 +31,7 @@
                 <LucideIcon IconName="upload" Size="18" /> @L["Campaign.Library.ImportPack"]
                 <InputFile OnChange="ImportPackAsync" accept=".zip" class="visually-hidden" />
             </label>
-            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="ExportHomebrewAsync" aria-label="@L["Campaign.Library.ExportLabel"]"><LucideIcon IconName="download" Size="18" /> @L["Campaign.Library.ExportPack"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="OpenExportAsync" aria-label="@L["Campaign.Library.ExportLabel"]" data-testid="export-pack"><LucideIcon IconName="download" Size="18" /> @L["Campaign.Library.ExportPack"]</CodexButton>
         </div>
     }
 </div>
@@ -73,6 +73,34 @@
 {
     <HomebrewWizard @ref="wizard" OnSaved="OnSavedAsync" OnDeleted="OnDeletedAsync" />
 }
+
+@* Export by tag: the homebrew that carries any of the picked tags, or all of it, as a pack another campaign or table can import. *@
+<dialog id="export-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="export-homebrew-title" data-testid="export-dialog">
+    <div class="dialog-body">
+        <h2 id="export-homebrew-title"><LucideIcon IconName="download" Size="18" Class="title-icon" /> @L["Campaign.Library.Export.Title"]</h2>
+        @if (exportTags.Count == 0)
+        {
+            <p class="mb-0">@L["Campaign.Library.Export.NoTags"]</p>
+        }
+        else
+        {
+            <p class="field-hint">@L["Campaign.Library.Export.Hint"]</p>
+            <div class="chips" role="group" aria-label="@L["Campaign.Library.Export.Tags"]">
+                @foreach (var (tag, count) in exportTags)
+                {
+                    var on = exportPicked.Contains(tag);
+                    <button type="button" class="chip" aria-pressed="@(on ? "true" : "false")" @onclick="() => ToggleExportTag(tag)" data-testid="export-tag">
+                        <LucideIcon IconName="tag" Size="12" /> @tag <span class="chip-key">@count</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+    <div class="dialog-actions">
+        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseExportAsync">@L["Common.Cancel"]</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Plaque" Icon="download" OnClick="ExportHomebrewAsync" Disabled="@(ExportSelection.Count == 0)" data-testid="export-go">@L["Campaign.Library.Export.Go", ExportSelection.Count]</CodexButton>
+    </div>
+</dialog>
 
 <dialog id="import-homebrew-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="import-homebrew-title">
     <div class="dialog-body">
@@ -333,19 +361,47 @@
         }
     }
 
-    private async Task ExportHomebrewAsync()
+    // The campaign's homebrew while the export dialog is open, its tags, and the tags picked.
+    private List<HomebrewEntryDocument> exportable = new();
+    private IReadOnlyList<(string Tag, int Count)> exportTags = Array.Empty<(string, int)>();
+    private readonly HashSet<string> exportPicked = new(StringComparer.OrdinalIgnoreCase);
+
+    private IReadOnlyList<HomebrewEntryDocument> ExportSelection => HomebrewTags.Tagged(exportable, exportPicked);
+
+    private async Task OpenExportAsync()
     {
-        var entries = (await Homebrew.GetAllForCampaignAsync(Ctx.Campaign.Id)).Select(h => h.ToEntry()).ToList();
-        if (entries.Count == 0)
+        exportable = (await Homebrew.GetAllForCampaignAsync(Ctx.Campaign.Id)).ToList();
+        if (exportable.Count == 0)
         {
             Ctx.Notify(Flash.Info(L["Campaign.Library.NoHomebrewToExport"]));
             return;
         }
 
+        exportTags = HomebrewTags.Tally(exportable);
+        exportPicked.Clear();
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "export-homebrew-dialog");
+    }
+
+    private void ToggleExportTag(string tag)
+    {
+        if (!exportPicked.Remove(tag)) exportPicked.Add(tag);
+    }
+
+    private Task CloseExportAsync() => JS.InvokeVoidAsync("codex.closeModal", "export-homebrew-dialog").AsTask();
+
+    private async Task ExportHomebrewAsync()
+    {
+        var entries = ExportSelection.Select(h => h.ToEntry()).ToList();
+        if (entries.Count == 0) return;
+        await CloseExportAsync();
+
+        // A pack of some tags is a pack of its own: importing it beside the whole set must not replace that.
+        var tags = exportPicked.OrderBy(t => t, StringComparer.OrdinalIgnoreCase).ToList();
         var manifest = new PackManifest
         {
-            Id = $"homebrew-{RavenHomebrewRepository.Slugify(Ctx.Campaign.Name)}",
-            Name = $"{Ctx.Campaign.Name} homebrew",
+            Id = $"homebrew-{RavenHomebrewRepository.Slugify(Ctx.Campaign.Name)}{(tags.Count == 0 ? "" : "-" + RavenHomebrewRepository.Slugify(string.Join(" ", tags)))}",
+            Name = $"{Ctx.Campaign.Name} homebrew{(tags.Count == 0 ? "" : $" ({string.Join(", ", tags)})")}",
             Version = "1.0.0",
             SystemId = Ctx.Campaign.SystemId,
             Kind = "homebrew",
