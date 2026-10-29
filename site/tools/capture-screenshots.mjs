@@ -73,6 +73,8 @@ async function captureLanguage(browser, lang) {
   const desktop = { width: 1100, height: 820 };
   const dmCtx = await browser.newContext({ baseURL: BASE, viewport: desktop, locale: lang, deviceScaleFactor: 1 });
   const dm = await dmCtx.newPage();
+  // Leaving an editor with unsaved text asks first; the script always means to leave.
+  dm.on('dialog', (dialog) => dialog.accept());
   await setCulture(dm, d.tag, '/login');
   await login(dm, names.dm);
 
@@ -105,7 +107,10 @@ async function captureLanguage(browser, lang) {
     hp: p.hp[0], hpMax: p.hp[1],
     sheet: { class: p.cls, species: p.species, background: p.background, str: p.scores[0], dex: p.scores[1], con: p.scores[2], int: p.scores[3], wis: p.scores[4], cha: p.scores[5], level: p.level, armorClass: p.ac, speed: 30, alignment: p.alignment },
   }));
-  d.npcs.forEach((n, i) => actors.push({ id: `npc${i}-${run}`, campaignId, name: n.name, kind: KIND.npc, visibility: VIS[n.visibility], hp: n.hp[0], hpMax: n.hp[1], sheet: { level: 3 } }));
+  d.npcs.forEach((n, i) => actors.push({
+    id: `npc${i}-${run}`, campaignId, name: n.name, kind: KIND.npc, visibility: VIS[n.visibility], hp: n.hp[0], hpMax: n.hp[1], sheet: { level: 3 },
+    publicName: n.publicName, publicDescription: n.publicDescription,
+  }));
   d.monsters.forEach((m, i) => {
     for (let c = 0; c < m.count; c++) {
       actors.push({ id: `mon${i}-${c}-${run}`, campaignId, name: m.count > 1 ? `${m.name} ${c + 1}` : m.name, kind: KIND.monster, visibility: VIS.Known, hp: m.hp[0], hpMax: m.hp[1], sheet: {} });
@@ -127,6 +132,12 @@ async function captureLanguage(browser, lang) {
     await page.waitForLoadState('networkidle');
     playerPages.push({ ctx, page });
   }
+
+  // The getting-started list, half done: described, invited and cast, but no page, place or session yet.
+  await dm.goto(`/campaigns/${campaignId}`);
+  await interactive(dm);
+  await dm.getByTestId('setup-checklist').waitFor();
+  await shoot(dm, lang, 'setup');
 
   const section = async (page, s) => { await page.goto(`/campaigns/${campaignId}/${s}`); await interactive(page); };
 
@@ -156,6 +167,20 @@ async function captureLanguage(browser, lang) {
     await dm.getByTestId('wiki-body').waitFor();
     await dm.getByTestId('wiki-body').fill(body);
     await dm.getByTestId('wiki-body').press('Tab'); // blur: the editor commits its text on change
+    await settle(dm, 300);
+    await dm.getByTestId('wiki-visibility').selectOption('Party');
+    await dm.getByTestId('wiki-save').click();
+    await dm.getByTestId('wiki-page').waitFor();
+    await settle(dm, 400);
+  }
+
+  // A page of each of the other kinds, so the list has something to filter and "[[" something to offer.
+  for (const p of d.pages) {
+    await dm.goto(`/campaigns/${campaignId}/wiki/new?title=${encodeURIComponent(p.title)}`);
+    await interactive(dm);
+    await dm.getByTestId('wiki-kind-select').selectOption(p.kind);
+    await dm.getByTestId('wiki-body').fill(p.body);
+    await dm.getByTestId('wiki-body').press('Tab');
     await settle(dm, 300);
     await dm.getByTestId('wiki-visibility').selectOption('Party');
     await dm.getByTestId('wiki-save').click();
@@ -234,13 +259,42 @@ async function captureLanguage(browser, lang) {
   };
   await visit('home', '/');
   await visit('overview', '');
+  await dm.setViewportSize({ width: 1100, height: 1300 });
   await visit('cast', 'cast');
+  await dm.setViewportSize({ width: 1100, height: 820 });
   await dm.setViewportSize({ width: 1100, height: 1250 });
   await visit('sheet', `actors/aria-${run}`);
   await dm.setViewportSize({ width: 1100, height: 820 });
   await visit('bestiary', 'bestiary');
   await visit('places', 'world');
-  await visit('wiki-page', 'wiki', async () => { await dm.getByTestId('wiki-list').locator('a').filter({ hasText: d.wiki.title }).first().click(); await dm.getByTestId('wiki-page').waitFor(); });
+  const openHarbour = async () => { await dm.getByTestId('wiki-list').locator('a').filter({ hasText: d.wiki.title }).first().click(); await dm.getByTestId('wiki-page').waitFor(); };
+  await visit('wiki-list', 'wiki');
+  // The DM's view: the secret and what players are told instead, and the card a link shows on hover.
+  await dm.goto(`/campaigns/${campaignId}/wiki`);
+  await interactive(dm);
+  await openHarbour();
+  await goTop(dm);
+  await dm.getByTestId('wiki-body').locator('a.wiki-link').first().hover();
+  await dm.getByTestId('hover-card').waitFor();
+  await shoot(dm, lang, 'wiki-page');
+  await dm.mouse.move(0, 0);
+  // Writing: "[[" offers the pages, and the save bar says there is something to save.
+  await dm.getByTestId('wiki-edit').click();
+  // The page's text and the editor share the test id: wait for the textarea.
+  const editor = dm.locator('textarea[data-testid=wiki-body]');
+  await editor.waitFor();
+  // Mid-text, after the line that names the harbourmaster, so the suggestions open over the text and not the save bar.
+  await editor.evaluate((el) => {
+    const at = el.value.indexOf('\n', el.value.indexOf('@'));
+    el.focus();
+    el.setSelectionRange(at, at);
+    el.scrollTop = 0;
+  });
+  await dm.evaluate(() => document.querySelector('.md-toolbar, [data-testid=wiki-body]')?.scrollIntoView({ block: 'start' }));
+  await editor.pressSequentially(' [[');
+  await dm.locator('#mention-list').waitFor();
+  await shoot(dm, lang, 'wiki-edit');
+  await editor.press('Escape');
   await visit('lore', 'lore');
   await visit('session', sessionPath);
   await visit('library', 'library/monster/goblin-boss');

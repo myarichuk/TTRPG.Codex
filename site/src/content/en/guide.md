@@ -35,6 +35,8 @@ Inside a campaign, a side rail holds the sections. On a phone it becomes a strip
 
 Until the campaign is set up, the Overview shows you a [[ui:Campaign.Setup.Title]] list: describe the campaign, invite players, add a character, write a page, put a place on the map and plan a session. Each step ticks itself off when it is done, and the cross puts the list away for good.
 
+![The Overview's Getting started list: the campaign described, the players invited and the cast begun; a page, a place and a session still to do.](shot:setup)
+
 When a player opens the link they sign in or create an account and land in the campaign as a player. A link works for anyone who has it, so if it spreads further than you wanted, press [[ui:Campaign.Settings.NewLink]] in Settings: the old link stops working.
 
 ![The Campaigns page, with a campaign card and a New campaign button.](shot:home)
@@ -89,6 +91,8 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 
 [[ui:Page.Campaign.Section.Wiki]] is a set of pages you write in plain text.
 
+![The wiki's page list, with filters by kind, sorting, and a count of the DM-only blocks on a page.](shot:wiki-list)
+
 - Link pages by typing a title in double brackets, like `[[The Drowned Chapel]]`: typing `[[` offers the pages you have, and the page list beside the editor puts a link where the cursor is. Backlinks list what mentions what. Hover over a link or a mention to see a card with the first lines and the picture; it shows only what the reader is allowed to see.
 - The page list filters by kind (person, place, faction, quest) as well as by tag, and sorts by title or by when a page last changed.
 - Mention a character with `@`, a place with `#` and an item with `$`.
@@ -102,7 +106,8 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 - Every place already has a wiki page of its own, and a page can be put on the map, or promoted into the cast.
 - Players can leave notes on any page they can read.
 
-![A wiki page about a harbour, with a link to another page, backlinks and a notes panel.](shot:wiki-page)
+![A wiki page as the DM sees it: a DM-only secret with what the players are told instead, and the card a link shows on hover.](shot:wiki-page)
+![Writing a page: typing double brackets offers the other pages, and the bar under the text says the changes are not saved yet.](shot:wiki-edit)
 
 ### Lore {#lore}
 

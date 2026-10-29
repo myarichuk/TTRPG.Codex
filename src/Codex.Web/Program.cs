@@ -247,7 +247,10 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
                 Kind = seed.Kind,
                 OwnerUserId = seed.OwnerUserId,
                 Name = seed.Name,
-                Visibility = seed.Visibility
+                Visibility = seed.Visibility,
+                PublicName = seed.PublicName,
+                PublicDescription = seed.PublicDescription,
+                Biography = seed.Biography
             };
 
             foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())

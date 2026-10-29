@@ -27,6 +27,11 @@ public sealed class TestSeedActor
     public int Hp { get; set; }
     public int HpMax { get; set; }
 
+    /// <summary>What players see of a stranger (<see cref="ActorVisibility.Unknown"/>), and the history; null leaves them empty.</summary>
+    public string? PublicName { get; set; }
+    public string? PublicDescription { get; set; }
+    public string? Biography { get; set; }
+
     /// <summary>Extra sheet fields (attribute scores, level, class reference...) to seed verbatim.</summary>
     public Dictionary<string, object>? Sheet { get; set; }
 }
