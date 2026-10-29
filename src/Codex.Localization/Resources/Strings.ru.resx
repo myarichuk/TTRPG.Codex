@@ -42,4 +42,8 @@
   <data name="Common.Editor.FullScreen" xml:space="preserve"><value>Во весь экран</value></data>
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Выйти из полноэкранного режима (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>Пока нечего показать.</value></data>
+  <data name="Common.Editor.Secret" xml:space="preserve"><value>Блок только для мастера (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Dm" xml:space="preserve"><value>Только мастер</value></data>
+  <data name="Common.Secret.Party" xml:space="preserve"><value>Открыто группе</value></data>
+  <data name="Common.Secret.Players" xml:space="preserve"><value>Что знают игроки</value></data>
 </root>

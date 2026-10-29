@@ -116,7 +116,33 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             query = query.Where(p => p.Visibility == WikiVisibility.Party);
         }
 
-        return (await query.ToListAsync()).OrderBy(p => p.Title, StringComparer.OrdinalIgnoreCase).ToList();
+        var pages = (await query.ToListAsync()).OrderBy(p => p.Title, StringComparer.OrdinalIgnoreCase).ToList();
+        if (!access.IsDm)
+        {
+            var visible = pages.Select(p => p.Slug).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var page in pages)
+            {
+                RedactForPlayer(page, visible);
+            }
+        }
+
+        return pages;
+    }
+
+    // Pages handed to a player with their secret blocks taken out. A page in here is never saved, which would write the
+    // player's copy over the DM's text; only the DM saves, and the DM is never given one, so this only guards the future.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<WikiPageDocument, object> Redacted = new();
+
+    /// <summary>The page as a player reads it: the body without its DM blocks, and links only to what that body links to (and,
+    /// when <paramref name="visibleSlugs"/> is given, only to pages the player may open), so neither the link count nor
+    /// "pages linking here" points at a secret.</summary>
+    private static void RedactForPlayer(WikiPageDocument page, IReadOnlySet<string>? visibleSlugs)
+    {
+        page.Body = SecretText.ForPlayers(page.Body);
+        page.Links = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).Distinct()
+            .Where(slug => visibleSlugs == null || visibleSlugs.Contains(slug))
+            .ToList();
+        Redacted.AddOrUpdate(page, page);
     }
 
     public async Task<WikiPageDocument?> GetVisibleBySlugAsync(string slug, CampaignAccess access)
@@ -130,12 +156,23 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             return null;
         }
 
-        return access.IsDm || page.Visibility == WikiVisibility.Party ? page : null;
+        if (access.IsDm)
+        {
+            return page;
+        }
+
+        if (page.Visibility != WikiVisibility.Party)
+        {
+            return null;
+        }
+
+        RedactForPlayer(page, null);
+        return page;
     }
 
     public async Task<bool> TrySaveAsync(WikiPageDocument page, CampaignAccess access)
     {
-        if (!access.IsDm || string.IsNullOrWhiteSpace(page.Title))
+        if (!access.IsDm || string.IsNullOrWhiteSpace(page.Title) || Redacted.TryGetValue(page, out _))
         {
             return false;
         }

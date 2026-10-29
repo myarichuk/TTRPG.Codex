@@ -506,4 +506,12 @@
   <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>None of the homebrew is tagged yet, so everything is exported. The world builder can tag it for you.</value></data>
   <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>Tags</value></data>
   <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{Export # entry} other{Export # entries}}</value></data>
+  <data name="Campaign.Wiki.CreateThisPage" xml:space="preserve"><value>Create this page</value></data>
+  <data name="Campaign.Wiki.SecretHint" xml:space="preserve"><value>Keep what players must not see yet between a `:::dm` line and a `:::` line (the eye button or Ctrl+Shift+H does it for you). `:::party` marks a secret you have revealed, `:::players` what the players are told instead.</value></data>
+  <data name="Campaign.Wiki.ViewAs" xml:space="preserve"><value>Read the page as</value></data>
+  <data name="Campaign.Wiki.ViewAs.Dm" xml:space="preserve"><value>DM</value></data>
+  <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>Players</value></data>
+  <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>This is the page exactly as the players read it: no DM blocks, and links only to pages they can open.</value></data>
+  <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>Players can't see this page: it is DM-only. Share it and they read everything outside its DM blocks.</value></data>
+  <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# DM block} other{# DM blocks}}</value></data>
 </root>

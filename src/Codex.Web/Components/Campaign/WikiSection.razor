@@ -3,6 +3,7 @@
 @using Codex.Persistence
 @using Microsoft.AspNetCore.WebUtilities
 @inject IWikiRepository WikiRepo
+@inject IActorRepository ActorRepo
 @inject INoteRepository NoteRepo
 @inject IUserRepository UserRepo
 @inject AiFeatures Ai
@@ -71,9 +72,9 @@ else if (Mode == "edit")
                     <label for="wiki-body" class="field-label">@L["Campaign.Wiki.Field.Text"]</label>
                     <MarkdownEditor Id="wiki-body" Title="@(string.IsNullOrWhiteSpace(draft.Title) ? L["Campaign.Wiki.Field.Text"] : draft.Title)" Rows="18" Class="wiki-editor"
                                     @bind-Value="draft.Body" Mentions="@mentionsJson" DescribedBy="wiki-body-hint" TestId="wiki-body" Placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"
-                                    Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false))"
+                                    Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false, DmView.From(L)))" Secrets="true"
                                     Busy="expanding" BusyText="@L["Campaign.Wiki.Writing"]" OnStop="aiCall.Stop">
-                        <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"]</div>
+                        <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"] @Rich(L["Campaign.Wiki.SecretHint"])</div>
                     </MarkdownEditor>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
@@ -213,6 +214,10 @@ else if (Slug != null)
             @if (Ctx.IsDm)
             {
                 <div class="row-actions">
+                    <div class="md-tabs view-as" role="group" aria-label="@L["Campaign.Wiki.ViewAs"]" data-testid="wiki-view-as">
+                        <button type="button" class="md-tab" aria-pressed="@(asParty ? "false" : "true")" @onclick="() => ViewAsPartyAsync(false)">@L["Campaign.Wiki.ViewAs.Dm"]</button>
+                        <button type="button" class="md-tab" aria-pressed="@(asParty ? "true" : "false")" @onclick="() => ViewAsPartyAsync(true)" data-testid="wiki-view-as-party"><LucideIcon IconName="users" Size="14" /> @L["Campaign.Wiki.ViewAs.Party"]</button>
+                    </div>
                     @if (CastMember(current) == null && current.Kind is WikiPageKind.General or WikiPageKind.Person)
                     {
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => promote.OpenAsync(current, mentions.Plain(current.Body))" data-testid="wiki-promote-cast"><LucideIcon IconName="user-plus" Size="18" /> @L["Campaign.Wiki.Promote.Open"]</CodexButton>
@@ -276,13 +281,29 @@ else if (Slug != null)
                             }
                         </div>
                     }
-                    @if (string.IsNullOrWhiteSpace(current.Body))
+                    @if (asParty)
+                    {
+                        @* The DM's "view as players": the page as the repository hands it to a player, rendered as a player's is. *@
+                        <p class="view-as-note" role="status" data-testid="wiki-view-as-note"><LucideIcon IconName="users" Size="14" /> @(party.Page == null ? L["Campaign.Wiki.ViewAs.Hidden"] : L["Campaign.Wiki.ViewAs.Note"])</p>
+                        @if (party.Page is { } seen)
+                        {
+                            @if (string.IsNullOrWhiteSpace(seen.Body))
+                            {
+                                <p class="small-muted mb-0">@L["Campaign.Wiki.PageEmpty"]</p>
+                            }
+                            else
+                            {
+                                <div class="rules-text wiki-body" data-testid="wiki-body">@((MarkupString)WikiRender.ToHtml(seen.Body, party.Pages, party.Mentions, Ctx.Campaign.Id, false))</div>
+                            }
+                        }
+                    }
+                    else if (string.IsNullOrWhiteSpace(current.Body))
                     {
                         <p class="small-muted mb-0">@L["Campaign.Wiki.PageEmpty"]</p>
                     }
                     else
                     {
-                        <div class="rules-text wiki-body">@((MarkupString)WikiRender.ToHtml(current.Body, pages, mentions, Ctx.Campaign.Id, Ctx.IsDm))</div>
+                        <div class="rules-text wiki-body" data-testid="wiki-body">@((MarkupString)WikiRender.ToHtml(current.Body, pages, mentions, Ctx.Campaign.Id, Ctx.IsDm, Ctx.IsDm ? DmView.From(L) : null))</div>
                     }
                 </article>
 
@@ -323,8 +344,10 @@ else if (Slug != null)
             </div>
             <div class="col-lg-4">
                 @{
-                    var outgoing = current.Links.Select(slug => pages.FirstOrDefault(p => p.Slug == slug)).Where(p => p != null).Cast<WikiPageDocument>().ToList();
-                    var incoming = pages.Where(p => p.Links.Contains(current.Slug) && p.Id != current.Id).ToList();
+                    // In "view as players" the links are the ones a player's copy of the page, and of every other page, holds.
+                    var (linksOf, among) = asParty ? (party.Page?.Links ?? new List<string>(), party.Pages) : (current.Links, pages);
+                    var outgoing = linksOf.Select(slug => among.FirstOrDefault(p => p.Slug == slug)).Where(p => p != null).Cast<WikiPageDocument>().ToList();
+                    var incoming = asParty && party.Page == null ? new List<WikiPageDocument>() : among.Where(p => p.Links.Contains(current.Slug) && p.Id != current.Id).ToList();
                 }
                 <section class="panel">
                     <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksFrom"]</h3></div>
@@ -419,11 +442,15 @@ else
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
                         <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
+                    @if (Ctx.IsDm && wp.Visibility == WikiVisibility.Party && SecretText.SecretBlocks(wp.Body).Count is > 0 and var secrets)
+                    {
+                        <span class="small-muted" data-testid="wiki-card-secrets"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Wiki.SecretCount", secrets]</span>
+                    }
                     @if (IllustrationOf(wp) is { } thumb)
                     {
                         <img class="place-thumb" src="@thumb" alt="" loading="lazy" />
                     }
-                    <p class="mb-0 small">@WikiRender.Summary(wp.Body, mentions, 150)</p>
+                    <p class="mb-0 small">@WikiRender.Summary(wp.Body, mentions, 150, Ctx.IsDm)</p>
                     <div class="card-foot">
                         <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
@@ -478,6 +505,19 @@ else
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
     private bool aiReady;
+    // The DM's "view as players" of the open page, loaded through a player's access when first asked for.
+    private bool asParty;
+    private (WikiPageDocument? Page, List<WikiPageDocument> Pages, MentionDirectory Mentions) party = (null, new(), MentionDirectory.Empty);
+
+    private async Task ViewAsPartyAsync(bool on)
+    {
+        asParty = on && current != null;
+        if (!asParty || Ctx.Access.PartyPreview() is not { } preview) return;
+        var visible = (await WikiRepo.GetVisibleForCampaignAsync(preview)).ToList();
+        var cast = await ActorRepo.GetVisibleForCampaignAsync(preview);
+        party = (visible.FirstOrDefault(p => p.Id == current!.Id), visible, await MentionSources.DirectoryAsync(Ctx.Campaign, preview, cast));
+    }
+
     // The editor's content as loaded or last saved, to tell whether leaving would lose anything.
     private string savedDraft = string.Empty;
 
@@ -511,6 +551,7 @@ else
         regions = (await RegionRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
         current = null;
         linked = null;
+        asParty = false;
         notes = new List<NoteDocument>();
         pendingArt = null;
         removeArt = false;
@@ -754,7 +795,7 @@ else
         try
         {
             var related = WikiText.ExtractLinks(draft.Body).Concat((pages ?? new()).Select(p => p.Title)).Distinct(StringComparer.OrdinalIgnoreCase);
-            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, draft.Body, related, aiInstruction, draft.Visibility == WikiVisibility.Party ? AiAudience.Players : AiAudience.Dm, Ctx.UserId, ct);
+            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, linked != null ? WikiPageKind.Place : draft.Kind, draft.Body, related, SubjectContext(), aiInstruction, Ctx.UserId, ct);
             Ctx.Notify(Flash.Info(L["Campaign.Wiki.AiDraftReady"]));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -775,6 +816,28 @@ else
             aiCall.End(ct);
             expanding = false;
         }
+    }
+
+    /// <summary>What the campaign says about the page's subject outside the page: the history of the character it is about and
+    /// the DM's notes on them, and the description of its place and where that is. The AI writes the page to agree with it.</summary>
+    private List<string> SubjectContext()
+    {
+        var context = new List<string>();
+        if (!string.IsNullOrEmpty(draft.ActorId) && Ctx.Actors.FirstOrDefault(a => a.Id == draft.ActorId) is { } member)
+        {
+            if (!string.IsNullOrWhiteSpace(member.Biography)) context.Add($"History of {member.Name} (their character in the cast): {TextFormatting.Summary(mentions.Plain(member.Biography), 1200)}");
+            if (!string.IsNullOrWhiteSpace(member.DmNotes)) context.Add($"The DM's notes on {member.Name}: {TextFormatting.Summary(mentions.Plain(member.DmNotes), 800)}");
+        }
+
+        if (linked is { } on)
+        {
+            context.Add($"Where it is: {PlacePath(on)}");
+            if (!string.IsNullOrWhiteSpace(on.Place.Description)) context.Add($"Description of the place on the map: {TextFormatting.Summary(mentions.Plain(on.Place.Description), 1200)}");
+            var inside = on.Region.Locations.Where(l => l.ParentId == on.Place.Id).Select(l => l.Name).ToList();
+            if (inside.Count > 0) context.Add($"Places inside it: {string.Join(", ", inside)}");
+        }
+
+        return context;
     }
 
     public void Dispose() => aiCall.Dispose();

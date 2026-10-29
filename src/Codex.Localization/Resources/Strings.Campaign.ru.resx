@@ -506,4 +506,12 @@
   <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>У собственных материалов пока нет меток, поэтому экспортируется всё. Строитель мира может расставить метки за вас.</value></data>
   <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>Метки</value></data>
   <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{Экспортировать # запись} few{Экспортировать # записи} many{Экспортировать # записей} other{Экспортировать # записи}}</value></data>
+  <data name="Campaign.Wiki.CreateThisPage" xml:space="preserve"><value>Создать эту страницу</value></data>
+  <data name="Campaign.Wiki.SecretHint" xml:space="preserve"><value>То, что игрокам пока знать нельзя, держите между строкой `:::dm` и строкой `:::` (кнопка с глазом или Ctrl+Shift+H сделают это за вас). `:::party` отмечает раскрытую тайну, `:::players` — то, что вместо неё знают игроки.</value></data>
+  <data name="Campaign.Wiki.ViewAs" xml:space="preserve"><value>Читать страницу как</value></data>
+  <data name="Campaign.Wiki.ViewAs.Dm" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>Игроки</value></data>
+  <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>Так страницу видят игроки: без блоков мастера и со ссылками только на доступные им страницы.</value></data>
+  <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>Игроки не видят эту страницу: она только для мастера. Откройте её группе, и игроки прочтут всё, кроме блоков мастера.</value></data>
+  <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# блок мастера} few{# блока мастера} many{# блоков мастера} other{# блока мастера}}</value></data>
 </root>

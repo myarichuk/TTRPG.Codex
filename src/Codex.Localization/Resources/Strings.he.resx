@@ -42,4 +42,8 @@
   <data name="Common.Editor.FullScreen" xml:space="preserve"><value>מסך מלא</value></data>
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>יציאה ממסך מלא (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>אין עדיין מה להציג.</value></data>
+  <data name="Common.Editor.Secret" xml:space="preserve"><value>קטע לשליט המבוך בלבד (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Dm" xml:space="preserve"><value>לשליט המבוך בלבד</value></data>
+  <data name="Common.Secret.Party" xml:space="preserve"><value>נחשף לקבוצה</value></data>
+  <data name="Common.Secret.Players" xml:space="preserve"><value>מה שהשחקנים יודעים</value></data>
 </root>

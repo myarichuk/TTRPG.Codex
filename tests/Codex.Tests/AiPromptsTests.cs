@@ -5,6 +5,48 @@ namespace Codex.Tests;
 public class AiPromptsTests
 {
     [Fact]
+    public void WikiPage_AboutAPerson_AsksForTheirHistory_AgreesWithTheCast_AndKeepsSecretsInDmBlocks()
+    {
+        var (system, user) = AiPrompts.WikiPage(new WikiPageRequest("Keeper Olm", "person", "Runs the lighthouse.", "",
+            new[] { "Saltmere" }, new[] { "History of Keeper Olm (their character in the cast): Washed ashore as a child." }, "Saltmere Shadows"));
+
+        Assert.Contains("their history", system);
+        Assert.Contains(":::dm", system);
+        Assert.Contains("never contradict", system);
+        Assert.Contains("Washed ashore as a child.", user);
+        Assert.Contains("[[Name]]", user);
+        Assert.Contains("Saltmere", user);
+    }
+
+    [Fact]
+    public void WikiPage_AboutAPlace_AsksForItsHistoryAndEncounters()
+    {
+        var (system, _) = AiPrompts.WikiPage(new WikiPageRequest("Lighthouse", "place", "", "", Array.Empty<string>(), Array.Empty<string>()));
+
+        Assert.Contains("its history", system);
+        Assert.Contains("encounters", system);
+    }
+
+    [Fact]
+    public void WorldChat_WritesHistoriesAndKeepsSecretsInDmBlocks()
+    {
+        var prompt = AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", null, Array.Empty<string>()));
+
+        Assert.Contains("their history", prompt);
+        Assert.Contains("its history", prompt);
+        Assert.Contains(":::dm", prompt);
+    }
+
+    [Fact]
+    public void Rewrite_OfATextWithDmBlocks_KeepsThem()
+    {
+        var (system, _) = AiPrompts.Rewrite(new RewriteRequest("Aria", "character", Array.Empty<string>(), "Born at sea.\n:::dm\nSecret.\n:::", "", AiAudience.Players));
+        Assert.Contains("Keep every one of them", system);
+        var (plain, _) = AiPrompts.Rewrite(new RewriteRequest("Aria", "character", Array.Empty<string>(), "Born at sea.", "", AiAudience.Players));
+        Assert.DoesNotContain(":::", plain);
+    }
+
+    [Fact]
     public void SessionSummary_PlayerAudience_AsksForInWorldRecapAndForbidsSecrets()
     {
         var (system, user) = AiPrompts.SessionSummary(new SessionSummaryRequest(

@@ -467,6 +467,50 @@ window.codex = {
         mdReplace(el, s, e, text);
         el.setSelectionRange(s, s + text.length);
     },
+    // Puts the selected lines (or, with nothing selected, the paragraph at the cursor) in a ":::dm" block, the secret
+    // blocks of SecretText.cs; inside a block already, takes it out of it instead. The text keeps its own lines.
+    mdSecret: function (id) {
+        const el = document.getElementById(id);
+        if (!el || el.readOnly) return;
+        const v = el.value;
+        const lines = v.split("\n");
+        const lineAt = function (pos) { return v.slice(0, pos).split("\n").length - 1; };
+        const isOpen = function (l) { return /^\s*:::\s*[^\s:]/.test(l); };
+        const isClose = function (l) { return /^\s*:::\s*$/.test(l); };
+        let first = lineAt(el.selectionStart), last = lineAt(el.selectionEnd);
+        // The block the cursor is in, if any: the nearest opening line above with its closing line below.
+        let depth = 0, open = -1;
+        for (let i = first; i >= 0; i--) {
+            if (isClose(lines[i]) && i !== first) depth++;
+            else if (isOpen(lines[i])) { if (depth === 0) { open = i; break; } depth--; }
+        }
+        if (open >= 0) {
+            let close = -1; depth = 0;
+            for (let i = open + 1; i < lines.length; i++) {
+                if (isOpen(lines[i])) depth++;
+                else if (isClose(lines[i])) { if (depth === 0) { close = i; break; } depth--; }
+            }
+            if (close >= first || close < 0) {
+                const end = close < 0 ? lines.length : close + 1;
+                const inner = lines.slice(open + 1, close < 0 ? lines.length : close).join("\n");
+                const s = lines.slice(0, open).join("\n").length + (open > 0 ? 1 : 0);
+                const e = lines.slice(0, end).join("\n").length;
+                mdReplace(el, s, e, inner);
+                el.setSelectionRange(s, s + inner.length);
+                return;
+            }
+        }
+        if (el.selectionStart === el.selectionEnd) {
+            while (first > 0 && lines[first - 1].trim() !== "") first--;
+            while (last < lines.length - 1 && lines[last + 1].trim() !== "") last++;
+        }
+        const s = lines.slice(0, first).join("\n").length + (first > 0 ? 1 : 0);
+        const e = lines.slice(0, last + 1).join("\n").length;
+        const picked = v.slice(s, e);
+        const text = ":::dm\n" + (picked.trim() === "" ? "" : picked) + "\n:::";
+        mdReplace(el, s, e, text);
+        el.setSelectionRange(s + 6, s + 6 + (picked.trim() === "" ? 0 : picked.length));
+    },
     // A detail pane that is a full-screen sheet on a phone (.phone-sheet): move focus into it when it opens,
     // so keyboards and screen readers follow. Beside the list on a wide screen it is left alone.
     // Opening and closing a Library entry are navigations, and Blazor scrolls to the top after each one;
@@ -495,6 +539,15 @@ function mdReplace(el, start, end, text) {
         el.dispatchEvent(new Event("input", { bubbles: true }));
     }
 }
+
+// Ctrl/Cmd+Shift+H in a MarkdownEditor box that takes secret blocks.
+document.addEventListener("keydown", function (e) {
+    const el = e.target;
+    if (!(el instanceof HTMLTextAreaElement) || !el.hasAttribute("data-md-secrets") || !(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return;
+    if (e.key.toLowerCase() !== "h") return;
+    e.preventDefault();
+    window.codex.mdSecret(el.id);
+});
 
 // Ctrl/Cmd+B and Ctrl/Cmd+I in a MarkdownEditor box.
 document.addEventListener("keydown", function (e) {

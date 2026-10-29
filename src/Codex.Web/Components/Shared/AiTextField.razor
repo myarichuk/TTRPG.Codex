@@ -14,7 +14,7 @@
         </CodexButton>
     </div>
     <MarkdownEditor Id="@Id" Title="@(Label ?? L["Library.Ai.Description"])" Rows="@Rows" Placeholder="@Placeholder" Value="@Value" ValueChanged="OnValueChanged"
-                    DescribedBy="@($"{Id}-hint")" Mentions="@Mentions" Preview="Preview" TestId="@TestId" Class="mb-0"
+                    DescribedBy="@($"{Id}-hint")" Mentions="@Mentions" Preview="Preview" TestId="@TestId" Class="mb-0" Secrets="Secrets"
                     Busy="busy" BusyText="@L["Library.Ai.Writing"]" OnStop="call.Stop" />
     <div class="ai-field-foot">
         <label for="@(Id)-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
@@ -54,6 +54,9 @@
 
     /// <summary>The text as the reader will see it (see <see cref="MarkdownEditor.Preview"/>); null renders plain Markdown.</summary>
     [Parameter] public Func<string, string>? Preview { get; set; }
+
+    /// <summary>The text takes secret blocks (see <see cref="MarkdownEditor.Secrets"/>).</summary>
+    [Parameter] public bool Secrets { get; set; }
 
     /// <summary>Produces the new text from the current text and the optional instruction; the token is cancelled by Stop.</summary>
     [Parameter, EditorRequired] public Func<string, string, CancellationToken, Task<string>> Generate { get; set; } = null!;

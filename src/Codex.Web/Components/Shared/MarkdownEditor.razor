@@ -20,6 +20,10 @@
             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="italic" Label="@L["Common.Editor.Italic"]" title="@L["Common.Editor.Italic"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => WrapAsync("*", "*"))" />
             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="heading" Label="@L["Common.Editor.Heading"]" title="@L["Common.Editor.Heading"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => PrefixAsync("## "))" />
             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="list" Label="@L["Common.Editor.List"]" title="@L["Common.Editor.List"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => PrefixAsync("- "))" />
+            @if (Secrets)
+            {
+                <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="eye-off" Label="@L["Common.Editor.Secret"]" title="@L["Common.Editor.Secret"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="SecretAsync" data-testid="@($"{TestId}-secret")" />
+            }
         </div>
         <div class="md-view">
             <div class="md-tabs" role="group" aria-label="@L["Common.Editor.View"]">
@@ -34,7 +38,7 @@
     <div class="md-panes">
         <div class="md-write">
             <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@initial" @oninput="OnInput"
-                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-testid="@TestId"></textarea>
+                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-md-secrets="@(Secrets ? "" : null)" data-testid="@TestId"></textarea>
             @if (Busy)
             {
                 <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
@@ -81,6 +85,11 @@
     /// wiki links passes the renderer its read view uses (encoding the typed @Names first).</summary>
     [Parameter] public Func<string, string>? Preview { get; set; }
 
+    /// <summary>The text takes secret blocks (see <c>SecretText</c>): the toolbar gets a button, and Ctrl+Shift+H, that put the
+    /// selected lines (or the paragraph at the cursor) in a DM block, or take them out of one. Off for a box whose text is not
+    /// redacted for players.</summary>
+    [Parameter] public bool Secrets { get; set; }
+
     /// <summary>The AI is writing into the box: the text is read-only and a "Writing…" notice covers it.</summary>
     [Parameter] public bool Busy { get; set; }
     [Parameter] public string? BusyText { get; set; }
@@ -118,6 +127,8 @@
     private async Task WrapAsync(string before, string after) => await JS.InvokeVoidAsync("codex.mdWrap", Id, before, after);
 
     private async Task PrefixAsync(string prefix) => await JS.InvokeVoidAsync("codex.mdPrefix", Id, prefix);
+
+    private async Task SecretAsync() => await JS.InvokeVoidAsync("codex.mdSecret", Id);
 
     // The "Writing…" notice sits on the text, so the text is what shows while the AI writes.
     protected override void OnParametersSet()

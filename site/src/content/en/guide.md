@@ -90,6 +90,8 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 - Link pages by typing a title in double brackets, like `[[The Drowned Chapel]]`. Backlinks list what mentions what.
 - Mention a character with `@`, a place with `#` and an item with `$`.
 - Every page starts as [[ui:Campaign.Wiki.DmOnly]]. Press [[ui:Campaign.Wiki.SharePage]] to make it readable by the whole party.
+- A shared page can still hide parts of itself. Put a secret between a line `:::dm` and a line `:::` (the eye button in the toolbar, or Ctrl+Shift+H, does it for you): players never receive that text, not even its links. Change `:::dm` to `:::party` when the party learns it, and use `:::players` for what the players are told instead of the truth. The same works in a place's description and a character's history.
+- Press [[ui:Campaign.Wiki.ViewAs.Party]] above a page to read it exactly as the players do.
 - Every place already has a wiki page of its own, and a page can be put on the map, or promoted into the cast.
 - Players can leave notes on any page they can read.
 

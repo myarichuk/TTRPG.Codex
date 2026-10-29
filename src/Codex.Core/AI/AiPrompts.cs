@@ -32,6 +32,21 @@ public sealed record RewriteRequest(
     string? CampaignContext = null,
     string? Language = null);
 
+/// <summary>A page of the campaign wiki to write or expand, for the DM.</summary>
+/// <param name="Kind">What the page is about: "lore", "person", "place", "faction" or "quest".</param>
+/// <param name="Related">Titles of other pages it may link to with [[Title]].</param>
+/// <param name="Context">What the campaign already says about the subject elsewhere: the history of the character the page is
+/// about, the DM's notes on them, the description of its place and where that place is. The page must agree with it.</param>
+public sealed record WikiPageRequest(
+    string Title,
+    string Kind,
+    string CurrentText,
+    string Instruction,
+    IReadOnlyList<string> Related,
+    IReadOnlyList<string> Context,
+    string? CampaignContext = null,
+    string? Language = null);
+
 /// <summary>A description for a Library entry (a homebrew creature, spell, item) or a place on the world map.</summary>
 public sealed record DescribeRequest(
     string Subject,
@@ -157,7 +172,11 @@ public static class AiPrompts
         var audience = r.Audience == AiAudience.Players
             ? "The text will be read by the players, so keep anything the facts mark as secret or DM-only out of it."
             : "The text is for the game master's eyes.";
-        var system = $"You are a writing assistant for a tabletop role-playing campaign. You rewrite or write the history, personality and background of a {r.SubjectKind}. Keep every fact given; do not contradict the sheet; keep names as spelled. {audience} Reply with the finished text only. {StyleFor(r.Language)}";
+        // A history may hold the DM's secret blocks; players never see them, so they are kept as they are, not rewritten away.
+        var blocks = r.CurrentText.Contains(":::", StringComparison.Ordinal)
+            ? "The current text has DM blocks (a line \":::dm\", text, a line \":::\"); players never see them. Keep every one of them, word for word, with its marker lines. "
+            : "";
+        var system = $"You are a writing assistant for a tabletop role-playing campaign. You rewrite or write the history, personality and background of a {r.SubjectKind}. Keep every fact given; do not contradict the sheet; keep names as spelled. {audience} {blocks}Reply with the finished text only. {StyleFor(r.Language)}";
 
         var sb = new StringBuilder();
         sb.AppendLine($"Subject: {r.Subject} ({r.SubjectKind})");
@@ -169,6 +188,66 @@ public static class AiPrompts
         AppendList(sb, "Facts from the sheet", r.Facts);
         sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction) ? "Polish and expand the current text into two or three paragraphs." : r.Instruction.Trim()));
         sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet - write it from the facts)" : r.CurrentText);
+        return (system, sb.ToString());
+    }
+
+    /// <summary>How to keep a secret in a text the players may read, as a prompt says it. See <c>SecretText</c>.</summary>
+    public const string SecretBlocks =
+        "Anything the players must not learn yet (a secret, a twist, a trap, what an encounter really is, a DM aside) goes in a DM block: " +
+        "a line \":::dm\", the secret text, then a line \":::\". Players never see a DM block; the game master reveals it when the party learns it. " +
+        "Everything outside DM blocks is what the party may read. Never nest blocks, and keep every \":::dm\" line and \":::\" line that is already in a text. ";
+
+    /// <summary>What a page about a person covers.</summary>
+    public const string PersonOutline =
+        "A person: their part in the story; how they look and how they speak, with a line or two they might say in quotes; their history, where they come from and what shaped them; " +
+        "what they want and why; what they fear; two things they know or remember that the party can use; how the party is likely to meet them and how they react to help, threats or lies; " +
+        "and one sentence on how to play them. ";
+
+    /// <summary>What a page about a place covers.</summary>
+    public const string PlaceOutline =
+        "A place: what the party sees, hears and smells on arriving, in vivid prose; its history, who built it, what happened there and what of that still shows; who and what is found there; " +
+        "what the party can do or learn there, as concrete options with what each costs or risks; the encounters that may happen there; what it hides; " +
+        "and how it connects to the places and people around it. It is never a dead end. ";
+
+    public const string FactionOutline = "A faction: what it wants, how it works toward it, its history, who leads it, what it has, who opposes it, and how the party meets it. ";
+
+    public const string QuestOutline = "A quest: the hook, what is really going on, the complications along the way, the rewards, and what happens if the party ignores it. ";
+
+    private static string OutlineFor(string kind) => kind switch
+    {
+        "person" => PersonOutline,
+        "place" => PlaceOutline,
+        "faction" => FactionOutline,
+        "quest" => QuestOutline,
+        _ => ""
+    };
+
+    /// <summary>Writes or expands a wiki page. The page is the DM's, so it may hold secrets, but in DM blocks: once the page is
+    /// shared, the party reads the rest of it.</summary>
+    public static (string System, string User) WikiPage(WikiPageRequest r)
+    {
+        var system = "You are a writing assistant for the game master of a tabletop role-playing campaign. You write a page of the campaign's world wiki, " +
+                     "in markdown with short headings, in full, flowing sentences a game master can run the table from. Keep every fact given and every name as spelled; " +
+                     "never contradict what the campaign already says about the subject. Keep [[links]], and stored mentions such as [[actor:ID]], exactly as written. " +
+                     OutlineFor(r.Kind) + SecretBlocks + "Reply with the finished page only. " + StyleFor(r.Language);
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Page: {r.Title} ({r.Kind})");
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
+        {
+            sb.AppendLine($"Campaign: {r.CampaignContext}");
+        }
+
+        AppendList(sb, "What the campaign already says about the subject", r.Context);
+        if (r.Related.Count > 0)
+        {
+            sb.AppendLine().AppendLine("Related wiki pages (keep their names and link to them with [[Name]] where they fit): " + string.Join(", ", r.Related));
+        }
+
+        sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction)
+            ? "Expand the current notes into a well-structured wiki page with short headings. Keep what they say; put what the party must not know yet in DM blocks."
+            : r.Instruction.Trim()));
+        sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet - write it from the title and what the campaign says)" : r.CurrentText);
         return (system, sb.ToString());
     }
 
@@ -326,7 +405,7 @@ public static class AiPrompts
             "Read the target with get_page first, change only what the game master asked for and keep everything else word for word, and still link with [[ref]] or [[existing:slug]]. " +
             "A page, a place's description and a cast member's history are separate texts, so change each one that should change. " +
             "People, places and items mentioned in a text appear as [[actor:ID|Name]], [[place:ID|Name]] or [[item:ID|Name]]: copy each one exactly as written, or the link is lost. " +
-            "Players read a place's description and a character's history once they are revealed, so write those for players' eyes, with nothing the party must not know yet. " +
+            "Players read a place's description and a character's history once they are revealed, and a page once it is shared. " + SecretBlocks +
             "An edit is reviewed like any other entry, next to the current text; nothing changes until the game master applies it. " +
             "Entries: \"place\" (placeKind area, settlement, district or site; \"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places), " +
             "\"npc\" (a person; \"cast\": true for anyone the party will talk to or fight, which also adds them to the cast with their page as their history), " +
@@ -344,13 +423,8 @@ public static class AiPrompts
             "a game master who has never seen this world should understand it at a glance and know what to do with it. " +
             "A page is usually 150 to 350 words; under each heading write at least two full sentences, or a list whose items are each a full sentence. " +
             "Give every entry a \"pitch\" too: one or two plain sentences saying what it is, for lists and the review card. " +
-            "A place: what the party sees, hears and smells on arriving, in vivid prose; who and what is found there; what the party can do or learn there, as concrete options with what each costs or risks; " +
-            "what it hides; and how it connects to the places and people around it. It is never a dead end. " +
-            "A person: their part in the story; how they look and how they speak, with a line or two they might say in quotes; what they want and why; what they fear; " +
-            "two things they know or remember that the party can use; how the party is likely to meet them and how they react to help, threats or lies; and one sentence on how to play them. " +
-            "A faction: what it wants, how it works toward it, who leads it, what it has, who opposes it, and how the party meets it. " +
-            "A quest: the hook, what is really going on, the complications along the way, the rewards, and what happens if the party ignores it. " +
-            "Add secrets only where a plot lives in them, never as a quota, and put each secret in a \"fact\" linked to the entries it is about. " +
+            PlaceOutline + PersonOutline + FactionOutline + QuestOutline +
+            "Add secrets only where a plot lives in them, never as a quota: write each in a DM block of the text it belongs to, and when the party can uncover it in play, also add it as a \"fact\" linked to the entries it is about. " +
             $"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
             $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. " +
             "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company. ");

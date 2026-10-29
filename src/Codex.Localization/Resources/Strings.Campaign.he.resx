@@ -506,4 +506,12 @@
   <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>לתוכן הביתי אין עדיין תגיות, ולכן הכול ייוצא. בונה העולם יכול לתייג אותו בשבילכם.</value></data>
   <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>תגיות</value></data>
   <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{ייצוא רשומה אחת} two{ייצוא # רשומות} other{ייצוא # רשומות}}</value></data>
+  <data name="Campaign.Wiki.CreateThisPage" xml:space="preserve"><value>יצירת הדף הזה</value></data>
+  <data name="Campaign.Wiki.SecretHint" xml:space="preserve"><value>מה שהשחקנים עוד לא אמורים לדעת שמרו בין שורת `:::dm` לשורת `:::` (כפתור העין או Ctrl+Shift+H יעשו זאת בשבילכם). `:::party` מסמן סוד שנחשף, ו-`:::players` את מה שנאמר לשחקנים במקומו.</value></data>
+  <data name="Campaign.Wiki.ViewAs" xml:space="preserve"><value>קריאת הדף בתור</value></data>
+  <data name="Campaign.Wiki.ViewAs.Dm" xml:space="preserve"><value>שליט המבוך</value></data>
+  <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>שחקנים</value></data>
+  <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>כך בדיוק השחקנים קוראים את הדף: בלי קטעי שליט המבוך, ועם קישורים רק לדפים שהם יכולים לפתוח.</value></data>
+  <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>השחקנים לא רואים את הדף הזה: הוא לשליט המבוך בלבד. שתפו אותו והם יקראו את כל מה שמחוץ לקטעי שליט המבוך.</value></data>
+  <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{קטע אחד לשליט המבוך} two{שני קטעים לשליט המבוך} other{# קטעים לשליט המבוך}}</value></data>
 </root>

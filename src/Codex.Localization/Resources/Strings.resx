@@ -42,4 +42,8 @@
   <data name="Common.Editor.FullScreen" xml:space="preserve"><value>Full screen</value></data>
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Exit full screen (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>Nothing to preview yet.</value></data>
+  <data name="Common.Editor.Secret" xml:space="preserve"><value>DM-only block (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Dm" xml:space="preserve"><value>DM only</value></data>
+  <data name="Common.Secret.Party" xml:space="preserve"><value>Revealed to the party</value></data>
+  <data name="Common.Secret.Players" xml:space="preserve"><value>What the players are told</value></data>
 </root>

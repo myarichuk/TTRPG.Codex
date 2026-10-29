@@ -1,3 +1,4 @@
+using Codex.Core;
 using Codex.Persistence;
 using Raven.Client.Documents;
 using Raven.Client.ServerWide.Operations;
@@ -1049,6 +1050,88 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         var other = new CampaignAccess("another-campaign", "dm", CampaignRole.DM);
         Assert.False(await _wikiRepository.TryDeleteAsync(dmPages[0].Id, other));
+    }
+
+    [Fact]
+    public async Task Wiki_PlayersGetSharedPagesWithoutTheirDmBlocks_AndNoLinkToASecret()
+    {
+        var campaignId = "camp-wiki-secret-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var body = "A quiet village near [[The Cove]].\n\n:::dm\nThe lighthouse is the lair of [[The Drowned Cult]].\n:::\n\n:::party\nThe keeper drinks.\n:::";
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Saltmere", Body = body, Visibility = WikiVisibility.Party }, dm));
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Cove", Body = "Sand.", Visibility = WikiVisibility.Party }, dm));
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Drowned Cult", Body = "Dagon.", Visibility = WikiVisibility.DmOnly }, dm));
+
+        var dmPage = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!;
+        Assert.Equal(body, dmPage.Body);
+        Assert.Contains("the-drowned-cult", dmPage.Links);
+
+        foreach (var seen in new[] { (await _wikiRepository.GetVisibleForCampaignAsync(player)).Single(p => p.Slug == "saltmere"), (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))! })
+        {
+            Assert.DoesNotContain("lighthouse", seen.Body);
+            Assert.DoesNotContain("Drowned", seen.Body);
+            Assert.DoesNotContain(":::", seen.Body);
+            Assert.Contains("The keeper drinks.", seen.Body);
+            Assert.Equal(new[] { "the-cove" }, seen.Links);
+        }
+
+        // "Pages linking here" on the secret page must not name Saltmere for a player either: the player cannot open the secret
+        // page at all, and no player copy links to it.
+        Assert.DoesNotContain(await _wikiRepository.GetVisibleForCampaignAsync(player), p => p.Links.Contains("the-drowned-cult"));
+
+        // A player's copy can never be written back over the DM's text, even with a DM's access.
+        var copy = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!;
+        Assert.False(await _wikiRepository.TrySaveAsync(copy, dm));
+        Assert.Equal(body, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Body);
+    }
+
+    [Fact]
+    public async Task PartyPreview_ReadsExactlyAsAPlayerWhoOwnsNothing()
+    {
+        var campaignId = "camp-preview-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        Assert.Null(new CampaignAccess(campaignId, "p1", CampaignRole.Player).PartyPreview());
+        var preview = dm.PartyPreview()!;
+        Assert.False(preview.IsDm);
+        Assert.Equal(campaignId, preview.CampaignId);
+
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Open", Body = "Seen\n:::dm\nHidden\n:::", Visibility = WikiVisibility.Party }, dm));
+        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Shut", Body = "x", Visibility = WikiVisibility.DmOnly }, dm));
+        var seen = Assert.Single(await _wikiRepository.GetVisibleForCampaignAsync(preview));
+        Assert.Equal("Seen", seen.Body);
+        Assert.False(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope" }, preview));
+    }
+
+    [Fact]
+    public async Task PlacesAndHistories_ReachPlayersWithoutTheirDmBlocks_AndAPlayersSaveKeepsThem()
+    {
+        var campaignId = "camp-secret-text-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Coast" };
+        region.Locations.Add(new LocationDocument { Id = "loc-1", Name = "Lighthouse", Description = "Tall.\n:::dm\nCult lair.\n:::", Visibility = ActorVisibility.Known });
+        Assert.True(await _regionRepository.SaveAsync(region, dm));
+        Assert.Equal("Tall.", (await _regionRepository.GetVisibleForCampaignAsync(player)).Single().Locations.Single().Description);
+        Assert.Equal("Tall.", (await _regionRepository.GetAsync(region.Id, player))!.Locations.Single().Description);
+        Assert.Contains("Cult lair.", (await _regionRepository.GetAsync(region.Id, dm))!.Locations.Single().Description);
+
+        var pc = new ActorDocument { CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Biography = "Born at sea.\n:::dm\nHer father is the cult leader.\n:::" };
+        Assert.True(await _actorRepository.TrySaveAsync(pc, dm));
+        var mine = (await _actorRepository.GetVisibleAsync(pc.Id, player))!;
+        Assert.Equal("Born at sea.", mine.Biography);
+
+        mine.Biography = "Born at sea, raised by smugglers.";
+        Assert.True(await _actorRepository.TrySaveAsync(mine, player));
+        Assert.Equal("Born at sea, raised by smugglers.", (await _actorRepository.GetVisibleAsync(pc.Id, player))!.Biography);
+        var stored = (await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Biography!;
+        Assert.StartsWith("Born at sea, raised by smugglers.", stored);
+        Assert.Single(SecretText.SecretBlocks(stored), "Her father is the cult leader.");
+
+        // Saving again (a live table applies a save twice) does not repeat the secret.
+        Assert.True(await _actorRepository.TrySaveAsync((await _actorRepository.GetVisibleAsync(pc.Id, player))!, player));
+        Assert.Single(SecretText.SecretBlocks((await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Biography));
     }
 
     [Fact]

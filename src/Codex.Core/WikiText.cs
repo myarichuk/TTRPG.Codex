@@ -58,9 +58,12 @@ public static class WikiText
     /// null when the page doesn't exist (or the reader may not see it); missing links render as
     /// a <c>wiki-missing</c> span, optionally with a create link when <paramref name="createHref"/> is given.
     /// <paramref name="mention"/> turns a stored mention (kind "actor", "place" or "item", and its id) into markup for
-    /// the reader; without it a mention shows as plain text.
+    /// the reader; without it a mention shows as plain text. <paramref name="missingAsText"/> renders a link that does not
+    /// resolve as its label alone, for a reader who must not learn that a page they may not open exists.
+    /// <paramref name="createTitle"/> is the tooltip on a create link.
     /// </summary>
-    public static string ToHtml(string? body, Func<string, string?> resolve, Func<string, string?>? createHref = null, Func<string, string, string>? mention = null)
+    public static string ToHtml(string? body, Func<string, string?> resolve, Func<string, string?>? createHref = null, Func<string, string, string>? mention = null,
+        bool missingAsText = false, string? createTitle = null)
     {
         if (string.IsNullOrWhiteSpace(body))
         {
@@ -104,8 +107,8 @@ public static class WikiText
             {
                 var create = createHref?.Invoke(title);
                 replacement = create != null
-                    ? $"<a class=\"wiki-link wiki-missing\" href=\"{WebUtility.HtmlEncode(create)}\" title=\"Create this page\">{encodedLabel}</a>"
-                    : $"<span class=\"wiki-missing\">{encodedLabel}</span>";
+                    ? $"<a class=\"wiki-link wiki-missing\" href=\"{WebUtility.HtmlEncode(create)}\" title=\"{WebUtility.HtmlEncode(createTitle ?? "Create this page")}\">{encodedLabel}</a>"
+                    : missingAsText ? encodedLabel : $"<span class=\"wiki-missing\">{encodedLabel}</span>";
             }
 
             html = html.Replace($"\u0001{i}\u0002", replacement);

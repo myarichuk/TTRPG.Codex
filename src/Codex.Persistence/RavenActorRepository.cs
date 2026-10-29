@@ -1,3 +1,4 @@
+using Codex.Core;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
 
@@ -17,12 +18,14 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         return CanSee(actor, access) ? Redact(actor, access) : null;
     }
 
-    /// <summary>The DM's private notes never reach a player's circuit, even for an actor they own.</summary>
+    /// <summary>The DM's private notes never reach a player's circuit, even for an actor they own, and neither do the DM
+    /// blocks of a history (see <see cref="SecretText"/>).</summary>
     private static ActorDocument Redact(ActorDocument actor, CampaignAccess access)
     {
         if (!access.IsDm)
         {
             actor.DmNotes = null;
+            actor.Biography = actor.Biography == null ? null : SecretText.ForPlayers(actor.Biography);
         }
 
         return actor;
@@ -118,7 +121,8 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         target.BlueprintId = source.BlueprintId;
         target.Sheet = source.Sheet;
         target.State = source.State;
-        target.Biography = source.Biography;
+        // A player edits the history they were given without its DM blocks; the blocks stay, at its end.
+        target.Biography = isDm ? source.Biography : SecretText.KeepSecrets(target.Biography, source.Biography);
         target.HasPortrait = source.HasPortrait;
         target.PortraitVersion = source.PortraitVersion;
         if (isDm)

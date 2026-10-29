@@ -594,7 +594,7 @@ else
                 {
                     <label for="actor-bio" class="visually-hidden">@L["Actor.Sheet.History"]</label>
                     <MarkdownEditor Id="actor-bio" Title="@L["Actor.Sheet.History"]" Rows="10" Placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind-Value="editBiography"
-                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography"
+                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography" Secrets="@access.IsDm"
                                     Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -608,7 +608,7 @@ else
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
-                    <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(actor.Biography, noteMentions, CampaignId))</div>
+                    <div class="rules-text mb-0">@((MarkupString)SecretRender.Html(actor.Biography, text => MentionLinks.ToHtml(text, noteMentions, CampaignId), access.IsDm ? DmView.From(L) : null))</div>
                 }
                 else
                 {
@@ -863,7 +863,8 @@ else
     private readonly AiCall aiCall = new();
 
     /// <summary>The history or notes as a reader will see them: the typed @Names become mentions first.</summary>
-    private string PreviewMentions(string text) => MentionLinks.ToHtml(noteMentions.Encode(text), noteMentions, CampaignId);
+    private string PreviewMentions(string text) =>
+        SecretRender.Html(noteMentions.Encode(text), encoded => MentionLinks.ToHtml(encoded, noteMentions, CampaignId), access?.IsDm == true ? DmView.From(L) : null);
     private ActorVisibility editVisibility;
     private string editPublicName = "";
     private ActorKind editKind;

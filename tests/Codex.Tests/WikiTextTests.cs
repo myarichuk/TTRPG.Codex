@@ -36,6 +36,24 @@ public class WikiTextTests
     }
 
     [Fact]
+    public void ToHtml_ForAReaderWhoMustNotLearnOfIt_RendersAMissingLinkAsItsLabelAlone()
+    {
+        var html = WikiText.ToHtml("Lair of [[The Drowned Cult|the cult]].", _ => null, missingAsText: true);
+
+        Assert.Contains("Lair of the cult.", html);
+        Assert.DoesNotContain("wiki-missing", html);
+        Assert.DoesNotContain("Drowned", html);
+    }
+
+    [Fact]
+    public void ToHtml_CreateLinkTooltip_IsTheOneGiven()
+    {
+        var html = WikiText.ToHtml("[[New]]", _ => null, _ => "/new", createTitle: "Make <this> page");
+
+        Assert.Contains("title=\"Make &lt;this&gt; page\"", html);
+    }
+
+    [Fact]
     public void ToHtml_WithoutCreateLinks_RendersMissingAsPlainSpan()
     {
         var html = WikiText.ToHtml("[[Secret page]]", _ => null);
