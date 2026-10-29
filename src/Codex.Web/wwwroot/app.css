@@ -1043,14 +1043,14 @@ a.user-chip:active { transform: scale(0.97); }
 .secret-item-text:hover { text-decoration: underline; }
 .secret-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.35rem 0; font-size: 0.8rem; color: var(--text-2); }
 .secret-item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.secret-pick { display: grid; gap: 0.3rem; padding: 0.5rem; min-width: 12rem; }
 /* A players' version the AI drafted from a DM block, for the DM to read and change before it goes in. */
 .secret-told { display: flex; align-items: flex-start; gap: 0.35rem; margin: 0 0 0.4rem; font-size: 0.8rem; color: var(--text-2); }
 .secret-told svg { flex: none; margin-top: 0.15rem; }
 .secret-told span { min-width: 0; overflow-wrap: anywhere; }
-.players-draft { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
-.players-draft textarea { font-size: 0.9rem; }
-.players-draft-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* The secret a reveal or a players' version is about, quoted at the top of its dialog. */
+.secret-quote { max-height: 14rem; overflow-y: auto; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-inline-start: 3px solid var(--warning); border-radius: var(--radius-md); background: var(--surface-2); }
+.secret-quote > :last-child { margin-bottom: 0; }
+.reveal-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.3rem 1rem; margin: 0.4rem 0 0; padding-inline-start: 1.8rem; }
 /* Lore: who knows a fact, each with a way to take it back. */
 .fact-knowers { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
 .chip-static { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.3rem 0.15rem 0.65rem; font-size: 0.82rem; cursor: default; }
@@ -1855,9 +1855,20 @@ html:has(.md-full) { overflow: hidden; }
 /* While a template is being filled in (app-startup.js): which field the caret is in and the keys that move it. */
 .template-hint {
     position: fixed; z-index: 1100; padding: 0.3rem 0.65rem; border-radius: var(--radius-md); font-size: 0.82rem;
-    background: var(--arcane-soft); color: var(--text); border: 1px solid var(--arcane); box-shadow: var(--shadow-2); pointer-events: none;
+    background: linear-gradient(var(--arcane-soft), var(--arcane-soft)), var(--surface); color: var(--text); border: 1px solid var(--arcane); box-shadow: var(--shadow-2); pointer-events: none;
 }
 .template-hint[hidden] { display: none; }
+/* The fields of a template being filled, drawn over the box (app-startup.js copies its text, font and wrapping). Only the
+   fields show: each outlined, the one being filled lit, and a name standing in a field greyed over the box's own letters. */
+.template-marks { position: absolute; overflow: hidden; pointer-events: none; }
+.template-marks[hidden] { display: none; }
+.template-marks > div { box-sizing: border-box; margin: 0; border: 0; color: transparent; }
+.template-marks .tf { border-radius: 3px; box-shadow: inset 0 0 0 1px var(--border-strong); }
+.template-marks .tf-current { box-shadow: inset 0 0 0 1.5px var(--arcane); background: var(--arcane-soft); }
+.template-marks .tf-ph { color: var(--text-3); background: linear-gradient(var(--arcane-soft), var(--arcane-soft)), var(--tf-bg, var(--surface)); }
+.template-marks .tf-current.tf-ph { background: linear-gradient(var(--arcane-soft), var(--arcane-soft)), linear-gradient(var(--arcane-soft), var(--arcane-soft)), var(--tf-bg, var(--surface)); }
+.template-marks .tf-empty { display: inline-block; width: 0; height: 1.1em; vertical-align: text-bottom; box-shadow: 0 0 0 1px var(--border-strong); }
+.template-marks .tf-empty.tf-current { box-shadow: 0 0 0 1px var(--arcane); }
 .mention-kind { color: var(--text-3); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .mention { font-weight: 600; text-decoration: none; border-bottom: 1px dotted currentColor; }
 a.mention:hover { text-decoration: none; border-bottom-style: solid; }
@@ -2261,4 +2272,7 @@ dialog.wb-raw-dialog { width: min(880px, 96vw); }
 .setup-steps li { display: flex; align-items: center; gap: 0.5rem; }
 .setup-steps .setup-mark { color: var(--text-3); flex: 0 0 auto; }
 .setup-steps .setup-done .setup-mark { color: var(--success, #6fbf73); }
-.setup-steps .setup-done a { color: var(--text-3); text-decoration: line-through; }
+.setup-steps .setup-done a, .setup-steps .setup-done .link-button { color: var(--text-3); text-decoration: line-through; font-weight: inherit; }
+.setup-steps .link-button { font-weight: inherit; color: var(--accent); text-align: start; }
+.setup-step { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; min-width: 0; }
+.setup-why { font-size: 0.82rem; color: var(--text-3); }

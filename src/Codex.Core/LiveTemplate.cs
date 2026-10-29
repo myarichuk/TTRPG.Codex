@@ -22,7 +22,9 @@ public sealed record TemplateExpansion(string Text, IReadOnlyList<TemplateField>
 /// </list>
 /// A name is letters, digits and underscores, in any script. A <c>$</c> that starts none of these (an item mention typed as
 /// <c>$Longsword</c>) is left as it is. Typing a template's abbreviation and Tab in the editor puts the template in and steps
-/// through its fields with Tab and Shift+Tab (app-startup.js parses templates the same way); a new page can start from one; and
+/// through its fields with Tab and Shift+Tab, a field with no default holding its name, greyed, until it is typed over (the
+/// names left standing are taken out when the template ends; app-startup.js parses templates the same way); a new page can
+/// start from one; and
 /// <see cref="AddMissingSections"/> brings a page written earlier up to its template's headings.
 /// </summary>
 public static class LiveTemplate

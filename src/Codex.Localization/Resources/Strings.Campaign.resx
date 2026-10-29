@@ -515,13 +515,8 @@
   <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>New</value></data>
   <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>Secrets on this page</value></data>
   <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>The page is still DM-only: players read what you reveal here once you share it.</value></data>
-  <data name="Campaign.Wiki.Secrets.RevealTo" xml:space="preserve"><value>Reveal to…</value></data>
   <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>Reveal to them</value></data>
   <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(empty block)</value></data>
-  <data name="Campaign.Wiki.Secrets.TheParty" xml:space="preserve"><value>the party</value></data>
-  <data name="Campaign.Wiki.Secrets.ConfirmTitle" xml:space="preserve"><value>Reveal to {0}?</value></data>
-  <data name="Campaign.Wiki.Secrets.ConfirmBody" xml:space="preserve"><value>You can hide it again later, but not from anyone who has read it by then. They will read: “{0}”</value></data>
-  <data name="Campaign.Wiki.Secrets.ConfirmHiddenPage" xml:space="preserve"><value>The page itself is still DM-only, so they will read this once you share it: “{0}”</value></data>
   <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>Revealed to the party.</value></data>
   <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>Revealed to {0}.</value></data>
   <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>Hidden from players again.</value></data>
@@ -599,10 +594,19 @@
   <data name="Campaign.Wiki.Secrets.DraftLabel" xml:space="preserve"><value>What the players are told</value></data>
   <data name="Campaign.Wiki.Secrets.DraftHint" xml:space="preserve"><value>Read it before it goes on the page: once the page is shared, players read it.</value></data>
   <data name="Campaign.Wiki.Secrets.PutOnPage" xml:space="preserve"><value>Put on the page</value></data>
-  <data name="Campaign.Wiki.Secrets.Discard" xml:space="preserve"><value>Discard</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>The players’ version is on the page. Players read it now; the secret stays hidden.</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>The players’ version is on the page. Players will read it once you share the page.</value></data>
   <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>Edit players’ version</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealEllipsis" xml:space="preserve"><value>Reveal…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTitle" xml:space="preserve"><value>Reveal this secret</value></data>
+  <data name="Campaign.Wiki.Secrets.TheSecret" xml:space="preserve"><value>The secret</value></data>
+  <data name="Campaign.Wiki.Secrets.Who" xml:space="preserve"><value>Who learns it</value></data>
+  <data name="Campaign.Wiki.Secrets.ToParty" xml:space="preserve"><value>The whole party</value></data>
+  <data name="Campaign.Wiki.Secrets.ToSome" xml:space="preserve"><value>Only some of the characters</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToParty" xml:space="preserve"><value>Reveal to the party</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndo" xml:space="preserve"><value>You can hide it again later, but not from anyone who has read it by then.</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndoHidden" xml:space="preserve"><value>The page itself is still DM-only, so they read this once you share the page. You can hide it again, but not from anyone who has read it by then.</value></data>
+  <data name="Campaign.Wiki.Secrets.Redraft" xml:space="preserve"><value>Draft again</value></data>
   <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>Sort pages</value></data>
   <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>A–Z</value></data>
   <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>Recently updated</value></data>
@@ -614,11 +618,16 @@
   <data name="Campaign.Setup.Done" xml:space="preserve"><value>Done:</value></data>
   <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>To do:</value></data>
   <data name="Campaign.Setup.Describe" xml:space="preserve"><value>Describe the campaign for your players</value></data>
-  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Invite your players with the link</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Copy the invite link for your players</value></data>
   <data name="Campaign.Setup.Cast" xml:space="preserve"><value>Add a first character to the cast</value></data>
   <data name="Campaign.Setup.Page" xml:space="preserve"><value>Write a first wiki page</value></data>
   <data name="Campaign.Setup.Place" xml:space="preserve"><value>Put a first place on the map</value></data>
   <data name="Campaign.Setup.Session" xml:space="preserve"><value>Plan the first session</value></data>
+  <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>Done once a player joins.</value></data>
+  <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>Someone of your world: players add their own characters.</value></data>
+  <data name="Campaign.Setup.InviteCopied" xml:space="preserve"><value>Invite link copied. Send it to your players: this is ticked off once one of them joins.</value></data>
+  <data name="Campaign.Setup.Builder" xml:space="preserve"><value>Or have the world builder draft them: the pages, places on the map and cast members you accept tick these off.</value></data>
+  <data name="Campaign.Setup.BuilderNoAi" xml:space="preserve"><value>Once AI is set up, the world builder can draft pages, places and cast members for you.</value></data>
   <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Recently updated pages</value></data>
   <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Open the wiki</value></data>
 </root>

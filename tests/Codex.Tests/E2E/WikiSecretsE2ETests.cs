@@ -52,14 +52,22 @@ public class WikiSecretsE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.GotoInteractiveAsync(player, $"/campaigns/{campaignId}/wiki/saltmere");
         await Assertions.Expect(player.GetByTestId("wiki-body")).ToHaveTextAsync("A quiet village.");
 
+        // The block's own Reveal asks in a dialog that shows the whole secret, the party picked to begin with.
         await dm.GetByTestId("secret-party-0").ClickAsync();
-        await dm.GetByTestId("confirm-accept").ClickAsync();
+        var reveal = dm.GetByTestId("reveal-dialog");
+        await Assertions.Expect(reveal.GetByTestId("reveal-secret-text")).ToContainTextAsync("The keeper is a cultist.");
+        await Assertions.Expect(reveal.GetByTestId("reveal-to-party")).ToBeCheckedAsync();
+        await reveal.GetByTestId("reveal-accept").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("secret-dm-0")).ToBeVisibleAsync();
 
-        await dm.GetByTestId("wiki-secret-to-1").Locator("summary").ClickAsync();
-        await dm.GetByTestId("wiki-secret-to-1").GetByText("Aria", new() { Exact = true }).ClickAsync();
-        await dm.GetByTestId("wiki-secret-to-1").GetByRole(AriaRole.Button, new() { Name = "Reveal to them" }).ClickAsync();
-        await dm.GetByTestId("confirm-accept").ClickAsync();
+        // The side panel's Reveal… asks the same; picking "some characters" offers the ones players play, and needs one ticked.
+        await dm.GetByTestId("wiki-secret-reveal-1").ClickAsync();
+        await Assertions.Expect(reveal.GetByTestId("reveal-secret-text")).ToContainTextAsync("The keeper taught Aria.");
+        await reveal.GetByTestId("reveal-to-some").CheckAsync();
+        await Assertions.Expect(reveal.GetByTestId("reveal-accept")).ToBeDisabledAsync();
+        await reveal.GetByTestId("reveal-picks").GetByText("Aria", new() { Exact = true }).ClickAsync();
+        await Assertions.Expect(reveal.GetByTestId("reveal-accept")).ToHaveTextAsync("Reveal to them");
+        await reveal.GetByTestId("reveal-accept").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("wiki-body")).ToContainTextAsync("Revealed to Aria");
 
         await E2EHelpers.GotoInteractiveAsync(player, $"/campaigns/{campaignId}/wiki/saltmere");
