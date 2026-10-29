@@ -87,7 +87,7 @@ else
                                     {
                                         <details class="place-details">
                                             <summary class="row-sub">@WikiRender.Summary(location.Description, noteMentions, 140, Ctx.IsDm)</summary>
-                                            <div class="rules-text mt-2">@((MarkupString)WikiRender.ToHtml(location.Description, wikiPages, noteMentions, Ctx.Campaign.Id, false, Ctx.IsDm ? DmView.From(L) : null))</div>
+                                            <div class="rules-text mt-2">@((MarkupString)WikiRender.ToHtml(location.Description, wikiPages, noteMentions, Ctx.Campaign.Id, false, Ctx.IsDm ? DmView.From(L, noteMentions) : null))</div>
                                         </details>
                                     }
                                     else if (Ctx.IsDm)
@@ -231,7 +231,7 @@ else
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
                                      Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson"
-                                     Preview="@(text => WikiRender.ToHtml(noteMentions.Encode(text), wikiPages, noteMentions, Ctx.Campaign.Id, false, DmView.From(L)))" Secrets="true"
+                                     Preview="@(text => WikiRender.ToHtml(noteMentions.Encode(text), wikiPages, noteMentions, Ctx.Campaign.Id, false, DmView.From(L, noteMentions)))" Secrets="true"
                                      Hint="@($"{L["Campaign.World.DescHint"]} {L["Campaign.Wiki.MentionHint"]}")" />
                     </div>
                     <ArtSlot ImageUrl="@ArtService.Url(editingRegion, editingLocation)" CanEdit="true" Landscape="true" Label="@L["Campaign.World.Art"]" Class="art-compact" Alt="@L["Campaign.World.ArtFor", editingLocation.Name]" TestId="location-art"

@@ -1087,6 +1087,40 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task Wiki_TheDmRevealsAndHidesABlock_OnlyAsTheySawIt_AndABlockForACharacterReachesOnlyTheirPlayer()
+    {
+        var campaignId = "camp-wiki-reveal-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var ariaPlayer = new CampaignAccess(campaignId, "p-aria", CampaignRole.Player);
+        var bramPlayer = new CampaignAccess(campaignId, "p-bram", CampaignRole.Player);
+        var aria = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", OwnerUserId = "p-aria", Visibility = ActorVisibility.Known };
+        await _actorRepository.SaveAsync(aria);
+        await _actorRepository.SaveAsync(new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Bram", OwnerUserId = "p-bram", Visibility = ActorVisibility.Known });
+
+        var page = new WikiPageDocument { Title = "Saltmere", Body = "Village.\n:::dm\nThe keeper is a cultist.\n:::\n:::dm\nAria's mother lived here.\n:::", Visibility = WikiVisibility.Party };
+        Assert.True(await _wikiRepository.TrySaveAsync(page, dm));
+
+        // A player cannot reveal anything, and the DM cannot reveal a block that is no longer what they saw.
+        Assert.Equal(SecretChange.Refused, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "The keeper is a cultist.", SecretAudience.Party, null, ariaPlayer));
+        Assert.Equal(SecretChange.Stale, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "The keeper is a smuggler.", SecretAudience.Party, null, dm));
+        Assert.DoesNotContain("cultist", (await _wikiRepository.GetVisibleBySlugAsync("saltmere", bramPlayer))!.Body);
+
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "The keeper is a cultist.", SecretAudience.Party, null, dm));
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetSecretAsync(page.Id, 1, "Aria's mother lived here.", SecretAudience.Some, new[] { aria.Id }, dm));
+
+        var forBram = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", bramPlayer))!;
+        Assert.Contains("cultist", forBram.Body);
+        Assert.DoesNotContain("mother", forBram.Body);
+        // What a player is handed says when the block was revealed, so it can be shown as new, and nothing more.
+        Assert.Matches(@":::party \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\nThe keeper is a cultist\.\n:::", forBram.Body);
+        Assert.Contains("mother", (await _wikiRepository.GetVisibleForCampaignAsync(ariaPlayer)).Single().Body);
+        Assert.DoesNotContain("mother", (await _wikiRepository.GetVisibleForCampaignAsync(dm.PartyPreview()!)).Single().Body);
+
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "The keeper is a cultist.", SecretAudience.Dm, null, dm));
+        Assert.DoesNotContain("cultist", (await _wikiRepository.GetVisibleBySlugAsync("saltmere", bramPlayer))!.Body);
+    }
+
+    [Fact]
     public async Task PartyPreview_ReadsExactlyAsAPlayerWhoOwnsNothing()
     {
         var campaignId = "camp-preview-" + Guid.NewGuid();

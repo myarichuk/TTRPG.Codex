@@ -92,6 +92,7 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 - Every page starts as [[ui:Campaign.Wiki.DmOnly]]. Press [[ui:Campaign.Wiki.SharePage]] to make it readable by the whole party.
 - A shared page can still hide parts of itself. Put a secret between a line `:::dm` and a line `:::` (the eye button in the toolbar, or Ctrl+Shift+H, does it for you): players never receive that text, not even its links. Change `:::dm` to `:::party` when the party learns it, and use `:::players` for what the players are told instead of the truth. The same works in a place's description and a character's history.
 - Press [[ui:Campaign.Wiki.ViewAs.Party]] above a page to read it exactly as the players do.
+- To reveal a secret at the table, press [[ui:Common.Secret.Reveal]] on the block itself, or use [[ui:Campaign.Wiki.Secrets]] beside the page, which lists every secret on it. From there [[ui:Campaign.Wiki.Secrets.RevealTo]] reveals it to chosen characters only (it becomes `:::for @Aria`), and [[ui:Common.Secret.Hide]] takes it back. If a session is running, the log notes that something was revealed on the page (its title, never the secret). Players see what was revealed since they last opened a page marked [[ui:Campaign.Wiki.NewReveal]].
 - Every place already has a wiki page of its own, and a page can be put on the map, or promoted into the cast.
 - Players can leave notes on any page they can read.
 

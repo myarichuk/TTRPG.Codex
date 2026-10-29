@@ -18,9 +18,10 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
             return regions;
         }
 
+        var owned = await OwnedActors.OfAsync(session, access);
         foreach (var region in regions)
         {
-            region.Locations = ForPlayers(region.Locations);
+            region.Locations = ForPlayers(region.Locations, owned);
         }
 
         // A region with nothing revealed in it is the DM's planning (its name can be a spoiler, such as a quest's title),
@@ -39,19 +40,19 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
 
         if (!access.IsDm)
         {
-            region.Locations = ForPlayers(region.Locations);
+            region.Locations = ForPlayers(region.Locations, await OwnedActors.OfAsync(session, access));
             if (region.Locations.Count == 0) return null; // nothing revealed yet, as in GetVisibleForCampaignAsync
         }
 
         return region;
     }
 
-    /// <summary>The places a player may see, each description without its DM blocks (see <see cref="SecretText"/>).</summary>
-    private static List<LocationDocument> ForPlayers(IEnumerable<LocationDocument> locations) =>
+    /// <summary>The places a player may see, each description without the blocks they may not read (see <see cref="SecretText"/>).</summary>
+    private static List<LocationDocument> ForPlayers(IEnumerable<LocationDocument> locations, IReadOnlySet<string> ownedActorIds) =>
         locations.Where(l => l.Visibility == ActorVisibility.Known)
             .Select(l =>
             {
-                l.Description = string.IsNullOrEmpty(l.Description) ? l.Description : SecretText.ForPlayers(l.Description);
+                l.Description = string.IsNullOrEmpty(l.Description) ? l.Description : SecretText.ForPlayers(l.Description, ownedActorIds);
                 return l;
             })
             .ToList();

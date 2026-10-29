@@ -513,5 +513,19 @@
   <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>Игроки</value></data>
   <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>Так страницу видят игроки: без блоков мастера и со ссылками только на доступные им страницы.</value></data>
   <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>Игроки не видят эту страницу: она только для мастера. Откройте её группе, и игроки прочтут всё, кроме блоков мастера.</value></data>
+  <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>Новое</value></data>
+  <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>Секреты на странице</value></data>
+  <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>Страница пока видна только мастеру: игроки прочтут открытое здесь, когда вы поделитесь страницей.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTo" xml:space="preserve"><value>Открыть персонажам…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>Открыть им</value></data>
+  <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(пустой блок)</value></data>
+  <data name="Campaign.Wiki.Secrets.TheParty" xml:space="preserve"><value>отряд</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmTitle" xml:space="preserve"><value>Открыть: {0}?</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmBody" xml:space="preserve"><value>Блок можно снова скрыть, но не от тех, кто уже успел его прочесть. Они прочтут: «{0}»</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmHiddenPage" xml:space="preserve"><value>Сама страница пока видна только мастеру, так что они прочтут это, когда вы ею поделитесь: «{0}»</value></data>
+  <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>Открыто отряду.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>Открыто: {0}.</value></data>
+  <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>Снова скрыто от игроков.</value></data>
+  <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>Страница изменилась, пока была открыта. Вот её текущий вид: проверьте блок и попробуйте снова.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# блок мастера} few{# блока мастера} many{# блоков мастера} other{# блока мастера}}</value></data>
 </root>

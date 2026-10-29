@@ -513,5 +513,19 @@
   <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>שחקנים</value></data>
   <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>כך בדיוק השחקנים קוראים את הדף: בלי קטעי שליט המבוך, ועם קישורים רק לדפים שהם יכולים לפתוח.</value></data>
   <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>השחקנים לא רואים את הדף הזה: הוא לשליט המבוך בלבד. שתפו אותו והם יקראו את כל מה שמחוץ לקטעי שליט המבוך.</value></data>
+  <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>חדש</value></data>
+  <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>סודות בדף</value></data>
+  <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>הדף עדיין גלוי רק למנחה: השחקנים יקראו את מה שתחשפו כאן כשתשתפו אותו.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTo" xml:space="preserve"><value>חשיפה לדמויות…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>חשיפה להן</value></data>
+  <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(בלוק ריק)</value></data>
+  <data name="Campaign.Wiki.Secrets.TheParty" xml:space="preserve"><value>החבורה</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmTitle" xml:space="preserve"><value>לחשוף ל{0}?</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmBody" xml:space="preserve"><value>אפשר להסתיר אותו שוב בהמשך, אבל לא ממי שכבר קרא אותו. הם יקראו: „{0}”</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmHiddenPage" xml:space="preserve"><value>הדף עצמו עדיין גלוי רק למנחה, כך שהם יקראו את זה כשתשתפו אותו: „{0}”</value></data>
+  <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>נחשף לחבורה.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>נחשף ל{0}.</value></data>
+  <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>הוסתר שוב מהשחקנים.</value></data>
+  <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>הדף השתנה מאז שנפתח. הנה הוא כפי שהוא עכשיו; בדקו את הבלוק ונסו שוב.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{קטע אחד לשליט המבוך} two{שני קטעים לשליט המבוך} other{# קטעים לשליט המבוך}}</value></data>
 </root>

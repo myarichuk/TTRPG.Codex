@@ -746,6 +746,21 @@ public sealed record HydrateActorCommand(ActorDocument Actor) : IRuntimeCommand
         SessionEvent.From("ActorJoined", new[] { EventMessage.Of("Actor.Joined", Actor.Name) }, new[] { Actor.Id });
 }
 
+/// <summary>Logs that the DM revealed a secret of a shared wiki page to the party, while a session is on: the table sees
+/// it happen, and the recap has it. Changes nothing in the world; the page itself was saved before this was sent. Only the
+/// page's title is logged, never the secret's words, and only for a page the party can already open.</summary>
+public sealed record LogWikiRevealCommand(string PageTitle) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("WikiReveal", new[] { EventMessage.Of("Wiki.Revealed", PageTitle) });
+}
+
 /// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, say),
 /// clamped between zero and the pool's maximum. <paramref name="Label"/> is what the log calls it
 /// ("level 3 spell slot").</summary>

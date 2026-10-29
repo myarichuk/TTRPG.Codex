@@ -513,5 +513,19 @@
   <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>Players</value></data>
   <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>This is the page exactly as the players read it: no DM blocks, and links only to pages they can open.</value></data>
   <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>Players can't see this page: it is DM-only. Share it and they read everything outside its DM blocks.</value></data>
+  <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>New</value></data>
+  <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>Secrets on this page</value></data>
+  <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>The page is still DM-only: players read what you reveal here once you share it.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTo" xml:space="preserve"><value>Reveal to…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>Reveal to them</value></data>
+  <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(empty block)</value></data>
+  <data name="Campaign.Wiki.Secrets.TheParty" xml:space="preserve"><value>the party</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmTitle" xml:space="preserve"><value>Reveal to {0}?</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmBody" xml:space="preserve"><value>You can hide it again later, but not from anyone who has read it by then. They will read: “{0}”</value></data>
+  <data name="Campaign.Wiki.Secrets.ConfirmHiddenPage" xml:space="preserve"><value>The page itself is still DM-only, so they will read this once you share it: “{0}”</value></data>
+  <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>Revealed to the party.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>Revealed to {0}.</value></data>
+  <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>Hidden from players again.</value></data>
+  <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>The page changed since you opened it. Here it is as it is now; check the block and try again.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# DM block} other{# DM blocks}}</value></data>
 </root>

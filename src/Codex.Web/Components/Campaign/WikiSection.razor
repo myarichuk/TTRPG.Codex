@@ -13,6 +13,8 @@
 @inject ArtService Art
 @inject NavigationManager Nav
 @inject ILogger<WikiSection> Logger
+@inject Codex.Persistence.Runtime.CampaignRuntimeManager Runtimes
+@inject IJSRuntime JS
 @implements IDisposable
 
 @* The world wiki: DM-written pages linked with [[Page title]], each DM-only or shared with the
@@ -72,7 +74,7 @@ else if (Mode == "edit")
                     <label for="wiki-body" class="field-label">@L["Campaign.Wiki.Field.Text"]</label>
                     <MarkdownEditor Id="wiki-body" Title="@(string.IsNullOrWhiteSpace(draft.Title) ? L["Campaign.Wiki.Field.Text"] : draft.Title)" Rows="18" Class="wiki-editor"
                                     @bind-Value="draft.Body" Mentions="@mentionsJson" DescribedBy="wiki-body-hint" TestId="wiki-body" Placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"
-                                    Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false, DmView.From(L)))" Secrets="true"
+                                    Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false, DmView.From(L, mentions)))" Secrets="true"
                                     Busy="expanding" BusyText="@L["Campaign.Wiki.Writing"]" OnStop="aiCall.Stop">
                         <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"] @Rich(L["Campaign.Wiki.SecretHint"])</div>
                     </MarkdownEditor>
@@ -237,7 +239,7 @@ else if (Slug != null)
 
         <div class="row g-3">
             <div class="col-lg-8">
-                <article class="panel wiki-page" data-testid="wiki-page">
+                <article class="panel wiki-page" id="wiki-page-body" data-testid="wiki-page">
                     @* Beside the text on a wide screen, above it on a phone. A person shows the portrait their cast card has, and the
                        page's own illustration too when it has one; a place shows its map picture. With nothing yet, the same placeholder
                        the card and the map show. *@
@@ -303,7 +305,7 @@ else if (Slug != null)
                     }
                     else
                     {
-                        <div class="rules-text wiki-body" data-testid="wiki-body">@((MarkupString)WikiRender.ToHtml(current.Body, pages, mentions, Ctx.Campaign.Id, Ctx.IsDm, Ctx.IsDm ? DmView.From(L) : null))</div>
+                        <div class="rules-text wiki-body" data-testid="wiki-body">@((MarkupString)WikiRender.ToHtml(current.Body, pages, mentions, Ctx.Campaign.Id, Ctx.IsDm, Ctx.IsDm ? DmView.From(L, mentions, actions: true) : null, seenAt, L["Campaign.Wiki.NewReveal"]))</div>
                     }
                 </article>
 
@@ -348,6 +350,61 @@ else if (Slug != null)
                     var (linksOf, among) = asParty ? (party.Page?.Links ?? new List<string>(), party.Pages) : (current.Links, pages);
                     var outgoing = linksOf.Select(slug => among.FirstOrDefault(p => p.Slug == slug)).Where(p => p != null).Cast<WikiPageDocument>().ToList();
                     var incoming = asParty && party.Page == null ? new List<WikiPageDocument>() : among.Where(p => p.Links.Contains(current.Slug) && p.Id != current.Id).ToList();
+                }
+                @if (Ctx.IsDm && !asParty && Revealable(current) is { Count: > 0 } secrets)
+                {
+                    <section class="panel" aria-labelledby="wiki-secrets-heading" data-testid="wiki-secrets">
+                        <div class="panel-title"><h3 id="wiki-secrets-heading" class="h6"><LucideIcon IconName="eye-off" Size="14" Class="title-icon" /> @L["Campaign.Wiki.Secrets"]</h3></div>
+                        @if (current.Visibility == WikiVisibility.DmOnly)
+                        {
+                            <p class="field-hint">@L["Campaign.Wiki.Secrets.PageHidden"]</p>
+                        }
+                        <ul class="secret-list">
+                            @foreach (var block in secrets)
+                            {
+                                var status = block.Marked switch
+                                {
+                                    SecretAudience.Party => ("pill-success", L["Common.Secret.Party"].ToString()),
+                                    SecretAudience.Some => ("pill-accent", L["Common.Secret.Some", KnowerNames(block.Knowers)].ToString()),
+                                    _ => ("pill-warning", L["Common.Secret.Dm"].ToString())
+                                };
+                                <li class="secret-item secret-item-@block.Marked.ToString().ToLowerInvariant()" data-testid="wiki-secret-@block.Block">
+                                    <button type="button" class="secret-item-text" @onclick="@(() => JS.InvokeVoidAsync("codex.scrollToId", $"secret-{block.Block}"))">@SecretPreview(block)</button>
+                                    <div class="secret-item-meta">
+                                        <span class="pill @status.Item1">@status.Item2</span>
+                                        @if (block.RevealedAt is { } at && block.Marked != SecretAudience.Dm)
+                                        {
+                                            <span><LocalTime Value="at" Format="d MMM, HH:mm" /></span>
+                                        }
+                                    </div>
+                                    <div class="secret-item-actions">
+                                        @if (block.Marked != SecretAudience.Party)
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetSecretAsync(block.Block, SecretAudience.Party, null)" data-testid="@($"wiki-secret-reveal-{block.Block}")"><LucideIcon IconName="eye" Size="14" /> @L["Common.Secret.Reveal"]</CodexButton>
+                                        }
+                                        @if (block.Marked != SecretAudience.Dm)
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetSecretAsync(block.Block, SecretAudience.Dm, null)" data-testid="@($"wiki-secret-hide-{block.Block}")"><LucideIcon IconName="eye-off" Size="14" /> @L["Common.Secret.Hide"]</CodexButton>
+                                        }
+                                        @if (Characters.Count > 0 && block.Marked != SecretAudience.Party)
+                                        {
+                                            <details class="popover-menu" data-testid="@($"wiki-secret-to-{block.Block}")">
+                                                <summary class="cx-btn cx-etched cx-sm"><LucideIcon IconName="user" Size="14" /> @L["Campaign.Wiki.Secrets.RevealTo"]</summary>
+                                                <div class="popover-panel secret-pick">
+                                                    @foreach (var pc in Characters)
+                                                    {
+                                                        var picked = PicksFor(block);
+                                                        <CodexCheck Checked="@picked.Contains(pc.Id)" OnChange="e => TogglePick(block, pc.Id, e.Value is true)">@pc.Name</CodexCheck>
+                                                    }
+                                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" disabled="@(PicksFor(block).Count == 0)" OnClick="() => SetSecretAsync(block.Block, SecretAudience.Some, PicksFor(block).ToList())">@L["Campaign.Wiki.Secrets.RevealToThem"]</CodexButton>
+                                                </div>
+                                            </details>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </section>
                 }
                 <section class="panel">
                     <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksFrom"]</h3></div>
@@ -442,6 +499,10 @@ else
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
                         <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
                     </div>
+                    @if (!Ctx.IsDm && LatestReveal(wp) is { } revealedAt && seenPages.TryGetValue(wp.Id, out var seen) && revealedAt > seen)
+                    {
+                        <span class="small-muted" data-testid="wiki-card-new"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Wiki.NewReveal"]</span>
+                    }
                     @if (Ctx.IsDm && wp.Visibility == WikiVisibility.Party && SecretText.SecretBlocks(wp.Body).Count is > 0 and var secrets)
                     {
                         <span class="small-muted" data-testid="wiki-card-secrets"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Wiki.SecretCount", secrets]</span>
@@ -505,6 +566,13 @@ else
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
     private bool aiReady;
+    // For a player: when this browser last opened the page, so what was revealed since is marked new; and the same for the cards.
+    private DateTime? seenAt;
+    private Dictionary<string, DateTime> seenPages = new();
+    private string? seenFor;
+    // Who the DM ticked in a block's "Reveal to…", by block.
+    private readonly Dictionary<int, HashSet<string>> picks = new();
+    private DotNetObjectReference<WikiSection>? selfRef;
     // The DM's "view as players" of the open page, loaded through a player's access when first asked for.
     private bool asParty;
     private (WikiPageDocument? Page, List<WikiPageDocument> Pages, MentionDirectory Mentions) party = (null, new(), MentionDirectory.Empty);
@@ -542,6 +610,9 @@ else
         var key = $"{Ctx.Campaign.Id}|{Slug}|{Action}";
         if (key == loadedKey) return;
         loadedKey = key;
+        // Another page (or the list): what is new on it is worked out after it renders.
+        seenAt = null;
+        seenFor = null;
         await LoadAsync();
     }
 
@@ -552,6 +623,7 @@ else
         current = null;
         linked = null;
         asParty = false;
+        picks.Clear();
         notes = new List<NoteDocument>();
         pendingArt = null;
         removeArt = false;
@@ -604,6 +676,148 @@ else
                     }
                 }
             }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (pages == null || Mode != "view") return;
+        if (Ctx.IsDm)
+        {
+            if (current != null && !asParty)
+            {
+                selfRef ??= DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("codex.secretActions", "wiki-page-body", selfRef);
+            }
+
+            return;
+        }
+
+        // Once per page (or per list) opened: read when this browser last saw it, and note that it sees it now.
+        var key = current?.Id ?? "list";
+        if (seenFor == key) return;
+        seenFor = key;
+        if (current != null)
+        {
+            var was = await JS.InvokeAsync<string?>("codex.seenSince", SeenKey(current.Id), DateTime.UtcNow.ToString("O"));
+            var since = ParseSeen(was);
+            var mark = LatestReveal(current) > since ? since : null;
+            if (mark != seenAt)
+            {
+                seenAt = mark;
+                StateHasChanged();
+            }
+        }
+        else if (pages.Any(p => LatestReveal(p) != null))
+        {
+            var seen = await JS.InvokeAsync<Dictionary<string, string>>("codex.seenAll", pages.Select(p => SeenKey(p.Id)).ToList());
+            seenPages = pages.Where(p => seen.ContainsKey(SeenKey(p.Id)) && ParseSeen(seen[SeenKey(p.Id)]) != null)
+                .ToDictionary(p => p.Id, p => ParseSeen(seen[SeenKey(p.Id)])!.Value);
+            if (seenPages.Count > 0) StateHasChanged();
+        }
+    }
+
+    private static string SeenKey(string pageId) => $"codex-wiki-seen:{pageId}";
+
+    private static DateTime? ParseSeen(string? iso) =>
+        DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at : null;
+
+    /// <summary>When the newest of the blocks the reader may read on a page was revealed, if any says.</summary>
+    private static DateTime? LatestReveal(WikiPageDocument page) =>
+        SecretText.Parse(page.Body).Where(s => s.Audience is SecretAudience.Party or SecretAudience.Some).Max(s => s.RevealedAt);
+
+    /// <summary>The blocks of a page the DM can reveal or hide: not inside a DM block (revealing those would show nothing),
+    /// and not the players' versions, which are already the players'.</summary>
+    private static List<SecretBlock> Revealable(WikiPageDocument page) =>
+        SecretText.Blocks(page.Body).Where(b => !b.UnderDm && b.Marked is SecretAudience.Dm or SecretAudience.Party or SecretAudience.Some).ToList();
+
+    /// <summary>The characters a block can be revealed to on its own: the ones players play.</summary>
+    private List<ActorDocument> Characters => Ctx.Actors.Where(a => !string.IsNullOrEmpty(a.OwnerUserId)).OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+    private string KnowerNames(IReadOnlyList<string> ids) =>
+        ids.Count == 0 ? "?" : string.Join(", ", ids.Select(id => Ctx.Actors.FirstOrDefault(a => a.Id == id)?.Name ?? "?"));
+
+    private string SecretPreview(SecretBlock block)
+    {
+        var text = WikiRender.Summary(block.Inner, mentions, 90, forDm: true);
+        return string.IsNullOrWhiteSpace(text) ? L["Campaign.Wiki.Secrets.Empty"] : text;
+    }
+
+    private HashSet<string> PicksFor(SecretBlock block)
+    {
+        if (!picks.TryGetValue(block.Block, out var set))
+        {
+            picks[block.Block] = set = block.Knowers.ToHashSet();
+        }
+
+        return set;
+    }
+
+    private void TogglePick(SecretBlock block, string actorId, bool on)
+    {
+        var set = PicksFor(block);
+        if (on) set.Add(actorId); else set.Remove(actorId);
+    }
+
+    /// <summary>A click on a block's own Reveal or Hide button in the reading view.</summary>
+    [JSInvokable]
+    public Task OnSecretAction(int block, string to) =>
+        InvokeAsync(() => SetSecretAsync(block, to == "party" ? SecretAudience.Party : SecretAudience.Dm, null));
+
+    /// <summary>Reveals a block to the party or to some characters, or hides it again. A reveal asks first, showing what the
+    /// players will read, since it cannot be taken back from anyone who has read it.</summary>
+    private async Task SetSecretAsync(int block, SecretAudience to, IReadOnlyList<string>? knowers)
+    {
+        if (current == null || !Ctx.IsDm) return;
+        var found = SecretText.Blocks(current.Body).FirstOrDefault(b => b.Block == block);
+        if (found == null) return;
+        if (to != SecretAudience.Dm)
+        {
+            var who = to == SecretAudience.Some ? KnowerNames(knowers ?? Array.Empty<string>()) : L["Campaign.Wiki.Secrets.TheParty"].ToString();
+            var body = current.Visibility == WikiVisibility.Party
+                ? L["Campaign.Wiki.Secrets.ConfirmBody", SecretPreview(found)]
+                : L["Campaign.Wiki.Secrets.ConfirmHiddenPage", SecretPreview(found)];
+            if (!await confirm.ShowAsync(L["Campaign.Wiki.Secrets.ConfirmTitle", who], body, L["Common.Secret.Reveal"])) return;
+        }
+
+        var result = await WikiRepo.TrySetSecretAsync(current.Id, block, found.Inner, to, knowers, Ctx.Access);
+        switch (result)
+        {
+            case SecretChange.Done:
+                Ctx.Notify(Flash.Success(to switch
+                {
+                    SecretAudience.Party => L["Campaign.Wiki.Secrets.Revealed"],
+                    SecretAudience.Some => L["Campaign.Wiki.Secrets.RevealedTo", KnowerNames(knowers ?? Array.Empty<string>())],
+                    _ => L["Campaign.Wiki.Secrets.Hidden"]
+                }));
+                if (to == SecretAudience.Party && current.Visibility == WikiVisibility.Party) await LogRevealAsync(current.Title);
+                break;
+            case SecretChange.Stale:
+                Ctx.Notify(Flash.Error(L["Campaign.Wiki.Secrets.Stale"]));
+                break;
+            default:
+                Ctx.Notify(Flash.Error(L["Campaign.Wiki.OnlyDm"]));
+                break;
+        }
+
+        loadedKey = null;
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>When the table is running a session, notes the reveal in its log (the page's title only).</summary>
+    private async Task LogRevealAsync(string title)
+    {
+        try
+        {
+            if (Runtimes.TryGet(Ctx.Campaign.Id) is { ActiveSession: not null } table)
+            {
+                await table.EnqueueAsync(new Codex.Persistence.Runtime.LogWikiRevealCommand(title));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Logging a wiki reveal to the session failed");
         }
     }
 
@@ -840,7 +1054,11 @@ else
         return context;
     }
 
-    public void Dispose() => aiCall.Dispose();
+    public void Dispose()
+    {
+        aiCall.Dispose();
+        selfRef?.Dispose();
+    }
 
     private async Task AddNoteAsync()
     {

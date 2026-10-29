@@ -435,6 +435,49 @@ window.codex = {
         }
         grow();
     },
+    // The reveal and hide buttons the DM's reading view draws on a page's secret blocks. The page's text is markup, not
+    // components, so one listener on its container hands each click to the page. Called after every render; the newest
+    // reference wins, and the listener is added once.
+    secretActions: function (id, ref) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el._secretRef = ref;
+        if (el.dataset.secretActions) return;
+        el.dataset.secretActions = "true";
+        el.addEventListener("click", e => {
+            const b = e.target.closest("[data-secret-block]");
+            if (!b || !el.contains(b) || !el._secretRef) return;
+            e.preventDefault();
+            el._secretRef.invokeMethodAsync("OnSecretAction", parseInt(b.dataset.secretBlock, 10), b.dataset.secretTo);
+        });
+    },
+    // When this browser last opened a page (an ISO time, or null the first time), noting that it is open now (the server's
+    // time, as the reveals are stamped with it, so a wrong clock here marks nothing wrongly): what was revealed on it since is
+    // marked new. Per browser, and only a convenience: with storage blocked nothing is marked.
+    seenSince: function (key, now) {
+        try {
+            const was = localStorage.getItem(key);
+            localStorage.setItem(key, now);
+            return was;
+        } catch (e) {
+            return null;
+        }
+    },
+    // When this browser last opened each of the pages, for the ones it has opened.
+    seenAll: function (keys) {
+        const out = {};
+        try {
+            for (const k of keys) {
+                const v = localStorage.getItem(k);
+                if (v) out[k] = v;
+            }
+        } catch (e) { /* storage blocked */ }
+        return out;
+    },
+    scrollToId: function (id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    },
     // Bring a panel into view unless all of it already is (beside the chat on a wide screen it usually is).
     revealPanel: function (id) {
         const el = document.getElementById(id);

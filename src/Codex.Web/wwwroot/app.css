@@ -1027,6 +1027,21 @@ a.user-chip:active { transform: scale(0.97); }
 .secret-label { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warning); }
 .secret-party .secret-label { color: var(--success); }
 .secret-players .secret-label { color: var(--arcane); }
+.secret-some { border-inline-start-color: var(--accent); background: var(--accent-soft); }
+.secret-some .secret-label { color: var(--accent); }
+.secret-label .secret-action { display: inline-flex; align-items: center; gap: 0.25rem; margin-inline-start: 0.5rem; padding: 0.1rem 0.5rem; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.secret-label .secret-action:hover, .secret-label .secret-action:focus-visible { background: color-mix(in srgb, currentColor 14%, transparent); }
+.secret-new { position: relative; margin: 0.9rem 0; padding: 0.6rem 0.9rem 0.2rem; border-inline-start: 3px solid var(--success); border-radius: var(--radius-md); background: var(--success-soft); }
+.secret-new .secret-label { color: var(--success); }
+.secret-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.secret-item { padding: 0.5rem 0.6rem; border: 1px solid var(--border); border-inline-start: 3px solid var(--warning); border-radius: var(--radius-md); }
+.secret-item-party { border-inline-start-color: var(--success); }
+.secret-item-some { border-inline-start-color: var(--accent); }
+.secret-item-text { display: block; width: 100%; padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 0.9rem; text-align: start; cursor: pointer; }
+.secret-item-text:hover { text-decoration: underline; }
+.secret-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.35rem 0; font-size: 0.8rem; color: var(--text-2); }
+.secret-item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.secret-pick { display: grid; gap: 0.3rem; padding: 0.5rem; min-width: 12rem; }
 .view-as { display: inline-flex; align-items: center; gap: 0.5rem; }
 .view-as-note { margin: 0 0 0.8rem; padding: 0.5rem 0.8rem; border: 1px dashed var(--arcane); border-radius: var(--radius-md); color: var(--text-2); background: var(--arcane-soft); font-size: 0.92rem; }
 /* A page's pictures float at the end side of the text (left in Hebrew), framed like the other art, and the text wraps around

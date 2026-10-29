@@ -11,7 +11,9 @@ public static class WikiRender
     /// <param name="canCreate">Links to missing pages offer to create them (the DM).</param>
     /// <param name="dm">The DM's view of the secret blocks; null renders what a player reads. For a player a link to a page
     /// they cannot open is plain text: styled as missing it would tell them a secret page is there.</param>
-    public static string ToHtml(string? text, IReadOnlyCollection<WikiPageDocument> pages, MentionDirectory mentions, string campaignId, bool canCreate, DmView? dm = null)
+    /// <param name="newSince">For a player: blocks revealed after this are marked <paramref name="newLabel"/>.</param>
+    public static string ToHtml(string? text, IReadOnlyCollection<WikiPageDocument> pages, MentionDirectory mentions, string campaignId, bool canCreate, DmView? dm = null,
+        DateTime? newSince = null, string newLabel = "")
     {
         var basePath = $"/campaigns/{campaignId}";
         return SecretRender.Html(text, run => WikiText.ToHtml(run,
@@ -24,7 +26,7 @@ public static class WikiRender
             canCreate && dm != null ? title => $"{basePath}/wiki/new?title={Uri.EscapeDataString(title)}" : null,
             (kind, id) => mentions.Html(kind, id, (k, i) => MentionLinks.Href(campaignId, k, i)),
             missingAsText: dm == null,
-            createTitle: dm?.CreatePage), dm);
+            createTitle: dm?.CreatePage), dm, newSince, newLabel);
     }
 
     /// <summary>A line of text for a card: mentions named, Markdown, links and secret markers flattened, cut to <paramref name="max"/>

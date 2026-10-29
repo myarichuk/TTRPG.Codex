@@ -43,6 +43,10 @@
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Exit full screen (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>Nothing to preview yet.</value></data>
   <data name="Common.Editor.Secret" xml:space="preserve"><value>DM-only block (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Some" xml:space="preserve"><value>Revealed to {0}</value></data>
+  <data name="Common.Secret.NoOne" xml:space="preserve"><value>Revealed to no one</value></data>
+  <data name="Common.Secret.Reveal" xml:space="preserve"><value>Reveal</value></data>
+  <data name="Common.Secret.Hide" xml:space="preserve"><value>Hide again</value></data>
   <data name="Common.Secret.Dm" xml:space="preserve"><value>DM only</value></data>
   <data name="Common.Secret.Party" xml:space="preserve"><value>Revealed to the party</value></data>
   <data name="Common.Secret.Players" xml:space="preserve"><value>What the players are told</value></data>

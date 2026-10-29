@@ -77,6 +77,7 @@
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>истощение прошло</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>истощение теперь {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>снято: {0}</value></data>
+  <data name="Event.Wiki.Revealed" xml:space="preserve"><value>В вики открыто новое о «{0}».</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>Добавлено: {0}.</value></data>
   <data name="Event.Note.AddedSecret" xml:space="preserve"><value>Добавлено (секретно): {0}.</value></data>
   <data name="Event.Note.Corrected" xml:space="preserve"><value>Исправлено: {0}.</value></data>
@@ -119,6 +120,7 @@
   <data name="Event.Type.Initiative" xml:space="preserve"><value>Инициатива</value></data>
   <data name="Event.Type.InitiativeRemoved" xml:space="preserve"><value>Вне инициативы</value></data>
   <data name="Event.Type.Note" xml:space="preserve"><value>Заметка</value></data>
+  <data name="Event.Type.WikiReveal" xml:space="preserve"><value>Раскрытие</value></data>
   <data name="Event.Type.ResourceSpent" xml:space="preserve"><value>Трата</value></data>
   <data name="Event.Type.ResourceRegained" xml:space="preserve"><value>Восстановление</value></data>
   <data name="Event.Type.Rest" xml:space="preserve"><value>Отдых</value></data>

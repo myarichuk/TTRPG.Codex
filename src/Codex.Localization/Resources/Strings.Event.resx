@@ -77,6 +77,7 @@
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>exhaustion gone</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>exhaustion now {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>{0} lifted</value></data>
+  <data name="Event.Wiki.Revealed" xml:space="preserve"><value>Something new about {0} was revealed in the wiki.</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>A {0} was added.</value></data>
   <data name="Event.Note.AddedSecret" xml:space="preserve"><value>A secret {0} was added.</value></data>
   <data name="Event.Note.Corrected" xml:space="preserve"><value>A {0} was corrected.</value></data>
@@ -119,6 +120,7 @@
   <data name="Event.Type.Initiative" xml:space="preserve"><value>Initiative</value></data>
   <data name="Event.Type.InitiativeRemoved" xml:space="preserve"><value>Left initiative</value></data>
   <data name="Event.Type.Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Event.Type.WikiReveal" xml:space="preserve"><value>Reveal</value></data>
   <data name="Event.Type.ResourceSpent" xml:space="preserve"><value>Used</value></data>
   <data name="Event.Type.ResourceRegained" xml:space="preserve"><value>Regained</value></data>
   <data name="Event.Type.Rest" xml:space="preserve"><value>Rest</value></data>
