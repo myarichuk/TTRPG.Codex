@@ -1,0 +1,177 @@
+{
+  "locale": "en_US",
+  "meta": {
+    "title": "TTRPG.Codex — a self-hosted companion for tabletop campaigns",
+    "description": "One DM, any number of players, one browser tab each: a live table with initiative and hit points, campaign prep, a rules Library with homebrew, and optional AI on your own key. Free for personal and noncommercial use. English, Russian and Hebrew."
+  },
+  "nav": {
+    "home": "Home", "install": "Install", "guide": "Guide", "github": "GitHub",
+    "skip": "Skip to main content", "label": "Main", "language": "Language",
+    "theme": "Switch between dark and parchment theme", "menu": "Menu"
+  },
+  "ui": {
+    "zoom": "Enlarge screenshot", "close": "Close", "copy": "Copy", "copied": "Copied",
+    "toc": "On this page", "previous": "Previous", "next": "Next",
+    "edit": "Suggest an edit to this page on GitHub"
+  },
+  "callouts": { "note": "Note", "tip": "Tip", "warning": "Heads up" },
+  "banner": { "text": "This site is also available in English.", "cta": "Switch to English", "dismiss": "Dismiss" },
+  "wip": "Work in progress: features and file formats may still change. Back up your campaigns with “{{ui:Campaign.Settings.Export}}”.",
+  "hero": {
+    "eyebrow": "Self-hosted · Free for personal and noncommercial use",
+    "title": "Run your whole table from one browser tab",
+    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One DM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew. It ships with the Fifth Edition SRD 5.2.1, and other systems can be added as data.",
+    "primary": "Download",
+    "secondary": "Read the guide",
+    "note": "Windows, macOS and Linux · English, Русский, עברית",
+    "shotAlt": "The live table in TTRPG.Codex: initiative order with hit-point bars and conditions, the DM's controls and a dice tray."
+  },
+  "strip": [
+    { "icon": "lock", "text": "Your data stays on your computer" },
+    { "icon": "wifi-off", "text": "Nothing fetched from the internet while it runs" },
+    { "icon": "users", "text": "Players need only a browser" },
+    { "icon": "globe", "text": "English, Russian and Hebrew (right-to-left)" }
+  ],
+  "features": {
+    "eyebrow": "What it does",
+    "title": "Everything between sessions and at the table",
+    "lead": "Built for the way a game actually runs: prepare quietly, then keep the table moving without a stack of tabs and paper.",
+    "items": [
+      { "icon": "dices", "title": "A live table", "text": "Initiative, hit points, conditions with round counters, a dice tray and quick notes. Everyone sees changes the moment the DM makes them." },
+      { "icon": "scroll", "title": "Character sheets from data", "text": "Sheets are drawn from the game system's own definition, with rule checks you can set to strict, warn or off, and level-up guidance from the Library." },
+      { "icon": "map", "title": "Prep and a world wiki", "text": "Cast with portraits, a bestiary shortlist, regions and places, linked wiki pages, and lore you can reveal to one character or the whole party." },
+      { "icon": "book-open", "title": "A Library you can extend", "text": "Ships with the Fifth Edition SRD 5.2.1. Write homebrew, clone an entry as a variant, and carry sets of it between campaigns as packs." },
+      { "icon": "notebook-pen", "title": "Sessions, recaps and journals", "text": "A player-facing recap and a separate DM summary, table notes (private or shared) and a private journal that not even the DM can read." },
+      { "icon": "eye-off", "title": "Secrets stay secret", "text": "NPCs can be hidden, known by silhouette or revealed. Players only ever receive what they are allowed to see." },
+      { "icon": "sparkles", "title": "Optional AI, on your own key", "text": "Draft recaps, histories and characters, or build the world in a chat. Nothing is sent to a model until you click, and nothing is saved until you apply it." },
+      { "icon": "library", "title": "Systems are data", "text": "A system is a YAML file plus packs of YAML content: attributes, resources, sheet fields, content types and conditions. Define your own without touching the program." }
+    ]
+  },
+  "tour": {
+    "eyebrow": "A look inside",
+    "title": "Screenshots from the real app",
+    "lead": "Every image on this site is captured from TTRPG.Codex itself, in the language shown.",
+    "items": [
+      {
+        "shot": "table", "alt": "The live table with initiative order, hit-point bars and condition badges.",
+        "title": "The table that updates itself",
+        "text": "Start the table and everyone's page attaches to it. Set initiative by rolling or typing the total, and step through turns.",
+        "bullets": ["Damage, healing and temporary hit points in one click", "Conditions that count down and expire on their own", "Players see their own numbers; creatures show only how they look"]
+      },
+      {
+        "shot": "sheet", "alt": "A character sheet showing hit points, armor class, attributes and level-up help.",
+        "title": "Sheets that know the rules",
+        "text": "The sheet is rendered from the system definition: attributes, skills, picks, inventory and history, with the numbers worked out for you.",
+        "bullets": ["Point buy and standard array, enforced or just flagged", "Level-up help drawn from the Library's class entries", "A DM-only notes tab for secrets about the character"]
+      },
+      {
+        "shot": "wiki-page", "alt": "A wiki page about a harbour town with a link to another page and a map marker.",
+        "title": "A wiki that links itself",
+        "text": "Write pages in plain text and link them with double brackets. Places get a page of their own, and backlinks show what mentions what.",
+        "bullets": ["Pages are DM-only until you share them with the party", "Mention characters, places and items with @, # and $", "Players can leave notes on the pages they can read"]
+      },
+      {
+        "shot": "library", "alt": "The Library showing a creature entry with filters for classes, spells and equipment.",
+        "title": "A Library that grows with your campaign",
+        "text": "Search a full rules reference, then make it yours. Clone any entry into a homebrew variant or write one from scratch.",
+        "bullets": ["Classes, species, feats, spells, creatures, equipment and more", "Import homebrew from another campaign, or from a pack file", "Export all of it, or only what carries a tag, to share"]
+      },
+      {
+        "shot": "session", "alt": "A session page with a recap editor, a private journal and the event log.",
+        "title": "Recaps with a head start",
+        "text": "Every roll, hit and condition lands in the session log. Pre-fill the recap from it, polish it, and publish it to the party.",
+        "bullets": ["A player-facing recap and a separate, secret DM summary", "Table notes that are private or shared", "Each player's journal, private even from the DM"]
+      },
+      {
+        "shot": "table-light", "alt": "The live table in the light parchment theme.",
+        "title": "Dark stone by default, parchment when you prefer",
+        "text": "The interface is built for a dim room, with a light theme one click away. Colours meet WCAG AA contrast, controls have names, and motion respects your settings.",
+        "bullets": ["Keyboard friendly, with screen-reader labels throughout", "Respects reduced-motion preferences", "Installs to a phone's home screen as an app"]
+      }
+    ]
+  },
+  "phone": {
+    "title": "In every player's pocket",
+    "text": "The app is installable on a phone. Players open the link, add it to the home screen, and follow the table full-screen.",
+    "bullets": ["Layouts rebuilt for narrow screens, not just shrunk", "The DM's phone is a control panel too", "Needs a connection to the table; offline you get a plain notice, never stale data"],
+    "altTable": "A player's phone showing the initiative order.",
+    "altSheet": "A character sheet on a phone."
+  },
+  "ai": {
+    "eyebrow": "Optional AI",
+    "title": "Bring your own model, and stay in control",
+    "text": "Every “{{ui:Session.DraftAi}}” button talks to a chat model you choose. OpenRouter is pre-selected, with presets for OpenAI, Groq, Mistral, a local Ollama or LM Studio, or any OpenAI-compatible endpoint.",
+    "bullets": [
+      "Keys are stored encrypted on your server",
+      "Nothing goes to a model until someone clicks an AI button",
+      "The world builder proposes places, people, factions, quests and homebrew; you review each change and apply only what you want",
+      "Writes in the reader's language"
+    ],
+    "alt": "The AI settings page with text and image model setup."
+  },
+  "languages": {
+    "eyebrow": "Three languages",
+    "title": "The same table, in your language",
+    "lead": "The interface, the game system's labels and the rules content are translated into Russian and Hebrew. Hebrew mirrors the whole layout, right to left.",
+    "note": "Still refining a few game terms? Corrections are welcome as an issue or pull request.",
+    "alts": {
+      "en": "The live table in English.",
+      "ru": "The live table in Russian.",
+      "he": "The live table in Hebrew, laid out right to left."
+    }
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "title": "From download to first session in minutes",
+    "steps": [
+      { "title": "Install and start", "text": "Run the installer. TTRPG.Codex sits in your system tray, starts the server and opens your browser." },
+      { "title": "Create a campaign", "text": "Make an account (the first becomes the server admin), create a campaign and pick a game system." },
+      { "title": "Send the invite link", "text": "Players open the link on their phone or laptop, create an account and join. Scan the QR code if you are in the same room." }
+    ]
+  },
+  "systems": {
+    "eyebrow": "Systems and licences",
+    "title": "What is in the box, in plain terms",
+    "lead": "What ships today, what you can add, and what you may do with it.",
+    "panels": [
+      {
+        "title": "Ships with the Fifth Edition SRD 5.2.1",
+        "text": "Twelve classes, nine species, four backgrounds, seventeen feats, 339 spells and 340 creatures from the System Reference Document 5.2.1, used under CC BY 4.0. It is the one complete game system included today. TTRPG.Codex describes itself as \"5E compatible\" and has no connection to Wizards of the Coast."
+      },
+      {
+        "title": "Built to take other systems",
+        "text": "A game system is data, not code: a YAML file for attributes, resources, sheet fields, content types and conditions, plus packs of entries. A small system, like the bundled d6 example, is one short file and a few entry files. Rules that need real logic, such as 5E's spell slots and level-ups, take a compiled plugin. Other publishers' content is not included.",
+        "link": { "href": "https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md", "label": "Read the content pack format" }
+      },
+      {
+        "title": "Free for personal and noncommercial use",
+        "text": "The program is source-available under the PolyForm Noncommercial License 1.0.0. Run it for your own table, your club or a class, and study and change it for noncommercial purposes. It is not an OSI open-source licence, and it does not allow selling it or using it commercially. Unsure whether your use counts? Open an issue and ask.",
+        "link": { "href": "https://github.com/myarichuk/TTRPG.Codex/blob/main/LEGAL.md", "label": "Read the legal notices" }
+      }
+    ]
+  },
+  "download": {
+    "eyebrow": "Download",
+    "title": "Get TTRPG.Codex",
+    "lead": "Every package carries the .NET runtime it needs. Nothing else to install.",
+    "latest": "Latest release",
+    "published": "published",
+    "recommended": "For your system",
+    "unsigned": "The packages are not code-signed yet, so Windows SmartScreen and macOS Gatekeeper will ask before running them.",
+    "installLink": "Step-by-step install guide",
+    "allReleases": "All releases",
+    "fromSource": "Build from source",
+    "platforms": [
+      { "os": "win", "name": "Windows", "sub": "64-bit, installs for your user, no admin needed", "primary": { "label": "Installer (.exe)", "asset": "win-setup" }, "secondary": { "label": "Portable (.zip)", "asset": "win-zip" } },
+      { "os": "mac", "name": "macOS", "sub": "Apple silicon, installs to Applications", "primary": { "label": "Installer (.pkg)", "asset": "mac-pkg" }, "secondary": { "label": "Portable (.tar.gz)", "asset": "mac-tgz" } },
+      { "os": "linux", "name": "Linux", "sub": "64-bit, Debian and Ubuntu package", "primary": { "label": "Package (.deb)", "asset": "linux-deb" }, "secondary": { "label": "Portable (.tar.gz)", "asset": "linux-tgz" } }
+    ]
+  },
+  "footer": {
+    "tagline": "A self-hosted companion for running tabletop role-playing campaigns.",
+    "license": "Source-available under the PolyForm Noncommercial License 1.0.0.",
+    "project": "Project", "source": "Source code", "releases": "Releases", "issues": "Report an issue", "legal": "Legal notices", "docs": "Design documents",
+    "site": "This site",
+    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License. TTRPG.Codex is an independent project, not affiliated with or endorsed by Wizards of the Coast."
+  }
+}

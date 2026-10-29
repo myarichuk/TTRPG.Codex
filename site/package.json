@@ -1,0 +1,20 @@
+{
+  "name": "ttrpg-codex-site",
+  "private": true,
+  "type": "module",
+  "description": "The TTRPG.Codex website (GitHub Pages): a zero-framework static generator, content in English, Russian and Hebrew.",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node build.mjs && node tools/serve.mjs",
+    "capture": "node tools/capture-screenshots.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "marked": "18.1.2"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
