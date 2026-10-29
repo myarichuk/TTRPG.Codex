@@ -89,10 +89,10 @@ else
                                 <p id="journal-mention-hint" class="field-hint">@L["Campaign.Journal.MentionHint"]</p>
                             </MarkdownEditor>
                         </div>
-                        <div class="d-flex gap-2">
-                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save">@L["Campaign.Journal.Save"]</CodexButton>
+                        <SaveBar Dirty="IsDirty()" TestId="journal-save-bar">
+                            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="journal-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Campaign.Journal.Save"]</CodexButton>
                             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CancelAsync">@L["Campaign.Journal.Cancel"]</CodexButton>
-                        </div>
+                        </SaveBar>
                     </form>
                 </section>
             }

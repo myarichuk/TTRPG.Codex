@@ -90,21 +90,21 @@ else if (Mode == "edit")
                         </div>
                     }
                     <MarkdownEditor Id="wiki-body" Title="@(string.IsNullOrWhiteSpace(draft.Title) ? L["Campaign.Wiki.Field.Text"] : draft.Title)" Rows="18" Class="wiki-editor"
-                                    Templates="templates" TemplatesHref="@($"{Ctx.BasePath}/templates")"
+                                    Templates="templates" Pages="linkTargets" TemplatesHref="@($"{Ctx.BasePath}/templates")"
                                     @bind-Value="draft.Body" Mentions="@mentionsJson" DescribedBy="wiki-body-hint" TestId="wiki-body" Placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"
                                     Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false, DmView.From(L, mentions)))" Secrets="true"
                                     Busy="expanding" BusyText="@L["Campaign.Wiki.Writing"]" OnStop="aiCall.Stop">
                         <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"] @Rich(L["Campaign.Wiki.SecretHint"]) @Rich(L["Campaign.Wiki.TemplateHint"])</div>
                     </MarkdownEditor>
-                    <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
+                    <SaveBar Dirty="IsDirty()" TestId="wiki-save-bar">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding" data-testid="wiki-expand"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Wiki.ExpandWithAi"]</CodexButton>
                         <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">@L["Campaign.Wiki.Cancel"]</a>
                         @if (current != null)
                         {
                             <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync">@L["Campaign.Wiki.DeletePage"]</CodexButton>
                         }
-                    </div>
+                    </SaveBar>
                 </form>
             </section>
         </div>
@@ -115,7 +115,7 @@ else if (Mode == "edit")
                 <div class="chips">
                     @foreach (var wp in pages.Where(p => current == null || p.Id != current.Id).Take(40))
                     {
-                        <button type="button" class="chip" @onclick="() => AppendLink(wp)">@wp.Title</button>
+                        <button type="button" class="chip" @onclick="() => InsertLinkAsync(wp)" data-testid="wiki-link-chip">@wp.Title</button>
                     }
                 </div>
                 @if (pages.Count == 0)
@@ -522,6 +522,23 @@ else
             <label for="wiki-search" class="visually-hidden">@L["Campaign.Wiki.Search"]</label>
             <input id="wiki-search" type="search" class="field-input" placeholder="@L["Campaign.Wiki.SearchPlaceholder"]" @bind="search" @bind:event="oninput" />
         </div>
+        <div class="wiki-sort">
+            <label for="wiki-sort" class="visually-hidden">@L["Campaign.Wiki.SortBy"]</label>
+            <select id="wiki-sort" class="field-select" @bind="sort" data-testid="wiki-sort">
+                <option value="title">@L["Campaign.Wiki.Sort.Title"]</option>
+                <option value="updated">@L["Campaign.Wiki.Sort.Updated"]</option>
+            </select>
+        </div>
+        @if (Kinds.Count > 1)
+        {
+            <div class="chips wiki-kinds" role="group" aria-label="@L["Campaign.Wiki.FilterByKind"]" data-testid="wiki-kind-filter">
+                <button type="button" class="chip" aria-pressed="@((activeKind == null) ? "true" : "false")" @onclick="() => activeKind = null">@L["Campaign.Wiki.AllKinds"]</button>
+                @foreach (var (kind, count) in Kinds)
+                {
+                    <button type="button" class="chip" aria-pressed="@((activeKind == kind) ? "true" : "false")" @onclick="() => activeKind = kind" data-testid="@($"wiki-kind-{kind.ToString().ToLowerInvariant()}")"><LucideIcon IconName="@KindIcon(kind)" Size="14" /> @KindLabel(kind) <span class="chip-count">@count</span></button>
+                }
+            </div>
+        }
         @if (AllTags.Count > 0)
         {
             <div class="chips" role="group" aria-label="@L["Campaign.Wiki.FilterByTag"]">
@@ -611,6 +628,10 @@ else
     private readonly Dictionary<string, string> usernames = new();
     private string search = string.Empty;
     private string? activeTag;
+    private WikiPageKind? activeKind;
+    private string sort = "title";
+    // The pages the editor offers after "[[": every other page.
+    private List<WikiPageDocument> linkTargets = new();
     private string newNote = string.Empty;
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
     private string aiInstruction = string.Empty;
@@ -649,9 +670,22 @@ else
     private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
     private List<string> AllTags => (pages ?? new()).SelectMany(p => p.Tags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
 
-    private IEnumerable<WikiPageDocument> Filtered => (pages ?? new())
-        .Where(p => activeTag == null || p.Tags.Contains(activeTag, StringComparer.OrdinalIgnoreCase))
-        .Where(p => string.IsNullOrWhiteSpace(search) || p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || p.Body.Contains(search, StringComparison.OrdinalIgnoreCase));
+    // The kinds of page there are, with how many of each, in the kinds' own order.
+    private List<(WikiPageKind Kind, int Count)> Kinds => (pages ?? new()).GroupBy(p => p.Kind).OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
+
+    private IEnumerable<WikiPageDocument> Filtered
+    {
+        get
+        {
+            var shown = (pages ?? new())
+                .Where(p => activeKind == null || p.Kind == activeKind)
+                .Where(p => activeTag == null || p.Tags.Contains(activeTag, StringComparer.OrdinalIgnoreCase))
+                .Where(p => string.IsNullOrWhiteSpace(search) || p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || p.Body.Contains(search, StringComparison.OrdinalIgnoreCase));
+            return sort == "updated"
+                ? shown.OrderByDescending(p => p.UpdatedAt)
+                : shown.OrderBy(p => p.Title, StringComparer.Create(L.Culture, ignoreCase: true));
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -693,6 +727,7 @@ else
             : MentionDirectory.Empty;
         mentionsJson = MentionLinks.Json(mentions, Ctx.Actors);
         templates = Mode == "edit" ? await TemplateRepo.GetAsync(Ctx.Access, L) : null;
+        linkTargets = pages;
 
         if (Slug == "new")
         {
@@ -712,6 +747,7 @@ else
                     Body = mentions.ForEditing(current.Body), Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId,
                     PlaceId = current.PlaceId, Kind = current.Kind, ActorId = current.ActorId
                 };
+                linkTargets = pages.Where(p => p.Id != current.Id).ToList();
                 linked = PlaceOf(current);
                 if (linked is { } on)
                 {
@@ -1026,7 +1062,10 @@ else
     private Task<ArtImage> GenerateArtAsync(CancellationToken ct) =>
         Art.GenerateAsync(Ctx.UserId, draft.Title, "place", TextFormatting.Summary(mentions.Plain(draft.Body), 300), ArtShape.Wide, ct);
 
-    private void AppendLink(WikiPageDocument target) => draft.Body = (draft.Body.TrimEnd() + $" [[{target.Title}]]").Trim();
+    // At the caret the box last had (a textarea keeps its selection when the chip takes focus), as typing it would; the
+    // box's input event brings the text back here.
+    private async Task InsertLinkAsync(WikiPageDocument target) =>
+        await JS.InvokeVoidAsync("codex.mdInsert", "wiki-body", $"[[{target.Title}]]");
 
     private async Task SaveAsync()
     {

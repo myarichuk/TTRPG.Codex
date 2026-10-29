@@ -15,7 +15,7 @@
     </div>
     <MarkdownEditor Id="@Id" Title="@(Label ?? L["Library.Ai.Description"])" Rows="@Rows" Placeholder="@Placeholder" Value="@Value" ValueChanged="OnValueChanged"
                     DescribedBy="@($"{Id}-hint")" Mentions="@Mentions" Preview="Preview" TestId="@TestId" Class="mb-0" Secrets="Secrets"
-                    Busy="busy" BusyText="@L["Library.Ai.Writing"]" OnStop="call.Stop" />
+                    Pages="Pages" Templates="Templates" TemplatesHref="@TemplatesHref" Busy="busy" BusyText="@L["Library.Ai.Writing"]" OnStop="call.Stop" />
     <div class="ai-field-foot">
         <label for="@(Id)-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
         <input id="@(Id)-ask" class="field-input field-sm" placeholder="@L["Library.Ai.AskPlaceholder"]" @bind="instruction" @bind:event="oninput" />
@@ -57,6 +57,13 @@
 
     /// <summary>The text takes secret blocks (see <see cref="MarkdownEditor.Secrets"/>).</summary>
     [Parameter] public bool Secrets { get; set; }
+
+    /// <summary>The pages offered after "[[" (see <see cref="MarkdownEditor.Pages"/>).</summary>
+    [Parameter] public IReadOnlyCollection<Codex.Persistence.WikiPageDocument>? Pages { get; set; }
+
+    /// <summary>The DM's templates (see <see cref="MarkdownEditor.Templates"/>), and where they are edited.</summary>
+    [Parameter] public IReadOnlyList<Codex.Persistence.TextTemplate>? Templates { get; set; }
+    [Parameter] public string? TemplatesHref { get; set; }
 
     /// <summary>Produces the new text from the current text and the optional instruction; the token is cancelled by Stop.</summary>
     [Parameter, EditorRequired] public Func<string, string, CancellationToken, Task<string>> Generate { get; set; } = null!;

@@ -335,14 +335,14 @@
   <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>פלג, עיר, אגדה…</value></data>
   <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>טקסט</value></data>
   <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>כתבו את הדף. קשרו לדפים אחרים עם [[כותרת הדף]]; קישור לדף שעדיין לא קיים הופך לקישור "יצירה".</value></data>
-  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>קישור: `[[כותרת הדף]]` או `[[כותרת הדף|טקסט מוצג]]`. מוצגים `**מודגש**`, `*נטוי*`, תבליטים עם "- ", "### כותרות" וגם | טבלאות |.</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>קישור: `[[כותרת הדף]]` (הקלידו `[[` כדי לבחור דף) או `[[כותרת הדף|טקסט מוצג]]`. מוצגים `**מודגש**`, `*נטוי*`, תבליטים עם "- ", "### כותרות" וגם | טבלאות |.</value></data>
   <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>שמירת הדף</value></data>
   <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>כותב…</value></data>
   <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>הרחבה באמצעות AI</value></data>
   <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>ביטול</value></data>
   <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>מחיקת הדף</value></data>
   <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>קישור לדף</value></data>
-  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>לחצו כדי להוסיף קישור לטקסט.</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>מוסיף קישור במקום שבו נמצא הסמן. בתוך הטקסט, הקלדת [[ מציעה את הדפים גם כן.</value></data>
   <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>אין עדיין דפים נוספים. כתבו `[[דף חדש]]` והוא יהפוך לקישור יצירה.</value></data>
   <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>הנחיה ל-AI</value></data>
   <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>הנחיה ל-AI</value></data>
@@ -603,4 +603,22 @@
   <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים קוראים אותה עכשיו; הסוד נשאר מוסתר.</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים יקראו אותה כשתשתפו את הדף.</value></data>
   <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>עריכת הגרסה לשחקנים</value></data>
+  <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>מיון הדפים</value></data>
+  <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>לפי א״ב</value></data>
+  <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>עודכנו לאחרונה</value></data>
+  <data name="Campaign.Wiki.FilterByKind" xml:space="preserve"><value>סינון לפי סוג</value></data>
+  <data name="Campaign.Wiki.AllKinds" xml:space="preserve"><value>כל הסוגים</value></data>
+  <data name="Campaign.Setup.Title" xml:space="preserve"><value>צעדים ראשונים</value></data>
+  <data name="Campaign.Setup.Dismiss" xml:space="preserve"><value>הסתרת הרשימה</value></data>
+  <data name="Campaign.Setup.Progress" xml:space="preserve"><value>בוצעו {0} מתוך {1}</value></data>
+  <data name="Campaign.Setup.Done" xml:space="preserve"><value>בוצע:</value></data>
+  <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>לביצוע:</value></data>
+  <data name="Campaign.Setup.Describe" xml:space="preserve"><value>תארו את המערכה לשחקנים</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>הזמינו את השחקנים בעזרת הקישור</value></data>
+  <data name="Campaign.Setup.Cast" xml:space="preserve"><value>הוסיפו דמות ראשונה לצוות</value></data>
+  <data name="Campaign.Setup.Page" xml:space="preserve"><value>כתבו דף ויקי ראשון</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>הוסיפו מקום ראשון למפה</value></data>
+  <data name="Campaign.Setup.Session" xml:space="preserve"><value>תכננו את המפגש הראשון</value></data>
+  <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>דפים שעודכנו לאחרונה</value></data>
+  <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>פתיחת הוויקי</value></data>
 </root>

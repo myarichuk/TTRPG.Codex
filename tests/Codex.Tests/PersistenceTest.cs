@@ -1256,9 +1256,10 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             Assert.False(mask.HasPortrait);
             Assert.Empty(mask.Sheet);
             Assert.Empty(mask.State);
-            // Every field, as it would leave for the browser: nothing of who they really are.
+            // Every field, as it would leave for the browser: nothing of who they really are. The sheet and state are checked by
+            // their keys: a number would also turn up by chance in the ids, which are random hex.
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(mask);
-            foreach (var secret in new[] { "Vizier", "Mor", "poisoned", "Weak to fire", "srd5e:mage", "page-mor", "disguise", "40" })
+            foreach (var secret in new[] { "Vizier", "Mor", "poisoned", "Weak to fire", "srd5e:mage", "page-mor", "disguise", "\"hp\"", "\"level\"" })
             {
                 Assert.DoesNotContain(secret, json);
             }

@@ -16,6 +16,7 @@
 @inject ISystemCatalog Catalog
 @inject AiFeatures Ai
 @inject MentionSources MentionSources
+@inject ITemplateRepository TemplateRepo
 @inject ILogger<SessionDetail> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
@@ -99,7 +100,7 @@ else
                                     DescribedBy="mention-hint" Preview="PreviewMentions" TestId="session-recap"
                                     Busy="@(drafting == AiAudience.Players)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync">@L["Session.SaveRecap"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync" data-save-shortcut="">@L["Session.SaveRecap"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">@L["Session.Prefill"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
                             <LucideIcon IconName="sparkles" Size="14" /> @L["Session.DraftAi"]
@@ -127,10 +128,10 @@ else
                     </div>
                     <label for="dm-summary" class="visually-hidden">@L["Session.DmSummary"]</label>
                     <MarkdownEditor Id="dm-summary" Title="@L["Session.DmSummary"]" Rows="8" Placeholder="@L["Session.DmSummaryPlaceholder"]" @bind-Value="editDmSummary" Mentions="@mentionsJson"
-                                    Preview="PreviewMentions" TestId="session-dm-summary"
+                                    Preview="PreviewMentions" TestId="session-dm-summary" Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(drafting == AiAudience.Dm)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync">@L["Session.SaveSummary"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync" data-save-shortcut="">@L["Session.SaveSummary"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
                             <LucideIcon IconName="sparkles" Size="14" /> @L["Session.DraftAi"]
                         </CodexButton>
@@ -204,7 +205,7 @@ else
                 <MarkdownEditor Id="journal-body" Title="@L["Session.MyJournal"]" Rows="7" Placeholder="@L["Session.JournalPlaceholder"]" @bind-Value="journalBody" Mentions="@mentionsJson"
                                 Preview="PreviewMentions" TestId="session-journal" />
                 <div class="d-flex align-items-center gap-2">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save">@L["Session.SaveJournal"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save" data-save-shortcut="">@L["Session.SaveJournal"]</CodexButton>
                     @if (journalSavedAt != null)
                     {
                         <span class="small-muted" role="status">@L["Session.Saved"] <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></span>
@@ -250,6 +251,7 @@ else
     private IReadOnlyList<MentionItem> items = Array.Empty<MentionItem>();
     private MentionDirectory mentions = MentionDirectory.Empty;
     // What the recap, summary, note and journal boxes suggest after @, # or $.
+    private IReadOnlyList<TextTemplate>? templates;
     private string mentionsJson = "[]";
     private IReadOnlyList<SessionEvent> visibleEvents = Array.Empty<SessionEvent>();
     private readonly Dictionary<string, string> memberUsernames = new();
@@ -309,6 +311,8 @@ else
                 // The boxes hold the text as typed (@Name); the stored text holds ids.
                 editRecap = mentions.ForEditing(session.Recap ?? "");
                 editDmSummary = access.IsDm ? mentions.ForEditing(session.DmSummary ?? "") : "";
+                // Only for the DM's own summary: the recap is the players' to read, and a template can hold the DM's secrets.
+                templates = access.IsDm ? await TemplateRepo.GetAsync(access, L) : null;
                 // Notes left here and quick notes typed at the live table, as one timeline. Secret table notes are the DM's alone.
                 var pageNotes = await NoteRepo.GetNotesForTargetAsync(NotesTargetId, access);
                 var actorsById = campaignActors.ToDictionary(a => a.Id);

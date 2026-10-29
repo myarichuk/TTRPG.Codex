@@ -10,6 +10,7 @@
 @inject MentionSources MentionSources
 @inject IWikiRepository WikiRepo
 @inject PlaceWikiSync PlaceSync
+@inject ITemplateRepository TemplateRepo
 
 <div class="page-header mb-3">
     <div>
@@ -230,7 +231,7 @@ else
                     </div>
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
-                                     Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson"
+                                     Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson" Pages="wikiPages" Templates="templates" TemplatesHref="@($"{Ctx.BasePath}/templates")"
                                      Preview="@(text => WikiRender.ToHtml(noteMentions.Encode(text), wikiPages, noteMentions, Ctx.Campaign.Id, false, DmView.From(L, noteMentions)))" Secrets="true"
                                      Hint="@($"{L["Campaign.World.DescHint"]} {L["Campaign.Wiki.MentionHint"]}")" />
                     </div>
@@ -243,7 +244,7 @@ else
                 </div>
                 <div class="dialog-actions">
                     <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="BackFromLocationAsync">@L["Common.Back"]</CodexButton>
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" data-testid="location-save">@L["Campaign.World.SavePlace"]</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Icon="check" data-testid="location-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Campaign.World.SavePlace"]</CodexButton>
                 </div>
             </form>
         }
@@ -280,6 +281,7 @@ else
     private MentionDirectory noteMentions = MentionDirectory.Empty;
     private string mentionsJson = "[]";
     private IReadOnlyCollection<WikiPageDocument> wikiPages = Array.Empty<WikiPageDocument>();
+    private IReadOnlyList<TextTemplate>? templates;
     private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
 
     protected override async Task OnParametersSetAsync() => await LoadAsync();
@@ -302,6 +304,7 @@ else
         noteActors = Ctx.Actors.ToDictionary(a => a.Id);
         mentionsJson = MentionLinks.Json(noteMentions, Ctx.Actors);
         wikiPages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
+        templates = Ctx.IsDm ? await TemplateRepo.GetAsync(Ctx.Access, L) : null;
 
         packLocations = Ctx.IsDm ? Registry.GetLocationsBySystem(Ctx.Campaign.SystemId).OrderBy(l => l.Name).ToList() : new List<ILocationDefinition>();
     }

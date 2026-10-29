@@ -116,11 +116,19 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
     // box's data-mentions list. Picking one writes "@Name" into the box; the server turns names into ids when the
     // note is saved. The list lives on <body>, outside anything Blazor renders, so a re-render can't disturb it.
     // A box with templates (data-templates) also offers them after a "/" that starts a word: picking one puts it in.
+    // A box with wiki pages (data-pages: [{ n: title, k: kind }]) offers them after "[[": picking one writes "[[Title]]".
     (function () {
         const MAX = 8;
         let list = null, field = null, items = [], active = 0, start = -1;
 
         function candidates(el, trigger) {
+            if (trigger === "[[") {
+                if (el._pagesSource !== el.dataset.pages) {
+                    el._pagesSource = el.dataset.pages;
+                    try { el._pages = JSON.parse(el.dataset.pages || "[]").map(function (p) { return { t: "[[", n: p.n, k: p.k }; }); } catch { el._pages = []; }
+                }
+                return el._pages;
+            }
             if (trigger === "/") {
                 return window.codexTemplates.of(el).map(function (t, i) {
                     return { t: "/", n: t.a || t.n, k: t.a ? t.n : "", i: i };
@@ -137,6 +145,19 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
         // something still matches.
         function query(el) {
             const caret = el.selectionStart, before = el.value.slice(0, caret);
+            // An open "[[" on this line, with no "]" after it: the title typed so far. It wins over an "@" or "#" before it,
+            // and loses to one typed after it ("[[a @b": the mention).
+            let link = null;
+            if (el.hasAttribute("data-pages")) {
+                const at = before.lastIndexOf("[[");
+                const typed = at < 0 ? "" : before.slice(at + 2);
+                if (at >= 0 && typed.length <= 60 && !/[\]\n\[]/.test(typed)) link = { trigger: "[[", text: typed, start: at };
+            }
+            const other = mentionQuery(el, before);
+            return other && (!link || other.start > link.start) ? other : link;
+        }
+
+        function mentionQuery(el, before) {
             for (let i = before.length - 1; i >= 0 && before.length - i <= 40; i--) {
                 const ch = before[i];
                 if (ch === "\n") return null;
@@ -212,7 +233,7 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
                 li.setAttribute("aria-selected", i === active ? "true" : "false");
                 li.dataset.index = i;
                 const name = document.createElement("span");
-                name.textContent = c.t + c.n;
+                name.textContent = c.t === "[[" ? c.n : c.t + c.n;
                 const kind = document.createElement("span");
                 kind.className = "mention-kind";
                 kind.textContent = c.k;
@@ -262,8 +283,10 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
                 window.codexTemplates.insert(el, c.i, from, caret);
                 return;
             }
-            const insert = c.t + c.n + " ";
-            el.value = el.value.slice(0, start) + insert + el.value.slice(caret);
+            // A link closes itself, over a "]]" already after the caret (typed, or left from an earlier title).
+            const closing = c.t === "[[" ? (el.value.slice(caret, caret + 2) === "]]" ? 2 : el.value[caret] === "]" ? 1 : 0) : 0;
+            const insert = c.t === "[[" ? "[[" + c.n + "]]" : c.t + c.n + " ";
+            el.value = el.value.slice(0, start) + insert + el.value.slice(caret + closing);
             const at = start + insert.length;
             el.setSelectionRange(at, at);
             close();
@@ -272,7 +295,7 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
         }
 
         document.addEventListener("input", function (e) {
-            if (e.target instanceof HTMLElement && (e.target.hasAttribute("data-mentions") || e.target.hasAttribute("data-templates"))) update(e.target);
+            if (e.target instanceof HTMLElement && (e.target.hasAttribute("data-mentions") || e.target.hasAttribute("data-templates") || e.target.hasAttribute("data-pages"))) update(e.target);
         });
 
         // Capture on window, ahead of Blazor and the drawer: while the list is open, its keys are the list's.
@@ -572,6 +595,17 @@ window.codex = {
         mdReplace(el, s, e, text);
         el.setSelectionRange(s + 6, s + 6 + (picked.trim() === "" ? 0 : picked.length));
     },
+    // Puts text in at the box's caret (or over its selection), with a space either side where a word would touch it.
+    mdInsert: function (id, text) {
+        const el = document.getElementById(id);
+        if (!el || el.readOnly) return;
+        const start = el.selectionStart, end = el.selectionEnd, v = el.value;
+        const before = start > 0 && !/\s/.test(v[start - 1]) ? " " : "";
+        const after = end < v.length && !/\s/.test(v[end]) ? " " : "";
+        mdReplace(el, start, end, before + text + after);
+        const at = start + before.length + text.length;
+        el.setSelectionRange(at, at);
+    },
     // Puts template number <index> of the box's data-templates in at the caret (the editor's template menu, a new page).
     mdTemplate: function (id, index) {
         const el = document.getElementById(id);
@@ -626,6 +660,32 @@ document.addEventListener("keydown", function (e) {
     if (key !== "b" && key !== "i") return;
     e.preventDefault();
     if (key === "b") window.codex.mdWrap(el.id, "**", "**"); else window.codex.mdWrap(el.id, "*", "*");
+});
+
+// Ctrl+S (Cmd+S on a Mac) presses the Save of what is being edited: the nearest [data-save-shortcut] button around the focus
+// (a page can hold several editors, a session's recap and summary), else the only one on screen; an open dialog's own first.
+// The browser's "Save page as" never opens over an editor. A field that sends its value on change (not on input) is blurred
+// first, so the value is in before Save runs; focus goes back afterwards.
+document.addEventListener("keydown", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "s") return;
+    function usable(b) { return !b.disabled && b.getClientRects().length > 0; }
+    const dialog = Array.from(document.querySelectorAll("dialog[open]")).pop();
+    const scope = dialog || document;
+    let button = null;
+    for (let node = e.target instanceof Element ? e.target : null; node && !button && node !== document.body; node = node.parentElement) {
+        if (dialog && !dialog.contains(node)) break;
+        button = Array.from(node.querySelectorAll("[data-save-shortcut]")).find(usable) || null;
+    }
+    if (!button) {
+        const all = Array.from(scope.querySelectorAll("[data-save-shortcut]")).filter(usable);
+        if (all.length === 1) button = all[0];
+    }
+    if (!button) return;
+    e.preventDefault();
+    const field = document.activeElement;
+    if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) field.blur();
+    button.click();
+    if (field instanceof HTMLElement && field !== document.body) field.focus({ preventScroll: true });
 });
 
 // Where the page was scrolled when a link was last followed (captured before Blazor handles the click).
@@ -834,4 +894,114 @@ window.codexTemplates = (function () {
     }, true);
 
     return { of: of, insert: insert, expand: expand };
+})();
+
+// Hovering a mention or a [[link]] in written text (or focusing it from the keyboard) shows a card with the name, what it
+// is, its first lines and its picture, from /campaigns/{id}/preview (PreviewEndpoints.cs), which answers only what the
+// viewer may read. Screens without hover follow the link instead. Answers are kept a minute: a reveal shows soon after.
+(function () {
+    if (!window.matchMedia || !window.matchMedia("(hover: hover)").matches) return;
+    const SHOW_AFTER = 350, KEEP = 60000;
+    const cache = new Map();
+    let card = null, timer = 0, current = null;
+
+    function target(link) {
+        let url;
+        try { url = new URL(link.href, location.href); } catch { return null; }
+        if (url.origin !== location.origin) return null;
+        let m = url.pathname.match(/^\/campaigns\/([^/]+)\/actors\/([^/]+)$/);
+        if (m) return "/campaigns/" + m[1] + "/preview/actor/" + m[2];
+        m = url.pathname.match(/^\/campaigns\/([^/]+)\/wiki\/([^/]+)$/);
+        if (m && m[2] !== "new") return "/campaigns/" + m[1] + "/preview/page/" + m[2];
+        m = url.pathname.match(/^\/campaigns\/([^/]+)\/world$/);
+        if (m && url.hash.startsWith("#place-")) return "/campaigns/" + m[1] + "/preview/place/" + url.hash.slice(7);
+        return null;
+    }
+
+    function load(src) {
+        const hit = cache.get(src);
+        if (hit && Date.now() - hit.at < KEEP) return hit.data;
+        const data = fetch(src, { credentials: "same-origin", headers: { Accept: "application/json" } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .catch(function () { return null; });
+        cache.set(src, { at: Date.now(), data: data });
+        return data;
+    }
+
+    function hide() {
+        clearTimeout(timer);
+        if (current) current.removeAttribute("aria-describedby");
+        current = null;
+        if (card) card.hidden = true;
+    }
+
+    function place(link) {
+        const r = link.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+        card.style.left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8) + "px";
+        card.style.top = (r.bottom + 6 + h > window.innerHeight - 8 && r.top - h - 6 > 8 ? r.top - h - 6 : r.bottom + 6) + "px";
+    }
+
+    function show(link, p) {
+        if (!card) {
+            card = document.createElement("div");
+            card.id = "hover-card";
+            card.className = "hover-card";
+            card.setAttribute("role", "tooltip");
+            card.dataset.testid = "hover-card";
+            document.body.appendChild(card);
+        }
+        const parts = [];
+        if (p.image) {
+            const img = document.createElement("img");
+            img.src = p.image; img.alt = ""; img.className = "hover-card-img";
+            parts.push(img);
+        }
+        const body = document.createElement("div");
+        body.className = "hover-card-body";
+        const title = document.createElement("strong");
+        title.className = "hover-card-title"; title.textContent = p.title;
+        const sub = document.createElement("span");
+        sub.className = "hover-card-sub"; sub.textContent = p.sub;
+        body.append(title, sub);
+        if (p.text) {
+            const text = document.createElement("p");
+            text.className = "hover-card-text"; text.textContent = p.text;
+            body.append(text);
+        }
+        parts.push(body);
+        card.replaceChildren.apply(card, parts);
+        card.dir = "auto";
+        card.hidden = false;
+        link.setAttribute("aria-describedby", "hover-card");
+        place(link);
+    }
+
+    function start(link) {
+        if (link === current) return;
+        hide();
+        const src = target(link);
+        if (!src) return;
+        current = link;
+        timer = setTimeout(function () {
+            load(src).then(function (p) { if (p && current === link && link.isConnected) show(link, p); });
+        }, SHOW_AFTER);
+    }
+
+    const SELECTOR = "a.mention, a.wiki-link:not(.wiki-missing)";
+    document.addEventListener("mouseover", function (e) {
+        const link = e.target instanceof Element ? e.target.closest(SELECTOR) : null;
+        if (link) start(link);
+    });
+    document.addEventListener("mouseout", function (e) {
+        if (!current) return;
+        const to = e.relatedTarget instanceof Element ? e.relatedTarget.closest(SELECTOR) : null;
+        if (to !== current) hide();
+    });
+    document.addEventListener("focusin", function (e) {
+        const link = e.target instanceof Element ? e.target.closest(SELECTOR) : null;
+        if (link) start(link); else hide();
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
+    window.addEventListener("scroll", hide, { passive: true, capture: true });
+    document.addEventListener("click", hide, true);
 })();

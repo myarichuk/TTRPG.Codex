@@ -55,7 +55,7 @@
                             </div>
                             <div class="mb-2">
                                 <label for="edit-details-@fact.Id" class="field-label">@L["Campaign.Lore.Details"]</label>
-                                <textarea id="edit-details-@fact.Id" class="field-input" rows="4" @bind="editDetails" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="edit-details-hint-@fact.Id" data-testid="fact-edit-details"></textarea>
+                                <textarea id="edit-details-@fact.Id" class="field-input" rows="4" @bind="editDetails" @bind:event="oninput" data-mentions="@mentionsJson" data-pages="@pagesJson" aria-describedby="edit-details-hint-@fact.Id" data-testid="fact-edit-details"></textarea>
                                 <p id="edit-details-hint-@fact.Id" class="field-hint">@L["Campaign.Lore.DetailsHint"]</p>
                             </div>
                             <div class="mb-2">
@@ -67,7 +67,7 @@
                                 </select>
                             </div>
                             <div class="d-flex gap-2 flex-wrap">
-                                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="fact-edit-save">@L["Campaign.Lore.SaveFact"]</CodexButton>
+                                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="fact-edit-save" data-save-shortcut="">@L["Campaign.Lore.SaveFact"]</CodexButton>
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editingId = null">@L["Common.Cancel"]</CodexButton>
                             </div>
                         </form>
@@ -195,7 +195,7 @@
                     </div>
                     <div class="mb-2">
                         <label for="fact-details" class="field-label">@L["Campaign.Lore.Details"]</label>
-                        <textarea id="fact-details" class="field-input" rows="3" @bind="newDetails" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="fact-details-hint" data-testid="new-fact-details"></textarea>
+                        <textarea id="fact-details" class="field-input" rows="3" @bind="newDetails" @bind:event="oninput" data-mentions="@mentionsJson" data-pages="@pagesJson" aria-describedby="fact-details-hint" data-testid="new-fact-details"></textarea>
                         <p id="fact-details-hint" class="field-hint">@L["Campaign.Lore.DetailsHint"]</p>
                     </div>
                     <div class="mb-3">
@@ -221,6 +221,7 @@
     private ConfirmDialog confirm = null!;
     private List<FactDocument>? facts;
     private List<WikiPageDocument> pages = new();
+    private string? pagesJson;
     private MentionDirectory mentions = MentionDirectory.Empty;
     private string mentionsJson = "[]";
     private string search = string.Empty;
@@ -259,6 +260,7 @@
     {
         facts = (await FactRepo.GetVisibleForCampaignAsync(Ctx.Access, Ctx.OwnedActorIds)).OrderBy(f => f.Summary, StringComparer.CurrentCultureIgnoreCase).ToList();
         pages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
+        pagesJson = Ctx.IsDm ? PageSuggestions.Json(pages, kind => L[$"Campaign.Wiki.Kind.{kind}"]) : null;
         mentions = await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
         mentionsJson = Ctx.IsDm ? MentionLinks.Json(mentions, Ctx.Actors) : "[]";
         var firstActor = PlayerCharacters.Concat(OtherActors).FirstOrDefault()?.Id ?? string.Empty;

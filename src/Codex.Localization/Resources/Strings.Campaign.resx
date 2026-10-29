@@ -335,14 +335,14 @@
   <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>faction, city, legend…</value></data>
   <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>Text</value></data>
   <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>Write the page. Link to other pages with [[Page title]]; a link to a page that doesn't exist yet becomes a “create it” link.</value></data>
-  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Link with `[[Page title]]` or `[[Page title|shown as]]`. `**bold**`, `*italic*`, "- " bullets, "### headings" and | tables | are rendered.</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Link with `[[Page title]]` (type `[[` to pick a page) or `[[Page title|shown as]]`. `**bold**`, `*italic*`, "- " bullets, "### headings" and | tables | are rendered.</value></data>
   <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>Save page</value></data>
   <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>Writing…</value></data>
   <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>Expand with AI</value></data>
   <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>Delete page</value></data>
   <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>Link to a page</value></data>
-  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Click to append a link to the text.</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Puts a link where the cursor is. In the text, typing [[ offers the pages too.</value></data>
   <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>No other pages yet. Write `[[A new page]]` and it becomes a create link.</value></data>
   <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>AI instruction</value></data>
   <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>Instruction for the AI</value></data>
@@ -603,4 +603,22 @@
   <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>The players’ version is on the page. Players read it now; the secret stays hidden.</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>The players’ version is on the page. Players will read it once you share the page.</value></data>
   <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>Edit players’ version</value></data>
+  <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>Sort pages</value></data>
+  <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>A–Z</value></data>
+  <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>Recently updated</value></data>
+  <data name="Campaign.Wiki.FilterByKind" xml:space="preserve"><value>Filter by kind</value></data>
+  <data name="Campaign.Wiki.AllKinds" xml:space="preserve"><value>All kinds</value></data>
+  <data name="Campaign.Setup.Title" xml:space="preserve"><value>Getting started</value></data>
+  <data name="Campaign.Setup.Dismiss" xml:space="preserve"><value>Hide this list</value></data>
+  <data name="Campaign.Setup.Progress" xml:space="preserve"><value>{0} of {1} done</value></data>
+  <data name="Campaign.Setup.Done" xml:space="preserve"><value>Done:</value></data>
+  <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>To do:</value></data>
+  <data name="Campaign.Setup.Describe" xml:space="preserve"><value>Describe the campaign for your players</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Invite your players with the link</value></data>
+  <data name="Campaign.Setup.Cast" xml:space="preserve"><value>Add a first character to the cast</value></data>
+  <data name="Campaign.Setup.Page" xml:space="preserve"><value>Write a first wiki page</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Put a first place on the map</value></data>
+  <data name="Campaign.Setup.Session" xml:space="preserve"><value>Plan the first session</value></data>
+  <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Recently updated pages</value></data>
+  <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Open the wiki</value></data>
 </root>

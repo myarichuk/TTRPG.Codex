@@ -335,14 +335,14 @@
   <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>фракция, город, легенда…</value></data>
   <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>Текст</value></data>
   <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>Напишите страницу. Ссылайтесь на другие страницы так: [[Название страницы]]; ссылка на ещё не существующую страницу превращается в ссылку «создать».</value></data>
-  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Ссылка: `[[Название страницы]]` или `[[Название страницы|что показать]]`. Поддерживаются `**жирный**`, `*курсив*`, маркеры «- », «### заголовки» и | таблицы |.</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Ссылка: `[[Название страницы]]` (наберите `[[`, чтобы выбрать страницу) или `[[Название страницы|что показать]]`. Поддерживаются `**жирный**`, `*курсив*`, маркеры «- », «### заголовки» и | таблицы |.</value></data>
   <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>Сохранить страницу</value></data>
   <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>Пишу…</value></data>
   <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>Расширить с помощью ИИ</value></data>
   <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>Удалить страницу</value></data>
   <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>Ссылка на страницу</value></data>
-  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Нажмите, чтобы добавить ссылку в текст.</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Вставляет ссылку туда, где стоит курсор. В тексте страницы предлагаются и после [[.</value></data>
   <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>Других страниц пока нет. Напишите `[[Новая страница]]`, и появится ссылка для создания.</value></data>
   <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>Указание для ИИ</value></data>
   <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>Указание для ИИ</value></data>
@@ -603,4 +603,22 @@
   <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>Версия для игроков добавлена. Игроки уже её видят, а секрет остаётся скрытым.</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>Версия для игроков добавлена. Игроки прочтут её, когда вы поделитесь страницей.</value></data>
   <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>Изменить версию для игроков</value></data>
+  <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>Порядок страниц</value></data>
+  <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>По алфавиту</value></data>
+  <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>Недавно изменённые</value></data>
+  <data name="Campaign.Wiki.FilterByKind" xml:space="preserve"><value>Фильтр по типу</value></data>
+  <data name="Campaign.Wiki.AllKinds" xml:space="preserve"><value>Все типы</value></data>
+  <data name="Campaign.Setup.Title" xml:space="preserve"><value>С чего начать</value></data>
+  <data name="Campaign.Setup.Dismiss" xml:space="preserve"><value>Скрыть этот список</value></data>
+  <data name="Campaign.Setup.Progress" xml:space="preserve"><value>Сделано {0} из {1}</value></data>
+  <data name="Campaign.Setup.Done" xml:space="preserve"><value>Сделано:</value></data>
+  <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>Сделать:</value></data>
+  <data name="Campaign.Setup.Describe" xml:space="preserve"><value>Опишите кампанию для игроков</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Пригласите игроков по ссылке</value></data>
+  <data name="Campaign.Setup.Cast" xml:space="preserve"><value>Добавьте первого персонажа в состав</value></data>
+  <data name="Campaign.Setup.Page" xml:space="preserve"><value>Напишите первую страницу вики</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Отметьте первое место на карте</value></data>
+  <data name="Campaign.Setup.Session" xml:space="preserve"><value>Запланируйте первую сессию</value></data>
+  <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Недавно изменённые страницы</value></data>
+  <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Открыть вики</value></data>
 </root>

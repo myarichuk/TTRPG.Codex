@@ -63,7 +63,7 @@
         <div class="md-write">
             <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@initial" @oninput="OnInput"
                       readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-md-secrets="@(Secrets ? "" : null)" data-testid="@TestId"
-                      data-templates="@templatesJson" data-template-hint="@(Templates != null ? L["Common.Editor.TemplateHint"] : null)"></textarea>
+                      data-templates="@templatesJson" data-pages="@pagesJson" data-template-hint="@(Templates != null ? L["Common.Editor.TemplateHint"] : null)"></textarea>
             @if (Busy)
             {
                 <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
@@ -119,6 +119,10 @@
     /// the toolbar, puts it in, and Tab steps through its fields. Null for a box that takes none.</summary>
     [Parameter] public IReadOnlyList<TextTemplate>? Templates { get; set; }
 
+    /// <summary>The wiki pages the box offers after "[[" (picking one writes <c>[[Title]]</c>); null for a box whose text
+    /// does not link to pages.</summary>
+    [Parameter] public IReadOnlyCollection<WikiPageDocument>? Pages { get; set; }
+
     /// <summary>Where the templates are edited; the template menu links to it.</summary>
     [Parameter] public string? TemplatesHref { get; set; }
 
@@ -147,6 +151,8 @@
     private IReadOnlyList<TextTemplate> inUse = Array.Empty<TextTemplate>();
     private IReadOnlyList<TextTemplate>? templatesSource;
     private string? templatesJson;
+    private IReadOnlyCollection<WikiPageDocument>? pagesSource;
+    private string? pagesJson;
 
     protected override void OnInitialized()
     {
@@ -180,6 +186,12 @@
             templatesJson = Templates == null
                 ? null
                 : System.Text.Json.JsonSerializer.Serialize(inUse.Select(t => new { a = t.Abbreviation, n = t.Name, b = t.Body }));
+        }
+
+        if (!ReferenceEquals(Pages, pagesSource))
+        {
+            pagesSource = Pages;
+            pagesJson = Pages == null ? null : PageSuggestions.Json(Pages, kind => L[$"Campaign.Wiki.Kind.{kind}"]);
         }
 
         if (Busy) showPreview = false;

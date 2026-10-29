@@ -29,6 +29,7 @@
 @inject NavigationManager Nav
 @inject IUserRepository UserRepo
 @inject IWikiRepository WikiRepo
+@inject ITemplateRepository TemplateRepo
 @implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
@@ -138,7 +139,7 @@ else
                 <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> @L["Actor.Sheet.BackToCast"]</a>
                 @if (CanEdit)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">@L["Actor.Sheet.SaveChanges"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Actor.Sheet.SaveChanges"]</CodexButton>
                 }
             </div>
         </div>
@@ -625,6 +626,7 @@ else
                     <label for="actor-bio" class="visually-hidden">@L["Actor.Sheet.History"]</label>
                     <MarkdownEditor Id="actor-bio" Title="@L["Actor.Sheet.History"]" Rows="10" Placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind-Value="editBiography"
                                     Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography" Secrets="@access.IsDm"
+                                    Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -708,6 +710,7 @@ else
                     <label for="actor-dm-notes" class="visually-hidden">@L["Actor.Sheet.DmNotes"]</label>
                     <MarkdownEditor Id="actor-dm-notes" Title="@L["Actor.Sheet.DmNotes"]" Rows="8" Placeholder="@L["Actor.Sheet.DmNotesPlaceholder"]" @bind-Value="editDmNotes"
                                     Mentions="@mentionsJson" Preview="PreviewMentions" TestId="sheet-dm-notes"
+                                    Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "dm")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -934,6 +937,7 @@ else
     private int MentionCount => mentionedIn.Count + writtenIn.Count;
     private MentionDirectory noteMentions = MentionDirectory.Empty;
     // What the history and DM notes boxes suggest after @, # or $.
+    private IReadOnlyList<TextTemplate>? templates;
     private string mentionsJson = "[]";
     private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
 
@@ -1175,6 +1179,8 @@ else
                 noteMentions = mentions;
                 noteActors = visibleActors.ToDictionary(a => a.Id);
                 mentionsJson = CanEdit ? MentionLinks.Json(mentions, visibleActors) : "[]";
+                // The DM's templates (a template can hold the DM's secrets, so a player's boxes get none).
+                templates = access.IsDm ? await TemplateRepo.GetAsync(access, L) : null;
                 editBiography = mentions.ForEditing(actor.Biography ?? "");
                 editDmNotes = mentions.ForEditing(actor.DmNotes ?? "");
                 editPublicDescription = mentions.ForEditing(actor.PublicDescription ?? "");

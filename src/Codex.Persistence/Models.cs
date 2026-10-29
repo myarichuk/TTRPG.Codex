@@ -82,6 +82,10 @@ public class CampaignDocument
     public Dictionary<string, int> PackArt { get; set; } = new();
 
     public Dictionary<string, object> WorldState { get; set; } = new();
+
+    /// <summary>The DM put away the overview's getting-started checklist.</summary>
+    public bool SetupDismissed { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

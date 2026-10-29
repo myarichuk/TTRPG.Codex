@@ -429,6 +429,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 });
 
 Codex.Web.MediaEndpoints.MapMedia(app);
+Codex.Web.PreviewEndpoints.MapPreviews(app);
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 

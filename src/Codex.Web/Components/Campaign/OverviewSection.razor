@@ -3,6 +3,9 @@
 @inject IUserRepository UserRepo
 @inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
+@inject ICampaignRepository CampaignRepo
+@inject IWikiRepository WikiRepo
+@inject IRegionRepository RegionRepo
 @inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
 @inject IConfiguration Config
@@ -10,6 +13,27 @@
 
 <div class="row g-3">
     <div class="col-lg-8">
+        @if (setup is { } steps)
+        {
+            <section class="panel setup-panel" aria-labelledby="setup-heading" data-testid="setup-checklist">
+                <div class="panel-title">
+                    <h2 id="setup-heading">@L["Campaign.Setup.Title"]</h2>
+                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Campaign.Setup.Dismiss"]" title="@L["Campaign.Setup.Dismiss"]" OnClick="DismissSetupAsync" data-testid="setup-dismiss" />
+                </div>
+                <p class="small-muted mb-2">@L["Campaign.Setup.Progress", steps.Count(s => s.Done), steps.Count]</p>
+                <ol class="setup-steps">
+                    @foreach (var step in steps)
+                    {
+                        <li class="@(step.Done ? "setup-done" : null)" data-testid="@($"setup-{step.Key}")" data-done="@(step.Done ? "true" : "false")">
+                            <LucideIcon IconName="@(step.Done ? "circle-check" : "circle")" Size="18" Class="setup-mark" />
+                            <span class="visually-hidden">@(step.Done ? L["Campaign.Setup.Done"] : L["Campaign.Setup.ToDo"])</span>
+                            <a href="@step.Href">@L[$"Campaign.Setup.{step.Key}"]</a>
+                        </li>
+                    }
+                </ol>
+            </section>
+        }
+
         <section class="panel" aria-labelledby="about-heading">
             <div class="panel-title">
                 <h2 id="about-heading">@L["Campaign.Overview.About"]</h2>
@@ -61,6 +85,28 @@
                 </ul>
             }
         </section>
+
+        @if (recent.Count > 0)
+        {
+            <section class="panel" aria-labelledby="recent-heading" data-testid="overview-recent">
+                <div class="panel-title">
+                    <h2 id="recent-heading">@L["Campaign.Overview.RecentPages"]</h2>
+                    <a href="@Ctx.BasePath/wiki" class="cx-btn cx-etched cx-sm">@L["Campaign.Overview.OpenWiki"]</a>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    @foreach (var wp in recent)
+                    {
+                        <li class="list-row">
+                            <div class="row-main">
+                                <div class="row-title"><a class="wiki-link" href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></div>
+                                <div class="row-sub">@L[$"Campaign.Wiki.Kind.{wp.Kind}"]</div>
+                            </div>
+                            <span class="small-muted"><LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
     </div>
 
     <div class="col-lg-4">
@@ -115,13 +161,44 @@
 
     private Dictionary<string, string> usernames = new();
     private SessionDocument? latestSession;
+    private List<WikiPageDocument> recent = new();
+    // The DM's first steps in a new campaign, while some are left and the list is not put away.
+    private List<SetupStep>? setup;
+
+    private sealed record SetupStep(string Key, bool Done, string Href);
 
     private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
     protected override async Task OnParametersSetAsync()
     {
         usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
-        latestSession = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).FirstOrDefault();
+        var sessions = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).ToList();
+        latestSession = sessions.OrderByDescending(s => s.Date).FirstOrDefault();
+        var pages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
+        recent = pages.OrderByDescending(p => p.UpdatedAt).Take(5).ToList();
+        setup = null;
+        if (Ctx.IsDm && !Ctx.Campaign.SetupDismissed)
+        {
+            var regions = await RegionRepo.GetVisibleForCampaignAsync(Ctx.Access);
+            var steps = new List<SetupStep>
+            {
+                new("Describe", !string.IsNullOrWhiteSpace(Ctx.Campaign.Description) || !string.IsNullOrWhiteSpace(Ctx.Campaign.Tagline), $"{Ctx.BasePath}/settings"),
+                new("Invite", Ctx.Campaign.Members.Any(m => m.Role != CampaignRole.DM), $"{Ctx.BasePath}#invite-link"),
+                new("Cast", Ctx.Actors.Any(a => a.Kind != ActorKind.PlayerCharacter), $"{Ctx.BasePath}/cast"),
+                new("Page", pages.Count > 0, $"{Ctx.BasePath}/wiki/new"),
+                new("Place", regions.Any(r => r.Locations.Count > 0), $"{Ctx.BasePath}/world"),
+                new("Session", sessions.Count > 0, $"{Ctx.BasePath}/sessions")
+            };
+            if (steps.Any(s => !s.Done)) setup = steps;
+        }
+    }
+
+    private async Task DismissSetupAsync()
+    {
+        if (!Ctx.IsDm) return;
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, c => c.SetupDismissed = true);
+        Ctx.Campaign.SetupDismissed = true;
+        setup = null;
     }
 
     private string KindLabel(ActorKind kind) => kind switch

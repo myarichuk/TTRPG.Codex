@@ -80,7 +80,7 @@ else
                         </div>
                     </div>
                     <label for="template-body" class="field-label">@L["Campaign.Templates.Field.Body"]</label>
-                    <MarkdownEditor @key="editorKey" Id="template-body" Title="@(draft.Name.Length > 0 ? draft.Name : L["Campaign.Templates.Field.Body"])" Rows="14" Class="wiki-editor"
+                    <MarkdownEditor @key="editorKey" Id="template-body" Title="@(draft.Name.Length > 0 ? draft.Name : L["Campaign.Templates.Field.Body"])" Rows="14" Class="code-editor"
                                     @bind-Value="draft.Body" DescribedBy="template-body-hint" TestId="template-body" Secrets="true"
                                     Preview="@(text => SecretRender.Html(LiveTemplate.Sample(text), TextFormatting.ToHtml, DmView.From(L)))">
                         <div id="template-body-hint" class="field-hint mb-3">
@@ -88,8 +88,8 @@ else
                             <span class="d-block mt-1" data-testid="template-fields">@(LiveTemplate.FieldNames(draft.Body) is { Count: > 0 } names ? L["Campaign.Templates.Fields", string.Join(", ", names)] : L["Campaign.Templates.NoFields"])</span>
                         </div>
                     </MarkdownEditor>
-                    <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="template-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Templates.Save"]</CodexButton>
+                    <SaveBar Dirty="IsDirty()" TestId="template-save-bar">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="template-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Templates.Save"]</CodexButton>
                         @if (selected is { IsBuiltIn: true } builtIn)
                         {
                             @if (builtIn.Hidden)
@@ -109,7 +109,7 @@ else
                         {
                             <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync" data-testid="template-delete">@L["Campaign.Templates.Delete"]</CodexButton>
                         }
-                    </div>
+                    </SaveBar>
                 </form>
             </section>
             <section class="panel" aria-labelledby="template-try">

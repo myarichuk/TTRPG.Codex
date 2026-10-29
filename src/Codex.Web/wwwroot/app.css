@@ -651,6 +651,8 @@ hr { border-color: var(--border); opacity: 1; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 1rem; }
 .search { position: relative; }
 .toolbar .search { flex: 1; min-width: 220px; }
+.wiki-sort .field-select { width: auto; }
+.chip-count { font-size: 0.78em; color: var(--text-3); font-variant-numeric: tabular-nums; }
 .search input { padding-inline-start: 2.4rem; }
 .search .search-icon { position: absolute; inset-inline-start: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; transition: color var(--transition); }
 .search:focus-within .search-icon { color: var(--accent); }
@@ -1105,7 +1107,9 @@ a.user-chip:active { transform: scale(0.97); }
 .wiki-body { font-size: 1.02rem; line-height: 1.65; }
 .wiki-body h3 { font-size: 1.15rem; margin-top: 1.4rem; }
 .wiki-body h4 { font-size: 1rem; margin-top: 1.1rem; }
-.wiki-textarea, .wiki-editor .md-input { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92rem; line-height: 1.55; }
+/* Prose is written in the face it is read in; a template's ${fields} and markers line up better in monospace. */
+.wiki-editor .md-input { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.6; }
+.code-editor .md-input { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92rem; line-height: 1.55; }
 .wiki-card .card-head h3 { margin: 0; font-size: 1.05rem; }
 .wiki-card .card-head h3 a { color: var(--text); text-decoration: none; }
 .wiki-card .card-head h3 a::after { content: ""; position: absolute; inset: 0; }
@@ -2223,3 +2227,38 @@ dialog.wb-raw-dialog { width: min(880px, 96vw); }
 .wb-links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .wb-links li { display: inline-flex; align-items: baseline; gap: 0.35rem; }
 .wb-links a { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* The row under an editor with its Save (SaveBar.razor): it sticks to the bottom of the screen while the editor is in view. */
+.save-bar {
+    position: sticky; bottom: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+    margin-inline: -0.5rem; padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid transparent;
+}
+.save-bar-dirty { border-top-color: var(--border-strong); box-shadow: 0 -6px 14px rgba(0, 0, 0, 0.18); }
+.save-bar-note { font-size: 0.9rem; }
+/* The note sits with Save; a button pushed to the far end (Delete) stays last. */
+.save-bar > .ms-auto { order: 1; }
+@media (max-width: 640px) {
+    .save-bar > .cx-btn { flex: 1 1 auto; }
+    .save-bar-note { flex-basis: 100%; order: -1; }
+}
+
+/* The card shown on hovering a mention or a [[link]] (app-startup.js). */
+.hover-card {
+    position: fixed; z-index: 1100; display: flex; gap: 0.7rem; width: min(22rem, calc(100vw - 16px)); padding: 0.7rem 0.8rem;
+    background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); pointer-events: none;
+}
+.hover-card[hidden] { display: none; }
+.hover-card-img { flex: 0 0 4.5rem; width: 4.5rem; height: 4.5rem; object-fit: cover; border-radius: var(--radius-sm, 6px); border: 1px solid var(--border); }
+.hover-card-body { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.hover-card-title { font-family: var(--font-display); font-weight: 600; overflow-wrap: anywhere; }
+.hover-card-sub { font-size: 0.8rem; color: var(--text-3); }
+.hover-card-text { margin: 0.3rem 0 0; font-size: 0.88rem; line-height: 1.45; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* The DM's getting-started checklist on the overview. */
+.setup-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.setup-steps li { display: flex; align-items: center; gap: 0.5rem; }
+.setup-steps .setup-mark { color: var(--text-3); flex: 0 0 auto; }
+.setup-steps .setup-done .setup-mark { color: var(--success, #6fbf73); }
+.setup-steps .setup-done a { color: var(--text-3); text-decoration: line-through; }
