@@ -42,4 +42,17 @@
   <data name="Common.Editor.FullScreen" xml:space="preserve"><value>Во весь экран</value></data>
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Выйти из полноэкранного режима (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>Пока нечего показать.</value></data>
+  <data name="Common.Editor.Secret" xml:space="preserve"><value>Блок только для мастера (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Some" xml:space="preserve"><value>Открыто: {0}</value></data>
+  <data name="Common.Secret.NoOne" xml:space="preserve"><value>Не открыто никому</value></data>
+  <data name="Common.Secret.Reveal" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Common.Secret.Hide" xml:space="preserve"><value>Снова скрыть</value></data>
+  <data name="Common.Secret.Dm" xml:space="preserve"><value>Только мастер</value></data>
+  <data name="Common.Secret.Party" xml:space="preserve"><value>Открыто группе</value></data>
+  <data name="Common.Secret.Players" xml:space="preserve"><value>Что знают игроки</value></data>
+  <data name="Common.Editor.Templates" xml:space="preserve"><value>Вставить шаблон (или наберите его сокращение и Tab, или /)</value></data>
+  <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>Изменить шаблоны…</value></data>
+  <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} из {2} · Tab: дальше · Shift+Tab: назад · Esc: готово</value></data>
+  <data name="Common.Unsaved.Note" xml:space="preserve"><value>Не сохранено</value></data>
+  <data name="Common.SaveShortcut" xml:space="preserve"><value>Сохранить (Ctrl+S)</value></data>
 </root>

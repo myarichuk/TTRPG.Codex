@@ -271,7 +271,6 @@
   <data name="Actor.Sheet.VisUnknown" xml:space="preserve"><value>נראה אך לא מזוהה</value></data>
   <data name="Actor.Sheet.VisKnown" xml:space="preserve"><value>ידוע</value></data>
   <data name="Actor.Sheet.ShownAs" xml:space="preserve"><value>מוצג לשחקנים כ</value></data>
-  <data name="Actor.Sheet.PublicNamePh" xml:space="preserve"><value>לדוגמה: זר עטוי ברדס</value></data>
   <data name="Actor.Sheet.Kind" xml:space="preserve"><value>סוג</value></data>
   <data name="Actor.Sheet.KindPc" xml:space="preserve"><value>דמות שחקן</value></data>
   <data name="Actor.Sheet.KindNpc" xml:space="preserve"><value>דמות לא-שחקנית (NPC)</value></data>
@@ -310,7 +309,7 @@
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>תוכנית לדרגה {0}:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>נוסף לשדה ההערות. שמרו שינויים כדי לשמור זאת.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>ויקי: {0}</value></data>
-  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>אחרי השמירה השחקנים יוכלו לקרוא את ההיסטוריה של הדמות. כדאי לבדוק קודם שאין בה סודות.</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>אחרי השמירה השחקנים יוכלו לקרוא את ההיסטוריה של הדמות, מלבד הבלוקים של שליט המבוך. כדאי לבדוק קודם שאין סודות בשאר.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" אינו בספרייה.</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} – {2}</value></data>
@@ -338,4 +337,11 @@
   <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>ללא שריון</value></data>
   <data name="Actor.Ac.Defense" xml:space="preserve"><value>הגנת {0}</value></data>
   <data name="Actor.Ac.Other" xml:space="preserve"><value>בונוסים אחרים</value></data>
+  <data name="Actor.Stranger" xml:space="preserve"><value>דמות זרה</value></data>
+  <data name="Actor.Stranger.NotIdentified" xml:space="preserve"><value>זהות לא ידועה</value></data>
+  <data name="Actor.Stranger.NothingYet" xml:space="preserve"><value>החבורה עדיין לא יודעת עליהם יותר מזה.</value></data>
+  <data name="Actor.Sheet.UnknownHint" xml:space="preserve"><value>השחקנים רואים דמות זרה: רק את השם והתיאור שלמטה, לעולם לא את השם האמיתי, ההיסטוריה, הדיוקן או דף הדמות.</value></data>
+  <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>מה החבורה רואה</value></data>
+  <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>דמות עטויה בברדס שמשלמת בכסף ישן ולעולם לא מוסרת שם.</value></data>
+  <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>נחשף לכם</value></data>
 </root>

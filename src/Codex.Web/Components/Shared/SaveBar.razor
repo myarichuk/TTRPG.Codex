@@ -1,0 +1,18 @@
+@* The row under an editor with its Save button. It sticks to the bottom of the screen while the editor is in view, so Save
+   is under the thumb on a phone however long the text, and says when there is something to save. Its Save button carries
+   data-save-shortcut, which Ctrl+S (Cmd+S) presses (app-startup.js). *@
+<div class="save-bar @(Dirty ? "save-bar-dirty" : null) @Class" data-testid="@TestId">
+    @ChildContent
+    @if (Dirty)
+    {
+        <span class="dirty-note save-bar-note" role="status" data-testid="@($"{TestId}-dirty")">@L["Common.Unsaved.Note"]</span>
+    }
+</div>
+
+@code {
+    /// <summary>There are changes not saved yet.</summary>
+    [Parameter] public bool Dirty { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string TestId { get; set; } = "save-bar";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

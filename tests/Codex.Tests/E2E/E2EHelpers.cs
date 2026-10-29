@@ -69,6 +69,15 @@ public static class E2EHelpers
         await field.PressAsync("Tab");
     }
 
+    /// <summary>Presses the sheet's Save and waits for "Saved.", which shows once the actor is stored. The unsaved-changes
+    /// count clears before that (the edits are applied to the page's copy first), so waiting for it races the write. Use on a
+    /// page load's first save: a "Saved." left from an earlier one would pass at once.</summary>
+    public static async Task SaveSheetAsync(IPage page)
+    {
+        await page.GetByTestId("sheet-save").ClickAsync();
+        await Assertions.Expect(page.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+    }
+
     public static Task WaitForInteractiveAsync(IPage page) =>
         page.Locator("[data-interactive]").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
 

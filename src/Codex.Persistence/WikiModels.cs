@@ -77,6 +77,16 @@ public interface IWikiRepository
 
     Task<bool> TryDeleteAsync(string id, CampaignAccess access);
 
+    /// <summary>Reveals block <paramref name="block"/> of a page's body to the party (<see cref="SecretAudience.Party"/>), to the
+    /// characters <paramref name="knowers"/> (<see cref="SecretAudience.Some"/>), or hides it again (<see cref="SecretAudience.Dm"/>);
+    /// see <see cref="SecretText.SetAudience"/>. <paramref name="expectedInner"/> is the block's text as the DM saw it. DM only.</summary>
+    Task<SecretChange> TrySetSecretAsync(string pageId, int block, string expectedInner, SecretAudience to, IReadOnlyList<string>? knowers, CampaignAccess access);
+
+    /// <summary>Puts <paramref name="version"/> beside DM block <paramref name="block"/> as what the players are told
+    /// (a <c>:::players</c> block right after it, replacing the one there); see <see cref="SecretText.SetPlayersVersion"/>.
+    /// <paramref name="expectedInner"/> is the block's text as the DM saw it. DM only.</summary>
+    Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access);
+
     /// <summary>Records that the page's illustration was stored (or removed) and bumps its version. DM only.</summary>
     Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access);
 
@@ -85,6 +95,18 @@ public interface IWikiRepository
 
     Task SaveAsync(WikiPageDocument page);
     Task DeleteAllForCampaignAsync(string campaignId);
+}
+
+/// <summary>How asking to reveal or hide a block of a page went.</summary>
+public enum SecretChange
+{
+    Done,
+
+    /// <summary>The block is not what the DM saw: the page was edited since, or the block is gone. Nothing changed.</summary>
+    Stale,
+
+    /// <summary>Not the DM's, no such page, or a block that cannot be changed that way. Nothing changed.</summary>
+    Refused
 }
 
 public class WikiByCampaignIndex : AbstractIndexCreationTask<WikiPageDocument>
@@ -116,7 +138,35 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             query = query.Where(p => p.Visibility == WikiVisibility.Party);
         }
 
-        return (await query.ToListAsync()).OrderBy(p => p.Title, StringComparer.OrdinalIgnoreCase).ToList();
+        var pages = (await query.ToListAsync()).OrderBy(p => p.Title, StringComparer.OrdinalIgnoreCase).ToList();
+        if (!access.IsDm)
+        {
+            var visible = pages.Select(p => p.Slug).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var owned = await OwnedActors.OfAsync(session, access);
+            foreach (var page in pages)
+            {
+                RedactForPlayer(page, visible, owned);
+            }
+        }
+
+        return pages;
+    }
+
+    // Pages handed to a player with their secret blocks taken out. A page in here is never saved, which would write the
+    // player's copy over the DM's text; only the DM saves, and the DM is never given one, so this only guards the future.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<WikiPageDocument, object> Redacted = new();
+
+    /// <summary>The page as a player owning <paramref name="ownedActorIds"/> reads it: the body without the blocks they may not
+    /// read (revealed blocks keep their markers and time, so the page can show them as new), and links only to what that body
+    /// links to (and, when <paramref name="visibleSlugs"/> is given, only to pages the player may open), so neither the link
+    /// count nor "pages linking here" points at a secret.</summary>
+    private static void RedactForPlayer(WikiPageDocument page, IReadOnlySet<string>? visibleSlugs, IReadOnlySet<string> ownedActorIds)
+    {
+        page.Body = SecretText.ForPlayersMarked(page.Body, ownedActorIds);
+        page.Links = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).Distinct()
+            .Where(slug => visibleSlugs == null || visibleSlugs.Contains(slug))
+            .ToList();
+        Redacted.AddOrUpdate(page, page);
     }
 
     public async Task<WikiPageDocument?> GetVisibleBySlugAsync(string slug, CampaignAccess access)
@@ -130,12 +180,23 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             return null;
         }
 
-        return access.IsDm || page.Visibility == WikiVisibility.Party ? page : null;
+        if (access.IsDm)
+        {
+            return page;
+        }
+
+        if (page.Visibility != WikiVisibility.Party)
+        {
+            return null;
+        }
+
+        RedactForPlayer(page, null, await OwnedActors.OfAsync(session, access));
+        return page;
     }
 
     public async Task<bool> TrySaveAsync(WikiPageDocument page, CampaignAccess access)
     {
-        if (!access.IsDm || string.IsNullOrWhiteSpace(page.Title))
+        if (!access.IsDm || string.IsNullOrWhiteSpace(page.Title) || Redacted.TryGetValue(page, out _))
         {
             return false;
         }
@@ -180,6 +241,81 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
         await session.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<SecretChange> TrySetSecretAsync(string pageId, int block, string expectedInner, SecretAudience to, IReadOnlyList<string>? knowers, CampaignAccess access)
+    {
+        if (!access.IsDm || to is not (SecretAudience.Party or SecretAudience.Some or SecretAudience.Dm))
+        {
+            return SecretChange.Refused;
+        }
+
+        var result = SecretChange.Refused;
+        // Under optimistic concurrency, against a fresh load each attempt: a save of the page in between is either seen here
+        // (and the block checked against it) or makes this go again, so a reveal never writes over an edit.
+        await RavenUpdate.RunAsync<WikiPageDocument>(dbService, pageId, page =>
+        {
+            result = SecretChange.Refused;
+            if (page.CampaignId != access.CampaignId)
+            {
+                return;
+            }
+
+            var found = SecretText.Blocks(page.Body).FirstOrDefault(b => b.Block == block);
+            if (found == null || found.Inner != expectedInner)
+            {
+                result = SecretChange.Stale;
+                return;
+            }
+
+            if (SecretText.SetAudience(page.Body, block, expectedInner, to, knowers, DateTime.UtcNow) is not { } body)
+            {
+                return;
+            }
+
+            page.Body = body;
+            page.Links = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).Distinct().ToList();
+            page.UpdatedAt = DateTime.UtcNow;
+            result = SecretChange.Done;
+        });
+        return result;
+    }
+
+    public async Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access)
+    {
+        if (!access.IsDm || string.IsNullOrWhiteSpace(version))
+        {
+            return SecretChange.Refused;
+        }
+
+        var result = SecretChange.Refused;
+        // As TrySetSecretAsync: against a fresh load each attempt, so the version never lands beside a block edited since.
+        await RavenUpdate.RunAsync<WikiPageDocument>(dbService, pageId, page =>
+        {
+            result = SecretChange.Refused;
+            if (page.CampaignId != access.CampaignId)
+            {
+                return;
+            }
+
+            var found = SecretText.Blocks(page.Body).FirstOrDefault(b => b.Block == block);
+            if (found == null || found.Inner != expectedInner)
+            {
+                result = SecretChange.Stale;
+                return;
+            }
+
+            if (found.Marked != SecretAudience.Dm || SecretText.SetPlayersVersion(page.Body, block, expectedInner, version) is not { } body)
+            {
+                return;
+            }
+
+            page.Body = body;
+            page.Links = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).Distinct().ToList();
+            page.UpdatedAt = DateTime.UtcNow;
+            result = SecretChange.Done;
+        });
+        return result;
     }
 
     private static async Task<string> UniqueSlugAsync(Raven.Client.Documents.Session.IAsyncDocumentSession session, string campaignId, string slug)

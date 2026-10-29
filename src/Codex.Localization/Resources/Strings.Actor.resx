@@ -271,7 +271,6 @@
   <data name="Actor.Sheet.VisUnknown" xml:space="preserve"><value>Seen but not identified</value></data>
   <data name="Actor.Sheet.VisKnown" xml:space="preserve"><value>Known</value></data>
   <data name="Actor.Sheet.ShownAs" xml:space="preserve"><value>Shown to players as</value></data>
-  <data name="Actor.Sheet.PublicNamePh" xml:space="preserve"><value>e.g. Hooded stranger</value></data>
   <data name="Actor.Sheet.Kind" xml:space="preserve"><value>Kind</value></data>
   <data name="Actor.Sheet.KindPc" xml:space="preserve"><value>Player character</value></data>
   <data name="Actor.Sheet.KindNpc" xml:space="preserve"><value>Non-player character</value></data>
@@ -310,7 +309,7 @@
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>Level {0} plan:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Added to the notes field. Save changes to keep it.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Wiki: {0}</value></data>
-  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character's history. Check it for secrets first.</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character’s history, except its DM blocks. Check the rest for secrets first.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
@@ -338,4 +337,11 @@
   <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>Unarmored</value></data>
   <data name="Actor.Ac.Defense" xml:space="preserve"><value>{0} defense</value></data>
   <data name="Actor.Ac.Other" xml:space="preserve"><value>Other bonuses</value></data>
+  <data name="Actor.Stranger" xml:space="preserve"><value>A stranger</value></data>
+  <data name="Actor.Stranger.NotIdentified" xml:space="preserve"><value>Not identified yet</value></data>
+  <data name="Actor.Stranger.NothingYet" xml:space="preserve"><value>The party knows nothing more about them yet.</value></data>
+  <data name="Actor.Sheet.UnknownHint" xml:space="preserve"><value>Players see a stranger: only the name and description below, never the real name, history, portrait or sheet.</value></data>
+  <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>What the party sees</value></data>
+  <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>A hooded figure who pays in old silver and never gives a name.</value></data>
+  <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Revealed to you</value></data>
 </root>

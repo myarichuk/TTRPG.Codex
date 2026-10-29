@@ -33,6 +33,10 @@ Inside a campaign, a side rail holds the sections. On a phone it becomes a strip
 2. Open [[ui:Page.Campaign.Section.Settings]] to add a tagline, a description players will see on the overview, and cover art.
 3. Copy the **invite link** from the Overview (or from Settings) and send it to your players.
 
+Until the campaign is set up, the Overview shows you a [[ui:Campaign.Setup.Title]] list: describe the campaign, invite players, add a character, write a page, put a place on the map and plan a session. Each step ticks itself off when it is done, and the cross puts the list away for good.
+
+![The Overview's Getting started list: the campaign described, the players invited and the cast begun; a page, a place and a session still to do.](shot:setup)
+
 When a player opens the link they sign in or create an account and land in the campaign as a player. A link works for anyone who has it, so if it spreads further than you wanted, press [[ui:Campaign.Settings.NewLink]] in Settings: the old link stops working.
 
 ![The Campaigns page, with a campaign card and a New campaign button.](shot:home)
@@ -52,10 +56,10 @@ Every NPC and monster has a visibility, and this is how you keep secrets:
 | State | What players see |
 | --- | --- |
 | [[ui:Campaign.Cast.HiddenFromPlayers]] | Nothing at all, not even a name. |
-| [[ui:Campaign.Cast.IdentityUnknown]] | Only a public name and description, such as "A figure in a wet cloak". |
+| [[ui:Actor.Sheet.VisLabelUnknown]] | A stranger: only the public name and description you give on the sheet, such as "A figure in a wet cloak". Never the real name, history, portrait or sheet, though the stranger can still be mentioned, speak, and take part in a fight. |
 | [[ui:Actor.Sheet.VisLabelKnown]] | The full character, name and public bio. |
 
-Use [[ui:Campaign.Cast.Reveal]] and [[ui:Campaign.Cast.Hide]] on a row to move a character between states as the story demands.
+Use [[ui:Campaign.Cast.Stranger]], [[ui:Campaign.Cast.Reveal]] and [[ui:Campaign.Cast.Hide]] on a row to move a character between states as the story demands.
 
 ![The cast: player characters on the left, NPCs and monsters on the right, with Reveal and Hide controls.](shot:cast)
 
@@ -67,7 +71,7 @@ Click any character to open their sheet. It is drawn from the game system's defi
 
 ![A character sheet with the stat plate, attribute scores and the level-up panel.](shot:sheet)
 
-Below it, tabs hold the attributes and skills, the picks (feats, spells and so on), the inventory, the history and, for the DM only, private notes about the character. Press [[ui:Actor.Sheet.SaveChanges]] when you are done; a counter next to it shows how many edits are unsaved.
+Below it, tabs hold the attributes and skills, the picks (feats, spells and so on), the inventory, the history and, for the DM only, private notes about the character. Press [[ui:Actor.Sheet.SaveChanges]] when you are done; a counter next to it shows how many edits are unsaved. Ctrl+S (Cmd+S on a Mac) saves too, here and in every other editor; on a phone, Save stays at the bottom of the screen while you write.
 
 **Rule checks.** Point buy, class spell lists, subclass and feat limits come from the system. Under [[ui:Page.Campaign.Section.Settings]] you set **[[ui:Campaign.Settings.Rules.Label]]** to *Strict* (players cannot save a sheet that breaks a rule), *Warn only*, or *Off*. The DM can always enter scores by hand.
 
@@ -87,17 +91,27 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 
 [[ui:Page.Campaign.Section.Wiki]] is a set of pages you write in plain text.
 
-- Link pages by typing a title in double brackets, like `[[The Drowned Chapel]]`. Backlinks list what mentions what.
+![The wiki's page list, with filters by kind, sorting, and a count of the DM-only blocks on a page.](shot:wiki-list)
+
+- Link pages by typing a title in double brackets, like `[[The Drowned Chapel]]`: typing `[[` offers the pages you have, and the page list beside the editor puts a link where the cursor is. Backlinks list what mentions what. Hover over a link or a mention to see a card with the first lines and the picture; it shows only what the reader is allowed to see.
+- The page list filters by kind (person, place, faction, quest) as well as by tag, and sorts by title or by when a page last changed.
 - Mention a character with `@`, a place with `#` and an item with `$`.
 - Every page starts as [[ui:Campaign.Wiki.DmOnly]]. Press [[ui:Campaign.Wiki.SharePage]] to make it readable by the whole party.
+- A shared page can still hide parts of itself. Put a secret between a line `:::dm` and a line `:::` (the eye button in the toolbar, or Ctrl+Shift+H, does it for you): players never receive that text, not even its links. Change `:::dm` to `:::party` when the party learns it, and use `:::players` for what the players are told instead of the truth. The same works in a place's description and a character's history.
+- Press [[ui:Campaign.Wiki.ViewAs.Party]] above a page to read it exactly as the players do.
+- [[ui:Campaign.Wiki.Secrets.PlayersVersion]] beside a secret writes what the players are told instead (drafted by the AI when one is set up): you read and change it, and it goes in as a `:::players` block right after the secret.
+- A block `:::for @Aria` in a character's history is read by Aria's player only, apart from the history they edit.
+- To reveal a secret at the table, press [[ui:Common.Secret.Reveal]] on the block itself, or use [[ui:Campaign.Wiki.Secrets]] beside the page, which lists every secret on it. From there [[ui:Campaign.Wiki.Secrets.RevealTo]] reveals it to chosen characters only (it becomes `:::for @Aria`), and [[ui:Common.Secret.Hide]] takes it back. If a session is running, the log notes that something was revealed on the page (its title, never the secret). Players see what was revealed since they last opened a page marked [[ui:Campaign.Wiki.NewReveal]].
+- **Templates** save typing. In a page (and in a place's description, a character's history and your DM notes), type a template's abbreviation and press Tab (`enc` for an encounter, `npc` for a person in brief, `dmb` for a DM-only block, `dmp` for the truth beside what players are told), or type `/` and pick one. The template goes in and Tab moves from field to field (Shift+Tab goes back, Esc stops); a field used twice fills in both places. A new page can start from the outline of its kind, and a page written earlier gets a button that adds the headings it lacks. Change the built-in templates, turn them off or write your own under [[ui:Campaign.Templates.Title]] (the button at the top of the wiki); the AI writes pages to your outlines too. In a template, `$name$` is a field, `$name:text$` a field with text already in it, and `$END$` where the cursor ends up.
 - Every place already has a wiki page of its own, and a page can be put on the map, or promoted into the cast.
 - Players can leave notes on any page they can read.
 
-![A wiki page about a harbour, with a link to another page, backlinks and a notes panel.](shot:wiki-page)
+![A wiki page as the DM sees it: a DM-only secret with what the players are told instead, and the card a link shows on hover.](shot:wiki-page)
+![Writing a page: typing double brackets offers the other pages, and the bar under the text says the changes are not saved yet.](shot:wiki-edit)
 
 ### Lore {#lore}
 
-[[ui:Page.Campaign.Section.Lore]] is for facts. Each fact is visible to the DM only, revealed to one character who then knows it, or shared with the whole party. Add one with [[ui:Campaign.Lore.AddFact]].
+[[ui:Page.Campaign.Section.Lore]] is for facts. Each fact is visible to the DM only, revealed to one character who then knows it, or shared with the whole party. Add one with [[ui:Campaign.Lore.AddFact]]. Mention @characters and #places in its details, or link a `[[page]]`, and the fact shows on their pages and sheets too; a page or sheet has a button to write one more about it. The DM also finds every secret of the wiki here, with who it is revealed to, and players find what the wiki revealed to them, newest first.
 
 ![The lore page: facts with their visibility.](shot:lore)
 

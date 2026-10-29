@@ -100,25 +100,40 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             SheetChanges: system?.Canonical.Ai.AdvancementChanges), ct);
     }
 
-    /// <summary>Expands or rewrites a wiki page from its current text, the campaign blurb and the titles it links to.</summary>
-    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, string body, IEnumerable<string> relatedTitles, string instruction, AiAudience audience, string userId, CancellationToken ct = default)
+    /// <summary>Writes or expands a wiki page for the DM. <paramref name="context"/> is what the campaign already says about the
+    /// page's subject (the history of the character it is about, the description of its place), which the page must agree with.
+    /// The page may hold secrets, in DM blocks: the DM's is the only audience, and players are given the page without them.</summary>
+    /// <param name="outline">The DM's template for pages of this kind (see <c>LiveTemplate</c>), which the page follows; null for none.</param>
+    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, WikiPageKind kind, string body, IEnumerable<string> relatedTitles, IReadOnlyList<string> context, string instruction, string userId, CancellationToken ct = default,
+        string? outline = null)
     {
         var assistant = await providers.AssistantForAsync(userId);
-        var facts = new List<string> { $"Setting: {catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”" };
-        var related = relatedTitles.Take(30).ToList();
-        if (related.Count > 0)
-        {
-            facts.Add("Related wiki pages (keep their names and link to them with [[Name]]): " + string.Join(", ", related));
-        }
-
-        return await assistant.RewriteAsync(new RewriteRequest(
+        var setting = $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(400) is { Length: > 0 } blurb ? ": " + blurb : "")}";
+        return await assistant.WriteWikiPageAsync(new WikiPageRequest(
             title,
-            "world wiki page",
-            facts,
+            kind == WikiPageKind.General ? "lore" : kind.ToString().ToLowerInvariant(),
             body,
-            string.IsNullOrWhiteSpace(instruction) ? "Expand the current notes into a well-structured wiki page with short headings. Keep [[links]] as written and add [[links]] to the related pages where they fit." : instruction,
-            audience,
-            campaign.Blurb(400) is { Length: > 0 } blurb ? blurb : null,
+            instruction,
+            relatedTitles.Take(30).ToList(),
+            context,
+            setting,
+            Language: Lang,
+            Structure: string.IsNullOrWhiteSpace(outline) ? null : LiveTemplate.Sample(outline)), ct);
+    }
+
+    /// <summary>Drafts the players' version of one of the DM's secrets on a wiki page, for the DM to read before it goes in.
+    /// <paramref name="shown"/> is what players already read on the page.</summary>
+    public async Task<string> PlayersVersionAsync(CampaignDocument campaign, string title, WikiPageKind kind, string secret, string shown, string? current, string instruction, string userId, CancellationToken ct = default)
+    {
+        var assistant = await providers.AssistantForAsync(userId);
+        return await assistant.WritePlayersVersionAsync(new PlayersVersionRequest(
+            title,
+            kind == WikiPageKind.General ? "lore" : kind.ToString().ToLowerInvariant(),
+            secret,
+            shown,
+            current,
+            instruction,
+            $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
             Language: Lang), ct);
     }
 

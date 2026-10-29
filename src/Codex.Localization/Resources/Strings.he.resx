@@ -42,4 +42,17 @@
   <data name="Common.Editor.FullScreen" xml:space="preserve"><value>מסך מלא</value></data>
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>יציאה ממסך מלא (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>אין עדיין מה להציג.</value></data>
+  <data name="Common.Editor.Secret" xml:space="preserve"><value>קטע לשליט המבוך בלבד (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Some" xml:space="preserve"><value>נחשף ל{0}</value></data>
+  <data name="Common.Secret.NoOne" xml:space="preserve"><value>לא נחשף לאף אחד</value></data>
+  <data name="Common.Secret.Reveal" xml:space="preserve"><value>חשיפה</value></data>
+  <data name="Common.Secret.Hide" xml:space="preserve"><value>הסתרה מחדש</value></data>
+  <data name="Common.Secret.Dm" xml:space="preserve"><value>לשליט המבוך בלבד</value></data>
+  <data name="Common.Secret.Party" xml:space="preserve"><value>נחשף לקבוצה</value></data>
+  <data name="Common.Secret.Players" xml:space="preserve"><value>מה שהשחקנים יודעים</value></data>
+  <data name="Common.Editor.Templates" xml:space="preserve"><value>הוספת תבנית (או הקלידו את הקיצור שלה ו-Tab, או /)</value></data>
+  <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>עריכת תבניות…</value></data>
+  <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} מתוך {2} · Tab: הבא · Shift+Tab: הקודם · Esc: סיום</value></data>
+  <data name="Common.Unsaved.Note" xml:space="preserve"><value>עדיין לא נשמר</value></data>
+  <data name="Common.SaveShortcut" xml:space="preserve"><value>שמירה (Ctrl+S)</value></data>
 </root>

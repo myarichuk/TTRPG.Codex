@@ -29,6 +29,7 @@
 @inject NavigationManager Nav
 @inject IUserRepository UserRepo
 @inject IWikiRepository WikiRepo
+@inject ITemplateRepository TemplateRepo
 @implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
@@ -44,6 +45,36 @@ else if (campaign == null || actor == null || access == null)
         <h1 class="h4">@L["Actor.Sheet.NotFound"]</h1>
         <p>@L["Actor.Sheet.NotFoundBody"]</p>
         <a href="/" class="cx-btn cx-plaque">@L["Actor.Sheet.BackToCampaigns"]</a>
+    </div>
+}
+else if (IsStranger)
+{
+    @* Someone the party met but has not identified: the repository hands over a mask (name they go by, what can be seen), nothing of the sheet. *@
+    <div class="stranger-card panel" data-testid="stranger-card">
+        <nav aria-label="@L["Actor.Sheet.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Actor.Sheet.Campaigns"]</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">@L["Actor.Sheet.Cast"]</a></nav>
+        <div class="stranger-head">
+            <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" />
+            <div class="min-w-0">
+                <h1 data-testid="actor-name">@DisplayName</h1>
+                <span class="pill pill-warning"><LucideIcon IconName="help-circle" Size="14" /> @L["Actor.Stranger.NotIdentified"]</span>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(actor.PublicDescription))
+        {
+            <div class="rules-text mb-0" data-testid="stranger-description">@((MarkupString)MentionLinks.ToHtml(actor.PublicDescription, noteMentions, CampaignId))</div>
+        }
+        else
+        {
+            <p class="small-muted mb-0">@L["Actor.Stranger.NothingYet"]</p>
+        }
+        <div class="mt-3">
+            <LoreAbout Access="access" OwnedActorIds="OwnedActorIds" BasePath="@($"/campaigns/{CampaignId}")" TestId="actor-lore" Keys="@(new[] { FactLinks.Actor(actor.Id) })" />
+        </div>
+        @if (mentionedIn.Count > 0 || writtenIn.Count > 0)
+        {
+            <h2 class="h6 mt-3"><LucideIcon IconName="notebook-pen" Size="14" Class="title-icon" /> @L["Actor.Sheet.InNotes"]</h2>
+            <NotesMentioning Lines="mentionedIn" Written="writtenIn" Mentions="noteMentions" Actors="noteActors" IsDm="false" CampaignId="@CampaignId" />
+        }
     </div>
 }
 else
@@ -108,7 +139,7 @@ else
                 <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> @L["Actor.Sheet.BackToCast"]</a>
                 @if (CanEdit)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">@L["Actor.Sheet.SaveChanges"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Actor.Sheet.SaveChanges"]</CodexButton>
                 }
             </div>
         </div>
@@ -594,7 +625,8 @@ else
                 {
                     <label for="actor-bio" class="visually-hidden">@L["Actor.Sheet.History"]</label>
                     <MarkdownEditor Id="actor-bio" Title="@L["Actor.Sheet.History"]" Rows="10" Placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind-Value="editBiography"
-                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography"
+                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography" Secrets="@access.IsDm"
+                                    Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -608,13 +640,23 @@ else
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
-                    <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(actor.Biography, noteMentions, CampaignId))</div>
+                    <div class="rules-text mb-0">@((MarkupString)SecretRender.Html(actor.Biography, text => MentionLinks.ToHtml(text, noteMentions, CampaignId), access.IsDm ? DmView.From(L, noteMentions) : null))</div>
                 }
                 else
                 {
                     <p class="small-muted mb-0">@L["Actor.Sheet.NoHistory"]</p>
                 }
+                @if (!string.IsNullOrWhiteSpace(actor.RevealedToReader))
+                {
+                    @* Revealed by the DM to this player's characters: read here, never in the box above, whose save would make it everyone's. *@
+                    <div class="revealed-to-you mt-3" data-testid="actor-revealed-to-you">
+                        <div class="revealed-to-you-title"><LucideIcon IconName="key-round" Size="14" /> @L["Actor.Sheet.RevealedToYou"]</div>
+                        <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(actor.RevealedToReader, noteMentions, CampaignId))</div>
+                    </div>
+                }
             </section>
+            <LoreAbout Access="access" OwnedActorIds="OwnedActorIds" BasePath="@($"/campaigns/{CampaignId}")" TestId="actor-lore"
+                       Keys="@(new[] { FactLinks.Actor(actor.Id) })" AboutKey="@FactLinks.Actor(actor.Id)" />
 
             }
 
@@ -668,6 +710,7 @@ else
                     <label for="actor-dm-notes" class="visually-hidden">@L["Actor.Sheet.DmNotes"]</label>
                     <MarkdownEditor Id="actor-dm-notes" Title="@L["Actor.Sheet.DmNotes"]" Rows="8" Placeholder="@L["Actor.Sheet.DmNotesPlaceholder"]" @bind-Value="editDmNotes"
                                     Mentions="@mentionsJson" Preview="PreviewMentions" TestId="sheet-dm-notes"
+                                    Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "dm")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -787,15 +830,21 @@ else
                             <option value="@ActorVisibility.Known">@L["Actor.Sheet.VisKnown"]</option>
                         </select>
                     </div>
-                    @if (editVisibility != ActorVisibility.Hidden && actor.Visibility == ActorVisibility.Hidden && !string.IsNullOrWhiteSpace(actor.Biography))
+                    @if (editVisibility == ActorVisibility.Known && actor.Visibility != ActorVisibility.Known && !string.IsNullOrWhiteSpace(actor.Biography))
                     {
                         <p class="field-hint text-warning" role="status" data-testid="actor-reveal-history">@L["Actor.Sheet.RevealHistory"]</p>
                     }
                     @if (editVisibility == ActorVisibility.Unknown)
                     {
+                        <p class="field-hint" data-testid="actor-unknown-hint">@L["Actor.Sheet.UnknownHint"]</p>
                         <div class="mb-2">
                             <label for="actor-public-name" class="field-label">@L["Actor.Sheet.ShownAs"]</label>
-                            <input id="actor-public-name" class="field-input" @bind="editPublicName" placeholder="@L["Actor.Sheet.PublicNamePh"]" />
+                            <input id="actor-public-name" class="field-input" @bind="editPublicName" @bind:event="oninput" placeholder="@L["Actor.Stranger"]" data-testid="actor-public-name" />
+                        </div>
+                        <div class="mb-2">
+                            <label for="actor-public-description" class="field-label">@L["Actor.Sheet.PublicDescription"]</label>
+                            <textarea id="actor-public-description" class="field-input" rows="4" @bind="editPublicDescription" @bind:event="oninput"
+                                      placeholder="@L["Actor.Sheet.PublicDescriptionPh"]" data-mentions="@mentionsJson" data-testid="actor-public-description"></textarea>
                         </div>
                     }
                     <div class="mb-2">
@@ -863,9 +912,11 @@ else
     private readonly AiCall aiCall = new();
 
     /// <summary>The history or notes as a reader will see them: the typed @Names become mentions first.</summary>
-    private string PreviewMentions(string text) => MentionLinks.ToHtml(noteMentions.Encode(text), noteMentions, CampaignId);
+    private string PreviewMentions(string text) =>
+        SecretRender.Html(noteMentions.Encode(text), encoded => MentionLinks.ToHtml(encoded, noteMentions, CampaignId), access?.IsDm == true ? DmView.From(L, noteMentions) : null);
     private ActorVisibility editVisibility;
     private string editPublicName = "";
+    private string editPublicDescription = "";
     private ActorKind editKind;
     private string editOwnerId = "";
     private Dictionary<string, object> editSheet = new();
@@ -886,6 +937,7 @@ else
     private int MentionCount => mentionedIn.Count + writtenIn.Count;
     private MentionDirectory noteMentions = MentionDirectory.Empty;
     // What the history and DM notes boxes suggest after @, # or $.
+    private IReadOnlyList<TextTemplate>? templates;
     private string mentionsJson = "[]";
     private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
 
@@ -944,6 +996,13 @@ else
             // The boxes hold the text as typed (@Name), the stored text holds ids.
             if (editBiography != noteMentions.ForEditing(actor.Biography ?? "")) count++;
             if (editDmNotes != noteMentions.ForEditing(actor.DmNotes ?? "")) count++;
+            if (access?.IsDm == true)
+            {
+                if (editVisibility != actor.Visibility) count++;
+                if (editPublicName != (actor.PublicName ?? "")) count++;
+                if (editPublicDescription != noteMentions.ForEditing(actor.PublicDescription ?? "")) count++;
+            }
+
             foreach (var key in editSheet.Keys.Union(baselineSheet.Keys))
             {
                 editSheet.TryGetValue(key, out var now);
@@ -1032,6 +1091,12 @@ else
 
     private string DisplayName => actor == null ? string.Empty : actor.NameFor(access?.IsDm != false);
 
+    /// <summary>The characters the reader plays: which lore and which revealed blocks reach them.</summary>
+    private IReadOnlySet<string> OwnedActorIds => noteActors.Values.Where(a => a.OwnerUserId == currentUserId).Select(a => a.Id).ToHashSet();
+
+    /// <summary>A player looking at someone the DM keeps unidentified: what they were handed is a mask, not a sheet.</summary>
+    private bool IsStranger => actor != null && access is { IsDm: false } && actor.Visibility == ActorVisibility.Unknown && actor.OwnerUserId != currentUserId;
+
     private string KindLabel => actor?.Kind switch
     {
         ActorKind.PlayerCharacter => L["Actor.Sheet.KindPc"],
@@ -1114,8 +1179,11 @@ else
                 noteMentions = mentions;
                 noteActors = visibleActors.ToDictionary(a => a.Id);
                 mentionsJson = CanEdit ? MentionLinks.Json(mentions, visibleActors) : "[]";
+                // The DM's templates (a template can hold the DM's secrets, so a player's boxes get none).
+                templates = access.IsDm ? await TemplateRepo.GetAsync(access, L) : null;
                 editBiography = mentions.ForEditing(actor.Biography ?? "");
                 editDmNotes = mentions.ForEditing(actor.DmNotes ?? "");
+                editPublicDescription = mentions.ForEditing(actor.PublicDescription ?? "");
             }
         }
 
@@ -1361,6 +1429,7 @@ else
             target.DmNotes = string.IsNullOrWhiteSpace(editDmNotes) ? null : noteMentions.Encode(editDmNotes.Trim());
             target.Visibility = editVisibility;
             target.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
+            target.PublicDescription = string.IsNullOrWhiteSpace(editPublicDescription) ? null : noteMentions.Encode(editPublicDescription.Trim());
             target.Kind = editKind;
             target.OwnerUserId = editKind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(editOwnerId) ? editOwnerId : (editKind == ActorKind.PlayerCharacter ? target.OwnerUserId : null);
         }

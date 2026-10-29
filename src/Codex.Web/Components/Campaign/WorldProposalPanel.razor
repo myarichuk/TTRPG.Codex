@@ -178,14 +178,14 @@
                             @Tags(current.Tags)
                             @if (!string.IsNullOrWhiteSpace(current.Body))
                             {
-                                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)TextFormatting.ToHtml(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false)))</div>
+                                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false), TextFormatting.ToHtml, DmView.From(L)))</div>
                             }
                             break;
                         default:
                             @Tags(current.Tags)
                             @if (!string.IsNullOrWhiteSpace(current.Body))
                             {
-                                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)TextFormatting.ToHtml(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false)))</div>
+                                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false), TextFormatting.ToHtml, DmView.From(L)))</div>
                             }
                             break;
                     }
@@ -490,10 +490,10 @@
         @switch (textView)
         {
             case "new":
-                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)TextFormatting.ToHtml(flatAfter))</div>
+                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(flatAfter, TextFormatting.ToHtml, DmView.From(L)))</div>
                 break;
             case "old":
-                <div class="rules-text wb-reader-body" data-testid="world-proposal-before">@((MarkupString)TextFormatting.ToHtml(before))</div>
+                <div class="rules-text wb-reader-body" data-testid="world-proposal-before">@((MarkupString)SecretRender.Html(before, TextFormatting.ToHtml, DmView.From(L)))</div>
                 break;
             default:
                 <div class="wb-diff" data-testid="world-diff">

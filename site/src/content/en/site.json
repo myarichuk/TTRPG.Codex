@@ -39,10 +39,10 @@
     "items": [
       { "icon": "dices", "title": "A live table", "text": "Initiative, hit points, conditions with round counters, a dice tray and quick notes. Everyone sees changes the moment the DM makes them." },
       { "icon": "scroll", "title": "Character sheets from data", "text": "Sheets are drawn from the game system's own definition, with rule checks you can set to strict, warn or off, and level-up guidance from the Library." },
-      { "icon": "map", "title": "Prep and a world wiki", "text": "Cast with portraits, a bestiary shortlist, regions and places, linked wiki pages, and lore you can reveal to one character or the whole party." },
+      { "icon": "map", "title": "Prep and a world wiki", "text": "Cast with portraits, a bestiary shortlist, regions and places, linked wiki pages with templates for what you write often, and lore you can reveal to one character or the whole party." },
       { "icon": "book-open", "title": "A Library you can extend", "text": "Ships with the Fifth Edition SRD 5.2.1. Write homebrew, clone an entry as a variant, and carry sets of it between campaigns as packs." },
       { "icon": "notebook-pen", "title": "Sessions, recaps and journals", "text": "A player-facing recap and a separate DM summary, table notes (private or shared) and a private journal that not even the DM can read." },
-      { "icon": "eye-off", "title": "Secrets stay secret", "text": "NPCs can be hidden, known by silhouette or revealed. Players only ever receive what they are allowed to see." },
+      { "icon": "eye-off", "title": "Secrets stay secret", "text": "NPCs can be hidden, met as strangers under a name you choose, or revealed. A shared page keeps its secrets, with what the players are told instead. Players only ever receive what they are allowed to see." },
       { "icon": "sparkles", "title": "Optional AI, on your own key", "text": "Draft recaps, histories and characters, or build the world in a chat. Nothing is sent to a model until you click, and nothing is saved until you apply it." },
       { "icon": "library", "title": "Systems are data", "text": "A system is a YAML file plus packs of YAML content: attributes, resources, sheet fields, content types and conditions. Define your own without touching the program." }
     ]
@@ -65,10 +65,10 @@
         "bullets": ["Point buy and standard array, enforced or just flagged", "Level-up help drawn from the Library's class entries", "A DM-only notes tab for secrets about the character"]
       },
       {
-        "shot": "wiki-page", "alt": "A wiki page about a harbour town with a link to another page and a map marker.",
+        "shot": "wiki-page", "alt": "A wiki page about a harbour town, with a secret only the DM sees and a preview card on a link.",
         "title": "A wiki that links itself",
-        "text": "Write pages in plain text and link them with double brackets. Places get a page of their own, and backlinks show what mentions what.",
-        "bullets": ["Pages are DM-only until you share them with the party", "Mention characters, places and items with @, # and $", "Players can leave notes on the pages they can read"]
+        "text": "Write pages in plain text and link them with double brackets: typing [[ offers the pages you have. Hover a link for a preview, and backlinks show what mentions what.",
+        "bullets": ["Secrets inside a shared page, revealed to the party or to one character", "Templates and outlines for encounters, people and places", "Mention characters, places and items with @, # and $"]
       },
       {
         "shot": "library", "alt": "The Library showing a creature entry with filters for classes, spells and equipment.",

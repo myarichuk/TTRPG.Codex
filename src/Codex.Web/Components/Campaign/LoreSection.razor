@@ -1,5 +1,10 @@
+@using Codex.Core
 @using Codex.Persistence
+@using Microsoft.AspNetCore.WebUtilities
 @inject IFactRepository FactRepo
+@inject IWikiRepository WikiRepo
+@inject MentionSources MentionSources
+@inject NavigationManager Nav
 
 <div class="page-header mb-3">
     <div>
@@ -28,61 +33,153 @@
         {
             <LoadingSkeleton />
         }
-        else if (!Filtered.Any())
-        {
-            <div class="empty">
-                <div class="empty-icon"><LucideIcon IconName="book-marked" Size="28" /></div>
-                <h3>@(string.IsNullOrWhiteSpace(search) ? L["Campaign.Lore.Empty.None"] : L["Campaign.Lore.Empty.NoMatch"])</h3>
-                <p>@(Ctx.IsDm ? L["Campaign.Lore.Empty.Dm"] : L["Campaign.Lore.Empty.Player"])</p>
-            </div>
-        }
         else
         {
+            @if (!Filtered.Any() && !WikiFiltered.Any())
+            {
+                <div class="empty">
+                    <div class="empty-icon"><LucideIcon IconName="book-marked" Size="28" /></div>
+                    <h3>@(string.IsNullOrWhiteSpace(search) ? L["Campaign.Lore.Empty.None"] : L["Campaign.Lore.Empty.NoMatch"])</h3>
+                    <p>@(Ctx.IsDm ? L["Campaign.Lore.Empty.Dm"] : L["Campaign.Lore.Empty.Player"])</p>
+                </div>
+            }
             @foreach (var fact in Filtered)
             {
                 <article class="panel" aria-labelledby="fact-@fact.Id" data-testid="fact-card">
-                    <div class="panel-title">
-                        <h3 id="fact-@fact.Id" class="h6">@fact.Summary</h3>
-                        <span class="pill @VisibilityClass(fact)">@VisibilityLabel(fact)</span>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(fact.Details))
+                    @if (editingId == fact.Id)
                     {
-                        <p class="mb-2">@fact.Details</p>
-                    }
-                    @if (Ctx.IsDm)
-                    {
-                        <div class="small-muted mb-2">@L["Campaign.Lore.KnownBy", KnowersLabel(fact)]</div>
-                        @if (fact.Visibility != FactVisibility.Public)
-                        {
-                            <div class="d-flex flex-wrap gap-2 align-items-end">
-                                <div>
-                                    <label for="reveal-actor-@fact.Id" class="field-label">@L["Campaign.Lore.RevealTo"]</label>
-                                    <select id="reveal-actor-@fact.Id" class="field-select field-sm" @bind="revealActorId[fact.Id]">
-                                        @foreach (var actor in Ctx.Actors)
-                                        {
-                                            <option value="@actor.Id">@actor.Name</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="reveal-level-@fact.Id" class="field-label">@L["Campaign.Lore.HowWell"]</label>
-                                    <select id="reveal-level-@fact.Id" class="field-select field-sm" @bind="revealLevel[fact.Id]">
-                                        @foreach (KnowledgeLevel level in Enum.GetValues<KnowledgeLevel>())
-                                        {
-                                            <option value="@level">@LevelLabel(level)</option>
-                                        }
-                                    </select>
-                                </div>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealToActorAsync(fact)" disabled="@(Ctx.Actors.Count == 0)">@L["Campaign.Lore.RevealToCharacter"]</CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealToPartyAsync(fact)"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Lore.RevealToParty"]</CodexButton>
+                        <form @onsubmit="() => SaveEditAsync(fact)" @onsubmit:preventDefault="true" data-testid="fact-edit">
+                            <div class="mb-2">
+                                <label for="edit-summary-@fact.Id" class="field-label">@L["Campaign.Lore.Summary"]</label>
+                                <input id="edit-summary-@fact.Id" class="field-input" @bind="editSummary" required data-testid="fact-edit-summary" />
                             </div>
-                        }
+                            <div class="mb-2">
+                                <label for="edit-details-@fact.Id" class="field-label">@L["Campaign.Lore.Details"]</label>
+                                <textarea id="edit-details-@fact.Id" class="field-input" rows="4" @bind="editDetails" @bind:event="oninput" data-mentions="@mentionsJson" data-pages="@pagesJson" aria-describedby="edit-details-hint-@fact.Id" data-testid="fact-edit-details"></textarea>
+                                <p id="edit-details-hint-@fact.Id" class="field-hint">@L["Campaign.Lore.DetailsHint"]</p>
+                            </div>
+                            <div class="mb-2">
+                                <label for="edit-visibility-@fact.Id" class="field-label">@L["Campaign.Lore.WhoCanSee"]</label>
+                                <select id="edit-visibility-@fact.Id" class="field-select" @bind="editVisibility">
+                                    <option value="@FactVisibility.DmOnly">@L["Campaign.Lore.Vis.DmOnly"]</option>
+                                    <option value="@FactVisibility.KnowersOnly">@L["Campaign.Lore.Vis.KnowersOnly"]</option>
+                                    <option value="@FactVisibility.Public">@L["Campaign.Lore.Vis.Public"]</option>
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="fact-edit-save" data-save-shortcut="">@L["Campaign.Lore.SaveFact"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editingId = null">@L["Common.Cancel"]</CodexButton>
+                            </div>
+                        </form>
                     }
                     else
                     {
-                        <div class="small-muted">@MyKnowledgeLabel(fact)</div>
+                        <div class="panel-title">
+                            <h3 id="fact-@fact.Id" class="h6">@fact.Summary</h3>
+                            <span class="pill @VisibilityClass(fact)">@VisibilityLabel(fact)</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(fact.Details))
+                        {
+                            <div class="rules-text mb-2" data-testid="fact-details">@((MarkupString)WikiRender.ToHtml(fact.Details, pages, mentions, Ctx.Campaign.Id, false, Ctx.IsDm ? DmView.From(L, mentions) : null))</div>
+                        }
+                        @if (Ctx.IsDm)
+                        {
+                            <div class="fact-knowers small-muted mb-2">
+                                <span>@L["Campaign.Lore.KnownByLabel"]</span>
+                                @if (fact.KnownBy.Count == 0)
+                                {
+                                    <span>@L["Campaign.Lore.Nobody"]</span>
+                                }
+                                @foreach (var knower in fact.KnownBy)
+                                {
+                                    <span class="chip chip-static" data-testid="fact-knower">
+                                        @ActorName(knower.EntityId) · @LevelLabel(knower.Level)
+                                        <button type="button" class="chip-x" aria-label="@L["Campaign.Lore.Forget", ActorName(knower.EntityId)]" title="@L["Campaign.Lore.Forget", ActorName(knower.EntityId)]" @onclick="() => ForgetAsync(fact, knower.EntityId)"><LucideIcon IconName="x" Size="12" /></button>
+                                    </span>
+                                }
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-end">
+                                @if (fact.Visibility != FactVisibility.Public)
+                                {
+                                    <div>
+                                        <label for="reveal-actor-@fact.Id" class="field-label">@L["Campaign.Lore.RevealTo"]</label>
+                                        <select id="reveal-actor-@fact.Id" class="field-select field-sm" @bind="revealActorId[fact.Id]" data-testid="fact-reveal-actor">
+                                            @if (PlayerCharacters.Count > 0)
+                                            {
+                                                <optgroup label="@L["Campaign.Lore.PlayerCharacters"]">
+                                                    @foreach (var actor in PlayerCharacters)
+                                                    {
+                                                        <option value="@actor.Id">@actor.Name</option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                            @if (OtherActors.Count > 0)
+                                            {
+                                                <optgroup label="@L["Campaign.Lore.Others"]">
+                                                    @foreach (var actor in OtherActors)
+                                                    {
+                                                        <option value="@actor.Id">@actor.Name</option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="reveal-level-@fact.Id" class="field-label">@L["Campaign.Lore.HowWell"]</label>
+                                        <select id="reveal-level-@fact.Id" class="field-select field-sm" @bind="revealLevel[fact.Id]">
+                                            @foreach (KnowledgeLevel level in Enum.GetValues<KnowledgeLevel>().Where(l => l != KnowledgeLevel.None))
+                                            {
+                                                <option value="@level">@LevelLabel(level)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealToActorAsync(fact)" disabled="@(Ctx.Actors.Count == 0)" data-testid="fact-reveal-to">@L["Campaign.Lore.RevealToCharacter"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealToPartyAsync(fact)" data-testid="fact-reveal-party"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Lore.RevealToParty"]</CodexButton>
+                                }
+                                else
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => HideAsync(fact)" data-testid="fact-hide"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Lore.HideAgain"]</CodexButton>
+                                }
+                                <span class="flex-grow-1"></span>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => BeginEdit(fact)" data-testid="fact-edit-open"><LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Lore.Edit"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.Lore.DeleteLabel", fact.Summary]" OnClick="() => DeleteAsync(fact)" data-testid="fact-delete" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="small-muted">@MyKnowledgeLabel(fact)</div>
+                        }
                     }
                 </article>
+            }
+
+            @if (WikiFiltered.Any())
+            {
+                <section class="panel" aria-labelledby="lore-wiki-heading" data-testid="lore-wiki">
+                    <div class="panel-title">
+                        <h3 id="lore-wiki-heading" class="h6"><LucideIcon IconName="book-open" Size="14" Class="title-icon" /> @(Ctx.IsDm ? L["Campaign.Lore.Wiki.Dm"] : L["Campaign.Lore.Wiki.Player"])</h3>
+                    </div>
+                    <p class="field-hint">@(Ctx.IsDm ? L["Campaign.Lore.Wiki.DmHint"] : L["Campaign.Lore.Wiki.PlayerHint"])</p>
+                    <ul class="secret-list mb-0">
+                        @foreach (var item in WikiFiltered)
+                        {
+                            <li class="secret-item secret-item-@item.Block.Marked.ToString().ToLowerInvariant()" data-testid="lore-wiki-item">
+                                <a class="secret-item-text" href="@Ctx.BasePath/wiki/@item.Page.Slug">@SecretPreview(item.Block)</a>
+                                <div class="secret-item-meta">
+                                    <span><LucideIcon IconName="book-open" Size="12" /> @item.Page.Title</span>
+                                    @if (Ctx.IsDm)
+                                    {
+                                        <span class="pill @StatusClass(item.Block)">@StatusLabel(item.Block)</span>
+                                    }
+                                    @if (item.Block.RevealedAt is { } at && item.Block.Marked != SecretAudience.Dm)
+                                    {
+                                        <span><LocalTime Value="at" Format="d MMM, HH:mm" /></span>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
             }
         }
     </div>
@@ -98,7 +195,8 @@
                     </div>
                     <div class="mb-2">
                         <label for="fact-details" class="field-label">@L["Campaign.Lore.Details"]</label>
-                        <textarea id="fact-details" class="field-input" rows="3" @bind="newDetails"></textarea>
+                        <textarea id="fact-details" class="field-input" rows="3" @bind="newDetails" @bind:event="oninput" data-mentions="@mentionsJson" data-pages="@pagesJson" aria-describedby="fact-details-hint" data-testid="new-fact-details"></textarea>
+                        <p id="fact-details-hint" class="field-hint">@L["Campaign.Lore.DetailsHint"]</p>
                     </div>
                     <div class="mb-3">
                         <label for="fact-visibility" class="field-label">@L["Campaign.Lore.WhoCanSee"]</label>
@@ -115,10 +213,17 @@
     }
 </div>
 
+<ConfirmDialog @ref="confirm" />
+
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
+    private ConfirmDialog confirm = null!;
     private List<FactDocument>? facts;
+    private List<WikiPageDocument> pages = new();
+    private string? pagesJson;
+    private MentionDirectory mentions = MentionDirectory.Empty;
+    private string mentionsJson = "[]";
     private string search = string.Empty;
     private string activeChip = "All";
     private string newSummary = string.Empty;
@@ -126,21 +231,50 @@
     private FactVisibility newVisibility = FactVisibility.DmOnly;
     private readonly Dictionary<string, string> revealActorId = new();
     private readonly Dictionary<string, KnowledgeLevel> revealLevel = new();
+    private string? editingId;
+    private string editSummary = string.Empty;
+    private string editDetails = string.Empty;
+    private FactVisibility editVisibility;
+    private string? loadedFor;
+
+    private sealed record WikiSecret(WikiPageDocument Page, SecretBlock Block);
 
     private IEnumerable<string> Chips => Ctx.IsDm ? new[] { "All", "Party", "Revealed", "DM only" } : new[] { "All", "Party", "Revealed to me" };
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedFor == Ctx.Campaign.Id) return;
+        loadedFor = Ctx.Campaign.Id;
+        await LoadAsync();
+        // "?about=actor:ID" or "?about=wiki:slug" (a page's or a sheet's "Add lore" link) starts a new fact about it.
+        if (Ctx.IsDm && QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("about", out var about) && newDetails.Length == 0)
+        {
+            var key = about.ToString();
+            newDetails = key.StartsWith("wiki:", StringComparison.Ordinal)
+                ? pages.FirstOrDefault(p => p.Slug == key[5..]) is { } page ? $"[[{page.Title}]] " : string.Empty
+                : key.StartsWith("actor:", StringComparison.Ordinal) || key.StartsWith("place:", StringComparison.Ordinal) ? mentions.ForEditing($"[[{key}]]") + " " : string.Empty;
+        }
+    }
 
     private async Task LoadAsync()
     {
-        facts = (await FactRepo.GetVisibleForCampaignAsync(Ctx.Access, Ctx.OwnedActorIds)).ToList();
-        var firstActor = Ctx.Actors.FirstOrDefault()?.Id ?? string.Empty;
+        facts = (await FactRepo.GetVisibleForCampaignAsync(Ctx.Access, Ctx.OwnedActorIds)).OrderBy(f => f.Summary, StringComparer.CurrentCultureIgnoreCase).ToList();
+        pages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
+        pagesJson = Ctx.IsDm ? PageSuggestions.Json(pages, kind => L[$"Campaign.Wiki.Kind.{kind}"]) : null;
+        mentions = await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
+        mentionsJson = Ctx.IsDm ? MentionLinks.Json(mentions, Ctx.Actors) : "[]";
+        var firstActor = PlayerCharacters.Concat(OtherActors).FirstOrDefault()?.Id ?? string.Empty;
         foreach (var fact in facts)
         {
             revealActorId.TryAdd(fact.Id, firstActor);
             revealLevel.TryAdd(fact.Id, KnowledgeLevel.Full);
         }
     }
+
+    /// <summary>The characters players play, first in the reveal picker: a reveal is nearly always to one of them.</summary>
+    private List<ActorDocument> PlayerCharacters => Ctx.Actors.Where(a => a.Kind == ActorKind.PlayerCharacter).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+    private List<ActorDocument> OtherActors => Ctx.Actors.Where(a => a.Kind == ActorKind.NonPlayerCharacter).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
     private IEnumerable<FactDocument> Filtered
     {
@@ -156,12 +290,66 @@
             };
             if (!string.IsNullOrWhiteSpace(search))
             {
-                result = result.Where(f => f.Summary.Contains(search, StringComparison.OrdinalIgnoreCase) || (f.Details?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+                result = result.Where(f => f.Summary.Contains(search, StringComparison.OrdinalIgnoreCase) || (f.Details != null && mentions.Plain(f.Details).Contains(search, StringComparison.OrdinalIgnoreCase)));
             }
 
             return result;
         }
     }
+
+    /// <summary>
+    /// The wiki's secret blocks as lore. The DM gets every block they can reveal or hide, on every page. A player gets what
+    /// was revealed to them, newest first: their copy of a page already holds only that, each revealed block marked with when
+    /// (see <see cref="SecretText.ForPlayersMarked"/>), so nothing here is more than the pages themselves show.
+    /// </summary>
+    private IEnumerable<WikiSecret> WikiSecrets => Ctx.IsDm
+        ? pages.SelectMany(p => SecretText.Blocks(p.Body).Where(b => !b.UnderDm && b.Marked is SecretAudience.Dm or SecretAudience.Party or SecretAudience.Some).Select(b => new WikiSecret(p, b)))
+        : pages.SelectMany(p => SecretText.Blocks(p.Body).Where(b => b.Marked == SecretAudience.Party && b.RevealedAt != null).Select(b => new WikiSecret(p, b)))
+            .OrderByDescending(s => s.Block.RevealedAt);
+
+    private IEnumerable<WikiSecret> WikiFiltered
+    {
+        get
+        {
+            var result = WikiSecrets;
+            result = activeChip switch
+            {
+                "Party" => result.Where(s => s.Block.Marked == SecretAudience.Party),
+                "Revealed" => result.Where(s => s.Block.Marked == SecretAudience.Some),
+                "DM only" => result.Where(s => s.Block.Marked == SecretAudience.Dm),
+                "Revealed to me" => Enumerable.Empty<WikiSecret>(),
+                _ => result
+            };
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                result = result.Where(s => s.Page.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || mentions.Plain(s.Block.Inner).Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return result;
+        }
+    }
+
+    private string SecretPreview(SecretBlock block)
+    {
+        var text = WikiRender.Summary(block.Inner, mentions, 140, forDm: Ctx.IsDm);
+        return string.IsNullOrWhiteSpace(text) ? L["Campaign.Wiki.Secrets.Empty"] : text;
+    }
+
+    private string StatusLabel(SecretBlock block) => block.Marked switch
+    {
+        SecretAudience.Party => L["Common.Secret.Party"],
+        SecretAudience.Some => L["Common.Secret.Some", string.Join(", ", block.Knowers.Select(ActorName))],
+        _ => L["Common.Secret.Dm"]
+    };
+
+    private static string StatusClass(SecretBlock block) => block.Marked switch
+    {
+        SecretAudience.Party => "pill-success",
+        SecretAudience.Some => "pill-accent",
+        _ => "pill-warning"
+    };
+
+    private string ActorName(string id) => Ctx.Actors.FirstOrDefault(a => a.Id == id)?.NameFor(Ctx.IsDm) ?? "?";
 
     private string ChipLabel(string chip) => chip switch
     {
@@ -202,9 +390,6 @@
         return mine == null ? string.Empty : L["Campaign.Lore.KnownTo", Ctx.Actors.FirstOrDefault(a => a.Id == mine.EntityId)?.Name ?? L["Campaign.Lore.YourCharacter"], LevelLabel(mine.Level)];
     }
 
-    private string KnowersLabel(FactDocument fact) =>
-        fact.KnownBy.Count == 0 ? L["Campaign.Lore.Nobody"] : string.Join(", ", fact.KnownBy.Select(k => Ctx.Actors.FirstOrDefault(a => a.Id == k.EntityId)?.Name ?? k.EntityId));
-
     private async Task CreateAsync()
     {
         if (string.IsNullOrWhiteSpace(newSummary)) return;
@@ -213,7 +398,7 @@
             Id = Guid.NewGuid().ToString(),
             CampaignId = Ctx.Campaign.Id,
             Summary = newSummary.Trim(),
-            Details = string.IsNullOrWhiteSpace(newDetails) ? null : newDetails.Trim(),
+            Details = string.IsNullOrWhiteSpace(newDetails) ? null : mentions.Encode(newDetails.Trim()),
             Visibility = newVisibility
         };
         if (await FactRepo.SaveAsync(fact, Ctx.Access))
@@ -221,6 +406,45 @@
             newSummary = string.Empty;
             newDetails = string.Empty;
             Ctx.Notify(Flash.Success(L["Campaign.Lore.FactAdded"]));
+            await LoadAsync();
+        }
+    }
+
+    private void BeginEdit(FactDocument fact)
+    {
+        editingId = fact.Id;
+        editSummary = fact.Summary;
+        editDetails = mentions.ForEditing(fact.Details ?? string.Empty);
+        editVisibility = fact.Visibility;
+    }
+
+    private async Task SaveEditAsync(FactDocument fact)
+    {
+        if (string.IsNullOrWhiteSpace(editSummary)) return;
+        var changed = new FactDocument
+        {
+            Id = fact.Id,
+            CampaignId = fact.CampaignId,
+            Summary = editSummary,
+            Details = string.IsNullOrWhiteSpace(editDetails) ? null : mentions.Encode(editDetails.Trim()),
+            Visibility = editVisibility,
+            KnownBy = fact.KnownBy,
+            Metadata = fact.Metadata
+        };
+        if (await FactRepo.SaveAsync(changed, Ctx.Access))
+        {
+            editingId = null;
+            Ctx.Notify(Flash.Success(L["Campaign.Lore.FactSaved"]));
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteAsync(FactDocument fact)
+    {
+        if (!await confirm.ShowAsync(L["Campaign.Lore.DeleteQ", fact.Summary], L["Campaign.Lore.DeleteBody"], L["Campaign.Lore.Delete"], isDestructive: true)) return;
+        if (await FactRepo.DeleteAsync(fact.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(L["Campaign.Lore.Deleted"]));
             await LoadAsync();
         }
     }
@@ -237,11 +461,31 @@
         }
     }
 
+    private async Task ForgetAsync(FactDocument fact, string actorId)
+    {
+        if (await FactRepo.RemoveKnowerAsync(fact.Id, actorId, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(L["Campaign.Lore.Forgotten", ActorName(actorId)]));
+            await LoadAsync();
+        }
+    }
+
     private async Task RevealToPartyAsync(FactDocument fact)
     {
         if (await FactRepo.SetVisibilityAsync(fact.Id, FactVisibility.Public, Ctx.Access))
         {
             Ctx.Notify(Flash.Success(L["Campaign.Lore.RevealedToParty"]));
+            await LoadAsync();
+        }
+    }
+
+    /// <summary>Takes a fact back from the party: the characters it was revealed to keep it, everyone else loses it.</summary>
+    private async Task HideAsync(FactDocument fact)
+    {
+        var to = fact.KnownBy.Count > 0 ? FactVisibility.KnowersOnly : FactVisibility.DmOnly;
+        if (await FactRepo.SetVisibilityAsync(fact.Id, to, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(L["Campaign.Lore.Hidden"]));
             await LoadAsync();
         }
     }

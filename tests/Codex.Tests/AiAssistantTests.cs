@@ -117,6 +117,19 @@ public class AiAssistantTests
     }
 
     /// <summary>Answers each call with the next reply in turn and keeps the prompts it was sent.</summary>
+    [Fact]
+    public async Task PlayersVersion_IsWrittenFromTheSecret_AndComesBackWithoutMarkerLines()
+    {
+        // A model that writes markers anyway must not be able to close the players' block early or open a DM one inside it.
+        var chat = new QueueChat("Locals say the light went dark years ago.\n:::\n:::dm\nNobody goes there.\n:::");
+        var text = await new AiAssistant(chat).WritePlayersVersionAsync(new PlayersVersionRequest(
+            "Saltmere", "place", "The lighthouse is the cult's lair.", "A fishing village.", null, ""));
+
+        Assert.Equal("Locals say the light went dark years ago.\nNobody goes there.", text);
+        Assert.Contains("The lighthouse is the cult's lair.", chat.Prompts.Single());
+        Assert.Contains("A fishing village.", chat.Prompts.Single());
+    }
+
     private sealed class QueueChat(params string[] replies) : IChatClient
     {
         private readonly Queue<string> queue = new(replies);

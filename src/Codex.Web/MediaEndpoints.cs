@@ -51,7 +51,8 @@ public static class MediaEndpoints
             }
 
             var access = await resolver.ResolveAsync(campaignId, userId);
-            if (access == null || await actors.GetVisibleAsync(actorId, access) == null)
+            // A stranger's mask has no portrait: the face is who they are.
+            if (access == null || await actors.GetVisibleAsync(actorId, access) is not { HasPortrait: true })
             {
                 return Results.NotFound();
             }

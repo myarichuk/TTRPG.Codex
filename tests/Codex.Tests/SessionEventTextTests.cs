@@ -146,4 +146,14 @@ public class SessionEventTextTests
             Assert.All(types, t => Assert.Contains("Event.Type." + t, keys));
         }
     }
+
+    [Fact]
+    public void A_wiki_reveal_names_the_page_and_never_the_secret_and_every_player_may_read_it()
+    {
+        var evt = new Codex.Persistence.Runtime.LogWikiRevealCommand("Saltmere").Describe(null!);
+        Assert.Equal("Something new about Saltmere was revealed in the wiki.", evt.Text(Localizer.For("en")));
+        Assert.Empty(evt.ActorIds);
+        var player = new CampaignAccess("c", "p1", CampaignRole.Player);
+        Assert.Single(SessionEventRedactor.ForViewer(new[] { evt }, player, Array.Empty<ActorDocument>()));
+    }
 }

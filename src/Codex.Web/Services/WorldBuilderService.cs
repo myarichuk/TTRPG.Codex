@@ -41,7 +41,8 @@ public sealed record WorldEdit(EditTarget Target, string Id, string Name);
 /// places DM-only). DM only.
 /// </summary>
 public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary library, IHomebrewRepository homebrew, IWikiRepository wiki,
-    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository, AiFeatures ai)
+    IFactRepository facts, CastService cast, IRegionRepository regions, ICampaignRepository campaigns, IActorRepository actorRepository, AiFeatures ai,
+    ITemplateRepository? templates = null)
 {
     /// <summary>The language the model writes in: the one the DM reads the app in.</summary>
     private static string Lang => SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
@@ -64,7 +65,29 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             types.Select(t => $"{t.Type} ({PromptLabel(t.Type, t)}{(t.ActorBlueprint ? ", a " + (system?.Canonical.Ai.Creature ?? "creature") : "")})").ToList(),
             Lang,
             system?.Canonical.Ai.Creature ?? "creature",
-            system?.Canonical.Ai.CreatureExamples);
+            system?.Canonical.Ai.CreatureExamples,
+            await OutlinesAsync(access));
+    }
+
+    // The DM's template for each kind of page the builder writes, as the model is shown it.
+    private async Task<IReadOnlyDictionary<string, string>?> OutlinesAsync(CampaignAccess access)
+    {
+        if (templates == null)
+        {
+            return null;
+        }
+
+        var all = await templates.GetAsync(access, new Localizer());
+        var outlines = new Dictionary<string, string>();
+        foreach (var kind in new[] { WikiPageKind.Person, WikiPageKind.Place, WikiPageKind.Faction, WikiPageKind.Quest })
+        {
+            if (TemplateSet.ForKind(all, kind) is { } template && !string.IsNullOrWhiteSpace(template.Body))
+            {
+                outlines[kind.ToString().ToLowerInvariant()] = LiveTemplate.Sample(template.Body);
+            }
+        }
+
+        return outlines;
     }
 
     /// <summary>Pages, places and cast members whose name (or a page's text) holds <paramref name="query"/>; with no query, an

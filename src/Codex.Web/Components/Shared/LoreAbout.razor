@@ -1,0 +1,68 @@
+@using Codex.Persistence
+@inject IFactRepository FactRepo
+
+@* The lore about a page or a character: the facts whose text mentions or links to it (FactLinks), as far as the reader may
+   know them. The DM also gets a way to write one more. *@
+@if (facts != null && (facts.Count > 0 || Access.IsDm))
+{
+    <section class="panel" aria-labelledby="@($"{TestId}-heading")" data-testid="@TestId">
+        <div class="panel-title">
+            <h3 id="@($"{TestId}-heading")" class="h6"><LucideIcon IconName="book-marked" Size="14" Class="title-icon" /> @L["Campaign.Lore.About"]</h3>
+            @if (facts.Count > 0)
+            {
+                <a class="small-muted" href="@BasePath/lore">@L["Campaign.Lore.AllLore"]</a>
+            }
+        </div>
+        @if (facts.Count == 0)
+        {
+            <p class="small-muted">@L["Campaign.Lore.AboutNone"]</p>
+        }
+        <ul class="lore-list">
+            @foreach (var fact in facts)
+            {
+                <li data-testid="@($"{TestId}-fact")">
+                    <span class="lore-summary">@fact.Summary</span>
+                    @if (Access.IsDm)
+                    {
+                        <span class="pill @(fact.Visibility switch { FactVisibility.Public => "pill-success", FactVisibility.KnowersOnly => "pill-accent", _ => "pill-warning" }) ms-1">@(fact.Visibility switch
+                        {
+                            FactVisibility.Public => L["Campaign.Lore.Chip.Party"],
+                            FactVisibility.KnowersOnly => L["Campaign.Lore.Chip.Revealed"],
+                            _ => L["Campaign.Lore.Chip.DmOnly"]
+                        })</span>
+                    }
+                </li>
+            }
+        </ul>
+        @if (Access.IsDm && !string.IsNullOrEmpty(AboutKey))
+        {
+            <a class="cx-btn cx-etched cx-sm mt-2" href="@BasePath/lore?about=@Uri.EscapeDataString(AboutKey)" data-testid="@($"{TestId}-add")"><LucideIcon IconName="plus" Size="14" /> @L["Campaign.Lore.AddAbout"]</a>
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlySet<string> OwnedActorIds { get; set; } = new HashSet<string>();
+    [Parameter, EditorRequired] public string BasePath { get; set; } = string.Empty;
+
+    /// <summary>What the lore is about, as <see cref="FactLinks"/> keys; empty ones are ignored.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<string?> Keys { get; set; } = Array.Empty<string?>();
+
+    /// <summary>The key a new fact written from here starts out about.</summary>
+    [Parameter] public string? AboutKey { get; set; }
+
+    [Parameter] public string TestId { get; set; } = "lore-about";
+
+    private List<FactDocument>? facts;
+    private string? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = string.Join("|", Keys) + "|" + Access.CampaignId;
+        if (key == loadedFor) return;
+        loadedFor = key;
+        var visible = await FactRepo.GetVisibleForCampaignAsync(Access, OwnedActorIds);
+        facts = FactLinks.About(visible, Keys.ToArray()).OrderBy(f => f.Summary, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+}
