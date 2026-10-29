@@ -135,8 +135,7 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
         if (publicName != null) await dm.GetByTestId("actor-public-name").FillAsync(publicName);
         await dm.GetByTestId("tab-history").ClickAsync();
         await dm.Locator("#actor-bio").FillAsync(history);
-        await dm.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("sheet-dirty")).ToBeHiddenAsync();
+        await E2EHelpers.SaveSheetAsync(dm);
         return id;
     }
 }

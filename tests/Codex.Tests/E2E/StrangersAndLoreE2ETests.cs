@@ -56,8 +56,7 @@ public class StrangersAndLoreE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("actor-public-description").FillAsync("Pays in old silver.");
         await dm.GetByTestId("tab-history").ClickAsync();
         await dm.Locator("#actor-bio").FillAsync("Mor poisoned the old king.");
-        await dm.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("sheet-dirty")).ToBeHiddenAsync();
+        await E2EHelpers.SaveSheetAsync(dm);
 
         // A fact about them, written from their sheet, for the party.
         await dm.GetByTestId("actor-lore-add").ClickAsync();
@@ -109,8 +108,7 @@ public class StrangersAndLoreE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.GotoInteractiveAsync(dm, ariaUrl);
         await dm.GetByTestId("tab-history").ClickAsync();
         await dm.Locator("#actor-bio").FillAsync("Born at sea.\n\n:::for @Aria\nYou were adopted.\n:::");
-        await dm.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("sheet-dirty")).ToBeHiddenAsync();
+        await E2EHelpers.SaveSheetAsync(dm);
 
         await E2EHelpers.GotoInteractiveAsync(player, ariaUrl);
         await player.GetByTestId("tab-history").ClickAsync();

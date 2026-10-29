@@ -56,6 +56,7 @@ public class AiPromptsTests
     public void PlayersVersion_GivesTheSecretAsTheDmsOnly_AndRevisesTheVersionThereIs()
     {
         var (system, user) = AiPrompts.PlayersVersion(new PlayersVersionRequest("Saltmere", "place", "The keeper runs the smugglers.", "A quiet village.", "Lights at night.", "", Language: "ru"));
+        user = user.ReplaceLineEndings("\n"); // the prompt's lines end as the platform's do
 
         Assert.Contains("without giving it away", system);
         Assert.Contains("Never write lines that start with \":::\"", system);
