@@ -1042,6 +1042,19 @@ a.user-chip:active { transform: scale(0.97); }
 .secret-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.35rem 0; font-size: 0.8rem; color: var(--text-2); }
 .secret-item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .secret-pick { display: grid; gap: 0.3rem; padding: 0.5rem; min-width: 12rem; }
+/* The editor's template menu and the templates page. */
+.md-templates { display: inline-flex; }
+.md-templates .popover-panel { inset-inline: 0 auto; min-width: 17rem; max-height: 20rem; overflow-y: auto; }
+.md-templates .menu-item { justify-content: space-between; }
+.template-abbr { flex: none; padding: 0.05rem 0.4rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); font-size: 0.78rem; }
+.template-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+.template-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.45rem 0.6rem; border: 1px solid transparent; border-radius: var(--radius-md); background: none; color: var(--text); text-align: start; }
+.template-row:hover { background: var(--surface-2); }
+.template-row[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.template-row.is-off { opacity: 0.6; }
+.template-row .template-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.template-start { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem; }
+
 .view-as { display: inline-flex; align-items: center; gap: 0.5rem; }
 .view-as-note { margin: 0 0 0.8rem; padding: 0.5rem 0.8rem; border: 1px dashed var(--arcane); border-radius: var(--radius-md); color: var(--text-2); background: var(--arcane-soft); font-size: 0.92rem; }
 /* A page's pictures float at the end side of the text (left in Hebrew), framed like the other art, and the text wraps around
@@ -1812,6 +1825,12 @@ html:has(.md-full) { overflow: hidden; }
     padding: 0.35rem 0.55rem; border-radius: var(--radius-sm); color: var(--text); cursor: pointer;
 }
 .mention-list [role="option"][aria-selected="true"], .mention-list [role="option"]:hover { background: var(--accent-soft); color: var(--accent); }
+/* While a template is being filled in (app-startup.js): which field the caret is in and the keys that move it. */
+.template-hint {
+    position: fixed; z-index: 1100; padding: 0.3rem 0.65rem; border-radius: var(--radius-md); font-size: 0.82rem;
+    background: var(--arcane-soft); color: var(--text); border: 1px solid var(--arcane); box-shadow: var(--shadow-2); pointer-events: none;
+}
+.template-hint[hidden] { display: none; }
 .mention-kind { color: var(--text-3); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .mention { font-weight: 600; text-decoration: none; border-bottom: 1px dotted currentColor; }
 a.mention:hover { text-decoration: none; border-bottom-style: solid; }

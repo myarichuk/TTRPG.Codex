@@ -1,0 +1,286 @@
+@using Codex.Core
+@using Codex.Persistence
+@inject ITemplateRepository TemplateRepo
+@inject IJSRuntime JS
+
+@* The DM's text templates (LiveTemplate): the built-in outlines of each kind of page and snippets, which the DM may change,
+   turn off or put back as they ship, and their own. Typing a template's abbreviation and Tab in a page puts it in. DM only. *@
+
+<UnsavedChangesGuard @ref="guard" IsDirty="IsDirty" />
+<ConfirmDialog @ref="confirm" />
+
+@if (!Ctx.IsDm)
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="braces" Size="28" /></div>
+        <h3>@L["Campaign.Templates.DmOnly"]</h3>
+        <a href="@Ctx.BasePath/wiki" class="cx-btn cx-etched">@L["Campaign.Wiki.BackToWiki"]</a>
+    </div>
+}
+else if (templates == null)
+{
+    <LoadingSkeleton />
+}
+else
+{
+    <div class="page-header mb-3">
+        <div>
+            <nav aria-label="@L["Campaign.Wiki.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">@L["Campaign.Wiki.Title"]</a></nav>
+            <h2 class="mb-0">@L["Campaign.Templates.Title"]</h2>
+            <p class="page-subtitle">@L["Campaign.Templates.Subtitle"]</p>
+        </div>
+        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NewAsync" data-testid="template-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Templates.New"]</CodexButton>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <section class="panel" aria-labelledby="templates-pages">
+                <div class="panel-title"><h3 id="templates-pages" class="h6">@L["Campaign.Templates.Pages"]</h3></div>
+                @List(templates.Where(t => t.PageKind != null))
+            </section>
+            <section class="panel" aria-labelledby="templates-snippets">
+                <div class="panel-title"><h3 id="templates-snippets" class="h6">@L["Campaign.Templates.Snippets"]</h3></div>
+                @List(templates.Where(t => t.PageKind == null))
+            </section>
+        </div>
+        <div class="col-lg-8">
+            <section class="panel" aria-labelledby="template-editing">
+                <div class="panel-title">
+                    <h3 id="template-editing" class="h6">@(selected == null ? L["Campaign.Templates.New"] : selected.Name)</h3>
+                    @if (selected != null)
+                    {
+                        <span class="pill">@StatusOf(selected)</span>
+                    }
+                </div>
+                <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" data-testid="template-editor">
+                    <div class="field-grid mb-3">
+                        <div class="field-wide">
+                            <label for="template-name" class="field-label">@L["Campaign.Templates.Field.Name"] <span class="required-mark" aria-hidden="true">*</span></label>
+                            <input id="template-name" class="field-input" @bind="draft.Name" @bind:event="oninput" required maxlength="@LiveTemplate.MaxName" data-testid="template-name" />
+                        </div>
+                        <div>
+                            <label for="template-abbr" class="field-label">@L["Campaign.Templates.Field.Abbreviation"]</label>
+                            <input id="template-abbr" class="field-input" dir="auto" @bind="draft.Abbreviation" @bind:event="oninput" maxlength="@LiveTemplate.MaxAbbreviation"
+                                   aria-describedby="template-abbr-hint" aria-invalid="@(LiveTemplate.IsValidAbbreviation(draft.Abbreviation.Trim()) ? null : "true")" data-testid="template-abbreviation" />
+                        </div>
+                        <div>
+                            <label for="template-kind" class="field-label">@L["Campaign.Templates.Field.Kind"]</label>
+                            <select id="template-kind" class="field-select" value="@(draft.PageKind?.ToString() ?? "")" @onchange="e => draft.PageKind = Enum.TryParse<WikiPageKind>(e.Value?.ToString(), out var k) ? k : null"
+                                    aria-describedby="template-kind-hint" data-testid="template-kind">
+                                <option value="">@L["Campaign.Templates.Kind.None"]</option>
+                                @foreach (var kind in Enum.GetValues<WikiPageKind>().Where(k => k != WikiPageKind.General))
+                                {
+                                    <option value="@kind">@L[$"Campaign.Wiki.Kind.{kind}"]</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field-wide">
+                            <div id="template-abbr-hint" class="field-hint">@L["Campaign.Templates.AbbreviationHint"]</div>
+                            <div id="template-kind-hint" class="field-hint">@L["Campaign.Templates.KindHint"]</div>
+                        </div>
+                    </div>
+                    <label for="template-body" class="field-label">@L["Campaign.Templates.Field.Body"]</label>
+                    <MarkdownEditor @key="editorKey" Id="template-body" Title="@(draft.Name.Length > 0 ? draft.Name : L["Campaign.Templates.Field.Body"])" Rows="14" Class="wiki-editor"
+                                    @bind-Value="draft.Body" DescribedBy="template-body-hint" TestId="template-body" Secrets="true"
+                                    Preview="@(text => SecretRender.Html(LiveTemplate.Sample(text), TextFormatting.ToHtml, DmView.From(L)))">
+                        <div id="template-body-hint" class="field-hint mb-3">
+                            @Rich(L["Campaign.Templates.Syntax"])
+                            <span class="d-block mt-1" data-testid="template-fields">@(LiveTemplate.FieldNames(draft.Body) is { Count: > 0 } names ? L["Campaign.Templates.Fields", string.Join(", ", names)] : L["Campaign.Templates.NoFields"])</span>
+                        </div>
+                    </MarkdownEditor>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="template-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Templates.Save"]</CodexButton>
+                        @if (selected is { IsBuiltIn: true } builtIn)
+                        {
+                            @if (builtIn.Hidden)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => SetHiddenAsync(false)" data-testid="template-turn-on">@L["Campaign.Templates.TurnOn"]</CodexButton>
+                            }
+                            else
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => SetHiddenAsync(true)" data-testid="template-turn-off">@L["Campaign.Templates.TurnOff"]</CodexButton>
+                            }
+                            @if (IsChanged(builtIn))
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="RestoreAsync" data-testid="template-restore">@L["Campaign.Templates.Restore"]</CodexButton>
+                            }
+                        }
+                        else if (selected != null)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync" data-testid="template-delete">@L["Campaign.Templates.Delete"]</CodexButton>
+                        }
+                    </div>
+                </form>
+            </section>
+            <section class="panel" aria-labelledby="template-try">
+                <div class="panel-title"><h3 id="template-try" class="h6"><LucideIcon IconName="file-text" Size="14" Class="title-icon" /> @L["Campaign.Templates.Try"]</h3></div>
+                <p class="field-hint">@L["Campaign.Templates.TryHint"]</p>
+                <MarkdownEditor Id="template-try-box" Title="@L["Campaign.Templates.Try"]" Rows="6" @bind-Value="tryText" TestId="template-try" Templates="TryTemplates()" Secrets="true"
+                                Preview="@(text => SecretRender.Html(text, TextFormatting.ToHtml, DmView.From(L)))" />
+            </section>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private UnsavedChangesGuard guard = null!;
+    private ConfirmDialog confirm = null!;
+    private IReadOnlyList<TextTemplate>? templates;
+    private IReadOnlyList<TextTemplate> builtIns = Array.Empty<TextTemplate>();
+    private TextTemplate? selected;
+    private TextTemplate draft = new();
+    private string savedDraft = string.Empty;
+    private string? tryText;
+    // A new editor for each template opened, so the box starts with that template's text.
+    private int editorKey;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Ctx.IsDm) return;
+        builtIns = BuiltInTemplates.For(L);
+        await LoadAsync(BuiltInTemplates.Prefix + "person");
+    }
+
+    private async Task LoadAsync(string? openId)
+    {
+        templates = await TemplateRepo.GetAsync(Ctx.Access, L);
+        Open(templates.FirstOrDefault(t => t.Id == openId));
+    }
+
+    private void Open(TextTemplate? template)
+    {
+        selected = template;
+        draft = template?.Copy() ?? new TextTemplate();
+        savedDraft = Snapshot(draft);
+        editorKey++;
+    }
+
+    private bool IsDirty() => Snapshot(draft) != savedDraft;
+
+    private static string Snapshot(TextTemplate t) => string.Join('\u0001', t.Name, t.Abbreviation, t.Body, t.PageKind, t.Hidden);
+
+    private async Task SelectAsync(TextTemplate template)
+    {
+        if (template.Id == selected?.Id || !await guard.ConfirmDiscardAsync()) return;
+        Open(template);
+        // On a phone the editor is below the list: take the reader to it.
+        await JS.InvokeVoidAsync("codex.focus", "template-name");
+    }
+
+    private async Task NewAsync()
+    {
+        if (!await guard.ConfirmDiscardAsync()) return;
+        Open(null);
+        await JS.InvokeVoidAsync("codex.focus", "template-name");
+    }
+
+    private bool IsChanged(TextTemplate template) =>
+        template.IsBuiltIn && builtIns.FirstOrDefault(b => b.Id == template.Id) is { } shipped && Snapshot(shipped) != Snapshot(template);
+
+    private string StatusOf(TextTemplate template) =>
+        template.Hidden ? L["Campaign.Templates.Off"]
+        : IsChanged(template) ? L["Campaign.Templates.Changed"]
+        : template.IsBuiltIn ? L["Campaign.Templates.BuiltIn"]
+        : L["Campaign.Templates.Yours"];
+
+    // The templates the try-out box offers: those in use, with the one being edited as it is now, saved or not.
+    private IReadOnlyList<TextTemplate> TryTemplates()
+    {
+        var list = (templates ?? Array.Empty<TextTemplate>()).Where(t => t.Id != selected?.Id).ToList();
+        if (!draft.Hidden) list.Insert(0, draft);
+        return list;
+    }
+
+    private async Task SaveAsync()
+    {
+        var result = await TemplateRepo.TrySaveAsync(draft, Ctx.Access, L);
+        switch (result)
+        {
+            case TemplateSave.Done:
+                // The save gives a new template its id.
+                savedDraft = Snapshot(draft);
+                await LoadAsync(draft.Id);
+                Ctx.Notify(Flash.Success(L["Campaign.Templates.Saved"]));
+                break;
+            case TemplateSave.Taken:
+                Ctx.Notify(Flash.Error(L["Campaign.Templates.Taken", draft.Abbreviation.Trim()]));
+                break;
+            default:
+                Ctx.Notify(Flash.Error(L["Campaign.Templates.Refused"]));
+                break;
+        }
+    }
+
+    private async Task SetHiddenAsync(bool hidden)
+    {
+        if (selected == null) return;
+        // Turning off or on keeps what is saved; the editor's unsaved changes stay in the editor.
+        var stored = selected.Copy();
+        stored.Hidden = hidden;
+        if (await TemplateRepo.TrySaveAsync(stored, Ctx.Access, L) != TemplateSave.Done)
+        {
+            Ctx.Notify(Flash.Error(L["Campaign.Templates.Taken", stored.Abbreviation]));
+            return;
+        }
+
+        var dirty = IsDirty();
+        draft.Hidden = hidden;
+        templates = await TemplateRepo.GetAsync(Ctx.Access, L);
+        selected = templates.FirstOrDefault(t => t.Id == stored.Id);
+        if (!dirty) savedDraft = Snapshot(draft);
+    }
+
+    private async Task RestoreAsync()
+    {
+        if (selected == null) return;
+        if (await TemplateRepo.TryRemoveAsync(selected.Id, Ctx.Access, L) == TemplateSave.Taken)
+        {
+            Ctx.Notify(Flash.Error(L["Campaign.Templates.Taken", builtIns.First(b => b.Id == selected.Id).Abbreviation]));
+            return;
+        }
+
+        savedDraft = Snapshot(draft);
+        await LoadAsync(selected.Id);
+        Ctx.Notify(Flash.Success(L["Campaign.Templates.Restored"]));
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (selected == null || !await confirm.ShowAsync(L["Campaign.Templates.DeleteTitle", selected.Name], L["Campaign.Templates.DeleteBody"], L["Campaign.Templates.Delete"], isDestructive: true))
+        {
+            return;
+        }
+
+        await TemplateRepo.TryRemoveAsync(selected.Id, Ctx.Access, L);
+        savedDraft = Snapshot(draft);
+        await LoadAsync(null);
+        Ctx.Notify(Flash.Success(L["Campaign.Templates.Deleted"]));
+    }
+
+    private RenderFragment List(IEnumerable<TextTemplate> list) => __builder =>
+    {
+        <div class="template-list" role="list">
+            @foreach (var template in list)
+            {
+                <div role="listitem">
+                    <button type="button" class="template-row @(template.Hidden ? "is-off" : "")" aria-current="@(template.Id == selected?.Id ? "true" : null)"
+                            @onclick="() => SelectAsync(template)" data-testid="@($"template-row-{template.Id}")">
+                        <span class="template-name">@template.Name</span>
+                        @if (template.Abbreviation.Length > 0)
+                        {
+                            <kbd class="template-abbr" dir="auto">@template.Abbreviation</kbd>
+                        }
+                        @if (template.Hidden || IsChanged(template))
+                        {
+                            <span class="pill">@StatusOf(template)</span>
+                        }
+                    </button>
+                </div>
+            }
+        </div>
+    };
+
+    private static RenderFragment Rich(string text) => RichText.Code(text);
+}

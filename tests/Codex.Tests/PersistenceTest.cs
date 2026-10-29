@@ -1,3 +1,4 @@
+using Codex.Localization;
 using Codex.Core;
 using Codex.Persistence;
 using Raven.Client.Documents;
@@ -87,6 +88,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenWikiRepository _wikiRepository;
     private readonly RavenJournalRepository _journalRepository;
     private readonly RavenWorldChatRepository _worldChatRepository;
+    private readonly RavenTemplateRepository _templateRepository;
     private readonly RavenMediaStore _mediaStore;
     private readonly CampaignExportService _exportService;
 
@@ -104,9 +106,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         _wikiRepository = new RavenWikiRepository(_dbService);
         _journalRepository = new RavenJournalRepository(_dbService);
         _worldChatRepository = new RavenWorldChatRepository(_dbService);
+        _templateRepository = new RavenTemplateRepository(_dbService);
         _mediaStore = new RavenMediaStore(_dbService);
-        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository, _wikiRepository, _journalRepository, _worldChatRepository);
-        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository, _wikiRepository);
+        _campaignRepository = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository, _wikiRepository, _journalRepository, _worldChatRepository,
+            templateRepository: _templateRepository);
+        _exportService = new CampaignExportService(_campaignRepository, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository, _wikiRepository, _templateRepository);
     }
 
     [Fact]
@@ -1084,6 +1088,60 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var copy = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!;
         Assert.False(await _wikiRepository.TrySaveAsync(copy, dm));
         Assert.Equal(body, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Body);
+    }
+
+    [Fact]
+    public async Task Templates_AreTheDms_TakeOneAbbreviationEach_AndTravelWithTheCampaign()
+    {
+        var l = Localizer.For("en");
+        var campaign = new CampaignDocument { Id = "camp-templates-" + Guid.NewGuid(), Name = "Templates", OwnerId = "dm", SystemId = "srd5e" };
+        campaign.Members.Add(new CampaignMember { UserId = "dm", Role = CampaignRole.DM });
+        await _campaignRepository.SaveAsync(campaign);
+        var dm = new CampaignAccess(campaign.Id, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaign.Id, "p1", CampaignRole.Player);
+
+        // A campaign starts with the built-in ones; a player is given none, and saves none.
+        var shipped = await _templateRepository.GetAsync(dm, l);
+        Assert.Equal(BuiltInTemplates.For(l).Select(t => t.Id), shipped.Select(t => t.Id));
+        Assert.Empty(await _templateRepository.GetAsync(player, l));
+        Assert.Equal(TemplateSave.Refused, await _templateRepository.TrySaveAsync(new TextTemplate { Name = "Mine", Body = "x" }, player, l));
+
+        var loot = new TextTemplate { Name = "Loot", Abbreviation = "loot", Body = "- $item$ ($value:10 gp$)" };
+        Assert.Equal(TemplateSave.Done, await _templateRepository.TrySaveAsync(loot, dm, l));
+        Assert.NotEmpty(loot.Id);
+        // An abbreviation in use, by one of theirs or a built-in one, is not taken twice; nor are ill-formed ones saved.
+        Assert.Equal(TemplateSave.Taken, await _templateRepository.TrySaveAsync(new TextTemplate { Name = "Other", Abbreviation = "LOOT", Body = "y" }, dm, l));
+        Assert.Equal(TemplateSave.Taken, await _templateRepository.TrySaveAsync(new TextTemplate { Name = "Other", Abbreviation = "npc", Body = "y" }, dm, l));
+        Assert.Equal(TemplateSave.Refused, await _templateRepository.TrySaveAsync(new TextTemplate { Name = "Other", Abbreviation = "two words", Body = "y" }, dm, l));
+        Assert.Equal(TemplateSave.Refused, await _templateRepository.TrySaveAsync(new TextTemplate { Id = BuiltInTemplates.Prefix + "nope", Name = "Other", Body = "y" }, dm, l));
+
+        // Their version of a built-in one replaces it in place; turned off, it frees its abbreviation; removed, it is back as it ships.
+        var npc = shipped.Single(t => t.Abbreviation == "npc");
+        npc.Body = "**$name$** the $role$";
+        npc.Hidden = true;
+        Assert.Equal(TemplateSave.Done, await _templateRepository.TrySaveAsync(npc, dm, l));
+        var mine = await _templateRepository.GetAsync(dm, l);
+        Assert.Equal(npc.Id, mine[shipped.ToList().FindIndex(t => t.Id == npc.Id)].Id);
+        Assert.True(mine.Single(t => t.Id == npc.Id).Hidden);
+        Assert.Equal("Loot", mine[^1].Name);
+        Assert.Equal(TemplateSave.Done, await _templateRepository.TrySaveAsync(new TextTemplate { Name = "Person, short", Abbreviation = "npc", Body = "$who$", PageKind = WikiPageKind.Person }, dm, l));
+        Assert.Equal("Person, short", TemplateSet.ForKind(await _templateRepository.GetAsync(dm, l), WikiPageKind.Person)!.Name);
+        Assert.Equal(TemplateSave.Refused, await _templateRepository.TryRemoveAsync(npc.Id, player, l));
+        // Back as it ships, it would take "npc" again: not while another template has it.
+        Assert.Equal(TemplateSave.Taken, await _templateRepository.TryRemoveAsync(npc.Id, dm, l));
+        var shortPerson = (await _templateRepository.GetAsync(dm, l)).Single(t => t.Name == "Person, short");
+        Assert.Equal(TemplateSave.Done, await _templateRepository.TryRemoveAsync(shortPerson.Id, dm, l));
+        Assert.Equal(TemplateSave.Done, await _templateRepository.TryRemoveAsync(npc.Id, dm, l));
+        Assert.Equal(BuiltInTemplates.For(l).Single(t => t.Id == npc.Id).Body, (await _templateRepository.GetAsync(dm, l)).Single(t => t.Id == npc.Id).Body);
+
+        // They go out with the campaign, come back with it, and are deleted with it.
+        var bundle = CampaignExportService.Deserialize(CampaignExportService.Serialize((await _exportService.ExportAsync(dm))!))!;
+        await _templateRepository.DeleteAllForCampaignAsync(campaign.Id);
+        Assert.DoesNotContain(await _templateRepository.GetAsync(dm, l), t => t.Name == "Loot");
+        Assert.True(await _exportService.ImportAsync(bundle, "dm"));
+        Assert.Equal("- $item$ ($value:10 gp$)", (await _templateRepository.GetAsync(dm, l)).Single(t => t.Name == "Loot").Body);
+        Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaign.Id, "dm"));
+        Assert.Null(await _templateRepository.GetDocumentAsync(campaign.Id));
     }
 
     [Fact]

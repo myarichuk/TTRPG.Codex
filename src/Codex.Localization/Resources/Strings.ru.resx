@@ -50,4 +50,7 @@
   <data name="Common.Secret.Dm" xml:space="preserve"><value>Только мастер</value></data>
   <data name="Common.Secret.Party" xml:space="preserve"><value>Открыто группе</value></data>
   <data name="Common.Secret.Players" xml:space="preserve"><value>Что знают игроки</value></data>
+  <data name="Common.Editor.Templates" xml:space="preserve"><value>Вставить шаблон (или наберите его сокращение и Tab, или /)</value></data>
+  <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>Изменить шаблоны…</value></data>
+  <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} из {2} · Tab: дальше · Shift+Tab: назад · Esc: готово</value></data>
 </root>

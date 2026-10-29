@@ -65,7 +65,7 @@ else
                     @foreach (var section in group.Sections.Where(s => s.Key != "build" || access.IsDm))
                     {
                         var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
-                        var current = CurrentSection == section.Key ? "page" : null;
+                        var current = NavSection == section.Key ? "page" : null;
                         var testId = "section-" + section.Key;
                         var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
                         <a href="@href" aria-current="@current" data-testid="@testId">
@@ -106,7 +106,7 @@ else
                         {
                             var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
                             var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
-                            <a class="menu-item" href="@href" aria-current="@(CurrentSection == section.Key ? "page" : null)"><LucideIcon IconName="@section.Icon" Size="18" />@label</a>
+                            <a class="menu-item" href="@href" aria-current="@(NavSection == section.Key ? "page" : null)"><LucideIcon IconName="@section.Icon" Size="18" />@label</a>
                         }
                     }
                 </div>
@@ -151,6 +151,9 @@ else
                         break;
                     case "settings":
                         <SettingsSection />
+                        break;
+                    case "templates":
+                        <TemplatesSection />
                         break;
                     default:
                         <OverviewSection />
@@ -230,6 +233,7 @@ else
         "lore" => L["Page.Campaign.Section.Lore"],
         "library" => L["Page.Campaign.Section.Library"],
         "settings" => L["Page.Campaign.Section.Settings"],
+        "templates" => L["Campaign.Templates.Title"],
         _ => L["Page.Campaign.Section.Overview"]
     };
 
@@ -241,7 +245,10 @@ else
     };
 
     private string BasePath => $"/campaigns/{CampaignId}";
-    private string CurrentSection => Sections.Any(s => s.Key == Section) ? Section! : "overview";
+    private string CurrentSection => Sections.Any(s => s.Key == Section) || Section == "templates" ? Section! : "overview";
+
+    // The section the side rail marks as the one open: the templates belong to the wiki.
+    private string NavSection => CurrentSection == "templates" ? "wiki" : CurrentSection;
 
     protected override void OnInitialized()
     {

@@ -45,7 +45,8 @@ public sealed record WikiPageRequest(
     IReadOnlyList<string> Related,
     IReadOnlyList<string> Context,
     string? CampaignContext = null,
-    string? Language = null);
+    string? Language = null,
+    string? Structure = null);
 
 /// <summary>A description for a Library entry (a homebrew creature, spell, item) or a place on the world map.</summary>
 public sealed record DescribeRequest(
@@ -101,13 +102,16 @@ public sealed record CharacterConceptRequest(
 /// <param name="HomebrewTypes">Content types a homebrew entry may have, as "id (label)".</param>
 /// <param name="Creature">What the system calls a creature with a stat block (<see cref="Codex.Plugin.Abstractions.AiVocabulary.Creature"/>).</param>
 /// <param name="CreatureExamples">Plain roles to show the model, as the system words them; null for the neutral few.</param>
+/// <param name="Outlines">The DM's outline of each kind of page ("person", "place", "faction", "quest"), as
+/// <see cref="LiveTemplate.Sample"/> shows a template; the pages of that kind follow it.</param>
 public sealed record WorldChatRequest(
     string SystemName,
     string? CampaignContext,
     IReadOnlyList<string> HomebrewTypes,
     string? Language = null,
     string Creature = "creature",
-    IReadOnlyList<string>? CreatureExamples = null);
+    IReadOnlyList<string>? CreatureExamples = null,
+    IReadOnlyDictionary<string, string>? Outlines = null);
 
 /// <summary>An item a character may carry: its Library id and the name a model knows it by.</summary>
 public sealed record EquipmentOption(string Id, string Name);
@@ -239,6 +243,13 @@ public static class AiPrompts
         }
 
         AppendList(sb, "What the campaign already says about the subject", r.Context);
+        if (!string.IsNullOrWhiteSpace(r.Structure))
+        {
+            sb.AppendLine().AppendLine("The game master's outline for this kind of page. Use its headings, worded as they are and in this order, and keep its DM blocks as DM blocks; " +
+                                       "‹words› in it say what goes there, and the rest of its text stays as it is. Fill every section; text already under a heading stays under it:")
+                .AppendLine(r.Structure.Trim());
+        }
+
         if (r.Related.Count > 0)
         {
             sb.AppendLine().AppendLine("Related wiki pages (keep their names and link to them with [[Name]] where they fit): " + string.Join(", ", r.Related));
@@ -424,6 +435,7 @@ public static class AiPrompts
             "A page is usually 150 to 350 words; under each heading write at least two full sentences, or a list whose items are each a full sentence. " +
             "Give every entry a \"pitch\" too: one or two plain sentences saying what it is, for lists and the review card. " +
             PlaceOutline + PersonOutline + FactionOutline + QuestOutline +
+            OutlinesOf(r.Outlines) +
             "Add secrets only where a plot lives in them, never as a quota: write each in a DM block of the text it belongs to, and when the party can uncover it in play, also add it as a \"fact\" linked to the entries it is about. " +
             $"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
             $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. " +
@@ -433,6 +445,24 @@ public static class AiPrompts
         sb.Append(language == "English"
             ? Style
             : $"Write your replies, names and page texts in {language}; keep every JSON key, kind, ref, id and type exactly as given. " + StyleFor(r.Language));
+        return sb.ToString();
+    }
+
+    // The DM's page templates, which the pages of their kinds follow: an npc's page is a person's.
+    private static string OutlinesOf(IReadOnlyDictionary<string, string>? outlines)
+    {
+        if (outlines is not { Count: > 0 })
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder("The game master has an outline for some kinds of page. A page of that kind uses its headings, worded as they are and in their order, " +
+                                   "and keeps its DM blocks as DM blocks; ‹words› in it say what goes there, and the rest of its text stays as it is.\n");
+        foreach (var (kind, outline) in outlines)
+        {
+            sb.Append($"Outline of a {kind} page:\n{outline.Trim()}\n");
+        }
+
         return sb.ToString();
     }
 

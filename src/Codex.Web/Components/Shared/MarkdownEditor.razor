@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Persistence
 @inject IJSRuntime JS
 
 @* The box for long writing: histories, wiki pages, recaps, descriptions. It stays a plain textarea (the @, # and $
@@ -24,6 +25,29 @@
             {
                 <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="eye-off" Label="@L["Common.Editor.Secret"]" title="@L["Common.Editor.Secret"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="SecretAsync" data-testid="@($"{TestId}-secret")" />
             }
+            @if (Templates != null && !ReadOnlyNow && !showPreview)
+            {
+                <details class="popover-menu md-templates" data-testid="@($"{TestId}-templates")">
+                    <summary class="cx-btn cx-rune cx-sm" title="@L["Common.Editor.Templates"]" aria-label="@L["Common.Editor.Templates"]"><LucideIcon IconName="braces" Size="14" /></summary>
+                    <div class="popover-panel">
+                        @for (var i = 0; i < inUse.Count; i++)
+                        {
+                            var index = i;
+                            <button type="button" class="menu-item" @onclick="() => InsertTemplateAsync(index)">
+                                <span>@inUse[index].Name</span>
+                                @if (inUse[index].Abbreviation.Length > 0)
+                                {
+                                    <kbd class="template-abbr" dir="auto">@inUse[index].Abbreviation</kbd>
+                                }
+                            </button>
+                        }
+                        @if (TemplatesHref != null)
+                        {
+                            <a class="menu-item" href="@TemplatesHref"><span>@L["Common.Editor.ManageTemplates"]</span></a>
+                        }
+                    </div>
+                </details>
+            }
         </div>
         <div class="md-view">
             <div class="md-tabs" role="group" aria-label="@L["Common.Editor.View"]">
@@ -38,7 +62,8 @@
     <div class="md-panes">
         <div class="md-write">
             <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@initial" @oninput="OnInput"
-                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-md-secrets="@(Secrets ? "" : null)" data-testid="@TestId"></textarea>
+                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-md-secrets="@(Secrets ? "" : null)" data-testid="@TestId"
+                      data-templates="@templatesJson" data-template-hint="@(Templates != null ? L["Common.Editor.TemplateHint"] : null)"></textarea>
             @if (Busy)
             {
                 <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
@@ -90,6 +115,13 @@
     /// redacted for players.</summary>
     [Parameter] public bool Secrets { get; set; }
 
+    /// <summary>The DM's templates (see <c>LiveTemplate</c>): typing one's abbreviation and Tab, or picking it after "/" or from
+    /// the toolbar, puts it in, and Tab steps through its fields. Null for a box that takes none.</summary>
+    [Parameter] public IReadOnlyList<TextTemplate>? Templates { get; set; }
+
+    /// <summary>Where the templates are edited; the template menu links to it.</summary>
+    [Parameter] public string? TemplatesHref { get; set; }
+
     /// <summary>The AI is writing into the box: the text is read-only and a "Writing…" notice covers it.</summary>
     [Parameter] public bool Busy { get; set; }
     [Parameter] public string? BusyText { get; set; }
@@ -109,6 +141,12 @@
     private bool fullscreen;
     private string? focusAfterRender;
     private bool ReadOnlyNow => ReadOnly || Busy;
+
+    // The templates in use, in the menu's order; the box's data-templates lists them in the same order, so a menu item and
+    // the script name a template by its index.
+    private IReadOnlyList<TextTemplate> inUse = Array.Empty<TextTemplate>();
+    private IReadOnlyList<TextTemplate>? templatesSource;
+    private string? templatesJson;
 
     protected override void OnInitialized()
     {
@@ -130,9 +168,20 @@
 
     private async Task SecretAsync() => await JS.InvokeVoidAsync("codex.mdSecret", Id);
 
+    private async Task InsertTemplateAsync(int index) => await JS.InvokeVoidAsync("codex.mdTemplate", Id, index);
+
     // The "Writing…" notice sits on the text, so the text is what shows while the AI writes.
     protected override void OnParametersSet()
     {
+        if (!ReferenceEquals(Templates, templatesSource))
+        {
+            templatesSource = Templates;
+            inUse = Templates == null ? Array.Empty<TextTemplate>() : TemplateSet.InUse(Templates).ToList();
+            templatesJson = Templates == null
+                ? null
+                : System.Text.Json.JsonSerializer.Serialize(inUse.Select(t => new { a = t.Abbreviation, n = t.Name, b = t.Body }));
+        }
+
         if (Busy) showPreview = false;
         if (!string.Equals(Value ?? string.Empty, seen ?? string.Empty, StringComparison.Ordinal))
         {

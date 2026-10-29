@@ -50,4 +50,7 @@
   <data name="Common.Secret.Dm" xml:space="preserve"><value>לשליט המבוך בלבד</value></data>
   <data name="Common.Secret.Party" xml:space="preserve"><value>נחשף לקבוצה</value></data>
   <data name="Common.Secret.Players" xml:space="preserve"><value>מה שהשחקנים יודעים</value></data>
+  <data name="Common.Editor.Templates" xml:space="preserve"><value>הוספת תבנית (או הקלידו את הקיצור שלה ו-Tab, או /)</value></data>
+  <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>עריכת תבניות…</value></data>
+  <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} מתוך {2} · Tab: הבא · Shift+Tab: הקודם · Esc: סיום</value></data>
 </root>

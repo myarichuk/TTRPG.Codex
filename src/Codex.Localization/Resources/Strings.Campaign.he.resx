@@ -528,4 +528,42 @@
   <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>הוסתר שוב מהשחקנים.</value></data>
   <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>הדף השתנה מאז שנפתח. הנה הוא כפי שהוא עכשיו; בדקו את הבלוק ונסו שוב.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{קטע אחד לשליט המבוך} two{שני קטעים לשליט המבוך} other{# קטעים לשליט המבוך}}</value></data>
+  <data name="Campaign.Templates.Title" xml:space="preserve"><value>תבניות</value></data>
+  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>שלדים לדפים חדשים וקטעים לכל דף: הקלידו את הקיצור של תבנית ולחצו Tab, או הקלידו / ובחרו אחת, ואז עברו משדה לשדה עם Tab.</value></data>
+  <data name="Campaign.Templates.DmOnly" xml:space="preserve"><value>רק שליט המבוך עורך תבניות.</value></data>
+  <data name="Campaign.Templates.New" xml:space="preserve"><value>תבנית חדשה</value></data>
+  <data name="Campaign.Templates.Pages" xml:space="preserve"><value>דפים</value></data>
+  <data name="Campaign.Templates.Snippets" xml:space="preserve"><value>קטעים</value></data>
+  <data name="Campaign.Templates.BuiltIn" xml:space="preserve"><value>מובנית</value></data>
+  <data name="Campaign.Templates.Changed" xml:space="preserve"><value>שונתה</value></data>
+  <data name="Campaign.Templates.Off" xml:space="preserve"><value>כבויה</value></data>
+  <data name="Campaign.Templates.Yours" xml:space="preserve"><value>שלכם</value></data>
+  <data name="Campaign.Templates.Field.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Campaign.Templates.Field.Abbreviation" xml:space="preserve"><value>קיצור</value></data>
+  <data name="Campaign.Templates.Field.Kind" xml:space="preserve"><value>שלד עבור</value></data>
+  <data name="Campaign.Templates.Field.Body" xml:space="preserve"><value>טקסט</value></data>
+  <data name="Campaign.Templates.Kind.None" xml:space="preserve"><value>ללא סוג (קטע)</value></data>
+  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>מילה אחת: הקלידו אותה בדף ולחצו Tab. השאירו ריק כדי שהתבנית תופיע רק בתפריט / ובכפתור התבניות של העורך.</value></data>
+  <data name="Campaign.Templates.KindHint" xml:space="preserve"><value>דף חדש מסוג זה יכול להתחיל ממנה, דף מסוג זה יכול להוסיף את הסעיפים החסרים לו, וה-AI כותב דפים כאלה לפיה. תבנית שלכם קודמת לתבנית המובנית.</value></data>
+  <data name="Campaign.Templates.Syntax" xml:space="preserve"><value>`$שם$` הוא שדה למילוי; אותו שם שוב חוזר על מה שהקלדתם. `$שם:טקסט$` מתחיל עם הטקסט. `$END$` הוא המקום שבו הסמן יסיים. `$$` הוא סימן דולר. קישורים, אזכורים וקטעים סודיים עובדים כמו בדפים.</value></data>
+  <data name="Campaign.Templates.Fields" xml:space="preserve"><value>שדות, לפי סדר Tab: {0}</value></data>
+  <data name="Campaign.Templates.NoFields" xml:space="preserve"><value>אין שדות: הטקסט נכנס כמו שהוא.</value></data>
+  <data name="Campaign.Templates.Save" xml:space="preserve"><value>שמירת התבנית</value></data>
+  <data name="Campaign.Templates.TurnOff" xml:space="preserve"><value>כיבוי</value></data>
+  <data name="Campaign.Templates.TurnOn" xml:space="preserve"><value>הפעלה</value></data>
+  <data name="Campaign.Templates.Restore" xml:space="preserve"><value>שחזור למקור</value></data>
+  <data name="Campaign.Templates.Delete" xml:space="preserve"><value>מחיקת התבנית</value></data>
+  <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>למחוק את ”{0}“?</value></data>
+  <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>דפים שנוצרו ממנה ישמרו על הטקסט שלהם.</value></data>
+  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>התבנית נשמרה.</value></data>
+  <data name="Campaign.Templates.Taken" xml:space="preserve"><value>הקיצור ”{0}“ כבר בשימוש בתבנית אחרת.</value></data>
+  <data name="Campaign.Templates.Refused" xml:space="preserve"><value>לא ניתן לשמור את התבנית: תנו לה שם, וקיצור של מילה אחת או בלי קיצור.</value></data>
+  <data name="Campaign.Templates.Restored" xml:space="preserve"><value>התבנית שוחזרה למקור.</value></data>
+  <data name="Campaign.Templates.Deleted" xml:space="preserve"><value>התבנית נמחקה.</value></data>
+  <data name="Campaign.Templates.Try" xml:space="preserve"><value>ניסיון</value></data>
+  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>הקלידו קיצור ולחצו Tab, או הקלידו /. התבנית שבעריכה מוצעת כפי שהיא עכשיו, שמורה או לא. מה שמוקלד כאן לא נשמר.</value></data>
+  <data name="Campaign.Wiki.StartFrom" xml:space="preserve"><value>להתחיל מתבנית:</value></data>
+  <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>הוספת הסעיפים החסרים מתוך ”{0}“</value></data>
+  <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>הסעיפים החסרים נוספו במקומם. מלאו אותם, או הסירו את מה שלא צריך.</value></data>
+  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>כדי להוסיף תבנית, הקלידו את הקיצור שלה ו-Tab, או `/`.</value></data>
 </root>

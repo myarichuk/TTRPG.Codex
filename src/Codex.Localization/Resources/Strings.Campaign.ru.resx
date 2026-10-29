@@ -528,4 +528,42 @@
   <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>Снова скрыто от игроков.</value></data>
   <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>Страница изменилась, пока была открыта. Вот её текущий вид: проверьте блок и попробуйте снова.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# блок мастера} few{# блока мастера} many{# блоков мастера} other{# блока мастера}}</value></data>
+  <data name="Campaign.Templates.Title" xml:space="preserve"><value>Шаблоны</value></data>
+  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>Заготовки новых страниц и фрагменты для любой страницы: наберите сокращение шаблона и нажмите Tab или наберите / и выберите шаблон, а затем переходите между полями по Tab.</value></data>
+  <data name="Campaign.Templates.DmOnly" xml:space="preserve"><value>Шаблоны редактирует только мастер.</value></data>
+  <data name="Campaign.Templates.New" xml:space="preserve"><value>Новый шаблон</value></data>
+  <data name="Campaign.Templates.Pages" xml:space="preserve"><value>Страницы</value></data>
+  <data name="Campaign.Templates.Snippets" xml:space="preserve"><value>Фрагменты</value></data>
+  <data name="Campaign.Templates.BuiltIn" xml:space="preserve"><value>Встроенный</value></data>
+  <data name="Campaign.Templates.Changed" xml:space="preserve"><value>Изменён</value></data>
+  <data name="Campaign.Templates.Off" xml:space="preserve"><value>Выключен</value></data>
+  <data name="Campaign.Templates.Yours" xml:space="preserve"><value>Ваш</value></data>
+  <data name="Campaign.Templates.Field.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Templates.Field.Abbreviation" xml:space="preserve"><value>Сокращение</value></data>
+  <data name="Campaign.Templates.Field.Kind" xml:space="preserve"><value>Заготовка для</value></data>
+  <data name="Campaign.Templates.Field.Body" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Templates.Kind.None" xml:space="preserve"><value>Без вида (фрагмент)</value></data>
+  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>Одно слово: наберите его на странице и нажмите Tab. Оставьте пустым, чтобы шаблон был только в меню / и под кнопкой шаблонов в редакторе.</value></data>
+  <data name="Campaign.Templates.KindHint" xml:space="preserve"><value>С неё может начинаться новая страница этого вида, страница этого вида может добавить недостающие разделы, и ИИ пишет такие страницы по ней. Ваш шаблон важнее встроенного.</value></data>
+  <data name="Campaign.Templates.Syntax" xml:space="preserve"><value>`$имя$` — поле для заполнения; то же имя ещё раз повторяет введённое. `$имя:текст$` сразу содержит текст. `$END$` — где окажется курсор в конце. `$$` — знак доллара. Ссылки, упоминания и секретные блоки работают как на страницах.</value></data>
+  <data name="Campaign.Templates.Fields" xml:space="preserve"><value>Поля в порядке Tab: {0}</value></data>
+  <data name="Campaign.Templates.NoFields" xml:space="preserve"><value>Полей нет: текст вставляется как есть.</value></data>
+  <data name="Campaign.Templates.Save" xml:space="preserve"><value>Сохранить шаблон</value></data>
+  <data name="Campaign.Templates.TurnOff" xml:space="preserve"><value>Выключить</value></data>
+  <data name="Campaign.Templates.TurnOn" xml:space="preserve"><value>Включить</value></data>
+  <data name="Campaign.Templates.Restore" xml:space="preserve"><value>Вернуть исходный</value></data>
+  <data name="Campaign.Templates.Delete" xml:space="preserve"><value>Удалить шаблон</value></data>
+  <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>Страницы, созданные по нему, сохранят свой текст.</value></data>
+  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>Шаблон сохранён.</value></data>
+  <data name="Campaign.Templates.Taken" xml:space="preserve"><value>Сокращение «{0}» уже занято другим шаблоном.</value></data>
+  <data name="Campaign.Templates.Refused" xml:space="preserve"><value>Не удалось сохранить шаблон: дайте ему название и сокращение из одного слова или без сокращения.</value></data>
+  <data name="Campaign.Templates.Restored" xml:space="preserve"><value>Исходный шаблон восстановлен.</value></data>
+  <data name="Campaign.Templates.Deleted" xml:space="preserve"><value>Шаблон удалён.</value></data>
+  <data name="Campaign.Templates.Try" xml:space="preserve"><value>Попробовать</value></data>
+  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>Наберите сокращение и нажмите Tab или наберите /. Редактируемый шаблон предлагается в текущем виде, даже несохранённый. Набранное здесь не сохраняется.</value></data>
+  <data name="Campaign.Wiki.StartFrom" xml:space="preserve"><value>Начать с шаблона:</value></data>
+  <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>Добавить недостающие разделы из «{0}»</value></data>
+  <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>Недостающие разделы добавлены на свои места. Заполните их или удалите ненужные.</value></data>
+  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>Чтобы вставить шаблон, наберите его сокращение и Tab или `/`.</value></data>
 </root>

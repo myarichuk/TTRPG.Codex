@@ -3,6 +3,7 @@
 @using Codex.Persistence
 @using Microsoft.AspNetCore.WebUtilities
 @inject IWikiRepository WikiRepo
+@inject ITemplateRepository TemplateRepo
 @inject IActorRepository ActorRepo
 @inject INoteRepository NoteRepo
 @inject IUserRepository UserRepo
@@ -72,11 +73,28 @@ else if (Mode == "edit")
                         </div>
                     </div>
                     <label for="wiki-body" class="field-label">@L["Campaign.Wiki.Field.Text"]</label>
+                    @if (templates != null && !expanding && string.IsNullOrWhiteSpace(draft.Body) && PageTemplates.Any())
+                    {
+                        <div class="template-start" data-testid="wiki-start-from">
+                            <span class="small-muted">@L["Campaign.Wiki.StartFrom"]</span>
+                            @foreach (var template in PageTemplates)
+                            {
+                                <button type="button" class="chip" @onclick="() => StartFromAsync(template)" data-testid="@($"wiki-start-{template.Id}")"><LucideIcon IconName="@KindIcon(template.PageKind!.Value)" Size="14" /> @template.Name</button>
+                            }
+                        </div>
+                    }
+                    else if (!expanding && MissingSections() is { } withSections)
+                    {
+                        <div class="template-start">
+                            <button type="button" class="chip" @onclick="() => AddSections(withSections)" data-testid="wiki-add-sections"><LucideIcon IconName="list-plus" Size="14" /> @L["Campaign.Wiki.AddSections", KindTemplate!.Name]</button>
+                        </div>
+                    }
                     <MarkdownEditor Id="wiki-body" Title="@(string.IsNullOrWhiteSpace(draft.Title) ? L["Campaign.Wiki.Field.Text"] : draft.Title)" Rows="18" Class="wiki-editor"
+                                    Templates="templates" TemplatesHref="@($"{Ctx.BasePath}/templates")"
                                     @bind-Value="draft.Body" Mentions="@mentionsJson" DescribedBy="wiki-body-hint" TestId="wiki-body" Placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"
                                     Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false, DmView.From(L, mentions)))" Secrets="true"
                                     Busy="expanding" BusyText="@L["Campaign.Wiki.Writing"]" OnStop="aiCall.Stop">
-                        <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"] @Rich(L["Campaign.Wiki.SecretHint"])</div>
+                        <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"] @Rich(L["Campaign.Wiki.SecretHint"]) @Rich(L["Campaign.Wiki.TemplateHint"])</div>
                     </MarkdownEditor>
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
@@ -458,6 +476,7 @@ else
                         </div>
                     </details>
                 }
+                <a href="@Ctx.BasePath/templates" class="cx-btn cx-etched" data-testid="wiki-templates"><LucideIcon IconName="braces" Size="18" /> @L["Campaign.Templates.Title"]</a>
                 <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
             </div>
         }
@@ -639,6 +658,7 @@ else
             ? await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors)
             : MentionDirectory.Empty;
         mentionsJson = MentionLinks.Json(mentions, Ctx.Actors);
+        templates = Mode == "edit" ? await TemplateRepo.GetAsync(Ctx.Access, L) : null;
 
         if (Slug == "new")
         {
@@ -821,25 +841,7 @@ else
         }
     }
 
-    /// <summary>Renders a localized sentence in which `backtick` segments are code samples.</summary>
-    private static RenderFragment Rich(string template) => builder =>
-    {
-        var parts = template.Split('`');
-        for (var i = 0; i < parts.Length; i++)
-        {
-            if (parts[i].Length == 0) continue;
-            if (i % 2 == 1)
-            {
-                builder.OpenElement(0, "code");
-                builder.AddContent(1, parts[i]);
-                builder.CloseElement();
-            }
-            else
-            {
-                builder.AddContent(2, parts[i]);
-            }
-        }
-    };
+    private static RenderFragment Rich(string text) => RichText.Code(text);
 
     private static string NotesTarget(WikiPageDocument page) => $"wiki:{page.Id}";
 
@@ -1001,6 +1003,36 @@ else
         }
     }
 
+    // ---- Templates ----
+
+    /// <summary>The DM's templates (see LiveTemplate) while editing; null otherwise.</summary>
+    private IReadOnlyList<TextTemplate>? templates;
+
+    /// <summary>The outlines a new page can start from.</summary>
+    private IEnumerable<TextTemplate> PageTemplates => TemplateSet.InUse(templates ?? Array.Empty<TextTemplate>()).Where(t => t.PageKind != null);
+
+    /// <summary>The outline of pages of this page's kind (a page on the map is a place's).</summary>
+    private TextTemplate? KindTemplate => templates == null ? null : TemplateSet.ForKind(templates, linked != null ? WikiPageKind.Place : draft.Kind);
+
+    // The page with the sections of its kind's outline it lacks, or null when it lacks none (or is still empty: then it starts
+    // from a template instead).
+    private string? MissingSections() =>
+        string.IsNullOrWhiteSpace(draft.Body) || KindTemplate is not { } template ? null : LiveTemplate.AddMissingSections(draft.Body, template.Body);
+
+    // Puts the outline in the box as a template being filled (the script steps through its fields), and makes the page that kind.
+    private async Task StartFromAsync(TextTemplate template)
+    {
+        if (linked == null) draft.Kind = template.PageKind!.Value;
+        var index = TemplateSet.InUse(templates!).ToList().FindIndex(t => t.Id == template.Id);
+        await JS.InvokeVoidAsync("codex.mdTemplate", "wiki-body", index);
+    }
+
+    private void AddSections(string body)
+    {
+        draft.Body = body;
+        Ctx.Notify(Flash.Info(L["Campaign.Wiki.SectionsAdded"]));
+    }
+
     private async Task ExpandAsync()
     {
         if (expanding) return;
@@ -1009,7 +1041,8 @@ else
         try
         {
             var related = WikiText.ExtractLinks(draft.Body).Concat((pages ?? new()).Select(p => p.Title)).Distinct(StringComparer.OrdinalIgnoreCase);
-            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, linked != null ? WikiPageKind.Place : draft.Kind, draft.Body, related, SubjectContext(), aiInstruction, Ctx.UserId, ct);
+            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, linked != null ? WikiPageKind.Place : draft.Kind, draft.Body, related, SubjectContext(), aiInstruction, Ctx.UserId, ct,
+                KindTemplate?.Body);
             Ctx.Notify(Flash.Info(L["Campaign.Wiki.AiDraftReady"]));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)

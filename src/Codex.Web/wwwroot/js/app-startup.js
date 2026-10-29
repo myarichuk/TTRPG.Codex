@@ -115,11 +115,17 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
     // Mentions in note boxes: typing @ (a character), # (a place) or $ (an item) offers matching names from the
     // box's data-mentions list. Picking one writes "@Name" into the box; the server turns names into ids when the
     // note is saved. The list lives on <body>, outside anything Blazor renders, so a re-render can't disturb it.
+    // A box with templates (data-templates) also offers them after a "/" that starts a word: picking one puts it in.
     (function () {
         const MAX = 8;
         let list = null, field = null, items = [], active = 0, start = -1;
 
-        function candidates(el) {
+        function candidates(el, trigger) {
+            if (trigger === "/") {
+                return window.codexTemplates.of(el).map(function (t, i) {
+                    return { t: "/", n: t.a || t.n, k: t.a ? t.n : "", i: i };
+                });
+            }
             if (el._mentionsSource !== el.dataset.mentions) {
                 el._mentionsSource = el.dataset.mentions;
                 try { el._mentions = JSON.parse(el.dataset.mentions || "[]"); } catch { el._mentions = []; }
@@ -137,16 +143,22 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
                 if ((ch === "@" || ch === "#" || ch === "$") && (i === 0 || !/[\p{L}\p{N}]/u.test(before[i - 1]))) {
                     return { trigger: ch, text: before.slice(i + 1), start: i };
                 }
+                // "/" only where a word starts, so "and/or" and a link's "https://" never open the list.
+                if (ch === "/" && el.hasAttribute("data-templates") && (i === 0 || /\s/.test(before[i - 1]))) {
+                    return { trigger: ch, text: before.slice(i + 1), start: i };
+                }
             }
             return null;
         }
 
         function matches(el, q) {
             const needle = q.text.toLowerCase();
-            return candidates(el).filter(function (c) {
+            return candidates(el, q.trigger).filter(function (c) {
                 if (c.t !== q.trigger) return false;
-                const name = c.n.toLowerCase();
-                return name.startsWith(needle) || name.split(/\s+/).some(function (word) { return word.startsWith(needle); });
+                return [c.n, c.t === "/" ? c.k : ""].some(function (text) {
+                    const name = text.toLowerCase();
+                    return name.startsWith(needle) || name.split(/\s+/).some(function (word) { return word.startsWith(needle); });
+                });
             }).slice(0, MAX);
         }
 
@@ -244,6 +256,12 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
             const c = items[index], el = field;
             if (!c || !el) return;
             const caret = el.selectionStart;
+            if (c.t === "/") {
+                const from = start;
+                close();
+                window.codexTemplates.insert(el, c.i, from, caret);
+                return;
+            }
             const insert = c.t + c.n + " ";
             el.value = el.value.slice(0, start) + insert + el.value.slice(caret);
             const at = start + insert.length;
@@ -254,7 +272,7 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
         }
 
         document.addEventListener("input", function (e) {
-            if (e.target instanceof HTMLElement && e.target.hasAttribute("data-mentions")) update(e.target);
+            if (e.target instanceof HTMLElement && (e.target.hasAttribute("data-mentions") || e.target.hasAttribute("data-templates"))) update(e.target);
         });
 
         // Capture on window, ahead of Blazor and the drawer: while the list is open, its keys are the list's.
@@ -554,6 +572,14 @@ window.codex = {
         mdReplace(el, s, e, text);
         el.setSelectionRange(s + 6, s + 6 + (picked.trim() === "" ? 0 : picked.length));
     },
+    // Puts template number <index> of the box's data-templates in at the caret (the editor's template menu, a new page).
+    mdTemplate: function (id, index) {
+        const el = document.getElementById(id);
+        document.querySelectorAll("details.md-templates[open]").forEach(function (d) { d.open = false; });
+        if (!el || el.readOnly) return;
+        el.focus();
+        window.codexTemplates.insert(el, index, el.selectionStart, el.selectionEnd);
+    },
     // A detail pane that is a full-screen sheet on a phone (.phone-sheet): move focus into it when it opens,
     // so keyboards and screen readers follow. Beside the list on a wide screen it is left alone.
     // Opening and closing a Library entry are navigations, and Blazor scrolls to the top after each one;
@@ -611,3 +637,201 @@ document.addEventListener("click", function (e) {
 
 // Kept for backwards compatibility with earlier builds.
 window.codexDownload = window.codex.download;
+
+// Live templates (LiveTemplate.cs) in a box with data-templates: [{ a: abbreviation, n: name, b: body }]. Typing an
+// abbreviation and Tab puts its template in; then Tab and Shift+Tab step through its fields, a field used twice repeats what
+// is typed in the first, and Tab after the last field (or Escape, or leaving the box) ends it. Tab anywhere else still moves
+// focus, so a keyboard user is never trapped. While a template is being filled, a hint (data-template-hint, with {0} the
+// field, {1} its number and {2} how many) says where the caret is.
+window.codexTemplates = (function () {
+    // Keep in step with Token in LiveTemplate.cs.
+    const TOKEN = /\$\$|\$([\p{L}\p{N}_]+)(?::([^$\r\n]*))?\$/gu;
+    let s = null;
+    let hint = null;
+    let mirroring = false;
+
+    function of(el) {
+        if (el._templatesSource !== el.dataset.templates) {
+            el._templatesSource = el.dataset.templates;
+            try { el._templates = JSON.parse(el.dataset.templates || "[]"); } catch { el._templates = []; }
+        }
+        return el._templates;
+    }
+
+    function expand(body) {
+        const defaults = {};
+        for (const m of body.matchAll(TOKEN)) {
+            if (m[1] !== undefined && m[2] !== undefined && !(m[1] in defaults)) defaults[m[1]] = m[2];
+        }
+        let text = "", at = 0, end = -1;
+        const fields = [], seen = new Set();
+        for (const m of body.matchAll(TOKEN)) {
+            text += body.slice(at, m.index);
+            at = m.index + m[0].length;
+            if (m[1] === undefined) { text += "$"; continue; }
+            if (m[1] === "END") { if (end < 0) end = text.length; continue; }
+            const value = defaults[m[1]] || "";
+            fields.push({ name: m[1], start: text.length, end: text.length + value.length, mirror: seen.has(m[1]) });
+            seen.add(m[1]);
+            text += value;
+        }
+        text += body.slice(at);
+        return { text: text, fields: fields, end: end < 0 ? text.length : end };
+    }
+
+    function insert(el, index, from, to) {
+        const t = of(el)[index];
+        if (!t || el.readOnly) return;
+        stop();
+        const x = expand(t.b.replace(/\r\n/g, "\n"));
+        mdReplace(el, from, to, x.text);
+        const fields = x.fields.map(function (f) { return { name: f.name, start: f.start + from, end: f.end + from, mirror: f.mirror }; });
+        const stops = fields.filter(function (f) { return !f.mirror; });
+        if (stops.length === 0) {
+            el.setSelectionRange(from + x.end, from + x.end);
+            return;
+        }
+        s = { el: el, fields: fields, stops: stops, end: from + x.end, index: 0, value: el.value };
+        go(0);
+    }
+
+    function go(i) {
+        s.index = i;
+        const f = s.stops[i];
+        s.el.setSelectionRange(f.start, f.end);
+        show();
+    }
+
+    function stop() {
+        s = null;
+        if (hint) { hint.hidden = true; hint.textContent = ""; }
+    }
+
+    function finish() {
+        const el = s.el, end = s.end;
+        stop();
+        el.setSelectionRange(end, end);
+    }
+
+    function show() {
+        if (!hint) {
+            hint = document.createElement("div");
+            hint.className = "template-hint";
+            hint.setAttribute("role", "status");
+            hint.setAttribute("aria-live", "polite");
+            hint.dataset.testid = "template-hint";
+            document.body.appendChild(hint);
+        }
+        const f = s.stops[s.index];
+        const words = s.el.dataset.templateHint || "{0} ({1}/{2})";
+        hint.textContent = words.replace("{0}", f.name.replace(/_/g, " ")).replace("{1}", s.index + 1).replace("{2}", s.stops.length);
+        // In the box's bottom corner on the end side (left in Hebrew), or the bottom of the screen when that is out of view.
+        const box = s.el.getBoundingClientRect();
+        hint.hidden = false;
+        const rtl = getComputedStyle(s.el).direction === "rtl";
+        const left = rtl ? box.left + 18 : box.right - hint.offsetWidth - 18;
+        hint.style.left = Math.max(8, Math.min(left, window.innerWidth - hint.offsetWidth - 8)) + "px";
+        hint.style.top = Math.max(8, Math.min(box.bottom, window.innerHeight) - hint.offsetHeight - 8) + "px";
+    }
+
+    // The edit just made: the old text from p to oldEnd became the new text from p to newEnd. Typing, deleting and pasting
+    // all leave the caret at the end of what changed, which settles where a run of equal letters was typed.
+    function change(before, after, caret) {
+        const tail = after.length - caret;
+        let p = 0;
+        const limit = Math.min(before.length, after.length);
+        while (p < limit && before[p] === after[p]) p++;
+        if (tail >= 0 && tail <= before.length && before.slice(before.length - tail) === after.slice(caret)) {
+            return { p: Math.min(p, caret, before.length - tail), oldEnd: before.length - tail, newEnd: caret };
+        }
+        let q = 0;
+        while (q < limit - p && before[before.length - 1 - q] === after[after.length - 1 - q]) q++;
+        return { p: p, oldEnd: before.length - q, newEnd: after.length - q };
+    }
+
+    function shift(from, delta, except) {
+        s.fields.forEach(function (f) {
+            if (f === except) return;
+            if (f.start >= from) f.start += delta;
+            if (f.end >= from) f.end += delta;
+        });
+        if (s.end >= from) s.end += delta;
+    }
+
+    function edited(el) {
+        const c = change(s.value, el.value, el.selectionStart);
+        const delta = (c.newEnd - c.p) - (c.oldEnd - c.p);
+        // The field the edit is in: the one being filled first, then any (a click into another before typing).
+        const inside = function (f) { return c.p >= f.start && c.oldEnd <= f.end; };
+        const field = inside(s.stops[s.index]) ? s.stops[s.index] : s.fields.find(inside);
+        if (!field) { stop(); return; }
+        const oldEnd = field.end;
+        field.end += delta;
+        shift(oldEnd, delta, field);
+        const value = el.value.slice(field.start, field.end);
+        let caret = el.selectionStart;
+        // Repeat it in the field's other uses, last first so the earlier positions stay right.
+        s.fields.filter(function (f) { return f !== field && f.name === field.name; })
+            .sort(function (a, b) { return b.start - a.start; })
+            .forEach(function (m) {
+                const d = value.length - (m.end - m.start);
+                if (d === 0 && el.value.slice(m.start, m.end) === value) return;
+                el.setRangeText(value, m.start, m.end, "preserve");
+                const mEnd = m.end;
+                m.end = m.start + value.length;
+                shift(mEnd, d, m);
+                if (m.start < caret) caret += d;
+            });
+        if (el.value !== s.value) {
+            el.setSelectionRange(caret, caret);
+            mirroring = true;
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            mirroring = false;
+        }
+        // Typing in a repeat of a field counts as being in the field.
+        s.index = s.stops.findIndex(function (f) { return f.name === field.name; });
+        s.value = el.value;
+        show();
+    }
+
+    document.addEventListener("input", function (e) {
+        if (!s || mirroring || e.target !== s.el) return;
+        edited(s.el);
+    });
+
+    document.addEventListener("focusout", function (e) { if (s && e.target === s.el) stop(); });
+    window.addEventListener("resize", function () { if (s) show(); });
+
+    // On window, after the suggestion list (which takes Tab and Escape first while it is open).
+    window.addEventListener("keydown", function (e) {
+        const el = e.target;
+        if (e.defaultPrevented || !(el instanceof HTMLTextAreaElement) || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (s && el === s.el && el.value !== s.value) stop(); // changed from outside (the AI, a re-render)
+        if (s && el === s.el) {
+            if (e.key === "Escape") {
+                stop();
+            } else if (e.key === "Tab") {
+                if (e.shiftKey) go(Math.max(0, s.index - 1));
+                else if (s.index + 1 < s.stops.length) go(s.index + 1);
+                else finish();
+            } else {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        if (e.key !== "Tab" || e.shiftKey || !el.hasAttribute("data-templates") || el.readOnly || el.selectionStart !== el.selectionEnd) return;
+        const before = el.value.slice(0, el.selectionStart);
+        const word = /(?:^|[^\p{L}\p{N}_-])([\p{L}\p{N}_-]+)$/u.exec(before);
+        if (!word) return;
+        const typed = word[1].toLowerCase();
+        const index = of(el).findIndex(function (t) { return t.a && t.a.toLowerCase() === typed; });
+        if (index < 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        insert(el, index, el.selectionStart - word[1].length, el.selectionStart);
+    }, true);
+
+    return { of: of, insert: insert, expand: expand };
+})();

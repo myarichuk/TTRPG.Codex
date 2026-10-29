@@ -38,6 +38,21 @@ public class AiPromptsTests
     }
 
     [Fact]
+    public void WikiPage_AndWorldChat_FollowTheDmsOutline_WhenThereIsOne()
+    {
+        var outline = Codex.Core.LiveTemplate.Sample("## Rumours\n- $rumour$\n\n## Stock\n$stock$");
+        var (_, user) = AiPrompts.WikiPage(new WikiPageRequest("Mira's shop", "place", "", "", Array.Empty<string>(), Array.Empty<string>(), Structure: outline));
+        var (_, without) = AiPrompts.WikiPage(new WikiPageRequest("Mira's shop", "place", "", "", Array.Empty<string>(), Array.Empty<string>()));
+        var chat = AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", null, Array.Empty<string>(), Outlines: new Dictionary<string, string> { ["place"] = outline }));
+
+        Assert.Contains("## Rumours\n- ‹rumour›\n\n## Stock\n‹stock›", user);
+        Assert.Contains("in this order", user);
+        Assert.DoesNotContain("outline", without);
+        Assert.Contains("Outline of a place page:\n## Rumours", chat);
+        Assert.DoesNotContain("Outline of a", AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", null, Array.Empty<string>())));
+    }
+
+    [Fact]
     public void Rewrite_OfATextWithDmBlocks_KeepsThem()
     {
         var (system, _) = AiPrompts.Rewrite(new RewriteRequest("Aria", "character", Array.Empty<string>(), "Born at sea.\n:::dm\nSecret.\n:::", "", AiAudience.Players));

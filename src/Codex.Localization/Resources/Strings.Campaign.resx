@@ -528,4 +528,42 @@
   <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>Hidden from players again.</value></data>
   <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>The page changed since you opened it. Here it is as it is now; check the block and try again.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# DM block} other{# DM blocks}}</value></data>
+  <data name="Campaign.Templates.Title" xml:space="preserve"><value>Templates</value></data>
+  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>Outlines for new pages, and snippets for any page: type a template’s abbreviation and press Tab, or type / and pick one, then Tab from field to field.</value></data>
+  <data name="Campaign.Templates.DmOnly" xml:space="preserve"><value>Only the DM edits templates.</value></data>
+  <data name="Campaign.Templates.New" xml:space="preserve"><value>New template</value></data>
+  <data name="Campaign.Templates.Pages" xml:space="preserve"><value>Pages</value></data>
+  <data name="Campaign.Templates.Snippets" xml:space="preserve"><value>Snippets</value></data>
+  <data name="Campaign.Templates.BuiltIn" xml:space="preserve"><value>Built-in</value></data>
+  <data name="Campaign.Templates.Changed" xml:space="preserve"><value>Changed</value></data>
+  <data name="Campaign.Templates.Off" xml:space="preserve"><value>Off</value></data>
+  <data name="Campaign.Templates.Yours" xml:space="preserve"><value>Yours</value></data>
+  <data name="Campaign.Templates.Field.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.Templates.Field.Abbreviation" xml:space="preserve"><value>Abbreviation</value></data>
+  <data name="Campaign.Templates.Field.Kind" xml:space="preserve"><value>Outline for</value></data>
+  <data name="Campaign.Templates.Field.Body" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Templates.Kind.None" xml:space="preserve"><value>No kind (a snippet)</value></data>
+  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>One word: type it in a page and press Tab. Leave it empty to offer the template only in the / menu and the editor’s template button.</value></data>
+  <data name="Campaign.Templates.KindHint" xml:space="preserve"><value>A new page of this kind can start from it, a page of this kind can add the sections it lacks, and the AI writes such pages to it. Your own template comes before the built-in one.</value></data>
+  <data name="Campaign.Templates.Syntax" xml:space="preserve"><value>`$name$` is a field to fill in; the same name again repeats what you type. `$name:text$` starts out holding the text. `$END$` is where the cursor ends up. `$$` is a dollar sign. Links, mentions and secret blocks work as in pages.</value></data>
+  <data name="Campaign.Templates.Fields" xml:space="preserve"><value>Fields, in Tab order: {0}</value></data>
+  <data name="Campaign.Templates.NoFields" xml:space="preserve"><value>No fields: the text goes in as it is.</value></data>
+  <data name="Campaign.Templates.Save" xml:space="preserve"><value>Save template</value></data>
+  <data name="Campaign.Templates.TurnOff" xml:space="preserve"><value>Turn off</value></data>
+  <data name="Campaign.Templates.TurnOn" xml:space="preserve"><value>Turn on</value></data>
+  <data name="Campaign.Templates.Restore" xml:space="preserve"><value>Restore as it ships</value></data>
+  <data name="Campaign.Templates.Delete" xml:space="preserve"><value>Delete template</value></data>
+  <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>Pages made from it keep their text.</value></data>
+  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>Template saved.</value></data>
+  <data name="Campaign.Templates.Taken" xml:space="preserve"><value>Another template already uses the abbreviation “{0}”.</value></data>
+  <data name="Campaign.Templates.Refused" xml:space="preserve"><value>The template could not be saved: give it a name, and an abbreviation of one word or none.</value></data>
+  <data name="Campaign.Templates.Restored" xml:space="preserve"><value>Restored as it ships.</value></data>
+  <data name="Campaign.Templates.Deleted" xml:space="preserve"><value>Template deleted.</value></data>
+  <data name="Campaign.Templates.Try" xml:space="preserve"><value>Try it</value></data>
+  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>Type an abbreviation and press Tab, or type /. The template being edited is offered as it is now, saved or not. Nothing typed here is kept.</value></data>
+  <data name="Campaign.Wiki.StartFrom" xml:space="preserve"><value>Start from:</value></data>
+  <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>Add the sections of “{0}” this page lacks</value></data>
+  <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>Added the missing sections where the template has them. Fill them in, or remove the ones you don’t need.</value></data>
+  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>Type a template’s abbreviation and Tab, or `/`, to put it in.</value></data>
 </root>

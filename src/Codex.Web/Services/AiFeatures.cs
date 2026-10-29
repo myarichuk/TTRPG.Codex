@@ -103,7 +103,9 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// <summary>Writes or expands a wiki page for the DM. <paramref name="context"/> is what the campaign already says about the
     /// page's subject (the history of the character it is about, the description of its place), which the page must agree with.
     /// The page may hold secrets, in DM blocks: the DM's is the only audience, and players are given the page without them.</summary>
-    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, WikiPageKind kind, string body, IEnumerable<string> relatedTitles, IReadOnlyList<string> context, string instruction, string userId, CancellationToken ct = default)
+    /// <param name="outline">The DM's template for pages of this kind (see <c>LiveTemplate</c>), which the page follows; null for none.</param>
+    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, WikiPageKind kind, string body, IEnumerable<string> relatedTitles, IReadOnlyList<string> context, string instruction, string userId, CancellationToken ct = default,
+        string? outline = null)
     {
         var assistant = await providers.AssistantForAsync(userId);
         var setting = $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(400) is { Length: > 0 } blurb ? ": " + blurb : "")}";
@@ -115,7 +117,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             relatedTitles.Take(30).ToList(),
             context,
             setting,
-            Language: Lang), ct);
+            Language: Lang,
+            Structure: string.IsNullOrWhiteSpace(outline) ? null : LiveTemplate.Sample(outline)), ct);
     }
 
     /// <summary>Writes or polishes the description of a Library entry or a place. The facts are the
