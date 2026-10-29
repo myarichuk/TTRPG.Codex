@@ -68,7 +68,7 @@
   <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>יצירת דמות</value></data>
   <data name="Campaign.Cast.Mine" xml:space="preserve"><value>שלי</value></data>
   <data name="Campaign.Cast.HiddenFromPlayers" xml:space="preserve"><value>מוסתר מהשחקנים</value></data>
-  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>זהות לא ידועה</value></data>
+  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>נראה בתור ”{0}“</value></data>
   <data name="Campaign.Cast.Reveal" xml:space="preserve"><value>חשיפה</value></data>
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>חשיפת {0} בפני השחקנים</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>הסתרה</value></data>
@@ -159,8 +159,8 @@
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>עדיין אין תוכן ביתי לייצוא.</value></data>
   <data name="Campaign.Library.Exported" xml:space="preserve"><value>יוצאו רשומות: {0}. הניחו את קובץ ה-zip בתיקיית התוכן כדי לטעון אותו כחבילה.</value></data>
   <data name="Campaign.Lore.Title" xml:space="preserve"><value>אגדות עולם</value></data>
-  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>עובדות על העולם ומי מכיר אותן. אפשר לחשוף לכל הקבוצה או לדמות אחת.</value></data>
-  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>מה שהדמויות שלכם יודעות. עובדות מופיעות כאן כששליט המבוך חושף אותן.</value></data>
+  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>עובדות על העולם ומי מכיר אותן, וכל הסודות של הוויקי. אפשר לחשוף לכל הקבוצה או לדמות אחת.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>מה שהדמויות שלכם יודעות: עובדות, ומה שנחשף בוויקי, כששליט המבוך חושף אותם.</value></data>
   <data name="Campaign.Lore.Search" xml:space="preserve"><value>חיפוש באגדות העולם</value></data>
   <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>חיפוש באגדות העולם…</value></data>
   <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>סינון לפי נראות</value></data>
@@ -173,7 +173,6 @@
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>לא נמצאו אגדות מתאימות</value></data>
   <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה בצד.</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>עדיין לא נחשף בפניכם דבר.</value></data>
-  <data name="Campaign.Lore.KnownBy" xml:space="preserve"><value>מכירים: {0}</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>עדיין אף אחד</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>חשיפה בפני</value></data>
   <data name="Campaign.Lore.HowWell" xml:space="preserve"><value>באיזו מידה</value></data>
@@ -488,7 +487,7 @@
   <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>פלג</value></data>
   <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>משימה</value></data>
   <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>לחשוף את {0}?</value></data>
-  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>השחקנים יוכלו לקרוא את ההיסטוריה של הדמות. אם היא הגיעה מדף ויקי של מנחה בלבד, כדאי לבדוק קודם שאין בה סודות.</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>השחקנים יוכלו לקרוא את ההיסטוריה של הדמות, מלבד הבלוקים של שליט המבוך. כדאי לבדוק קודם שאין סודות בשאר.</value></data>
   <data name="Campaign.Places.Inside" xml:space="preserve"><value>בתוך</value></data>
   <data name="Campaign.Places.InRegion" xml:space="preserve"><value>ישירות ב{0}</value></data>
   <data name="Campaign.Places.InPlace" xml:space="preserve"><value>בתוך {0}</value></data>
@@ -566,4 +565,42 @@
   <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>הוספת הסעיפים החסרים מתוך ”{0}“</value></data>
   <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>הסעיפים החסרים נוספו במקומם. מלאו אותם, או הסירו את מה שלא צריך.</value></data>
   <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>כדי להוסיף תבנית, הקלידו את הקיצור שלה ו-Tab, או `/`.</value></data>
+  <data name="Campaign.Cast.Stranger" xml:space="preserve"><value>להציג כדמות זרה</value></data>
+  <data name="Campaign.Cast.StrangerLabel" xml:space="preserve"><value>להציג לשחקנים את {0} כדמות זרה</value></data>
+  <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>השחקנים יראו שמישהו שם, בשם שתתנו בדף הדמות, אבל לא מי זה.</value></data>
+  <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>השחקנים רואים עכשיו את {0} בתור ”{1}“.</value></data>
+  <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>שמירת העובדה</value></data>
+  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>העובדה נשמרה.</value></data>
+  <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>אזכרו @דמויות ו#מקומות, וקשרו ל[[דפים]]: העובדה תופיע אז בדפים ובדפי הדמות שלהם.</value></data>
+  <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>יודעים:</value></data>
+  <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} שוכחים את זה</value></data>
+  <data name="Campaign.Lore.Forgotten" xml:space="preserve"><value>{0} כבר לא יודעים את זה.</value></data>
+  <data name="Campaign.Lore.PlayerCharacters" xml:space="preserve"><value>דמויות השחקנים</value></data>
+  <data name="Campaign.Lore.Others" xml:space="preserve"><value>אחרים</value></data>
+  <data name="Campaign.Lore.HideAgain" xml:space="preserve"><value>הסתרה מחדש</value></data>
+  <data name="Campaign.Lore.Hidden" xml:space="preserve"><value>הוסתר מהקבוצה. הדמויות שזה נחשף בפניהן עדיין יודעות.</value></data>
+  <data name="Campaign.Lore.Edit" xml:space="preserve"><value>עריכה</value></data>
+  <data name="Campaign.Lore.DeleteLabel" xml:space="preserve"><value>מחיקת העובדה ”{0}“</value></data>
+  <data name="Campaign.Lore.DeleteQ" xml:space="preserve"><value>למחוק את ”{0}“?</value></data>
+  <data name="Campaign.Lore.DeleteBody" xml:space="preserve"><value>מי שידע אותה לא ימצא אותה יותר בידע שלו.</value></data>
+  <data name="Campaign.Lore.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Lore.Deleted" xml:space="preserve"><value>העובדה נמחקה.</value></data>
+  <data name="Campaign.Lore.Wiki.Dm" xml:space="preserve"><value>סודות בוויקי</value></data>
+  <data name="Campaign.Lore.Wiki.Player" xml:space="preserve"><value>מה שנלמד בוויקי</value></data>
+  <data name="Campaign.Lore.Wiki.DmHint" xml:space="preserve"><value>כל הבלוקים של שליט המבוך בכל הדפים, ולמי הם נחשפו. חושפים ומסתירים אותם בדפים עצמם.</value></data>
+  <data name="Campaign.Lore.Wiki.PlayerHint" xml:space="preserve"><value>מה ששליט המבוך חשף בדפי הוויקי, החדש ביותר קודם.</value></data>
+  <data name="Campaign.Lore.About" xml:space="preserve"><value>אגדות עולם</value></data>
+  <data name="Campaign.Lore.AllLore" xml:space="preserve"><value>כל אגדות העולם</value></data>
+  <data name="Campaign.Lore.AboutNone" xml:space="preserve"><value>עדיין אין עובדות שמזכירות את זה.</value></data>
+  <data name="Campaign.Lore.AddAbout" xml:space="preserve"><value>הוספת עובדה על זה</value></data>
+  <data name="Campaign.Wiki.Secrets.Told" xml:space="preserve"><value>לשחקנים מספרים: {0}</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersion" xml:space="preserve"><value>הגרסה לשחקנים</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionTitle" xml:space="preserve"><value>מה שמספרים לשחקנים במקום הסוד: שמועה, מה שכל אחד שם יכול לראות. נכנס מיד אחרי הסוד.</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftLabel" xml:space="preserve"><value>מה שהשחקנים יודעים</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftHint" xml:space="preserve"><value>קראו לפני שזה נכנס לדף: כשהדף משותף, השחקנים קוראים את זה.</value></data>
+  <data name="Campaign.Wiki.Secrets.PutOnPage" xml:space="preserve"><value>הוספה לדף</value></data>
+  <data name="Campaign.Wiki.Secrets.Discard" xml:space="preserve"><value>ביטול</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים קוראים אותה עכשיו; הסוד נשאר מוסתר.</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים יקראו אותה כשתשתפו את הדף.</value></data>
+  <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>עריכת הגרסה לשחקנים</value></data>
 </root>

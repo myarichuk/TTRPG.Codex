@@ -5,7 +5,9 @@ public interface IActorRepository
     /// <summary>
     /// Loads an actor by id, scoped to what <paramref name="access"/> is allowed to see. Returns
     /// null both when the actor doesn't exist and when it exists but is Hidden/not-owned from a
-    /// non-DM - the two cases are indistinguishable to a player on purpose (1.4).
+    /// non-DM - the two cases are indistinguishable to a player on purpose (1.4). An Unknown actor
+    /// a player does not own comes back as a stranger: its id, kind, public name and public
+    /// description, nothing else.
     /// </summary>
     Task<ActorDocument?> GetVisibleAsync(string actorId, CampaignAccess access);
 
@@ -31,11 +33,10 @@ public interface IActorRepository
 
     /// <summary>
     /// Actors in <paramref name="access"/>'s campaign that <paramref name="access"/> is allowed to
-    /// see: everything for a DM; for a Player, actors that are <see cref="ActorVisibility.Known"/>
-    /// or that they own, with Unknown-but-owned actors excluded because ownership without
-    /// knowledge doesn't happen in practice and the plan calls for a strict allow-list. The
-    /// filter runs in the Raven query, not after loading, so a hidden actor's data never leaves
-    /// the database for a player's session.
+    /// see: everything for a DM; for a Player, every actor that is not <see cref="ActorVisibility.Hidden"/>,
+    /// and the ones they own. An <see cref="ActorVisibility.Unknown"/> actor they do not own comes as a
+    /// stranger (see <see cref="GetVisibleAsync"/>). The Hidden filter runs in the Raven query, not after
+    /// loading, so a hidden actor's data never leaves the database for a player's session.
     /// </summary>
     Task<IEnumerable<ActorDocument>> GetVisibleForCampaignAsync(CampaignAccess access);
 

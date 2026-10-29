@@ -244,7 +244,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task GetVisibleForCampaign_AsPlayer_HidesUnownedUnknownActors_Async()
+    public async Task GetVisibleForCampaign_AsPlayer_LeavesHiddenActorsOut_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
 
@@ -1224,6 +1224,169 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         // Saving again (a live table applies a save twice) does not repeat the secret.
         Assert.True(await _actorRepository.TrySaveAsync((await _actorRepository.GetVisibleAsync(pc.Id, player))!, player));
         Assert.Single(SecretText.SecretBlocks((await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Biography));
+    }
+
+    [Fact]
+    public async Task AnUnknownActor_ReachesPlayersAsAStranger_WithNothingButTheirPublicFace()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var vizier = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Vizier Mor", Kind = ActorKind.NonPlayerCharacter, Visibility = ActorVisibility.Unknown,
+            PublicName = "Hooded stranger", PublicDescription = "Pays in old silver.\n:::dm\nThe vizier in disguise.\n:::",
+            Biography = "Mor poisoned the old king.", DmNotes = "Weak to fire.", BlueprintId = "srd5e:mage", WikiPageId = "page-mor",
+            HasPortrait = true, Sheet = new Dictionary<string, object> { ["level"] = 9 }, State = new Dictionary<string, object> { ["hp"] = 40 }
+        };
+        var nameless = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Sister Vel", Visibility = ActorVisibility.Unknown };
+        var hidden = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Cult Leader", Visibility = ActorVisibility.Hidden };
+        foreach (var actor in new[] { vizier, nameless, hidden }) await _actorRepository.SaveAsync(actor);
+
+        var listed = (await _actorRepository.GetVisibleForCampaignAsync(player)).ToList();
+        var byId = await _actorRepository.GetVisibleAsync(vizier.Id, player);
+        Assert.DoesNotContain(listed, a => a.Id == hidden.Id);
+        Assert.Null(await _actorRepository.GetVisibleAsync(hidden.Id, player));
+        foreach (var mask in new[] { listed.Single(a => a.Id == vizier.Id), byId! })
+        {
+            Assert.Equal("Hooded stranger", mask.Name);
+            Assert.Equal("Hooded stranger", mask.NameFor(isDm: false));
+            Assert.Equal("Pays in old silver.", mask.PublicDescription);
+            Assert.Equal(ActorVisibility.Unknown, mask.Visibility);
+            Assert.False(mask.HasPortrait);
+            Assert.Empty(mask.Sheet);
+            Assert.Empty(mask.State);
+            // Every field, as it would leave for the browser: nothing of who they really are.
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(mask);
+            foreach (var secret in new[] { "Vizier", "Mor", "poisoned", "Weak to fire", "srd5e:mage", "page-mor", "disguise", "40" })
+            {
+                Assert.DoesNotContain(secret, json);
+            }
+
+            // A mask is never saved over the real actor, whoever asks.
+            Assert.False(await _actorRepository.TrySaveAsync(mask, player));
+            Assert.False(await _actorRepository.TrySaveAsync(mask, dm));
+        }
+
+        Assert.Equal(SessionQuotes.StrangerName, listed.Single(a => a.Id == nameless.Id).Name);
+        Assert.NotEqual("Sister Vel", SessionQuotes.StrangerName);
+        var whole = (await _actorRepository.GetVisibleAsync(vizier.Id, dm))!;
+        Assert.Equal("Vizier Mor", whole.Name);
+        Assert.Equal("Mor poisoned the old king.", whole.Biography);
+    }
+
+    [Fact]
+    public async Task ABlockForACharacter_InAHistory_ReachesOnlyTheirPlayer_AndNeverTheTextTheyEdit()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var arias = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var brams = new CampaignAccess(campaignId, "p2", CampaignRole.Player);
+        var aria = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1" };
+        var bram = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Bram", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p2" };
+        aria.Biography = $"Born at sea.\n:::for [[actor:{aria.Id}]]\nYou were adopted.\n:::\n:::dm\nHer father leads the cult.\n:::";
+        var mara = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Mara", Kind = ActorKind.NonPlayerCharacter,
+            Biography = $"Keeps the lighthouse.\n:::for [[actor:{aria.Id}]]\nAria knows her as her mother.\n:::"
+        };
+        foreach (var actor in new[] { aria, bram, mara }) await _actorRepository.SaveAsync(actor);
+
+        // Someone else's history is read, never saved: the block for Aria is in it for Aria's player only.
+        Assert.Contains("Aria knows her as her mother.", (await _actorRepository.GetVisibleAsync(mara.Id, arias))!.Biography);
+        Assert.Equal("Keeps the lighthouse.", (await _actorRepository.GetVisibleAsync(mara.Id, brams))!.Biography);
+        Assert.Contains("Aria knows her as her mother.", (await _actorRepository.GetVisibleForCampaignAsync(arias)).Single(a => a.Id == mara.Id).Biography);
+
+        // Her own history she edits: the block comes apart, read only, and a save keeps it a block.
+        var mine = (await _actorRepository.GetVisibleAsync(aria.Id, arias))!;
+        Assert.Equal("Born at sea.", mine.Biography);
+        Assert.Equal("You were adopted.", mine.RevealedToReader);
+        Assert.Null((await _actorRepository.GetVisibleAsync(aria.Id, brams))!.RevealedToReader);
+        mine.Biography = "Born at sea, raised by smugglers.";
+        Assert.True(await _actorRepository.TrySaveAsync(mine, arias));
+
+        var stored = (await _actorRepository.GetVisibleAsync(aria.Id, dm))!;
+        Assert.Null(stored.RevealedToReader);
+        Assert.StartsWith("Born at sea, raised by smugglers.", stored.Biography);
+        Assert.Contains("You were adopted.", SecretText.SecretBlocks(stored.Biography));
+        Assert.Contains("Her father leads the cult.", SecretText.SecretBlocks(stored.Biography));
+        Assert.DoesNotContain("adopted", (await _actorRepository.GetVisibleAsync(aria.Id, brams))!.Biography);
+
+        // Never stored, even when a document holding it is saved: it is the reader's, worked out each time.
+        await _actorRepository.SaveAsync(new ActorDocument { Id = "actors/never-stored", CampaignId = campaignId, Name = "X", RevealedToReader = "a secret" });
+        using var session = _dbService.Store.OpenAsyncSession();
+        var raw = await session.Advanced.AsyncRawQuery<Dictionary<string, object>>("from ActorDocuments where id() = 'actors/never-stored'").SingleAsync();
+        Assert.Equal("X", raw["Name"]?.ToString());
+        Assert.False(raw.ContainsKey(nameof(ActorDocument.RevealedToReader)));
+    }
+
+    [Fact]
+    public async Task Facts_KnowWhatTheyMention_StayInTheirCampaign_AndARevealToACharacterShowsIt()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var otherDm = new CampaignAccess(Guid.NewGuid().ToString(), "dm-2", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var owned = new HashSet<string> { "aria" };
+        var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = " The keeper's daughter ", Details = "[[actor:mara]] hides her in [[Saltmere Light]]; ask #[[place:p1]]." };
+        Assert.True(await _factRepository.SaveAsync(fact, dm));
+
+        async Task<FactDocument?> AsDm() => (await _factRepository.GetVisibleForCampaignAsync(dm, new HashSet<string>())).SingleOrDefault(f => f.Id == fact.Id);
+        async Task<bool> PlayerSees() => (await _factRepository.GetVisibleForCampaignAsync(player, owned)).Any(f => f.Id == fact.Id);
+
+        var saved = (await AsDm())!;
+        Assert.Equal("The keeper's daughter", saved.Summary);
+        Assert.Equal(new[] { "actor:mara", "place:p1", "wiki:saltmere-light" }, saved.RelatedEntityIds.OrderBy(k => k));
+        Assert.Single(FactLinks.About(new[] { saved }, FactLinks.Page("saltmere-light")));
+        Assert.Empty(FactLinks.About(new[] { saved }, FactLinks.Actor("aria"), null));
+
+        // Another campaign's DM cannot take the id over.
+        Assert.False(await _factRepository.SaveAsync(new FactDocument { Id = fact.Id, Summary = "Mine now" }, otherDm));
+        Assert.Equal("The keeper's daughter", (await AsDm())!.Summary);
+
+        // A DM-only fact revealed to a character is shown to that character's player, and taken back.
+        Assert.False(await PlayerSees());
+        Assert.True(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("aria", KnowledgeLevel.Rumor), dm));
+        Assert.Equal(FactVisibility.KnowersOnly, (await AsDm())!.Visibility);
+        Assert.True(await PlayerSees());
+        Assert.False(await _factRepository.RemoveKnowerAsync(fact.Id, "aria", player));
+        Assert.True(await _factRepository.RemoveKnowerAsync(fact.Id, "aria", dm));
+        Assert.False(await PlayerSees());
+
+        // Edited from a copy (the Lore tab's), then deleted.
+        var edit = new FactDocument { Id = fact.Id, Summary = "The keeper's son", Details = "No links now.", Visibility = FactVisibility.Public };
+        Assert.True(await _factRepository.SaveAsync(edit, dm));
+        Assert.Empty((await AsDm())!.RelatedEntityIds);
+        Assert.True(await PlayerSees());
+        Assert.False(await _factRepository.DeleteAsync(fact.Id, player));
+        Assert.False(await _factRepository.DeleteAsync(fact.Id, otherDm));
+        Assert.True(await _factRepository.DeleteAsync(fact.Id, dm));
+        Assert.Null(await AsDm());
+    }
+
+    [Fact]
+    public async Task APlayersVersion_GoesBesideTheSecret_OnlyFromTheDm_AndNeverBesideAnEditedOne()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var page = new WikiPageDocument { Title = "Saltmere", Visibility = WikiVisibility.Party, Body = "A fishing village.\n:::dm\nThe keeper runs the smugglers.\n:::" };
+        Assert.True(await _wikiRepository.TrySaveAsync(page, dm));
+        const string secret = "The keeper runs the smugglers.";
+
+        Assert.Equal(SecretChange.Refused, await _wikiRepository.TrySetPlayersVersionAsync(page.Id, 0, secret, "Lights at night.", player));
+        Assert.Equal(SecretChange.Stale, await _wikiRepository.TrySetPlayersVersionAsync(page.Id, 0, "An older secret.", "Lights at night.", dm));
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetPlayersVersionAsync(page.Id, 0, secret, "Lights at night, says [[Old Tom]].", dm));
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetPlayersVersionAsync(page.Id, 0, secret, "Boats come by night, says [[Old Tom]].", dm));
+
+        var seen = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!;
+        Assert.Equal("A fishing village.\n\nBoats come by night, says [[Old Tom]].", seen.Body);
+        Assert.Equal(new[] { "old-tom" }, seen.Links);
+        var whole = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Body;
+        Assert.Contains(secret, whole);
+        Assert.Single(SecretText.Blocks(whole), b => b.Marked == SecretAudience.Players);
+        // A players' version is for a DM block; one beside a players' block is refused.
+        Assert.Equal(SecretChange.Refused, await _wikiRepository.TrySetPlayersVersionAsync(page.Id, 1, "Boats come by night, says [[Old Tom]].", "More.", dm));
     }
 
     [Fact]

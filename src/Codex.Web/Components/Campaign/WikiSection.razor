@@ -395,6 +395,10 @@ else if (Slug != null)
                                             <span><LocalTime Value="at" Format="d MMM, HH:mm" /></span>
                                         }
                                     </div>
+                                    @if (block.Marked == SecretAudience.Dm && PlayersVersionOf(current, block) is { } told)
+                                    {
+                                        <div class="secret-told" data-testid="@($"wiki-secret-told-{block.Block}")"><LucideIcon IconName="users" Size="12" /><span>@L["Campaign.Wiki.Secrets.Told", SecretPreview(told)]</span></div>
+                                    }
                                     <div class="secret-item-actions">
                                         @if (block.Marked != SecretAudience.Party)
                                         {
@@ -418,11 +422,41 @@ else if (Slug != null)
                                                 </div>
                                             </details>
                                         }
+                                        @if (CanHavePlayersVersion(block) && !playersDrafts.ContainsKey(block.Block))
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="@(aiReady ? "cx-arcane" : null)" OnClick="() => DraftPlayersVersionAsync(block)" Disabled="@(draftingBlock != null)"
+                                                         title="@L["Campaign.Wiki.Secrets.PlayersVersionTitle"]" data-testid="@($"wiki-secret-players-{block.Block}")">
+                                                <LucideIcon IconName="@(aiReady ? "sparkles" : "users")" Size="14" /> @(PlayersVersionOf(current, block) == null ? L["Campaign.Wiki.Secrets.PlayersVersion"] : L["Campaign.Wiki.Secrets.EditPlayersVersion"])
+                                            </CodexButton>
+                                        }
                                     </div>
+                                    @if (draftingBlock == block.Block)
+                                    {
+                                        <AiWorking Compact="true" Text="@L["Campaign.Wiki.Writing"]" OnStop="playersCall.Stop" TestId="@($"wiki-secret-players-working-{block.Block}")" />
+                                    }
+                                    else if (playersDrafts.ContainsKey(block.Block))
+                                    {
+                                        <div class="players-draft" data-testid="@($"wiki-secret-draft-{block.Block}")">
+                                            <label for="players-draft-@block.Block" class="field-label">@L["Campaign.Wiki.Secrets.DraftLabel"]</label>
+                                            <textarea id="players-draft-@block.Block" class="field-input" rows="5" value="@playersDrafts[block.Block]" data-mentions="@mentionsJson"
+                                                      @oninput="e => playersDrafts[block.Block] = e.Value?.ToString() ?? string.Empty" data-testid="@($"wiki-secret-draft-text-{block.Block}")"></textarea>
+                                            <p class="field-hint mb-0">@L["Campaign.Wiki.Secrets.DraftHint"]</p>
+                                            <div class="players-draft-actions">
+                                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Disabled="@string.IsNullOrWhiteSpace(playersDrafts[block.Block])" OnClick="() => PutPlayersVersionAsync(block)" data-testid="@($"wiki-secret-draft-save-{block.Block}")">@L["Campaign.Wiki.Secrets.PutOnPage"]</CodexButton>
+                                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => playersDrafts.Remove(block.Block)">@L["Campaign.Wiki.Secrets.Discard"]</CodexButton>
+                                            </div>
+                                        </div>
+                                    }
                                 </li>
                             }
                         </ul>
                     </section>
+                }
+                @if (!asParty)
+                {
+                    <LoreAbout Access="Ctx.Access" OwnedActorIds="Ctx.OwnedActorIds" BasePath="@Ctx.BasePath" TestId="wiki-lore"
+                               Keys="@(new[] { FactLinks.Page(current.Slug), string.IsNullOrEmpty(current.ActorId) ? null : FactLinks.Actor(current.ActorId), string.IsNullOrEmpty(current.PlaceId) ? null : FactLinks.Place(current.PlaceId) })"
+                               AboutKey="@FactLinks.Page(current.Slug)" />
                 }
                 <section class="panel">
                     <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksFrom"]</h3></div>
@@ -763,6 +797,93 @@ else
         return string.IsNullOrWhiteSpace(text) ? L["Campaign.Wiki.Secrets.Empty"] : text;
     }
 
+    // The players' versions being written, by block, and the block the AI is writing one for.
+    private readonly Dictionary<int, string> playersDrafts = new();
+    private int? draftingBlock;
+    private readonly AiCall playersCall = new();
+
+    /// <summary>A DM block that can be given a players' version: one at the top level of the page (a version inside another
+    /// block would be that block's), and closed (a block that runs to the end of the page has no "after").</summary>
+    private static bool CanHavePlayersVersion(SecretBlock block) => block is { Marked: SecretAudience.Dm, Depth: 0, ClosingLine: not null };
+
+    /// <summary>The players' version already beside a DM block: a <c>:::players</c> block right after it, only blank lines between.</summary>
+    private static SecretBlock? PlayersVersionOf(WikiPageDocument page, SecretBlock block)
+    {
+        if (block.ClosingLine is not { } closing) return null;
+        var lines = page.Body.Replace("\r\n", "\n").Split('\n');
+        var next = closing + 1;
+        while (next < lines.Length && lines[next].Trim().Length == 0) next++;
+        return SecretText.Blocks(page.Body).FirstOrDefault(b => b.Line == next && b is { Marked: SecretAudience.Players, Depth: 0 });
+    }
+
+    /// <summary>Opens the players' version of a DM block for the DM to write: drafted by the AI when there is one (from the
+    /// secret, what the page already tells the players, and the version it has now), else the version it has, or nothing.</summary>
+    private async Task DraftPlayersVersionAsync(SecretBlock block)
+    {
+        if (current == null || draftingBlock != null) return;
+        var told = PlayersVersionOf(current, block);
+        var now = told == null ? string.Empty : mentions.ForEditing(told.Inner.Trim());
+        if (!aiReady)
+        {
+            playersDrafts[block.Block] = now;
+            return;
+        }
+
+        draftingBlock = block.Block;
+        var ct = playersCall.Begin();
+        try
+        {
+            var page = current;
+            var text = await Ai.PlayersVersionAsync(Ctx.Campaign, page.Title, page.Kind, mentions.ForEditing(block.Inner), mentions.ForEditing(SecretText.ForPlayers(page.Body)),
+                told == null ? null : now, string.Empty, Ctx.UserId, ct);
+            if (current?.Id == page.Id) playersDrafts[block.Block] = text;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            Ctx.Notify(Flash.Info(L["Common.Ai.Stopped"]));
+        }
+        catch (AiNotConfiguredException)
+        {
+            aiReady = false;
+            playersDrafts[block.Block] = now;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Drafting a players' version failed");
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.AiFailed", AiFailureText.For(L, ex)]));
+        }
+        finally
+        {
+            playersCall.End(ct);
+            draftingBlock = null;
+        }
+    }
+
+    /// <summary>Puts the DM's players' version beside the block, unless the block changed since the page was loaded.</summary>
+    private async Task PutPlayersVersionAsync(SecretBlock block)
+    {
+        if (current == null || !playersDrafts.TryGetValue(block.Block, out var text) || string.IsNullOrWhiteSpace(text)) return;
+        var result = await WikiRepo.TrySetPlayersVersionAsync(current.Id, block.Block, block.Inner, mentions.Encode(text.Trim()), Ctx.Access);
+        switch (result)
+        {
+            case SecretChange.Done:
+                playersDrafts.Remove(block.Block);
+                Ctx.Notify(Flash.Success(current.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Secrets.PlayersVersionSaved"] : L["Campaign.Wiki.Secrets.PlayersVersionSavedHidden"]));
+                break;
+            case SecretChange.Stale:
+                playersDrafts.Remove(block.Block);
+                Ctx.Notify(Flash.Error(L["Campaign.Wiki.Secrets.Stale"]));
+                break;
+            default:
+                Ctx.Notify(Flash.Error(L["Campaign.Wiki.OnlyDm"]));
+                return;
+        }
+
+        loadedKey = null;
+        await LoadAsync();
+        StateHasChanged();
+    }
+
     private HashSet<string> PicksFor(SecretBlock block)
     {
         if (!picks.TryGetValue(block.Block, out var set))
@@ -1090,6 +1211,7 @@ else
     public void Dispose()
     {
         aiCall.Dispose();
+        playersCall.Dispose();
         selfRef?.Dispose();
     }
 

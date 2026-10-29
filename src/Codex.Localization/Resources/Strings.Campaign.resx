@@ -68,7 +68,7 @@
   <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>Generate character</value></data>
   <data name="Campaign.Cast.Mine" xml:space="preserve"><value>Mine</value></data>
   <data name="Campaign.Cast.HiddenFromPlayers" xml:space="preserve"><value>Hidden from players</value></data>
-  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>Identity unknown</value></data>
+  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>Seen as “{0}”</value></data>
   <data name="Campaign.Cast.Reveal" xml:space="preserve"><value>Reveal</value></data>
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>Reveal {0} to players</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>Hide</value></data>
@@ -159,8 +159,8 @@
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>There is no homebrew to export yet.</value></data>
   <data name="Campaign.Library.Exported" xml:space="preserve"><value>Exported {0} entries. Drop the zip into a content folder to load it as a pack.</value></data>
   <data name="Campaign.Lore.Title" xml:space="preserve"><value>Lore</value></data>
-  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>Facts about the world and who knows them. Reveal to the whole party or to one character.</value></data>
-  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>What your characters know. Facts appear here as the DM reveals them.</value></data>
+  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>Facts about the world and who knows them, and every secret of the wiki. Reveal to the whole party or to one character.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>What your characters know: facts, and what the wiki revealed, as the DM reveals them.</value></data>
   <data name="Campaign.Lore.Search" xml:space="preserve"><value>Search lore</value></data>
   <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>Search lore…</value></data>
   <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>Filter by visibility</value></data>
@@ -173,7 +173,6 @@
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>No lore matches</value></data>
   <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Write the first fact on the right.</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>Nothing has been revealed to you yet.</value></data>
-  <data name="Campaign.Lore.KnownBy" xml:space="preserve"><value>Known by: {0}</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>nobody yet</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>Reveal to</value></data>
   <data name="Campaign.Lore.HowWell" xml:space="preserve"><value>How well</value></data>
@@ -488,7 +487,7 @@
   <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>Faction</value></data>
   <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Quest</value></data>
   <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Reveal {0}?</value></data>
-  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Players will be able to read this character's history. If it came from a DM-only wiki page, check it for secrets first.</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Players will be able to read this character’s history, except its DM blocks. Check the rest for secrets first.</value></data>
   <data name="Campaign.Places.Inside" xml:space="preserve"><value>Inside</value></data>
   <data name="Campaign.Places.InRegion" xml:space="preserve"><value>Straight in {0}</value></data>
   <data name="Campaign.Places.InPlace" xml:space="preserve"><value>in {0}</value></data>
@@ -566,4 +565,42 @@
   <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>Add the sections of “{0}” this page lacks</value></data>
   <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>Added the missing sections where the template has them. Fill them in, or remove the ones you don’t need.</value></data>
   <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>Type a template’s abbreviation and Tab, or `/`, to put it in.</value></data>
+  <data name="Campaign.Cast.Stranger" xml:space="preserve"><value>Show as stranger</value></data>
+  <data name="Campaign.Cast.StrangerLabel" xml:space="preserve"><value>Show {0} to players as a stranger</value></data>
+  <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>Players see that someone is there, under the name you give on the sheet, but not who it is.</value></data>
+  <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>{0} now shows to players as “{1}”.</value></data>
+  <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>Save fact</value></data>
+  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>Fact saved.</value></data>
+  <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>Mention @characters and #places, and link [[pages]]: the fact then shows on their pages and sheets.</value></data>
+  <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>Known by:</value></data>
+  <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} forgets this</value></data>
+  <data name="Campaign.Lore.Forgotten" xml:space="preserve"><value>{0} no longer knows it.</value></data>
+  <data name="Campaign.Lore.PlayerCharacters" xml:space="preserve"><value>Player characters</value></data>
+  <data name="Campaign.Lore.Others" xml:space="preserve"><value>Others</value></data>
+  <data name="Campaign.Lore.HideAgain" xml:space="preserve"><value>Hide again</value></data>
+  <data name="Campaign.Lore.Hidden" xml:space="preserve"><value>Hidden from the party. The characters it was revealed to still know it.</value></data>
+  <data name="Campaign.Lore.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.Lore.DeleteLabel" xml:space="preserve"><value>Delete the fact “{0}”</value></data>
+  <data name="Campaign.Lore.DeleteQ" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Campaign.Lore.DeleteBody" xml:space="preserve"><value>Whoever knew it will no longer find it in their lore.</value></data>
+  <data name="Campaign.Lore.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Campaign.Lore.Deleted" xml:space="preserve"><value>Fact deleted.</value></data>
+  <data name="Campaign.Lore.Wiki.Dm" xml:space="preserve"><value>Secrets in the wiki</value></data>
+  <data name="Campaign.Lore.Wiki.Player" xml:space="preserve"><value>Learned in the wiki</value></data>
+  <data name="Campaign.Lore.Wiki.DmHint" xml:space="preserve"><value>Every DM block on every page, and who it is revealed to. Reveal or hide them on their pages.</value></data>
+  <data name="Campaign.Lore.Wiki.PlayerHint" xml:space="preserve"><value>What the DM revealed on the wiki’s pages, newest first.</value></data>
+  <data name="Campaign.Lore.About" xml:space="preserve"><value>Lore</value></data>
+  <data name="Campaign.Lore.AllLore" xml:space="preserve"><value>All lore</value></data>
+  <data name="Campaign.Lore.AboutNone" xml:space="preserve"><value>No facts mention this yet.</value></data>
+  <data name="Campaign.Lore.AddAbout" xml:space="preserve"><value>Add a fact about this</value></data>
+  <data name="Campaign.Wiki.Secrets.Told" xml:space="preserve"><value>Players are told: {0}</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersion" xml:space="preserve"><value>Players’ version</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionTitle" xml:space="preserve"><value>What the players are told in place of this secret: a rumour, what anyone there can see. It goes right after the secret.</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftLabel" xml:space="preserve"><value>What the players are told</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftHint" xml:space="preserve"><value>Read it before it goes on the page: once the page is shared, players read it.</value></data>
+  <data name="Campaign.Wiki.Secrets.PutOnPage" xml:space="preserve"><value>Put on the page</value></data>
+  <data name="Campaign.Wiki.Secrets.Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>The players’ version is on the page. Players read it now; the secret stays hidden.</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>The players’ version is on the page. Players will read it once you share the page.</value></data>
+  <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>Edit players’ version</value></data>
 </root>

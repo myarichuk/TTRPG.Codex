@@ -162,6 +162,96 @@ public class SecretTextTests
         Assert.Equal("Edited.\n\n:::for [[actor:aria]]\nAria's secret.\n:::", SecretText.KeepSecrets(stored, "Edited."));
     }
 
+    [Fact]
+    public void Blocks_KnowWhereTheyCloseAndHowDeepTheyAre()
+    {
+        var blocks = SecretText.Blocks("a\n:::dm\nb\n:::party\nc\n:::\n:::\n:::for [[actor:x]]\nd");
+
+        Assert.Equal(new int?[] { 6, 5, null }, blocks.Select(b => b.ClosingLine));
+        Assert.Equal(new[] { 0, 1, 0 }, blocks.Select(b => b.Depth));
+    }
+
+    [Fact]
+    public void RevealedOnlyTo_IsWhatABlockForTheirCharacterAddsForThatPlayer()
+    {
+        const string text = "Born.\n:::for [[actor:a]]\nAdopted.\n:::\n:::for [[actor:b]]\nB's.\n:::\n:::dm\nCult.\n:::\n:::party\nOut.\n:::";
+
+        Assert.Equal("Adopted.", SecretText.RevealedOnlyTo(text, new HashSet<string> { "a" }));
+        Assert.Equal("Adopted.\n\nB's.", SecretText.RevealedOnlyTo(text, new HashSet<string> { "a", "b" }));
+        Assert.Equal(string.Empty, SecretText.RevealedOnlyTo(text, null));
+        Assert.Equal(string.Empty, SecretText.RevealedOnlyTo(text, new HashSet<string> { "c" }));
+    }
+
+    [Fact]
+    public void PlayersVersion_GoesRightAfterTheSecret_AndReplacesTheOneThere()
+    {
+        const string text = "Intro.\n:::dm\nThe keeper runs the smugglers.\n:::\nAfter.";
+
+        var once = SecretText.SetPlayersVersion(text, 0, "The keeper runs the smugglers.", "Lights at night.");
+        Assert.Equal("Intro.\n:::dm\nThe keeper runs the smugglers.\n:::\n\n:::players\nLights at night.\n:::\n\nAfter.", once);
+        Assert.Equal("Intro.\n\nLights at night.\n\nAfter.", SecretText.ForPlayers(once));
+
+        var twice = SecretText.SetPlayersVersion(once, 0, "The keeper runs the smugglers.", "Boats come and go\n:::\n:::dm\nby night.");
+        Assert.Equal("Intro.\n:::dm\nThe keeper runs the smugglers.\n:::\n\n:::players\nBoats come and go\nby night.\n:::\n\nAfter.", twice);
+    }
+
+    [Theory]
+    [InlineData("Intro.\n:::dm\nSecret.\n:::", 0, "Changed.")] // edited since the DM looked
+    [InlineData("Intro.\n:::dm\nSecret.", 0, "Secret.")] // never closed: no "after"
+    [InlineData(":::party\n:::dm\nSecret.\n:::\n:::", 1, "Secret.")] // inside another block
+    [InlineData("Intro.\n:::dm\nSecret.\n:::", 3, "Secret.")] // no such block
+    public void PlayersVersion_IsRefused_WhereItWouldNotBeBesideTheSecretTheDmSaw(string text, int block, string expected) =>
+        Assert.Null(SecretText.SetPlayersVersion(text, block, expected, "Told."));
+
+    [Fact]
+    public void PlayersVersion_ThatIsOnlyMarkers_IsRefused() =>
+        Assert.Null(SecretText.SetPlayersVersion(":::dm\nS.\n:::", 0, "S.", ":::\n\n:::dm"));
+
+    /// <summary>Putting a players' version beside a secret never shows a player a word they could not read before, and
+    /// every player reads the version; random texts as in <see cref="NoWordAPlayerMayNotRead_EverReachesThem"/>.</summary>
+    [Fact]
+    public void PlayersVersion_RevealsNothingButItself()
+    {
+        var random = new Random(4321);
+        string[] openers = { ":::dm", ":::party", ":::players", ":::for [[actor:a]]", ":::xyz" };
+        IReadOnlySet<string>?[] viewers = { null, new HashSet<string> { "a" } };
+        var tried = 0;
+        for (var round = 0; round < 2000; round++)
+        {
+            var lines = new List<string>();
+            var depth = 0;
+            var n = random.Next(1, 25);
+            for (var i = 0; i < n; i++)
+            {
+                var roll = random.Next(10);
+                if (roll < 3) { lines.Add(openers[random.Next(openers.Length)]); depth++; }
+                else if (roll < 6 && depth > 0) { lines.Add(":::"); depth--; }
+                else lines.Add(random.Next(4) == 0 ? string.Empty : $"w{round}x{i}");
+            }
+
+            var text = string.Join("\n", lines);
+            foreach (var block in SecretText.Blocks(text).Where(b => b is { Marked: SecretAudience.Dm, Depth: 0, ClosingLine: not null }))
+            {
+                tried++;
+                var told = $"told{round}b{block.Block}";
+                var after = SecretText.SetPlayersVersion(text, block.Block, block.Inner, told + "\n:::\n:::party");
+                Assert.NotNull(after);
+                Assert.Equal(block.Inner, SecretText.Blocks(after).Single(b => b.Line == block.Line).Inner);
+                foreach (var viewer in viewers)
+                {
+                    var before = Words(SecretText.ForPlayers(text, viewer));
+                    var now = Words(SecretText.ForPlayers(after, viewer));
+                    // Nothing new but the version (a players' version it replaces is gone, which is the point).
+                    Assert.True(now.IsSubsetOf(before.Append(told)) && now.Contains(told), $"viewer {(viewer == null ? "none" : "a")} on:\n{text}\n---\n{after}");
+                }
+            }
+        }
+
+        Assert.True(tried > 500, $"only {tried} blocks tried");
+
+        static HashSet<string> Words(string text) => text.Split(new[] { ' ', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+    }
+
     /// <summary>The property that matters: whatever the DM writes, no word a player may not read reaches them, whether they own
     /// no character, the one a block names, or another. Random texts of plain lines, markers of every kind, nesting, unclosed
     /// blocks and noise, read as <see cref="SecretText.ForPlayers(string?, IReadOnlySet{string}?)"/> and as the marked copy a page hands them.</summary>

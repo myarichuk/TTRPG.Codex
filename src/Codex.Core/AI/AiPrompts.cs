@@ -48,6 +48,21 @@ public sealed record WikiPageRequest(
     string? Language = null,
     string? Structure = null);
 
+/// <summary>What the players are told in place of one of the DM's secrets: the players' version of a DM block of a wiki page.</summary>
+/// <param name="Kind">What the page is about: "lore", "person", "place", "faction" or "quest".</param>
+/// <param name="Secret">The DM block's text: the truth, for the model's eyes only.</param>
+/// <param name="Shown">What players already read on the page (the page without its secrets), so the version agrees with it.</param>
+/// <param name="Current">The players' version the page already has, to revise; null for none.</param>
+public sealed record PlayersVersionRequest(
+    string Title,
+    string Kind,
+    string Secret,
+    string Shown,
+    string? Current,
+    string Instruction,
+    string? CampaignContext = null,
+    string? Language = null);
+
 /// <summary>A description for a Library entry (a homebrew creature, spell, item) or a place on the world map.</summary>
 public sealed record DescribeRequest(
     string Subject,
@@ -259,6 +274,38 @@ public static class AiPrompts
             ? "Expand the current notes into a well-structured wiki page with short headings. Keep what they say; put what the party must not know yet in DM blocks."
             : r.Instruction.Trim()));
         sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet - write it from the title and what the campaign says)" : r.CurrentText);
+        return (system, sb.ToString());
+    }
+
+    /// <summary>
+    /// The players' version of a secret: what people in the world say, or what anyone there can see, in place of the truth. The
+    /// truth goes in so the version agrees with it; the reply goes to the DM, who reads and changes it before it is put in a
+    /// <c>:::players</c> block beside the secret. Nothing here reaches players unread.
+    /// </summary>
+    public static (string System, string User) PlayersVersion(PlayersVersionRequest r)
+    {
+        var system = "You are a writing assistant for the game master of a tabletop role-playing campaign. A page of the campaign's wiki holds a secret only the game master knows. " +
+                     "Write what the players are told in its place: what people in the world say about it, or what anyone there can plainly see, in an in-world voice (a rumour, a local's account, an old song, a notice on a wall). " +
+                     "It must agree with the secret without giving it away: leave out the truth and anything that would let a player work it out. It may be partial, vague or mistaken, the way people in the world would be. " +
+                     "It must also agree with what the players already read on the page, and not repeat it. One short paragraph, or two to four bullets. " +
+                     "Keep names as spelled, and write references exactly as they appear (@Name for a person, #Name for a place, [[Title]] for a page), using only ones the players' text already has or that the version is about. " +
+                     "Never write lines that start with \":::\". Reply with the players' text only. " + StyleFor(r.Language);
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Page: {r.Title} ({r.Kind})");
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext))
+        {
+            sb.AppendLine($"Campaign: {r.CampaignContext}");
+        }
+
+        sb.AppendLine().AppendLine("What the players already read on the page:").AppendLine(string.IsNullOrWhiteSpace(r.Shown) ? "(nothing yet)" : r.Shown.Trim());
+        sb.AppendLine().AppendLine("The secret (the game master's only; never state it):").AppendLine(r.Secret.Trim());
+        if (!string.IsNullOrWhiteSpace(r.Current))
+        {
+            sb.AppendLine().AppendLine("The players' version the page has now (revise it; keep what still fits):").AppendLine(r.Current.Trim());
+        }
+
+        sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction) ? "Write what the players are told in place of the secret." : r.Instruction.Trim()));
         return (system, sb.ToString());
     }
 

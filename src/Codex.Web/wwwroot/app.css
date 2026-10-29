@@ -1042,6 +1042,29 @@ a.user-chip:active { transform: scale(0.97); }
 .secret-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.35rem 0; font-size: 0.8rem; color: var(--text-2); }
 .secret-item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .secret-pick { display: grid; gap: 0.3rem; padding: 0.5rem; min-width: 12rem; }
+/* A players' version the AI drafted from a DM block, for the DM to read and change before it goes in. */
+.secret-told { display: flex; align-items: flex-start; gap: 0.35rem; margin: 0 0 0.4rem; font-size: 0.8rem; color: var(--text-2); }
+.secret-told svg { flex: none; margin-top: 0.15rem; }
+.secret-told span { min-width: 0; overflow-wrap: anywhere; }
+.players-draft { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
+.players-draft textarea { font-size: 0.9rem; }
+.players-draft-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* Lore: who knows a fact, each with a way to take it back. */
+.fact-knowers { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.chip-static { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.3rem 0.15rem 0.65rem; font-size: 0.82rem; cursor: default; }
+.chip-static:active { transform: none; }
+.chip-x { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--text-3); cursor: pointer; }
+.chip-x:hover, .chip-x:focus-visible { background: var(--danger-soft, var(--surface-2)); color: var(--danger); }
+.lore-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.lore-list li { font-size: 0.9rem; }
+.lore-list .lore-summary { font-weight: 600; }
+/* Someone the party met but has not identified, as a player sees them. */
+.stranger-card { max-width: 46rem; }
+.stranger-head { display: flex; align-items: center; gap: 1rem; margin: 0.6rem 0 1rem; }
+.stranger-head h1 { margin: 0 0 0.3rem; overflow-wrap: anywhere; }
+/* On a player's own sheet: what the DM revealed to their character, kept apart from the history they edit. */
+.revealed-to-you { padding: 0.6rem 0.9rem; border-inline-start: 3px solid var(--accent); border-radius: var(--radius-md); background: var(--accent-soft); }
+.revealed-to-you-title { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; color: var(--accent); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 /* The editor's template menu and the templates page. */
 .md-templates { display: inline-flex; }
 .md-templates .popover-panel { inset-inline: 0 auto; min-width: 17rem; max-height: 20rem; overflow-y: auto; }

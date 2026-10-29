@@ -188,7 +188,11 @@
                 }
                 @if (Ctx.IsDm && actor.Visibility != ActorVisibility.Known)
                 {
-                    <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Cast.HiddenFromPlayers"] : L["Campaign.Cast.IdentityUnknown"])</span>
+                    <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Cast.HiddenFromPlayers"] : L["Campaign.Cast.IdentityUnknown", actor.NameFor(isDm: false)])</span>
+                }
+                else if (!Ctx.IsDm && actor.Visibility == ActorVisibility.Unknown && actor.OwnerUserId != Ctx.UserId)
+                {
+                    <span class="pill pill-warning ms-1">@L["Actor.Stranger.NotIdentified"]</span>
                 }
             </div>
             <div class="row-sub">@Summary(actor)</div>
@@ -196,11 +200,15 @@
         @if (Ctx.IsDm)
         {
             <div class="row-actions">
+                @if (actor.Visibility == ActorVisibility.Hidden && actor.Kind != ActorKind.PlayerCharacter)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Unknown)" aria-label="@L["Campaign.Cast.StrangerLabel", actor.Name]" title="@L["Campaign.Cast.StrangerTitle"]" data-testid="cast-stranger"><LucideIcon IconName="help-circle" Size="14" /> @L["Campaign.Cast.Stranger"]</CodexButton>
+                }
                 @if (actor.Visibility != ActorVisibility.Known)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Known)" aria-label="@L["Campaign.Cast.RevealLabel", actor.Name]"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Cast.Reveal"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Known)" aria-label="@L["Campaign.Cast.RevealLabel", actor.Name]" data-testid="cast-reveal"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Cast.Reveal"]</CodexButton>
                 }
-                else if (actor.Kind != ActorKind.PlayerCharacter)
+                @if (actor.Visibility != ActorVisibility.Hidden && actor.Kind != ActorKind.PlayerCharacter)
                 {
                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Hidden)" aria-label="@L["Campaign.Cast.HideLabel", actor.Name]"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Cast.Hide"]</CodexButton>
                 }
@@ -218,8 +226,16 @@
 
     private string DisplayName(ActorDocument actor) => actor.NameFor(Ctx.IsDm);
 
+    private static readonly System.Text.RegularExpressions.Regex ActorMention = new(@"\[\[actor:(?<id>[^\]|]+)\]\]");
+
     private string Summary(ActorDocument actor)
     {
+        if (!Ctx.IsDm && actor.Visibility == ActorVisibility.Unknown && actor.OwnerUserId != Ctx.UserId)
+        {
+            // A stranger: what the party has seen of them is all there is.
+            return string.IsNullOrWhiteSpace(actor.PublicDescription) ? KindLabel(actor.Kind) : TextFormatting.Summary(ActorMention.Replace(actor.PublicDescription, m => Ctx.Actors.FirstOrDefault(a => a.Id == m.Groups["id"].Value)?.NameFor(isDm: false) ?? "…"), 120);
+        }
+
         var parts = new List<string>();
         var hp = ActorSheetSync.PrimaryResource(actor, Ctx.System);
         foreach (var key in new[] { "level", "species", "class" })
@@ -367,8 +383,9 @@
 
     private async Task SetVisibilityAsync(ActorDocument actor, ActorVisibility visibility)
     {
-        // A history written for the DM (a promoted wiki page often holds secrets) is what players read once the character shows.
-        if (visibility == ActorVisibility.Known && actor.Visibility == ActorVisibility.Hidden && !string.IsNullOrWhiteSpace(actor.Biography)
+        // A history written for the DM (a promoted wiki page often holds secrets) is what players read once the character is
+        // known; a stranger shows only the public name and description.
+        if (visibility == ActorVisibility.Known && actor.Visibility != ActorVisibility.Known && !string.IsNullOrWhiteSpace(SecretText.ForPlayers(actor.Biography))
             && !await confirm.ShowAsync(L["Campaign.Cast.RevealQ", actor.Name], L["Campaign.Cast.RevealHistory"], L["Campaign.Cast.Reveal"]))
         {
             return;
@@ -378,7 +395,12 @@
         // would write back the hit points the table has changed since.
         if (Ctx.IsDm && actor.CampaignId == Ctx.Campaign.Id && await ActorRepo.UpdateAsync(actor.Id, stored => stored.Visibility = visibility) != null)
         {
-            Ctx.Notify(Flash.Success(visibility == ActorVisibility.Known ? L["Campaign.Cast.NowVisible", actor.Name] : L["Campaign.Cast.NowHidden", actor.Name]));
+            Ctx.Notify(Flash.Success(visibility switch
+            {
+                ActorVisibility.Known => L["Campaign.Cast.NowVisible", actor.Name],
+                ActorVisibility.Unknown => L["Campaign.Cast.NowStranger", actor.Name, actor.NameFor(isDm: false)],
+                _ => L["Campaign.Cast.NowHidden", actor.Name]
+            }));
             await Ctx.ReloadAsync();
         }
     }

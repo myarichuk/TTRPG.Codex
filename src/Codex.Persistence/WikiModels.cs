@@ -82,6 +82,11 @@ public interface IWikiRepository
     /// see <see cref="SecretText.SetAudience"/>. <paramref name="expectedInner"/> is the block's text as the DM saw it. DM only.</summary>
     Task<SecretChange> TrySetSecretAsync(string pageId, int block, string expectedInner, SecretAudience to, IReadOnlyList<string>? knowers, CampaignAccess access);
 
+    /// <summary>Puts <paramref name="version"/> beside DM block <paramref name="block"/> as what the players are told
+    /// (a <c>:::players</c> block right after it, replacing the one there); see <see cref="SecretText.SetPlayersVersion"/>.
+    /// <paramref name="expectedInner"/> is the block's text as the DM saw it. DM only.</summary>
+    Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access);
+
     /// <summary>Records that the page's illustration was stored (or removed) and bumps its version. DM only.</summary>
     Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access);
 
@@ -264,6 +269,43 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             }
 
             if (SecretText.SetAudience(page.Body, block, expectedInner, to, knowers, DateTime.UtcNow) is not { } body)
+            {
+                return;
+            }
+
+            page.Body = body;
+            page.Links = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).Distinct().ToList();
+            page.UpdatedAt = DateTime.UtcNow;
+            result = SecretChange.Done;
+        });
+        return result;
+    }
+
+    public async Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access)
+    {
+        if (!access.IsDm || string.IsNullOrWhiteSpace(version))
+        {
+            return SecretChange.Refused;
+        }
+
+        var result = SecretChange.Refused;
+        // As TrySetSecretAsync: against a fresh load each attempt, so the version never lands beside a block edited since.
+        await RavenUpdate.RunAsync<WikiPageDocument>(dbService, pageId, page =>
+        {
+            result = SecretChange.Refused;
+            if (page.CampaignId != access.CampaignId)
+            {
+                return;
+            }
+
+            var found = SecretText.Blocks(page.Body).FirstOrDefault(b => b.Block == block);
+            if (found == null || found.Inner != expectedInner)
+            {
+                result = SecretChange.Stale;
+                return;
+            }
+
+            if (found.Marked != SecretAudience.Dm || SecretText.SetPlayersVersion(page.Body, block, expectedInner, version) is not { } body)
             {
                 return;
             }

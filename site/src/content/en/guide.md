@@ -52,10 +52,10 @@ Every NPC and monster has a visibility, and this is how you keep secrets:
 | State | What players see |
 | --- | --- |
 | [[ui:Campaign.Cast.HiddenFromPlayers]] | Nothing at all, not even a name. |
-| [[ui:Campaign.Cast.IdentityUnknown]] | Only a public name and description, such as "A figure in a wet cloak". |
+| [[ui:Actor.Sheet.VisLabelUnknown]] | A stranger: only the public name and description you give on the sheet, such as "A figure in a wet cloak". Never the real name, history, portrait or sheet, though the stranger can still be mentioned, speak, and take part in a fight. |
 | [[ui:Actor.Sheet.VisLabelKnown]] | The full character, name and public bio. |
 
-Use [[ui:Campaign.Cast.Reveal]] and [[ui:Campaign.Cast.Hide]] on a row to move a character between states as the story demands.
+Use [[ui:Campaign.Cast.Stranger]], [[ui:Campaign.Cast.Reveal]] and [[ui:Campaign.Cast.Hide]] on a row to move a character between states as the story demands.
 
 ![The cast: player characters on the left, NPCs and monsters on the right, with Reveal and Hide controls.](shot:cast)
 
@@ -92,6 +92,8 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 - Every page starts as [[ui:Campaign.Wiki.DmOnly]]. Press [[ui:Campaign.Wiki.SharePage]] to make it readable by the whole party.
 - A shared page can still hide parts of itself. Put a secret between a line `:::dm` and a line `:::` (the eye button in the toolbar, or Ctrl+Shift+H, does it for you): players never receive that text, not even its links. Change `:::dm` to `:::party` when the party learns it, and use `:::players` for what the players are told instead of the truth. The same works in a place's description and a character's history.
 - Press [[ui:Campaign.Wiki.ViewAs.Party]] above a page to read it exactly as the players do.
+- [[ui:Campaign.Wiki.Secrets.PlayersVersion]] beside a secret writes what the players are told instead (drafted by the AI when one is set up): you read and change it, and it goes in as a `:::players` block right after the secret.
+- A block `:::for @Aria` in a character's history is read by Aria's player only, apart from the history they edit.
 - To reveal a secret at the table, press [[ui:Common.Secret.Reveal]] on the block itself, or use [[ui:Campaign.Wiki.Secrets]] beside the page, which lists every secret on it. From there [[ui:Campaign.Wiki.Secrets.RevealTo]] reveals it to chosen characters only (it becomes `:::for @Aria`), and [[ui:Common.Secret.Hide]] takes it back. If a session is running, the log notes that something was revealed on the page (its title, never the secret). Players see what was revealed since they last opened a page marked [[ui:Campaign.Wiki.NewReveal]].
 - **Templates** save typing. In a page, type a template's abbreviation and press Tab (`enc` for an encounter, `npc` for a person in brief, `dmb` for a DM-only block, `dmp` for the truth beside what players are told), or type `/` and pick one. The template goes in and Tab moves from field to field (Shift+Tab goes back, Esc stops); a field used twice fills in both places. A new page can start from the outline of its kind, and a page written earlier gets a button that adds the headings it lacks. Change the built-in templates, turn them off or write your own under [[ui:Campaign.Templates.Title]] (the button at the top of the wiki); the AI writes pages to your outlines too. In a template, `$name$` is a field, `$name:text$` a field with text already in it, and `$END$` where the cursor ends up.
 - Every place already has a wiki page of its own, and a page can be put on the map, or promoted into the cast.
@@ -101,7 +103,7 @@ Below it, tabs hold the attributes and skills, the picks (feats, spells and so o
 
 ### Lore {#lore}
 
-[[ui:Page.Campaign.Section.Lore]] is for facts. Each fact is visible to the DM only, revealed to one character who then knows it, or shared with the whole party. Add one with [[ui:Campaign.Lore.AddFact]].
+[[ui:Page.Campaign.Section.Lore]] is for facts. Each fact is visible to the DM only, revealed to one character who then knows it, or shared with the whole party. Add one with [[ui:Campaign.Lore.AddFact]]. Mention @characters and #places in its details, or link a `[[page]]`, and the fact shows on their pages and sheets too; a page or sheet has a button to write one more about it. The DM also finds every secret of the wiki here, with who it is revealed to, and players find what the wiki revealed to them, newest first.
 
 ![The lore page: facts with their visibility.](shot:lore)
 

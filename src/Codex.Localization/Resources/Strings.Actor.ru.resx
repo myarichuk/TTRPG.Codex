@@ -271,7 +271,6 @@
   <data name="Actor.Sheet.VisUnknown" xml:space="preserve"><value>Замечен, но не опознан</value></data>
   <data name="Actor.Sheet.VisKnown" xml:space="preserve"><value>Известен</value></data>
   <data name="Actor.Sheet.ShownAs" xml:space="preserve"><value>Показывается игрокам как</value></data>
-  <data name="Actor.Sheet.PublicNamePh" xml:space="preserve"><value>напр. Незнакомец в капюшоне</value></data>
   <data name="Actor.Sheet.Kind" xml:space="preserve"><value>Тип</value></data>
   <data name="Actor.Sheet.KindPc" xml:space="preserve"><value>Персонаж игрока</value></data>
   <data name="Actor.Sheet.KindNpc" xml:space="preserve"><value>Неигровой персонаж (НПС)</value></data>
@@ -310,7 +309,7 @@
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>План на уровень {0}:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Добавлено в поле заметок. Сохраните изменения, чтобы оставить.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Вики: {0}</value></data>
-  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>После сохранения игроки смогут прочитать историю персонажа. Сначала проверьте, нет ли в ней секретов.</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>После сохранения игроки смогут прочитать историю персонажа, кроме блоков мастера. Сначала проверьте остальное на секреты.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: «{1}» нет в Библиотеке.</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} — {2}</value></data>
@@ -338,4 +337,11 @@
   <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>Без доспехов</value></data>
   <data name="Actor.Ac.Defense" xml:space="preserve"><value>Защита: {0}</value></data>
   <data name="Actor.Ac.Other" xml:space="preserve"><value>Прочие бонусы</value></data>
+  <data name="Actor.Stranger" xml:space="preserve"><value>Незнакомец</value></data>
+  <data name="Actor.Stranger.NotIdentified" xml:space="preserve"><value>Личность не установлена</value></data>
+  <data name="Actor.Stranger.NothingYet" xml:space="preserve"><value>Больше отряду пока ничего не известно.</value></data>
+  <data name="Actor.Sheet.UnknownHint" xml:space="preserve"><value>Игроки видят незнакомца: только имя и описание ниже, но не настоящее имя, историю, портрет или лист персонажа.</value></data>
+  <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>Что видит отряд</value></data>
+  <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>Фигура в капюшоне, платит старым серебром и не называет имени.</value></data>
+  <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Открыто вам</value></data>
 </root>

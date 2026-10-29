@@ -9,10 +9,15 @@ public static class SessionQuotes
     /// <summary>What a speaker the viewer can't see is called. The words were said aloud; who said them stays hidden.</summary>
     public const string UnknownSpeaker = "Someone";
 
-    /// <summary>The name <paramref name="actor"/> goes by for this viewer: the public name while the DM keeps them
-    /// unidentified, the real name otherwise.</summary>
+    /// <summary>The name <paramref name="actor"/> goes by for this viewer: while the DM keeps them unidentified, the public
+    /// name (or "a stranger", in the viewer's language, when the DM gave none: never the real one); the real name otherwise.</summary>
     public static string NameFor(this ActorDocument actor, bool isDm) =>
-        !isDm && actor.Visibility == ActorVisibility.Unknown && !string.IsNullOrWhiteSpace(actor.PublicName) ? actor.PublicName : actor.Name;
+        isDm || actor.Visibility != ActorVisibility.Unknown ? actor.Name
+        : string.IsNullOrWhiteSpace(actor.PublicName) ? StrangerName
+        : actor.PublicName.Trim();
+
+    /// <summary>What players call someone the DM keeps unidentified and gave no public name.</summary>
+    public static string StrangerName => new Codex.Localization.Localizer()["Actor.Stranger"];
 
     /// <param name="visibleActors">The actors this viewer may see (a player's list already leaves Hidden ones out).</param>
     /// <param name="unknownName">What to call a speaker the viewer can't see, in the viewer's language.</param>

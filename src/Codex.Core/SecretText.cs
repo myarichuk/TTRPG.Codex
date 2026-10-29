@@ -44,7 +44,14 @@ public sealed record SecretSegment(SecretAudience Audience, string Text, int Blo
 /// <param name="Knowers">For <see cref="SecretAudience.Some"/>: the ids of the characters it names.</param>
 /// <param name="RevealedAt">When it was revealed, if its opening line says so.</param>
 /// <param name="Line">The 0-based line of its opening marker.</param>
-public sealed record SecretBlock(int Block, SecretAudience Marked, bool UnderDm, string Inner, IReadOnlyList<string> Knowers, DateTime? RevealedAt, int Line);
+public sealed record SecretBlock(int Block, SecretAudience Marked, bool UnderDm, string Inner, IReadOnlyList<string> Knowers, DateTime? RevealedAt, int Line)
+{
+    /// <summary>The 0-based line of its closing <c>:::</c>, or null when it is never closed and runs to the end of the text.</summary>
+    public int? ClosingLine { get; init; }
+
+    /// <summary>How many blocks it is inside: 0 for a block at the top level of the text.</summary>
+    public int Depth { get; init; }
+}
 
 /// <summary>
 /// The secret blocks of a DM's text (a wiki page, a place's description, a character's history):
@@ -92,7 +99,7 @@ public static class SecretText
     /// <summary>Every block of the text, in the order their opening lines come.</summary>
     public static IReadOnlyList<SecretBlock> Blocks(string? text) => Walk(text).Blocks;
 
-    private sealed record Frame(SecretAudience Marked, int Block, IReadOnlyList<string> Knowers, DateTime? RevealedAt, int Line, bool UnderDm);
+    private sealed record Frame(SecretAudience Marked, int Block, IReadOnlyList<string> Knowers, DateTime? RevealedAt, int Line, bool UnderDm, int Depth);
 
     private static (List<SecretSegment> Segments, List<SecretBlock> Blocks) Walk(string? text)
     {
@@ -131,7 +138,7 @@ public static class SecretText
                 var rest = m.Groups["rest"].Value;
                 var knowers = marked == SecretAudience.Some ? ActorToken.Matches(rest).Select(t => t.Groups["id"].Value).Distinct().ToList() : new List<string>();
                 var underDm = open.Any(o => o.Marked == SecretAudience.Dm);
-                open.Add(new Frame(marked, blocks.Count, knowers, StampOf(rest), i, underDm));
+                open.Add(new Frame(marked, blocks.Count, knowers, StampOf(rest), i, underDm, open.Count));
                 blocks.Add(null!); // filled in when it closes, so Inner can hold its lines
             }
             else if (open.Count > 0)
@@ -155,7 +162,11 @@ public static class SecretText
 
         void Close(Frame frame, int closingLine) =>
             blocks[frame.Block] = new SecretBlock(frame.Block, frame.Marked, frame.UnderDm,
-                string.Join("\n", lines[(frame.Line + 1)..closingLine]), frame.Knowers, frame.RevealedAt, frame.Line);
+                string.Join("\n", lines[(frame.Line + 1)..closingLine]), frame.Knowers, frame.RevealedAt, frame.Line)
+            {
+                ClosingLine = closingLine < lines.Length ? closingLine : null,
+                Depth = frame.Depth
+            };
 
         void Flush()
         {
@@ -241,6 +252,64 @@ public static class SecretText
             s.RevealedAt is { } at && s.Audience is SecretAudience.Party or SecretAudience.Some
                 ? $":::party {StampText(at)}\n{s.Text.Trim('\n')}\n:::"
                 : s.Text));
+    }
+
+    /// <summary>The blocks of the text a player owning <paramref name="ownedActorIds"/> may read only because they were
+    /// revealed to one of their characters (<c>:::for</c>), as ordinary text, in order; empty when there are none. What
+    /// <see cref="ForPlayers(string?, IReadOnlySet{string}?)"/> adds to <see cref="ForPlayers(string?)"/> for that player.</summary>
+    public static string RevealedOnlyTo(string? text, IReadOnlySet<string>? ownedActorIds)
+    {
+        if (!HasMarkers(text) || ownedActorIds == null || ownedActorIds.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        return Join(Parse(text).Where(s => s.Audience == SecretAudience.Some && CanRead(s, ownedActorIds)).Select(s => s.Text));
+    }
+
+    /// <summary>Whether a line is a block marker (<c>:::</c> or <c>:::word …</c>). Text written to go inside a block is cut of
+    /// these, so it cannot close the block early or open another.</summary>
+    public static bool IsMarkerLine(string line) => Marker.IsMatch(line);
+
+    /// <summary>
+    /// The text with <paramref name="version"/> as the players' version of block <paramref name="block"/>: a <c>:::players</c>
+    /// block right after it, or, when one is there already (only blank lines between), that block's lines replaced. Marker
+    /// lines in <paramref name="version"/> are dropped, so it cannot close the block early or open another. Null when there is
+    /// no such block outside every other block, it is never closed, its lines are no longer <paramref name="expectedInner"/>
+    /// (edited since the DM looked), or the version is empty.
+    /// </summary>
+    public static string? SetPlayersVersion(string? text, int block, string expectedInner, string? version)
+    {
+        var all = Blocks(text);
+        var found = all.FirstOrDefault(b => b.Block == block);
+        var body = Lines(version ?? string.Empty).Where(l => !IsMarkerLine(l)).ToList();
+        while (body.Count > 0 && body[^1].Trim().Length == 0) body.RemoveAt(body.Count - 1);
+        while (body.Count > 0 && body[0].Trim().Length == 0) body.RemoveAt(0);
+        if (found is not { Depth: 0, ClosingLine: { } closing } || found.Inner != expectedInner || body.Count == 0)
+        {
+            return null;
+        }
+
+        var lines = Lines(text!).ToList();
+        var next = closing + 1;
+        while (next < lines.Count && lines[next].Trim().Length == 0) next++;
+        var indent = Marker.Match(lines[found.Line]).Groups["indent"].Value;
+        var players = new List<string> { string.Empty, indent + ":::players" };
+        players.AddRange(body);
+        players.Add(indent + ":::");
+        if (all.FirstOrDefault(b => b.Line == next) is { Marked: SecretAudience.Players, Depth: 0, ClosingLine: { } end })
+        {
+            lines.RemoveRange(closing + 1, end - closing);
+        }
+
+        lines.InsertRange(closing + 1, players);
+        var after = closing + 1 + players.Count;
+        if (after < lines.Count && lines[after].Trim().Length > 0)
+        {
+            lines.Insert(after, string.Empty);
+        }
+
+        return string.Join("\n", lines);
     }
 
     /// <summary>The whole text with the marker lines left out: for a one-line summary the DM reads.</summary>

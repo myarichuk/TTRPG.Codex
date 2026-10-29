@@ -53,6 +53,20 @@ public class AiPromptsTests
     }
 
     [Fact]
+    public void PlayersVersion_GivesTheSecretAsTheDmsOnly_AndRevisesTheVersionThereIs()
+    {
+        var (system, user) = AiPrompts.PlayersVersion(new PlayersVersionRequest("Saltmere", "place", "The keeper runs the smugglers.", "A quiet village.", "Lights at night.", "", Language: "ru"));
+
+        Assert.Contains("without giving it away", system);
+        Assert.Contains("Never write lines that start with \":::\"", system);
+        Assert.Contains("Russian", system);
+        Assert.Contains("The secret (the game master's only; never state it):\nThe keeper runs the smugglers.", user);
+        Assert.Contains("What the players already read on the page:\nA quiet village.", user);
+        Assert.Contains("revise it", user);
+        Assert.DoesNotContain("revise it", AiPrompts.PlayersVersion(new PlayersVersionRequest("Saltmere", "place", "S", "", null, "")).User);
+    }
+
+    [Fact]
     public void Rewrite_OfATextWithDmBlocks_KeepsThem()
     {
         var (system, _) = AiPrompts.Rewrite(new RewriteRequest("Aria", "character", Array.Empty<string>(), "Born at sea.\n:::dm\nSecret.\n:::", "", AiAudience.Players));

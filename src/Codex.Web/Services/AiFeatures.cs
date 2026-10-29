@@ -121,6 +121,22 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             Structure: string.IsNullOrWhiteSpace(outline) ? null : LiveTemplate.Sample(outline)), ct);
     }
 
+    /// <summary>Drafts the players' version of one of the DM's secrets on a wiki page, for the DM to read before it goes in.
+    /// <paramref name="shown"/> is what players already read on the page.</summary>
+    public async Task<string> PlayersVersionAsync(CampaignDocument campaign, string title, WikiPageKind kind, string secret, string shown, string? current, string instruction, string userId, CancellationToken ct = default)
+    {
+        var assistant = await providers.AssistantForAsync(userId);
+        return await assistant.WritePlayersVersionAsync(new PlayersVersionRequest(
+            title,
+            kind == WikiPageKind.General ? "lore" : kind.ToString().ToLowerInvariant(),
+            secret,
+            shown,
+            current,
+            instruction,
+            $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            Language: Lang), ct);
+    }
+
     /// <summary>Writes or polishes the description of a Library entry or a place. The facts are the
     /// filled-in fields, so the prose agrees with the numbers; <paramref name="audience"/> Players
     /// keeps it to what someone there would see.</summary>

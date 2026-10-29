@@ -24,6 +24,13 @@ public sealed class AiAssistant(IChatClient chat)
     public Task<string> WriteWikiPageAsync(WikiPageRequest request, CancellationToken ct = default) =>
         CompleteAsync(AiPrompts.WikiPage(request), ct);
 
+    /// <summary>The players' version of a secret; any marker line the model writes anyway is dropped.</summary>
+    public async Task<string> WritePlayersVersionAsync(PlayersVersionRequest request, CancellationToken ct = default)
+    {
+        var text = await CompleteAsync(AiPrompts.PlayersVersion(request), ct);
+        return string.Join("\n", text.Replace("\r\n", "\n").Split('\n').Where(line => !SecretText.IsMarkerLine(line))).Trim();
+    }
+
     public Task<string> DescribeAsync(DescribeRequest request, CancellationToken ct = default) =>
         CompleteAsync(AiPrompts.Describe(request), ct);
 

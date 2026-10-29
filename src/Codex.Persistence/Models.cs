@@ -98,7 +98,8 @@ public enum ActorVisibility
     /// <summary>Doesn't appear to players at all - not even a name.</summary>
     Hidden,
 
-    /// <summary>Players know something is there, but only <see cref="ActorDocument.PublicName"/>/<see cref="ActorDocument.PublicDescription"/>, never the real sheet.</summary>
+    /// <summary>Players know someone is there, a stranger they have met but not identified: they get only
+    /// <see cref="ActorDocument.PublicName"/> and <see cref="ActorDocument.PublicDescription"/>, never the real name, history or sheet.</summary>
     Unknown,
 
     /// <summary>Fully visible to players with access to the campaign.</summary>
@@ -128,8 +129,10 @@ public class ActorDocument
     public string Name { get; set; } = string.Empty;
     public ActorVisibility Visibility { get; set; } = ActorVisibility.Known;
 
-    /// <summary>What an Unknown actor shows players instead of the real name/description.</summary>
+    /// <summary>What an Unknown actor shows players instead of the real name ("the hooded stranger").</summary>
     public string? PublicName { get; set; }
+
+    /// <summary>What players see of an Unknown actor instead of the history: how they look, what they did in front of the party.</summary>
     public string? PublicDescription { get; set; }
 
     /// <summary>
@@ -145,6 +148,12 @@ public class ActorDocument
 
     /// <summary>History, personality, goals: the prose the owner (or the DM) writes and the AI can polish.</summary>
     public string? Biography { get; set; }
+
+    /// <summary>Never stored: on a player's own character, the blocks of its history the DM revealed to that player's
+    /// characters (<c>:::for</c>). They are kept out of <see cref="Biography"/>, which the player edits, so a save cannot turn
+    /// them into text everyone reads; the sheet shows them apart, read only.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public string? RevealedToReader { get; set; }
 
     /// <summary>The DM's private notes on this actor. Stripped by the repository before a non-DM ever sees the document.</summary>
     public string? DmNotes { get; set; }

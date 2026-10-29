@@ -81,7 +81,7 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         var bridgeCard = dm.GetByTestId("fact-card").Filter(new() { HasText = revealedSummary });
         await bridgeCard.GetByLabel("Reveal to").SelectOptionAsync(new SelectOptionValue { Label = "Aria" });
         await bridgeCard.GetByRole(AriaRole.Button, new() { Name = "Reveal to character" }).ClickAsync();
-        await bridgeCard.GetByText("Known by: Aria").WaitForAsync();
+        await Assertions.Expect(bridgeCard.GetByTestId("fact-knower")).ToContainTextAsync("Aria");
 
         // ---- Players' lore: Aria's player knows, Bram's doesn't, nobody sees the secret. ----
         await E2EHelpers.GoToSectionAsync(player1, campaignId, "lore");
