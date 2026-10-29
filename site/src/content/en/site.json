@@ -20,7 +20,7 @@
   "hero": {
     "eyebrow": "Self-hosted · Free for personal and noncommercial use",
     "title": "Run your whole table from one browser tab",
-    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One DM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew. It ships with the Fifth Edition SRD 5.2.1, and other systems can be added as data.",
+    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One DM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew. It ships with the Fifth Edition SRD 5.2.1.",
     "primary": "Download",
     "secondary": "Read the guide",
     "note": "Windows, macOS and Linux · English, Русский, עברית",
@@ -44,7 +44,7 @@
       { "icon": "notebook-pen", "title": "Sessions, recaps and journals", "text": "A player-facing recap and a separate DM summary, table notes (private or shared) and a private journal that not even the DM can read." },
       { "icon": "eye-off", "title": "Secrets stay secret", "text": "NPCs can be hidden, known by silhouette or revealed. Players only ever receive what they are allowed to see." },
       { "icon": "sparkles", "title": "Optional AI, on your own key", "text": "Draft recaps, histories and characters, or build the world in a chat. Nothing is sent to a model until you click, and nothing is saved until you apply it." },
-      { "icon": "library", "title": "Systems are data", "text": "A system is a YAML file plus packs of YAML content: attributes, resources, sheet fields, content types and conditions. Define your own without touching the program." }
+      { "icon": "library", "title": "Systems are data", "text": "The 5E rules are data, not code: a YAML system definition plus packs of YAML content. The format is still being reworked to take other games." }
     ]
   },
   "tour": {
@@ -132,16 +132,16 @@
   "systems": {
     "eyebrow": "Systems and licences",
     "title": "What is in the box, in plain terms",
-    "lead": "What ships today, what you can add, and what you may do with it.",
+    "lead": "What ships today, where it is going, and what you may do with it.",
     "panels": [
       {
         "title": "Ships with the Fifth Edition SRD 5.2.1",
         "text": "Twelve classes, nine species, four backgrounds, seventeen feats, 339 spells and 340 creatures from the System Reference Document 5.2.1, used under CC BY 4.0. It is the one complete game system included today. TTRPG.Codex describes itself as \"5E compatible\" and has no connection to Wizards of the Coast."
       },
       {
-        "title": "Built to take other systems",
-        "text": "A game system is data, not code: a YAML file for attributes, resources, sheet fields, content types and conditions, plus packs of entries. A small system, like the bundled d6 example, is one short file and a few entry files. Rules that need real logic, such as 5E's spell slots and level-ups, take a compiled plugin. Other publishers' content is not included.",
-        "link": { "href": "https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md", "label": "Read the content pack format" }
+        "title": "Other systems are the goal",
+        "text": "The 5E SRD is data, not code: a YAML system definition for attributes, resources, sheet fields, content types and conditions, plus packs of entries. That format is still being reworked, so 5E is the only system fully supported today; the bundled d6 example is a demo, not a playable game. Other publishers' content is not included.",
+        "link": { "href": "https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md", "label": "Read the current format (it may change)" }
       },
       {
         "title": "Free for personal and noncommercial use",

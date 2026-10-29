@@ -114,7 +114,7 @@ The DM can extend it:
 - [[ui:Campaign.Library.ImportFromCampaign]] brings homebrew over from another campaign you run.
 - [[ui:Campaign.Library.ExportPack]] saves homebrew as a pack file, all of it or only entries carrying a tag you choose, and [[ui:Campaign.Library.ImportPack]] loads one. That is how you share a set of rules with another DM.
 
-To add a whole new game system, or a setting pack, write YAML files and drop them in your `content` folder. The format is described in [the content pack documentation](https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md).
+To add a setting pack, write YAML files and drop them in your `content` folder. The format is described in [the content pack documentation](https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md) and may still change. Whole new game systems are not supported yet.
 
 ## Run the table {#table}
 

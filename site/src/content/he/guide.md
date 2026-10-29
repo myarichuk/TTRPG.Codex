@@ -114,7 +114,7 @@ description: מדריך שימוש ב-TTRPG.Codex: יצירת קמפיין, הז
 - ״[[ui:Campaign.Library.ImportFromCampaign]]״ מביא תוכן ביתי מקמפיין אחר שאתם מנהלים.
 - ״[[ui:Campaign.Library.ExportPack]]״ שומר תוכן ביתי כקובץ חבילה, את כולו או רק רשומות עם תגית שבחרתם, ו״[[ui:Campaign.Library.ImportPack]]״ טוען קובץ כזה. כך משתפים סט חוקים עם שליט מבוך אחר.
 
-כדי להוסיף מערכת משחק חדשה או חבילת סביבה, כותבים קובצי YAML ומניחים אותם בתיקיית `content`. הפורמט מתואר ב[תיעוד חבילות התוכן](https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md).
+כדי להוסיף חבילת סביבה, כותבים קובצי YAML ומניחים אותם בתיקיית `content`. הפורמט מתואר ב[תיעוד חבילות התוכן](https://github.com/myarichuk/TTRPG.Codex/blob/main/docs/CONTENT_PACKS.md) ועדיין עשוי להשתנות. מערכות משחק חדשות לגמרי עדיין אינן נתמכות.
 
 ## מנהלים את השולחן {#table}
 
