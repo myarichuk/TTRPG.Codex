@@ -1443,7 +1443,12 @@ else
     /// tells the merge which fields were edited here.</summary>
     private Task<bool> TrySaveActorAsync() => RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
 
-    private async Task SaveAsync()
+    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
+    private readonly SaveGate saveGate = new();
+
+    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
+
+    private async Task SaveNowAsync()
     {
         if (actor == null || access == null || campaign == null) return;
         flash = null; // a message from an earlier attempt must not outlive this one

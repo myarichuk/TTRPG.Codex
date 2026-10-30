@@ -167,7 +167,12 @@ else
         if (await guard.ConfirmDiscardAsync()) editing = null;
     }
 
-    private async Task SaveAsync()
+    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
+    private readonly SaveGate saveGate = new();
+
+    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
+
+    private async Task SaveNowAsync()
     {
         if (editing == null) return;
         if (string.IsNullOrEmpty(editing.SessionId)) editing.SessionId = null;

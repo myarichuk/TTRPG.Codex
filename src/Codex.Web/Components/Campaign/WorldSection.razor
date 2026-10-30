@@ -468,7 +468,12 @@ else
         editingRegion = null;
     }
 
-    private async Task SaveLocationAsync()
+    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
+    private readonly SaveGate saveGate = new();
+
+    private Task SaveLocationAsync() => saveGate.RunAsync(SaveLocationNowAsync);
+
+    private async Task SaveLocationNowAsync()
     {
         if (editingRegion == null || editingLocation == null) return;
         if (string.IsNullOrWhiteSpace(editingLocation.Name))

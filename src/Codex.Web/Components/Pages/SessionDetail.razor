@@ -413,7 +413,12 @@ else
         flash = Flash.Success(L["Session.Flash.DetailsSaved"]);
     }
 
-    private async Task SaveRecapAsync()
+    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
+    private readonly SaveGate saveGate = new();
+
+    private Task SaveRecapAsync() => saveGate.RunAsync(SaveRecapNowAsync);
+
+    private async Task SaveRecapNowAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
         var recap = mentions.Encode(editRecap);
@@ -422,7 +427,9 @@ else
         flash = Flash.Success(L["Session.Flash.RecapSaved"]);
     }
 
-    private async Task SaveDmSummaryAsync()
+    private Task SaveDmSummaryAsync() => saveGate.RunAsync(SaveDmSummaryNowAsync);
+
+    private async Task SaveDmSummaryNowAsync()
     {
         if (session == null || access == null || !access.IsDm) return;
         var summary = mentions.Encode(editDmSummary);
@@ -472,7 +479,9 @@ else
     /// <summary>The text as a reader will see it: the typed @Names become mentions first.</summary>
     private string PreviewMentions(string text) => MentionLinks.ToHtml(mentions.Encode(text), mentions, CampaignId);
 
-    private async Task SaveJournalAsync()
+    private Task SaveJournalAsync() => saveGate.RunAsync(SaveJournalNowAsync);
+
+    private async Task SaveJournalNowAsync()
     {
         if (access == null) return;
         var entry = journal ?? new JournalEntryDocument { CampaignId = CampaignId, SessionId = SessionId, Title = Title ?? "Session" };

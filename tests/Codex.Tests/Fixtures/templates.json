@@ -1,0 +1,37 @@
+[
+  {
+    "why": "a field used twice repeats the first; a default fills its field",
+    "body": "$who$ gives $item:a coin$; $who$ smiles.",
+    "text": " gives a coin;  smiles.",
+    "end": 23,
+    "fields": [["who", 0, 0, false], ["item", 7, 6, false], ["who", 15, 0, true]]
+  },
+  {
+    "why": "$$ is a dollar sign, and $END$ is where the caret goes",
+    "body": "Cost: $$5. $END$Done",
+    "text": "Cost: $5. Done",
+    "end": 10,
+    "fields": []
+  },
+  {
+    "why": "names an object already has are fields like any other",
+    "body": "$constructor$ and $toString:x$",
+    "text": " and x",
+    "end": 6,
+    "fields": [["constructor", 0, 0, false], ["toString", 5, 1, false]]
+  },
+  {
+    "why": "names in any script; the first default counts for every use",
+    "body": "$имя:Мара$ — $имя$",
+    "text": "Мара — Мара",
+    "end": 11,
+    "fields": [["имя", 0, 4, false], ["имя", 7, 4, true]]
+  },
+  {
+    "why": "a $ that starts no field stays; a later default does not replace the first",
+    "body": "Sword $Longsword and $a:1$ $a:2$",
+    "text": "Sword $Longsword and 1 1",
+    "end": 24,
+    "fields": [["a", 21, 1, false], ["a", 23, 1, true]]
+  }
+]

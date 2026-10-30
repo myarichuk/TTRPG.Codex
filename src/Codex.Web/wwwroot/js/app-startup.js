@@ -667,11 +667,20 @@ function mdReplace(el, start, end, text) {
     }
 }
 
+// The letter a Ctrl/Cmd shortcut was pressed with. On a Latin layout that is the key's own letter (so Dvorak's S is S); on any
+// other (Russian, Hebrew) the key gives "ы" or "ד", so the letter is taken from where the key sits (e.code "KeyS"), as browsers
+// and desktop programs do: Ctrl+S saves whatever the layout.
+function shortcutKey(e) {
+    const key = (e.key || "").toLowerCase();
+    if (/^[a-z]$/.test(key)) return key;
+    return /^Key[A-Z]$/.test(e.code || "") ? e.code.slice(3).toLowerCase() : key;
+}
+
 // Ctrl/Cmd+Shift+H in a MarkdownEditor box that takes secret blocks.
 document.addEventListener("keydown", function (e) {
     const el = e.target;
     if (!(el instanceof HTMLTextAreaElement) || !el.hasAttribute("data-md-secrets") || !(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return;
-    if (e.key.toLowerCase() !== "h") return;
+    if (shortcutKey(e) !== "h") return;
     e.preventDefault();
     window.codex.mdSecret(el.id);
 });
@@ -680,7 +689,7 @@ document.addEventListener("keydown", function (e) {
 document.addEventListener("keydown", function (e) {
     const el = e.target;
     if (!(el instanceof HTMLTextAreaElement) || !el.hasAttribute("data-md") || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
-    const key = e.key.toLowerCase();
+    const key = shortcutKey(e);
     if (key !== "b" && key !== "i") return;
     e.preventDefault();
     if (key === "b") window.codex.mdWrap(el.id, "**", "**"); else window.codex.mdWrap(el.id, "*", "*");
@@ -688,17 +697,19 @@ document.addEventListener("keydown", function (e) {
 
 // Ctrl+S (Cmd+S on a Mac) presses the Save of what is being edited: the nearest [data-save-shortcut] button around the focus
 // (a page can hold several editors, a session's recap and summary), else the only one on screen; an open dialog's own first.
-// The browser's "Save page as" never opens over an editor. A field that sends its value on change (not on input) is blurred
-// first, so the value is in before Save runs; focus goes back afterwards.
+// The browser's "Save page as" never opens over an editor. A template being filled ends first (its unfilled names come out), and
+// a field that sends its value on change (not on input) is blurred, so the text is final before Save runs; focus goes back
+// afterwards. Holding the keys down saves once: the key's repeats are swallowed.
 document.addEventListener("keydown", function (e) {
-    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "s") return;
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || shortcutKey(e) !== "s") return;
     function usable(b) { return !b.disabled && b.getClientRects().length > 0; }
     const dialog = Array.from(document.querySelectorAll("dialog[open]")).pop();
     const scope = dialog || document;
-    let button = null;
+    let button = null, around = scope;
     for (let node = e.target instanceof Element ? e.target : null; node && !button && node !== document.body; node = node.parentElement) {
         if (dialog && !dialog.contains(node)) break;
         button = Array.from(node.querySelectorAll("[data-save-shortcut]")).find(usable) || null;
+        if (button) around = node;
     }
     if (!button) {
         const all = Array.from(scope.querySelectorAll("[data-save-shortcut]")).filter(usable);
@@ -706,6 +717,8 @@ document.addEventListener("keydown", function (e) {
     }
     if (!button) return;
     e.preventDefault();
+    if (e.repeat) return;
+    window.codexTemplates.stopWithin(around);
     const field = document.activeElement;
     if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) field.blur();
     button.click();
@@ -722,14 +735,16 @@ document.addEventListener("click", function (e) {
 // Kept for backwards compatibility with earlier builds.
 window.codexDownload = window.codex.download;
 
-// Live templates (LiveTemplate.cs) in a box with data-templates: [{ a: abbreviation, n: name, b: body }]. Typing an
-// abbreviation and Tab puts its template in; then Tab and Shift+Tab step through its fields, a field used twice repeats what
+// Live templates (LiveTemplate.cs) in a box with data-templates: [{ a: abbreviation, n: name, b: body }]. Typing ";" and an
+// abbreviation, then Tab, puts its template in; then Tab and Shift+Tab step through its fields, a field used twice repeats what
 // is typed in the first, and Tab after the last field (or Escape, or leaving the box, or saving) ends it. Tab anywhere else
 // still moves focus, so a keyboard user is never trapped. As in an IDE, a field with no default holds its name, greyed and
 // selected, so typing replaces it; a name still there when the template ends is taken out again, so it never reaches the
 // page. The fields are drawn over the box (a layer that copies the box's text and wrapping, with only the fields showing),
 // and a hint (data-template-hint, with {0} the field, {1} its number and {2} how many) says where the caret is.
 window.codexTemplates = (function () {
+    // Typed before an abbreviation to put its template in with Tab; keep in step with LiveTemplate.Prefix.
+    const PREFIX = ";";
     // Keep in step with Token in LiveTemplate.cs.
     const TOKEN = /\$\$|\$([\p{L}\p{N}_]+)(?::([^$\r\n]*))?\$/gu;
     // What the layer over the box copies from it, so its text wraps line for line with the box's.
@@ -755,9 +770,10 @@ window.codexTemplates = (function () {
 
     // The template with each field holding its default; with <placeholders>, a field with none holds its name instead (ph).
     function expand(body, placeholders) {
-        const defaults = {};
+        // A Map, not an object: a field called "constructor" or "toString" must not find the object's own.
+        const defaults = new Map();
         for (const m of body.matchAll(TOKEN)) {
-            if (m[1] !== undefined && m[2] !== undefined && !(m[1] in defaults)) defaults[m[1]] = m[2];
+            if (m[1] !== undefined && m[2] !== undefined && !defaults.has(m[1])) defaults.set(m[1], m[2]);
         }
         let text = "", at = 0, end = -1;
         const fields = [], seen = new Set();
@@ -766,7 +782,7 @@ window.codexTemplates = (function () {
             at = m.index + m[0].length;
             if (m[1] === undefined) { text += "$"; continue; }
             if (m[1] === "END") { if (end < 0) end = text.length; continue; }
-            const value = defaults[m[1]] || "";
+            const value = defaults.get(m[1]) || "";
             const ph = !value && !!placeholders;
             const shown = ph ? label(m[1]) : value;
             fields.push({ name: m[1], start: text.length, end: text.length + shown.length, mirror: seen.has(m[1]), ph: ph });
@@ -1086,7 +1102,9 @@ window.codexTemplates = (function () {
             if (e.key === "Escape") {
                 stop();
             } else if (e.key === "Tab") {
-                if (e.shiftKey) go(Math.max(0, s.index - 1));
+                // Shift+Tab before the first field leaves the template, and the box, the way Shift+Tab leaves any box.
+                if (e.shiftKey && s.index === 0) { stop(); return; }
+                if (e.shiftKey) go(s.index - 1);
                 else if (s.index + 1 < s.stops.length) go(s.index + 1);
                 else finish();
             } else {
@@ -1097,18 +1115,24 @@ window.codexTemplates = (function () {
             return;
         }
         if (e.key !== "Tab" || e.shiftKey || !el.hasAttribute("data-templates") || el.readOnly || el.selectionStart !== el.selectionEnd) return;
+        // Only after the prefix (";npc"), so an abbreviation that is also a word ("npc" in a sentence) followed by Tab still moves on.
         const before = el.value.slice(0, el.selectionStart);
-        const word = /(?:^|[^\p{L}\p{N}_-])([\p{L}\p{N}_-]+)$/u.exec(before);
+        const word = /(?:^|[^\p{L}\p{N}_-]);([\p{L}\p{N}_-]+)$/u.exec(before);
         if (!word) return;
         const typed = word[1].toLowerCase();
         const index = of(el).findIndex(function (t) { return t.a && t.a.toLowerCase() === typed; });
         if (index < 0) return;
         e.preventDefault();
         e.stopPropagation();
-        insert(el, index, el.selectionStart - word[1].length, el.selectionStart);
+        insert(el, index, el.selectionStart - word[1].length - PREFIX.length, el.selectionStart);
     }, true);
 
-    return { of: of, insert: insert, expand: expand };
+    // Ends the template being filled when its box is inside <scope> (Save pressed for that editor), names left standing taken out.
+    function stopWithin(scope) {
+        if (s && scope && scope.contains(s.el)) stop();
+    }
+
+    return { of: of, insert: insert, expand: expand, stopWithin: stopWithin };
 })();
 
 // Hovering a mention or a [[link]] in written text (or focusing it from the keyboard) shows a card with the name, what it

@@ -527,7 +527,7 @@
   <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>The page changed since you opened it. Here it is as it is now; check the block and try again.</value></data>
   <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# DM block} other{# DM blocks}}</value></data>
   <data name="Campaign.Templates.Title" xml:space="preserve"><value>Templates</value></data>
-  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>Outlines for new pages, and snippets for any page: type a template’s abbreviation and press Tab, or type / and pick one, then Tab from field to field.</value></data>
+  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>Outlines for new pages, and snippets for any page: type ; and a template’s abbreviation (;npc) and press Tab, or type / and pick one, then Tab from field to field.</value></data>
   <data name="Campaign.Templates.DmOnly" xml:space="preserve"><value>Only the DM edits templates.</value></data>
   <data name="Campaign.Templates.New" xml:space="preserve"><value>New template</value></data>
   <data name="Campaign.Templates.Pages" xml:space="preserve"><value>Pages</value></data>
@@ -541,7 +541,7 @@
   <data name="Campaign.Templates.Field.Kind" xml:space="preserve"><value>Outline for</value></data>
   <data name="Campaign.Templates.Field.Body" xml:space="preserve"><value>Text</value></data>
   <data name="Campaign.Templates.Kind.None" xml:space="preserve"><value>No kind (a snippet)</value></data>
-  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>One word: type it in a page and press Tab. Leave it empty to offer the template only in the / menu and the editor’s template button.</value></data>
+  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>One word: type ; and the word in a page (;npc) and press Tab. Leave it empty to offer the template only in the / menu and the editor’s template button.</value></data>
   <data name="Campaign.Templates.KindHint" xml:space="preserve"><value>A new page of this kind can start from it, a page of this kind can add the sections it lacks, and the AI writes such pages to it. Your own template comes before the built-in one.</value></data>
   <data name="Campaign.Templates.Syntax" xml:space="preserve"><value>`$name$` is a field to fill in; the same name again repeats what you type. `$name:text$` starts out holding the text. `$END$` is where the cursor ends up. `$$` is a dollar sign. Links, mentions and secret blocks work as in pages.</value></data>
   <data name="Campaign.Templates.Fields" xml:space="preserve"><value>Fields, in Tab order: {0}</value></data>
@@ -559,11 +559,11 @@
   <data name="Campaign.Templates.Restored" xml:space="preserve"><value>Restored as it ships.</value></data>
   <data name="Campaign.Templates.Deleted" xml:space="preserve"><value>Template deleted.</value></data>
   <data name="Campaign.Templates.Try" xml:space="preserve"><value>Try it</value></data>
-  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>Type an abbreviation and press Tab, or type /. The template being edited is offered as it is now, saved or not. Nothing typed here is kept.</value></data>
+  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>Type ; and an abbreviation and press Tab, or type /. The template being edited is offered as it is now, saved or not. Nothing typed here is kept.</value></data>
   <data name="Campaign.Wiki.StartFrom" xml:space="preserve"><value>Start from:</value></data>
   <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>Add the sections of “{0}” this page lacks</value></data>
   <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>Added the missing sections where the template has them. Fill them in, or remove the ones you don’t need.</value></data>
-  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>Type a template’s abbreviation and Tab, or `/`, to put it in.</value></data>
+  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>Type `;` and a template’s abbreviation, then Tab, or `/`, to put it in.</value></data>
   <data name="Campaign.Cast.Stranger" xml:space="preserve"><value>Show as stranger</value></data>
   <data name="Campaign.Cast.StrangerLabel" xml:space="preserve"><value>Show {0} to players as a stranger</value></data>
   <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>Players see that someone is there, under the name you give on the sheet, but not who it is.</value></data>

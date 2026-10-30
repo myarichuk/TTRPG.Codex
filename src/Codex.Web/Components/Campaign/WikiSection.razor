@@ -1018,7 +1018,12 @@ else
     private async Task InsertLinkAsync(WikiPageDocument target) =>
         await JS.InvokeVoidAsync("codex.mdInsert", "wiki-body", $"[[{target.Title}]]");
 
-    private async Task SaveAsync()
+    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
+    private readonly SaveGate saveGate = new();
+
+    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
+
+    private async Task SaveNowAsync()
     {
         if (string.IsNullOrWhiteSpace(draft.Title))
         {
