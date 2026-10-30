@@ -9,7 +9,7 @@
 <div class="ai-field">
     <div class="ai-field-head">
         <label for="@Id" class="field-label">@(Label ?? L["Library.Ai.Description"])</label>
-        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="EnhanceAsync" Disabled="@busy" data-testid="@($"{TestId}-ai")">
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="EnhanceAsync" Busy="@busy" data-testid="@($"{TestId}-ai")">
             @(busy ? L["Library.Ai.Writing"] : string.IsNullOrWhiteSpace(Value) ? L["Library.Ai.Write"] : L["Library.Ai.Enhance"])
         </CodexButton>
     </div>

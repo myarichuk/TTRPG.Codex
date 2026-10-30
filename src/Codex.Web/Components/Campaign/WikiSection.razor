@@ -103,7 +103,7 @@ else if (Mode == "edit")
                     </MarkdownEditor>
                     <SaveBar Dirty="IsDirty()" TestId="wiki-save-bar">
                         <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="ExpandAsync" Disabled="@expanding" data-testid="wiki-expand"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Wiki.ExpandWithAi"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" Icon="sparkles" OnClick="ExpandAsync" Busy="@expanding" data-testid="wiki-expand">@L["Campaign.Wiki.ExpandWithAi"]</CodexButton>
                         <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">@L["Campaign.Wiki.Cancel"]</a>
                         @if (current != null)
                         {

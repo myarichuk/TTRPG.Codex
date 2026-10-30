@@ -102,8 +102,8 @@ else
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync" data-save-shortcut="">@L["Session.SaveRecap"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">@L["Session.Prefill"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Players)" disabled="@(drafting != null)" aria-describedby="ai-help">
-                            <LucideIcon IconName="sparkles" Size="14" /> @L["Session.DraftAi"]
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => DraftAsync(AiAudience.Players)" Disabled="@(drafting != null)" Busy="@(drafting == AiAudience.Players)" aria-describedby="ai-help">
+                            @L["Session.DraftAi"]
                         </CodexButton>
                     </div>
                     <p id="mention-hint" class="field-hint">@L["Session.MentionHint"]</p>
@@ -132,8 +132,8 @@ else
                                     Busy="@(drafting == AiAudience.Dm)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync" data-save-shortcut="">@L["Session.SaveSummary"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => DraftAsync(AiAudience.Dm)" disabled="@(drafting != null)">
-                            <LucideIcon IconName="sparkles" Size="14" /> @L["Session.DraftAi"]
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => DraftAsync(AiAudience.Dm)" Disabled="@(drafting != null)" Busy="@(drafting == AiAudience.Dm)">
+                            @L["Session.DraftAi"]
                         </CodexButton>
                     </div>
                     <p class="field-hint">@L["Session.DmDraftHint"]</p>
