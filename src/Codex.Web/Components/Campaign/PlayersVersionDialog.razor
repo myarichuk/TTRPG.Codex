@@ -30,7 +30,7 @@
                     <div class="ai-field-foot">
                         <label for="players-version-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
                         <input id="players-version-ask" class="field-input field-sm" placeholder="@L["Library.Ai.AskPlaceholder"]" @bind="instruction" @bind:event="oninput" disabled="@busy" />
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="DraftAsync" Disabled="@busy" data-testid="wiki-secret-draft-ai">
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="DraftAsync" Busy="@busy" data-testid="wiki-secret-draft-ai">
                             @(string.IsNullOrWhiteSpace(text) ? L["Library.Ai.Write"] : L["Campaign.Wiki.Secrets.Redraft"])
                         </CodexButton>
                     </div>

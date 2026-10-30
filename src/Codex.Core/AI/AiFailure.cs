@@ -43,6 +43,8 @@ public sealed record AiFailure(AiFailureKind Kind, string Detail)
         {
             case 401 or 403:
                 return new AiFailure(AiFailureKind.Auth, DetailOf(chain));
+            case 408:
+                return new AiFailure(AiFailureKind.Timeout, DetailOf(chain));
             case 404:
                 return new AiFailure(AiFailureKind.NotFound, DetailOf(chain));
             case 402 or 429:
@@ -136,9 +138,19 @@ public sealed record AiFailure(AiFailureKind Kind, string Detail)
         return null;
     }
 
+    // The OpenAI SDK's message is "HTTP 400 (invalid_request_error: )" with the provider's reason on a line of its own below it;
+    // the reason is the part a person can act on, so it leads and the status follows.
+    private static readonly System.Text.RegularExpressions.Regex StatusLine = new(@"^(HTTP \d{3})\b");
+
     private static string Shorten(string text)
     {
-        var line = text.Split('\n', 2)[0].Trim();
+        var lines = text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+        var line = lines.Count switch
+        {
+            0 => text.Trim(),
+            > 1 when StatusLine.Match(lines[0]) is { Success: true } status => $"{lines[1]} ({status.Groups[1].Value})",
+            _ => lines[0]
+        };
         return line.Length <= MaxDetail ? line : line[..MaxDetail].TrimEnd() + "…";
     }
 }

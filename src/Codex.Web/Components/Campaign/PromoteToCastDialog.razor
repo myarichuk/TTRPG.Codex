@@ -151,7 +151,7 @@
         {
             return await Ai.EquipAsync(About, Ctx.Campaign, Ctx.System, Ctx.UserId, ItemsAsync, ct);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             Logger.LogWarning(ex, "Picking gear for a promoted character failed");
             return null;
@@ -208,7 +208,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Promoting a wiki page to the cast failed");
-            error = L["Campaign.Wiki.Promote.Failed", L.Describe(ex)];
+            error = L["Campaign.Wiki.Promote.Failed", AiFailureText.For(L, ex)];
         }
         finally
         {

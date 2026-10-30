@@ -3,6 +3,7 @@ using Codex.Core.AI;
 using Codex.Core.Rules;
 using Codex.Localization;
 using Codex.Core.Systems;
+using Codex.Core.WorldBuilder;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 
@@ -248,18 +249,10 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
 
         // A model that left the gear out gets one short call that asks for nothing else; if that fails too, the character is
         // still worth keeping, without gear.
-        IReadOnlyList<DraftItem> picked;
-        try
-        {
-            picked = draft.Equipment is { Count: > 0 } equipment
-                ? equipment
-                : await assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
-                    catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            picked = Array.Empty<DraftItem>();
-        }
+        var picked = draft.Equipment is { Count: > 0 } equipment
+            ? equipment
+            : await GearOrNoneAsync(() => assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
+                catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct), ct);
 
         if (picked.Count > 0)
         {
@@ -267,6 +260,20 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         }
 
         return draft;
+    }
+
+    /// <summary>The gear <paramref name="pick"/> chose, or none when it failed. A provider that timed out throws a cancellation
+    /// too, but only the person's own stop (<paramref name="ct"/>) should cost them the rest of what the model made.</summary>
+    public static async Task<IReadOnlyList<DraftItem>> GearOrNoneAsync(Func<Task<IReadOnlyList<DraftItem>>> pick, CancellationToken ct)
+    {
+        try
+        {
+            return await pick();
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return Array.Empty<DraftItem>();
+        }
     }
 
     /// <summary>How the system generates scores, in a sentence for the prompt; null when it says nothing.</summary>
@@ -302,6 +309,70 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         var picked = await assistant.EquipAsync(new EquipRequest(character, catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
         return picked.Count == 0 ? null : StoredEquipment(picked, carriable, inventory, armor);
     }
+
+    /// <summary>Gear for several characters at once, a few calls at a time, as the proposal shows it; null when the system has no
+    /// inventory or no model is set up. A character whose pick failed gets none.</summary>
+    /// <param name="characters">Who each one is: a name and a line or a paragraph about them.</param>
+    public async Task<IReadOnlyList<List<DraftGear>>?> PickGearAsync(IReadOnlyList<string> characters, CampaignDocument campaign, SystemDefinition? system,
+        string userId, Func<string, Task<IReadOnlyList<ContentEntry>>> itemsFor, CancellationToken ct = default)
+    {
+        system = system?.Canonical;
+        var inventory = system?.SheetRules?.Inventory;
+        var armor = system?.SheetRules?.ArmorClass;
+        var carriable = await CarriableAsync(inventory, itemsFor);
+        if (inventory == null || carriable.Count == 0 || characters.Count == 0)
+        {
+            return null;
+        }
+
+        AiAssistant assistant;
+        try
+        {
+            assistant = await providers.AssistantForAsync(userId);
+        }
+        catch (AiNotConfiguredException)
+        {
+            return null;
+        }
+
+        var options = Options(carriable);
+        var systemName = catalog.GetDisplayName(campaign.SystemId);
+        using var turns = new SemaphoreSlim(MaxGearCalls);
+        return await Task.WhenAll(characters.Select(async character =>
+        {
+            await turns.WaitAsync(ct);
+            try
+            {
+                var picked = await GearOrNoneAsync(() => assistant.EquipAsync(new EquipRequest(character, systemName, options, armor != null), ct), ct);
+                return picked.Where(p => carriable.ContainsKey(p.Id))
+                    .Select(p => new DraftGear { Id = carriable[p.Id].Id, Name = carriable[p.Id].Name, Quantity = Math.Max(1, p.Quantity), Equipped = p.Equipped })
+                    .ToList();
+            }
+            finally
+            {
+                turns.Release();
+            }
+        }));
+    }
+
+    /// <summary>Gear picked earlier (<see cref="PickGearAsync"/>) as the sheet stores it, with no model call; null when there is
+    /// none or the system has no inventory. Items no longer in the Library are left out.</summary>
+    public async Task<List<object>?> StoredGearAsync(IReadOnlyList<DraftGear>? gear, SystemDefinition? system, Func<string, Task<IReadOnlyList<ContentEntry>>> itemsFor)
+    {
+        system = system?.Canonical;
+        var inventory = system?.SheetRules?.Inventory;
+        if (gear is not { Count: > 0 } || inventory == null)
+        {
+            return null;
+        }
+
+        var carriable = await CarriableAsync(inventory, itemsFor);
+        var stored = StoredEquipment(gear.Select(g => new DraftItem(g.Id, g.Quantity, g.Equipped)), carriable, inventory, system?.SheetRules?.ArmorClass);
+        return stored.Count == 0 ? null : stored;
+    }
+
+    /// <summary>Most gear picks that run at once for one proposal.</summary>
+    private const int MaxGearCalls = 4;
 
     /// <summary>Most items a prompt lists; keeps a system with a vast Library from filling the model's input.</summary>
     private const int MaxCarriable = 600;

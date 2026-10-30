@@ -122,6 +122,10 @@
                             <CodexCheck Id="@($"reader-cast-{current.Ref}")" Checked="current.Cast" OnChange="e => SetCast(current, (bool)(e.Value ?? false))" Disabled="@(Locked || !current.Selected)" data-testid="world-proposal-cast">@(current.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"])</CodexCheck>
                         }
                     </div>
+                    @if (current is { Kind: DraftKinds.Npc, Cast: true, Gear.Count: > 0 })
+                    {
+                        <p class="small-muted wb-reader-gear" data-testid="world-proposal-gear"><LucideIcon IconName="package" Size="14" /> @L["WorldChat.Proposal.Gear", string.Join(", ", current.Gear.Select(GearText))]</p>
+                    }
                     @if (current.SharedWithPlayers && current.Kind != DraftKinds.Bestiary)
                     {
                         <p class="wb-callout wb-callout-warning" data-testid="world-proposal-shared"><LucideIcon IconName="eye" Size="14" /> @L["WorldChat.Proposal.Shared"]</p>
@@ -311,6 +315,12 @@
         if (on) proposal.Select(d);
         else proposal.Skip(d);
         await OnDecided.InvokeAsync(null);
+    }
+
+    private string GearText(DraftGear item)
+    {
+        var name = item.Quantity > 1 ? $"{item.Quantity} × {item.Name}" : item.Name;
+        return item.Equipped ? L["WorldChat.Proposal.GearEquipped", name] : name;
     }
 
     private async Task SetCast(WorldDraft d, bool on)

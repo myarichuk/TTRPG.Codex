@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using Codex.Core.AI;
 using Codex.Localization;
 using Codex.Persistence;
@@ -40,6 +43,36 @@ public sealed class AiProviderService(
 
     private readonly IDataProtector _protector = dataProtection.CreateProtector("Codex.AiProviderKeys.v1");
     private readonly Lazy<IChatClient?> _serverClient = new(() => AIClientFactory.CreateClient(serverConfig));
+
+    // One client per provider setup, kept for the life of the server: a client learns things about its model (that it refuses a
+    // temperature, say) which a fresh one would have to find out again with a failed request. The key's hash is part of what
+    // names a setup, so a changed key, address or model gets a client of its own and the old one is never used again.
+    private const int MaxClients = 128;
+    private readonly ConcurrentDictionary<string, IChatClient> _clients = new();
+
+    private IChatClient? CachedClient(AIConfiguration config, bool confined)
+    {
+        var name = string.Join('\n', config.Provider, config.Endpoint?.Trim(), config.ModelId?.Trim(), confined,
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(config.ApiKey ?? string.Empty))));
+        if (_clients.TryGetValue(name, out var cached))
+        {
+            return cached;
+        }
+
+        var client = AIClientFactory.CreateClient(config);
+        if (client == null)
+        {
+            return null;
+        }
+
+        // Setups people tried and left behind pile up; starting over now and then costs one relearned refusal each.
+        if (_clients.Count >= MaxClients)
+        {
+            _clients.Clear();
+        }
+
+        return _clients.GetOrAdd(name, client);
+    }
 
     public bool ServerConfigured => _serverClient.Value != null;
 
@@ -93,7 +126,7 @@ public sealed class AiProviderService(
         var provider = DefaultProvider(user);
         if (provider != null && !Blocked(provider, user))
         {
-            var client = AIClientFactory.CreateClient(ToConfiguration(provider, null, Confined(user)));
+            var client = CachedClient(ToConfiguration(provider, null, Confined(user)), Confined(user));
             if (client != null)
             {
                 return client;

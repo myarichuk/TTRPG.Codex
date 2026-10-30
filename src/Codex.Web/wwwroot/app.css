@@ -1502,6 +1502,11 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .cx-arcane { border-color: var(--arcane); }
 .cx-arcane .lucide-icon { color: var(--arcane); }
 .cx-arcane:hover { background: var(--arcane-soft); border-color: var(--arcane); }
+/* A button whose work is under way: a turning ring where its icon was, the size of a small icon. */
+.cx-spinner { flex: none; display: inline-block; border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: 50%; animation: cx-spin 0.75s linear infinite; }
+.cx-arcane .cx-spinner { color: var(--arcane); }
+.cx-btn[aria-busy="true"] { cursor: progress; }
+@keyframes cx-spin { to { transform: rotate(360deg); } }
 .input-group > .field-input, .input-group > .field-select { flex: 1 1 auto; width: 1%; min-width: 0; }
 .input-group > .cx-btn { flex: 0 0 auto; }
 

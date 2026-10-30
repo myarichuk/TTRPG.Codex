@@ -234,7 +234,11 @@ else if (chat != null)
                     {
                         <StatusMessage Message="notice" OnDismiss="() => notice = null">
                             <Actions>
-                                @if (!string.IsNullOrWhiteSpace(draft))
+                                @if (carryOn != null)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="message-square-plus" OnClick="CarryOnAsync" data-testid="world-chat-carry-on">@L["WorldChat.CarryOn"]</CodexButton>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(draft))
                                 {
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="refresh-cw" OnClick="SendAsync" data-testid="world-chat-retry">@L["WorldChat.Retry"]</CodexButton>
                                 }
@@ -262,7 +266,7 @@ else if (chat != null)
             @* ---- The proposal ---- *@
             <aside class="wb-ledger panel" id="world-proposal" aria-labelledby="world-proposal-heading">
                 <WorldProposalPanel @ref="panel" Proposal="proposal" Warnings="chat.ProposalWarnings" Decided="chat.Decided" Missing="missing" PlaceNames="placeNames"
-                                    LastApplied="lastApplied" Locked="@(live != null || applying)" Applying="applying" ApplyError="@applyError"
+                                    LastApplied="lastApplied" Locked="@(chat.IsBusy || applying)" Applying="applying" ApplyError="@applyError"
                                     OnApply="ApplyAsync" OnDiscard="DiscardAsync" OnFill="FillAsync" OnDecided="DecidedAsync" />
             </aside>
         </div>
@@ -312,6 +316,8 @@ else if (chat != null)
     private string? applyError;
     // How the last turn ended when it didn't land: an error, or a stop the DM asked for. The message is back in the box either way.
     private Flash? notice;
+    // A new chat's first message, offered when this one has grown too long for the model: a recap of how this one ended.
+    private string? carryOn;
     private IReadOnlyList<MissingMention> missing = Array.Empty<MissingMention>();
     private Dictionary<string, string> placeNames = new();
     private WorldProposalPanel? panel;
@@ -411,6 +417,34 @@ else if (chat != null)
         Nav.NavigateTo($"{Ctx.BasePath}/build", replace: true);
     }
 
+    private async Task CarryOnAsync()
+    {
+        var recap = carryOn;
+        if (recap == null) return;
+        await NewChat();
+        notice = null;
+        carryOn = null;
+        SetDraft(recap);
+    }
+
+    /// <summary>How the chat ended, as the first message of a new one: the last of what the DM and the model said (no tool results,
+    /// which are what made it too long), then the message that did not get through.</summary>
+    private string Recap(WorldChat from, string unsent)
+    {
+        const int room = 6_000;
+        var said = new List<string>();
+        var length = 0;
+        foreach (var line in from.Lines.Reverse().Where(l => l.Speaker != WorldChatSpeaker.Tool && !string.IsNullOrWhiteSpace(l.Text)))
+        {
+            var entry = $"{(line.Speaker == WorldChatSpeaker.Dm ? L["WorldChat.CarryOn.Me"] : L["WorldChat.CarryOn.You"])}: {TextFormatting.Summary(line.Text.Trim(), 1_500)}";
+            if (length + entry.Length > room) break;
+            said.Insert(0, entry);
+            length += entry.Length;
+        }
+
+        return $"{L["WorldChat.CarryOn.Intro"]}\n\n{string.Join("\n\n", said)}\n\n{L["WorldChat.CarryOn.Next"]} {unsent.Trim()}";
+    }
+
     private void UseStarter(string key)
     {
         SetDraft(key == "homebrew" ? L["WorldChat.Starter.homebrew.Text", L["WorldChat.Starter.homebrew.Any"]] : L[$"WorldChat.Starter.{key}.Text"]);
@@ -507,6 +541,7 @@ else if (chat != null)
         if (sending == null || sending.IsBusy || applying || string.IsNullOrWhiteSpace(text)) return;
         if (fromBox) SetDraft(string.Empty);
         notice = null;
+        carryOn = null;
         applyError = null;
         forceFollow = true;
         pane = "talk";
@@ -537,6 +572,11 @@ else if (chat != null)
         catch (Exception ex) when (ex.InnerException is OperationCanceledException || ex is TaskCanceledException)
         {
             failed = new Flash(L["Common.Ai.Stopped"], FlashTone.Info);
+        }
+        catch (LocalizedException ex) when (ex.Key == "WorldChat.Error.TooLong")
+        {
+            failed = Flash.Error(L.Describe(ex));
+            if (ReferenceEquals(sending, chat)) carryOn = Recap(sending, text);
         }
         catch (Exception ex)
         {
@@ -659,7 +699,8 @@ else if (chat != null)
 
     private async Task DiscardAsync()
     {
-        if (chat == null) return;
+        // Not while a turn is starting or under way: the chat refuses, and the proposal may be about to change.
+        if (chat == null || chat.IsBusy || applying) return;
         if (!await KeepsUpAsync(chat, chat.DiscardAsync)) return;
         applyError = null;
         await AfterTurnAsync();

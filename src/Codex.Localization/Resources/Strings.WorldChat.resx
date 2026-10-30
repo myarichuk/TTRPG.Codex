@@ -39,6 +39,12 @@
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>There is no proposal to apply.</value></data>
   <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>This chat was changed in another tab, so it has been reloaded here. Nothing from this tab was saved; send or apply again if you still want to.</value></data>
   <data name="WorldChat.Error.Gone" xml:space="preserve"><value>This chat was deleted in another tab.</value></data>
+  <data name="WorldChat.Error.TooLong" xml:space="preserve"><value>This chat has grown too long for the model to read. Carry on in a new chat: it starts with a recap of this one, which you can edit before you send it.</value></data>
+  <data name="WorldChat.CarryOn" xml:space="preserve"><value>Carry on in a new chat</value></data>
+  <data name="WorldChat.CarryOn.Intro" xml:space="preserve"><value>Let's carry on from an earlier chat. This is how it ended:</value></data>
+  <data name="WorldChat.CarryOn.Me" xml:space="preserve"><value>Me</value></data>
+  <data name="WorldChat.CarryOn.You" xml:space="preserve"><value>You</value></data>
+  <data name="WorldChat.CarryOn.Next" xml:space="preserve"><value>Now:</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Your message</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>What should we add to the world?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Send</value></data>
@@ -47,6 +53,7 @@
   <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Proposal ready to review.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Applied: {0} added, hidden from players.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Proposal discarded.</value></data>
+  <data name="WorldChat.DiscardedRest" xml:space="preserve"><value>Discarded the rest of the proposal. What an earlier apply already saved stays:</value></data>
   <data name="WorldChat.Tool.Search" xml:space="preserve"><value>Looked through the campaign for “{0}”</value></data>
   <data name="WorldChat.Tool.Page" xml:space="preserve"><value>Read the page “{0}”</value></data>
   <data name="WorldChat.Tool.Places" xml:space="preserve"><value>Looked at the places</value></data>
@@ -58,6 +65,8 @@
   <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{# thing worth a look} other{# things worth a look}}</value></data>
   <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>Also add to the cast</value></data>
   <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>Also add to the cast, playing like {0}</value></data>
+  <data name="WorldChat.Proposal.Gear" xml:space="preserve"><value>Carries: {0}</value></data>
+  <data name="WorldChat.Proposal.GearEquipped" xml:space="preserve"><value>{0} (equipped)</value></data>
   <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>a place you have</value></data>
   <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>Apply {0}</value></data>
   <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>Saving, and picking gear for the cast…</value></data>

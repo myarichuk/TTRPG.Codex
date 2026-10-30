@@ -631,8 +631,8 @@ else
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
                             <input id="bio-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.BioInstructionPh"]" @bind="bioInstruction" />
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Players)" Disabled="@(busy != null)" data-testid="sheet-biography-ai">
-                                <LucideIcon IconName="sparkles" Size="14" /> @(string.IsNullOrWhiteSpace(editBiography) ? L["Actor.Sheet.WriteAi"] : L["Actor.Sheet.RewriteAi"])
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => RewriteAsync(AiAudience.Players)" Disabled="@(busy != null)" Busy="@(busy == "bio")" data-testid="sheet-biography-ai">
+                                @(string.IsNullOrWhiteSpace(editBiography) ? L["Actor.Sheet.WriteAi"] : L["Actor.Sheet.RewriteAi"])
                             </CodexButton>
                         </div>
                         <p id="bio-mention-hint" class="field-hint">@L["Actor.Sheet.MentionHint"]</p>
@@ -715,8 +715,8 @@ else
                         <div class="ai-row">
                             <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
                             <input id="dm-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.DmInstructionPh"]" @bind="dmInstruction" />
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="() => RewriteAsync(AiAudience.Dm)" Disabled="@(busy != null)" data-testid="sheet-dm-notes-ai">
-                                <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.DraftAi"]
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => RewriteAsync(AiAudience.Dm)" Disabled="@(busy != null)" Busy="@(busy == "dm")" data-testid="sheet-dm-notes-ai">
+                                @L["Actor.Sheet.DraftAi"]
                             </CodexButton>
                         </div>
                     </MarkdownEditor>

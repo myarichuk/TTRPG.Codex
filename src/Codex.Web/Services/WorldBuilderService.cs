@@ -32,7 +32,9 @@ public sealed record WorldBuildResult(
 }
 
 /// <summary>An existing entry a proposal changed: what kind of text, its id (a page's slug), and its name.</summary>
-public sealed record WorldEdit(EditTarget Target, string Id, string Name);
+/// <param name="Shared">The changed thing is one players can see (a party page, a known place or cast member, a published entry),
+/// so they read the change too, all but its hidden blocks.</param>
+public sealed record WorldEdit(EditTarget Target, string Id, string Name, bool Shared = false);
 
 /// <summary>
 /// The world builder (docs/WORLD_BUILDER.md): what the world-building chat's tools read about the campaign, the check of a
@@ -637,24 +639,29 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         _ => draft.PageKind is "faction" or "quest" ? draft.PageKind : null
     };
 
-    /// <summary>What a person added to the cast carries, picked by the model; none when the system has no inventory or the call
-    /// fails (the person is still worth saving without it).</summary>
-    private async Task<IReadOnlyList<object>?> GearAsync(string name, string text, CampaignDocument campaign, CampaignAccess access, CancellationToken ct)
+    /// <summary>Picks what each person of the proposal would carry into the cast, for those not picked for yet (an earlier check
+    /// picked for the rest), so the DM sees it while reviewing and applying needs no model. Nothing is picked when the system has
+    /// no inventory or no model is set up; a pick that fails leaves that person without gear.</summary>
+    public async Task PickGearAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, CancellationToken ct = default)
     {
-        try
+        var wanting = bundle.Drafts.Where(d => d.Kind == DraftKinds.Npc && d.Gear == null && !d.SavedAs.ContainsKey("cast")).ToList();
+        if (wanting.Count == 0) return;
+        var characters = wanting
+            .Select(d => $"{d.Name.Trim()}: {TextFormatting.Summary(WorldBundleParser.ResolveLinks(d.Body ?? d.Pitch, bundle, keepLinks: false), 800)}")
+            .ToList();
+        var picks = await ai.PickGearAsync(characters, campaign, catalog.GetDefinition(campaign.SystemId), access.UserId, ItemsFor(campaign, access), ct);
+        for (var i = 0; i < wanting.Count; i++)
         {
-            return await ai.EquipAsync($"{name.Trim()}: {TextFormatting.Summary(text, 800)}", campaign, catalog.GetDefinition(campaign.SystemId), access.UserId,
-                async type => (await library.OptionsAsync(campaign, access, type)).Select(i => i.Entry).ToList(), ct);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return null;
+            wanting[i].Gear = picks?[i] ?? new List<DraftGear>();
         }
     }
 
+    private Func<string, Task<IReadOnlyList<ContentEntry>>> ItemsFor(CampaignDocument campaign, CampaignAccess access) =>
+        async type => (await library.OptionsAsync(campaign, access, type)).Select(i => i.Entry).ToList();
+
     /// <summary>Saves the selected entries: wiki pages and people's and places' pages first (DM-only), so their titles are settled
     /// before links are rewritten, then homebrew entries (unpublished; creatures ticked for it also on the Bestiary shortlist), the
-    /// people ticked for the cast (hidden, their page as their history, with gear the model picks), the places (hidden, nested as
+    /// people ticked for the cast (hidden, their page as their history, with the gear picked when the proposal was checked), the places (hidden, nested as
     /// proposed) and the secrets (DM-only in Lore, related to what they link to). Retrying after a failure skips what was stored.</summary>
     /// <param name="onStored">Called after each entry is stored (its <see cref="WorldDraft.SavedAs"/> set), so the caller can keep that at
     /// once: an apply cut short by a crash or a closed tab then still knows what it made, and a retry does not make it twice.</param>
@@ -757,11 +764,12 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var allPages = castDrafts.Count == 0 ? new List<WikiPageDocument>() : (await wiki.GetVisibleForCampaignAsync(access)).ToList();
         foreach (var draft in castDrafts)
         {
-            // The sheet starts from the creature picked for the person, or blank; either way the model picks what they carry.
+            // The sheet starts from the creature picked for the person, or blank.
             // A creature that has gone since (its pack switched off, the homebrew deleted) leaves the blank sheet.
             var creature = draft.Stats is { } stats ? await library.GetAsync(campaign, access, stats.Type, stats.Id, stats.Homebrew) : null;
             var text = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false);
-            var npc = new NewNpc(draft.Name) { Creature = creature, Equipment = await GearAsync(draft.Name, text, campaign, access, ct) };
+            // The gear the DM saw in the proposal; picking it was part of checking the proposal, so applying asks the model nothing.
+            var npc = new NewNpc(draft.Name) { Creature = creature, Equipment = await ai.StoredGearAsync(draft.Gear, system, ItemsFor(campaign, access)) };
             // The person's page becomes their history, as promoting a page from the wiki does; revealing them warns the DM first.
             var page = draft.SavedAs.TryGetValue(PageStep, out var pageId) ? allPages.FirstOrDefault(p => p.Id == pageId) : null;
             var actor = (page != null
@@ -862,13 +870,68 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         return new WorldBuildResult(entries, pages, actors, saved, places.Select(p => p.Place).ToList(), shortlisted, edited, retagged, picked);
     }
 
+    /// <summary>What an apply that stopped part way already made of <paramref name="bundle"/>, as links the conversation keeps: the
+    /// entries a discard leaves behind.</summary>
+    public async Task<List<WorldChatLink>> SavedLinksAsync(WorldBundle bundle, CampaignAccess access)
+    {
+        var links = new List<WorldChatLink>();
+        var saved = bundle.Drafts.Where(d => d.SavedAs.Count > 0).ToList();
+        if (saved.Count == 0) return links;
+        var pages = saved.Any(d => d.SavedAs.ContainsKey(PageStep))
+            ? (await wiki.GetVisibleForCampaignAsync(access)).ToDictionary(p => p.Id)
+            : new Dictionary<string, WikiPageDocument>();
+        var entries = saved.Any(d => d.SavedAs.ContainsKey("homebrew"))
+            ? (await homebrew.GetVisibleForCampaignAsync(access)).ToDictionary(h => h.Id)
+            : new Dictionary<string, HomebrewEntryDocument>();
+        var facts = 0;
+        var retagged = 0;
+        foreach (var draft in saved)
+        {
+            foreach (var (step, id) in draft.SavedAs)
+            {
+                switch (step)
+                {
+                    case PageStep when pages.TryGetValue(id, out var page):
+                        links.Add(new WorldChatLink { Kind = "page", Id = page.Slug, Name = page.Title });
+                        break;
+                    case "homebrew" when entries.TryGetValue(id, out var entry):
+                        links.Add(new WorldChatLink { Kind = "homebrew", Id = $"{entry.Type}/{entry.EntryId}", Name = entry.Name });
+                        break;
+                    case "cast":
+                        links.Add(new WorldChatLink { Kind = "actor", Id = id, Name = draft.Name });
+                        break;
+                    case "place" when !draft.SavedAs.ContainsKey(PageStep):
+                        links.Add(new WorldChatLink { Kind = "place", Id = id, Name = draft.Name });
+                        break;
+                    case "bestiary":
+                        links.Add(new WorldChatLink { Kind = "bestiary", Id = id, Name = draft.Stats?.Name ?? draft.Name });
+                        break;
+                    case "edit":
+                        var change = EditOf(draft);
+                        links.Add(new WorldChatLink { Kind = "change-" + change.Target.ToString().ToLowerInvariant(), Id = change.Id, Name = change.Name });
+                        break;
+                    case "fact":
+                        facts++;
+                        break;
+                    case "tags":
+                        retagged += draft.Targets.Count;
+                        break;
+                }
+            }
+        }
+
+        if (retagged > 0) links.Add(new WorldChatLink { Kind = "tags", Name = retagged.ToString(System.Globalization.CultureInfo.InvariantCulture) });
+        if (facts > 0) links.Add(new WorldChatLink { Kind = "lore", Name = facts.ToString(System.Globalization.CultureInfo.InvariantCulture) });
+        return links;
+    }
+
     /// <summary>True when two field values say the same, however each was stored (a long from the model, a double from the database).</summary>
     internal static bool Same(object? a, object? b) => PropertyJson(a) == PropertyJson(b);
 
     private static WorldEdit EditOf(WorldDraft draft)
     {
         var target = WorldBundle.ParseTarget(draft.Target ?? string.Empty, out var id);
-        return new WorldEdit(target, id, draft.Name);
+        return new WorldEdit(target, id, draft.Name, draft.SharedWithPlayers);
     }
 
     /// <summary>Replaces the text an edit targets with its complete new text. The text is the DM's to review beforehand, so a target
@@ -903,7 +966,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
 
                 if (draft.Retag) entry.Tags = new List<string>(draft.Tags);
                 if (!await homebrew.TrySaveAsync(entry, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-                return new WorldEdit(target, $"{entry.Type}/{entry.EntryId}", entry.Name);
+                return new WorldEdit(target, $"{entry.Type}/{entry.EntryId}", entry.Name, entry.IsPublished);
             }
             case EditTarget.Place:
             {
@@ -914,7 +977,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                     // What players read once the place is revealed: plain text, no wiki links (mentions stay).
                     place.Description = ResolveEditText(body, bundle, keepLinks: false).Trim();
                     if (!await regions.UpsertLocationAsync(region.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-                    return new WorldEdit(target, id, place.Name);
+                    return new WorldEdit(target, id, place.Name, place.Visibility == ActorVisibility.Known);
                 }
 
                 throw gone;
@@ -925,7 +988,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 Unchanged(actor.Biography, keepLinks: false);
                 actor.Biography = ResolveEditText(body, bundle, keepLinks: false).Trim();
                 if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-                return new WorldEdit(target, id, actor.Name);
+                return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known);
             }
             default:
             {
@@ -933,7 +996,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 Unchanged(page.Body, keepLinks: true);
                 page.Body = ResolveEditText(body, bundle, keepLinks: true).Trim();
                 if (!await wiki.TrySaveAsync(page, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-                return new WorldEdit(target, page.Slug, page.Title);
+                return new WorldEdit(target, page.Slug, page.Title, page.Visibility == WikiVisibility.Party);
             }
         }
     }
