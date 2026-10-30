@@ -711,7 +711,9 @@ public sealed class WorldChat
     private List<AITool> Tools(Action<WorldChatStep> progress)
     {
         // Every call is recorded as a step: what was asked, what came back, how long it took, and whether it failed.
-        async Task<string> Step(string tool, object arguments, string? subject, int? count, Func<Task<string>> run)
+        // data: the result is the campaign's text (pages, entries, names), which anyone who can write a page could have written. It
+        // reaches the model fenced off with a tag it cannot guess, so a page that says "ignore your instructions" is read as a page.
+        async Task<string> Step(string tool, object arguments, string? subject, int? count, Func<Task<string>> run, bool data = true)
         {
             var step = new WorldChatStep
             {
@@ -731,7 +733,7 @@ public sealed class WorldChat
                 step.Result = result.Length <= MaxStepResult ? result : result[..MaxStepResult] + "\n[…]";
                 step.Rejected = result.StartsWith("Nothing was", StringComparison.Ordinal);
                 step.Status = WorldChatStepStatus.Done;
-                return result;
+                return data ? Fenced(result) : result;
             }
             catch (Exception ex)
             {
@@ -787,13 +789,13 @@ public sealed class WorldChat
                 "Lists the tags the campaign's wiki pages and homebrew entries use, with how many of each, so new tags match the old ones."),
             AIFunctionFactory.Create(
                 (AdditionInput additions) =>
-                    Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => WithGearAsync(AddEntriesAsync(additions))),
+                    Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => WithGearAsync(AddEntriesAsync(additions)), data: false),
                 "add_entries",
                 "Adds entries to the proposal already waiting for the game master, without resending it: pass ONLY the new entries, each with a ref the proposal does not use yet. " +
                 "They may use the refs already in the proposal as a place's parent, in \"links\" and as [[ref]]. The game master's ticks are kept. With no proposal waiting, it makes one."),
             AIFunctionFactory.Create(
                 (ProposalInput proposal) =>
-                    Step("propose_changes", proposal, null, proposal.Entries?.Count ?? 0, () => WithGearAsync(ProposeAsync(proposal))),
+                    Step("propose_changes", proposal, null, proposal.Entries?.Count ?? 0, () => WithGearAsync(ProposeAsync(proposal)), data: false),
                 "propose_changes",
                 "Proposes related entries to add to the campaign or changes to what it has, all in one proposal, for the game master to review and apply. Saves nothing. " +
                 "Returns errors to fix (then call it again with the whole corrected proposal) or confirms the proposal is ready for review.")
@@ -807,6 +809,14 @@ public sealed class WorldChat
         var result = await proposing;
         if (Proposal is { } proposal) await builder.PickGearAsync(campaign, access, proposal, running?.Token ?? CancellationToken.None);
         return result;
+    }
+
+    /// <summary>A tool's result as the model reads it: between markers with a tag made for this result alone, so text inside cannot
+    /// close the fence and go on as if the app were speaking (AiPrompts.WorldChat says what the markers mean).</summary>
+    public static string Fenced(string result)
+    {
+        var tag = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(6)).ToLowerInvariant();
+        return $"[campaign data {tag}]\n{result}\n[end of campaign data {tag}]";
     }
 
     // New entries beside the waiting proposal's: checked together (a new place can sit inside an old one), then what the game master
