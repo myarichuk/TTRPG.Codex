@@ -9,6 +9,7 @@
 @using Codex.Web.Components.Layout
 @layout AuthLayout
 @inject IUserRepository UserRepository
+@inject ICampaignRepository CampaignRepository
 @inject IConfiguration Configuration
 @inject NavigationManager NavManager
 @inject IAuthenticationSchemeProvider SchemeProvider
@@ -64,9 +65,9 @@
         </div>
     }
 
-    @if (EnableLocalLogin)
+    @if (EnableLocalLogin && CanSignUp)
     {
-        <p class="text-center small-muted mt-4 mb-0">@L["Page.Login.NewHere"]<a href="/register">@L["Page.Login.CreateAccount"]</a></p>
+        <p class="text-center small-muted mt-4 mb-0">@L["Page.Login.NewHere"]<a href="@RegisterHref">@L["Page.Login.CreateAccount"]</a></p>
     }
 </div>
 
@@ -85,6 +86,12 @@
 
     public bool EnableLocalLogin { get; set; } = true;
 
+    /// <summary>Always true at home; on a server open to the internet only for someone holding a real invite.</summary>
+    private bool CanSignUp { get; set; } = true;
+
+    // Carry the return address across, so a new player lands back on their invite after signing up.
+    private string RegisterHref => string.IsNullOrEmpty(ReturnUrl) ? "/register" : "/register?returnUrl=" + Uri.EscapeDataString(ReturnUrl);
+
     public IEnumerable<AuthenticationScheme> ExternalSchemes { get; set; } = Array.Empty<AuthenticationScheme>();
 
     protected override async Task OnInitializedAsync()
@@ -94,10 +101,11 @@
         ExternalSchemes = allSchemes.Where(s => s.Name != "Cookies" && s.Name != "External").ToList();
 
         EnableLocalLogin = Configuration.GetValue<bool>("Authentication:EnableLocalLogin", true);
+        CanSignUp = await Codex.Web.ExposurePolicy.MaySignUpAsync(Codex.Web.ExposurePolicy.IsExposed(Configuration), ReturnUrl, CampaignRepository);
 
         if (!string.IsNullOrEmpty(QueryError))
         {
-            ErrorMessage = QueryError;
+            ErrorMessage = QueryError == "invite-only" ? L["Page.Register.InviteOnly"] : QueryError;
         }
         else if (!EnableLocalLogin && ExternalSchemes.Count() == 1)
         {

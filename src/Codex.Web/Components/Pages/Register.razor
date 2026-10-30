@@ -9,6 +9,7 @@
 @using Codex.Web.Components.Layout
 @layout AuthLayout
 @inject IUserRepository UserRepository
+@inject ICampaignRepository CampaignRepository
 @inject NavigationManager NavManager
 @inject IConfiguration Configuration
 
@@ -18,6 +19,14 @@
     <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
     <h1>@L["Page.Register.Heading"]</h1>
 
+    @if (!SignUpOpen)
+    {
+        <div class="status" role="alert" data-testid="invite-only">
+            <LucideIcon IconName="info" Size="18" /><span>@L[NoAccountYet ? "Page.Register.NoAccountYet" : "Page.Register.InviteOnly"]</span>
+        </div>
+    }
+    else
+    {
     <EditForm Model="@Model" OnValidSubmit="HandleRegister" FormName="RegisterForm">
         <DataAnnotationsValidator />
 
@@ -46,8 +55,9 @@
 
         <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100">@L["Page.Register.Title"]</CodexButton>
     </EditForm>
+    }
 
-    <p class="text-center small-muted mt-4 mb-0">@L["Page.Register.HaveAccount"]<a href="/login">@L["Page.Auth.SignIn"]</a></p>
+    <p class="text-center small-muted mt-4 mb-0">@L["Page.Register.HaveAccount"]<a href="@LoginHref">@L["Page.Auth.SignIn"]</a></p>
 </div>
 
 @code {
@@ -60,9 +70,21 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
-    protected override void OnInitialized()
+    private bool Exposed => Codex.Web.ExposurePolicy.IsExposed(Configuration);
+
+    /// <summary>False on a server open to the internet unless the visitor came from a real campaign invite.</summary>
+    private bool SignUpOpen { get; set; } = true;
+
+    /// <summary>True when sign-up is closed because nobody has an account yet: the DM must make theirs before opening the server up.</summary>
+    private bool NoAccountYet { get; set; }
+
+    private string LoginHref => string.IsNullOrEmpty(ReturnUrl) ? "/login" : "/login?returnUrl=" + Uri.EscapeDataString(ReturnUrl);
+
+    protected override async Task OnInitializedAsync()
     {
         Model ??= new();
+        SignUpOpen = await Codex.Web.ExposurePolicy.MaySignUpAsync(Exposed, ReturnUrl, CampaignRepository);
+        NoAccountYet = !SignUpOpen && !await UserRepository.AnyUsersExistAsync();
     }
 
     public string? ErrorMessage { get; set; }
@@ -72,6 +94,12 @@
         if (HttpContext == null || Model == null)
         {
             ErrorMessage = L["Page.Register.Stale"];
+            return;
+        }
+
+        if (!await Codex.Web.ExposurePolicy.MaySignUpAsync(Exposed, ReturnUrl, CampaignRepository))
+        {
+            SignUpOpen = false;
             return;
         }
 
@@ -116,10 +144,11 @@
         };
 
         // ServerAdmin goes to the configured Codex:AdminUsername, or to the very first account.
+        // Never while open to the internet: whoever arrives with an invite must not be able to claim it.
         var configuredAdmin = Configuration["Codex:AdminUsername"];
-        var grantsServerAdmin = !string.IsNullOrWhiteSpace(configuredAdmin)
+        var grantsServerAdmin = !Exposed && (!string.IsNullOrWhiteSpace(configuredAdmin)
             ? string.Equals(Model.Username, configuredAdmin, StringComparison.OrdinalIgnoreCase)
-            : !await UserRepository.AnyUsersExistAsync();
+            : !await UserRepository.AnyUsersExistAsync());
 
         if (grantsServerAdmin)
         {

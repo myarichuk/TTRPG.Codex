@@ -63,7 +63,12 @@ internal sealed class ServerController : IDisposable
         return null;
     }
 
-    public void Start(LauncherSettings settings)
+    /// <param name="internetUrl">The https address Tailscale Funnel will serve this table at, when it is being opened to
+    /// the internet. It becomes the invite address and puts the server in its stricter mode (invite-only sign-up,
+    /// the server's AI key for its admin alone).</param>
+    /// <param name="strict">Start in that stricter mode without an internet address, when an earlier internet link may
+    /// still be forwarding to this port.</param>
+    public void Start(LauncherSettings settings, string? internetUrl = null, bool strict = false)
     {
         lock (gate)
         {
@@ -105,7 +110,19 @@ internal sealed class ServerController : IDisposable
             Directory.CreateDirectory(LauncherPaths.MyContent(dataHome));
             info.Environment["Codex__ContentDirectories__0"] = LauncherPaths.MyContent(dataHome);
             // Invite links must carry an address players can reach, not the DM's own "localhost".
-            if (settings.PlayerUrl(LanAddress.Best(), LanAddress.Tailnet()) is { } playerUrl) info.Environment["Codex__PublicUrl"] = playerUrl;
+            var (lan, tailnet) = (LanAddress.Best(), LanAddress.Tailnet());
+            if (internetUrl != null)
+            {
+                // The one address that works for everybody, wherever they are.
+                info.Environment["Codex__PublicUrl"] = internetUrl;
+                info.Environment["Codex__PublicExposure"] = "true";
+            }
+            else
+            {
+                if (settings.PlayerUrl(lan, tailnet) is { } playerUrl) info.Environment["Codex__PublicUrl"] = playerUrl;
+                if (settings.RemoteUrl(lan, tailnet) is { } remoteUrl) info.Environment["Codex__RemoteUrl"] = remoteUrl;
+                if (strict) info.Environment["Codex__PublicExposure"] = "true";
+            }
 
             Directory.CreateDirectory(LauncherPaths.RavenData(dataHome));
             var child = new Process { StartInfo = info, EnableRaisingEvents = true };

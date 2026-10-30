@@ -355,7 +355,7 @@ else
         testing = true;
         try
         {
-            var (ok, message) = await Providers.TestAsync(provider, string.IsNullOrWhiteSpace(key) ? null : key.Trim());
+            var (ok, message) = await Providers.TestAsync(provider, string.IsNullOrWhiteSpace(key) ? null : key.Trim(), user);
             flash = ok ? Flash.Success(L.Describe(message)) : Flash.Error(L.Describe(message));
         }
         finally

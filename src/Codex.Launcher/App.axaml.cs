@@ -85,7 +85,7 @@ public partial class App : Application
         toggleItem.Click += (_, _) => model!.Toggle();
         openItem = Item("Launcher.Tray.Open", () => model!.OpenBrowser());
         copyItem = new NativeMenuItem();
-        copyItem.Click += async (_, _) => await window!.CopyAsync(model!.Links.Count > 1 ? model.Links[1].Url : model.Settings.LocalUrl);
+        copyItem.Click += async (_, _) => await window!.CopyAsync((model!.Links.FirstOrDefault(l => l.Kind == LinkKind.Internet) ?? (model.Links.Count > 1 ? model.Links[1] : null))?.Url ?? model.Settings.LocalUrl);
         labelled.Add((copyItem, "Launcher.Tray.CopyPlayers"));
         copyLocalItem = new NativeMenuItem();
         copyLocalItem.Click += async (_, _) => await window!.CopyAsync(model!.Settings.LocalUrl);

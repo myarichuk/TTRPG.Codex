@@ -179,11 +179,19 @@
             @if (Ctx.IsDm)
             {
                 <hr />
-                <label for="invite-link" class="field-label">@L["Campaign.Overview.InviteLink"]</label>
+                <label for="invite-link" class="field-label">@InviteLabel</label>
                 <div class="input-group input-group-sm">
                     <input id="invite-link" class="field-input" readonly value="@InviteLink" data-testid="invite-link" />
-                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CopyInviteAsync" aria-label="@L["Campaign.Overview.CopyInvite"]"><LucideIcon IconName="copy" Size="14" /></CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => CopyInviteAsync(InviteLink)" aria-label="@L["Campaign.Overview.CopyInvite"]"><LucideIcon IconName="copy" Size="14" /></CodexButton>
                 </div>
+                @if (RemoteInviteLink is { } remoteLink)
+                {
+                    <label for="invite-link-remote" class="field-label mt-2">@L["Campaign.Overview.InviteLinkTailscale"]</label>
+                    <div class="input-group input-group-sm">
+                        <input id="invite-link-remote" class="field-input" readonly value="@remoteLink" data-testid="invite-link-remote" />
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => CopyInviteAsync(remoteLink)" aria-label="@L["Campaign.Overview.CopyInvite"]"><LucideIcon IconName="copy" Size="14" /></CodexButton>
+                    </div>
+                }
                 <div class="field-hint">@L["Campaign.Overview.InviteHint"]</div>
             }
         </section>
@@ -206,6 +214,10 @@
     private sealed record SetupStep(string Key, bool Done, string? Href);
 
     private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
+
+    private string? RemoteInviteLink => Codex.Web.Services.InviteLinks.BuildRemote(Config["Codex:RemoteUrl"], Ctx.Campaign.InviteCode);
+
+    private string InviteLabel => RemoteInviteLink is null ? L["Campaign.Overview.InviteLink"] : L["Campaign.Overview.InviteLinkNetwork"];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -273,9 +285,9 @@
         _ => L["Campaign.Overview.Role.Observer"]
     };
 
-    private async Task CopyInviteAsync()
+    private async Task CopyInviteAsync(string link)
     {
-        var ok = await JS.InvokeAsync<bool>("codex.copyText", InviteLink);
+        var ok = await JS.InvokeAsync<bool>("codex.copyText", link);
         Ctx.Notify(ok ? Flash.Success(L["Campaign.Overview.InviteCopied"]) : Flash.Error(L["Campaign.Overview.CopyFailed"]));
     }
 

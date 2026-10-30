@@ -89,6 +89,25 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 builder.Services.AddHttpContextAccessor();
+if (Codex.Web.ExposurePolicy.IsExposed(builder.Configuration))
+{
+    // Open to the internet, the pages that tell a visitor whether a password or an invite code is right get a ration per address.
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
+            Codex.Web.ExposurePolicy.IsGuessable(context.Request.Path)
+                ? System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                    Codex.Web.ExposurePolicy.ClientKey(context.Connection.RemoteIpAddress),
+                    _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = Codex.Web.ExposurePolicy.GuessesPerMinute,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                    })
+                : System.Threading.RateLimiting.RateLimitPartition.GetNoLimiter("open"));
+    });
+}
 
 // Persistence
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
@@ -188,6 +207,21 @@ using (var scope = app.Services.CreateScope())
     logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
     await loader.LoadAndInitializeAsync(roots);
     logger.LogInformation("Loaded systems: {Systems}", string.Join(", ", loader.LoadedSystemIds));
+}
+
+if (Codex.Web.ExposurePolicy.IsExposed(app.Configuration))
+{
+    // Open to the internet through Tailscale Funnel: its proxy runs on this machine and passes the visitor's
+    // address and scheme in X-Forwarded-*. The default trusts only loopback, so nobody else can set them.
+    app.UseForwardedHeaders(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions
+    {
+        ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+    });
+}
+
+if (Codex.Web.ExposurePolicy.IsExposed(app.Configuration))
+{
+    app.UseRateLimiter();
 }
 
 if (!app.Environment.IsDevelopment())
@@ -334,9 +368,9 @@ app.MapGet("/login/external", async (string provider, string? returnUrl, Microso
         RedirectUri = $"/login/external-callback?returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}"
     };
     return Results.Challenge(properties, new[] { provider });
-});
+}).AllowAnonymous();
 
-app.MapGet("/login/external-callback", async (HttpContext context, IUserRepository userRepository, string? returnUrl) =>
+app.MapGet("/login/external-callback", async (HttpContext context, IUserRepository userRepository, ICampaignRepository campaignRepository, IConfiguration config, string? returnUrl) =>
 {
     var authenticateResult = await context.AuthenticateAsync("External");
 
@@ -375,6 +409,13 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
     if (user == null)
     {
+        // A server open to the internet makes new accounts only for people who arrive with a real invite.
+        if (!await Codex.Web.ExposurePolicy.MaySignUpAsync(Codex.Web.ExposurePolicy.IsExposed(config), returnUrl, campaignRepository))
+        {
+            await context.SignOutAsync("External");
+            return Results.Redirect("/login?error=" + "invite-only");
+        }
+
         var baseUsername = !string.IsNullOrEmpty(name) ? name : ("User" + Guid.NewGuid().ToString().Substring(0, 8));
         user = new UserDocument
         {
@@ -395,6 +436,13 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
             {
                 return Results.Redirect("/login?error=" + Uri.EscapeDataString("Could not allocate a username. Please try again."));
             }
+        }
+
+        // The first account runs the server, but never on an open one. The name is the identity provider's display name,
+        // which the person signing in chooses, so unlike the sign-up form it is never matched against Codex:AdminUsername.
+        if (!Codex.Web.ExposurePolicy.IsExposed(config) && string.IsNullOrWhiteSpace(config["Codex:AdminUsername"]) && !await userRepository.AnyUsersExistAsync())
+        {
+            user.Roles.Add("ServerAdmin");
         }
 
         await userRepository.CreateUserAsync(user);
@@ -429,7 +477,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
     }
 
     return Results.Redirect(returnUrl ?? "/");
-});
+}).AllowAnonymous();
 
 Codex.Web.MediaEndpoints.MapMedia(app);
 Codex.Web.PreviewEndpoints.MapPreviews(app);

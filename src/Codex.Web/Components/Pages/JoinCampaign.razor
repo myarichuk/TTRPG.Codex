@@ -45,7 +45,8 @@
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null)
         {
-            Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}", forceLoad: true);
+            // A local path, so signing in or creating an account brings the person straight back here.
+            Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString("/" + Nav.ToBaseRelativePath(Nav.Uri))}", forceLoad: true);
             return;
         }
 

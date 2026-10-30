@@ -8,6 +8,7 @@
   <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>No image provider is set up.</value></data>
   <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>Only the DM drafts session summaries.</value></data>
   <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>The provider needs an endpoint, a model and (for hosted services) an API key.</value></data>
+  <data name="Service.Ai.PrivateBlocked" xml:space="preserve"><value>That address is on this computer or its private network, which an internet-facing server does not allow here.</value></data>
   <data name="Service.Ai.Connected" xml:space="preserve"><value>Connected. The model said: “{0}”</value></data>
   <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>Connected (empty reply).</value></data>
   <data name="Service.Ai.Unreachable" xml:space="preserve"><value>Could not reach the model: {0}</value></data>

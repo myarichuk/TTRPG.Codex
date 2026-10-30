@@ -54,6 +54,7 @@ internal static class Strings
     {
         LinkKind.Network => L["Launcher.Link.Network"],
         LinkKind.Tailscale => L["Launcher.Link.Tailscale"],
+        LinkKind.Internet => L["Launcher.Link.Internet"],
         _ => L["Launcher.Link.This"],
     };
 

@@ -32,6 +32,22 @@
   <data name="Launcher.Link.This" xml:space="preserve"><value>המחשב הזה</value></data>
   <data name="Launcher.Link.Network" xml:space="preserve"><value>שחקנים ברשת שלך</value></data>
   <data name="Launcher.Link.Tailscale" xml:space="preserve"><value>שחקנים ב-Tailscale</value></data>
+  <data name="Launcher.Link.Internet" xml:space="preserve"><value>כל מי שיש לו את הקישור, מכל רשת</value></data>
+  <data name="Launcher.Funnel.Toggle" xml:space="preserve"><value>פתיחה לאינטרנט (Tailscale Funnel)</value></data>
+  <data name="Launcher.Funnel.Hint" xml:space="preserve"><value>השחקנים מקבלים קישור אחד שעובד מכל מקום, ולא מתקינים כלום. כל מי שימצא את הקישור יוכל להגיע לדף הכניסה, ולכן חשבונות חדשים נפתחים רק בהזמנה לקמפיין, ומפתח ה-AI נשאר שלכם בלבד. נדרש Tailscale במחשב הזה. האפשרות כבה מעצמה בכל פעם שהתוכנה נסגרת.</value></data>
+  <data name="Launcher.Funnel.Confirm" xml:space="preserve"><value>פתיחה לאינטרנט</value></data>
+  <data name="Launcher.Funnel.Cancel" xml:space="preserve"><value>לא עכשיו</value></data>
+  <data name="Launcher.Funnel.NotInstalled" xml:space="preserve"><value>Tailscale אינו מותקן במחשב הזה. התקינו אותו מ-tailscale.com, התחברו, ואז הפעילו שוב את האפשרות.</value></data>
+  <data name="Launcher.Funnel.NoStatus" xml:space="preserve"><value>לא ניתן להתחבר ל-Tailscale. ודאו שהוא פועל, ואז הפעילו שוב את האפשרות.</value></data>
+  <data name="Launcher.Funnel.SignedOut" xml:space="preserve"><value>Tailscale מותקן אך לא מחובר. פתחו את Tailscale, התחברו, ואז הפעילו שוב את האפשרות.</value></data>
+  <data name="Launcher.Funnel.NoName" xml:space="preserve"><value>Tailscale עדיין לא נתן למחשב הזה שם. הפעילו MagicDNS בהגדרות הניהול של Tailscale, ואז הפעילו שוב את האפשרות.</value></data>
+  <data name="Launcher.Funnel.NoHttps" xml:space="preserve"><value>אישורי HTTPS אינם מופעלים ברשת ה-Tailscale שלכם, והקישור לאינטרנט זקוק להם. הפעילו אותם בלוח הניהול של Tailscale תחת DNS.</value></data>
+  <data name="Launcher.Funnel.Waiting" xml:space="preserve"><value>פותח את הקישור לאינטרנט…</value></data>
+  <data name="Launcher.Funnel.Approve" xml:space="preserve"><value>בעל רשת ה-Tailscale שלכם צריך לאשר את Funnel פעם אחת. נפתח דף בדפדפן: אשרו שם והקישור יתחיל לפעול מעצמו.</value></data>
+  <data name="Launcher.Funnel.ApproveButton" xml:space="preserve"><value>פתיחת דף האישור</value></data>
+  <data name="Launcher.Funnel.Permission" xml:space="preserve"><value>Tailscale לא אפשר לתוכנה לשנות את ההגדרות שלו. ב-Linux בדרך כלל עוזרת פקודה חד-פעמית: {0}</value></data>
+  <data name="Launcher.Funnel.Stopped" xml:space="preserve"><value>הקישור לאינטרנט הפסיק לפעול. הפרטים ביומן.</value></data>
+  <data name="Launcher.Funnel.Stray" xml:space="preserve"><value>ייתכן שקישור לאינטרנט מהפעלה קודמת עדיין מצביע על השולחן הזה, ולכן הוא עולה במצב הזמנה בלבד. כדי לסגור את הקישור, הריצו: {0}</value></data>
   <data name="Launcher.Tray.Open" xml:space="preserve"><value>פתיחת TTRPG.Codex</value></data>
   <data name="Launcher.Tray.CopyPlayers" xml:space="preserve"><value>העתקת קישור לשחקנים</value></data>
   <data name="Launcher.Tray.CopyLocal" xml:space="preserve"><value>העתקת קישור למחשב הזה</value></data>
@@ -58,6 +74,7 @@
   <data name="Launcher.Qr.Title" xml:space="preserve"><value>סרקו כדי להצטרף</value></data>
   <data name="Launcher.Qr.Instruction" xml:space="preserve"><value>כוונו את מצלמת הטלפון לכאן. השולחן ייפתח בדפדפן.</value></data>
   <data name="Launcher.Qr.SameWifi" xml:space="preserve"><value>הטלפונים צריכים להיות באותה רשת Wi-Fi כמו המחשב הזה.</value></data>
+  <data name="Launcher.Qr.Anywhere" xml:space="preserve"><value>עובד בכל רשת. כל מי שיש לו את הכתובת הזו מגיע לדף הכניסה; שחקנים זקוקים לקישור ההזמנה של הקמפיין כדי להצטרף.</value></data>
   <data name="Launcher.Help.Got" xml:space="preserve"><value>הבנתי</value></data>
   <data name="Launcher.Help.Intro" xml:space="preserve"><value>TTRPG.Codex רץ על המחשב הזה. השחקנים שלכם פותחים אותו בדפדפן: אין מה להתקין.</value></data>
   <data name="Launcher.Help.Head.Room" xml:space="preserve"><value>משחקים באותו חדר או באותה רשת Wi-Fi</value></data>

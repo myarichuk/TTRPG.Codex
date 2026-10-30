@@ -62,6 +62,20 @@ public class LauncherTests
     }
 
     [Fact]
+    public void Tailscale_is_offered_as_a_second_invite_address_only_beside_a_network_one()
+    {
+        var settings = new LauncherSettings { AllowLan = true };
+
+        Assert.Equal("http://100.64.1.1:5080", settings.RemoteUrl("192.168.1.20", "100.64.1.1"));
+        Assert.Null(settings.RemoteUrl(null, "100.64.1.1")); // Tailscale is already the main address
+        Assert.Null(settings.RemoteUrl("192.168.1.20", null));
+        Assert.Null(new LauncherSettings().RemoteUrl("192.168.1.20", "100.64.1.1"));
+        Assert.Equal("http://100.64.1.1:5080/campaigns/join/abc", Codex.Web.Services.InviteLinks.BuildRemote("http://100.64.1.1:5080/", "abc"));
+        Assert.Null(Codex.Web.Services.InviteLinks.BuildRemote(null, "abc"));
+        Assert.Null(Codex.Web.Services.InviteLinks.BuildRemote("  ", "abc"));
+    }
+
+    [Fact]
     public void An_invalid_port_falls_back_to_the_default()
     {
         Assert.Equal("http://localhost:5080", new LauncherSettings { Port = 0 }.LocalUrl);

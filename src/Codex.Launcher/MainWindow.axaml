@@ -36,6 +36,17 @@
         </WrapPanel>
 
         <ToggleButton x:Name="LanBox" Classes="etched" HorizontalAlignment="Left" Click="OnLanChanged" />
+        <ToggleButton x:Name="FunnelBox" Classes="etched" HorizontalAlignment="Left" Click="OnFunnelChanged" />
+        <!-- Opening the table to the internet is only switched on after the DM has read what it means. -->
+        <StackPanel x:Name="FunnelConfirmPanel" Spacing="8" IsVisible="False">
+          <TextBlock x:Name="FunnelWarning" Foreground="#e8c27a" FontSize="12" TextWrapping="Wrap" />
+          <WrapPanel Orientation="Horizontal">
+            <Button x:Name="FunnelConfirmButton" Classes="plaque" Margin="0,0,8,0" Click="OnFunnelConfirm" />
+            <Button x:Name="FunnelCancelButton" Classes="etched" Click="OnFunnelCancel" />
+          </WrapPanel>
+        </StackPanel>
+        <TextBlock x:Name="FunnelNoteText" Foreground="#cbbfa5" FontSize="12" TextWrapping="Wrap" IsVisible="False" />
+        <Button x:Name="FunnelApproveButton" Classes="etched" HorizontalAlignment="Left" IsVisible="False" Click="OnFunnelApprove" />
         <StackPanel x:Name="LinksPanel" Spacing="8" />
         <TextBlock x:Name="LanHint" Foreground="#b3a78d" FontSize="12" TextWrapping="Wrap" IsVisible="False" />
         <WrapPanel Orientation="Horizontal">

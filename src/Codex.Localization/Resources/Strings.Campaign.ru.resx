@@ -229,6 +229,8 @@
   <data name="Campaign.Overview.Role.Observer" xml:space="preserve"><value>Наблюдатель</value></data>
   <data name="Campaign.Overview.InviteLink" xml:space="preserve"><value>Ссылка-приглашение</value></data>
   <data name="Campaign.Overview.CopyInvite" xml:space="preserve"><value>Скопировать ссылку-приглашение</value></data>
+  <data name="Campaign.Overview.InviteLinkNetwork" xml:space="preserve"><value>Ссылка-приглашение для игроков в вашей сети</value></data>
+  <data name="Campaign.Overview.InviteLinkTailscale" xml:space="preserve"><value>Ссылка-приглашение для игроков в Tailscale</value></data>
   <data name="Campaign.Overview.InviteHint" xml:space="preserve"><value>Любой, у кого есть эта ссылка, присоединится как игрок.</value></data>
   <data name="Campaign.Overview.InviteCopied" xml:space="preserve"><value>Ссылка-приглашение скопирована.</value></data>
   <data name="Campaign.Overview.CopyFailed" xml:space="preserve"><value>Не удалось скопировать. Выделите ссылку и скопируйте её вручную.</value></data>
@@ -286,6 +288,8 @@
   <data name="Campaign.Settings.RemoveFromCampaign" xml:space="preserve"><value>Убрать из кампании: {0}</value></data>
   <data name="Campaign.Settings.InviteLink" xml:space="preserve"><value>Ссылка-приглашение</value></data>
   <data name="Campaign.Settings.CopyInvite" xml:space="preserve"><value>Скопировать ссылку-приглашение</value></data>
+  <data name="Campaign.Settings.InviteLinkNetwork" xml:space="preserve"><value>Ссылка-приглашение для игроков в вашей сети</value></data>
+  <data name="Campaign.Settings.InviteLinkTailscale" xml:space="preserve"><value>Ссылка-приглашение для игроков в Tailscale</value></data>
   <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>Новая ссылка</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>После создания новой ссылки старая перестанет работать.</value></data>
   <data name="Campaign.Settings.Backup" xml:space="preserve"><value>Резервная копия</value></data>

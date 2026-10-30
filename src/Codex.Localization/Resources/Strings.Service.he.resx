@@ -8,6 +8,7 @@
   <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>לא הוגדר ספק תמונות.</value></data>
   <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>רק שליט המבוך מנסח סיכומי מפגשים.</value></data>
   <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>הספק זקוק לכתובת, למודל ו(בשירותים מתארחים) למפתח API.</value></data>
+  <data name="Service.Ai.PrivateBlocked" xml:space="preserve"><value>הכתובת הזו מובילה למחשב הזה או לרשת הפרטית שלו, ושרת הפתוח לאינטרנט אינו מרשה זאת.</value></data>
   <data name="Service.Ai.Connected" xml:space="preserve"><value>החיבור הצליח. המודל ענה: “{0}”</value></data>
   <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>החיבור הצליח (תשובה ריקה).</value></data>
   <data name="Service.Ai.Unreachable" xml:space="preserve"><value>לא ניתן להגיע למודל: {0}</value></data>

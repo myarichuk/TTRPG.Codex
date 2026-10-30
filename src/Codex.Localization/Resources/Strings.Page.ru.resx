@@ -76,6 +76,8 @@
   <data name="Page.Register.TooShort" xml:space="preserve"><value>Пароль должен содержать не менее 8 символов.</value></data>
   <data name="Page.Register.Weak" xml:space="preserve"><value>В пароле нужны заглавная буква, строчная буква и цифра.</value></data>
   <data name="Page.Register.Taken" xml:space="preserve"><value>Это имя пользователя уже занято.</value></data>
+  <data name="Page.Register.InviteOnly" xml:space="preserve"><value>Регистрация на этом сервере только по приглашению. Откройте ссылку-приглашение от мастера, а затем создайте учётную запись.</value></data>
+  <data name="Page.Register.NoAccountYet" xml:space="preserve"><value>На этом сервере ещё нет ни одной учётной записи. Отключите ссылку в интернет, создайте свою учётную запись и включите ссылку снова.</value></data>
   <data name="Page.About.Title" xml:space="preserve"><value>О проекте и лицензии</value></data>
   <data name="Page.About.Heading" xml:space="preserve"><value>О TTRPG.Codex</value></data>
   <data name="Page.About.Subtitle" xml:space="preserve"><value>Помощник для кампаний и персонажей настольных ролевых игр, который вы запускаете у себя. Игровые системы и материалы — это данные, которые можно читать, редактировать и передавать другим.</value></data>
