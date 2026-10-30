@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Template.Person.Name" xml:space="preserve"><value>Person</value></data>
+  <data name="Template.Person.Body" xml:space="preserve"><value>$summary$
+
+## Look and voice
+$look$
+
+## History
+$history$
+
+## Wants and fears
+$wants$
+
+## What they know
+- $knows$
+
+## Meeting the party
+$meeting$
+
+## Playing them
+$playing$
+
+:::dm
+What they hide: $secret$
+:::
+</value></data>
+  <data name="Template.Place.Name" xml:space="preserve"><value>Place</value></data>
+  <data name="Template.Place.Body" xml:space="preserve"><value>$summary$
+
+## Arriving
+$arriving$
+
+## History
+$history$
+
+## Who is here
+$who$
+
+## What to do here
+- $options$
+
+## Encounters
+- $encounter$
+
+## Nearby
+$nearby$
+
+:::dm
+What it hides: $secret$
+:::
+</value></data>
+  <data name="Template.Faction.Name" xml:space="preserve"><value>Faction</value></data>
+  <data name="Template.Faction.Body" xml:space="preserve"><value>$summary$
+
+## Goals
+$goals$
+
+## Methods
+$methods$
+
+## History
+$history$
+
+## Leaders
+$leaders$
+
+## Resources
+$resources$
+
+## Rivals
+$rivals$
+
+## Meeting the party
+$meeting$
+
+:::dm
+What they really want: $secret$
+:::
+</value></data>
+  <data name="Template.Quest.Name" xml:space="preserve"><value>Quest</value></data>
+  <data name="Template.Quest.Body" xml:space="preserve"><value>## Hook
+$hook$
+
+:::dm
+What is really going on: $truth$
+:::
+
+## Complications
+- $complication$
+
+## Rewards
+$rewards$
+
+## If the party ignores it
+$ignored$
+</value></data>
+  <data name="Template.Npc.Name" xml:space="preserve"><value>Person in brief</value></data>
+  <data name="Template.Npc.Body" xml:space="preserve"><value>**$name$**, $role$. $look$ Wants $wants$. Says: “$line$”$END$</value></data>
+  <data name="Template.Encounter.Name" xml:space="preserve"><value>Encounter</value></data>
+  <data name="Template.Encounter.Body" xml:space="preserve"><value>### $name:Encounter$
+**When:** $when$
+**Who:** $who$
+**How it goes:** $tactics$
+**Outcome:** $outcome$
+$END$</value></data>
+  <data name="Template.Secret.Name" xml:space="preserve"><value>DM-only block</value></data>
+  <data name="Template.Secret.Body" xml:space="preserve"><value>:::dm
+$secret$
+:::
+$END$</value></data>
+  <data name="Template.Truth.Name" xml:space="preserve"><value>The truth and what players are told</value></data>
+  <data name="Template.Truth.Body" xml:space="preserve"><value>:::dm
+$truth$
+:::
+
+:::players
+$told$
+:::
+$END$</value></data>
+</root>

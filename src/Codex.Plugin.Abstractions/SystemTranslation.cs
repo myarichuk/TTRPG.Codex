@@ -25,6 +25,13 @@ public class SystemTranslation
     /// <summary>Labels of the sheet rules (derived stats, pick lists, skills, slot pools...).</summary>
     public SheetRulesTranslation SheetRules { get; set; } = new();
 
+    /// <summary>The word in "Hit Points (max)": what a resource's maximum field is called after its label. Default "max".</summary>
+    public string? MaxSuffix { get; set; }
+
+    /// <summary>Heading of a group of sheet fields (General, Combat, Attributes, Resources, Spellcasting...) -> heading to show. A field's own
+    /// <c>category</c> translation wins; this one covers every field and rule that merely names the group.</summary>
+    public Dictionary<string, string> Categories { get; set; } = new();
+
     /// <summary>Shared dropdown/tag values (schools, sizes, damage types...) -> text to show, for any field.</summary>
     public Dictionary<string, string> Values { get; set; } = new();
 }
@@ -69,7 +76,15 @@ public class SheetRulesTranslation
     /// <summary>Slot pool key -> label.</summary>
     public Dictionary<string, string> SlotPools { get; set; } = new();
 
+    /// <summary>Pick list key -> the sentence under its label.</summary>
+    public Dictionary<string, string> ListDescriptions { get; set; } = new();
+
+    /// <summary>The <c>message</c> of a rule condition as system.yaml words it ("that is not a cantrip.") -> text to show.</summary>
+    public Dictionary<string, string> Messages { get; set; } = new();
+
     /// <summary>Headings of whole rule groups.</summary>
+    public string? BonusesLabel { get; set; }
+    public string? IncreasesLabel { get; set; }
     public string? SkillsLabel { get; set; }
     public string? InventoryLabel { get; set; }
     public string? MulticlassLabel { get; set; }

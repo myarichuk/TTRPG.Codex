@@ -3,13 +3,71 @@
 @inject IUserRepository UserRepo
 @inject Codex.Web.Services.ViewerClock Clock
 @inject ISessionRepository SessionRepo
+@inject ICampaignRepository CampaignRepo
+@inject IWikiRepository WikiRepo
+@inject IRegionRepository RegionRepo
 @inject CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
 @inject IConfiguration Config
 @inject IJSRuntime JS
+@inject Codex.Web.Services.AiFeatures Ai
 
 <div class="row g-3">
     <div class="col-lg-8">
+        @if (setup is { } steps)
+        {
+            <section class="panel setup-panel" aria-labelledby="setup-heading" data-testid="setup-checklist">
+                <div class="panel-title">
+                    <h2 id="setup-heading">@L["Campaign.Setup.Title"]</h2>
+                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Campaign.Setup.Dismiss"]" title="@L["Campaign.Setup.Dismiss"]" OnClick="DismissSetupAsync" data-testid="setup-dismiss" />
+                </div>
+                <p class="small-muted mb-2">@L["Campaign.Setup.Progress", steps.Count(s => s.Done), steps.Count]</p>
+                <ol class="setup-steps">
+                    @foreach (var step in steps)
+                    {
+                        <li class="@(step.Done ? "setup-done" : null)" data-testid="@($"setup-{step.Key}")" data-done="@(step.Done ? "true" : "false")">
+                            <LucideIcon IconName="@(step.Done ? "circle-check" : "circle")" Size="18" Class="setup-mark" />
+                            <span class="visually-hidden">@(step.Done ? L["Campaign.Setup.Done"] : L["Campaign.Setup.ToDo"])</span>
+                            <span class="setup-step">
+                                @if (step.Key == "Invite")
+                                {
+                                    @* Not a link: the invite link is on this page already, so the step copies it. *@
+                                    <button type="button" class="link-button" @onclick="InviteAsync" data-testid="setup-invite-copy">@L["Campaign.Setup.Invite"]</button>
+                                }
+                                else
+                                {
+                                    <a href="@step.Href">@L[$"Campaign.Setup.{step.Key}"]</a>
+                                }
+                                @if (!step.Done && step.Key == "Invite")
+                                {
+                                    <span class="setup-why">@L["Campaign.Setup.InviteWhen"]</span>
+                                }
+                                else if (!step.Done && step.Key == "Cast")
+                                {
+                                    <span class="setup-why">@L["Campaign.Setup.CastWhen"]</span>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ol>
+                @if (steps.Any(s => !s.Done && s.Key is "Cast" or "Page" or "Place"))
+                {
+                    @* The world builder drafts pages, places and cast members in one go; what the DM accepts ticks these off. *@
+                    <p class="small-muted mb-0 mt-2" data-testid="setup-builder">
+                        <LucideIcon IconName="sparkles" Size="14" Class="title-icon" />
+                        @if (aiReady)
+                        {
+                            <a href="@Ctx.BasePath/build">@L["Campaign.Setup.Builder"]</a>
+                        }
+                        else
+                        {
+                            <a href="/settings/ai">@L["Campaign.Setup.BuilderNoAi"]</a>
+                        }
+                    </p>
+                }
+            </section>
+        }
+
         <section class="panel" aria-labelledby="about-heading">
             <div class="panel-title">
                 <h2 id="about-heading">@L["Campaign.Overview.About"]</h2>
@@ -61,6 +119,28 @@
                 </ul>
             }
         </section>
+
+        @if (recent.Count > 0)
+        {
+            <section class="panel" aria-labelledby="recent-heading" data-testid="overview-recent">
+                <div class="panel-title">
+                    <h2 id="recent-heading">@L["Campaign.Overview.RecentPages"]</h2>
+                    <a href="@Ctx.BasePath/wiki" class="cx-btn cx-etched cx-sm">@L["Campaign.Overview.OpenWiki"]</a>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    @foreach (var wp in recent)
+                    {
+                        <li class="list-row">
+                            <div class="row-main">
+                                <div class="row-title"><a class="wiki-link" href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></div>
+                                <div class="row-sub">@L[$"Campaign.Wiki.Kind.{wp.Kind}"]</div>
+                            </div>
+                            <span class="small-muted"><LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
     </div>
 
     <div class="col-lg-4">
@@ -68,7 +148,7 @@
             <div class="panel-title"><h2 id="table-heading">@L["Campaign.Overview.Table"]</h2></div>
             @if (RuntimeManager.TryGet(Ctx.Campaign.Id) != null)
             {
-                <p class="mb-2"><span class="pill pill-success"><span class="live-dot" aria-hidden="true"></span>@L["Campaign.Overview.Live"]</span> @L["Campaign.Overview.TableRunning"]</p>
+                <p class="mb-2"><span class="pill pill-success me-2"><span class="live-dot" aria-hidden="true"></span>@L["Campaign.Overview.Live"]</span> @L["Campaign.Overview.TableRunning"]</p>
                 <a href="@Ctx.BasePath/table" class="cx-btn cx-plaque cx-sm w-100">@L["Campaign.Overview.JoinTable"]</a>
             }
             else
@@ -86,9 +166,9 @@
         </section>
 
         <section class="panel" aria-labelledby="members-heading">
-            <div class="panel-title"><h2 id="members-heading">@L["Campaign.Overview.Members", Ctx.Campaign.Members.Count]</h2></div>
+            <div class="panel-title"><h2 id="members-heading">@L["Campaign.Overview.Members", members.Count]</h2></div>
             <ul class="list-unstyled mb-0">
-                @foreach (var member in Ctx.Campaign.Members)
+                @foreach (var member in members)
                 {
                     <li class="list-row">
                         <span>@usernames.GetValueOrDefault(member.UserId, member.UserId)</span>
@@ -122,7 +202,16 @@
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
     private Dictionary<string, string> usernames = new();
+    // Who is in the campaign as stored now: a player who joined from the invite link since this campaign was opened is
+    // missing from the context's copy, which is loaded once.
+    private IReadOnlyList<CampaignMember> members = Array.Empty<CampaignMember>();
+    private bool aiReady;
     private SessionDocument? latestSession;
+    private List<WikiPageDocument> recent = new();
+    // The DM's first steps in a new campaign, while some are left and the list is not put away.
+    private List<SetupStep>? setup;
+
+    private sealed record SetupStep(string Key, bool Done, string? Href);
 
     private string InviteLink => Codex.Web.Services.InviteLinks.Build(Nav.BaseUri, Config["Codex:PublicUrl"], Ctx.Campaign.InviteCode);
 
@@ -132,8 +221,47 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
-        latestSession = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).FirstOrDefault();
+        var stored = await CampaignRepo.GetAsync(Ctx.Campaign.Id) ?? Ctx.Campaign;
+        members = stored.Members;
+        usernames = await MemberNames.LoadAsync(UserRepo, stored);
+        var sessions = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).ToList();
+        latestSession = sessions.OrderByDescending(s => s.Date).FirstOrDefault();
+        var pages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
+        recent = pages.OrderByDescending(p => p.UpdatedAt).Take(5).ToList();
+        setup = null;
+        if (Ctx.IsDm && !stored.SetupDismissed)
+        {
+            // Each step is done by what it asks for, however it came about: by hand, by the world builder (its pages, the
+            // places it puts on the map, the people it adds to the cast) or by restoring a backup.
+            var regions = await RegionRepo.GetVisibleForCampaignAsync(Ctx.Access);
+            var steps = new List<SetupStep>
+            {
+                new("Describe", !string.IsNullOrWhiteSpace(stored.Description) || !string.IsNullOrWhiteSpace(stored.Tagline), $"{Ctx.BasePath}/settings"),
+                new("Invite", members.Any(m => m.Role != CampaignRole.DM), null),
+                new("Cast", Ctx.Actors.Any(a => a.Kind != ActorKind.PlayerCharacter), $"{Ctx.BasePath}/cast"),
+                new("Page", pages.Count > 0, $"{Ctx.BasePath}/wiki/new"),
+                new("Place", regions.Any(r => r.Locations.Count > 0), $"{Ctx.BasePath}/world"),
+                new("Session", sessions.Count > 0, $"{Ctx.BasePath}/sessions")
+            };
+            if (steps.Any(s => !s.Done))
+            {
+                setup = steps;
+                aiReady = await Ai.IsConfiguredAsync(Ctx.UserId);
+            }
+            else
+            {
+                // All done: the list is put away for good, so deleting the only page later does not bring it back.
+                await DismissSetupAsync();
+            }
+        }
+    }
+
+    private async Task DismissSetupAsync()
+    {
+        if (!Ctx.IsDm) return;
+        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, c => c.SetupDismissed = true);
+        Ctx.Campaign.SetupDismissed = true;
+        setup = null;
     }
 
     private string KindLabel(ActorKind kind) => kind switch
@@ -161,5 +289,14 @@
     {
         var ok = await JS.InvokeAsync<bool>("codex.copyText", link);
         Ctx.Notify(ok ? Flash.Success(L["Campaign.Overview.InviteCopied"]) : Flash.Error(L["Campaign.Overview.CopyFailed"]));
+    }
+
+    // The checklist's invite step: copies the link and shows it where it lives on the page, selected, for a DM who would
+    // rather send it some other way (or when the browser refuses to copy).
+    private async Task InviteAsync()
+    {
+        await JS.InvokeVoidAsync("codex.selectField", "invite-link");
+        var ok = await JS.InvokeAsync<bool>("codex.copyText", InviteLink);
+        Ctx.Notify(ok ? Flash.Success(L["Campaign.Setup.InviteCopied"]) : Flash.Error(L["Campaign.Overview.CopyFailed"]));
     }
 }

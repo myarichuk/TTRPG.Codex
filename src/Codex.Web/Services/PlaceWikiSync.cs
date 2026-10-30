@@ -2,6 +2,9 @@ using Codex.Persistence;
 
 namespace Codex.Web.Services;
 
+/// <summary>Where a place sits in its region: inside <see cref="ParentId"/> (empty: straight in the region), as a <see cref="Kind"/>.</summary>
+public sealed record PlacePlacement(string? ParentId, PlaceKind Kind);
+
 /// <summary>
 /// Keeps a place on the world map and its wiki page together: <see cref="LocationDocument.WikiPageId"/> and
 /// <see cref="WikiPageDocument.PlaceId"/> point at each other. They share a name and the place's picture, and sharing the
@@ -22,6 +25,7 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
             Body = location.Description ?? string.Empty,
             Visibility = known ? WikiVisibility.Party : WikiVisibility.DmOnly,
             Tags = string.IsNullOrWhiteSpace(tag) ? new List<string>() : new List<string> { tag },
+            Kind = WikiPageKind.Place,
             PlaceId = location.Id,
             AuthorUserId = access.UserId
         };
@@ -41,8 +45,10 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
 
     /// <summary>Puts <paramref name="page"/> on the map: a new place named after it in <paramref name="regionId"/> (a region named
     /// <paramref name="newRegionName"/> is made when there is none), with the page's text when the party can read it anyway, and
-    /// <paramref name="image"/> as its picture. Returns the region and place, or null when the caller is not the DM.</summary>
-    public async Task<(RegionDocument Region, LocationDocument Place)?> CreatePlaceAsync(WikiPageDocument page, string? regionId, string newRegionName, ArtImage? image, CampaignAccess access)
+    /// <paramref name="image"/> as its picture, inside the place <paramref name="placement"/> names (when it is in that region).
+    /// Returns the region and place, or null when the caller is not the DM.</summary>
+    public async Task<(RegionDocument Region, LocationDocument Place)?> CreatePlaceAsync(WikiPageDocument page, string? regionId, string newRegionName, ArtImage? image, CampaignAccess access,
+        PlacePlacement? placement = null)
     {
         if (!access.IsDm) return null;
 
@@ -55,8 +61,11 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
             Name = page.Title.Trim(),
             Description = known && !string.IsNullOrWhiteSpace(page.Body) ? page.Body : null,
             Visibility = known ? ActorVisibility.Known : ActorVisibility.Hidden,
-            WikiPageId = page.Id
+            WikiPageId = page.Id,
+            Kind = placement?.Kind ?? PlaceKind.Site,
+            ParentId = region?.Locations.Any(l => l.Id == placement?.ParentId) == true ? placement!.ParentId : null
         };
+        page.Kind = WikiPageKind.Place;
 
         if (region == null)
         {
@@ -105,15 +114,30 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
     }
 
     /// <summary>The page was renamed or shared: its place takes the name, and a shared page's place is revealed so the party
-    /// can open what the page shows.</summary>
-    public async Task UpdatePlaceAsync(WikiPageDocument page, CampaignAccess access)
+    /// can open what the page shows. A <paramref name="placement"/> also moves the place (within its region; a move that would
+    /// put it inside itself is ignored) and sets its kind.</summary>
+    public async Task UpdatePlaceAsync(WikiPageDocument page, CampaignAccess access, PlacePlacement? placement = null)
     {
         if (string.IsNullOrEmpty(page.PlaceId)) return;
         if (await FindPlaceAsync(page.PlaceId, access) is not var (region, place)) return;
 
-        if (place.Name != page.Title)
+        var changed = place.Name != page.Title;
+        place.Name = page.Title;
+        if (placement != null)
         {
-            place.Name = page.Title;
+            var parentId = string.IsNullOrEmpty(placement.ParentId) ? null : placement.ParentId;
+            if (parentId != place.ParentId && PlaceTree.CanParent(region.Locations, place.Id, parentId))
+            {
+                place.ParentId = parentId;
+                changed = true;
+            }
+
+            changed |= place.Kind != placement.Kind;
+            place.Kind = placement.Kind;
+        }
+
+        if (changed)
+        {
             await regions.UpsertLocationAsync(region.Id, place, access);
         }
 

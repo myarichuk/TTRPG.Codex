@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Template.Person.Name" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Template.Person.Body" xml:space="preserve"><value>$кратко$
+
+## Внешность и голос
+$внешность$
+
+## История
+$история$
+
+## Желания и страхи
+$желания$
+
+## Что знает
+- $знает$
+
+## Встреча с группой
+$встреча$
+
+## Как отыгрывать
+$отыгрыш$
+
+:::dm
+Что скрывает: $секрет$
+:::
+</value></data>
+  <data name="Template.Place.Name" xml:space="preserve"><value>Место</value></data>
+  <data name="Template.Place.Body" xml:space="preserve"><value>$кратко$
+
+## Прибытие
+$прибытие$
+
+## История
+$история$
+
+## Кто здесь
+$кто$
+
+## Что здесь делать
+- $варианты$
+
+## Столкновения
+- $столкновение$
+
+## Поблизости
+$поблизости$
+
+:::dm
+Что скрывает: $секрет$
+:::
+</value></data>
+  <data name="Template.Faction.Name" xml:space="preserve"><value>Фракция</value></data>
+  <data name="Template.Faction.Body" xml:space="preserve"><value>$кратко$
+
+## Цели
+$цели$
+
+## Методы
+$методы$
+
+## История
+$история$
+
+## Лидеры
+$лидеры$
+
+## Ресурсы
+$ресурсы$
+
+## Соперники
+$соперники$
+
+## Встреча с группой
+$встреча$
+
+:::dm
+Чего на самом деле хотят: $секрет$
+:::
+</value></data>
+  <data name="Template.Quest.Name" xml:space="preserve"><value>Задание</value></data>
+  <data name="Template.Quest.Body" xml:space="preserve"><value>## Завязка
+$завязка$
+
+:::dm
+Что происходит на самом деле: $правда$
+:::
+
+## Осложнения
+- $осложнение$
+
+## Награды
+$награды$
+
+## Если группа не возьмётся
+$последствия$
+</value></data>
+  <data name="Template.Npc.Name" xml:space="preserve"><value>Персонаж вкратце</value></data>
+  <data name="Template.Npc.Body" xml:space="preserve"><value>**$имя$**, $роль$. $внешность$ Хочет: $желание$. Говорит: «$реплика$»$END$</value></data>
+  <data name="Template.Encounter.Name" xml:space="preserve"><value>Столкновение</value></data>
+  <data name="Template.Encounter.Body" xml:space="preserve"><value>### $название:Столкновение$
+**Когда:** $когда$
+**Кто:** $кто$
+**Как идёт:** $тактика$
+**Исход:** $исход$
+$END$</value></data>
+  <data name="Template.Secret.Name" xml:space="preserve"><value>Блок только для мастера</value></data>
+  <data name="Template.Secret.Body" xml:space="preserve"><value>:::dm
+$секрет$
+:::
+$END$</value></data>
+  <data name="Template.Truth.Name" xml:space="preserve"><value>Правда и то, что слышат игроки</value></data>
+  <data name="Template.Truth.Body" xml:space="preserve"><value>:::dm
+$правда$
+:::
+
+:::players
+$версия$
+:::
+$END$</value></data>
+</root>

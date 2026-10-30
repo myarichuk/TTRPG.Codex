@@ -20,7 +20,10 @@ public sealed class NullEntryResolver : IEntryResolver
     public IEnumerable<ContentEntry> Candidates(string type) => Enumerable.Empty<ContentEntry>();
 }
 
-public sealed record RuleViolation(string FieldKey, string Message);
+/// <summary>A rule the sheet breaks (or a warning). <see cref="Message"/> is English, for logs and tests; when <see cref="Key"/> is set the
+/// UI shows the localized sentence instead, built from <see cref="Args"/> (strings, numbers, and the <see cref="ContentEntry"/> an entry's
+/// name is taken from, so it can be shown in the reader's language).</summary>
+public sealed record RuleViolation(string FieldKey, string Message, string? Key = null, IReadOnlyList<object?>? Args = null);
 
 /// <summary>What the attribute rules make of the sheet's current scores.</summary>
 public sealed record AttributeSummary(
@@ -171,13 +174,13 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             var entry = resolver.Resolve(field.TargetEntityType, chosen);
             if (entry == null)
             {
-                result.Violations.Add(new RuleViolation(constraint.Field, $"{field.Label}: \"{chosen}\" is not in the Library."));
+                result.Violations.Add(new RuleViolation(constraint.Field, $"{field.Label}: \"{chosen}\" is not in the Library.", "Actor.Rule.NotInLibrary", new object?[] { field.Label, chosen }));
                 continue;
             }
 
             foreach (var condition in constraint.Where.Where(w => !Holds(w, entry, sheet)))
             {
-                result.Violations.Add(new RuleViolation(constraint.Field, $"{field.Label}: {condition.Message ?? "this choice is not allowed by the rules."}"));
+                result.Violations.Add(new RuleViolation(constraint.Field, $"{field.Label}: {condition.Message ?? "this choice is not allowed by the rules."}", "Actor.Rule.Choice", new object?[] { field.Label, condition.Message ?? "this choice is not allowed by the rules." }));
             }
         }
 
@@ -191,7 +194,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 var entry = resolver.Resolve(list.TargetEntityType, id);
                 if (entry == null)
                 {
-                    result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: \"{id}\" is not in the Library."));
+                    result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: \"{id}\" is not in the Library.", "Actor.Rule.NotInLibrary", new object?[] { list.Label, id }));
                     continue;
                 }
 
@@ -208,7 +211,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                     .First();
                 foreach (var condition in failures)
                 {
-                    result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {entry.Name} - {condition.Message ?? "not allowed by the rules."}"));
+                    result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {entry.Name} - {condition.Message ?? "not allowed by the rules."}", "Actor.Rule.Pick", new object?[] { list.Label, entry, condition.Message ?? "not allowed by the rules." }));
                 }
             }
 
@@ -221,14 +224,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
             foreach (var duplicate in resolved.GroupBy(p => p.Entry.Id, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1 && !IsRepeatable(list, g.First().Entry)))
             {
-                result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {duplicate.First().Entry.Name} can only be taken once."));
+                result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {duplicate.First().Entry.Name} can only be taken once.", "Actor.Rule.Once", new object?[] { list.Label, duplicate.First().Entry }));
             }
 
             var limit = ResolveCount(list.MaxCount, views);
             result.ListLimits[list.Key] = limit;
             if (limit.HasValue && picked.Count > limit.Value)
             {
-                result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {picked.Count} picked, but only {limit.Value} allowed at this level."));
+                result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {picked.Count} picked, but only {limit.Value} allowed at this level.", "Actor.Rule.Limit", new object?[] { list.Label, picked.Count, limit.Value }));
             }
         }
 
@@ -304,7 +307,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 var score = bases[attribute.Key];
                 if (score < pointBuy.Min || score > pointBuy.Max)
                 {
-                    result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: point buy scores run from {pointBuy.Min} to {pointBuy.Max}."));
+                    result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: point buy scores run from {pointBuy.Min} to {pointBuy.Max}.", "Actor.Rule.PointBuyRange", new object?[] { attribute.Label, pointBuy.Min, pointBuy.Max }));
                     continue;
                 }
 
@@ -313,7 +316,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
             if (spent > pointBuy.Budget)
             {
-                result.Violations.Add(new RuleViolation(MethodKey, $"Point buy: {spent} of {pointBuy.Budget} points spent."));
+                result.Violations.Add(new RuleViolation(MethodKey, $"Point buy: {spent} of {pointBuy.Budget} points spent.", "Actor.Rule.PointBuySpent", new object?[] { spent, pointBuy.Budget }));
             }
         }
         else if (method == "standard-array" && rules.StandardArray.Count > 0)
@@ -322,7 +325,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             var actual = bases.Values.OrderBy(v => v).ToList();
             if (!expected.SequenceEqual(actual))
             {
-                result.Violations.Add(new RuleViolation(MethodKey, $"Standard array: assign exactly {string.Join(", ", rules.StandardArray)}, one score per attribute."));
+                result.Violations.Add(new RuleViolation(MethodKey, $"Standard array: assign exactly {string.Join(", ", rules.StandardArray)}, one score per attribute.", "Actor.Rule.StandardArray", new object?[] { string.Join(", ", rules.StandardArray) }));
             }
         }
         else if (!rules.Methods.Contains(method, StringComparer.OrdinalIgnoreCase) && method != "manual")
@@ -340,14 +343,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 foreach (var key in bonuses.Keys.Where(k => !eligible.Contains(k)))
                 {
                     var label = system.Attributes.First(a => a.Key == key).Label;
-                    result.Violations.Add(new RuleViolation(BonusPrefix + key, $"{bonusRules.Label}: {label} is not one of the eligible attributes."));
+                    result.Violations.Add(new RuleViolation(BonusPrefix + key, $"{bonusRules.Label}: {label} is not one of the eligible attributes.", "Actor.Rule.BonusNotEligible", new object?[] { bonusRules.Label, label }));
                 }
 
                 var allowed = bonusRules.Allocations.Any(a => a.OrderByDescending(v => v).SequenceEqual(allocation));
                 if (!allowed)
                 {
                     var options = string.Join(" or ", bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v))));
-                    result.Violations.Add(new RuleViolation(MethodKey, $"{bonusRules.Label}: spread them as {options}, each on a different attribute."));
+                    result.Violations.Add(new RuleViolation(MethodKey, $"{bonusRules.Label}: spread them as {options}, each on a different attribute.", "Actor.Rule.BonusSpread", new object?[] { bonusRules.Label, bonusRules.Allocations }));
                 }
             }
         }
@@ -361,7 +364,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         {
             if (rules.Max.HasValue && running[attribute.Key] > rules.Max.Value)
             {
-                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {rules.Max.Value}."));
+                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {rules.Max.Value}.", "Actor.Rule.ScoreMax", new object?[] { attribute.Label, rules.Max.Value }));
             }
         }
 
@@ -379,7 +382,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                     var cap = grant.Cap ?? rules.Max;
                     if (cap.HasValue && running[attribute.Key] > cap.Value && overCap.Add(attribute.Key))
                     {
-                        result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value} with {grant.Pick.Entry.Name}."));
+                        result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value} with {grant.Pick.Entry.Name}.", "Actor.Rule.ScoreCap", new object?[] { attribute.Label, cap.Value, grant.Pick.Entry }));
                     }
                 }
             }
@@ -408,7 +411,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             var points = (int)(ToDouble(entry.Properties.GetValueOrDefault(rules.Property)) ?? 0);
             if (points <= 0)
             {
-                if (choices.Count > 0) result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} doesn't raise any score."));
+                if (choices.Count > 0) result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} doesn't raise any score.", "Actor.Rule.IncNone", new object?[] { rules.Label, entry }));
                 continue;
             }
 
@@ -421,11 +424,11 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             var spent = choices.Values.Sum();
             if (spent < points)
             {
-                result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: choose where {entry.Name}'s {points - spent} remaining point{(points - spent == 1 ? "" : "s")} go{(points - spent == 1 ? "es" : "")}."));
+                result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: choose where {entry.Name}'s {points - spent} remaining point{(points - spent == 1 ? "" : "s")} go{(points - spent == 1 ? "es" : "")}.", "Actor.Rule.IncRemaining", new object?[] { rules.Label, entry, points - spent }));
             }
             else if (spent > points)
             {
-                result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} grants {points} point{(points == 1 ? "" : "s")}, not {spent}."));
+                result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} grants {points} point{(points == 1 ? "" : "s")}, not {spent}.", "Actor.Rule.IncGrants", new object?[] { rules.Label, entry, points, spent }));
             }
 
             foreach (var key in choices.Keys)
@@ -433,7 +436,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 var attribute = MatchAttribute(key);
                 if (attribute == null || !options.Contains(attribute.Key))
                 {
-                    result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} can't raise {attribute?.Label ?? key}."));
+                    result.Violations.Add(new RuleViolation(list.Key, $"{rules.Label}: {entry.Name} can't raise {attribute?.Label ?? key}.", "Actor.Rule.IncCant", new object?[] { rules.Label, entry, attribute?.Label ?? key }));
                 }
             }
 

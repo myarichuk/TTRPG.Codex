@@ -62,10 +62,10 @@ else
             {
                 <div class="ws-nav-group" role="group" aria-label="@GroupLabel(group.Label)">
                     <div class="ws-nav-label" aria-hidden="true">@GroupLabel(group.Label)</div>
-                    @foreach (var section in group.Sections)
+                    @foreach (var section in group.Sections.Where(s => s.Key != "build" || access.IsDm))
                     {
                         var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
-                        var current = CurrentSection == section.Key ? "page" : null;
+                        var current = NavSection == section.Key ? "page" : null;
                         var testId = "section-" + section.Key;
                         var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
                         <a href="@href" aria-current="@current" data-testid="@testId">
@@ -102,11 +102,11 @@ else
                     @foreach (var group in Groups)
                     {
                         <div class="tabbar-more-label eyebrow" aria-hidden="true">@GroupLabel(group.Label)</div>
-                        @foreach (var section in group.Sections)
+                        @foreach (var section in group.Sections.Where(s => s.Key != "build" || access.IsDm))
                         {
                             var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
                             var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
-                            <a class="menu-item" href="@href" aria-current="@(CurrentSection == section.Key ? "page" : null)"><LucideIcon IconName="@section.Icon" Size="18" />@label</a>
+                            <a class="menu-item" href="@href" aria-current="@(NavSection == section.Key ? "page" : null)"><LucideIcon IconName="@section.Icon" Size="18" />@label</a>
                         }
                     }
                 </div>
@@ -128,6 +128,9 @@ else
                     case "lore":
                         <LoreSection />
                         break;
+                    case "build":
+                        <WorldChatSection Starter="@Arg1" />
+                        break;
                     case "wiki":
                         <WikiSection Slug="@Arg1" Action="@Arg2" />
                         break;
@@ -148,6 +151,9 @@ else
                         break;
                     case "settings":
                         <SettingsSection />
+                        break;
+                    case "templates":
+                        <TemplatesSection />
                         break;
                     default:
                         <OverviewSection />
@@ -181,6 +187,7 @@ else
             ("bestiary", "Bestiary", "paw-print"),
             ("world", "Places", "map"),
             ("wiki", "Wiki", "globe"),
+            ("build", "World builder", "sparkles"),
             ("lore", "Lore", "book-marked")
         }),
         ("Reference", new[]
@@ -222,9 +229,11 @@ else
         "bestiary" => L["Page.Campaign.Section.Bestiary"],
         "world" => L["Page.Campaign.Section.Places"],
         "wiki" => L["Page.Campaign.Section.Wiki"],
+        "build" => L["Page.Campaign.Section.Build"],
         "lore" => L["Page.Campaign.Section.Lore"],
         "library" => L["Page.Campaign.Section.Library"],
         "settings" => L["Page.Campaign.Section.Settings"],
+        "templates" => L["Campaign.Templates.Title"],
         _ => L["Page.Campaign.Section.Overview"]
     };
 
@@ -236,7 +245,10 @@ else
     };
 
     private string BasePath => $"/campaigns/{CampaignId}";
-    private string CurrentSection => Sections.Any(s => s.Key == Section) ? Section! : "overview";
+    private string CurrentSection => Sections.Any(s => s.Key == Section) || Section == "templates" ? Section! : "overview";
+
+    // The section the side rail marks as the one open: the templates belong to the wiki.
+    private string NavSection => CurrentSection == "templates" ? "wiki" : CurrentSection;
 
     protected override void OnInitialized()
     {

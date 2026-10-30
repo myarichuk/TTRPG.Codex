@@ -1,3 +1,4 @@
+using Microsoft.Extensions.AI;
 using Codex.Core.AI;
 
 namespace Codex.Tests;
@@ -54,6 +55,24 @@ public class AiAssistantTests
     }
 
     [Fact]
+    public void ParseDraft_AttributeAnsweredUnderItsLabel_IsKept()
+    {
+        var draft = AiAssistant.ParseDraft("""{"name":"X","sheet":{"Strength":15,"DEX":"12"}}""", Request);
+
+        Assert.Equal(15L, draft.Sheet["str"]);
+        Assert.Equal(12L, draft.Sheet["dex"]);
+    }
+
+    [Fact]
+    public void CreateCharacterPrompt_AsksForEveryScore_WithTheSystemsGeneration()
+    {
+        var (_, user) = AiPrompts.CreateCharacter(Request with { AttributeAdvice = "use the standard array 15, 14, 13, 12, 10, 8" });
+
+        Assert.Contains("Give EVERY attribute", user);
+        Assert.Contains("standard array 15, 14, 13, 12, 10, 8", user);
+    }
+
+    [Fact]
     public void ParseDraft_UnknownReferenceId_IsDroppedNotSaved()
     {
         var draft = AiAssistant.ParseDraft("""{"name":"X","sheet":{"class":"paladin"}}""", Request);
@@ -69,9 +88,65 @@ public class AiAssistantTests
 
     private static readonly CharacterConceptRequest WithGear = Request with
     {
-        Equipment = new[] { "longsword", "chain-mail", "shield", "rope" },
+        Equipment = new[] { new EquipmentOption("longsword", "Longsword"), new EquipmentOption("chain-mail", "Chain Mail"), new EquipmentOption("shield", "Shield"), new EquipmentOption("rope", "Rope") },
         OneArmorAndShield = true
     };
+
+    [Fact]
+    public void ParseDraft_Equipment_AcceptsAnItemByItsName()
+    {
+        // Models often answer with the name they read next to the id.
+        var draft = AiAssistant.ParseDraft("""{"name":"X","equipment":[{"id":"Chain Mail","equipped":true},{"name":"rope","quantity":2}]}""", WithGear);
+
+        Assert.Equal(new[] { new DraftItem("chain-mail", 1, true), new DraftItem("rope", 2, false) }, draft.Equipment);
+    }
+
+    [Fact]
+    public async Task CreateCharacter_WithoutGearInTheReply_AsksForItOnItsOwn()
+    {
+        var chat = new QueueChat("""{"name":"Brakka","sheet":{},"biography":"A smith."}""", """{"equipment":[{"id":"longsword","equipped":true}]}""");
+        var assistant = new AiAssistant(chat);
+
+        var draft = await assistant.CreateCharacterAsync(WithGear);
+        var gear = draft.Equipment is { Count: > 0 } ? draft.Equipment : await assistant.EquipAsync(new EquipRequest("Brakka: a smith", "SRD", WithGear.Equipment!, true));
+
+        Assert.Equal(new[] { new DraftItem("longsword", 1, true) }, gear);
+        Assert.Contains("Character: Brakka: a smith", chat.Prompts[^1]);
+        Assert.Contains("- chain-mail: Chain Mail", chat.Prompts[^1]);
+        Assert.Contains("- longsword" + Environment.NewLine, chat.Prompts[^1]); // a name that only says the id again is left out
+    }
+
+    /// <summary>Answers each call with the next reply in turn and keeps the prompts it was sent.</summary>
+    [Fact]
+    public async Task PlayersVersion_IsWrittenFromTheSecret_AndComesBackWithoutMarkerLines()
+    {
+        // A model that writes markers anyway must not be able to close the players' block early or open a DM one inside it.
+        var chat = new QueueChat("Locals say the light went dark years ago.\n:::\n:::dm\nNobody goes there.\n:::");
+        var text = await new AiAssistant(chat).WritePlayersVersionAsync(new PlayersVersionRequest(
+            "Saltmere", "place", "The lighthouse is the cult's lair.", "A fishing village.", null, ""));
+
+        Assert.Equal("Locals say the light went dark years ago.\nNobody goes there.", text);
+        Assert.Contains("The lighthouse is the cult's lair.", chat.Prompts.Single());
+        Assert.Contains("A fishing village.", chat.Prompts.Single());
+    }
+
+    private sealed class QueueChat(params string[] replies) : IChatClient
+    {
+        private readonly Queue<string> queue = new(replies);
+        public List<string> Prompts { get; } = new();
+
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            Prompts.Add(string.Join("\n", messages.Select(m => m.Text)));
+            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, queue.Dequeue())));
+        }
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+    }
 
     [Fact]
     public void ParseDraft_Equipment_KeepsListedIdsAddsRepeatsAndClampsQuantity()
@@ -113,9 +188,9 @@ public class AiAssistantTests
         var (system, user) = AiPrompts.CreateCharacter(WithGear);
 
         Assert.DoesNotContain("equipment", without);
-        Assert.DoesNotContain("Item ids", withoutUser);
-        Assert.Contains("\"equipment\"", system);
+        Assert.DoesNotContain("Items (", withoutUser);
+        Assert.Contains("\"biography\": string, \"equipment\": [", system); // part of the one shape the reply follows
         Assert.Contains("one suit of body armor and one shield", system);
-        Assert.Contains("- chain-mail", user);
+        Assert.Contains("- chain-mail: Chain Mail", user);
     }
 }

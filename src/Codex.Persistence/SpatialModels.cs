@@ -10,11 +10,27 @@ public class LocationConnection
     public int TravelTimeMinutes { get; set; }
 }
 
+/// <summary>How big a place is, from the widest down: a region (<see cref="RegionDocument"/>) holds areas, an area holds
+/// settlements, a settlement districts, and any of them sites (a tavern, a ruin, a room). Only a guide: a site may sit
+/// straight in a region, and a ruin in the wilds holds rooms.</summary>
+public enum PlaceKind
+{
+    Area,
+    Settlement,
+    District,
+    Site
+}
+
 public class LocationDocument
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+
+    public PlaceKind Kind { get; set; } = PlaceKind.Site;
+
+    /// <summary>The place in the same region this one is inside, or empty for a place straight in the region. See <see cref="PlaceTree"/>.</summary>
+    public string? ParentId { get; set; }
     public List<LocationConnection> Connections { get; set; } = new();
     public Dictionary<string, object> Metadata { get; set; } = new();
 

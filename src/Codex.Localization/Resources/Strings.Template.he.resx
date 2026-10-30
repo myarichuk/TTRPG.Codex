@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Template.Person.Name" xml:space="preserve"><value>דמות</value></data>
+  <data name="Template.Person.Body" xml:space="preserve"><value>$בקצרה$
+
+## מראה וקול
+$מראה$
+
+## היסטוריה
+$היסטוריה$
+
+## רצונות ופחדים
+$רצונות$
+
+## מה ידוע לדמות
+- $ידע$
+
+## המפגש עם הקבוצה
+$מפגש$
+
+## איך לגלם
+$גילום$
+
+:::dm
+מה הדמות מסתירה: $סוד$
+:::
+</value></data>
+  <data name="Template.Place.Name" xml:space="preserve"><value>מקום</value></data>
+  <data name="Template.Place.Body" xml:space="preserve"><value>$בקצרה$
+
+## בהגעה
+$הגעה$
+
+## היסטוריה
+$היסטוריה$
+
+## מי נמצא כאן
+$מי$
+
+## מה אפשר לעשות כאן
+- $אפשרויות$
+
+## היתקלויות
+- $היתקלות$
+
+## בסביבה
+$סביבה$
+
+:::dm
+מה המקום מסתיר: $סוד$
+:::
+</value></data>
+  <data name="Template.Faction.Name" xml:space="preserve"><value>פלג</value></data>
+  <data name="Template.Faction.Body" xml:space="preserve"><value>$בקצרה$
+
+## מטרות
+$מטרות$
+
+## שיטות
+$שיטות$
+
+## היסטוריה
+$היסטוריה$
+
+## מנהיגים
+$מנהיגים$
+
+## משאבים
+$משאבים$
+
+## יריבים
+$יריבים$
+
+## המפגש עם הקבוצה
+$מפגש$
+
+:::dm
+מה הפלג באמת רוצה: $סוד$
+:::
+</value></data>
+  <data name="Template.Quest.Name" xml:space="preserve"><value>משימה</value></data>
+  <data name="Template.Quest.Body" xml:space="preserve"><value>## וו עלילתי
+$וו$
+
+:::dm
+מה באמת קורה: $אמת$
+:::
+
+## סיבוכים
+- $סיבוך$
+
+## פרסים
+$פרסים$
+
+## אם הקבוצה מתעלמת
+$השלכות$
+</value></data>
+  <data name="Template.Npc.Name" xml:space="preserve"><value>דמות בקצרה</value></data>
+  <data name="Template.Npc.Body" xml:space="preserve"><value>**$שם$**, $תפקיד$. $מראה$ רצון: $רצון$. משפט אופייני: "$משפט$"$END$</value></data>
+  <data name="Template.Encounter.Name" xml:space="preserve"><value>היתקלות</value></data>
+  <data name="Template.Encounter.Body" xml:space="preserve"><value>### $שם:היתקלות$
+**מתי:** $מתי$
+**מי:** $מי$
+**איך זה מתנהל:** $טקטיקה$
+**תוצאה:** $תוצאה$
+$END$</value></data>
+  <data name="Template.Secret.Name" xml:space="preserve"><value>בלוק לשליט המבוך בלבד</value></data>
+  <data name="Template.Secret.Body" xml:space="preserve"><value>:::dm
+$סוד$
+:::
+$END$</value></data>
+  <data name="Template.Truth.Name" xml:space="preserve"><value>האמת ומה שהשחקנים שומעים</value></data>
+  <data name="Template.Truth.Body" xml:space="preserve"><value>:::dm
+$אמת$
+:::
+
+:::players
+$גרסה$
+:::
+$END$</value></data>
+</root>

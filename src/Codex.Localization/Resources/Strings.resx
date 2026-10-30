@@ -25,6 +25,12 @@
   <data name="Common.Ai.Writing" xml:space="preserve"><value>Writing…</value></data>
   <data name="Common.Ai.Stop" xml:space="preserve"><value>Stop</value></data>
   <data name="Common.Ai.Stopped" xml:space="preserve"><value>Stopped. Nothing was changed.</value></data>
+  <data name="Common.Ai.Problem.Timeout" xml:space="preserve"><value>The model took too long to answer. A long message or a slow model can do that: try again, shorten the message, or pick a faster model in your AI settings.</value></data>
+  <data name="Common.Ai.Problem.Auth" xml:space="preserve"><value>The provider didn't accept your API key. Check it in your AI settings.</value></data>
+  <data name="Common.Ai.Problem.NotFound" xml:space="preserve"><value>The provider doesn't know that model or address. Check them in your AI settings.</value></data>
+  <data name="Common.Ai.Problem.RateLimit" xml:space="preserve"><value>The provider reports too many requests, or the account is out of credit. Wait a moment and try again.</value></data>
+  <data name="Common.Ai.Problem.Server" xml:space="preserve"><value>The provider is having trouble right now. Try again in a moment.</value></data>
+  <data name="Common.Ai.Problem.Network" xml:space="preserve"><value>Couldn't reach the provider. Check the address in your AI settings and your connection.</value></data>
   <data name="Common.Editor.Toolbar" xml:space="preserve"><value>Formatting</value></data>
   <data name="Common.Editor.Bold" xml:space="preserve"><value>Bold (Ctrl+B)</value></data>
   <data name="Common.Editor.Italic" xml:space="preserve"><value>Italic (Ctrl+I)</value></data>
@@ -36,4 +42,21 @@
   <data name="Common.Editor.FullScreen" xml:space="preserve"><value>Full screen</value></data>
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Exit full screen (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>Nothing to preview yet.</value></data>
+  <data name="Common.Editor.Secret" xml:space="preserve"><value>DM-only block (Ctrl+Shift+H)</value></data>
+  <data name="Common.Secret.Some" xml:space="preserve"><value>Revealed to {0}</value></data>
+  <data name="Common.Secret.NoOne" xml:space="preserve"><value>Revealed to no one</value></data>
+  <data name="Common.Secret.Reveal" xml:space="preserve"><value>Reveal</value></data>
+  <data name="Common.Secret.Hide" xml:space="preserve"><value>Hide again</value></data>
+  <data name="Common.Secret.Dm" xml:space="preserve"><value>DM only</value></data>
+  <data name="Common.Secret.Party" xml:space="preserve"><value>Revealed to the party</value></data>
+  <data name="Common.Secret.Players" xml:space="preserve"><value>What the players are told</value></data>
+  <data name="Common.Editor.Templates" xml:space="preserve"><value>Insert a template (or type its abbreviation and Tab, or /)</value></data>
+  <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>Edit templates…</value></data>
+  <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} of {2} · Tab: next · Shift+Tab: back · Esc: done</value></data>
+  <data name="Common.Editor.TemplateHintTouch" xml:space="preserve"><value>{0} · {1} of {2}</value></data>
+  <data name="Common.Editor.TemplatePrev" xml:space="preserve"><value>Previous field</value></data>
+  <data name="Common.Editor.TemplateNext" xml:space="preserve"><value>Next field</value></data>
+  <data name="Common.Editor.TemplateDone" xml:space="preserve"><value>Done</value></data>
+  <data name="Common.Unsaved.Note" xml:space="preserve"><value>Not saved yet</value></data>
+  <data name="Common.SaveShortcut" xml:space="preserve"><value>Save (Ctrl+S)</value></data>
 </root>

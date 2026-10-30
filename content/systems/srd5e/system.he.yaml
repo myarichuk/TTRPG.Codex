@@ -66,6 +66,16 @@ actorFields:
     description: מועתקת מהגזע שלך כשאתה בוחר בו.
   notes: { label: הערות, category: הערות }
 
+maxSuffix: מקס׳
+
+categories:
+  Attributes: תכונות
+  Resources: משאבים
+  Spellcasting: הטלת לחשים
+  Feats: כשרונות
+  Combat: קרב
+  General: כללי
+
 conditions:
   Blinded: עיוור
   Charmed: מוקסם
@@ -455,6 +465,28 @@ values:
   "weapon-property": "תכונת נשק"
 
 sheetRules:
+  bonusesLabel: בונוסים מהרקע
+  increasesLabel: העלאות ציוני תכונות
+  listDescriptions:
+    cantrips: לחשונים ידועים. רק הלחשונים של המקצוע שלך, עד המספר שבטבלת המקצוע.
+    spells: לחשים מדרגה 1 ומעלה. רק מהרשימה של המקצוע שלך, לא גבוהים מתא הלחשים הגבוה ביותר שלך, עד מספר הלחשים המוכנים.
+    grantedSpells: לחשים שיכולת מעניקה לך מחוץ לרשימת המקצוע (לחשי תת-מקצוע, חניך קסם, שושלת גזע, ארקנום מסתורי). הם אינם נספרים בלחשים המוכנים שלך.
+    feats: כשרונות כלליים וכשרוני מתנה אפית שמתקבלים מיכולות מקצוע. כשרוני מוצא מגיעים מהרקע; לסגנונות לחימה יש רשימה משלהם.
+    fightingStyles: כשרוני סגנון לחימה מיכולות מקצוע, כמו סגנון הלחימה של הלוחם וסגנון הלחימה הנוסף של האלוף.
+    extraOriginFeats: כשרון מוצא מעבר לזה של הרקע שלך, כמו זה שמעניקה התכונה "רב-גוניות" של בן אנוש.
+  messages:
+    "this choice is not allowed by the rules.": זה אינו מותר לפי החוקים.
+    "not allowed by the rules.": זה אינו מותר לפי החוקים.
+    "that is not a cantrip.": זה אינו לחשון.
+    "not on your class's spell list.": אינו ברשימת הלחשים של המקצוע שלך.
+    "cantrips go in the cantrips list.": לחשונים נכנסים לרשימת הלחשונים.
+    "above the highest spell level you can cast.": גבוה מדרגת הלחש הגבוהה ביותר שאתה יכול להטיל.
+    "origin feats come from your background and fighting styles have their own list.": כשרוני מוצא מגיעים מהרקע שלך, ולסגנונות לחימה יש רשימה משלהם.
+    "you are not high enough level for it.": הדרגה שלך אינה גבוהה מספיק בשביל זה.
+    "that is not a fighting style.": זה אינו סגנון לחימה.
+    "only an origin feat can go here.": רק כשרון מוצא יכול להיכנס כאן.
+    "that subclass belongs to another class.": תת-המקצוע הזה שייך למקצוע אחר.
+    "your background grants a different origin feat.": הרקע שלך מעניק כשרון מוצא אחר.
   derived:
     proficiencyBonus: תוסף שליטה
     initiative: יוזמה

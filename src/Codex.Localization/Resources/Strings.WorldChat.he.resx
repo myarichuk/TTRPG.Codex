@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="WorldChat.Title" xml:space="preserve"><value>בונה העולם</value></data>
+  <data name="WorldChat.DmOnly" xml:space="preserve"><value>רק המנחה בונה את העולם.</value></data>
+  <data name="WorldChat.NoAi.Title" xml:space="preserve"><value>עדיין לא הוגדר מודל בינה מלאכותית</value></data>
+  <data name="WorldChat.NoAi.Body" xml:space="preserve"><value>הוסיפו מודל טקסט בהגדרות הבינה המלאכותית. עליו לתמוך בקריאה לכלים.</value></data>
+  <data name="WorldChat.NoAi.Settings" xml:space="preserve"><value>פתיחת הגדרות הבינה המלאכותית</value></data>
+  <data name="WorldChat.Conversation" xml:space="preserve"><value>שיחה</value></data>
+  <data name="WorldChat.Intro" xml:space="preserve"><value>כתבו מה תרצו, או בחרו אחת מאלה. הבינה המלאכותית קוראת קודם את המערכה, שואלת כשההחלטה שלכם, ומציעה הכול יחד לבדיקה.</value></data>
+  <data name="WorldChat.Starters" xml:space="preserve"><value>דרכים להתחיל</value></data>
+  <data name="WorldChat.Starter.settlement.Label" xml:space="preserve"><value>יישוב</value></data>
+  <data name="WorldChat.Starter.settlement.Text" xml:space="preserve"><value>בנה יישוב למערכה הזו: הרבעים והמקומות הבולטים בו, האנשים שהקבוצה תפגוש שם, וסוד או שניים ששווה לגלות.</value></data>
+  <data name="WorldChat.Starter.faction.Label" xml:space="preserve"><value>פלג</value></data>
+  <data name="WorldChat.Starter.faction.Text" xml:space="preserve"><value>צור פלג למערכה הזו: מה הוא רוצה, מי מוביל אותו, כמה חברים שהקבוצה עשויה לפגוש, היכן הוא נפגש ומה הוא מסתיר.</value></data>
+  <data name="WorldChat.Starter.quest.Label" xml:space="preserve"><value>משימה</value></data>
+  <data name="WorldChat.Starter.quest.Text" xml:space="preserve"><value>תכנן משימה לקבוצה: מי מבקש עזרה ולמה, לאן היא מובילה, מי עומד בדרך, ואילו רמזים מראים את הדרך.</value></data>
+  <data name="WorldChat.Starter.people.Label" xml:space="preserve"><value>אנשים למקום</value></data>
+  <data name="WorldChat.Starter.people.Text" xml:space="preserve"><value>הוסף את האנשים שהקבוצה תפגוש ב</value></data>
+  <data name="WorldChat.Starter.homebrew.Label" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="WorldChat.Starter.homebrew.Text" xml:space="preserve"><value>צור תוכן ביתי ({0}): </value></data>
+  <data name="WorldChat.Starter.homebrew.Any" xml:space="preserve"><value>כל סוג</value></data>
+  <data name="WorldChat.You" xml:space="preserve"><value>אתם</value></data>
+  <data name="WorldChat.Model" xml:space="preserve"><value>בינה מלאכותית</value></data>
+  <data name="WorldChat.Working" xml:space="preserve"><value>חושב על זה…</value></data>
+  <data name="WorldChat.Error" xml:space="preserve"><value>הבינה המלאכותית לא הצליחה לענות: {0}</value></data>
+  <data name="WorldChat.Retry" xml:space="preserve"><value>נסו שוב</value></data>
+  <data name="WorldChat.Kind.edit" xml:space="preserve"><value>שינויים בערכים קיימים</value></data>
+  <data name="WorldChat.Edit.Page" xml:space="preserve"><value>מחליף את הטקסט של הדף</value></data>
+  <data name="WorldChat.Edit.Place" xml:space="preserve"><value>מחליף את תיאור המקום</value></data>
+  <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>מחליף את הרקע של הדמות</value></data>
+  <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>הטקסט הנוכחי</value></data>
+  <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>השחקנים כבר יכולים לקרוא את זה, ולכן החלה תשנה את מה שהם רואים.</value></data>
+  <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{צעד אחד} two{# צעדים} other{# צעדים}}</value></data>
+  <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>המודל הזה לא יודע לקרוא לכלים, ובונה העולם צריך זאת. בחרו בהגדרות מודל שתומך בקריאה לכלים.</value></data>
+  <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>אין הצעה להחיל.</value></data>
+  <data name="WorldChat.MessageLabel" xml:space="preserve"><value>ההודעה שלכם</value></data>
+  <data name="WorldChat.Placeholder" xml:space="preserve"><value>מה נוסיף לעולם?</value></data>
+  <data name="WorldChat.Send" xml:space="preserve"><value>שליחה</value></data>
+  <data name="WorldChat.Hint" xml:space="preserve"><value>Enter לשליחה · Shift+Enter לשורה חדשה</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>המודל לא החזיר תשובה, פעמיים. שלחו שוב את ההודעה, או בחרו בהגדרות מודל חזק יותר.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>ההצעה מוכנה לבדיקה.</value></data>
+  <data name="WorldChat.Applied" xml:space="preserve"><value>הוחל: נוספו {0}, מוסתרים מהשחקנים.</value></data>
+  <data name="WorldChat.Discarded" xml:space="preserve"><value>ההצעה נמחקה.</value></data>
+  <data name="WorldChat.Tool.Search" xml:space="preserve"><value>חיפוש במערכה: „{0}”</value></data>
+  <data name="WorldChat.Tool.Page" xml:space="preserve"><value>נקרא הדף „{0}”</value></data>
+  <data name="WorldChat.Tool.Places" xml:space="preserve"><value>נבדקו המקומות</value></data>
+  <data name="WorldChat.Tool.Library" xml:space="preserve"><value>חיפוש בספרייה: „{0}”</value></data>
+  <data name="WorldChat.Tool.Fields" xml:space="preserve"><value>נבדקו השדות של {0}</value></data>
+  <data name="WorldChat.Tool.Propose" xml:space="preserve"><value>הוצעו {0} רשומות</value></data>
+  <data name="WorldChat.Proposal.Title" xml:space="preserve"><value>הצעה</value></data>
+  <data name="WorldChat.Proposal.Hint" xml:space="preserve"><value>פתחו רשומה כדי לקרוא אותה. בטלו את הסימון ממה שלא תרצו; הכול נשמר מוסתר מהשחקנים.</value></data>
+  <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{דבר אחד ששווה לבדוק} two{# דברים ששווה לבדוק} other{# דברים ששווה לבדוק}}</value></data>
+  <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>להוסיף גם לדמויות</value></data>
+  <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>להוסיף גם לדמויות, עם הנתונים של {0}</value></data>
+  <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>מקום קיים</value></data>
+  <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>החלה ({0})</value></data>
+  <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>שומרים ובוחרים ציוד לדמויות…</value></data>
+  <data name="WorldChat.Proposal.Discard" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="WorldChat.Proposal.Failed" xml:space="preserve"><value>לא הכול נשמר: {0}. החילו שוב כדי לשמור את השאר.</value></data>
+  <data name="WorldChat.Result.Hint" xml:space="preserve"><value>מוסתר מהשחקנים עד שתשתפו או תחשפו.</value></data>
+  <data name="WorldChat.Result.Secrets" xml:space="preserve"><value>{0, plural, one{סוד אחד בידע} two{# סודות בידע} other{# סודות בידע}}</value></data>
+  <data name="WorldChat.Kind.place" xml:space="preserve"><value>מקומות</value></data>
+  <data name="WorldChat.Kind.npc" xml:space="preserve"><value>דמויות</value></data>
+  <data name="WorldChat.Kind.wiki" xml:space="preserve"><value>דפים</value></data>
+  <data name="WorldChat.Kind.fact" xml:space="preserve"><value>סודות</value></data>
+  <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(הבינה המלאכותית חיפשה הרבה בבת אחת ועצרה לפני שענתה. בקשו ממנה להמשיך.)</value></data>
+  <data name="WorldChat.Tool.Add" xml:space="preserve"><value>נוספו {0} רשומות להצעה</value></data>
+  <data name="WorldChat.Review.Step" xml:space="preserve"><value>{0} מתוך {1}</value></data>
+  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>להשאיר</value></data>
+  <data name="WorldChat.Review.Skip" xml:space="preserve"><value>דילוג</value></data>
+  <data name="WorldChat.Review.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>אושר</value></data>
+  <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>דולג</value></data>
+  <data name="WorldChat.Review.Pending" xml:space="preserve"><value>טרם נסקר</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>דילוג על הערך מדלג גם על מה שבתוכו או שעוסק רק בו ({0}).</value></data>
+  <data name="WorldChat.Review.Rail" xml:space="preserve"><value>ערכים</value></data>
+  <data name="WorldChat.Missing.Title" xml:space="preserve"><value>הוזכר, ועדיין לא נכתב</value></data>
+  <data name="WorldChat.Missing.Write" xml:space="preserve"><value>כתיבת “{0}”</value></data>
+  <data name="WorldChat.Missing.All" xml:space="preserve"><value>כתיבת כולם ({0})</value></data>
+  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>מוזכר ב־{0}</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>הוסף להצעה את “{0}”: הוא מוזכר ב־{1}, אבל עוד לא נכתב. התאם לטון ולעובדות של מה שכבר בהצעה.</value></data>
+  <data name="WorldChat.Fill.All" xml:space="preserve"><value>הוסף להצעה את כל אלה בבת אחת: {0}. ערכים שכבר בהצעה מזכירים כל אחד מהם, אבל אף אחד עוד לא נכתב. התאם לטון ולעובדות שכבר שם.</value></data>
+  <data name="WorldChat.Welcome" xml:space="preserve"><value>מה נבנה?</value></data>
+  <data name="WorldChat.Chats" xml:space="preserve"><value>שיחות</value></data>
+  <data name="WorldChat.NewChat" xml:space="preserve"><value>שיחה חדשה</value></data>
+  <data name="WorldChat.Untitled" xml:space="preserve"><value>שיחה חדשה</value></data>
+  <data name="WorldChat.NoChats" xml:space="preserve"><value>אין עדיין שיחות. ההודעה הראשונה שלכם תפתח אחת.</value></data>
+  <data name="WorldChat.Rename" xml:space="preserve"><value>שינוי שם השיחה</value></data>
+  <data name="WorldChat.RenameLabel" xml:space="preserve"><value>שם השיחה</value></data>
+  <data name="WorldChat.Delete" xml:space="preserve"><value>מחיקת השיחה</value></data>
+  <data name="WorldChat.DeleteConfirm.Title" xml:space="preserve"><value>למחוק את השיחה?</value></data>
+  <data name="WorldChat.DeleteConfirm.Body" xml:space="preserve"><value>„{0}” וההצעה שממתינה בה יימחקו. מה שכבר הוחל נשאר במערכה.</value></data>
+  <data name="WorldChat.Waiting" xml:space="preserve"><value>{0, plural, one{רשומה אחת ממתינה} two{# רשומות ממתינות} other{# רשומות ממתינות}}</value></data>
+  <data name="WorldChat.Reasoning" xml:space="preserve"><value>שיקולים</value></data>
+  <data name="WorldChat.Thinking" xml:space="preserve"><value>חושב…</value></data>
+  <data name="WorldChat.Seconds" xml:space="preserve"><value>{0} שנ׳</value></data>
+  <data name="WorldChat.Minutes" xml:space="preserve"><value>{0} דק׳ {1} שנ׳</value></data>
+  <data name="WorldChat.Usage.Calls" xml:space="preserve"><value>{0, plural, one{פנייה אחת למודל} two{# פניות למודל} other{# פניות למודל}}</value></data>
+  <data name="WorldChat.Usage.Tokens" xml:space="preserve"><value>אסימונים: {0} נכנסו / {1} יצאו</value></data>
+  <data name="WorldChat.Step.Arguments" xml:space="preserve"><value>ארגומנטים</value></data>
+  <data name="WorldChat.Step.Result" xml:space="preserve"><value>תוצאה</value></data>
+  <data name="WorldChat.Step.Error" xml:space="preserve"><value>שגיאה</value></data>
+  <data name="WorldChat.Step.Raw" xml:space="preserve"><value>JSON גולמי</value></data>
+  <data name="WorldChat.Step.Copy" xml:space="preserve"><value>העתקת JSON</value></data>
+  <data name="WorldChat.Step.Copied" xml:space="preserve"><value>הועתק</value></data>
+  <data name="WorldChat.Step.Title" xml:space="preserve"><value>קריאה לכלי: {0}</value></data>
+  <data name="WorldChat.Step.Running" xml:space="preserve"><value>בביצוע</value></data>
+  <data name="WorldChat.Step.Failed" xml:space="preserve"><value>נכשל</value></data>
+  <data name="WorldChat.Step.Ready" xml:space="preserve"><value>התקבל</value></data>
+  <data name="WorldChat.Step.Rejected" xml:space="preserve"><value>{0, plural, one{תיקון אחד} two{# תיקונים} other{# תיקונים}}</value></data>
+  <data name="WorldChat.Step.Lines" xml:space="preserve"><value>{0, plural, one{שורה אחת} two{# שורות} other{# שורות}}</value></data>
+  <data name="WorldChat.Tool.Entry" xml:space="preserve"><value>נקראה הרשומה „{0}”</value></data>
+  <data name="WorldChat.Tool.Tags" xml:space="preserve"><value>נבדקו התגיות</value></data>
+  <data name="WorldChat.Kind.tags" xml:space="preserve"><value>תגיות</value></data>
+  <data name="WorldChat.Kind.bestiary" xml:space="preserve"><value>ספר המפלצות</value></data>
+  <data name="WorldChat.Edit.Homebrew" xml:space="preserve"><value>משנה את התוכן הביתי</value></data>
+  <data name="WorldChat.Proposal.Ready" xml:space="preserve"><value>{0, plural, one{רשומה אחת מוכנה לבדיקה} two{# רשומות מוכנות לבדיקה} other{# רשומות מוכנות לבדיקה}}</value></data>
+  <data name="WorldChat.Proposal.Show" xml:space="preserve"><value>לבדיקה</value></data>
+  <data name="WorldChat.Proposal.Empty.Title" xml:space="preserve"><value>אין עדיין מה לבדוק</value></data>
+  <data name="WorldChat.Proposal.Empty.Body" xml:space="preserve"><value>כשהבינה המלאכותית תציע משהו, זה יחכה לכם כאן: קראו כל רשומה, השאירו את מה שאהבתם והחילו. הכול נשמר מוסתר מהשחקנים.</value></data>
+  <data name="WorldChat.Can.World" xml:space="preserve"><value>מקומות, דמויות, פלגים, משימות וסודות, מקושרים למה שכבר יש במערכה.</value></data>
+  <data name="WorldChat.Can.Homebrew" xml:space="preserve"><value>לחשים, חפצי קסם, ציוד ויצורים: חדשים, או גרסאות של מה שיש בספרייה.</value></data>
+  <data name="WorldChat.Can.Revise" xml:space="preserve"><value>שינויים בדפי ויקי, במקומות, ברקע של דמויות ובתוכן הביתי, מסומנים מילה במילה.</value></data>
+  <data name="WorldChat.Can.Tags" xml:space="preserve"><value>תגיות לדפים ולתוכן ביתי, כדי לייצא ולשתף אוסף של תוכן ביתי.</value></data>
+  <data name="WorldChat.Reader.Back" xml:space="preserve"><value>כל הרשומות</value></data>
+  <data name="WorldChat.Reader.Include" xml:space="preserve"><value>לכלול את „{0}”</value></data>
+  <data name="WorldChat.Reader.Keep" xml:space="preserve"><value>לכלול בהצעה</value></data>
+  <data name="WorldChat.Proposal.BasedOn" xml:space="preserve"><value>גרסה של „{0}”</value></data>
+  <data name="WorldChat.Proposal.Fields" xml:space="preserve"><value>שדות</value></data>
+  <data name="WorldChat.Proposal.TagsLabel" xml:space="preserve"><value>תגיות</value></data>
+  <data name="WorldChat.Proposal.NoTags" xml:space="preserve"><value>ללא תגיות</value></data>
+  <data name="WorldChat.Proposal.Renamed" xml:space="preserve"><value>שם חדש: „{0}”</value></data>
+  <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{תגיות לדף או רשומה אחת} two{תגיות ל-# דפים ורשומות} other{תגיות ל-# דפים ורשומות}}</value></data>
+  <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>היצור הזה כבר בספר המפלצות.</value></data>
+  <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>מוסיף את „{0}” לספר המפלצות של המערכה.</value></data>
+  <data name="WorldChat.Result.Bestiary" xml:space="preserve"><value>בספר המפלצות</value></data>
+  <data name="WorldChat.Result.Retagged" xml:space="preserve"><value>{0, plural, one{התגיות שונו בדף או רשומה אחת} two{התגיות שונו ב-# דפים ורשומות} other{התגיות שונו ב-# דפים ורשומות}}</value></data>
+  <data name="WorldChat.Diff.Changes" xml:space="preserve"><value>שינויים</value></data>
+  <data name="WorldChat.Diff.New" xml:space="preserve"><value>הטקסט החדש</value></data>
+  <data name="WorldChat.Diff.View" xml:space="preserve"><value>הצגה</value></data>
+  <data name="WorldChat.Diff.None" xml:space="preserve"><value>הטקסט נשאר כמו שהוא.</value></data>
+  <data name="WorldChat.Starter.variant.Label" xml:space="preserve"><value>גרסה של לחש או חפץ</value></data>
+  <data name="WorldChat.Starter.variant.Text" xml:space="preserve"><value>צור גרסה ביתית של לחש או חפץ קסם מהספרייה שמתאימה למערכה. בדוק קודם מה יש בספרייה, ואז ספר לי במה בחרת ולמה.</value></data>
+  <data name="WorldChat.Starter.revise.Label" xml:space="preserve"><value>שיפור דף</value></data>
+  <data name="WorldChat.Starter.revise.Text" xml:space="preserve"><value>קרא את דף הוויקי שאציין ושפר אותו: שמור על העובדות, השלם את החסר וקשר אותו למה שיש במערכה. הדף: </value></data>
+  <data name="WorldChat.Starter.tags.Label" xml:space="preserve"><value>תיוג תוכן ביתי לשיתוף</value></data>
+  <data name="WorldChat.Starter.tags.Text" xml:space="preserve"><value>עבור על התוכן הביתי ודפי הוויקי של המערכה והצע תגיות שיקבצו אותם (לפי אזור, פלג או נושא), כדי שאוכל לייצא אוסף ולשתף אותו. השתמש בתגיות שכבר קיימות.</value></data>
+  <data name="WorldChat.Step.Request" xml:space="preserve"><value>בקשה</value></data>
+  <data name="WorldChat.Steps.Trouble" xml:space="preserve"><value>{0, plural, one{אחד דרש ניסיון נוסף} two{# דרשו ניסיון נוסף} other{# דרשו ניסיון נוסף}}</value></data>
+</root>

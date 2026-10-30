@@ -105,7 +105,9 @@ builder.Services.AddSingleton<IFactRepository, FactRepository>();
 builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
 builder.Services.AddSingleton<IHomebrewRepository, RavenHomebrewRepository>();
 builder.Services.AddSingleton<IWikiRepository, RavenWikiRepository>();
+builder.Services.AddSingleton<ITemplateRepository, RavenTemplateRepository>();
 builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
+builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
@@ -121,6 +123,7 @@ builder.Services.AddSingleton<PluginLoader>();
 builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddScoped<MentionSources>();
+builder.Services.AddScoped<WorldChatSessions>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 builder.Services.AddHostedService<IdleRuntimeEvictionService>();
 
@@ -244,7 +247,10 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
                 Kind = seed.Kind,
                 OwnerUserId = seed.OwnerUserId,
                 Name = seed.Name,
-                Visibility = seed.Visibility
+                Visibility = seed.Visibility,
+                PublicName = seed.PublicName,
+                PublicDescription = seed.PublicDescription,
+                Biography = seed.Biography
             };
 
             foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())
@@ -426,6 +432,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 });
 
 Codex.Web.MediaEndpoints.MapMedia(app);
+Codex.Web.PreviewEndpoints.MapPreviews(app);
 
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 

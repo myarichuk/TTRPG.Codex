@@ -28,6 +28,8 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IUserRepository UserRepo
+@inject IWikiRepository WikiRepo
+@inject ITemplateRepository TemplateRepo
 @implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
@@ -43,6 +45,36 @@ else if (campaign == null || actor == null || access == null)
         <h1 class="h4">@L["Actor.Sheet.NotFound"]</h1>
         <p>@L["Actor.Sheet.NotFoundBody"]</p>
         <a href="/" class="cx-btn cx-plaque">@L["Actor.Sheet.BackToCampaigns"]</a>
+    </div>
+}
+else if (IsStranger)
+{
+    @* Someone the party met but has not identified: the repository hands over a mask (name they go by, what can be seen), nothing of the sheet. *@
+    <div class="stranger-card panel" data-testid="stranger-card">
+        <nav aria-label="@L["Actor.Sheet.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Actor.Sheet.Campaigns"]</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">@L["Actor.Sheet.Cast"]</a></nav>
+        <div class="stranger-head">
+            <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" />
+            <div class="min-w-0">
+                <h1 data-testid="actor-name">@DisplayName</h1>
+                <span class="pill pill-warning"><LucideIcon IconName="help-circle" Size="14" /> @L["Actor.Stranger.NotIdentified"]</span>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(actor.PublicDescription))
+        {
+            <div class="rules-text mb-0" data-testid="stranger-description">@((MarkupString)MentionLinks.ToHtml(actor.PublicDescription, noteMentions, CampaignId))</div>
+        }
+        else
+        {
+            <p class="small-muted mb-0">@L["Actor.Stranger.NothingYet"]</p>
+        }
+        <div class="mt-3">
+            <LoreAbout Access="access" OwnedActorIds="OwnedActorIds" BasePath="@($"/campaigns/{CampaignId}")" TestId="actor-lore" Keys="@(new[] { FactLinks.Actor(actor.Id) })" />
+        </div>
+        @if (mentionedIn.Count > 0 || writtenIn.Count > 0)
+        {
+            <h2 class="h6 mt-3"><LucideIcon IconName="notebook-pen" Size="14" Class="title-icon" /> @L["Actor.Sheet.InNotes"]</h2>
+            <NotesMentioning Lines="mentionedIn" Written="writtenIn" Mentions="noteMentions" Actors="noteActors" IsDm="false" CampaignId="@CampaignId" />
+        }
     </div>
 }
 else
@@ -69,6 +101,10 @@ else
                         {
                             <span class="pill @(actor.Visibility == ActorVisibility.Known ? "pill-success" : "pill-warning")">@VisibilityLabel</span>
                         }
+                        @if (wikiPage != null)
+                        {
+                            <a class="pill" href="/campaigns/@CampaignId/wiki/@wikiPage.Slug" data-testid="actor-wiki-page"><LucideIcon IconName="book-open" Size="14" /> @L["Actor.Sheet.WikiPage", wikiPage.Title]</a>
+                        }
                         @if (!string.IsNullOrEmpty(actor.BlueprintId))
                         {
                             <span class="pill">@L["Actor.Sheet.From", ContentRegistry.ActorName(actor.BlueprintId, L.Culture.Name) ?? actor.BlueprintId.Split(':').Last()]</span>
@@ -81,7 +117,7 @@ else
                         {
                             @if (busy == "portrait")
                             {
-                                <AiWorking Text="@L["Actor.Art.Drawing"]" OnStop="aiCall.Stop" TestId="portrait-working" />
+                                <AiWorking Compact="true" Text="@L["Actor.Art.Drawing"]" OnStop="aiCall.Stop" TestId="portrait-working" />
                             }
                             else
                             {
@@ -103,7 +139,7 @@ else
                 <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> @L["Actor.Sheet.BackToCast"]</a>
                 @if (CanEdit)
                 {
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save">@L["Actor.Sheet.SaveChanges"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Actor.Sheet.SaveChanges"]</CodexButton>
                 }
             </div>
         </div>
@@ -175,7 +211,7 @@ else
                     <ul class="mb-0 small">
                         @foreach (var violation in evaluation.Violations)
                         {
-                            <li>@violation.Message</li>
+                            <li>@Describe(violation)</li>
                         }
                     </ul>
                 </section>
@@ -191,7 +227,7 @@ else
                     <ul class="mb-0 small">
                         @foreach (var warning in evaluation.Warnings)
                         {
-                            <li>@warning.Message</li>
+                            <li>@Describe(warning)</li>
                         }
                     </ul>
                 </section>
@@ -370,14 +406,14 @@ else
                             {
                                 var targets = PointTargets(grant);
                                 <div class="mb-2" data-testid="increase-@grant.Pick.Index">
-                                    <div class="small fw-semibold">@grant.Pick.Entry.Name <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
+                                    <div class="small fw-semibold">@ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name) <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
                                     <div class="d-flex flex-wrap gap-2">
                                         @for (var point = 0; point < grant.Points; point++)
                                         {
                                             var pointIndex = point;
                                             var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
                                             <div>
-                                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", grant.Pick.Entry.Name, pointIndex + 1, grant.Points]</span></label>
+                                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name), pointIndex + 1, grant.Points]</span></label>
                                                 <select id="@selectId" class="field-select field-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
                                                         @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
                                                     <option value="">@L["Actor.Sheet.Choose"]</option>
@@ -401,7 +437,7 @@ else
                             {
                                 if (!evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
                                 <dt>@derived.Label</dt>
-                                <dd data-testid="derived-@derived.Key">@FormatSigned(value)</dd>
+                                <dd data-testid="derived-@derived.Key"><bdi dir="ltr">@FormatSigned(value)</bdi></dd>
                             }
                         </dl>
                     }
@@ -459,14 +495,14 @@ else
                                 var levelInputId = "class-level-" + classId;
                                 <li class="list-row py-1" data-testid="class-row">
                                     <span>
-                                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(cls.Entry?.Name ?? classId)</a>
+                                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(Nm(cls.Entry) ?? classId)</a>
                                         @if (cls.IsFirst)
                                         {
                                             <span class="small-muted"> · @L["Actor.Sheet.FirstClass"]</span>
                                         }
                                         @if (cls.Subclass != null)
                                         {
-                                            <span class="small-muted"> · @cls.Subclass.Name</span>
+                                            <span class="small-muted"> · @Nm(cls.Subclass)</span>
                                         }
                                     </span>
                                     @if (cls.IsFirst || !CanEdit)
@@ -476,10 +512,10 @@ else
                                     else
                                     {
                                         <span class="d-flex align-items-center gap-2">
-                                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", cls.Entry?.Name ?? classId]</label>
+                                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", Nm(cls.Entry) ?? classId]</label>
                                             <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
                                                    @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
-                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", cls.Entry?.Name ?? classId]" OnClick="() => RemoveClass(multiclass, classId)" />
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", Nm(cls.Entry) ?? classId]" OnClick="() => RemoveClass(multiclass, classId)" />
                                         </span>
                                     }
                                 </li>
@@ -487,13 +523,13 @@ else
                                 {
                                     var subclassId = "class-subclass-" + classId;
                                     <li class="py-1">
-                                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", cls.Entry?.Name ?? classId]</label>
+                                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", Nm(cls.Entry) ?? classId]</label>
                                         <select id="@subclassId" class="field-select field-sm" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
                                                 @onchange="e => SetClassSubclass(multiclass, classId, e.Value?.ToString())">
                                             <option value="">@L["Actor.Sheet.NoneYet"]</option>
                                             @foreach (var option in SubclassOptions(classId))
                                             {
-                                                <option value="@option.Id">@option.Name</option>
+                                                <option value="@option.Id">@Nm(option)</option>
                                             }
                                         </select>
                                     </li>
@@ -510,7 +546,7 @@ else
                                         <option value="">@L["Actor.Sheet.Choose"]</option>
                                         @foreach (var option in evaluation.MulticlassOptions)
                                         {
-                                            <option value="@option.Id">@option.Name</option>
+                                            <option value="@option.Id">@Nm(option)</option>
                                         }
                                     </select>
                                 </div>
@@ -531,7 +567,7 @@ else
                     {
                         <div class="mb-3">
                             <div class="label-caps">@label</div>
-                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@item.Entry.Name</a>
+                            <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
                             <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
                         </div>
                     }
@@ -589,7 +625,8 @@ else
                 {
                     <label for="actor-bio" class="visually-hidden">@L["Actor.Sheet.History"]</label>
                     <MarkdownEditor Id="actor-bio" Title="@L["Actor.Sheet.History"]" Rows="10" Placeholder="@L["Actor.Sheet.HistoryPlaceholder"]" @bind-Value="editBiography"
-                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography"
+                                    Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography" Secrets="@access.IsDm"
+                                    Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -603,13 +640,23 @@ else
                 }
                 else if (!string.IsNullOrWhiteSpace(actor.Biography))
                 {
-                    <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(actor.Biography, noteMentions, CampaignId))</div>
+                    <div class="rules-text mb-0">@((MarkupString)SecretRender.Html(actor.Biography, text => MentionLinks.ToHtml(text, noteMentions, CampaignId), access.IsDm ? DmView.From(L, noteMentions) : null))</div>
                 }
                 else
                 {
                     <p class="small-muted mb-0">@L["Actor.Sheet.NoHistory"]</p>
                 }
+                @if (!string.IsNullOrWhiteSpace(actor.RevealedToReader))
+                {
+                    @* Revealed by the DM to this player's characters: read here, never in the box above, whose save would make it everyone's. *@
+                    <div class="revealed-to-you mt-3" data-testid="actor-revealed-to-you">
+                        <div class="revealed-to-you-title"><LucideIcon IconName="key-round" Size="14" /> @L["Actor.Sheet.RevealedToYou"]</div>
+                        <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(actor.RevealedToReader, noteMentions, CampaignId))</div>
+                    </div>
+                }
             </section>
+            <LoreAbout Access="access" OwnedActorIds="OwnedActorIds" BasePath="@($"/campaigns/{CampaignId}")" TestId="actor-lore"
+                       Keys="@(new[] { FactLinks.Actor(actor.Id) })" AboutKey="@FactLinks.Actor(actor.Id)" />
 
             }
 
@@ -663,6 +710,7 @@ else
                     <label for="actor-dm-notes" class="visually-hidden">@L["Actor.Sheet.DmNotes"]</label>
                     <MarkdownEditor Id="actor-dm-notes" Title="@L["Actor.Sheet.DmNotes"]" Rows="8" Placeholder="@L["Actor.Sheet.DmNotesPlaceholder"]" @bind-Value="editDmNotes"
                                     Mentions="@mentionsJson" Preview="PreviewMentions" TestId="sheet-dm-notes"
+                                    Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "dm")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
                         <div class="ai-row">
                             <label for="dm-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
@@ -735,11 +783,11 @@ else
                             <select id="levelup-class" class="field-select field-sm" @bind="levelUpClassId" data-testid="levelup-class">
                                 @foreach (var cls in evaluation.Classes)
                                 {
-                                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", cls.Entry?.Name ?? cls.Id, cls.Level + 1]</option>
+                                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", Nm(cls.Entry) ?? cls.Id, cls.Level + 1]</option>
                                 }
                                 @foreach (var option in evaluation.MulticlassOptions)
                                 {
-                                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", option.Name]</option>
+                                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", Nm(option)]</option>
                                 }
                             </select>
                         </div>
@@ -782,11 +830,21 @@ else
                             <option value="@ActorVisibility.Known">@L["Actor.Sheet.VisKnown"]</option>
                         </select>
                     </div>
+                    @if (editVisibility == ActorVisibility.Known && actor.Visibility != ActorVisibility.Known && !string.IsNullOrWhiteSpace(actor.Biography))
+                    {
+                        <p class="field-hint text-warning" role="status" data-testid="actor-reveal-history">@L["Actor.Sheet.RevealHistory"]</p>
+                    }
                     @if (editVisibility == ActorVisibility.Unknown)
                     {
+                        <p class="field-hint" data-testid="actor-unknown-hint">@L["Actor.Sheet.UnknownHint"]</p>
                         <div class="mb-2">
                             <label for="actor-public-name" class="field-label">@L["Actor.Sheet.ShownAs"]</label>
-                            <input id="actor-public-name" class="field-input" @bind="editPublicName" placeholder="@L["Actor.Sheet.PublicNamePh"]" />
+                            <input id="actor-public-name" class="field-input" @bind="editPublicName" @bind:event="oninput" placeholder="@L["Actor.Stranger"]" data-testid="actor-public-name" />
+                        </div>
+                        <div class="mb-2">
+                            <label for="actor-public-description" class="field-label">@L["Actor.Sheet.PublicDescription"]</label>
+                            <textarea id="actor-public-description" class="field-input" rows="4" @bind="editPublicDescription" @bind:event="oninput"
+                                      placeholder="@L["Actor.Sheet.PublicDescriptionPh"]" data-mentions="@mentionsJson" data-testid="actor-public-description"></textarea>
                         </div>
                     }
                     <div class="mb-2">
@@ -830,6 +888,8 @@ else
     private Dictionary<string, string> memberNames = new();
     private ActorDocument? actor;
     private CampaignAccess? access;
+    // The wiki page this character was promoted from, when the reader can open it.
+    private WikiPageDocument? wikiPage;
     private SystemDefinition? system;
     private string? currentUserId;
     private UISchema? schema;
@@ -852,9 +912,11 @@ else
     private readonly AiCall aiCall = new();
 
     /// <summary>The history or notes as a reader will see them: the typed @Names become mentions first.</summary>
-    private string PreviewMentions(string text) => MentionLinks.ToHtml(noteMentions.Encode(text), noteMentions, CampaignId);
+    private string PreviewMentions(string text) =>
+        SecretRender.Html(noteMentions.Encode(text), encoded => MentionLinks.ToHtml(encoded, noteMentions, CampaignId), access?.IsDm == true ? DmView.From(L, noteMentions) : null);
     private ActorVisibility editVisibility;
     private string editPublicName = "";
+    private string editPublicDescription = "";
     private ActorKind editKind;
     private string editOwnerId = "";
     private Dictionary<string, object> editSheet = new();
@@ -875,6 +937,7 @@ else
     private int MentionCount => mentionedIn.Count + writtenIn.Count;
     private MentionDirectory noteMentions = MentionDirectory.Empty;
     // What the history and DM notes boxes suggest after @, # or $.
+    private IReadOnlyList<TextTemplate>? templates;
     private string mentionsJson = "[]";
     private IReadOnlyDictionary<string, ActorDocument> noteActors = new Dictionary<string, ActorDocument>();
 
@@ -933,6 +996,13 @@ else
             // The boxes hold the text as typed (@Name), the stored text holds ids.
             if (editBiography != noteMentions.ForEditing(actor.Biography ?? "")) count++;
             if (editDmNotes != noteMentions.ForEditing(actor.DmNotes ?? "")) count++;
+            if (access?.IsDm == true)
+            {
+                if (editVisibility != actor.Visibility) count++;
+                if (editPublicName != (actor.PublicName ?? "")) count++;
+                if (editPublicDescription != noteMentions.ForEditing(actor.PublicDescription ?? "")) count++;
+            }
+
             foreach (var key in editSheet.Keys.Union(baselineSheet.Keys))
             {
                 editSheet.TryGetValue(key, out var now);
@@ -949,7 +1019,7 @@ else
     {
         if (evaluation is { Classes.Count: > 0 })
         {
-            foreach (var cls in evaluation.Classes) yield return $"{cls.Entry?.Name ?? cls.Id} {cls.Level}";
+            foreach (var cls in evaluation.Classes) yield return $"{Nm(cls.Entry) ?? cls.Id} {cls.Level}";
         }
         else if (HasLevel)
         {
@@ -1021,6 +1091,12 @@ else
 
     private string DisplayName => actor == null ? string.Empty : actor.NameFor(access?.IsDm != false);
 
+    /// <summary>The characters the reader plays: which lore and which revealed blocks reach them.</summary>
+    private IReadOnlySet<string> OwnedActorIds => noteActors.Values.Where(a => a.OwnerUserId == currentUserId).Select(a => a.Id).ToHashSet();
+
+    /// <summary>A player looking at someone the DM keeps unidentified: what they were handed is a mask, not a sheet.</summary>
+    private bool IsStranger => actor != null && access is { IsDm: false } && actor.Visibility == ActorVisibility.Unknown && actor.OwnerUserId != currentUserId;
+
     private string KindLabel => actor?.Kind switch
     {
         ActorKind.PlayerCharacter => L["Actor.Sheet.KindPc"],
@@ -1072,6 +1148,8 @@ else
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 ActorSheetSync.ApplyStateToSheet(actor, system, Components);
+                wikiPage = string.IsNullOrEmpty(actor.WikiPageId) || access == null ? null
+                    : (await WikiRepo.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == actor.WikiPageId);
                 editName = actor.Name;
                 editVisibility = actor.Visibility;
                 editPublicName = actor.PublicName ?? "";
@@ -1101,8 +1179,11 @@ else
                 noteMentions = mentions;
                 noteActors = visibleActors.ToDictionary(a => a.Id);
                 mentionsJson = CanEdit ? MentionLinks.Json(mentions, visibleActors) : "[]";
+                // The DM's templates (a template can hold the DM's secrets, so a player's boxes get none).
+                templates = access.IsDm ? await TemplateRepo.GetAsync(access, L) : null;
                 editBiography = mentions.ForEditing(actor.Biography ?? "");
                 editDmNotes = mentions.ForEditing(actor.DmNotes ?? "");
+                editPublicDescription = mentions.ForEditing(actor.PublicDescription ?? "");
             }
         }
 
@@ -1126,7 +1207,7 @@ else
         engine.ApplyArmorClass(editSheet, evaluation);
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
-            kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, e.Name)).ToList());
+            kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, Nm(e)!)).ToList());
     }
 
     private Task OnRulesInputChanged()
@@ -1208,6 +1289,29 @@ else
     }
 
     /// <summary>"+1 STR, +1 DEX" after a pick that raised scores.</summary>
+    private string? Nm(ContentEntry? entry) => entry == null ? null : ContentRegistry.Name(entry, L.Culture.Name);
+
+    /// <summary>A rule message in the reader's language: the localized sentence when the engine named one, built from its arguments (entries by their
+    /// translated names, rule texts and system words through the system's translation); else the engine's English.</summary>
+    private string Describe(RuleViolation violation)
+    {
+        if (violation.Key == null || violation.Args == null || !L.Has(violation.Key)) return violation.Message;
+        var culture = L.Culture.Name;
+        var args = violation.Args.Select((a, index) => a switch
+        {
+            ContentEntry entry => ContentRegistry.Name(entry, culture),
+            // The spreads a bonus may take, each read left to right: "+2/+1 or +1/+1/+1".
+            List<List<int>> spreads => string.Join(L["Actor.Sheet.Or"], spreads.Select(s => Bidi.Ltr(string.Join("/", s.Select(v => "+" + v))))),
+            // Scores and signed numbers keep their order inside a right-to-left sentence.
+            string text when System.Text.RegularExpressions.Regex.IsMatch(text, @"^[\d+/, ]+$") => Bidi.Ltr(text),
+            // A system word ("Heavy armor") in the middle of a sentence is not capitalised.
+            string text when system != null && violation.Key == "Actor.Rule.ArmorUntrained" && index == 2 => system.DisplayValue(text).ToLower(L.Culture),
+            string text when system != null => system.DisplayRuleMessage(text) is var message && message != text ? message : system.DisplayValue(text),
+            _ => a
+        }).ToArray();
+        return L[violation.Key, args];
+    }
+
     private string? PickNote(SheetPick pick) =>
         pick.Choices.Count == 0 || system == null ? null
             : string.Join(", ", pick.Choices.Select(c => $"+{c.Value} {system.Attributes.FirstOrDefault(a => a.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? c.Key}"));
@@ -1325,6 +1429,7 @@ else
             target.DmNotes = string.IsNullOrWhiteSpace(editDmNotes) ? null : noteMentions.Encode(editDmNotes.Trim());
             target.Visibility = editVisibility;
             target.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
+            target.PublicDescription = string.IsNullOrWhiteSpace(editPublicDescription) ? null : noteMentions.Encode(editPublicDescription.Trim());
             target.Kind = editKind;
             target.OwnerUserId = editKind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(editOwnerId) ? editOwnerId : (editKind == ActorKind.PlayerCharacter ? target.OwnerUserId : null);
         }
@@ -1461,7 +1566,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "Portrait generation failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Art.DrawFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Actor.Art.DrawFailed", AiFailureText.For(L, ex)]);
             return;
         }
         finally
@@ -1507,7 +1612,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI rewrite failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Sheet.AiDraftFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Actor.Sheet.AiDraftFailed", AiFailureText.For(L, ex)]);
         }
         finally
         {
@@ -1537,7 +1642,7 @@ else
         catch (Exception ex)
         {
             Logger.LogError(ex, "AI level-up failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Sheet.AiSuggestFailed", L.Describe(ex)]);
+            flash = Flash.Error(L["Actor.Sheet.AiSuggestFailed", AiFailureText.For(L, ex)]);
         }
         finally
         {

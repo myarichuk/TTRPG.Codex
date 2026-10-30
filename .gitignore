@@ -45,3 +45,5 @@ RavenData/
 # Release packages built by packaging/package.sh / package.ps1
 dist/
 .DS_Store
+site/dist/
+site/.capture/

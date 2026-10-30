@@ -29,7 +29,68 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
         }
 
         using var session = dbService.Store.OpenAsyncSession();
-        await session.StoreAsync(fact);
+        var existing = string.IsNullOrEmpty(fact.Id) ? null : await session.LoadAsync<FactDocument>(fact.Id);
+        if (existing != null && existing.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        fact.CampaignId = access.CampaignId;
+        fact.Summary = (fact.Summary ?? string.Empty).Trim();
+        fact.Details = string.IsNullOrWhiteSpace(fact.Details) ? null : fact.Details.Trim();
+        fact.RelatedEntityIds = FactLinks.Of(fact.Summary, fact.Details).ToList();
+        if (existing == null)
+        {
+            await session.StoreAsync(fact, string.IsNullOrEmpty(fact.Id) ? null : fact.Id);
+        }
+        else
+        {
+            // The caller's copy is detached; the tracked one takes its fields.
+            existing.Summary = fact.Summary;
+            existing.Details = fact.Details;
+            existing.Visibility = fact.Visibility;
+            existing.KnownBy = fact.KnownBy;
+            existing.RelatedEntityIds = fact.RelatedEntityIds;
+            existing.Metadata = fact.Metadata;
+        }
+
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(string factId, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var fact = await session.LoadAsync<FactDocument>(factId);
+        if (fact == null || fact.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        session.Delete(fact);
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RemoveKnowerAsync(string factId, string entityId, CampaignAccess access)
+    {
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var fact = await session.LoadAsync<FactDocument>(factId);
+        if (fact == null || fact.CampaignId != access.CampaignId || fact.KnownBy.RemoveAll(k => k.EntityId == entityId) == 0)
+        {
+            return false;
+        }
+
         await session.SaveChangesAsync();
         return true;
     }
@@ -69,6 +130,11 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
 
         fact.KnownBy.RemoveAll(k => k.EntityId == knower.EntityId);
         fact.KnownBy.Add(knower);
+        if (fact.Visibility == FactVisibility.DmOnly)
+        {
+            fact.Visibility = FactVisibility.KnowersOnly;
+        }
+
         await session.SaveChangesAsync();
         return true;
     }

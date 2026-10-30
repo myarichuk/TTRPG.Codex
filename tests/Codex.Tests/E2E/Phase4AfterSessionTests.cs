@@ -81,7 +81,7 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         var bridgeCard = dm.GetByTestId("fact-card").Filter(new() { HasText = revealedSummary });
         await bridgeCard.GetByLabel("Reveal to").SelectOptionAsync(new SelectOptionValue { Label = "Aria" });
         await bridgeCard.GetByRole(AriaRole.Button, new() { Name = "Reveal to character" }).ClickAsync();
-        await bridgeCard.GetByText("Known by: Aria").WaitForAsync();
+        await Assertions.Expect(bridgeCard.GetByTestId("fact-knower")).ToContainTextAsync("Aria");
 
         // ---- Players' lore: Aria's player knows, Bram's doesn't, nobody sees the secret. ----
         await E2EHelpers.GoToSectionAsync(player1, campaignId, "lore");
@@ -130,9 +130,18 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         await dm.Keyboard.TypeAsync(recap);
         await dm.GetByRole(AriaRole.Button, new() { Name = "Save recap" }).ClickAsync();
         await dm.GetByText("Recap saved.").WaitForAsync();
+        // After a save the box shows what the server stored. If keystrokes were lost on the way (typed faster than the circuit
+        // answers), the failure is here and says so, instead of 30 seconds later as a player who never sees the text.
+        await Assertions.Expect(dm.Locator("#recap")).ToHaveValueAsync(recap);
 
         await E2EHelpers.GotoInteractiveAsync(player1, sessionUrl!);
         await player1.GetByText(recap).WaitForAsync();
+
+        // The box is not re-sent its value as the DM types (that dropped keystrokes under load), so a change the page makes to it
+        // itself has to arrive another way: "Pre-fill from events" replaces what is there.
+        await dm.Locator("#recap").FillAsync("P4 scratch text");
+        await dm.GetByRole(AriaRole.Button, new() { Name = "Pre-fill from events" }).ClickAsync();
+        await Assertions.Expect(dm.Locator("#recap")).Not.ToHaveValueAsync("P4 scratch text");
 
         // ---- Payload half: secrets never crossed the wire to players. ----
         string player1Payload, player2Payload;

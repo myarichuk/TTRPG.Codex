@@ -16,7 +16,9 @@ public class CampaignRepository(
     IEncounterRepository encounterRepository,
     IWikiRepository? wikiRepository = null,
     IJournalRepository? journalRepository = null,
-    CampaignLifecycleHooks? lifecycle = null) : ICampaignRepository
+    IWorldChatRepository? worldChatRepository = null,
+    CampaignLifecycleHooks? lifecycle = null,
+    ITemplateRepository? templateRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -131,6 +133,8 @@ public class CampaignRepository(
         await encounterRepository.DeleteAllForCampaignAsync(campaignId);
         if (wikiRepository != null) await wikiRepository.DeleteAllForCampaignAsync(campaignId);
         if (journalRepository != null) await journalRepository.DeleteAllForCampaignAsync(campaignId);
+        if (worldChatRepository != null) await worldChatRepository.DeleteAllForCampaignAsync(campaignId);
+        if (templateRepository != null) await templateRepository.DeleteAllForCampaignAsync(campaignId);
 
         // Attachments (cover art) are deleted with the document.
         session.Delete(campaign);

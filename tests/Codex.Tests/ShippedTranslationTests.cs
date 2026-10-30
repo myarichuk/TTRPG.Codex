@@ -58,6 +58,18 @@ public class ShippedTranslationTests
             Assert.All(rules?.Skills?.Passives ?? [], p => Assert.True(labels.Passives.ContainsKey(p.Key), $"{language}: passive {p.Key} untranslated"));
             Assert.All(rules?.SlotPools ?? [], p => Assert.True(labels.SlotPools.ContainsKey(p.Key), $"{language}: slot pool {p.Key} untranslated"));
 
+            // The sentences and headings the sheet prints from the rules, not only their labels.
+            Assert.All(rules?.Lists.Where(l => !string.IsNullOrWhiteSpace(l.Description)) ?? [], l => Assert.True(labels.ListDescriptions.ContainsKey(l.Key), $"{language}: description of list {l.Key} untranslated"));
+            if (rules?.Attributes?.Bonuses != null) Assert.False(string.IsNullOrWhiteSpace(labels.BonusesLabel), $"{language}: bonuses label untranslated");
+            if (rules?.Attributes?.Increases != null) Assert.False(string.IsNullOrWhiteSpace(labels.IncreasesLabel), $"{language}: increases label untranslated");
+            var messages = (rules?.Lists.SelectMany(l => l.Where) ?? []).Concat(rules?.Constraints.SelectMany(c => c.Where) ?? [])
+                .Select(w => w.Message).Where(m => !string.IsNullOrWhiteSpace(m)).Distinct();
+            Assert.All(messages, m => Assert.True(labels.Messages.ContainsKey(m!), $"{language}: rule message \"{m}\" untranslated"));
+            var groups = (rules?.Lists.Select(l => l.Category) ?? []).Concat(rules?.Derived.Select(d => d.Category) ?? [])
+                .Concat([DataDrivenSystemPlugin.AttributesCategory, DataDrivenSystemPlugin.ResourcesCategory]).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct();
+            Assert.All(groups, c => Assert.True(t.Categories.ContainsKey(c!), $"{language}: group heading {c} untranslated"));
+            Assert.False(string.IsNullOrWhiteSpace(t.MaxSuffix), $"{language}: maxSuffix missing");
+
             // Every attribute and condition is shown in the language, so a table is never half translated.
             Assert.All(system.Attributes, a => Assert.True(t.Attributes.ContainsKey(a.Key), $"{language}: attribute {a.Key} untranslated"));
             Assert.All(system.Conditions, c => Assert.True(t.Conditions.ContainsKey(c), $"{language}: condition {c} untranslated"));
@@ -128,5 +140,21 @@ public class ShippedTranslationTests
             .ToList();
 
         Assert.Empty(offenders);
+    }
+
+    [Theory]
+    [InlineData("he")]
+    [InlineData("ru")]
+    public void LocalizedActorSchema_HasNoEnglishGroupHeadingsOrMaxSuffix(string language)
+    {
+        var system = SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems/srd5e", "system.yaml")).Localize(language);
+        var schema = DataDrivenSystemPlugin.BuildActorSchema(system);
+
+        Assert.DoesNotContain(schema.Fields, f => f.Category is "Resources" or "Attributes" or "Combat" or "General");
+        Assert.DoesNotContain(schema.Fields, f => f.Label.EndsWith("(max)"));
+        var list = system.SheetRules!.Lists.First(l => l.Key == "cantrips");
+        Assert.DoesNotContain("Cantrips known", list.Description);
+        Assert.NotEqual("Background bonuses", system.SheetRules.Attributes!.Bonuses!.Label);
+        Assert.NotEqual("Ability score increases", system.SheetRules.Attributes.Increases!.Label);
     }
 }

@@ -14,7 +14,7 @@
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>עדיין לא זוהה</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>מפלצת</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>רשימה קצרה ({0})</value></data>
-  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>אין כלום ברשימה הקצרה. חפשו בספרייה בצד וסמנו יצורים למפגשים הקרובים.</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>אין כלום ברשימה הקצרה. חפשו תחת „חיפוש יצורים” וסמנו יצורים למפגשים הקרובים.</value></data>
   <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>הערה עבור {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>איפה תשתמשו בזה…</value></data>
@@ -68,7 +68,7 @@
   <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>יצירת דמות</value></data>
   <data name="Campaign.Cast.Mine" xml:space="preserve"><value>שלי</value></data>
   <data name="Campaign.Cast.HiddenFromPlayers" xml:space="preserve"><value>מוסתר מהשחקנים</value></data>
-  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>זהות לא ידועה</value></data>
+  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>נראה בתור ”{0}“</value></data>
   <data name="Campaign.Cast.Reveal" xml:space="preserve"><value>חשיפה</value></data>
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>חשיפת {0} בפני השחקנים</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>הסתרה</value></data>
@@ -159,8 +159,8 @@
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>עדיין אין תוכן ביתי לייצוא.</value></data>
   <data name="Campaign.Library.Exported" xml:space="preserve"><value>יוצאו רשומות: {0}. הניחו את קובץ ה-zip בתיקיית התוכן כדי לטעון אותו כחבילה.</value></data>
   <data name="Campaign.Lore.Title" xml:space="preserve"><value>אגדות עולם</value></data>
-  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>עובדות על העולם ומי מכיר אותן. אפשר לחשוף לכל הקבוצה או לדמות אחת.</value></data>
-  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>מה שהדמויות שלכם יודעות. עובדות מופיעות כאן כששליט המבוך חושף אותן.</value></data>
+  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>עובדות על העולם ומי מכיר אותן, וכל הסודות של הוויקי. אפשר לחשוף לכל הקבוצה או לדמות אחת.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>מה שהדמויות שלכם יודעות: עובדות, ומה שנחשף בוויקי, כששליט המבוך חושף אותם.</value></data>
   <data name="Campaign.Lore.Search" xml:space="preserve"><value>חיפוש באגדות העולם</value></data>
   <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>חיפוש באגדות העולם…</value></data>
   <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>סינון לפי נראות</value></data>
@@ -171,9 +171,8 @@
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>נחשף בפניי</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>אין כאן עדיין כלום</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>לא נמצאו אגדות מתאימות</value></data>
-  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה בצד.</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה תחת „עובדה חדשה”.</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>עדיין לא נחשף בפניכם דבר.</value></data>
-  <data name="Campaign.Lore.KnownBy" xml:space="preserve"><value>מכירים: {0}</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>עדיין אף אחד</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>חשיפה בפני</value></data>
   <data name="Campaign.Lore.HowWell" xml:space="preserve"><value>באיזו מידה</value></data>
@@ -340,14 +339,14 @@
   <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>פלג, עיר, אגדה…</value></data>
   <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>טקסט</value></data>
   <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>כתבו את הדף. קשרו לדפים אחרים עם [[כותרת הדף]]; קישור לדף שעדיין לא קיים הופך לקישור "יצירה".</value></data>
-  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>קישור: `[[כותרת הדף]]` או `[[כותרת הדף|טקסט מוצג]]`. מוצגים `**מודגש**`, `*נטוי*`, תבליטים עם "- ", "### כותרות" וגם | טבלאות |.</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>קישור: `[[כותרת הדף]]` (הקלידו `[[` כדי לבחור דף) או `[[כותרת הדף|טקסט מוצג]]`. מוצגים `**מודגש**`, `*נטוי*`, תבליטים עם "- ", "### כותרות" וגם | טבלאות |.</value></data>
   <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>שמירת הדף</value></data>
   <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>כותב…</value></data>
   <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>הרחבה באמצעות AI</value></data>
   <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>ביטול</value></data>
   <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>מחיקת הדף</value></data>
   <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>קישור לדף</value></data>
-  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>לחצו כדי להוסיף קישור לטקסט.</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>מוסיף קישור במקום שבו נמצא הסמן. בתוך הטקסט, הקלדת [[ מציעה את הדפים גם כן.</value></data>
   <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>אין עדיין דפים נוספים. כתבו `[[דף חדש]]` והוא יהפוך לקישור יצירה.</value></data>
   <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>הנחיה ל-AI</value></data>
   <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>הנחיה ל-AI</value></data>
@@ -384,7 +383,7 @@
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>חיפוש בוויקי</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>חיפוש דפים…</value></data>
   <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>סינון לפי תגית</value></data>
-  <data name="Campaign.Wiki.All" xml:space="preserve"><value>הכול</value></data>
+  <data name="Campaign.Wiki.AllTags" xml:space="preserve"><value>כל התגיות</value></data>
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>עדיין אין דפים</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>לא נמצא דף מתאים</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>התחילו במקום, בפלג או באגדה. קשרו דפים עם [[סוגריים כפולים]].</value></data>
@@ -454,14 +453,13 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>המקום הזה כבר לא קיים, או שאין לכם הרשאה לשנות אותו.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>נחשף בפני הקבוצה.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>על המפה</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>הדף הזה עוסק במקום</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>המקום יתווסף לדף העולם עם שם הדף והתמונה שלו. שיתוף הדף חושף את המקום לצוות; מה שנכתב כאן נשאר בדף.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>בשמירה הדף יתווסף לרשימת המקומות עם השם והתמונה שלו. שיתוף הדף חושף את המקום לקבוצה; מה שכתוב כאן נשאר בדף.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>אזור</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>מקומות</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>תמונה</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>תמונה של {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>על המפה: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה להוסיף או לעדכן את המקום במפה.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה לשמור את התמונה שלו או את המקום שלו במפה.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>דף ויקי</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>פתחו את דף הוויקי של {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>יצירת דף</value></data>
@@ -470,4 +468,170 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>שורת תיאור</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>משפט או שניים קצרים לכרטיס הקמפיין ולכותרת.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>התיאור המלא שהשחקנים רואים בסקירה: העולם, הרעיון, למה לצפות.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>הוספה לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>הוספת {0} לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>הדף הזה יהפוך להיסטוריה של הדמות. הדמות תצטרף לרשימה מוסתרת מהשחקנים, והדף יישאר כפי שהוא.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>נתוני משחק</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>הבינה המלאכותית תמלא את הדף והציוד לפי הדף הזה</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>שימוש ביצור מהספרייה</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>התחלה מדף ריק</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>הבינה המלאכותית קוראת את הדף וממלאת את הנתונים ואת הציוד. טקסט הדף הופך להיסטוריה ללא שינוי.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>משחקת כמו: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>שינוי</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>הבינה המלאכותית תבחר את הציוד</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>בונים את הדמות…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>הוספה לדמויות</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} נוספו לדמויות, מוסתרים מהשחקנים.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>לא ניתן היה להוסיף לדמויות: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>בדמויות: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>על מה</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>ידע</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>דמות</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>פלג</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>משימה</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>לחשוף את {0}?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>השחקנים יוכלו לקרוא את ההיסטוריה של הדמות, מלבד הבלוקים של שליט המבוך. כדאי לבדוק קודם שאין סודות בשאר.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>בתוך</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>ישירות ב{0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>בתוך {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>סוג</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>אזור</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>יישוב</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>רובע</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למפה</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>איור</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>מוצג לצד טקסט הדף. כל מי שיכול לקרוא את הדף רואה אותו.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>איור עבור {0}</value></data>
+  <data name="Campaign.Library.Export.Title" xml:space="preserve"><value>ייצוא תוכן ביתי כחבילה</value></data>
+  <data name="Campaign.Library.Export.Hint" xml:space="preserve"><value>בחרו תגיות כדי לייצא רק רשומות שיש להן אחת מהן, או אל תבחרו כלום כדי לייצא הכול.</value></data>
+  <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>לתוכן הביתי אין עדיין תגיות, ולכן הכול ייוצא. בונה העולם יכול לתייג אותו בשבילכם.</value></data>
+  <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>תגיות</value></data>
+  <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{ייצוא רשומה אחת} two{ייצוא # רשומות} other{ייצוא # רשומות}}</value></data>
+  <data name="Campaign.Wiki.CreateThisPage" xml:space="preserve"><value>יצירת הדף הזה</value></data>
+  <data name="Campaign.Wiki.SecretHint" xml:space="preserve"><value>מה שהשחקנים עוד לא אמורים לדעת שמרו בין שורת `:::dm` לשורת `:::` (כפתור העין או Ctrl+Shift+H יעשו זאת בשבילכם). `:::party` מסמן סוד שנחשף, ו-`:::players` את מה שנאמר לשחקנים במקומו.</value></data>
+  <data name="Campaign.Wiki.ViewAs" xml:space="preserve"><value>קריאת הדף בתור</value></data>
+  <data name="Campaign.Wiki.ViewAs.Dm" xml:space="preserve"><value>שליט המבוך</value></data>
+  <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>שחקנים</value></data>
+  <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>כך בדיוק השחקנים קוראים את הדף: בלי קטעי שליט המבוך, ועם קישורים רק לדפים שהם יכולים לפתוח.</value></data>
+  <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>השחקנים לא רואים את הדף הזה: הוא לשליט המבוך בלבד. שתפו אותו והם יקראו את כל מה שמחוץ לקטעי שליט המבוך.</value></data>
+  <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>חדש</value></data>
+  <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>סודות בדף</value></data>
+  <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>הדף עדיין גלוי רק למנחה: השחקנים יקראו את מה שתחשפו כאן כשתשתפו אותו.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>חשיפה להן</value></data>
+  <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(בלוק ריק)</value></data>
+  <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>נחשף לחבורה.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>נחשף ל{0}.</value></data>
+  <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>הוסתר שוב מהשחקנים.</value></data>
+  <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>הדף השתנה מאז שנפתח. הנה הוא כפי שהוא עכשיו; בדקו את הבלוק ונסו שוב.</value></data>
+  <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{קטע אחד לשליט המבוך} two{שני קטעים לשליט המבוך} other{# קטעים לשליט המבוך}}</value></data>
+  <data name="Campaign.Templates.Title" xml:space="preserve"><value>תבניות</value></data>
+  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>שלדים לדפים חדשים וקטעים לכל דף: הקלידו את הקיצור של תבנית ולחצו Tab, או הקלידו / ובחרו אחת, ואז עברו משדה לשדה עם Tab.</value></data>
+  <data name="Campaign.Templates.DmOnly" xml:space="preserve"><value>רק שליט המבוך עורך תבניות.</value></data>
+  <data name="Campaign.Templates.New" xml:space="preserve"><value>תבנית חדשה</value></data>
+  <data name="Campaign.Templates.Pages" xml:space="preserve"><value>דפים</value></data>
+  <data name="Campaign.Templates.Snippets" xml:space="preserve"><value>קטעים</value></data>
+  <data name="Campaign.Templates.BuiltIn" xml:space="preserve"><value>מובנית</value></data>
+  <data name="Campaign.Templates.Changed" xml:space="preserve"><value>שונתה</value></data>
+  <data name="Campaign.Templates.Off" xml:space="preserve"><value>כבויה</value></data>
+  <data name="Campaign.Templates.Yours" xml:space="preserve"><value>שלכם</value></data>
+  <data name="Campaign.Templates.Field.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Campaign.Templates.Field.Abbreviation" xml:space="preserve"><value>קיצור</value></data>
+  <data name="Campaign.Templates.Field.Kind" xml:space="preserve"><value>שלד עבור</value></data>
+  <data name="Campaign.Templates.Field.Body" xml:space="preserve"><value>טקסט</value></data>
+  <data name="Campaign.Templates.Kind.None" xml:space="preserve"><value>ללא סוג (קטע)</value></data>
+  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>מילה אחת: הקלידו אותה בדף ולחצו Tab. השאירו ריק כדי שהתבנית תופיע רק בתפריט / ובכפתור התבניות של העורך.</value></data>
+  <data name="Campaign.Templates.KindHint" xml:space="preserve"><value>דף חדש מסוג זה יכול להתחיל ממנה, דף מסוג זה יכול להוסיף את הסעיפים החסרים לו, וה-AI כותב דפים כאלה לפיה. תבנית שלכם קודמת לתבנית המובנית.</value></data>
+  <data name="Campaign.Templates.Syntax" xml:space="preserve"><value>`$שם$` הוא שדה למילוי; אותו שם שוב חוזר על מה שהקלדתם. `$שם:טקסט$` מתחיל עם הטקסט. `$END$` הוא המקום שבו הסמן יסיים. `$$` הוא סימן דולר. קישורים, אזכורים וקטעים סודיים עובדים כמו בדפים.</value></data>
+  <data name="Campaign.Templates.Fields" xml:space="preserve"><value>שדות, לפי סדר Tab: {0}</value></data>
+  <data name="Campaign.Templates.NoFields" xml:space="preserve"><value>אין שדות: הטקסט נכנס כמו שהוא.</value></data>
+  <data name="Campaign.Templates.Save" xml:space="preserve"><value>שמירת התבנית</value></data>
+  <data name="Campaign.Templates.TurnOff" xml:space="preserve"><value>כיבוי</value></data>
+  <data name="Campaign.Templates.TurnOn" xml:space="preserve"><value>הפעלה</value></data>
+  <data name="Campaign.Templates.Restore" xml:space="preserve"><value>שחזור למקור</value></data>
+  <data name="Campaign.Templates.Delete" xml:space="preserve"><value>מחיקת התבנית</value></data>
+  <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>למחוק את ”{0}“?</value></data>
+  <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>דפים שנוצרו ממנה ישמרו על הטקסט שלהם.</value></data>
+  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>התבנית נשמרה.</value></data>
+  <data name="Campaign.Templates.Taken" xml:space="preserve"><value>הקיצור ”{0}“ כבר בשימוש בתבנית אחרת.</value></data>
+  <data name="Campaign.Templates.Refused" xml:space="preserve"><value>לא ניתן לשמור את התבנית: תנו לה שם, וקיצור של מילה אחת או בלי קיצור.</value></data>
+  <data name="Campaign.Templates.Restored" xml:space="preserve"><value>התבנית שוחזרה למקור.</value></data>
+  <data name="Campaign.Templates.Deleted" xml:space="preserve"><value>התבנית נמחקה.</value></data>
+  <data name="Campaign.Templates.Try" xml:space="preserve"><value>ניסיון</value></data>
+  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>הקלידו קיצור ולחצו Tab, או הקלידו /. התבנית שבעריכה מוצעת כפי שהיא עכשיו, שמורה או לא. מה שמוקלד כאן לא נשמר.</value></data>
+  <data name="Campaign.Wiki.StartFrom" xml:space="preserve"><value>להתחיל מתבנית:</value></data>
+  <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>הוספת הסעיפים החסרים מתוך ”{0}“</value></data>
+  <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>הסעיפים החסרים נוספו במקומם. מלאו אותם, או הסירו את מה שלא צריך.</value></data>
+  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>כדי להוסיף תבנית, הקלידו את הקיצור שלה ו-Tab, או `/`.</value></data>
+  <data name="Campaign.Cast.Stranger" xml:space="preserve"><value>להציג כדמות זרה</value></data>
+  <data name="Campaign.Cast.StrangerLabel" xml:space="preserve"><value>להציג לשחקנים את {0} כדמות זרה</value></data>
+  <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>השחקנים יראו שמישהו שם, בשם שתתנו בדף הדמות, אבל לא מי זה.</value></data>
+  <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>השחקנים רואים עכשיו את {0} בתור ”{1}“.</value></data>
+  <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>שמירת העובדה</value></data>
+  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>העובדה נשמרה.</value></data>
+  <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>אזכרו @דמויות ו#מקומות, וקשרו ל[[דפים]]: העובדה תופיע אז בדפים ובדפי הדמות שלהם.</value></data>
+  <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>יודעים:</value></data>
+  <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} שוכחים את זה</value></data>
+  <data name="Campaign.Lore.Forgotten" xml:space="preserve"><value>{0} כבר לא יודעים את זה.</value></data>
+  <data name="Campaign.Lore.PlayerCharacters" xml:space="preserve"><value>דמויות השחקנים</value></data>
+  <data name="Campaign.Lore.Others" xml:space="preserve"><value>אחרים</value></data>
+  <data name="Campaign.Lore.HideAgain" xml:space="preserve"><value>הסתרה מחדש</value></data>
+  <data name="Campaign.Lore.Hidden" xml:space="preserve"><value>הוסתר מהקבוצה. הדמויות שזה נחשף בפניהן עדיין יודעות.</value></data>
+  <data name="Campaign.Lore.Edit" xml:space="preserve"><value>עריכה</value></data>
+  <data name="Campaign.Lore.DeleteLabel" xml:space="preserve"><value>מחיקת העובדה ”{0}“</value></data>
+  <data name="Campaign.Lore.DeleteQ" xml:space="preserve"><value>למחוק את ”{0}“?</value></data>
+  <data name="Campaign.Lore.DeleteBody" xml:space="preserve"><value>מי שידע אותה לא ימצא אותה יותר בידע שלו.</value></data>
+  <data name="Campaign.Lore.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Lore.Deleted" xml:space="preserve"><value>העובדה נמחקה.</value></data>
+  <data name="Campaign.Lore.Wiki.Dm" xml:space="preserve"><value>סודות בוויקי</value></data>
+  <data name="Campaign.Lore.Wiki.Player" xml:space="preserve"><value>מה שנלמד בוויקי</value></data>
+  <data name="Campaign.Lore.Wiki.DmHint" xml:space="preserve"><value>כל הבלוקים של שליט המבוך בכל הדפים, ולמי הם נחשפו. חושפים ומסתירים אותם בדפים עצמם.</value></data>
+  <data name="Campaign.Lore.Wiki.PlayerHint" xml:space="preserve"><value>מה ששליט המבוך חשף בדפי הוויקי, החדש ביותר קודם.</value></data>
+  <data name="Campaign.Lore.About" xml:space="preserve"><value>אגדות עולם</value></data>
+  <data name="Campaign.Lore.AllLore" xml:space="preserve"><value>כל אגדות העולם</value></data>
+  <data name="Campaign.Lore.AboutNone" xml:space="preserve"><value>עדיין אין עובדות שמזכירות את זה.</value></data>
+  <data name="Campaign.Lore.AddAbout" xml:space="preserve"><value>הוספת עובדה על זה</value></data>
+  <data name="Campaign.Wiki.Secrets.Told" xml:space="preserve"><value>לשחקנים מספרים: {0}</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersion" xml:space="preserve"><value>הגרסה לשחקנים</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionTitle" xml:space="preserve"><value>מה שמספרים לשחקנים במקום הסוד: שמועה, מה שכל אחד שם יכול לראות. נכנס מיד אחרי הסוד.</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftLabel" xml:space="preserve"><value>מה שהשחקנים יודעים</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftHint" xml:space="preserve"><value>קראו לפני שזה נכנס לדף: כשהדף משותף, השחקנים קוראים את זה.</value></data>
+  <data name="Campaign.Wiki.Secrets.PutOnPage" xml:space="preserve"><value>הוספה לדף</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים קוראים אותה עכשיו; הסוד נשאר מוסתר.</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים יקראו אותה כשתשתפו את הדף.</value></data>
+  <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>עריכת הגרסה לשחקנים</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealEllipsis" xml:space="preserve"><value>חשיפה…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTitle" xml:space="preserve"><value>חשיפת הסוד</value></data>
+  <data name="Campaign.Wiki.Secrets.TheSecret" xml:space="preserve"><value>הסוד</value></data>
+  <data name="Campaign.Wiki.Secrets.Who" xml:space="preserve"><value>למי לחשוף</value></data>
+  <data name="Campaign.Wiki.Secrets.ToParty" xml:space="preserve"><value>לכל החבורה</value></data>
+  <data name="Campaign.Wiki.Secrets.ToSome" xml:space="preserve"><value>רק לחלק מהדמויות</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToParty" xml:space="preserve"><value>חשיפה לחבורה</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndo" xml:space="preserve"><value>אפשר להסתיר אותו שוב בהמשך, אבל לא ממי שכבר קרא אותו.</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndoHidden" xml:space="preserve"><value>הדף עצמו עדיין גלוי רק למנחה, כך שהם יקראו את זה כשתשתפו אותו. אפשר להסתיר אותו שוב, אבל לא ממי שכבר קרא אותו.</value></data>
+  <data name="Campaign.Wiki.Secrets.Redraft" xml:space="preserve"><value>ניסוח מחדש</value></data>
+  <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>מיון הדפים</value></data>
+  <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>לפי א״ב</value></data>
+  <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>עודכנו לאחרונה</value></data>
+  <data name="Campaign.Wiki.FilterByKind" xml:space="preserve"><value>סינון לפי סוג</value></data>
+  <data name="Campaign.Wiki.AllKinds" xml:space="preserve"><value>כל הסוגים</value></data>
+  <data name="Campaign.Setup.Title" xml:space="preserve"><value>צעדים ראשונים</value></data>
+  <data name="Campaign.Setup.Dismiss" xml:space="preserve"><value>הסתרת הרשימה</value></data>
+  <data name="Campaign.Setup.Progress" xml:space="preserve"><value>בוצעו {0} מתוך {1}</value></data>
+  <data name="Campaign.Setup.Done" xml:space="preserve"><value>בוצע:</value></data>
+  <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>לביצוע:</value></data>
+  <data name="Campaign.Setup.Describe" xml:space="preserve"><value>תארו את המערכה לשחקנים</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>העתיקו את קישור ההזמנה לשחקנים</value></data>
+  <data name="Campaign.Setup.Cast" xml:space="preserve"><value>הוסיפו דמות ראשונה לצוות</value></data>
+  <data name="Campaign.Setup.Page" xml:space="preserve"><value>כתבו דף ויקי ראשון</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>הוסיפו מקום ראשון למפה</value></data>
+  <data name="Campaign.Setup.Session" xml:space="preserve"><value>תכננו את המפגש הראשון</value></data>
+  <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>מסומן כשמצטרף שחקן.</value></data>
+  <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>מישהו מהעולם שלכם: השחקנים מוסיפים את הדמויות שלהם בעצמם.</value></data>
+  <data name="Campaign.Setup.InviteCopied" xml:space="preserve"><value>קישור ההזמנה הועתק. שלחו אותו לשחקנים: השלב יסומן כשאחד מהם יצטרף.</value></data>
+  <data name="Campaign.Setup.Builder" xml:space="preserve"><value>או תנו לבונה העולם לנסח אותם: הדפים, המקומות במפה והדמויות שתאשרו יסמנו את השלבים האלה.</value></data>
+  <data name="Campaign.Setup.BuilderNoAi" xml:space="preserve"><value>אחרי שתגדירו בינה מלאכותית, בונה העולם יוכל לנסח עבורכם דפים, מקומות ודמויות.</value></data>
+  <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>דפים שעודכנו לאחרונה</value></data>
+  <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>פתיחת הוויקי</value></data>
 </root>

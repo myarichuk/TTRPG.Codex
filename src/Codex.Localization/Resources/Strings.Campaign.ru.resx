@@ -14,7 +14,7 @@
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>Пока не опознано</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>Монстр</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>Список ({0})</value></data>
-  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Список пуст. Найдите существ в Библиотеке справа и закрепите их для будущих столкновений.</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Список пуст. Найдите существ в разделе «Поиск существ» и закрепите их для будущих столкновений.</value></data>
   <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Собственный</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>Заметка для: {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>Где вы это используете…</value></data>
@@ -68,7 +68,7 @@
   <data name="Campaign.Cast.Ai.Generate" xml:space="preserve"><value>Создать персонажа</value></data>
   <data name="Campaign.Cast.Mine" xml:space="preserve"><value>Мой</value></data>
   <data name="Campaign.Cast.HiddenFromPlayers" xml:space="preserve"><value>Скрыт от игроков</value></data>
-  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>Личность неизвестна</value></data>
+  <data name="Campaign.Cast.IdentityUnknown" xml:space="preserve"><value>Виден как «{0}»</value></data>
   <data name="Campaign.Cast.Reveal" xml:space="preserve"><value>Раскрыть</value></data>
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>Раскрыть игрокам: {0}</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>Скрыть</value></data>
@@ -159,8 +159,8 @@
   <data name="Campaign.Library.NoHomebrewToExport" xml:space="preserve"><value>Экспортировать пока нечего: собственного контента нет.</value></data>
   <data name="Campaign.Library.Exported" xml:space="preserve"><value>Экспортировано записей: {0}. Положите архив в папку с материалами, чтобы загрузить его как набор.</value></data>
   <data name="Campaign.Lore.Title" xml:space="preserve"><value>Предания</value></data>
-  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>Факты о мире и о том, кто их знает. Раскрывайте всей группе или одному персонажу.</value></data>
-  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>Что знают ваши персонажи. Факты появляются здесь, когда мастер их раскрывает.</value></data>
+  <data name="Campaign.Lore.Subtitle.Dm" xml:space="preserve"><value>Факты о мире и о том, кто их знает, и все секреты вики. Раскрывайте всей группе или одному персонажу.</value></data>
+  <data name="Campaign.Lore.Subtitle.Player" xml:space="preserve"><value>Что знают ваши персонажи: факты и открытое в вики — по мере того, как мастер их раскрывает.</value></data>
   <data name="Campaign.Lore.Search" xml:space="preserve"><value>Поиск по преданиям</value></data>
   <data name="Campaign.Lore.SearchPlaceholder" xml:space="preserve"><value>Поиск по преданиям…</value></data>
   <data name="Campaign.Lore.FilterLabel" xml:space="preserve"><value>Фильтр по видимости</value></data>
@@ -171,9 +171,8 @@
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>Раскрыто мне</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>Здесь пока пусто</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>Предания не найдены</value></data>
-  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Запишите первый факт справа.</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Запишите первый факт в разделе «Новый факт».</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>Вам пока ничего не раскрыто.</value></data>
-  <data name="Campaign.Lore.KnownBy" xml:space="preserve"><value>Известно: {0}</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>пока никому</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>Раскрыть</value></data>
   <data name="Campaign.Lore.HowWell" xml:space="preserve"><value>Насколько хорошо</value></data>
@@ -340,14 +339,14 @@
   <data name="Campaign.Wiki.TagsPlaceholder" xml:space="preserve"><value>фракция, город, легенда…</value></data>
   <data name="Campaign.Wiki.Field.Text" xml:space="preserve"><value>Текст</value></data>
   <data name="Campaign.Wiki.BodyPlaceholder" xml:space="preserve"><value>Напишите страницу. Ссылайтесь на другие страницы так: [[Название страницы]]; ссылка на ещё не существующую страницу превращается в ссылку «создать».</value></data>
-  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Ссылка: `[[Название страницы]]` или `[[Название страницы|что показать]]`. Поддерживаются `**жирный**`, `*курсив*`, маркеры «- », «### заголовки» и | таблицы |.</value></data>
+  <data name="Campaign.Wiki.SyntaxHint" xml:space="preserve"><value>Ссылка: `[[Название страницы]]` (наберите `[[`, чтобы выбрать страницу) или `[[Название страницы|что показать]]`. Поддерживаются `**жирный**`, `*курсив*`, маркеры «- », «### заголовки» и | таблицы |.</value></data>
   <data name="Campaign.Wiki.SavePage" xml:space="preserve"><value>Сохранить страницу</value></data>
   <data name="Campaign.Wiki.Writing" xml:space="preserve"><value>Пишу…</value></data>
   <data name="Campaign.Wiki.ExpandWithAi" xml:space="preserve"><value>Расширить с помощью ИИ</value></data>
   <data name="Campaign.Wiki.Cancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="Campaign.Wiki.DeletePage" xml:space="preserve"><value>Удалить страницу</value></data>
   <data name="Campaign.Wiki.LinkToPage" xml:space="preserve"><value>Ссылка на страницу</value></data>
-  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Нажмите, чтобы добавить ссылку в текст.</value></data>
+  <data name="Campaign.Wiki.ClickToAppend" xml:space="preserve"><value>Вставляет ссылку туда, где стоит курсор. В тексте страницы предлагаются и после [[.</value></data>
   <data name="Campaign.Wiki.NoOtherPages" xml:space="preserve"><value>Других страниц пока нет. Напишите `[[Новая страница]]`, и появится ссылка для создания.</value></data>
   <data name="Campaign.Wiki.AiInstruction" xml:space="preserve"><value>Указание для ИИ</value></data>
   <data name="Campaign.Wiki.AiInstructionLabel" xml:space="preserve"><value>Указание для ИИ</value></data>
@@ -384,7 +383,7 @@
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>Поиск по вики</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>Поиск страниц…</value></data>
   <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>Фильтр по тегу</value></data>
-  <data name="Campaign.Wiki.All" xml:space="preserve"><value>Все</value></data>
+  <data name="Campaign.Wiki.AllTags" xml:space="preserve"><value>Все теги</value></data>
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>Страниц пока нет</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>Подходящих страниц нет</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>Начните с места, фракции или легенды. Связывайте страницы с помощью [[двойных скобок]].</value></data>
@@ -454,14 +453,13 @@
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>Этого места больше нет, или вы не можете его изменить.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Раскрыто группе.</value></data>
   <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>На карте</value></data>
-  <data name="Campaign.Wiki.IsPlace" xml:space="preserve"><value>Эта страница о месте</value></data>
-  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>Место появится на странице «Мир» с названием и картинкой этой страницы. Если поделиться страницей, место откроется отряду; то, что вы пишете здесь, остаётся на странице.</value></data>
+  <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>При сохранении страница появится в списке мест с её названием и картинкой. Если открыть страницу группе, место тоже откроется; текст остаётся на странице.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Регион</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Места</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Картинка</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Картинка: {0}</value></data>
   <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>На карте: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но место на карте не удалось добавить или обновить.</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но её картинку или место на карте сохранить не удалось.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Страница вики</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Открыть страницу вики: {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Создать страницу</value></data>
@@ -470,4 +468,170 @@
   <data name="Campaign.Settings.Tagline" xml:space="preserve"><value>Слоган</value></data>
   <data name="Campaign.Settings.TaglineHint" xml:space="preserve"><value>Одна-две короткие фразы для карточки кампании и заголовка.</value></data>
   <data name="Campaign.Settings.DescriptionHint" xml:space="preserve"><value>Полное описание, которое игроки видят в обзоре: мир, завязка, чего ожидать.</value></data>
+  <data name="Campaign.Wiki.Promote.Open" xml:space="preserve"><value>Добавить в состав</value></data>
+  <data name="Campaign.Wiki.Promote.Title" xml:space="preserve"><value>Добавить {0} в состав</value></data>
+  <data name="Campaign.Wiki.Promote.Hint" xml:space="preserve"><value>Текст страницы станет их историей. Персонаж появится в составе скрытым от игроков, а страница останется как есть.</value></data>
+  <data name="Campaign.Wiki.Promote.Sheet" xml:space="preserve"><value>Характеристики</value></data>
+  <data name="Campaign.Wiki.Promote.Ai" xml:space="preserve"><value>ИИ заполнит лист и снаряжение по этой странице</value></data>
+  <data name="Campaign.Wiki.Promote.Stats" xml:space="preserve"><value>Взять существо из библиотеки</value></data>
+  <data name="Campaign.Wiki.Promote.Blank" xml:space="preserve"><value>Начать с пустого листа</value></data>
+  <data name="Campaign.Wiki.Promote.AiHint" xml:space="preserve"><value>ИИ прочтёт страницу и заполнит лист и снаряжение. Текст страницы станет историей без изменений.</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChosen" xml:space="preserve"><value>Играется как: {0}</value></data>
+  <data name="Campaign.Wiki.Promote.StatsChange" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Wiki.Promote.Gear" xml:space="preserve"><value>Пусть ИИ подберёт снаряжение</value></data>
+  <data name="Campaign.Wiki.Promote.Working" xml:space="preserve"><value>Создаём персонажа…</value></data>
+  <data name="Campaign.Wiki.Promote.Submit" xml:space="preserve"><value>Добавить в состав</value></data>
+  <data name="Campaign.Wiki.Promote.Done" xml:space="preserve"><value>{0} в составе, скрыт(а) от игроков.</value></data>
+  <data name="Campaign.Wiki.Promote.Failed" xml:space="preserve"><value>Не удалось добавить в состав: {0}</value></data>
+  <data name="Campaign.Wiki.InCast" xml:space="preserve"><value>В составе: {0}</value></data>
+  <data name="Campaign.Wiki.Field.Kind" xml:space="preserve"><value>О чём</value></data>
+  <data name="Campaign.Wiki.Kind.General" xml:space="preserve"><value>Предания</value></data>
+  <data name="Campaign.Wiki.Kind.Person" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Campaign.Wiki.Kind.Place" xml:space="preserve"><value>Место</value></data>
+  <data name="Campaign.Wiki.Kind.Faction" xml:space="preserve"><value>Фракция</value></data>
+  <data name="Campaign.Wiki.Kind.Quest" xml:space="preserve"><value>Задание</value></data>
+  <data name="Campaign.Cast.RevealQ" xml:space="preserve"><value>Открыть {0} игрокам?</value></data>
+  <data name="Campaign.Cast.RevealHistory" xml:space="preserve"><value>Игроки смогут прочитать историю этого персонажа, кроме блоков мастера. Сначала проверьте остальное на секреты.</value></data>
+  <data name="Campaign.Places.Inside" xml:space="preserve"><value>Где находится</value></data>
+  <data name="Campaign.Places.InRegion" xml:space="preserve"><value>Прямо в регионе {0}</value></data>
+  <data name="Campaign.Places.InPlace" xml:space="preserve"><value>в: {0}</value></data>
+  <data name="Campaign.Places.Kind" xml:space="preserve"><value>Тип</value></data>
+  <data name="Campaign.Places.Kind.Area" xml:space="preserve"><value>Местность</value></data>
+  <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Поселение</value></data>
+  <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>Район</value></data>
+  <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Место</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Нанести на карту</value></data>
+  <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Иллюстрация</value></data>
+  <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Показывается рядом с текстом страницы. Её видят все, кто может читать страницу.</value></data>
+  <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
+  <data name="Campaign.Library.Export.Title" xml:space="preserve"><value>Экспорт собственных материалов набором</value></data>
+  <data name="Campaign.Library.Export.Hint" xml:space="preserve"><value>Выберите метки, чтобы экспортировать только записи с любой из них, или не выбирайте ничего, чтобы экспортировать всё.</value></data>
+  <data name="Campaign.Library.Export.NoTags" xml:space="preserve"><value>У собственных материалов пока нет меток, поэтому экспортируется всё. Строитель мира может расставить метки за вас.</value></data>
+  <data name="Campaign.Library.Export.Tags" xml:space="preserve"><value>Метки</value></data>
+  <data name="Campaign.Library.Export.Go" xml:space="preserve"><value>{0, plural, one{Экспортировать # запись} few{Экспортировать # записи} many{Экспортировать # записей} other{Экспортировать # записи}}</value></data>
+  <data name="Campaign.Wiki.CreateThisPage" xml:space="preserve"><value>Создать эту страницу</value></data>
+  <data name="Campaign.Wiki.SecretHint" xml:space="preserve"><value>То, что игрокам пока знать нельзя, держите между строкой `:::dm` и строкой `:::` (кнопка с глазом или Ctrl+Shift+H сделают это за вас). `:::party` отмечает раскрытую тайну, `:::players` — то, что вместо неё знают игроки.</value></data>
+  <data name="Campaign.Wiki.ViewAs" xml:space="preserve"><value>Читать страницу как</value></data>
+  <data name="Campaign.Wiki.ViewAs.Dm" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Campaign.Wiki.ViewAs.Party" xml:space="preserve"><value>Игроки</value></data>
+  <data name="Campaign.Wiki.ViewAs.Note" xml:space="preserve"><value>Так страницу видят игроки: без блоков мастера и со ссылками только на доступные им страницы.</value></data>
+  <data name="Campaign.Wiki.ViewAs.Hidden" xml:space="preserve"><value>Игроки не видят эту страницу: она только для мастера. Откройте её группе, и игроки прочтут всё, кроме блоков мастера.</value></data>
+  <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>Новое</value></data>
+  <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>Секреты на странице</value></data>
+  <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>Страница пока видна только мастеру: игроки прочтут открытое здесь, когда вы поделитесь страницей.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>Открыть им</value></data>
+  <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(пустой блок)</value></data>
+  <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>Открыто отряду.</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>Открыто: {0}.</value></data>
+  <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>Снова скрыто от игроков.</value></data>
+  <data name="Campaign.Wiki.Secrets.Stale" xml:space="preserve"><value>Страница изменилась, пока была открыта. Вот её текущий вид: проверьте блок и попробуйте снова.</value></data>
+  <data name="Campaign.Wiki.SecretCount" xml:space="preserve"><value>{0, plural, one{# блок мастера} few{# блока мастера} many{# блоков мастера} other{# блока мастера}}</value></data>
+  <data name="Campaign.Templates.Title" xml:space="preserve"><value>Шаблоны</value></data>
+  <data name="Campaign.Templates.Subtitle" xml:space="preserve"><value>Заготовки новых страниц и фрагменты для любой страницы: наберите сокращение шаблона и нажмите Tab или наберите / и выберите шаблон, а затем переходите между полями по Tab.</value></data>
+  <data name="Campaign.Templates.DmOnly" xml:space="preserve"><value>Шаблоны редактирует только мастер.</value></data>
+  <data name="Campaign.Templates.New" xml:space="preserve"><value>Новый шаблон</value></data>
+  <data name="Campaign.Templates.Pages" xml:space="preserve"><value>Страницы</value></data>
+  <data name="Campaign.Templates.Snippets" xml:space="preserve"><value>Фрагменты</value></data>
+  <data name="Campaign.Templates.BuiltIn" xml:space="preserve"><value>Встроенный</value></data>
+  <data name="Campaign.Templates.Changed" xml:space="preserve"><value>Изменён</value></data>
+  <data name="Campaign.Templates.Off" xml:space="preserve"><value>Выключен</value></data>
+  <data name="Campaign.Templates.Yours" xml:space="preserve"><value>Ваш</value></data>
+  <data name="Campaign.Templates.Field.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Templates.Field.Abbreviation" xml:space="preserve"><value>Сокращение</value></data>
+  <data name="Campaign.Templates.Field.Kind" xml:space="preserve"><value>Заготовка для</value></data>
+  <data name="Campaign.Templates.Field.Body" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Templates.Kind.None" xml:space="preserve"><value>Без вида (фрагмент)</value></data>
+  <data name="Campaign.Templates.AbbreviationHint" xml:space="preserve"><value>Одно слово: наберите его на странице и нажмите Tab. Оставьте пустым, чтобы шаблон был только в меню / и под кнопкой шаблонов в редакторе.</value></data>
+  <data name="Campaign.Templates.KindHint" xml:space="preserve"><value>С неё может начинаться новая страница этого вида, страница этого вида может добавить недостающие разделы, и ИИ пишет такие страницы по ней. Ваш шаблон важнее встроенного.</value></data>
+  <data name="Campaign.Templates.Syntax" xml:space="preserve"><value>`$имя$` — поле для заполнения; то же имя ещё раз повторяет введённое. `$имя:текст$` сразу содержит текст. `$END$` — где окажется курсор в конце. `$$` — знак доллара. Ссылки, упоминания и секретные блоки работают как на страницах.</value></data>
+  <data name="Campaign.Templates.Fields" xml:space="preserve"><value>Поля в порядке Tab: {0}</value></data>
+  <data name="Campaign.Templates.NoFields" xml:space="preserve"><value>Полей нет: текст вставляется как есть.</value></data>
+  <data name="Campaign.Templates.Save" xml:space="preserve"><value>Сохранить шаблон</value></data>
+  <data name="Campaign.Templates.TurnOff" xml:space="preserve"><value>Выключить</value></data>
+  <data name="Campaign.Templates.TurnOn" xml:space="preserve"><value>Включить</value></data>
+  <data name="Campaign.Templates.Restore" xml:space="preserve"><value>Вернуть исходный</value></data>
+  <data name="Campaign.Templates.Delete" xml:space="preserve"><value>Удалить шаблон</value></data>
+  <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>Страницы, созданные по нему, сохранят свой текст.</value></data>
+  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>Шаблон сохранён.</value></data>
+  <data name="Campaign.Templates.Taken" xml:space="preserve"><value>Сокращение «{0}» уже занято другим шаблоном.</value></data>
+  <data name="Campaign.Templates.Refused" xml:space="preserve"><value>Не удалось сохранить шаблон: дайте ему название и сокращение из одного слова или без сокращения.</value></data>
+  <data name="Campaign.Templates.Restored" xml:space="preserve"><value>Исходный шаблон восстановлен.</value></data>
+  <data name="Campaign.Templates.Deleted" xml:space="preserve"><value>Шаблон удалён.</value></data>
+  <data name="Campaign.Templates.Try" xml:space="preserve"><value>Попробовать</value></data>
+  <data name="Campaign.Templates.TryHint" xml:space="preserve"><value>Наберите сокращение и нажмите Tab или наберите /. Редактируемый шаблон предлагается в текущем виде, даже несохранённый. Набранное здесь не сохраняется.</value></data>
+  <data name="Campaign.Wiki.StartFrom" xml:space="preserve"><value>Начать с шаблона:</value></data>
+  <data name="Campaign.Wiki.AddSections" xml:space="preserve"><value>Добавить недостающие разделы из «{0}»</value></data>
+  <data name="Campaign.Wiki.SectionsAdded" xml:space="preserve"><value>Недостающие разделы добавлены на свои места. Заполните их или удалите ненужные.</value></data>
+  <data name="Campaign.Wiki.TemplateHint" xml:space="preserve"><value>Чтобы вставить шаблон, наберите его сокращение и Tab или `/`.</value></data>
+  <data name="Campaign.Cast.Stranger" xml:space="preserve"><value>Показать незнакомцем</value></data>
+  <data name="Campaign.Cast.StrangerLabel" xml:space="preserve"><value>Показать игрокам {0} как незнакомца</value></data>
+  <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>Игроки увидят, что кто-то есть, под именем, которое вы зададите в листе, но не узнают, кто это.</value></data>
+  <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>Теперь игроки видят {0} как «{1}».</value></data>
+  <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>Сохранить факт</value></data>
+  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>Факт сохранён.</value></data>
+  <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>Упоминайте @персонажей и #места и ссылайтесь на [[страницы]]: тогда факт появится на их страницах и в листах.</value></data>
+  <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>Знают:</value></data>
+  <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} забывает это</value></data>
+  <data name="Campaign.Lore.Forgotten" xml:space="preserve"><value>{0} больше этого не знает.</value></data>
+  <data name="Campaign.Lore.PlayerCharacters" xml:space="preserve"><value>Персонажи игроков</value></data>
+  <data name="Campaign.Lore.Others" xml:space="preserve"><value>Другие</value></data>
+  <data name="Campaign.Lore.HideAgain" xml:space="preserve"><value>Скрыть снова</value></data>
+  <data name="Campaign.Lore.Hidden" xml:space="preserve"><value>Скрыто от группы. Персонажи, которым это раскрыто, по-прежнему знают.</value></data>
+  <data name="Campaign.Lore.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Lore.DeleteLabel" xml:space="preserve"><value>Удалить факт «{0}»</value></data>
+  <data name="Campaign.Lore.DeleteQ" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.Lore.DeleteBody" xml:space="preserve"><value>Те, кто его знал, больше не найдут его в своих знаниях.</value></data>
+  <data name="Campaign.Lore.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Lore.Deleted" xml:space="preserve"><value>Факт удалён.</value></data>
+  <data name="Campaign.Lore.Wiki.Dm" xml:space="preserve"><value>Секреты в вики</value></data>
+  <data name="Campaign.Lore.Wiki.Player" xml:space="preserve"><value>Узнано из вики</value></data>
+  <data name="Campaign.Lore.Wiki.DmHint" xml:space="preserve"><value>Все блоки мастера на всех страницах и кому они открыты. Открывайте и скрывайте их на самих страницах.</value></data>
+  <data name="Campaign.Lore.Wiki.PlayerHint" xml:space="preserve"><value>Что мастер открыл на страницах вики, сначала новое.</value></data>
+  <data name="Campaign.Lore.About" xml:space="preserve"><value>Предания</value></data>
+  <data name="Campaign.Lore.AllLore" xml:space="preserve"><value>Все предания</value></data>
+  <data name="Campaign.Lore.AboutNone" xml:space="preserve"><value>Пока ни один факт об этом не упоминает.</value></data>
+  <data name="Campaign.Lore.AddAbout" xml:space="preserve"><value>Добавить факт об этом</value></data>
+  <data name="Campaign.Wiki.Secrets.Told" xml:space="preserve"><value>Игрокам говорят: {0}</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersion" xml:space="preserve"><value>Версия для игроков</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionTitle" xml:space="preserve"><value>Что игрокам говорят вместо этого секрета: слух, то, что видно любому. Добавляется сразу после секрета.</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftLabel" xml:space="preserve"><value>Что знают игроки</value></data>
+  <data name="Campaign.Wiki.Secrets.DraftHint" xml:space="preserve"><value>Прочтите, прежде чем добавить: когда страница открыта игрокам, они это прочтут.</value></data>
+  <data name="Campaign.Wiki.Secrets.PutOnPage" xml:space="preserve"><value>Добавить на страницу</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>Версия для игроков добавлена. Игроки уже её видят, а секрет остаётся скрытым.</value></data>
+  <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>Версия для игроков добавлена. Игроки прочтут её, когда вы поделитесь страницей.</value></data>
+  <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>Изменить версию для игроков</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealEllipsis" xml:space="preserve"><value>Открыть…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTitle" xml:space="preserve"><value>Открыть секрет</value></data>
+  <data name="Campaign.Wiki.Secrets.TheSecret" xml:space="preserve"><value>Секрет</value></data>
+  <data name="Campaign.Wiki.Secrets.Who" xml:space="preserve"><value>Кому открыть</value></data>
+  <data name="Campaign.Wiki.Secrets.ToParty" xml:space="preserve"><value>Всей группе</value></data>
+  <data name="Campaign.Wiki.Secrets.ToSome" xml:space="preserve"><value>Только некоторым персонажам</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToParty" xml:space="preserve"><value>Открыть группе</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndo" xml:space="preserve"><value>Позже его можно снова скрыть, но не от тех, кто уже успел его прочесть.</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndoHidden" xml:space="preserve"><value>Сама страница пока видна только мастеру, так что они прочтут это, когда вы её откроете. Секрет можно снова скрыть, но не от тех, кто уже успел его прочесть.</value></data>
+  <data name="Campaign.Wiki.Secrets.Redraft" xml:space="preserve"><value>Написать заново</value></data>
+  <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>Порядок страниц</value></data>
+  <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>По алфавиту</value></data>
+  <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>Недавно изменённые</value></data>
+  <data name="Campaign.Wiki.FilterByKind" xml:space="preserve"><value>Фильтр по типу</value></data>
+  <data name="Campaign.Wiki.AllKinds" xml:space="preserve"><value>Все типы</value></data>
+  <data name="Campaign.Setup.Title" xml:space="preserve"><value>С чего начать</value></data>
+  <data name="Campaign.Setup.Dismiss" xml:space="preserve"><value>Скрыть этот список</value></data>
+  <data name="Campaign.Setup.Progress" xml:space="preserve"><value>Сделано {0} из {1}</value></data>
+  <data name="Campaign.Setup.Done" xml:space="preserve"><value>Сделано:</value></data>
+  <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>Сделать:</value></data>
+  <data name="Campaign.Setup.Describe" xml:space="preserve"><value>Опишите кампанию для игроков</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Скопируйте ссылку-приглашение для игроков</value></data>
+  <data name="Campaign.Setup.Cast" xml:space="preserve"><value>Добавьте первого персонажа в состав</value></data>
+  <data name="Campaign.Setup.Page" xml:space="preserve"><value>Напишите первую страницу вики</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Отметьте первое место на карте</value></data>
+  <data name="Campaign.Setup.Session" xml:space="preserve"><value>Запланируйте первую сессию</value></data>
+  <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>Отметится, когда присоединится игрок.</value></data>
+  <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>Кто-то из вашего мира: игроки добавляют своих персонажей сами.</value></data>
+  <data name="Campaign.Setup.InviteCopied" xml:space="preserve"><value>Ссылка-приглашение скопирована. Отправьте её игрокам: шаг отметится, когда кто-то из них присоединится.</value></data>
+  <data name="Campaign.Setup.Builder" xml:space="preserve"><value>Или поручите это строителю мира: принятые вами страницы, места на карте и персонажи отметят эти шаги.</value></data>
+  <data name="Campaign.Setup.BuilderNoAi" xml:space="preserve"><value>Когда ИИ будет настроен, строитель мира сможет набросать для вас страницы, места и персонажей.</value></data>
+  <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Недавно изменённые страницы</value></data>
+  <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Открыть вики</value></data>
 </root>

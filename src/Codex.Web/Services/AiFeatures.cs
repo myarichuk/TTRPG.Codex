@@ -100,25 +100,40 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             SheetChanges: system?.Canonical.Ai.AdvancementChanges), ct);
     }
 
-    /// <summary>Expands or rewrites a wiki page from its current text, the campaign blurb and the titles it links to.</summary>
-    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, string body, IEnumerable<string> relatedTitles, string instruction, AiAudience audience, string userId, CancellationToken ct = default)
+    /// <summary>Writes or expands a wiki page for the DM. <paramref name="context"/> is what the campaign already says about the
+    /// page's subject (the history of the character it is about, the description of its place), which the page must agree with.
+    /// The page may hold secrets, in DM blocks: the DM's is the only audience, and players are given the page without them.</summary>
+    /// <param name="outline">The DM's template for pages of this kind (see <c>LiveTemplate</c>), which the page follows; null for none.</param>
+    public async Task<string> ExpandWikiAsync(CampaignDocument campaign, string title, WikiPageKind kind, string body, IEnumerable<string> relatedTitles, IReadOnlyList<string> context, string instruction, string userId, CancellationToken ct = default,
+        string? outline = null)
     {
         var assistant = await providers.AssistantForAsync(userId);
-        var facts = new List<string> { $"Setting: {catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”" };
-        var related = relatedTitles.Take(30).ToList();
-        if (related.Count > 0)
-        {
-            facts.Add("Related wiki pages (keep their names and link to them with [[Name]]): " + string.Join(", ", related));
-        }
-
-        return await assistant.RewriteAsync(new RewriteRequest(
+        var setting = $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(400) is { Length: > 0 } blurb ? ": " + blurb : "")}";
+        return await assistant.WriteWikiPageAsync(new WikiPageRequest(
             title,
-            "world wiki page",
-            facts,
+            kind == WikiPageKind.General ? "lore" : kind.ToString().ToLowerInvariant(),
             body,
-            string.IsNullOrWhiteSpace(instruction) ? "Expand the current notes into a well-structured wiki page with short headings. Keep [[links]] as written and add [[links]] to the related pages where they fit." : instruction,
-            audience,
-            campaign.Blurb(400) is { Length: > 0 } blurb ? blurb : null,
+            instruction,
+            relatedTitles.Take(30).ToList(),
+            context,
+            setting,
+            Language: Lang,
+            Structure: string.IsNullOrWhiteSpace(outline) ? null : LiveTemplate.Sample(outline)), ct);
+    }
+
+    /// <summary>Drafts the players' version of one of the DM's secrets on a wiki page, for the DM to read before it goes in.
+    /// <paramref name="shown"/> is what players already read on the page.</summary>
+    public async Task<string> PlayersVersionAsync(CampaignDocument campaign, string title, WikiPageKind kind, string secret, string shown, string? current, string instruction, string userId, CancellationToken ct = default)
+    {
+        var assistant = await providers.AssistantForAsync(userId);
+        return await assistant.WritePlayersVersionAsync(new PlayersVersionRequest(
+            title,
+            kind == WikiPageKind.General ? "lore" : kind.ToString().ToLowerInvariant(),
+            secret,
+            shown,
+            current,
+            instruction,
+            $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
             Language: Lang), ct);
     }
 
@@ -205,17 +220,9 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             fields.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max));
         }
 
-        // The gear a sheet may carry: every entry of the system's inventory types, the everyday ones first.
         var inventory = itemsFor == null ? null : system?.SheetRules?.Inventory;
         var armor = system?.SheetRules?.ArmorClass;
-        var carriable = new Dictionary<string, ContentEntry>(StringComparer.OrdinalIgnoreCase);
-        foreach (var type in inventory?.Types ?? new List<string>())
-        {
-            foreach (var entry in await itemsFor!(type))
-            {
-                if (carriable.Count < MaxCarriable) carriable.TryAdd(entry.Id, entry);
-            }
-        }
+        var carriable = await CarriableAsync(inventory, itemsFor);
 
         var primary = system?.PrimaryResource;
         var draft = await assistant.CreateCharacterAsync(new CharacterConceptRequest(
@@ -230,10 +237,31 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             Language: Lang,
             HitPointsLabel: primary?.Label,
             HitPointsBasis: system?.Ai.PrimaryResourceBasis,
-            Equipment: carriable.Count == 0 ? null : carriable.Keys.ToList(),
-            OneArmorAndShield: armor != null), ct);
+            Equipment: carriable.Count == 0 ? null : Options(carriable),
+            OneArmorAndShield: armor != null,
+            AttributeAdvice: AttributeAdvice(system?.SheetRules?.Attributes)), ct);
 
-        if (inventory != null && draft.Equipment is { Count: > 0 } picked)
+        if (inventory == null || carriable.Count == 0)
+        {
+            return draft;
+        }
+
+        // A model that left the gear out gets one short call that asks for nothing else; if that fails too, the character is
+        // still worth keeping, without gear.
+        IReadOnlyList<DraftItem> picked;
+        try
+        {
+            picked = draft.Equipment is { Count: > 0 } equipment
+                ? equipment
+                : await assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
+                    catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            picked = Array.Empty<DraftItem>();
+        }
+
+        if (picked.Count > 0)
         {
             draft.Sheet[inventory.Key] = StoredEquipment(picked, carriable, inventory, armor);
         }
@@ -241,8 +269,65 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         return draft;
     }
 
+    /// <summary>How the system generates scores, in a sentence for the prompt; null when it says nothing.</summary>
+    internal static string? AttributeAdvice(AttributeRules? rules)
+    {
+        if (rules == null) return null;
+        if (rules.StandardArray.Count > 0)
+        {
+            return $"use the standard array {string.Join(", ", rules.StandardArray)}, each value once, the best scores on what they do best";
+        }
+
+        return rules.PointBuy is { } pointBuy
+            ? $"scores from {pointBuy.Min} to {pointBuy.Max} as if bought with {pointBuy.Budget} points, the best scores on what they do best"
+            : null;
+    }
+
+    /// <summary>Gear for a character who has none yet (one made from a stat block or a blank sheet), as the sheet stores it;
+    /// null when the system has no inventory or the model picked nothing usable.</summary>
+    /// <param name="character">Who they are: a name and a line or a paragraph about them.</param>
+    public async Task<List<object>?> EquipAsync(string character, CampaignDocument campaign, SystemDefinition? system, string userId,
+        Func<string, Task<IReadOnlyList<ContentEntry>>> itemsFor, CancellationToken ct = default)
+    {
+        system = system?.Canonical;
+        var inventory = system?.SheetRules?.Inventory;
+        var armor = system?.SheetRules?.ArmorClass;
+        var carriable = await CarriableAsync(inventory, itemsFor);
+        if (inventory == null || carriable.Count == 0)
+        {
+            return null;
+        }
+
+        var assistant = await providers.AssistantForAsync(userId);
+        var picked = await assistant.EquipAsync(new EquipRequest(character, catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
+        return picked.Count == 0 ? null : StoredEquipment(picked, carriable, inventory, armor);
+    }
+
     /// <summary>Most items a prompt lists; keeps a system with a vast Library from filling the model's input.</summary>
     private const int MaxCarriable = 600;
+
+    /// <summary>The gear a sheet may carry: every entry of the system's inventory types, the everyday ones first.</summary>
+    private static async Task<Dictionary<string, ContentEntry>> CarriableAsync(InventoryRules? inventory, Func<string, Task<IReadOnlyList<ContentEntry>>>? itemsFor)
+    {
+        var carriable = new Dictionary<string, ContentEntry>(StringComparer.OrdinalIgnoreCase);
+        if (inventory == null || itemsFor == null)
+        {
+            return carriable;
+        }
+
+        foreach (var type in inventory.Types)
+        {
+            foreach (var entry in await itemsFor(type))
+            {
+                if (carriable.Count < MaxCarriable) carriable.TryAdd(entry.Id, entry);
+            }
+        }
+
+        return carriable;
+    }
+
+    private static List<EquipmentOption> Options(Dictionary<string, ContentEntry> carriable) =>
+        carriable.Values.Select(e => new EquipmentOption(e.Id, e.Name)).ToList();
 
     /// <summary>The generated gear as the sheet stores it ("id|qty:2,equipped:1"). The rules allow one suit of body armor and one
     /// shield on at a time, so a second of either is carried, not worn.</summary>

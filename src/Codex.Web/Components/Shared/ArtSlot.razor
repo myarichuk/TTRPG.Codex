@@ -33,7 +33,7 @@
                 <div class="art-busy">
                     @if (drawing.IsRunning)
                     {
-                        <AiWorking Text="@busy" OnStop="drawing.Stop" TestId="@($"{TestId}-working")" />
+                        <AiWorking Compact="true" Text="@busy" OnStop="drawing.Stop" TestId="@($"{TestId}-working")" />
                     }
                     else
                     {
@@ -166,7 +166,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Art generation failed");
-            error = L["Actor.Art.DrawFailed", L.Describe(ex)];
+            error = L["Actor.Art.DrawFailed", AiFailureText.For(L, ex)];
         }
         finally
         {

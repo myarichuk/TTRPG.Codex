@@ -1,6 +1,7 @@
 @using Codex.Core
 @using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
+@inject IContentRegistry Registry
 
 @* Armor class: the number, what it is made of, and whether it follows the sheet's equipment and class
    or is typed in. The numbers come from the rule engine. *@
@@ -18,9 +19,9 @@
     @if (Auto && Summary != null)
     {
         <ul class="list-unstyled small mt-2 mb-2" aria-label="@L["Actor.Ac.LinesAria"]" data-testid="armor-class-lines">
-            @foreach (var line in Summary.Lines)
+            @foreach (var line in Summary.Parts)
             {
-                <li>@line</li>
+                <li>@Describe(line)</li>
             }
         </ul>
     }
@@ -58,6 +59,22 @@
     [Parameter] public EventCallback Changed { get; set; }
 
     private readonly string id = "ac-" + Guid.NewGuid().ToString("N")[..6];
+
+    private string Describe(ArmorClassLine line)
+    {
+        var name = line.Entry == null ? line.Label : Registry.Name(line.Entry, L.Culture.Name);
+        var signed = Bidi.Ltr((line.Value >= 0 ? "+" : "") + line.Value);
+        return line.Kind switch
+        {
+            "dex" when line.DexCap.HasValue => L["Actor.Ac.DexCapped", signed, line.DexCap],
+            "dex" => L["Actor.Ac.Dex", signed],
+            "misc" => $"{L["Actor.Ac.Other"]}: {signed}",
+            "bonus" => $"{name}: {signed}",
+            "unarmored" => $"{L["Actor.Ac.Unarmored"]}: {Bidi.Ltr(line.Value.ToString())}",
+            "defense" => $"{L["Actor.Ac.Defense", name]}: {Bidi.Ltr(line.Value.ToString())}",
+            _ => $"{name}: {Bidi.Ltr(line.Value.ToString())}"
+        };
+    }
 
     private bool Auto => Summary?.Active == true;
     private int Value => Auto ? Summary!.Total : YamlValues.GetInt(Sheet, Rules.Key) ?? 10;

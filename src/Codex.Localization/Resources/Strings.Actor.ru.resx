@@ -271,7 +271,6 @@
   <data name="Actor.Sheet.VisUnknown" xml:space="preserve"><value>Замечен, но не опознан</value></data>
   <data name="Actor.Sheet.VisKnown" xml:space="preserve"><value>Известен</value></data>
   <data name="Actor.Sheet.ShownAs" xml:space="preserve"><value>Показывается игрокам как</value></data>
-  <data name="Actor.Sheet.PublicNamePh" xml:space="preserve"><value>напр. Незнакомец в капюшоне</value></data>
   <data name="Actor.Sheet.Kind" xml:space="preserve"><value>Тип</value></data>
   <data name="Actor.Sheet.KindPc" xml:space="preserve"><value>Персонаж игрока</value></data>
   <data name="Actor.Sheet.KindNpc" xml:space="preserve"><value>Неигровой персонаж (НПС)</value></data>
@@ -309,4 +308,40 @@
   <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>Установлен уровень {0}. Обновите очки здоровья и особенности, затем сохраните изменения.</value></data>
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>План на уровень {0}:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Добавлено в поле заметок. Сохраните изменения, чтобы оставить.</value></data>
+  <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Вики: {0}</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>После сохранения игроки смогут прочитать историю персонажа, кроме блоков мастера. Сначала проверьте остальное на секреты.</value></data>
+  <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: «{1}» нет в Библиотеке.</value></data>
+  <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} — {2}</value></data>
+  <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} можно взять только один раз.</value></data>
+  <data name="Actor.Rule.Limit" xml:space="preserve"><value>{0}: выбрано {1}, но на этом уровне разрешено только {2}.</value></data>
+  <data name="Actor.Rule.PointBuyRange" xml:space="preserve"><value>{0}: при покупке очков значения идут от {1} до {2}.</value></data>
+  <data name="Actor.Rule.PointBuySpent" xml:space="preserve"><value>Покупка очков: потрачено {0} из {1}.</value></data>
+  <data name="Actor.Rule.StandardArray" xml:space="preserve"><value>Стандартный набор: распределите ровно {0}, по одному значению на характеристику.</value></data>
+  <data name="Actor.Rule.BonusNotEligible" xml:space="preserve"><value>{0}: {1} не входит в допустимые характеристики.</value></data>
+  <data name="Actor.Rule.BonusSpread" xml:space="preserve"><value>{0}: распределите их как {1}, каждый на свою характеристику.</value></data>
+  <data name="Actor.Rule.ScoreMax" xml:space="preserve"><value>{0}: значение не может превышать {1}.</value></data>
+  <data name="Actor.Rule.ScoreCap" xml:space="preserve"><value>{0}: с «{2}» значение не может превышать {1}.</value></data>
+  <data name="Actor.Rule.OneArmor" xml:space="preserve"><value>{0}: одновременно можно носить только один доспех.</value></data>
+  <data name="Actor.Rule.OneShield" xml:space="preserve"><value>{0}: в руке можно держать только один щит.</value></data>
+  <data name="Actor.Rule.IncNone" xml:space="preserve"><value>{0}: «{1}» не повышает ни одной характеристики.</value></data>
+  <data name="Actor.Rule.IncRemaining" xml:space="preserve"><value>{0}: выберите, куда пойдут оставшиеся очки «{1}»: {2}.</value></data>
+  <data name="Actor.Rule.IncGrants" xml:space="preserve"><value>{0}: «{1}» даёт очков: {2}, а не {3}.</value></data>
+  <data name="Actor.Rule.IncCant" xml:space="preserve"><value>{0}: «{1}» не может повысить «{2}».</value></data>
+  <data name="Actor.Rule.ArmorUntrained" xml:space="preserve"><value>{0}: класс «{1}» не обучен: {2}. Без обучения у вас помеха при проверках, атаках и спасбросках с Силой или Ловкостью, и вы не можете накладывать заклинания.</value></data>
+  <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: требуется Сила {1}, иначе Скорость падает на 10 футов.</value></data>
+  <data name="Actor.Rule.ArmorStealth" xml:space="preserve"><value>{0}: даёт помеху при проверках Скрытности.</value></data>
+  <data name="Actor.Rule.WeaponUntrained" xml:space="preserve"><value>{0}: класс «{1}» не обучен ему, поэтому бонус мастерства к его атакам не добавляется.</value></data>
+  <data name="Actor.Ac.Dex" xml:space="preserve"><value>Ловкость: {0}</value></data>
+  <data name="Actor.Ac.DexCapped" xml:space="preserve"><value>Ловкость: {0} (не более +{1})</value></data>
+  <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>Без доспехов</value></data>
+  <data name="Actor.Ac.Defense" xml:space="preserve"><value>Защита: {0}</value></data>
+  <data name="Actor.Ac.Other" xml:space="preserve"><value>Прочие бонусы</value></data>
+  <data name="Actor.Stranger" xml:space="preserve"><value>Незнакомец</value></data>
+  <data name="Actor.Stranger.NotIdentified" xml:space="preserve"><value>Личность не установлена</value></data>
+  <data name="Actor.Stranger.NothingYet" xml:space="preserve"><value>Больше отряду пока ничего не известно.</value></data>
+  <data name="Actor.Sheet.UnknownHint" xml:space="preserve"><value>Игроки видят незнакомца: только имя и описание ниже, но не настоящее имя, историю, портрет или лист персонажа.</value></data>
+  <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>Что видит отряд</value></data>
+  <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>Фигура в капюшоне, платит старым серебром и не называет имени.</value></data>
+  <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Открыто вам</value></data>
 </root>

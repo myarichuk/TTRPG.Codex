@@ -43,6 +43,12 @@ entityTypes:
     fields:
       category: { label: Категория }
 
+maxSuffix: макс.
+
+categories:
+  Attributes: Характеристики
+  Resources: Ресурсы
+
 conditions:
   Dazed: Оглушён
   Scared: Напуган

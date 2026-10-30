@@ -204,8 +204,17 @@ else
     private string Summary(LibraryItem item)
     {
         var type = Ctx.System?.FindType(item.Entry.Type);
+        // Values go through the field's translation (size, creature type), as they do in the Library; the stored text stays as it is.
+        string Shown(string key, object value)
+        {
+            var field = type?.Fields.FirstOrDefault(f => f.Key == key);
+            return value is IEnumerable<object> list && value is not string
+                ? string.Join(", ", list.Select(o => field?.Display(o?.ToString() ?? string.Empty) ?? o?.ToString()))
+                : field?.Display(value.ToString() ?? string.Empty) ?? value.ToString() ?? string.Empty;
+        }
+
         var parts = (type?.SummaryFields ?? new List<string>())
-            .Select(key => item.Entry.Properties.TryGetValue(key, out var v) && v != null ? $"{type!.Fields.FirstOrDefault(f => f.Key == key)?.Label ?? key} {v}" : null)
+            .Select(key => item.Entry.Properties.TryGetValue(key, out var v) && v != null ? $"{type!.Fields.FirstOrDefault(f => f.Key == key)?.Label ?? key} {Shown(key, v)}" : null)
             .Where(p => p != null);
         var text = string.Join(" · ", parts);
         return text.Length > 0 ? text : TextFormatting.Summary(item.Entry.Description, 90);

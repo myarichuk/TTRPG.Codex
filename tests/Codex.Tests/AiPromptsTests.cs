@@ -5,6 +5,78 @@ namespace Codex.Tests;
 public class AiPromptsTests
 {
     [Fact]
+    public void WikiPage_AboutAPerson_AsksForTheirHistory_AgreesWithTheCast_AndKeepsSecretsInDmBlocks()
+    {
+        var (system, user) = AiPrompts.WikiPage(new WikiPageRequest("Keeper Olm", "person", "Runs the lighthouse.", "",
+            new[] { "Saltmere" }, new[] { "History of Keeper Olm (their character in the cast): Washed ashore as a child." }, "Saltmere Shadows"));
+
+        Assert.Contains("their history", system);
+        Assert.Contains(":::dm", system);
+        Assert.Contains("never contradict", system);
+        Assert.Contains("Washed ashore as a child.", user);
+        Assert.Contains("[[Name]]", user);
+        Assert.Contains("Saltmere", user);
+    }
+
+    [Fact]
+    public void WikiPage_AboutAPlace_AsksForItsHistoryAndEncounters()
+    {
+        var (system, _) = AiPrompts.WikiPage(new WikiPageRequest("Lighthouse", "place", "", "", Array.Empty<string>(), Array.Empty<string>()));
+
+        Assert.Contains("its history", system);
+        Assert.Contains("encounters", system);
+    }
+
+    [Fact]
+    public void WorldChat_WritesHistoriesAndKeepsSecretsInDmBlocks()
+    {
+        var prompt = AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", null, Array.Empty<string>()));
+
+        Assert.Contains("their history", prompt);
+        Assert.Contains("its history", prompt);
+        Assert.Contains(":::dm", prompt);
+    }
+
+    [Fact]
+    public void WikiPage_AndWorldChat_FollowTheDmsOutline_WhenThereIsOne()
+    {
+        var outline = Codex.Core.LiveTemplate.Sample("## Rumours\n- $rumour$\n\n## Stock\n$stock$");
+        var (_, user) = AiPrompts.WikiPage(new WikiPageRequest("Mira's shop", "place", "", "", Array.Empty<string>(), Array.Empty<string>(), Structure: outline));
+        var (_, without) = AiPrompts.WikiPage(new WikiPageRequest("Mira's shop", "place", "", "", Array.Empty<string>(), Array.Empty<string>()));
+        var chat = AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", null, Array.Empty<string>(), Outlines: new Dictionary<string, string> { ["place"] = outline }));
+
+        Assert.Contains("## Rumours\n- ‹rumour›\n\n## Stock\n‹stock›", user);
+        Assert.Contains("in this order", user);
+        Assert.DoesNotContain("outline", without);
+        Assert.Contains("Outline of a place page:\n## Rumours", chat);
+        Assert.DoesNotContain("Outline of a", AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", null, Array.Empty<string>())));
+    }
+
+    [Fact]
+    public void PlayersVersion_GivesTheSecretAsTheDmsOnly_AndRevisesTheVersionThereIs()
+    {
+        var (system, user) = AiPrompts.PlayersVersion(new PlayersVersionRequest("Saltmere", "place", "The keeper runs the smugglers.", "A quiet village.", "Lights at night.", "", Language: "ru"));
+        user = user.ReplaceLineEndings("\n"); // the prompt's lines end as the platform's do
+
+        Assert.Contains("without giving it away", system);
+        Assert.Contains("Never write lines that start with \":::\"", system);
+        Assert.Contains("Russian", system);
+        Assert.Contains("The secret (the game master's only; never state it):\nThe keeper runs the smugglers.", user);
+        Assert.Contains("What the players already read on the page:\nA quiet village.", user);
+        Assert.Contains("revise it", user);
+        Assert.DoesNotContain("revise it", AiPrompts.PlayersVersion(new PlayersVersionRequest("Saltmere", "place", "S", "", null, "")).User);
+    }
+
+    [Fact]
+    public void Rewrite_OfATextWithDmBlocks_KeepsThem()
+    {
+        var (system, _) = AiPrompts.Rewrite(new RewriteRequest("Aria", "character", Array.Empty<string>(), "Born at sea.\n:::dm\nSecret.\n:::", "", AiAudience.Players));
+        Assert.Contains("Keep every one of them", system);
+        var (plain, _) = AiPrompts.Rewrite(new RewriteRequest("Aria", "character", Array.Empty<string>(), "Born at sea.", "", AiAudience.Players));
+        Assert.DoesNotContain(":::", plain);
+    }
+
+    [Fact]
     public void SessionSummary_PlayerAudience_AsksForInWorldRecapAndForbidsSecrets()
     {
         var (system, user) = AiPrompts.SessionSummary(new SessionSummaryRequest(

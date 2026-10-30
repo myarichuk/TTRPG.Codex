@@ -80,3 +80,26 @@ public interface IHomebrewRepository
 
     Task DeleteAllForCampaignAsync(string campaignId);
 }
+
+/// <summary>Homebrew by tag: the tags a campaign's entries use, and the entries that carry any of a set of them, for exporting
+/// one set of homebrew to share. Tags match whatever their case or spacing ("Grey Coast" is "grey coast ").</summary>
+public static class HomebrewTags
+{
+    /// <summary>Each tag the entries use, as first written, with how many entries carry it; most used first.</summary>
+    public static IReadOnlyList<(string Tag, int Count)> Tally(IEnumerable<HomebrewEntryDocument> entries) =>
+        entries.SelectMany(e => e.Tags.Select(Normal).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase))
+            .GroupBy(t => t, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Tag: g.First(), Count: g.Count()))
+            .OrderByDescending(t => t.Count).ThenBy(t => t.Tag, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>The entries carrying at least one of <paramref name="tags"/>; every entry when there are none.</summary>
+    public static IReadOnlyList<HomebrewEntryDocument> Tagged(IEnumerable<HomebrewEntryDocument> entries, IReadOnlyCollection<string> tags)
+    {
+        if (tags.Count == 0) return entries.ToList();
+        var wanted = tags.Select(Normal).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return entries.Where(e => e.Tags.Any(t => wanted.Contains(Normal(t)))).ToList();
+    }
+
+    private static string Normal(string tag) => string.Join(' ', tag.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+}

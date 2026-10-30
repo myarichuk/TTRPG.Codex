@@ -172,7 +172,7 @@
   <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>No image model yet</value></data>
   <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>No text model yet</value></data>
   <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>Uploading art works without one. Add one to have pictures drawn for you; good writing models rarely draw, so this is set up apart from text.</value></data>
-  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Add one under New text model. OpenRouter is pre-selected: one key gives you most current models.</value></data>
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>In use</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>no key</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>key stored</value></data>
@@ -190,6 +190,7 @@
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>One key, hundreds of models. Get a key at openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Direct OpenAI access with your own key.</value></data>
+  <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude through Anthropic's own API. Get a key at console.anthropic.com.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (local)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>A model running on your own machine. No key needed.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (local)</value></data>
@@ -207,4 +208,5 @@
   <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>One sentence that sells it, e.g. “A heist in a city that floats.”</value></data>
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Shown on the campaign card and under its title.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>The full write-up, shown on the campaign’s overview. Markdown works; you can expand it later in Settings.</value></data>
+  <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>World builder</value></data>
 </root>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="WorldChat.Title" xml:space="preserve"><value>World builder</value></data>
+  <data name="WorldChat.DmOnly" xml:space="preserve"><value>Only the DM builds the world.</value></data>
+  <data name="WorldChat.NoAi.Title" xml:space="preserve"><value>No AI model set up yet</value></data>
+  <data name="WorldChat.NoAi.Body" xml:space="preserve"><value>Add a text model in your AI settings to build with it. It needs to support tool calls.</value></data>
+  <data name="WorldChat.NoAi.Settings" xml:space="preserve"><value>Open AI settings</value></data>
+  <data name="WorldChat.Conversation" xml:space="preserve"><value>Conversation</value></data>
+  <data name="WorldChat.Intro" xml:space="preserve"><value>Say what you want, or pick one of these. The AI reads your campaign first, asks when a choice is yours, and proposes everything together for you to review.</value></data>
+  <data name="WorldChat.Starters" xml:space="preserve"><value>Ways to start</value></data>
+  <data name="WorldChat.Starter.settlement.Label" xml:space="preserve"><value>A settlement</value></data>
+  <data name="WorldChat.Starter.settlement.Text" xml:space="preserve"><value>Build a settlement for this campaign: its districts and landmarks, the people the party will meet there, and a secret or two worth uncovering.</value></data>
+  <data name="WorldChat.Starter.faction.Label" xml:space="preserve"><value>A faction</value></data>
+  <data name="WorldChat.Starter.faction.Text" xml:space="preserve"><value>Create a faction for this campaign: what it wants, who leads it, a few members the party could meet, where it meets, and what it hides.</value></data>
+  <data name="WorldChat.Starter.quest.Label" xml:space="preserve"><value>A quest</value></data>
+  <data name="WorldChat.Starter.quest.Text" xml:space="preserve"><value>Plan a quest for the party: who asks for help and why, where it leads, who stands in the way, and the clues that point the way.</value></data>
+  <data name="WorldChat.Starter.people.Label" xml:space="preserve"><value>People for a place</value></data>
+  <data name="WorldChat.Starter.people.Text" xml:space="preserve"><value>Add the people the party will meet at </value></data>
+  <data name="WorldChat.Starter.homebrew.Label" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="WorldChat.Starter.homebrew.Text" xml:space="preserve"><value>Create a homebrew {0}: </value></data>
+  <data name="WorldChat.Starter.homebrew.Any" xml:space="preserve"><value>entry</value></data>
+  <data name="WorldChat.You" xml:space="preserve"><value>You</value></data>
+  <data name="WorldChat.Model" xml:space="preserve"><value>AI</value></data>
+  <data name="WorldChat.Working" xml:space="preserve"><value>Thinking it through…</value></data>
+  <data name="WorldChat.Error" xml:space="preserve"><value>The AI couldn't answer: {0}</value></data>
+  <data name="WorldChat.Retry" xml:space="preserve"><value>Try again</value></data>
+  <data name="WorldChat.Kind.edit" xml:space="preserve"><value>Changes to existing entries</value></data>
+  <data name="WorldChat.Edit.Page" xml:space="preserve"><value>replaces the page's text</value></data>
+  <data name="WorldChat.Edit.Place" xml:space="preserve"><value>replaces the place's description</value></data>
+  <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>replaces the character's history</value></data>
+  <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>Current text</value></data>
+  <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>Players can already read this, so applying it changes what they see.</value></data>
+  <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{# step} other{# steps}}</value></data>
+  <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>This model can't call tools, which the world builder needs. Pick a model that supports tool calls in your AI settings.</value></data>
+  <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>There is no proposal to apply.</value></data>
+  <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Your message</value></data>
+  <data name="WorldChat.Placeholder" xml:space="preserve"><value>What should we add to the world?</value></data>
+  <data name="WorldChat.Send" xml:space="preserve"><value>Send</value></data>
+  <data name="WorldChat.Hint" xml:space="preserve"><value>Enter sends · Shift+Enter for a new line</value></data>
+  <data name="WorldChat.Error.Empty" xml:space="preserve"><value>The AI returned nothing, twice. Send the message again, or pick a stronger model in your AI settings.</value></data>
+  <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Proposal ready to review.</value></data>
+  <data name="WorldChat.Applied" xml:space="preserve"><value>Applied: {0} added, hidden from players.</value></data>
+  <data name="WorldChat.Discarded" xml:space="preserve"><value>Proposal discarded.</value></data>
+  <data name="WorldChat.Tool.Search" xml:space="preserve"><value>Looked through the campaign for “{0}”</value></data>
+  <data name="WorldChat.Tool.Page" xml:space="preserve"><value>Read the page “{0}”</value></data>
+  <data name="WorldChat.Tool.Places" xml:space="preserve"><value>Looked at the places</value></data>
+  <data name="WorldChat.Tool.Library" xml:space="preserve"><value>Searched the Library for “{0}”</value></data>
+  <data name="WorldChat.Tool.Fields" xml:space="preserve"><value>Looked up the fields of {0}</value></data>
+  <data name="WorldChat.Tool.Propose" xml:space="preserve"><value>Proposed {0} entries</value></data>
+  <data name="WorldChat.Proposal.Title" xml:space="preserve"><value>Proposal</value></data>
+  <data name="WorldChat.Proposal.Hint" xml:space="preserve"><value>Open an entry to read it. Untick what you don't want; everything is saved hidden from players.</value></data>
+  <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{# thing worth a look} other{# things worth a look}}</value></data>
+  <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>Also add to the cast</value></data>
+  <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>Also add to the cast, playing like {0}</value></data>
+  <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>a place you have</value></data>
+  <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>Apply {0}</value></data>
+  <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>Saving, and picking gear for the cast…</value></data>
+  <data name="WorldChat.Proposal.Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="WorldChat.Proposal.Failed" xml:space="preserve"><value>Not everything was saved: {0}. Apply again to save the rest.</value></data>
+  <data name="WorldChat.Result.Hint" xml:space="preserve"><value>Hidden from players until you share or reveal them.</value></data>
+  <data name="WorldChat.Result.Secrets" xml:space="preserve"><value>{0, plural, one{# secret in Lore} other{# secrets in Lore}}</value></data>
+  <data name="WorldChat.Kind.place" xml:space="preserve"><value>Places</value></data>
+  <data name="WorldChat.Kind.npc" xml:space="preserve"><value>People</value></data>
+  <data name="WorldChat.Kind.wiki" xml:space="preserve"><value>Pages</value></data>
+  <data name="WorldChat.Kind.fact" xml:space="preserve"><value>Secrets</value></data>
+  <data name="WorldChat.Kind.homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="WorldChat.TooManySteps" xml:space="preserve"><value>(The AI looked up a lot in one go and stopped before answering. Ask it to go on.)</value></data>
+  <data name="WorldChat.Tool.Add" xml:space="preserve"><value>Added {0} entries to the proposal</value></data>
+  <data name="WorldChat.Review.Step" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="WorldChat.Review.Accept" xml:space="preserve"><value>Keep</value></data>
+  <data name="WorldChat.Review.Skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="WorldChat.Review.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="WorldChat.Review.Accepted" xml:space="preserve"><value>Accepted</value></data>
+  <data name="WorldChat.Review.Skipped" xml:space="preserve"><value>Skipped</value></data>
+  <data name="WorldChat.Review.Pending" xml:space="preserve"><value>Not reviewed yet</value></data>
+  <data name="WorldChat.Review.SkippedAlso" xml:space="preserve"><value>Skipping this also skips what is inside it or only about it ({0})</value></data>
+  <data name="WorldChat.Review.Rail" xml:space="preserve"><value>Entries</value></data>
+  <data name="WorldChat.Missing.Title" xml:space="preserve"><value>Mentioned, not written yet</value></data>
+  <data name="WorldChat.Missing.Write" xml:space="preserve"><value>Write “{0}”</value></data>
+  <data name="WorldChat.Missing.All" xml:space="preserve"><value>Write all {0}</value></data>
+  <data name="WorldChat.Missing.Mentions" xml:space="preserve"><value>mentioned by {0}</value></data>
+  <data name="WorldChat.Fill.Message" xml:space="preserve"><value>Add “{0}” to the proposal: it is mentioned in {1}, but it isn't written yet. Match the tone and facts of what is already in the proposal.</value></data>
+  <data name="WorldChat.Fill.All" xml:space="preserve"><value>Add all of these to the proposal in one go: {0}. Entries already in it mention each, but none is written yet. Match the tone and facts of what is already there.</value></data>
+  <data name="WorldChat.Welcome" xml:space="preserve"><value>What shall we build?</value></data>
+  <data name="WorldChat.Chats" xml:space="preserve"><value>Chats</value></data>
+  <data name="WorldChat.NewChat" xml:space="preserve"><value>New chat</value></data>
+  <data name="WorldChat.Untitled" xml:space="preserve"><value>New chat</value></data>
+  <data name="WorldChat.NoChats" xml:space="preserve"><value>No chats yet. Your first message starts one.</value></data>
+  <data name="WorldChat.Rename" xml:space="preserve"><value>Rename chat</value></data>
+  <data name="WorldChat.RenameLabel" xml:space="preserve"><value>Chat name</value></data>
+  <data name="WorldChat.Delete" xml:space="preserve"><value>Delete chat</value></data>
+  <data name="WorldChat.DeleteConfirm.Title" xml:space="preserve"><value>Delete this chat?</value></data>
+  <data name="WorldChat.DeleteConfirm.Body" xml:space="preserve"><value>“{0}” and the proposal waiting in it will be deleted. What you already applied stays in the campaign.</value></data>
+  <data name="WorldChat.Waiting" xml:space="preserve"><value>{0, plural, one{# entry waiting} other{# entries waiting}}</value></data>
+  <data name="WorldChat.Reasoning" xml:space="preserve"><value>Reasoning</value></data>
+  <data name="WorldChat.Thinking" xml:space="preserve"><value>Thinking…</value></data>
+  <data name="WorldChat.Seconds" xml:space="preserve"><value>{0} s</value></data>
+  <data name="WorldChat.Minutes" xml:space="preserve"><value>{0} min {1} s</value></data>
+  <data name="WorldChat.Usage.Calls" xml:space="preserve"><value>{0, plural, one{# model call} other{# model calls}}</value></data>
+  <data name="WorldChat.Usage.Tokens" xml:space="preserve"><value>{0} in / {1} out tokens</value></data>
+  <data name="WorldChat.Step.Arguments" xml:space="preserve"><value>Arguments</value></data>
+  <data name="WorldChat.Step.Result" xml:space="preserve"><value>Result</value></data>
+  <data name="WorldChat.Step.Error" xml:space="preserve"><value>Error</value></data>
+  <data name="WorldChat.Step.Raw" xml:space="preserve"><value>Raw JSON</value></data>
+  <data name="WorldChat.Step.Copy" xml:space="preserve"><value>Copy JSON</value></data>
+  <data name="WorldChat.Step.Copied" xml:space="preserve"><value>Copied</value></data>
+  <data name="WorldChat.Step.Title" xml:space="preserve"><value>Tool call: {0}</value></data>
+  <data name="WorldChat.Step.Running" xml:space="preserve"><value>running</value></data>
+  <data name="WorldChat.Step.Failed" xml:space="preserve"><value>failed</value></data>
+  <data name="WorldChat.Step.Ready" xml:space="preserve"><value>accepted</value></data>
+  <data name="WorldChat.Step.Rejected" xml:space="preserve"><value>{0, plural, one{# thing to fix} other{# things to fix}}</value></data>
+  <data name="WorldChat.Step.Lines" xml:space="preserve"><value>{0, plural, one{# line} other{# lines}}</value></data>
+  <data name="WorldChat.Tool.Entry" xml:space="preserve"><value>Read “{0}”</value></data>
+  <data name="WorldChat.Tool.Tags" xml:space="preserve"><value>Looked at the tags</value></data>
+  <data name="WorldChat.Kind.tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="WorldChat.Kind.bestiary" xml:space="preserve"><value>Bestiary</value></data>
+  <data name="WorldChat.Edit.Homebrew" xml:space="preserve"><value>changes the homebrew entry</value></data>
+  <data name="WorldChat.Proposal.Ready" xml:space="preserve"><value>{0, plural, one{# entry ready to review} other{# entries ready to review}}</value></data>
+  <data name="WorldChat.Proposal.Show" xml:space="preserve"><value>Review</value></data>
+  <data name="WorldChat.Proposal.Empty.Title" xml:space="preserve"><value>Nothing to review yet</value></data>
+  <data name="WorldChat.Proposal.Empty.Body" xml:space="preserve"><value>When the AI proposes something, it waits here for you: read each entry, keep what you like, and apply. Everything is saved hidden from players.</value></data>
+  <data name="WorldChat.Can.World" xml:space="preserve"><value>Places, people, factions, quests and secrets, linked to what the campaign has.</value></data>
+  <data name="WorldChat.Can.Homebrew" xml:space="preserve"><value>Spells, magic items, equipment and creatures: new ones, or variants of what the Library has.</value></data>
+  <data name="WorldChat.Can.Revise" xml:space="preserve"><value>Changes to wiki pages, places, cast histories and your homebrew, marked word by word.</value></data>
+  <data name="WorldChat.Can.Tags" xml:space="preserve"><value>Tags on pages and homebrew, so a set of homebrew can be exported and shared.</value></data>
+  <data name="WorldChat.Reader.Back" xml:space="preserve"><value>All entries</value></data>
+  <data name="WorldChat.Reader.Include" xml:space="preserve"><value>Include {0}</value></data>
+  <data name="WorldChat.Reader.Keep" xml:space="preserve"><value>Include in the proposal</value></data>
+  <data name="WorldChat.Proposal.BasedOn" xml:space="preserve"><value>a variant of {0}</value></data>
+  <data name="WorldChat.Proposal.Fields" xml:space="preserve"><value>Fields</value></data>
+  <data name="WorldChat.Proposal.TagsLabel" xml:space="preserve"><value>Tags</value></data>
+  <data name="WorldChat.Proposal.NoTags" xml:space="preserve"><value>no tags</value></data>
+  <data name="WorldChat.Proposal.Renamed" xml:space="preserve"><value>Renamed to “{0}”</value></data>
+  <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{Tags # page or entry} other{Tags # pages and entries}}</value></data>
+  <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>This creature is already on the Bestiary.</value></data>
+  <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>Puts {0} on the campaign's Bestiary.</value></data>
+  <data name="WorldChat.Result.Bestiary" xml:space="preserve"><value>on the Bestiary</value></data>
+  <data name="WorldChat.Result.Retagged" xml:space="preserve"><value>{0, plural, one{Tags changed on # page or entry} other{Tags changed on # pages and entries}}</value></data>
+  <data name="WorldChat.Diff.Changes" xml:space="preserve"><value>Changes</value></data>
+  <data name="WorldChat.Diff.New" xml:space="preserve"><value>New text</value></data>
+  <data name="WorldChat.Diff.View" xml:space="preserve"><value>Show</value></data>
+  <data name="WorldChat.Diff.None" xml:space="preserve"><value>The text stays as it is.</value></data>
+  <data name="WorldChat.Starter.variant.Label" xml:space="preserve"><value>A variant of a spell or item</value></data>
+  <data name="WorldChat.Starter.variant.Text" xml:space="preserve"><value>Make a homebrew variant of a spell or magic item from the Library that fits this campaign. Look at what the Library has first, then tell me which one you picked and why.</value></data>
+  <data name="WorldChat.Starter.revise.Label" xml:space="preserve"><value>Revise a page</value></data>
+  <data name="WorldChat.Starter.revise.Text" xml:space="preserve"><value>Read the wiki page I name and improve it: keep its facts, fill the gaps, and link it to what the campaign has. The page: </value></data>
+  <data name="WorldChat.Starter.tags.Label" xml:space="preserve"><value>Tag homebrew for sharing</value></data>
+  <data name="WorldChat.Starter.tags.Text" xml:space="preserve"><value>Look at the campaign's homebrew and wiki pages and propose tags that group them (by region, faction or theme), so I can export a set to share. Reuse the tags that already exist.</value></data>
+  <data name="WorldChat.Step.Request" xml:space="preserve"><value>Request</value></data>
+  <data name="WorldChat.Steps.Trouble" xml:space="preserve"><value>{0, plural, one{# needed another try} other{# needed another try}}</value></data>
+</root>

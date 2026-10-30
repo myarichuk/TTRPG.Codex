@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Persistence
 @inject IJSRuntime JS
 
 @* The box for long writing: histories, wiki pages, recaps, descriptions. It stays a plain textarea (the @, # and $
@@ -20,6 +21,33 @@
             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="italic" Label="@L["Common.Editor.Italic"]" title="@L["Common.Editor.Italic"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => WrapAsync("*", "*"))" />
             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="heading" Label="@L["Common.Editor.Heading"]" title="@L["Common.Editor.Heading"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => PrefixAsync("## "))" />
             <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="list" Label="@L["Common.Editor.List"]" title="@L["Common.Editor.List"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="@(() => PrefixAsync("- "))" />
+            @if (Secrets)
+            {
+                <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="eye-off" Label="@L["Common.Editor.Secret"]" title="@L["Common.Editor.Secret"]" Disabled="@(ReadOnlyNow || showPreview)" OnClick="SecretAsync" data-testid="@($"{TestId}-secret")" />
+            }
+            @if (Templates != null && !ReadOnlyNow && !showPreview)
+            {
+                <details class="popover-menu md-templates" data-testid="@($"{TestId}-templates")">
+                    <summary class="cx-btn cx-rune cx-sm" title="@L["Common.Editor.Templates"]" aria-label="@L["Common.Editor.Templates"]"><LucideIcon IconName="braces" Size="14" /></summary>
+                    <div class="popover-panel">
+                        @for (var i = 0; i < inUse.Count; i++)
+                        {
+                            var index = i;
+                            <button type="button" class="menu-item" @onclick="() => InsertTemplateAsync(index)">
+                                <span>@inUse[index].Name</span>
+                                @if (inUse[index].Abbreviation.Length > 0)
+                                {
+                                    <kbd class="template-abbr" dir="auto">@inUse[index].Abbreviation</kbd>
+                                }
+                            </button>
+                        }
+                        @if (TemplatesHref != null)
+                        {
+                            <a class="menu-item" href="@TemplatesHref"><span>@L["Common.Editor.ManageTemplates"]</span></a>
+                        }
+                    </div>
+                </details>
+            }
         </div>
         <div class="md-view">
             <div class="md-tabs" role="group" aria-label="@L["Common.Editor.View"]">
@@ -33,11 +61,14 @@
     </div>
     <div class="md-panes">
         <div class="md-write">
-            <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@Value" @oninput="OnInput"
-                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-testid="@TestId"></textarea>
+            <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@initial" @oninput="OnInput"
+                      readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-md-secrets="@(Secrets ? "" : null)" data-testid="@TestId"
+                      data-templates="@templatesJson" data-pages="@pagesJson" data-template-hint="@(Templates != null ? L["Common.Editor.TemplateHint"] : null)"
+                      data-template-hint-touch="@(Templates != null ? L["Common.Editor.TemplateHintTouch"] : null)"
+                      data-template-buttons="@(Templates != null ? $"{L["Common.Editor.TemplatePrev"]}|{L["Common.Editor.TemplateNext"]}|{L["Common.Editor.TemplateDone"]}" : null)"></textarea>
             @if (Busy)
             {
-                <div class="md-busy"><AiWorking Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
+                <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
             }
         </div>
         @if (showPreview || fullscreen)
@@ -81,6 +112,22 @@
     /// wiki links passes the renderer its read view uses (encoding the typed @Names first).</summary>
     [Parameter] public Func<string, string>? Preview { get; set; }
 
+    /// <summary>The text takes secret blocks (see <c>SecretText</c>): the toolbar gets a button, and Ctrl+Shift+H, that put the
+    /// selected lines (or the paragraph at the cursor) in a DM block, or take them out of one. Off for a box whose text is not
+    /// redacted for players.</summary>
+    [Parameter] public bool Secrets { get; set; }
+
+    /// <summary>The DM's templates (see <c>LiveTemplate</c>): typing one's abbreviation and Tab, or picking it after "/" or from
+    /// the toolbar, puts it in, and Tab steps through its fields. Null for a box that takes none.</summary>
+    [Parameter] public IReadOnlyList<TextTemplate>? Templates { get; set; }
+
+    /// <summary>The wiki pages the box offers after "[[" (picking one writes <c>[[Title]]</c>); null for a box whose text
+    /// does not link to pages.</summary>
+    [Parameter] public IReadOnlyCollection<WikiPageDocument>? Pages { get; set; }
+
+    /// <summary>Where the templates are edited; the template menu links to it.</summary>
+    [Parameter] public string? TemplatesHref { get; set; }
+
     /// <summary>The AI is writing into the box: the text is read-only and a "Writing…" notice covers it.</summary>
     [Parameter] public bool Busy { get; set; }
     [Parameter] public string? BusyText { get; set; }
@@ -90,14 +137,35 @@
     /// <summary>Shown under the box, and kept in full screen: the AI row, hints.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    // The text the box starts with. It is rendered once and never changes: a value that followed every keystroke would be sent back
+    // to the browser after each one, and an answer older than what has been typed since overwrites it (letters vanish when the
+    // circuit is slow or the machine busy). Changes that come from outside the box (AI text, an undo) are put in by setValue.
+    private string initial = string.Empty;
+    private string? seen;
+    private bool changedOutside;
     private bool showPreview;
     private bool fullscreen;
     private string? focusAfterRender;
     private bool ReadOnlyNow => ReadOnly || Busy;
 
+    // The templates in use, in the menu's order; the box's data-templates lists them in the same order, so a menu item and
+    // the script name a template by its index.
+    private IReadOnlyList<TextTemplate> inUse = Array.Empty<TextTemplate>();
+    private IReadOnlyList<TextTemplate>? templatesSource;
+    private string? templatesJson;
+    private IReadOnlyCollection<WikiPageDocument>? pagesSource;
+    private string? pagesJson;
+
+    protected override void OnInitialized()
+    {
+        initial = Value ?? string.Empty;
+        seen = Value;
+    }
+
     private Task OnInput(ChangeEventArgs e)
     {
         Value = e.Value?.ToString() ?? string.Empty;
+        seen = Value; // the owner handing this same text back is not a change from outside
         return ValueChanged.InvokeAsync(Value);
     }
 
@@ -106,10 +174,34 @@
 
     private async Task PrefixAsync(string prefix) => await JS.InvokeVoidAsync("codex.mdPrefix", Id, prefix);
 
+    private async Task SecretAsync() => await JS.InvokeVoidAsync("codex.mdSecret", Id);
+
+    private async Task InsertTemplateAsync(int index) => await JS.InvokeVoidAsync("codex.mdTemplate", Id, index);
+
     // The "Writing…" notice sits on the text, so the text is what shows while the AI writes.
     protected override void OnParametersSet()
     {
+        if (!ReferenceEquals(Templates, templatesSource))
+        {
+            templatesSource = Templates;
+            inUse = Templates == null ? Array.Empty<TextTemplate>() : TemplateSet.InUse(Templates).ToList();
+            templatesJson = Templates == null
+                ? null
+                : System.Text.Json.JsonSerializer.Serialize(inUse.Select(t => new { a = t.Abbreviation, n = t.Name, b = t.Body }));
+        }
+
+        if (!ReferenceEquals(Pages, pagesSource))
+        {
+            pagesSource = Pages;
+            pagesJson = Pages == null ? null : PageSuggestions.Json(Pages, kind => L[$"Campaign.Wiki.Kind.{kind}"]);
+        }
+
         if (Busy) showPreview = false;
+        if (!string.Equals(Value ?? string.Empty, seen ?? string.Empty, StringComparison.Ordinal))
+        {
+            seen = Value;
+            changedOutside = true;
+        }
     }
 
     private void ToggleFullscreen()
@@ -121,6 +213,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (changedOutside)
+        {
+            changedOutside = false;
+            try
+            {
+                await JS.InvokeVoidAsync("codex.setValue", Id, Value ?? string.Empty);
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+
         if (focusAfterRender is not { } id) return;
         focusAfterRender = null;
         await JS.InvokeVoidAsync("codex.focus", id);

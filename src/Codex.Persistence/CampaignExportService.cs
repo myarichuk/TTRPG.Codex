@@ -24,6 +24,9 @@ public class CampaignBundle
 
     /// <summary>World wiki pages. Player journals are deliberately absent: they are private to each player.</summary>
     public List<WikiPageDocument> Wiki { get; set; } = new();
+
+    /// <summary>The DM's templates and their versions of the built-in ones; null in bundles from before there were any.</summary>
+    public CampaignTemplatesDocument? Templates { get; set; }
 }
 
 /// <summary>
@@ -42,7 +45,8 @@ public class CampaignExportService(
     INoteRepository notes,
     IRegionRepository regions,
     IHomebrewRepository homebrew,
-    IWikiRepository? wiki = null)
+    IWikiRepository? wiki = null,
+    ITemplateRepository? templates = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -70,7 +74,8 @@ public class CampaignExportService(
             Notes = (await notes.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Regions = (await regions.GetVisibleForCampaignAsync(access)).ToList(),
             Homebrew = (await homebrew.GetAllForCampaignAsync(access.CampaignId)).ToList(),
-            Wiki = wiki == null ? new List<WikiPageDocument>() : (await wiki.GetAllForCampaignAsync(access.CampaignId)).ToList()
+            Wiki = wiki == null ? new List<WikiPageDocument>() : (await wiki.GetAllForCampaignAsync(access.CampaignId)).ToList(),
+            Templates = templates == null ? null : await templates.GetDocumentAsync(access.CampaignId)
         };
     }
 
@@ -158,8 +163,14 @@ public class CampaignExportService(
         {
             foreach (var page in bundle.Wiki.Where(p => p.CampaignId == campaign.Id))
             {
+                page.HasArt = false;
                 await wiki.SaveAsync(page);
             }
+        }
+
+        if (templates != null && bundle.Templates is { } bundled && bundled.CampaignId == campaign.Id)
+        {
+            await templates.SaveDocumentAsync(bundled);
         }
 
         return true;

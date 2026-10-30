@@ -1,0 +1,519 @@
+@using Codex.Core
+@using Codex.Core.WorldBuilder
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+
+@* The proposal as a journal: a list of entries grouped by kind, each ticked in or out with its diamond, and a reader that opens one
+   entry at a time, with what an edit changes marked word by word. Keep and Skip in the reader move on to the next entry waiting, so
+   a long proposal can be gone through from the keyboard. Nothing is saved until Apply. *@
+
+<div class="wb-ledger-inner" data-testid="world-proposal">
+    @if (Proposal is { } proposal)
+    {
+        var order = Order(proposal);
+        var current = reading == null ? null : order.FirstOrDefault(d => d.Ref == reading);
+        <header class="wb-head">
+            @if (current != null)
+            {
+                <button type="button" class="wb-icon-btn" @onclick="() => reading = null" aria-label="@L["WorldChat.Reader.Back"]" title="@L["WorldChat.Reader.Back"]" data-testid="world-reader-back"><LucideIcon IconName="arrow-left" Size="18" /></button>
+            }
+            <h3 id="world-proposal-heading" class="wb-title"><LucideIcon IconName="clipboard-check" Size="16" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3>
+            <span class="wb-count" title="@L["WorldChat.Proposal.Apply", proposal.Drafts.Count(d => d.Selected)]">@proposal.Drafts.Count(d => d.Selected)/@proposal.Drafts.Count</span>
+        </header>
+
+        <div class="wb-scroll wb-ledger-body" id="world-proposal-body">
+            @if (current == null)
+            {
+                @if (!string.IsNullOrWhiteSpace(proposal.Summary))
+                {
+                    <p class="wb-summary">@proposal.Summary</p>
+                }
+                <p class="field-hint">@L["WorldChat.Proposal.Hint"]</p>
+                @if (Warnings.Count > 0)
+                {
+                    <details class="wb-warnings mb-3" data-testid="world-proposal-warnings">
+                        <summary><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Warnings", Warnings.Count]</summary>
+                        <ul class="small mb-0">
+                            @foreach (var warning in Warnings)
+                            {
+                                <li>@warning</li>
+                            }
+                        </ul>
+                    </details>
+                }
+                @if (Missing.Count > 0)
+                {
+                    <div class="world-missing mb-3" data-testid="world-missing">
+                        <h4 class="label-caps mb-1">@L["WorldChat.Missing.Title"]</h4>
+                        <ul class="list-unstyled mb-1">
+                            @foreach (var m in Missing)
+                            {
+                                <li class="world-missing-row">
+                                    <span><strong>@m.Name</strong> <span class="small-muted">@L["WorldChat.Missing.Mentions", string.Join(", ", m.By)]</span></span>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" OnClick="() => OnFill.InvokeAsync(new[] { m })" Disabled="@Locked" data-testid="world-missing-write">@L["WorldChat.Missing.Write", m.Name]</CodexButton>
+                                </li>
+                            }
+                        </ul>
+                        @if (Missing.Count > 1)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" OnClick="() => OnFill.InvokeAsync(Missing)" Disabled="@Locked" data-testid="world-missing-all">@L["WorldChat.Missing.All", Missing.Count]</CodexButton>
+                        }
+                    </div>
+                }
+                @foreach (var group in order.GroupBy(d => d.Kind))
+                {
+                    <section class="wb-group">
+                        <h4 class="label-caps wb-group-title">@L[$"WorldChat.Kind.{group.Key}"] <span class="wb-group-count">@group.Count()</span></h4>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var d in group)
+                            {
+                                var state = State(d);
+                                <li class="wb-entry wb-entry-@state" data-testid="world-proposal-entry">
+                                    <input type="checkbox" class="wb-diamond" checked="@d.Selected" disabled="@Locked" aria-label="@L["WorldChat.Reader.Include", d.Name]"
+                                           @onchange="e => SetSelected(proposal, d, (bool)(e.Value ?? false))" data-testid="world-proposal-tick" />
+                                    <button type="button" class="wb-entry-open" @onclick="() => Read(d)" data-testid="world-proposal-open">
+                                        <span class="wb-entry-icon" aria-hidden="true"><LucideIcon IconName="@WorldChatView.KindIcon(d)" Size="16" /></span>
+                                        <span class="wb-entry-text">
+                                            <span class="wb-entry-name">@d.Name</span>
+                                            @if (Detail(proposal, d) is { Length: > 0 } detail)
+                                            {
+                                                <span class="wb-entry-detail">@detail</span>
+                                            }
+                                            @if (Pitch(proposal, d) is { Length: > 0 } pitch)
+                                            {
+                                                <span class="wb-entry-pitch">@pitch</span>
+                                            }
+                                        </span>
+                                        <span class="wb-entry-flags">
+                                            @if (d.SharedWithPlayers && d.Kind != DraftKinds.Bestiary)
+                                            {
+                                                <span title="@L["WorldChat.Proposal.Shared"]"><LucideIcon IconName="eye" Size="14" Label="@L["WorldChat.Proposal.Shared"]" /></span>
+                                            }
+                                            @if (state == "Accepted")
+                                            {
+                                                <LucideIcon IconName="check" Size="14" Label="@L["WorldChat.Review.Accepted"]" />
+                                            }
+                                        </span>
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+            }
+            else
+            {
+                var position = order.IndexOf(current);
+                var state = State(current);
+                <article class="wb-reader" data-testid="world-reader">
+                    <nav class="wb-reader-nav" aria-label="@L["WorldChat.Review.Rail"]">
+                        <span class="small-muted" role="status">@L["WorldChat.Review.Step", position + 1, order.Count]</span>
+                        <span class="wb-reader-arrows">
+                            <button type="button" class="wb-icon-btn" disabled="@(position == 0)" @onclick="() => reading = order[position - 1].Ref" aria-label="@L["Common.Back"]" data-testid="world-reader-prev"><LucideIcon IconName="chevron-left" Size="18" /></button>
+                            <button type="button" class="wb-icon-btn" disabled="@(position == order.Count - 1)" @onclick="() => reading = order[position + 1].Ref" aria-label="@L["Common.Next"]" data-testid="world-reader-next"><LucideIcon IconName="chevron-right" Size="18" /></button>
+                        </span>
+                    </nav>
+                    <p class="label-caps mb-1"><LucideIcon IconName="@WorldChatView.KindIcon(current)" Size="14" /> @L[$"WorldChat.Kind.{current.Kind}"]@(Detail(proposal, current) is { Length: > 0 } detail ? " · " + detail : "")</p>
+                    <h3 class="wb-reader-name">@current.Name <span class="chip review-state review-state-@state">@L[$"WorldChat.Review.{state}"]</span></h3>
+                    <div class="wb-reader-switches">
+                        <CodexCheck Id="@($"reader-include-{current.Ref}")" Checked="current.Selected" OnChange="e => SetSelected(proposal, current, (bool)(e.Value ?? false))" Disabled="Locked" data-testid="world-reader-include">@L["WorldChat.Reader.Keep"]</CodexCheck>
+                        @if (current.Kind == DraftKinds.Npc)
+                        {
+                            <CodexCheck Id="@($"reader-cast-{current.Ref}")" Checked="current.Cast" OnChange="e => SetCast(current, (bool)(e.Value ?? false))" Disabled="@(Locked || !current.Selected)" data-testid="world-proposal-cast">@(current.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"])</CodexCheck>
+                        }
+                    </div>
+                    @if (current.SharedWithPlayers && current.Kind != DraftKinds.Bestiary)
+                    {
+                        <p class="wb-callout wb-callout-warning" data-testid="world-proposal-shared"><LucideIcon IconName="eye" Size="14" /> @L["WorldChat.Proposal.Shared"]</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(current.Pitch) && !PitchRepeatsBody(current) && !DraftKinds.ChangesExisting(current.Kind))
+                    {
+                        <p class="wb-reader-pitch">@Resolved(proposal, current.Pitch)</p>
+                    }
+                    @switch (current.Kind)
+                    {
+                        case DraftKinds.Tags:
+                            <div class="wb-tagchange">
+                                @foreach (var tag in current.TagsAdded)
+                                {
+                                    <span class="chip wb-tag wb-tag-added">+ @tag</span>
+                                }
+                                @foreach (var tag in current.TagsRemoved)
+                                {
+                                    <span class="chip wb-tag wb-tag-removed">− @tag</span>
+                                }
+                            </div>
+                            <h4 class="label-caps mt-3">@L["WorldChat.Proposal.Targets", current.Tagged.Count]</h4>
+                            <ul class="wb-tagged">
+                                @foreach (var thing in current.Tagged)
+                                {
+                                    <li><span>@thing.Name</span> <span class="small-muted">@(thing.Before.Count == 0 ? L["WorldChat.Proposal.NoTags"] : string.Join(", ", thing.Before))</span></li>
+                                }
+                            </ul>
+                            break;
+                        case DraftKinds.Bestiary:
+                            <p>@(current.SharedWithPlayers ? L["WorldChat.Proposal.OnBestiary"] : L["WorldChat.Proposal.ToBestiary", current.Stats?.Shown ?? current.Name])</p>
+                            break;
+                        case DraftKinds.Edit when WorldBundle.ParseTarget(current.Target ?? string.Empty, out _) == EditTarget.Homebrew:
+                            @if (current.Rename != null)
+                            {
+                                <p><strong>@L["WorldChat.Proposal.Renamed", current.Rename]</strong></p>
+                            }
+                            @Fields(current, onlyChanged: true)
+                            @if (current.Retag)
+                            {
+                                @TagDiff(current.BeforeTags ?? new List<string>(), current.Tags)
+                            }
+                            @TextChange(current, wiki: false)
+                            break;
+                        case DraftKinds.Edit:
+                            @TextChange(current, wiki: true)
+                            break;
+                        case DraftKinds.Homebrew:
+                            @if (current.BasedOnName != null)
+                            {
+                                <p class="wb-callout"><LucideIcon IconName="copy" Size="14" /> @L["WorldChat.Proposal.BasedOn", current.BasedOnName]</p>
+                            }
+                            @Fields(current, onlyChanged: false)
+                            @Tags(current.Tags)
+                            @if (!string.IsNullOrWhiteSpace(current.Body))
+                            {
+                                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false), TextFormatting.ToHtml, DmView.From(L)))</div>
+                            }
+                            break;
+                        default:
+                            @Tags(current.Tags)
+                            @if (!string.IsNullOrWhiteSpace(current.Body))
+                            {
+                                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(WorldBundleParser.ResolveLinks(current.Body, proposal, keepLinks: false), TextFormatting.ToHtml, DmView.From(L)))</div>
+                            }
+                            break;
+                    }
+                    @if (Missing.Where(m => m.ByRefs.Contains(current.Ref)).ToList() is { Count: > 0 } here)
+                    {
+                        <div class="world-missing mt-3">
+                            <h4 class="label-caps">@L["WorldChat.Missing.Title"]</h4>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var m in here)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="sparkles" OnClick="() => OnFill.InvokeAsync(new[] { m })" Disabled="@Locked" data-testid="world-review-write">@L["WorldChat.Missing.Write", m.Name]</CodexButton>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (current.Selected && proposal.WouldSkip(current).Count is > 0 and var cascade)
+                    {
+                        <p class="small-muted mt-3 mb-0">@L["WorldChat.Review.SkippedAlso", cascade]</p>
+                    }
+                </article>
+            }
+        </div>
+
+        <footer class="wb-foot">
+            @if (ApplyError != null)
+            {
+                <p class="text-danger small mb-2" role="alert" data-testid="world-review-error">@ApplyError</p>
+            }
+            @if (Applying)
+            {
+                <AiWorking Text="@L["WorldChat.Proposal.Applying"]" TestId="world-proposal-applying" Compact="true" />
+            }
+            else if (current != null)
+            {
+                <div class="wb-foot-row">
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => SkipAsync(proposal, current)" Disabled="@Locked" data-testid="world-review-skip"><LucideIcon IconName="x" Size="16" /> @L["WorldChat.Review.Skip"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => KeepAsync(proposal, current)" Disabled="@Locked" id="world-review-accept" data-testid="world-review-accept"><LucideIcon IconName="check" Size="16" /> @L["WorldChat.Review.Accept"]</CodexButton>
+                </div>
+            }
+            <div class="wb-foot-row">
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="DiscardAsync" Disabled="@Locked" data-testid="world-proposal-discard">@L["WorldChat.Proposal.Discard"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OnApply" Disabled="@(Locked || !proposal.Drafts.Any(d => d.Selected))" data-testid="world-proposal-apply">
+                    <LucideIcon IconName="check" Size="16" /> @L["WorldChat.Proposal.Apply", proposal.Drafts.Count(d => d.Selected)]
+                </CodexButton>
+            </div>
+        </footer>
+    }
+    else
+    {
+        <header class="wb-head">
+            <h3 class="wb-title"><LucideIcon IconName="clipboard-check" Size="16" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3>
+        </header>
+        <div class="wb-scroll wb-ledger-body">
+            @if (LastApplied is { Links.Count: > 0 } applied)
+            {
+                <section class="wb-result" data-testid="world-result">
+                    <h4 class="wb-result-title"><LucideIcon IconName="circle-check" Size="16" /> @applied.Text</h4>
+                    <p class="field-hint">@L["WorldChat.Result.Hint"]</p>
+                    <WorldChatLinks Links="applied.Links" />
+                </section>
+            }
+            <div class="wb-empty">
+                <p class="wb-empty-title">@L["WorldChat.Proposal.Empty.Title"]</p>
+                <p class="small-muted">@L["WorldChat.Proposal.Empty.Body"]</p>
+                <ul class="wb-can">
+                    <li><LucideIcon IconName="map-pin" Size="14" /> @L["WorldChat.Can.World"]</li>
+                    <li><LucideIcon IconName="book-marked" Size="14" /> @L["WorldChat.Can.Homebrew"]</li>
+                    <li><LucideIcon IconName="edit-3" Size="14" /> @L["WorldChat.Can.Revise"]</li>
+                    <li><LucideIcon IconName="tags" Size="14" /> @L["WorldChat.Can.Tags"]</li>
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+    [Parameter] public WorldBundle? Proposal { get; set; }
+    [Parameter] public IReadOnlyList<string> Warnings { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyCollection<string> Decided { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<MissingMention> Missing { get; set; } = Array.Empty<MissingMention>();
+    [Parameter] public IReadOnlyDictionary<string, string> PlaceNames { get; set; } = new Dictionary<string, string>();
+    [Parameter] public WorldChatLine? LastApplied { get; set; }
+    [Parameter] public bool Locked { get; set; }
+    [Parameter] public bool Applying { get; set; }
+    [Parameter] public string? ApplyError { get; set; }
+    [Parameter] public EventCallback OnApply { get; set; }
+    [Parameter] public EventCallback OnDiscard { get; set; }
+    [Parameter] public EventCallback<IReadOnlyList<MissingMention>> OnFill { get; set; }
+    /// <summary>The DM ticked or unticked something or decided on an entry: the chat stores it and the missing mentions change.</summary>
+    [Parameter] public EventCallback<string?> OnDecided { get; set; }
+
+    // The entry the reader shows; null shows the list.
+    private string? reading;
+    private WorldBundle? shown;
+
+    protected override void OnParametersSet()
+    {
+        // A proposal made afresh starts at its list; entries added to the same one keep the reader where it is.
+        if (!ReferenceEquals(shown, Proposal) && (Proposal == null || reading == null || Proposal.Find(reading) == null)) reading = null;
+        shown = Proposal;
+    }
+
+    /// <summary>Opens the reader at the first entry still waiting for a decision, or the first.</summary>
+    public void ReadNext()
+    {
+        if (Proposal == null) return;
+        var order = Order(Proposal);
+        reading = (order.FirstOrDefault(d => d.Selected && !Decided.Contains(d.Ref)) ?? order.FirstOrDefault())?.Ref;
+        StateHasChanged();
+    }
+
+    private static List<WorldDraft> Order(WorldBundle proposal) =>
+        proposal.Drafts.OrderBy(d => Array.IndexOf(WorldChatView.KindOrder, d.Kind)).ToList();
+
+    private string State(WorldDraft d) => !d.Selected ? "Skipped" : Decided.Contains(d.Ref) ? "Accepted" : "Pending";
+
+    private void Read(WorldDraft d) => reading = d.Ref;
+
+    // Unticking an entry unticks what only exists because of it (the places inside it), so no place is left without its parent.
+    private async Task SetSelected(WorldBundle proposal, WorldDraft d, bool on)
+    {
+        if (on) proposal.Select(d);
+        else proposal.Skip(d);
+        await OnDecided.InvokeAsync(null);
+    }
+
+    private async Task SetCast(WorldDraft d, bool on)
+    {
+        d.Cast = on;
+        await OnDecided.InvokeAsync(null);
+    }
+
+    private async Task KeepAsync(WorldBundle proposal, WorldDraft d)
+    {
+        // The place it sits in comes back with it.
+        foreach (var up in proposal.Select(d)) await OnDecided.InvokeAsync(up.Ref);
+        await OnDecided.InvokeAsync(d.Ref);
+        Advance(proposal, d);
+    }
+
+    private async Task SkipAsync(WorldBundle proposal, WorldDraft d)
+    {
+        foreach (var also in proposal.Skip(d)) await OnDecided.InvokeAsync(also.Ref);
+        await OnDecided.InvokeAsync(d.Ref);
+        Advance(proposal, d);
+    }
+
+    // After a decision, the next entry still waiting; when none is, back to the list, where Apply is.
+    private void Advance(WorldBundle proposal, WorldDraft from)
+    {
+        var order = Order(proposal);
+        var at = order.IndexOf(from);
+        reading = order.Skip(at + 1).Concat(order.Take(at)).FirstOrDefault(d => d.Selected && !Decided.Contains(d.Ref))?.Ref;
+    }
+
+    private async Task DiscardAsync()
+    {
+        reading = null;
+        await OnDiscard.InvokeAsync();
+    }
+
+    // A pitch the app made from the start of the text would only say the same thing twice, one above the other.
+    private static bool PitchRepeatsBody(WorldDraft d)
+    {
+        static string Flat(string text) => System.Text.RegularExpressions.Regex.Replace(text.Replace("[[", string.Empty).Replace("]]", string.Empty), @"\s+", " ").Trim().TrimEnd('…', '.', ' ');
+        var pitch = Flat(d.Pitch);
+        return pitch.Length > 0 && Flat(d.Body ?? string.Empty).StartsWith(pitch, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string Resolved(WorldBundle proposal, string text) => WorldBundleParser.ResolveLinks(text, proposal, keepLinks: false);
+
+    // The list's second line: for a change, what it changes; otherwise the pitch.
+    private string? Pitch(WorldBundle proposal, WorldDraft d) => d.Kind switch
+    {
+        DraftKinds.Tags => L["WorldChat.Proposal.Targets", d.Targets.Count],
+        DraftKinds.Bestiary => null,
+        DraftKinds.Edit => null,
+        _ => string.IsNullOrWhiteSpace(d.Pitch) ? null : Resolved(proposal, d.Pitch)
+    };
+
+    /// <summary>"Settlement, in Greyharbour": what kind of entry it is and, for a place, where it goes.</summary>
+    private string Detail(WorldBundle proposal, WorldDraft d)
+    {
+        var parts = new List<string>();
+        switch (d.Kind)
+        {
+            case DraftKinds.Edit:
+                parts.Add(L[$"WorldChat.Edit.{WorldBundle.ParseTarget(d.Target ?? string.Empty, out _)}"]);
+                break;
+            case DraftKinds.Place:
+                if (d.PlaceKind != null) parts.Add(L[$"Campaign.Places.Kind.{(d.PlaceKind == "site" ? "Site" : char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..])}"]);
+                var parent = d.Parent == null ? null
+                    : d.Parent.StartsWith(WorldBundle.ExistingPrefix, StringComparison.Ordinal) ? PlaceNames.GetValueOrDefault(d.Parent[(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix).Length..]) ?? L["WorldChat.Proposal.ExistingPlace"]
+                    : proposal.Find(d.Parent)?.Name;
+                if (parent != null) parts.Add(L["Campaign.Places.InPlace", parent]);
+                else if (!string.IsNullOrWhiteSpace(proposal.Region)) parts.Add(L["Campaign.Places.InPlace", proposal.Region]);
+                break;
+            case DraftKinds.Wiki when d.PageKind is "faction" or "quest":
+                parts.Add(L[$"Campaign.Wiki.Kind.{(d.PageKind == "faction" ? "Faction" : "Quest")}"]);
+                break;
+            case DraftKinds.Homebrew when d.Type != null:
+                parts.Add(TypeLabel(d.Type));
+                if (d.BasedOnName != null) parts.Add(L["WorldChat.Proposal.BasedOn", d.BasedOnName]);
+                break;
+            case DraftKinds.Npc when d.Cast:
+                parts.Add(d.Stats is { } stats ? L["WorldChat.Proposal.CastAs", stats.Shown] : L["WorldChat.Proposal.Cast"]);
+                break;
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    private string TypeLabel(string type) => Ctx.System?.FindType(type)?.Label is { Length: > 0 } label ? label : type;
+
+    private string FieldLabel(string type, string key) =>
+        Ctx.System?.FindType(type)?.EditorFields().FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase))?.Label is { Length: > 0 } label ? label : key;
+
+    // A field's value as the DM reads it: text as it is, a list as a list, anything else as JSON.
+    private string Show(object? value) => value switch
+    {
+        null => "—",
+        string text => text,
+        bool yes => yes ? L["Library.Detail.Yes"] : L["Library.Detail.No"],
+        System.Collections.IEnumerable list when value is not System.Collections.IDictionary && list.Cast<object?>().All(v => v is string or long or int or double) =>
+            string.Join(", ", list.Cast<object?>()),
+        _ => WorldBuilderService.PropertyJson(value)
+    };
+
+    // A homebrew entry's fields: every one for a new entry, the ones that change (old → new) for an edit.
+    private RenderFragment Fields(WorldDraft d, bool onlyChanged) => __builder =>
+    {
+        var rows = d.Properties.Where(p => !onlyChanged || d.BeforeProperties == null || !WorldBuilderService.Same(d.BeforeProperties.GetValueOrDefault(p.Key), p.Value)).ToList();
+        if (rows.Count == 0) return;
+        <h4 class="label-caps mt-2">@L["WorldChat.Proposal.Fields"]</h4>
+        <dl class="wb-fields" data-testid="world-reader-fields">
+            @foreach (var (key, value) in rows)
+            {
+                <dt>@FieldLabel(d.Type ?? string.Empty, key)</dt>
+                <dd>
+                    @if (onlyChanged && d.BeforeProperties?.GetValueOrDefault(key) is { } old)
+                    {
+                        <del>@Show(old)</del> <span aria-hidden="true">→</span>
+                    }
+                    <span class="@(onlyChanged ? "wb-ins" : null)">@Show(value)</span>
+                </dd>
+            }
+        </dl>
+    };
+
+    private RenderFragment Tags(IReadOnlyList<string> tags) => __builder =>
+    {
+        if (tags.Count == 0) return;
+        <div class="wb-tagchange mt-2" aria-label="@L["WorldChat.Proposal.TagsLabel"]">
+            @foreach (var tag in tags)
+            {
+                <span class="chip wb-tag"><LucideIcon IconName="tag" Size="12" /> @tag</span>
+            }
+        </div>
+    };
+
+    private RenderFragment TagDiff(List<string> before, List<string> after) => __builder =>
+    {
+        <h4 class="label-caps mt-2">@L["WorldChat.Proposal.TagsLabel"]</h4>
+        <div class="wb-tagchange">
+            @foreach (var tag in after)
+            {
+                <span class="chip wb-tag @(before.Contains(tag, StringComparer.OrdinalIgnoreCase) ? null : "wb-tag-added")">@tag</span>
+            }
+            @foreach (var tag in before.Where(t => !after.Contains(t, StringComparer.OrdinalIgnoreCase)))
+            {
+                <span class="chip wb-tag wb-tag-removed">@tag</span>
+            }
+        </div>
+    };
+
+    // What an edit does to a text: the changes marked word by word, the new text as it will read, or the text as it is now.
+    private string textView = "changes";
+
+    private RenderFragment TextChange(WorldDraft d, bool wiki) => __builder =>
+    {
+        var after = d.Body ?? string.Empty;
+        var before = d.Before ?? string.Empty;
+        // Both sides as they read, links flattened to names, so a link kept as it was is not a change.
+        var flatAfter = WorldBundleParser.ResolveLinks(after, Proposal!, keepLinks: false);
+        var flatBefore = WorldBundleParser.ResolveLinks(before, Proposal!, keepLinks: false);
+        if (!TextDiff.Changed(flatBefore, flatAfter))
+        {
+            if (wiki)
+            {
+                <p class="small-muted">@L["WorldChat.Diff.None"]</p>
+            }
+
+            return;
+        }
+
+        <div class="wb-seg mt-2" role="group" aria-label="@L["WorldChat.Diff.View"]">
+            <button type="button" class="wb-seg-btn" aria-pressed="@(textView == "changes" ? "true" : "false")" @onclick='() => textView = "changes"' data-testid="world-diff-changes"><LucideIcon IconName="file-diff" Size="14" /> @L["WorldChat.Diff.Changes"]</button>
+            <button type="button" class="wb-seg-btn" aria-pressed="@(textView == "new" ? "true" : "false")" @onclick='() => textView = "new"'>@L["WorldChat.Diff.New"]</button>
+            <button type="button" class="wb-seg-btn" aria-pressed="@(textView == "old" ? "true" : "false")" @onclick='() => textView = "old"'>@L["WorldChat.Proposal.Current"]</button>
+        </div>
+        @switch (textView)
+        {
+            case "new":
+                <div class="rules-text wb-reader-body" data-testid="world-review-body">@((MarkupString)SecretRender.Html(flatAfter, TextFormatting.ToHtml, DmView.From(L)))</div>
+                break;
+            case "old":
+                <div class="rules-text wb-reader-body" data-testid="world-proposal-before">@((MarkupString)SecretRender.Html(before, TextFormatting.ToHtml, DmView.From(L)))</div>
+                break;
+            default:
+                <div class="wb-diff" data-testid="world-diff">
+                    @foreach (var piece in TextDiff.Words(flatBefore, flatAfter))
+                    {
+                        @switch (piece.Kind)
+                        {
+                            case DiffKind.Added:
+                                <ins>@piece.Text</ins>
+                                break;
+                            case DiffKind.Removed:
+                                <del>@piece.Text</del>
+                                break;
+                            default:
+                                @piece.Text
+                                break;
+                        }
+                    }
+                </div>
+                break;
+        }
+    };
+}

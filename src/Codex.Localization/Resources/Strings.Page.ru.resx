@@ -172,7 +172,7 @@
   <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>Модели изображений пока нет</value></data>
   <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>Текстовой модели пока нет</value></data>
   <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>Загружать иллюстрации можно и без неё. Добавьте её, чтобы картинки рисовались за вас; хорошие модели для текста редко рисуют, поэтому она настраивается отдельно.</value></data>
-  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Добавьте её справа. OpenRouter выбран заранее: одним ключом доступно большинство современных моделей.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Добавьте её в разделе «Новая текстовая модель». OpenRouter выбран заранее: одним ключом доступно большинство современных моделей.</value></data>
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>Используется</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>нет ключа</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>ключ сохранён</value></data>
@@ -190,6 +190,7 @@
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>не настроено</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>Один ключ — сотни моделей. Ключ можно получить на openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Прямой доступ к OpenAI с вашим ключом.</value></data>
+  <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude через собственный API Anthropic. Ключ можно получить на console.anthropic.com.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (локально)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>Модель на вашем компьютере. Ключ не нужен.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (локально)</value></data>
@@ -207,4 +208,5 @@
   <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>Одна фраза, которая цепляет, например «Ограбление в летающем городе».</value></data>
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Видно на карточке кампании и под её названием.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>Полное описание на странице обзора кампании. Работает Markdown; дополнить можно позже в настройках.</value></data>
+  <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>Строитель мира</value></data>
 </root>

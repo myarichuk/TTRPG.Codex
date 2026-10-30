@@ -66,6 +66,16 @@ actorFields:
     description: Копируется из вашего вида при выборе.
   notes: { label: Заметки, category: Заметки }
 
+maxSuffix: макс.
+
+categories:
+  Attributes: Характеристики
+  Resources: Ресурсы
+  Spellcasting: Заклинания
+  Feats: Черты
+  Combat: Бой
+  General: Общее
+
 conditions:
   Blinded: Ослеплённый
   Charmed: Очарованный
@@ -455,6 +465,28 @@ values:
   "weapon-property": "Свойство оружия"
 
 sheetRules:
+  bonusesLabel: Бонусы предыстории
+  increasesLabel: Повышения характеристик
+  listDescriptions:
+    cantrips: Известные заговоры. Только заговоры вашего класса, не больше числа из таблицы класса.
+    spells: Заклинания 1-го уровня и выше. Только из списка вашего класса, не выше вашей самой высокой ячейки, не больше числа подготовленных заклинаний.
+    grantedSpells: Заклинания, которые умение даёт вам вне списка класса (заклинания подкласса, Одарённый магией, наследие вида, Таинственный арканум). Они не входят в число подготовленных.
+    feats: Общие черты и дары эпических героев, полученные от умений класса. Черты происхождения даёт предыстория; у боевых стилей свой список.
+    fightingStyles: Черты боевого стиля от умений класса, например «Боевой стиль» воина и «Дополнительный боевой стиль» чемпиона.
+    extraOriginFeats: Черта происхождения сверх черты предыстории, например та, что даёт человеку «Универсальность».
+  messages:
+    "this choice is not allowed by the rules.": это не разрешено правилами.
+    "not allowed by the rules.": это не разрешено правилами.
+    "that is not a cantrip.": это не заговор.
+    "not on your class's spell list.": нет в списке заклинаний вашего класса.
+    "cantrips go in the cantrips list.": заговоры вносятся в список заговоров.
+    "above the highest spell level you can cast.": выше самого высокого уровня заклинаний, который вы можете накладывать.
+    "origin feats come from your background and fighting styles have their own list.": черты происхождения даёт предыстория, а у боевых стилей свой список.
+    "you are not high enough level for it.": ваш уровень для этого недостаточно высок.
+    "that is not a fighting style.": это не боевой стиль.
+    "only an origin feat can go here.": здесь может быть только черта происхождения.
+    "that subclass belongs to another class.": этот подкласс принадлежит другому классу.
+    "your background grants a different origin feat.": ваша предыстория даёт другую черту происхождения.
   derived:
     proficiencyBonus: Бонус мастерства
     initiative: Инициатива

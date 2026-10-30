@@ -172,7 +172,7 @@
   <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>אין מודל תמונות עדיין</value></data>
   <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>אין מודל טקסט עדיין</value></data>
   <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>העלאת איורים עובדת גם בלעדיו. הוסיפו מודל כדי שיציירו עבורכם; מודלי כתיבה טובים כמעט לא מציירים, ולכן זה מוגדר בנפרד מהטקסט.</value></data>
-  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>הוסיפו מודל בצד. OpenRouter נבחר מראש: מפתח אחד נותן גישה לרוב המודלים העדכניים.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>הוסיפו מודל תחת „מודל טקסט חדש”. OpenRouter נבחר מראש: מפתח אחד נותן גישה לרוב המודלים העדכניים.</value></data>
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>בשימוש</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>אין מפתח</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>המפתח שמור</value></data>
@@ -190,6 +190,7 @@
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>מפתח אחד, מאות מודלים. אפשר לקבל מפתח ב-openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>גישה ישירה ל-OpenAI עם מפתח משלכם.</value></data>
+  <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude דרך ה-API של Anthropic עצמה. מפתח אפשר לקבל ב-console.anthropic.com.</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama" xml:space="preserve"><value>Ollama (מקומי)</value></data>
   <data name="Page.AiSettings.Preset.Text.ollama.Hint" xml:space="preserve"><value>מודל שרץ על המחשב שלכם. לא צריך מפתח.</value></data>
   <data name="Page.AiSettings.Preset.Text.lmstudio" xml:space="preserve"><value>LM Studio (מקומי)</value></data>
@@ -207,4 +208,5 @@
   <data name="Page.Home.TaglinePlaceholder" xml:space="preserve"><value>משפט אחד שמושך, למשל ״שוד בעיר שמרחפת באוויר״.</value></data>
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>מוצג בכרטיס הקמפיין ומתחת לשמו.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>התיאור המלא, מוצג בדף הסקירה של הקמפיין. אפשר להשתמש ב-Markdown ולהרחיב אחר כך בהגדרות.</value></data>
+  <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>בונה העולם</value></data>
 </root>

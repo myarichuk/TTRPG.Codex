@@ -15,6 +15,9 @@ of content a system has; packs of YAML files supply the content. The repository 
 pack). See [docs/CONTENT_PACKS.md](docs/CONTENT_PACKS.md) for the format and
 [LEGAL.md](LEGAL.md) for licences.
 
+The project website, with screenshots, an install guide and a usage guide in English, Russian and Hebrew, lives in
+[`site/`](site/README.md) and is published to GitHub Pages: <https://myarichuk.github.io/TTRPG.Codex/>.
+
 ## Run it
 
 **Download:** the [latest release](https://github.com/myarichuk/TTRPG.Codex/releases) has an
@@ -74,6 +77,12 @@ What the AI does today:
 - **Characters from a concept**: one line of concept becomes a draft sheet using only classes,
   species and backgrounds loaded in the campaign's Library, plus a short history.
 - **Wiki pages**: expand rough notes into a linked page.
+- **World builder**: named chats with your model, kept per campaign, that read the campaign and the
+  Library and propose new places, people, factions, quests, secrets, spells, magic items, equipment
+  and creatures (or variants of the Library's), changes to existing pages, places, histories and
+  homebrew (reviewed as a word-by-word diff), Bestiary picks, and tags. Nothing is saved until you
+  apply it, and everything starts hidden. Each tool call the model makes can be opened, down to the
+  raw JSON. Tags then let the Library export one set of homebrew as a pack to share.
 
 ## Install on a phone
 

@@ -8,12 +8,19 @@ using System.Text.RegularExpressions;
 namespace Codex.Core;
 
 /// <summary>
-/// Renders the small Markdown subset rules text actually uses - paragraphs, <c>**bold**</c>,
-/// <c>*italic*</c> and <c>_italic_</c>, <c>- </c> bullet lists, pipe tables - into HTML. Everything is HTML-encoded
-/// first, so content from a pack or a homebrew author can never inject markup.
+/// Renders the small Markdown subset rules text and written histories actually use - paragraphs, headings, <c>**bold**</c>,
+/// <c>*italic*</c> and <c>_italic_</c>, <c>`code`</c>, bullet and numbered lists, <c>&gt;</c> quotes, rules, fenced code,
+/// <c>[text](https://…)</c> links, pipe tables - into HTML. Everything is HTML-encoded first, so content from a pack or a
+/// homebrew author can never inject markup.
 /// </summary>
 public static class TextFormatting
 {
+    private static readonly Regex Rule = new(@"^(?:-{3,}|\*{3,}|_{3,})$", RegexOptions.Compiled);
+    private static readonly Regex OrderedMark = new(@"^\s*\d{1,3}[.)]\s+", RegexOptions.Compiled);
+    private static readonly Regex QuoteMark = new(@"^>\s?", RegexOptions.Compiled);
+    private static readonly Regex CodeSpan = new(@"`([^`\n]+?)`", RegexOptions.Compiled);
+    // Applied to text that is already HTML-encoded, so the address cannot break out of its attribute; web addresses only.
+    private static readonly Regex MdLink = new(@"\[([^\[\]\n]+?)\]\((https?://[^\s()]+)\)", RegexOptions.Compiled);
     private static readonly Regex Bold = new(@"\*\*(.+?)\*\*", RegexOptions.Compiled);
     private static readonly Regex Italic = new(@"(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)", RegexOptions.Compiled);
 
@@ -56,6 +63,72 @@ public static class TextFormatting
                 }
 
                 html.Append(RenderTable(tableLines));
+                continue;
+            }
+
+            if (line.TrimStart().StartsWith("```"))
+            {
+                Flush();
+                i++;
+                var code = new List<string>();
+                while (i < lines.Count && !lines[i].TrimStart().StartsWith("```"))
+                {
+                    code.Add(lines[i]);
+                    i++;
+                }
+
+                if (i < lines.Count) i++; // the closing fence; a block left open runs to the end
+                html.Append("<pre><code>").Append(WebUtility.HtmlEncode(string.Join("\n", code))).Append("</code></pre>");
+                continue;
+            }
+
+            if (Rule.IsMatch(line.Trim()))
+            {
+                Flush();
+                html.Append("<hr>");
+                i++;
+                continue;
+            }
+
+            if (line.TrimStart().StartsWith(">"))
+            {
+                Flush();
+                var quoted = new List<string>();
+                while (i < lines.Count && lines[i].TrimStart().StartsWith(">"))
+                {
+                    quoted.Add(QuoteMark.Replace(lines[i].TrimStart(), string.Empty).Trim());
+                    i++;
+                }
+
+                // A blank quoted line starts a new paragraph inside the quote.
+                var paragraphs = new List<List<string>> { new() };
+                foreach (var quotedLine in quoted)
+                {
+                    if (quotedLine.Length == 0) paragraphs.Add(new List<string>());
+                    else paragraphs[^1].Add(quotedLine);
+                }
+
+                html.Append("<blockquote>");
+                foreach (var part in paragraphs.Where(x => x.Count > 0))
+                {
+                    html.Append("<p>").Append(string.Join("<br>", part.Select(Inline))).Append("</p>");
+                }
+
+                html.Append("</blockquote>");
+                continue;
+            }
+
+            if (OrderedMark.IsMatch(line))
+            {
+                Flush();
+                html.Append("<ol>");
+                while (i < lines.Count && OrderedMark.IsMatch(lines[i]))
+                {
+                    html.Append("<li>").Append(Inline(OrderedMark.Replace(lines[i], string.Empty).Trim())).Append("</li>");
+                    i++;
+                }
+
+                html.Append("</ol>");
                 continue;
             }
 
@@ -134,30 +207,59 @@ public static class TextFormatting
         return sb.Append("</tbody></table></div>").ToString();
     }
 
-    /// <summary>HTML-encode, then apply bold/italic.</summary>
+    /// <summary>HTML-encode, then apply code, links, bold and italic. Code goes first and is set aside, so what is written
+    /// inside it (<c>*</c>, <c>_</c>) stays as written.</summary>
     public static string Inline(string text)
     {
-        var encoded = WebUtility.HtmlEncode(text);
+        // The placeholders below are control characters, which HtmlEncode leaves alone: written ones would be mistaken for ours.
+        var encoded = WebUtility.HtmlEncode(text).Replace("\u0003", string.Empty).Replace("\u0004", string.Empty)
+            .Replace("\u0005", string.Empty).Replace("\u0006", string.Empty);
+        var code = new List<string>();
+        var urls = new List<string>();
+        encoded = CodeSpan.Replace(encoded, m =>
+        {
+            code.Add(m.Groups[1].Value);
+            return $"\u0003{code.Count - 1}\u0004";
+        });
+        // The address is set aside too, so emphasis cannot rewrite inside the href ("https://a.com/*b*c") or leave tags unbalanced.
+        encoded = MdLink.Replace(encoded, m =>
+        {
+            urls.Add(m.Groups[2].Value);
+            return $"<a href=\"\u0005{urls.Count - 1}\u0006\" target=\"_blank\" rel=\"noopener noreferrer\">{m.Groups[1].Value}</a>";
+        });
         encoded = Bold.Replace(encoded, "<strong>$1</strong>");
         encoded = Italic.Replace(encoded, "<em>$1</em>");
         encoded = UnderscoreItalic.Replace(encoded, "<em>$1</em>");
-        return encoded;
+        if (urls.Count > 0) encoded = UrlPlaceholder.Replace(encoded, m => urls[int.Parse(m.Groups[1].Value)]);
+        return code.Count == 0 ? encoded : CodePlaceholder.Replace(encoded, m => "<code>" + code[int.Parse(m.Groups[1].Value)] + "</code>");
     }
 
+    private static readonly Regex CodePlaceholder = new("\u0003(\\d{1,6})\u0004", RegexOptions.Compiled);
+    private static readonly Regex UrlPlaceholder = new("\u0005(\\d{1,6})\u0006", RegexOptions.Compiled);
+
     /// <summary>First sentence or so, for list rows and cards, with markdown removed: headings (labels, not content) are left
-    /// out unless nothing else is written, bullets and emphasis lose their markers, and a wiki link shows its text.</summary>
-    public static string Summary(string? text, int maxLength = 140)
+    /// out unless nothing else is written, bullets and emphasis lose their markers, and a wiki link shows its text. With
+    /// <paramref name="keepLinks"/> the links stay as written ([[p1]]), for a summary that is resolved later: flattened to "p1" they
+    /// could no longer be told from words, and a link cut in half by the length limit is dropped whole.</summary>
+    public static string Summary(string? text, int maxLength = 140, bool keepLinks = false)
     {
         if (string.IsNullOrWhiteSpace(text)) return string.Empty;
         var lines = text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
         var content = lines.Where(l => !l.StartsWith('#')).ToList();
         var flat = string.Join(' ', (content.Count > 0 ? content : lines).Select(l => BulletMark.Replace(l.TrimStart('#').Trim(), string.Empty)));
-        flat = SummaryLink.Replace(flat, m => m.Groups[2].Success ? m.Groups[2].Value : m.Groups[1].Value);
+        if (!keepLinks) flat = SummaryLink.Replace(flat, m => m.Groups[2].Success ? m.Groups[2].Value : m.Groups[1].Value);
         flat = Italic.Replace(Bold.Replace(flat, "$1"), "$1");
         flat = UnderscoreItalic.Replace(flat, "$1").Replace("**", string.Empty);
         flat = Regex.Replace(flat, @"\s+", " ").Trim();
         if (flat.Length <= maxLength) return flat;
         var cut = flat.LastIndexOf(' ', maxLength);
-        return flat.Substring(0, cut > 40 ? cut : maxLength).TrimEnd('.', ',', ';') + "…";
+        var shortened = flat.Substring(0, cut > 40 ? cut : maxLength);
+        if (keepLinks)
+        {
+            var open = shortened.LastIndexOf("[[", StringComparison.Ordinal);
+            if (open >= 0 && shortened.IndexOf("]]", open, StringComparison.Ordinal) < 0) shortened = shortened[..open];
+        }
+
+        return shortened.TrimEnd('.', ',', ';', ' ') + "…";
     }
 }

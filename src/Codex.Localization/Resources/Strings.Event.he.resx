@@ -77,6 +77,7 @@
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>התשישות חלפה</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>דרגת התשישות כעת {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>הסרה: {0}</value></data>
+  <data name="Event.Wiki.Revealed" xml:space="preserve"><value>נחשף משהו חדש על {0} בוויקי.</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>הוספת {0}.</value></data>
   <data name="Event.Note.AddedSecret" xml:space="preserve"><value>הוספת {0} בסוד.</value></data>
   <data name="Event.Note.Corrected" xml:space="preserve"><value>תיקון {0}.</value></data>
@@ -119,6 +120,7 @@
   <data name="Event.Type.Initiative" xml:space="preserve"><value>יוזמה</value></data>
   <data name="Event.Type.InitiativeRemoved" xml:space="preserve"><value>יציאה מהיוזמה</value></data>
   <data name="Event.Type.Note" xml:space="preserve"><value>הערה</value></data>
+  <data name="Event.Type.WikiReveal" xml:space="preserve"><value>חשיפה</value></data>
   <data name="Event.Type.ResourceSpent" xml:space="preserve"><value>שימוש</value></data>
   <data name="Event.Type.ResourceRegained" xml:space="preserve"><value>החזרה</value></data>
   <data name="Event.Type.Rest" xml:space="preserve"><value>מנוחה</value></data>

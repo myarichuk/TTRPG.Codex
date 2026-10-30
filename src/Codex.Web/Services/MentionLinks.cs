@@ -55,3 +55,14 @@ public static class MentionLinks
         _ => "Item"
     };
 }
+
+/// <summary>The wiki pages a text box offers after "[[" (app-startup.js), as JSON for its data-pages attribute: the most
+/// recently updated first, so the page being worked on is at hand.</summary>
+public static class PageSuggestions
+{
+    public static string Json(IEnumerable<WikiPageDocument> pages, Func<WikiPageKind, string> kindLabel) =>
+        JsonSerializer.Serialize(pages
+            .Where(p => !string.IsNullOrWhiteSpace(p.Title))
+            .OrderByDescending(p => p.UpdatedAt)
+            .Select(p => new { n = p.Title, k = kindLabel(p.Kind) }));
+}

@@ -114,19 +114,19 @@ public sealed partial class SheetRuleEngine
                 var isShield = Rules.ArmorClass != null && type.Equals(Rules.ArmorClass.ShieldType, StringComparison.OrdinalIgnoreCase);
                 if (!armorTraining.Contains(training) && !(allArmor && !isShield))
                 {
-                    result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with {training.ToLowerInvariant()}. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells."));
+                    result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with {training.ToLowerInvariant()}. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.", "Actor.Rule.ArmorUntrained", new object?[] { entry, cls, training.ToLowerInvariant() }));
                 }
 
                 var needed = ToDouble(Property(entry, rules.StrengthProperty));
                 var score = result.Attributes?.Totals.GetValueOrDefault(strength) ?? YamlValues.GetInt(sheet, strength) ?? 10;
                 if (needed is > 0 && score < needed.Value)
                 {
-                    result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: needs Strength {(int)needed.Value}, or your Speed drops by 10 feet."));
+                    result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: needs Strength {(int)needed.Value}, or your Speed drops by 10 feet.", "Actor.Rule.ArmorStrength", new object?[] { entry, (int)needed.Value }));
                 }
 
                 if (Property(entry, rules.StealthProperty) is true or "true" or "True")
                 {
-                    result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: gives disadvantage on Stealth checks."));
+                    result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: gives disadvantage on Stealth checks.", "Actor.Rule.ArmorStealth", new object?[] { entry }));
                 }
 
                 continue;
@@ -137,7 +137,7 @@ public sealed partial class SheetRuleEngine
             var covered = entry.Tags.Any(weaponTraining.Contains) || weaponTraining.Any(t => StemWords(t) == name);
             if (!covered)
             {
-                result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with it, so you don't add your proficiency bonus to its attacks."));
+                result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with it, so you don't add your proficiency bonus to its attacks.", "Actor.Rule.WeaponUntrained", new object?[] { entry, cls }));
             }
         }
     }

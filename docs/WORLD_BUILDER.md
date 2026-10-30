@@ -1,214 +1,161 @@
 # World builder
 
-Status: the **homebrew recipe** (Library → *Build with AI*) and the **faction**, **settlement** and **quest recipes**
-(Wiki → *Build with AI*) are built, shown to the DM once a text model is set up. People (`npc`), places (`place`) and
-secrets (`fact`) are draft kinds; a person can also join the cast (with the stats of a Library creature, §3.1), a place can also go on the World page, and a homebrew
-creature can also go on the Bestiary shortlist. The world
-recipe and MCP are still design only.
+Status: built. The **World builder** section (`/campaigns/{id}/build`, DM only) holds the DM's conversations with their own
+text model, which reads the campaign and the Library through tools and proposes related pages, places, people, secrets and
+homebrew in one go, changes to what the campaign has, Bestiary picks and tags. The wiki's *Build with AI* menu and the Library's *Homebrew with AI* button open it with a starter message. The
+guided recipe wizards it replaced are gone. Phase 2, the same tools over MCP (§6), is design only.
 
-A set of guided wizards that help the DM create campaign material with the AI: a homebrew item, spell or creature,
-a faction, a city, a world, a quest or story arc. The wizard asks a short series of questions, the AI proposes a
-*bundle* of linked drafts (a city plus its ruler, two factions and a rumour), the DM reviews them, and the app saves
-the chosen ones into the wiki, the Library (homebrew) and the bestiary.
-
-It is offered only when the DM has set up a text model (BYOK, `AiFeatures.IsConfiguredAsync`); without one the
-entry points are hidden, as the other AI buttons are. It runs on the DM's own key (`AiProviderService.AssistantForAsync`).
+Related, outside the chat: any wiki page can be **promoted** to the cast (*Add to cast*: a Library stat block, a blank
+sheet or an AI-made sheet; the page becomes the character's history) or **put on the map** (a page of kind *Place* gets a
+place on save, nested in a region's tree). See `CastService.PromotePageAsync` and `PlaceWikiSync`.
 
 ## 1. Principles
 
-1. **The app drives, the model drafts.** The app owns the questions, the steps and every write. The model only
-   returns JSON drafts. It does not call tools that save anything. This works with every provider the settings page
-   offers, including small local models (Ollama, LM Studio) whose tool calling is unreliable.
-2. **Nothing is saved until the DM says so.** Generated material lands in a review step; the DM ticks what to keep,
-   edits it in place, and saves. Saved material starts hidden: wiki pages `DmOnly`, homebrew `IsPublished = false`,
-   facts `DmOnly`, places `Hidden`.
-3. **Reuse what exists.** Every draft becomes a document the app already has (table in §3). A new document type is
-   added only where nothing fits (quests, §3.2).
-4. **Stored data stays canonical.** Names and prose are written in the DM's language (`AiPrompts.StyleFor`), but
-   option values (spell school, damage type, size, any dropdown) are stored as the system's canonical values, as
-   everywhere else (see [LOCALIZATION.md](LOCALIZATION.md)). The app validates and fixes them before showing a draft.
-5. **Original names only.** The prompt asks for original names, and forbids product-identity names of published
-   settings and creatures, the same rule the shipped content follows.
+1. **The model proposes, the DM applies.** The model reads with tools and proposes with `propose_changes`, which checks
+   the proposal and holds it; it never writes. Saving happens only when the DM clicks *Apply* on the review card, through
+   `WorldBuilderService.SaveAsync`, the one write path.
+2. **Saved material starts hidden.** Wiki pages `DmOnly`, homebrew unpublished, facts `DmOnly`, places and cast members
+   `Hidden`. Revealing a cast member whose history came from a page warns the DM first.
+3. **Reuse what exists.** Every entry becomes a document the app already has: a page (`WikiPageDocument`, with a kind),
+   a place (`LocationDocument` in a region, with a parent and a kind), a cast member (`ActorDocument`, linked to its page),
+   a homebrew entry, a fact, a Bestiary shortlist line. Pack entries are never changed; a variant is a homebrew copy.
+4. **Stored data stays canonical.** Names and prose are in the DM's language; option values (spell school, damage type)
+   are mapped back to the system's values (`SystemDefinition.CanonicalOption`).
+5. **Original names only**, as the shipped content.
 
-## 2. How a wizard runs
+## 2. The conversations
 
-```
-Choose a recipe ─▶ Questions (2–6 steps) ─▶ Outline ─▶ Review & expand ─▶ Save
-                     fixed, from the recipe   one AI call   per draft, on demand   app writes, DM access
-```
+A DM keeps as many conversations per campaign as they like (`WorldChatDocument`, `worldchats/<guid>`). Each is named after
+its first message until the DM renames it, is private to the DM who started it (a co-DM sees their own), is stored after
+every turn and every decision on its proposal, is deleted with the campaign, and stays out of the campaign export, like the
+journal: they are working notes. `WorldChatSessions` (scoped to the DM's connection) keeps the chats opened so far, so a turn
+keeps running while the DM looks at another chat; `/build?chat=<guid>` opens one.
 
-1. **Choose a recipe.** From a "Build with AI" menu on the Wiki, Library (homebrew), Bestiary and World sections, or a
-   campaign-wide "World builder" entry on the overview. Opening it from a page pre-fills the context: "Faction" opened
-   from the wiki page *Port Varr* links the faction to Port Varr.
-2. **Questions.** Each recipe is a short list of questions: choices (tone, size, power level), short text ("what does
-   the faction want?") and "surprise me" on every question. The questions are data (§4), so they are translated and
-   always the same; the model does not invent the form. Free-text wishes go on the review step instead (step 4).
-3. **Outline (pass 1).** One call returns the bundle: each draft with a kind, a name, a one-line pitch and its links
-   to the other drafts and to existing pages. The prompt includes the campaign's description, the names of existing
-   wiki pages, homebrew entries, places and NPCs (capped, like `ExpandWikiAsync` caps related titles), so the model
-   links to them instead of inventing duplicates.
-4. **Review & expand (pass 2).** The DM sees the outline as cards with a checkbox each (all ticked), can drop or rename
-   one, and asks for the full text of each draft separately: a wiki page body, or a homebrew entry's fields.
-   Expanding one draft at a time keeps each call small enough for local models with short context windows, and lets
-   the DM stop after the outline. The full text is shown in the same preview the entry will have when saved.
-   The DM can also talk back, in two narrow ways rather than a free chat (so a small local model, without tool calling or
-   a long context, still copes, and nothing is saved before Save):
-   - **Change the ideas**: one line for the whole outline ("darker", "add a rival", "drop the eel"). The model gets the
-     drafts' refs, kinds, names, pitches and links (no texts) and returns the whole revised outline;
-     `WorldBundleParser.ParseRevision` matches its drafts to the old ones (by ref, then outline name, then name; same kind
-     and type; each once). A matched draft keeps its text, ticks and the DM's rename, and takes the new name and pitch only
-     while unwritten. A draft the reply leaves out is dropped, unless it was written or renamed: then it stays, unticked, with a note.
-   - **Ask for a change** on one card: the model rewrites that draft from its text so far (or its pitch) with the change made.
-     A homebrew entry is sent and returned whole, so fields the change does not touch stay. A secret stays plain sentences.
+A chat stores the history as the model reads it (`WorldChatMessage`: text, tool calls, tool results; reasoning is not kept,
+and the system prompt is made afresh for each message from the campaign as it is then), the log as the page shows it
+(`WorldChatLine`), and the waiting proposal with the DM's ticks and decisions.
 
-   In both prompts the DM's words come last, after the recipe's own instructions, and are capped at 1,000 characters.
-5. **Save.** The app writes the ticked drafts through the repositories with the DM's `CampaignAccess`, turns draft ids
-   into real `[[links]]` and ids (§5), and opens the first saved page. Undo is per item (delete), as today.
+Each DM message runs the model through `Microsoft.Extensions.AI`'s function invocation, at most `WorldChat.MaxToolRounds` round
+trips. Every tool call is recorded as a `WorldChatStep`: the tool, its arguments as JSON, what it returned (cut at 20,000
+characters), the error it hit, whether it refused what it was given (a proposal with errors), and how long it took. A reply
+keeps its steps, the model's reasoning (for models that share it) and a `WorldChatUsage`: the model, the number of model
+calls, the tokens in and out when the server reports them, and the time. While the model works, `WorldChat.Live` holds the
+steps so far (the last one maybe still running), the reply as it streams and the reasoning; `WorldChat.Changed` tells the
+page to redraw. *Stop* (or Escape) cancels the turn and the conversation is left as it was, message handed back.
 
-The layout reuses `HomebrewWizard`'s dialog: steps down the side, the current step in the middle, the preview on the
-side (stacked on phones, as the phone layout already does for sheets).
+The system prompt (`AiPrompts.WorldChat`) asks the model to look before inventing, to put related things in one proposal,
+never to claim something was saved, and to write usable pages: a place says what it looks, sounds and smells like, who is
+there, what the party can do and what it hides; a speaking person has a role, a look and voice, a want, a fear and two
+memories; secrets only where a plot lives in them, each as a `fact` linked to what it concerns. (The checklist is borrowed
+from CampaignVault's seeding guidance.) It also asks for two to five tags on every new page and homebrew entry, reusing the
+campaign's own.
 
-## 3. Recipes and where their drafts go
+Models that cannot call tools get a clear message (`WorldChat.Error.NoTools`).
 
-| Recipe | Questions (examples) | Drafts it can propose | Saved as |
-|---|---|---|---|
-| **Item / spell / creature / any homebrew type** | type, role ("a cursed heirloom"), power level, theme | the entry; optionally a wiki page for its history | `HomebrewEntryDocument` (fields from the type's `ContentTypeDefinition.EditorFields()`); a creature (a type with `actorBlueprint`) ticked "also add to the Bestiary shortlist" also becomes a `BestiaryEntry` (built) |
-| **Faction** (built) | what kind of group, what it wants, open or secret, reach, tone, its enemy, how many people, a secret or not | the faction page, its leader and 0–2 members, a secret | the faction as a wiki page, people as wiki pages and, when ticked, cast members (§3.1), the secret as a `FactDocument`; pages are tagged with the recipe ("faction") and people also "person", in the DM's language |
-| **Settlement** (built) | size, where it is, what it is known for, who rules, trouble brewing, tone, a sketch or in full, rumours or not | the settlement page, 2 or 4 places, 3 or 5 people, 1 or 2 factions, 1 or 2 rumours | wiki pages (tag "settlement"; places also "place", people also "person"); a place ticked "also add to the World page" becomes a hidden `LocationDocument` (its description, which players read once it is revealed, is the pitch, not the page) in a region named after the settlement (an existing region of that name is reused; players see a region only once one of its places is revealed); rumours as `FactDocument`s |
-| **World / region** | genre and tone, magic level, gods or not, the big conflict, scale | the overview page, 3–6 regions, powers (factions), a short history | wiki pages (tags `world`, `region`, `history`), linked from the overview |
-| **Quest / story arc** (built) | hook, stakes, villain, length (one session, a short or long arc), the party's level, tone, what to tie it into, a creature or reward or not | the quest page, 2–4 people (the villain first), 1–3 places, 1–2 clues, a homebrew creature and a reward item | the quest as a wiki page with a fixed outline (tag "quest", §3.2); people, places and clues as in the other recipes; the creature and item as unpublished homebrew |
+## 3. Tools
 
-Every recipe works for any system: homebrew fields come from the system's own content types, and the setting
-recipes only write wiki pages, places and facts.
+| Tool | Returns |
+|---|---|
+| `search_world(query)` | Pages, places and cast members matching, one line each with the key a proposal uses (`existing:slug`, `existing:place:<id>`, `existing:actor:<id>`) |
+| `get_page(page)` | One page in full, a place's description or a cast member's history, mentions kept as `[[actor:id\|Name]]` |
+| `list_places()` | Every region and its places as a tree, with keys |
+| `search_library(query, type)` | `type/id: Name` lines, packs and homebrew; a homebrew line carries its key (`existing:homebrew:<type>/<id>`) and tags |
+| `get_entry(entry)` | One Library entry in full: where it comes from, its tags, every field as JSON, its rules text |
+| `homebrew_fields(type)` | The fields a homebrew entry of a type fills |
+| `list_tags()` | The tags the campaign's pages and homebrew use, with counts |
+| `propose_changes(proposal)` | Checks the proposal: errors per entry for the model to fix, or "ready for review" |
+| `add_entries(entries)` | Puts more entries beside the waiting proposal, keeping the DM's ticks |
 
-### 3.1 NPCs
+Read tools return short text, capped; they never write.
 
-Today an NPC is an `ActorDocument` (a sheet on the table) and lore lives in the wiki. The world builder writes NPCs as
-**wiki pages** by default (name, role, look, wants, secret), because most NPCs never need a sheet. On the review card
-the DM can tick "also add to the cast" to create a hidden `ActorDocument` (`CastService.AddNpcAsync`): the sheet starts on
-the system's defaults, and `DmNotes` points back to the page and holds its text (links flattened). `Biography` stays empty:
-players read it once the DM reveals the person, and the page tells what they hide.
-
-A person's sheet can start from a Library creature's stat block instead of a blank one. In a system with creatures (a type with
-`actorBlueprint`), the outline may give a person `"stats"`: the English name of a generic creature from the rules ("Priest").
-The app looks it up in the campaign's Library (its active packs and its homebrew) and takes it only on an exact match of the
-name or id, in English or the DM's language, since a near miss would give the person the wrong stats. Once "also add to the
-cast" is ticked, the card says which stats the sheet starts from, and the DM can pick another creature or a blank sheet
-(`WorldDraft.Stats`, `StatsChosen`). A change to the outline keeps what the DM picked; stats the DM left to the model follow
-the reply. On save the cast member keeps the person's name and kind (NPC) and gets the creature's properties and hit points
-(`ActorSheetSync.SeedFromBlueprint`); a pack creature is also recorded as its `BlueprintId`. A creature that is gone by then
-(its pack switched off, the homebrew deleted) leaves the blank sheet.
-
-### 3.2 Quests
-
-There is no quest document. The quest recipe writes a quest as a wiki page with a fixed outline (Hook, Stakes, Acts,
-Who's involved, Rewards, If the party fails; the recipe's `write.wiki` instruction, §4), so it is useful at once and can be edited like any page. A real quest
-document (status, steps the DM ticks off, which the session log and the AI recap could refer to) is a separate feature and
-is not part of this design.
-
-## 4. Recipes as data
-
-Recipes are YAML files embedded in `Codex.Core` (`src/Codex.Core/WorldBuilder/Recipes/*.yaml`, loaded and checked by
-`WorldRecipes`), one per recipe, so a new recipe needs no C# code. A question is `text`, `longText`, `choice`, `toggle` or
-`contentType` (the system's types). An empty answer goes to the model as "surprise me" when the question allows it, and as
-"no preference" otherwise. A sketch of a later recipe:
-
-```yaml
-# src/Codex.Core/WorldBuilder/Recipes/faction.yaml
-key: faction
-icon: flag
-drafts: [faction, npc, fact]       # kinds this recipe may return (validated)
-questions:
-  - key: goal
-    type: text                      # text | longText | choice | toggle | contentType
-    surprise: true                  # offers "Surprise me"
-  - key: methods
-    type: choice
-    options: [open, secret, mixed]
-  - key: reach
-    type: choice
-    options: [local, regional, world]
-prompt: |
-  Design one faction for the campaign and the people and secret that bring it to the table. ...
-```
-
-A recipe may also give `write:` instructions per draft kind, added to the call that writes a draft of that kind in
-full; the quest recipe uses it for the quest page's fixed sections and to size homebrew to the party.
-
-Each question also has an English `ask:`, which is what the model reads. Labels, help text and option labels come from
-`Strings.WorldBuilder*.resx` as `WorldBuilder.Recipe.<recipe>.<question>[.<option>|.Hint]`, plus `.Title` and `.Intro`.
-`WorldBuilderTests.EveryRecipeLabel_IsTranslated` fails on a missing one. A system may ship its own
-recipes in its folder later (for example a "deity" recipe for 5e); not needed for the first version.
-
-## 5. The bundle the model returns
+## 4. The proposal
 
 ```json
-{
-  "drafts": [
-    { "ref": "d1", "kind": "faction", "name": "The Salt Wardens", "pitch": "Smugglers who police the docks they rob.",
-      "links": ["d2", "existing:port-varr"] },
-    { "ref": "d2", "kind": "npc", "name": "Mother Ilse", "pitch": "Their leader, a retired harbour pilot." },
-    { "ref": "d3", "kind": "fact", "name": "The wardens pay the harbour master", "links": ["d1"] },
-    { "ref": "d4", "kind": "homebrew", "type": "magic-item", "name": "Tide-glass", "pitch": "..." }
-  ]
-}
+{"summary": "...", "region": "The Grey Coast", "entries": [
+  {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Saltmere", "tags": ["grey-coast"], "text": "markdown, [[n]], [[existing:slug]]"},
+  {"ref": "m", "kind": "place", "placeKind": "district", "parent": "t", "name": "The Gutting Rows", "text": "..."},
+  {"ref": "n", "kind": "npc", "name": "Wendel Tarr", "cast": true, "stats": "Bandit", "text": "..."},
+  {"ref": "w", "kind": "wiki", "pageKind": "faction", "name": "...", "text": "..."},
+  {"ref": "s", "kind": "fact", "name": "The secret in one sentence", "links": ["t"], "text": "who knows, how it is learned"},
+  {"ref": "h", "kind": "homebrew", "type": "monster", "bestiary": true, "name": "...", "text": "rules text", "properties": {}},
+  {"ref": "v", "kind": "homebrew", "type": "spell", "name": "Rimeburst", "basedOn": "spell/fireball", "properties": {"damageType": "Cold"}},
+  {"ref": "e", "kind": "edit", "target": "existing:saltmere", "text": "the COMPLETE new text"},
+  {"ref": "b", "kind": "edit", "target": "existing:homebrew:spell/brine-ward", "rename": "...", "properties": {"level": 3}, "tags": ["salt"]},
+  {"ref": "g", "kind": "tags", "targets": ["existing:saltmere", "existing:homebrew:spell/brine-ward"], "add": ["shareable"], "remove": ["town"]},
+  {"ref": "p", "kind": "bestiary", "entry": "monster/goblin-warrior"}
+]}
 ```
 
-- Kinds are `homebrew`, `wiki`, `npc` (a person: a wiki page, optionally a cast member), `place` (a wiki page, optionally a
-  place on the World page) and `fact` (a secret: its name is
-  the fact itself, its text two to four plain sentences). A recipe's own subject, such as the faction, is a `wiki` draft.
-  Links in text resolve to `wiki`, `npc` and `place` drafts; a secret has no page, so a link to it reads as plain text.
-- `ref` is a draft id that lives only until the save; `existing:<slug or id>` points at something already in the campaign.
-  Unknown `existing:` targets are dropped, unknown kinds or homebrew types are dropped with a note on the review step.
-- On save the app writes pages first (so `UniqueSlugAsync` settles the slugs), then rewrites `[[d2]]` in bodies to
-  `[[Mother Ilse]]` with the final title, then writes homebrew (and the ticked creatures' shortlist entries), cast members, and facts (`RelatedEntityIds` holds the ids
-  of the pages, cast members, places and existing pages the secret links to), then places.
-- The expand call for a homebrew draft asks for its fields by key, with each field's type and allowed options
-  (from `FieldDefinition`), and the reply goes through the same kind of coercion as `AiAssistant.ParseDraft`: numbers
-  parsed, options matched to their canonical value (also through the system translation, so a Hebrew school name still
-  maps to `Evocation`; `SystemDefinition.CanonicalOption`), anything else dropped. After saving, the Library opens the
-  first saved entry in `HomebrewWizard` on its Review step, so the DM checks the rules and publishes it.
-- Before saving, a new page whose title is taken (by an existing page or another draft) is renamed "Name (2)", since links go
-  by title. Each draft remembers what it was saved as (`WorldDraft.SavedAs`), so Save after a failure skips what is already stored.
-- An outline keeps at most 20 drafts (the rest are listed as dropped); names, pitches and texts are cut to a sane length.
-- JSON mode with the plain retry, as `CreateCharacterAsync` does; a reply that does not parse gets one "return only the
-  JSON" retry, then an error the DM can act on ("The model did not return a usable draft; try again or pick another model").
+`WorldBundleParser.ParseProposal` (pure, unit-tested) turns it into a `WorldBundle` of `WorldDraft`s: it resolves links to
+other entries and existing pages, checks parents (another place entry or an existing place; no loops), coerces homebrew
+fields, checks what an edit or a tags entry points at (an edit of a pack entry is refused with a pointer to `basedOn`), and
+reports errors as `entries[i] (kind 'name'): ...` or `ref (kind 'name'): ...`. `WorldBuilderService.CheckAsync` adds the
+campaign's pages, places, cast and homebrew, finds each person's stats and each Bestiary pick in the Library (exact name, or
+the `type/id` that `search_library` lists), starts each variant from its Library entry (its fields with the model's on top,
+its text and tags unless the model wrote its own), and records for the review what each change replaces: the current text, a
+homebrew entry's fields and tags, each tagged thing's tags, and a stamp to tell at saving whether it changed since.
+
+Saving (`SaveAsync`) writes pages first so titles are settled (`Name (2)` when taken) and links rewritten, then homebrew
+(variants keep where they came from as their attribution), then the Bestiary shortlist (new homebrew creatures ticked for it
+and the picked Library creatures), then cast members (page as history, AI-picked gear), then places, parents before children,
+in the parent's region or the proposal's region (found by name, else the campaign's first, else a new one), then edits (each
+refused if what it replaces changed since the review), then tags, then facts related to what they link to. Each entry
+records what it became (`SavedAs`), so applying again after a failure adds only the rest.
+
+## 5. The page
+
+`WorldChatSection` is a workbench filling the screen under the header, three framed panes laid out by container queries on
+the workbench (the side rail and the notes dock change its width at a given screen width):
+
+- **1280px and wider**: the chats (new, rename, delete; a badge for a waiting proposal, a spinner for a turn under way), the
+  conversation, the proposal.
+- **760 to 1279px**: the conversation and the proposal; the chats open as a drawer over them.
+- **Under 760px**: one pane at a time, picked from tabs (*Chats*, *Conversation*, *Proposal* with a count).
+
+The conversation sets the AI's words like a book's page and the DM's at the end side. Before the first message it offers
+numbered starters (a settlement, a faction, a quest, people, homebrew, a variant, revising a page, tagging for sharing). Under
+each reply the steps fold into one line (*7 steps · 0.4 s · 1 needed another try*); opened, each step is a line with what it
+did, how it came out and how long it took, and opens to its arguments and result, and from there to the raw JSON
+(`WorldChatSteps`, the dialog). While the model works the steps show live with the one running, its reasoning, what it is
+writing, and a status line with a clock. The message box grows as it is typed in; Enter sends where there is a keyboard
+(Shift+Enter for a new line), a touch screen's Enter makes a new line.
+
+The proposal (`WorldProposalPanel`) lists its entries by kind, each with a diamond that keeps it in or leaves it out (leaving
+out a place leaves out what is inside it), and opens one at a time in a reader with *Keep* and *Skip*, which move on to the
+next entry waiting. An edit shows its changes word by word (`TextDiff`, pure and unit-tested), the new text or the current
+one; a homebrew edit its new name, the fields that change (old → new) and its tags; a variant every field it will have; a
+tags entry what each target has now. What the proposal's texts mention that nothing is called can be asked for in one click.
+After applying, the panel and the conversation link to everything made or changed.
 
 ## 6. Code shape
 
-| Piece | Where | What |
-|---|---|---|
-| `WorldRecipe`, `WorldRecipes` | `Codex.Core/WorldBuilder` | Loads and validates the embedded `Recipes/*.yaml` |
-| `WorldBundle`, `WorldDraft` | `Codex.Core/WorldBuilder` | The bundle shape and its parser/validator (pure, unit-tested without a model) |
-| `AiPrompts.WorldOutline`, `AiPrompts.WorldExpand` | `Codex.Core/AI/AiPrompts.cs` | Prompts, written like the existing ones, with `StyleFor` |
-| `AiAssistant.OutlineWorldAsync`, `ReviseWorldAsync`, `ExpandHomebrewAsync`, `ExpandPageAsync` | `Codex.Core/AI/AiAssistant.cs` | JSON calls with the existing fallback and one retry; `FieldCoercion` is shared with character creation |
-| `WorldBuilderService` | `Codex.Web/Services` | Gathers campaign context, calls the assistant, commits a reviewed bundle through the repositories (DM access) |
-| `WorldBuilderWizard.razor` | `Codex.Web/Components/Shared` | The dialog (questions, outline cards, expand, save) |
-| Strings | `Strings.WorldBuilder{,.ru,.he}.resx` | All labels, question texts and errors |
+| Piece | Where |
+|---|---|
+| `WorldBundle`, `WorldDraft`, `DraftKinds`, `WorldBundleParser` | `Codex.Core/WorldBuilder/WorldBundle.cs` |
+| `TextDiff` | `Codex.Core/TextDiff.cs` |
+| `AiPrompts.WorldChat`, `WorldChatRequest` | `Codex.Core/AI/AiPrompts.cs` |
+| `WorldChatDocument` and its parts, `IWorldChatRepository` | `Codex.Persistence/WorldChatModels.cs` |
+| `HomebrewTags` (export by tag) | `Codex.Persistence/HomebrewModels.cs` |
+| `WorldBuilderService` (tool reads, check, save) | `Codex.Web/Services/WorldBuilderService.cs` |
+| `WorldChat`, `WorldChatLive`, `WorldChatSessions`, `ProposalInput` | `Codex.Web/Services/WorldChat.cs` |
+| `WorldChatSection`, `WorldChatSteps`, `WorldProposalPanel`, `WorldChatLinks`, `WorldChatView` | `Codex.Web/Components/Campaign` |
+| Strings | `Strings.WorldChat{,.ru,.he}.resx`, tags in `Strings.WorldBuilder*` |
 
-Tests: recipe loading, bundle parsing (bad JSON, unknown kinds, dangling refs), option coercion including translated
-values, link rewriting on save, merging a changed outline, the order of the DM's change in the prompts, finding a person's stats and seeding the cast member from them, DM-only
-enforcement and the one-retry rule (a scripted `IChatClient`), in `WorldBuilderTests`.
-There is no Playwright test yet; the faction, settlement and quest flows were checked by hand against a scripted model.
+Tests: `WorldBuilderTests` (proposal parsing, changes to what exists, links, saving and nesting, variants and Bestiary picks,
+the tool loop with a scripted model that feeds a proposal error back and fixes it, the stored history a chat carries on from,
+stopping), `TextDiffTests` (the diff rebuilds both texts; tags for export), `PersistenceTest` (a chat's round trip, its owner,
+cascade delete).
 
-## 7. Phase 2: the same operations over MCP
+## 7. Phase 2: the same tools over MCP
 
-Once the wizard works, the same operations can be offered as an MCP server (the `ModelContextProtocol.AspNetCore`
-package), so a DM using an external assistant (Claude Desktop, an IDE) can build the world from there. Tools: `list_recipes`,
-`campaign_context` (names of pages, places, homebrew), `search_library`, `propose_bundle` (stores a bundle as pending), and
-**no direct writes**: a proposed bundle shows up in the app's review step, where the DM saves it as in §2.
+The tools above are plain methods on `WorldBuilderService`, and a proposal is plain data (`WorldBundle`), so an MCP server
+(`ModelContextProtocol.AspNetCore`) can expose the same tools to an external assistant (Claude Desktop, an IDE).
+`propose_changes` there puts the proposal in a chat of the campaign, where the DM applies it in the app as in §2; the MCP side
+never writes. Because the app is often reached over the LAN, the endpoint needs a per-user token the DM creates in settings,
+scoped to one campaign, DM-only, revocable and off by default.
 
-That limit matters because the app is often reached over the LAN: the endpoint needs a per-user token the DM creates
-in settings, scoped to one campaign, DM-only, revocable, and off by default. MCP is not needed for the in-app wizard, which
-calls the model directly.
+## 8. Not done yet
 
-## 8. Decisions to make
-
-1. **Quests: wiki page now, quest document later?** Recommended: yes, a templated wiki page now (§3.2).
-2. **Does a city create places on the World map as well as wiki pages?** Recommended: an opt-in tick on the review
-   step ("also add landmarks to the map"), off by default, since a region's map is laid out by hand.
-3. **NPCs as wiki pages by default, cast actors on request?** Recommended: yes (§3.1).
-4. **MCP in the first version?** Recommended: no; phase 2 after the wizard and the bundle format have settled.
-5. **Recipes per system?** Recommended: generic recipes only for now; the YAML format leaves room for system recipes.
-6. **First recipes to build:** homebrew entry (it reuses `HomebrewWizard` and has the clearest value), then faction and
-   city, then world and quest.
+- A chat is not shared between co-DMs, and two tabs on one chat save over each other (the last save wins).
+- Changing a homebrew entry's type, or deleting anything, is not a proposal kind.
+- Export by tag covers homebrew; wiki pages carry tags but are not part of a pack.
