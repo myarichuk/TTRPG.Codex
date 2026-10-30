@@ -1520,7 +1520,8 @@ else
             actor.HasPortrait = true;
             actor.PortraitVersion++;
             ApplyEdits(actor);
-            await TrySaveActorAsync();
+            // A refused history keeps the player's text in the editor: no reload over it.
+            if (!await TrySaveActorAsync() && historyChanged) return;
             flash = Flash.Success(L["Actor.Sheet.PortraitUpdated"]);
         }
         catch (Exception ex)
@@ -1539,7 +1540,8 @@ else
         actor.HasPortrait = false;
         actor.PortraitVersion++;
         ApplyEdits(actor);
-        await TrySaveActorAsync();
+        // A refused history keeps the player's text in the editor: no reload over it.
+        if (!await TrySaveActorAsync() && historyChanged) return;
         flash = Flash.Success(L["Actor.Sheet.PortraitRemoved"]);
         await ReloadAsync();
     }
@@ -1571,7 +1573,8 @@ else
             actor.HasPortrait = true;
             actor.PortraitVersion++;
             ApplyEdits(actor);
-            await TrySaveActorAsync();
+            // A refused history keeps the player's text in the editor: no reload over it.
+            if (!await TrySaveActorAsync() && historyChanged) return;
             flash = Flash.Success(L["Actor.Sheet.PortraitDrawn"]);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)

@@ -174,12 +174,12 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     /// <paramref name="target"/>. CampaignId never moves; only the DM can change ownership and DM
     /// notes (a player's save arrives with the notes redacted to null and leaves them alone).
     /// </summary>
-    /// <param name="merged">The source is the live table's own copy, whose history a player's save already merged with the stored
-    /// one (<see cref="PlayerHistory"/>): it is copied as it is, not merged again.</param>
+    /// <param name="merged">The source is the live table's own copy, whose history a player's save already merged with the table's
+    /// (<see cref="PlayerHistory"/>); see <see cref="MergedHistory"/>.</param>
     internal static void CopyEditableFields(ActorDocument target, ActorDocument source, bool isDm, bool merged = false)
     {
         // First, as it may refuse the save: nothing is copied then.
-        var biography = isDm || merged ? source.Biography : PlayerHistory(target.Biography, source);
+        var biography = isDm ? source.Biography : merged ? MergedHistory(target.Biography, source.Biography) : PlayerHistory(target.Biography, source);
         target.Name = source.Name;
         target.Kind = source.Kind;
         target.Visibility = source.Visibility;
@@ -240,6 +240,14 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
         static bool SameText(string? a, string? b) => string.Equals((a ?? string.Empty).Trim(), (b ?? string.Empty).Trim(), StringComparison.Ordinal);
     }
+
+    /// <summary>The history a live table's player save leaves on the stored character. The table's copy may be older than the stored
+    /// one (the DM can change a history without going through the table), so when the player-readable text is the same the stored
+    /// history stays exactly as it is, and otherwise the player's text is kept with the stored hidden blocks at its end.</summary>
+    private static string? MergedHistory(string? stored, string? fromTable) =>
+        string.Equals(SecretText.ForPlayers(stored).Trim(), SecretText.ForPlayers(fromTable).Trim(), StringComparison.Ordinal)
+            ? stored
+            : SecretText.KeepSecrets(stored, fromTable);
 
     public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)
     {
