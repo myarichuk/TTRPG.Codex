@@ -53,6 +53,10 @@
   <data name="Common.Editor.Templates" xml:space="preserve"><value>הוספת תבנית (או הקלידו את הקיצור שלה ו-Tab, או /)</value></data>
   <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>עריכת תבניות…</value></data>
   <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} מתוך {2} · Tab: הבא · Shift+Tab: הקודם · Esc: סיום</value></data>
+  <data name="Common.Editor.TemplateHintTouch" xml:space="preserve"><value>{0} · {1} מתוך {2}</value></data>
+  <data name="Common.Editor.TemplatePrev" xml:space="preserve"><value>השדה הקודם</value></data>
+  <data name="Common.Editor.TemplateNext" xml:space="preserve"><value>השדה הבא</value></data>
+  <data name="Common.Editor.TemplateDone" xml:space="preserve"><value>סיום</value></data>
   <data name="Common.Unsaved.Note" xml:space="preserve"><value>עדיין לא נשמר</value></data>
   <data name="Common.SaveShortcut" xml:space="preserve"><value>שמירה (Ctrl+S)</value></data>
 </root>

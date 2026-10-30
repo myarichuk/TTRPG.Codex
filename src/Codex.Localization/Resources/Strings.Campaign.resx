@@ -14,7 +14,7 @@
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>Not yet identified</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>Monster</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>Shortlist ({0})</value></data>
-  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Nothing shortlisted. Search the Library on the right and pin creatures for upcoming encounters.</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Nothing shortlisted. Search under Find creatures and pin creatures for upcoming encounters.</value></data>
   <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>Note for {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>Where you'll use it…</value></data>
@@ -171,7 +171,7 @@
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>Revealed to me</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>Nothing here yet</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>No lore matches</value></data>
-  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Write the first fact on the right.</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Write the first fact under New fact.</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>Nothing has been revealed to you yet.</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>nobody yet</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>Reveal to</value></data>
@@ -379,7 +379,7 @@
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>Search the wiki</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>Search pages…</value></data>
   <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>Filter by tag</value></data>
-  <data name="Campaign.Wiki.All" xml:space="preserve"><value>All</value></data>
+  <data name="Campaign.Wiki.AllTags" xml:space="preserve"><value>All tags</value></data>
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>No pages yet</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>No page matches</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>Start with a place, a faction or a legend. Link pages with [[double brackets]].</value></data>

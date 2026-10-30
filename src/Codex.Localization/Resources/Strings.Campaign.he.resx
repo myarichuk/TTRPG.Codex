@@ -14,7 +14,7 @@
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>עדיין לא זוהה</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>מפלצת</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>רשימה קצרה ({0})</value></data>
-  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>אין כלום ברשימה הקצרה. חפשו בספרייה בצד וסמנו יצורים למפגשים הקרובים.</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>אין כלום ברשימה הקצרה. חפשו תחת „חיפוש יצורים” וסמנו יצורים למפגשים הקרובים.</value></data>
   <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>הערה עבור {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>איפה תשתמשו בזה…</value></data>
@@ -171,7 +171,7 @@
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>נחשף בפניי</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>אין כאן עדיין כלום</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>לא נמצאו אגדות מתאימות</value></data>
-  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה בצד.</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה תחת „עובדה חדשה”.</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>עדיין לא נחשף בפניכם דבר.</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>עדיין אף אחד</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>חשיפה בפני</value></data>
@@ -379,7 +379,7 @@
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>חיפוש בוויקי</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>חיפוש דפים…</value></data>
   <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>סינון לפי תגית</value></data>
-  <data name="Campaign.Wiki.All" xml:space="preserve"><value>הכול</value></data>
+  <data name="Campaign.Wiki.AllTags" xml:space="preserve"><value>כל התגיות</value></data>
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>עדיין אין דפים</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>לא נמצא דף מתאים</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>התחילו במקום, בפלג או באגדה. קשרו דפים עם [[סוגריים כפולים]].</value></data>

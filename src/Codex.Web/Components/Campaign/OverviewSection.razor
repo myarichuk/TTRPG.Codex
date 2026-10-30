@@ -148,7 +148,7 @@
             <div class="panel-title"><h2 id="table-heading">@L["Campaign.Overview.Table"]</h2></div>
             @if (RuntimeManager.TryGet(Ctx.Campaign.Id) != null)
             {
-                <p class="mb-2"><span class="pill pill-success"><span class="live-dot" aria-hidden="true"></span>@L["Campaign.Overview.Live"]</span> @L["Campaign.Overview.TableRunning"]</p>
+                <p class="mb-2"><span class="pill pill-success me-2"><span class="live-dot" aria-hidden="true"></span>@L["Campaign.Overview.Live"]</span> @L["Campaign.Overview.TableRunning"]</p>
                 <a href="@Ctx.BasePath/table" class="cx-btn cx-plaque cx-sm w-100">@L["Campaign.Overview.JoinTable"]</a>
             }
             else

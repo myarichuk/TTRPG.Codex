@@ -833,7 +833,7 @@ window.codexTemplates = (function () {
     function stop(keep) {
         const was = s;
         s = null;
-        if (hint) { hint.hidden = true; hint.textContent = ""; }
+        if (hint) { hint.hidden = true; hint.firstChild.textContent = ""; }
         if (layer) { layer.hidden = true; layer.firstChild.textContent = ""; }
         if (resized) resized.disconnect();
         if (!was || keep || was.el.value !== was.value) return [];
@@ -852,18 +852,55 @@ window.codexTemplates = (function () {
         stop();
     }
 
+    // The hint's buttons step back, step on and end the template, for a phone or tablet whose keyboard has no Tab or Escape
+    // (and for the mouse). They never take the focus, which would end the template: the box keeps it, and its keyboard stays up.
+    const ICONS = {
+        prev: "<path d=\"m15 18-6-6 6-6\"/>",
+        next: "<path d=\"m9 18 6-6-6-6\"/>",
+        done: "<path d=\"M20 6 9 17l-5-5\"/>"
+    };
+
+    function button(kind, title, act) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.tabIndex = -1;
+        b.className = "template-hint-btn th-" + kind;
+        b.title = title;
+        b.setAttribute("aria-label", title);
+        b.dataset.testid = "template-" + kind;
+        b.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + ICONS[kind] + "</svg>";
+        b.addEventListener("click", function () { if (s) act(); });
+        return b;
+    }
+
     function show() {
         if (!hint) {
             hint = document.createElement("div");
             hint.className = "template-hint";
-            hint.setAttribute("role", "status");
-            hint.setAttribute("aria-live", "polite");
             hint.dataset.testid = "template-hint";
+            const text = document.createElement("span");
+            text.className = "template-hint-text";
+            text.setAttribute("role", "status");
+            text.setAttribute("aria-live", "polite");
+            hint.appendChild(text);
+            hint.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+            hint.addEventListener("mousedown", function (e) { e.preventDefault(); });
             document.body.appendChild(hint);
         }
+        const names = (s.el.dataset.templateButtons || "").split("|");
+        if (hint.dataset.buttons !== s.el.dataset.templateButtons) {
+            hint.dataset.buttons = s.el.dataset.templateButtons || "";
+            hint.querySelectorAll("button").forEach(function (b) { b.remove(); });
+            hint.appendChild(button("prev", names[0] || "‹", function () { go(Math.max(0, s.index - 1)); }));
+            hint.appendChild(button("next", names[1] || "›", function () { if (s.index + 1 < s.stops.length) go(s.index + 1); else finish(); }));
+            hint.appendChild(button("done", names[2] || "✓", function () { stop(); }));
+        }
         const f = s.stops[s.index];
-        const words = s.el.dataset.templateHint || "{0} ({1}/{2})";
-        hint.textContent = words.replace("{0}", label(f.name)).replace("{1}", s.index + 1).replace("{2}", s.stops.length);
+        // Without a hardware keyboard the keys the hint names are not there: it says only where the caret is.
+        const touch = window.matchMedia && matchMedia("(hover: none) and (pointer: coarse)").matches;
+        const words = (touch && s.el.dataset.templateHintTouch) || s.el.dataset.templateHint || "{0} ({1}/{2})";
+        hint.firstChild.textContent = words.replace("{0}", label(f.name)).replace("{1}", s.index + 1).replace("{2}", s.stops.length);
+        hint.querySelector(".th-prev").disabled = s.index === 0;
         hint.hidden = false;
         place();
         paint();

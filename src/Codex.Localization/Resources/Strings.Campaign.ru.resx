@@ -14,7 +14,7 @@
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>Пока не опознано</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>Монстр</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>Список ({0})</value></data>
-  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Список пуст. Найдите существ в Библиотеке справа и закрепите их для будущих столкновений.</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>Список пуст. Найдите существ в разделе «Поиск существ» и закрепите их для будущих столкновений.</value></data>
   <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>Собственный</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>Заметка для: {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>Где вы это используете…</value></data>
@@ -171,7 +171,7 @@
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>Раскрыто мне</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>Здесь пока пусто</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>Предания не найдены</value></data>
-  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Запишите первый факт справа.</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>Запишите первый факт в разделе «Новый факт».</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>Вам пока ничего не раскрыто.</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>пока никому</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>Раскрыть</value></data>
@@ -379,7 +379,7 @@
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>Поиск по вики</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>Поиск страниц…</value></data>
   <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>Фильтр по тегу</value></data>
-  <data name="Campaign.Wiki.All" xml:space="preserve"><value>Все</value></data>
+  <data name="Campaign.Wiki.AllTags" xml:space="preserve"><value>Все теги</value></data>
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>Страниц пока нет</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>Подходящих страниц нет</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>Начните с места, фракции или легенды. Связывайте страницы с помощью [[двойных скобок]].</value></data>

@@ -38,6 +38,12 @@ public class TemplatesE2ETests : IClassFixture<AppFixture>
         await dm.Keyboard.PressAsync("Tab");
         await Assertions.Expect(hint).ToContainTextAsync("look · 2 of 8");
         await dm.Keyboard.TypeAsync("Grey-eyed.");
+        // The hint's buttons step too (a phone's keyboard has no Tab), and leave the caret in the box, so the template goes on.
+        await dm.GetByTestId("template-prev").ClickAsync();
+        await Assertions.Expect(hint).ToContainTextAsync("summary · 1 of 8");
+        await dm.GetByTestId("template-next").ClickAsync();
+        await Assertions.Expect(hint).ToContainTextAsync("look · 2 of 8");
+        await Assertions.Expect(body).ToBeFocusedAsync();
         await dm.Keyboard.PressAsync("Escape");
         await Assertions.Expect(hint).ToBeHiddenAsync();
         // The names still standing in the fields left alone are taken out again.

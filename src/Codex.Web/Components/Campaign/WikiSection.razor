@@ -216,14 +216,18 @@ else if (Slug != null)
                 <nav aria-label="@L["Campaign.Wiki.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">@L["Campaign.Wiki.Title"]</a><span class="crumb-sep" aria-hidden="true">/</span><span>@current.Title</span></nav>
                 <h2 class="mb-0" data-testid="wiki-page-title">@current.Title</h2>
                 <div class="d-flex flex-wrap gap-1 mt-1">
-                    <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="14" /> @(current.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
-                    @foreach (var tag in current.Tags)
-                    {
-                        <span class="pill">@tag</span>
-                    }
                     @if (current.Kind != WikiPageKind.General)
                     {
                         <span class="pill" data-testid="wiki-kind"><LucideIcon IconName="@KindIcon(current.Kind)" Size="14" /> @KindLabel(current.Kind)</span>
+                    }
+                    @* Everything a player can open is shared with the party, so only the DM is told who can read a page. *@
+                    @if (Ctx.IsDm)
+                    {
+                        <span class="pill @(current.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")"><LucideIcon IconName="@(current.Visibility == WikiVisibility.Party ? "users" : "eye-off")" Size="14" /> @(current.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
+                    }
+                    @foreach (var tag in ShownTags(current))
+                    {
+                        <span class="pill">@tag</span>
                     }
                     @if (CastMember(current) is { } member)
                     {
@@ -516,7 +520,7 @@ else
         @if (AllTags.Count > 0)
         {
             <div class="chips" role="group" aria-label="@L["Campaign.Wiki.FilterByTag"]">
-                <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">@L["Campaign.Wiki.All"]</button>
+                <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">@L["Campaign.Wiki.AllTags"]</button>
                 @foreach (var tag in AllTags)
                 {
                     <button type="button" class="chip" aria-pressed="@((activeTag == tag) ? "true" : "false")" @onclick="() => activeTag = tag">@tag</button>
@@ -541,7 +545,10 @@ else
                 <article class="campaign-card wiki-card" aria-labelledby="wiki-@wp.Id">
                     <div class="card-head">
                         <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
-                        <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
+                        @if (Ctx.IsDm)
+                        {
+                            <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
+                        }
                     </div>
                     @if (!Ctx.IsDm && LatestReveal(wp) is { } revealedAt && seenPages.TryGetValue(wp.Id, out var seen) && revealedAt > seen)
                     {
@@ -559,7 +566,7 @@ else
                     <div class="card-foot">
                         <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                         <div class="chips">
-                            @foreach (var tag in wp.Tags.Take(3))
+                            @foreach (var tag in ShownTags(wp).Take(3))
                             {
                                 <span class="pill">@tag</span>
                             }
@@ -640,7 +647,18 @@ else
     private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, draft.Kind, string.Join(",", draft.Tags), placeParentId, placeKind, pendingArt != null, removeArt);
 
     private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
-    private List<string> AllTags => (pages ?? new()).SelectMany(p => p.Tags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
+    private List<string> AllTags => (pages ?? new()).SelectMany(ShownTags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
+
+    // A page's tags less the one that only repeats its kind: place pages and the world builder's pages are tagged "place",
+    // "faction" and so on, which the kind already says (and the kind filter already filters by).
+    private IEnumerable<string> ShownTags(WikiPageDocument page)
+    {
+        if (page.Kind == WikiPageKind.General) return page.Tags;
+        var echoes = new[] { KindLabel(page.Kind), L[$"WorldBuilder.Tag.{KindTagKey(page.Kind)}"] };
+        return page.Tags.Where(t => !echoes.Contains(t.Trim(), StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static string KindTagKey(WikiPageKind kind) => kind == WikiPageKind.Person ? "npc" : kind.ToString().ToLowerInvariant();
 
     // The kinds of page there are, with how many of each, in the kinds' own order.
     private List<(WikiPageKind Kind, int Count)> Kinds => (pages ?? new()).GroupBy(p => p.Kind).OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();

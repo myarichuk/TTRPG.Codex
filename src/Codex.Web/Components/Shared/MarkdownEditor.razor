@@ -63,7 +63,9 @@
         <div class="md-write">
             <textarea id="@Id" class="field-input md-input" rows="@Rows" placeholder="@Placeholder" value="@initial" @oninput="OnInput"
                       readonly="@ReadOnlyNow" aria-busy="@(Busy ? "true" : "false")" aria-describedby="@DescribedBy" data-mentions="@Mentions" data-md="" data-md-secrets="@(Secrets ? "" : null)" data-testid="@TestId"
-                      data-templates="@templatesJson" data-pages="@pagesJson" data-template-hint="@(Templates != null ? L["Common.Editor.TemplateHint"] : null)"></textarea>
+                      data-templates="@templatesJson" data-pages="@pagesJson" data-template-hint="@(Templates != null ? L["Common.Editor.TemplateHint"] : null)"
+                      data-template-hint-touch="@(Templates != null ? L["Common.Editor.TemplateHintTouch"] : null)"
+                      data-template-buttons="@(Templates != null ? $"{L["Common.Editor.TemplatePrev"]}|{L["Common.Editor.TemplateNext"]}|{L["Common.Editor.TemplateDone"]}" : null)"></textarea>
             @if (Busy)
             {
                 <div class="md-busy"><AiWorking Compact="true" Text="@BusyText" OnStop="OnStop" TestId="@($"{TestId}-working")" /></div>
