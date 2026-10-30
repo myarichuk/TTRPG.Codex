@@ -196,7 +196,8 @@ public sealed class WorldChat
         var usage = new WorldChatUsage();
         ct = stop.Token;
 
-        using var client = new ChatClientBuilder(raw)
+        // Not disposed: disposing the pipeline disposes the model client under it, which the provider service keeps for every call.
+        var client = new ChatClientBuilder(raw)
             .UseFunctionInvocation(configure: f =>
             {
                 f.MaximumIterationsPerRequest = MaxToolRounds;

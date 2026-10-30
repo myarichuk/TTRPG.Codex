@@ -248,18 +248,10 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
 
         // A model that left the gear out gets one short call that asks for nothing else; if that fails too, the character is
         // still worth keeping, without gear.
-        IReadOnlyList<DraftItem> picked;
-        try
-        {
-            picked = draft.Equipment is { Count: > 0 } equipment
-                ? equipment
-                : await assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
-                    catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            picked = Array.Empty<DraftItem>();
-        }
+        var picked = draft.Equipment is { Count: > 0 } equipment
+            ? equipment
+            : await GearOrNoneAsync(() => assistant.EquipAsync(new EquipRequest($"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}",
+                catalog.GetDisplayName(campaign.SystemId), Options(carriable), armor != null), ct), ct);
 
         if (picked.Count > 0)
         {
@@ -267,6 +259,20 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         }
 
         return draft;
+    }
+
+    /// <summary>The gear <paramref name="pick"/> chose, or none when it failed. A provider that timed out throws a cancellation
+    /// too, but only the person's own stop (<paramref name="ct"/>) should cost them the rest of what the model made.</summary>
+    public static async Task<IReadOnlyList<DraftItem>> GearOrNoneAsync(Func<Task<IReadOnlyList<DraftItem>>> pick, CancellationToken ct)
+    {
+        try
+        {
+            return await pick();
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return Array.Empty<DraftItem>();
+        }
     }
 
     /// <summary>How the system generates scores, in a sentence for the prompt; null when it says nothing.</summary>
