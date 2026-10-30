@@ -64,6 +64,8 @@
   <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{# момент стоит проверить} few{# момента стоит проверить} many{# моментов стоит проверить} other{# момента стоит проверить}}</value></data>
   <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>Также добавить в состав</value></data>
   <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>Также добавить в состав, с характеристиками: {0}</value></data>
+  <data name="WorldChat.Proposal.Gear" xml:space="preserve"><value>Снаряжение: {0}</value></data>
+  <data name="WorldChat.Proposal.GearEquipped" xml:space="preserve"><value>{0} (экипировано)</value></data>
   <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>существующее место</value></data>
   <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>Применить ({0})</value></data>
   <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>Сохраняем и подбираем снаряжение…</value></data>

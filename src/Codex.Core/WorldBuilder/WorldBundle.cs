@@ -56,6 +56,15 @@ public enum EditTarget
     Homebrew
 }
 
+/// <summary>An item a proposed person would carry: the Library entry, how many, and whether it is worn or held.</summary>
+public sealed class DraftGear
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; } = 1;
+    public bool Equipped { get; set; }
+}
+
 /// <summary>
 /// One thing a proposal holds: a homebrew entry, a wiki page, a person, a place or a secret. Nothing is stored until the DM
 /// applies the proposal; <see cref="SavedAs"/> then records what each became.
@@ -99,6 +108,10 @@ public sealed class WorldDraft
 
     /// <summary>For a person added to the cast: the Library creature whose stat block their sheet starts from, instead of a blank sheet.</summary>
     public CreatureRef? Stats { get; set; }
+
+    /// <summary>For a person: what they carry if they join the cast, picked by the model when the proposal was checked so the DM sees
+    /// it before applying. Null until picked; empty when there is nothing to pick from or the pick failed.</summary>
+    public List<DraftGear>? Gear { get; set; }
 
     /// <summary>For a place: the place it is inside, another entry's <see cref="Ref"/> or <c>existing:place:&lt;id&gt;</c>; empty
     /// for a place straight in the region.</summary>

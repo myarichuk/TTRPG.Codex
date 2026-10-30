@@ -1362,6 +1362,34 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_PicksGearWhenItProposes_AndKeepsThePicksWhenEntriesAreAddedOrTheSamePersonIsProposedAgain()
+    {
+        const string ilse = """{"proposal": {"entries": [{"ref": "n", "kind": "npc", "name": "Ilse", "text": "A smith.", "cast": true}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "m", "kind": "npc", "name": "Bram", "text": "An innkeeper."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", ilse),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", more),
+            _ => new ChatMessage(ChatRole.Assistant, "Added."),
+            _ => Calls("c3", "propose_changes", ilse),
+            _ => new ChatMessage(ChatRole.Assistant, "Again."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        await chat.SendAsync("A smith.", _ => { }, CancellationToken.None);
+        // This system has no inventory, so the pick finds nothing; it is still a pick, and is not asked for again.
+        Assert.NotNull(chat.Proposal!.Find("n")!.Gear);
+        var picked = new List<DraftGear> { new() { Id = "hammer", Name = "Hammer", Quantity = 1, Equipped = true } };
+        chat.Proposal.Find("n")!.Gear = picked;
+
+        await chat.SendAsync("And an innkeeper.", _ => { }, CancellationToken.None);
+        Assert.Equal("Hammer", Assert.Single(chat.Proposal!.Find("n")!.Gear!).Name);
+        Assert.NotNull(chat.Proposal.Find("m")!.Gear);
+
+        await chat.SendAsync("Just the smith, again.", _ => { }, CancellationToken.None);
+        Assert.Equal("Hammer", Assert.Single(chat.Proposal!.Find("n")!.Gear!).Name);
+    }
+
+    [Fact]
     public async Task Chat_Apply_KeepsEachEntryAsItIsStored_AndMakesNothingWhenTheChatChangedElsewhere()
     {
         const string two = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}, {"ref": "b", "kind": "wiki", "name": "Bram's Rest", "text": "An inn."}]}}""";

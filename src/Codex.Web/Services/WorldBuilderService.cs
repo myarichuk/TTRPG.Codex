@@ -637,24 +637,29 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         _ => draft.PageKind is "faction" or "quest" ? draft.PageKind : null
     };
 
-    /// <summary>What a person added to the cast carries, picked by the model; none when the system has no inventory or the call
-    /// fails (the person is still worth saving without it).</summary>
-    private async Task<IReadOnlyList<object>?> GearAsync(string name, string text, CampaignDocument campaign, CampaignAccess access, CancellationToken ct)
+    /// <summary>Picks what each person of the proposal would carry into the cast, for those not picked for yet (an earlier check
+    /// picked for the rest), so the DM sees it while reviewing and applying needs no model. Nothing is picked when the system has
+    /// no inventory or no model is set up; a pick that fails leaves that person without gear.</summary>
+    public async Task PickGearAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, CancellationToken ct = default)
     {
-        try
+        var wanting = bundle.Drafts.Where(d => d.Kind == DraftKinds.Npc && d.Gear == null && !d.SavedAs.ContainsKey("cast")).ToList();
+        if (wanting.Count == 0) return;
+        var characters = wanting
+            .Select(d => $"{d.Name.Trim()}: {TextFormatting.Summary(WorldBundleParser.ResolveLinks(d.Body ?? d.Pitch, bundle, keepLinks: false), 800)}")
+            .ToList();
+        var picks = await ai.PickGearAsync(characters, campaign, catalog.GetDefinition(campaign.SystemId), access.UserId, ItemsFor(campaign, access), ct);
+        for (var i = 0; i < wanting.Count; i++)
         {
-            return await ai.EquipAsync($"{name.Trim()}: {TextFormatting.Summary(text, 800)}", campaign, catalog.GetDefinition(campaign.SystemId), access.UserId,
-                async type => (await library.OptionsAsync(campaign, access, type)).Select(i => i.Entry).ToList(), ct);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return null;
+            wanting[i].Gear = picks?[i] ?? new List<DraftGear>();
         }
     }
 
+    private Func<string, Task<IReadOnlyList<ContentEntry>>> ItemsFor(CampaignDocument campaign, CampaignAccess access) =>
+        async type => (await library.OptionsAsync(campaign, access, type)).Select(i => i.Entry).ToList();
+
     /// <summary>Saves the selected entries: wiki pages and people's and places' pages first (DM-only), so their titles are settled
     /// before links are rewritten, then homebrew entries (unpublished; creatures ticked for it also on the Bestiary shortlist), the
-    /// people ticked for the cast (hidden, their page as their history, with gear the model picks), the places (hidden, nested as
+    /// people ticked for the cast (hidden, their page as their history, with the gear picked when the proposal was checked), the places (hidden, nested as
     /// proposed) and the secrets (DM-only in Lore, related to what they link to). Retrying after a failure skips what was stored.</summary>
     /// <param name="onStored">Called after each entry is stored (its <see cref="WorldDraft.SavedAs"/> set), so the caller can keep that at
     /// once: an apply cut short by a crash or a closed tab then still knows what it made, and a retry does not make it twice.</param>
@@ -757,11 +762,12 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var allPages = castDrafts.Count == 0 ? new List<WikiPageDocument>() : (await wiki.GetVisibleForCampaignAsync(access)).ToList();
         foreach (var draft in castDrafts)
         {
-            // The sheet starts from the creature picked for the person, or blank; either way the model picks what they carry.
+            // The sheet starts from the creature picked for the person, or blank.
             // A creature that has gone since (its pack switched off, the homebrew deleted) leaves the blank sheet.
             var creature = draft.Stats is { } stats ? await library.GetAsync(campaign, access, stats.Type, stats.Id, stats.Homebrew) : null;
             var text = WorldBundleParser.ResolveLinks(draft.Body ?? draft.Pitch, bundle, keepLinks: false);
-            var npc = new NewNpc(draft.Name) { Creature = creature, Equipment = await GearAsync(draft.Name, text, campaign, access, ct) };
+            // The gear the DM saw in the proposal; picking it was part of checking the proposal, so applying asks the model nothing.
+            var npc = new NewNpc(draft.Name) { Creature = creature, Equipment = await ai.StoredGearAsync(draft.Gear, system, ItemsFor(campaign, access)) };
             // The person's page becomes their history, as promoting a page from the wiki does; revealing them warns the DM first.
             var page = draft.SavedAs.TryGetValue(PageStep, out var pageId) ? allPages.FirstOrDefault(p => p.Id == pageId) : null;
             var actor = (page != null

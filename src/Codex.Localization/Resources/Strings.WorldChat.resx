@@ -64,6 +64,8 @@
   <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{# thing worth a look} other{# things worth a look}}</value></data>
   <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>Also add to the cast</value></data>
   <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>Also add to the cast, playing like {0}</value></data>
+  <data name="WorldChat.Proposal.Gear" xml:space="preserve"><value>Carries: {0}</value></data>
+  <data name="WorldChat.Proposal.GearEquipped" xml:space="preserve"><value>{0} (equipped)</value></data>
   <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>a place you have</value></data>
   <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>Apply {0}</value></data>
   <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>Saving, and picking gear for the cast…</value></data>

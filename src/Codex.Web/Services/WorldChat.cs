@@ -753,17 +753,26 @@ public sealed class WorldChat
                 "Lists the tags the campaign's wiki pages and homebrew entries use, with how many of each, so new tags match the old ones."),
             AIFunctionFactory.Create(
                 (AdditionInput additions) =>
-                    Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => AddEntriesAsync(additions)),
+                    Step("add_entries", additions, null, additions.Entries?.Count ?? 0, () => WithGearAsync(AddEntriesAsync(additions))),
                 "add_entries",
                 "Adds entries to the proposal already waiting for the game master, without resending it: pass ONLY the new entries, each with a ref the proposal does not use yet. " +
                 "They may use the refs already in the proposal as a place's parent, in \"links\" and as [[ref]]. The game master's ticks are kept. With no proposal waiting, it makes one."),
             AIFunctionFactory.Create(
                 (ProposalInput proposal) =>
-                    Step("propose_changes", proposal, null, proposal.Entries?.Count ?? 0, () => ProposeAsync(proposal)),
+                    Step("propose_changes", proposal, null, proposal.Entries?.Count ?? 0, () => WithGearAsync(ProposeAsync(proposal))),
                 "propose_changes",
                 "Proposes related entries to add to the campaign or changes to what it has, all in one proposal, for the game master to review and apply. Saves nothing. " +
                 "Returns errors to fix (then call it again with the whole corrected proposal) or confirms the proposal is ready for review.")
         };
+    }
+
+    // Once a proposal stands (its entries carried over from the one before it), what its people would carry is picked, so the DM
+    // reviews that too and applying asks the model nothing. Only for people with no pick yet; a refused proposal changes nothing.
+    private async Task<string> WithGearAsync(Task<string> proposing)
+    {
+        var result = await proposing;
+        if (Proposal is { } proposal) await builder.PickGearAsync(campaign, access, proposal, running?.Token ?? CancellationToken.None);
+        return result;
     }
 
     // New entries beside the waiting proposal's: checked together (a new place can sit inside an old one), then what the game master
@@ -800,9 +809,9 @@ public sealed class WorldChat
     /// <summary>Puts what belongs to the entries of <paramref name="before"/> on the same entries (by ref and kind) of
     /// <paramref name="after"/>. Always what saving already made of them (<see cref="WorldDraft.SavedAs"/>), so an apply that failed
     /// part way never makes those again. With <paramref name="decisions"/> (more entries added to the same proposal), also what the
-    /// DM decided (ticks, the cast box, a new name) and, for an edit, the text it was proposed against: an edit whose target changed
-    /// since stays refused. For a proposal made afresh, only an entry that is plainly the same one keeps what it became: the same
-    /// name, or for an edit the same target and text (one with a new text should be applied, and is checked against the stamp).</summary>
+    /// DM decided (ticks, the cast box, a new name), a person's gear and, for an edit, the text it was proposed against: an edit
+    /// whose target changed since stays refused. For a proposal made afresh, only an entry that is plainly the same one keeps what it
+    /// became (and a person what was picked for them to carry): the same name, or for an edit the same target and text (one with a new text should be applied, and is checked against the stamp).</summary>
     internal static void CarryOver(WorldBundle before, WorldBundle after, bool decisions)
     {
         foreach (var draft in after.Drafts)
@@ -815,6 +824,7 @@ public sealed class WorldChat
                 draft.Bestiary = old.Bestiary;
                 draft.PageTitle = old.PageTitle;
                 draft.Stats ??= old.Stats;
+                draft.Gear ??= old.Gear;
                 if (!string.IsNullOrWhiteSpace(old.Name) && old.Name != old.OutlineName) draft.Name = old.Name;
                 if (old.Kind == DraftKinds.Edit && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
                 {
@@ -824,9 +834,11 @@ public sealed class WorldChat
                     draft.BeforeTags = old.BeforeTags;
                 }
             }
-            else if (old.SavedAs.Count == 0 || !SameEntry(old, draft))
+            else
             {
-                continue;
+                // The same person proposed again carries what was picked for them.
+                if (draft.Kind == DraftKinds.Npc && SameEntry(old, draft)) draft.Gear ??= old.Gear;
+                if (old.SavedAs.Count == 0 || !SameEntry(old, draft)) continue;
             }
 
             draft.SavedAs = new Dictionary<string, string>(old.SavedAs);

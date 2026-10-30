@@ -64,6 +64,8 @@
   <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{דבר אחד ששווה לבדוק} two{# דברים ששווה לבדוק} other{# דברים ששווה לבדוק}}</value></data>
   <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>להוסיף גם לדמויות</value></data>
   <data name="WorldChat.Proposal.CastAs" xml:space="preserve"><value>להוסיף גם לדמויות, עם הנתונים של {0}</value></data>
+  <data name="WorldChat.Proposal.Gear" xml:space="preserve"><value>ציוד: {0}</value></data>
+  <data name="WorldChat.Proposal.GearEquipped" xml:space="preserve"><value>{0} (בשימוש)</value></data>
   <data name="WorldChat.Proposal.ExistingPlace" xml:space="preserve"><value>מקום קיים</value></data>
   <data name="WorldChat.Proposal.Apply" xml:space="preserve"><value>החלה ({0})</value></data>
   <data name="WorldChat.Proposal.Applying" xml:space="preserve"><value>שומרים ובוחרים ציוד לדמויות…</value></data>
