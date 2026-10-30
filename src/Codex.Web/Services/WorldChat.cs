@@ -683,20 +683,14 @@ public sealed class WorldChat
     }
 
     // What providers say when the conversation no longer fits the model: OpenAI's context_length_exceeded, Anthropic's "prompt is
-    // too long", and the wording local servers use. Read from the messages along the chain, not ToString (the stack trace).
-    internal static bool TooLong(Exception ex)
+    // too long" (in the API's error body, which AiFailure reads), and the wording local servers use. Read from the messages along
+    // the chain, not ToString (the stack trace).
+    public static bool TooLong(Exception ex)
     {
-        for (var e = ex; e != null; e = e.InnerException)
-        {
-            var text = e.Message;
-            if (new[] { "context_length", "context length", "maximum context", "context window", "prompt is too long", "too many tokens" }
-                .Any(words => text.Contains(words, StringComparison.OrdinalIgnoreCase)))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        var said = new List<string> { AiFailure.From(ex).Detail };
+        for (var e = ex; e != null; e = e.InnerException) said.Add(e.Message);
+        return said.Any(text => new[] { "context_length", "context length", "maximum context", "context window", "prompt is too long", "too many tokens" }
+            .Any(words => text.Contains(words, StringComparison.OrdinalIgnoreCase)));
     }
 
     private static string Lang => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);

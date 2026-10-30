@@ -1,5 +1,8 @@
+using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.WorldBuilder;
 using Codex.Persistence;
+using Codex.Plugin.Abstractions;
 using Codex.Web.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
@@ -54,4 +57,41 @@ public class AiRobustnessTests
     [Fact]
     public void A408_IsATimeout() =>
         Assert.Equal(AiFailureKind.Timeout, AiFailure.From(new HttpRequestException("Request Timeout", null, System.Net.HttpStatusCode.RequestTimeout)).Kind);
+
+    [Fact]
+    public async Task GearPickedWithTheProposal_IsStoredOnTheSheetAtApply_WithoutAModel_AndAnItemGoneSinceIsLeftOut()
+    {
+        var service = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),
+            Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance, new ConfigurationBuilder().Build());
+        var ai = new AiFeatures(service, Substitute.For<IContentRegistry>(), Substitute.For<ISystemCatalog>());
+        var system = new SystemDefinition { SheetRules = new SheetRules { Inventory = new InventoryRules() } };
+        var gear = new List<DraftGear>
+        {
+            new() { Id = "hammer", Name = "Hammer", Quantity = 1, Equipped = true },
+            new() { Id = "rope", Name = "Rope", Quantity = 2 },
+            new() { Id = "gone", Name = "Lost Lantern" }
+        };
+        Task<IReadOnlyList<ContentEntry>> Items(string type) => Task.FromResult<IReadOnlyList<ContentEntry>>(type == "equipment"
+            ? new[] { new ContentEntry { Type = "equipment", Id = "hammer", Name = "Hammer" }, new ContentEntry { Type = "equipment", Id = "rope", Name = "Rope" } }
+            : Array.Empty<ContentEntry>());
+
+        var stored = await ai.StoredGearAsync(gear, system, Items);
+
+        Assert.Equal(new object[] { "hammer|equipped:1", "rope|qty:2" }, stored!);
+        Assert.Null(await ai.StoredGearAsync(new List<DraftGear>(), system, Items));
+        Assert.Null(await ai.StoredGearAsync(gear, new SystemDefinition(), Items));
+    }
+
+    [Fact]
+    public void AnthropicSayingThePromptIsTooLong_IsTooLong()
+    {
+        var tooLong = new Anthropic.Exceptions.AnthropicBadRequestException(new HttpRequestException("Bad Request", null, System.Net.HttpStatusCode.BadRequest))
+        {
+            StatusCode = System.Net.HttpStatusCode.BadRequest,
+            ResponseBody = """{"type":"error","error":{"type":"invalid_request_error","message":"prompt is too long: 210000 tokens > 200000 maximum"}}"""
+        };
+
+        Assert.True(WorldChat.TooLong(tooLong));
+        Assert.False(WorldChat.TooLong(new HttpRequestException("busy", null, System.Net.HttpStatusCode.ServiceUnavailable)));
+    }
 }
