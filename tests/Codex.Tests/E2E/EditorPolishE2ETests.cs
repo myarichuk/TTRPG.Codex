@@ -39,8 +39,16 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("setup-checklist")).ToBeVisibleAsync();
         await Assertions.Expect(dm.GetByTestId("setup-Page")).ToHaveAttributeAsync("data-done", "false");
         await Assertions.Expect(dm.GetByTestId("setup-Invite")).ToHaveAttributeAsync("data-done", "false");
+        // The invite step copies the link and shows it, selected, where it is on the page.
+        await dm.GetByTestId("setup-invite-copy").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("invite-link")).ToBeFocusedAsync();
         await E2EHelpers.JoinAsync(player, await E2EHelpers.ReadInviteLinkAsync(dm, campaignId));
         await Assertions.Expect(player.GetByTestId("setup-checklist")).ToHaveCountAsync(0);
+        // The DM's open campaign learns of the player without a reload: the overview reads who is in it as stored.
+        await dm.GetByRole(AriaRole.Link, new() { Name = "Wiki", Exact = true }).First.ClickAsync();
+        await dm.WaitForURLAsync(url => url.EndsWith("/wiki"));
+        await dm.GetByRole(AriaRole.Link, new() { Name = "Overview", Exact = true }).First.ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("setup-Invite")).ToHaveAttributeAsync("data-done", "true");
 
         // An NPC kept a stranger, and one kept hidden.
         var morId = await CreateNpcAsync(dm, campaignId, "Vizier Mor", "Unknown", "Mor poisoned the old king.", "Hooded stranger");

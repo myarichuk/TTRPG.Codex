@@ -14,7 +14,7 @@
   <data name="Campaign.Bestiary.NotIdentified" xml:space="preserve"><value>עדיין לא זוהה</value></data>
   <data name="Campaign.Bestiary.Monster" xml:space="preserve"><value>מפלצת</value></data>
   <data name="Campaign.Bestiary.Shortlist" xml:space="preserve"><value>רשימה קצרה ({0})</value></data>
-  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>אין כלום ברשימה הקצרה. חפשו בספרייה בצד וסמנו יצורים למפגשים הקרובים.</value></data>
+  <data name="Campaign.Bestiary.ShortlistEmpty" xml:space="preserve"><value>אין כלום ברשימה הקצרה. חפשו תחת „חיפוש יצורים” וסמנו יצורים למפגשים הקרובים.</value></data>
   <data name="Campaign.Bestiary.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
   <data name="Campaign.Bestiary.NoteFor" xml:space="preserve"><value>הערה עבור {0}</value></data>
   <data name="Campaign.Bestiary.NotePlaceholder" xml:space="preserve"><value>איפה תשתמשו בזה…</value></data>
@@ -171,7 +171,7 @@
   <data name="Campaign.Lore.Chip.RevealedToMe" xml:space="preserve"><value>נחשף בפניי</value></data>
   <data name="Campaign.Lore.Empty.None" xml:space="preserve"><value>אין כאן עדיין כלום</value></data>
   <data name="Campaign.Lore.Empty.NoMatch" xml:space="preserve"><value>לא נמצאו אגדות מתאימות</value></data>
-  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה בצד.</value></data>
+  <data name="Campaign.Lore.Empty.Dm" xml:space="preserve"><value>כתבו את העובדה הראשונה תחת „עובדה חדשה”.</value></data>
   <data name="Campaign.Lore.Empty.Player" xml:space="preserve"><value>עדיין לא נחשף בפניכם דבר.</value></data>
   <data name="Campaign.Lore.Nobody" xml:space="preserve"><value>עדיין אף אחד</value></data>
   <data name="Campaign.Lore.RevealTo" xml:space="preserve"><value>חשיפה בפני</value></data>
@@ -379,7 +379,7 @@
   <data name="Campaign.Wiki.Search" xml:space="preserve"><value>חיפוש בוויקי</value></data>
   <data name="Campaign.Wiki.SearchPlaceholder" xml:space="preserve"><value>חיפוש דפים…</value></data>
   <data name="Campaign.Wiki.FilterByTag" xml:space="preserve"><value>סינון לפי תגית</value></data>
-  <data name="Campaign.Wiki.All" xml:space="preserve"><value>הכול</value></data>
+  <data name="Campaign.Wiki.AllTags" xml:space="preserve"><value>כל התגיות</value></data>
   <data name="Campaign.Wiki.Empty.None" xml:space="preserve"><value>עדיין אין דפים</value></data>
   <data name="Campaign.Wiki.Empty.NoMatch" xml:space="preserve"><value>לא נמצא דף מתאים</value></data>
   <data name="Campaign.Wiki.Empty.Dm" xml:space="preserve"><value>התחילו במקום, בפלג או באגדה. קשרו דפים עם [[סוגריים כפולים]].</value></data>
@@ -515,13 +515,8 @@
   <data name="Campaign.Wiki.NewReveal" xml:space="preserve"><value>חדש</value></data>
   <data name="Campaign.Wiki.Secrets" xml:space="preserve"><value>סודות בדף</value></data>
   <data name="Campaign.Wiki.Secrets.PageHidden" xml:space="preserve"><value>הדף עדיין גלוי רק למנחה: השחקנים יקראו את מה שתחשפו כאן כשתשתפו אותו.</value></data>
-  <data name="Campaign.Wiki.Secrets.RevealTo" xml:space="preserve"><value>חשיפה לדמויות…</value></data>
   <data name="Campaign.Wiki.Secrets.RevealToThem" xml:space="preserve"><value>חשיפה להן</value></data>
   <data name="Campaign.Wiki.Secrets.Empty" xml:space="preserve"><value>(בלוק ריק)</value></data>
-  <data name="Campaign.Wiki.Secrets.TheParty" xml:space="preserve"><value>החבורה</value></data>
-  <data name="Campaign.Wiki.Secrets.ConfirmTitle" xml:space="preserve"><value>לחשוף ל{0}?</value></data>
-  <data name="Campaign.Wiki.Secrets.ConfirmBody" xml:space="preserve"><value>אפשר להסתיר אותו שוב בהמשך, אבל לא ממי שכבר קרא אותו. הם יקראו: „{0}”</value></data>
-  <data name="Campaign.Wiki.Secrets.ConfirmHiddenPage" xml:space="preserve"><value>הדף עצמו עדיין גלוי רק למנחה, כך שהם יקראו את זה כשתשתפו אותו: „{0}”</value></data>
   <data name="Campaign.Wiki.Secrets.Revealed" xml:space="preserve"><value>נחשף לחבורה.</value></data>
   <data name="Campaign.Wiki.Secrets.RevealedTo" xml:space="preserve"><value>נחשף ל{0}.</value></data>
   <data name="Campaign.Wiki.Secrets.Hidden" xml:space="preserve"><value>הוסתר שוב מהשחקנים.</value></data>
@@ -599,10 +594,19 @@
   <data name="Campaign.Wiki.Secrets.DraftLabel" xml:space="preserve"><value>מה שהשחקנים יודעים</value></data>
   <data name="Campaign.Wiki.Secrets.DraftHint" xml:space="preserve"><value>קראו לפני שזה נכנס לדף: כשהדף משותף, השחקנים קוראים את זה.</value></data>
   <data name="Campaign.Wiki.Secrets.PutOnPage" xml:space="preserve"><value>הוספה לדף</value></data>
-  <data name="Campaign.Wiki.Secrets.Discard" xml:space="preserve"><value>ביטול</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSaved" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים קוראים אותה עכשיו; הסוד נשאר מוסתר.</value></data>
   <data name="Campaign.Wiki.Secrets.PlayersVersionSavedHidden" xml:space="preserve"><value>הגרסה לשחקנים נוספה לדף. השחקנים יקראו אותה כשתשתפו את הדף.</value></data>
   <data name="Campaign.Wiki.Secrets.EditPlayersVersion" xml:space="preserve"><value>עריכת הגרסה לשחקנים</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealEllipsis" xml:space="preserve"><value>חשיפה…</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealTitle" xml:space="preserve"><value>חשיפת הסוד</value></data>
+  <data name="Campaign.Wiki.Secrets.TheSecret" xml:space="preserve"><value>הסוד</value></data>
+  <data name="Campaign.Wiki.Secrets.Who" xml:space="preserve"><value>למי לחשוף</value></data>
+  <data name="Campaign.Wiki.Secrets.ToParty" xml:space="preserve"><value>לכל החבורה</value></data>
+  <data name="Campaign.Wiki.Secrets.ToSome" xml:space="preserve"><value>רק לחלק מהדמויות</value></data>
+  <data name="Campaign.Wiki.Secrets.RevealToParty" xml:space="preserve"><value>חשיפה לחבורה</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndo" xml:space="preserve"><value>אפשר להסתיר אותו שוב בהמשך, אבל לא ממי שכבר קרא אותו.</value></data>
+  <data name="Campaign.Wiki.Secrets.CannotUndoHidden" xml:space="preserve"><value>הדף עצמו עדיין גלוי רק למנחה, כך שהם יקראו את זה כשתשתפו אותו. אפשר להסתיר אותו שוב, אבל לא ממי שכבר קרא אותו.</value></data>
+  <data name="Campaign.Wiki.Secrets.Redraft" xml:space="preserve"><value>ניסוח מחדש</value></data>
   <data name="Campaign.Wiki.SortBy" xml:space="preserve"><value>מיון הדפים</value></data>
   <data name="Campaign.Wiki.Sort.Title" xml:space="preserve"><value>לפי א״ב</value></data>
   <data name="Campaign.Wiki.Sort.Updated" xml:space="preserve"><value>עודכנו לאחרונה</value></data>
@@ -614,11 +618,16 @@
   <data name="Campaign.Setup.Done" xml:space="preserve"><value>בוצע:</value></data>
   <data name="Campaign.Setup.ToDo" xml:space="preserve"><value>לביצוע:</value></data>
   <data name="Campaign.Setup.Describe" xml:space="preserve"><value>תארו את המערכה לשחקנים</value></data>
-  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>הזמינו את השחקנים בעזרת הקישור</value></data>
+  <data name="Campaign.Setup.Invite" xml:space="preserve"><value>העתיקו את קישור ההזמנה לשחקנים</value></data>
   <data name="Campaign.Setup.Cast" xml:space="preserve"><value>הוסיפו דמות ראשונה לצוות</value></data>
   <data name="Campaign.Setup.Page" xml:space="preserve"><value>כתבו דף ויקי ראשון</value></data>
   <data name="Campaign.Setup.Place" xml:space="preserve"><value>הוסיפו מקום ראשון למפה</value></data>
   <data name="Campaign.Setup.Session" xml:space="preserve"><value>תכננו את המפגש הראשון</value></data>
+  <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>מסומן כשמצטרף שחקן.</value></data>
+  <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>מישהו מהעולם שלכם: השחקנים מוסיפים את הדמויות שלהם בעצמם.</value></data>
+  <data name="Campaign.Setup.InviteCopied" xml:space="preserve"><value>קישור ההזמנה הועתק. שלחו אותו לשחקנים: השלב יסומן כשאחד מהם יצטרף.</value></data>
+  <data name="Campaign.Setup.Builder" xml:space="preserve"><value>או תנו לבונה העולם לנסח אותם: הדפים, המקומות במפה והדמויות שתאשרו יסמנו את השלבים האלה.</value></data>
+  <data name="Campaign.Setup.BuilderNoAi" xml:space="preserve"><value>אחרי שתגדירו בינה מלאכותית, בונה העולם יוכל לנסח עבורכם דפים, מקומות ודמויות.</value></data>
   <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>דפים שעודכנו לאחרונה</value></data>
   <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>פתיחת הוויקי</value></data>
 </root>

@@ -93,9 +93,13 @@ public class StrangersAndLoreE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("wiki-save").ClickAsync();
         await dm.WaitForURLAsync(url => url.EndsWith("/wiki/saltmere"));
         await E2EHelpers.WaitForInteractiveAsync(dm);
+        // Written in a dialog with the secret quoted above the box.
         await dm.GetByTestId("wiki-secret-players-0").ClickAsync();
-        await dm.GetByTestId("wiki-secret-draft-text-0").FillAsync("Lights move on the water at night.");
-        await dm.GetByTestId("wiki-secret-draft-save-0").ClickAsync();
+        var told = dm.GetByTestId("players-version-dialog");
+        await Assertions.Expect(told).ToContainTextAsync("The keeper runs the smugglers.");
+        await told.GetByTestId("wiki-secret-draft-text").FillAsync("Lights move on the water at night.");
+        await told.GetByTestId("wiki-secret-draft-save").ClickAsync();
+        await Assertions.Expect(told).ToBeHiddenAsync();
         await Assertions.Expect(dm.GetByTestId("wiki-secret-told-0")).ToContainTextAsync("Lights move on the water at night.");
         await Assertions.Expect(dm.GetByTestId("wiki-body")).ToContainTextAsync("The keeper runs the smugglers.");
 

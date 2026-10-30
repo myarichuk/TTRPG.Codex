@@ -551,7 +551,12 @@ hr { border-color: var(--border); opacity: 1; }
 }
 .list-row:hover { background: var(--surface-2); }
 .list-row:last-child { border-bottom: 0; }
-.list-row .row-main { min-width: 0; flex: 1; }
+/* A row in a narrow column (the cast's two halves) puts its buttons under the name rather than squeezing the name into a
+   word per line; on their own line they keep to the end. A long status plaque wraps instead of running over them. */
+.list-row { flex-wrap: wrap; }
+.list-row .row-main { min-width: 0; flex: 1 1 9rem; }
+.list-row > .row-actions { margin-inline-start: auto; }
+.list-row .row-title .pill { white-space: normal; max-width: 100%; }
 .list-row .row-title { font-weight: 600; }
 .list-row .row-title a { color: var(--text); text-decoration: none; }
 .list-row .row-title a:hover { text-decoration: underline; }
@@ -927,7 +932,8 @@ dialog.codex-dialog::backdrop {
     .panel { padding: 1.1rem 1rem; }
     .list-row { flex-direction: column; align-items: flex-start; }
     /* Stacked, the text takes the row's width and long words (licence URLs) wrap instead of widening the page. */
-    .list-row .row-main { width: 100%; overflow-wrap: anywhere; }
+    .list-row .row-main { width: 100%; overflow-wrap: anywhere; flex: none; }
+    .list-row > .row-actions { margin-inline-start: 0; }
     .row-actions { justify-content: flex-start; }
     .dialog-body { padding: 1.3rem 1.2rem 1rem; }
     .dialog-actions { padding: 0 1.2rem 1.2rem; }
@@ -1043,14 +1049,14 @@ a.user-chip:active { transform: scale(0.97); }
 .secret-item-text:hover { text-decoration: underline; }
 .secret-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.35rem 0; font-size: 0.8rem; color: var(--text-2); }
 .secret-item-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.secret-pick { display: grid; gap: 0.3rem; padding: 0.5rem; min-width: 12rem; }
 /* A players' version the AI drafted from a DM block, for the DM to read and change before it goes in. */
 .secret-told { display: flex; align-items: flex-start; gap: 0.35rem; margin: 0 0 0.4rem; font-size: 0.8rem; color: var(--text-2); }
 .secret-told svg { flex: none; margin-top: 0.15rem; }
 .secret-told span { min-width: 0; overflow-wrap: anywhere; }
-.players-draft { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
-.players-draft textarea { font-size: 0.9rem; }
-.players-draft-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* The secret a reveal or a players' version is about, quoted at the top of its dialog. */
+.secret-quote { max-height: 14rem; overflow-y: auto; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-inline-start: 3px solid var(--warning); border-radius: var(--radius-md); background: var(--surface-2); }
+.secret-quote > :last-child { margin-bottom: 0; }
+.reveal-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.3rem 1rem; margin: 0.4rem 0 0; padding-inline-start: 1.8rem; }
 /* Lore: who knows a fact, each with a way to take it back. */
 .fact-knowers { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
 .chip-static { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.3rem 0.15rem 0.65rem; font-size: 0.82rem; cursor: default; }
@@ -1288,6 +1294,8 @@ dialog.codex-dialog::before, dialog.codex-dialog::after {
 .pill-success { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 55%, transparent); }
 .pill-warning { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 55%, transparent); }
 .pill-arcane { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--arcane) 55%, transparent); }
+/* The chamfers eat into the corners, so a plaque set after a name with the usual small gap looks stuck to it. */
+.pill.ms-1 { margin-inline-start: 0.5rem !important; }
 
 /* Ornamental divider: a rule with a diamond in the middle. */
 .divider-orn { display: flex; align-items: center; gap: 0.6rem; margin: 1rem 0; color: var(--border-strong); }
@@ -1833,8 +1841,13 @@ html:has(.md-full) { overflow: hidden; }
 @media (min-width: 992px) and (max-width: 1699px) {
     .beside-notes .ws-main .row > [class*="col-lg-"] { flex: 0 0 auto; width: 100%; }
 }
+/* The tab hangs outside the drawer at the page's edge; where the page has no margin beside it, the page keeps clear of it
+   (it is about 2.4rem wide). On a phone it sits above the tab bar, not on its last button. */
+@media (min-width: 721px) {
+    body:has(.notes-dock) .page { padding-inline-end: max(var(--gutter), calc(3rem - max(0px, (100vw - var(--content-max)) / 2))); }
+}
 @media (max-width: 720px) {
-    .notes-tab { top: auto; bottom: 1rem; }
+    .notes-tab { top: auto; bottom: calc(var(--tabbar-h, 0px) + env(safe-area-inset-bottom) + 0.75rem); }
 }
 @media (prefers-reduced-motion: reduce) {
     .notes-dock, .workspace.beside-notes { transition: none; }
@@ -1854,10 +1867,32 @@ html:has(.md-full) { overflow: hidden; }
 .mention-list [role="option"][aria-selected="true"], .mention-list [role="option"]:hover { background: var(--accent-soft); color: var(--accent); }
 /* While a template is being filled in (app-startup.js): which field the caret is in and the keys that move it. */
 .template-hint {
-    position: fixed; z-index: 1100; padding: 0.3rem 0.65rem; border-radius: var(--radius-md); font-size: 0.82rem;
-    background: var(--arcane-soft); color: var(--text); border: 1px solid var(--arcane); box-shadow: var(--shadow-2); pointer-events: none;
+    position: fixed; z-index: 1100; display: flex; align-items: center; gap: 0.15rem;
+    padding-block: 0.15rem; padding-inline: 0.65rem 0.2rem; border-radius: var(--radius-md); font-size: 0.82rem;
+    background: linear-gradient(var(--arcane-soft), var(--arcane-soft)), var(--surface); color: var(--text); border: 1px solid var(--arcane); box-shadow: var(--shadow-2);
 }
 .template-hint[hidden] { display: none; }
+.template-hint-text { margin-inline-end: 0.35rem; }
+.template-hint-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0;
+    background: transparent; color: var(--arcane); border: 0; border-radius: var(--radius-sm); cursor: pointer;
+}
+.template-hint-btn:hover:not(:disabled) { background: var(--arcane-soft); color: var(--text); }
+.template-hint-btn:disabled { opacity: 0.35; cursor: default; }
+[dir="rtl"] .template-hint-btn.th-prev svg, [dir="rtl"] .template-hint-btn.th-next svg { transform: scaleX(-1); }
+/* Big enough for a finger where there is no mouse. */
+@media (hover: none) and (pointer: coarse) { .template-hint-btn { width: 40px; height: 40px; } }
+/* The fields of a template being filled, drawn over the box (app-startup.js copies its text, font and wrapping). Only the
+   fields show: each outlined, the one being filled lit, and a name standing in a field greyed over the box's own letters. */
+.template-marks { position: absolute; overflow: hidden; pointer-events: none; }
+.template-marks[hidden] { display: none; }
+.template-marks > div { box-sizing: border-box; margin: 0; border: 0; color: transparent; }
+.template-marks .tf { border-radius: 3px; box-shadow: inset 0 0 0 1px var(--border-strong); }
+.template-marks .tf-current { box-shadow: inset 0 0 0 1.5px var(--arcane); background: var(--arcane-soft); }
+.template-marks .tf-ph { color: var(--text-3); background: linear-gradient(var(--arcane-soft), var(--arcane-soft)), var(--tf-bg, var(--surface)); }
+.template-marks .tf-current.tf-ph { background: linear-gradient(var(--arcane-soft), var(--arcane-soft)), linear-gradient(var(--arcane-soft), var(--arcane-soft)), var(--tf-bg, var(--surface)); }
+.template-marks .tf-empty { display: inline-block; width: 0; height: 1.1em; vertical-align: text-bottom; box-shadow: 0 0 0 1px var(--border-strong); }
+.template-marks .tf-empty.tf-current { box-shadow: 0 0 0 1px var(--arcane); }
 .mention-kind { color: var(--text-3); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .mention { font-weight: 600; text-decoration: none; border-bottom: 1px dotted currentColor; }
 a.mention:hover { text-decoration: none; border-bottom-style: solid; }
@@ -2261,4 +2296,7 @@ dialog.wb-raw-dialog { width: min(880px, 96vw); }
 .setup-steps li { display: flex; align-items: center; gap: 0.5rem; }
 .setup-steps .setup-mark { color: var(--text-3); flex: 0 0 auto; }
 .setup-steps .setup-done .setup-mark { color: var(--success, #6fbf73); }
-.setup-steps .setup-done a { color: var(--text-3); text-decoration: line-through; }
+.setup-steps .setup-done a, .setup-steps .setup-done .link-button { color: var(--text-3); text-decoration: line-through; font-weight: inherit; }
+.setup-steps .link-button { font-weight: inherit; color: var(--accent); text-align: start; }
+.setup-step { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; min-width: 0; }
+.setup-why { font-size: 0.82rem; color: var(--text-3); }

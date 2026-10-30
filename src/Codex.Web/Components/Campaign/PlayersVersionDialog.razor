@@ -1,0 +1,157 @@
+@using Codex.Web.Services
+@inject IJSRuntime JS
+@inject ILogger<PlayersVersionDialog> Logger
+@implements IDisposable
+
+@* Writes the players' version of a DM block: what the players are told in its place. The secret sits on top for reference
+   and the text gets a box of its own, in a dialog rather than the side panel, which has no room for either. With the AI
+   ready it drafts the text when there is none yet, and drafts again on asking (steered by a line of instruction); the DM
+   reads and edits it before it goes on the page. Its contents render only while it is open. *@
+
+<dialog id="players-version-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="players-version-title" @onclose="OnClosed" @oncancel="OnClosed" data-testid="players-version-dialog">
+    @if (pending != null)
+    {
+        <form @onsubmit="Accept" @onsubmit:preventDefault="true">
+            <div class="dialog-body">
+                <h2 id="players-version-title"><LucideIcon IconName="users" Size="18" Class="title-icon" /> @L["Campaign.Wiki.Secrets.PlayersVersion"]</h2>
+                <p class="small-muted">@L["Campaign.Wiki.Secrets.PlayersVersionTitle"]</p>
+                <div class="label-caps mb-1">@L["Campaign.Wiki.Secrets.TheSecret"]</div>
+                <div class="secret-quote rules-text">@((MarkupString)secretHtml)</div>
+
+                <label for="players-version-text" class="field-label mt-3">@L["Campaign.Wiki.Secrets.DraftLabel"]</label>
+                @if (busy)
+                {
+                    <AiWorking Text="@L["Campaign.Wiki.Writing"]" OnStop="call.Stop" TestId="wiki-secret-players-working" />
+                }
+                <textarea id="players-version-text" class="field-input" rows="8" value="@text" data-mentions="@Mentions" readonly="@busy" aria-describedby="players-version-hint"
+                          @oninput="e => text = e.Value?.ToString() ?? string.Empty" data-testid="wiki-secret-draft-text"></textarea>
+                @if (draft != null)
+                {
+                    <div class="ai-field-foot">
+                        <label for="players-version-ask" class="visually-hidden">@L["Library.Ai.AskLabel"]</label>
+                        <input id="players-version-ask" class="field-input field-sm" placeholder="@L["Library.Ai.AskPlaceholder"]" @bind="instruction" @bind:event="oninput" disabled="@busy" />
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="DraftAsync" Disabled="@busy" data-testid="wiki-secret-draft-ai">
+                            @(string.IsNullOrWhiteSpace(text) ? L["Library.Ai.Write"] : L["Campaign.Wiki.Secrets.Redraft"])
+                        </CodexButton>
+                    </div>
+                }
+                <p id="players-version-hint" class="field-hint mb-0">@L["Campaign.Wiki.Secrets.DraftHint"]</p>
+                @if (error != null)
+                {
+                    <p class="text-danger small mb-0 mt-1" role="alert">@error</p>
+                }
+            </div>
+            <div class="dialog-actions">
+                <CodexButton OnClick="() => Finish(null)">@L["Common.Cancel"]</CodexButton>
+                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@(busy || string.IsNullOrWhiteSpace(text))" data-testid="wiki-secret-draft-save">
+                    <LucideIcon IconName="check" Size="16" /> @L["Campaign.Wiki.Secrets.PutOnPage"]
+                </CodexButton>
+            </div>
+        </form>
+    }
+</dialog>
+
+@code {
+    /// <summary>The box's @, # and $ suggestions as JSON (see <c>MentionLinks.Json</c>).</summary>
+    [Parameter] public string? Mentions { get; set; }
+
+    /// <summary>Drafts the text with the AI from the version in the box (null when empty) and an instruction (may be empty).</summary>
+    public delegate Task<string> Drafter(string? current, string instruction, CancellationToken ct);
+
+    private string secretHtml = string.Empty;
+    private string text = string.Empty;
+    private string instruction = string.Empty;
+    private string? error;
+    private bool busy;
+    private Drafter? draft;
+    private readonly AiCall call = new();
+    private TaskCompletionSource<string?>? pending;
+    private bool showRequested;
+    private bool draftOnOpen;
+
+    /// <summary>Opens the dialog on <paramref name="current"/> (the version the block has, or empty). With a
+    /// <paramref name="drafter"/> (the AI is ready) an empty version is drafted at once. The text to put on the page, or null
+    /// when the DM cancels.</summary>
+    public async Task<string?> ShowAsync(string html, string current, Drafter? drafter)
+    {
+        if (pending != null) Finish(null);
+        secretHtml = html;
+        text = current;
+        instruction = string.Empty;
+        error = null;
+        draft = drafter;
+        draftOnOpen = drafter != null && string.IsNullOrWhiteSpace(current);
+        pending = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        showRequested = true;
+        StateHasChanged();
+        return await pending.Task;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!showRequested) return;
+        showRequested = false;
+        await JS.InvokeVoidAsync("codex.showModal", "players-version-dialog");
+        if (draftOnOpen)
+        {
+            draftOnOpen = false;
+            await DraftAsync();
+        }
+    }
+
+    private async Task DraftAsync()
+    {
+        if (draft == null || busy) return;
+        busy = true;
+        error = null;
+        StateHasChanged();
+        var ct = call.Begin();
+        try
+        {
+            var written = await draft(string.IsNullOrWhiteSpace(text) ? null : text, instruction.Trim(), ct);
+            if (pending != null) text = written;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            error = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Drafting a players' version failed");
+            error = L["Campaign.Wiki.AiFailed", AiFailureText.For(L, ex)];
+            // Not configured after all: the DM writes it by hand.
+            if (ex is AiNotConfiguredException) draft = null;
+        }
+        finally
+        {
+            call.End(ct);
+            busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Accept()
+    {
+        if (busy || string.IsNullOrWhiteSpace(text)) return;
+        Finish(text);
+    }
+
+    private void Finish(string? result)
+    {
+        call.Stop();
+        var completion = pending;
+        pending = null;
+        _ = JS.InvokeVoidAsync("codex.closeModal", "players-version-dialog");
+        completion?.TrySetResult(result);
+    }
+
+    private void OnClosed()
+    {
+        call.Stop();
+        var completion = pending;
+        pending = null;
+        completion?.TrySetResult(null);
+    }
+
+    public void Dispose() => call.Dispose();
+}

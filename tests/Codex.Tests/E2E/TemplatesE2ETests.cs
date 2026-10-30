@@ -31,13 +31,24 @@ public class TemplatesE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("wiki-start-builtin:person").ClickAsync();
         await Assertions.Expect(hint).ToContainTextAsync("summary · 1 of 8");
         await Assertions.Expect(dm.GetByTestId("wiki-kind-select")).ToHaveValueAsync("Person");
+        // As in an IDE, a field with no default holds its name, drawn greyed over the box, until it is typed over.
+        await Assertions.Expect(body).ToHaveValueAsync(new System.Text.RegularExpressions.Regex(@"^summary\n\n## Look and voice\nlook\n"));
+        await Assertions.Expect(dm.Locator(".template-marks .tf-ph.tf-current")).ToHaveTextAsync("summary");
         await dm.Keyboard.TypeAsync("Keeper of the lighthouse.");
         await dm.Keyboard.PressAsync("Tab");
         await Assertions.Expect(hint).ToContainTextAsync("look · 2 of 8");
         await dm.Keyboard.TypeAsync("Grey-eyed.");
+        // The hint's buttons step too (a phone's keyboard has no Tab), and leave the caret in the box, so the template goes on.
+        await dm.GetByTestId("template-prev").ClickAsync();
+        await Assertions.Expect(hint).ToContainTextAsync("summary · 1 of 8");
+        await dm.GetByTestId("template-next").ClickAsync();
+        await Assertions.Expect(hint).ToContainTextAsync("look · 2 of 8");
+        await Assertions.Expect(body).ToBeFocusedAsync();
         await dm.Keyboard.PressAsync("Escape");
         await Assertions.Expect(hint).ToBeHiddenAsync();
-        await Assertions.Expect(body).ToHaveValueAsync(new System.Text.RegularExpressions.Regex(@"^Keeper of the lighthouse\.\n\n## Look and voice\nGrey-eyed\.\n\n## History\n"));
+        // The names still standing in the fields left alone are taken out again.
+        await Assertions.Expect(body).ToHaveValueAsync(new System.Text.RegularExpressions.Regex(@"^Keeper of the lighthouse\.\n\n## Look and voice\nGrey-eyed\.\n\n## History\n\n\n## Wants and fears\n\n\n"));
+        await Assertions.Expect(dm.Locator(".template-marks")).ToBeHiddenAsync();
 
         // A snippet by its abbreviation: its default is selected, so typing replaces it; Tab after the last field ends it.
         await body.FillAsync("");
@@ -71,5 +82,15 @@ public class TemplatesE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("wiki-save").ClickAsync();
         await dm.WaitForURLAsync(url => url.EndsWith("/wiki/mara"));
         await Assertions.Expect(dm.GetByTestId("wiki-body")).ToHaveTextAsync("Mara gives a coin; Mara smiles.");
+
+        // Saved with Ctrl+S while a field still holds its name: the name never reaches the page.
+        await E2EHelpers.GotoInteractiveAsync(dm, $"/campaigns/{campaignId}/wiki/new?title=Olm");
+        await body.PressSequentiallyAsync("/gif");
+        await dm.Keyboard.PressAsync("Enter");
+        await Assertions.Expect(body).ToHaveValueAsync("who gives a coin; who smiles.");
+        await body.PressAsync("Control+s");
+        await dm.WaitForURLAsync(url => url.EndsWith("/wiki/olm"));
+        await Assertions.Expect(dm.GetByTestId("wiki-body")).ToContainTextAsync("gives a coin;");
+        await Assertions.Expect(dm.GetByTestId("wiki-body")).Not.ToContainTextAsync("who");
     }
 }

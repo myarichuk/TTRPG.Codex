@@ -172,7 +172,7 @@
   <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>אין מודל תמונות עדיין</value></data>
   <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>אין מודל טקסט עדיין</value></data>
   <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>העלאת איורים עובדת גם בלעדיו. הוסיפו מודל כדי שיציירו עבורכם; מודלי כתיבה טובים כמעט לא מציירים, ולכן זה מוגדר בנפרד מהטקסט.</value></data>
-  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>הוסיפו מודל בצד. OpenRouter נבחר מראש: מפתח אחד נותן גישה לרוב המודלים העדכניים.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>הוסיפו מודל תחת „מודל טקסט חדש”. OpenRouter נבחר מראש: מפתח אחד נותן גישה לרוב המודלים העדכניים.</value></data>
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>בשימוש</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>אין מפתח</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>המפתח שמור</value></data>

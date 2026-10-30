@@ -53,6 +53,10 @@
   <data name="Common.Editor.Templates" xml:space="preserve"><value>Insert a template (or type its abbreviation and Tab, or /)</value></data>
   <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>Edit templates…</value></data>
   <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} of {2} · Tab: next · Shift+Tab: back · Esc: done</value></data>
+  <data name="Common.Editor.TemplateHintTouch" xml:space="preserve"><value>{0} · {1} of {2}</value></data>
+  <data name="Common.Editor.TemplatePrev" xml:space="preserve"><value>Previous field</value></data>
+  <data name="Common.Editor.TemplateNext" xml:space="preserve"><value>Next field</value></data>
+  <data name="Common.Editor.TemplateDone" xml:space="preserve"><value>Done</value></data>
   <data name="Common.Unsaved.Note" xml:space="preserve"><value>Not saved yet</value></data>
   <data name="Common.SaveShortcut" xml:space="preserve"><value>Save (Ctrl+S)</value></data>
 </root>

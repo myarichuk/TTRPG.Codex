@@ -172,7 +172,7 @@
   <data name="Page.AiSettings.EmptyImageTitle" xml:space="preserve"><value>No image model yet</value></data>
   <data name="Page.AiSettings.EmptyTextTitle" xml:space="preserve"><value>No text model yet</value></data>
   <data name="Page.AiSettings.EmptyImageText" xml:space="preserve"><value>Uploading art works without one. Add one to have pictures drawn for you; good writing models rarely draw, so this is set up apart from text.</value></data>
-  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Add one on the right. OpenRouter is pre-selected: one key gives you most current models.</value></data>
+  <data name="Page.AiSettings.EmptyTextText" xml:space="preserve"><value>Add one under New text model. OpenRouter is pre-selected: one key gives you most current models.</value></data>
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>In use</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>no key</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>key stored</value></data>

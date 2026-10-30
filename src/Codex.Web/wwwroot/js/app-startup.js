@@ -432,6 +432,14 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // Brings a field into view, focused and its text selected (a link to copy by hand).
+    selectField: function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        el.focus({ preventScroll: true });
+        if (el.select) el.select();
+    },
     // A text box whose value the server changes from outside what the reader typed (AI text, an undo): the box itself is not
     // re-sent its value on every keystroke, so this is the one way such a change reaches it.
     setValue: function (id, value) {
@@ -700,15 +708,24 @@ window.codexDownload = window.codex.download;
 
 // Live templates (LiveTemplate.cs) in a box with data-templates: [{ a: abbreviation, n: name, b: body }]. Typing an
 // abbreviation and Tab puts its template in; then Tab and Shift+Tab step through its fields, a field used twice repeats what
-// is typed in the first, and Tab after the last field (or Escape, or leaving the box) ends it. Tab anywhere else still moves
-// focus, so a keyboard user is never trapped. While a template is being filled, a hint (data-template-hint, with {0} the
-// field, {1} its number and {2} how many) says where the caret is.
+// is typed in the first, and Tab after the last field (or Escape, or leaving the box, or saving) ends it. Tab anywhere else
+// still moves focus, so a keyboard user is never trapped. As in an IDE, a field with no default holds its name, greyed and
+// selected, so typing replaces it; a name still there when the template ends is taken out again, so it never reaches the
+// page. The fields are drawn over the box (a layer that copies the box's text and wrapping, with only the fields showing),
+// and a hint (data-template-hint, with {0} the field, {1} its number and {2} how many) says where the caret is.
 window.codexTemplates = (function () {
     // Keep in step with Token in LiveTemplate.cs.
     const TOKEN = /\$\$|\$([\p{L}\p{N}_]+)(?::([^$\r\n]*))?\$/gu;
+    // What the layer over the box copies from it, so its text wraps line for line with the box's.
+    const COPIED = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "fontVariant", "fontStretch", "fontFeatureSettings", "fontVariationSettings",
+        "fontKerning", "letterSpacing", "wordSpacing", "lineHeight", "textTransform", "textIndent", "textAlign", "direction", "unicodeBidi", "tabSize",
+        "whiteSpace", "overflowWrap", "wordBreak", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft"];
     let s = null;
     let hint = null;
+    let layer = null;
     let mirroring = false;
+    let frame = 0;
+    const resized = window.ResizeObserver ? new ResizeObserver(function () { later(); }) : null;
 
     function of(el) {
         if (el._templatesSource !== el.dataset.templates) {
@@ -718,7 +735,10 @@ window.codexTemplates = (function () {
         return el._templates;
     }
 
-    function expand(body) {
+    function label(name) { return name.replace(/_/g, " "); }
+
+    // The template with each field holding its default; with <placeholders>, a field with none holds its name instead (ph).
+    function expand(body, placeholders) {
         const defaults = {};
         for (const m of body.matchAll(TOKEN)) {
             if (m[1] !== undefined && m[2] !== undefined && !(m[1] in defaults)) defaults[m[1]] = m[2];
@@ -731,9 +751,11 @@ window.codexTemplates = (function () {
             if (m[1] === undefined) { text += "$"; continue; }
             if (m[1] === "END") { if (end < 0) end = text.length; continue; }
             const value = defaults[m[1]] || "";
-            fields.push({ name: m[1], start: text.length, end: text.length + value.length, mirror: seen.has(m[1]) });
+            const ph = !value && !!placeholders;
+            const shown = ph ? label(m[1]) : value;
+            fields.push({ name: m[1], start: text.length, end: text.length + shown.length, mirror: seen.has(m[1]), ph: ph });
             seen.add(m[1]);
-            text += value;
+            text += shown;
         }
         text += body.slice(at);
         return { text: text, fields: fields, end: end < 0 ? text.length : end };
@@ -742,17 +764,28 @@ window.codexTemplates = (function () {
     function insert(el, index, from, to) {
         const t = of(el)[index];
         if (!t || el.readOnly) return;
-        stop();
-        const x = expand(t.b.replace(/\r\n/g, "\n"));
+        // A template put in while another is being filled ends that one first; taking its names out moves what comes after.
+        stop().forEach(function (r) {
+            from = moved(from, r);
+            to = moved(to, r);
+        });
+        const x = expand(t.b.replace(/\r\n/g, "\n"), true);
         mdReplace(el, from, to, x.text);
-        const fields = x.fields.map(function (f) { return { name: f.name, start: f.start + from, end: f.end + from, mirror: f.mirror }; });
+        const fields = x.fields.map(function (f) { return { name: f.name, start: f.start + from, end: f.end + from, mirror: f.mirror, ph: f.ph }; });
         const stops = fields.filter(function (f) { return !f.mirror; });
         if (stops.length === 0) {
             el.setSelectionRange(from + x.end, from + x.end);
             return;
         }
         s = { el: el, fields: fields, stops: stops, end: from + x.end, index: 0, value: el.value };
+        if (resized) resized.observe(el);
         go(0);
+    }
+
+    // Where a position ends up once the text from r.start to r.end is taken out.
+    function moved(p, r) {
+        if (p >= r.end) return p - (r.end - r.start);
+        return p > r.start ? r.start : p;
     }
 
     function go(i) {
@@ -760,38 +793,187 @@ window.codexTemplates = (function () {
         const f = s.stops[i];
         s.el.setSelectionRange(f.start, f.end);
         show();
+        follow();
     }
 
-    function stop() {
+    // The part of the screen the box can be read in: under the site's header, above the editor's Save row when that sticks.
+    function readable() {
+        const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 0;
+        let bottom = window.innerHeight;
+        const form = s.el.closest("form");
+        const bar = form && form.querySelector(".save-bar");
+        if (bar) {
+            const r = bar.getBoundingClientRect();
+            if (r.top > top && r.top < bottom) bottom = r.top;
+        }
+        return { top: top, bottom: bottom };
+    }
+
+    // Brings the field being filled into view, as an IDE moves to it: in the box first, then the page (on a phone the box is
+    // mostly under the Save row and the tab bar). Where the field is comes from the layer, which lays the text out as the box does.
+    function follow() {
+        const mark = layer && layer.querySelector(".tf-current");
+        if (!mark) return;
+        const box = s.el.getBoundingClientRect();
+        let r = mark.getBoundingClientRect();
+        if (r.top < box.top || r.bottom > box.bottom) {
+            s.el.scrollTop += r.top - box.top - Math.max(0, (box.height - r.height) / 3);
+            paint();
+            r = layer.querySelector(".tf-current").getBoundingClientRect();
+        }
+        const view = readable();
+        if (r.top < view.top + 8 || r.bottom > view.bottom - 8) {
+            const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+            window.scrollBy({ top: r.top - view.top - Math.max(0, (view.bottom - view.top - r.height) / 3), behavior: reduce ? "auto" : "smooth" });
+        }
+    }
+
+    // Ends the template being filled and takes out the names still standing in fields no one typed in, unless <keep> (the box
+    // was changed from outside, so where the fields are is not known). Returns the ranges taken out, last first.
+    function stop(keep) {
+        const was = s;
         s = null;
-        if (hint) { hint.hidden = true; hint.textContent = ""; }
+        if (hint) { hint.hidden = true; hint.firstChild.textContent = ""; }
+        if (layer) { layer.hidden = true; layer.firstChild.textContent = ""; }
+        if (resized) resized.disconnect();
+        if (!was || keep || was.el.value !== was.value) return [];
+        const gone = was.fields.filter(function (f) { return f.ph && f.end > f.start; })
+            .sort(function (a, b) { return b.start - a.start; })
+            .map(function (f) { return { start: f.start, end: f.end }; });
+        if (gone.length === 0) return gone;
+        const el = was.el;
+        gone.forEach(function (r) { el.setRangeText("", r.start, r.end, "preserve"); });
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        return gone;
     }
 
     function finish() {
-        const el = s.el, end = s.end;
+        s.el.setSelectionRange(s.end, s.end);
         stop();
-        el.setSelectionRange(end, end);
+    }
+
+    // The hint's buttons step back, step on and end the template, for a phone or tablet whose keyboard has no Tab or Escape
+    // (and for the mouse). They never take the focus, which would end the template: the box keeps it, and its keyboard stays up.
+    const ICONS = {
+        prev: "<path d=\"m15 18-6-6 6-6\"/>",
+        next: "<path d=\"m9 18 6-6-6-6\"/>",
+        done: "<path d=\"M20 6 9 17l-5-5\"/>"
+    };
+
+    function button(kind, title, act) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.tabIndex = -1;
+        b.className = "template-hint-btn th-" + kind;
+        b.title = title;
+        b.setAttribute("aria-label", title);
+        b.dataset.testid = "template-" + kind;
+        b.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + ICONS[kind] + "</svg>";
+        b.addEventListener("click", function () { if (s) act(); });
+        return b;
     }
 
     function show() {
         if (!hint) {
             hint = document.createElement("div");
             hint.className = "template-hint";
-            hint.setAttribute("role", "status");
-            hint.setAttribute("aria-live", "polite");
             hint.dataset.testid = "template-hint";
+            const text = document.createElement("span");
+            text.className = "template-hint-text";
+            text.setAttribute("role", "status");
+            text.setAttribute("aria-live", "polite");
+            hint.appendChild(text);
+            hint.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+            hint.addEventListener("mousedown", function (e) { e.preventDefault(); });
             document.body.appendChild(hint);
         }
+        const names = (s.el.dataset.templateButtons || "").split("|");
+        if (hint.dataset.buttons !== s.el.dataset.templateButtons) {
+            hint.dataset.buttons = s.el.dataset.templateButtons || "";
+            hint.querySelectorAll("button").forEach(function (b) { b.remove(); });
+            hint.appendChild(button("prev", names[0] || "‹", function () { go(Math.max(0, s.index - 1)); }));
+            hint.appendChild(button("next", names[1] || "›", function () { if (s.index + 1 < s.stops.length) go(s.index + 1); else finish(); }));
+            hint.appendChild(button("done", names[2] || "✓", function () { stop(); }));
+        }
         const f = s.stops[s.index];
-        const words = s.el.dataset.templateHint || "{0} ({1}/{2})";
-        hint.textContent = words.replace("{0}", f.name.replace(/_/g, " ")).replace("{1}", s.index + 1).replace("{2}", s.stops.length);
-        // In the box's bottom corner on the end side (left in Hebrew), or the bottom of the screen when that is out of view.
-        const box = s.el.getBoundingClientRect();
+        // Without a hardware keyboard the keys the hint names are not there: it says only where the caret is.
+        const touch = window.matchMedia && matchMedia("(hover: none) and (pointer: coarse)").matches;
+        const words = (touch && s.el.dataset.templateHintTouch) || s.el.dataset.templateHint || "{0} ({1}/{2})";
+        hint.firstChild.textContent = words.replace("{0}", label(f.name)).replace("{1}", s.index + 1).replace("{2}", s.stops.length);
+        hint.querySelector(".th-prev").disabled = s.index === 0;
         hint.hidden = false;
+        place();
+        paint();
+    }
+
+    // The hint in the box's bottom corner on the end side (left in Hebrew), or the bottom of the screen when that is out of view;
+    // above the editor's Save row when that sticks over the box, so the hint never covers its buttons.
+    function place() {
+        const box = s.el.getBoundingClientRect();
         const rtl = getComputedStyle(s.el).direction === "rtl";
         const left = rtl ? box.left + 18 : box.right - hint.offsetWidth - 18;
+        const bottom = Math.min(box.bottom, readable().bottom);
         hint.style.left = Math.max(8, Math.min(left, window.innerWidth - hint.offsetWidth - 8)) + "px";
-        hint.style.top = Math.max(8, Math.min(box.bottom, window.innerHeight) - hint.offsetHeight - 8) + "px";
+        hint.style.top = Math.max(8, bottom - hint.offsetHeight - 8) + "px";
+    }
+
+    function escape(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Above the box's own layer: one more than the highest z-index among its positioned ancestors (a full-screen editor's).
+    function zOver(el) {
+        let z = 0;
+        for (let node = el.parentElement; node && node !== document.body; node = node.parentElement) {
+            const cs = getComputedStyle(node);
+            if (cs.position !== "static" && cs.zIndex !== "auto") z = Math.max(z, parseInt(cs.zIndex, 10) || 0);
+        }
+        return z + 1;
+    }
+
+    // Draws the fields over the box: the box's text again, invisible, with each field outlined, the one being filled lit,
+    // and a name standing in a field drawn greyed over the box's own letters (it covers them with the box's background).
+    function paint() {
+        const el = s.el;
+        if (!layer) {
+            layer = document.createElement("div");
+            layer.className = "template-marks";
+            layer.setAttribute("aria-hidden", "true");
+            layer.appendChild(document.createElement("div"));
+            document.body.appendChild(layer);
+        }
+        const cs = getComputedStyle(el);
+        const box = el.getBoundingClientRect();
+        layer.hidden = false;
+        layer.style.left = (box.left + window.scrollX + el.clientLeft) + "px";
+        layer.style.top = (box.top + window.scrollY + el.clientTop) + "px";
+        layer.style.width = el.clientWidth + "px";
+        layer.style.height = el.clientHeight + "px";
+        layer.style.zIndex = zOver(el);
+        layer.style.setProperty("--tf-bg", cs.backgroundColor);
+        const inner = layer.firstChild;
+        COPIED.forEach(function (p) { inner.style[p] = cs[p]; });
+        inner.style.width = el.clientWidth + "px";
+        inner.style.transform = "translate(" + (-el.scrollLeft) + "px, " + (-el.scrollTop) + "px)";
+        const value = el.value, current = s.stops[s.index].name;
+        let html = "", at = 0;
+        s.fields.slice().sort(function (a, b) { return a.start - b.start; }).forEach(function (f) {
+            if (f.start < at) return;
+            html += escape(value.slice(at, f.start));
+            const kind = "tf" + (f.ph ? " tf-ph" : "") + (f.name === current ? " tf-current" : "") + (f.end === f.start ? " tf-empty" : "");
+            html += "<span class=\"" + kind + "\">" + escape(value.slice(f.start, f.end)) + "</span>";
+            at = f.end;
+        });
+        // A last empty line still takes its height in the box.
+        inner.innerHTML = html + escape(value.slice(at)) + "\n";
+    }
+
+    function later() {
+        if (!s || frame) return;
+        frame = requestAnimationFrame(function () {
+            frame = 0;
+            if (s) { place(); paint(); }
+        });
     }
 
     // The edit just made: the old text from p to oldEnd became the new text from p to newEnd. Typing, deleting and pasting
@@ -824,10 +1006,18 @@ window.codexTemplates = (function () {
         // The field the edit is in: the one being filled first, then any (a click into another before typing).
         const inside = function (f) { return c.p >= f.start && c.oldEnd <= f.end; };
         const field = inside(s.stops[s.index]) ? s.stops[s.index] : s.fields.find(inside);
-        if (!field) { stop(); return; }
+        if (!field) {
+            // Typed outside the fields: that ends the template, the fields after the edit moved by it.
+            shift(c.oldEnd, delta, null);
+            s.value = el.value;
+            stop();
+            return;
+        }
         const oldEnd = field.end;
         field.end += delta;
         shift(oldEnd, delta, field);
+        // Typed in: what the field holds is the DM's now, in every use of it.
+        s.fields.forEach(function (f) { if (f.name === field.name) f.ph = false; });
         const value = el.value.slice(field.start, field.end);
         let caret = el.selectionStart;
         // Repeat it in the field's other uses, last first so the earlier positions stay right.
@@ -859,14 +1049,23 @@ window.codexTemplates = (function () {
         edited(s.el);
     });
 
-    document.addEventListener("focusout", function (e) { if (s && e.target === s.el) stop(); });
-    window.addEventListener("resize", function () { if (s) show(); });
+    // Leaving the box ends the template, but the window losing the focus (another program, another tab) does not: the box
+    // gets it back on return.
+    document.addEventListener("focusout", function (e) {
+        if (s && e.target === s.el && document.hasFocus()) stop();
+    });
+    // Saving ends it too, before the form sends the text (Ctrl+S presses Save without leaving the box).
+    window.addEventListener("submit", function (e) {
+        if (s && e.target instanceof Element && e.target.contains(s.el)) stop();
+    }, true);
+    window.addEventListener("resize", later);
+    window.addEventListener("scroll", later, true);
 
     // On window, after the suggestion list (which takes Tab and Escape first while it is open).
     window.addEventListener("keydown", function (e) {
         const el = e.target;
         if (e.defaultPrevented || !(el instanceof HTMLTextAreaElement) || e.ctrlKey || e.metaKey || e.altKey) return;
-        if (s && el === s.el && el.value !== s.value) stop(); // changed from outside (the AI, a re-render)
+        if (s && el === s.el && el.value !== s.value) stop(true); // changed from outside (the AI, a re-render)
         if (s && el === s.el) {
             if (e.key === "Escape") {
                 stop();

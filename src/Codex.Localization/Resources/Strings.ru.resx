@@ -53,6 +53,10 @@
   <data name="Common.Editor.Templates" xml:space="preserve"><value>Вставить шаблон (или наберите его сокращение и Tab, или /)</value></data>
   <data name="Common.Editor.ManageTemplates" xml:space="preserve"><value>Изменить шаблоны…</value></data>
   <data name="Common.Editor.TemplateHint" xml:space="preserve"><value>{0} · {1} из {2} · Tab: дальше · Shift+Tab: назад · Esc: готово</value></data>
+  <data name="Common.Editor.TemplateHintTouch" xml:space="preserve"><value>{0} · {1} из {2}</value></data>
+  <data name="Common.Editor.TemplatePrev" xml:space="preserve"><value>Предыдущее поле</value></data>
+  <data name="Common.Editor.TemplateNext" xml:space="preserve"><value>Следующее поле</value></data>
+  <data name="Common.Editor.TemplateDone" xml:space="preserve"><value>Готово</value></data>
   <data name="Common.Unsaved.Note" xml:space="preserve"><value>Не сохранено</value></data>
   <data name="Common.SaveShortcut" xml:space="preserve"><value>Сохранить (Ctrl+S)</value></data>
 </root>
