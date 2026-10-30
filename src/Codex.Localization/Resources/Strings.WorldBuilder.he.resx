@@ -17,6 +17,7 @@
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>בניית העולם זמינה לשליט המבוך בלבד.</value></data>
   <data name="WorldBuilder.Error.EditTargetGone" xml:space="preserve"><value>“{0}” כבר אינו בקמפיין, ולכן אי אפשר להחיל את השינוי בו. בטלו את הסימון שלו והחילו את השאר.</value></data>
   <data name="WorldBuilder.Error.EditChanged" xml:space="preserve"><value>“{0}” שונה אחרי שההצעה נוצרה, ולכן החלתה תדרוס את השינוי. בקשו את השינוי שוב מהטקסט הנוכחי.</value></data>
+  <data name="WorldBuilder.Error.EditLosesSecret" xml:space="preserve"><value>“{0}” לא שונה: הטקסט החדש היה מוחק או חושף את אחד הקטעים המוסתרים שלו. בקשו את השינוי שוב והשאירו את החלקים של מנחה המשחק כפי שהם.</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>יצירה עם בינה מלאכותית</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>יצורים</value></data>
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>בחירה</value></data>

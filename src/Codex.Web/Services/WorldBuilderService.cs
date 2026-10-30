@@ -407,6 +407,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                         draft.BeforeStamp = Stamp(place.Description);
                         draft.SharedWithPlayers = place.Visibility == ActorVisibility.Known;
                         TooLong(draft, place.Description);
+                        KeepsSecrets(draft, place.Description, keepLinks: false);
                     }
 
                     break;
@@ -418,6 +419,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                         draft.BeforeStamp = Stamp(actor.Biography);
                         draft.SharedWithPlayers = actor.Visibility == ActorVisibility.Known;
                         TooLong(draft, actor.Biography);
+                        KeepsSecrets(draft, actor.Biography, keepLinks: false);
                     }
 
                     break;
@@ -429,6 +431,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                         draft.BeforeStamp = Stamp(page.Body);
                         draft.SharedWithPlayers = page.Visibility == WikiVisibility.Party;
                         TooLong(draft, page.Body);
+                        KeepsSecrets(draft, page.Body, keepLinks: true);
                     }
 
                     break;
@@ -447,7 +450,26 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                            "so it cannot be replaced as a whole without losing the end; put the new material in a new entry instead.");
             }
         }
+
+        // The edit replaces the whole text, so a hidden block left out, rewritten or moved out of its markers would be lost or shown
+        // to players. The DM may well miss that in a long diff; the model is told to keep them whole instead.
+        void KeepsSecrets(WorldDraft draft, string? stored, bool keepLinks)
+        {
+            foreach (var words in LostSecrets(draft, bundle, stored, keepLinks))
+            {
+                errors.Add($"{draft.Ref} (edit '{draft.Name}'): the new text drops or changes the hidden block that starts \"{words}\". " +
+                           "Copy every :::dm and :::for block whole, its marker lines included, exactly as get_page shows it, and keep it for the same readers; " +
+                           "put new hidden material in a new :::dm block.");
+            }
+        }
     }
+
+    /// <summary>The hidden blocks of <paramref name="stored"/> that the edit's new text would lose or expose, as their first words.
+    /// Both texts go through the same link resolution, so a block copied back verbatim compares equal.</summary>
+    private static IReadOnlyList<string> LostSecrets(WorldDraft draft, WorldBundle bundle, string? stored, bool keepLinks) =>
+        SecretText.HasMarkers(stored)
+            ? SecretText.LostSecrets(ResolveEditText(stored!, bundle, keepLinks), ResolveEditText(draft.Body ?? string.Empty, bundle, keepLinks))
+            : Array.Empty<string>();
 
     private static readonly Regex TypeField = new("\"type\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.Compiled);
 
@@ -855,9 +877,11 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         var body = draft.Body ?? string.Empty;
         var changed = new LocalizedException("WorldBuilder.Error.EditChanged", draft.Name);
         // The text the DM reviewed must still be the text there: someone may have edited it since (another tab, a co-DM).
-        void Unchanged(string? stored)
+        // Nor may it lose or expose a hidden block. The check refused such an edit already; this holds even if that was skipped.
+        void Unchanged(string? stored, bool keepLinks)
         {
             if (draft.BeforeStamp != null && draft.BeforeStamp != Stamp(stored)) throw changed;
+            if (LostSecrets(draft, bundle, stored, keepLinks).Count > 0) throw new LocalizedException("WorldBuilder.Error.EditLosesSecret", draft.Name);
         }
 
         switch (target)
@@ -883,7 +907,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                 foreach (var region in (await regions.GetVisibleForCampaignAsync(access)).ToList())
                 {
                     if (region.Locations.FirstOrDefault(p => p.Id == id) is not { } place) continue;
-                    Unchanged(place.Description);
+                    Unchanged(place.Description, keepLinks: false);
                     // What players read once the place is revealed: plain text, no wiki links (mentions stay).
                     place.Description = ResolveEditText(body, bundle, keepLinks: false).Trim();
                     if (!await regions.UpsertLocationAsync(region.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
@@ -895,7 +919,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             case EditTarget.Actor:
             {
                 var actor = await actorRepository.GetVisibleAsync(id, access) ?? throw gone;
-                Unchanged(actor.Biography);
+                Unchanged(actor.Biography, keepLinks: false);
                 actor.Biography = ResolveEditText(body, bundle, keepLinks: false).Trim();
                 if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                 return new WorldEdit(target, id, actor.Name);
@@ -903,7 +927,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             default:
             {
                 var page = (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => string.Equals(p.Slug, id, StringComparison.OrdinalIgnoreCase)) ?? throw gone;
-                Unchanged(page.Body);
+                Unchanged(page.Body, keepLinks: true);
                 page.Body = ResolveEditText(body, bundle, keepLinks: true).Trim();
                 if (!await wiki.TrySaveAsync(page, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                 return new WorldEdit(target, page.Slug, page.Title);

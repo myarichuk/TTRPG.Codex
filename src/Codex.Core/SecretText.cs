@@ -356,6 +356,51 @@ public static class SecretText
         Parse(text).Where(s => !CanRead(s, null)).GroupBy(s => s.Block).Select(g => string.Join("\n", g.Select(s => s.Text))).ToList();
 
     /// <summary>
+    /// The secret blocks of <paramref name="before"/> that <paramref name="after"/> no longer holds as they were: for each block a
+    /// player who owns no character cannot read (DM blocks, blocks for single characters), the same lines must still be there
+    /// for the same readers. One dropped, rewritten, moved out of its block or marked for someone else comes back as its first
+    /// words. Moving a block, adding new ones and blank-line or trailing-space changes are fine. A text replaced whole (an AI
+    /// edit) is checked with this before it is saved, so a secret never reaches players, or vanishes, without the DM seeing it.
+    /// </summary>
+    public static IReadOnlyList<string> LostSecrets(string? before, string? after)
+    {
+        if (!HasMarkers(before))
+        {
+            return Array.Empty<string>();
+        }
+
+        var left = Signatures(after).GroupBy(s => s.Key).ToDictionary(g => g.Key, g => g.Count());
+        var lost = new List<string>();
+        foreach (var (key, text) in Signatures(before))
+        {
+            if (left.TryGetValue(key, out var count) && count > 0)
+            {
+                left[key] = count - 1;
+                continue;
+            }
+
+            lost.Add(FirstWords(text));
+        }
+
+        return lost;
+
+        static IEnumerable<(string Key, string Text)> Signatures(string? text) =>
+            Parse(text).Where(s => !CanRead(s, null)).GroupBy(s => s.Block).Select(g =>
+            {
+                var first = g.First();
+                var lines = string.Join("\n", g.SelectMany(s => s.Text.Split('\n')).Select(l => l.TrimEnd()).Where(l => l.Length > 0));
+                var readers = first.Audience == SecretAudience.Some ? string.Join(" ", first.Knowers.Order(StringComparer.Ordinal)) : string.Empty;
+                return (Key: $"{first.Audience}|{readers}|{lines}", Text: lines);
+            }).Where(s => s.Text.Length > 0);
+
+        static string FirstWords(string text)
+        {
+            var words = text.Split((char[]?)null, 7, StringSplitOptions.RemoveEmptyEntries);
+            return words.Length > 6 ? string.Join(" ", words[..6]) + "…" : string.Join(" ", words);
+        }
+    }
+
+    /// <summary>
     /// The text with block <paramref name="block"/> marked for <paramref name="to"/>: <see cref="SecretAudience.Party"/> reveals it to
     /// everyone, <see cref="SecretAudience.Some"/> to the characters <paramref name="knowers"/>, <see cref="SecretAudience.Dm"/> hides
     /// it again. A reveal stamps the opening line with <paramref name="at"/>, so players can be shown what is new. Only the opening
@@ -388,7 +433,8 @@ public static class SecretText
         return string.Join("\n", lines);
     }
 
-    private static string[] Lines(string text) => text.Replace("\r\n", "\n").Split('\n');
+    // "\r\n" (Windows) and a lone "\r" (old Mac, some pastes) both end a line, so a marker after either is still a marker.
+    private static string[] Lines(string text) => text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
 
     private static string StampText(DateTime at) => at.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 

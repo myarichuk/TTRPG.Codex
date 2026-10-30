@@ -23,6 +23,19 @@ public class TextDiffTests
         Assert.True(TextDiff.Changed("The bell rings.", "The bell rang."));
     }
 
+    [Fact]
+    public void AMarkerLineThatChangesReaders_IsReplacedWhole_NotWordByWord()
+    {
+        const string before = "Village.\n  :::dm\nThe keeper is a cultist.\n:::";
+        const string after = "Village.\n  :::party 2026-10-30\nThe keeper is a cultist.\n:::";
+
+        var pieces = TextDiff.Words(before, after);
+
+        Assert.Contains(new DiffPiece(DiffKind.Removed, ":::dm"), pieces);
+        Assert.Contains(new DiffPiece(DiffKind.Added, ":::party 2026-10-30"), pieces);
+        AssertRebuilds(before, after, pieces);
+    }
+
     [Theory]
     [InlineData("The bell rings twice at low tide.", "The cracked bell rings once at low tide.")]
     [InlineData("a b c d", "a c d")]

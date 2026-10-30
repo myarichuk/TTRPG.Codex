@@ -301,7 +301,7 @@ public class SecretTextTests
                 }
             }
 
-            var text = string.Join(random.Next(2) == 0 ? "\n" : "\r\n", lines);
+            var text = string.Join(random.Next(3) switch { 0 => "\n", 1 => "\r\n", _ => "\r" }, lines);
             for (var v = 0; v < viewers.Length; v++)
             {
                 var plain = SecretText.ForPlayers(text, viewers[v]);
@@ -320,5 +320,41 @@ public class SecretTextTests
                 Assert.All(marked.Split('\n').Where(l => l.Contains(":::")), l => Assert.Matches(@"^:::(party \S+)?$", l));
             }
         }
+    }
+
+    [Fact]
+    public void LoneCarriageReturns_EndLines_SoAMarkerAfterOneStillHides()
+    {
+        var text = "Open.\r:::dm\rThe keeper is the cultist.\r:::\rAfter.";
+
+        var seen = SecretText.ForPlayers(text);
+
+        Assert.DoesNotContain("keeper", seen);
+        Assert.Contains("Open.", seen);
+        Assert.Contains("After.", seen);
+    }
+
+    private const string Hidden = "Village.\n:::dm\nThe keeper is a cultist.\n:::\n:::for [[actor:bram]]\nYou were born here.\n:::";
+
+    [Theory]
+    [InlineData("Village, now bigger.\n:::dm\nThe keeper is a cultist.\n:::\n:::for [[actor:bram]]\nYou were born here.\n:::")]
+    [InlineData(":::for [[actor:bram]]\nYou were born here.  \n:::\n\nNew text.\n\n:::dm\n\nThe keeper is a cultist.\n:::\n:::dm\nA new secret.\n:::")]
+    public void LostSecrets_IsEmpty_WhenEveryHiddenBlockIsKeptWhole(string after) =>
+        Assert.Empty(SecretText.LostSecrets(Hidden, after));
+
+    [Theory]
+    [InlineData("Village.\n:::for [[actor:bram]]\nYou were born here.\n:::")]
+    [InlineData("Village.\nThe keeper is a cultist.\n:::for [[actor:bram]]\nYou were born here.\n:::")]
+    [InlineData("Village.\n:::party\nThe keeper is a cultist.\n:::\n:::for [[actor:bram]]\nYou were born here.\n:::")]
+    [InlineData("Village.\n:::dm\nThe keeper is a smuggler.\n:::\n:::for [[actor:bram]]\nYou were born here.\n:::")]
+    public void LostSecrets_NamesADmBlockDroppedMovedOutRevealedOrRewritten(string after) =>
+        Assert.Equal(new[] { "The keeper is a cultist." }, SecretText.LostSecrets(Hidden, after));
+
+    [Fact]
+    public void LostSecrets_NamesABlockForOneCharacterGivenToAnother()
+    {
+        var after = Hidden.Replace("[[actor:bram]]", "[[actor:aria]]");
+
+        Assert.Equal(new[] { "You were born here." }, SecretText.LostSecrets(Hidden, after));
     }
 }
