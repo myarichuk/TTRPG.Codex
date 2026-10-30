@@ -74,8 +74,8 @@ public class TailscaleTests
     [Fact]
     public void The_command_is_looked_for_on_the_path_and_where_each_system_installs_it()
     {
-        var linux = TailscaleCli.Candidates(windows: false, mac: false, "/usr/local/sbin:/opt/bin", "").ToList();
-        Assert.Equal(new[] { "/usr/local/sbin/tailscale", "/opt/bin/tailscale", "/usr/bin/tailscale", "/usr/local/bin/tailscale" }, linux);
+        var linux = TailscaleCli.Candidates(windows: false, mac: false, string.Join(Path.PathSeparator, "/usr/local/sbin", "/opt/bin"), "").ToList();
+        Assert.Equal(new[] { Path.Combine("/usr/local/sbin", "tailscale"), Path.Combine("/opt/bin", "tailscale"), "/usr/bin/tailscale", "/usr/local/bin/tailscale" }, linux);
 
         var mac = TailscaleCli.Candidates(windows: false, mac: true, "", "").ToList();
         Assert.Contains("/Applications/Tailscale.app/Contents/MacOS/Tailscale", mac);
