@@ -105,7 +105,9 @@ internal sealed class ServerController : IDisposable
             Directory.CreateDirectory(LauncherPaths.MyContent(dataHome));
             info.Environment["Codex__ContentDirectories__0"] = LauncherPaths.MyContent(dataHome);
             // Invite links must carry an address players can reach, not the DM's own "localhost".
-            if (settings.PlayerUrl(LanAddress.Best(), LanAddress.Tailnet()) is { } playerUrl) info.Environment["Codex__PublicUrl"] = playerUrl;
+            var (lan, tailnet) = (LanAddress.Best(), LanAddress.Tailnet());
+            if (settings.PlayerUrl(lan, tailnet) is { } playerUrl) info.Environment["Codex__PublicUrl"] = playerUrl;
+            if (settings.RemoteUrl(lan, tailnet) is { } remoteUrl) info.Environment["Codex__RemoteUrl"] = remoteUrl;
 
             Directory.CreateDirectory(LauncherPaths.RavenData(dataHome));
             var child = new Process { StartInfo = info, EnableRaisingEvents = true };

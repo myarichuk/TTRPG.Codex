@@ -230,6 +230,8 @@
   <data name="Campaign.Overview.Role.Observer" xml:space="preserve"><value>צופה</value></data>
   <data name="Campaign.Overview.InviteLink" xml:space="preserve"><value>קישור הזמנה</value></data>
   <data name="Campaign.Overview.CopyInvite" xml:space="preserve"><value>העתקת קישור הזמנה</value></data>
+  <data name="Campaign.Overview.InviteLinkNetwork" xml:space="preserve"><value>קישור הזמנה לשחקנים ברשת שלכם</value></data>
+  <data name="Campaign.Overview.InviteLinkTailscale" xml:space="preserve"><value>קישור הזמנה לשחקנים ב-Tailscale</value></data>
   <data name="Campaign.Overview.InviteHint" xml:space="preserve"><value>כל מי שיש לו את הקישור הזה מצטרף כשחקן.</value></data>
   <data name="Campaign.Overview.InviteCopied" xml:space="preserve"><value>קישור ההזמנה הועתק.</value></data>
   <data name="Campaign.Overview.CopyFailed" xml:space="preserve"><value>ההעתקה נכשלה. סמנו את הקישור והעתיקו אותו ידנית.</value></data>
@@ -287,6 +289,8 @@
   <data name="Campaign.Settings.RemoveFromCampaign" xml:space="preserve"><value>הסרת {0} מהקמפיין</value></data>
   <data name="Campaign.Settings.InviteLink" xml:space="preserve"><value>קישור הזמנה</value></data>
   <data name="Campaign.Settings.CopyInvite" xml:space="preserve"><value>העתקת קישור הזמנה</value></data>
+  <data name="Campaign.Settings.InviteLinkNetwork" xml:space="preserve"><value>קישור הזמנה לשחקנים ברשת שלכם</value></data>
+  <data name="Campaign.Settings.InviteLinkTailscale" xml:space="preserve"><value>קישור הזמנה לשחקנים ב-Tailscale</value></data>
   <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>קישור חדש</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>יצירת קישור חדש מבטלת את הקישור הישן.</value></data>
   <data name="Campaign.Settings.Backup" xml:space="preserve"><value>גיבוי</value></data>

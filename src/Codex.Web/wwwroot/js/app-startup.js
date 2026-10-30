@@ -362,11 +362,27 @@ window.codex = {
     },
 
     copyText: async function (text) {
+        // navigator.clipboard only exists on secure origins; a player on http://192.168.x.x has to
+        // take the older execCommand route.
         try {
             await navigator.clipboard.writeText(text);
             return true;
         } catch (e) {
+            // fall through to the legacy path
+        }
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        try {
+            area.select();
+            return document.execCommand('copy');
+        } catch (e) {
             return false;
+        } finally {
+            area.remove();
         }
     },
 

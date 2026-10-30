@@ -43,6 +43,11 @@ internal sealed class LauncherSettings
     /// or <c>null</c> while only this computer can connect.</summary>
     public string? PlayerUrl(string? lanAddress, string? tailnetAddress) => Links(lanAddress, tailnetAddress).Skip(1).Select(l => l.Url).FirstOrDefault();
 
+    /// <summary>The Tailscale address, only when <see cref="PlayerUrl"/> already leads with the network one, so
+    /// the invite screen can offer both: a player away from the home network cannot use the first.</summary>
+    public string? RemoteUrl(string? lanAddress, string? tailnetAddress) =>
+        AllowLan && lanAddress != null && tailnetAddress != null ? $"http://{tailnetAddress}:{ValidPort}" : null;
+
     private int ValidPort => Port is > 0 and < 65536 ? Port : DefaultPort;
 
     public static LauncherSettings Load(string path)
