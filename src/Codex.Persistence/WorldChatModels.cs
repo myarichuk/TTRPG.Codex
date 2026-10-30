@@ -195,12 +195,28 @@ public interface IWorldChatRepository
     /// <summary>One of the caller's own chats; null for anyone else's, or one that is gone.</summary>
     Task<WorldChatDocument?> GetMineAsync(string id, CampaignAccess access);
 
-    /// <summary>Creates or replaces a chat the caller owns. Returns false for anyone else's chat.</summary>
-    Task<bool> TrySaveAsync(WorldChatDocument chat, CampaignAccess access);
+    /// <summary>Creates or replaces a chat the caller owns. A chat loaded with <see cref="GetMineAsync"/> (or saved here before) is
+    /// replaced only if nobody saved it since: a second tab on the same chat gets <see cref="ChatSave.Changed"/>, not the last word.</summary>
+    Task<ChatSave> TrySaveAsync(WorldChatDocument chat, CampaignAccess access);
 
     Task<bool> TryDeleteAsync(string id, CampaignAccess access);
 
     Task DeleteAllForCampaignAsync(string campaignId);
+}
+
+/// <summary>How saving a chat went.</summary>
+public enum ChatSave
+{
+    Saved,
+
+    /// <summary>Not the caller's chat. Nothing changed.</summary>
+    Refused,
+
+    /// <summary>Someone saved the chat since this copy was loaded (another tab). Nothing changed; load it again.</summary>
+    Changed,
+
+    /// <summary>The chat was deleted since this copy was loaded. Nothing changed, and it is not made again.</summary>
+    Gone
 }
 
 public class WorldChatsByOwnerIndex : AbstractIndexCreationTask<WorldChatDocument>
@@ -232,26 +248,51 @@ public class RavenWorldChatRepository(RavenDbService dbService) : IWorldChatRepo
             .ToListAsync();
     }
 
+    // The version each copy handed out (or last saved) was, so a save can tell whether it is still the latest. Kept beside the copy
+    // rather than on it, so it is never stored.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<WorldChatDocument, string> Versions = new();
+
     public async Task<WorldChatDocument?> GetMineAsync(string id, CampaignAccess access)
     {
         using var session = dbService.Store.OpenAsyncSession();
         var chat = await session.LoadAsync<WorldChatDocument>(id);
-        return chat != null && chat.CampaignId == access.CampaignId && chat.OwnerUserId == access.UserId ? chat : null;
+        if (chat == null || chat.CampaignId != access.CampaignId || chat.OwnerUserId != access.UserId)
+        {
+            return null;
+        }
+
+        Versions.AddOrUpdate(chat, session.Advanced.GetChangeVectorFor(chat));
+        return chat;
     }
 
-    public async Task<bool> TrySaveAsync(WorldChatDocument chat, CampaignAccess access)
+    public async Task<ChatSave> TrySaveAsync(WorldChatDocument chat, CampaignAccess access)
     {
         using var session = dbService.Store.OpenAsyncSession();
+        session.Advanced.UseOptimisticConcurrency = true;
+        var known = Versions.TryGetValue(chat, out var version) ? version : null;
         var existing = string.IsNullOrEmpty(chat.Id) ? null : await session.LoadAsync<WorldChatDocument>(chat.Id);
         if (existing != null && (existing.CampaignId != access.CampaignId || existing.OwnerUserId != access.UserId))
         {
-            return false;
+            return ChatSave.Refused;
+        }
+
+        if (existing == null && known != null)
+        {
+            return ChatSave.Gone;
         }
 
         if (existing != null)
         {
-            // The chat is held whole by the page that saves it, so it replaces what is stored.
+            var current = session.Advanced.GetChangeVectorFor(existing);
+            if (known != null && known != current)
+            {
+                return ChatSave.Changed;
+            }
+
+            // The chat is held whole by the page that saves it, so it replaces what is stored, as long as that is still the version
+            // it was loaded at: the store below carries it, and a save that got in between fails it.
             session.Advanced.Evict(existing);
+            known = current;
         }
         else
         {
@@ -262,9 +303,19 @@ public class RavenWorldChatRepository(RavenDbService dbService) : IWorldChatRepo
         chat.CampaignId = access.CampaignId;
         chat.OwnerUserId = access.UserId;
         chat.UpdatedAt = DateTime.UtcNow;
-        await session.StoreAsync(chat, chat.Id);
-        await session.SaveChangesAsync();
-        return true;
+        // A new chat is stored only if the id is still free (an empty change vector); an old one only at the version checked above.
+        await session.StoreAsync(chat, known ?? string.Empty, chat.Id);
+        try
+        {
+            await session.SaveChangesAsync();
+        }
+        catch (Raven.Client.Exceptions.ConcurrencyException)
+        {
+            return ChatSave.Changed;
+        }
+
+        Versions.AddOrUpdate(chat, session.Advanced.GetChangeVectorFor(chat));
+        return ChatSave.Saved;
     }
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)

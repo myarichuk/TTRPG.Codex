@@ -291,6 +291,7 @@
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Saved with {0, plural, one{# rule warning} other{# rule warnings}}.</value></data>
   <data name="Actor.Sheet.Saved" xml:space="preserve"><value>Saved.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>You don't have permission to edit this sheet.</value></data>
+  <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>The DM changed this history while you were editing it, so your change was not saved. Your text is still in the box: copy it, reload the page, and add it again.</value></data>
   <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>Use a PNG, JPEG, WebP, GIF or AVIF image.</value></data>
   <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>That image is over 6 MB. Resize it and try again.</value></data>
   <data name="Actor.Sheet.PortraitUpdated" xml:space="preserve"><value>Portrait updated.</value></data>

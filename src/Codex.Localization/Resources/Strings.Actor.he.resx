@@ -291,6 +291,7 @@
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>נשמר עם {0, plural, one{אזהרת כללים אחת} two{# אזהרות כללים} other{# אזהרות כללים}}.</value></data>
   <data name="Actor.Sheet.Saved" xml:space="preserve"><value>נשמר.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>אין לכם הרשאה לערוך את הדף הזה.</value></data>
+  <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>מנחה המשחק שינה את ההיסטוריה הזו בזמן שערכתם אותה, ולכן השינוי שלכם לא נשמר. הטקסט שלכם עדיין בתיבה: העתיקו אותו, טענו את הדף מחדש והוסיפו אותו שוב.</value></data>
   <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>השתמשו בתמונה מסוג PNG, JPEG, WebP, GIF או AVIF.</value></data>
   <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>התמונה גדולה מ-6 MB. הקטינו אותה ונסו שוב.</value></data>
   <data name="Actor.Sheet.PortraitUpdated" xml:space="preserve"><value>הדיוקן עודכן.</value></data>

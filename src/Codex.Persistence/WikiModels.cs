@@ -87,6 +87,12 @@ public interface IWikiRepository
     /// <paramref name="expectedInner"/> is the block's text as the DM saw it. DM only.</summary>
     Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access);
 
+    /// <summary>Makes the page the page of cast member <paramref name="actorId"/>: sets its kind and its <see cref="WikiPageDocument.ActorId"/>
+    /// and nothing else, on the page as stored, so an edit or a reveal made meanwhile is kept. A page already linked to another
+    /// character keeps that link unless it is <paramref name="replacing"/> (one the caller found gone). Returns the character the
+    /// page is linked to afterwards, or null when there is no such page or the caller is not the DM. DM only.</summary>
+    Task<string?> TryLinkActorAsync(string pageId, string actorId, WikiPageKind kind, string? replacing, CampaignAccess access);
+
     /// <summary>Records that the page's illustration was stored (or removed) and bumps its version. DM only.</summary>
     Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access);
 
@@ -279,6 +285,36 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             result = SecretChange.Done;
         });
         return result;
+    }
+
+    public async Task<string?> TryLinkActorAsync(string pageId, string actorId, WikiPageKind kind, string? replacing, CampaignAccess access)
+    {
+        if (!access.IsDm || string.IsNullOrEmpty(actorId))
+        {
+            return null;
+        }
+
+        string? linked = null;
+        await RavenUpdate.RunAsync<WikiPageDocument>(dbService, pageId, page =>
+        {
+            linked = null;
+            if (page.CampaignId != access.CampaignId)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(page.ActorId) && page.ActorId != replacing)
+            {
+                linked = page.ActorId;
+                return;
+            }
+
+            page.Kind = kind;
+            page.ActorId = actorId;
+            page.UpdatedAt = DateTime.UtcNow;
+            linked = actorId;
+        });
+        return linked;
     }
 
     public async Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access)

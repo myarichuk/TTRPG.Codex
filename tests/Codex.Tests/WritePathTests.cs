@@ -140,6 +140,32 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task APlayersSheetSaveAtALiveTable_KeepsADmBlockAddedAroundTheTable_Async()
+    {
+        var actor = await SeedActorAsync("camp", 10, ownerId: "player");
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+        var player = new CampaignAccess("camp", "player", CampaignRole.Player);
+
+        // The DM adds a secret without going through the table (as the world builder does)...
+        var dmCopy = (await LoadAsync(actor))!;
+        dmCopy.Biography = "Born at sea.\n:::dm\nHer father leads the cult.\n:::";
+        Assert.True(await _actors.TrySaveAsync(dmCopy, Dm));
+
+        // ...and the player saves their sheet, history untouched, while the table is live.
+        var mine = (await _actors.GetVisibleAsync(actor.Id, player))!;
+        var loaded = (await _actors.GetVisibleAsync(actor.Id, player))!;
+        mine.Sheet["Level"] = 4L;
+        await runtime.EnqueueAsync(SheetSave(mine, loaded, player));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(actor.Id, 12));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+
+        var stored = (await LoadAsync(actor))!;
+        Assert.Equal(4, YamlValues.GetInt(stored.Sheet, "Level"));
+        Assert.Contains("Her father leads the cult.", stored.Biography);
+    }
+
+    [Fact]
     public async Task SheetSave_CanStillChangeHitPoints_WhenTheEditorChangedThem_Async()
     {
         var actor = await SeedActorAsync("camp", 10);

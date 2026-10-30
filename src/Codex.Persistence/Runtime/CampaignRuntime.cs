@@ -517,7 +517,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
             {
                 if (sheetEdit.Source != null)
                 {
-                    ActorRepository.CopyEditableFields(doc, sheetEdit.Source, sheetEdit.IsDm);
+                    // The table's copy already holds the player's history merged with the stored one (ReplaceActor).
+                    ActorRepository.CopyEditableFields(doc, sheetEdit.Source, sheetEdit.IsDm, merged: true);
                 }
 
                 doc.State = state;

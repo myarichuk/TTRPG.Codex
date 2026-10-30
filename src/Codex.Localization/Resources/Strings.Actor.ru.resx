@@ -291,6 +291,7 @@
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Сохранено с {0, plural, one{# предупреждением о правилах} few{# предупреждениями о правилах} many{# предупреждениями о правилах} other{# предупреждения о правилах}}.</value></data>
   <data name="Actor.Sheet.Saved" xml:space="preserve"><value>Сохранено.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>У вас нет прав редактировать этот лист.</value></data>
+  <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>Ведущий изменил эту историю, пока вы её редактировали, поэтому ваше изменение не сохранено. Ваш текст остался в поле: скопируйте его, обновите страницу и добавьте снова.</value></data>
   <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>Используйте изображение PNG, JPEG, WebP, GIF или AVIF.</value></data>
   <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>Это изображение больше 6 МБ. Уменьшите его и попробуйте снова.</value></data>
   <data name="Actor.Sheet.PortraitUpdated" xml:space="preserve"><value>Портрет обновлён.</value></data>

@@ -37,6 +37,8 @@
   <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{# step} other{# steps}}</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>This model can't call tools, which the world builder needs. Pick a model that supports tool calls in your AI settings.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>There is no proposal to apply.</value></data>
+  <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>This chat was changed in another tab, so it has been reloaded here. Nothing from this tab was saved; send or apply again if you still want to.</value></data>
+  <data name="WorldChat.Error.Gone" xml:space="preserve"><value>This chat was deleted in another tab.</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Your message</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>What should we add to the world?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Send</value></data>

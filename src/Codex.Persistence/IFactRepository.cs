@@ -14,8 +14,12 @@ public interface IFactRepository
     /// <summary>Creates or updates a fact. DM only - lore authoring is a DM prep-loop tool (2.1/2.5). The fact goes into the
     /// DM's campaign whatever its <see cref="FactDocument.CampaignId"/> says, an id taken by another campaign's fact is refused,
     /// and <see cref="FactDocument.RelatedEntityIds"/> is rebuilt from what its text mentions and links to
-    /// (<see cref="FactLinks.Of"/>).</summary>
+    /// (<see cref="FactLinks.Of"/>). Updating a stored fact changes its text and metadata only; its knowers and visibility change
+    /// through <see cref="AddKnowerAsync"/>, <see cref="RemoveKnowerAsync"/> and <see cref="SetVisibilityAsync"/>.</summary>
     Task<bool> SaveAsync(FactDocument fact, CampaignAccess access);
+
+    /// <summary>Stores a fact whole, knowers and visibility included, replacing any with its id: restoring a campaign export only.</summary>
+    Task RestoreAsync(FactDocument fact);
 
     /// <summary>Deletes a fact. DM only.</summary>
     Task<bool> DeleteAsync(string factId, CampaignAccess access);

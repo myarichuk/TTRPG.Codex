@@ -138,7 +138,7 @@ public class CampaignExportService(
 
         foreach (var fact in bundle.Facts.Where(f => f.CampaignId == campaign.Id))
         {
-            await facts.SaveAsync(fact, dmAccess);
+            await facts.RestoreAsync(fact);
         }
 
         foreach (var note in bundle.Notes.Where(n => n.CampaignId == campaign.Id))
