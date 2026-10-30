@@ -595,20 +595,42 @@ public sealed class WorldChat
         Document.ProposalWarnings = new List<string>();
         Document.Decided = new List<string>();
 
-        var note = new StringBuilder("(A note from the app, not from the game master: the game master applied your proposal. These now exist, hidden from the players:");
-        foreach (var page in result.Pages) note.Append($" page existing:{page.Slug} \"{page.Title}\";");
-        foreach (var place in result.Places) note.Append($" place existing:{WorldBundle.PlacePrefix}{place.Id} \"{place.Name}\";");
-        foreach (var actor in result.Actors) note.Append($" cast member \"{actor.Name}\";");
-        foreach (var change in result.Changes) note.Append($" changed: the {change.Target switch { EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry", _ => "text of the page" }} \"{change.Name}\" now reads as you wrote it;");
-        foreach (var entry in result.Entries) note.Append($" homebrew existing:{WorldBundle.HomebrewPrefix}{entry.Type}/{entry.EntryId} \"{entry.Name}\";");
-        foreach (var creature in result.Shortlisted) note.Append($" on the Bestiary: \"{creature.Name}\";");
-        if (result.Retagged > 0) note.Append($" tags changed on {result.Retagged} page(s) or entries;");
-        if (result.Facts.Count > 0) note.Append($" {result.Facts.Count} secret(s) in Lore;");
-        history.Add(new ChatMessage(ChatRole.User, note.ToString().TrimEnd(';') + ".)"));
+        // Everything new starts hidden; a change to something players can already see is not hidden, so the model is told which.
+        var note = new StringBuilder("(A note from the app, not from the game master: the game master applied your proposal.");
+        var made = new List<string>();
+        made.AddRange(result.Pages.Select(page => $"page existing:{page.Slug} \"{page.Title}\""));
+        made.AddRange(result.Places.Select(place => $"place existing:{WorldBundle.PlacePrefix}{place.Id} \"{place.Name}\""));
+        made.AddRange(result.Actors.Select(actor => $"cast member \"{actor.Name}\""));
+        made.AddRange(result.Entries.Select(entry => $"homebrew existing:{WorldBundle.HomebrewPrefix}{entry.Type}/{entry.EntryId} \"{entry.Name}\""));
+        if (result.Facts.Count > 0) made.Add($"{result.Facts.Count} secret(s) in Lore");
+        if (made.Count > 0) note.Append(" New, and hidden from the players until the game master reveals them: " + string.Join("; ", made) + ".");
+        foreach (var change in result.Changes)
+        {
+            var what = change.Target switch { EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry", _ => "text of the page" };
+            note.Append($" Changed: the {what} \"{change.Name}\" now reads as you wrote it; " +
+                        (change.Shared ? "the players can see it, so they read the change, all but its hidden blocks." : "it is hidden from the players."));
+        }
+
+        if (result.Shortlisted.Count > 0) note.Append(" On the Bestiary shortlist (the game master's own): " + string.Join("; ", result.Shortlisted.Select(c => $"\"{c.Name}\"")) + ".");
+        if (result.Retagged > 0) note.Append($" Tags changed on {result.Retagged} page(s) or entries.");
+        history.Add(new ChatMessage(ChatRole.User, note.Append(')').ToString()));
         Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Applied", result.Count], icon: "circle-check") { Links = Links(result) });
         await SaveAsync();
         return result;
     }
+
+    /// <summary>A link as the model reads it: what it is, and the key to use for it.</summary>
+    private static string Described(WorldChatLink link) => link.Kind switch
+    {
+        "page" => $"page existing:{link.Id} \"{link.Name}\"",
+        "place" => $"place existing:{WorldBundle.PlacePrefix}{link.Id} \"{link.Name}\"",
+        "actor" => $"cast member \"{link.Name}\"",
+        "homebrew" => $"homebrew existing:{WorldBundle.HomebrewPrefix}{link.Id} \"{link.Name}\"",
+        "bestiary" => $"\"{link.Name}\" on the Bestiary",
+        "lore" => $"{link.Name} secret(s) in Lore",
+        "tags" => $"tags changed on {link.Name} page(s) or entries",
+        _ => $"the change to \"{link.Name}\""
+    };
 
     /// <summary>What an applied proposal made or changed, as links the conversation keeps.</summary>
     private static List<WorldChatLink> Links(WorldBuildResult result)
@@ -629,14 +651,26 @@ public sealed class WorldChat
     /// <summary>Drops the proposal without saving it, and tells the model so.</summary>
     public async Task DiscardAsync()
     {
-        if (Proposal == null) return;
+        if (Proposal is not { } proposal) return;
         if (IsBusy) throw new InvalidOperationException("A turn or an apply is under way.");
+        // An apply that stopped part way already made some of it; that stays, and both the DM and the model are told what it is.
+        var kept = await builder.SavedLinksAsync(proposal, access);
         Proposal = null;
         Held = null;
         Document.ProposalWarnings = new List<string>();
         Document.Decided = new List<string>();
-        history.Add(new ChatMessage(ChatRole.User, "(A note from the app: the game master discarded your last proposal; nothing from it was saved.)"));
-        Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Discarded"], icon: "x"));
+        var l = Localizer.For(Lang);
+        if (kept.Count == 0)
+        {
+            history.Add(new ChatMessage(ChatRole.User, "(A note from the app: the game master discarded your last proposal; nothing from it was saved.)"));
+            Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, l["WorldChat.Discarded"], icon: "x"));
+        }
+        else
+        {
+            history.Add(new ChatMessage(ChatRole.User, "(A note from the app: the game master discarded the rest of your last proposal. An earlier apply that stopped " +
+                $"part way had already saved some of it, which still exists, hidden from the players: {string.Join("; ", kept.Select(Described))}.)"));
+            Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, l["WorldChat.DiscardedRest"], icon: "x") { Links = kept });
+        }
         await SaveAsync();
     }
 

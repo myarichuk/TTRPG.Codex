@@ -53,6 +53,7 @@
   <data name="WorldChat.ProposalReady" xml:space="preserve"><value>ההצעה מוכנה לבדיקה.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>הוחל: נוספו {0}, מוסתרים מהשחקנים.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>ההצעה נמחקה.</value></data>
+  <data name="WorldChat.DiscardedRest" xml:space="preserve"><value>שאר ההצעה נמחק. מה שכבר נשמר בהחלה קודמת נשאר:</value></data>
   <data name="WorldChat.Tool.Search" xml:space="preserve"><value>חיפוש במערכה: „{0}”</value></data>
   <data name="WorldChat.Tool.Page" xml:space="preserve"><value>נקרא הדף „{0}”</value></data>
   <data name="WorldChat.Tool.Places" xml:space="preserve"><value>נבדקו המקומות</value></data>

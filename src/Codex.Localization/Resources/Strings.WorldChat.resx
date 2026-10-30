@@ -53,6 +53,7 @@
   <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Proposal ready to review.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Applied: {0} added, hidden from players.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Proposal discarded.</value></data>
+  <data name="WorldChat.DiscardedRest" xml:space="preserve"><value>Discarded the rest of the proposal. What an earlier apply already saved stays:</value></data>
   <data name="WorldChat.Tool.Search" xml:space="preserve"><value>Looked through the campaign for “{0}”</value></data>
   <data name="WorldChat.Tool.Page" xml:space="preserve"><value>Read the page “{0}”</value></data>
   <data name="WorldChat.Tool.Places" xml:space="preserve"><value>Looked at the places</value></data>

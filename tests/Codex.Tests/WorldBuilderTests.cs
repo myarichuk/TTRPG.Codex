@@ -1390,6 +1390,41 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_Applied_TellsTheModelWhichChangesThePlayersCanSee()
+    {
+        var saving = Service(new[] { VarrPage() });
+        const string both = """{"proposal": {"entries": [{"ref": "e", "kind": "edit", "target": "existing:port-varr", "text": "New text."}, {"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}]}}""";
+        var model = new ScriptedModel(_ => Calls("c1", "propose_changes", both), _ => new ChatMessage(ChatRole.Assistant, "Ready."));
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("Rewrite Varr, add Amphail.", _ => { }, CancellationToken.None);
+
+        await chat.ApplyAsync();
+
+        var note = chat.Document.History[^1].Text!;
+        Assert.Contains("New, and hidden from the players until the game master reveals them: page existing:amphail \"Amphail\"", note);
+        // Port Varr is a party page: its new text is in front of the players now.
+        Assert.Contains("\"Port Varr\" now reads as you wrote it; the players can see it", note);
+    }
+
+    [Fact]
+    public async Task Chat_DiscardAfterAnApplyStoppedPartWay_SaysWhatStays_WithLinks()
+    {
+        var saving = Service(new[] { VarrPage() });
+        const string two = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Port Varr", "text": "A port."}, {"ref": "b", "kind": "wiki", "name": "Bram's Rest", "text": "An inn."}]}}""";
+        var model = new ScriptedModel(_ => Calls("c1", "propose_changes", two), _ => new ChatMessage(ChatRole.Assistant, "Ready."));
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("Two places.", _ => { }, CancellationToken.None);
+        chat.Proposal!.Find("a")!.SavedAs["page"] = "page-varr"; // what an apply that stopped after the first page left
+
+        await chat.DiscardAsync();
+
+        var line = chat.Lines[^1];
+        var link = Assert.Single(line.Links!);
+        Assert.Equal(("page", "port-varr", "Port Varr"), (link.Kind, link.Id, link.Name));
+        Assert.Contains("still exists, hidden from the players: page existing:port-varr \"Port Varr\"", chat.Document.History[^1].Text);
+    }
+
+    [Fact]
     public async Task Chat_Apply_KeepsEachEntryAsItIsStored_AndMakesNothingWhenTheChatChangedElsewhere()
     {
         const string two = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}, {"ref": "b", "kind": "wiki", "name": "Bram's Rest", "text": "An inn."}]}}""";

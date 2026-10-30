@@ -53,6 +53,7 @@
   <data name="WorldChat.ProposalReady" xml:space="preserve"><value>Предложение готово к проверке.</value></data>
   <data name="WorldChat.Applied" xml:space="preserve"><value>Применено: добавлено {0}, скрыто от игроков.</value></data>
   <data name="WorldChat.Discarded" xml:space="preserve"><value>Предложение отброшено.</value></data>
+  <data name="WorldChat.DiscardedRest" xml:space="preserve"><value>Остальное из предложения отброшено. То, что уже сохранило прежнее применение, остаётся:</value></data>
   <data name="WorldChat.Tool.Search" xml:space="preserve"><value>Поиск по кампании: «{0}»</value></data>
   <data name="WorldChat.Tool.Page" xml:space="preserve"><value>Прочитана страница «{0}»</value></data>
   <data name="WorldChat.Tool.Places" xml:space="preserve"><value>Просмотрены места</value></data>
