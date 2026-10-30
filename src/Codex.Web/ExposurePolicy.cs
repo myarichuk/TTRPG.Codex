@@ -77,17 +77,18 @@ public static class ExposurePolicy
         var b = ip.GetAddressBytes();
         if (ip.AddressFamily == AddressFamily.InterNetwork)
         {
-            return b[0] == 10 || (b[0] == 172 && b[1] is >= 16 and <= 31) || (b[0] == 192 && b[1] == 168)
+            return b[0] >= 224 || (b[0] == 198 && b[1] is 18 or 19) || b[0] == 10 || (b[0] == 172 && b[1] is >= 16 and <= 31) || (b[0] == 192 && b[1] == 168)
                 || (b[0] == 169 && b[1] == 254) || (b[0] == 100 && b[1] is >= 64 and <= 127) || b[0] == 0;
         }
 
-        return ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || (b[0] & 0xFE) == 0xFC;
+        return ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || ip.IsIPv6Multicast || (b[0] & 0xFE) == 0xFC
+            || (b[0] == 0 && b[1] == 0x64 && b[2] == 0xFF && b[3] == 0x9B); // NAT64 reaches IPv4 hosts, private ones included
     }
 
     /// <summary>The one client used for a stranger's own AI provider while the server is open: it connects only to public
     /// addresses, redirects included, so no hostname or answer from their server can lead to this computer. Requests are
     /// timed by the AI clients themselves.</summary>
-    public static readonly HttpClient PublicOnlyClient = new(new SocketsHttpHandler { ConnectCallback = ConnectPublicOnlyAsync, PooledConnectionLifetime = TimeSpan.FromMinutes(5) })
+    public static readonly HttpClient PublicOnlyClient = new(new SocketsHttpHandler { ConnectCallback = ConnectPublicOnlyAsync, UseProxy = false, UseCookies = false, PooledConnectionLifetime = TimeSpan.FromMinutes(5) })
     {
         Timeout = Timeout.InfiniteTimeSpan,
     };

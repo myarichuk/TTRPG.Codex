@@ -440,7 +440,7 @@ app.MapGet("/login/external-callback", async (HttpContext context, IUserReposito
 
         // The first account runs the server, but never on an open one. The name is the identity provider's display name,
         // which the person signing in chooses, so unlike the sign-up form it is never matched against Codex:AdminUsername.
-        if (!Codex.Web.ExposurePolicy.IsExposed(config) && !await userRepository.AnyUsersExistAsync())
+        if (!Codex.Web.ExposurePolicy.IsExposed(config) && string.IsNullOrWhiteSpace(config["Codex:AdminUsername"]) && !await userRepository.AnyUsersExistAsync())
         {
             user.Roles.Add("ServerAdmin");
         }

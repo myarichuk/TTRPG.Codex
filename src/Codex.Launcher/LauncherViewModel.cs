@@ -107,16 +107,27 @@ internal sealed class LauncherViewModel
 
     private async Task StartAfterPlanAsync()
     {
-        FunnelPlan plan;
         try
         {
             while (true)
             {
                 lock (planGate) replan = false;
-                plan = await PlanFunnelAsync();
+                var plan = await PlanFunnelAsync();
+
+                // One step: look for a change made during the check, and if there is none, start. The plan travels in a
+                // local and the funnel's settings are fixed with the start, so nothing can slip in between.
                 lock (planGate)
                 {
                     if (replan && !Quitting) continue;
+                    planning = false;
+                    if (Quitting) return;
+                    funnelExe = plan.Exe;
+                    if (Controller.State is ServerState.Stopped or ServerState.Failed)
+                    {
+                        startedExposed = plan.InternetUrl != null;
+                        Controller.Start(Settings, plan.InternetUrl, plan.Strict);
+                    }
+
                     break;
                 }
             }
@@ -124,21 +135,8 @@ internal sealed class LauncherViewModel
         catch
         {
             lock (planGate) planning = false;
+            Changed?.Invoke();
             throw;
-        }
-
-        // The plan travels in locals, and the funnel's own settings are fixed in the same step as the start, so a
-        // second check begun in the gap can neither lose the strict mode nor attach a funnel to a server that is not ready for it.
-        lock (planGate)
-        {
-            planning = false;
-            if (Quitting) return;
-            funnelExe = plan.Exe;
-            if (Controller.State is ServerState.Stopped or ServerState.Failed)
-            {
-                startedExposed = plan.InternetUrl != null;
-                Controller.Start(Settings, plan.InternetUrl, plan.Strict);
-            }
         }
 
         if (Controller.State == ServerState.Stopped) Changed?.Invoke();
@@ -184,19 +182,19 @@ internal sealed class LauncherViewModel
         var strict = false;
         if (File.Exists(FunnelMarker))
         {
-            var ended = false;
-            try
-            {
-                var text = File.ReadAllText(FunnelMarker).Trim();
-                if (text.Length == 0) ended = true;
-                else if (int.TryParse(text, out var pid)) ended = EndStrayProcess(pid);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-            }
+            var text = "";
+            try { text = File.ReadAllText(FunnelMarker).Trim(); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { strict = true; }
 
-            if (ended) MarkFunnel(false);
-            else strict = true;
+            if (!strict)
+            {
+                var parts = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                // Anything that is not a process number and its start time names nothing that could still be running.
+                var ended = parts.Length != 2 || !int.TryParse(parts[0], out var pid) || !long.TryParse(parts[1], out var ticks)
+                    || await Task.Run(() => EndStrayProcess(pid, ticks));
+                if (ended) MarkFunnel(false);
+                else strict = true;
+            }
         }
 
         if (!strict && exe != null && TailscaleCli.FunnelPointsAtPort(await TailscaleCli.FunnelStatusAsync(exe), Settings.EffectivePort))
@@ -207,13 +205,15 @@ internal sealed class LauncherViewModel
         return strict;
     }
 
-    /// <summary>True when the process is gone: it already was, or it was a tailscale command and has now been ended.</summary>
-    private static bool EndStrayProcess(int pid)
+    /// <summary>True when the funnel process is gone: it already was, or it was ended now. A process with that number
+    /// is only touched if it started when the funnel did, so a number reused after a reboot (the Tailscale app or its
+    /// daemon, say) is left alone.</summary>
+    private static bool EndStrayProcess(int pid, long startTicks)
     {
         try
         {
             using var process = Process.GetProcessById(pid);
-            if (!process.ProcessName.Contains("tailscale", StringComparison.OrdinalIgnoreCase)) return true; // the number was reused by something else
+            if (Math.Abs(process.StartTime.ToUniversalTime().Ticks - startTicks) > TimeSpan.TicksPerSecond * 2) return true;
             process.Kill(entireProcessTree: true);
             return process.WaitForExit(3000);
         }
@@ -244,7 +244,7 @@ internal sealed class LauncherViewModel
             try
             {
                 funnel.Start();
-                MarkFunnel(true, funnel.ProcessId);
+                MarkFunnel(true, funnel.ProcessId, funnel.StartedAt);
             }
             catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
             {
@@ -303,11 +303,11 @@ internal sealed class LauncherViewModel
 
     /// <summary>A file that exists while a funnel may be running, holding its process number, so a launcher that dies
     /// without stopping it can end it next time.</summary>
-    private void MarkFunnel(bool on, int? processId = null)
+    private void MarkFunnel(bool on, int? processId = null, DateTime? startedAt = null)
     {
         try
         {
-            if (on) File.WriteAllText(FunnelMarker, processId?.ToString() ?? "");
+            if (on) File.WriteAllText(FunnelMarker, processId == null ? "" : $"{processId} {startedAt?.ToUniversalTime().Ticks ?? 0}");
             else File.Delete(FunnelMarker);
         }
         catch (IOException)
@@ -398,7 +398,7 @@ internal sealed class LauncherViewModel
     private async Task RestartAsync()
     {
         await Controller.StopAsync();
-        for (var i = 0; i < 100 && Controller.State == ServerState.Stopping; i++) await Task.Delay(100);
+        for (var i = 0; i < 600 && Controller.State == ServerState.Stopping; i++) await Task.Delay(100);
         StartServer(openBrowser: false);
     }
 

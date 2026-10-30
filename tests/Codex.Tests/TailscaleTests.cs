@@ -96,6 +96,15 @@ public class TailscaleTests
         Assert.False(TailscaleCli.FunnelPointsAtPort(stale, 3000));
         Assert.False(TailscaleCli.FunnelPointsAtPort("No serve config", 5080));
         Assert.False(TailscaleCli.FunnelPointsAtPort(null, 5080));
+
+        // A tailnet-only Serve for the same port is not a public address.
+        const string serveOnly = "https://table-pc.tail1234.ts.net (tailnet only)\n|-- / proxy http://127.0.0.1:5080\n";
+        Assert.False(TailscaleCli.FunnelPointsAtPort(serveOnly, 5080));
+
+        // A funnel for another port does not count either, even beside a Serve for this one.
+        const string mixed = serveOnly + "\nhttps://table-pc.tail1234.ts.net:8443 (Funnel on)\n|-- / proxy http://127.0.0.1:3000\n";
+        Assert.False(TailscaleCli.FunnelPointsAtPort(mixed, 5080));
+        Assert.True(TailscaleCli.FunnelPointsAtPort(mixed, 3000));
     }
 
     [Fact]

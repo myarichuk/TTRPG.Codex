@@ -117,10 +117,24 @@ internal static class TailscaleCli
 
     /// <summary>Whether the text of <c>tailscale funnel status</c> shows a public address forwarding to this port, as a
     /// run of the launcher that was killed would leave behind. Judged from the text alone, since the format is not documented.</summary>
-    internal static bool FunnelPointsAtPort(string? statusText, int port) =>
-        statusText != null
-        && statusText.Contains(".ts.net", StringComparison.OrdinalIgnoreCase)
-        && Regex.IsMatch(statusText, @":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"(?!\d)");
+    internal static bool FunnelPointsAtPort(string? statusText, int port)
+    {
+        if (statusText == null) return false;
+        var target = new Regex(@":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture) + @"(?!\d)");
+        // An entry is a block of lines; a tailnet-only Serve entry for the same port is not a public address.
+        foreach (var block in Regex.Split(statusText, @"\r?\n\s*\r?\n"))
+        {
+            if (block.Contains(".ts.net", StringComparison.OrdinalIgnoreCase)
+                && block.Contains("funnel on", StringComparison.OrdinalIgnoreCase)
+                && !block.TrimStart().StartsWith('#')
+                && target.IsMatch(block))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>The output of <c>tailscale funnel status</c>, or <c>null</c> when it cannot be had.</summary>
     public static Task<string?> FunnelStatusAsync(string exe) => RunAsync(exe, "funnel", "status");
@@ -192,6 +206,7 @@ internal sealed class FunnelSession : IDisposable
     }
 
     public int? ProcessId { get; private set; }
+    public DateTime? StartedAt { get; private set; }
 
     public bool IsRunning => process is { } p && !HasExited(p);
 
@@ -224,6 +239,8 @@ internal sealed class FunnelSession : IDisposable
         process = child; // before it runs, so a Stop from another thread always finds it
         child.Start();
         ProcessId = child.Id;
+        try { StartedAt = child.StartTime; }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
         child.BeginOutputReadLine();
         child.BeginErrorReadLine();
     }
