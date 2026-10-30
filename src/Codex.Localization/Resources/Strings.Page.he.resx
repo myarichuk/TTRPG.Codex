@@ -76,6 +76,8 @@
   <data name="Page.Register.TooShort" xml:space="preserve"><value>הסיסמה חייבת להכיל לפחות 8 תווים.</value></data>
   <data name="Page.Register.Weak" xml:space="preserve"><value>הסיסמה חייבת לכלול אות גדולה, אות קטנה וספרה.</value></data>
   <data name="Page.Register.Taken" xml:space="preserve"><value>שם המשתמש הזה כבר תפוס.</value></data>
+  <data name="Page.Register.InviteOnly" xml:space="preserve"><value>ההרשמה בשרת הזה היא בהזמנה בלבד. פתחו את קישור ההזמנה משליט המבוך, ואז צרו חשבון.</value></data>
+  <data name="Page.Register.NoAccountYet" xml:space="preserve"><value>עדיין אין חשבון בשרת הזה. כבו את הקישור לאינטרנט, צרו חשבון משלכם ואז הפעילו אותו שוב.</value></data>
   <data name="Page.About.Title" xml:space="preserve"><value>אודות ורישיונות</value></data>
   <data name="Page.About.Heading" xml:space="preserve"><value>אודות TTRPG.Codex</value></data>
   <data name="Page.About.Subtitle" xml:space="preserve"><value>מלווה לקמפיינים ולדמויות במשחקי תפקידים שולחניים, שמופעל על השרת שלכם. מערכות משחק ותוכן הם נתונים שאפשר לקרוא, לערוך ולשתף.</value></data>

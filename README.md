@@ -27,6 +27,13 @@ copies the link for your players and opens the log. Tick "Let players on my netw
 window to host a table from your laptop. Players outside your network need a VPN or tunnel such as
 Tailscale. Nothing else needs installing.
 
+If you have [Tailscale](https://tailscale.com) installed and signed in, "Open to the internet (Tailscale
+Funnel)" gives players one `https://` link that works from anywhere, with nothing for them to install. The
+first time, Tailscale asks the owner of your Tailscale network to approve Funnel; the launcher opens that
+page. While it is on, anyone who finds the link can see the sign-in page, so new accounts need a campaign
+invite, only the server admin can use the AI key set in the server's own configuration, and the switch turns
+itself off whenever the launcher closes. Create your own account before turning it on.
+
 **From source:**
 
 ```sh

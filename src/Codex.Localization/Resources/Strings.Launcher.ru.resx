@@ -32,6 +32,22 @@
   <data name="Launcher.Link.This" xml:space="preserve"><value>Этот компьютер</value></data>
   <data name="Launcher.Link.Network" xml:space="preserve"><value>Игроки в вашей сети</value></data>
   <data name="Launcher.Link.Tailscale" xml:space="preserve"><value>Игроки в Tailscale</value></data>
+  <data name="Launcher.Link.Internet" xml:space="preserve"><value>Все, у кого есть ссылка, из любой сети</value></data>
+  <data name="Launcher.Funnel.Toggle" xml:space="preserve"><value>Открыть в интернет (Tailscale Funnel)</value></data>
+  <data name="Launcher.Funnel.Hint" xml:space="preserve"><value>Игроки получают одну ссылку, которая работает где угодно, и ничего не устанавливают. Любой, кто найдёт ссылку, сможет открыть страницу входа, поэтому новые учётные записи создаются только по приглашению в кампанию, а ваш ключ ИИ остаётся только вашим. Нужен Tailscale на этом компьютере. Опция сама выключается при каждом закрытии программы.</value></data>
+  <data name="Launcher.Funnel.Confirm" xml:space="preserve"><value>Открыть в интернет</value></data>
+  <data name="Launcher.Funnel.Cancel" xml:space="preserve"><value>Не сейчас</value></data>
+  <data name="Launcher.Funnel.NotInstalled" xml:space="preserve"><value>Tailscale не установлен на этом компьютере. Установите его с tailscale.com, войдите в аккаунт и включите эту опцию снова.</value></data>
+  <data name="Launcher.Funnel.NoStatus" xml:space="preserve"><value>Не удалось связаться с Tailscale. Убедитесь, что он запущен, и включите эту опцию снова.</value></data>
+  <data name="Launcher.Funnel.SignedOut" xml:space="preserve"><value>Tailscale установлен, но вход не выполнен. Откройте Tailscale, войдите и включите эту опцию снова.</value></data>
+  <data name="Launcher.Funnel.NoName" xml:space="preserve"><value>Tailscale ещё не присвоил этому компьютеру имя. Включите MagicDNS в настройках администратора Tailscale и включите эту опцию снова.</value></data>
+  <data name="Launcher.Funnel.NoHttps" xml:space="preserve"><value>В вашей сети Tailscale не включены HTTPS-сертификаты, а ссылке в интернет они нужны. Включите их в консоли администратора Tailscale, в разделе DNS.</value></data>
+  <data name="Launcher.Funnel.Waiting" xml:space="preserve"><value>Открываю ссылку в интернете…</value></data>
+  <data name="Launcher.Funnel.Approve" xml:space="preserve"><value>Владелец вашей сети Tailscale должен один раз подтвердить Funnel. В браузере открылась страница: подтвердите там, и ссылка заработает сама.</value></data>
+  <data name="Launcher.Funnel.ApproveButton" xml:space="preserve"><value>Открыть страницу подтверждения</value></data>
+  <data name="Launcher.Funnel.Permission" xml:space="preserve"><value>Tailscale не разрешил программе менять его настройки. В Linux обычно помогает однократная команда: {0}</value></data>
+  <data name="Launcher.Funnel.Stopped" xml:space="preserve"><value>Ссылка в интернете перестала работать. Подробности в журнале.</value></data>
+  <data name="Launcher.Funnel.Stray" xml:space="preserve"><value>Ссылка в интернете от прошлого запуска, возможно, всё ещё ведёт к этому столу, поэтому он запускается в режиме «только по приглашению». Чтобы закрыть её, выполните: {0}</value></data>
   <data name="Launcher.Tray.Open" xml:space="preserve"><value>Открыть TTRPG.Codex</value></data>
   <data name="Launcher.Tray.CopyPlayers" xml:space="preserve"><value>Копировать ссылку для игроков</value></data>
   <data name="Launcher.Tray.CopyLocal" xml:space="preserve"><value>Копировать ссылку для этого компьютера</value></data>
@@ -58,6 +74,7 @@
   <data name="Launcher.Qr.Title" xml:space="preserve"><value>Отсканируйте, чтобы присоединиться</value></data>
   <data name="Launcher.Qr.Instruction" xml:space="preserve"><value>Наведите камеру телефона на код. Стол откроется в браузере.</value></data>
   <data name="Launcher.Qr.SameWifi" xml:space="preserve"><value>Телефоны должны быть в той же сети Wi-Fi, что и этот компьютер.</value></data>
+  <data name="Launcher.Qr.Anywhere" xml:space="preserve"><value>Работает в любой сети. Любой, у кого есть этот адрес, увидит страницу входа; игрокам для входа нужна ссылка-приглашение в кампанию.</value></data>
   <data name="Launcher.Help.Got" xml:space="preserve"><value>Понятно</value></data>
   <data name="Launcher.Help.Intro" xml:space="preserve"><value>TTRPG.Codex работает на этом компьютере. Ваши игроки открывают его в браузере: ничего устанавливать не нужно.</value></data>
   <data name="Launcher.Help.Head.Room" xml:space="preserve"><value>Игра в одной комнате или в одной сети Wi-Fi</value></data>

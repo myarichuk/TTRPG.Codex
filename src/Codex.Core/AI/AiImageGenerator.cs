@@ -80,7 +80,7 @@ public static class AiImageGenerator
 #pragma warning disable MEAI001 // IImageGenerator is marked experimental; it is the adapter the OpenAI package ships.
     private static async Task<GeneratedImage> ViaImagesApiAsync(Uri endpoint, string key, string model, string prompt, ArtShape shape, HttpClient http, CancellationToken ct)
     {
-        var client = new OpenAIClient(new ApiKeyCredential(key), new OpenAIClientOptions { Endpoint = endpoint });
+        var client = new OpenAIClient(new ApiKeyCredential(key), new OpenAIClientOptions { Endpoint = endpoint, Transport = new System.ClientModel.Primitives.HttpClientPipelineTransport(http) });
         var generator = client.GetImageClient(model).AsIImageGenerator();
         // No response format: gpt-image models reject it and always return base64; dall-e models
         // return a URL, which is downloaded below. Sizes differ per family; others get their default.

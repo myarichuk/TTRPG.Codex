@@ -114,6 +114,8 @@ public static class AIClientFactory
             options.Endpoint = uri;
         }
 
+        if (config.Http != null) options.Transport = new HttpClientPipelineTransport(config.Http);
+
         if (kind == "openrouter")
         {
             // OpenRouter asks callers to identify the app; both headers are optional but polite.
@@ -146,7 +148,9 @@ public static class AIClientFactory
         }
 
         var baseUrl = uri.GetLeftPart(UriPartial.Authority) + path;
-        var client = new AnthropicClient { ApiKey = key, BaseUrl = baseUrl, Timeout = RequestTimeout, MaxRetries = 1 };
+        var client = config.Http == null
+            ? new AnthropicClient { ApiKey = key, BaseUrl = baseUrl, Timeout = RequestTimeout, MaxRetries = 1 }
+            : new AnthropicClient { ApiKey = key, BaseUrl = baseUrl, Timeout = RequestTimeout, MaxRetries = 1, HttpClient = config.Http };
         return new TemperatureFallbackChatClient(client.AsIChatClient(config.ModelId!.Trim(), AnthropicMaxOutputTokens));
     }
 

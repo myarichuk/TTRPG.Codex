@@ -8,6 +8,7 @@
   <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>Поставщик изображений не настроен.</value></data>
   <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>Краткие пересказы сессий составляет только мастер.</value></data>
   <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>Поставщику нужны адрес, модель и (для облачных сервисов) API-ключ.</value></data>
+  <data name="Service.Ai.PrivateBlocked" xml:space="preserve"><value>Этот адрес ведёт на этот компьютер или в его частную сеть, а сервер, открытый в интернет, этого не допускает.</value></data>
   <data name="Service.Ai.Connected" xml:space="preserve"><value>Соединение установлено. Модель ответила: «{0}»</value></data>
   <data name="Service.Ai.ConnectedEmpty" xml:space="preserve"><value>Соединение установлено (пустой ответ).</value></data>
   <data name="Service.Ai.Unreachable" xml:space="preserve"><value>Не удалось связаться с моделью: {0}</value></data>

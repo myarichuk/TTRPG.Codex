@@ -24,8 +24,20 @@ public sealed class AiProviderService(
     AIConfiguration serverConfig,
     AIImageConfiguration serverImageConfig,
     IHttpClientFactory httpClients,
-    ILogger<AiProviderService> logger)
+    ILogger<AiProviderService> logger,
+    IConfiguration configuration)
 {
+    // While the server is open to the internet only its admin may use the key in the server's own configuration.
+    private bool ServerKeyAllowedFor(UserDocument? user) => ExposurePolicy.MayUseServerAi(ExposurePolicy.IsExposed(configuration), user);
+
+    // A stranger's own provider must not aim at this computer or its network while the server is on the internet.
+    // The server's admin owns this computer and may use whatever runs on it.
+    private bool Confined(UserDocument? user) =>
+        ExposurePolicy.IsExposed(configuration) && user?.Roles.Contains(ExposurePolicy.ServerAdminRole) != true;
+
+    private bool Blocked(AiProviderConfig provider, UserDocument? user) =>
+        Confined(user) && ExposurePolicy.IsInternalEndpoint(provider.BaseUrl);
+
     private readonly IDataProtector _protector = dataProtection.CreateProtector("Codex.AiProviderKeys.v1");
     private readonly Lazy<IChatClient?> _serverClient = new(() => AIClientFactory.CreateClient(serverConfig));
 
@@ -56,8 +68,9 @@ public sealed class AiProviderService(
         }
     }
 
-    public AIConfiguration ToConfiguration(AiProviderConfig provider, string? plainKey = null) => new()
+    public AIConfiguration ToConfiguration(AiProviderConfig provider, string? plainKey = null, bool confined = false) => new()
     {
+        Http = confined ? ExposurePolicy.PublicOnlyClient : null,
         Provider = provider.Kind,
         Endpoint = provider.BaseUrl,
         ModelId = provider.ModelId,
@@ -78,9 +91,9 @@ public sealed class AiProviderService(
     public IChatClient? ClientFor(UserDocument? user)
     {
         var provider = DefaultProvider(user);
-        if (provider != null)
+        if (provider != null && !Blocked(provider, user))
         {
-            var client = AIClientFactory.CreateClient(ToConfiguration(provider));
+            var client = AIClientFactory.CreateClient(ToConfiguration(provider, null, Confined(user)));
             if (client != null)
             {
                 return client;
@@ -89,7 +102,7 @@ public sealed class AiProviderService(
             logger.LogWarning("User {UserId}'s default AI provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);
         }
 
-        return _serverClient.Value;
+        return ServerKeyAllowedFor(user) ? _serverClient.Value : null;
     }
 
     public string? Describe(UserDocument? user)
@@ -100,7 +113,7 @@ public sealed class AiProviderService(
             return $"{provider.Name} · {provider.ModelId}";
         }
 
-        return ServerConfigured ? "Server default · " + serverConfig.ModelId : null;
+        return ServerConfigured && ServerKeyAllowedFor(user) ? "Server default · " + serverConfig.ModelId : null;
     }
 
     public async Task<AiAssistant> AssistantForAsync(string userId)
@@ -135,9 +148,9 @@ public sealed class AiProviderService(
 
     private AIConfiguration? ImageConfigFor(UserDocument? user)
     {
-        if (DefaultImageProvider(user) is { } provider)
+        if (DefaultImageProvider(user) is { } provider && !Blocked(provider, user))
         {
-            var config = ToConfiguration(provider);
+            var config = ToConfiguration(provider, null, Confined(user));
             if (AiImageGenerator.Problem(config) == null)
             {
                 return config;
@@ -146,7 +159,7 @@ public sealed class AiProviderService(
             logger.LogWarning("User {UserId}'s image provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);
         }
 
-        return ServerImageConfigured ? serverImageConfig : null;
+        return ServerImageConfigured && ServerKeyAllowedFor(user) ? serverImageConfig : null;
     }
 
     public async Task<bool> IsImageConfiguredForAsync(string userId) => ImageConfigFor(await users.GetUserByIdAsync(userId)) != null;
@@ -156,16 +169,17 @@ public sealed class AiProviderService(
         var config = ImageConfigFor(await users.GetUserByIdAsync(userId)) ?? throw new AiImageNotConfiguredException();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromMinutes(2));
-        var http = httpClients.CreateClient("ai-images");
-        http.Timeout = TimeSpan.FromMinutes(2);
+        var http = config.Http ?? httpClients.CreateClient("ai-images");
+        if (config.Http == null) http.Timeout = TimeSpan.FromMinutes(2);
         return await AiImageGenerator.GenerateAsync(config, prompt, shape, http, timeout.Token);
     }
 
     /// <summary>Sends one tiny prompt so the settings page can confirm a key and model work.</summary>
     /// <remarks>The message is a <see cref="LocalizedException"/> so the page shows it in the viewer's language; it is not thrown.</remarks>
-    public async Task<(bool Ok, LocalizedException Message)> TestAsync(AiProviderConfig provider, string? plainKey, CancellationToken ct = default)
+    public async Task<(bool Ok, LocalizedException Message)> TestAsync(AiProviderConfig provider, string? plainKey, UserDocument? user = null, CancellationToken ct = default)
     {
-        var client = AIClientFactory.CreateClient(ToConfiguration(provider, plainKey));
+        if (Blocked(provider, user)) return (false, new LocalizedException("Service.Ai.PrivateBlocked"));
+        var client = AIClientFactory.CreateClient(ToConfiguration(provider, plainKey, Confined(user)));
         if (client == null)
         {
             return (false, new LocalizedException("Service.Ai.NeedsSetup"));

@@ -142,6 +142,15 @@ public class CampaignRepository(
         return CampaignDeleteResult.Deleted;
     }
 
+    public async Task<bool> InviteCodeExistsAsync(string inviteCode)
+    {
+        if (string.IsNullOrWhiteSpace(inviteCode)) return false;
+        using var lookup = dbService.Store.OpenAsyncSession();
+        return await lookup.Query<CampaignDocument>()
+            .Customize(x => x.WaitForNonStaleResults())
+            .AnyAsync(c => c.InviteCode == inviteCode);
+    }
+
     public async Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId)
     {
         string? campaignId;

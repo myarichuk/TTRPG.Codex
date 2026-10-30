@@ -353,7 +353,7 @@ public class WorldBuilderTests
         var campaigns = Substitute.For<ICampaignRepository>();
         var library = new CampaignLibrary(registry, homebrew, catalog);
         var providers = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),
-            Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance);
+            Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
         var components = new ComponentRegistry();
         var runtimes = new Codex.Persistence.Runtime.CampaignRuntimeManager(actorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
             Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);

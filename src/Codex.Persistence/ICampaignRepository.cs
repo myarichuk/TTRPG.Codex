@@ -45,4 +45,8 @@ public interface ICampaignRepository
     /// member if the code resolves to a campaign and that user isn't already a member (2.4).
     /// </summary>
     Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId);
+
+    /// <summary>Whether some campaign currently uses this invite code. Lets a server open to the internet
+    /// accept a new account only from someone holding a real invite.</summary>
+    Task<bool> InviteCodeExistsAsync(string inviteCode);
 }

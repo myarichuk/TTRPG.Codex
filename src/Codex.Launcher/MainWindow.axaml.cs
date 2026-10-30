@@ -52,7 +52,12 @@ public partial class MainWindow : Window
         BackupsButton.Content = L["Launcher.Backups"];
         ContentButton.Content = L["Launcher.MyContent"];
         CheckButton.Content = L["Launcher.CantJoin"];
+        FunnelWarning.Text = L["Launcher.Funnel.Hint"];
+        FunnelConfirmButton.Content = L["Launcher.Funnel.Confirm"];
+        FunnelCancelButton.Content = L["Launcher.Funnel.Cancel"];
+        FunnelApproveButton.Content = L["Launcher.Funnel.ApproveButton"];
         SetLanText();
+        SetFunnelText();
         linksKey = ""; // the link rows carry text too: rebuild them
         Refresh();
     }
@@ -89,6 +94,11 @@ public partial class MainWindow : Window
         ProblemText.IsVisible = !string.IsNullOrEmpty(model.Controller.Problem);
         RebuildLinks();
         LanHint.IsVisible = model.Settings.AllowLan;
+        if (!FunnelConfirmPanel.IsVisible) FunnelBox.IsChecked = model.Settings.OpenToInternet; // a refusal switches it back off
+        SetFunnelText();
+        FunnelNoteText.Text = model.FunnelNote;
+        FunnelNoteText.IsVisible = !string.IsNullOrEmpty(model.FunnelNote);
+        FunnelApproveButton.IsVisible = model.FunnelApprovalUrl != null;
     }
 
     private string linksKey = "";
@@ -176,6 +186,40 @@ public partial class MainWindow : Window
         model.SetAllowLan(LanBox.IsChecked == true);
         SetLanText();
     }
+
+    private void OnFunnelChanged(object? sender, RoutedEventArgs e)
+    {
+        if (loading) return;
+        if (FunnelBox.IsChecked == true)
+        {
+            FunnelConfirmPanel.IsVisible = true; // nothing happens until the DM confirms
+        }
+        else
+        {
+            FunnelConfirmPanel.IsVisible = false;
+            model.SetOpenToInternet(false);
+        }
+
+        SetFunnelText();
+    }
+
+    private void OnFunnelConfirm(object? sender, RoutedEventArgs e)
+    {
+        FunnelConfirmPanel.IsVisible = false;
+        model.SetOpenToInternet(true);
+    }
+
+    private void OnFunnelCancel(object? sender, RoutedEventArgs e)
+    {
+        FunnelConfirmPanel.IsVisible = false;
+        FunnelBox.IsChecked = false;
+        SetFunnelText();
+    }
+
+    private void OnFunnelApprove(object? sender, RoutedEventArgs e) => model.OpenFunnelApproval();
+
+    private void SetFunnelText() =>
+        FunnelBox.Content = (FunnelBox.IsChecked == true ? "◆  " : "◇  ") + L["Launcher.Funnel.Toggle"];
 
     private void SetLanText() =>
         LanBox.Content = (LanBox.IsChecked == true ? "◆  " : "◇  ") + L["Launcher.Lan.Toggle"];

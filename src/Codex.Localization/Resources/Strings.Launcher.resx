@@ -32,6 +32,22 @@
   <data name="Launcher.Link.This" xml:space="preserve"><value>This computer</value></data>
   <data name="Launcher.Link.Network" xml:space="preserve"><value>Players on your network</value></data>
   <data name="Launcher.Link.Tailscale" xml:space="preserve"><value>Players on Tailscale</value></data>
+  <data name="Launcher.Link.Internet" xml:space="preserve"><value>Anyone with the link, on any network</value></data>
+  <data name="Launcher.Funnel.Toggle" xml:space="preserve"><value>Open to the internet (Tailscale Funnel)</value></data>
+  <data name="Launcher.Funnel.Hint" xml:space="preserve"><value>Players get one link that works anywhere, and install nothing. Anyone who finds the link can reach your sign-in page, so new accounts need a campaign invite, and your AI key stays yours alone. Needs Tailscale on this computer. This switches itself off each time the program closes.</value></data>
+  <data name="Launcher.Funnel.Confirm" xml:space="preserve"><value>Open it to the internet</value></data>
+  <data name="Launcher.Funnel.Cancel" xml:space="preserve"><value>Not now</value></data>
+  <data name="Launcher.Funnel.NotInstalled" xml:space="preserve"><value>Tailscale is not installed on this computer. Install it from tailscale.com, sign in, then switch this on again.</value></data>
+  <data name="Launcher.Funnel.NoStatus" xml:space="preserve"><value>Could not reach Tailscale. Make sure it is running, then switch this on again.</value></data>
+  <data name="Launcher.Funnel.SignedOut" xml:space="preserve"><value>Tailscale is installed but not signed in. Open Tailscale, sign in, then switch this on again.</value></data>
+  <data name="Launcher.Funnel.NoName" xml:space="preserve"><value>Tailscale has not given this computer a name yet. Turn on MagicDNS in your Tailscale admin settings, then switch this on again.</value></data>
+  <data name="Launcher.Funnel.NoHttps" xml:space="preserve"><value>HTTPS certificates are not turned on for your Tailscale network, which the internet link needs. Turn them on in the Tailscale admin console under DNS.</value></data>
+  <data name="Launcher.Funnel.Waiting" xml:space="preserve"><value>Opening the internet link…</value></data>
+  <data name="Launcher.Funnel.Approve" xml:space="preserve"><value>The owner of your Tailscale network has to approve Funnel once. A page opened in your browser: approve it there and the link starts by itself.</value></data>
+  <data name="Launcher.Funnel.ApproveButton" xml:space="preserve"><value>Open the approval page</value></data>
+  <data name="Launcher.Funnel.Permission" xml:space="preserve"><value>Tailscale would not let this program change its settings. On Linux, running this once usually fixes it: {0}</value></data>
+  <data name="Launcher.Funnel.Stopped" xml:space="preserve"><value>The internet link stopped. The log has the details.</value></data>
+  <data name="Launcher.Funnel.Stray" xml:space="preserve"><value>A link to the internet from an earlier run may still point at this table, so it starts in invite-only mode. To close that link, run: {0}</value></data>
   <data name="Launcher.Tray.Open" xml:space="preserve"><value>Open TTRPG.Codex</value></data>
   <data name="Launcher.Tray.CopyPlayers" xml:space="preserve"><value>Copy link for players</value></data>
   <data name="Launcher.Tray.CopyLocal" xml:space="preserve"><value>Copy link for this computer</value></data>
@@ -58,6 +74,7 @@
   <data name="Launcher.Qr.Title" xml:space="preserve"><value>Scan to join</value></data>
   <data name="Launcher.Qr.Instruction" xml:space="preserve"><value>Point your phone's camera at this. It opens the table in the browser.</value></data>
   <data name="Launcher.Qr.SameWifi" xml:space="preserve"><value>Phones must be on the same Wi-Fi as this computer.</value></data>
+  <data name="Launcher.Qr.Anywhere" xml:space="preserve"><value>Works on any network. Anyone with this address reaches your sign-in page; players need your campaign invite link to join.</value></data>
   <data name="Launcher.Help.Got" xml:space="preserve"><value>Got it</value></data>
   <data name="Launcher.Help.Intro" xml:space="preserve"><value>TTRPG.Codex runs on this computer. Your players open it in their web browser: nothing to install for them.</value></data>
   <data name="Launcher.Help.Head.Room" xml:space="preserve"><value>Playing in the same room or on the same Wi-Fi</value></data>

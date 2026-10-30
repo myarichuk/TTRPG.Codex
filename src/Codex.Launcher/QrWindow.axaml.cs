@@ -26,7 +26,7 @@ public partial class QrWindow : Window
         Title = L["Launcher.Qr.Title"];
         Heading.Text = LinkLabel(kind);
         Instruction.Text = L["Launcher.Qr.Instruction"];
-        SameWifi.Text = L["Launcher.Qr.SameWifi"];
+        SameWifi.Text = kind == LinkKind.Internet ? L["Launcher.Qr.Anywhere"] : L["Launcher.Qr.SameWifi"];
         CopyButton.Content = L["Launcher.CopyLink"];
         DoneButton.Content = L["Launcher.Done"];
     }
