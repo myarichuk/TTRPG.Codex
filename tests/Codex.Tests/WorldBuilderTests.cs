@@ -859,6 +859,74 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public void Chat_SendsOldToolResultsAsALine_AndKeepsTheStoredHistoryWhole()
+    {
+        var page = new string('x', 5_000);
+        ChatMessage Dm(string text) => new(ChatRole.User, text);
+        ChatMessage Result(string id, string text) => new(ChatRole.Tool, new List<AIContent> { new FunctionResultContent(id, text) });
+        var history = new List<ChatMessage>
+        {
+            Dm("one"), Calls("old", "get_page", """{"page": "harbour"}"""), Result("old", page), Result("small", "short"), new(ChatRole.Assistant, "read it"),
+            Dm("two"), new(ChatRole.Assistant, "ok"),
+            Dm("three"), Calls("new", "get_page", """{"page": "pier"}"""), Result("new", page), new(ChatRole.Assistant, "read that too"),
+            Dm("four")
+        };
+
+        var sent = WorldChat.ForModel(new ChatMessage(ChatRole.System, "system"), history);
+
+        Assert.Equal(history.Count + 1, sent.Count);
+        var results = sent.SelectMany(m => m.Contents).OfType<FunctionResultContent>().ToDictionary(r => r.CallId, r => r.Result as string);
+        // Before the DM's last three messages: the long result is a line naming the tool; a short one is cheap enough to keep.
+        Assert.StartsWith("[An earlier result of get_page, 5,000 characters", results["old"]);
+        Assert.Equal("short", results["small"]);
+        Assert.Equal(page, results["new"]);
+        Assert.Equal(page, history[2].Contents.OfType<FunctionResultContent>().Single().Result);
+    }
+
+    [Fact]
+    public async Task Chat_ClaimsATurnBeforeItsFirstWait_SoASecondSendOrAnApplyCannotSlipIn()
+    {
+        var gate = new TaskCompletionSource<IChatClient>();
+        var chat = new WorldChat(Service().Service, () => gate.Task, Campaign, Dm);
+
+        var first = chat.SendAsync("A harbour, please.", null, CancellationToken.None);
+        Assert.True(chat.IsBusy);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => chat.SendAsync("And a pier.", null, CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => chat.ApplyAsync());
+
+        gate.SetResult(new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, "Varr, then.")));
+        await first;
+        Assert.False(chat.IsBusy);
+        Assert.Equal("Varr, then.", chat.Lines[^1].Text);
+    }
+
+    [Fact]
+    public async Task Chat_AskedAfterTheDmHandedTheCampaignOver_RefusesAndIsNotLeftBusy()
+    {
+        var model = new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, "never"));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm, stillDm: () => Task.FromResult(false));
+
+        var refused = await Assert.ThrowsAsync<LocalizedException>(() => chat.SendAsync("A harbour, please.", null, CancellationToken.None));
+
+        Assert.Equal("WorldBuilder.Error.OnlyDm", refused.Key);
+        Assert.False(chat.IsBusy);
+        Assert.Empty(model.Calls);
+    }
+
+    [Fact]
+    public async Task Chat_TooLongForTheModel_SaysSo_AndLeavesTheConversationAsItWas()
+    {
+        var model = new ScriptedModel(_ => throw new InvalidOperationException("HTTP 400 (invalid_request_error: context_length_exceeded)"));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+
+        var error = await Assert.ThrowsAsync<LocalizedException>(() => chat.SendAsync("A harbour, please.", null, CancellationToken.None));
+
+        Assert.Equal("WorldChat.Error.TooLong", error.Key);
+        Assert.Empty(chat.Lines);
+        Assert.False(chat.IsBusy);
+    }
+
+    [Fact]
     public async Task Chat_ThatHitsTheToolLimit_LeavesNoCallWithoutItsResult_ForTheNextMessage()
     {
         var saving = Service();

@@ -109,6 +109,15 @@ public sealed class WorldChat
     /// <summary>Longest reasoning a reply keeps: its last stretch.</summary>
     private const int MaxReasoning = 12_000;
 
+    /// <summary>Longest reply the model may write in one go; a proposal that runs past it gets the cut-off nudge.</summary>
+    private const int MaxReplyTokens = 8_192;
+
+    /// <summary>Tool results from before this many of the DM's messages back reach the model as a line saying what they were.</summary>
+    private const int FreshMessages = 3;
+
+    /// <summary>Tool results up to this long are sent again whole, however old: a stub would save next to nothing.</summary>
+    private const int MaxOldResult = 1_200;
+
     private readonly WorldBuilderService builder;
     private readonly Func<Task<IChatClient>> model;
     private readonly CampaignDocument campaign;
@@ -118,14 +127,20 @@ public sealed class WorldChat
     // What the model looked up during the turn under way; it goes with the reply when the turn lands.
     private readonly List<WorldChatStep> trail = new();
     private CancellationTokenSource? running;
+    // Set before a turn's or an apply's first await, so a second one can't slip in while the first is still getting started.
+    private bool claimed;
+    private readonly Func<Task<bool>>? stillDm;
 
     /// <param name="model">The DM's own text model (<see cref="AiProviderService.ChatClientForAsync"/>), asked for at each message so a
     /// change in their AI settings counts at once.</param>
     /// <param name="document">The conversation to carry on; a new one when null.</param>
     /// <param name="store">Stores the conversation after each change; nothing is stored when null (tests).</param>
+    /// <param name="stillDm">Asks again, before each turn and each apply, whether the user still runs the campaign: a chat stays
+    /// open for as long as the connection lasts, and the DM may hand the campaign over meanwhile. Not asked when null (tests).</param>
     public WorldChat(WorldBuilderService builder, Func<Task<IChatClient>> model, CampaignDocument campaign, CampaignAccess access,
-        WorldChatDocument? document = null, Func<WorldChatDocument, Task>? store = null)
+        WorldChatDocument? document = null, Func<WorldChatDocument, Task>? store = null, Func<Task<bool>>? stillDm = null)
     {
+        this.stillDm = stillDm;
         this.builder = builder;
         this.model = model;
         this.campaign = campaign;
@@ -160,7 +175,8 @@ public sealed class WorldChat
     /// <summary>The turn under way; null when the model is not working.</summary>
     public WorldChatLive? Live { get; private set; }
 
-    public bool IsBusy => Live != null;
+    /// <summary>True while a turn or an apply is under way.</summary>
+    public bool IsBusy => Live != null || claimed;
 
     /// <summary>Raised when the turn under way moves on (a step starts or ends, more text arrives) and when it ends. Raised on the
     /// turn's thread: a page marshals it onto its own.</summary>
@@ -185,10 +201,23 @@ public sealed class WorldChat
         var message = text.Trim();
         if (message.Length == 0) return;
         if (IsBusy) throw new InvalidOperationException("A turn is already under way.");
+        claimed = true;
 
         // The model and the system prompt first: until the turn is under way (Live), nothing here needs undoing.
-        var raw = await model();
-        var system = new ChatMessage(ChatRole.System, AiPrompts.WorldChat(await builder.ChatRequestAsync(campaign, access)));
+        IChatClient raw;
+        ChatMessage system;
+        try
+        {
+            await StillDmAsync();
+            raw = await model();
+            system = new ChatMessage(ChatRole.System, AiPrompts.WorldChat(await builder.ChatRequestAsync(campaign, access)));
+        }
+        catch
+        {
+            claimed = false;
+            throw;
+        }
+
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(ct);
         running = stop;
         var live = Live = new WorldChatLive();
@@ -236,7 +265,7 @@ public sealed class WorldChat
 
         try
         {
-            var (reply, cutShort) = await RunTurnAsync(client, system, new ChatOptions { Tools = Tools(OnStep), Temperature = 0.8f },
+            var (reply, cutShort) = await RunTurnAsync(client, system, new ChatOptions { Tools = Tools(OnStep), Temperature = 0.8f, MaxOutputTokens = MaxReplyTokens },
                 () => !ReferenceEquals(Proposal, heldProposal), OnDelta, usage, ct);
             var l = Localizer.For(Lang);
             // A proposal made and then not a word about it: the proposal is the news.
@@ -264,6 +293,11 @@ public sealed class WorldChat
             Undo();
             throw new LocalizedException("WorldChat.Error.NoTools");
         }
+        catch (Exception ex) when (ex is not LocalizedException && !ct.IsCancellationRequested && TooLong(ex))
+        {
+            Undo();
+            throw new LocalizedException("WorldChat.Error.TooLong");
+        }
         catch
         {
             // A stopped or failed turn leaves the conversation as it was, message included: the page hands the text back to the
@@ -275,6 +309,7 @@ public sealed class WorldChat
         {
             running = null;
             Live = null;
+            claimed = false;
             Raise();
         }
 
@@ -381,7 +416,7 @@ public sealed class WorldChat
     private async Task<ChatResponse> StreamAsync(IChatClient client, ChatMessage system, ChatOptions options, Action<WorldChatDelta> stream, CancellationToken ct)
     {
         var updates = new List<ChatResponseUpdate>();
-        await foreach (var update in client.GetStreamingResponseAsync(history.Prepend(system).ToList(), options, ct))
+        await foreach (var update in client.GetStreamingResponseAsync(ForModel(system, history), options, ct))
         {
             updates.Add(update);
             foreach (var content in update.Contents)
@@ -392,6 +427,44 @@ public sealed class WorldChat
         }
 
         return updates.ToChatResponse();
+    }
+
+    /// <summary>The conversation as the model is sent it: the history, except that what tools returned before the DM's last few
+    /// messages is cut to a line saying what it was. Those results are the bulk of a long chat (whole pages, search lists), the model
+    /// has long since used them, and it can look them up again; the stored history keeps them whole for the DM.</summary>
+    public static List<ChatMessage> ForModel(ChatMessage system, IReadOnlyList<ChatMessage> history)
+    {
+        // Where the DM's last few messages begin; a chat with fewer than that has nothing old yet.
+        var fresh = 0;
+        for (int i = history.Count - 1, seen = 0; i >= 0; i--)
+        {
+            if (history[i].Role == ChatRole.User && !history[i].Contents.OfType<FunctionResultContent>().Any() && ++seen == FreshMessages)
+            {
+                fresh = i;
+                break;
+            }
+        }
+
+        var calls = history.SelectMany(m => m.Contents).OfType<FunctionCallContent>().GroupBy(c => c.CallId).ToDictionary(g => g.Key, g => g.First().Name);
+        var sent = new List<ChatMessage>(history.Count + 1) { system };
+        for (var i = 0; i < history.Count; i++)
+        {
+            var message = history[i];
+            if (i >= fresh || !message.Contents.OfType<FunctionResultContent>().Any(r => ResultText(r.Result).Length > MaxOldResult))
+            {
+                sent.Add(message);
+                continue;
+            }
+
+            // A copy: the message itself is the stored history's.
+            var contents = message.Contents.Select(c => c is FunctionResultContent result && ResultText(result.Result) is { Length: > MaxOldResult } text
+                ? new FunctionResultContent(result.CallId,
+                    $"[An earlier result of {(calls.TryGetValue(result.CallId, out var name) ? name : "a tool")}, {text.Length:N0} characters, left out to save room. Call the tool again if you need it.]")
+                : c).ToList();
+            sent.Add(new ChatMessage(message.Role, contents));
+        }
+
+        return sent;
     }
 
     /// <summary>What the model said after its last tool result: its answer. What it said before each call is a preamble ("Got it,
@@ -485,7 +558,22 @@ public sealed class WorldChat
     /// <summary>Saves the proposal's ticked entries and tells the model what they became, so the conversation can build on them.</summary>
     public async Task<WorldBuildResult> ApplyAsync(CancellationToken ct = default)
     {
+        if (IsBusy) throw new InvalidOperationException("A turn or an apply is under way.");
+        claimed = true;
+        try
+        {
+            return await ApplyNowAsync(ct);
+        }
+        finally
+        {
+            claimed = false;
+        }
+    }
+
+    private async Task<WorldBuildResult> ApplyNowAsync(CancellationToken ct)
+    {
         var proposal = Proposal ?? throw new LocalizedException("WorldChat.Error.NoProposal");
+        await StillDmAsync();
         // Stored first: if another tab changed this chat (or applied this very proposal) since it was loaded, the save is refused
         // here, before anything is made, rather than making it all twice.
         await SaveAsync();
@@ -542,6 +630,7 @@ public sealed class WorldChat
     public async Task DiscardAsync()
     {
         if (Proposal == null) return;
+        if (IsBusy) throw new InvalidOperationException("A turn or an apply is under way.");
         Proposal = null;
         Held = null;
         Document.ProposalWarnings = new List<string>();
@@ -553,6 +642,28 @@ public sealed class WorldChat
 
     /// <summary>The errors that mean this copy of the chat is no longer the stored one: it changed in another tab, or was deleted.</summary>
     public static bool IsStale(Exception ex) => ex is LocalizedException { Key: "WorldChat.Error.ChangedElsewhere" or "WorldChat.Error.Gone" };
+
+    private async Task StillDmAsync()
+    {
+        if (stillDm != null && !await stillDm()) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+    }
+
+    // What providers say when the conversation no longer fits the model: OpenAI's context_length_exceeded, Anthropic's "prompt is
+    // too long", and the wording local servers use. Read from the messages along the chain, not ToString (the stack trace).
+    internal static bool TooLong(Exception ex)
+    {
+        for (var e = ex; e != null; e = e.InnerException)
+        {
+            var text = e.Message;
+            if (new[] { "context_length", "context length", "maximum context", "context window", "prompt is too long", "too many tokens" }
+                .Any(words => text.Contains(words, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static string Lang => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
 
@@ -856,9 +967,12 @@ public sealed class ProposalEntry
 
 /// <summary>Keeps the DM's world-building conversations open for as long as their connection lasts (a turn keeps running while
 /// they look at another chat), loading each from the database the first time it is opened. DM only.</summary>
-public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderService providers, IWorldChatRepository repository)
+public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderService providers, IWorldChatRepository repository,
+    ICampaignAccessResolver accessResolver) : IDisposable
 {
     private readonly Dictionary<string, WorldChat> open = new();
+    // Every chat made here, stored or not yet (a new one is stored when its first turn ends), so all of them can be stopped.
+    private readonly List<WorldChat> made = new();
 
     /// <summary>The DM's chats in the campaign, most recent first.</summary>
     public async Task<IReadOnlyList<WorldChatSummary>> ListAsync(CampaignAccess access)
@@ -896,13 +1010,13 @@ public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderSer
 
     private WorldChat Make(CampaignDocument campaign, CampaignAccess access, WorldChatDocument? document)
     {
-        WorldChat? made = null;
-        made = new WorldChat(builder, () => providers.ChatClientForAsync(access.UserId), campaign, access, document, async doc =>
+        WorldChat? chat = null;
+        chat = new WorldChat(builder, () => providers.ChatClientForAsync(access.UserId), campaign, access, document, store: async doc =>
         {
             switch (await repository.TrySaveAsync(doc, access))
             {
                 case ChatSave.Saved:
-                    open[doc.Id] = made!;
+                    open[doc.Id] = chat!;
                     return;
                 case ChatSave.Changed:
                     // This copy is out of date: forget it, so opening the chat again loads what is stored.
@@ -914,8 +1028,15 @@ public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderSer
                 default:
                     throw new LocalizedException("WorldBuilder.Error.OnlyDm");
             }
-        });
-        return made;
+        }, stillDm: async () => (await accessResolver.ResolveAsync(campaign.Id, access.UserId))?.IsDm == true);
+        made.Add(chat);
+        return chat;
+    }
+
+    /// <summary>The connection is gone: nobody is left to read what a turn under way would bring, so it stops.</summary>
+    public void Dispose()
+    {
+        foreach (var chat in made) chat.Stop();
     }
 
     private static void DmOnly(CampaignAccess access)

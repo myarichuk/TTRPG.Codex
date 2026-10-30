@@ -39,6 +39,12 @@
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>אין הצעה להחיל.</value></data>
   <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>השיחה הזו שונתה בכרטיסייה אחרת, ולכן נטענה מחדש כאן. שום דבר מהכרטיסייה הזו לא נשמר; שלחו או החילו שוב אם עדיין צריך.</value></data>
   <data name="WorldChat.Error.Gone" xml:space="preserve"><value>השיחה הזו נמחקה בכרטיסייה אחרת.</value></data>
+  <data name="WorldChat.Error.TooLong" xml:space="preserve"><value>השיחה הזו ארוכה מדי בשביל המודל. המשיכו בשיחה חדשה: היא תיפתח בסיכום של השיחה הזו, שאפשר לערוך לפני השליחה.</value></data>
+  <data name="WorldChat.CarryOn" xml:space="preserve"><value>להמשיך בשיחה חדשה</value></data>
+  <data name="WorldChat.CarryOn.Intro" xml:space="preserve"><value>בואו נמשיך משיחה קודמת. כך היא הסתיימה:</value></data>
+  <data name="WorldChat.CarryOn.Me" xml:space="preserve"><value>אני</value></data>
+  <data name="WorldChat.CarryOn.You" xml:space="preserve"><value>אתה</value></data>
+  <data name="WorldChat.CarryOn.Next" xml:space="preserve"><value>עכשיו:</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>ההודעה שלכם</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>מה נוסיף לעולם?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>שליחה</value></data>

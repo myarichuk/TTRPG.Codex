@@ -39,6 +39,12 @@
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>Нет предложения для применения.</value></data>
   <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>Этот чат изменили в другой вкладке, поэтому он загружен заново. Ничего из этой вкладки не сохранено; отправьте или примените ещё раз, если нужно.</value></data>
   <data name="WorldChat.Error.Gone" xml:space="preserve"><value>Этот чат удалили в другой вкладке.</value></data>
+  <data name="WorldChat.Error.TooLong" xml:space="preserve"><value>Этот чат стал слишком длинным, и модель уже не может его прочитать. Продолжите в новом чате: он начнётся с пересказа этого, который можно поправить перед отправкой.</value></data>
+  <data name="WorldChat.CarryOn" xml:space="preserve"><value>Продолжить в новом чате</value></data>
+  <data name="WorldChat.CarryOn.Intro" xml:space="preserve"><value>Продолжим прошлый чат. Вот чем он закончился:</value></data>
+  <data name="WorldChat.CarryOn.Me" xml:space="preserve"><value>Я</value></data>
+  <data name="WorldChat.CarryOn.You" xml:space="preserve"><value>Ты</value></data>
+  <data name="WorldChat.CarryOn.Next" xml:space="preserve"><value>Теперь:</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Ваше сообщение</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>Что добавим в мир?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Отправить</value></data>
