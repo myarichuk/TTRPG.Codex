@@ -17,6 +17,7 @@
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Строить мир может только мастер.</value></data>
   <data name="WorldBuilder.Error.EditTargetGone" xml:space="preserve"><value>«{0}» больше нет в кампании, поэтому изменение применить нельзя. Снимите с него отметку и примените остальное.</value></data>
   <data name="WorldBuilder.Error.EditChanged" xml:space="preserve"><value>«{0}» изменили после составления предложения, и применение затёрло бы эти правки. Попросите изменение заново, исходя из текущего текста.</value></data>
+  <data name="WorldBuilder.Error.EditLosesSecret" xml:space="preserve"><value>«{0}» не изменено: новый текст удалил бы или раскрыл один из его скрытых блоков. Попросите изменение заново, оставив части только для ведущего как есть.</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>Создать с ИИ</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Существа</value></data>
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Выбрать</value></data>

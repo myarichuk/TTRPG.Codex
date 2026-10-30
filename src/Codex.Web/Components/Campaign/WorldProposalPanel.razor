@@ -462,6 +462,34 @@
         </div>
     };
 
+    // A piece of a diff, its block marker lines set apart, so the DM sees at a glance where a hidden block starts and ends.
+    private static RenderFragment DiffText(string text) => __builder =>
+    {
+        if (!text.Contains(":::", StringComparison.Ordinal))
+        {
+            @text
+            return;
+        }
+
+        var lines = text.Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (SecretText.IsMarkerLine(lines[i]))
+            {
+                <span class="wb-diff-marker">@lines[i]</span>
+            }
+            else
+            {
+                @lines[i]
+            }
+
+            if (i < lines.Length - 1)
+            {
+                @("\n")
+            }
+        }
+    };
+
     // What an edit does to a text: the changes marked word by word, the new text as it will read, or the text as it is now.
     private string textView = "changes";
 
@@ -502,13 +530,13 @@
                         @switch (piece.Kind)
                         {
                             case DiffKind.Added:
-                                <ins>@piece.Text</ins>
+                                <ins>@DiffText(piece.Text)</ins>
                                 break;
                             case DiffKind.Removed:
-                                <del>@piece.Text</del>
+                                <del>@DiffText(piece.Text)</del>
                                 break;
                             default:
-                                @piece.Text
+                                @DiffText(piece.Text)
                                 break;
                         }
                     }

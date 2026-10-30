@@ -269,6 +269,33 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task Facts_ReachPlayersWithoutTheirDmBlocks_OrTheLinksInsideThem()
+    {
+        var campaignId = "camp-facts-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var fact = new FactDocument
+        {
+            Summary = "The lighthouse is dark",
+            Details = "Nobody has climbed it in years.\n:::dm\n[[actor:villain]] hides at the top.\n:::",
+            Visibility = FactVisibility.Public
+        };
+        Assert.True(await _factRepository.SaveAsync(fact, dm));
+
+        var seen = Assert.Single(await _factRepository.GetVisibleForCampaignAsync(player, new HashSet<string>()));
+        Assert.DoesNotContain("hides", seen.Details);
+        Assert.DoesNotContain("actor:villain", seen.Details);
+        Assert.DoesNotContain(FactLinks.Actor("villain"), seen.RelatedEntityIds);
+        Assert.Empty(FactLinks.About(new[] { seen }, FactLinks.Actor("villain")));
+
+        // The DM still sees and links it, and the player's copy can never be saved back over the DM's.
+        var dmCopy = Assert.Single(await _factRepository.GetVisibleForCampaignAsync(dm, new HashSet<string>()));
+        Assert.Contains("hides", dmCopy.Details);
+        Assert.Single(FactLinks.About(new[] { dmCopy }, FactLinks.Actor("villain")));
+        Assert.False(await _factRepository.SaveAsync(seen, dm));
+    }
+
+    [Fact]
     public async Task GetVisibleAsync_AsPlayer_CannotLoadHiddenActorById_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

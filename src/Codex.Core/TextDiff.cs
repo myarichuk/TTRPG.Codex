@@ -158,7 +158,9 @@ public static partial class TextDiff
 
     private static List<string> Tokens(string text) => Token().Matches(text.Replace("\r\n", "\n")).Select(m => m.Value).ToList();
 
-    [GeneratedRegex(@"\s+|[^\s]+")]
+    // A block marker line (":::dm", ":::for [[actor:x]]", ":::") is one token, so a block that changes readers shows as its whole
+    // marker line replaced, never as a struck-out ":::dm" beside a new word.
+    [GeneratedRegex(@"(?<=(?:^|\n)[ \t]*):::[^\n]*|\s+|[^\s]+")]
     private static partial Regex Token();
 
     [GeneratedRegex(@"\s+")]

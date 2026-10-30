@@ -1466,6 +1466,40 @@ public class WorldBuilderTests
         Assert.Equal("Someone else edited this in another tab.", page.Body);
     }
 
+    [Theory]
+    [InlineData("Docks.")] // dropped
+    [InlineData("Docks.\\nThe harbourmaster is a smuggler.")] // moved out of its block
+    [InlineData("Docks.\\n:::party\\nThe harbourmaster is a smuggler.\\n:::")] // revealed
+    public async Task Check_Edit_ThatLosesOrRevealsAHiddenBlock_IsAnError(string text)
+    {
+        var page = VarrPage();
+        page.Body = "Docks.\n:::dm\nThe harbourmaster is a smuggler.\n:::";
+        var saving = Service(new[] { page });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, $$"""{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "{{text}}"}]}""");
+
+        Assert.False(check.Ok);
+        Assert.Contains("hidden block that starts \"The harbourmaster is a smuggler.\"", Assert.Single(check.Errors));
+    }
+
+    [Fact]
+    public async Task Edit_ThatKeepsHiddenBlocksWhole_Passes_AndApplyStillRefusesOneThatDoesNot()
+    {
+        var page = VarrPage();
+        page.Body = "Docks.\n:::dm\nThe harbourmaster is a smuggler.\n:::";
+        var saving = Service(new[] { page });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm,
+            """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Busy docks.\n\n:::dm\nThe harbourmaster is a smuggler.\n:::"}]}""");
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+
+        check.Bundle.Drafts[0].Body = "Busy docks."; // as if the check had been skipped
+        var ex = await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, check.Bundle));
+
+        Assert.Equal("WorldBuilder.Error.EditLosesSecret", ex.Key);
+        Assert.Contains("smuggler", page.Body);
+    }
+
     [Fact]
     public async Task Check_Edit_OfAPlace_FindsItWhateverTheCaseOfTheKey()
     {

@@ -2236,6 +2236,7 @@ dialog.wb-raw-dialog { width: min(880px, 96vw); }
 .wb-fields .wb-ins, .wb-diff ins { color: var(--success); background: var(--success-soft); text-decoration: none; }
 .wb-diff { padding: 0.7rem 0.85rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; background: var(--surface-2); border: 1px solid var(--rule); border-radius: var(--radius-md); }
 .wb-diff :is(ins, del) { padding: 0 1px; border-radius: 2px; }
+.wb-diff-marker { font-family: var(--font-mono, ui-monospace, monospace); font-weight: 600; color: var(--warning, var(--text-muted)); }
 .wb-seg { display: inline-flex; margin-bottom: 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
 .wb-seg-btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border: 0; background: transparent; color: var(--text-2); font-size: 0.88rem; }
 .wb-seg-btn + .wb-seg-btn { border-inline-start: 1px solid var(--border); }

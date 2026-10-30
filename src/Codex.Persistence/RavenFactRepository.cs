@@ -1,3 +1,4 @@
+using Codex.Core;
 using Raven.Client.Documents;
 
 namespace Codex.Persistence;
@@ -17,13 +18,37 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
             return facts;
         }
 
-        return facts.Where(f => f.Visibility == FactVisibility.Public ||
-            (f.Visibility == FactVisibility.KnowersOnly && f.KnownBy.Any(k => ownedActorIds.Contains(k.EntityId))));
+        var visible = facts.Where(f => f.Visibility == FactVisibility.Public ||
+            (f.Visibility == FactVisibility.KnowersOnly && f.KnownBy.Any(k => ownedActorIds.Contains(k.EntityId)))).ToList();
+        foreach (var fact in visible)
+        {
+            RedactForPlayer(fact, ownedActorIds);
+        }
+
+        return visible;
+    }
+
+    // Facts handed to a player with their secret blocks taken out. One of these is never saved, which would write the
+    // player's copy over the DM's text; as with wiki pages, only the DM saves, so this only guards the future.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<FactDocument, object> Redacted = new();
+
+    /// <summary>The fact as a player owning <paramref name="ownedActorIds"/> reads it: Details without the blocks they may not
+    /// read, and links only to what is left, so neither "Lore about" nor search finds a fact by a name inside a DM block.</summary>
+    private static void RedactForPlayer(FactDocument fact, IReadOnlySet<string> ownedActorIds)
+    {
+        if (SecretText.HasMarkers(fact.Details))
+        {
+            var details = SecretText.ForPlayersMarked(fact.Details, ownedActorIds);
+            fact.Details = string.IsNullOrWhiteSpace(details) ? null : details;
+        }
+
+        fact.RelatedEntityIds = FactLinks.Of(fact.Summary, fact.Details).ToList();
+        Redacted.AddOrUpdate(fact, fact);
     }
 
     public async Task<bool> SaveAsync(FactDocument fact, CampaignAccess access)
     {
-        if (!access.IsDm)
+        if (!access.IsDm || Redacted.TryGetValue(fact, out _))
         {
             return false;
         }
