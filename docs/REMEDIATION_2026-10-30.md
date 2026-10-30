@@ -287,3 +287,7 @@ churn.
 3. **Equipment picks (4.4):** move into the reviewed proposal (recommended), or keep at apply but make them
    cancellable and parallel.
 4. **Undo of an applied proposal (Phase 9):** build it, or rely on the stamp-checked review alone.
+5. **AI edits of hidden text (1.2, as built):** the check refuses any change to the lines of an existing `:::dm` or
+   `:::for` block, not only drops and reveals, because a lightly reworded line could slip past a looser check. So "revise
+   the secret" through the AI adds a new block and leaves the old one for the DM to delete by hand. Keep it strict
+   (current), or allow edits inside a block as long as it keeps its readers.
