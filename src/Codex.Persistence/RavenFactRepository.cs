@@ -28,34 +28,46 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
             return false;
         }
 
-        using var session = dbService.Store.OpenAsyncSession();
-        var existing = string.IsNullOrEmpty(fact.Id) ? null : await session.LoadAsync<FactDocument>(fact.Id);
-        if (existing != null && existing.CampaignId != access.CampaignId)
-        {
-            return false;
-        }
-
-        fact.CampaignId = access.CampaignId;
         fact.Summary = (fact.Summary ?? string.Empty).Trim();
         fact.Details = string.IsNullOrWhiteSpace(fact.Details) ? null : fact.Details.Trim();
         fact.RelatedEntityIds = FactLinks.Of(fact.Summary, fact.Details).ToList();
-        if (existing == null)
+        if (!string.IsNullOrEmpty(fact.Id))
         {
-            await session.StoreAsync(fact, string.IsNullOrEmpty(fact.Id) ? null : fact.Id);
-        }
-        else
-        {
-            // The caller's copy is detached; the tracked one takes its fields.
-            existing.Summary = fact.Summary;
-            existing.Details = fact.Details;
-            existing.Visibility = fact.Visibility;
-            existing.KnownBy = fact.KnownBy;
-            existing.RelatedEntityIds = fact.RelatedEntityIds;
-            existing.Metadata = fact.Metadata;
+            // An edit changes the text only, on the fact as stored: who knows it and who may read it change through
+            // AddKnowerAsync, RemoveKnowerAsync and SetVisibilityAsync, so an edit open while a knower was added keeps the knower.
+            var wrongCampaign = false;
+            var updated = await RavenUpdate.RunAsync<FactDocument>(dbService, fact.Id, existing =>
+            {
+                wrongCampaign = existing.CampaignId != access.CampaignId;
+                if (wrongCampaign)
+                {
+                    return;
+                }
+
+                existing.Summary = fact.Summary;
+                existing.Details = fact.Details;
+                existing.RelatedEntityIds = fact.RelatedEntityIds;
+                existing.Metadata = fact.Metadata;
+            });
+            if (updated != null)
+            {
+                return !wrongCampaign;
+            }
         }
 
+        fact.CampaignId = access.CampaignId;
+        using var session = dbService.Store.OpenAsyncSession();
+        await session.StoreAsync(fact, string.IsNullOrEmpty(fact.Id) ? null : fact.Id);
         await session.SaveChangesAsync();
         return true;
+    }
+
+    public async Task RestoreAsync(FactDocument fact)
+    {
+        fact.RelatedEntityIds = FactLinks.Of(fact.Summary, fact.Details).ToList();
+        using var session = dbService.Store.OpenAsyncSession();
+        await session.StoreAsync(fact, string.IsNullOrEmpty(fact.Id) ? null : fact.Id);
+        await session.SaveChangesAsync();
     }
 
     public async Task<bool> DeleteAsync(string factId, CampaignAccess access)

@@ -634,7 +634,9 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
     /// before links are rewritten, then homebrew entries (unpublished; creatures ticked for it also on the Bestiary shortlist), the
     /// people ticked for the cast (hidden, their page as their history, with gear the model picks), the places (hidden, nested as
     /// proposed) and the secrets (DM-only in Lore, related to what they link to). Retrying after a failure skips what was stored.</summary>
-    public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, CancellationToken ct = default)
+    /// <param name="onStored">Called after each entry is stored (its <see cref="WorldDraft.SavedAs"/> set), so the caller can keep that at
+    /// once: an apply cut short by a crash or a closed tab then still knows what it made, and a retry does not make it twice.</param>
+    public async Task<WorldBuildResult> SaveAsync(CampaignDocument campaign, CampaignAccess access, WorldBundle bundle, CancellationToken ct = default, Func<Task>? onStored = null)
     {
         DmOnly(access);
         var l = Localizer.For(Lang);
@@ -642,10 +644,11 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         // A retry after a failed save starts from what the first attempt stored (WorldDraft.SavedAs) and skips those steps.
         var savedIds = Kept(bundle).ToDictionary(d => d.Ref, d => d.SavedAs.Values.ToList());
         var earlier = Kept(bundle).SelectMany(d => d.SavedAs.Select(s => (Draft: d, Step: s.Key, Id: s.Value))).ToList();
-        void Saved(WorldDraft draft, string step, string id)
+        async Task Saved(WorldDraft draft, string step, string id)
         {
             draft.SavedAs[step] = id;
             savedIds[draft.Ref].Add(id);
+            if (onStored != null) await onStored();
         }
 
         IEnumerable<WorldDraft> Pending(string step) => Kept(bundle).Where(d => !d.SavedAs.ContainsKey(step));
@@ -674,7 +677,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             }
 
             pages.Add(page);
-            Saved(draft, PageStep, page.Id);
+            await Saved(draft, PageStep, page.Id);
         }
 
         var system = catalog.GetDefinition(campaign.SystemId);
@@ -703,7 +706,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             }
 
             entries.Add(entry);
-            Saved(draft, "homebrew", entry.Id);
+            await Saved(draft, "homebrew", entry.Id);
         }
 
         // Creatures an earlier attempt stored are shortlisted too: that attempt may have failed before it got this far.
@@ -725,7 +728,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         }
 
         var shortlisted = await ShortlistAsync(campaign, shortlist);
-        foreach (var draft in picks) Saved(draft, "bestiary", $"{draft.Stats!.Type}/{draft.Stats.Id}");
+        foreach (var draft in picks) await Saved(draft, "bestiary", $"{draft.Stats!.Type}/{draft.Stats.Id}");
 
         var actors = new List<ActorDocument>();
         var castDrafts = Pending("cast").Where(d => d.Kind == DraftKinds.Npc && d.Cast).ToList();
@@ -744,13 +747,13 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
                     : await cast.AddNpcAsync(npc with { Biography = text }, campaign, system, access))
                 ?? throw new LocalizedException("WorldBuilder.Error.OnlyDm");
             actors.Add(actor);
-            Saved(draft, "cast", actor.Id);
+            await Saved(draft, "cast", actor.Id);
         }
 
         var places = await PlacesAsync(bundle, Pending("place").ToList(), l, access);
         foreach (var (draft, place) in places)
         {
-            Saved(draft, "place", place.Id);
+            await Saved(draft, "place", place.Id);
         }
 
         await LinkPagesToPlacesAsync(places.Select(p => p.Place), access);
@@ -759,14 +762,14 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
         foreach (var draft in Pending("edit").Where(d => d.Kind == DraftKinds.Edit && d.Target != null))
         {
             edited.Add(await ApplyEditAsync(draft, bundle, access));
-            Saved(draft, "edit", draft.Target!);
+            await Saved(draft, "edit", draft.Target!);
         }
 
         var retagged = 0;
         foreach (var draft in Pending("tags").Where(d => d.Kind == DraftKinds.Tags))
         {
             retagged += await RetagAsync(draft, access);
-            Saved(draft, "tags", string.Join(",", draft.Targets));
+            await Saved(draft, "tags", string.Join(",", draft.Targets));
         }
 
         var saved = new List<FactDocument>();
@@ -797,7 +800,7 @@ public sealed class WorldBuilderService(ISystemCatalog catalog, CampaignLibrary 
             }
 
             saved.Add(fact);
-            Saved(draft, "fact", fact.Id);
+            await Saved(draft, "fact", fact.Id);
         }
 
         // A retry reports the whole save, the earlier attempt's documents first, so the count is right and "open the first

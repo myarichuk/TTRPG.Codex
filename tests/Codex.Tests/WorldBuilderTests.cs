@@ -337,6 +337,13 @@ public class WorldBuilderTests
             pages.Add(page);
             return ci.Arg<CampaignAccess>().IsDm;
         });
+        wiki.TryLinkActorAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<WikiPageKind>(), Arg.Any<string?>(), Arg.Any<CampaignAccess>()).Returns(ci =>
+        {
+            if ((existingPages ?? Array.Empty<WikiPageDocument>()).Concat(pages).FirstOrDefault(p => p.Id == ci.ArgAt<string>(0)) is not { } page) return (string?)null;
+            page.Kind = ci.ArgAt<WikiPageKind>(2);
+            page.ActorId = ci.ArgAt<string>(1);
+            return page.ActorId;
+        });
         var homebrew = Substitute.For<IHomebrewRepository>();
         homebrew.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existing.Concat(entries).ToList().AsEnumerable());
         var factRepo = Substitute.For<IFactRepository>();
@@ -1239,6 +1246,82 @@ public class WorldBuilderTests
         Assert.Equal("Varr (2)", varrDraft.PageTitle);
         Assert.False(varrDraft.Selected);
         Assert.True(chat.Proposal.Find("a")!.Selected);
+    }
+
+    [Fact]
+    public async Task Chat_AFreshProposalAfterAPartialApply_KeepsWhatWasMadeOfTheSameEntriesOnly()
+    {
+        const string first = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}, {"ref": "b", "kind": "wiki", "name": "Bram's Rest", "text": "An inn."}]}}""";
+        const string again = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A bigger port."}, {"ref": "b", "kind": "wiki", "name": "The Gull", "text": "Another inn."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", first),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "propose_changes", again),
+            _ => new ChatMessage(ChatRole.Assistant, "Redone."));
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("Two places.", _ => { }, CancellationToken.None);
+        chat.Proposal!.Find("a")!.SavedAs["page"] = "page-1"; // an apply that stored Amphail, then failed
+        chat.Proposal.Find("b")!.SavedAs["page"] = "page-2";
+
+        await chat.SendAsync("Start over, but keep Amphail.", _ => { }, CancellationToken.None);
+
+        Assert.Equal("page-1", chat.Proposal!.Find("a")!.SavedAs["page"]); // the same Amphail: not made twice
+        Assert.Empty(chat.Proposal.Find("b")!.SavedAs); // a different entry under the old ref is new
+    }
+
+    [Fact]
+    public async Task Chat_AddEntries_KeepsTheTextAnEditWasProposedAgainst_SoAnEditSinceStillRefusesIt()
+    {
+        var page = VarrPage();
+        var saving = Service(new[] { page });
+        const string edit = """{"proposal": {"entries": [{"ref": "e", "kind": "edit", "target": "existing:port-varr", "text": "New text."}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}]}}""";
+        var model = new ScriptedModel(
+            _ => Calls("c1", "propose_changes", edit),
+            _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+            _ => Calls("c2", "add_entries", more),
+            _ => new ChatMessage(ChatRole.Assistant, "Added."));
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+        await chat.SendAsync("Rewrite Varr.", _ => { }, CancellationToken.None);
+
+        page.Body = "Someone else's edit."; // after the edit was proposed, before more entries were added
+        await chat.SendAsync("And Amphail.", _ => { }, CancellationToken.None);
+
+        Assert.Equal("Old text.", chat.Proposal!.Find("e")!.Before);
+        var ex = await Assert.ThrowsAsync<LocalizedException>(() => chat.ApplyAsync());
+        Assert.Equal("WorldBuilder.Error.EditChanged", ex.Key);
+        Assert.Equal("Someone else's edit.", page.Body);
+    }
+
+    [Fact]
+    public async Task Chat_Apply_KeepsEachEntryAsItIsStored_AndMakesNothingWhenTheChatChangedElsewhere()
+    {
+        const string two = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}, {"ref": "b", "kind": "wiki", "name": "Bram's Rest", "text": "An inn."}]}}""";
+        var model = new ScriptedModel(_ => Calls("c1", "propose_changes", two), _ => new ChatMessage(ChatRole.Assistant, "Ready."));
+        var saving = Service();
+        var stores = new List<int>();
+        var stale = false;
+        WorldChat? chat = null;
+        chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm, store: _ =>
+        {
+            if (stale) throw new LocalizedException("WorldChat.Error.ChangedElsewhere");
+            stores.Add(chat!.Proposal?.Drafts.Count(d => d.SavedAs.Count > 0) ?? -1);
+            return Task.CompletedTask;
+        });
+        await chat.SendAsync("Two places.", _ => { }, CancellationToken.None);
+        stores.Clear();
+
+        stale = true; // another tab saved the chat since this one loaded it
+        var refused = await Assert.ThrowsAsync<LocalizedException>(() => chat.ApplyAsync());
+        Assert.True(WorldChat.IsStale(refused));
+        Assert.Empty(saving.Pages);
+
+        stale = false;
+        await chat.ApplyAsync();
+
+        Assert.Equal(2, saving.Pages.Count);
+        // Stored before anything was made, after each entry, and once more with the note.
+        Assert.Equal(new[] { 0, 1, 2, -1 }, stores);
     }
 
     [Fact]

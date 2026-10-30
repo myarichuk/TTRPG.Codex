@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Localization;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
 
@@ -17,6 +18,10 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
         return CanSee(actor, access) ? Redact(actor, access, access.IsDm ? null : await OwnedActors.OfAsync(session, access)) : null;
     }
+
+    // The history each copy of a player's own character was handed out with (and, after a save, the history as it then stood), so
+    // their save can tell whether they changed it, and whether the DM changed it since they were given it.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ActorDocument, string> GivenHistory = new();
 
     // Copies handed to a player that are not theirs to save: a stranger's mask, and another's character read with the blocks
     // revealed to the reader's characters. Saving one would write a player's view over the DM's text; TrySaveAsync refuses.
@@ -46,6 +51,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
             actor.DmNotes = null;
             actor.RevealedToReader = SecretText.RevealedOnlyTo(actor.Biography, owned) is { Length: > 0 } mine ? mine : null;
             actor.Biography = actor.Biography == null ? null : SecretText.ForPlayers(actor.Biography);
+            GivenHistory.AddOrUpdate(actor, actor.Biography ?? string.Empty);
             return actor;
         }
 
@@ -168,8 +174,12 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     /// <paramref name="target"/>. CampaignId never moves; only the DM can change ownership and DM
     /// notes (a player's save arrives with the notes redacted to null and leaves them alone).
     /// </summary>
-    internal static void CopyEditableFields(ActorDocument target, ActorDocument source, bool isDm)
+    /// <param name="merged">The source is the live table's own copy, whose history a player's save already merged with the stored
+    /// one (<see cref="PlayerHistory"/>): it is copied as it is, not merged again.</param>
+    internal static void CopyEditableFields(ActorDocument target, ActorDocument source, bool isDm, bool merged = false)
     {
+        // First, as it may refuse the save: nothing is copied then.
+        var biography = isDm || merged ? source.Biography : PlayerHistory(target.Biography, source);
         target.Name = source.Name;
         target.Kind = source.Kind;
         target.Visibility = source.Visibility;
@@ -178,8 +188,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         target.BlueprintId = source.BlueprintId;
         target.Sheet = source.Sheet;
         target.State = source.State;
-        // A player edits the history they were given without its DM blocks; the blocks stay, at its end.
-        target.Biography = isDm ? source.Biography : SecretText.KeepSecrets(target.Biography, source.Biography);
+        target.Biography = biography;
         target.HasPortrait = source.HasPortrait;
         target.PortraitVersion = source.PortraitVersion;
         if (isDm)
@@ -190,6 +199,46 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         }
 
         target.UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// The history a player's save leaves on their character, from the <paramref name="stored"/> one. A player edits the history
+    /// they were given, without the blocks they may not read:
+    /// <list type="bullet">
+    /// <item>left as given, the stored history stays exactly as it is, markers and all (a save of the sheet's numbers does not
+    /// rewrite the DM's text);</item>
+    /// <item>changed, while the DM changed the history since it was given (revealed a block, say), the save is refused: merging
+    /// would lose one of the two, and the player's text is still in their editor;</item>
+    /// <item>changed, and nothing else changed, the player's text is kept with the hidden blocks at its end
+    /// (<see cref="SecretText.KeepSecrets"/>).</item>
+    /// </list>
+    /// A copy not handed out here (one a player made, a test's) is merged as in the last case.
+    /// </summary>
+    internal static string? PlayerHistory(string? stored, ActorDocument source)
+    {
+        if (GivenHistory.TryGetValue(source, out var given))
+        {
+            if (SameText(source.Biography, given))
+            {
+                return stored;
+            }
+
+            if (!SameText(SecretText.ForPlayers(stored), given))
+            {
+                throw new LocalizedException("Actor.Sheet.HistoryChanged");
+            }
+        }
+
+        var merged = SecretText.KeepSecrets(stored, source.Biography);
+        if (given != null)
+        {
+            // What this copy holds is now the stored history as a player reads it, so its next save compares with that.
+            GivenHistory.AddOrUpdate(source, SecretText.ForPlayers(merged));
+        }
+
+        return merged;
+
+        static bool SameText(string? a, string? b) => string.Equals((a ?? string.Empty).Trim(), (b ?? string.Empty).Trim(), StringComparison.Ordinal);
     }
 
     public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)

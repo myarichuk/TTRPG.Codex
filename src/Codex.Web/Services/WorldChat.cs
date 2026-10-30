@@ -485,14 +485,18 @@ public sealed class WorldChat
     public async Task<WorldBuildResult> ApplyAsync(CancellationToken ct = default)
     {
         var proposal = Proposal ?? throw new LocalizedException("WorldChat.Error.NoProposal");
+        // Stored first: if another tab changed this chat (or applied this very proposal) since it was loaded, the save is refused
+        // here, before anything is made, rather than making it all twice.
+        await SaveAsync();
         WorldBuildResult result;
         try
         {
-            result = await builder.SaveAsync(campaign, access, proposal, ct);
+            // Each entry is kept in the chat the moment it is stored, so an apply cut short by anything (a failure, a closed tab,
+            // a restart) leaves a chat that knows what it made: Apply again only adds the rest.
+            result = await builder.SaveAsync(campaign, access, proposal, ct, SaveAsync);
         }
-        catch
+        catch (Exception ex) when (!IsStale(ex))
         {
-            // What was stored stays stored (each entry remembers it), so the stored chat must remember it too.
             await SaveAsync();
             throw;
         }
@@ -545,6 +549,9 @@ public sealed class WorldChat
         Document.Lines.Add(new WorldChatLine(WorldChatSpeaker.Tool, Localizer.For(Lang)["WorldChat.Discarded"], icon: "x"));
         await SaveAsync();
     }
+
+    /// <summary>The errors that mean this copy of the chat is no longer the stored one: it changed in another tab, or was deleted.</summary>
+    public static bool IsStale(Exception ex) => ex is LocalizedException { Key: "WorldChat.Error.ChangedElsewhere" or "WorldChat.Error.Gone" };
 
     private static string Lang => SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name);
 
@@ -674,22 +681,51 @@ public sealed class WorldChat
 
         var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
         var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
-        if (!ReferenceEquals(Proposal, before) && Proposal != null)
+        if (!ReferenceEquals(Proposal, before) && Proposal != null) CarryOver(before, Proposal, decisions: true);
+        return result;
+    }
+
+    /// <summary>Puts what belongs to the entries of <paramref name="before"/> on the same entries (by ref and kind) of
+    /// <paramref name="after"/>. Always what saving already made of them (<see cref="WorldDraft.SavedAs"/>), so an apply that failed
+    /// part way never makes those again. With <paramref name="decisions"/> (more entries added to the same proposal), also what the
+    /// DM decided (ticks, the cast box, a new name) and, for an edit, the text it was proposed against: an edit whose target changed
+    /// since stays refused. For a proposal made afresh, only an entry that is plainly the same one keeps what it became: the same
+    /// name, or for an edit the same target and text (one with a new text should be applied, and is checked against the stamp).</summary>
+    internal static void CarryOver(WorldBundle before, WorldBundle after, bool decisions)
+    {
+        foreach (var draft in after.Drafts)
         {
-            foreach (var draft in Proposal.Drafts)
+            if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
+            if (decisions)
             {
-                if (before.Find(draft.Ref) is not { } old || old.Kind != draft.Kind) continue;
                 draft.Selected = old.Selected;
                 draft.Cast = old.Cast;
                 draft.Bestiary = old.Bestiary;
-                draft.SavedAs = old.SavedAs;
                 draft.PageTitle = old.PageTitle;
                 draft.Stats ??= old.Stats;
                 if (!string.IsNullOrWhiteSpace(old.Name) && old.Name != old.OutlineName) draft.Name = old.Name;
+                if (old.Kind == DraftKinds.Edit && string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase))
+                {
+                    draft.Before = old.Before;
+                    draft.BeforeStamp = old.BeforeStamp;
+                    draft.BeforeProperties = old.BeforeProperties;
+                    draft.BeforeTags = old.BeforeTags;
+                }
             }
+            else if (old.SavedAs.Count == 0 || !SameEntry(old, draft))
+            {
+                continue;
+            }
+
+            draft.SavedAs = new Dictionary<string, string>(old.SavedAs);
         }
 
-        return result;
+        static bool SameEntry(WorldDraft old, WorldDraft draft) => old.Kind switch
+        {
+            DraftKinds.Edit => string.Equals(old.Target, draft.Target, StringComparison.OrdinalIgnoreCase) && old.Body == draft.Body,
+            DraftKinds.Tags => false, // tagging again changes nothing that is already tagged
+            _ => new[] { old.OutlineName, old.Name }.Any(name => string.Equals(name.Trim(), draft.Name.Trim(), StringComparison.OrdinalIgnoreCase))
+        };
     }
 
     private async Task<string> ProposeAsync(ProposalInput input, string tool = "propose_changes", string with = "the whole proposal", bool fresh = true)
@@ -707,6 +743,8 @@ public sealed class WorldChat
         {
             Document.ProposalEpoch++;
             Document.Decided = new List<string>();
+            // A proposal made again after an apply that failed part way: what was made then is not made twice.
+            if (Proposal is { } waiting) CarryOver(waiting, check.Bundle, decisions: false);
         }
 
         Proposal = check.Bundle;
@@ -860,8 +898,21 @@ public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderSer
         WorldChat? made = null;
         made = new WorldChat(builder, () => providers.ChatClientForAsync(access.UserId), campaign, access, document, async doc =>
         {
-            if (!await repository.TrySaveAsync(doc, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-            open[doc.Id] = made!;
+            switch (await repository.TrySaveAsync(doc, access))
+            {
+                case ChatSave.Saved:
+                    open[doc.Id] = made!;
+                    return;
+                case ChatSave.Changed:
+                    // This copy is out of date: forget it, so opening the chat again loads what is stored.
+                    open.Remove(doc.Id);
+                    throw new LocalizedException("WorldChat.Error.ChangedElsewhere");
+                case ChatSave.Gone:
+                    open.Remove(doc.Id);
+                    throw new LocalizedException("WorldChat.Error.Gone");
+                default:
+                    throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+            }
         });
         return made;
     }

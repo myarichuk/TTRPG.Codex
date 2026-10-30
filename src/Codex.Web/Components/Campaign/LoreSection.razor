@@ -427,11 +427,11 @@
             CampaignId = fact.CampaignId,
             Summary = editSummary,
             Details = string.IsNullOrWhiteSpace(editDetails) ? null : mentions.Encode(editDetails.Trim()),
-            Visibility = editVisibility,
-            KnownBy = fact.KnownBy,
             Metadata = fact.Metadata
         };
-        if (await FactRepo.SaveAsync(changed, Ctx.Access))
+        // The text and who may read it are saved apart, so a knower added meanwhile (from a session, another tab) is kept.
+        if (await FactRepo.SaveAsync(changed, Ctx.Access)
+            && (editVisibility == fact.Visibility || await FactRepo.SetVisibilityAsync(fact.Id, editVisibility, Ctx.Access)))
         {
             editingId = null;
             Ctx.Notify(Flash.Success(L["Campaign.Lore.FactSaved"]));

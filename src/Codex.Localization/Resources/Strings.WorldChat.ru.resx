@@ -37,6 +37,8 @@
   <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{# шаг} few{# шага} many{# шагов} other{# шага}}</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>Эта модель не умеет вызывать инструменты, а строителю мира это нужно. Выберите в настройках ИИ модель с поддержкой вызова инструментов.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>Нет предложения для применения.</value></data>
+  <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>Этот чат изменили в другой вкладке, поэтому он загружен заново. Ничего из этой вкладки не сохранено; отправьте или примените ещё раз, если нужно.</value></data>
+  <data name="WorldChat.Error.Gone" xml:space="preserve"><value>Этот чат удалили в другой вкладке.</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>Ваше сообщение</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>Что добавим в мир?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>Отправить</value></data>

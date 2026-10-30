@@ -182,9 +182,17 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
             return null;
         }
 
+        // Only the link is written, onto the page as stored: the copy the caller holds may be older than an edit or a reveal.
+        var linked = await wiki.TryLinkActorAsync(page.Id, actor.Id, WikiPageKind.Person, page.ActorId, access);
+        if (linked != actor.Id)
+        {
+            // The page is gone, or someone promoted it first: this character would be a duplicate nobody links to.
+            await runtimes.TryDeleteActorAsync(actor.Id, access);
+            return linked == null ? null : await actors.GetVisibleAsync(linked, access);
+        }
+
         page.Kind = WikiPageKind.Person;
         page.ActorId = actor.Id;
-        await wiki.TrySaveAsync(page, access);
         return actor;
     }
 }

@@ -527,6 +527,13 @@ else if (chat != null)
         {
             failed = Flash.Error(L["WorldChat.NoAi.Title"]);
         }
+        catch (Exception ex) when (WorldChat.IsStale(ex))
+        {
+            // The message goes back to the box of the chat as it is now.
+            await ReloadStaleAsync(sending, ex);
+            if (chat?.Id == sending.Id) SetDraft(text);
+            return;
+        }
         catch (Exception ex) when (ex.InnerException is OperationCanceledException || ex is TaskCanceledException)
         {
             failed = new Flash(L["Common.Ai.Stopped"], FlashTone.Info);
@@ -611,7 +618,7 @@ else if (chat != null)
     {
         if (chat == null) return;
         if (reference != null) chat.Decide(reference);
-        await chat.SaveAsync();
+        if (!await KeepsUpAsync(chat, chat.SaveAsync)) return;
         if (chat.Proposal != null) missing = await Builder.MissingMentionsAsync(Ctx.Access, chat.Proposal);
         chats = await Sessions.ListAsync(Ctx.Access);
     }
@@ -627,6 +634,13 @@ else if (chat != null)
             var result = await chat.ApplyAsync();
             if (result.Actors.Count > 0 || result.Places.Count > 0 || result.Shortlisted.Count > 0) await Ctx.ReloadAsync();
             forceFollow = true;
+        }
+        catch (Exception ex) when (WorldChat.IsStale(ex))
+        {
+            // Nothing was made: another tab changed (or applied) this chat first. Show it as it is now.
+            applying = false;
+            await ReloadStaleAsync(chat!, ex);
+            return;
         }
         catch (Exception ex)
         {
@@ -646,7 +660,7 @@ else if (chat != null)
     private async Task DiscardAsync()
     {
         if (chat == null) return;
-        await chat.DiscardAsync();
+        if (!await KeepsUpAsync(chat, chat.DiscardAsync)) return;
         applyError = null;
         await AfterTurnAsync();
         chats = await Sessions.ListAsync(Ctx.Access);
@@ -663,8 +677,36 @@ else if (chat != null)
     {
         renaming = false;
         if (chat == null || string.IsNullOrWhiteSpace(newTitle)) return;
-        await chat.RenameAsync(newTitle);
+        var title = newTitle;
+        if (!await KeepsUpAsync(chat, () => chat.RenameAsync(title))) return;
         chats = await Sessions.ListAsync(Ctx.Access);
+    }
+
+    // Runs a change to the chat; when this tab's copy turns out to be behind the stored one, shows the stored one instead. False then.
+    private async Task<bool> KeepsUpAsync(WorldChat changing, Func<Task> change)
+    {
+        try
+        {
+            await change();
+            return true;
+        }
+        catch (Exception ex) when (WorldChat.IsStale(ex))
+        {
+            await ReloadStaleAsync(changing, ex);
+            return false;
+        }
+    }
+
+    // This tab's copy of the chat fell behind (another tab saved it since) or the chat was deleted: what it holds is dropped, and the
+    // chat is shown as stored, with a note saying why.
+    private async Task ReloadStaleAsync(WorldChat stale, Exception why)
+    {
+        var fresh = string.IsNullOrEmpty(stale.Id) ? null : await Sessions.OpenAsync(Ctx.Campaign, Ctx.Access, stale.Id);
+        chats = await Sessions.ListAsync(Ctx.Access);
+        if (!ReferenceEquals(stale, chat)) return;
+        await ShowAsync(fresh ?? Sessions.New(Ctx.Campaign, Ctx.Access));
+        notice = new Flash(L.Describe(why), FlashTone.Info);
+        if (fresh == null) Nav.NavigateTo($"{Ctx.BasePath}/build", replace: true);
     }
 
     private void OnRenameKey(KeyboardEventArgs e)

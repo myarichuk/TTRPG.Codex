@@ -37,6 +37,8 @@
   <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{צעד אחד} two{# צעדים} other{# צעדים}}</value></data>
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>המודל הזה לא יודע לקרוא לכלים, ובונה העולם צריך זאת. בחרו בהגדרות מודל שתומך בקריאה לכלים.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>אין הצעה להחיל.</value></data>
+  <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>השיחה הזו שונתה בכרטיסייה אחרת, ולכן נטענה מחדש כאן. שום דבר מהכרטיסייה הזו לא נשמר; שלחו או החילו שוב אם עדיין צריך.</value></data>
+  <data name="WorldChat.Error.Gone" xml:space="preserve"><value>השיחה הזו נמחקה בכרטיסייה אחרת.</value></data>
   <data name="WorldChat.MessageLabel" xml:space="preserve"><value>ההודעה שלכם</value></data>
   <data name="WorldChat.Placeholder" xml:space="preserve"><value>מה נוסיף לעולם?</value></data>
   <data name="WorldChat.Send" xml:space="preserve"><value>שליחה</value></data>

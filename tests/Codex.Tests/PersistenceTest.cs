@@ -1227,6 +1227,79 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task APlayersSave_LeavesAnUntouchedHistoryAsStored_AndIsRefusedWhenTheDmChangedItMeanwhile()
+    {
+        var campaignId = "camp-history-race-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        const string history = "Born at sea.\n:::party 2026-10-01T10:00:00Z\nShe saw the drowned bell.\n:::\n:::dm\nHer father leads the cult.\n:::";
+        var pc = new ActorDocument { CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Biography = history };
+        Assert.True(await _actorRepository.TrySaveAsync(pc, dm));
+
+        // A save that leaves the history alone (a new name) keeps the DM's text exactly: markers in place, nothing moved.
+        var mine = (await _actorRepository.GetVisibleAsync(pc.Id, player))!;
+        mine.Name = "Aria Vell";
+        Assert.True(await _actorRepository.TrySaveAsync(mine, player));
+        Assert.Equal(history, (await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Biography);
+
+        // The DM reveals the secret while the player is editing.
+        var editing = (await _actorRepository.GetVisibleAsync(pc.Id, player))!;
+        var dmCopy = (await _actorRepository.GetVisibleAsync(pc.Id, dm))!;
+        dmCopy.Biography = history.Replace(":::dm", ":::party 2026-10-30T10:00:00Z");
+        Assert.True(await _actorRepository.TrySaveAsync(dmCopy, dm));
+
+        editing.Biography += "\nShe left on a whaler.";
+        var refused = await Assert.ThrowsAsync<Codex.Localization.LocalizedException>(() => _actorRepository.TrySaveAsync(editing, player));
+        Assert.Equal("Actor.Sheet.HistoryChanged", refused.Key);
+        Assert.Equal(dmCopy.Biography, (await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Biography);
+
+        // Loaded again, the player sees the reveal and can save their line.
+        var fresh = (await _actorRepository.GetVisibleAsync(pc.Id, player))!;
+        Assert.Contains("Her father leads the cult.", fresh.Biography);
+        fresh.Biography += "\nShe left on a whaler.";
+        Assert.True(await _actorRepository.TrySaveAsync(fresh, player));
+        fresh.Biography += "\nAnd came back.";
+        Assert.True(await _actorRepository.TrySaveAsync(fresh, player)); // its own last save is not a change by someone else
+    }
+
+    [Fact]
+    public async Task AFactEdit_KeepsAKnowerAddedWhileItWasOpen()
+    {
+        var campaignId = "camp-fact-race-" + Guid.NewGuid();
+        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var fact = new FactDocument { Summary = "The bell is cursed", Visibility = FactVisibility.DmOnly };
+        Assert.True(await _factRepository.SaveAsync(fact, dm));
+        var open = new FactDocument { Id = fact.Id, Summary = fact.Summary, Visibility = fact.Visibility }; // the edit form's copy
+
+        Assert.True(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("aria", KnowledgeLevel.Rumor), dm));
+        open.Summary = "The bell is cursed, and rings at night";
+        Assert.True(await _factRepository.SaveAsync(open, dm));
+
+        var stored = Assert.Single(await _factRepository.GetVisibleForCampaignAsync(dm, new HashSet<string>()));
+        Assert.Equal("The bell is cursed, and rings at night", stored.Summary);
+        Assert.Equal("aria", Assert.Single(stored.KnownBy).EntityId);
+        Assert.Equal(FactVisibility.KnowersOnly, stored.Visibility);
+    }
+
+    [Fact]
+    public async Task LinkingAPageToACastMember_KeepsARevealMadeMeanwhile_AndAnEarlierLink()
+    {
+        var dm = new CampaignAccess("camp-promote-race-" + Guid.NewGuid(), "dm", CampaignRole.DM);
+        var page = new WikiPageDocument { Title = "Wendel", Body = "A fisher.\n:::dm\nA smuggler.\n:::", Visibility = WikiVisibility.Party };
+        Assert.True(await _wikiRepository.TrySaveAsync(page, dm));
+        var dialogCopy = (await _wikiRepository.GetVisibleForCampaignAsync(dm)).Single(); // the promote dialog's copy
+
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "A smuggler.", SecretAudience.Party, null, dm));
+        Assert.Equal("actor-1", await _wikiRepository.TryLinkActorAsync(dialogCopy.Id, "actor-1", WikiPageKind.Person, dialogCopy.ActorId, dm));
+        // A second promote that raced the first gets the first one's character back, not a second link.
+        Assert.Equal("actor-1", await _wikiRepository.TryLinkActorAsync(dialogCopy.Id, "actor-2", WikiPageKind.Person, dialogCopy.ActorId, dm));
+
+        var stored = (await _wikiRepository.GetVisibleForCampaignAsync(dm)).Single();
+        Assert.Equal(("actor-1", WikiPageKind.Person), (stored.ActorId, stored.Kind));
+        Assert.Contains(":::party", stored.Body);
+    }
+
+    [Fact]
     public async Task AnUnknownActor_ReachesPlayersAsAStranger_WithNothingButTheirPublicFace()
     {
         var campaignId = Guid.NewGuid().ToString();
@@ -1354,10 +1427,12 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.True(await _factRepository.RemoveKnowerAsync(fact.Id, "aria", dm));
         Assert.False(await PlayerSees());
 
-        // Edited from a copy (the Lore tab's), then deleted.
+        // Edited from a copy (the Lore tab's): the text only; who may read it is set apart, as the Lore tab does. Then deleted.
         var edit = new FactDocument { Id = fact.Id, Summary = "The keeper's son", Details = "No links now.", Visibility = FactVisibility.Public };
         Assert.True(await _factRepository.SaveAsync(edit, dm));
         Assert.Empty((await AsDm())!.RelatedEntityIds);
+        Assert.False(await PlayerSees());
+        Assert.True(await _factRepository.SetVisibilityAsync(fact.Id, FactVisibility.Public, dm));
         Assert.True(await PlayerSees());
         Assert.False(await _factRepository.DeleteAsync(fact.Id, player));
         Assert.False(await _factRepository.DeleteAsync(fact.Id, otherDm));
@@ -1510,7 +1585,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             Waiting = 1
         };
 
-        Assert.True(await _worldChatRepository.TrySaveAsync(chat, dm));
+        Assert.Equal(ChatSave.Saved, await _worldChatRepository.TrySaveAsync(chat, dm));
         Assert.StartsWith("worldchats/", chat.Id);
 
         var listed = Assert.Single(await _worldChatRepository.ListMineAsync(dm));
@@ -1518,7 +1593,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         // Another DM of the same campaign neither sees nor changes it.
         Assert.Empty(await _worldChatRepository.ListMineAsync(coDm));
         Assert.Null(await _worldChatRepository.GetMineAsync(chat.Id, coDm));
-        Assert.False(await _worldChatRepository.TrySaveAsync(chat, coDm));
+        Assert.Equal(ChatSave.Refused, await _worldChatRepository.TrySaveAsync(chat, coDm));
         Assert.False(await _worldChatRepository.TryDeleteAsync(chat.Id, coDm));
 
         var loaded = await _worldChatRepository.GetMineAsync(chat.Id, dm);
@@ -1538,10 +1613,32 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal((100L, 20L, 2), (loaded.Lines[1].Usage!.InputTokens, loaded.Lines[1].Usage!.OutputTokens, loaded.Lines[1].Usage!.Rounds));
 
         loaded.Title = "Salt and bells";
-        Assert.True(await _worldChatRepository.TrySaveAsync(loaded, dm));
+        Assert.Equal(ChatSave.Saved, await _worldChatRepository.TrySaveAsync(loaded, dm));
         Assert.Equal("Salt and bells", (await _worldChatRepository.GetMineAsync(chat.Id, dm))!.Title);
         Assert.True(await _worldChatRepository.TryDeleteAsync(chat.Id, dm));
         Assert.Empty(await _worldChatRepository.ListMineAsync(dm));
+    }
+
+    [Fact]
+    public async Task WorldChat_TwoCopiesOfOneChat_TheSecondSaveIsRefused_AndADeletedChatStaysDeleted()
+    {
+        var dm = new CampaignAccess("camp-chat-race-" + Guid.NewGuid(), "dm", CampaignRole.DM);
+        var chat = new WorldChatDocument { Title = "Salt" };
+        Assert.Equal(ChatSave.Saved, await _worldChatRepository.TrySaveAsync(chat, dm));
+        var tabA = (await _worldChatRepository.GetMineAsync(chat.Id, dm))!;
+        var tabB = (await _worldChatRepository.GetMineAsync(chat.Id, dm))!;
+
+        tabA.Title = "From A";
+        Assert.Equal(ChatSave.Saved, await _worldChatRepository.TrySaveAsync(tabA, dm));
+        tabA.Title = "From A again"; // the copy that saved last stays current
+        Assert.Equal(ChatSave.Saved, await _worldChatRepository.TrySaveAsync(tabA, dm));
+        tabB.Title = "From B";
+        Assert.Equal(ChatSave.Changed, await _worldChatRepository.TrySaveAsync(tabB, dm));
+        Assert.Equal("From A again", (await _worldChatRepository.GetMineAsync(chat.Id, dm))!.Title);
+
+        Assert.True(await _worldChatRepository.TryDeleteAsync(chat.Id, dm));
+        Assert.Equal(ChatSave.Gone, await _worldChatRepository.TrySaveAsync(tabA, dm));
+        Assert.Null(await _worldChatRepository.GetMineAsync(chat.Id, dm));
     }
 
     [Fact]

@@ -1441,7 +1441,23 @@ else
     /// <summary>Saves through the live table when there is one (merging with whatever the table changed
     /// since this page loaded), and straight to the actor otherwise. <see cref="loadedSheet"/> is what
     /// tells the merge which fields were edited here.</summary>
-    private Task<bool> TrySaveActorAsync() => RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
+    // Set when the last save was refused because the DM changed the history while the player was editing it.
+    private bool historyChanged;
+
+    private async Task<bool> TrySaveActorAsync()
+    {
+        historyChanged = false;
+        try
+        {
+            return await RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
+        }
+        catch (LocalizedException ex) when (ex.Key == "Actor.Sheet.HistoryChanged")
+        {
+            historyChanged = true;
+            flash = Flash.Error(L[ex.Key]);
+            return false;
+        }
+    }
 
     private async Task SaveAsync()
     {
@@ -1467,6 +1483,11 @@ else
         if (await TrySaveActorAsync())
         {
             flash ??= Flash.Success(L["Actor.Sheet.Saved"]);
+        }
+        else if (historyChanged)
+        {
+            // Not reloaded: the player's text stays in the editor for them to copy.
+            return;
         }
         else
         {
