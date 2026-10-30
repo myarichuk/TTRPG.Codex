@@ -21,7 +21,7 @@ public sealed record TemplateExpansion(string Text, IReadOnlyList<TemplateField>
 /// <item><c>$$</c>: a dollar sign.</item>
 /// </list>
 /// A name is letters, digits and underscores, in any script. A <c>$</c> that starts none of these (an item mention typed as
-/// <c>$Longsword</c>) is left as it is. Typing a template's abbreviation and Tab in the editor puts the template in and steps
+/// <c>$Longsword</c>) is left as it is. Typing <see cref="Prefix"/> and a template's abbreviation, then Tab, in the editor puts the template in and steps
 /// through its fields with Tab and Shift+Tab, a field with no default holding its name, greyed, until it is typed over (the
 /// names left standing are taken out when the template ends; app-startup.js parses templates the same way); a new page can
 /// start from one; and
@@ -35,7 +35,11 @@ public static class LiveTemplate
 
     private const string EndName = "END";
 
-    // Keep in step with TemplateToken in app-startup.js.
+    /// <summary>What is typed before an abbreviation to put its template in with Tab (<c>;npc</c>), so a word that happens to be
+    /// an abbreviation, typed in a sentence, never turns into a template. Keep in step with PREFIX in app-startup.js.</summary>
+    public const string Prefix = ";";
+
+    // Keep in step with TOKEN in app-startup.js (tests/Codex.Tests/Fixtures/templates.json runs both).
     private static readonly Regex Token = new(@"\$\$|\$(?<name>[\p{L}\p{N}_]+)(?::(?<def>[^$\r\n]*))?\$", RegexOptions.Compiled);
 
     private static readonly Regex AbbreviationShape = new(@"^[\p{L}\p{N}_-]+$", RegexOptions.Compiled);

@@ -35,4 +35,9 @@
     <ProjectReference Include="..\..\tools\Codex.TranslationCheck\Codex.TranslationCheck.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Cases both template parsers (LiveTemplate.cs and app-startup.js) are run against. -->
+    <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

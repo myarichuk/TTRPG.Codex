@@ -3,8 +3,8 @@ using Microsoft.Playwright;
 namespace Codex.Tests.E2E;
 
 /// <summary>
-/// Templates at the keyboard: a new page starts from the Person outline and Tab steps through its fields; an abbreviation and
-/// Tab puts a snippet in; the DM writes a template of their own whose field is used twice, and finds it after "/" in a page.
+/// Templates at the keyboard: a new page starts from the Person outline and Tab steps through its fields; ";", an abbreviation
+/// and Tab put a snippet in; the DM writes a template of their own whose field is used twice, and finds it after "/" in a page.
 /// </summary>
 [Collection("RavenDb")]
 public class TemplatesE2ETests : IClassFixture<AppFixture>
@@ -50,9 +50,16 @@ public class TemplatesE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(body).ToHaveValueAsync(new System.Text.RegularExpressions.Regex(@"^Keeper of the lighthouse\.\n\n## Look and voice\nGrey-eyed\.\n\n## History\n\n\n## Wants and fears\n\n\n"));
         await Assertions.Expect(dm.Locator(".template-marks")).ToBeHiddenAsync();
 
-        // A snippet by its abbreviation: its default is selected, so typing replaces it; Tab after the last field ends it.
+        // An abbreviation typed as a word in a sentence stays a word: Tab moves on, as it does anywhere.
         await body.FillAsync("");
-        await body.PressSequentiallyAsync("Road north.\n\nenc");
+        await body.PressSequentiallyAsync("Road north. enc");
+        await dm.Keyboard.PressAsync("Tab");
+        await Assertions.Expect(body).Not.ToBeFocusedAsync();
+        await Assertions.Expect(body).ToHaveValueAsync("Road north. enc");
+
+        // A snippet by ";" and its abbreviation: its default is selected, so typing replaces it; Tab after the last field ends it.
+        await body.FillAsync("");
+        await body.PressSequentiallyAsync("Road north.\n\n;enc");
         await dm.Keyboard.PressAsync("Tab");
         await dm.Keyboard.TypeAsync("Bandits");
         for (var i = 0; i < 5; i++) await dm.Keyboard.PressAsync("Tab");
@@ -63,6 +70,8 @@ public class TemplatesE2ETests : IClassFixture<AppFixture>
         // Their own template, with a field used twice and a default.
         await E2EHelpers.GotoInteractiveAsync(dm, $"/campaigns/{campaignId}/templates");
         await dm.GetByTestId("template-new").ClickAsync();
+        // The new template's editor is ready once it has put the caret in the name; typed sooner, the name is wiped as it opens.
+        await Assertions.Expect(dm.GetByTestId("template-name")).ToBeFocusedAsync();
         await dm.GetByTestId("template-name").FillAsync("Gift");
         await dm.GetByTestId("template-abbreviation").FillAsync("gv");
         await dm.Locator("#template-body").FillAsync("$who$ gives $item:a coin$; $who$ smiles.");
@@ -92,5 +101,55 @@ public class TemplatesE2ETests : IClassFixture<AppFixture>
         await dm.WaitForURLAsync(url => url.EndsWith("/wiki/olm"));
         await Assertions.Expect(dm.GetByTestId("wiki-body")).ToContainTextAsync("gives a coin;");
         await Assertions.Expect(dm.GetByTestId("wiki-body")).Not.ToContainTextAsync("who");
+    }
+
+    [Fact]
+    public async Task CtrlS_SavesOnce_OnAnyLayout_AndEndsATemplateEvenWhereSaveIsNoForm()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "tk-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Keys campaign");
+
+        // A new template saved with Ctrl+S held down: the key's repeats don't save it again, so there is one, not several.
+        await E2EHelpers.GotoInteractiveAsync(dm, $"/campaigns/{campaignId}/templates");
+        await dm.GetByTestId("template-new").ClickAsync();
+        // The new template's editor is ready once it has put the caret in the name; typed sooner, the name is wiped as it opens.
+        await Assertions.Expect(dm.GetByTestId("template-name")).ToBeFocusedAsync();
+        await dm.GetByTestId("template-name").FillAsync("Gift");
+        await dm.GetByTestId("template-abbreviation").FillAsync("gv");
+        var templateBody = dm.Locator("#template-body");
+        await templateBody.FillAsync("$who$ gives $item:a coin$; $who$ smiles.");
+        await templateBody.FocusAsync();
+        await dm.Keyboard.DownAsync("Control");
+        for (var i = 0; i < 4; i++) await dm.Keyboard.DownAsync("s"); // the first press, then the key repeating
+        await dm.Keyboard.UpAsync("s");
+        await dm.Keyboard.UpAsync("Control");
+        await Assertions.Expect(dm.GetByTestId("template-fields")).ToContainTextAsync("who, item");
+        await Assertions.Expect(dm.Locator(".template-row", new() { HasText = "Gift" })).ToHaveCountAsync(1);
+
+        // A character's history, whose Save is a button, not a form: Ctrl+S with a field still holding its name saves without it.
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "cast");
+        await dm.GetByTestId("create-character").ClickAsync();
+        await dm.GetByTestId("create-character-name").FillAsync("Olm");
+        await dm.GetByTestId("create-character-submit").ClickAsync();
+        await dm.WaitForURLAsync(url => url.Contains("/actors/"));
+        await E2EHelpers.WaitForInteractiveAsync(dm);
+        await dm.GetByTestId("tab-history").ClickAsync();
+        var history = dm.Locator("#actor-bio");
+        await history.FillAsync("");
+        await history.PressSequentiallyAsync(";gv");
+        await dm.Keyboard.PressAsync("Tab");
+        await Assertions.Expect(history).ToHaveValueAsync("who gives a coin; who smiles.");
+        // Pressed on a Russian layout: the key gives "ы", but it is the S key, so it saves.
+        await history.EvaluateAsync("el => el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ы', code: 'KeyS', ctrlKey: true, bubbles: true, cancelable: true }))");
+        await Assertions.Expect(dm.GetByTestId("template-hint")).ToBeHiddenAsync();
+        await dm.ReloadAsync();
+        await E2EHelpers.WaitForInteractiveAsync(dm);
+        await dm.GetByTestId("tab-history").ClickAsync();
+        await Assertions.Expect(dm.Locator("#actor-bio")).ToHaveValueAsync("gives a coin;  smiles."); // stored trimmed
     }
 }

@@ -193,7 +193,12 @@ else
         return list;
     }
 
-    private async Task SaveAsync()
+    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
+    private readonly SaveGate saveGate = new();
+
+    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
+
+    private async Task SaveNowAsync()
     {
         var result = await TemplateRepo.TrySaveAsync(draft, Ctx.Access, L);
         switch (result)
@@ -270,7 +275,7 @@ else
                         <span class="template-name">@template.Name</span>
                         @if (template.Abbreviation.Length > 0)
                         {
-                            <kbd class="template-abbr" dir="auto">@template.Abbreviation</kbd>
+                            <kbd class="template-abbr" dir="auto">@(LiveTemplate.Prefix + template.Abbreviation)</kbd>
                         }
                         @if (template.Hidden || IsChanged(template))
                         {
