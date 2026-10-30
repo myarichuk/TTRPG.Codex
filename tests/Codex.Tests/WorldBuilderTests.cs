@@ -879,6 +879,96 @@ public class WorldBuilderTests
         Assert.NotEqual(WorldChat.Fenced("same"), WorldChat.Fenced("same"));
     }
 
+    /// <summary>One thread that runs everything posted to it in turn, as a Blazor circuit's renderer does.</summary>
+    private sealed class CircuitContext : SynchronizationContext, IDisposable
+    {
+        private readonly System.Collections.Concurrent.BlockingCollection<(SendOrPostCallback Run, object? State)> queue = new();
+        public int ThreadId { get; private set; }
+
+        public override void Post(SendOrPostCallback d, object? state) => queue.Add((d, state));
+
+        public void Run(Func<Task> work)
+        {
+            var previous = Current;
+            SetSynchronizationContext(this);
+            ThreadId = Environment.CurrentManagedThreadId;
+            try
+            {
+                var task = work();
+                task.ContinueWith(_ => queue.CompleteAdding(), TaskScheduler.Default);
+                foreach (var (run, state) in queue.GetConsumingEnumerable()) run(state);
+                task.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                SetSynchronizationContext(previous);
+            }
+        }
+
+        public void Dispose() => queue.Dispose();
+    }
+
+    /// <summary>A model that answers off the caller's thread, as one behind an HTTP client does.</summary>
+    private sealed class OffThreadModel(IChatClient inner) : DelegatingChatClient(inner)
+    {
+        public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+            await foreach (var update in base.GetStreamingResponseAsync(messages, options, cancellationToken).ConfigureAwait(false)) yield return update;
+        }
+    }
+
+    [Fact]
+    public void Chat_StressedWhileItsToolsChangeTheProposal_ThePageNeverSeesItHalfChanged()
+    {
+        const string first = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}, {"ref": "n", "kind": "npc", "name": "Ilse", "text": "A smith.", "cast": true}]}}""";
+        const string more = """{"additions": {"entries": [{"ref": "m", "kind": "npc", "name": "Bram", "text": "An innkeeper."}]}}""";
+        var offContext = 0;
+        var torn = new List<string>();
+        for (var round = 0; round < 200; round++)
+        {
+            using var circuit = new CircuitContext();
+            WorldChat? chat = null;
+            var model = new OffThreadModel(new ScriptedModel(
+                _ => Calls("c1", "propose_changes", first),
+                _ => new ChatMessage(ChatRole.Assistant, "Ready."),
+                _ =>
+                {
+                    if (Environment.CurrentManagedThreadId != circuit.ThreadId) Interlocked.Increment(ref offContext);
+                    return Calls("c2", "add_entries", more);
+                },
+                _ => new ChatMessage(ChatRole.Assistant, "Added.")));
+            circuit.Run(async () =>
+            {
+                chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm);
+                await chat.SendAsync("A port and a smith.", null, CancellationToken.None);
+                // The DM leaves the port out and decides on it, then asks for more.
+                chat.Proposal!.Find("a")!.Selected = false;
+                chat.Decide("a");
+                var turn = chat.SendAsync("And an innkeeper.", null, CancellationToken.None);
+                // Meanwhile the page redraws, on its own thread, whenever it gets the chance (each step and each piece of text).
+                while (!turn.IsCompleted)
+                {
+                    if (chat.Proposal is { } shown)
+                    {
+                        if (shown.Find("a") is { Selected: true }) torn.Add($"round {round}: the port is ticked again");
+                        if (shown.Find("n") is { Gear: null } && shown.Drafts.Any(d => d.Ref == "m")) torn.Add($"round {round}: the smith's gear is missing");
+                        if (!chat.Decided.Contains("a")) torn.Add($"round {round}: the decision on the port is gone");
+                    }
+
+                    await Task.Yield();
+                }
+
+                await turn;
+            });
+            Assert.False(chat!.Proposal!.Find("a")!.Selected);
+        }
+
+        Assert.True(offContext > 0, "the tools never ran off the page's thread, so this stresses nothing");
+        Assert.Empty(torn.Distinct());
+    }
+
     [Fact]
     public void Chat_SendsOldToolResultsAsALine_AndKeepsTheStoredHistoryWhole()
     {

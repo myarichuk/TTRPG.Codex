@@ -266,7 +266,7 @@ else if (chat != null)
             @* ---- The proposal ---- *@
             <aside class="wb-ledger panel" id="world-proposal" aria-labelledby="world-proposal-heading">
                 <WorldProposalPanel @ref="panel" Proposal="proposal" Warnings="chat.ProposalWarnings" Decided="chat.Decided" Missing="missing" PlaceNames="placeNames"
-                                    LastApplied="lastApplied" Locked="@(live != null || applying)" Applying="applying" ApplyError="@applyError"
+                                    LastApplied="lastApplied" Locked="@(chat.IsBusy || applying)" Applying="applying" ApplyError="@applyError"
                                     OnApply="ApplyAsync" OnDiscard="DiscardAsync" OnFill="FillAsync" OnDecided="DecidedAsync" />
             </aside>
         </div>
@@ -699,7 +699,8 @@ else if (chat != null)
 
     private async Task DiscardAsync()
     {
-        if (chat == null) return;
+        // Not while a turn is starting or under way: the chat refuses, and the proposal may be about to change.
+        if (chat == null || chat.IsBusy || applying) return;
         if (!await KeepsUpAsync(chat, chat.DiscardAsync)) return;
         applyError = null;
         await AfterTurnAsync();
