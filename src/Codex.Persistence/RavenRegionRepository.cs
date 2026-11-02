@@ -47,12 +47,15 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         return region;
     }
 
-    /// <summary>The places a player may see, each description without the blocks they may not read (see <see cref="SecretText"/>).</summary>
+    /// <summary>The places a player may see, each description without the blocks they may not read (see <see cref="SecretText"/>)
+    /// and without a feature's notes.</summary>
     private static List<LocationDocument> ForPlayers(IEnumerable<LocationDocument> locations, IReadOnlySet<string> ownedActorIds) =>
         locations.Where(l => l.Visibility == ActorVisibility.Known)
             .Select(l =>
             {
                 l.Description = string.IsNullOrEmpty(l.Description) ? l.Description : SecretText.ForPlayers(l.Description, ownedActorIds);
+                // The lock, the trap and what is inside are the DM's to tell (a revealed chest still hides its mimic).
+                l.Feature = null;
                 return l;
             })
             .ToList();
@@ -94,6 +97,29 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         region.Name = name.Trim();
         region.UpdatedAt = DateTime.UtcNow;
         await ForgetRemovedArtAsync(session, region);
+        await session.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> SetKindAsync(string regionId, RegionKind kind, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
+        if (!access.IsDm)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var region = await session.LoadAsync<RegionDocument>(regionId);
+        if (region == null || region.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        region.Kind = kind;
+        region.UpdatedAt = DateTime.UtcNow;
         await session.SaveChangesAsync();
         return true;
     }

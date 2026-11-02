@@ -522,8 +522,14 @@ public sealed partial class WorldBuilderService
                     Name = draft.Name.Trim(),
                     Description = string.IsNullOrWhiteSpace(draft.Pitch) ? null : WorldBundleParser.ResolveLinks(draft.Pitch, bundle, keepLinks: false),
                     Visibility = ActorVisibility.Hidden,
-                    Kind = Enum.TryParse<PlaceKind>(draft.PlaceKind, ignoreCase: true, out var kind) ? kind : PlaceTree.ChildKind(parent),
+                    Kind = Enum.TryParse<PlaceKind>(draft.PlaceKind, ignoreCase: true, out var kind) ? kind : PlaceTree.ChildKind(parent, region.Kind),
                     ParentId = parent?.Id,
+                    Feature = draft.Feature is { } feature
+                        ? PlaceFeature.Tidy(new PlaceFeature
+                        {
+                            Container = feature.Container, Lock = feature.Lock, Trap = feature.Trap, Concealment = feature.Concealment, Contents = feature.Contents, Creature = feature.Creature
+                        })
+                        : null,
                     // The page written for this draft is the place's page.
                     WikiPageId = draft.SavedAs.GetValueOrDefault(PageStep)
                 };
@@ -560,7 +566,11 @@ public sealed partial class WorldBuilderService
 
         RegionDocument NewRegion(string name)
         {
-            var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = access.CampaignId, Name = name.Trim() };
+            var region = new RegionDocument
+            {
+                Id = Guid.NewGuid().ToString(), CampaignId = access.CampaignId, Name = name.Trim(),
+                Kind = Enum.TryParse<RegionKind>(bundle.RegionKind, ignoreCase: true, out var kind) ? kind : RegionKind.General
+            };
             newRegions.Add(region);
             return region;
         }

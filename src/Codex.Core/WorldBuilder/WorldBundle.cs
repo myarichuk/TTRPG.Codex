@@ -56,6 +56,17 @@ public enum EditTarget
     Homebrew
 }
 
+/// <summary>A proposed feature's notes for the DM (see <c>PlaceFeature</c>): free text in the campaign's own terms, empty for none.</summary>
+public sealed class DraftFeature
+{
+    public bool Container { get; set; }
+    public string? Lock { get; set; }
+    public string? Trap { get; set; }
+    public string? Concealment { get; set; }
+    public string? Contents { get; set; }
+    public string? Creature { get; set; }
+}
+
 /// <summary>An item a proposed person would carry: the Library entry, how many, and whether it is worn or held.</summary>
 public sealed class DraftGear
 {
@@ -117,8 +128,11 @@ public sealed class WorldDraft
     /// for a place straight in the region.</summary>
     public string? Parent { get; set; }
 
-    /// <summary>For a place: "area", "settlement", "district" or "site".</summary>
+    /// <summary>For a place: "area", "settlement", "district", "site", "section", "room" or "feature".</summary>
     public string? PlaceKind { get; set; }
+
+    /// <summary>For a place that is a chest, a safe or a mimic: its lock, trap, hiding place, contents and creature, for the DM.</summary>
+    public DraftFeature? Feature { get; set; }
 
     /// <summary>For a wiki page: "lore", "faction" or "quest".</summary>
     public string? PageKind { get; set; }
@@ -240,6 +254,10 @@ public sealed class WorldBundle
     /// <summary>The region new top-level places go into (found by name, made when there is none), or empty for the campaign's first.</summary>
     public string? Region { get; set; }
 
+
+    /// <summary>What a new region made for the proposal is: "dungeon", "vessel" and so on, or null to leave it general.</summary>
+    public string? RegionKind { get; set; }
+
     public List<WorldDraft> Drafts { get; set; } = new();
 
     public WorldDraft? Find(string reference) => Drafts.FirstOrDefault(d => d.Ref == reference);
@@ -342,7 +360,10 @@ public static class WorldBundleParser
     private const int MaxBody = 20_000;
     private const int MaxStats = 100;
 
-    private static readonly string[] PlaceKinds = { "area", "settlement", "district", "site" };
+    private static readonly string[] PlaceKinds = { "area", "settlement", "district", "site", "section", "room", "feature" };
+    private static readonly string[] RegionKinds = { "general", "realm", "wilderness", "city", "dungeon", "vessel", "plane" };
+    private const int MaxFeatureNote = 300;
+    private const int MaxFeatureContents = 4000;
     private static readonly string[] PageKinds = { "lore", "faction", "quest" };
 
     /// <summary>
@@ -373,6 +394,11 @@ public static class WorldBundleParser
             var root = doc.RootElement;
             bundle.Summary = Cut(FieldCoercion.String(root, "summary"), MaxPitch) is { Length: > 0 } summary ? summary : null;
             bundle.Region = Cut(FieldCoercion.String(root, "region"), MaxName) is { Length: > 0 } region ? region : null;
+            bundle.RegionKind = OneOf(FieldCoercion.String(root, "regionKind"), RegionKinds);
+            if (bundle.RegionKind == null && FieldCoercion.String(root, "regionKind") is { Length: > 0 } badRegion)
+            {
+                warnings.Add($"regionKind '{badRegion}' is not one of {string.Join(", ", RegionKinds)}; it was ignored.");
+            }
             if (!root.TryGetProperty("entries", out var entries) || entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() == 0)
             {
                 errors.Add("The proposal has no \"entries\".");
@@ -461,6 +487,8 @@ public static class WorldBundleParser
                         {
                             warnings.Add($"{label}: placeKind '{badPlace}' is not one of {string.Join(", ", PlaceKinds)}; it was left to the parent.");
                         }
+
+                        draft.Feature = ReadFeature(element);
 
                         break;
                     case DraftKinds.Wiki:
@@ -748,6 +776,25 @@ public static class WorldBundleParser
         if (v == null) return null;
         if (alias != null && v == alias) return aliasOf;
         return allowed.Contains(v) ? v : null;
+    }
+
+
+    // A place's "feature": {"container", "lock", "trap", "concealment", "contents", "creature"}; null when it says nothing.
+    private static DraftFeature? ReadFeature(JsonElement element)
+    {
+        if (!element.TryGetProperty("feature", out var f) || f.ValueKind != JsonValueKind.Object) return null;
+        var feature = new DraftFeature
+        {
+            Container = f.TryGetProperty("container", out var container) && container.ValueKind == JsonValueKind.True,
+            Lock = Note(FieldCoercion.String(f, "lock"), MaxFeatureNote),
+            Trap = Note(FieldCoercion.String(f, "trap"), MaxFeatureNote),
+            Concealment = Note(FieldCoercion.String(f, "concealment"), MaxFeatureNote),
+            Contents = Note(FieldCoercion.String(f, "contents"), MaxFeatureContents),
+            Creature = Note(FieldCoercion.String(f, "creature"), MaxFeatureNote)
+        };
+        return feature is { Container: false, Lock: null, Trap: null, Concealment: null, Contents: null, Creature: null } ? null : feature;
+
+        static string? Note(string? text, int max) => Cut(text, max) is { Length: > 0 } cut ? cut : null;
     }
 
     /// <summary>

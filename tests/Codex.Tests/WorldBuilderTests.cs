@@ -30,7 +30,7 @@ public class WorldBuilderTests
         new("actions", "Actions", "Collection", null, null, null)
     };
 
-    private static ProposalRules Rules(Func<string, string, string>? canonical = null, IReadOnlyCollection<string>? actors = null) => new(
+    internal static ProposalRules Rules(Func<string, string, string>? canonical = null, IReadOnlyCollection<string>? actors = null) => new(
         new Dictionary<string, string> { ["magic-item"] = "magic-item", ["Magic Item"] = "magic-item", ["spell"] = "spell", ["monster"] = "monster" },
         new Dictionary<string, string> { ["port-varr"] = "Port Varr", ["sister-maren"] = "Sister Maren", ["sister-maren-2"] = "Sister Maren" },
         new[] { "old-town" },

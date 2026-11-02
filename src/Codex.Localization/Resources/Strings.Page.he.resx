@@ -127,6 +127,7 @@
   <data name="Page.Campaign.Section.Overview" xml:space="preserve"><value>סקירה</value></data>
   <data name="Page.Campaign.Section.Table" xml:space="preserve"><value>שולחן</value></data>
   <data name="Page.Campaign.Section.Sessions" xml:space="preserve"><value>מפגשים</value></data>
+  <data name="Page.Campaign.Section.Items" xml:space="preserve"><value>חפצים</value></data>
   <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>היומן שלי</value></data>
   <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>דמויות</value></data>
   <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>ספר המפלצות</value></data>

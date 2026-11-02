@@ -168,6 +168,9 @@ else
                             case "sessions":
                                 <SessionsSection />
                                 break;
+                            case "items":
+                                <ItemsSection />
+                                break;
                             case "table":
                                 <TableSection />
                                 break;
@@ -206,6 +209,7 @@ else
             ("overview", "Overview", "home"),
             ("table", "Table", "dices"),
             ("sessions", "Sessions", "calendar"),
+            ("items", "Items", "package"),
             ("journal", "My journal", "notebook-pen")
         }),
         ("World", new[]
@@ -255,6 +259,7 @@ else
     {
         "table" => L["Page.Campaign.Section.Table"],
         "sessions" => L["Page.Campaign.Section.Sessions"],
+        "items" => L["Page.Campaign.Section.Items"],
         "journal" => L["Page.Campaign.Section.Journal"],
         "cast" => L["Page.Campaign.Section.Cast"],
         "bestiary" => L["Page.Campaign.Section.Bestiary"],

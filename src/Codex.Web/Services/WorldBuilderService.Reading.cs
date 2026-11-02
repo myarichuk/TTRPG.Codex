@@ -165,14 +165,29 @@ public sealed partial class WorldBuilderService
         var sb = new StringBuilder();
         foreach (var region in (await regions.GetVisibleForCampaignAsync(access)).OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase))
         {
-            sb.AppendLine($"Region: {region.Name}");
+            sb.AppendLine(region.Kind == RegionKind.General ? $"Region: {region.Name}" : $"Region: {region.Name} ({region.Kind.ToString().ToLowerInvariant()})");
             foreach (var (place, depth) in PlaceTree.Ordered(region.Locations))
             {
-                sb.AppendLine($"{new string(' ', 2 + depth * 2)}- {place.Name} ({KindName(place.Kind)}) key: existing:{WorldBundle.PlacePrefix}{place.Id}");
+                sb.AppendLine($"{new string(' ', 2 + depth * 2)}- {place.Name} ({KindName(place.Kind)}{FeatureNotes(place.Feature)}) key: existing:{WorldBundle.PlacePrefix}{place.Id}");
             }
         }
 
         return sb.Length == 0 ? "The campaign has no places yet. New top-level places go into a region named by the proposal's \"region\"." : sb.ToString().TrimEnd();
+    }
+
+
+    // "; locked: DC 15; creature: a mimic": what a feature hides, so the model neither repeats nor contradicts it.
+    private static string FeatureNotes(PlaceFeature? feature)
+    {
+        if (feature == null) return string.Empty;
+        var notes = new List<string>();
+        if (feature.Container) notes.Add("container");
+        if (feature.Lock is { Length: > 0 } locked) notes.Add($"lock: {locked}");
+        if (feature.Trap is { Length: > 0 } trap) notes.Add($"trap: {trap}");
+        if (feature.Concealment is { Length: > 0 } hidden) notes.Add($"hidden: {hidden}");
+        if (feature.Creature is { Length: > 0 } creature) notes.Add($"creature: {creature}");
+        if (feature.Contents is { Length: > 0 } contents) notes.Add($"contents: {TextFormatting.Summary(contents, 120)}");
+        return notes.Count == 0 ? string.Empty : "; " + string.Join("; ", notes);
     }
 
     /// <summary>A Library search, for a person's stats or for what exists already: "type/id: Name" lines. Without a type it

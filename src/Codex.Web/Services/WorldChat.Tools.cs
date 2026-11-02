@@ -147,7 +147,7 @@ public sealed partial class WorldChat
                    "Add fewer, or tell the game master to apply the proposal first and ask for the rest after.";
         }
 
-        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
+        var merged = new ProposalInput { Summary = input.Summary, Region = input.Region, RegionKind = input.RegionKind, Entries = (input.Entries ?? new List<ProposalEntry>()).Concat(added).ToList() };
         var result = await ProposeAsync(merged, "add_entries", $"only the new entries (the {input.Entries?.Count ?? 0} waiting ones come first when errors are numbered, so your first new entry is entries[{input.Entries?.Count ?? 0}])", fresh: false);
         if (!ReferenceEquals(Proposal, before) && Proposal != null) CarryOver(before, Proposal, decisions: true);
         return result;

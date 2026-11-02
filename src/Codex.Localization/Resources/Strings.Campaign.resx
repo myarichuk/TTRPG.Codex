@@ -535,6 +535,58 @@
   <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Settlement</value></data>
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>District</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Location</value></data>
+  <data name="Campaign.Places.Kind.Section" xml:space="preserve"><value>Section</value></data>
+  <data name="Campaign.Places.Kind.Room" xml:space="preserve"><value>Room</value></data>
+  <data name="Campaign.Places.Kind.Feature" xml:space="preserve"><value>Feature</value></data>
+  <data name="Campaign.Regions.Kind" xml:space="preserve"><value>Region type</value></data>
+  <data name="Campaign.Regions.KindOf" xml:space="preserve"><value>Type of {0}</value></data>
+  <data name="Campaign.Regions.Kind.General" xml:space="preserve"><value>General</value></data>
+  <data name="Campaign.Regions.Kind.Realm" xml:space="preserve"><value>Realm</value></data>
+  <data name="Campaign.Regions.Kind.Wilderness" xml:space="preserve"><value>Wilderness</value></data>
+  <data name="Campaign.Regions.Kind.City" xml:space="preserve"><value>City</value></data>
+  <data name="Campaign.Regions.Kind.Dungeon" xml:space="preserve"><value>Dungeon</value></data>
+  <data name="Campaign.Regions.Kind.Vessel" xml:space="preserve"><value>Vessel</value></data>
+  <data name="Campaign.Regions.Kind.Plane" xml:space="preserve"><value>Plane</value></data>
+  <data name="Campaign.Places.Feature.Title" xml:space="preserve"><value>Feature notes</value></data>
+  <data name="Campaign.Places.Feature.Hint" xml:space="preserve"><value>Only you see these. Players read the description once the place is revealed.</value></data>
+  <data name="Campaign.Places.Feature.IsContainer" xml:space="preserve"><value>Holds things (a chest, a safe)</value></data>
+  <data name="Campaign.Places.Feature.Container" xml:space="preserve"><value>Container</value></data>
+  <data name="Campaign.Places.Feature.Locked" xml:space="preserve"><value>Locked</value></data>
+  <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>Trapped</value></data>
+  <data name="Campaign.Places.Feature.Concealed" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Campaign.Places.Feature.HasCreature" xml:space="preserve"><value>Creature</value></data>
+  <data name="Campaign.Places.Feature.Lock" xml:space="preserve"><value>Lock</value></data>
+  <data name="Campaign.Places.Feature.LockPlaceholder" xml:space="preserve"><value>DC 15 to pick; Maud has the key</value></data>
+  <data name="Campaign.Places.Feature.Trap" xml:space="preserve"><value>Trap</value></data>
+  <data name="Campaign.Places.Feature.TrapPlaceholder" xml:space="preserve"><value>Poison needle, DC 13 to spot</value></data>
+  <data name="Campaign.Places.Feature.Concealment" xml:space="preserve"><value>Hidden by</value></data>
+  <data name="Campaign.Places.Feature.ConcealmentPlaceholder" xml:space="preserve"><value>A false wall, found with a careful search</value></data>
+  <data name="Campaign.Places.Feature.Creature" xml:space="preserve"><value>Really a creature</value></data>
+  <data name="Campaign.Places.Feature.CreaturePlaceholder" xml:space="preserve"><value>A mimic that bites whoever opens it</value></data>
+  <data name="Campaign.Places.Feature.CreatureOnCast" xml:space="preserve"><value>That creature on the cast</value></data>
+  <data name="Campaign.Places.Feature.NoCreatureOnCast" xml:space="preserve"><value>Not on the cast</value></data>
+  <data name="Campaign.Places.Feature.Contents" xml:space="preserve"><value>Contents</value></data>
+  <data name="Campaign.Places.Feature.ContentsPlaceholder" xml:space="preserve"><value>What is inside. When the party takes them, give the items to characters from Items.</value></data>
+  <data name="Campaign.Items.Title" xml:space="preserve"><value>Items</value></data>
+  <data name="Campaign.Items.Subtitle.Dm" xml:space="preserve"><value>Give loot from the Library, or move items between any characters. Players get them unequipped.</value></data>
+  <data name="Campaign.Items.Subtitle.Player" xml:space="preserve"><value>Hand what your character carries to another player's character.</value></data>
+  <data name="Campaign.Items.NoInventory.Title" xml:space="preserve"><value>This game system has no inventory</value></data>
+  <data name="Campaign.Items.NoInventory.Body" xml:space="preserve"><value>Its character sheets don't carry items, so there is nothing to hand over.</value></data>
+  <data name="Campaign.Items.Empty.Dm" xml:space="preserve"><value>No character carries anything yet</value></data>
+  <data name="Campaign.Items.Empty.Player" xml:space="preserve"><value>You have no character in this campaign yet</value></data>
+  <data name="Campaign.Items.CarriesNothing" xml:space="preserve"><value>Carries nothing.</value></data>
+  <data name="Campaign.Items.HowMany" xml:space="preserve"><value>How many {0}</value></data>
+  <data name="Campaign.Items.HandTo" xml:space="preserve"><value>Hand {0} to</value></data>
+  <data name="Campaign.Items.Hand" xml:space="preserve"><value>Hand over</value></data>
+  <data name="Campaign.Items.Give" xml:space="preserve"><value>Give from the Library</value></data>
+  <data name="Campaign.Items.NoOneToGive" xml:space="preserve"><value>Add a character to the cast or wait for players to make theirs, then give them items.</value></data>
+  <data name="Campaign.Items.GiveTo" xml:space="preserve"><value>Give to</value></data>
+  <data name="Campaign.Items.Quantity" xml:space="preserve"><value>How many</value></data>
+  <data name="Campaign.Items.GiveButton" xml:space="preserve"><value>Give</value></data>
+  <data name="Campaign.Items.Handed" xml:space="preserve"><value>Handed {0} × {1} to {2}.</value></data>
+  <data name="Campaign.Items.NotEnough" xml:space="preserve"><value>There aren't that many {0} to hand over any more.</value></data>
+  <data name="Campaign.Items.Gone" xml:space="preserve"><value>That character isn't in play any more.</value></data>
+  <data name="Campaign.Items.NotAllowed" xml:space="preserve"><value>You can't hand that over.</value></data>
   <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Add to Places</value></data>
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Illustration</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Shown beside the page's text. Whoever can read the page sees it.</value></data>

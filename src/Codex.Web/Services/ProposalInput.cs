@@ -14,6 +14,9 @@ public sealed class ProposalInput
     [JsonPropertyName("region"), Description("The region new top-level places go into: an existing region's name, or a new one's. Empty: the campaign's first region.")]
     public string? Region { get; set; }
 
+    [JsonPropertyName("regionKind"), Description("When the region is new: what it is, which sets what goes straight inside it. general, realm, wilderness, city, dungeon (its floors are sections), vessel (a ship; its decks are sections) or plane.")]
+    public string? RegionKind { get; set; }
+
     [JsonPropertyName("entries"), Description("Every entry of the proposal: about 8 is best for the game master to review, at most 30.")]
     public List<ProposalEntry>? Entries { get; set; }
 }
@@ -52,8 +55,11 @@ public sealed class ProposalEntry
     [JsonPropertyName("links"), Description("Refs and existing:slug keys this entry is about (a fact's subjects).")]
     public List<string>? Links { get; set; }
 
-    [JsonPropertyName("placeKind"), Description("For a place: area, settlement, district or site.")]
+    [JsonPropertyName("placeKind"), Description("For a place: area, settlement, district, site (a building, ship or dungeon), section (a floor, deck or wing; one floor of a dungeon), room, or feature (a chest, safe, altar or secret door in a room).")]
     public string? PlaceKind { get; set; }
+
+    [JsonPropertyName("feature"), Description("For a feature: the game master's notes on what the party can open, find or be attacked by. Players never see them.")]
+    public ProposalFeature? Feature { get; set; }
 
     [JsonPropertyName("parent"), Description("For a place: the ref of the place entry it is inside, or existing:place:<id>.")]
     public string? Parent { get; set; }
@@ -93,4 +99,27 @@ public sealed class ProposalEntry
 
     [JsonPropertyName("properties"), Description("For a homebrew entry: its fields, by the keys homebrew_fields lists. For an edit of one: only the fields that change.")]
     public Dictionary<string, JsonElement>? Properties { get; set; }
+}
+
+
+/// <summary>A feature's notes, read by <see cref="WorldBundleParser.ParseProposal"/>.</summary>
+public sealed class ProposalFeature
+{
+    [JsonPropertyName("container"), Description("True when it holds things: a chest, a safe, a hollow statue.")]
+    public bool? Container { get; set; }
+
+    [JsonPropertyName("lock"), Description("How it is locked and opened, in the system's terms (\"DC 15 to pick; the innkeeper has the key\").")]
+    public string? Lock { get; set; }
+
+    [JsonPropertyName("trap"), Description("What it does to whoever opens it carelessly, and how to spot and disarm it.")]
+    public string? Trap { get; set; }
+
+    [JsonPropertyName("concealment"), Description("How it is hidden (a false wall, an illusion) and how it is found.")]
+    public string? Concealment { get; set; }
+
+    [JsonPropertyName("contents"), Description("What is inside: coins, items, papers.")]
+    public string? Contents { get; set; }
+
+    [JsonPropertyName("creature"), Description("What it really is or what lives in it, when that is a creature: \"a mimic\".")]
+    public string? Creature { get; set; }
 }

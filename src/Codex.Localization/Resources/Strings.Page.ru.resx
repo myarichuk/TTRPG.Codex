@@ -127,6 +127,7 @@
   <data name="Page.Campaign.Section.Overview" xml:space="preserve"><value>Обзор</value></data>
   <data name="Page.Campaign.Section.Table" xml:space="preserve"><value>Стол</value></data>
   <data name="Page.Campaign.Section.Sessions" xml:space="preserve"><value>Сессии</value></data>
+  <data name="Page.Campaign.Section.Items" xml:space="preserve"><value>Предметы</value></data>
   <data name="Page.Campaign.Section.Journal" xml:space="preserve"><value>Мой журнал</value></data>
   <data name="Page.Campaign.Section.Cast" xml:space="preserve"><value>Персонажи</value></data>
   <data name="Page.Campaign.Section.Bestiary" xml:space="preserve"><value>Бестиарий</value></data>

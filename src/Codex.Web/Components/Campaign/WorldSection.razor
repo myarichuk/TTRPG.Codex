@@ -54,10 +54,22 @@ else
                         }
                         else
                         {
-                            <h3 id="region-@region.Id">@region.Name</h3>
+                            <h3 id="region-@region.Id">@region.Name
+                                @if (region.Kind != RegionKind.General)
+                                {
+                                    <span class="pill ms-2" data-testid="region-kind">@L[$"Campaign.Regions.Kind.{region.Kind}"]</span>
+                                }
+                            </h3>
                             @if (Ctx.IsDm)
                             {
                                 <div class="d-flex gap-2">
+                                    <label for="region-kind-@region.Id" class="visually-hidden">@L["Campaign.Regions.KindOf", region.Name]</label>
+                                    <select id="region-kind-@region.Id" class="field-select field-sm" value="@region.Kind" @onchange="e => SetRegionKindAsync(region, e.Value)" data-testid="region-kind-select">
+                                        @foreach (var kind in Enum.GetValues<RegionKind>())
+                                        {
+                                            <option value="@kind">@L[$"Campaign.Regions.Kind.{kind}"]</option>
+                                        }
+                                    </select>
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@L["Campaign.World.RenameLabel", region.Name]" data-testid="rename-region">@L["Campaign.World.Rename"]</CodexButton>
                                     <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.World.DeleteRegionLabel", region.Name]" OnClick="() => DeleteRegionAsync(region)" data-testid="delete-region" />
                                 </div>
@@ -89,6 +101,10 @@ else
                                             <span class="pill pill-warning ms-2">@L["Campaign.World.Hidden"]</span>
                                         }
                                     </div>
+                                    @if (Ctx.IsDm && location.Feature is { IsEmpty: false } feature)
+                                    {
+                                        <PlaceFeatureNotes Feature="feature" Creature="@CreatureOf(feature)" CreatureHref="@(CreatureOf(feature) is { } creature ? $"{Ctx.BasePath}/actors/{creature.Id}" : null)" />
+                                    }
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
                                     {
                                         <details class="place-details">
@@ -162,6 +178,13 @@ else
                         <label for="new-region" class="field-label">@L["Campaign.World.Name"]</label>
                         <div class="input-group input-group-sm">
                             <input id="new-region" class="field-input" @bind="newRegionName" required data-testid="new-region-name" />
+                            <label for="new-region-kind" class="visually-hidden">@L["Campaign.Regions.Kind"]</label>
+                            <select id="new-region-kind" class="field-select" @bind="newRegionKind" data-testid="new-region-kind">
+                                @foreach (var kind in Enum.GetValues<RegionKind>())
+                                {
+                                    <option value="@kind">@L[$"Campaign.Regions.Kind.{kind}"]</option>
+                                }
+                            </select>
                             <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="new-region-add">@L["Campaign.World.Add"]</CodexButton>
                         </div>
                     </form>
@@ -236,6 +259,48 @@ else
                             </select>
                         </div>
                     </div>
+                    @if (editingLocation.Kind == PlaceKind.Feature || !editingFeature.IsEmpty)
+                    {
+                        <fieldset class="mb-3" data-testid="feature-fields">
+                            <legend class="field-label">@L["Campaign.Places.Feature.Title"]</legend>
+                            <p class="small-muted">@L["Campaign.Places.Feature.Hint"]</p>
+                            <div class="field-check mb-2">
+                                <input id="feat-container" type="checkbox" class="field-box" @bind="editingFeature.Container" data-testid="feature-container-check" />
+                                <label for="feat-container">@L["Campaign.Places.Feature.IsContainer"]</label>
+                            </div>
+                            <div class="field-grid mb-2">
+                                <div>
+                                    <label for="feat-lock" class="field-label">@L["Campaign.Places.Feature.Lock"]</label>
+                                    <input id="feat-lock" class="field-input" @bind="editingFeature.Lock" @bind:event="oninput" maxlength="300" placeholder="@L["Campaign.Places.Feature.LockPlaceholder"]" data-testid="feature-lock-input" />
+                                </div>
+                                <div>
+                                    <label for="feat-trap" class="field-label">@L["Campaign.Places.Feature.Trap"]</label>
+                                    <input id="feat-trap" class="field-input" @bind="editingFeature.Trap" @bind:event="oninput" maxlength="300" placeholder="@L["Campaign.Places.Feature.TrapPlaceholder"]" data-testid="feature-trap-input" />
+                                </div>
+                                <div>
+                                    <label for="feat-hidden" class="field-label">@L["Campaign.Places.Feature.Concealment"]</label>
+                                    <input id="feat-hidden" class="field-input" @bind="editingFeature.Concealment" @bind:event="oninput" maxlength="300" placeholder="@L["Campaign.Places.Feature.ConcealmentPlaceholder"]" data-testid="feature-concealment-input" />
+                                </div>
+                                <div>
+                                    <label for="feat-creature" class="field-label">@L["Campaign.Places.Feature.Creature"]</label>
+                                    <input id="feat-creature" class="field-input" @bind="editingFeature.Creature" @bind:event="oninput" maxlength="300" placeholder="@L["Campaign.Places.Feature.CreaturePlaceholder"]" data-testid="feature-creature-input" />
+                                </div>
+                            </div>
+                            @if (CreatureChoices.Count > 0)
+                            {
+                                <label for="feat-creature-actor" class="field-label">@L["Campaign.Places.Feature.CreatureOnCast"]</label>
+                                <select id="feat-creature-actor" class="field-select mb-2" @bind="editingCreatureActorId" data-testid="feature-creature-actor">
+                                    <option value="">@L["Campaign.Places.Feature.NoCreatureOnCast"]</option>
+                                    @foreach (var actor in CreatureChoices)
+                                    {
+                                        <option value="@actor.Id">@actor.Name</option>
+                                    }
+                                </select>
+                            }
+                            <label for="feat-contents" class="field-label">@L["Campaign.Places.Feature.Contents"]</label>
+                            <textarea id="feat-contents" class="field-input" rows="3" @bind="editingFeature.Contents" @bind:event="oninput" maxlength="4000" placeholder="@L["Campaign.Places.Feature.ContentsPlaceholder"]" data-testid="feature-contents-input"></textarea>
+                        </fieldset>
+                    }
                     <div class="mb-3">
                         <AiTextField Id="loc-edit-desc" Label="@L["Campaign.World.Description"]" Rows="6" @bind-Value="editingLocation.Description" TestId="location-description"
                                      Placeholder="@L["Campaign.World.DescPlaceholder"]" Generate="DescribeLocationAsync" Mentions="@mentionsJson" Pages="wikiPages" Templates="templates" TemplatesHref="@($"{Ctx.BasePath}/templates")"
@@ -271,13 +336,26 @@ else
     // The select needs a string; an empty one is "straight in the region".
     private string editingParentId = string.Empty;
 
-    private string LocationSnapshot() => editingLocation == null ? string.Empty : string.Join('\u0001', editingLocation.Name, editingLocation.Description, editingParentId, editingLocation.Kind);
+    // The feature's notes, edited apart so the place's own copy stays as it was until Save.
+    private PlaceFeature editingFeature = new();
+    private string editingCreatureActorId = string.Empty;
+
+    private string LocationSnapshot() => editingLocation == null ? string.Empty : string.Join('\u0001', editingLocation.Name, editingLocation.Description, editingParentId, editingLocation.Kind,
+        editingFeature.Container, editingFeature.Lock, editingFeature.Trap, editingFeature.Concealment, editingFeature.Contents, editingFeature.Creature, editingCreatureActorId);
+
+    // Who a feature may really be: anyone on the cast but the players' own characters.
+    private IReadOnlyList<ActorDocument> CreatureChoices =>
+        Ctx.AllActors.Where(a => a.Kind != ActorKind.PlayerCharacter && (!a.Retired || a.Id == editingCreatureActorId)).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+    private ActorDocument? CreatureOf(PlaceFeature feature) =>
+        string.IsNullOrEmpty(feature.CreatureActorId) ? null : noteActors.GetValueOrDefault(feature.CreatureActorId);
 
     private bool LocationDirty() => editingLocation != null && LocationSnapshot() != locationSnapshot;
 
     private List<RegionDocument>? regions;
     private List<ILocationDefinition> packLocations = new();
     private string newRegionName = string.Empty;
+    private RegionKind newRegionKind = RegionKind.General;
     private readonly Dictionary<string, string> newLocationNames = new();
     private readonly Dictionary<string, string> newLocationParents = new();
     private string packTargetRegionId = string.Empty;
@@ -400,11 +478,12 @@ else
     private async Task CreateRegionAsync()
     {
         if (string.IsNullOrWhiteSpace(newRegionName)) return;
-        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = Ctx.Campaign.Id, Name = newRegionName.Trim() };
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = Ctx.Campaign.Id, Name = newRegionName.Trim(), Kind = newRegionKind };
         if (await RegionRepo.SaveAsync(region, Ctx.Access))
         {
             Ctx.Notify(Flash.Success(L["Campaign.World.RegionAdded", region.Name]));
             newRegionName = string.Empty;
+            newRegionKind = RegionKind.General;
             await LoadAsync();
         }
     }
@@ -413,10 +492,11 @@ else
     {
         var name = newLocationNames.GetValueOrDefault(regionId, string.Empty);
         if (string.IsNullOrWhiteSpace(name)) return;
-        var parent = regions?.FirstOrDefault(r => r.Id == regionId)?.Locations.FirstOrDefault(l => l.Id == newLocationParents.GetValueOrDefault(regionId));
+        var region = regions?.FirstOrDefault(r => r.Id == regionId);
+        var parent = region?.Locations.FirstOrDefault(l => l.Id == newLocationParents.GetValueOrDefault(regionId));
         var location = new LocationDocument
         {
-            Id = Guid.NewGuid().ToString(), Name = name.Trim(), Visibility = ActorVisibility.Hidden, ParentId = parent?.Id, Kind = PlaceTree.ChildKind(parent)
+            Id = Guid.NewGuid().ToString(), Name = name.Trim(), Visibility = ActorVisibility.Hidden, ParentId = parent?.Id, Kind = PlaceTree.ChildKind(parent, region?.Kind ?? RegionKind.General)
         };
         if (await RegionRepo.UpsertLocationAsync(regionId, location, Ctx.Access))
         {
@@ -432,7 +512,8 @@ else
         if (string.IsNullOrEmpty(packTargetRegionId)) return;
         // The pack's own "inside" holds when its parent was added to this region already.
         var parentBlueprint = string.IsNullOrEmpty(definition.ParentId) ? null : $"{definition.SystemId}:{definition.ParentId}";
-        var parent = parentBlueprint == null ? null : regions?.FirstOrDefault(r => r.Id == packTargetRegionId)?.Locations
+        var target = regions?.FirstOrDefault(r => r.Id == packTargetRegionId);
+        var parent = parentBlueprint == null ? null : target?.Locations
             .FirstOrDefault(l => l.Metadata.TryGetValue("blueprintId", out var id) && id?.ToString() == parentBlueprint);
         var location = new LocationDocument
         {
@@ -441,7 +522,7 @@ else
             Description = definition.Description,
             Visibility = ActorVisibility.Hidden,
             ParentId = parent?.Id,
-            Kind = PlaceTree.ChildKind(parent),
+            Kind = PlaceTree.ChildKind(parent, target?.Kind ?? RegionKind.General),
             Metadata = new Dictionary<string, object>(definition.Metadata) { ["blueprintId"] = $"{definition.SystemId}:{definition.Id}" }
         };
         if (await RegionRepo.UpsertLocationAsync(packTargetRegionId, location, Ctx.Access))
@@ -465,13 +546,19 @@ else
             WikiPageId = location.WikiPageId,
             ParentId = location.ParentId,
             Kind = location.Kind,
-
+            Feature = location.Feature,
             Metadata = location.Metadata,
             Visibility = location.Visibility,
             HasArt = location.HasArt,
             ArtVersion = location.ArtVersion
         };
         editingParentId = location.ParentId ?? string.Empty;
+        var feature = location.Feature ?? new PlaceFeature();
+        editingFeature = new PlaceFeature
+        {
+            Container = feature.Container, Lock = feature.Lock, Trap = feature.Trap, Concealment = feature.Concealment, Contents = feature.Contents, Creature = feature.Creature
+        };
+        editingCreatureActorId = feature.CreatureActorId ?? string.Empty;
         locationSnapshot = LocationSnapshot();
         locationError = null;
         // Escape goes through BackFromLocationAsync, which asks before throwing edits away.
@@ -510,6 +597,8 @@ else
         editingLocation.Name = editingLocation.Name.Trim();
         // The list only offers parents that make no loop; the check stays for a region another tab changed meanwhile.
         editingLocation.ParentId = PlaceTree.CanParent(editingRegion.Locations, editingLocation.Id, editingParentId) && editingParentId.Length > 0 ? editingParentId : null;
+        editingFeature.CreatureActorId = editingCreatureActorId.Length > 0 ? editingCreatureActorId : null;
+        editingLocation.Feature = PlaceFeature.Tidy(editingFeature);
         var typed = editingLocation.Description;
         editingLocation.Description = typed == null ? null : noteMentions.Encode(typed);
         if (await RegionRepo.UpsertLocationAsync(editingRegion.Id, editingLocation, Ctx.Access))
@@ -594,6 +683,19 @@ else
         {
             Ctx.Notify(Flash.Success(L["Campaign.World.RegionDeleted", region.Name]));
             await LoadAsync();
+        }
+    }
+
+    private async Task SetRegionKindAsync(RegionDocument region, object? value)
+    {
+        if (!Enum.TryParse<RegionKind>(value?.ToString(), out var kind) || kind == region.Kind) return;
+        if (await RegionRepo.SetKindAsync(region.Id, kind, Ctx.Access))
+        {
+            region.Kind = kind;
+        }
+        else
+        {
+            Ctx.Notify(Flash.Error(L["Campaign.World.OnlyDm"]));
         }
     }
 

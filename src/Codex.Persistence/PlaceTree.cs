@@ -56,12 +56,22 @@ public static class PlaceTree
         return parent != null && Ancestors(places, parent).All(a => a.Id != placeId);
     }
 
-    /// <summary>The kind a place inside <paramref name="parent"/> most likely is: one step smaller, or an area at the top.</summary>
-    public static PlaceKind ChildKind(LocationDocument? parent) => parent?.Kind switch
+    /// <summary>The kind a place inside <paramref name="parent"/> most likely is: one step smaller, or, straight in a region, what
+    /// that kind of region holds (a dungeon its levels, a ship its decks).</summary>
+    public static PlaceKind ChildKind(LocationDocument? parent, RegionKind region = RegionKind.General) => parent?.Kind switch
     {
-        null => PlaceKind.Area,
+        null => region switch
+        {
+            RegionKind.City => PlaceKind.District,
+            RegionKind.Wilderness => PlaceKind.Site,
+            RegionKind.Dungeon or RegionKind.Vessel => PlaceKind.Section,
+            _ => PlaceKind.Area
+        },
         PlaceKind.Area => PlaceKind.Settlement,
         PlaceKind.Settlement => PlaceKind.District,
-        _ => PlaceKind.Site
+        PlaceKind.District => PlaceKind.Site,
+        // A tavern's cellar is a room more often than a wing; a room in a room (the card room behind the cellar) is common too.
+        PlaceKind.Site or PlaceKind.Section or PlaceKind.Room => PlaceKind.Room,
+        _ => PlaceKind.Feature
     };
 }

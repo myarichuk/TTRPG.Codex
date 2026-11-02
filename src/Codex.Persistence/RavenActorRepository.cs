@@ -1,5 +1,8 @@
 using Codex.Core;
+using Codex.Core.Rules;
 using Codex.Localization;
+using Codex.Plugin.Abstractions;
+using Raven.Client.Exceptions;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
 
@@ -433,6 +436,70 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         using var session = dbService.Store.OpenAsyncSession();
         var actor = await session.LoadAsync<ActorDocument>(actorId);
         return actor != null && actor.CampaignId == access.CampaignId ? actor : null;
+    }
+
+
+    /// <summary>The most of one item moved at once: enough for a dragon's hoard of coins, not a typo's worth of zeros.</summary>
+    public const int MaxItemsMoved = 100_000;
+
+    public async Task<ItemMoveResult> TryMoveItemAsync(ItemMove move, InventoryRules rules, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return ItemMoveResult.NotAllowed;
+        access = current;
+        if (move.Quantity is < 1 or > MaxItemsMoved || string.IsNullOrWhiteSpace(move.ItemId) || move.FromActorId == move.ToActorId)
+        {
+            return ItemMoveResult.NotAllowed;
+        }
+
+        // A player hands over only what their own character carries; the DM may also give from the Library (no giver).
+        if (!access.IsDm && (move.FromActorId == null || string.IsNullOrEmpty(access.UserId))) return ItemMoveResult.NotAllowed;
+
+        for (var attempt = 1; ; attempt++)
+        {
+            using var session = dbService.Store.OpenAsyncSession();
+            session.Advanced.UseOptimisticConcurrency = true;
+            var to = await session.LoadAsync<ActorDocument>(move.ToActorId);
+            var from = move.FromActorId == null ? null : await session.LoadAsync<ActorDocument>(move.FromActorId);
+            if (to == null || to.CampaignId != access.CampaignId || to.Retired
+                || (move.FromActorId != null && (from == null || from.CampaignId != access.CampaignId || from.Retired)))
+            {
+                return ItemMoveResult.Gone;
+            }
+
+            // Between players, only to another player's character the party knows of.
+            if (!access.IsDm && (from!.OwnerUserId != access.UserId || to.Kind != ActorKind.PlayerCharacter || to.Visibility == ActorVisibility.Hidden))
+            {
+                return ItemMoveResult.NotAllowed;
+            }
+
+            if (from != null)
+            {
+                var carried = SheetRuleEngine.RawList(from.Sheet, rules.Key);
+                if (!InventoryMoves.Take(carried, rules, move.ItemId, move.Quantity)) return ItemMoveResult.NotEnough;
+                StoreInventory(from, rules, carried);
+            }
+
+            var received = SheetRuleEngine.RawList(to.Sheet, rules.Key);
+            InventoryMoves.Add(received, rules, move.ItemId.Trim(), move.Quantity);
+            StoreInventory(to, rules, received);
+            try
+            {
+                // Both sheets in one save: the item is never on both, nor on neither.
+                await session.SaveChangesAsync();
+                return ItemMoveResult.Moved;
+            }
+            catch (ConcurrencyException) when (attempt < 8)
+            {
+                // A sheet was saved between our load and our save: count again from what it holds now.
+            }
+        }
+
+        static void StoreInventory(ActorDocument actor, InventoryRules rules, List<string> raw)
+        {
+            if (raw.Count == 0) actor.Sheet.Remove(rules.Key);
+            else actor.Sheet[rules.Key] = raw.Cast<object>().ToList();
+            actor.UpdatedAt = DateTime.UtcNow;
+        }
     }
 
     public async Task DeleteAllForCampaignAsync(string campaignId)
