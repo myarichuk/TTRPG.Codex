@@ -106,12 +106,12 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await Assertions.Expect(player1.GetByTestId("initiative-header")).ToBeVisibleAsync(new() { Timeout = 15_000 });
         await Assertions.Expect(player2.GetByTestId("initiative-header")).ToBeVisibleAsync(new() { Timeout = 15_000 });
 
-        await SetInitiativeAsync(dm, "Aria", 20);
-        await SetInitiativeAsync(dm, "Goblin 1", 18);
-        await SetInitiativeAsync(dm, "Bram", 15);
-        await SetInitiativeAsync(dm, "Goblin 2", 12);
-        await SetInitiativeAsync(dm, hiddenNpcName, 10);
-        await SetInitiativeAsync(dm, "Goblin 3", 8);
+        await SetInitiativeAsync(dm, "Aria", ariaActorId, 20);
+        await SetInitiativeAsync(dm, "Goblin 1", goblin1Id, 18);
+        await SetInitiativeAsync(dm, "Bram", bramActorId, 15);
+        await SetInitiativeAsync(dm, "Goblin 2", goblin2Id, 12);
+        await SetInitiativeAsync(dm, hiddenNpcName, hiddenNpcId, 10);
+        await SetInitiativeAsync(dm, "Goblin 3", goblin3Id, 8);
 
         var goblin1Row = dm.Locator($"[data-testid='participant-row'][data-actor-id='{goblin1Id}']");
         var ariaRowOnDm = dm.Locator($"[data-testid='participant-row'][data-actor-id='{ariaActorId}']");
@@ -198,30 +198,39 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await Assertions.Expect(player1.GetByText("Waiting for the DM")).ToBeVisibleAsync(new() { Timeout = 15_000 });
     }
 
-    private static async Task SetInitiativeAsync(IPage dm, string actorName, int roll)
+    private static async Task SetInitiativeAsync(IPage dm, string actorName, string actorId, int roll)
     {
         var select = dm.GetByTestId("add-to-initiative-select");
         var setBtn = dm.GetByTestId("set-initiative-btn");
+        var row = dm.Locator($"[data-testid='participant-row'][data-actor-id='{actorId}']");
 
         await select.Locator("option", new() { HasText = actorName })
             .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 20_000 });
 
+        // The panel clears its picker and re-renders after every Set, and a re-render that lands between
+        // the pick, the typed total and the click makes the Set a silent no-op (no picker, or no total, so
+        // nothing is queued). Only the actor showing up in the order proves it went through, so check that
+        // and try again if it did not - never move on blind, or the count of rolls below drifts.
         for (var attempt = 1; attempt <= 5; attempt++)
         {
-            await select.SelectOptionAsync(new SelectOptionValue { Label = actorName });
             try
             {
+                await select.SelectOptionAsync(new SelectOptionValue { Label = actorName });
                 await Assertions.Expect(setBtn).ToBeEnabledAsync(new() { Timeout = 3_000 });
-                break;
+                var input = dm.GetByTestId("manual-initiative-input");
+                await input.FillAsync(roll.ToString());
+                await Assertions.Expect(input).ToHaveValueAsync(roll.ToString(), new() { Timeout = 3_000 });
+                await setBtn.ClickAsync();
+                await Assertions.Expect(row).ToHaveCountAsync(1, new() { Timeout = 10_000 });
+                return;
             }
             catch (PlaywrightException) when (attempt < 5)
             {
+                // Nothing joined the order (the row check failed) or the picker was reset: start over.
+                if (await row.CountAsync() > 0) return;
                 await select.SelectOptionAsync(new SelectOptionValue { Label = "Choose someone…" });
             }
         }
-
-        await dm.GetByTestId("manual-initiative-input").FillAsync(roll.ToString());
-        await setBtn.ClickAsync();
     }
 
     private static async Task AddConditionAsync(ILocator participantRow, string effectId, int rounds)
