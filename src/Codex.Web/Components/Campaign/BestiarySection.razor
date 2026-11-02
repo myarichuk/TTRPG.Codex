@@ -74,7 +74,7 @@ else
                                     <a href="@Ctx.BasePath/library/@entry.EntryType/@Uri.EscapeDataString(entry.EntryId)">@entry.Name</a>
                                     @if (entry.IsHomebrew)
                                     {
-                                        <span class="pill pill-accent ms-1">@L["Campaign.Bestiary.Homebrew"]</span>
+                                        <span class="pill pill-accent ms-2">@L["Campaign.Bestiary.Homebrew"]</span>
                                     }
                                 </div>
                                 <div class="row-sub">
@@ -109,7 +109,7 @@ else
                                 <div class="row-title"><a href="@Ctx.BasePath/actors/@actor.Id">@actor.Name</a>
                                     @if (actor.Visibility != ActorVisibility.Known)
                                     {
-                                        <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Bestiary.Hidden"] : L["Campaign.Bestiary.Unidentified"])</span>
+                                        <span class="pill pill-warning ms-2">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Bestiary.Hidden"] : L["Campaign.Bestiary.Unidentified"])</span>
                                     }
                                 </div>
                                 <div class="row-sub">@(hp.Max > 0 ? $"{hp.Current}/{hp.Max} {hp.Label}" : "")</div>
@@ -147,7 +147,7 @@ else
                                     <div class="row-title"><a href="@Ctx.BasePath/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)">@item.Entry.Name</a>
                                         @if (item.IsHomebrew)
                                         {
-                                            <span class="pill pill-accent ms-1">@L["Campaign.Bestiary.Homebrew"]</span>
+                                            <span class="pill pill-accent ms-2">@L["Campaign.Bestiary.Homebrew"]</span>
                                         }
                                     </div>
                                     <div class="row-sub">@Summary(item)</div>
@@ -224,7 +224,8 @@ else
     /// joined or a session started since this page opened is not overwritten) and refreshes the page's copy.</summary>
     private async Task EditBestiaryAsync(Action<List<BestiaryEntry>> edit)
     {
-        var stored = await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => edit(campaign.Bestiary));
+        CampaignDocument? stored = null;
+        await Ctx.WithCurrentRoleAsync(async () => stored = await CampaignRepo.UpdateAsDmAsync(Ctx.Access, campaign => edit(campaign.Bestiary)));
         if (stored != null)
         {
             Ctx.Campaign.Bestiary = stored.Bestiary;

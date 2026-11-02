@@ -59,6 +59,26 @@ public sealed partial class SheetRuleEngine
             result.Inventory.Add(new InventoryItem(index, raw[index], entry, quantity, equipped));
         }
 
+        // What it all weighs, and how much the character can carry (F24).
+        result.CarriedWeight = result.Inventory.Sum(i => (ToDouble(i.Entry.Properties.GetValueOrDefault(rules.WeightProperty)) ?? 0) * i.Quantity);
+        if (!string.IsNullOrWhiteSpace(rules.Capacity))
+        {
+            try
+            {
+                result.CarryingCapacity = EvaluateFormula(FormulaContext(sheet), rules.Capacity);
+            }
+            catch (Exception)
+            {
+                result.Warnings.Add(FormulaError(rules.Key, $"{rules.Label} capacity"));
+            }
+
+            if (result.CarryingCapacity is { } capacity && result.CarriedWeight > capacity)
+            {
+                result.Warnings.Add(new RuleViolation(rules.Key, $"{rules.Label}: carrying {result.CarriedWeight:0.##} of the {capacity} you can carry.", "Actor.Rule.OverCapacity",
+                    new object?[] { rules.Label, result.CarriedWeight, capacity }));
+            }
+        }
+
         if (Rules.ArmorClass is { } armor)
         {
             var worn = result.Inventory.Where(i => i.Equipped).ToList();
@@ -108,9 +128,8 @@ public sealed partial class SheetRuleEngine
     private int ModifierOf(IReadOnlyDictionary<string, object> sheet, string attributeKey)
     {
         var attribute = system.Attributes.FirstOrDefault(a => a.Key.Equals(attributeKey, StringComparison.OrdinalIgnoreCase));
-        if (attribute == null || attribute.Modifier != "half-minus-five") return 0;
-        var score = YamlValues.GetInt(sheet, attribute.Key) ?? attribute.Default;
-        return (int)Math.Floor((score - 10) / 2.0);
+        if (attribute == null) return 0;
+        return attribute.ModifierFor(YamlValues.GetInt(sheet, attribute.Key) ?? attribute.Default) ?? 0;
     }
 
     private void EvaluateHitPoints(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
@@ -130,6 +149,12 @@ public sealed partial class SheetRuleEngine
         foreach (var cls in SheetClasses(sheet, result, rules.ClassField, rules.LevelField))
         {
             var die = cls.Entry != null && cls.Entry.Properties.TryGetValue(rules.DieProperty, out var raw) ? ParseHitDie(raw) : null;
+            if (die == null && cls.Entry != null)
+            {
+                // A homebrew class with no hit die (or one like "big") used to add nothing without a word (F24).
+                result.Warnings.Add(new RuleViolation(rules.Key, $"{cls.Entry.Name} has no hit die, so its levels add no hit points.", "Actor.Rule.NoHitDie", new object?[] { cls.Entry }));
+            }
+
             for (var i = 0; i < cls.Level; i++)
             {
                 number++;
@@ -138,7 +163,7 @@ public sealed partial class SheetRuleEngine
                 int baseValue;
                 if (number == 1)
                 {
-                    baseValue = die.Value;
+                    baseValue = rules.FirstLevelGain(die.Value);
                 }
                 else if (mode == "rolled" && number - 2 < rolls.Count && rolls[number - 2] > 0)
                 {
@@ -147,7 +172,7 @@ public sealed partial class SheetRuleEngine
                 }
                 else
                 {
-                    baseValue = die.Value / 2 + 1;
+                    baseValue = rules.AverageOf(die.Value);
                 }
 
                 levels.Add(new HitPointLevel(number, cls.Entry!.Name, die.Value, baseValue, rolled, modifier, Math.Max(baseValue + modifier + extra, rules.MinimumPerLevel), extra));
@@ -189,7 +214,7 @@ public sealed partial class SheetRuleEngine
         var requested = (YamlValues.GetString(sheet, rules.ModeKey) ?? "manual").ToLowerInvariant();
         var mode = requested == "auto" ? "auto" : "manual";
         var lines = new List<ArmorClassLine>();
-        var (interpreter, identifiers) = FormulaContext(sheet);
+        var values = FormulaContext(sheet);
 
         var worn = result.Inventory.Where(i => i.Equipped).Select(i => i.Entry).ToList();
         var body = worn.Where(e => IsBodyArmor(e, rules)).OrderByDescending(e => ToDouble(Property(e, rules.BaseProperty))).FirstOrDefault();
@@ -204,32 +229,32 @@ public sealed partial class SheetRuleEngine
             var dexPart = cap.HasValue ? (cap.Value <= 0 ? 0 : Math.Min(dex, (int)cap.Value)) : dex;
             total = baseValue + dexPart;
             lines.Add(new ArmorClassLine("body", body.Name, baseValue, body));
-            if (dexPart != 0 || !cap.HasValue) lines.Add(new ArmorClassLine("dex", "Dexterity", dexPart, null, cap is > 0 ? (int)cap.Value : null));
+            if (dexPart != 0 || !cap.HasValue) lines.Add(new ArmorClassLine("dex", system.Attributes.FirstOrDefault(a => a.Key.Equals(rules.DexAttribute, StringComparison.OrdinalIgnoreCase))?.Label ?? rules.DexAttribute, dexPart, null, cap is > 0 ? (int)cap.Value : null));
         }
         else
         {
             var options = new List<(string Kind, string Label, long Value, ContentEntry? Entry)>();
             try
             {
-                options.Add(("unarmored", "Unarmored", EvaluateFormula(interpreter, identifiers, rules.Unarmored), null));
+                options.Add(("unarmored", "Unarmored", EvaluateFormula(values, rules.Unarmored), null));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                result.Violations.Add(new RuleViolation(rules.Key, $"Armor Class: formula error ({ex.Message})."));
+                result.Warnings.Add(FormulaError(rules.Key, "Armor Class"));
             }
 
-            foreach (var cls in SheetClasses(sheet, result, Rules.HitPoints?.ClassField ?? "class", Rules.HitPoints?.LevelField ?? "level"))
+            foreach (var cls in SheetClasses(sheet, result, Rules.HitPoints?.ClassField ?? system.FieldRoles.Class ?? string.Empty, Rules.HitPoints?.LevelField ?? system.FieldRoles.Level ?? string.Empty))
             {
                 if (cls.Entry == null || !cls.Entry.Properties.TryGetValue(rules.ClassFormulaProperty, out var formula) || string.IsNullOrWhiteSpace(formula?.ToString())) continue;
                 var shieldAllowed = !cls.Entry.Properties.TryGetValue(rules.ClassShieldProperty, out var allows) || allows is not (false or "false" or "False");
                 if (shielded && !shieldAllowed) continue;
                 try
                 {
-                    options.Add(("defense", $"{cls.Entry.Name} defense", EvaluateFormula(interpreter, identifiers, formula!.ToString()!), cls.Entry));
+                    options.Add(("defense", $"{cls.Entry.Name} defense", EvaluateFormula(values, formula!.ToString()!), cls.Entry));
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    result.Violations.Add(new RuleViolation(rules.Key, $"Armor Class: {cls.Entry.Name}'s formula error ({ex.Message})."));
+                    result.Warnings.Add(FormulaError(rules.Key, $"{cls.Entry.Name} defense"));
                 }
             }
 

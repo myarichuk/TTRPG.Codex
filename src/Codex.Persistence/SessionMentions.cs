@@ -88,16 +88,26 @@ public static partial class SessionMentions
 
     internal static string KindName(MentionKind kind) => kind switch { MentionKind.Actor => "actor", MentionKind.Place => "place", _ => "item" };
 
-    internal static string Token(MentionKind kind, string id) => $"[[{KindName(kind)}:{id}]]";
+    public static string Token(MentionKind kind, string id) => $"[[{KindName(kind)}:{id}]]";
 }
 
 /// <summary>
 /// What one viewer can mention and read: the characters, places and items they can see, by the names they know.
 /// Built from the full lists; the visibility rules are applied here, so one directory serves one audience.
 /// </summary>
+/// <summary>What a reader sees for a mention they can't: an actor, a place, an item. English unless a page passes its
+/// language's words.</summary>
+public sealed record MentionWords(string Someone, string Somewhere, string Something)
+{
+    public static MentionWords English { get; } = new(SessionMentions.UnknownActor, SessionMentions.UnknownPlace, SessionMentions.UnknownItem);
+}
+
 public sealed class MentionDirectory
 {
     private readonly bool _isDm;
+
+    /// <summary>The words for mentions this viewer can't see.</summary>
+    public MentionWords Words { get; init; } = MentionWords.English;
     private readonly Dictionary<string, ActorDocument> _actors;
     private readonly Dictionary<string, LocationDocument> _places;
     private readonly Dictionary<string, MentionItem> _items;
@@ -120,9 +130,35 @@ public sealed class MentionDirectory
             .Where(c => !string.IsNullOrWhiteSpace(c.Name))
             .ToList();
         _byLength = Candidates.OrderByDescending(c => c.Name.Length).ToList();
+        _ambiguous = Candidates.GroupBy(NameKey, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     private readonly List<MentionCandidate> _byLength;
+
+    // Names two candidates of one kind share (two PCs called Bram). "@Bram" can't say which, so such a mention stays an id in
+    // the editor and typed text is never encoded to either: guessing moved a :::for reveal to the other Bram (S3).
+    private readonly HashSet<string> _ambiguous;
+
+    private static string NameKey(MentionCandidate c) => c.Trigger + c.Name;
+
+    /// <summary>Whether another candidate of the same kind has <paramref name="candidate"/>'s name, so "@Name" can't say which.</summary>
+    public bool IsAmbiguous(MentionCandidate candidate) => _ambiguous.Contains(NameKey(candidate));
+
+    /// <summary>For an actor whose name another shares, the first line of the description this viewer may read, so the
+    /// suggestion list can say which Bram is which (F7); null otherwise.</summary>
+    public string? HintFor(MentionCandidate candidate)
+    {
+        if (candidate.Kind != MentionKind.Actor || !IsAmbiguous(candidate) || !_actors.TryGetValue(candidate.Id, out var actor)) return null;
+        var text = _isDm ? actor.Biography
+            : actor.Visibility == ActorVisibility.Unknown ? actor.PublicDescription
+            : SecretText.ForPlayers(actor.Biography);
+        var line = (text ?? string.Empty).Split('\n').Select(l => l.Trim().TrimStart('#', '>', '*', '-', ' ')).FirstOrDefault(l => l.Length > 0 && !l.StartsWith(":::", StringComparison.Ordinal));
+        return line == null ? null : line.Length <= 40 ? line : line[..39].TrimEnd() + "…";
+    }
+
+    /// <summary>A retired actor (D17): still named wherever it is mentioned, and still read back when typed, but not offered.</summary>
+    public bool IsRetired(MentionCandidate candidate) => candidate.Kind == MentionKind.Actor && _actors.TryGetValue(candidate.Id, out var actor) && actor.Retired;
 
     /// <summary>Everything this viewer may mention.</summary>
     public IReadOnlyList<MentionCandidate> Candidates { get; }
@@ -140,7 +176,7 @@ public sealed class MentionDirectory
             if ((ch == '@' || ch == '#' || ch == '$') && (i == 0 || !char.IsLetterOrDigit(text[i - 1])))
             {
                 var match = _byLength.FirstOrDefault(c => c.Trigger == ch && NameAt(text, i + 1, c.Name));
-                if (match != null)
+                if (match != null && !_ambiguous.Contains(NameKey(match)))
                 {
                     result.Append(SessionMentions.Token(match.Kind, match.Id));
                     i += 1 + match.Name.Length;
@@ -168,13 +204,13 @@ public sealed class MentionDirectory
             {
                 "actor" => _actors.TryGetValue(id, out var actor)
                     ? new MentionSegment(actor.NameFor(_isDm), MentionKind.Actor, id)
-                    : new MentionSegment(SessionMentions.UnknownActor, MentionKind.Actor, id, Known: false),
+                    : new MentionSegment(Words.Someone, MentionKind.Actor, id, Known: false),
                 "place" => _places.TryGetValue(id, out var place)
                     ? new MentionSegment(place.Name, MentionKind.Place, id)
-                    : new MentionSegment(SessionMentions.UnknownPlace, MentionKind.Place, id, Known: false),
+                    : new MentionSegment(Words.Somewhere, MentionKind.Place, id, Known: false),
                 _ => _items.TryGetValue(id, out var item)
                     ? new MentionSegment(item.Name, MentionKind.Item, id)
-                    : new MentionSegment(SessionMentions.UnknownItem, MentionKind.Item, id, Known: false)
+                    : new MentionSegment(Words.Something, MentionKind.Item, id, Known: false)
             });
             last = m.Index + m.Length;
         }
@@ -221,17 +257,45 @@ public sealed class MentionDirectory
     public string Plain(string text) =>
         SessionMentions.HasMentions(text) ? string.Concat(Read(text).Select(s => s.Text)) : text;
 
-    /// <summary>The note back as its writer typed it, for correcting: "@Name" for each mention they can still see.
-    /// One they no longer can stays a stored id, so saving the correction doesn't lose it.</summary>
-    public string ForEditing(string text) =>
-        !SessionMentions.HasMentions(text)
-            ? text
-            : string.Concat(Read(text).Select(s => s.Kind switch
+    /// <summary>The note back as its writer typed it, for correcting: "@Name" for each mention they can still see. A mention
+    /// stays a stored id where "@Name" would not come back as the same one through <see cref="Encode"/> (S3):
+    /// <list type="bullet">
+    /// <item>one they no longer can see, so saving the correction doesn't lose it;</item>
+    /// <item>one whose name another candidate shares;</item>
+    /// <item>one glued to the word before it ("the[[actor:x]]"), which Encode would not read as a mention;</item>
+    /// <item>every mention on a secret block's marker line (<c>:::for [[actor:x]]</c>): who may read the block is not
+    /// something a retyped name may change.</item>
+    /// </list></summary>
+    public string ForEditing(string text)
+    {
+        if (!SessionMentions.HasMentions(text)) return text;
+        var lines = text.Split('\n');
+        for (var l = 0; l < lines.Length; l++)
+        {
+            if (!SessionMentions.HasMentions(lines[l]) || SecretText.IsMarkerLine(lines[l].TrimEnd('\r'))) continue;
+            var editing = new StringBuilder(lines[l].Length);
+            foreach (var s in Read(lines[l]))
             {
-                null => s.Text,
-                { } kind when !s.Known => SessionMentions.Token(kind, s.Id!),
-                { } kind => SessionMentions.TriggerOf(kind) + s.Text
-            }));
+                if (s.Kind is not { } kind)
+                {
+                    editing.Append(s.Text);
+                }
+                else if (!s.Known || _ambiguous.Contains(SessionMentions.TriggerOf(kind) + s.Text)
+                         || (editing.Length > 0 && char.IsLetterOrDigit(editing[^1])))
+                {
+                    editing.Append(SessionMentions.Token(kind, s.Id!));
+                }
+                else
+                {
+                    editing.Append(SessionMentions.TriggerOf(kind)).Append(s.Text);
+                }
+            }
+
+            lines[l] = editing.ToString();
+        }
+
+        return string.Join('\n', lines);
+    }
 
     /// <summary>Whether <paramref name="name"/> is at <paramref name="start"/>, ignoring case, and ends a word there.</summary>
     private static bool NameAt(string text, int start, string name) =>

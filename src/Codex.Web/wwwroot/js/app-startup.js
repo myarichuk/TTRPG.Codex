@@ -1,5 +1,9 @@
 window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOptions().timeZone; };
 
+// The interface language the server chose (the account's, from its cookie, which scripts can't read), kept for offline.html,
+// which the service worker shows with no server to ask (U7).
+try { localStorage.setItem("codex-lang", document.documentElement.lang || "en"); } catch (e) { /* storage blocked: the browser's language */ }
+
 (function () {
     // ---- Splash ----
     function removeSplash() {
@@ -31,8 +35,18 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
             } else if (event.detail.state === "failed") {
                 document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
             } else if (event.detail.state === "rejected") {
-                location.reload();
+                mustReload();
             }
+        }
+
+        // The server no longer has this page's session, so it has to reload. Said, not done behind the person's back
+        // (D9): what they typed is kept (see Drafts) and offered back once the page is up again.
+        function mustReload() {
+            Array.from(reconnectModal.classList)
+                .filter(function (c) { return c.indexOf("components-reconnect-") === 0 || c === "components-reconnect-paused"; })
+                .forEach(function (c) { reconnectModal.classList.remove(c); });
+            reconnectModal.classList.add("components-reconnect-rejected");
+            if (reconnectModal.showModal && !reconnectModal.open) reconnectModal.showModal();
         }
 
         async function retry() {
@@ -42,7 +56,7 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
                 if (!successful) {
                     const resumeSuccessful = await Blazor.resumeCircuit();
                     if (!resumeSuccessful) {
-                        location.reload();
+                        mustReload();
                     } else if (reconnectModal.close) {
                         reconnectModal.close();
                     }
@@ -55,14 +69,117 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
         async function resume() {
             try {
                 const successful = await Blazor.resumeCircuit();
-                if (!successful) location.reload();
+                if (!successful) mustReload();
             } catch {
-                location.reload();
+                mustReload();
             }
         }
 
         async function retryWhenDocumentBecomesVisible() {
             if (document.visibilityState === "visible") await retry();
+        }
+    }
+
+    // ---- Drafts (D9) ----
+    // What someone types into a text box is copied to this tab's sessionStorage, per page and box, as they type. When the
+    // page has to reload because the server lost its session (a phone locked for a few minutes mid-entry), the text is
+    // offered back once the page is up again, for the boxes whose text differs from what was saved. Only after such a
+    // reload: ordinary navigation offers nothing, and the copies are dropped once offered or after a day.
+    var DRAFT_PREFIX = "codex.draft:";
+    var RECOVERING = "codex.recovering";
+    var DRAFT_TTL = 24 * 60 * 60 * 1000;
+
+    function draftable(el) {
+        if (!el || !el.id || el.readOnly || el.disabled || el.hasAttribute("data-no-draft")) return false;
+        if (el.tagName === "TEXTAREA") return true;
+        return el.tagName === "INPUT" && (el.type === "text" || el.type === "search" || el.type === "url" || el.type === "number");
+    }
+
+    function draftKey(path, id) { return DRAFT_PREFIX + path + "#" + id; }
+
+    function storage(fn) { try { return fn(window.sessionStorage); } catch (e) { return null; } }
+
+    function keepDrafts() {
+        document.addEventListener("input", function (e) {
+            var el = e.target;
+            if (!draftable(el)) return;
+            storage(function (s) { s.setItem(draftKey(location.pathname, el.id), JSON.stringify({ v: el.value, t: Date.now() })); });
+        }, true);
+
+        document.addEventListener("click", function (e) {
+            var button = e.target && e.target.closest ? e.target.closest("[data-codex-reload]") : null;
+            if (!button) return;
+            storage(function (s) { s.setItem(RECOVERING, location.pathname); });
+            location.reload();
+        });
+    }
+
+    function draftsFor(path) {
+        return storage(function (s) {
+            var found = [];
+            for (var i = s.length - 1; i >= 0; i--) {
+                var key = s.key(i);
+                if (!key || key.indexOf(DRAFT_PREFIX) !== 0) continue;
+                var draft = null;
+                try { draft = JSON.parse(s.getItem(key)); } catch (e) { }
+                if (!draft || Date.now() - draft.t > DRAFT_TTL) { s.removeItem(key); continue; }
+                var prefix = DRAFT_PREFIX + path + "#";
+                if (key.indexOf(prefix) === 0) found.push({ key: key, id: key.substring(prefix.length), value: draft.v });
+            }
+            return found;
+        }) || [];
+    }
+
+    function forget(drafts) {
+        storage(function (s) {
+            drafts.forEach(function (d) { s.removeItem(d.key); });
+            s.removeItem(RECOVERING);
+        });
+    }
+
+    // After a reload the page loads its data on its own time, so the boxes are looked for for a little while.
+    function offerDrafts() {
+        var path = storage(function (s) { return s.getItem(RECOVERING); });
+        var drafts = draftsFor(location.pathname);
+        if (path !== location.pathname || drafts.length === 0) {
+            if (path) storage(function (s) { s.removeItem(RECOVERING); });
+            return;
+        }
+
+        var tries = 0;
+        (function look() {
+            var waiting = drafts.filter(function (d) {
+                var el = document.getElementById(d.id);
+                return draftable(el) && el.value !== d.value;
+            });
+            if (waiting.length === 0 && ++tries < 20) { setTimeout(look, 500); return; }
+            if (waiting.length === 0) { forget(drafts); return; }
+            show(waiting);
+        })();
+
+        function show(waiting) {
+            var banner = document.getElementById("codex-draft-recovery");
+            if (!banner) { forget(drafts); return; }
+            var text = waiting.length === 1 ? banner.getAttribute("data-one") : banner.getAttribute("data-many").replace("{0}", waiting.length);
+            document.getElementById("codex-draft-recovery-text").textContent = text;
+            banner.hidden = false;
+            document.getElementById("codex-draft-restore").onclick = function () {
+                // Looked up again: the page may have finished loading since the banner appeared.
+                waiting.forEach(function (d) {
+                    var el = document.getElementById(d.id);
+                    if (!draftable(el) || el.value === d.value) return;
+                    el.value = d.value;
+                    // Both, so a box bound on change and one bound as you type each take the text into the page.
+                    el.dispatchEvent(new Event("input", { bubbles: true }));
+                    el.dispatchEvent(new Event("change", { bubbles: true }));
+                });
+                banner.hidden = true;
+                forget(drafts);
+            };
+            document.getElementById("codex-draft-discard").onclick = function () {
+                banner.hidden = true;
+                forget(drafts);
+            };
         }
     }
 
@@ -78,9 +195,10 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
     function init() {
         registerServiceWorker();
         initReconnectLogic();
+        keepDrafts();
         if (window.Blazor) {
             try {
-                Blazor.start().then(removeSplash).catch(removeSplash);
+                Blazor.start().then(function () { removeSplash(); setTimeout(offerDrafts, 1500); }).catch(removeSplash);
             } catch (e) {
                 removeSplash();
             }
@@ -285,7 +403,8 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
             }
             // A link closes itself, over a "]]" already after the caret (typed, or left from an earlier title).
             const closing = c.t === "[[" ? (el.value.slice(caret, caret + 2) === "]]" ? 2 : el.value[caret] === "]" ? 1 : 0) : 0;
-            const insert = c.t === "[[" ? "[[" + c.n + "]]" : c.t + c.n + " ";
+            // "w": what to write instead of the name, for a name two characters share (the stored id; the server sends it).
+            const insert = c.t === "[[" ? "[[" + c.n + "]]" : (c.w || c.t + c.n) + " ";
             el.value = el.value.slice(0, start) + insert + el.value.slice(caret + closing);
             const at = start + insert.length;
             el.setSelectionRange(at, at);
@@ -352,22 +471,58 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
 
 // Phones never show title= tooltips, and some carry rules (a condition's expiry, an initiative roll, death
 // saves). On a screen without hover, tapping something that has a title shows it in a bubble; the next tap,
-// a scroll or Escape hides it. Controls keep their own tap behaviour.
+// a scroll or Escape hides it. Controls keep their own tap behaviour: a tap presses them, and a long press
+// (half a second) shows what they do instead, so a button with only an icon can be asked before it is pressed.
 (function () {
     if (!window.matchMedia || !window.matchMedia("(hover: none)").matches) return;
     let tip = null;
+    let press = null;
+    let swallowClick = false;
     function hide() { if (tip) { tip.remove(); tip = null; } }
+    function labelOf(el) { return (el.getAttribute("title") || el.getAttribute("aria-label") || "").trim(); }
+    document.addEventListener("touchstart", function (e) {
+        clearTimeout(press);
+        const target = e.target instanceof Element ? e.target : null;
+        // The control's own name, or the title of what holds it (a condition chip around its name's link).
+        const control = target ? target.closest("button, a, summary") : null;
+        const el = control && labelOf(control) ? control : target ? target.closest("[title]") : null;
+        if (!el || !labelOf(el) || target.closest("input, select, textarea")) return;
+        press = setTimeout(function () {
+            hide();
+            show(el, labelOf(el));
+            swallowClick = true;
+        }, 500);
+    }, { passive: true });
+    ["touchend", "touchmove", "touchcancel"].forEach(function (type) {
+        document.addEventListener(type, function () {
+            clearTimeout(press);
+            // A long press may end with no click at all (Android opens its menu instead), so the next tap isn't swallowed.
+            if (swallowClick) setTimeout(function () { swallowClick = false; }, 400);
+        }, { passive: true });
+    });
+    // The press that showed the tip doesn't also press the control, nor open the browser's menu for a link.
+    document.addEventListener("contextmenu", function (e) { if (swallowClick) e.preventDefault(); });
+    document.addEventListener("click", function (e) {
+        if (swallowClick) {
+            swallowClick = false;
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, true);
     document.addEventListener("click", function (e) {
         const wasOpen = !!tip;
         hide();
         const target = e.target instanceof Element ? e.target : null;
         const el = target ? target.closest("[title]") : null;
         if (!el || wasOpen || !el.title.trim() || target.closest("button, a, input, select, textarea, label, summary")) return;
+        show(el, el.title);
+    });
+    function show(el, text) {
         tip = document.createElement("div");
         tip.className = "tap-tip";
         tip.setAttribute("role", "tooltip");
         tip.dir = "auto";
-        tip.textContent = el.title;
+        tip.textContent = text;
         document.body.appendChild(tip);
         const r = el.getBoundingClientRect();
         const w = tip.offsetWidth, h = tip.offsetHeight;
@@ -375,7 +530,7 @@ window.codexTimeZone = function () { return Intl.DateTimeFormat().resolvedOption
         const top = r.top - h - 8 > 8 ? r.top - h - 8 : r.bottom + 8;
         tip.style.left = left + "px";
         tip.style.top = top + "px";
-    });
+    }
     window.addEventListener("scroll", hide, { passive: true, capture: true });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
 })();
@@ -655,6 +810,39 @@ window.codex = {
         if (sheetListScroll === null) return;
         window.scrollTo({ top: sheetListScroll, behavior: "instant" });
         sheetListScroll = null;
+    },
+    // A character sheet or a session opens as a window over the section it came from, which stays on the page, hidden
+    // (CampaignPage, U2). The window starts at the top; closing it puts the section back where it was scrolled when the
+    // click that opened the window happened (by then Blazor has already scrolled for the navigation).
+    windowOpened: function () {
+        windowUnderScroll = lastClickScroll;
+        window.scrollTo({ top: 0, behavior: "instant" });
+    },
+    windowClosed: function (restore) {
+        if (restore) window.scrollTo({ top: windowUnderScroll, behavior: "instant" });
+    },
+    // A link to a place (".../world#place-ID") lands on its row with its description open, not folded away (U2).
+    revealPlace: function (id) {
+        const row = document.getElementById(id);
+        if (!row) return false;
+        const details = row.querySelector("details.place-details");
+        if (details) details.open = true;
+        row.classList.remove("place-target");
+        void row.offsetWidth;
+        row.classList.add("place-target");
+        row.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        return true;
+    },
+    // The place on a character sheet that fixes a rule problem (data-rule-key, ActorSheet U4): in view, its first control focused.
+    showRule: function (key) {
+        const place = Array.from(document.querySelectorAll("[data-rule-key]")).find(function (el) { return el.getAttribute("data-rule-key") === key; });
+        if (!place) return;
+        place.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        const control = place.querySelector("input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])");
+        if (control) control.focus({ preventScroll: true });
+        place.classList.remove("rule-target");
+        void place.offsetWidth;
+        place.classList.add("rule-target");
     }
 };
 
@@ -728,9 +916,27 @@ document.addEventListener("keydown", function (e) {
 // Where the page was scrolled when a link was last followed (captured before Blazor handles the click).
 let lastLinkScroll = 0;
 let sheetListScroll = null;
+// The same for any click: a button can open a window too (Create opens the new character's sheet).
+let lastClickScroll = 0;
+let windowUnderScroll = 0;
 document.addEventListener("click", function (e) {
+    lastClickScroll = window.scrollY;
     if (e.target instanceof Element && e.target.closest("a[href]")) lastLinkScroll = window.scrollY;
 }, true);
+
+// Escape closes a detail that is a full-screen sheet on a phone (.phone-sheet), as its Back arrow does (U2). Not while typing
+// (a box's own Escape: a suggestion list, a template, full screen), and not under an open dialog or menu, which take it first.
+document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    const target = e.target;
+    if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
+        || (target instanceof HTMLInputElement && target.type !== "checkbox" && target.type !== "radio")) return;
+    if (document.querySelector("dialog[open], details.popover-menu[open]")) return;
+    const back = Array.from(document.querySelectorAll(".phone-sheet .sheet-bar > .icon-btn")).find(b => b.getClientRects().length > 0);
+    if (!back) return;
+    e.preventDefault();
+    back.click();
+});
 
 // Kept for backwards compatibility with earlier builds.
 window.codexDownload = window.codex.download;
@@ -1135,15 +1341,32 @@ window.codexTemplates = (function () {
     return { of: of, insert: insert, expand: expand, stopWithin: stopWithin };
 })();
 
-// Hovering a mention or a [[link]] in written text (or focusing it from the keyboard) shows a card with the name, what it
-// is, its first lines and its picture, from /campaigns/{id}/preview (PreviewEndpoints.cs), which answers only what the
-// viewer may read. Screens without hover follow the link instead. Answers are kept a minute: a reveal shows soon after.
+// The preview card (U1): a mention, a [[link]] or a name on the table (a[data-preview]) shows a card with the name, what it is,
+// its first lines, its picture and what it mentions, from /campaigns/{id}/preview (PreviewEndpoints.cs), which answers only
+// what the viewer may read. Answers are kept a minute: a reveal shows soon after.
+// - With a mouse, hovering (or focusing) shows the card. The pointer can move onto it; a name on it opens the next card beside
+//   it, and the pin keeps a card open while you read on, until its close button or Escape.
+// - On a touch screen, a tap opens the card as a sheet at the bottom instead of following the link, with Open to go there; a
+//   name on the sheet opens its card in the same sheet, and Back returns. When there is no card to show, the tap follows the link.
 (function () {
-    if (!window.matchMedia || !window.matchMedia("(hover: hover)").matches) return;
-    const SHOW_AFTER = 350, KEEP = 60000;
+    if (!window.matchMedia) return;
+    const HOVER = window.matchMedia("(hover: hover)").matches;
+    const SHOW_AFTER = 350, HIDE_AFTER = 300, KEEP = 60000, MAX_PINNED = 4;
+    const SELECTOR = "a.mention, a.wiki-link:not(.wiki-missing), a[data-preview]";
+    const ICONS = {
+        pin: "<path d=\"M12 17v5\"/><path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z\"/>",
+        close: "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>",
+        back: "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>"
+    };
     const cache = new Map();
-    let card = null, timer = 0, current = null;
+    let serial = 0;
 
+    function text(key) {
+        const s = document.getElementById("codex-preview-strings");
+        return (s && s.getAttribute("data-" + key)) || "";
+    }
+
+    // The preview a link asks for, or null for a link that has none.
     function target(link) {
         let url;
         try { url = new URL(link.href, location.href); } catch { return null; }
@@ -1154,41 +1377,49 @@ window.codexTemplates = (function () {
         if (m && m[2] !== "new") return "/campaigns/" + m[1] + "/preview/page/" + m[2];
         m = url.pathname.match(/^\/campaigns\/([^/]+)\/world$/);
         if (m && url.hash.startsWith("#place-")) return "/campaigns/" + m[1] + "/preview/place/" + url.hash.slice(7);
+        m = url.pathname.match(/^\/campaigns\/([^/]+)\/library\/([^/]+)\/([^/]+)$/);
+        if (m) return "/campaigns/" + m[1] + "/preview/entry/" + m[2] + "/" + m[3];
+        m = url.pathname.match(/^\/campaigns\/([^/]+)\/sessions\/([^/]+)$/);
+        if (m) return "/campaigns/" + m[1] + "/preview/session/" + m[2];
         return null;
+    }
+
+    // Inside the DM's "view as players" (a page part, or a card opened from one), the card answers as it would for a player
+    // (the server checks it is the DM asking).
+    function source(link) {
+        const src = target(link);
+        return src && link.closest("[data-view-as='players']") ? src + "?as=players" : src;
     }
 
     function load(src) {
         const hit = cache.get(src);
         if (hit && Date.now() - hit.at < KEEP) return hit.data;
-        const data = fetch(src, { credentials: "same-origin", headers: { Accept: "application/json" } })
+        const data = fetch(src, { credentials: "same-origin", headers: { Accept: "application/json", "X-Time-Zone": window.codexTimeZone() } })
             .then(function (r) { return r.ok ? r.json() : null; })
             .catch(function () { return null; });
         cache.set(src, { at: Date.now(), data: data });
         return data;
     }
 
-    function hide() {
-        clearTimeout(timer);
-        if (current) current.removeAttribute("aria-describedby");
-        current = null;
-        if (card) card.hidden = true;
+    function icon(name) {
+        return "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">" + ICONS[name] + "</svg>";
     }
 
-    function place(link) {
-        const r = link.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
-        card.style.left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8) + "px";
-        card.style.top = (r.bottom + 6 + h > window.innerHeight - 8 && r.top - h - 6 > 8 ? r.top - h - 6 : r.bottom + 6) + "px";
+    function button(name, label, testid) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "hover-card-btn";
+        b.innerHTML = icon(name);
+        b.setAttribute("aria-label", label);
+        b.title = label;
+        b.dataset.testid = testid;
+        return b;
     }
 
-    function show(link, p) {
-        if (!card) {
-            card = document.createElement("div");
-            card.id = "hover-card";
-            card.className = "hover-card";
-            card.setAttribute("role", "tooltip");
-            card.dataset.testid = "hover-card";
-            document.body.appendChild(card);
-        }
+    // The card's content: picture, name (a link to it), what it is, the first lines, and the names it mentions as links that
+    // open their own cards.
+    function content(p, src) {
+        const id = "hover-card-" + (++serial);
         const parts = [];
         if (p.image) {
             const img = document.createElement("img");
@@ -1197,50 +1428,294 @@ window.codexTemplates = (function () {
         }
         const body = document.createElement("div");
         body.className = "hover-card-body";
-        const title = document.createElement("strong");
-        title.className = "hover-card-title"; title.textContent = p.title;
+        const title = document.createElement("a");
+        title.className = "hover-card-title"; title.href = p.href; title.textContent = p.title; title.id = id + "-title";
         const sub = document.createElement("span");
         sub.className = "hover-card-sub"; sub.textContent = p.sub;
         body.append(title, sub);
         if (p.text) {
-            const text = document.createElement("p");
-            text.className = "hover-card-text"; text.textContent = p.text;
-            body.append(text);
+            const t = document.createElement("p");
+            t.className = "hover-card-text"; t.textContent = p.text;
+            body.append(t);
+        }
+        if (p.links && p.links.length) {
+            const list = document.createElement("p");
+            list.className = "hover-card-links";
+            const label = document.createElement("span");
+            label.className = "hover-card-links-label"; label.textContent = text("names");
+            list.append(label);
+            p.links.forEach(function (l) {
+                const a = document.createElement("a");
+                a.href = l.href; a.textContent = l.title; a.dataset.preview = ""; a.className = "hover-card-link";
+                list.append(" ", a);
+            });
+            body.append(list);
         }
         parts.push(body);
-        card.replaceChildren.apply(card, parts);
+        const card = document.createElement("div");
+        card.id = id;
+        card.className = "hover-card";
         card.dir = "auto";
-        card.hidden = false;
-        link.setAttribute("aria-describedby", "hover-card");
-        place(link);
+        card.setAttribute("role", "dialog");
+        card.setAttribute("aria-labelledby", title.id);
+        card.dataset.testid = "hover-card";
+        if (src.indexOf("?as=players") > 0) card.dataset.viewAs = "players";
+        card.append.apply(card, parts);
+        return card;
     }
 
-    function start(link) {
-        if (link === current) return;
-        hide();
-        const src = target(link);
-        if (!src) return;
-        current = link;
-        timer = setTimeout(function () {
-            load(src).then(function (p) { if (p && current === link && link.isConnected) show(link, p); });
-        }, SHOW_AFTER);
+    function campaignOf(path) {
+        const m = path.match(/^\/campaigns\/[^/?#]+/);
+        return m ? m[0] : "";
     }
 
-    const SELECTOR = "a.mention, a.wiki-link:not(.wiki-missing)";
-    document.addEventListener("mouseover", function (e) {
-        const link = e.target instanceof Element ? e.target.closest(SELECTOR) : null;
-        if (link) start(link);
-    });
-    document.addEventListener("mouseout", function (e) {
-        if (!current) return;
-        const to = e.relatedTarget instanceof Element ? e.relatedTarget.closest(SELECTOR) : null;
-        if (to !== current) hide();
-    });
-    document.addEventListener("focusin", function (e) {
-        const link = e.target instanceof Element ? e.target.closest(SELECTOR) : null;
-        if (link) start(link); else hide();
-    });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
-    window.addEventListener("scroll", hide, { passive: true, capture: true });
-    document.addEventListener("click", hide, true);
+    if (HOVER) desktop(); else touch();
+
+    // ---- With a mouse: cards beside the link, the pointer can move onto them, a pin keeps them. ----
+    function desktop() {
+        const cards = []; // { el, link, src, pinned }, a name on card i opening card i + 1
+        let showTimer = 0, hideTimer = 0, pending = null;
+
+        function indexOf(el) {
+            const card = el instanceof Element ? el.closest(".hover-card") : null;
+            return card ? cards.findIndex(function (c) { return c.el === card; }) : -1;
+        }
+
+        function close(i) {
+            const c = cards[i];
+            if (!c) return;
+            cards.splice(i, 1);
+            c.el.remove();
+            if (c.link.getAttribute("aria-describedby") === c.el.id) c.link.removeAttribute("aria-describedby");
+        }
+
+        // Every card after card `keep` that is not pinned (all of them for -1), and their pending show.
+        function trim(keep) {
+            for (let i = cards.length - 1; i > keep; i--) if (!cards[i].pinned) close(i);
+        }
+
+        function cancel() {
+            clearTimeout(showTimer);
+            pending = null;
+        }
+
+        function laterTrim(keep) {
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(function () { trim(keep); }, HIDE_AFTER);
+        }
+
+        function place(c, from) {
+            const el = c.el, w = el.offsetWidth, h = el.offsetHeight, gap = 6;
+            const fits = function (x) { return x >= 8 && x + w <= window.innerWidth - 8; };
+            let left = null, top;
+            if (from >= 0) {
+                // Beside the card the name is on, at the name's height; under the name when neither side has room.
+                const r = cards[from].el.getBoundingClientRect();
+                const rtl = getComputedStyle(cards[from].el).direction === "rtl";
+                const after = rtl ? r.left - w - gap : r.right + gap, before = rtl ? r.right + gap : r.left - w - gap;
+                left = fits(after) ? after : fits(before) ? before : null;
+                top = c.link.getBoundingClientRect().top - 12;
+            }
+            if (left === null) {
+                const r = c.link.getBoundingClientRect();
+                left = r.left;
+                top = r.bottom + gap + h > window.innerHeight - 8 && r.top - h - gap > 8 ? r.top - h - gap : r.bottom + gap;
+            }
+            el.style.left = Math.min(Math.max(8, left), window.innerWidth - w - 8) + "px";
+            el.style.top = Math.min(Math.max(8, top), Math.max(8, window.innerHeight - h - 8)) + "px";
+        }
+
+        function pin(c, on) {
+            c.pinned = on;
+            c.el.classList.toggle("hover-card-pinned", on);
+            c.el.dataset.pinned = on ? "true" : "false";
+            const b = c.el.querySelector("[data-testid='hover-card-pin']");
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+            b.setAttribute("aria-label", text(on ? "unpin" : "pin"));
+            b.title = text(on ? "unpin" : "pin");
+            if (!on) return;
+            const pinned = cards.filter(function (x) { return x.pinned; });
+            if (pinned.length > MAX_PINNED) close(cards.indexOf(pinned[0]));
+        }
+
+        function show(link, src, p, from) {
+            trim(from);
+            const el = content(p, src);
+            const tools = document.createElement("div");
+            tools.className = "hover-card-tools";
+            const pinButton = button("pin", text("pin"), "hover-card-pin");
+            pinButton.setAttribute("aria-pressed", "false");
+            const closeButton = button("close", text("close"), "hover-card-close");
+            tools.append(pinButton, closeButton);
+            el.append(tools);
+            el.dataset.pinned = "false";
+            const c = { el: el, link: link, src: src, pinned: false };
+            pinButton.addEventListener("click", function () { pin(c, !c.pinned); });
+            closeButton.addEventListener("click", function () {
+                const i = cards.indexOf(c);
+                if (i >= 0) { trim(i); close(i); }
+                if (link.isConnected) link.focus({ preventScroll: true });
+            });
+            cards.push(c);
+            document.body.appendChild(el);
+            link.setAttribute("aria-describedby", el.id);
+            place(c, from);
+        }
+
+        function start(link) {
+            const parent = cards[indexOf(link)] || null;
+            // The link of a card already open: keep it, and what it opened.
+            if (cards.some(function (c) { return c.link === link; })) { clearTimeout(hideTimer); return; }
+            if (pending === link) return;
+            cancel();
+            const src = source(link);
+            if (!src) return;
+            pending = link;
+            showTimer = setTimeout(function () {
+                load(src).then(function (p) {
+                    if (!p || pending !== link || !link.isConnected) return;
+                    pending = null;
+                    // The card the name is on may have closed while this one loaded.
+                    const from = parent ? cards.indexOf(parent) : -1;
+                    if (parent && from < 0) return;
+                    show(link, src, p, from);
+                });
+            }, SHOW_AFTER);
+        }
+
+        document.addEventListener("mouseover", function (e) {
+            const t = e.target instanceof Element ? e.target : null;
+            if (!t) return;
+            const link = t.closest(SELECTOR);
+            const i = indexOf(t);
+            if (link) { clearTimeout(hideTimer); start(link); return; }
+            if (pending) cancel();
+            // On card i: the cards it did not open stay a moment, so the pointer can cross to them.
+            if (i >= 0) laterTrim(i);
+        });
+        document.addEventListener("mouseout", function (e) {
+            const from = e.target instanceof Element ? e.target : null;
+            const to = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+            if (!from || (!from.closest(SELECTOR) && indexOf(from) < 0)) return;
+            if (to && (to.closest(SELECTOR) || indexOf(to) >= 0)) return;
+            cancel();
+            laterTrim(-1);
+        });
+        document.addEventListener("focusin", function (e) {
+            const t = e.target instanceof Element ? e.target : null;
+            const link = t ? t.closest(SELECTOR) : null;
+            if (link) start(link);
+            else if (!t || indexOf(t) < 0) { cancel(); trim(-1); }
+        });
+        // Escape closes the newest card (before the page's own Escape: a phone sheet's, a window's).
+        document.addEventListener("keydown", function (e) {
+            if (e.key !== "Escape") return;
+            cancel();
+            if (cards.length === 0) return;
+            e.preventDefault();
+            const c = cards[cards.length - 1];
+            const inside = c.el.contains(document.activeElement);
+            close(cards.length - 1);
+            if (inside && c.link.isConnected) c.link.focus({ preventScroll: true });
+        }, true);
+        // Scrolling the page moves the links away from their cards: the cards that are not pinned go. Scrolling in a card does not.
+        window.addEventListener("scroll", function (e) {
+            if (e.target instanceof Element && indexOf(e.target) >= 0) return;
+            cancel();
+            trim(-1);
+        }, { passive: true, capture: true });
+        // A click outside the cards (or on a link, which opens it) closes the cards that are not pinned.
+        document.addEventListener("click", function (e) {
+            const t = e.target instanceof Element ? e.target : null;
+            cancel();
+            if (t && indexOf(t) >= 0 && !t.closest("a[href]")) return;
+            trim(-1);
+        }, true);
+        // Leaving the campaign takes its pinned cards with it.
+        function left(path) {
+            const here = campaignOf(path);
+            for (let i = cards.length - 1; i >= 0; i--) if (campaignOf(cards[i].src) !== here) close(i);
+        }
+        if (window.navigation) window.navigation.addEventListener("navigatesuccess", function () { left(location.pathname); });
+        window.addEventListener("popstate", function () { left(location.pathname); });
+    }
+
+    // ---- On a touch screen: a tap opens the card in a sheet at the bottom. ----
+    function touch() {
+        let sheet = null, stack = [], loading = null;
+
+        function close() {
+            loading = null;
+            stack = [];
+            if (sheet) { sheet.remove(); sheet = null; }
+        }
+
+        function render() {
+            const top = stack[stack.length - 1];
+            if (!sheet) {
+                sheet = document.createElement("div");
+                sheet.className = "preview-sheet-layer";
+                sheet.innerHTML = "<div class=\"preview-sheet-backdrop\"></div><div class=\"preview-sheet\" role=\"dialog\" aria-modal=\"true\" data-testid=\"preview-sheet\"></div>";
+                sheet.firstChild.addEventListener("click", close);
+                document.body.appendChild(sheet);
+            }
+            const panel = sheet.lastChild;
+            const bar = document.createElement("div");
+            bar.className = "preview-sheet-bar";
+            if (stack.length > 1) {
+                const back = button("back", text("back"), "preview-sheet-back");
+                back.addEventListener("click", function () { stack.pop(); render(); });
+                bar.append(back);
+            }
+            const open = document.createElement("a");
+            open.className = "cx-btn cx-plaque cx-sm preview-sheet-open";
+            open.href = top.p.href;
+            open.textContent = text("open");
+            open.dataset.testid = "preview-sheet-open";
+            const shut = button("close", text("close"), "preview-sheet-close");
+            shut.addEventListener("click", close);
+            bar.append(open, shut);
+            const card = content(top.p, top.src);
+            panel.setAttribute("aria-labelledby", card.getAttribute("aria-labelledby"));
+            panel.replaceChildren(card, bar);
+            panel.scrollTop = 0;
+        }
+
+        // A tap on a link that has a card opens the card instead; the link itself is followed when there is no card for it.
+        document.addEventListener("click", function (e) {
+            if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+            const t = e.target instanceof Element ? e.target : null;
+            const link = t ? t.closest(SELECTOR) : null;
+            if (!link) {
+                // Open (and the card's own name) go where they say, and close the sheet on the way.
+                if (sheet && t && t.closest(".preview-sheet a[href]")) close();
+                return;
+            }
+            const src = source(link);
+            if (!src) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const ticket = {};
+            loading = ticket;
+            load(src).then(function (p) {
+                if (loading !== ticket) return;
+                loading = null;
+                if (!p) {
+                    close();
+                    if (window.Blazor && window.Blazor.navigateTo) window.Blazor.navigateTo(link.href); else location.href = link.href;
+                    return;
+                }
+                if (!(sheet && sheet.contains(link))) stack = [];
+                stack.push({ p: p, src: src });
+                render();
+            });
+        }, true);
+        document.addEventListener("keydown", function (e) {
+            if (e.key !== "Escape" || !sheet) return;
+            e.preventDefault();
+            if (stack.length > 1) { stack.pop(); render(); } else close();
+        }, true);
+        window.addEventListener("popstate", close);
+        if (window.navigation) window.navigation.addEventListener("navigatesuccess", close);
+    }
 })();

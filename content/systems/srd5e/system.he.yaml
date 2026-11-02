@@ -48,6 +48,7 @@ actorFields:
     description: השפעות קסם או לחשים שאינם פריט שאתה נושא.
   speed:
     label: מהירות (רגל)
+    unit: רגל
     category: קרב
     description: מועתקת מהגזע שלך כשאתה בוחר בו; שנה כאן עבור יכולות ששינו אותה.
   size:
@@ -427,8 +428,14 @@ values:
   pp: פלטינה
   Short Rest: מנוחה קצרה
   Long Rest: מנוחה ארוכה
+  Spell slots: תאי לחשים
+  Pact slots: תאי ברית
+  spell slot: תא לחשים
+  pact slot: תא ברית
+  lb: ליב׳
   Dead: מת
   Stable: יציב
+  Concentrating: מרוכז
   # Entry tags (shown translated; the tags themselves stay as the packs wrote them)
   "ability-score": "ערך תכונה"
   "alignment": "נטייה"

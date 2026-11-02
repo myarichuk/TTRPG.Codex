@@ -14,9 +14,9 @@ public sealed partial class SheetRuleEngine
     private int ModifierOf(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, string attributeKey)
     {
         var attribute = system.Attributes.FirstOrDefault(a => a.Key.Equals(attributeKey, StringComparison.OrdinalIgnoreCase));
-        if (attribute == null || attribute.Modifier != "half-minus-five") return 0;
+        if (attribute == null) return 0;
         var score = result.Attributes?.Totals.GetValueOrDefault(attribute.Key) ?? YamlValues.GetInt(sheet, attribute.Key) ?? attribute.Default;
-        return (int)Math.Floor((score - 10) / 2.0);
+        return attribute.ModifierFor(score) ?? 0;
     }
 
     private ContentEntry? FirstClass(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, string classField) =>
@@ -25,6 +25,14 @@ public sealed partial class SheetRuleEngine
     private static HashSet<string> Names(object? listed) =>
         (listed is not string and IEnumerable<object> list ? list.Select(o => o?.ToString() ?? "") : new[] { listed?.ToString() ?? "" })
         .Where(n => n.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    // How many skills a class's choices allow: a number, or the first number in text such as "Choose 2: Acrobatics, …".
+    private static readonly System.Text.RegularExpressions.Regex FirstNumber = new(@"\d+", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static int? ChoiceCount(object? value) =>
+        ToDouble(value) is { } number ? (int)number
+        : value is string text && FirstNumber.Match(text) is { Success: true } m ? int.Parse(m.Value, CultureInfo.InvariantCulture)
+        : null;
 
     private void EvaluateSkills(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
@@ -56,6 +64,18 @@ public sealed partial class SheetRuleEngine
             result.Warnings.Add(new RuleViolation(rules.ProficienciesKey, $"{rules.Label}: \"{unknown}\" is not a skill this system has."));
         }
 
+        // The first class's skill choices (F24): more chosen than it gives, beyond the background's, is worth a look, not a
+        // refusal, since a species or a feat may give more.
+        if (FirstClass(sheet, result, rules.ClassField) is { } firstClass && ChoiceCount(firstClass.Properties.GetValueOrDefault(rules.ClassChoicesProperty)) is { } allowed)
+        {
+            var chosen = rules.List.Count(s => Has(picked, s) && !Has(granted, s));
+            if (chosen > allowed)
+            {
+                result.Warnings.Add(new RuleViolation(rules.ProficienciesKey, $"{rules.Label}: {chosen} chosen beyond your background, but {firstClass.Name} gives {allowed}. A species or feat may give more.",
+                    "Actor.Rule.SkillChoices", new object?[] { rules.Label, chosen, firstClass, allowed }));
+            }
+        }
+
         var trained = AttributesNamedIn(FirstClass(sheet, result, rules.ClassField)?.Properties.GetValueOrDefault(rules.SavingThrowsProperty));
         foreach (var attribute in system.Attributes)
         {
@@ -79,10 +99,24 @@ public sealed partial class SheetRuleEngine
         var bonus = BonusValue(result, rules.BonusKey);
         var classes = result.Classes.Count > 0
             ? result.Classes.Where(c => c.Entry != null).Select(c => c.Entry!).ToList()
-            : new[] { ReferencedEntry(Rules.Multiclass?.ClassField ?? "class", sheet) }.OfType<ContentEntry>().ToList();
+            : (Rules.Multiclass?.ClassField ?? system.FieldRoles.Class) is { } classField
+                ? new[] { ReferencedEntry(classField, sheet) }.OfType<ContentEntry>().ToList()
+                : new List<ContentEntry>();
         foreach (var cls in classes)
         {
-            if (AttributesNamedIn(cls.Properties.GetValueOrDefault(rules.AbilityProperty)).FirstOrDefault() is not { } key) continue;
+            // A homebrew caster missing half of what casting needs used to get no DC, or no slots and spells, without a word (F24).
+            var hasTable = Rules.SlotPools.Any(p => cls.Properties.ContainsKey(p.Table));
+            var ability = AttributesNamedIn(cls.Properties.GetValueOrDefault(rules.AbilityProperty)).FirstOrDefault();
+            if (hasTable && ability == null)
+            {
+                result.Warnings.Add(new RuleViolation(rules.AbilityProperty, $"{cls.Name} has spell slots but names no spellcasting ability, so it has no spell save DC or attack.", "Actor.Rule.NoSpellAbility", new object?[] { cls }));
+            }
+            else if (!hasTable && ability != null && Rules.SlotPools.Count > 0)
+            {
+                result.Warnings.Add(new RuleViolation(rules.AbilityProperty, $"{cls.Name} names a spellcasting ability but has no spellcasting table, so it gets no spell slots or prepared spells.", "Actor.Rule.NoSpellTable", new object?[] { cls }));
+            }
+
+            if (ability is not { } key) continue;
             var modifier = ModifierOf(sheet, result, key);
             result.Spellcasting.Add(new SpellcastingScore(cls.Name, key, rules.SaveBase + bonus + modifier, bonus + modifier));
         }
@@ -90,8 +124,11 @@ public sealed partial class SheetRuleEngine
 
     // ---- Armor and weapon training ----
 
-    private static string StemWords(string text) =>
-        string.Join(' ', text.Replace(',', ' ').ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w.TrimEnd('s')).Order(StringComparer.Ordinal));
+    // A weapon's name and a training's, as words in any order, each without the system's plural ending: "Longswords" is a Longsword.
+    private static string StemWords(string text, string? pluralSuffix) =>
+        string.Join(' ', text.Replace(',', ' ').ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => !string.IsNullOrEmpty(pluralSuffix) && w.EndsWith(pluralSuffix, StringComparison.OrdinalIgnoreCase) ? w[..^pluralSuffix.Length] : w)
+            .Order(StringComparer.Ordinal));
 
     private void EvaluateProficiencies(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
@@ -101,7 +138,7 @@ public sealed partial class SheetRuleEngine
 
         var armorTraining = Names(cls.Properties.GetValueOrDefault(rules.ArmorProperty));
         var weaponTraining = Names(cls.Properties.GetValueOrDefault(rules.WeaponProperty));
-        var allArmor = armorTraining.Any(t => t.StartsWith("all armor", StringComparison.OrdinalIgnoreCase));
+        var allArmor = rules.AllArmor is { Length: > 0 } every && armorTraining.Any(t => t.StartsWith(every, StringComparison.OrdinalIgnoreCase));
         var typeProperty = Rules.ArmorClass?.TypeProperty ?? "armorType";
         var strength = rules.StrengthAttribute;
 
@@ -133,8 +170,8 @@ public sealed partial class SheetRuleEngine
             }
 
             if (!entry.Tags.Contains(rules.WeaponTag, StringComparer.OrdinalIgnoreCase)) continue;
-            var name = StemWords(entry.Name);
-            var covered = entry.Tags.Any(weaponTraining.Contains) || weaponTraining.Any(t => StemWords(t) == name);
+            var name = StemWords(entry.Name, rules.PluralSuffix);
+            var covered = entry.Tags.Any(weaponTraining.Contains) || weaponTraining.Any(t => StemWords(t, rules.PluralSuffix) == name);
             if (!covered)
             {
                 result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with it, so you don't add your proficiency bonus to its attacks.", "Actor.Rule.WeaponUntrained", new object?[] { entry, cls }));

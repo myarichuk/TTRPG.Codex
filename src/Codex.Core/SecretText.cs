@@ -271,6 +271,21 @@ public static class SecretText
     /// these, so it cannot close the block early or open another.</summary>
     public static bool IsMarkerLine(string line) => Marker.IsMatch(line);
 
+    /// <summary>The players' version already beside <paramref name="block"/>: a <c>:::players</c> block outside every other
+    /// block right after it, only blank lines between. Null when there is none, or the block is never closed.</summary>
+    public static SecretBlock? PlayersVersionOf(string? text, SecretBlock block)
+    {
+        if (block.ClosingLine is not { } closing || string.IsNullOrEmpty(text)) return null;
+        var next = NextFilledLine(Lines(text), closing + 1);
+        return Blocks(text).FirstOrDefault(b => b.Line == next && b is { Marked: SecretAudience.Players, Depth: 0 });
+    }
+
+    private static int NextFilledLine(IReadOnlyList<string> lines, int from)
+    {
+        while (from < lines.Count && lines[from].Trim().Length == 0) from++;
+        return from;
+    }
+
     /// <summary>
     /// The text with <paramref name="version"/> as the players' version of block <paramref name="block"/>: a <c>:::players</c>
     /// block right after it, or, when one is there already (only blank lines between), that block's lines replaced. Marker
@@ -291,8 +306,7 @@ public static class SecretText
         }
 
         var lines = Lines(text!).ToList();
-        var next = closing + 1;
-        while (next < lines.Count && lines[next].Trim().Length == 0) next++;
+        var next = NextFilledLine(lines, closing + 1);
         var indent = Marker.Match(lines[found.Line]).Groups["indent"].Value;
         var players = new List<string> { string.Empty, indent + ":::players" };
         players.AddRange(body);
@@ -329,26 +343,207 @@ public static class SecretText
     /// <summary>
     /// What to store when a player saves a text the DM may have put secrets in (a player character's history): the player's
     /// <paramref name="edited"/> text, with the blocks of <paramref name="stored"/> a player cannot read (DM blocks, and blocks
-    /// for single characters, which a player is never shown in a text they can edit) kept at its end. Nothing the player never
-    /// saw is lost, and nothing is revealed. A player cannot write such blocks, so any in <paramref name="edited"/> are dropped
-    /// first: that also makes this idempotent, which matters because a live table applies a save twice (to its cached copy,
-    /// then that copy to the stored one).
+    /// for single characters, which a player is never shown in a text they can edit) put back where they stood, and the
+    /// revealed (<c>:::party</c>) and players' (<c>:::players</c>) blocks kept inside their opening lines, even where the player
+    /// changed their words (D16). A player reads those as prose, so without this a spelling fix turned each into plain text,
+    /// losing the reveal's stamp and the DM's way to hide it again. Nothing the player never saw is lost, and nothing is
+    /// revealed. Where each block goes is found by lining the player's text up with the one they were given, line by line;
+    /// a hidden block whose neighbours the player all rewrote goes at the end, as before. A player cannot write blocks, so
+    /// any in <paramref name="edited"/> are dropped first: that also makes this idempotent, which matters because a live table
+    /// applies a save twice (to its cached copy, then that copy to the stored one).
     /// </summary>
     public static string? KeepSecrets(string? stored, string? edited)
     {
-        var kept = string.Join("\n\n", Parse(stored).Where(s => !CanRead(s, null)).GroupBy(s => s.Block).Select(g =>
-        {
-            var first = g.First();
-            var opener = first.Audience == SecretAudience.Some ? ":::for" + string.Concat(first.Knowers.Select(id => $" [[actor:{id}]]")) : ":::dm";
-            return $"{opener}\n{string.Join("\n", g.Select(s => s.Text))}\n:::";
-        }));
         edited = HasMarkers(edited) ? ForPlayers(edited) : edited;
-        if (kept.Length == 0)
+        if (!HasMarkers(stored))
         {
             return edited;
         }
 
-        return string.IsNullOrWhiteSpace(edited) ? kept : edited.TrimEnd() + "\n\n" + kept;
+        var (view, hidden, openers) = PlayersView(stored!);
+        if (string.IsNullOrWhiteSpace(edited))
+        {
+            return hidden.Count == 0 ? edited : string.Join("\n\n", hidden.Select(h => h.Text));
+        }
+
+        var mine = Lines(edited);
+        var match = Align(view.Select(v => v.Text).ToList(), mine);
+        var claimed = new bool[mine.Length];
+        foreach (var e in match.Where(e => e >= 0)) claimed[e] = true;
+
+        // Each revealed or players' block takes the lines of the player's text that came from it, and the lines they wrote
+        // in their place: unmatched lines next to it, up to a blank line or the next line that came from somewhere else.
+        var spans = new List<Span>();
+        var used = -1;
+        foreach (var block in view.Select(v => v.Block).Where(b => b >= 0).Distinct().ToList())
+        {
+            var first = view.FindIndex(v => v.Block == block);
+            var last = view.FindLastIndex(v => v.Block == block);
+            var before = Math.Max(used, Enumerable.Range(0, first).Select(i => match[i]).Where(e => e >= 0).DefaultIfEmpty(-1).Max());
+            var after = Enumerable.Range(last + 1, view.Count - last - 1).Select(i => match[i]).Where(e => e >= 0).DefaultIfEmpty(mine.Length).Min();
+            var kept = Enumerable.Range(first, last - first + 1).Select(i => match[i]).Where(e => e >= 0).ToList();
+            int from, to;
+            if (kept.Count > 0)
+            {
+                (from, to) = (kept.Min(), kept.Max());
+                while (from - 1 > before && !claimed[from - 1] && mine[from - 1].Trim().Length > 0) from--;
+                while (to + 1 < after && !claimed[to + 1] && mine[to + 1].Trim().Length > 0) to++;
+            }
+            else
+            {
+                // Every line of it rewritten: what the player wrote between its neighbours is the block now.
+                (from, to) = (before + 1, after - 1);
+                while (from <= to && mine[from].Trim().Length == 0) from++;
+                while (to >= from && mine[to].Trim().Length == 0) to--;
+            }
+
+            if (from <= to)
+            {
+                spans.Add(new Span(block, from, to));
+                used = to;
+            }
+        }
+
+        // A hidden block goes after the nearest line before it that the player kept (after the whole block, when that line
+        // was in a revealed block), or before the nearest one after it, or at the end when the player rewrote both.
+        var placed = hidden.Select(h =>
+        {
+            for (var i = h.At - 1; i >= 0; i--)
+            {
+                if (SpanOf(i) is { } span) return (h.Text, At: span.To + 1);
+                if (match[i] >= 0) return (h.Text, At: match[i] + 1);
+            }
+
+            for (var i = h.At; i < view.Count; i++)
+            {
+                if (SpanOf(i) is { } span) return (h.Text, At: span.From);
+                if (match[i] >= 0) return (h.Text, At: match[i]);
+            }
+
+            return (h.Text, At: mine.Length);
+        }).ToList();
+
+        var output = new List<string>();
+        var gap = false;
+        for (var p = 0; p <= mine.Length; p++)
+        {
+            foreach (var h in placed.Where(h => h.At == p))
+            {
+                Separate();
+                output.Add(h.Text);
+                gap = true;
+            }
+
+            if (p == mine.Length) break;
+            if (spans.FirstOrDefault(s => s.From == p, new Span(-1, -1, -1)) is { Block: >= 0 } opening)
+            {
+                Separate();
+                output.Add(openers[opening.Block]);
+            }
+
+            if (gap && mine[p].Trim().Length > 0) output.Add(string.Empty);
+            gap = false;
+            output.Add(mine[p]);
+            if (spans.Any(s => s.To == p))
+            {
+                output.Add(":::");
+                gap = true;
+            }
+        }
+
+        return string.Join("\n", output);
+
+        void Separate()
+        {
+            if (output.Count > 0 && output[^1].Trim().Length > 0) output.Add(string.Empty);
+            gap = false;
+        }
+
+        Span? SpanOf(int line) => view[line].Block >= 0 && spans.FindIndex(s => s.Block == view[line].Block) is var at and >= 0 ? spans[at] : null;
+    }
+
+    private sealed record ViewLine(string Text, int Block);
+
+    private readonly record struct Span(int Block, int From, int To);
+
+    private sealed record HiddenBlock(string Text, int At);
+
+    /// <summary>
+    /// The text a player who owns no character is given of <paramref name="stored"/> (<see cref="ForPlayers(string?)"/>), line by
+    /// line, each line with the revealed or players' block it came from (-1 for none, or one that holds other blocks and so
+    /// is not put back); the hidden blocks, each whole as stored with the outermost hidden block that holds it, and how many of
+    /// those lines come before it; and each such revealed block's opening line.
+    /// </summary>
+    private static (List<ViewLine> View, List<HiddenBlock> Hidden, Dictionary<int, string> Openers) PlayersView(string stored)
+    {
+        var lines = Lines(stored);
+        var blocks = Blocks(stored);
+        var view = new List<ViewLine>();
+        var hidden = new List<HiddenBlock>();
+        var openers = new Dictionary<int, string>();
+        var kept = new HashSet<int>();
+        foreach (var segment in Parse(stored))
+        {
+            if (CanRead(segment, null))
+            {
+                var run = segment.Text.Trim('\n');
+                if (run.Trim().Length == 0) continue;
+                var block = segment.Block >= 0 && blocks[segment.Block] is { Depth: 0, Marked: SecretAudience.Party or SecretAudience.Players } b && !HasMarkers(b.Inner)
+                    ? segment.Block
+                    : -1;
+                if (block >= 0) openers[block] = lines[blocks[block].Line].Trim();
+                if (view.Count > 0) view.Add(new ViewLine(string.Empty, -1));
+                view.AddRange(run.Split('\n').Select(l => new ViewLine(l, block)));
+                continue;
+            }
+
+            var inner = blocks[segment.Block];
+            var outer = blocks.Where(o => o.Marked is SecretAudience.Dm or SecretAudience.Some && o.Line <= inner.Line && (o.ClosingLine ?? lines.Length) >= inner.Line)
+                .MinBy(o => o.Depth) ?? inner;
+            if (kept.Add(outer.Block))
+            {
+                var end = outer.ClosingLine ?? lines.Length - 1;
+                var raw = string.Join("\n", lines[outer.Line..(end + 1)]);
+                hidden.Add(new HiddenBlock(outer.ClosingLine == null ? raw.TrimEnd('\n') + "\n:::" : raw, view.Count));
+            }
+        }
+
+        return (view, hidden, openers);
+    }
+
+    /// <summary>For each line of <paramref name="given"/>, the line of <paramref name="mine"/> it stayed as (the longest common run of
+    /// lines, trailing spaces ignored), or -1 when the player changed or dropped it.</summary>
+    private static int[] Align(IReadOnlyList<string> given, IReadOnlyList<string> mine)
+    {
+        var match = Enumerable.Repeat(-1, given.Count).ToArray();
+        static bool Same(string a, string b) => string.Equals(a.TrimEnd(), b.TrimEnd(), StringComparison.Ordinal);
+
+        var head = 0;
+        while (head < given.Count && head < mine.Count && Same(given[head], mine[head])) { match[head] = head; head++; }
+        var tail = 0;
+        while (tail < given.Count - head && tail < mine.Count - head && Same(given[^(tail + 1)], mine[^(tail + 1)]))
+        {
+            match[given.Count - 1 - tail] = mine.Count - 1 - tail;
+            tail++;
+        }
+
+        int n = given.Count - head - tail, m = mine.Count - head - tail;
+        // A text this long is not a character's history; its middle is left unmatched rather than spend the memory.
+        if (n == 0 || m == 0 || (long)n * m > 4_000_000) return match;
+
+        var lcs = new int[n + 1, m + 1];
+        for (var i = n - 1; i >= 0; i--)
+        for (var j = m - 1; j >= 0; j--)
+            lcs[i, j] = Same(given[head + i], mine[head + j]) ? lcs[i + 1, j + 1] + 1 : Math.Max(lcs[i + 1, j], lcs[i, j + 1]);
+
+        for (int i = 0, j = 0; i < n && j < m;)
+        {
+            if (Same(given[head + i], mine[head + j])) { match[head + i] = head + j; i++; j++; }
+            else if (lcs[i + 1, j] >= lcs[i, j + 1]) i++;
+            else j++;
+        }
+
+        return match;
     }
 
     /// <summary>The text of each block a player who owns no character cannot read, in order (nested ones come back as their own entries).</summary>

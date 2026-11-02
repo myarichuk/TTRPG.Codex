@@ -38,6 +38,7 @@
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>Эта модель не умеет вызывать инструменты, а строителю мира это нужно. Выберите в настройках ИИ модель с поддержкой вызова инструментов.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>Нет предложения для применения.</value></data>
   <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>Этот чат изменили в другой вкладке, поэтому он загружен заново. Ничего из этой вкладки не сохранено; отправьте или примените ещё раз, если нужно.</value></data>
+  <data name="WorldChat.Error.ApplyingElsewhere" xml:space="preserve"><value>Это предложение сейчас применяется в другой вкладке. Дождитесь окончания и откройте чат заново, чтобы увидеть, что получилось.</value></data>
   <data name="WorldChat.Error.Gone" xml:space="preserve"><value>Этот чат удалили в другой вкладке.</value></data>
   <data name="WorldChat.Error.TooLong" xml:space="preserve"><value>Этот чат стал слишком длинным, и модель уже не может его прочитать. Продолжите в новом чате: он начнётся с пересказа этого, который можно поправить перед отправкой.</value></data>
   <data name="WorldChat.CarryOn" xml:space="preserve"><value>Продолжить в новом чате</value></data>

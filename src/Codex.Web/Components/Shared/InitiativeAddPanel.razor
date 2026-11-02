@@ -1,0 +1,75 @@
+@using Codex.Persistence
+
+@* The DM's way into the order: pick someone not in it, then roll for them or type the total they rolled. The console adds
+   the bonus and tie-break from their sheet. *@
+<div class="console-row mt-3 pt-3 border-top">
+    <div>
+        <label for="add-to-initiative" class="field-label">@L["Combat.AddToInitiative"]</label>
+        <select id="add-to-initiative" class="field-select field-sm" data-testid="add-to-initiative-select" @bind="actorId">
+            <option value="">@L["Combat.ChooseSomeone"]</option>
+            @foreach (var actor in Candidates)
+            {
+                <option value="@actor.Id">@actor.Name</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label for="initiative-mode" class="field-label">@L["Combat.Roll"]</label>
+        <select id="initiative-mode" class="field-select field-sm" @bind="mode">
+            <option value="normal">@L["Combat.Roll.Normal"]</option>
+            <option value="adv">@L["Combat.Roll.Advantage"]</option>
+            <option value="dis">@L["Combat.Roll.Disadvantage"]</option>
+        </select>
+    </div>
+    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="roll-initiative-btn" OnClick="RollAsync" Disabled="@string.IsNullOrEmpty(actorId)">@L["Combat.RollInitiative", InitiativeDice + (string.IsNullOrEmpty(actorId) ? "" : BonusText(actorId))]</CodexButton>
+    <span class="small-muted pb-1">@L["Combat.Or"]</span>
+    <div>
+        <label for="manual-initiative" class="field-label">@L["Combat.EnterTotal"]</label>
+        <input id="manual-initiative" type="number" class="field-input field-sm" data-testid="manual-initiative-input"
+               value="@totals.GetValueOrDefault(actorId)"
+               @onchange="e => totals[actorId] = int.TryParse(e.Value?.ToString(), out var value) ? value : null" />
+    </div>
+    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="set-initiative-btn" OnClick="SetAsync" Disabled="@string.IsNullOrEmpty(actorId)">@L["Combat.Set"]</CodexButton>
+</div>
+
+@code {
+    /// <summary>Who may still join the order.</summary>
+    [Parameter, EditorRequired] public IEnumerable<ActorDocument> Candidates { get; set; } = Enumerable.Empty<ActorDocument>();
+    [Parameter] public string InitiativeDice { get; set; } = "1d20";
+    /// <summary>The bonus as the roll button shows it (" + 2"), or blank.</summary>
+    [Parameter] public Func<string, string> BonusText { get; set; } = _ => "";
+    /// <summary>Rolls for someone: their id and the die to roll ("1d20", "adv" or "dis"), before the bonus.</summary>
+    [Parameter] public EventCallback<(string ActorId, string Expression)> OnRoll { get; set; }
+    /// <summary>Puts someone in at the total typed for them.</summary>
+    [Parameter] public EventCallback<(string ActorId, int Total)> OnSet { get; set; }
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
+
+    private string actorId = "";
+    private string mode = "normal";
+    // Blank until a total is typed: a Set with nothing typed says so rather than putting the creature in at 0 (U5).
+    private readonly Dictionary<string, int?> totals = new();
+
+    // Each clears the picker before awaiting: the round trip through the single-writer loop can be long enough that a
+    // DM's next click lands before this resumes.
+    private async Task RollAsync()
+    {
+        if (string.IsNullOrEmpty(actorId)) return;
+        var rolling = actorId;
+        actorId = "";
+        await OnRoll.InvokeAsync((rolling, mode == "normal" ? InitiativeDice : mode));
+    }
+
+    private async Task SetAsync()
+    {
+        if (string.IsNullOrEmpty(actorId)) return;
+        if (totals.GetValueOrDefault(actorId) is not { } total)
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.InitiativeNeeded"]));
+            return;
+        }
+
+        var setting = actorId;
+        actorId = "";
+        await OnSet.InvokeAsync((setting, total));
+    }
+}

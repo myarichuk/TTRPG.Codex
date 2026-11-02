@@ -12,6 +12,7 @@ public class MockUserRepository : IUserRepository
     private readonly Dictionary<string, UserDocument> _usersByEmail = new();
     private readonly Dictionary<(string provider, string key), UserDocument> _usersByExternalLogin = new();
     private readonly HashSet<string> _reservedUsernames = new();
+    private string? _firstAdmin;
 
     public Task<UserDocument?> GetUserByIdAsync(string id) =>
         Task.FromResult(_usersById.TryGetValue(id, out var user) ? user : null);
@@ -39,8 +40,14 @@ public class MockUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task UpdateUserAsync(UserDocument user)
+    public Task<UserDocument?> UpdateUserAsync(string userId, Action<UserDocument> mutate)
     {
+        if (!_usersById.TryGetValue(userId, out var user))
+        {
+            return Task.FromResult<UserDocument?>(null);
+        }
+
+        mutate(user);
         // Sync external logins index
         _usersByExternalLogin.Clear();
         foreach (var userData in _usersById.Values)
@@ -49,7 +56,7 @@ public class MockUserRepository : IUserRepository
                 _usersByExternalLogin[(login.Provider, login.ProviderKey)] = userData;
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult<UserDocument?>(user);
     }
 
     public Task DeleteUserAsync(string id)
@@ -76,6 +83,13 @@ public class MockUserRepository : IUserRepository
     public Task<bool> TryReserveUsernameAsync(string username, string userId) =>
         Task.FromResult(_reservedUsernames.Add(username.Trim().ToLowerInvariant()));
 
+    public Task<bool> TryClaimFirstAdminAsync(string userId)
+    {
+        if (_firstAdmin != null || _usersById.Values.Any(u => u.Roles.Contains("ServerAdmin"))) return Task.FromResult(false);
+        _firstAdmin = userId;
+        return Task.FromResult(true);
+    }
+
     // Clear state between tests
     public void Reset()
     {
@@ -84,5 +98,6 @@ public class MockUserRepository : IUserRepository
         _usersByEmail.Clear();
         _usersByExternalLogin.Clear();
         _reservedUsernames.Clear();
+        _firstAdmin = null;
     }
 }

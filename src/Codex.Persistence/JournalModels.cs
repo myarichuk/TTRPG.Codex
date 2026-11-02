@@ -66,6 +66,9 @@ public class RavenJournalRepository(RavenDbService dbService) : IJournalReposito
 
     public async Task<bool> TrySaveAsync(JournalEntryDocument entry, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         using var session = dbService.Store.OpenAsyncSession();
         var existing = string.IsNullOrEmpty(entry.Id) ? null : await session.LoadAsync<JournalEntryDocument>(entry.Id);
         if (existing != null && (existing.CampaignId != access.CampaignId || existing.OwnerUserId != access.UserId))
@@ -96,6 +99,9 @@ public class RavenJournalRepository(RavenDbService dbService) : IJournalReposito
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         using var session = dbService.Store.OpenAsyncSession();
         var entry = await session.LoadAsync<JournalEntryDocument>(id);
         if (entry == null || entry.CampaignId != access.CampaignId || entry.OwnerUserId != access.UserId)

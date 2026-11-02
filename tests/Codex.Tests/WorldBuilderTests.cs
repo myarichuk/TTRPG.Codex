@@ -286,6 +286,9 @@ public class WorldBuilderTests
         /// <summary>While true, saving a homebrew entry fails, as a save that breaks half-way would.</summary>
         public bool FailHomebrew { get; set; }
 
+        /// <summary>When set, storing a place fails once this many have been stored, as a save that breaks half-way would.</summary>
+        public int? FailPlacesAfter { get; set; }
+
         /// <summary>The campaign as stored; its Bestiary shortlist is what saving added to it.</summary>
         public CampaignDocument Stored { get; } = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     }
@@ -329,13 +332,13 @@ public class WorldBuilderTests
             if (stored >= 0)
             {
                 pages[stored] = page;
-                return ci.Arg<CampaignAccess>().IsDm;
+                return ci.Arg<CampaignAccess>().IsDm ? SaveOutcome.Saved : SaveOutcome.Refused;
             }
 
             page.Id = $"page-{pages.Count + 1}";
             page.Slug = WikiText.Slugify(page.Title);
             pages.Add(page);
-            return ci.Arg<CampaignAccess>().IsDm;
+            return ci.Arg<CampaignAccess>().IsDm ? SaveOutcome.Saved : SaveOutcome.Refused;
         });
         wiki.TryLinkActorAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<WikiPageKind>(), Arg.Any<string?>(), Arg.Any<CampaignAccess>()).Returns(ci =>
         {
@@ -360,7 +363,7 @@ public class WorldBuilderTests
         var campaigns = Substitute.For<ICampaignRepository>();
         var library = new CampaignLibrary(registry, homebrew, catalog);
         var providers = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),
-            Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
+            Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(), new ServerAiUsage(new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(), NullLogger<ServerAiUsage>.Instance));
         var components = new ComponentRegistry();
         var runtimes = new Codex.Persistence.Runtime.CampaignRuntimeManager(actorRepo, Substitute.For<ISessionRepository>(), Substitute.For<ICampaignRepository>(),
             Substitute.For<IEncounterRepository>(), components, new PluginLoader(NullLogger<PluginLoader>.Instance, components, Substitute.For<IContentPackLoader>()), NullLoggerFactory.Instance);
@@ -370,7 +373,7 @@ public class WorldBuilderTests
         var ai = new AiFeatures(providers, registry, catalog);
         var saving = new Saving(new WorldBuilderService(catalog, library, homebrew, wiki, factRepo, cast, regions, campaigns, actorRepo, ai), pages, entries, actors, facts);
         regions.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => existingRegions.Concat(saving.NewRegions).ToList().AsEnumerable());
-        campaigns.UpdateAsync("c1", Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
+        campaigns.UpdateAsDmAsync(Arg.Any<CampaignAccess>(), Arg.Any<Action<CampaignDocument>>()).Returns(ci =>
         {
             ci.Arg<Action<CampaignDocument>>()(saving.Stored);
             return saving.Stored;
@@ -386,6 +389,7 @@ public class WorldBuilderTests
         regions.SaveAsync(Arg.Do<RegionDocument>(saving.NewRegions.Add), Arg.Any<CampaignAccess>()).Returns(true);
         regions.UpsertLocationAsync(Arg.Any<string>(), Arg.Any<LocationDocument>(), Arg.Any<CampaignAccess>()).Returns(ci =>
         {
+            if (saving.FailPlacesAfter is { } after && saving.AddedPlaces.Count >= after) return false;
             saving.AddedPlaces.Add((ci.ArgAt<string>(0), ci.ArgAt<LocationDocument>(1)));
             return true;
         });
@@ -572,6 +576,25 @@ public class WorldBuilderTests
         var market = saving.AddedPlaces.Single(p => p.Place.Name == "Salt Market").Place;
         Assert.Null(market.ParentId);
         Assert.Equal(PlaceKind.Area, market.Kind); // at the top, it is taken for an area
+    }
+
+    [Fact]
+    public async Task Save_ThatFailsBetweenPlaces_RemembersThePlacesStored_SoTheRetryDoesNotMakeThemTwice()
+    {
+        var saving = Service(null, new[] { new RegionDocument { Id = "region-a", CampaignId = "c1", Name = "Arch" } });
+        var bundle = Settlement();
+        bundle.Region = null;
+        var onMap = bundle.Drafts.Count(d => d.Kind == DraftKinds.Place && d.OnMap && d.Selected);
+        Assert.True(onMap >= 2);
+
+        saving.FailPlacesAfter = 1;
+        await Assert.ThrowsAsync<LocalizedException>(() => saving.Service.SaveAsync(Campaign, Dm, bundle));
+        Assert.Single(bundle.Drafts, d => d.SavedAs.ContainsKey("place"));
+
+        saving.FailPlacesAfter = null;
+        await saving.Service.SaveAsync(Campaign, Dm, bundle);
+        Assert.Equal(onMap, saving.AddedPlaces.Count);
+        Assert.Equal(onMap, saving.AddedPlaces.Select(p => p.Place.Name).Distinct().Count());
     }
 
     [Fact]
@@ -1567,6 +1590,38 @@ public class WorldBuilderTests
     }
 
     [Fact]
+    public async Task Chat_Apply_SaysItIsUnderWay_SoATabThatOpenedTheChatMeanwhileDoesNotApplyItAgain()
+    {
+        const string two = """{"proposal": {"entries": [{"ref": "a", "kind": "wiki", "name": "Amphail", "text": "A port."}, {"ref": "b", "kind": "wiki", "name": "Bram's Rest", "text": "An inn."}]}}""";
+        var model = new ScriptedModel(_ => Calls("c1", "propose_changes", two), _ => new ChatMessage(ChatRole.Assistant, "Ready."));
+        var saving = Service();
+        var marked = new List<DateTime?>();
+        var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm, store: doc =>
+        {
+            marked.Add(doc.ApplyingSince);
+            return Task.CompletedTask;
+        });
+        await chat.SendAsync("Two places.", _ => { }, CancellationToken.None);
+
+        // The chat as a second tab loads it just after the first tab's guard save: the apply is under way.
+        chat.Document.ApplyingSince = DateTime.UtcNow.AddMinutes(-1);
+        var refused = await Assert.ThrowsAsync<LocalizedException>(() => chat.ApplyAsync());
+        Assert.Equal("WorldChat.Error.ApplyingElsewhere", refused.Key);
+        // Shown as a chat another tab changed is shown: reloaded, with a note, not logged as a failed apply (F10).
+        Assert.True(WorldChat.IsStale(refused));
+        Assert.Empty(saving.Pages);
+
+        // One cut off long ago (a crash) holds it no more; the guard save carries the mark, and the last save clears it.
+        chat.Document.ApplyingSince = DateTime.UtcNow.AddHours(-1);
+        marked.Clear();
+        await chat.ApplyAsync();
+        Assert.Equal(2, saving.Pages.Count);
+        Assert.NotNull(marked[0]);
+        Assert.Null(marked[^1]);
+        Assert.Null(chat.Document.ApplyingSince);
+    }
+
+    [Fact]
     public async Task Chat_ThatAddedEntriesAndThenFailed_GetsItsWaitingProposalBack_AndItsEpoch()
     {
         const string varr = """{"proposal": {"region": "The Coast", "entries": [{"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Varr", "text": "A town."}]}}""";
@@ -1757,6 +1812,22 @@ public class WorldBuilderTests
     {
         var page = VarrPage();
         page.Body = new string('x', 6001);
+        var saving = Service(new[] { page });
+
+        var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Short."}]}""");
+
+        Assert.False(check.Ok);
+        Assert.Contains("more than get_page shows", Assert.Single(check.Errors));
+        Assert.Contains("too long to show whole", await saving.Service.PageAsync(Dm, "existing:port-varr"));
+    }
+
+    [Fact]
+    public async Task Check_Edit_MeasuresTheTextAsGetPageShowsIt_MentionsWrittenOut()
+    {
+        // 6,000 characters stored, but get_page writes each mention out as [[actor:a1|...]], so it showed the text cut short.
+        var page = VarrPage();
+        page.Body = new string('x', 5700) + string.Concat(Enumerable.Repeat("[[actor:a1]]", 25));
+        Assert.Equal(6000, page.Body.Length);
         var saving = Service(new[] { page });
 
         var check = await saving.Service.CheckAsync(Campaign, Dm, """{"entries": [{"ref": "e1", "kind": "edit", "target": "existing:port-varr", "text": "Short."}]}""");

@@ -155,6 +155,35 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task EndingTheTable_MidFight_KeepsTheSessionOpen_SoAPlainStartBringsTheOrderBack_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Ambush" };
+        await campaigns.SaveAsync(campaign);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+
+        var runtime = await manager.GetOrStartAsync(campaign, dm);
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 18));
+        var sessionId = runtime.ActiveSession!.Id;
+        var encounterId = runtime.ActiveEncounter!.Id;
+
+        // The console's "End the table" promises the order comes back (D6).
+        Assert.False(await manager.EvictAsync(campaignId));
+        Assert.Equal(SessionStatus.Live, (await _sessions.GetAsync(sessionId))!.Status);
+
+        var resumed = await manager.GetOrStartAsync(campaign, dm);
+        Assert.Equal(sessionId, resumed.ActiveSession!.Id);
+        Assert.Equal(encounterId, resumed.ActiveEncounter!.Id);
+
+        // Once the fight is over, ending the table completes the session as before.
+        await resumed.EnqueueAsync(new EndEncounterCommand());
+        Assert.True(await manager.EvictAsync(campaignId));
+        Assert.Equal(SessionStatus.Completed, (await _sessions.GetAsync(sessionId))!.Status);
+    }
+
+    [Fact]
     public async Task EndEncounter_ExpiresTimedConditions_AndKeepsIndefiniteOnes_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
@@ -307,11 +336,15 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(0, Hp(runtime, hero.Id));
         Assert.True(Has(runtime, hero.Id, "Unconscious"));
         Assert.False(Has(runtime, hero.Id, "Dead"));
+        // The snapshot carries the rules' verdict, which the table's console reads (Phase 7).
+        Assert.Equal((false, true), (runtime.Snapshot.Actor(hero.Id)!.IsDead, runtime.Snapshot.Actor(hero.Id)!.IsDown));
 
         // 10 HP, 22 damage: 12 left over, more than the maximum of 10.
         await runtime.EnqueueAsync(new ApplyDamageCommand(tank.Id, "HP", 22, "dragon"));
         Assert.True(Has(runtime, tank.Id, "Dead"));
         Assert.False(Has(runtime, tank.Id, "Unconscious"));
+        Assert.Equal((true, false), (runtime.Snapshot.Actor(tank.Id)!.IsDead, runtime.Snapshot.Actor(tank.Id)!.IsDown));
+        Assert.Equal((false, false), (runtime.Snapshot.Actor(goblin.Id)!.IsDead, runtime.Snapshot.Actor(goblin.Id)!.IsDown));
 
         await runtime.EnqueueAsync(new ApplyDamageCommand(goblin.Id, "HP", 7, "arrow"));
         Assert.True(Has(runtime, goblin.Id, "Dead"));
@@ -656,6 +689,42 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task PlayerLog_NamesAStrangerByTheirPublicName_AndAHiddenSourceAsSomeone_Async()
+    {
+        // F20: the log stored real names, and a player could see every event about an actor they can see, strangers included.
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "player-9", CampaignRole.Player);
+        var stranger = await SeedAsync(campaignId, "Prince Aldric", 20, ActorKind.NonPlayerCharacter);
+        stranger.Visibility = ActorVisibility.Unknown;
+        stranger.PublicName = "the hooded man";
+        await _actors.SaveAsync(stranger);
+        var assassin = await SeedAsync(campaignId, "Silent Vess", 20);
+        assassin.Visibility = ActorVisibility.Hidden;
+        await _actors.SaveAsync(assassin);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { stranger, assassin });
+
+        await runtime.EnqueueAsync(new ApplyDamageCommand(stranger.Id, "HP", 5, assassin.Id));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(stranger.Id, "Poisoned", assassin.Id, 2, EffectExpiry.EndOfTurn, stranger.Id));
+
+        var log = SessionEventRedactor.ForViewer(session.Events, player, await _actors.GetVisibleForCampaignAsync(player));
+        Assert.NotEmpty(log);
+        Assert.All(log, e =>
+        {
+            Assert.DoesNotContain("Aldric", e.Description);
+            Assert.DoesNotContain("Vess", e.Description);
+            Assert.DoesNotContain(e.Parts.SelectMany(p => p.Args), arg => arg.Contains("Aldric") || arg.Contains("Vess"));
+        });
+        Assert.Contains(log, e => e.Type == "StatusEffect" && e.Description.Contains("the hooded man") && e.Description.Contains("someone"));
+
+        // The DM reads the real names.
+        var dmLog = SessionEventRedactor.ForViewer(session.Events, dm, await _actors.GetVisibleForCampaignAsync(dm));
+        Assert.Contains(dmLog, e => e.Type == "StatusEffect" && e.Description.Contains("Prince Aldric") && e.Description.Contains("Silent Vess"));
+    }
+
+    [Fact]
     public async Task DamageTypes_MatchWholeWordsOnly_AndSkipConditionalEntries_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
@@ -726,6 +795,246 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         await detached;
         Assert.False(await saved);
         Assert.Null(await StoredAsync(campaignId, hero.Id));
+        await manager.EvictAsync(campaignId);
+    }
+
+    // ---- Table rules of the 2026-11-01 review (Phase 4) ----
+
+    [Fact]
+    public async Task RemovingWhoeverIsActing_PassesTheTurnAsNextTurnDoes_SkippingTheDeadAndBeginningTheNext_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var a = await SeedAsync(campaignId, "A", 10);
+        var b = await SeedAsync(campaignId, "B", 10);
+        var c = await SeedAsync(campaignId, "C", 10);
+        var d = await SeedAsync(campaignId, "D", 10);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { a, b, c, d });
+        await runtime.EnqueueAsync(new SetInitiativeCommand(a.Id, 20));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(b.Id, 15));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(c.Id, 10));
+        await runtime.EnqueueAsync(new SetInitiativeCommand(d.Id, 5));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        await runtime.EnqueueAsync(new ApplyDamageCommand(c.Id, "HP", 10, ""));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(d.Id, "Frightened", "", 1, EffectExpiry.StartOfTurn, d.Id));
+        Assert.True(Has(runtime, c.Id, "Dead"));
+
+        // B flees on their own turn: C is dead and passed over, and D's turn begins, so its start-of-turn condition ends (R2).
+        await runtime.EnqueueAsync(new RemoveParticipantCommand(b.Id));
+        var encounter = runtime.ActiveEncounter!;
+        Assert.Equal(d.Id, encounter.Participants[encounter.TurnIndex].ActorId);
+        Assert.False(Has(runtime, d.Id, "Frightened"));
+        Assert.Equal(1, encounter.Round);
+    }
+
+    [Fact]
+    public async Task MarkingDead_GoesThroughTheRules_AndReviving_ComesBackOnOneHitPointWithNoFailedSaves_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero });
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 15, ""));
+        await runtime.EnqueueAsync(new RecordDeathSaveCommand(hero.Id, false, 2));
+        Assert.Equal(2, runtime.Snapshot.Actor(hero.Id)!.Pool("DeathSaveFailures"));
+
+        await runtime.EnqueueAsync(new KillCommand(hero.Id));
+        Assert.True(Has(runtime, hero.Id, "Dead"));
+        Assert.False(Has(runtime, hero.Id, "Unconscious"));
+        Assert.Null(runtime.Snapshot.Actor(hero.Id)!.Pool("DeathSaveFailures"));
+
+        // R3: removing "Dead" by hand left an unconscious character two failures from dying again.
+        await runtime.EnqueueAsync(new ReviveCommand(hero.Id));
+        Assert.False(Has(runtime, hero.Id, "Dead"));
+        Assert.False(Has(runtime, hero.Id, "Unconscious"));
+        Assert.Equal(1, Hp(runtime, hero.Id));
+        Assert.Null(runtime.Snapshot.Actor(hero.Id)!.Pool("DeathSaveFailures"));
+        Assert.Contains(session.Events, e => e.Type == "Killed" && e.Description == "Aria is dead.");
+        Assert.Contains(session.Events, e => e.Type == "Revived");
+    }
+
+    [Fact]
+    public async Task ADeath_EndsWhatTheCreatureConcentratedOn_AndTheEffectsCountedOnItsTurns_AsLeavingTheOrderDoes_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var cleric = await SeedAsync(campaignId, "Cleric", 9);
+        var fighter = await SeedAsync(campaignId, "Fighter", 20, ActorKind.PlayerCharacter);
+        var goblin = await SeedAsync(campaignId, "Goblin", 7);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { cleric, fighter, goblin });
+        foreach (var (actor, roll) in new[] { (cleric, 20), (fighter, 15), (goblin, 10) })
+        {
+            await runtime.EnqueueAsync(new SetInitiativeCommand(actor.Id, roll));
+        }
+
+        // Bless on the fighter, held by the cleric's concentration; a curse on the goblin counted on the cleric's turns; and
+        // a mark that lasts until removed.
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(fighter.Id, "Blessed", cleric.Id, 10, EffectExpiry.EndOfTurn, fighter.Id, HeldBy: cleric.Id));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(goblin.Id, "Cursed", cleric.Id, 3, EffectExpiry.EndOfTurn, cleric.Id));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(goblin.Id, "Marked", cleric.Id, 0, EffectExpiry.EndOfTurn, cleric.Id));
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(goblin.Id, "Prone", fighter.Id, 2, EffectExpiry.EndOfTurn, fighter.Id));
+        Assert.True(Has(runtime, cleric.Id, "Concentrating"));
+
+        await runtime.EnqueueAsync(new ApplyDamageCommand(cleric.Id, "HP", 9, ""));
+        Assert.True(Has(runtime, cleric.Id, "Dead"));
+        Assert.False(Has(runtime, cleric.Id, "Concentrating"));
+        Assert.False(Has(runtime, fighter.Id, "Blessed"));
+        Assert.False(Has(runtime, goblin.Id, "Cursed"));
+        Assert.True(Has(runtime, goblin.Id, "Marked"));
+
+        // Leaving the order ends what was counted on the leaver's turns too.
+        await runtime.EnqueueAsync(new RemoveParticipantCommand(fighter.Id));
+        Assert.False(Has(runtime, goblin.Id, "Prone"));
+
+        // And the change reached the stored goblin, not only the table's copy.
+        var stored = (await StoredAsync(campaignId, goblin.Id))!;
+        Assert.DoesNotContain(_registry.Hydrate(stored.State).OfType<ActiveEffectsComponent>().Single().Effects, e => e.EffectId == "Cursed");
+    }
+
+    [Fact]
+    public async Task Concentration_AHitAsksForASave_RemovingItEndsWhatItHeld_AndGoingDownLosesIt_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var wizard = await SeedAsync(campaignId, "Wizard", 20, ActorKind.PlayerCharacter);
+        var goblin = await SeedAsync(campaignId, "Goblin", 7);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { wizard, goblin });
+
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(goblin.Id, "Restrained", wizard.Id, 10, EffectExpiry.EndOfTurn, goblin.Id, HeldBy: wizard.Id));
+        var hit = new ApplyDamageCommand(wizard.Id, "HP", 8, "");
+        await runtime.EnqueueAsync(hit);
+        Assert.Equal(10, hit.ConcentrationDc);
+        Assert.Contains(session.Events, e => e.Type == "Damage" && e.Description.Contains("Wizard is concentrating: a DC 10 save keeps it."));
+
+        await runtime.EnqueueAsync(new RemoveStatusEffectCommand(wizard.Id, "Concentrating"));
+        Assert.False(Has(runtime, goblin.Id, "Restrained"));
+        Assert.Contains(session.Events, e => e.Type == "StatusEffectRemoved" && e.Description.Contains("One effect it held up ended."));
+
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(goblin.Id, "Restrained", wizard.Id, 10, EffectExpiry.EndOfTurn, goblin.Id, HeldBy: wizard.Id));
+        var downing = new ApplyDamageCommand(wizard.Id, "HP", 40, "");
+        await runtime.EnqueueAsync(downing);
+        Assert.Null(downing.ConcentrationDc);
+        Assert.False(Has(runtime, goblin.Id, "Restrained"));
+        Assert.Contains(session.Events, e => e.Type == "Damage" && e.Description.Contains("Wizard lost concentration."));
+    }
+
+    [Fact]
+    public async Task Undo_PutsBackAMistypedHit_IncludingGoingDown_ButNotOnceSomethingElseChangedTheCreature_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero });
+        await runtime.EnqueueAsync(new SetInitiativeCommand(hero.Id, 10));
+
+        // 21 typed for 12: down, death saves begun. Undo puts it all back (R5).
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 21, ""));
+        Assert.True(Has(runtime, hero.Id, "Unconscious"));
+        Assert.Equal("Damage", runtime.Snapshot.Actor(hero.Id)!.UndoKind);
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+        Assert.Equal(12, Hp(runtime, hero.Id));
+        Assert.False(Has(runtime, hero.Id, "Unconscious"));
+        Assert.Null(runtime.Snapshot.Actor(hero.Id)!.UndoKind);
+        Assert.Equal(12, Codex.Core.YamlValues.GetInt((await StoredAsync(campaignId, hero.Id))!.Sheet, "HP"));
+
+        // A hit, then the turn ends and a condition wears off: the hit can no longer be taken back on its own.
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(hero.Id, "Prone", "", 1, EffectExpiry.EndOfTurn, hero.Id));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 3, ""));
+        await runtime.EnqueueAsync(new NextTurnCommand());
+        Assert.Null(runtime.Snapshot.Actor(hero.Id)!.UndoKind);
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+        Assert.Equal(9, Hp(runtime, hero.Id));
+        Assert.Contains(session.Events, e => e.Type == "Undo" && e.Description.Contains("nothing to undo"));
+    }
+
+    [Fact]
+    public async Task APoolsMaximum_IsWhereverTheSystemSaysItIs_ForHealingAndSpendingAlike_Async()
+    {
+        var system = new SystemDefinition { Id = "wounds", Resources = { new ResourceDefinition { Key = "Wounds", MaxKey = "WoundCap", IsPrimary = true } } };
+        Assert.Equal("WoundCap", system.MaxKeyOf("Wounds"));
+        Assert.Equal("slots_1_Max", system.MaxKeyOf("slots_1"));
+
+        var campaignId = Guid.NewGuid().ToString();
+        var pool = new ResourcePoolComponent();
+        pool.Set("Wounds", 2);
+        pool.Set("WoundCap", 5);
+        var ferryman = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Ferryman", State = _registry.Snapshot(new object[] { pool }) };
+        await _actors.SaveAsync(ferryman);
+        await using var runtime = new CampaignRuntime(campaignId, _actors, _registry, NullLogger.Instance, system: system);
+        runtime.Hydrate(new[] { ferryman });
+
+        // R9: damage was capped by WoundCap while healing looked for "Wounds_Max" and had no cap at all.
+        await runtime.EnqueueAsync(new ApplyHealingCommand(ferryman.Id, "Wounds", 10, ""));
+        Assert.Equal(5, runtime.Snapshot.Actor(ferryman.Id)!.Pool("Wounds"));
+        await runtime.EnqueueAsync(new ApplyDamageCommand(ferryman.Id, "Wounds", 4, ""));
+        await runtime.EnqueueAsync(new AdjustResourceCommand(ferryman.Id, "Wounds", 10, "wounds"));
+        Assert.Equal(5, runtime.Snapshot.Actor(ferryman.Id)!.Pool("Wounds"));
+    }
+
+    [Fact]
+    public async Task RevealingACreatureMidFight_ReachesTheTable_SoEveryTablePageReloadsWhoItMaySee_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Reveal" };
+        await campaigns.SaveAsync(campaign);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var runtime = await manager.GetOrStartAsync(campaign, dm);
+        var goblin = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Grisk", Kind = ActorKind.Monster, Visibility = ActorVisibility.Hidden };
+        Assert.True(await manager.TryCreateActorAsync(goblin, dm));
+        var roster = runtime.Snapshot.RosterVersion;
+
+        Assert.False(await manager.TrySetVisibilityAsync(goblin.Id, ActorVisibility.Known, new CampaignAccess(campaignId, "player-1", CampaignRole.Player)));
+        Assert.True(await manager.TrySetVisibilityAsync(goblin.Id, ActorVisibility.Unknown, dm));
+
+        Assert.NotEqual(roster, runtime.Snapshot.RosterVersion);
+        Assert.Equal(ActorVisibility.Unknown, runtime.GetActorDocument(goblin.Id)!.Visibility);
+        Assert.Equal(ActorVisibility.Unknown, (await StoredAsync(campaignId, goblin.Id))!.Visibility);
+        // A stranger's real name stays out of what players read of the log.
+        var reveal = runtime.ActiveSession!.Events.Last(e => e.Type == "ActorVisibility");
+        Assert.DoesNotContain("Grisk", reveal.PlayerDescription);
+        await manager.EvictAsync(campaignId);
+    }
+
+    [Fact]
+    public async Task Retiring_TakesAnActorOffTheTableButKeepsIt_AndTheDmCanBringItBack_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Retire", Members = { new CampaignMember { UserId = "player-1", Role = CampaignRole.Player } } };
+        await campaigns.SaveAsync(campaign);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var player = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        var goblin = await SeedAsync(campaignId, "Goblin", 7);
+        var runtime = await manager.GetOrStartAsync(campaign, dm);
+        await runtime.EnqueueAsync(new SetInitiativeCommand(goblin.Id, 12));
+
+        Assert.False(await manager.TryRetireActorAsync(goblin.Id, player));
+        Assert.True(await manager.TryRetireActorAsync(goblin.Id, dm));
+        Assert.False(runtime.HasActor(goblin.Id));
+        Assert.Empty(runtime.ActiveEncounter!.Participants);
+        var kept = (await StoredAsync(campaignId, goblin.Id))!;
+        Assert.True(kept.Retired);
+        Assert.Contains(await _actors.GetVisibleForCampaignAsync(dm), a => a.Id == goblin.Id && a.Retired);
+
+        // A player retires their own character; only the DM brings anyone back.
+        Assert.True(await manager.TryRetireActorAsync(hero.Id, player));
+        Assert.False(await manager.TryRestoreActorAsync(hero.Id, player));
+        Assert.True(await manager.TryRestoreActorAsync(goblin.Id, dm));
+        Assert.True(runtime.HasActor(goblin.Id));
+        Assert.False((await StoredAsync(campaignId, goblin.Id))!.Retired);
+
+        // A table started later leaves the retired out.
+        await manager.EvictAsync(campaignId);
+        var again = await manager.GetOrStartAsync(campaign, dm);
+        Assert.False(again.HasActor(hero.Id));
+        Assert.True(again.HasActor(goblin.Id));
         await manager.EvictAsync(campaignId);
     }
 

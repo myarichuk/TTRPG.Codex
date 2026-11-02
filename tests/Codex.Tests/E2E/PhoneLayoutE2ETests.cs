@@ -97,6 +97,10 @@ public class PhoneLayoutE2ETests : IClassFixture<AppFixture>
         // The section rail is a tab bar at the bottom; More lists the rest and closes once one is picked.
         await E2EHelpers.GoToSectionAsync(page, campaignId, "");
         await Assertions.Expect(page.GetByTestId("section-table")).ToBeHiddenAsync();
+        // The DM's bar holds what the DM runs the table with (U7); a player's holds their journal and the places instead.
+        await Assertions.Expect(page.GetByTestId("tabbar-cast")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByTestId("tabbar-wiki")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByTestId("tabbar-journal")).ToHaveCountAsync(0);
         await page.GetByTestId("tabbar-sessions").ClickAsync();
         await Assertions.Expect(page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/sessions$"));
         await page.GetByTestId("tabbar-more").ClickAsync();
@@ -130,7 +134,8 @@ public class PhoneLayoutE2ETests : IClassFixture<AppFixture>
         Assert.True(Math.Abs(backScroll - listScroll) < 50, $"closing the entry moved the list from {listScroll} to {backScroll}");
 
         // The journal editor opens in view, with Back to cancel it.
-        await page.GetByTestId("tabbar-journal").ClickAsync();
+        await page.GetByTestId("tabbar-more").ClickAsync();
+        await page.Locator(".tabbar-more .popover-panel a", new() { HasText = "My journal" }).ClickAsync();
         await page.GetByTestId("journal-new").ClickAsync();
         await AssertOnTopInViewAsync(page.GetByTestId("journal-title"), "The journal editor");
         await page.Locator(".sheet-bar button").ClickAsync();

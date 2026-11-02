@@ -1,0 +1,119 @@
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* A character's classes, when the system allows more than one: each class's levels and subclass, and a new one to add.
+   The first class's level is the sheet's level; the others are edited here, and the sheet keeps the list (OnSetLevel,
+   OnRemove, OnSetSubclass, OnAdd). *@
+<section class="panel" aria-labelledby="classes-heading" data-testid="multiclass" data-rule-key="@Multiclass.Key">
+    <div class="panel-title">
+        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="18" Class="title-icon" /> @L["Actor.Sheet.Classes"]</h2>
+        <span class="pill">@L["Actor.Sheet.LevelInAll", CurrentLevel]</span>
+    </div>
+    <RuleProblemList Problems="Problems" Describe="Describe" TestId="class-problems" />
+    @if (Evaluation.Classes.Count == 0)
+    {
+        <p class="small-muted mb-0">@L["Actor.Sheet.ChooseClassFirst"]</p>
+    }
+    else
+    {
+        <ul class="list-unstyled mb-2">
+            @foreach (var cls in Evaluation.Classes)
+            {
+                var classId = cls.Id;
+                var levelInputId = "class-level-" + classId;
+                <li class="list-row py-1" data-testid="class-row">
+                    <span>
+                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(EntryName(cls.Entry) ?? classId)</a>
+                        @if (cls.IsFirst)
+                        {
+                            <span class="small-muted"> · @L["Actor.Sheet.FirstClass"]</span>
+                        }
+                        @if (cls.Subclass != null)
+                        {
+                            <span class="small-muted"> · @EntryName(cls.Subclass)</span>
+                        }
+                    </span>
+                    @if (cls.IsFirst || !CanEdit)
+                    {
+                        <span data-testid="class-level-@classId">@L["Actor.Sheet.Levels", cls.Level]</span>
+                    }
+                    else
+                    {
+                        <span class="d-flex align-items-center gap-2">
+                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", EntryName(cls.Entry) ?? classId]</label>
+                            <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
+                                   @onchange="e => SetLevel(classId, e.Value?.ToString())" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", EntryName(cls.Entry) ?? classId]" OnClick="() => OnRemove.InvokeAsync(classId)" />
+                        </span>
+                    }
+                </li>
+                @if (CanEdit && !cls.IsFirst && Multiclass.SubclassField != null && cls.Level >= Multiclass.SubclassLevel)
+                {
+                    var subclassId = "class-subclass-" + classId;
+                    <li class="py-1">
+                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", EntryName(cls.Entry) ?? classId]</label>
+                        <select id="@subclassId" class="field-select field-sm" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
+                                @onchange="e => OnSetSubclass.InvokeAsync((classId, e.Value?.ToString()))">
+                            <option value="">@L["Actor.Sheet.NoneYet"]</option>
+                            @foreach (var option in SubclassOptions(classId))
+                            {
+                                <option value="@option.Id">@EntryName(option)</option>
+                            }
+                        </select>
+                    </li>
+                }
+            }
+        </ul>
+        @if (CanEdit)
+        {
+            var firstLevel = Evaluation.Classes.FirstOrDefault(c => c.IsFirst)?.Level ?? 0;
+            <div class="d-flex gap-2 align-items-end flex-wrap">
+                <div>
+                    <label for="add-class" class="field-label">@L["Actor.Sheet.AddClass"]</label>
+                    <select id="add-class" class="field-select field-sm" @bind="newClassId" data-testid="add-class-select">
+                        <option value="">@L["Actor.Sheet.Choose"]</option>
+                        @foreach (var option in Evaluation.MulticlassOptions)
+                        {
+                            <option value="@option.Id">@EntryName(option)</option>
+                        }
+                    </select>
+                </div>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" OnClick="AddAsync" data-testid="add-class">@L["Actor.Sheet.Add"]</CodexButton>
+            </div>
+            <p class="field-hint">@(firstLevel <= 1 ? L["Actor.Sheet.NewClassHintRaise"] : L["Actor.Sheet.NewClassHint"])</p>
+        }
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public MulticlassRules Multiclass { get; set; } = null!;
+    [Parameter, EditorRequired] public SheetEvaluation Evaluation { get; set; } = null!;
+    [Parameter] public string CampaignId { get; set; } = string.Empty;
+    [Parameter] public int CurrentLevel { get; set; }
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter, EditorRequired] public Func<ContentEntry?, string?> EntryName { get; set; } = null!;
+
+    /// <summary>The rules the classes break, said at the top.</summary>
+    [Parameter] public IReadOnlyList<RuleViolation> Problems { get; set; } = Array.Empty<RuleViolation>();
+    [Parameter, EditorRequired] public Func<RuleViolation, string> Describe { get; set; } = null!;
+
+    /// <summary>The subclasses a class (its id) may take.</summary>
+    [Parameter, EditorRequired] public Func<string, IEnumerable<ContentEntry>> SubclassOptions { get; set; } = null!;
+    [Parameter] public EventCallback<(string ClassId, int Level)> OnSetLevel { get; set; }
+    [Parameter] public EventCallback<string> OnRemove { get; set; }
+    [Parameter] public EventCallback<(string ClassId, string? SubclassId)> OnSetSubclass { get; set; }
+    [Parameter] public EventCallback<string> OnAdd { get; set; }
+
+    private string newClassId = string.Empty;
+
+    private Task SetLevel(string classId, string? raw) =>
+        int.TryParse(raw, out var level) && level >= 1 ? OnSetLevel.InvokeAsync((classId, level)) : Task.CompletedTask;
+
+    private async Task AddAsync()
+    {
+        if (string.IsNullOrEmpty(newClassId)) return;
+        var classId = newClassId;
+        newClassId = string.Empty;
+        await OnAdd.InvokeAsync(classId);
+    }
+}

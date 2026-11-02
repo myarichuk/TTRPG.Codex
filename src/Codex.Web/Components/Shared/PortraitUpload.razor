@@ -1,0 +1,50 @@
+@using Codex.Persistence
+@inject IMediaStore Media
+@inject IActorRepository ActorRepo
+@inject ILogger<PortraitUpload> Logger
+
+@* The camera on a character's portrait: picks a picture and stores it as the portrait. Only the portrait is recorded
+   (D5), so the sheet's unsaved edits stay unsaved. *@
+<label class="portrait-upload" title="@L["Actor.Sheet.UploadPortrait"]">
+    <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">@L["Actor.Sheet.UploadPortraitHidden"]</span>
+    <InputFile OnChange="UploadAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
+</label>
+
+@code {
+    [Parameter, EditorRequired] public ActorDocument Actor { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
+
+    private async Task UploadAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Actor.Sheet.PortraitTypeError"]));
+            return;
+        }
+
+        if (file.Size > RavenMediaStore.MaxBytes)
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Actor.Sheet.PortraitTooBig"]));
+            return;
+        }
+
+        Flash result;
+        try
+        {
+            using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
+            await Media.PutAsync(Access, Actor.Id, RavenMediaStore.ActorPortrait, stream, file.ContentType);
+            result = await ActorRepo.TrySetPortraitAsync(Actor, true, Access)
+                ? Flash.Success(L["Actor.Sheet.PortraitUpdated"])
+                : Flash.Error(L["Actor.Sheet.NoPermission"]);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Portrait upload failed for actor {ActorId}", Actor.Id);
+            result = Flash.Error(L["Actor.Art.UploadFailed", L.Describe(ex)]);
+        }
+
+        await OnMessage.InvokeAsync(result);
+    }
+}

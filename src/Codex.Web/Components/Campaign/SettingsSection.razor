@@ -27,7 +27,9 @@
                 <form @onsubmit="SaveDetailsAsync" @onsubmit:preventDefault="true">
                     <div class="mb-3">
                         <label for="cs-name" class="field-label">@L["Campaign.Settings.Name"]</label>
-                        <input id="cs-name" class="field-input" @bind="name" required maxlength="120" data-testid="settings-name" />
+                        <input id="cs-name" class="field-input" @bind="name" @bind:after="() => nameError = null" required maxlength="120" data-testid="settings-name"
+                               aria-invalid="@(nameError == null ? null : "true")" aria-describedby="@(nameError == null ? null : "cs-name-error")" />
+                        <FieldError Id="cs-name-error" Message="@nameError" TestId="settings-name-error" />
                     </div>
                     <div class="mb-3">
                         <label for="cs-tagline" class="field-label">@L["Campaign.Settings.Tagline"]</label>
@@ -62,7 +64,7 @@
                             <div id="cs-rules-help" class="field-hint">@L["Campaign.Settings.Rules.Hint"]</div>
                         </div>
                     }
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="settings-save" data-save-shortcut="">@L["Campaign.Settings.SaveDetails"]</CodexButton>
+                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="settings-save" data-save-shortcut="" Busy="@saveGate.IsBusy">@L["Campaign.Settings.SaveDetails"]</CodexButton>
                 </form>
             }
             else
@@ -99,6 +101,7 @@
                                 <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="RemoveCoverAsync">@L["Campaign.Settings.Remove"]</CodexButton>
                             }
                         </div>
+                        <FieldError Id="cs-cover-error" Message="@coverError" TestId="settings-cover-error" />
                     </div>
                 </div>
             </section>
@@ -119,10 +122,10 @@
                     {
                         <div class="field-check mb-1">
                             <input id="pack-@pack.Id" type="checkbox" class="field-box" checked="@IsActive(pack.Id)" @onchange="e => TogglePack(pack.Id, (bool)(e.Value ?? false))" />
-                            <label for="pack-@pack.Id" >@pack.Name <span class="pill ms-1">@pack.Kind</span></label>
+                            <label for="pack-@pack.Id" >@pack.Name <span class="pill ms-2">@pack.Kind</span></label>
                         </div>
                     }
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-2" OnClick="SavePacksAsync">@L["Campaign.Settings.Packs.Save"]</CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-2" OnClick="SavePacksAsync" Busy="@saveGate.IsBusy">@L["Campaign.Settings.Packs.Save"]</CodexButton>
                 }
             </section>
         }
@@ -141,8 +144,10 @@
                         {
                             <div class="row-actions">
                                 <label for="role-@member.UserId" class="visually-hidden">@L["Campaign.Settings.RoleFor", usernames.GetValueOrDefault(member.UserId, member.UserId)]</label>
-                                <select id="role-@member.UserId" class="field-select field-sm" value="@member.Role" @onchange="e => ChangeRoleAsync(member, e.Value?.ToString())">
-                                    @foreach (CampaignRole role in Enum.GetValues<CampaignRole>())
+                                @* Keyed on the times a change was called off, so a refused pick is redrawn as the role it still is. *@
+                                <select @key="(member.UserId, roleResets)" id="role-@member.UserId" class="field-select field-sm" value="@member.Role" @onchange="e => ChangeRoleAsync(member, e.Value?.ToString())">
+                                    @* Observer is not offered: nothing reads it, so it is a player by another name. A member who has it keeps it. *@
+                                    @foreach (var role in Enum.GetValues<CampaignRole>().Where(r => r != CampaignRole.Observer || r == member.Role))
                                     {
                                         <option value="@role">@RoleLabel(role)</option>
                                     }
@@ -174,6 +179,19 @@
                         <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => CopyInviteAsync(remoteLink)" aria-label="@L["Campaign.Settings.CopyInvite"]"><LucideIcon IconName="copy" Size="14" /></CodexButton>
                     </div>
                 }
+                @if (InviteState is { } state)
+                {
+                    <div class="field-hint" data-testid="invite-state">@state</div>
+                }
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <label for="cs-invite-validity" class="field-label mb-0">@L["Campaign.Settings.InviteValidity"]</label>
+                    <select id="cs-invite-validity" class="field-select field-sm" @bind="inviteValidity" data-testid="invite-validity">
+                        <option value="forever">@L["Campaign.Settings.InviteValidity.Forever"]</option>
+                        <option value="week">@L["Campaign.Settings.InviteValidity.Week"]</option>
+                        <option value="day">@L["Campaign.Settings.InviteValidity.Day"]</option>
+                        <option value="once">@L["Campaign.Settings.InviteValidity.Once"]</option>
+                    </select>
+                </div>
                 <div class="field-hint">@L["Campaign.Settings.NewLinkHint"]</div>
             }
         </section>
@@ -264,11 +282,19 @@
         if (on) activePacks.Add(packId); else activePacks.Remove(packId);
     }
 
-    private async Task SaveDetailsAsync()
+    // One save of the details or the packs at a time: a double press, or Ctrl+S held, writes once (U6).
+    private readonly SaveGate saveGate = new();
+    // What is wrong with the name or the cover, said under it rather than at the top of the page (U5).
+    private string? nameError;
+    private string? coverError;
+
+    private Task SaveDetailsAsync() => saveGate.RunAsync(SaveDetailsNowAsync);
+
+    private async Task SaveDetailsNowAsync()
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            Ctx.Notify(Flash.Error(L["Campaign.Settings.NameRequired"]));
+            nameError = L["Campaign.Settings.NameRequired"];
             return;
         }
 
@@ -279,16 +305,14 @@
         var newEnforcement = rulesEnforcement == "inherit" ? null : rulesEnforcement;
         try
         {
-            await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+            await ChangeAsync(campaign =>
             {
                 campaign.Name = newName;
                 campaign.Description = newDescription;
                 campaign.Tagline = newTagline;
                 campaign.SystemId = newSystemId;
                 campaign.RulesEnforcement = newEnforcement;
-            });
-            Ctx.Notify(Flash.Success(L["Campaign.Settings.Saved"]));
-            await Ctx.ReloadAsync();
+            }, L["Common.Saved"]);
         }
         catch (InvalidOperationException ex)
         {
@@ -296,33 +320,52 @@
         }
     }
 
-    private async Task SavePacksAsync()
+    /// <summary>Writes a DM-only change and, once it is stored, says <paramref name="done"/> and reloads. A role taken away
+    /// since the page loaded is refused by the store; <see cref="CampaignContext.WithCurrentRoleAsync"/> says so instead.</summary>
+    private async Task ChangeAsync(Action<CampaignDocument> mutate, string done)
+    {
+        if (await Ctx.WithCurrentRoleAsync(() => CampaignRepo.UpdateAsDmAsync(Ctx.Access, mutate)))
+        {
+            Ctx.Notify(Flash.Success(done));
+            await Ctx.ReloadAsync();
+        }
+    }
+
+    private Task SavePacksAsync() => saveGate.RunAsync(SavePacksNowAsync);
+
+    private Task SavePacksNowAsync()
     {
         var all = Registry.GetPacks(Ctx.Campaign.SystemId).Where(p => !p.IsTranslation).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var packs = activePacks.SetEquals(all) ? new List<string>() : activePacks.ToList();
-        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.ActivePacks = packs.ToList());
-        Ctx.Notify(Flash.Success(L["Campaign.Settings.PacksSaved"]));
-        await Ctx.ReloadAsync();
+        return ChangeAsync(campaign => campaign.ActivePacks = packs.ToList(), L["Campaign.Settings.PacksSaved"]);
     }
 
+    private int roleResets;
+
+    // A role changes on the select's change, which a mis-scroll on a phone can fire: it asks first (U3).
     private async Task ChangeRoleAsync(CampaignMember member, string? role)
     {
-        if (!Enum.TryParse<CampaignRole>(role, out var parsed)) return;
-        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+        if (!Enum.TryParse<CampaignRole>(role, out var parsed) || parsed == member.Role) return;
+        var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
+        if (!await confirm.ShowAsync(L["Campaign.Settings.RoleQ", who, RoleLabel(parsed)],
+                parsed == CampaignRole.DM ? L["Campaign.Settings.RoleBodyDm"] : L["Campaign.Settings.RoleBody"], L["Campaign.Settings.RoleConfirm"],
+                isDestructive: parsed == CampaignRole.DM))
+        {
+            roleResets++;
+            return;
+        }
+
+        await ChangeAsync(campaign =>
         {
             if (campaign.Members.FirstOrDefault(m => m.UserId == member.UserId) is { } stored) stored.Role = parsed;
-        });
-        Ctx.Notify(Flash.Success(L["Campaign.Settings.RoleChanged", usernames.GetValueOrDefault(member.UserId, member.UserId), RoleLabel(parsed)]));
-        await Ctx.ReloadAsync();
+        }, L["Campaign.Settings.RoleChanged", who, RoleLabel(parsed)]);
     }
 
     private async Task RemoveMemberAsync(CampaignMember member)
     {
         var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
         if (!await confirm.ShowAsync(L["Campaign.Settings.RemoveQ", who], L["Campaign.Settings.RemoveBody"], L["Campaign.Settings.Remove"], isDestructive: true)) return;
-        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.Members.RemoveAll(m => m.UserId == member.UserId));
-        Ctx.Notify(Flash.Success(L["Campaign.Settings.Removed", who]));
-        await Ctx.ReloadAsync();
+        await ChangeAsync(campaign => campaign.Members.RemoveAll(m => m.UserId == member.UserId), L["Campaign.Settings.Removed", who]);
     }
 
     private async Task CopyInviteAsync(string link)
@@ -331,57 +374,95 @@
         Ctx.Notify(ok ? Flash.Success(L["Campaign.Settings.InviteCopied"]) : Flash.Error(L["Campaign.Settings.CopyFailed"]));
     }
 
+    private string inviteValidity = "forever";
+
+    // The link in use stops working at once, and cannot be had back (U3).
     private async Task RegenerateInviteAsync()
     {
-        var code = Guid.NewGuid().ToString("N")[..8];
-        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign => campaign.InviteCode = code);
-        Ctx.Notify(Flash.Success(L["Campaign.Settings.NewInviteCreated"]));
-        await Ctx.ReloadAsync();
+        if (!await confirm.ShowAsync(L["Campaign.Settings.NewLinkQ"], L["Campaign.Settings.NewLinkBody"], L["Campaign.Settings.NewLinkConfirm"], isDestructive: true)) return;
+        var code = InviteCodes.New();
+        DateTime? expires = inviteValidity switch
+        {
+            "week" => DateTime.UtcNow.AddDays(7),
+            "day" => DateTime.UtcNow.AddDays(1),
+            _ => null
+        };
+        var once = inviteValidity == "once";
+        await ChangeAsync(campaign =>
+        {
+            campaign.InviteCode = code;
+            campaign.InviteExpiresAt = expires;
+            campaign.InviteSingleUse = once;
+            campaign.InviteUsedBy = null;
+        }, L["Campaign.Settings.NewInviteCreated"]);
+    }
+
+    /// <summary>What limits the current link, if anything: when it stops working, or that it lets one player in (D14).</summary>
+    private string? InviteState
+    {
+        get
+        {
+            var campaign = Ctx.Campaign;
+            if (campaign.InviteSingleUse)
+            {
+                return campaign.InviteUsedBy == null
+                    ? L["Campaign.Settings.InviteOnce"]
+                    : L["Campaign.Settings.InviteUsed", usernames.GetValueOrDefault(campaign.InviteUsedBy, campaign.InviteUsedBy)];
+            }
+
+            if (campaign.InviteExpiresAt is not { } expires) return null;
+            var left = expires - DateTime.UtcNow;
+            return left <= TimeSpan.Zero ? L["Campaign.Settings.InviteExpired"]
+                : left.TotalHours > 48 ? L["Campaign.Settings.InviteExpiresDays", (int)Math.Ceiling(left.TotalDays)]
+                : L["Campaign.Settings.InviteExpiresHours", Math.Max(1, (int)Math.Ceiling(left.TotalHours))];
+        }
     }
 
     private async Task UploadCoverAsync(InputFileChangeEventArgs e)
     {
         var file = e.File;
+        coverError = null;
         if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
         {
-            Ctx.Notify(Flash.Error(L["Campaign.Settings.BadImageType"]));
+            coverError = L["Campaign.Settings.BadImageType"];
             return;
         }
 
         if (file.Size > RavenMediaStore.MaxBytes)
         {
-            Ctx.Notify(Flash.Error(L["Campaign.Settings.ImageTooBig"]));
+            coverError = L["Campaign.Settings.ImageTooBig"];
             return;
         }
 
         try
         {
             using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
-            await Media.PutAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover, stream, file.ContentType);
-            await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+            if (await Ctx.WithCurrentRoleAsync(() => Media.PutAsync(Ctx.Access, Ctx.Campaign.Id, RavenMediaStore.CampaignCover, stream, file.ContentType)))
             {
-                campaign.HasCover = true;
-                campaign.CoverVersion++;
-            });
-            Ctx.Notify(Flash.Success(L["Campaign.Settings.CoverUpdated"]));
-            await Ctx.ReloadAsync();
+                await ChangeAsync(campaign =>
+                {
+                    campaign.HasCover = true;
+                    campaign.CoverVersion++;
+                }, L["Campaign.Settings.CoverUpdated"]);
+            }
         }
         catch (Exception ex)
         {
-            Ctx.Notify(Flash.Error(L["Campaign.Settings.UploadFailed", L.Describe(ex)]));
+            coverError = L["Campaign.Settings.UploadFailed", L.Describe(ex)];
         }
     }
 
     private async Task RemoveCoverAsync()
     {
-        await Media.DeleteAsync(Ctx.Campaign.Id, RavenMediaStore.CampaignCover);
-        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, campaign =>
+        if (!await confirm.ShowAsync(L["Common.Art.RemoveTitle"], L["Common.Art.RemoveBody"], L["Common.Art.Remove"], isDestructive: true)) return;
+        if (await Ctx.WithCurrentRoleAsync(() => Media.DeleteAsync(Ctx.Access, Ctx.Campaign.Id, RavenMediaStore.CampaignCover)))
         {
-            campaign.HasCover = false;
-            campaign.CoverVersion++;
-        });
-        Ctx.Notify(Flash.Success(L["Campaign.Settings.CoverRemoved"]));
-        await Ctx.ReloadAsync();
+            await ChangeAsync(campaign =>
+            {
+                campaign.HasCover = false;
+                campaign.CoverVersion++;
+            }, L["Campaign.Settings.CoverRemoved"]);
+        }
     }
 
     private async Task ExportAsync()
@@ -418,17 +499,23 @@
                 return;
             }
 
-            if (await ExportService.ImportAsync(bundle, Ctx.UserId))
+            if (bundle.Campaign!.Id != Ctx.Campaign.Id)
             {
-                Ctx.Notify(Flash.Success(L["Campaign.Settings.Imported", bundle.Campaign?.Name]));
-                if (bundle.Campaign!.Id == Ctx.Campaign.Id)
+                // Under new ids, so the file can never land on a campaign that exists (D13).
+                if (await ExportService.ImportAsNewAsync(bundle, Ctx.UserId) is { } restoredId)
                 {
-                    await Ctx.ReloadAsync();
+                    Ctx.Notify(Flash.Success(L["Campaign.Settings.RestoredAsNew", bundle.Campaign.Name]));
+                    Nav.NavigateTo($"/campaigns/{restoredId}");
                 }
                 else
                 {
-                    Nav.NavigateTo($"/campaigns/{bundle.Campaign.Id}");
+                    Ctx.Notify(Flash.Error(L["Campaign.Settings.ImportRejected"]));
                 }
+            }
+            else if (await ExportService.ImportAsync(bundle, Ctx.UserId))
+            {
+                Ctx.Notify(Flash.Success(L["Campaign.Settings.Imported", bundle.Campaign.Name]));
+                await Ctx.ReloadAsync();
             }
             else
             {

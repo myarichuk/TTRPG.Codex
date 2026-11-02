@@ -4,6 +4,7 @@
 @using Codex.Persistence
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AiProviderService Providers
+@inject ServerAiUsage Usage
 @inject IUserRepository UserRepo
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
@@ -18,7 +19,7 @@
     </div>
 </div>
 
-<StatusMessage Message="flash" OnDismiss="() => flash = null" />
+<StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
 
 @if (user == null)
 {
@@ -38,6 +39,29 @@ else
                     <li>@L["Page.AiSettings.ServerTextBefore"]<code>AI</code>@L["Page.AiSettings.ServerTextAfter"] <strong>@(Providers.ServerConfigured ? Providers.ServerDescription : L["Page.AiSettings.NotConfigured"])</strong></li>
                     <li>@L["Page.AiSettings.ServerImageBefore"]<code>AIImage</code>@L["Page.AiSettings.ServerImageAfter"] <strong>@(Providers.ServerImageConfigured ? Providers.ServerImageDescription : L["Page.AiSettings.NotConfigured"])</strong></li>
                 </ul>
+                @if (Providers.ServerConfigured || Providers.ServerImageConfigured)
+                {
+                    @* Everyone on a LAN server falls back to this key, so say so and show what it has cost today (F14). *@
+                    <p class="small mt-2 mb-1" data-testid="ai-server-shared">@L["Page.AiSettings.ServerShared", Allowance(ServerAiUsage.Kind.Text), Allowance(ServerAiUsage.Kind.Image)]</p>
+                    @if (serverUse == null)
+                    {
+                        <p class="small-muted mb-0" data-testid="ai-server-used">@L["Page.AiSettings.ServerUsedByYou", Usage.UsedToday(user.Id, ServerAiUsage.Kind.Text), Usage.UsedToday(user.Id, ServerAiUsage.Kind.Image)]</p>
+                    }
+                    else if (serverUse.Count == 0)
+                    {
+                        <p class="small-muted mb-0" data-testid="ai-server-used">@L["Page.AiSettings.ServerUsedByNoOne"]</p>
+                    }
+                    else
+                    {
+                        <p class="small mb-1">@L["Page.AiSettings.ServerUsedHeading"]</p>
+                        <ul class="small mb-0" data-testid="ai-server-used">
+                            @foreach (var (name, use) in serverUse)
+                            {
+                                <li>@L["Page.AiSettings.ServerUsedBy", name, use.Text, use.Images]</li>
+                            }
+                        </ul>
+                    }
+                }
             </section>
 
             <section class="panel" aria-labelledby="what-heading">
@@ -78,15 +102,15 @@ else
                     </div>
                     <div class="mb-3">
                         <label for="ai-name" class="field-label">@L["Page.AiSettings.Name"]</label>
-                        <input id="ai-name" class="field-input" @bind="editing.Name" required data-testid="ai-name" />
+                        <input id="ai-name" class="field-input" @bind="editing.Name" required data-testid="ai-name" aria-invalid="@Invalid("name")" />
                     </div>
                     <div class="mb-3">
                         <label for="ai-url" class="field-label">@L["Page.AiSettings.BaseUrl"]</label>
-                        <input id="ai-url" class="field-input" @bind="editing.BaseUrl" placeholder="https://…/v1" required data-testid="ai-url" />
+                        <input id="ai-url" class="field-input" @bind="editing.BaseUrl" placeholder="https://…/v1" required data-testid="ai-url" aria-invalid="@Invalid("url")" />
                     </div>
                     <div class="mb-3">
                         <label for="ai-model" class="field-label">@L["Page.AiSettings.Model"]</label>
-                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="@(purpose == Purpose.Image ? L["Page.AiSettings.ModelPhImage"] : L["Page.AiSettings.ModelPhText"])" required data-testid="ai-model" />
+                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="@(purpose == Purpose.Image ? L["Page.AiSettings.ModelPhImage"] : L["Page.AiSettings.ModelPhText"])" required data-testid="ai-model" aria-invalid="@Invalid("model")" />
                         @if (editing.Kind == "openrouter")
                         {
                             <div class="field-hint">@(purpose == Purpose.Image
@@ -96,7 +120,7 @@ else
                     </div>
                     <div class="mb-3">
                         <label for="ai-key" class="field-label">@L["Page.AiSettings.ApiKey"] @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? L["Page.AiSettings.ApiKeyKeep"] : "")</label>
-                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(PresetFor(purpose, editing.Kind)?.RequiresKey == false ? L["Page.AiSettings.KeyPhLocal"] : "sk-…")" data-testid="ai-key" />
+                        <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(PresetFor(purpose, editing.Kind)?.RequiresKey == false ? L["Page.AiSettings.KeyPhLocal"] : "sk-…")" data-testid="ai-key" aria-invalid="@Invalid("key")" />
                         <div class="field-hint">
                             @L["Page.AiSettings.KeyHint"]
                             @if (SharedKeySource() is { } source)
@@ -105,8 +129,9 @@ else
                             }
                         </div>
                     </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save">@(purpose == Purpose.Image ? L["Page.AiSettings.SaveImage"] : L["Page.AiSettings.SaveText"])</CodexButton>
+                    <FieldError Id="ai-form-error" Message="@formError" TestId="ai-form-error" />
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="ai-save" Busy="@saveGate.IsBusy">@(purpose == Purpose.Image ? L["Page.AiSettings.SaveImage"] : L["Page.AiSettings.SaveText"])</CodexButton>
                         @if (purpose == Purpose.Text)
                         {
                             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => TestAsync(editing, plainKey)" disabled="@testing">@(testing ? L["Page.AiSettings.Testing"] : L["Page.AiSettings.TestConnection"])</CodexButton>
@@ -129,15 +154,32 @@ else
 @code {
     private enum Purpose { Text, Image }
 
+    private string Allowance(ServerAiUsage.Kind kind) => Usage.LimitOf(kind) is var limit and > 0 ? limit.ToString(System.Globalization.CultureInfo.CurrentCulture) : L["Page.AiSettings.NoLimit"];
+
     private sealed record PresetView(string Kind, string Label, string DefaultEndpoint, string DefaultModel, bool RequiresKey, string Hint);
 
     private UserDocument? user;
+    // For the ServerAdmin: who used the server's key today, by name. Null for anyone else, who sees only their own count.
+    private List<(string Name, ServerAiUsage.Use Use)>? serverUse;
     private Purpose purpose = Purpose.Text;
     private AiProviderConfig editing = new();
     private string? editingOriginalId;
     private string plainKey = string.Empty;
     private bool testing;
     private Flash? flash;
+    // What stops the form being saved, said above its Save button with the fields marked (U5), and one save at a time (U6).
+    private string? formError;
+    private readonly HashSet<string> invalid = new();
+    private readonly SaveGate saveGate = new();
+
+    private string? Invalid(string field) => invalid.Contains(field) ? "true" : null;
+
+    private void Refuse(string message, params string[] fields)
+    {
+        formError = message;
+        invalid.Clear();
+        invalid.UnionWith(fields);
+    }
 
     private RenderFragment ProviderList(Purpose listPurpose) => __builder =>
     {
@@ -172,10 +214,10 @@ else
                                 <div class="row-title">@provider.Name
                                     @if (isDefault)
                                     {
-                                        <span class="pill pill-accent ms-1">@L["Page.AiSettings.InUse"]</span>
+                                        <span class="pill pill-accent ms-2">@L["Page.AiSettings.InUse"]</span>
                                     }
                                 </div>
-                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? L["Page.AiSettings.NoKey"] : L["Page.AiSettings.KeyStored"])</div>
+                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? L["Page.AiSettings.NoKey"] : Providers.NeedsReentry(user!.Id, provider.ProtectedApiKey) ? L["Page.AiSettings.KeyUnreadable"] : L["Page.AiSettings.KeyStored"])</div>
                             </div>
                             <div class="row-actions">
                                 @if (!isDefault)
@@ -196,7 +238,9 @@ else
         </section>
     };
 
-    private List<AiProviderConfig> ListFor(Purpose p) => p == Purpose.Image ? user!.ImageProviders : user!.AiProviders;
+    private List<AiProviderConfig> ListFor(Purpose p) => ListFor(user!, p);
+
+    private static List<AiProviderConfig> ListFor(UserDocument of, Purpose p) => p == Purpose.Image ? of.ImageProviders : of.AiProviders;
 
     private string? DefaultIdFor(Purpose p) => user == null ? null : (p == Purpose.Image ? Providers.DefaultImageProvider(user) : Providers.DefaultProvider(user))?.Id;
 
@@ -226,6 +270,15 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = userId == null ? null : await UserRepo.GetUserByIdAsync(userId);
+        if (user?.Roles.Contains(ExposurePolicy.ServerAdminRole) == true)
+        {
+            serverUse = new();
+            foreach (var use in Usage.Today())
+            {
+                serverUse.Add(((await UserRepo.GetUserByIdAsync(use.UserId))?.Username ?? use.UserId, use));
+            }
+        }
+
         await StartNew(Purpose.Text);
     }
 
@@ -234,6 +287,8 @@ else
         purpose = p;
         editingOriginalId = null;
         plainKey = string.Empty;
+        formError = null;
+        invalid.Clear();
         editing = new AiProviderConfig();
         ApplyPreset(p == Purpose.Image ? "openai" : "openrouter");
         if (focus)
@@ -247,6 +302,8 @@ else
         purpose = p;
         editingOriginalId = provider.Id;
         plainKey = string.Empty;
+        formError = null;
+        invalid.Clear();
         editing = new AiProviderConfig
         {
             Id = provider.Id,
@@ -279,24 +336,27 @@ else
         if (Replaceable(editing.ModelId, previous?.DefaultModel)) editing.ModelId = preset.DefaultModel;
     }
 
-    private async Task SaveAsync()
+    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
+
+    private async Task SaveNowAsync()
     {
         if (user == null) return;
         if (string.IsNullOrWhiteSpace(editing.Name) || string.IsNullOrWhiteSpace(editing.BaseUrl) || string.IsNullOrWhiteSpace(editing.ModelId))
         {
-            flash = Flash.Error(L["Page.AiSettings.Required"]);
+            Refuse(L["Page.AiSettings.Required"], new[] { ("name", editing.Name), ("url", editing.BaseUrl), ("model", editing.ModelId) }
+                .Where(f => string.IsNullOrWhiteSpace(f.Item2)).Select(f => f.Item1).ToArray());
             return;
         }
 
         if (!Uri.TryCreate(editing.BaseUrl.Trim(), UriKind.Absolute, out _))
         {
-            flash = Flash.Error(L["Page.AiSettings.BadUrl"]);
+            Refuse(L["Page.AiSettings.BadUrl"], "url");
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(plainKey))
         {
-            editing.ProtectedApiKey = Providers.Protect(plainKey.Trim());
+            editing.ProtectedApiKey = Providers.Protect(user!.Id, plainKey.Trim());
         }
         else if (SharedKeySource() is { } shared)
         {
@@ -304,7 +364,7 @@ else
         }
         else if (editingOriginalId == null && PresetFor(purpose, editing.Kind)?.RequiresKey == true)
         {
-            flash = Flash.Error(L["Page.AiSettings.NeedsKey"]);
+            Refuse(L["Page.AiSettings.NeedsKey"], "key");
             return;
         }
 
@@ -314,40 +374,70 @@ else
         editing.BaseUrl = editing.BaseUrl.Trim();
         editing.ModelId = editing.ModelId.Trim();
 
-        var list = ListFor(purpose);
-        var index = list.FindIndex(p => p.Id == editing.Id);
-        if (index >= 0) list[index] = editing; else list.Add(editing);
-        if (purpose == Purpose.Image) user.DefaultImageProviderId ??= editing.Id; else user.DefaultAiProviderId ??= editing.Id;
-        await UserRepo.UpdateUserAsync(user);
-        flash = Flash.Success(L["Page.AiSettings.Saved", editing.Name]);
+        // Each change is made to the user as stored, so another tab's change (a language, another provider) is kept (D18).
+        var saved = editing;
+        await UpdateUserAsync(stored =>
+        {
+            var list = ListFor(stored, purpose);
+            var index = list.FindIndex(p => p.Id == saved.Id);
+            if (index >= 0) list[index] = saved; else list.Add(saved);
+            if (purpose == Purpose.Image) stored.DefaultImageProviderId ??= saved.Id; else stored.DefaultAiProviderId ??= saved.Id;
+        });
+        flash = Flash.Success(L["Page.AiSettings.Saved", saved.Name]);
         await StartNew(purpose);
     }
 
     private async Task MakeDefaultAsync(AiProviderConfig provider, Purpose p)
     {
         if (user == null) return;
-        if (p == Purpose.Image) user.DefaultImageProviderId = provider.Id; else user.DefaultAiProviderId = provider.Id;
-        await UserRepo.UpdateUserAsync(user);
+        await UpdateUserAsync(stored =>
+        {
+            if (p == Purpose.Image) stored.DefaultImageProviderId = provider.Id; else stored.DefaultAiProviderId = provider.Id;
+        });
         flash = Flash.Success(p == Purpose.Image ? L["Page.AiSettings.NowImage", provider.Name] : L["Page.AiSettings.NowText", provider.Name]);
     }
 
     private async Task RemoveAsync(AiProviderConfig provider, Purpose p)
     {
         if (user == null) return;
-        var list = ListFor(p);
-        list.Remove(provider);
-        if (p == Purpose.Image)
+        // What Undo puts back (U3): the entry where it was, and its place as the default if it had it.
+        var index = ListFor(p).FindIndex(c => c.Id == provider.Id);
+        var wasDefault = DefaultIdFor(p) == provider.Id;
+        await UpdateUserAsync(stored =>
         {
-            if (user.DefaultImageProviderId == provider.Id) user.DefaultImageProviderId = list.FirstOrDefault()?.Id;
-        }
-        else if (user.DefaultAiProviderId == provider.Id)
-        {
-            user.DefaultAiProviderId = list.FirstOrDefault()?.Id;
-        }
-
-        await UserRepo.UpdateUserAsync(user);
-        flash = Flash.Success(L["Page.AiSettings.Removed", provider.Name]);
+            var list = ListFor(stored, p);
+            list.RemoveAll(c => c.Id == provider.Id);
+            if (p == Purpose.Image)
+            {
+                if (stored.DefaultImageProviderId == provider.Id) stored.DefaultImageProviderId = list.FirstOrDefault()?.Id;
+            }
+            else if (stored.DefaultAiProviderId == provider.Id)
+            {
+                stored.DefaultAiProviderId = list.FirstOrDefault()?.Id;
+            }
+        });
+        flash = Flash.Undoable(L["Page.AiSettings.Removed", provider.Name], () => RestoreAsync(provider, p, index, wasDefault));
         if (editingOriginalId == provider.Id) await StartNew(p);
+    }
+
+    private async Task RestoreAsync(AiProviderConfig provider, Purpose p, int index, bool wasDefault)
+    {
+        if (user == null) return;
+        await UpdateUserAsync(stored =>
+        {
+            var list = ListFor(stored, p);
+            if (list.Any(c => c.Id == provider.Id)) return;
+            list.Insert(Math.Clamp(index, 0, list.Count), provider);
+            if (!wasDefault) return;
+            if (p == Purpose.Image) stored.DefaultImageProviderId = provider.Id; else stored.DefaultAiProviderId = provider.Id;
+        });
+        flash = Flash.Success(L["Common.Undone"]);
+    }
+
+    /// <summary>Applies <paramref name="change"/> to the user as stored, and shows what is stored afterwards.</summary>
+    private async Task UpdateUserAsync(Action<UserDocument> change)
+    {
+        user = await UserRepo.UpdateUserAsync(user!.Id, change) ?? user;
     }
 
     private async Task TestAsync(AiProviderConfig provider, string? key)

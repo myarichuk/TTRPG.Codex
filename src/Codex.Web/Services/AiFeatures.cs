@@ -70,17 +70,24 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     public async Task<string> LevelUpAsync(ActorDocument actor, CampaignDocument campaign, SystemDefinition? system, string userId, CancellationToken ct = default)
     {
         var assistant = await providers.AssistantForAsync(userId);
-        var level = YamlValues.GetInt(actor.Sheet, "level") ?? 1;
+        // The level, class and subclass are the fields the system names for them (FieldRoles).
+        var roles = system?.FieldRoles ?? new FieldRoles();
+        string? Read(string? field) => field == null ? null : YamlValues.GetString(actor.Sheet, field);
+        string? TypeOf(string? field) => system?.ActorFields.FirstOrDefault(f => f.Key == field)?.TargetEntityType;
+        var level = roles.Level == null ? 1 : YamlValues.GetInt(actor.Sheet, roles.Level) ?? 1;
         var next = level + 1;
-        var classId = YamlValues.GetString(actor.Sheet, "class");
-        var subclassId = YamlValues.GetString(actor.Sheet, "subclass");
-        var classEntry = classId == null ? null : registry.GetEntry(campaign.SystemId, "class", classId);
-        var subclassEntry = subclassId == null ? null : registry.GetEntry(campaign.SystemId, "subclass", subclassId);
+        var classId = Read(roles.Class);
+        var subclassId = Read(roles.Subclass);
+        var classType = TypeOf(roles.Class);
+        var subclassType = TypeOf(roles.Subclass);
+        var classEntry = classId == null || classType == null ? null : registry.GetEntry(campaign.SystemId, classType, classId);
+        var subclassEntry = subclassId == null || subclassType == null ? null : registry.GetEntry(campaign.SystemId, subclassType, subclassId);
+        var subclassOf = system?.SheetRules?.Multiclass?.SubclassClassProperty ?? new MulticlassRules().SubclassClassProperty;
 
-        var subclasses = classEntry == null
+        var subclasses = classEntry == null || subclassType == null
             ? new List<string>()
-            : registry.GetEntries(campaign.SystemId, "subclass")
-                .Where(s => string.Equals(YamlValues.GetString(s.Properties, "class"), classId, StringComparison.OrdinalIgnoreCase))
+            : registry.GetEntries(campaign.SystemId, subclassType)
+                .Where(s => string.Equals(YamlValues.GetString(s.Properties, subclassOf), classId, StringComparison.OrdinalIgnoreCase))
                 .Select(s => $"{s.Name}: {TextFormatting.Summary(YamlValues.GetString(s.Properties, "summary") ?? s.Description, 120)}")
                 .ToList();
 
@@ -144,16 +151,30 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     public async Task<string> DescribeAsync(CampaignDocument campaign, string subject, string subjectKind, IReadOnlyList<string> facts, string currentText, string instruction, AiAudience audience, string userId, CancellationToken ct = default)
     {
         var assistant = await providers.AssistantForAsync(userId);
-        return await assistant.DescribeAsync(new DescribeRequest(
+        return await WithSecretsAside(currentText, audience, text => assistant.DescribeAsync(new DescribeRequest(
             subject,
             subjectKind,
             catalog.GetDisplayName(campaign.SystemId),
             facts,
-            currentText,
+            text,
             instruction,
             audience,
             $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
-            Language: Lang), ct);
+            Language: Lang), ct));
+    }
+
+    /// <summary>Runs <paramref name="write"/> on the text as players read it and puts the stored secret blocks back on
+    /// the reply. A Players-audience prompt is told to leave secrets out, so given the DM's blocks the model either dropped
+    /// them (lost on save) or worked them into the visible prose; the box then took the reply as it came (S4).</summary>
+    public static async Task<string> WithSecretsAside(string currentText, AiAudience audience, Func<string, Task<string>> write)
+    {
+        if (audience != AiAudience.Players || !SecretText.HasMarkers(currentText))
+        {
+            return await write(currentText);
+        }
+
+        var reply = await write(SecretText.ForPlayers(currentText));
+        return SecretText.KeepSecrets(currentText, reply) ?? reply;
     }
 
     /// <summary>An entry's filled-in fields as "Label: value" lines; collections become the names of their rows.</summary>

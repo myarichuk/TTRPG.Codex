@@ -73,7 +73,6 @@
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>חשיפת {0} בפני השחקנים</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>הסתרה</value></data>
   <data name="Campaign.Cast.HideLabel" xml:space="preserve"><value>הסתרת {0} מהשחקנים</value></data>
-  <data name="Campaign.Cast.DeleteLabel" xml:space="preserve"><value>מחיקת {0}</value></data>
   <data name="Campaign.Cast.EditSheet" xml:space="preserve"><value>עריכת הדף</value></data>
   <data name="Campaign.Cast.RetireLabel" xml:space="preserve"><value>פרישת {0}</value></data>
   <data name="Campaign.Cast.RetireTitle" xml:space="preserve"><value>פרישת הדמות הזו</value></data>
@@ -88,13 +87,17 @@
   <data name="Campaign.Cast.NowVisible" xml:space="preserve"><value>{0} גלוי/ה כעת לשחקנים.</value></data>
   <data name="Campaign.Cast.NowHidden" xml:space="preserve"><value>{0} מוסתר/ת מהשחקנים.</value></data>
   <data name="Campaign.Cast.RetireQ" xml:space="preserve"><value>לפרוש את {0}?</value></data>
-  <data name="Campaign.Cast.DeleteQ" xml:space="preserve"><value>למחוק את {0}?</value></data>
-  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>הדמות שלכם והדף שלה יוסרו מהקמפיין הזה. אי אפשר לבטל זאת; גם שליט המבוך לא יוכל לשחזר אותם.</value></data>
-  <data name="Campaign.Cast.DeleteBody" xml:space="preserve"><value>הדף והמצב שלהם יוסרו מהקמפיין הזה. אי אפשר לבטל זאת.</value></data>
+  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>הדמות שלכם יוצאת מהדמויות ומהשולחן. הערות ודפים שמזכירים אותה ישמרו את שמה, ושליט המבוך יוכל להחזיר אותה.</value></data>
+  <data name="Campaign.Cast.RetireBodyDm" xml:space="preserve"><value>הדמות יוצאת מהדמויות, מרשימות הבחירה ומהשולחן. הערות, דפים וחשיפות שמזכירים אותה ישמרו את שמה, ואפשר להחזיר אותה מרשימת הפורשים.</value></data>
+  <data name="Campaign.Cast.MentionedIn" xml:space="preserve"><value>{0, plural, one{טקסט אחד מזכיר אותה.} two{שני טקסטים מזכירים אותה.} other{# טקסטים מזכירים אותה.}}</value></data>
+  <data name="Campaign.Cast.MentionedNowhere" xml:space="preserve"><value>עדיין אף טקסט לא מזכיר אותה.</value></data>
+  <data name="Campaign.Cast.RetiredTitle" xml:space="preserve"><value>פורשים ({0})</value></data>
+  <data name="Campaign.Cast.RetiredHint" xml:space="preserve"><value>מחוץ למשחק: לא בדמויות, לא ברשימות הבחירה ולא בשולחן. כל מה שמזכיר אותם עדיין נוקב בשמם.</value></data>
+  <data name="Campaign.Cast.Restore" xml:space="preserve"><value>החזרה</value></data>
+  <data name="Campaign.Cast.RestoreLabel" xml:space="preserve"><value>החזרת {0} למשחק</value></data>
+  <data name="Campaign.Cast.Restored" xml:space="preserve"><value>{0} חזר/ה לדמויות.</value></data>
   <data name="Campaign.Cast.Retire" xml:space="preserve"><value>פרישה</value></data>
-  <data name="Campaign.Cast.Delete" xml:space="preserve"><value>מחיקה</value></data>
   <data name="Campaign.Cast.HasRetired" xml:space="preserve"><value>{0} פרש/ה.</value></data>
-  <data name="Campaign.Cast.Deleted" xml:space="preserve"><value>{0} נמחק/ה.</value></data>
   <data name="Campaign.Cast.RetireOwnOnly" xml:space="preserve"><value>אפשר לפרוש רק דמות שבבעלותכם.</value></data>
   <data name="Campaign.Journal.Title" xml:space="preserve"><value>היומן שלי</value></data>
   <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>המחברת הפרטית שלכם לקמפיין הזה. רק אתם יכולים לקרוא אותה, גם שליט המבוך לא. רשומה אחת לכל מפגש, ועוד כל דבר אחר שתרצו לשמור.</value></data>
@@ -113,7 +116,6 @@
   <data name="Campaign.Journal.Save" xml:space="preserve"><value>שמירה</value></data>
   <data name="Campaign.Journal.Cancel" xml:space="preserve"><value>ביטול</value></data>
   <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>רשומות היומן נשמרות לכל שחקן בנפרד ולעולם אינן מופיעות בתצוגת שליט המבוך, בייצואים או בטיוטות ה-AI.</value></data>
-  <data name="Campaign.Journal.Saved" xml:space="preserve"><value>היומן נשמר.</value></data>
   <data name="Campaign.Journal.SaveFailed" xml:space="preserve"><value>לא ניתן לשמור את הרשומה.</value></data>
   <data name="Campaign.Journal.Delete.Title" xml:space="preserve"><value>למחוק את הרשומה הזו?</value></data>
   <data name="Campaign.Journal.Delete.Body" xml:space="preserve"><value>הרשומה תוסר מהיומן שלכם ולא ניתן יהיה לשחזר אותה.</value></data>
@@ -121,6 +123,8 @@
   <data name="Campaign.Library.Title" xml:space="preserve"><value>ספרייה</value></data>
   <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>חומרי עזר למערכת של הקמפיין הזה, ובנוסף התוכן הביתי שלכם: ציוד, מקצועות, תת-מקצועות, כשרונות, לחשים, יצורים ועוד.</value></data>
   <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>חומרי עזר למערכת של הקמפיין הזה, כולל התוכן הביתי של שליט המבוך.</value></data>
+  <data name="Campaign.Library.LoadProblems" xml:space="preserve"><value>בטעינת המערכות והחבילות עלו {0} בעיות, ולכן ייתכן שחלק מהערכים חסרים כאן.</value></data>
+  <data name="Campaign.Library.LoadProblemsLink" xml:space="preserve"><value>מה השתבש</value></data>
   <data name="Campaign.Library.NewHomebrew" xml:space="preserve"><value>תוכן ביתי חדש</value></data>
   <data name="Campaign.Library.ImportFromCampaign" xml:space="preserve"><value>ייבוא מקמפיין אחר</value></data>
   <data name="Campaign.Library.ExportLabel" xml:space="preserve"><value>ייצוא התוכן הביתי של הקמפיין הזה כחבילת תוכן</value></data>
@@ -216,7 +220,7 @@
   <data name="Campaign.Overview.Live" xml:space="preserve"><value>חי</value></data>
   <data name="Campaign.Overview.TableRunning" xml:space="preserve"><value>השולחן פועל.</value></data>
   <data name="Campaign.Overview.JoinTable" xml:space="preserve"><value>הצטרפות לשולחן</value></data>
-  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>אין כרגע מפגש פעיל.</value></data>
+  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>השולחן לא פעיל כרגע.</value></data>
   <data name="Campaign.Overview.GoToTable" xml:space="preserve"><value>מעבר לשולחן</value></data>
   <data name="Campaign.Overview.WaitAtTable" xml:space="preserve"><value>המתנה בשולחן</value></data>
   <data name="Campaign.Overview.LatestSession" xml:space="preserve"><value>המפגש האחרון</value></data>
@@ -291,18 +295,35 @@
   <data name="Campaign.Settings.InviteLinkNetwork" xml:space="preserve"><value>קישור הזמנה לשחקנים ברשת שלכם</value></data>
   <data name="Campaign.Settings.InviteLinkTailscale" xml:space="preserve"><value>קישור הזמנה לשחקנים ב-Tailscale</value></data>
   <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>קישור חדש</value></data>
+  <data name="Campaign.Settings.NewLinkQ" xml:space="preserve"><value>ליצור קישור הזמנה חדש?</value></data>
+  <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>הקישור הנוכחי יפסיק לעבוד מיד. מי שקיבל אותו ועוד לא הצטרף יצטרך את החדש.</value></data>
+  <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>יצירת קישור חדש</value></data>
+  <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>לשנות את התפקיד של {0} ל{1}?</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>שליט מבוך רואה כל סוד במערכה הזו ויכול לשנות או למחוק בה כל דבר.</value></data>
+  <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>מה שהם יכולים לראות ולעשות ישתנה ברגע שתאשרו.</value></data>
+  <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>שינוי תפקיד</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>יצירת קישור חדש מבטלת את הקישור הישן.</value></data>
+  <data name="Campaign.Settings.InviteValidity" xml:space="preserve"><value>קישורים חדשים פועלים</value></data>
+  <data name="Campaign.Settings.InviteValidity.Forever" xml:space="preserve"><value>עד שיוחלפו</value></data>
+  <data name="Campaign.Settings.InviteValidity.Week" xml:space="preserve"><value>למשך 7 ימים</value></data>
+  <data name="Campaign.Settings.InviteValidity.Day" xml:space="preserve"><value>למשך 24 שעות</value></data>
+  <data name="Campaign.Settings.InviteValidity.Once" xml:space="preserve"><value>לשחקן אחד</value></data>
+  <data name="Campaign.Settings.InviteOnce" xml:space="preserve"><value>הקישור הזה מכניס שחקן אחד.</value></data>
+  <data name="Campaign.Settings.InviteUsed" xml:space="preserve"><value>{0} השתמש/ה בקישור הזה. צרו קישור חדש כדי להזמין שחקן נוסף.</value></data>
+  <data name="Campaign.Settings.InviteExpired" xml:space="preserve"><value>תוקף הקישור הזה פג. צרו קישור חדש כדי להזמין שחקנים.</value></data>
+  <data name="Campaign.Settings.InviteExpiresDays" xml:space="preserve"><value>הקישור הזה יפסיק לפעול בעוד {0} ימים.</value></data>
+  <data name="Campaign.Settings.InviteExpiresHours" xml:space="preserve"><value>הקישור הזה יפסיק לפעול בעוד {0} שעות.</value></data>
   <data name="Campaign.Settings.Backup" xml:space="preserve"><value>גיבוי</value></data>
-  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>ייצוא מוריד את כל הקמפיין (דמויות, מפגשים, אגדות עולם, הערות, תוכן ביתי) כקובץ JSON אחד. ייבוא משחזר קובץ שיוצא מכאן, גם לאחר שהקמפיין נמחק.</value></data>
+  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>ייצוא מוריד את הקמפיין (דמויות, מפגשים, אגדות עולם, הערות, תוכן ביתי) כקובץ JSON אחד, בלי התמונות ובלי קישור ההזמנה. מיזוג של קובץ שיוצא מהקמפיין הזה מחזיר את כל מה שבו, כולל מה שנמחק מאז, במקום מה ששמור; מה שנוסף אחרי הייצוא נשאר.</value></data>
   <data name="Campaign.Settings.Export" xml:space="preserve"><value>ייצוא הקמפיין</value></data>
-  <data name="Campaign.Settings.Import" xml:space="preserve"><value>ייבוא קמפיין</value></data>
-  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>הקובץ הוא גיבוי של קמפיין אחר (למשל קמפיין שנמחק): שחזור אותו</value></data>
+  <data name="Campaign.Settings.Import" xml:space="preserve"><value>מיזוג מקובץ</value></data>
+  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>הקובץ הוא מקמפיין אחר (למשל קמפיין שנמחק): שחזור כקמפיין חדש</value></data>
   <data name="Campaign.Settings.Delete.Title" xml:space="preserve"><value>מחיקת קמפיין</value></data>
   <data name="Campaign.Settings.Delete.Hint" xml:space="preserve"><value>מסיר את הקמפיין ואת כל מה שבו. ייצאו קודם אם אתם רוצים לשמור משהו.</value></data>
   <data name="Campaign.Settings.Delete.Button" xml:space="preserve"><value>מחיקת הקמפיין הזה</value></data>
   <data name="Campaign.Settings.Delete.OwnerOnlyHint" xml:space="preserve"><value>רק בעל הקמפיין יכול למחוק אותו.</value></data>
   <data name="Campaign.Settings.NameRequired" xml:space="preserve"><value>לקמפיין חייב להיות שם.</value></data>
-  <data name="Campaign.Settings.Saved" xml:space="preserve"><value>נשמר.</value></data>
+  <data name="Campaign.AccessChanged" xml:space="preserve"><value>התפקיד שלך בקמפיין הזה השתנה, ולכן הפעולה לא נשמרה.</value></data>
   <data name="Campaign.Settings.PacksSaved" xml:space="preserve"><value>בחירת החבילות נשמרה.</value></data>
   <data name="Campaign.Settings.RoleChanged" xml:space="preserve"><value>התפקיד של {0} הוא כעת: {1}.</value></data>
   <data name="Campaign.Settings.RemoveQ" xml:space="preserve"><value>להסיר את {0}?</value></data>
@@ -319,8 +340,9 @@
   <data name="Campaign.Settings.ExportFailed" xml:space="preserve"><value>הייצוא נכשל.</value></data>
   <data name="Campaign.Settings.ExportDone" xml:space="preserve"><value>הייצוא ירד.</value></data>
   <data name="Campaign.Settings.NotExport" xml:space="preserve"><value>הקובץ הזה אינו ייצוא של קמפיין.</value></data>
-  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>הקובץ הזה הוא גיבוי של קמפיין אחר. סמנו "שחזור אותו" אם התכוונתם להחזיר אותו.</value></data>
-  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>"{0}" יובא.</value></data>
+  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>הקובץ הזה הוא מקמפיין אחר. סמנו "שחזור כקמפיין חדש" כדי להחזיר אותו כקמפיין נפרד.</value></data>
+  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>"{0}" מוזג מהקובץ.</value></data>
+  <data name="Campaign.Settings.RestoredAsNew" xml:space="preserve"><value>"{0}" שוחזר כקמפיין חדש. הזמינו שוב את השחקנים: יש לו קישור חדש.</value></data>
   <data name="Campaign.Settings.ImportRejected" xml:space="preserve"><value>הייבוא נדחה: פורמט לא מזוהה, או שאינכם מנהלי המשחק של הקמפיין הזה.</value></data>
   <data name="Campaign.Settings.ImportFailed" xml:space="preserve"><value>הייבוא נכשל: {0}</value></data>
   <data name="Campaign.Settings.DeleteQ" xml:space="preserve"><value>למחוק את "{0}"?</value></data>
@@ -393,6 +415,8 @@
   <data name="Campaign.Wiki.Saved" xml:space="preserve"><value>"{0}" נשמר.</value></data>
   <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לערוך את הוויקי.</value></data>
   <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>שותף עם הקבוצה.</value></data>
+  <data name="Campaign.Wiki.ChangedMeanwhile" xml:space="preserve"><value>הדף השתנה מאז שפתחת אותו: עריכה בלשונית אחרת, או קטע שנחשף או הוסתר. הטקסט שלך עדיין כאן. בדוק אותו מול הדף, ושמור שוב כדי להחליף את מה ששמור.</value></data>
+  <data name="Campaign.Wiki.ShareChanged" xml:space="preserve"><value>הדף השתנה מאז שפתחת אותו. זו הגרסה העדכנית: שתף אותה שוב אם עדיין תרצה.</value></data>
   <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>"{0}" נמחק.</value></data>
   <data name="Campaign.Wiki.Delete.Title" xml:space="preserve"><value>למחוק את „{0}”?</value></data>
   <data name="Campaign.Wiki.Delete.Body" xml:space="preserve"><value>הדף יימחק לכולם ולא יהיה אפשר להחזיר אותו.</value></data>
@@ -402,7 +426,7 @@
   <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>לא הוגדר ספק AI. הוסיפו אחד בהגדרות ה-AI (למעלה בצד).</value></data>
   <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>טיוטת ה-AI נכשלה: {0}</value></data>
   <data name="Campaign.Wiki.NoteAdded" xml:space="preserve"><value>ההערה נוספה.</value></data>
-  <data name="Campaign.World.Title" xml:space="preserve"><value>עולם</value></data>
+  <data name="Campaign.World.Title" xml:space="preserve"><value>מקומות</value></data>
   <data name="Campaign.World.Subtitle.Dm" xml:space="preserve"><value>אזורים והמקומות שבהם. מקומות מוסתרים נשארים שלכם עד שתחשפו אותם.</value></data>
   <data name="Campaign.World.Subtitle.Player" xml:space="preserve"><value>מקומות שהקבוצה גילתה.</value></data>
   <data name="Campaign.World.Empty.Dm.Title" xml:space="preserve"><value>עדיין אין אזורים</value></data>
@@ -443,6 +467,16 @@
   <data name="Campaign.World.Renamed" xml:space="preserve"><value>"{0}" שונה ל-"{1}".</value></data>
   <data name="Campaign.World.RenameFailed" xml:space="preserve"><value>לא ניתן לשנות את שם האזור.</value></data>
   <data name="Campaign.World.RegionAdded" xml:space="preserve"><value>האזור "{0}" נוסף.</value></data>
+  <data name="Campaign.World.DeletePlaceLabel" xml:space="preserve"><value>מחיקת {0}</value></data>
+  <data name="Campaign.World.DeletePlaceTitle" xml:space="preserve"><value>למחוק את „{0}”?</value></data>
+  <data name="Campaign.World.DeletePlaceBody" xml:space="preserve"><value>אזכורים שלו יוצגו כ„איפשהו”, ודף עליו יישאר. אפשר לבטל לרגע.</value></data>
+  <data name="Campaign.World.DeletePlaceBodyInside" xml:space="preserve"><value>{0} המקומות שבתוכו יעלו רמה. אזכורים שלו יוצגו כ„איפשהו”, ודף עליו יישאר. אפשר לבטל לרגע.</value></data>
+  <data name="Campaign.World.PlaceDeleted" xml:space="preserve"><value>„{0}” נמחק.</value></data>
+  <data name="Campaign.World.DeleteRegionLabel" xml:space="preserve"><value>מחיקת האזור {0}</value></data>
+  <data name="Campaign.World.DeleteRegionTitle" xml:space="preserve"><value>למחוק את האזור „{0}”?</value></data>
+  <data name="Campaign.World.DeleteRegionBody" xml:space="preserve"><value>אין בו מקומות. אי אפשר לבטל.</value></data>
+  <data name="Campaign.World.DeleteRegionBodyPlaces" xml:space="preserve"><value>{0} המקומות שבו והתמונות שלהם יימחקו איתו, ואזכורים שלהם יוצגו כ„איפשהו”. דפים עליהם יישארו. אי אפשר לבטל.</value></data>
+  <data name="Campaign.World.RegionDeleted" xml:space="preserve"><value>האזור „{0}” נמחק.</value></data>
   <data name="Campaign.World.PlaceAdded" xml:space="preserve"><value>"{0}" נוסף (מוסתר מהשחקנים עד שתחשפו אותו).</value></data>
   <data name="Campaign.World.PackPlaceAdded" xml:space="preserve"><value>"{0}" נוסף מהחבילה.</value></data>
   <data name="Campaign.World.NameRequired" xml:space="preserve"><value>תנו למקום שם.</value></data>
@@ -450,16 +484,17 @@
   <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>רק שליט המבוך יכול לערוך מקומות.</value></data>
   <data name="Campaign.World.ArtRemoved" xml:space="preserve"><value>האיור הוסר.</value></data>
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>האיור נשמר.</value></data>
+  <data name="Campaign.World.ArtStoredTextNot" xml:space="preserve"><value>שינוי האיור נשמר. שאר השינויים במקום הזה עדיין צריכים שמירה.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>המקום הזה כבר לא קיים, או שאין לכם הרשאה לשנות אותו.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>נחשף בפני הקבוצה.</value></data>
-  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>על המפה</value></data>
+  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>במקומות</value></data>
   <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>בשמירה הדף יתווסף לרשימת המקומות עם השם והתמונה שלו. שיתוף הדף חושף את המקום לקבוצה; מה שכתוב כאן נשאר בדף.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>אזור</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>מקומות</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>תמונה</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>תמונה של {0}</value></data>
-  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>על המפה: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה לשמור את התמונה שלו או את המקום שלו במפה.</value></data>
+  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>במקומות: {0}</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>הדף נשמר, אך לא ניתן היה לשמור את התמונה שלו או את הרשומה שלו במקומות.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>דף ויקי</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>פתחו את דף הוויקי של {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>יצירת דף</value></data>
@@ -500,7 +535,7 @@
   <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>יישוב</value></data>
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>רובע</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>מקום</value></data>
-  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למפה</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למקומות</value></data>
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>איור</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>מוצג לצד טקסט הדף. כל מי שיכול לקרוא את הדף רואה אותו.</value></data>
   <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>איור עבור {0}</value></data>
@@ -553,7 +588,6 @@
   <data name="Campaign.Templates.Delete" xml:space="preserve"><value>מחיקת התבנית</value></data>
   <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>למחוק את ”{0}“?</value></data>
   <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>דפים שנוצרו ממנה ישמרו על הטקסט שלהם.</value></data>
-  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>התבנית נשמרה.</value></data>
   <data name="Campaign.Templates.Taken" xml:space="preserve"><value>הקיצור ”{0}“ כבר בשימוש בתבנית אחרת.</value></data>
   <data name="Campaign.Templates.Refused" xml:space="preserve"><value>לא ניתן לשמור את התבנית: תנו לה שם, וקיצור של מילה אחת או בלי קיצור.</value></data>
   <data name="Campaign.Templates.Restored" xml:space="preserve"><value>התבנית שוחזרה למקור.</value></data>
@@ -569,7 +603,6 @@
   <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>השחקנים יראו שמישהו שם, בשם שתתנו בדף הדמות, אבל לא מי זה.</value></data>
   <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>השחקנים רואים עכשיו את {0} בתור ”{1}“.</value></data>
   <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>שמירת העובדה</value></data>
-  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>העובדה נשמרה.</value></data>
   <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>אזכרו @דמויות ו#מקומות, וקשרו ל[[דפים]]: העובדה תופיע אז בדפים ובדפי הדמות שלהם.</value></data>
   <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>יודעים:</value></data>
   <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} שוכחים את זה</value></data>
@@ -625,7 +658,7 @@
   <data name="Campaign.Setup.Invite" xml:space="preserve"><value>העתיקו את קישור ההזמנה לשחקנים</value></data>
   <data name="Campaign.Setup.Cast" xml:space="preserve"><value>הוסיפו דמות ראשונה לצוות</value></data>
   <data name="Campaign.Setup.Page" xml:space="preserve"><value>כתבו דף ויקי ראשון</value></data>
-  <data name="Campaign.Setup.Place" xml:space="preserve"><value>הוסיפו מקום ראשון למפה</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>הוסיפו מקום ראשון</value></data>
   <data name="Campaign.Setup.Session" xml:space="preserve"><value>תכננו את המפגש הראשון</value></data>
   <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>מסומן כשמצטרף שחקן.</value></data>
   <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>מישהו מהעולם שלכם: השחקנים מוסיפים את הדמויות שלהם בעצמם.</value></data>

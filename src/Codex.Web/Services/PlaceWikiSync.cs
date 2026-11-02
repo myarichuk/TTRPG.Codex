@@ -17,6 +17,15 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
     /// The page starts with the place's description, visible to the party only when the place is. Null when the caller is not the DM.</summary>
     public async Task<WikiPageDocument?> CreatePageAsync(string regionId, LocationDocument location, string tag, CampaignAccess access)
     {
+        if (!access.IsDm) return null;
+
+        // A stale list can offer "Create page" for a page another tab made or restored meanwhile: that page is kept, not overwritten (F9).
+        if (!string.IsNullOrEmpty(location.WikiPageId)
+            && (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == location.WikiPageId) is { } existing)
+        {
+            return existing;
+        }
+
         var known = location.Visibility == ActorVisibility.Known;
         var page = new WikiPageDocument
         {
@@ -29,7 +38,7 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
             PlaceId = location.Id,
             AuthorUserId = access.UserId
         };
-        if (!await wiki.TrySaveAsync(page, access))
+        if (await wiki.TrySaveAsync(page, access) != SaveOutcome.Saved)
         {
             return null;
         }
@@ -78,7 +87,7 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
         }
 
         page.PlaceId = place.Id;
-        if (!await wiki.TrySaveAsync(page, access)) return null;
+        if (await wiki.TrySaveAsync(page, access) != SaveOutcome.Saved) return null;
 
         if (image != null)
         {

@@ -52,7 +52,7 @@ public class WikiPageDocument
     /// place's picture, and sharing the page reveals the place.</summary>
     public string? PlaceId { get; set; }
 
-    /// <summary>Slugs of the pages this one links to.</summary>
+    /// <summary>The slugs of this page's <c>[[Title]]</c> links, as written; <see cref="WikiLinks"/> says which page each reaches.</summary>
     public List<string> Links { get; set; } = new();
 
     /// <summary>True once the page's illustration is stored as its "art" attachment; <see cref="ArtVersion"/> busts caches. A page
@@ -73,7 +73,8 @@ public interface IWikiRepository
     Task<WikiPageDocument?> GetVisibleBySlugAsync(string slug, CampaignAccess access);
 
     /// <summary>Creates or updates a page. DM only. Assigns the slug on first save and refreshes <see cref="WikiPageDocument.Links"/>.</summary>
-    Task<bool> TrySaveAsync(WikiPageDocument page, CampaignAccess access);
+    /// <remarks>A page this repository handed out is saved only over the version it was handed out at (see <see cref="DocumentVersions"/>).</remarks>
+    Task<SaveOutcome> TrySaveAsync(WikiPageDocument page, CampaignAccess access);
 
     Task<bool> TryDeleteAsync(string id, CampaignAccess access);
 
@@ -145,9 +146,13 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
         }
 
         var pages = (await query.ToListAsync()).OrderBy(p => p.Title, StringComparer.OrdinalIgnoreCase).ToList();
-        if (!access.IsDm)
+        if (access.IsDm)
         {
-            var visible = pages.Select(p => p.Slug).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            pages.ForEach(p => DocumentVersions.Track(session, p));
+        }
+        else
+        {
+            var visible = pages.ToList();
             var owned = await OwnedActors.OfAsync(session, access);
             foreach (var page in pages)
             {
@@ -164,13 +169,13 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
     /// <summary>The page as a player owning <paramref name="ownedActorIds"/> reads it: the body without the blocks they may not
     /// read (revealed blocks keep their markers and time, so the page can show them as new), and links only to what that body
-    /// links to (and, when <paramref name="visibleSlugs"/> is given, only to pages the player may open), so neither the link
-    /// count nor "pages linking here" points at a secret.</summary>
-    private static void RedactForPlayer(WikiPageDocument page, IReadOnlySet<string>? visibleSlugs, IReadOnlySet<string> ownedActorIds)
+    /// links to (and, when <paramref name="visiblePages"/> is given, only to pages the player may open, by slug or title as
+    /// <see cref="WikiLinks"/> reads them), so neither the link count nor "pages linking here" points at a secret.</summary>
+    private static void RedactForPlayer(WikiPageDocument page, IReadOnlyList<WikiPageDocument>? visiblePages, IReadOnlySet<string> ownedActorIds)
     {
         page.Body = SecretText.ForPlayersMarked(page.Body, ownedActorIds);
         page.Links = WikiText.ExtractLinks(page.Body).Select(WikiText.Slugify).Distinct()
-            .Where(slug => visibleSlugs == null || visibleSlugs.Contains(slug))
+            .Where(slug => visiblePages == null || visiblePages.Any(p => WikiLinks.Reaches(slug, p)))
             .ToList();
         Redacted.AddOrUpdate(page, page);
     }
@@ -188,7 +193,7 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
         if (access.IsDm)
         {
-            return page;
+            return DocumentVersions.Track(session, page);
         }
 
         if (page.Visibility != WikiVisibility.Party)
@@ -196,22 +201,35 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             return null;
         }
 
-        RedactForPlayer(page, null, await OwnedActors.OfAsync(session, access));
+        // Links are kept only to pages the player may open, as in the list fetch (F27).
+        var visible = await session.Query<WikiPageDocument, WikiByCampaignIndex>()
+            .Where(p => p.CampaignId == access.CampaignId && p.Visibility == WikiVisibility.Party)
+            .ToListAsync();
+        RedactForPlayer(page, visible, await OwnedActors.OfAsync(session, access));
         return page;
     }
 
-    public async Task<bool> TrySaveAsync(WikiPageDocument page, CampaignAccess access)
+    public async Task<SaveOutcome> TrySaveAsync(WikiPageDocument page, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return SaveOutcome.Refused;
+        access = current;
+
         if (!access.IsDm || string.IsNullOrWhiteSpace(page.Title) || Redacted.TryGetValue(page, out _))
         {
-            return false;
+            return SaveOutcome.Refused;
         }
 
         using var session = dbService.Store.OpenAsyncSession();
         var existing = string.IsNullOrEmpty(page.Id) ? null : await session.LoadAsync<WikiPageDocument>(page.Id);
         if (existing != null && existing.CampaignId != access.CampaignId)
         {
-            return false;
+            return SaveOutcome.Refused;
+        }
+
+        // A page handed out and deleted since is not brought back by saving the copy.
+        if (existing == null && DocumentVersions.Of(page) != null)
+        {
+            return SaveOutcome.Changed;
         }
 
         page.CampaignId = access.CampaignId;
@@ -245,12 +263,16 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
             page.Slug = existing.Slug;
         }
 
-        await session.SaveChangesAsync();
-        return true;
+        // Whole fields replace what is stored, so only over the version the page was handed out at: a reveal, a hide or an
+        // edit made since is never undone by a copy that did not see it.
+        return await DocumentVersions.SaveIfUnchangedAsync(session, existing ?? page, page);
     }
 
     public async Task<SecretChange> TrySetSecretAsync(string pageId, int block, string expectedInner, SecretAudience to, IReadOnlyList<string>? knowers, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return SecretChange.Refused;
+        access = current;
+
         if (!access.IsDm || to is not (SecretAudience.Party or SecretAudience.Some or SecretAudience.Dm))
         {
             return SecretChange.Refused;
@@ -289,6 +311,9 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
     public async Task<string?> TryLinkActorAsync(string pageId, string actorId, WikiPageKind kind, string? replacing, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return null;
+        access = current;
+
         if (!access.IsDm || string.IsNullOrEmpty(actorId))
         {
             return null;
@@ -319,6 +344,9 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
     public async Task<SecretChange> TrySetPlayersVersionAsync(string pageId, int block, string expectedInner, string version, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return SecretChange.Refused;
+        access = current;
+
         if (!access.IsDm || string.IsNullOrWhiteSpace(version))
         {
             return SecretChange.Refused;
@@ -379,6 +407,9 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
     public async Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -399,6 +430,9 @@ public class RavenWikiRepository(RavenDbService dbService) : IWikiRepository
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;

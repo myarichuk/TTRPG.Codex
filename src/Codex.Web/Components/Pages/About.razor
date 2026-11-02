@@ -5,6 +5,7 @@
 @inject ISystemCatalog Catalog
 @inject IContentRegistry Registry
 @inject PluginLoader Loader
+@inject Codex.Web.Services.BackupStatus Backups
 
 <PageTitle>@L["Page.About.Title"] | TTRPG.Codex</PageTitle>
 
@@ -26,7 +27,7 @@
         {
             var packs = Registry.GetPacks(system.Id).ToList();
             <article class="mb-4" aria-labelledby="sys-@system.Id" data-testid="about-system">
-                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-1">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span></h3>
+                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-2">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span></h3>
                 @if (system.Compatibility != null)
                 {
                     <div class="small-muted">@system.Compatibility</div>
@@ -54,7 +55,7 @@
                         {
                             <li class="list-row" data-testid="about-pack">
                                 <div class="row-main">
-                                    <div class="row-title">@pack.Name <span class="pill ms-1">@pack.Kind</span> <span class="small-muted">v@(pack.Version)</span></div>
+                                    <div class="row-title">@pack.Name <span class="pill ms-2">@pack.Kind</span> <span class="small-muted">v@(pack.Version)</span></div>
                                     @if (pack.Description != null)
                                     {
                                         <div class="row-sub">@pack.Description</div>
@@ -99,6 +100,34 @@
             </ul>
         </section>
     }
+
+    @* Where the files are and what went wrong is for whoever runs the server: this page is open to anyone. *@
+    <AuthorizeView Roles="@ExposurePolicy.ServerAdminRole">
+    <section class="panel" aria-labelledby="backups-heading" data-testid="about-backups">
+        <div class="panel-title"><h2 id="backups-heading">@L["Page.About.Backups"]</h2></div>
+        @if (!Backups.Enabled)
+        {
+            <p class="mb-0">@L["Page.About.BackupsOff"]</p>
+        }
+        else
+        {
+            <p>@L["Page.About.BackupsWhere", Backups.Keep] <code>@Backups.Folder</code></p>
+            <p class="@(Backups.LastError != null ? "text-danger" : "small-muted")">
+                @(Backups.LastError != null ? L["Page.About.BackupsFailed", Backups.LastError]
+                  : Backups.LastWrittenAt is { } last ? L["Page.About.BackupsLast", last.ToString("yyyy-MM-dd HH:mm") + " UTC"]
+                  : L["Page.About.BackupsNone"])
+            </p>
+            <p class="small-muted mb-0">@L["Page.About.BackupsRestore"]</p>
+        }
+        <p class="small-muted mb-0 mt-2">@(Backups.Database switch
+        {
+            DatabaseBackups.On => L["Page.About.DatabaseBackupsOn"],
+            DatabaseBackups.NotLicensed => L["Page.About.DatabaseBackupsNotLicensed"],
+            DatabaseBackups.Failed => L["Page.About.DatabaseBackupsFailed"],
+            _ => L["Page.About.DatabaseBackupsUnknown"]
+        })</p>
+    </section>
+    </AuthorizeView>
 
     <section class="panel" aria-labelledby="software-heading">
         <div class="panel-title"><h2 id="software-heading">@L["Page.About.Software"]</h2></div>

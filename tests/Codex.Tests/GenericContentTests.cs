@@ -157,6 +157,30 @@ public class GenericContentTests : IDisposable
         Assert.NotNull(_registry.GetEntry("demo", "oddities", "thing"));
     }
 
+    /// <summary>R13: an entry the DM wrote wrong used to be logged and then simply be missing from the Library.</summary>
+    [Fact]
+    public async Task Loader_EntriesThatDoNotLoad_AreReportedForTheDm_OnceEach()
+    {
+        File.WriteAllText(Path.Combine(_tempPath, "manifest.yaml"), "id: p\nname: P\nsystemId: demo\n");
+        Directory.CreateDirectory(Path.Combine(_tempPath, "spells"));
+        File.WriteAllText(Path.Combine(_tempPath, "spells", "a.yaml"), """
+            - name: Nameless
+            - id: echo
+              name: Echo
+              inherits: shout
+            """);
+        File.WriteAllText(Path.Combine(_tempPath, "spells", "b.yaml"), "id: [unclosed\n");
+
+        var loader = new YamlContentPackLoader(_registry);
+        await loader.LoadPackAsync(_tempPath);
+
+        var problems = loader.TakeProblems();
+        Assert.Contains(problems, p => p.Contains("'Nameless'") && p.Contains("has no id"));
+        Assert.Contains(problems, p => p.Contains("spells/echo") && p.Contains("shout"));
+        Assert.Contains(problems, p => p.Contains("b.yaml") && p.Contains("pack p"));
+        Assert.Empty(loader.TakeProblems());
+    }
+
     [Fact]
     public async Task Loader_EntryInherits_FillsMissingFieldsFromBase()
     {

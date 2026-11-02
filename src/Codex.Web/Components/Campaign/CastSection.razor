@@ -14,11 +14,13 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject IUserRepository UserRepo
+@inject MentionSources MentionSources
 @implements IDisposable
 
 @{
     var pcs = Ctx.Actors.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList();
     var others = Ctx.Actors.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList();
+    var retired = Ctx.IsDm ? Ctx.AllActors.Where(a => a.Retired).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList() : new List<ActorDocument>();
 }
 
 <div class="page-header mb-3">
@@ -73,6 +75,29 @@
     </div>
 </div>
 
+@if (retired.Count > 0)
+{
+    <section class="panel mt-3" aria-labelledby="retired-heading" data-testid="retired-list">
+        <div class="panel-title"><h3 id="retired-heading"><LucideIcon IconName="log-out" Size="18" Class="title-icon" /> @L["Campaign.Cast.RetiredTitle", retired.Count]</h3></div>
+        <p class="small-muted">@L["Campaign.Cast.RetiredHint"]</p>
+        <ul class="list-unstyled mb-0">
+            @foreach (var actor in retired)
+            {
+                <li class="list-row" data-testid="retired-row" data-actor-id="@actor.Id">
+                    <ActorAvatar Actor="actor" DisplayName="@actor.Name" Size="md" />
+                    <div class="row-main">
+                        <div class="row-title"><a href="@Ctx.BasePath/actors/@actor.Id">@actor.Name</a></div>
+                        <div class="row-sub">@KindLabel(actor.Kind)</div>
+                    </div>
+                    <div class="row-actions">
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RestoreAsync(actor)" aria-label="@L["Campaign.Cast.RestoreLabel", actor.Name]" data-testid="restore-character"><LucideIcon IconName="undo-2" Size="14" /> @L["Campaign.Cast.Restore"]</CodexButton>
+                    </div>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
 <ConfirmDialog @ref="confirm" />
 
 <dialog id="create-actor-dialog" class="codex-dialog" aria-labelledby="create-actor-title">
@@ -115,7 +140,7 @@
         </div>
         <div class="dialog-actions">
             <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseCreateAsync">@L["Common.Cancel"]</CodexButton>
-            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="create-character-submit">@L["Campaign.Cast.Create"]</CodexButton>
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="create-character-submit" Busy="@createGate.IsBusy">@L["Campaign.Cast.Create"]</CodexButton>
         </div>
     </form>
 </dialog>
@@ -184,15 +209,15 @@
                 <a href="@Ctx.BasePath/actors/@actor.Id">@DisplayName(actor)</a>
                 @if (actor.OwnerUserId == Ctx.UserId)
                 {
-                    <span class="pill pill-accent ms-1">@L["Campaign.Cast.Mine"]</span>
+                    <span class="pill pill-accent ms-2">@L["Campaign.Cast.Mine"]</span>
                 }
                 @if (Ctx.IsDm && actor.Visibility != ActorVisibility.Known)
                 {
-                    <span class="pill pill-warning ms-1">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Cast.HiddenFromPlayers"] : L["Campaign.Cast.IdentityUnknown", actor.NameFor(isDm: false)])</span>
+                    <span class="pill pill-warning ms-2">@(actor.Visibility == ActorVisibility.Hidden ? L["Campaign.Cast.HiddenFromPlayers"] : L["Campaign.Cast.IdentityUnknown", actor.NameFor(isDm: false)])</span>
                 }
                 else if (!Ctx.IsDm && actor.Visibility == ActorVisibility.Unknown && actor.OwnerUserId != Ctx.UserId)
                 {
-                    <span class="pill pill-warning ms-1">@L["Actor.Stranger.NotIdentified"]</span>
+                    <span class="pill pill-warning ms-2">@L["Actor.Stranger.NotIdentified"]</span>
                 }
             </div>
             <div class="row-sub">@Summary(actor)</div>
@@ -212,39 +237,43 @@
                 {
                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetVisibilityAsync(actor, ActorVisibility.Hidden)" aria-label="@L["Campaign.Cast.HideLabel", actor.Name]"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Cast.Hide"]</CodexButton>
                 }
-                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.Cast.DeleteLabel", actor.Name]" OnClick="() => DeleteAsync(actor)" />
+                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="log-out" Label="@L["Campaign.Cast.RetireLabel", actor.Name]" title="@L["Campaign.Cast.RetireTitle"]" OnClick="() => RetireAsync(actor)" data-testid="retire-character" />
             </div>
         }
         else if (actor.Kind == ActorKind.PlayerCharacter && actor.OwnerUserId == Ctx.UserId)
         {
             <div class="row-actions">
                 <a href="@Ctx.BasePath/actors/@actor.Id" class="cx-btn cx-etched cx-sm"><LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Cast.EditSheet"]</a>
-                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.Cast.RetireLabel", actor.Name]" title="@L["Campaign.Cast.RetireTitle"]" OnClick="() => DeleteAsync(actor)" data-testid="retire-character" />
+                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="log-out" Label="@L["Campaign.Cast.RetireLabel", actor.Name]" title="@L["Campaign.Cast.RetireTitle"]" OnClick="() => RetireAsync(actor)" data-testid="retire-character" />
             </div>
         }
     </li>;
 
     private string DisplayName(ActorDocument actor) => actor.NameFor(Ctx.IsDm);
 
-    private static readonly System.Text.RegularExpressions.Regex ActorMention = new(@"\[\[actor:(?<id>[^\]|]+)\]\]");
 
     private string Summary(ActorDocument actor)
     {
         if (!Ctx.IsDm && actor.Visibility == ActorVisibility.Unknown && actor.OwnerUserId != Ctx.UserId)
         {
             // A stranger: what the party has seen of them is all there is.
-            return string.IsNullOrWhiteSpace(actor.PublicDescription) ? KindLabel(actor.Kind) : TextFormatting.Summary(ActorMention.Replace(actor.PublicDescription, m => Ctx.Actors.FirstOrDefault(a => a.Id == m.Groups["id"].Value)?.NameFor(isDm: false) ?? "…"), 120);
+            // Its mentions read as a player reads them (MentionDirectory), places and items included.
+            return string.IsNullOrWhiteSpace(actor.PublicDescription) ? KindLabel(actor.Kind)
+                : TextFormatting.Summary(new MentionDirectory(Ctx.AllActors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: false) { Words = MentionSources.Words(L) }.Plain(actor.PublicDescription), 120);
         }
 
         var parts = new List<string>();
         var hp = ActorSheetSync.PrimaryResource(actor, Ctx.System);
-        foreach (var key in new[] { "level", "species", "class" })
+        // The fields the system lists for a summary (FieldRoles): the level as "Level 3", an entry by its name.
+        var roles = Ctx.System?.FieldRoles;
+        foreach (var key in roles?.Summary ?? new List<string>())
         {
             var value = YamlValues.GetString(actor.Sheet, key);
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                parts.Add(key == "level" ? L["Campaign.Cast.Level", value] : Registry.GetEntry(Ctx.Campaign.SystemId, key, value)?.Name ?? value);
-            }
+            if (string.IsNullOrWhiteSpace(value)) continue;
+            var type = Ctx.System!.ActorFields.FirstOrDefault(f => f.Key == key)?.TargetEntityType;
+            parts.Add(key == roles!.Level ? L["Campaign.Cast.Level", value]
+                : type != null ? Registry.GetEntry(Ctx.Campaign.SystemId, type, value)?.Name ?? value
+                : Ctx.System.ActorFields.FirstOrDefault(f => f.Key == key)?.Display(value) ?? value);
         }
 
         if (hp.Max > 0 && (Ctx.IsDm || actor.OwnerUserId == Ctx.UserId))
@@ -306,7 +335,12 @@
         return actor;
     }
 
-    private async Task CreateAsync()
+    // Two taps on Create make one character, not two (U6).
+    private readonly SaveGate createGate = new();
+
+    private Task CreateAsync() => createGate.RunAsync(CreateNowAsync);
+
+    private async Task CreateNowAsync()
     {
         if (string.IsNullOrWhiteSpace(newName))
         {
@@ -391,9 +425,9 @@
             return;
         }
 
-        // A field-level patch: this list's copy of the actor may be minutes old, and saving it whole
-        // would write back the hit points the table has changed since.
-        if (Ctx.IsDm && actor.CampaignId == Ctx.Campaign.Id && await ActorRepo.UpdateAsync(actor.Id, stored => stored.Visibility = visibility) != null)
+        // A field-level patch: this list's copy of the actor may be minutes old, and saving it whole would write back the hit
+        // points the table has changed since. A live table hears of it, so the players' pages show or hide them at once (R1).
+        if (Ctx.IsDm && await RuntimeManager.TrySetVisibilityAsync(actor.Id, visibility, Ctx.Access))
         {
             Ctx.Notify(Flash.Success(visibility switch
             {
@@ -405,26 +439,46 @@
         }
     }
 
-    private async Task DeleteAsync(ActorDocument actor)
+    /// <summary>Takes a character out of play (D17). Nothing is deleted: what mentions them keeps naming them, and the DM can
+    /// bring them back. The DM is told how much writing mentions them first.</summary>
+    private async Task RetireAsync(ActorDocument actor)
     {
-        var retiring = !Ctx.IsDm;
-        var ok = await confirm.ShowAsync(
-            retiring ? L["Campaign.Cast.RetireQ", actor.Name] : L["Campaign.Cast.DeleteQ", actor.Name],
-            retiring ? L["Campaign.Cast.RetireBody"] : L["Campaign.Cast.DeleteBody"],
-            retiring ? L["Campaign.Cast.Retire"] : L["Campaign.Cast.Delete"], isDestructive: true);
-        if (!ok)
+        var body = Ctx.IsDm ? L["Campaign.Cast.RetireBodyDm"] : L["Campaign.Cast.RetireBody"];
+        if (Ctx.IsDm)
+        {
+            var mentions = await MentionCountAsync(actor.Id);
+            body += " " + (mentions == 0 ? L["Campaign.Cast.MentionedNowhere"] : L["Campaign.Cast.MentionedIn", mentions]);
+        }
+
+        if (!await confirm.ShowAsync(L["Campaign.Cast.RetireQ", actor.Name], body, L["Campaign.Cast.Retire"], isDestructive: true))
         {
             return;
         }
 
-        if (await RuntimeManager.TryDeleteActorAsync(actor.Id, Ctx.Access))
+        if (await RuntimeManager.TryRetireActorAsync(actor.Id, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success(retiring ? L["Campaign.Cast.HasRetired", actor.Name] : L["Campaign.Cast.Deleted", actor.Name]));
+            Ctx.Notify(Flash.Success(L["Campaign.Cast.HasRetired", actor.Name]));
             await Ctx.ReloadAsync();
         }
         else
         {
             Ctx.Notify(Flash.Error(L["Campaign.Cast.RetireOwnOnly"]));
+        }
+    }
+
+    /// <summary>Table notes, recaps, comments, journals, histories and pages that mention the actor.</summary>
+    private async Task<int> MentionCountAsync(string actorId)
+    {
+        var (sessions, writings, _) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.AllActors);
+        return SessionMentions.NotesMentioning(sessions, MentionKind.Actor, actorId, Ctx.IsDm).Count + writings.Mentioning(MentionKind.Actor, actorId).Count;
+    }
+
+    private async Task RestoreAsync(ActorDocument actor)
+    {
+        if (await RuntimeManager.TryRestoreActorAsync(actor.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(L["Campaign.Cast.Restored", actor.Name]));
+            await Ctx.ReloadAsync();
         }
     }
 }

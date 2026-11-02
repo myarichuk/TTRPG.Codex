@@ -37,12 +37,8 @@ public class RavenUserRepository(RavenDbService dbService) : IUserRepository
         await session.SaveChangesAsync();
     }
 
-    public async Task UpdateUserAsync(UserDocument user)
-    {
-        using var session = dbService.Store.OpenAsyncSession();
-        await session.StoreAsync(user);
-        await session.SaveChangesAsync();
-    }
+    public Task<UserDocument?> UpdateUserAsync(string userId, Action<UserDocument> mutate) =>
+        RavenUpdate.RunAsync(dbService, userId, mutate);
 
     public async Task<bool> AnyUsersExistAsync()
     {
@@ -50,6 +46,37 @@ public class RavenUserRepository(RavenDbService dbService) : IUserRepository
         return await session.Query<UserDocument>()
             .Customize(x => x.WaitForNonStaleResults())
             .AnyAsync();
+    }
+
+    public async Task<bool> TryClaimFirstAdminAsync(string userId)
+    {
+        using (var lookup = dbService.Store.OpenAsyncSession())
+        {
+            var adminExists = await lookup.Query<UserDocument>()
+                .Customize(x => x.WaitForNonStaleResults())
+                .AnyAsync(u => u.Roles.Contains(UserRoles.ServerAdmin));
+            if (adminExists)
+            {
+                return false;
+            }
+        }
+
+        using var session = dbService.Store.OpenAsyncSession(new SessionOptions
+        {
+            TransactionMode = TransactionMode.ClusterWide
+        });
+
+        session.Advanced.ClusterTransaction.CreateCompareExchangeValue("server/first-admin", userId);
+        try
+        {
+            await session.SaveChangesAsync();
+            return true;
+        }
+        catch (ConcurrencyException)
+        {
+            // Another sign-up claimed it first.
+            return false;
+        }
     }
 
     public async Task<bool> TryReserveUsernameAsync(string username, string userId)

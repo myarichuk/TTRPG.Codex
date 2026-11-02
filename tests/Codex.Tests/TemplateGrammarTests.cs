@@ -1,13 +1,13 @@
 using System.Text.Json;
 using Codex.Core;
-using Microsoft.Playwright;
 
 namespace Codex.Tests;
 
 /// <summary>
 /// One template grammar, two parsers: <see cref="LiveTemplate.Expand"/> on the server (new pages, the template preview) and
 /// <c>codexTemplates.expand</c> in app-startup.js (the editor). Both run against the same cases (Fixtures/templates.json), so
-/// they can't drift apart unnoticed: a template the server shows one way and the editor fills another.
+/// they can't drift apart unnoticed: a template the server shows one way and the editor fills another. The editor's half needs
+/// a browser and is <see cref="E2E.TemplateGrammarE2ETests"/>.
 /// </summary>
 public class TemplateGrammarTests
 {
@@ -36,37 +36,5 @@ public class TemplateGrammarTests
             Assert.True(c.End == x.End, $"{c.Why}: end {x.End}");
             Assert.Equal(c.Fields, x.Fields.Select(f => (f.Name, f.Start, f.Length, f.Mirror)).ToList());
         }
-    }
-
-    [Fact]
-    public async Task TheEditorsParser_ReadsEveryCaseAsTheServerDoes()
-    {
-        var script = await File.ReadAllTextAsync(Path.Combine(FindRepo(), "src", "Codex.Web", "wwwroot", "js", "app-startup.js"));
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
-        await page.SetContentAsync("<!doctype html><html><body></body></html>");
-        await page.AddScriptTagAsync(new PageAddScriptTagOptions { Content = script });
-
-        foreach (var c in Cases())
-        {
-            var x = await page.EvaluateAsync<JsonElement>("body => window.codexTemplates.expand(body, false)", c.Body);
-            Assert.True(c.Text == x.GetProperty("text").GetString(), $"{c.Why}: text \"{x.GetProperty("text").GetString()}\"");
-            Assert.True(c.End == x.GetProperty("end").GetInt32(), $"{c.Why}: end {x.GetProperty("end").GetInt32()}");
-            Assert.Equal(c.Fields, x.GetProperty("fields").EnumerateArray()
-                .Select(f => (f.GetProperty("name").GetString()!, f.GetProperty("start").GetInt32(),
-                    f.GetProperty("end").GetInt32() - f.GetProperty("start").GetInt32(), f.GetProperty("mirror").GetBoolean()))
-                .ToList());
-        }
-    }
-
-    private static string FindRepo()
-    {
-        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "src", "Codex.Web", "wwwroot", "js", "app-startup.js"))) return dir.FullName;
-        }
-
-        throw new DirectoryNotFoundException("The repository root was not found above " + AppContext.BaseDirectory);
     }
 }

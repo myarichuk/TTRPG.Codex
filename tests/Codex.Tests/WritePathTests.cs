@@ -15,9 +15,10 @@ namespace Codex.Tests;
 [Collection("RavenDb")]
 public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
 {
-    private static readonly CampaignAccess Dm = new("camp", "dm", CampaignRole.DM);
+    private CampaignAccess Dm => Access("camp", "dm", CampaignRole.DM);
 
     private readonly RavenDbService _dbService;
+    private CampaignAccess Access(string campaignId, string userId, CampaignRole role) => TestAccess.Member(_dbService, campaignId, userId, role);
     private readonly ActorRepository _actors;
     private readonly RavenSessionRepository _sessions;
     private readonly RavenEncounterRepository _encounters;
@@ -69,7 +70,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     private Task<ActorDocument?> LoadAsync(ActorDocument actor) =>
-        _actors.GetVisibleAsync(actor.Id, new CampaignAccess(actor.CampaignId, "dm", CampaignRole.DM));
+        _actors.GetVisibleAsync(actor.Id, Access(actor.CampaignId, "dm", CampaignRole.DM));
 
     [Fact]
     public async Task NextTurn_DoesNotRevertAnEditSavedToTheActorMeanwhile_Async()
@@ -107,7 +108,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(7, YamlValues.GetInt(stored.Sheet, "HP"));
     }
 
-    private static ReplaceActorCommand SheetSave(ActorDocument edited, ActorDocument loaded, CampaignAccess? access = null) =>
+    private ReplaceActorCommand SheetSave(ActorDocument edited, ActorDocument loaded, CampaignAccess? access = null) =>
         new(edited, new Dictionary<string, object>(loaded.Sheet), access ?? Dm, null);
 
     [Fact]
@@ -127,7 +128,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
         await runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 3, "wolf"));
 
         // ...and they save the stale page.
-        await runtime.EnqueueAsync(SheetSave(edited, loaded, new CampaignAccess("camp", "player", CampaignRole.Player)));
+        await runtime.EnqueueAsync(SheetSave(edited, loaded, Access("camp", "player", CampaignRole.Player)));
         await runtime.EnqueueAsync(new SetInitiativeCommand(actor.Id, 12));
         await runtime.EnqueueAsync(new NextTurnCommand());
 
@@ -145,7 +146,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
         var actor = await SeedActorAsync("camp", 10, ownerId: "player");
         var session = await SeedSessionAsync("camp");
         await using var runtime = StartRuntime("camp", session, actor);
-        var player = new CampaignAccess("camp", "player", CampaignRole.Player);
+        var player = Access("camp", "player", CampaignRole.Player);
 
         // The DM adds a secret without going through the table (as the world builder does)...
         var dmCopy = (await LoadAsync(actor))!;
@@ -186,6 +187,93 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task SheetSaveAtALiveTable_MovesHitPointsAndSlotsByTheEditorsChange_NotOverTheTable_Async()
+    {
+        var actor = await SeedActorAsync("camp", 30);
+        actor.Sheet["slots_1"] = 3L;
+        actor.Sheet["slots_1_Max"] = 3L;
+        var pool = new ResourcePoolComponent();
+        pool.Set("HP", 30);
+        pool.Set("HP_Max", 30);
+        pool.Set("slots_1", 3);
+        pool.Set("slots_1_Max", 3);
+        actor.State = _registry.Snapshot(new object[] { pool });
+        await _actors.SaveAsync(actor);
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+        var system = new SystemDefinition
+        {
+            Resources = { new ResourceDefinition { Key = "HP", MaxKey = "HP_Max" } },
+            SheetRules = new SheetRules { SlotPools = { new SlotPoolRule { Key = "slots" } } }
+        };
+
+        // Opened at 30/30 with three slots. On the sheet: Con goes up (+5 maximum, and the rules add the same to current)
+        // and a slot is used...
+        var loaded = (await LoadAsync(actor))!;
+        var edited = (await LoadAsync(actor))!;
+        edited.Sheet["HP_Max"] = 35L;
+        edited.Sheet["HP"] = 35L;
+        edited.Sheet["slots_1"] = 2L;
+
+        // ...while the table drops them to 12 and spends another slot.
+        await runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 18, "ogre"));
+        await runtime.EnqueueAsync(new AdjustResourceCommand(actor.Id, "slots_1", -1, "shield"));
+
+        await runtime.EnqueueAsync(new ReplaceActorCommand(edited, new Dictionary<string, object>(loaded.Sheet), Dm, system));
+
+        var live = runtime.GetEntity(actor.Id)!.Value.Get<ResourcePoolComponent>();
+        Assert.Equal(17, live.Get("HP"));
+        Assert.Equal(35, live.Get("HP_Max"));
+        Assert.Equal(1, live.Get("slots_1"));
+    }
+
+    [Fact]
+    public async Task ASheetSavedWithoutATable_OverAVersionItDidNotSee_IsRefused_AndKeepsTheOtherEdit_Async()
+    {
+        var actor = await SeedActorAsync("camp-version", 10, ownerId: "player");
+        var dm = Access("camp-version", "dm", CampaignRole.DM);
+        var player = Access("camp-version", "player", CampaignRole.Player);
+
+        // The DM and the player both open the sheet between sessions; the player adds a feat and saves first.
+        var dmCopy = (await _actors.GetVisibleAsync(actor.Id, dm))!;
+        var mine = (await _actors.GetVisibleAsync(actor.Id, player))!;
+        mine.Sheet["feats"] = new List<object> { "Alert" };
+        Assert.True(await _actors.TrySaveAsync(mine, player));
+
+        dmCopy.DmNotes = "Owes the guild.";
+        var refused = await Assert.ThrowsAsync<Codex.Localization.LocalizedException>(() => _actors.TrySaveAsync(dmCopy, dm));
+        Assert.Equal("Actor.Sheet.ChangedMeanwhile", refused.Key);
+        Assert.Null((await LoadAsync(actor))!.DmNotes);
+
+        // Taking the stored version as the one it replaces lets the DM save on purpose.
+        DocumentVersions.Carry(dmCopy, (await _actors.GetVisibleAsync(actor.Id, dm))!);
+        Assert.True(await _actors.TrySaveAsync(dmCopy, dm));
+        Assert.Equal("Owes the guild.", (await LoadAsync(actor))!.DmNotes);
+    }
+
+    [Fact]
+    public async Task APortraitChange_WritesOnlyThePortrait_AndLeavesTheSheetsEditsUnsavedButSaveable_Async()
+    {
+        var actor = await SeedActorAsync("camp-portrait", 10, ownerId: "player");
+        var player = Access("camp-portrait", "player", CampaignRole.Player);
+        var mine = (await _actors.GetVisibleAsync(actor.Id, player))!;
+        mine.Sheet["Level"] = 99L; // half-typed, and against the rules
+
+        Assert.True(await _actors.TrySetPortraitAsync(mine, true, player));
+        var stored = (await LoadAsync(actor))!;
+        Assert.True(stored.HasPortrait);
+        Assert.Equal(1, stored.PortraitVersion);
+        Assert.Equal(3, YamlValues.GetInt(stored.Sheet, "Level"));
+        Assert.Equal(1, mine.PortraitVersion);
+
+        // Only the portrait moved, so the page's copy is still the latest; and a stranger cannot set one.
+        mine.Sheet["Level"] = 4L;
+        Assert.True(await _actors.TrySaveAsync(mine, player));
+        Assert.True((await LoadAsync(actor))!.HasPortrait);
+        Assert.False(await _actors.TrySetPortraitAsync((await LoadAsync(actor))!, false, Access("camp-portrait", "stranger", CampaignRole.Player)));
+    }
+
+    [Fact]
     public async Task SheetSave_FromSomeoneWhoDoesNotOwnTheActor_IsRefused_Async()
     {
         var actor = await SeedActorAsync("camp", 10, ownerId: "player");
@@ -197,7 +285,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
         edited.Name = "Hijacked";
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            runtime.EnqueueAsync(SheetSave(edited, loaded, new CampaignAccess("camp", "stranger", CampaignRole.Player))));
+            runtime.EnqueueAsync(SheetSave(edited, loaded, Access("camp", "stranger", CampaignRole.Player))));
         Assert.Equal("Aria", (await LoadAsync(actor))!.Name);
     }
 

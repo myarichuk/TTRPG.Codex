@@ -10,7 +10,7 @@ namespace Codex.Web;
 public static class ExposurePolicy
 {
     public const string ConfigKey = "Codex:PublicExposure";
-    public const string ServerAdminRole = "ServerAdmin";
+    public const string ServerAdminRole = UserRoles.ServerAdmin;
     private const string JoinPrefix = "/campaigns/join/";
 
     public const int GuessesPerMinute = 30;
@@ -50,6 +50,11 @@ public static class ExposurePolicy
     /// <summary>Open servers take a new account only from someone arriving with a real campaign invite.</summary>
     public static async Task<bool> MaySignUpAsync(bool exposed, string? returnUrl, ICampaignRepository campaigns) =>
         !exposed || (InviteCodeFrom(returnUrl) is { } code && await campaigns.InviteCodeExistsAsync(code));
+
+    /// <summary>Whether a new account may claim the server's first ServerAdmin seat: never while open to the internet, and only
+    /// from this computer. The launcher's "Host" opens the server to the network before the DM has an account, and the first
+    /// player to sign up from there must not run the server (R13). <c>Codex:AdminUsername</c> names an admin from anywhere.</summary>
+    public static bool MayClaimFirstAdmin(bool exposed, IPAddress? client) => !exposed && client != null && IPAddress.IsLoopback(client);
 
     /// <summary>The key in the server's own configuration belongs to whoever runs the server.</summary>
     public static bool MayUseServerAi(bool exposed, UserDocument? user) =>

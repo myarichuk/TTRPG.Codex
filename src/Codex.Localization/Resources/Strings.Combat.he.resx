@@ -86,7 +86,7 @@
   <data name="Combat.TempHp" xml:space="preserve"><value>נק' חיים זמניות</value></data>
   <data name="Combat.TempHpTo" xml:space="preserve"><value>מתן נקודות חיים זמניות ל{0}</value></data>
   <data name="Combat.IsDead" xml:space="preserve"><value>{0}: {1}.</value></data>
-  <data name="Combat.Revive" xml:space="preserve"><value>החייאה (הסרת {0})</value></data>
+  <data name="Combat.Revive" xml:space="preserve"><value>החייאה</value></data>
   <data name="Combat.ReviveTo" xml:space="preserve"><value>החייאת {0}</value></data>
   <data name="Combat.RemoveFromOrder" xml:space="preserve"><value>הסרה מהסדר</value></data>
   <data name="Combat.RemoveFromOrderTo" xml:space="preserve"><value>הסרת {0} מהסדר</value></data>
@@ -96,9 +96,28 @@
   <data name="Combat.Stabilize" xml:space="preserve"><value>ייצוב</value></data>
   <data name="Combat.MarkDead" xml:space="preserve"><value>סימון כמת</value></data>
   <data name="Combat.MarkDeadTo" xml:space="preserve"><value>סימון {0} כמת</value></data>
+  <data name="Combat.MarkDeadTitle" xml:space="preserve"><value>לסמן את {0} כמת?</value></data>
+  <data name="Combat.MarkDeadText" xml:space="preserve"><value>המוות לפי חוקי השולחן: לא עוד מחוסר הכרה, הצלות המוות מתאפסות, ומה שהיצור החזיק בריכוז או נספר בתורות שלו מסתיים. החייאה מחזירה אותו, לא את האפקטים האלה.</value></data>
+  <data name="Combat.Undo" xml:space="preserve"><value>ביטול: {0}</value></data>
+  <data name="Combat.UndoTo" xml:space="preserve"><value>ביטול השינוי האחרון של {0} ({1})</value></data>
+  <data name="Combat.HeldBy" xml:space="preserve"><value>מוחזק בידי</value></data>
+  <data name="Combat.HeldByTitle" xml:space="preserve"><value>מי מחזיק את זה בריכוז. זה מסתיים כשהריכוז שלו נגמר.</value></data>
+  <data name="Combat.HeldByNobody" xml:space="preserve"><value>אף אחד</value></data>
+  <data name="Combat.EffectHeldBy" xml:space="preserve"><value>נשמר בזכות הריכוז של {0}.</value></data>
+  <data name="Combat.ConcentrationSave" xml:space="preserve"><value>{0}: בריכוז. הצלה בדרג קושי {1} שומרת עליו.</value></data>
+  <data name="Combat.Visibility.Label" xml:space="preserve"><value>מה השחקנים רואים מ{0}</value></data>
+  <data name="Combat.Visibility.PlayersSee" xml:space="preserve"><value>השחקנים רואים</value></data>
+  <data name="Combat.Visibility.Nothing" xml:space="preserve"><value>כלום</value></data>
+  <data name="Combat.Visibility.Stranger" xml:space="preserve"><value>זר/ה</value></data>
+  <data name="Combat.Visibility.Known" xml:space="preserve"><value>מי זה</value></data>
+  <data name="Combat.Visibility.HiddenBadge" xml:space="preserve"><value>מוסתר</value></data>
+  <data name="Combat.Visibility.StrangerBadge" xml:space="preserve"><value>זר</value></data>
   <data name="Combat.Condition" xml:space="preserve"><value>מצב</value></data>
   <data name="Combat.Rounds" xml:space="preserve"><value>סבבים</value></data>
   <data name="Combat.RoundsTitle" xml:space="preserve"><value>0 או ריק: עד להסרה</value></data>
+  <data name="Combat.AmountNeeded" xml:space="preserve"><value>הקלידו קודם כמות גדולה מ־0.</value></data>
+  <data name="Combat.InitiativeNeeded" xml:space="preserve"><value>הקלידו קודם את סך היוזמה.</value></data>
+  <data name="Combat.ConditionNeeded" xml:space="preserve"><value>בחרו קודם מצב.</value></data>
   <data name="Combat.EndsAt" xml:space="preserve"><value>מסתיים ב</value></data>
   <data name="Combat.EndOfTurn" xml:space="preserve"><value>בסוף התור שלהם</value></data>
   <data name="Combat.StartOfTurn" xml:space="preserve"><value>בתחילת התור שלהם</value></data>
@@ -127,13 +146,16 @@
   <data name="Combat.Dm" xml:space="preserve"><value>שליט המבוך</value></data>
   <data name="Combat.Player" xml:space="preserve"><value>שחקן</value></data>
   <data name="Combat.EndTableTitle" xml:space="preserve"><value>לסיים את השולחן?</value></data>
-  <data name="Combat.EndTableCombat" xml:space="preserve"><value>המפגש יסומן כהושלם. סדר היוזמה נשמר ויחזור כשהשולחן של המפגש הזה יופעל שוב.</value></data>
+  <data name="Combat.EndTableCombat" xml:space="preserve"><value>המפגש נשאר פתוח כל עוד הקרב נמשך, כך שסדר היוזמה יחזור כשהשולחן יופעל שוב. דפי השולחן של השחקנים חוזרים להמתנה.</value></data>
   <data name="Combat.EndTableIdle" xml:space="preserve"><value>המפגש יסומן כהושלם. דפי השולחן של השחקנים יחזרו להמתנה.</value></data>
   <data name="Combat.TableEnded" xml:space="preserve"><value>השולחן הסתיים. המפגש סומן כהושלם.</value></data>
+  <data name="Combat.TableEndedKept" xml:space="preserve"><value>השולחן הסתיים. הקרב נשמר לפעם הבאה שהשולחן יופעל.</value></data>
+  <data name="Combat.TableClosed" xml:space="preserve"><value>השולחן נסגר. הפעילו או הצטרפו אליו שוב כדי להמשיך.</value></data>
+  <data name="Combat.CommandFailed" xml:space="preserve"><value>הפעולה לא בוצעה. נסו שוב; אם זה חוזר, טענו את הדף מחדש.</value></data>
   <data name="Combat.EndEncounterTitle" xml:space="preserve"><value>לסיים את מפגש הקרב?</value></data>
   <data name="Combat.EndEncounterText" xml:space="preserve"><value>סדר היוזמה מתנקה ומצבים עם מספר סבבים פוקעים. מצבים שנמשכים עד להסרה נשארים.</value></data>
   <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>רק שליט המבוך יכול להוסיף יצורים.</value></data>
-  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} נוסף (מוסתר מהשחקנים). הוסיפו ליוזמה כשתהיו מוכנים.</value></data>
+  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} נוסף; השחקנים רואים אותו כזר בשם הזה. הוסיפו ליוזמה כשתהיו מוכנים.</value></data>
   <data name="Combat.Notes.Tab" xml:space="preserve"><value>הערות</value></data>
   <data name="Combat.Notes.TabTitle" xml:space="preserve"><value>הערות מפגש (מקש גישה N)</value></data>
   <data name="Combat.Notes.Count" xml:space="preserve"><value>{0} עד כה</value></data>
@@ -195,12 +217,12 @@
   <data name="Combat.RoundTurn" xml:space="preserve"><value>סבב {0} · התור של {1}</value></data>
   <data name="Combat.Notes.SecretPill" xml:space="preserve"><value>סודי</value></data>
   <data name="Combat.Notes.Correct" xml:space="preserve"><value>תיקון ההערה</value></data>
-  <data name="Combat.Notes.Remove" xml:space="preserve"><value>הסרת ההערה</value></data>
+  <data name="Combat.Notes.Remove" xml:space="preserve"><value>מחיקת ההערה</value></data>
   <data name="Combat.Notes.CorrectedWords" xml:space="preserve"><value>הטקסט המתוקן</value></data>
   <data name="Combat.Notes.To" xml:space="preserve"><value>אל {0}</value></data>
-  <data name="Combat.Notes.RemoveTitle" xml:space="preserve"><value>להסיר את ההערה?</value></data>
+  <data name="Combat.Notes.RemoveTitle" xml:space="preserve"><value>למחוק את ההערה?</value></data>
   <data name="Combat.Notes.RemoveText" xml:space="preserve"><value>היא תוסר מהמפגש ולא תופיע בסיכום.</value></data>
-  <data name="Combat.Notes.RemoveConfirm" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Combat.Notes.RemoveConfirm" xml:space="preserve"><value>מחיקה</value></data>
   <data name="Combat.Mention.Untitled" xml:space="preserve"><value>ללא כותרת</value></data>
   <data name="Combat.Mention.Private" xml:space="preserve"><value>פרטי</value></data>
   <data name="Combat.Mention.Home.Character" xml:space="preserve"><value>דמות</value></data>

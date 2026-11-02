@@ -207,7 +207,7 @@ else
                 // The save gives a new template its id.
                 savedDraft = Snapshot(draft);
                 await LoadAsync(draft.Id);
-                Ctx.Notify(Flash.Success(L["Campaign.Templates.Saved"]));
+                Ctx.Notify(Flash.Success(L["Common.Saved"]));
                 break;
             case TemplateSave.Taken:
                 Ctx.Notify(Flash.Error(L["Campaign.Templates.Taken", draft.Abbreviation.Trim()]));

@@ -1,3 +1,4 @@
+using Codex.Localization;
 using Codex.Persistence;
 
 namespace Codex.Web.Services;
@@ -7,8 +8,11 @@ namespace Codex.Web.Services;
 /// types from the active packs, plus homebrew). The repositories have already decided what the viewer may see.
 /// </summary>
 public sealed class MentionSources(IRegionRepository regions, CampaignLibrary library, ISessionRepository sessionRepo,
-    INoteRepository noteRepo, IJournalRepository journalRepo, IWikiRepository wikiRepo)
+    INoteRepository noteRepo, IJournalRepository journalRepo, IWikiRepository wikiRepo, Localizer L)
 {
+    /// <summary>"someone", "somewhere" and "something" in the reader's language.</summary>
+    public static MentionWords Words(Localizer L) => new(L["Event.Someone"], L["Event.Somewhere"], L["Event.Something"]);
+
     public async Task<(IReadOnlyList<LocationDocument> Places, IReadOnlyList<MentionItem> Items)> LoadAsync(CampaignDocument campaign, CampaignAccess access)
     {
         var places = (await regions.GetVisibleForCampaignAsync(access)).SelectMany(r => r.Locations).ToList();
@@ -27,7 +31,7 @@ public sealed class MentionSources(IRegionRepository regions, CampaignLibrary li
     public async Task<MentionDirectory> DirectoryAsync(CampaignDocument campaign, CampaignAccess access, IEnumerable<ActorDocument> actors)
     {
         var (places, items) = await LoadAsync(campaign, access);
-        return new MentionDirectory(actors, places, items, access.IsDm);
+        return new MentionDirectory(actors, places, items, access.IsDm) { Words = Words(L) };
     }
 
     /// <summary>What a page needs to list the writing that mentions something: the campaign's sessions (for their table

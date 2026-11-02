@@ -9,9 +9,9 @@
 @inject Codex.Web.Services.ViewerClock ViewerTime
 @inject IActorRepository ActorRepo
 @inject ISessionRepository SessionRepo
-@inject IContentRegistry ContentRegistry
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
+@inject ILogger<CombatConsole> Logger
 
 @* The table loop: initiative, hit points, conditions and dice, driven off one live
    CampaignRuntime per campaign. Every mutation goes through runtime.EnqueueAsync onto the campaign's
@@ -44,7 +44,7 @@
                 </div>
             }
             <div>
-                <CodexButton Variant="CodexButtonVariant.Plaque" data-testid="start-table" OnClick="StartOrJoinAsync">@L["Combat.Console.StartTable"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Plaque" data-testid="start-table" Busy="starting" OnClick="StartOrJoinAsync">@L["Combat.Console.StartTable"]</CodexButton>
             </div>
         }
         else
@@ -77,7 +77,10 @@ else
                 {
                     <div class="round-banner turn-banner" data-testid="turn-banner">
                         <div class="turn-callout"><LucideIcon IconName="target" Size="18" /><span class="visually-hidden">@L["Combat.NowActing"]</span><span class="turn-name" aria-live="polite">@turnName</span></div>
-                        <span class="small-muted">@L["Combat.TurnOfCount", encounter.TurnIndex + 1, encounter.Participants.Count]</span>
+                        @if (TurnPosition(encounter) is var (position, count))
+                        {
+                            <span class="small-muted">@L["Combat.TurnOfCount", position, count]</span>
+                        }
                     </div>
                 }
 
@@ -103,62 +106,19 @@ else
                             var isSelected = Access.IsDm && selectedParticipantId == actorId;
                             var dead = IsDead(actorId);
                             var down = !dead && IsDown(actorId);
-                            <div class="participant @(isCurrent ? "current" : "") @(isSelected ? "selected" : "") @(dead ? "dead" : down ? "down" : "")" data-testid="participant-row" data-actor-id="@actorId" aria-current="@(isCurrent ? "true" : null)">
-                                <div class="participant-token">
-                                    @if (actor != null)
-                                    {
-                                        <ActorAvatar Actor="actor" Size="lg" Class="@("token " + KindClass(actor))" />
-                                    }
-                                    else
-                                    {
-                                        <span class="avatar avatar-lg token" aria-hidden="true">?</span>
-                                    }
-                                </div>
-                                <div class="participant-head">
-                                    @if (Access.IsDm)
-                                    {
-                                        <button type="button" class="participant-select" data-testid="select-participant" aria-pressed="@(isSelected ? "true" : "false")" aria-label="@(isSelected ? L["Combat.Deselect", name] : L["Combat.Select", name])" @onclick="() => ToggleSelected(actorId)">
-                                            <span class="participant-name">@name</span>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <span class="participant-name">@name</span>
-                                    }
-                                    <span class="init-plaque" title="@(L["Combat.InitiativeTitle", participant.InitiativeRoll])"><span class="visually-hidden">@L["Combat.Initiative"] </span>@participant.InitiativeRoll</span>
-                                    @if (participant.State != TurnState.Normal)
-                                    {
-                                        <span class="pill pill-warning">@TurnStateLabel(participant.State)</span>
-                                    }
-                                    else if (participant.HasActed && !isCurrent)
-                                    {
-                                        <span class="pill" data-testid="acted-badge">@L["Combat.Acted"]</span>
-                                    }
-                                    @if (dead)
-                                    {
-                                        <span class="pill pill-danger" data-testid="dead-badge">@DeadCondition</span>
-                                    }
-                                    else if (down)
-                                    {
-                                        <span class="pill pill-danger" data-testid="down-badge">@(IsStable(actorId) ? StableCondition : L["Combat.Down"])</span>
-                                    }
-                                    @HpBadge(actorId)
-                                    @TempHpBadge(actorId)
-                                    @if (isCurrent)
-                                    {
-                                        <span class="visually-hidden">@L["Combat.CurrentTurn"]</span>
-                                    }
-                                </div>
-
-                                @HpBar(actorId)
-                                @DeathSaves(actorId)
-                                @ConditionList(actorId, name)
-
+                            <InitiativeRow Campaign="Campaign" Participant="participant" Actor="actor" Name="@name" State="snapshot.Actor(actorId)" Definition="Definition" ActorsById="ActorsById"
+                                           IsCurrent="isCurrent" IsSelected="isSelected" IsDm="Access.IsDm" Dead="dead" Down="down" Stable="IsStable(actorId)"
+                                           CanSeeExact="CanSeeExact(actorId)" CanRollDeathSave="Access.IsDm || IsOwnCharacter(actorId)"
+                                           OnToggleSelected="() => ToggleSelected(actorId)" OnRollDeathSave="() => SendAsync(new RollDeathSaveCommand(actorId, CurrentUserId))"
+                                           OnRemoveCondition="effectId => SendAsync(new RemoveStatusEffectCommand(actorId, effectId))">
                                 @if (isSelected)
                                 {
-                                    @CommandPanel(actorId, name, participant, dead, down)
+                                    <TableCommandPanel @key="actorId" ActorId="@actorId" Name="@name" Participant="participant" Dead="dead" Down="down" Stable="IsStable(actorId)" IsDm="Access.IsDm"
+                                                       Definition="Definition" Snapshot="snapshot" ActorsById="ActorsById" Rests="Rests" RestLabel="RestLabel" HitDice="HitDicePool(actorId)"
+                                                       Send="SendAsync" OnMessage="OnMessage" OnClose="() => ToggleSelected(actorId)" OnRemoveFromOrder="() => RemoveFromOrderAsync(actorId)"
+                                                       OnMarkDead="() => MarkDeadAsync(actorId, name)" OnSetVisibility="visibility => SetVisibilityAsync(actorId, visibility)" OnRest="rest => RestAsync(actorId, rest)" />
                                 }
-                            </div>
+                            </InitiativeRow>
                         }
                     }
                 }
@@ -171,64 +131,14 @@ else
                             <option value="@condition" label="@ConditionName(condition)"></option>
                         }
                     </datalist>
-                    <div class="console-row mt-3 pt-3 border-top">
-                        <div>
-                            <label for="add-to-initiative" class="field-label">@L["Combat.AddToInitiative"]</label>
-                            <select id="add-to-initiative" class="field-select field-sm" data-testid="add-to-initiative-select" @bind="selectedActorId">
-                                <option value="">@L["Combat.ChooseSomeone"]</option>
-                                @foreach (var actor in Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id)))
-                                {
-                                    <option value="@actor.Id">@actor.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div>
-                            <label for="initiative-mode" class="field-label">@L["Combat.Roll"]</label>
-                            <select id="initiative-mode" class="field-select field-sm" @bind="initiativeMode">
-                                <option value="normal">@L["Combat.Roll.Normal"]</option>
-                                <option value="adv">@L["Combat.Roll.Advantage"]</option>
-                                <option value="dis">@L["Combat.Roll.Disadvantage"]</option>
-                            </select>
-                        </div>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="roll-initiative-btn" OnClick="RollInitiativeForSelectedAsync" Disabled="@string.IsNullOrEmpty(selectedActorId)">@L["Combat.RollInitiative", InitiativeDice + InitiativeBonusText(selectedActorId)]</CodexButton>
-                        <span class="small-muted pb-1">@L["Combat.Or"]</span>
-                        <div>
-                            <label for="manual-initiative" class="field-label">@L["Combat.EnterTotal"]</label>
-                            <input id="manual-initiative" type="number" class="field-input field-sm" data-testid="manual-initiative-input"
-                                   value="@GetManualInitiative(selectedActorId)"
-                                   @onchange="e => SetManualInitiativeInput(selectedActorId, e.Value?.ToString())" />
-                        </div>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="set-initiative-btn" OnClick="SetInitiativeManualAsync" Disabled="@string.IsNullOrEmpty(selectedActorId)">@L["Combat.Set"]</CodexButton>
-                    </div>
+                    <InitiativeAddPanel Candidates="Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id))" InitiativeDice="@InitiativeDice"
+                                        BonusText="InitiativeBonusText" OnRoll="RollInitiativeAsync" OnSet="SetInitiativeAsync" OnMessage="OnMessage" />
                 }
             </section>
 
             @if (Access.IsDm)
             {
-                <section class="panel" aria-labelledby="quick-add-heading">
-                    <div class="panel-title"><h3 id="quick-add-heading">@L["Combat.QuickAdd"]</h3></div>
-                    <div class="search mb-2">
-                    <LucideIcon IconName="search" Size="18" Class="search-icon" />
-                    <label for="monster-search" class="visually-hidden">@L["Combat.SearchCreatures"]</label>
-                    <input id="monster-search" type="search" class="field-input field-sm" placeholder="@L["Combat.SearchPlaceholder"]" @bind="contentSearch" @bind:event="oninput" />
-                    </div>
-                    @if (contentSearch.Length > 0)
-                    {
-                        <ul class="list-unstyled mb-0">
-                            @foreach (var definition in SearchBlueprints().Take(12))
-                            {
-                                <li class="list-row">
-                                    <span>@definition.Name</span>
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => QuickAddMonsterAsync(definition)" aria-label="@(L["Combat.AddToEncounterFor", definition.Name])">@L["Combat.AddToEncounter"]</CodexButton>
-                                </li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <p class="small-muted mb-0">@L["Combat.QuickAddHint"]</p>
-                    }
-                </section>
+                <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" />
 
                 @if (Rests.Count > 0)
                 {
@@ -257,45 +167,22 @@ else
             @if (slotActors.Count > 0)
             {
                 <section class="panel" aria-labelledby="slots-heading" data-testid="table-slots">
-                    <div class="panel-title"><h3 id="slots-heading">@SlotTracker.Heading(SlotPoolRules, slotActors.SelectMany(a => SlotKeys(a.Id)))</h3></div>
+                    <div class="panel-title"><h3 id="slots-heading">@SlotTracker.Heading(Definition, SlotPoolRules, slotActors.SelectMany(a => SlotKeys(a.Id)))</h3></div>
                     @foreach (var actor in slotActors)
                     {
                         var actorId = actor.Id;
                         <div class="mb-3" data-testid="table-slots-actor" data-actor-id="@actorId">
-                            <div class="fw-semibold mb-1">@actor.Name</div>
-                            <SlotTracker Pools="SlotPoolRules" Keys="SlotKeys(actorId)" Value="key => PoolValue(actorId, key)" Title="@(L["Combat.SlotsTitle", actor.Name])"
-                                         OnAdjust="change => runtime!.EnqueueAsync(new AdjustResourceCommand(actorId, change.Key, change.Delta, change.Label))"
-                                         OnRest="rest => runtime!.EnqueueAsync(new RestCommand(actorId, rest.Name, rest.Keys))" />
+                            <div class="fw-semibold mb-1"><a class="table-name" href="@ActorHref(actorId)" data-preview>@actor.Name</a></div>
+                            <SlotTracker Definition="Definition" Pools="SlotPoolRules" Keys="SlotKeys(actorId)" Value="key => PoolValue(actorId, key)" Title="@(L["Combat.SlotsTitle", actor.Name])"
+                                         OnAdjust="change => SendAsync(new AdjustResourceCommand(actorId, change.Key, change.Delta, change.Label))"
+                                         OnRest="rest => SendAsync(new RestCommand(actorId, rest.Name, rest.Keys))" />
                         </div>
                     }
                 </section>
             }
 
-            <section class="panel" aria-labelledby="dice-heading">
-                <div class="panel-title"><h3 id="dice-heading">@L["Combat.Dice"]</h3></div>
-                <form class="input-group input-group-sm mb-2" @onsubmit="RollDiceAsync" @onsubmit:preventDefault="true">
-                    <label for="dice-expression" class="visually-hidden">@L["Combat.DiceExpression"]</label>
-                    <input id="dice-expression" class="field-input" placeholder="2d6+3, 4d6kh3, adv+5…" @bind="diceExpression" data-testid="dice-input" />
-                    <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="dice-roll">@L["Combat.Roll"]</CodexButton>
-                </form>
-                @if (Access.IsDm)
-                {
-                    <div class="field-check mb-2">
-                        <input type="checkbox" class="field-box" id="diceSecret" @bind="diceSecret" />
-                        <label class="small" for="diceSecret">@L["Combat.SecretRoll"]</label>
-                    </div>
-                }
-                <div class="log" aria-live="polite" aria-label="@L["Combat.RollLog"]">
-                    @foreach (var entry in VisibleRollLog())
-                    {
-                        <div class="log-entry" data-testid="roll-log-entry">
-                            <strong>@ResolveRollerName(entry)</strong>
-                            <DiceResult Compact="true" Label="@entry.Label" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
-                                        Modifier="entry.Modifier" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret" />
-                        </div>
-                    }
-                </div>
-            </section>
+            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
+                            ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
 
         </div>
     </div>
@@ -317,31 +204,23 @@ else
     // StateChanged. Reading the live encounter, roll log or entities during render could collide with
     // the loop mutating them and throw inside render (F13).
     private RuntimeSnapshot snapshot = RuntimeSnapshot.Empty;
-    private string diceExpression = "1d20";
-    private bool diceSecret;
-    private string contentSearch = "";
-    private string selectedActorId = "";
     private string? selectedParticipantId;
-    private string initiativeMode = "normal";
     private string startSessionId = "";
     private List<SessionDocument> openSessions = new();
     private bool sessionsLoadedFor;
-    private readonly Dictionary<string, int> damageInputs = new();
-    private static readonly int[] QuickAmounts = { 1, 5, 10 };
-    private readonly Dictionary<string, string> damageTypeInputs = new();
-    private readonly Dictionary<string, bool> criticalInputs = new();
-    private readonly Dictionary<string, string> conditionInputs = new();
-    private readonly Dictionary<string, int> conditionRoundsInputs = new();
-    private readonly Dictionary<string, EffectExpiry> conditionExpiryInputs = new();
-    private readonly Dictionary<string, int> hitDiceInputs = new();
-    private readonly Dictionary<string, int> manualInitiativeInputs = new();
+    // The roster the page last loaded its list of actors for; a different one in the snapshot means someone joined, left or
+    // was revealed, and the list is reloaded (R1).
+    private int rosterSeen;
     private bool subscribedToManager;
     // The sheet rule engine resolves initiative bonuses and class hit dice; loaded once per attach.
     private SheetRuleEngine? engine;
     private CachedEntryResolver? resolver;
     private Task? rulesLoading;
 
-    private Dictionary<string, ActorDocument> ActorsById => Actors.ToDictionary(a => a.Id);
+    // Built when the parameters are set, not on every read: a row reads it several times per render.
+    private Dictionary<string, ActorDocument> ActorsById { get; set; } = new();
+    // The actors this viewer can see, built with ActorsById for the visibility rules each render reads (F4).
+    private HashSet<string> VisibleActorIds { get; set; } = new();
     private VitalsRules? Vitals => Definition?.Vitals;
     /// <summary>A rest as the table reads it ("Long Rest"); the rules still get the system's own name.</summary>
     private string RestLabel(string rest) => Definition?.DisplayValue(rest) ?? rest;
@@ -350,16 +229,13 @@ else
     private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
 
     private IEnumerable<string> PickableConditions => (Definition?.Conditions ?? Enumerable.Empty<string>())
-        .Where(c => Vitals?.Exhaustion?.Condition == null || !string.Equals(c, Vitals.Exhaustion.Condition, StringComparison.OrdinalIgnoreCase));
-    private IReadOnlyList<string> DamageTypes => Vitals?.Damage?.Types ?? (IReadOnlyList<string>)Array.Empty<string>();
+        .Where(c => Vitals?.Exhaustion?.Condition == null || !string.Equals(c, Vitals.Exhaustion.Condition, StringComparison.OrdinalIgnoreCase))
+        .Concat(Vitals?.Concentration is { } concentration ? new[] { concentration.Condition } : Array.Empty<string>())
+        .Distinct(StringComparer.OrdinalIgnoreCase);
     private string InitiativeDice => Definition?.Dice.Initiative ?? "1d20";
-    private string PrimaryKey => Definition?.PrimaryResource?.Key ?? "HP";
-    private string PrimaryMaxKey => Definition?.PrimaryResource?.MaxKey ?? "HP_Max";
-    private string PrimaryLabel => Definition?.PrimaryResource?.Label ?? "HP";
-    private string TempKey => Vitals?.TemporaryResource ?? "TempHP";
-    private string DeadCondition => Vitals?.Down?.DeadCondition ?? "Dead";
-    private string StableCondition => Vitals?.Down?.StableCondition ?? "Stable";
-    private string DownCondition => Vitals?.Down?.Condition ?? "Unconscious";
+    private static readonly DownRules NoDownRules = new();
+    private DownRules Down => Vitals?.Down ?? NoDownRules;
+    private string StableCondition => Down.StableCondition;
 
     /// <summary>Rest names the table offers: the system's rests plus whatever slot pools recover on.</summary>
     private List<string> Rests => (Vitals?.Rests.Select(r => r.Name) ?? Enumerable.Empty<string>())
@@ -367,14 +243,12 @@ else
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToList();
 
-    private int GetDamageInput(string actorId) => damageInputs.GetValueOrDefault(actorId, 0);
-    private void SetDamageInput(string actorId, string? raw) => damageInputs[actorId] = int.TryParse(raw, out var value) ? value : 0;
-    private string GetConditionInput(string actorId) => conditionInputs.GetValueOrDefault(actorId, string.Empty);
-    private void SetConditionInput(string actorId, string? raw) => conditionInputs[actorId] = raw ?? string.Empty;
     private static string Slug(string text) => text.Replace(' ', '-').ToLowerInvariant();
 
     protected override async Task OnParametersSetAsync()
     {
+        ActorsById = Actors.ToDictionary(a => a.Id);
+        VisibleActorIds = ActorsById.Keys.ToHashSet();
         if (!subscribedToManager)
         {
             RuntimeManager.RuntimeChanged += OnRuntimeChanged;
@@ -414,13 +288,6 @@ else
         _ => L["Combat.Status.Completed"]
     };
 
-    private string TurnStateLabel(TurnState state) => state switch
-    {
-        TurnState.Delayed => L["Combat.TurnState.Delayed"],
-        TurnState.Readied => L["Combat.TurnState.Readied"],
-        _ => state.ToString()
-    };
-
     /// <summary>A player's open table page attaches the moment the DM starts (or ends) the table.</summary>
     private void OnRuntimeChanged(string campaignId)
     {
@@ -451,8 +318,10 @@ else
             return;
         }
 
-        if (!Access.IsDm) return;
+        if (!Access.IsDm || starting) return;
 
+        // Starting loads every actor and the session, so the button shows it is working rather than waiting silently (F18).
+        starting = true;
         try
         {
             Attach(await RuntimeManager.GetOrStartAsync(Campaign, Access, string.IsNullOrEmpty(startSessionId) ? null : startSessionId));
@@ -461,7 +330,13 @@ else
         {
             await OnMessage.InvokeAsync(Flash.Error(L.Describe(ex)));
         }
+        finally
+        {
+            starting = false;
+        }
     }
+
+    private bool starting;
 
     private async Task EndTableAsync()
     {
@@ -471,8 +346,8 @@ else
             inCombat ? L["Combat.EndTableCombat"] : L["Combat.EndTableIdle"],
             L["Combat.EndTable"], isDestructive: true);
         if (!ok) return;
-        await RuntimeManager.EvictAsync(CampaignId);
-        await OnMessage.InvokeAsync(Flash.Success(L["Combat.TableEnded"]));
+        var completed = await RuntimeManager.EvictAsync(CampaignId);
+        await OnMessage.InvokeAsync(Flash.Success(completed ? L["Combat.TableEnded"] : L["Combat.TableEndedKept"]));
     }
 
     /// <summary>Idempotent: starting the table reaches here twice (once from the manager's
@@ -486,6 +361,7 @@ else
         runtime = started;
         runtime.StateChanged += OnStateChanged;
         snapshot = runtime.Snapshot;
+        rosterSeen = snapshot.RosterVersion;
         if (Access.IsDm && Definition != null && rulesLoading == null)
         {
             rulesLoading = LoadRulesAsync();
@@ -520,9 +396,16 @@ else
         selectedParticipantId = null;
     }
 
-    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(() =>
+    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(async () =>
     {
         if (runtime != null) snapshot = runtime.Snapshot;
+        if (snapshot.RosterVersion != rosterSeen && OnActorAdded.HasDelegate)
+        {
+            // Someone joined or left the table, or the DM revealed or hid them: this viewer's list of who they may see is stale.
+            rosterSeen = snapshot.RosterVersion;
+            await OnActorAdded.InvokeAsync();
+        }
+
         StateHasChanged();
     });
 
@@ -560,41 +443,21 @@ else
         return YamlValues.GetInt(actor.Sheet, key) ?? Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Default ?? 0;
     }
 
-    private async Task RollInitiativeForSelectedAsync()
+    private Task RollInitiativeAsync((string ActorId, string Expression) roll)
     {
-        if (string.IsNullOrEmpty(selectedActorId)) return;
-        var actorId = selectedActorId;
-        selectedActorId = "";
-        var expression = initiativeMode == "normal" ? InitiativeDice : initiativeMode;
-        var bonus = InitiativeBonus(actorId);
-        var result = runtime!.DiceRoller.Roll(expression);
-        await runtime.EnqueueAsync(new RollDiceCommand(expression + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString()), actorId, CurrentUserId, IsSecret: false));
-        await runtime.EnqueueAsync(new SetInitiativeCommand(actorId, result.Total + bonus, TieBreak(actorId)));
+        var bonus = InitiativeBonus(roll.ActorId);
+        return SendAsync(new RollInitiativeCommand(roll.ActorId, roll.Expression + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString()), CurrentUserId, TieBreak(roll.ActorId)));
     }
 
-    private async Task SetInitiativeManualAsync()
-    {
-        if (string.IsNullOrEmpty(selectedActorId)) return;
-        // Clear the picker before awaiting: the round trip through the single-writer loop can be
-        // long enough that a DM's next click lands before this resumes.
-        var actorId = selectedActorId;
-        var roll = GetManualInitiative(actorId);
-        selectedActorId = "";
-        await runtime!.EnqueueAsync(new SetInitiativeCommand(actorId, roll, TieBreak(actorId)));
-    }
+    private Task SetInitiativeAsync((string ActorId, int Total) set) => SendAsync(new SetInitiativeCommand(set.ActorId, set.Total, TieBreak(set.ActorId)));
 
-    private int GetManualInitiative(string actorId) => manualInitiativeInputs.GetValueOrDefault(actorId, 0);
-    private void SetManualInitiativeInput(string actorId, string? raw) => manualInitiativeInputs[actorId] = int.TryParse(raw, out var value) ? value : 0;
-
-    private Task NextTurnAsync() => runtime!.EnqueueAsync(new NextTurnCommand());
-    private Task PreviousTurnAsync() => runtime!.EnqueueAsync(new PreviousTurnCommand());
-    private Task SetTurnStateAsync(string actorId, TurnState state) => runtime!.EnqueueAsync(new SetTurnStateCommand(actorId, state));
-    private Task ActNowAsync(string actorId) => runtime!.EnqueueAsync(new ActNowCommand(actorId));
+    private Task NextTurnAsync() => SendAsync(new NextTurnCommand());
+    private Task PreviousTurnAsync() => SendAsync(new PreviousTurnCommand());
 
     private async Task RemoveFromOrderAsync(string actorId)
     {
         if (selectedParticipantId == actorId) selectedParticipantId = null;
-        await runtime!.EnqueueAsync(new RemoveParticipantCommand(actorId));
+        await SendAsync(new RemoveParticipantCommand(actorId));
     }
 
     private async Task EndEncounterAsync()
@@ -602,7 +465,7 @@ else
         var ok = await confirm.ShowAsync(L["Combat.EndEncounterTitle"], L["Combat.EndEncounterText"], L["Combat.EndEncounter"], isDestructive: true);
         if (!ok) return;
         selectedParticipantId = null;
-        await runtime!.EnqueueAsync(new EndEncounterCommand());
+        await SendAsync(new EndEncounterCommand());
     }
 
     // ---- Reading the snapshot ----
@@ -613,14 +476,10 @@ else
     private bool HasEffect(string actorId, string effectId) =>
         GetEffects(actorId).Any(e => string.Equals(e.EffectId, effectId, StringComparison.OrdinalIgnoreCase));
 
-    private bool IsDead(string actorId) => Vitals?.Down != null && HasEffect(actorId, DeadCondition);
-    private bool IsDown(string actorId) => Pool(actorId) is { Current: <= 0 } && !IsDead(actorId);
+    // The runtime's verdicts (TableRules.IsDead / IsDown), carried on the snapshot.
+    private bool IsDead(string actorId) => snapshot.Actor(actorId)?.IsDead == true;
+    private bool IsDown(string actorId) => snapshot.Actor(actorId)?.IsDown == true;
     private bool IsStable(string actorId) => HasEffect(actorId, StableCondition);
-
-    private (int Current, int Max)? Pool(string actorId) =>
-        snapshot.Actor(actorId)?.Pools is { } pools
-            ? (pools.GetValueOrDefault(PrimaryKey), pools.GetValueOrDefault(PrimaryMaxKey))
-            : null;
 
     private IReadOnlyList<SlotPoolRule> SlotPoolRules => Definition?.SheetRules?.SlotPools ?? (IReadOnlyList<SlotPoolRule>)Array.Empty<SlotPoolRule>();
 
@@ -636,138 +495,11 @@ else
 
     private bool IsOwnCharacter(string actorId) => ActorsById.GetValueOrDefault(actorId) is { Kind: ActorKind.PlayerCharacter } a && a.OwnerUserId == CurrentUserId;
 
-    private RenderFragment HpBadge(string actorId) => builder =>
-    {
-        if (Pool(actorId) is not { } pool) return;
-        var text = CanSeeExact(actorId) ? $"{pool.Current}/{pool.Max} {PrimaryKey}" : HpBand(pool.Current, pool.Max);
+    private string ActorHref(string actorId) => MentionLinks.Href(CampaignId, MentionKind.Actor, actorId);
 
-        builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "class", (pool.Max > 0 && pool.Current * 2 < pool.Max ? "pill pill-danger" : "pill") + " hp-text");
-        builder.AddAttribute(2, "data-testid", "hp-badge");
-        builder.AddContent(3, text);
-        builder.CloseElement();
-    };
-
-    private RenderFragment TempHpBadge(string actorId) => builder =>
-    {
-        if (!CanSeeExact(actorId) || PoolValue(actorId, TempKey) is not { } temp || temp <= 0) return;
-        builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "class", "pill pill-arcane hp-text");
-        builder.AddAttribute(2, "data-testid", "temp-hp-badge");
-        builder.AddAttribute(3, "title", L["Combat.TempHpTitle"]);
-        builder.AddContent(4, L["Combat.TempHpBadge", temp]);
-        builder.CloseElement();
-    };
-
-    private RenderFragment HpBar(string actorId) => builder =>
-    {
-        if (!CanSeeExact(actorId) || Pool(actorId) is not { } pool || pool.Max <= 0) return;
-        var pct = Math.Clamp(100.0 * pool.Current / pool.Max, 0, 100);
-        var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "hp-bar hp-numbered " + band);
-        builder.AddAttribute(2, "role", "progressbar");
-        builder.AddAttribute(3, "aria-label", $"{PrimaryLabel}");
-        builder.AddAttribute(4, "aria-valuemin", "0");
-        builder.AddAttribute(5, "aria-valuemax", pool.Max.ToString());
-        builder.AddAttribute(6, "aria-valuenow", pool.Current.ToString());
-        builder.OpenElement(7, "span");
-        builder.AddAttribute(8, "style", $"width:{pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}%");
-        builder.CloseElement();
-        builder.OpenElement(9, "span");
-        builder.AddAttribute(10, "class", "hp-over");
-        builder.AddAttribute(11, "aria-hidden", "true");
-        builder.AddContent(12, $"{pool.Current} / {pool.Max}");
-        builder.CloseElement();
-        builder.CloseElement();
-    };
-
-    /// <summary>Death-save tally for a character that is down: filled pips for successes and failures,
-    /// and a roll button for the DM or the character's own player.</summary>
-    private RenderFragment DeathSaves(string actorId) => builder =>
-    {
-        if (Vitals?.DeathSaves is not { } rules || !IsDown(actorId) || IsStable(actorId)) return;
-        if (ActorsById.GetValueOrDefault(actorId) is not { Kind: ActorKind.PlayerCharacter }) return;
-        var successes = PoolValue(actorId, rules.SuccessesKey) ?? 0;
-        var failures = PoolValue(actorId, rules.FailuresKey) ?? 0;
-        var seq = 0;
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "death-saves");
-        builder.AddAttribute(seq++, "data-testid", "death-saves");
-        builder.AddAttribute(seq++, "aria-label", L["Combat.DeathSavesLabel", successes, failures]);
-        builder.OpenElement(seq++, "span");
-        builder.AddAttribute(seq++, "class", "death-saves-label");
-        builder.AddContent(seq++, L["Combat.DeathSaves"]);
-        builder.CloseElement();
-        foreach (var (count, needed, cls, label, title) in new[] {
-            (successes, rules.SuccessesToStabilize, "ok", "successes", L["Combat.DeathSavesSuccessTitle", successes, rules.SuccessesToStabilize]),
-            (failures, rules.FailuresToDie, "bad", "failures", L["Combat.DeathSavesFailureTitle", failures, rules.FailuresToDie]) })
-        {
-            builder.OpenElement(seq++, "span");
-            builder.AddAttribute(seq++, "class", "death-save-pips " + cls);
-            builder.AddAttribute(seq++, "data-testid", "death-save-" + label);
-            builder.AddAttribute(seq++, "title", title);
-            for (var i = 0; i < needed; i++)
-            {
-                builder.OpenElement(seq++, "span");
-                builder.AddAttribute(seq++, "class", "pip " + (i < count ? "full" : ""));
-                builder.CloseElement();
-            }
-
-            builder.CloseElement();
-        }
-
-        if (Access.IsDm || IsOwnCharacter(actorId))
-        {
-            builder.OpenElement(seq++, "button");
-            builder.AddAttribute(seq++, "type", "button");
-            builder.AddAttribute(seq++, "class", "cx-btn cx-etched cx-sm");
-            builder.AddAttribute(seq++, "data-testid", "roll-death-save");
-            builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => runtime!.EnqueueAsync(new RollDeathSaveCommand(actorId, CurrentUserId))));
-            builder.AddContent(seq++, L["Combat.RollDeathSave"]);
-            builder.CloseElement();
-        }
-
-        builder.CloseElement();
-    };
-
-    private RenderFragment ConditionList(string actorId, string name) => __builder =>
-    {
-        var effects = GetEffects(actorId).Where(e => !IsVitalsMarker(e.EffectId)).ToList();
-        var exhaustion = Vitals?.Exhaustion is { } rules ? PoolValue(actorId, rules.Key) ?? 0 : 0;
-        if (effects.Count == 0 && exhaustion == 0) return;
-        <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", name])">
-            @if (exhaustion > 0)
-            {
-                <li class="cond-chip" data-testid="exhaustion-badge" title="@(L["Combat.ExhaustionTitle", Vitals!.Exhaustion!.Condition ?? L["Combat.Exhaustion"], exhaustion])">
-                    <DomainIcon Domain="condition" Key="@(Vitals!.Exhaustion!.Condition ?? "Exhaustion")" Size="DomainIconSize.Small" />
-                    @($"{Vitals!.Exhaustion!.Condition ?? L["Combat.Exhaustion"]} {exhaustion}")
-                </li>
-            }
-            @foreach (var effect in effects)
-            {
-                var effectId = effect.EffectId;
-                var tip = effect.IsIndefinite ? L["Combat.UntilRemoved"] : effect.Expiry == EffectExpiry.StartOfTurn ? L["Combat.EffectEndsStart", effect.RoundsRemaining] : L["Combat.EffectEndsEnd", effect.RoundsRemaining];
-                <li class="cond-chip" data-testid="condition-badge" data-effect-id="@effectId" title="@tip">
-                    <DomainIcon Domain="condition" Key="@effectId" Size="DomainIconSize.Small" />
-                    @(effect.IsIndefinite ? ConditionName(effectId) : $"{ConditionName(effectId)} ({effect.RoundsRemaining})")
-                    @if (Access.IsDm)
-                    {
-                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@(L["Combat.RemoveCondition", effectId, name])" OnClick="() => RemoveConditionAsync(actorId, effectId)" />
-                    }
-                </li>
-            }
-        </ul>
-    };
-
-    private static string KindClass(ActorDocument actor) => actor.Kind switch
-    {
-        ActorKind.PlayerCharacter => "token-pc",
-        ActorKind.Monster => "token-monster",
-        _ => "token-npc",
-    };
-
-    /// <summary>Whose turn it is, for the banner. A participant the viewer can't see is never named.</summary>
+    /// <summary>Whose turn it is, for the banner. A participant the viewer can't see is never named. While one acts, players read
+    /// "Someone you can't see": that a hidden creature is in the order is a hint the DM's table gives on purpose (F2, decided
+    /// 2026-11-02), like a DM pausing behind the screen. Its name, rolls and place in the count stay hidden.</summary>
     private string? CurrentTurnName(EncounterSnapshot encounter)
     {
         if (encounter.TurnIndex < 0 || encounter.TurnIndex >= encounter.Participants.Count) return null;
@@ -776,229 +508,32 @@ else
         return actor?.Name ?? (Access.IsDm ? id : L["Combat.SomeoneUnseen"]);
     }
 
-    /// <summary>Dead, stable and down are shown as the row's state, not as conditions in the list.</summary>
-    private bool IsVitalsMarker(string effectId) =>
-        Vitals?.Down is { } down &&
-        (string.Equals(effectId, down.DeadCondition, StringComparison.OrdinalIgnoreCase) ||
-         string.Equals(effectId, down.StableCondition, StringComparison.OrdinalIgnoreCase) ||
-         string.Equals(effectId, down.Condition, StringComparison.OrdinalIgnoreCase));
+    private (int Position, int Count)? TurnPosition(EncounterSnapshot encounter) =>
+        TableVisibility.TurnPosition(encounter, Access.IsDm, VisibleActorIds);
 
-    /// <summary>Players never learn a hostile's exact remaining hit points - only a coarse band.</summary>
-    private string HpBand(int current, int max)
+    /// <summary>Death by the DM's hand goes through the table's rules (R3), after a confirm: it ends what the creature
+    /// concentrated on and the effects counted on its turns.</summary>
+    private async Task MarkDeadAsync(string actorId, string name)
     {
-        if (max <= 0) return L["Combat.Hp.Unknown"];
-        var fraction = (double)current / max;
-        return fraction switch
+        if (!await confirm.ShowAsync(L["Combat.MarkDeadTitle", name], L["Combat.MarkDeadText"], L["Combat.MarkDead"], isDestructive: true)) return;
+        await SendAsync(new KillCommand(actorId));
+    }
+
+    /// <summary>Shows, hides or unmasks a creature for the players without leaving the table (R1).</summary>
+    private async Task SetVisibilityAsync(string actorId, ActorVisibility visibility)
+    {
+        if (!await RuntimeManager.TrySetVisibilityAsync(actorId, visibility, Access))
         {
-            <= 0 => L["Combat.Down"],
-            < 0.25 => L["Combat.Hp.Critical"],
-            < 0.5 => L["Combat.Hp.Bloodied"],
-            _ => L["Combat.Hp.Healthy"]
-        };
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.CommandFailed"]));
+            return;
+        }
+
+        if (OnActorAdded.HasDelegate) await OnActorAdded.InvokeAsync();
     }
-
-    // ---- The DM's command panel ----
-
-    private RenderFragment CommandPanel(string actorId, string name, ParticipantSnapshot participant, bool dead, bool down) => __builder =>
-    {
-        <div class="command-panel" data-testid="command-panel" data-actor-id="@actorId" aria-label="@(L["Combat.CommandsFor", name])">
-            @* On a phone the panel is a sheet at the bottom of the screen, away from its row: it says whose it is. *@
-            <div class="command-head">
-                <span class="command-name">@name</span>
-                <CodexButton Variant="CodexButtonVariant.Rune" Icon="x" Label="@L["Combat.Deselect", name]" OnClick="() => ToggleSelected(actorId)" />
-            </div>
-            <div class="console-row mt-0">
-                <div>
-                    <label for="dmg-@actorId" class="field-label">@L["Combat.Amount"]</label>
-                    <input id="dmg-@actorId" type="number" min="0" inputmode="numeric" class="field-input field-sm" data-testid="damage-input"
-                           value="@GetDamageInput(actorId)"
-                           @oninput="e => SetDamageInput(actorId, e.Value?.ToString())" />
-                </div>
-                @* Tapping +5 twice is quicker than the number keyboard when the dice are already on the table. *@
-                <div class="chips quick-amounts" role="group" aria-label="@L["Combat.AddToAmount"]">
-                    @foreach (var step in QuickAmounts)
-                    {
-                        <button type="button" class="chip" data-testid="@($"quick-amount-{step}")" @onclick="() => damageInputs[actorId] = GetDamageInput(actorId) + step"><bdi>+@step</bdi></button>
-                    }
-                </div>
-                @if (DamageTypes.Count > 0)
-                {
-                    <div>
-                        <label for="dmg-type-@actorId" class="field-label">@L["Combat.Type"]</label>
-                        <select id="dmg-type-@actorId" class="field-select field-sm" data-testid="damage-type-select"
-                                value="@damageTypeInputs.GetValueOrDefault(actorId, "")"
-                                @onchange="e => damageTypeInputs[actorId] = e.Value?.ToString() ?? string.Empty">
-                            <option value="">@L["Combat.Untyped"]</option>
-                            @foreach (var type in DamageTypes)
-                            {
-                                <option value="@type">@Capitalize(type)</option>
-                            }
-                        </select>
-                    </div>
-                }
-                <div class="field-check pb-1">
-                    <input type="checkbox" class="field-box" id="crit-@actorId" data-testid="critical-input"
-                           checked="@criticalInputs.GetValueOrDefault(actorId)"
-                           @onchange="e => criticalInputs[actorId] = e.Value is true" />
-                    <label class="small" for="crit-@actorId">@L["Combat.CriticalHit"]</label>
-                </div>
-                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="damage-btn" OnClick="() => ApplyDamageAsync(actorId)" aria-label="@(L["Combat.DamageTo", name])">@L["Combat.Damage"]</CodexButton>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="heal-btn" OnClick="() => ApplyHealingAsync(actorId)" aria-label="@(L["Combat.HealTo", name])">@L["Combat.Heal"]</CodexButton>
-                @if (Vitals?.TemporaryResource != null)
-                {
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="temp-hp-btn" OnClick="() => GrantTempHpAsync(actorId)" aria-label="@(L["Combat.TempHpTo", name])">@L["Combat.TempHp"]</CodexButton>
-                }
-            </div>
-
-            @if (dead)
-            {
-                <div class="console-row">
-                    <span class="small-muted pb-1">@L["Combat.IsDead", name, DeadCondition.ToLowerInvariant()]</span>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="revive-btn" OnClick="() => RemoveConditionAsync(actorId, DeadCondition)" aria-label="@(L["Combat.ReviveTo", name])">@L["Combat.Revive", DeadCondition]</CodexButton>
-                    <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="remove-participant-btn" OnClick="() => RemoveFromOrderAsync(actorId)" aria-label="@(L["Combat.RemoveFromOrderTo", name])">@L["Combat.RemoveFromOrder"]</CodexButton>
-                </div>
-            }
-            else if (down && Vitals?.DeathSaves != null)
-            {
-                <div class="console-row">
-                    <span class="small-muted pb-1">@L["Combat.IsAtZero", name, PrimaryKey]</span>
-                    @if (!IsStable(actorId))
-                    {
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-success" OnClick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, true))">@L["Combat.Success"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-failure" OnClick="() => runtime!.EnqueueAsync(new RecordDeathSaveCommand(actorId, false))">@L["Combat.Failure"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="stabilize-btn" OnClick="() => runtime!.EnqueueAsync(new StabilizeCommand(actorId, NoSource))">@L["Combat.Stabilize"]</CodexButton>
-                    }
-                    else
-                    {
-                        <span class="pill pill-success">@StableCondition</span>
-                    }
-                    <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="kill-btn" OnClick="() => AddConditionDirectAsync(actorId, DeadCondition)" aria-label="@(L["Combat.MarkDeadTo", name])">@L["Combat.MarkDead"]</CodexButton>
-                </div>
-            }
-
-            <div class="console-row">
-                <div>
-                    <label for="cond-@actorId" class="field-label">@L["Combat.Condition"]</label>
-                    <input id="cond-@actorId" class="field-input field-sm w-8" list="conditions-list" data-testid="condition-input"
-                           value="@GetConditionInput(actorId)"
-                           @oninput="e => SetConditionInput(actorId, e.Value?.ToString())" />
-                </div>
-                <div>
-                    <label for="rounds-@actorId" class="field-label">@L["Combat.Rounds"]</label>
-                    <input id="rounds-@actorId" type="number" min="0" inputmode="numeric" class="field-input field-sm" data-testid="condition-rounds-input" placeholder="∞"
-                           value="@GetConditionRounds(actorId)" title="@L["Combat.RoundsTitle"]"
-                           @oninput="e => SetConditionRounds(actorId, e.Value?.ToString())" />
-                </div>
-                <div>
-                    <label for="expiry-@actorId" class="field-label">@L["Combat.EndsAt"]</label>
-                    <select id="expiry-@actorId" class="field-select field-sm" data-testid="condition-expiry-select"
-                            value="@conditionExpiryInputs.GetValueOrDefault(actorId, EffectExpiry.EndOfTurn).ToString()"
-                            @onchange="e => conditionExpiryInputs[actorId] = Enum.TryParse<EffectExpiry>(e.Value?.ToString(), out var x) ? x : EffectExpiry.EndOfTurn">
-                        <option value="@EffectExpiry.EndOfTurn">@L["Combat.EndOfTurn"]</option>
-                        <option value="@EffectExpiry.StartOfTurn">@L["Combat.StartOfTurn"]</option>
-                    </select>
-                </div>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="condition-add-btn" OnClick="() => AddConditionAsync(actorId)" aria-label="@(L["Combat.AddConditionTo", name])">@L["Combat.AddCondition"]</CodexButton>
-                @if (Vitals?.Exhaustion is { } exhaustion)
-                {
-                    var level = PoolValue(actorId, exhaustion.Key) ?? 0;
-                    <div class="d-flex align-items-end gap-1">
-                        <span class="small pb-1">@(exhaustion.Condition ?? L["Combat.Exhaustion"]) @level</span>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" OnClick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, 1))" aria-label="@(L["Combat.RaiseExhaustion", name])">+</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => runtime!.EnqueueAsync(new AdjustExhaustionCommand(actorId, -1))" aria-label="@(L["Combat.LowerExhaustion", name])">−</CodexButton>
-                    </div>
-                }
-            </div>
-
-            <div class="console-row">
-                <span class="small-muted pb-1">@L["Combat.TurnLabel"]</span>
-                @if (participant.State != TurnState.Normal)
-                {
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="act-now-btn" OnClick="() => ActNowAsync(actorId)" aria-label="@(L["Combat.ActsNow", name])">@L["Combat.ActNow"]</CodexButton>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetTurnStateAsync(actorId, TurnState.Normal)" aria-label="@(L["Combat.ClearTo", name])">@L["Combat.Clear"]</CodexButton>
-                }
-                else
-                {
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetTurnStateAsync(actorId, TurnState.Delayed)" aria-label="@(L["Combat.DelayTo", name])">@L["Combat.Delay"]</CodexButton>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetTurnStateAsync(actorId, TurnState.Readied)" aria-label="@(L["Combat.ReadyTo", name])">@L["Combat.Ready"]</CodexButton>
-                }
-                @if (!dead)
-                {
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="remove-participant-btn" OnClick="() => RemoveFromOrderAsync(actorId)" aria-label="@(L["Combat.RemoveFromOrderTo", name])">@L["Combat.RemoveFromOrder"]</CodexButton>
-                }
-            </div>
-
-            @if (Rests.Count > 0)
-            {
-                var hitDice = HitDicePool(actorId);
-                <div class="console-row">
-                    <span class="small-muted pb-1">@L["Combat.Rest"]</span>
-                    @foreach (var rest in Rests)
-                    {
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{Slug(rest)}")" OnClick="() => RestAsync(actorId, rest)">@RestLabel(rest)</CodexButton>
-                    }
-                    @if (hitDice is { Max: > 0 } dice)
-                    {
-                        <span class="small pb-1" data-testid="hit-dice">@L["Combat.HitDice", dice.Current, dice.Max]@if (dice.Sides is { } s) { <bdi>@($" (d{s})")</bdi> }</span>
-                        @if (dice.Sides != null)
-                        {
-                            <input type="number" min="1" max="@dice.Current" class="field-input field-sm" data-testid="hit-dice-input" aria-label="@L["Combat.HitDiceToSpend"]"
-                                   value="@hitDiceInputs.GetValueOrDefault(actorId, 1)"
-                                   @oninput="e => hitDiceInputs[actorId] = int.TryParse(e.Value?.ToString(), out var n) && n > 0 ? n : 1" />
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="spend-hit-dice-btn" Disabled="@(dice.Current <= 0)" OnClick="() => SpendHitDiceAsync(actorId, dice.Sides.Value)">@L["Combat.Spend"]</CodexButton>
-                        }
-                    }
-                </div>
-            }
-        </div>
-    };
-
-    private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
-
-    // The table's buttons name no source: the person who pressed one is not where the damage, healing or condition came from.
-    private const string NoSource = "";
-
-    private async Task ApplyDamageAsync(string actorId)
-    {
-        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
-        var type = damageTypeInputs.GetValueOrDefault(actorId, "");
-        var critical = criticalInputs.GetValueOrDefault(actorId);
-        criticalInputs[actorId] = false;
-        await runtime!.EnqueueAsync(new ApplyDamageCommand(actorId, PrimaryKey, amount, NoSource, string.IsNullOrEmpty(type) ? null : type, critical));
-    }
-
-    private async Task ApplyHealingAsync(string actorId)
-    {
-        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
-        await runtime!.EnqueueAsync(new ApplyHealingCommand(actorId, PrimaryKey, amount, NoSource));
-    }
-
-    private async Task GrantTempHpAsync(string actorId)
-    {
-        if (!damageInputs.TryGetValue(actorId, out var amount) || amount <= 0) return;
-        await runtime!.EnqueueAsync(new GrantTemporaryHitPointsCommand(actorId, amount, NoSource));
-    }
-
-    private async Task AddConditionAsync(string actorId)
-    {
-        if (!conditionInputs.TryGetValue(actorId, out var effectId) || string.IsNullOrWhiteSpace(effectId)) return;
-        var rounds = GetConditionRounds(actorId);
-        var expiry = conditionExpiryInputs.GetValueOrDefault(actorId, EffectExpiry.EndOfTurn);
-        conditionInputs[actorId] = "";
-        await runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId.Trim(), NoSource, rounds, expiry, actorId));
-    }
-
-    private Task AddConditionDirectAsync(string actorId, string effectId) =>
-        runtime!.EnqueueAsync(new AddStatusEffectCommand(actorId, effectId, NoSource, 0, EffectExpiry.EndOfTurn, actorId));
-
-    private int GetConditionRounds(string actorId) => conditionRoundsInputs.GetValueOrDefault(actorId, 1);
-    private void SetConditionRounds(string actorId, string? raw) => conditionRoundsInputs[actorId] = int.TryParse(raw, out var value) && value > 0 ? value : 0;
-
-    private Task RemoveConditionAsync(string actorId, string effectId) => runtime!.EnqueueAsync(new RemoveStatusEffectCommand(actorId, effectId));
 
     // ---- Rests and hit dice ----
 
-    private Task RestAsync(string actorId, string rest) => runtime!.EnqueueAsync(new RestCommand(actorId, rest, SlotKeysRestoredBy(actorId, rest)));
+    private Task RestAsync(string actorId, string rest) => SendAsync(new RestCommand(actorId, rest, SlotKeysRestoredBy(actorId, rest)));
 
     private async Task PartyRestAsync(string rest)
     {
@@ -1027,24 +562,14 @@ else
         }
 
         var classId = YamlValues.GetString(actor.Sheet, rules.ClassField);
-        if (string.IsNullOrWhiteSpace(classId) || resolver?.Resolve("class", classId) is not { } entry) return null;
+        var classType = Definition?.ActorFields.FirstOrDefault(f => f.Key == rules.ClassField)?.TargetEntityType;
+        if (string.IsNullOrWhiteSpace(classId) || classType == null || resolver?.Resolve(classType, classId) is not { } entry) return null;
         return entry.Properties.TryGetValue(rules.DieProperty, out var raw) ? SheetRuleEngine.ParseHitDie(raw) : null;
     }
 
-    private Task SpendHitDiceAsync(string actorId, int sides) =>
-        runtime!.EnqueueAsync(new SpendHitDiceCommand(actorId, hitDiceInputs.GetValueOrDefault(actorId, 1), sides));
-
     // ---- Quick add ----
 
-    private IEnumerable<IActorDefinition> SearchBlueprints()
-    {
-        var blueprints = ContentRegistry.GetActorsBySystem(Campaign.SystemId);
-        if (string.IsNullOrWhiteSpace(contentSearch)) return blueprints;
-        return blueprints.Where(a => a.Name.Contains(contentSearch, StringComparison.OrdinalIgnoreCase) ||
-            a.Tags.Any(t => t.Contains(contentSearch, StringComparison.OrdinalIgnoreCase)));
-    }
-
-    private async Task QuickAddMonsterAsync(IActorDefinition definition)
+    private async Task<bool> QuickAddMonsterAsync(IActorDefinition definition)
     {
         var actor = new ActorDocument
         {
@@ -1053,45 +578,66 @@ else
             Kind = ActorKind.Monster,
             BlueprintId = $"{definition.SystemId}:{definition.Id}",
             Name = definition.Name,
-            Visibility = ActorVisibility.Hidden
+            // The players see a goblin join the fight, by what it is (R1); the DM hides or names it from its row.
+            Visibility = ActorVisibility.Unknown,
+            PublicName = definition.Name
         };
         ActorSheetSync.SeedFromBlueprint(actor, definition, Definition, Components);
 
         if (!await RuntimeManager.TryCreateActorAsync(actor, Access))
         {
             await OnMessage.InvokeAsync(Flash.Error(L["Combat.DmOnlyCreatures"]));
-            return;
+            return false;
         }
 
-        contentSearch = "";
         await OnMessage.InvokeAsync(Flash.Success(L["Combat.CreatureAdded", actor.Name]));
 
         if (OnActorAdded.HasDelegate)
         {
             await OnActorAdded.InvokeAsync();
         }
+
+        return true;
     }
 
     // ---- Dice ----
 
-    private async Task RollDiceAsync()
+    private Task RollDiceAsync((string Expression, bool Secret) roll) =>
+        SendAsync(new RollDiceCommand(roll.Expression, null, CurrentUserId, roll.Secret));
+
+    /// <summary>How every button here reaches the runtime. The loop rethrows a command's failure into the caller, and an
+    /// exception escaping a Blazor handler ends the whole circuit: a typo in the dice box, a database hiccup while saving
+    /// a turn, or a table evicted between render and click would close the DM's page (D8). They become a message.</summary>
+    private async Task SendAsync(IRuntimeCommand command)
     {
-        if (string.IsNullOrWhiteSpace(diceExpression)) return;
+        if (runtime is not { } live)
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.TableClosed"]));
+            return;
+        }
+
         try
         {
-            await runtime!.EnqueueAsync(new RollDiceCommand(diceExpression, null, CurrentUserId, diceSecret && Access.IsDm));
+            await live.EnqueueAsync(command);
         }
-        catch (FormatException ex)
+        catch (Exception ex) when (ex is FormatException or LocalizedException)
         {
+            // The user's own input; nothing for the log.
             await OnMessage.InvokeAsync(Flash.Error(L.Describe(ex)));
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.TableClosed"]));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Runtime command {Command} failed for campaign {CampaignId}.", command.GetType().Name, CampaignId);
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.CommandFailed"]));
         }
     }
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
-        snapshot.RollLog
-        .Where(entry => Access.IsDm || !entry.IsSecret)
-        .OrderByDescending(entry => entry.Timestamp)
-        .Take(20);
+        TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, VisibleActorIds);
 
     /// <summary>Who rolled. Like the turn banner, a creature the viewer can't see is never named (nor its id shown).</summary>
     private string ResolveRollerName(RollLogEntry entry) =>

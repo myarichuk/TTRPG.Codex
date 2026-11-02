@@ -9,11 +9,24 @@
             <p class="components-reconnect-failed-visible">@L["Layout.Reconnect.Failed"]</p>
             <p class="components-pause-visible">@L["Layout.Reconnect.Paused"]</p>
             <p class="components-resume-failed-visible">@L["Layout.Reconnect.ResumeFailed"]</p>
+            <p class="components-reconnect-rejected-visible">@L["Layout.Reconnect.Rejected"]</p>
         </div>
     </div>
     <div class="dialog-actions">
         <button id="components-reconnect-button" type="button" class="btn btn-primary components-reconnect-failed-visible">@L["Layout.Reconnect.TryAgain"]</button>
         <button id="components-resume-button" type="button" class="btn btn-primary components-pause-visible">@L["Layout.Reconnect.Resume"]</button>
-        <button type="button" class="btn btn-outline-secondary components-reconnect-failed-visible" onclick="location.reload()">@L["Layout.Reconnect.Reload"]</button>
+        @* Reloads keeping what was typed (app-startup.js offers it back), instead of the blind reload that lost it (D9). *@
+        <button type="button" class="btn btn-primary components-reconnect-rejected-visible components-resume-failed-visible" data-codex-reload>@L["Layout.Reconnect.Reload"]</button>
+        <button type="button" class="btn btn-outline-secondary components-reconnect-failed-visible" data-codex-reload>@L["Layout.Reconnect.Reload"]</button>
     </div>
 </dialog>
+
+@* Shown after such a reload when the page has boxes whose text was typed and not saved (app-startup.js, D9). *@
+<div id="codex-draft-recovery" class="draft-recovery" role="alert" hidden
+     data-one="@L["Layout.Drafts.FoundOne"]" data-many="@L["Layout.Drafts.FoundMany"]">
+    <p id="codex-draft-recovery-text" class="mb-2"></p>
+    <div class="dialog-actions">
+        <button type="button" class="btn btn-primary" id="codex-draft-restore">@L["Layout.Drafts.Restore"]</button>
+        <button type="button" class="btn btn-outline-secondary" id="codex-draft-discard">@L["Layout.Drafts.Discard"]</button>
+    </div>
+</div>

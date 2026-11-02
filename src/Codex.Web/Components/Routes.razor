@@ -1,7 +1,4 @@
-@using Codex.Core
 @using Microsoft.AspNetCore.Components.Authorization
-@inject PluginLoader PluginLoader
-@implements IDisposable
 
 <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
@@ -12,29 +9,3 @@
         </AuthorizeRouteView>
     </Found>
 </Router>
-
-<AuthorizeView>
-    <Authorized>
-        @if (!PluginLoader.IsLoaded || PluginLoader.IsLoading)
-        {
-            <LoadingScreen />
-        }
-    </Authorized>
-</AuthorizeView>
-
-@code {
-    protected override void OnInitialized()
-    {
-        PluginLoader.OnPluginsLoaded += HandlePluginsLoaded;
-    }
-
-    private void HandlePluginsLoaded()
-    {
-        InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        PluginLoader.OnPluginsLoaded -= HandlePluginsLoaded;
-    }
-}

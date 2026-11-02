@@ -38,7 +38,9 @@
   <data name="Page.Join.Title" xml:space="preserve"><value>Присоединиться к кампании</value></data>
   <data name="Page.Join.Joining" xml:space="preserve"><value>Присоединяемся…</value></data>
   <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>Эта ссылка-приглашение недействительна</value></data>
-  <data name="Page.Join.InvalidText" xml:space="preserve"><value>Возможно, в ссылке опечатка или кампания была удалена. Попросите у мастера новую ссылку.</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>Возможно, в ссылке опечатка, срок её действия истёк, ею уже воспользовались или её заменили новой, либо кампания была удалена. Попросите у мастера новую ссылку.</value></data>
+  <data name="Page.Join.TooManyTitle" xml:space="preserve"><value>Слишком много попыток со ссылками-приглашениями</value></data>
+  <data name="Page.Join.TooManyText" xml:space="preserve"><value>Вы открыли несколько недействительных ссылок-приглашений. Подождите несколько минут и воспользуйтесь ссылкой, которую прислал мастер.</value></data>
   <data name="Page.Join.InTitle" xml:space="preserve"><value>Вы в кампании!</value></data>
   <data name="Page.Join.InText" xml:space="preserve"><value>Теперь вы игрок в этой кампании.</value></data>
   <data name="Page.Join.Go" xml:space="preserve"><value>Перейти к кампании</value></data>
@@ -53,7 +55,6 @@
   <data name="Page.Error.RequestId" xml:space="preserve"><value>Идентификатор запроса </value></data>
   <data name="Page.NotFound.Title" xml:space="preserve"><value>Страница не найдена</value></data>
   <data name="Page.NotFound.Text" xml:space="preserve"><value>По этому адресу ничего нет. Возможно, страницу переместили или удалили.</value></data>
-  <data name="Page.Loading.Text" xml:space="preserve"><value>Загрузка игровых систем и наборов материалов…</value></data>
   <data name="Page.Auth.Username" xml:space="preserve"><value>Имя пользователя</value></data>
   <data name="Page.Auth.Password" xml:space="preserve"><value>Пароль</value></data>
   <data name="Page.Auth.SignIn" xml:space="preserve"><value>Войти</value></data>
@@ -65,6 +66,11 @@
   <data name="Page.Login.CreateAccount" xml:space="preserve"><value>Создать учётную запись</value></data>
   <data name="Page.Login.Stale" xml:space="preserve"><value>Форму входа нужно отправлять с только что загруженной страницы. Перезагрузите страницу и попробуйте снова.</value></data>
   <data name="Page.Login.Invalid" xml:space="preserve"><value>Неверное имя пользователя или пароль.</value></data>
+  <data name="Page.Login.Error.UnknownProvider" xml:space="preserve"><value>Этот способ входа не настроен на сервере.</value></data>
+  <data name="Page.Login.Error.ExternalFailed" xml:space="preserve"><value>Не удалось войти через этого провайдера. Попробуйте ещё раз.</value></data>
+  <data name="Page.Login.Error.ExternalInvalid" xml:space="preserve"><value>Провайдер входа не сообщил, кто вы. Попробуйте ещё раз или войдите другим способом.</value></data>
+  <data name="Page.Login.Error.NoUsername" xml:space="preserve"><value>Не удалось подобрать свободное имя пользователя. Попробуйте ещё раз.</value></data>
+  <data name="Page.Login.TooMany" xml:space="preserve"><value>Слишком много попыток входа в эту учётную запись. Подождите несколько минут и попробуйте снова.</value></data>
   <data name="Page.Register.Title" xml:space="preserve"><value>Создать учётную запись</value></data>
   <data name="Page.Register.Heading" xml:space="preserve"><value>Создайте учётную запись</value></data>
   <data name="Page.Register.PasswordHelp" xml:space="preserve"><value>Не менее 8 символов, с заглавной буквой, строчной буквой и цифрой.</value></data>
@@ -93,6 +99,17 @@
   <data name="Page.About.By" xml:space="preserve"><value>Авторы: {0}</value></data>
   <data name="Page.About.Warnings" xml:space="preserve"><value>Предупреждения о содержимом</value></data>
   <data name="Page.About.WarningsIntro" xml:space="preserve"><value>Проблемы, найденные при загрузке систем и наборов. Исправьте файл и перезапустите приложение.</value></data>
+  <data name="Page.About.Backups" xml:space="preserve"><value>Резервные копии</value></data>
+  <data name="Page.About.BackupsOff" xml:space="preserve"><value>Ежедневная резервная копия отключена (Codex:Backups:Enabled). Экспортируйте каждую кампанию в её настройках, чтобы сохранить копию.</value></data>
+  <data name="Page.About.BackupsWhere" xml:space="preserve"><value>Каждый день сервер записывает каждую кампанию (как при экспорте, с изображениями и журналами игроков) и учётные записи (без ключей ИИ) в новую папку здесь и хранит последние {0}:</value></data>
+  <data name="Page.About.BackupsLast" xml:space="preserve"><value>Последняя копия: {0}.</value></data>
+  <data name="Page.About.BackupsNone" xml:space="preserve"><value>Копий пока нет: первая создаётся через минуту после запуска сервера.</value></data>
+  <data name="Page.About.BackupsFailed" xml:space="preserve"><value>Последняя копия не удалась: {0}. Новая попытка — каждый час.</value></data>
+  <data name="Page.About.BackupsRestore" xml:space="preserve"><value>Чтобы вернуть кампанию, откройте настройки любой кампании, отметьте «восстановить как новую кампанию» и слейте её campaign.json. Изображения и учётные записи хранятся файлами, их можно скопировать вручную.</value></data>
+  <data name="Page.About.DatabaseBackupsOn" xml:space="preserve"><value>База данных также делает собственную ежедневную копию в той же папке.</value></data>
+  <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>Собственные копии базы данных отключены: её бесплатная лицензия их не разрешает. Полагайтесь на ежедневную копию выше.</value></data>
+  <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>Не удалось настроить собственные копии базы данных (см. журнал сервера). Ежедневная копия выше продолжает работать.</value></data>
+  <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>Собственные копии базы данных ещё не проверены.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>Программное обеспечение</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Кампания</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Кампания не найдена</value></data>
@@ -101,6 +118,7 @@
   <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Попросите у мастера ссылку-приглашение.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>Разделы кампании</value></data>
   <data name="Page.Campaign.More" xml:space="preserve"><value>Ещё</value></data>
+  <data name="Page.Campaign.BackTo" xml:space="preserve"><value>Назад: {0}</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>Идёт игра</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>Стол запущен</value></data>
   <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>Игра</value></data>
@@ -178,6 +196,7 @@
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>Используется</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>нет ключа</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>ключ сохранён</value></data>
+  <data name="Page.AiSettings.KeyUnreadable" xml:space="preserve"><value>ключ нужно ввести заново</value></data>
   <data name="Page.AiSettings.Use" xml:space="preserve"><value>Использовать</value></data>
   <data name="Page.AiSettings.Test" xml:space="preserve"><value>Проверить</value></data>
   <data name="Page.AiSettings.EditLabel" xml:space="preserve"><value>Изменить: {0}</value></data>
@@ -190,6 +209,12 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>Кнопки ИИ теперь используют {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Удалено: {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>не настроено</value></data>
+  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>Каждая учётная запись на этом сервере использует эти модели, если у неё нет своих, — за счёт ключа сервера. Каждой учётной записи доступно {0} запросов и {1} изображений в день; у администратора сервера ограничений нет.</value></data>
+  <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>Сегодня вы использовали {0} запросов и {1} изображений.</value></data>
+  <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>Сегодня ими никто не пользовался.</value></data>
+  <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>Использовано сегодня:</value></data>
+  <data name="Page.AiSettings.ServerUsedBy" xml:space="preserve"><value>{0}: запросов — {1}, изображений — {2}</value></data>
+  <data name="Page.AiSettings.NoLimit" xml:space="preserve"><value>без ограничений</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>Один ключ — сотни моделей. Ключ можно получить на openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Прямой доступ к OpenAI с вашим ключом.</value></data>
   <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude через собственный API Anthropic. Ключ можно получить на console.anthropic.com.</value></data>

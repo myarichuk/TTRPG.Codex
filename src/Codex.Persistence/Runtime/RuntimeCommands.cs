@@ -9,11 +9,16 @@ namespace Codex.Persistence.Runtime;
 /// type is checked against the creature's immunities, resistances and vulnerabilities, temporary
 /// hit points absorb first, and reaching zero knocks a character down (death saves begin) or kills
 /// a creature outright (<see cref="TableRules.ApplyDamage"/>).</summary>
-public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amount, string SourceId, string? DamageType = null, bool IsCritical = false) : IRuntimeCommand
+public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amount, string SourceId, string? DamageType = null, bool IsCritical = false) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
+    public string UndoKind => "Damage";
+
     private TableRules.DamageOutcome _outcome = TableRules.DamageOutcome.Nothing;
+
+    /// <summary>Once applied: the save the creature owes to keep concentrating, or null when it was not concentrating (R4).</summary>
+    public int? ConcentrationDc => _outcome.ConcentrationDc;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -25,7 +30,7 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var name = runtime.GetActorName(ActorId);
+        var name = runtime.ActorTerm(ActorId);
         var type = string.IsNullOrWhiteSpace(DamageType) ? null : EventTerm.DamageType(DamageType.ToLowerInvariant());
         var source = LogTerms.Source(runtime, SourceId);
         var parts = new List<EventMessage>();
@@ -54,14 +59,19 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
         else if (_outcome.WentDown) parts.Add(EventMessage.Of("Damage.Down", name));
         else if (_outcome.FailuresAdded > 0) parts.Add(EventMessage.Of("Damage.HitWhileDown", name, _outcome.FailuresAdded));
 
+        if (_outcome.ConcentrationLost) parts.Add(EventMessage.Of("Concentration.Lost", name));
+        else if (_outcome.ConcentrationDc is { } dc) parts.Add(EventMessage.Of("Concentration.Save", name, dc));
+
         var player = EventMessage.Of(_outcome.Died ? "Damage.PlayerDied" : _outcome.WentDown ? "Damage.PlayerDown" : "Damage.Player", name);
         return SessionEvent.From("Damage", parts, new[] { ActorId }, new[] { player });
     }
 }
 
-public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Amount, string SourceId) : IRuntimeCommand
+public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Amount, string SourceId) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Healing";
 
     private TableRules.HealOutcome _outcome = new(0, false, false);
 
@@ -75,7 +85,7 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var name = runtime.GetActorName(ActorId);
+        var name = runtime.ActorTerm(ActorId);
         var source = LogTerms.Source(runtime, SourceId);
         var parts = new List<EventMessage>();
         if (_outcome.WasDead)
@@ -94,9 +104,11 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
 }
 
 /// <summary>Temporary hit points: the creature keeps the higher of what it has and what it is offered.</summary>
-public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, string SourceId) : IRuntimeCommand
+public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, string SourceId) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "TemporaryHitPoints";
 
     private bool _applied;
 
@@ -110,7 +122,7 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var name = runtime.GetActorName(ActorId);
+        var name = runtime.ActorTerm(ActorId);
         var source = LogTerms.Source(runtime, SourceId);
         var key = (_applied ? "TempHp.Gained" : "TempHp.Kept") + (source == null ? "" : "From");
         return SessionEvent.From("TemporaryHitPoints",
@@ -121,9 +133,11 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
 }
 
 /// <summary>Rolls a death save with the table's dice for a character at zero hit points.</summary>
-public sealed record RollDeathSaveCommand(string ActorId, string RollerUserId) : IRuntimeCommand
+public sealed record RollDeathSaveCommand(string ActorId, string RollerUserId) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "DeathSave";
 
     private TableRules.DeathSaveOutcome _outcome = TableRules.DeathSaveOutcome.None;
 
@@ -150,9 +164,11 @@ public sealed record RollDeathSaveCommand(string ActorId, string RollerUserId) :
 }
 
 /// <summary>Records a death save rolled away from the table (a player's own dice), or corrects the tally.</summary>
-public sealed record RecordDeathSaveCommand(string ActorId, bool Success, int Count = 1) : IRuntimeCommand
+public sealed record RecordDeathSaveCommand(string ActorId, bool Success, int Count = 1) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "DeathSave";
 
     private TableRules.DeathSaveOutcome _outcome = TableRules.DeathSaveOutcome.None;
 
@@ -171,7 +187,7 @@ internal static class DeathSaveEvents
 {
     public static SessionEvent Describe(CampaignRuntime runtime, string actorId, TableRules.DeathSaveOutcome outcome)
     {
-        var name = runtime.GetActorName(actorId);
+        var name = runtime.ActorTerm(actorId);
         var parts = new List<EventMessage>();
         if (outcome.NotApplicable)
         {
@@ -193,9 +209,11 @@ internal static class DeathSaveEvents
 }
 
 /// <summary>Stabilises a creature at zero (a Medicine check, Spare the Dying): no more death saves, still down.</summary>
-public sealed record StabilizeCommand(string ActorId, string SourceId) : IRuntimeCommand
+public sealed record StabilizeCommand(string ActorId, string SourceId) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Stabilized";
 
     private bool _applied;
 
@@ -210,17 +228,19 @@ public sealed record StabilizeCommand(string ActorId, string SourceId) : IRuntim
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Stabilized",
         new[]
         {
-            !_applied ? EventMessage.Of("Stabilized.None", runtime.GetActorName(ActorId))
-                : LogTerms.Source(runtime, SourceId) is { } source ? EventMessage.Of("Stabilized.DoneBy", runtime.GetActorName(ActorId), source)
-                : EventMessage.Of("Stabilized.Done", runtime.GetActorName(ActorId))
+            !_applied ? EventMessage.Of("Stabilized.None", runtime.ActorTerm(ActorId))
+                : LogTerms.Source(runtime, SourceId) is { } source ? EventMessage.Of("Stabilized.DoneBy", runtime.ActorTerm(ActorId), source)
+                : EventMessage.Of("Stabilized.Done", runtime.ActorTerm(ActorId))
         },
         new[] { ActorId });
 }
 
 /// <summary>Raises or lowers the exhaustion level; the top level kills.</summary>
-public sealed record AdjustExhaustionCommand(string ActorId, int Delta) : IRuntimeCommand
+public sealed record AdjustExhaustionCommand(string ActorId, int Delta) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Exhaustion";
 
     private (int Level, bool Died)? _outcome;
 
@@ -234,7 +254,7 @@ public sealed record AdjustExhaustionCommand(string ActorId, int Delta) : IRunti
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var name = runtime.GetActorName(ActorId);
+        var name = runtime.ActorTerm(ActorId);
         var message = _outcome is { } o
             ? o.Died ? EventMessage.Of("Exhaustion.Died", name) : o.Level == 0 ? EventMessage.Of("Exhaustion.None", name) : EventMessage.Of("Exhaustion.Level", name, o.Level)
             : EventMessage.Of("Exhaustion.Failed", name);
@@ -243,9 +263,11 @@ public sealed record AdjustExhaustionCommand(string ActorId, int Delta) : IRunti
 }
 
 /// <summary>Spends hit dice during a rest: each die plus the attribute modifier heals.</summary>
-public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides) : IRuntimeCommand
+public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "HitDice";
 
     private TableRules.HitDiceOutcome? _outcome;
 
@@ -270,7 +292,7 @@ public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var name = runtime.GetActorName(ActorId);
+        var name = runtime.ActorTerm(ActorId);
         if (_outcome is { Spent: > 0 } o)
         {
             return SessionEvent.From("HitDice",
@@ -279,29 +301,40 @@ public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides
                 new[] { EventMessage.Of("HitDice.Player", name) });
         }
 
-        return SessionEvent.From("HitDice", new[] { EventMessage.Of("HitDice.None", name) }, new[] { ActorId });
+        // Nothing to hide, but said so: a hit-dice event without a players' version is not shown to other players.
+        var none = new[] { EventMessage.Of("HitDice.None", name) };
+        return SessionEvent.From("HitDice", none, new[] { ActorId }, none);
     }
 }
 
 /// <summary>Adds a status effect without clobbering whatever else <paramref name="ActorId"/> is
 /// already under (B6). <paramref name="AnchorActorId"/> is whose turn ticks the duration down -
 /// usually the affected actor itself, but a DM-applied hazard might anchor to its source instead.
-/// <paramref name="Rounds"/> below one means the effect lasts until it is removed.</summary>
-public sealed record AddStatusEffectCommand(string ActorId, string EffectId, string SourceId, int Rounds, EffectExpiry Expiry, string AnchorActorId) : IRuntimeCommand
+/// <paramref name="Rounds"/> below one means the effect lasts until it is removed. <paramref name="HeldBy"/> names the creature
+/// whose concentration keeps it up (R4): it gets the system's concentration condition, and the effect ends when that does.</summary>
+public sealed record AddStatusEffectCommand(string ActorId, string EffectId, string SourceId, int Rounds, EffectExpiry Expiry, string AnchorActorId, string? HeldBy = null) : IUndoableCommand
 {
-    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = string.IsNullOrEmpty(HeldBy) || HeldBy == ActorId ? new[] { ActorId } : new[] { ActorId, HeldBy };
+
+    public string UndoKind => "StatusEffect";
 
     public void Apply(CampaignRuntime runtime)
     {
         if (runtime.GetEntity(ActorId) is { } e)
         {
-            runtime.World.AddStatus(e, EffectId, SourceId, Rounds, Expiry, AnchorActorId);
+            var concentration = TableRules.ConcentrationCondition(runtime);
+            var holder = concentration != null && !string.IsNullOrEmpty(HeldBy) ? runtime.GetEntity(HeldBy) : null;
+            runtime.World.AddStatus(e, EffectId, SourceId, Rounds, Expiry, AnchorActorId, holder != null ? HeldBy : null);
+            if (holder is { } concentrating && !TableRules.IsConcentrating(runtime, concentrating))
+            {
+                runtime.World.AddStatus(concentrating, concentration!, "concentrating", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, HeldBy!);
+            }
         }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        var name = runtime.GetActorName(ActorId);
+        var name = runtime.ActorTerm(ActorId);
         var effect = EventTerm.Condition(EffectId);
         var parts = new List<EventMessage>
         {
@@ -311,8 +344,13 @@ public sealed record AddStatusEffectCommand(string ActorId, string EffectId, str
         // The turn is always named, even the creature's own: "their turn" has a gender in Hebrew.
         parts.Add(Rounds < 1
             ? EventMessage.Of("Status.Indefinite")
-            : EventMessage.Of(start ? "Status.UntilStart" : "Status.UntilEnd", Rounds, runtime.GetActorName(AnchorActorId)));
-        return SessionEvent.From("StatusEffect", parts, new[] { ActorId });
+            : EventMessage.Of(start ? "Status.UntilStart" : "Status.UntilEnd", Rounds, runtime.ActorTerm(AnchorActorId)));
+        if (!string.IsNullOrEmpty(HeldBy) && TableRules.ConcentrationCondition(runtime) != null)
+        {
+            parts.Add(EventMessage.Of("Concentration.Holds", runtime.ActorTerm(HeldBy)));
+        }
+
+        return SessionEvent.From("StatusEffect", parts, string.IsNullOrEmpty(HeldBy) ? new[] { ActorId } : new[] { ActorId, HeldBy });
     }
 }
 
@@ -334,26 +372,38 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("TurnAdvance", new[] { EventMessage.Of("Turn.Ended", runtime.GetActorName(ActorId)) }, new[] { ActorId });
+        SessionEvent.From("TurnAdvance", new[] { EventMessage.Of("Turn.Ended", runtime.ActorTerm(ActorId)) }, new[] { ActorId });
 }
 
 /// <summary>Removes every instance of a status effect from an actor (3.7 "remove conditions") -
 /// the counterpart <see cref="AddStatusEffectCommand"/> never got, since B6's fix only needed
 /// "add without clobbering."</summary>
-public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) : IRuntimeCommand
+public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "StatusEffectRemoved";
+
+    // How many effects the creature's concentration held up, when the condition removed was concentration.
+    private int _released;
 
     public void Apply(CampaignRuntime runtime)
     {
         if (runtime.GetEntity(ActorId) is { } e)
         {
+            _released = string.Equals(EffectId, TableRules.ConcentrationCondition(runtime), StringComparison.OrdinalIgnoreCase)
+                ? TableRules.EndConcentration(runtime, ActorId, e)
+                : 0;
             runtime.World.RemoveStatus(e, EffectId);
         }
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("StatusEffectRemoved", new[] { EventMessage.Of("Status.Lost", runtime.GetActorName(ActorId), EventTerm.Condition(EffectId)) }, new[] { ActorId });
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var parts = new List<EventMessage> { EventMessage.Of("Status.Lost", runtime.ActorTerm(ActorId), EventTerm.Condition(EffectId)) };
+        if (_released > 0) parts.Add(EventMessage.Of("Concentration.Released", _released));
+        return SessionEvent.From("StatusEffectRemoved", parts, new[] { ActorId });
+    }
 }
 
 /// <summary>
@@ -392,7 +442,39 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.GetActorName(ActorId), InitiativeRoll) }, new[] { ActorId });
+        SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.ActorTerm(ActorId), InitiativeRoll) }, new[] { ActorId });
+}
+
+/// <summary>Rolls <paramref name="Expression"/> (the initiative die with the actor's bonus) once, logs that roll and puts
+/// the actor in the order at its total. The console used to roll on its own thread and enqueue a separate roll, so the
+/// log and the order showed two different numbers (D7).</summary>
+public sealed record RollInitiativeCommand(string ActorId, string Expression, string RollerUserId, int TieBreak = 0) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    // Set by Apply and read by Describe on the same instance, as RollDiceCommand does.
+    private DiceRollResult? _result;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        _result = runtime.DiceRoller.Roll(Expression);
+        runtime.RecordRoll(new RollLogEntry
+        {
+            ActorId = ActorId,
+            RollerUserId = RollerUserId,
+            Expression = Expression,
+            Result = _result.ToString(),
+            Total = _result.Total,
+            Kept = _result.Kept.ToList(),
+            Dropped = _result.Dropped.ToList(),
+            Modifier = _result.Modifier,
+            CheckDieIndex = _result.CheckDieIndex
+        });
+        new SetInitiativeCommand(ActorId, _result.Total, TieBreak).Apply(runtime);
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.ActorTerm(ActorId), _result?.Total ?? 0) }, new[] { ActorId });
 }
 
 /// <summary>Moves the encounter to the next participant's turn (3.5): end-of-turn effects
@@ -419,26 +501,7 @@ public sealed record NextTurnCommand : IRuntimeCommand
         }
 
         current.HasActed = true;
-        for (var step = 0; step < encounter.Participants.Count; step++)
-        {
-            encounter.TurnIndex++;
-            if (encounter.TurnIndex >= encounter.Participants.Count)
-            {
-                encounter.TurnIndex = 0;
-                CampaignRuntime.StartNewRound(encounter);
-            }
-
-            var next = encounter.Participants[encounter.TurnIndex];
-            if (runtime.GetEntity(next.ActorId) is { } e && TableRules.IsDead(runtime, e))
-            {
-                next.HasActed = true;
-                continue;
-            }
-
-            runtime.BeginTurn(next);
-            break;
-        }
-
+        runtime.MoveTurnOn(encounter, fromPointer: false);
         runtime.MarkEncounterDirty();
     }
 
@@ -448,7 +511,7 @@ public sealed record NextTurnCommand : IRuntimeCommand
         var upNextId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
         var round = encounter?.Round ?? 1;
         return SessionEvent.From("TurnAdvance",
-            new[] { upNextId != null ? EventMessage.Of("Turn.Passed", runtime.GetActorName(upNextId), round) : EventMessage.Of("Turn.PassedNobody", round) },
+            new[] { upNextId != null ? EventMessage.Of("Turn.Passed", runtime.ActorTerm(upNextId), round) : EventMessage.Of("Turn.PassedNobody", round) },
             upNextId != null ? new[] { upNextId } : null);
     }
 }
@@ -489,7 +552,7 @@ public sealed record PreviousTurnCommand : IRuntimeCommand
         var encounter = runtime.ActiveEncounter;
         var currentId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
         return SessionEvent.From("TurnAdvance",
-            new[] { currentId != null ? EventMessage.Of("Turn.Back", runtime.GetActorName(currentId)) : EventMessage.Of("Turn.BackNobody") },
+            new[] { currentId != null ? EventMessage.Of("Turn.Back", runtime.ActorTerm(currentId)) : EventMessage.Of("Turn.BackNobody") },
             currentId != null ? new[] { currentId } : null);
     }
 }
@@ -513,7 +576,7 @@ public sealed record SetTurnStateCommand(string ActorId, TurnState State) : IRun
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("TurnState",
-        new[] { EventMessage.Of(State switch { TurnState.Delayed => "Turn.Delayed", TurnState.Readied => "Turn.Readied", _ => "Turn.Normal" }, runtime.GetActorName(ActorId)) },
+        new[] { EventMessage.Of(State switch { TurnState.Delayed => "Turn.Delayed", TurnState.Readied => "Turn.Readied", _ => "Turn.Normal" }, runtime.ActorTerm(ActorId)) },
         new[] { ActorId });
 }
 
@@ -553,7 +616,7 @@ public sealed record ActNowCommand(string ActorId) : IRuntimeCommand
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("TurnAdvance",
-        new[] { EventMessage.Of("Turn.ActsNow", runtime.GetActorName(ActorId), runtime.ActiveEncounter?.Round ?? 1) },
+        new[] { EventMessage.Of("Turn.ActsNow", runtime.ActorTerm(ActorId), runtime.ActiveEncounter?.Round ?? 1) },
         new[] { ActorId });
 }
 
@@ -568,7 +631,7 @@ public sealed record RemoveParticipantCommand(string ActorId) : IRuntimeCommand
     public void Apply(CampaignRuntime runtime) => _removed = runtime.RemoveParticipant(ActorId);
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("InitiativeRemoved",
-        new[] { EventMessage.Of(_removed ? "Initiative.Removed" : "Initiative.NotIn", runtime.GetActorName(ActorId)) },
+        new[] { EventMessage.Of(_removed ? "Initiative.Removed" : "Initiative.NotIn", runtime.ActorTerm(ActorId)) },
         new[] { ActorId });
 }
 
@@ -603,16 +666,90 @@ public sealed record EndEncounterCommand : IRuntimeCommand
         new[] { _ended != null ? EventMessage.Of("Encounter.Ended", _ended.Round) : EventMessage.Of("Encounter.None") });
 }
 
+/// <summary>The DM marks a creature dead (R3): through the table's rules, so it is no longer down or stable, its death-save
+/// tally goes, and what it concentrated on or counted on its turns ends (<see cref="TableRules.Kill"/>).</summary>
+public sealed record KillCommand(string ActorId) : IUndoableCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Killed";
+
+    private bool _killed;
+
+    public void Apply(CampaignRuntime runtime) =>
+        _killed = runtime.GetEntity(ActorId) is { } e && TableRules.Kill(runtime, e, ActorId);
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var name = runtime.ActorTerm(ActorId);
+        return SessionEvent.From("Killed", new[] { EventMessage.Of(_killed ? "Killed.Done" : "Killed.Already", name) }, new[] { ActorId });
+    }
+}
+
+/// <summary>Brings a dead creature back (R3): not dead, down or stable, death saves reset, on at least one hit point
+/// (<see cref="TableRules.Revive"/>). Removing the dead condition by hand left a character unconscious with its failed saves.</summary>
+public sealed record ReviveCommand(string ActorId) : IUndoableCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Revived";
+
+    private bool _revived;
+
+    public void Apply(CampaignRuntime runtime) =>
+        _revived = runtime.GetEntity(ActorId) is { } e && TableRules.Revive(runtime, e);
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var name = runtime.ActorTerm(ActorId);
+        return SessionEvent.From("Revived", new[] { EventMessage.Of(_revived ? "Revived.Done" : "Revived.NotDead", name) }, new[] { ActorId });
+    }
+}
+
+/// <summary>Takes back the last change to a creature's pools and conditions (R5): a damage number typed wrong, a condition put
+/// on the wrong row. Refused, and logged as such, when something has changed the creature since; see <see cref="CampaignRuntime.Undo"/>.</summary>
+public sealed record UndoLastChangeCommand(string ActorId) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    private string? _undone;
+
+    public void Apply(CampaignRuntime runtime) => _undone = runtime.Undo(ActorId);
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var name = runtime.ActorTerm(ActorId);
+        return SessionEvent.From("Undo",
+            new[] { _undone != null ? EventMessage.Of("Undo.Done", name) : EventMessage.Of("Undo.Nothing", name) },
+            new[] { ActorId });
+    }
+}
+
+/// <summary>Gives the table a new copy of an actor's document after a change outside its live state (the DM revealed it, R1),
+/// so every open table page reloads who it may see. The change itself is already stored.</summary>
+public sealed record RefreshActorCommand(ActorDocument Actor, ActorVisibility? Revealed = null) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime) => runtime.RefreshDocument(Actor);
+
+    // Players read the name they know it by: a stranger's public name, never the real one.
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("ActorVisibility",
+        new[] { EventMessage.Of(Revealed switch { ActorVisibility.Known => "Visibility.Known", ActorVisibility.Unknown => "Visibility.Unknown", _ => "Visibility.Hidden" }, EventTerm.Actor(Actor.Id, Actor.Name)) },
+        new[] { Actor.Id },
+        new[] { EventMessage.Of("Visibility.Player", EventTerm.Actor(Actor.Id, Actor.NameFor(isDm: false))) });
+}
+
 /// <summary>Takes a deleted actor out of the live table: its entity and its place in the order go.</summary>
 public sealed record RemoveActorCommand(string ActorId) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
-    private string _name = string.Empty;
+    private object _name = string.Empty;
 
     public void Apply(CampaignRuntime runtime)
     {
-        _name = runtime.GetActorName(ActorId);
+        _name = runtime.ActorTerm(ActorId);
         runtime.RemoveActor(ActorId);
     }
 
@@ -648,13 +785,14 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
             Label = Label,
             Kept = _result.Kept.ToList(),
             Dropped = _result.Dropped.ToList(),
-            Modifier = _result.Modifier
+            Modifier = _result.Modifier,
+            CheckDieIndex = _result.CheckDieIndex
         });
     }
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
-        object roller = ActorId != null ? runtime.GetActorName(ActorId) : EventTerm.User(RollerUserId);
+        object roller = ActorId != null ? runtime.ActorTerm(ActorId) : EventTerm.User(RollerUserId);
         var message = IsSecret
             ? EventMessage.Of("Roll.Secret", roller, Expression)
             : Label != null
@@ -743,7 +881,7 @@ public sealed record HydrateActorCommand(ActorDocument Actor) : IRuntimeCommand
     public void Apply(CampaignRuntime runtime) => runtime.HydrateOne(Actor);
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("ActorJoined", new[] { EventMessage.Of("Actor.Joined", Actor.Name) }, new[] { Actor.Id });
+        SessionEvent.From("ActorJoined", new[] { EventMessage.Of("Actor.Joined", EventTerm.Actor(Actor.Id, Actor.Name)) }, new[] { Actor.Id });
 }
 
 /// <summary>Logs that the DM revealed a secret of a shared wiki page to the party, while a session is on: the table sees
@@ -764,29 +902,33 @@ public sealed record LogWikiRevealCommand(string PageTitle) : IRuntimeCommand
 /// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, say),
 /// clamped between zero and the pool's maximum. <paramref name="Label"/> is what the log calls it
 /// ("level 3 spell slot").</summary>
-public sealed record AdjustResourceCommand(string ActorId, string PoolName, int Delta, string Label) : IRuntimeCommand
+public sealed record AdjustResourceCommand(string ActorId, string PoolName, int Delta, string Label) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => Delta < 0 ? "ResourceSpent" : "ResourceRegained";
 
     public void Apply(CampaignRuntime runtime)
     {
         if (runtime.GetEntity(ActorId) is { } e)
         {
-            runtime.World.AdjustResource(e, PoolName, Delta);
+            runtime.World.AdjustResource(e, PoolName, Delta, key => TableRules.MaxKeyOf(runtime, key));
         }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From(
         Delta < 0 ? "ResourceSpent" : "ResourceRegained",
-        new[] { EventMessage.Of(Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.GetActorName(ActorId), Math.Abs(Delta), EventTerm.Slot(PoolName, Label)) },
+        new[] { EventMessage.Of(Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.ActorTerm(ActorId), Math.Abs(Delta), EventTerm.Slot(PoolName, Label)) },
         new[] { ActorId });
 }
 
 /// <summary>A rest: refills the named slot pools, then applies whatever the system's rest rule of that
 /// name says (hit points, temporary hit points, hit dice, exhaustion, conditions).</summary>
-public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<string> PoolNames) : IRuntimeCommand
+public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<string> PoolNames) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Rest";
 
     private List<EventMessage> _happened = new();
 
@@ -799,7 +941,7 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
-        new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.GetActorName(ActorId), EventTerm.Rest(RestName)).With(_happened) },
+        new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.ActorTerm(ActorId), EventTerm.Rest(RestName)).With(_happened) },
         new[] { ActorId });
 }
 
@@ -822,7 +964,7 @@ public sealed record ReplaceActorCommand(
     public void Apply(CampaignRuntime runtime) => runtime.ReplaceActor(Edited, BaselineSheet, Access, System);
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("SheetEdited", new[] { EventMessage.Of("Sheet.Edited", runtime.GetActorName(Edited.Id)) }, new[] { Edited.Id });
+        SessionEvent.From("SheetEdited", new[] { EventMessage.Of("Sheet.Edited", runtime.ActorTerm(Edited.Id)) }, new[] { Edited.Id });
 }
 
 /// <summary>The arguments of log messages that name something rather than count it.</summary>
@@ -830,8 +972,8 @@ internal static class LogTerms
 {
     /// <summary>The source to name in the log ("from the trap"), or null for none. The table sends no source when a
     /// person just pressed the button: whoever clicked is not where the damage came from.</summary>
-    public static string? Source(CampaignRuntime runtime, string? sourceId) =>
-        string.IsNullOrWhiteSpace(sourceId) ? null : runtime.GetActorName(sourceId);
+    public static object? Source(CampaignRuntime runtime, string? sourceId) =>
+        string.IsNullOrWhiteSpace(sourceId) ? null : runtime.ActorTerm(sourceId);
 
     /// <summary>A resource pool by key, with the system's English label.</summary>
     public static EventTerm Resource(CampaignRuntime runtime, string key) =>

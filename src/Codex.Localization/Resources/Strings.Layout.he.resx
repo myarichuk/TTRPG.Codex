@@ -20,6 +20,9 @@
   <data name="Layout.Menu" xml:space="preserve"><value>תפריט</value></data>
   <data name="Layout.SignIn" xml:space="preserve"><value>התחברות</value></data>
   <data name="Layout.SkipLink" xml:space="preserve"><value>דילוג לתוכן הראשי</value></data>
+  <data name="Layout.ErrorTitle" xml:space="preserve"><value>משהו השתבש בדף הזה.</value></data>
+  <data name="Layout.ErrorBody" xml:space="preserve"><value>שום דבר ששמרתם לא אבד. נסו שוב, או חזרו ופתחו את הדף מחדש.</value></data>
+  <data name="Layout.ErrorRetry" xml:space="preserve"><value>נסו שוב</value></data>
   <data name="Layout.Reconnect.Title" xml:space="preserve"><value>החיבור אבד</value></data>
   <data name="Layout.Reconnect.First" xml:space="preserve"><value>מתחברים מחדש לשרת…</value></data>
   <data name="Layout.Reconnect.RetryBefore" xml:space="preserve"><value>החיבור לא יציב. ניסיון חוזר בעוד </value></data>
@@ -27,6 +30,17 @@
   <data name="Layout.Reconnect.Failed" xml:space="preserve"><value>לא ניתן היה לשחזר את החיבור לשרת.</value></data>
   <data name="Layout.Reconnect.Paused" xml:space="preserve"><value>העבודה הושהתה בזמן שהלשונית הייתה ברקע.</value></data>
   <data name="Layout.Reconnect.ResumeFailed" xml:space="preserve"><value>לא ניתן היה לחדש את העבודה. טענו את הדף מחדש כדי להמשיך.</value></data>
+  <data name="Layout.Reconnect.Rejected" xml:space="preserve"><value>הדף הזה כבר לא פתוח בשרת, ולכן צריך לטעון אותו מחדש. כל מה שהקלדתם ולא שמרתם נשמר, ויוצע לכם שוב אחרי הטעינה.</value></data>
+  <data name="Layout.Drafts.FoundOne" xml:space="preserve"><value>הדף נטען מחדש אחרי שהחיבור אבד. בתיבה אחת כאן היה טקסט שהקלדתם ולא נשמר.</value></data>
+  <data name="Layout.Drafts.FoundMany" xml:space="preserve"><value>הדף נטען מחדש אחרי שהחיבור אבד. ב-{0} תיבות כאן היה טקסט שהקלדתם ולא נשמר.</value></data>
+  <data name="Layout.Drafts.Restore" xml:space="preserve"><value>החזרת הטקסט</value></data>
+  <data name="Layout.Preview.Pin" xml:space="preserve"><value>נעיצה: הכרטיס יישאר פתוח</value></data>
+  <data name="Layout.Preview.Unpin" xml:space="preserve"><value>ביטול נעיצה</value></data>
+  <data name="Layout.Preview.Close" xml:space="preserve"><value>סגירת הכרטיס</value></data>
+  <data name="Layout.Preview.Open" xml:space="preserve"><value>פתיחה</value></data>
+  <data name="Layout.Preview.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="Layout.Preview.Names" xml:space="preserve"><value>מוזכרים:</value></data>
+  <data name="Layout.Drafts.Discard" xml:space="preserve"><value>ביטול</value></data>
   <data name="Layout.Reconnect.TryAgain" xml:space="preserve"><value>נסו שוב</value></data>
   <data name="Layout.Reconnect.Resume" xml:space="preserve"><value>המשך</value></data>
   <data name="Layout.Reconnect.Reload" xml:space="preserve"><value>טעינת הדף מחדש</value></data>
@@ -35,6 +49,7 @@
   <data name="Layout.Picker.Nothing" xml:space="preserve"><value>עוד לא נבחר דבר.</value></data>
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>נבחרו: {0}</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>כבר לא בספרייה. הסירו אותו, או בקשו ממנהל המשחק להחזיר את הערך.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>הגעתם למגבלה</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>כרגע אין אפשרויות זמינות. בדקו את המקצוע, הדרגה והכללים שמעל.</value></data>
 </root>

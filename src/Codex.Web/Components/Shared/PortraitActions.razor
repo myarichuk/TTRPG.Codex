@@ -1,0 +1,110 @@
+@using Codex.Core
+@using Codex.Core.AI
+@using Codex.Plugin.Abstractions
+@using Codex.Persistence
+@implements IDisposable
+@inject IMediaStore Media
+@inject IActorRepository ActorRepo
+@inject AiFeatures Ai
+@inject ArtService Art
+@inject ILogger<PortraitActions> Logger
+
+@* A character's portrait buttons: have the image model draw one, or remove it. Only the portrait is recorded (D5), so the
+   sheet's unsaved edits stay unsaved. While a drawing runs the sheet's other AI buttons wait (OnBusyChanged). *@
+@if (drawing.IsRunning)
+{
+    <AiWorking Compact="true" Text="@L["Actor.Art.Drawing"]" OnStop="drawing.Stop" TestId="portrait-working" />
+}
+else
+{
+    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="DrawAsync" Disabled="@Busy" data-testid="portrait-generate">@(Actor.HasPortrait ? L["Actor.Sheet.PortraitNew"] : L["Actor.Sheet.PortraitAi"])</CodexButton>
+}
+@if (Actor.HasPortrait)
+{
+    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemoveAsync" Disabled="@(Busy || drawing.IsRunning)">@L["Actor.Sheet.RemovePortrait"]</CodexButton>
+}
+
+@code {
+    [Parameter, EditorRequired] public ActorDocument Actor { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter, EditorRequired] public string CurrentUserId { get; set; } = string.Empty;
+    [Parameter] public SystemDefinition? Definition { get; set; }
+    /// <summary>What players may know of the character as the sheet now has it, unsaved edits included, with mentions
+    /// as names: what the picture is drawn from (never the DM's notes).</summary>
+    [Parameter, EditorRequired] public Func<ActorDocument> Draft { get; set; } = null!;
+    [Parameter, EditorRequired] public ConfirmDialog Confirm { get; set; } = null!;
+    /// <summary>Another AI call on the sheet is running.</summary>
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<bool> OnBusyChanged { get; set; }
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
+
+    private readonly AiCall drawing = new();
+
+    private async Task RemoveAsync()
+    {
+        // The picture is deleted for good, so it asks first (U3).
+        if (!await Confirm.ShowAsync(L["Common.Art.RemoveTitle"], L["Common.Art.RemoveBody"], L["Common.Art.Remove"], isDestructive: true)) return;
+        try
+        {
+            await Media.DeleteAsync(Access, Actor.Id, RavenMediaStore.ActorPortrait);
+        }
+        catch (LocalizedException ex)
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L.Describe(ex)));
+            return;
+        }
+
+        await RecordAsync(false, L["Actor.Sheet.PortraitRemoved"]);
+    }
+
+    /// <summary>Has the image model draw a square, face-first portrait, and stores it like an upload.</summary>
+    private async Task DrawAsync()
+    {
+        if (Busy || drawing.IsRunning) return;
+        if (Actor.HasPortrait && !await Confirm.ShowAsync(
+                L["Actor.Sheet.ReplacePortraitTitle"],
+                L["Actor.Sheet.ReplacePortraitBody"],
+                L["Actor.Sheet.DrawNew"], cancel: L["Actor.Sheet.KeepThis"]))
+        {
+            return;
+        }
+
+        var ct = drawing.Begin();
+        await OnBusyChanged.InvokeAsync(true);
+        try
+        {
+            var draft = Draft();
+            var image = await Art.GenerateAsync(CurrentUserId, draft.Name, AiFeatures.KindLabel(draft.Kind, Definition), Ai.PortraitVisual(draft, Campaign.SystemId, Definition), ArtShape.Square, ct);
+            // Stopped just as the picture arrived: nothing is stored. Once storing starts, it finishes.
+            ct.ThrowIfCancellationRequested();
+            drawing.End(ct);
+            using var stream = new MemoryStream(image.Bytes);
+            await Media.PutAsync(Access, Actor.Id, RavenMediaStore.ActorPortrait, stream, image.ContentType);
+            await RecordAsync(true, L["Actor.Sheet.PortraitDrawn"]);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            await OnMessage.InvokeAsync(Flash.Info(L["Common.Ai.Stopped"]));
+        }
+        catch (AiImageNotConfiguredException)
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Actor.Sheet.NoImageModel"]));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Portrait generation failed for actor {ActorId}", Actor.Id);
+            await OnMessage.InvokeAsync(Flash.Error(L["Actor.Art.DrawFailed", AiFailureText.For(L, ex)]));
+        }
+        finally
+        {
+            drawing.End(ct);
+            await OnBusyChanged.InvokeAsync(false);
+        }
+    }
+
+    private async Task RecordAsync(bool hasPortrait, string done) =>
+        await OnMessage.InvokeAsync(await ActorRepo.TrySetPortraitAsync(Actor, hasPortrait, Access) ? Flash.Success(done) : Flash.Error(L["Actor.Sheet.NoPermission"]));
+
+    public void Dispose() => drawing.Dispose();
+}

@@ -43,6 +43,7 @@
   <data name="Common.Editor.ExitFullScreen" xml:space="preserve"><value>Выйти из полноэкранного режима (Esc)</value></data>
   <data name="Common.Editor.Nothing" xml:space="preserve"><value>Пока нечего показать.</value></data>
   <data name="Common.Editor.Secret" xml:space="preserve"><value>Блок только для мастера (Ctrl+Shift+H)</value></data>
+  <data name="Common.Note.SecretHint" xml:space="preserve"><value>Ctrl+Shift+H скрывает выделенные строки от игроков.</value></data>
   <data name="Common.Secret.Some" xml:space="preserve"><value>Открыто: {0}</value></data>
   <data name="Common.Secret.NoOne" xml:space="preserve"><value>Не открыто никому</value></data>
   <data name="Common.Secret.Reveal" xml:space="preserve"><value>Открыть</value></data>
@@ -59,4 +60,13 @@
   <data name="Common.Editor.TemplateDone" xml:space="preserve"><value>Готово</value></data>
   <data name="Common.Unsaved.Note" xml:space="preserve"><value>Не сохранено</value></data>
   <data name="Common.SaveShortcut" xml:space="preserve"><value>Сохранить (Ctrl+S)</value></data>
+  <data name="Common.Saved" xml:space="preserve"><value>Сохранено.</value></data>
+  <data name="Common.Undo" xml:space="preserve"><value>Отменить</value></data>
+  <data name="Common.Undone" xml:space="preserve"><value>Отменено.</value></data>
+  <data name="Common.UndoGone" xml:space="preserve"><value>Отменить уже нельзя: этот текст больше не открыт.</value></data>
+  <data name="Common.Remove" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Common.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Common.Art.RemoveTitle" xml:space="preserve"><value>Удалить это изображение?</value></data>
+  <data name="Common.Art.RemoveBody" xml:space="preserve"><value>Изображение будет удалено. Чтобы вернуть его, добавьте или нарисуйте его заново.</value></data>
+  <data name="Common.Art.Remove" xml:space="preserve"><value>Удалить изображение</value></data>
 </root>

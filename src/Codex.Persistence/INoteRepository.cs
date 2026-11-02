@@ -3,7 +3,10 @@ namespace Codex.Persistence;
 public interface INoteRepository
 {
     Task CreateNoteAsync(NoteDocument note);
-    Task DeleteNoteAsync(string id);
+
+    /// <summary>Deletes a note in <paramref name="access"/>'s campaign for its author or a DM, by their role in the campaign as
+    /// stored now (D15). False when it is gone or the caller may not; nothing is deleted then.</summary>
+    Task<bool> DeleteNoteAsync(string id, CampaignAccess access);
 
     /// <summary>
     /// Notes on a target, scoped by <paramref name="access"/>: a DM sees everything; a Player sees

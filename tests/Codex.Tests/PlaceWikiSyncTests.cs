@@ -9,9 +9,10 @@ namespace Codex.Tests;
 [Collection("RavenDb")]
 public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
 {
-    private static readonly CampaignAccess Dm = new("camp", "dm", CampaignRole.DM);
+    private CampaignAccess Dm => Access("camp", "dm", CampaignRole.DM);
 
     private readonly RavenDbService _db;
+    private CampaignAccess Access(string campaignId, string userId, CampaignRole role) => TestAccess.Member(_db, campaignId, userId, role);
     private readonly RegionRepository _regions;
     private readonly RavenWikiRepository _wiki;
     private readonly PlaceWikiSync _sync;
@@ -65,12 +66,29 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(WikiVisibility.Party, page!.Visibility);
     }
 
+    // F9: a stale list offers "Create page" for a page made meanwhile; that page is kept as it is.
+    [Fact]
+    public async Task CreatePage_FromAStaleList_KeepsThePageAnotherTabMade()
+    {
+        var (region, place) = await SeedPlaceAsync(ActorVisibility.Hidden);
+        var stale = new LocationDocument { Id = place.Id, Name = place.Name, Description = place.Description, Visibility = place.Visibility };
+        var made = (await _sync.CreatePageAsync(region.Id, place, "place", Dm))!;
+        made.Body = "Written since.";
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(made, Dm));
+
+        stale.WikiPageId = made.Id;
+        var again = await _sync.CreatePageAsync(region.Id, stale, "place", Dm);
+
+        Assert.Equal(made.Id, again!.Id);
+        Assert.Equal("Written since.", (await _wiki.GetVisibleBySlugAsync(made.Slug, Dm))!.Body);
+    }
+
     [Fact]
     public async Task CreatePage_IsNotWrittenForAPlayer()
     {
         var (region, place) = await SeedPlaceAsync(ActorVisibility.Known);
 
-        var page = await _sync.CreatePageAsync(region.Id, place, "place", new CampaignAccess(Dm.CampaignId, "player", CampaignRole.Player));
+        var page = await _sync.CreatePageAsync(region.Id, place, "place", Access(Dm.CampaignId, "player", CampaignRole.Player));
 
         Assert.Null(page);
         Assert.Empty(await _wiki.GetAllForCampaignAsync(Dm.CampaignId));
@@ -92,7 +110,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
     public async Task CreatePlace_FromAPage_MakesARegionWhenThereIsNone_AndKeepsDmOnlyTextOffTheMap()
     {
         var page = new WikiPageDocument { Title = "The Salt Court", Body = "The queen is a drowned thief.", Visibility = WikiVisibility.DmOnly };
-        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(page, Dm));
 
         var made = await _sync.CreatePlaceAsync(page, regionId: null, "Places", image: null, Dm);
 
@@ -110,7 +128,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
     {
         var (region, _) = await SeedPlaceAsync(ActorVisibility.Hidden);
         var page = new WikiPageDocument { Title = "The Lantern Quay", Body = "Lit all night.", Visibility = WikiVisibility.Party };
-        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(page, Dm));
 
         var made = await _sync.CreatePlaceAsync(page, region.Id, "Places", image: null, Dm);
 
@@ -127,7 +145,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
 
         page.Title = "Greyharbour Docks";
         page.Visibility = WikiVisibility.Party;
-        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(page, Dm));
         await _sync.UpdatePlaceAsync(page, Dm);
 
         var stored = (await _regions.GetAsync(region.Id, Dm))!.Locations.Single();
@@ -143,7 +161,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
         var page = (await _sync.CreatePageAsync(region.Id, place, "place", Dm))!;
 
         var edited = new WikiPageDocument { Id = page.Id, Title = page.Title, Body = "More.", Visibility = page.Visibility, PlaceId = page.PlaceId };
-        Assert.True(await _wiki.TrySaveAsync(edited, Dm));
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(edited, Dm));
 
         Assert.Equal(place.Id, (await _wiki.GetVisibleBySlugAsync(page.Slug, Dm))!.PlaceId);
     }
@@ -154,7 +172,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
         var (_, place) = await SeedPlaceAsync(ActorVisibility.Hidden);
 
         Assert.NotNull(await _sync.FindPlaceAsync(place.Id, Dm));
-        Assert.Null(await _sync.FindPlaceAsync(place.Id, new CampaignAccess(Dm.CampaignId, "player", CampaignRole.Player)));
+        Assert.Null(await _sync.FindPlaceAsync(place.Id, Access(Dm.CampaignId, "player", CampaignRole.Player)));
         Assert.Null(await _sync.FindPlaceAsync(null, Dm));
     }
 
@@ -163,7 +181,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
     {
         var (region, town) = await SeedPlaceAsync(ActorVisibility.Hidden);
         var page = new WikiPageDocument { Title = "The Salted Eel", Body = "A tavern." };
-        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(page, Dm));
 
         var made = await _sync.CreatePlaceAsync(page, region.Id, "Places", null, Dm, new PlacePlacement(town.Id, PlaceKind.Site));
 
@@ -177,7 +195,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
     {
         var (region, town) = await SeedPlaceAsync(ActorVisibility.Hidden);
         var page = new WikiPageDocument { Title = "Dock Ward" };
-        Assert.True(await _wiki.TrySaveAsync(page, Dm));
+        Assert.Equal(SaveOutcome.Saved, await _wiki.TrySaveAsync(page, Dm));
         var ward = (await _sync.CreatePlaceAsync(page, region.Id, "Places", null, Dm, new PlacePlacement(town.Id, PlaceKind.District)))!.Value.Place;
 
         // The town can't go inside its own district...

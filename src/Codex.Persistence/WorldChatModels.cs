@@ -44,6 +44,11 @@ public class WorldChatDocument
     /// <summary>How many entries of the waiting proposal are ticked, for the chats list.</summary>
     public int Waiting { get; set; }
 
+    /// <summary>When a tab started applying the proposal; null when none is (D10). Stored by the save that guards an apply, so
+    /// a tab that opened the chat after that save, before the apply stored its first entry, sees it and does not apply the
+    /// proposal a second time. An apply cut short without clearing it (a crash) stops counting after a while.</summary>
+    public DateTime? ApplyingSince { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -248,10 +253,6 @@ public class RavenWorldChatRepository(RavenDbService dbService) : IWorldChatRepo
             .ToListAsync();
     }
 
-    // The version each copy handed out (or last saved) was, so a save can tell whether it is still the latest. Kept beside the copy
-    // rather than on it, so it is never stored.
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<WorldChatDocument, string> Versions = new();
-
     public async Task<WorldChatDocument?> GetMineAsync(string id, CampaignAccess access)
     {
         using var session = dbService.Store.OpenAsyncSession();
@@ -261,15 +262,18 @@ public class RavenWorldChatRepository(RavenDbService dbService) : IWorldChatRepo
             return null;
         }
 
-        Versions.AddOrUpdate(chat, session.Advanced.GetChangeVectorFor(chat));
+        DocumentVersions.Track(session, chat);
         return chat;
     }
 
     public async Task<ChatSave> TrySaveAsync(WorldChatDocument chat, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } stored) return ChatSave.Refused;
+        access = stored;
+
         using var session = dbService.Store.OpenAsyncSession();
         session.Advanced.UseOptimisticConcurrency = true;
-        var known = Versions.TryGetValue(chat, out var version) ? version : null;
+        var known = DocumentVersions.Of(chat);
         var existing = string.IsNullOrEmpty(chat.Id) ? null : await session.LoadAsync<WorldChatDocument>(chat.Id);
         if (existing != null && (existing.CampaignId != access.CampaignId || existing.OwnerUserId != access.UserId))
         {
@@ -314,12 +318,15 @@ public class RavenWorldChatRepository(RavenDbService dbService) : IWorldChatRepo
             return ChatSave.Changed;
         }
 
-        Versions.AddOrUpdate(chat, session.Advanced.GetChangeVectorFor(chat));
+        DocumentVersions.Track(session, chat);
         return ChatSave.Saved;
     }
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } stored) return false;
+        access = stored;
+
         using var session = dbService.Store.OpenAsyncSession();
         var chat = await session.LoadAsync<WorldChatDocument>(id);
         if (chat == null || chat.CampaignId != access.CampaignId || chat.OwnerUserId != access.UserId)

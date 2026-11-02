@@ -540,4 +540,89 @@ public class SrdSheetScenarioTests : IAsyncLifetime
         var slots = Assert.Single(evaluation.SlotPools);
         Assert.Equal(new Dictionary<int, int> { [1] = 4, [2] = 2 }, slots.Max);
     }
+
+    // ---- The rest of R7 (F24) ----
+
+    private static readonly string[] WizardOnly = { "acid-arrow", "alarm", "alter-self", "arcane-lock", "blur", "burning-hands", "charm-person", "chromatic-orb", "color-spray", "comprehend-languages" };
+    private static readonly string[] ClericOnly = { "bane", "bless", "command", "cure-wounds" };
+
+    private Dictionary<string, object> WizardCleric(params string[] spells) =>
+        NewSheet("wizard", 6, ("multiclass", Items("cleric:1")), ("base_int", 15L), ("base_wis", 15L), ("spells", Items(spells)));
+
+    [Fact]
+    public void AWizardClericsPreparedSpells_CountAgainstEachClassesOwnShare()
+    {
+        // Wizard 5 prepares 9 and cleric 1 prepares 4: 13 in all, but not 10 wizard spells.
+        var pooled = Engine().Evaluate(WizardCleric(WizardOnly));
+        Assert.Equal(13, pooled.ListLimits["spells"]);
+        var over = Assert.Single(pooled.Violations, v => v.Key == "Actor.Rule.LimitForClass");
+        Assert.Equal(10, over.Args![1]);
+        Assert.Equal("wizard", Assert.IsType<ContentEntry>(over.Args[2]).Id);
+        Assert.Equal(9, over.Args[3]);
+
+        var fair = Engine().Evaluate(WizardCleric(WizardOnly[..9].Concat(ClericOnly).ToArray()));
+        Assert.DoesNotContain(fair.Violations, v => v.Key is "Actor.Rule.LimitForClass" or "Actor.Rule.Limit");
+    }
+
+    private sealed class WithHomebrew(Codex.Core.Rules.IEntryResolver inner, params ContentEntry[] extra) : Codex.Core.Rules.IEntryResolver
+    {
+        public ContentEntry? Resolve(string type, string id) => extra.FirstOrDefault(e => e.Type == type && e.Id == id) ?? inner.Resolve(type, id);
+        public IEnumerable<ContentEntry> Candidates(string type) => inner.Candidates(type).Concat(extra.Where(e => e.Type == type));
+    }
+
+    [Fact]
+    public void AHomebrewClassMissingItsHitDieOrHalfOfCasting_IsNamedInAWarning()
+    {
+        var wizard = _registry.GetEntries("srd5e", "class").Single(e => e.Id == "wizard");
+        ContentEntry Class(string id, params (string Key, object Value)[] properties)
+        {
+            var entry = new ContentEntry { Type = "class", Id = id, Name = id, SystemId = "srd5e", PackId = "homebrew" };
+            foreach (var (key, value) in properties) entry.Properties[key] = value;
+            return entry;
+        }
+
+        var engine = new Codex.Core.Rules.SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(new RegistryResolver(_registry),
+            Class("hexer", ("spellcastingAbility", "cha")),
+            Class("channeler", ("hitDie", "d8"), ("spellcasting", wizard.Properties["spellcasting"]))));
+
+        var hexer = engine.Evaluate(NewSheet("hexer", 3));
+        Assert.Contains(hexer.Warnings, w => w.Key == "Actor.Rule.NoHitDie");
+        Assert.Contains(hexer.Warnings, w => w.Key == "Actor.Rule.NoSpellTable");
+
+        var channeler = engine.Evaluate(NewSheet("channeler", 3));
+        Assert.DoesNotContain(channeler.Warnings, w => w.Key == "Actor.Rule.NoHitDie");
+        Assert.Contains(channeler.Warnings, w => w.Key == "Actor.Rule.NoSpellAbility");
+
+        // The shipped classes say nothing of the kind.
+        foreach (var cls in new[] { "wizard", "fighter", "warlock", "paladin" })
+        {
+            Assert.DoesNotContain(Engine().Evaluate(NewSheet(cls, 5)).Warnings, w => w.Key is "Actor.Rule.NoHitDie" or "Actor.Rule.NoSpellAbility" or "Actor.Rule.NoSpellTable");
+        }
+    }
+
+    [Fact]
+    public void SkillsChosenBeyondTheClassesChoices_AreWorthALook_NotARefusal()
+    {
+        // A fighter chooses 2; a soldier's Athletics and Intimidation come with the background.
+        var tooMany = Engine().Evaluate(NewSheet("fighter", 1, ("background", "soldier"), ("skillProficiencies", Items("Acrobatics", "History", "Insight"))));
+        var warning = Assert.Single(tooMany.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+        Assert.Equal(3, warning.Args![1]);
+        Assert.Equal(2, warning.Args[3]);
+        Assert.DoesNotContain(tooMany.Violations, v => v.FieldKey == "skillProficiencies");
+
+        var fair = Engine().Evaluate(NewSheet("fighter", 1, ("background", "soldier"), ("skillProficiencies", Items("Acrobatics", "History", "Athletics"))));
+        Assert.DoesNotContain(fair.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+    }
+
+    [Fact]
+    public void TheSheetAddsUpWhatItCarries_AndWarnsPastStrengthTimesFifteen()
+    {
+        var light = Engine().Evaluate(NewSheet("fighter", 1, ("str", 8L), ("inventory", Items("chain-mail|equipped:1", "longsword|qty:2"))));
+        Assert.Equal(55 + 3 * 2, light.CarriedWeight);
+        Assert.Equal(120, light.CarryingCapacity);
+        Assert.DoesNotContain(light.Warnings, w => w.Key == "Actor.Rule.OverCapacity");
+
+        var heavy = Engine().Evaluate(NewSheet("fighter", 1, ("str", 8L), ("inventory", Items("chain-mail|qty:3"))));
+        Assert.Contains(heavy.Warnings, w => w.Key == "Actor.Rule.OverCapacity");
+    }
 }

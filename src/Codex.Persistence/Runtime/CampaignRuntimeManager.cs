@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Codex.Core;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging;
 
 namespace Codex.Persistence.Runtime;
@@ -59,14 +60,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// reopen. Null runs the campaign's current session if it is live or planned, else a new one.</param>
     public async Task<CampaignRuntime> GetOrStartAsync(CampaignDocument campaign, CampaignAccess dmAccess, string? sessionId = null)
     {
-        if (_runtimes.TryGetValue(campaign.Id, out var existing))
+        if (TryGetRunning(campaign.Id, sessionId) is { } running)
         {
-            if (sessionId != null && existing.ActiveSession?.Id != sessionId)
-            {
-                throw new InvalidOperationException("The table is already running another session. End it first.");
-            }
-
-            return existing;
+            return running;
         }
 
         if (!dmAccess.IsDm)
@@ -74,39 +70,78 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             throw new InvalidOperationException("Only the campaign's DM can start its runtime.");
         }
 
-        var session = await OpenSessionAsync(campaign, sessionId);
-        var encounter = await FindOpenEncounterAsync(session);
-        var plugin = pluginLoader.GetPlugin(campaign.SystemId);
-
-        var runtime = new CampaignRuntime(
-            campaign.Id,
-            actorRepository,
-            componentRegistry,
-            loggerFactory.CreateLogger<CampaignRuntime>(),
-            sessionRepository,
-            session,
-            encounterRepository,
-            plugin?.GetDiceRoller(),
-            plugin?.Definition,
-            encounter);
-
-        if (!_runtimes.TryAdd(campaign.Id, runtime))
+        // One start (or end) per campaign at a time (R6): two "Start table" clicks used to both open a session and both
+        // patch the campaign before one of them lost the race to publish its runtime.
+        var gate = GateFor(campaign.Id);
+        await gate.WaitAsync();
+        try
         {
-            await runtime.DisposeAsync();
-            return _runtimes[campaign.Id];
-        }
+            if (TryGetRunning(campaign.Id, sessionId) is { } started)
+            {
+                return started;
+            }
 
-        if (plugin != null)
+            var session = await OpenSessionAsync(campaign, sessionId);
+            var encounter = await FindOpenEncounterAsync(session);
+            var plugin = pluginLoader.GetPlugin(campaign.SystemId);
+
+            var runtime = new CampaignRuntime(
+                campaign.Id,
+                actorRepository,
+                componentRegistry,
+                loggerFactory.CreateLogger<CampaignRuntime>(),
+                sessionRepository,
+                session,
+                encounterRepository,
+                plugin?.GetDiceRoller(),
+                plugin?.Definition,
+                encounter);
+
+            // Built whole before anyone can see it (R6): published first, a command could walk the actors while they were
+            // still being added, and a failed hydrate left a half-built table cached that nothing announced.
+            try
+            {
+                if (plugin != null)
+                {
+                    pluginLoader.InitializePlugins(new[] { plugin }, runtime.World);
+                }
+
+                runtime.Hydrate((await actorRepository.GetVisibleForCampaignAsync(dmAccess)).Where(a => !a.Retired));
+            }
+            catch
+            {
+                await runtime.DisposeAsync();
+                throw;
+            }
+
+            _runtimes[campaign.Id] = runtime;
+            RuntimeChanged?.Invoke(campaign.Id);
+            return runtime;
+        }
+        finally
         {
-            pluginLoader.InitializePlugins(new[] { plugin }, runtime.World);
+            gate.Release();
         }
-
-        var actors = await actorRepository.GetVisibleForCampaignAsync(dmAccess);
-        runtime.Hydrate(actors);
-
-        RuntimeChanged?.Invoke(campaign.Id);
-        return runtime;
     }
+
+    private CampaignRuntime? TryGetRunning(string campaignId, string? sessionId)
+    {
+        if (!_runtimes.TryGetValue(campaignId, out var existing))
+        {
+            return null;
+        }
+
+        if (sessionId != null && existing.ActiveSession?.Id != sessionId)
+        {
+            throw new InvalidOperationException("The table is already running another session. End it first.");
+        }
+
+        return existing;
+    }
+
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _gates = new();
+
+    private SemaphoreSlim GateFor(string campaignId) => _gates.GetOrAdd(campaignId, _ => new SemaphoreSlim(1, 1));
 
     /// <summary>
     /// Saves a character sheet. While the campaign's table is live and has hydrated the actor, the
@@ -197,6 +232,77 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         return true;
     }
 
+    /// <summary>Takes an actor out of play (D17) and off the live table. Its document stays, so everything that mentions it
+    /// still names it. Returns false when <paramref name="access"/> may not retire it.</summary>
+    public async Task<bool> TryRetireActorAsync(string actorId, CampaignAccess access)
+    {
+        if (await actorRepository.TryRetireAsync(actorId, access) == null)
+        {
+            return false;
+        }
+
+        await DetachAsync(access.CampaignId, actorId);
+        return true;
+    }
+
+    /// <summary>Brings a retired actor back, onto the live table too when one is running. The DM only.</summary>
+    public async Task<bool> TryRestoreActorAsync(string actorId, CampaignAccess access)
+    {
+        if (await actorRepository.TryRestoreAsync(actorId, access) is not { } restored)
+        {
+            return false;
+        }
+
+        await SendIfLiveAsync(access.CampaignId, new HydrateActorCommand(restored));
+        return true;
+    }
+
+    /// <summary>Changes who among the players may see an actor (R1). While the table is live, every open table page learns
+    /// of it at once and reloads who it may see. The DM only.</summary>
+    public async Task<bool> TrySetVisibilityAsync(string actorId, ActorVisibility visibility, CampaignAccess access)
+    {
+        if (await actorRepository.TrySetVisibilityAsync(actorId, visibility, access) is not { } stored)
+        {
+            return false;
+        }
+
+        if (TryGet(access.CampaignId) is { } runtime && runtime.HasActor(actorId))
+        {
+            await SendIfLiveAsync(access.CampaignId, new RefreshActorCommand(stored, visibility));
+        }
+
+        return true;
+    }
+
+    /// <summary>The dice the campaign's system rolls with (R8): its plugin's roller, the standard one otherwise. A sheet rolling
+    /// away from the table uses this too, so it rolls as the table would.</summary>
+    public IDiceRoller DiceRollerFor(string systemId) => pluginLoader.GetPlugin(systemId)?.GetDiceRoller() ?? StandardDiceRoller.Instance;
+
+    private async Task DetachAsync(string campaignId, string actorId)
+    {
+        if (TryGet(campaignId) is { } runtime && runtime.HasActor(actorId))
+        {
+            await SendIfLiveAsync(campaignId, new RemoveActorCommand(actorId));
+        }
+    }
+
+    private async Task SendIfLiveAsync(string campaignId, IRuntimeCommand command)
+    {
+        if (TryGet(campaignId) is not { } runtime)
+        {
+            return;
+        }
+
+        try
+        {
+            await runtime.EnqueueAsync(command);
+        }
+        catch (InvalidOperationException)
+        {
+            // The table ended in between; the stored actor is what the next start reads.
+        }
+    }
+
     /// <summary>
     /// The session the table runs (3.2 - the command log needs somewhere to append to before the
     /// first command arrives). An explicit <paramref name="sessionId"/> is opened as it is: a planned
@@ -218,7 +324,8 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         else if (campaign.CurrentSessionId != null)
         {
             var current = await sessionRepository.GetAsync(campaign.CurrentSessionId);
-            if (current is { Status: SessionStatus.Live } && LastActivity(current) is { } last && DateTime.UtcNow - last > StaleLiveSession)
+            if (current is { Status: SessionStatus.Live } && LastActivity(current) is { } last && DateTime.UtcNow - last > StaleLiveSession
+                && await FindOpenEncounterAsync(current) == null) // a fight left open is waiting for the same table, however long
             {
                 // A table left idle (evicted with its session still Live) and only started again days
                 // later is a new evening, not more of the old one: close the old one out.
@@ -295,19 +402,33 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// <summary>Stops and disposes a campaign's runtime, and closes out its live session. Called
     /// when the DM ends the table, just before a campaign is deleted, and by
     /// <see cref="EvictIdleAsync"/>.</summary>
-    public Task EvictAsync(string campaignId) => EvictAsync(campaignId, completeSession: true);
+    /// <summary>Ends the campaign's table. The session is marked complete unless a fight is still open: then it stays
+    /// open, so the next start of the table picks the initiative order back up (D6). Returns whether it was completed.</summary>
+    public Task<bool> EvictAsync(string campaignId) => EvictAsync(campaignId, completeSession: true);
 
     /// <param name="completeSession">False leaves the session Live, so the next start resumes it instead of
     /// opening a new one: what idle eviction wants, since a quiet table is not a finished evening.</param>
-    private async Task EvictAsync(string campaignId, bool completeSession)
+    private async Task<bool> EvictAsync(string campaignId, bool completeSession)
     {
-        if (!_runtimes.TryRemove(campaignId, out var runtime))
+        // Waits for a start under way, so a campaign deleted mid-start does not get its table published afterwards.
+        var gate = GateFor(campaignId);
+        await gate.WaitAsync();
+        CampaignRuntime? runtime;
+        try
         {
-            return;
+            if (!_runtimes.TryRemove(campaignId, out runtime))
+            {
+                return false;
+            }
+        }
+        finally
+        {
+            gate.Release();
         }
 
         await runtime.DisposeAsync();
 
+        completeSession &= runtime.ActiveEncounter is not { EndedAt: null, Participants.Count: > 0 };
         var campaign = completeSession ? await campaignRepository.GetAsync(campaignId) : null;
         if (campaign?.CurrentSessionId is { } sessionId)
         {
@@ -321,15 +442,17 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         }
 
         RuntimeChanged?.Invoke(campaignId);
+        return completeSession;
     }
 
-    /// <summary>Evicts every runtime that has taken no command for <paramref name="idleFor"/>, so a table
-    /// nobody ended doesn't stay in memory forever. The session stays Live: a long stretch of play
-    /// without commands (roleplay, a break) must not end the evening, and the next start resumes it. The manager owns no timer;
-    /// a hosted service calls this. Returns the campaigns it stopped.</summary>
+    /// <summary>Evicts every runtime that has taken no command for <paramref name="idleFor"/> and that no open page is
+    /// watching, so a table nobody ended doesn't stay in memory forever. A table with pages open on it is in use however
+    /// quiet (four players roleplaying for two hours send no commands) and is left alone (R6). The session stays Live: a
+    /// long stretch of play without commands must not end the evening, and the next start resumes it. The manager owns no
+    /// timer; a hosted service calls this. Returns the campaigns it stopped.</summary>
     public async Task<IReadOnlyList<string>> EvictIdleAsync(TimeSpan idleFor, DateTime utcNow)
     {
-        var idle = _runtimes.Where(r => utcNow - r.Value.LastActivityUtc >= idleFor).Select(r => r.Key).ToList();
+        var idle = _runtimes.Where(r => !r.Value.IsWatched && utcNow - r.Value.LastActivityUtc >= idleFor).Select(r => r.Key).ToList();
         foreach (var campaignId in idle)
         {
             await EvictAsync(campaignId, completeSession: false);

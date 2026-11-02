@@ -34,6 +34,9 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
 
     public async Task<bool> TrySaveAsync(HomebrewEntryDocument entry, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm || string.IsNullOrWhiteSpace(entry.Name) || string.IsNullOrWhiteSpace(entry.Type))
         {
             return false;
@@ -83,6 +86,9 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
 
     public async Task<bool> SetArtAsync(string id, bool hasArt, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -103,6 +109,9 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
 
     public async Task<bool> TryDeleteAsync(string id, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -152,6 +161,7 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
     {
         using var session = dbService.Store.OpenAsyncSession();
         var toDelete = await session.Query<HomebrewEntryDocument, HomebrewByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(h => h.CampaignId == campaignId)
             .ToListAsync();
 

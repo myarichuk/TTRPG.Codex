@@ -72,8 +72,11 @@
         }
     </figure>
 }
+<ConfirmDialog @ref="confirm" />
 
 @code {
+    private ConfirmDialog confirm = null!;
+
     /// <summary>The stored image's URL, if any.</summary>
     [Parameter] public string? ImageUrl { get; set; }
 
@@ -177,9 +180,11 @@
 
     public void Dispose() => drawing.Dispose();
 
+    // The picture is deleted for good (there is no copy to put back), so it asks first (U3).
     private async Task RemoveAsync()
     {
         error = null;
+        if (!await confirm.ShowAsync(L["Common.Art.RemoveTitle"], L["Common.Art.RemoveBody"], L["Common.Art.Remove"], isDestructive: true)) return;
         await OnRemove.InvokeAsync();
     }
 }

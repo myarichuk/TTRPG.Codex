@@ -1,8 +1,23 @@
 @inherits LayoutComponentBase
+@inject NavigationManager Nav
 
 <div class="auth-wrapper">
     <LanguagePicker />
     <main id="main-content">
-        @Body
+        @* As in MainLayout (F3): an exception in sign-in or sign-up shows a way back instead of the error page. These pages
+           render without a circuit, so "try again" loads the page anew rather than calling Recover. *@
+        <ErrorBoundary>
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent>
+                <div class="empty" role="alert" data-testid="page-error">
+                    <div class="empty-icon"><LucideIcon IconName="triangle-alert" Size="28" /></div>
+                    <h1 class="h4">@L["Layout.ErrorTitle"]</h1>
+                    <p>@L["Layout.ErrorBody"]</p>
+                    <a class="cx-btn cx-etched" href="@Nav.Uri" data-enhance-nav="false">@L["Layout.ErrorRetry"]</a>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
     </main>
 </div>

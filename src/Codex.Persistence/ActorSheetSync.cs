@@ -167,9 +167,8 @@ public static class ActorSheetSync
     /// <summary>Reads the current/max of the system's primary resource for display ("12/15 HP").</summary>
     public static (int Current, int Max, string Label) PrimaryResource(ActorDocument actor, SystemDefinition? system)
     {
-        var resource = system?.PrimaryResource;
-        var key = resource?.Key ?? "HP";
-        var maxKey = resource?.MaxKey ?? "HP_Max";
-        return (YamlValues.GetInt(actor.Sheet, key) ?? 0, YamlValues.GetInt(actor.Sheet, maxKey) ?? 0, resource?.Label ?? "HP");
+        var key = SystemDefinition.PrimaryKeyOf(system);
+        var maxKey = SystemDefinition.PoolMaxKey(system, key);
+        return (YamlValues.GetInt(actor.Sheet, key) ?? 0, YamlValues.GetInt(actor.Sheet, maxKey) ?? 0, system?.PrimaryResource?.Label ?? key);
     }
 }

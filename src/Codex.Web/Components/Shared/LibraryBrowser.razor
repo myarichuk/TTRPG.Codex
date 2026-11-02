@@ -67,7 +67,7 @@
                                 <a href="@link" aria-current="@ariaCurrent" data-testid="library-item">@item.Entry.Name</a>
                                 @if (item.IsHomebrew)
                                 {
-                                    <span class="pill pill-accent ms-1">@L["Library.Homebrew"]</span>
+                                    <span class="pill pill-accent ms-2">@L["Library.Homebrew"]</span>
                                 }
                             </div>
                             <div class="row-sub">@Summary(item)</div>
@@ -172,6 +172,8 @@
 
         lastRouteKey = routeKey;
         lastVersion = Version;
+        // The search is in the address (U7), so Back, a reload or a shared link find the same list.
+        query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("q", out var q) ? q.ToString() : string.Empty;
 
         types = await LoadTypesAsync();
         selectedType = RouteType != null && types.Any(t => t.Type == RouteType) ? RouteType : (RouteType == null ? selectedType : null);
@@ -274,6 +276,7 @@
         }
 
         await SearchAsync();
+        Nav.NavigateTo(WithQuery(new Uri(Nav.Uri).AbsolutePath), replace: true);
         StateHasChanged();
     }
 
@@ -282,12 +285,15 @@
         selectedType = type;
         selected = null;
         await SearchAsync();
-        Nav.NavigateTo(BasePath + (type != null ? "/" + type : string.Empty));
+        // A filter, not a place to go back to: Back leaves the Library rather than stepping through every chip tapped (U7).
+        Nav.NavigateTo(WithQuery(BasePath + (type != null ? "/" + type : string.Empty)), replace: true);
     }
 
-    private string CloseHref => BasePath + (selectedType != null ? "/" + selectedType : string.Empty);
+    private string WithQuery(string path) => string.IsNullOrWhiteSpace(query) ? path : $"{path}?q={Uri.EscapeDataString(query)}";
 
-    private string LinkTo(LibraryItem item) => $"{BasePath}/{item.Entry.Type}/{Uri.EscapeDataString(item.Entry.Id)}";
+    private string CloseHref => WithQuery(BasePath + (selectedType != null ? "/" + selectedType : string.Empty));
+
+    private string LinkTo(LibraryItem item) => WithQuery($"{BasePath}/{item.Entry.Type}/{Uri.EscapeDataString(item.Entry.Id)}");
 
     private ContentTypeDefinition? TypeDefinition(string type) =>
         types.FirstOrDefault(t => string.Equals(t.Type, type, StringComparison.OrdinalIgnoreCase));

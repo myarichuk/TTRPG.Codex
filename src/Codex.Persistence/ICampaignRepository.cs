@@ -11,7 +11,10 @@ public enum CampaignJoinResult
 {
     Joined,
     AlreadyMember,
-    InvalidCode
+    InvalidCode,
+
+    /// <summary>This user tried too many wrong codes lately (D14); nothing was looked up.</summary>
+    TooManyAttempts
 }
 
 public interface ICampaignRepository
@@ -27,6 +30,14 @@ public interface ICampaignRepository
     /// stale copy would silently drop both. Returns the stored document, or null when it does not exist.
     /// </summary>
     Task<CampaignDocument?> UpdateAsync(string campaignId, Action<CampaignDocument> mutate);
+
+    /// <summary>
+    /// <see cref="UpdateAsync"/> for a change only a DM may make, from a page. The role is read from the campaign as it is
+    /// stored when the change is written, not from <paramref name="access"/>: a DM demoted or removed after the page loaded
+    /// is refused with <c>Campaign.AccessChanged</c> (D15). Returns the stored document, or null when it does not exist.
+    /// </summary>
+    Task<CampaignDocument?> UpdateAsDmAsync(CampaignAccess access, Action<CampaignDocument> mutate);
+
     /// <summary>Every campaign on the server. Administrative/export use only - never for a user-facing list.</summary>
     Task<IEnumerable<CampaignDocument>> GetAllAsync();
 

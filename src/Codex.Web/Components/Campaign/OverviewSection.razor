@@ -161,7 +161,7 @@
                 <hr />
                 <div class="small-muted">@L["Campaign.Overview.LatestSession"]</div>
                 <a href="@Ctx.BasePath/sessions/@latestSession.Id">@(string.IsNullOrWhiteSpace(latestSession.Title) ? Clock.Format(latestSession.Date, "d MMM yyyy") : latestSession.Title)</a>
-                <span class="pill ms-1">@StatusLabel(latestSession.Status)</span>
+                <span class="pill ms-2">@StatusLabel(latestSession.Status)</span>
             }
         </section>
 
@@ -259,7 +259,7 @@
     private async Task DismissSetupAsync()
     {
         if (!Ctx.IsDm) return;
-        await CampaignRepo.UpdateAsync(Ctx.Campaign.Id, c => c.SetupDismissed = true);
+        if (!await Ctx.WithCurrentRoleAsync(() => CampaignRepo.UpdateAsDmAsync(Ctx.Access, c => c.SetupDismissed = true))) return;
         Ctx.Campaign.SetupDismissed = true;
         setup = null;
     }

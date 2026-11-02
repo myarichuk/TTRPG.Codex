@@ -18,14 +18,19 @@
   <data name="Session.GoToTable" xml:space="preserve"><value>Go to the table</value></data>
   <data name="Session.ReopenTable" xml:space="preserve"><value>Reopen at the table</value></data>
   <data name="Session.RunTable" xml:space="preserve"><value>Run at the table</value></data>
+  <data name="Session.Delete.Label" xml:space="preserve"><value>Delete this session</value></data>
+  <data name="Session.Delete.Title" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Session.Delete.Body" xml:space="preserve"><value>Its notes, log, rolls and encounters go with it. Journal entries about it keep their text. This can't be undone.</value></data>
+  <data name="Session.Delete.Running" xml:space="preserve"><value>The table is running this session. End the table first.</value></data>
+  <data name="Session.Delete.Failed" xml:space="preserve"><value>Could not delete the session.</value></data>
+  <data name="Session.Delete.Done" xml:space="preserve"><value>Deleted “{0}”.</value></data>
   <data name="Session.Details" xml:space="preserve"><value>Details</value></data>
   <data name="Session.TitleLabel" xml:space="preserve"><value>Title</value></data>
   <data name="Session.StatusLabel" xml:space="preserve"><value>Status</value></data>
-  <data name="Session.SaveDetails" xml:space="preserve"><value>Save details</value></data>
+  <data name="Session.DateLabel" xml:space="preserve"><value>Date</value></data>
   <data name="Session.Recap" xml:space="preserve"><value>Recap</value></data>
   <data name="Session.PlayersCanRead" xml:space="preserve"><value>Players can read this</value></data>
   <data name="Session.RecapPlaceholder" xml:space="preserve"><value>What happened this session, as the players will read it…</value></data>
-  <data name="Session.SaveRecap" xml:space="preserve"><value>Save recap</value></data>
   <data name="Session.Prefill" xml:space="preserve"><value>Pre-fill from events</value></data>
   <data name="Session.Drafting" xml:space="preserve"><value>Drafting…</value></data>
   <data name="Session.DraftAi" xml:space="preserve"><value>Draft with AI</value></data>
@@ -35,7 +40,6 @@
   <data name="Session.DmSummary" xml:space="preserve"><value>DM summary</value></data>
   <data name="Session.OnlyYou" xml:space="preserve"><value>Only you</value></data>
   <data name="Session.DmSummaryPlaceholder" xml:space="preserve"><value>Secrets, loose threads, hooks for next time…</value></data>
-  <data name="Session.SaveSummary" xml:space="preserve"><value>Save summary</value></data>
   <data name="Session.DmDraftHint" xml:space="preserve"><value>The DM draft sees everything: secret rolls, private notes and your previous summary.</value></data>
   <data name="Session.TableNotes" xml:space="preserve"><value>Table notes</value></data>
   <data name="Session.NoNotes" xml:space="preserve"><value>No notes yet.</value></data>
@@ -43,10 +47,6 @@
   <data name="Session.Label.Private" xml:space="preserve"><value>Private</value></data>
   <data name="Session.Label.Secret" xml:space="preserve"><value>Secret</value></data>
   <data name="Session.AtTable" xml:space="preserve"><value>At the table</value></data>
-  <data name="Session.Kind.Clue" xml:space="preserve"><value>Clue</value></data>
-  <data name="Session.Kind.Loot" xml:space="preserve"><value>Loot</value></data>
-  <data name="Session.Kind.Ruling" xml:space="preserve"><value>Ruling</value></data>
-  <data name="Session.Kind.FollowUp" xml:space="preserve"><value>Follow-up</value></data>
   <data name="Session.Round" xml:space="preserve"><value>Round {0}</value></data>
   <data name="Session.RoundTurn" xml:space="preserve"><value>Round {0} · turn: {1}</value></data>
   <data name="Session.To" xml:space="preserve"><value>to {0}</value></data>
@@ -59,21 +59,15 @@
   <data name="Session.JournalHint" xml:space="preserve"><value>Your private notebook for this session. Nobody else, not even the DM, can read it.</value></data>
   <data name="Session.JournalEntry" xml:space="preserve"><value>Journal entry</value></data>
   <data name="Session.JournalPlaceholder" xml:space="preserve"><value>Names to remember, theories, loot you're owed…</value></data>
-  <data name="Session.SaveJournal" xml:space="preserve"><value>Save journal</value></data>
   <data name="Session.Saved" xml:space="preserve"><value>Saved</value></data>
   <data name="Session.AllJournal" xml:space="preserve"><value>All my journal entries</value></data>
   <data name="Session.EventsHeading" xml:space="preserve"><value>Events ({0})</value></data>
   <data name="Session.EventsEmpty" xml:space="preserve"><value>Nothing recorded yet. Events are written automatically while the table runs.</value></data>
   <data name="Session.Flash.Prefilled" xml:space="preserve"><value>Recap pre-filled from the event log. Edit and save.</value></data>
-  <data name="Session.Flash.DetailsSaved" xml:space="preserve"><value>Details saved.</value></data>
-  <data name="Session.Flash.RecapSaved" xml:space="preserve"><value>Recap saved.</value></data>
-  <data name="Session.Flash.SummarySaved" xml:space="preserve"><value>DM summary saved.</value></data>
   <data name="Session.Flash.DraftReady" xml:space="preserve"><value>AI draft ready. Review, edit and save.</value></data>
   <data name="Session.Flash.NoAi" xml:space="preserve"><value>No AI provider is set up. Add one under your account's AI settings (top right).</value></data>
   <data name="Session.Flash.DraftFailed" xml:space="preserve"><value>The AI draft failed: {0}</value></data>
-  <data name="Session.Flash.JournalSaved" xml:space="preserve"><value>Journal saved. Only you can read it.</value></data>
   <data name="Session.Flash.JournalFailed" xml:space="preserve"><value>Could not save the journal entry.</value></data>
   <data name="Session.Flash.NoteAdded" xml:space="preserve"><value>Note added.</value></data>
-  <data name="Session.Label.Note" xml:space="preserve"><value>Note</value></data>
   <data name="Session.UnknownSpeaker" xml:space="preserve"><value>Someone</value></data>
 </root>

@@ -10,14 +10,15 @@ namespace Codex.Tests;
 
 public class AiProviderExposureTests
 {
-    private static AiProviderService Service(bool exposed) => new(
+    private static AiProviderService Service(bool exposed, ServerAiUsage? usage = null) => new(
         new EphemeralDataProtectionProvider(),
         Substitute.For<IUserRepository>(),
         new AIConfiguration { Provider = "openrouter", ApiKey = "server-key", ModelId = "m" },
         new AIImageConfiguration(),
         Substitute.For<IHttpClientFactory>(),
         NullLogger<AiProviderService>.Instance,
-        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Codex:PublicExposure"] = exposed ? "true" : "false" }).Build());
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Codex:PublicExposure"] = exposed ? "true" : "false" }).Build(),
+        usage ?? new ServerAiUsage(new ConfigurationBuilder().Build(), NullLogger<ServerAiUsage>.Instance));
 
     private static UserDocument User(bool admin, string? providerUrl = null)
     {

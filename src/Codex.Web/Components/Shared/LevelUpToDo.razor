@@ -1,0 +1,62 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* After a level is taken (U4): the choices it opened, each with the way to where it is made, ticked off as the sheet
+   fills it. Renders nothing when the level opened none. *@
+@if (Items() is { Count: > 0 } items)
+{
+    <div class="levelup-todo mt-3" data-testid="levelup-todo">
+        <h3 class="label-caps mb-1">@L["Actor.Sheet.LevelToDo", Done.Level]</h3>
+        <ul class="list-unstyled mb-2">
+            @foreach (var item in items)
+            {
+                var target = item.Target;
+                <li class="d-flex align-items-center gap-2 py-1 @(item.Done ? "levelup-done" : null)" data-testid="levelup-todo-item">
+                    <LucideIcon IconName="@(item.Done ? "check" : "circle")" Size="16" />
+                    <span class="flex-grow-1">@item.Text</span>
+                    @if (!item.Done)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnGoThere.InvokeAsync(target)">@L["Actor.Sheet.GoThere"]</CodexButton>
+                    }
+                </li>
+            }
+        </ul>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="OnDismiss">@L["Actor.Sheet.Dismiss"]</CodexButton>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public LevelUpPlan Done { get; set; } = null!;
+    [Parameter] public SheetEvaluation? Evaluation { get; set; }
+    [Parameter] public SheetRules? Rules { get; set; }
+
+    /// <summary>The sheet being edited, for a subclass chosen on a sheet without classes.</summary>
+    [Parameter] public IReadOnlyDictionary<string, object> Sheet { get; set; } = new Dictionary<string, object>();
+
+    /// <summary>Opens the tab and the field (its data-rule-key) where a choice is made.</summary>
+    [Parameter] public EventCallback<string> OnGoThere { get; set; }
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private List<(string Text, bool Done, string Target)> Items()
+    {
+        var subclassDone = !Done.NeedsSubclass || (Evaluation is { Classes.Count: > 0 }
+            ? Evaluation.Classes.FirstOrDefault(c => c.Id == Done.Class?.Id)?.SubclassId is { Length: > 0 }
+            : YamlValues.GetString(Sheet, Rules?.Multiclass?.SubclassField ?? "subclass") is { Length: > 0 });
+        var items = new List<(string Text, bool Done, string Target)>();
+        if (Done.NeedsSubclass)
+        {
+            var first = Evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id == Done.Class?.Id || Evaluation is not { Classes.Count: > 0 };
+            items.Add((L["Actor.Sheet.LevelSubclass", Done.Class?.Name ?? ""], subclassDone, first ? Rules?.Multiclass?.SubclassField ?? "subclass" : Rules?.Multiclass?.Key ?? "multiclass"));
+        }
+
+        foreach (var choice in Done.Choices)
+        {
+            var picked = Evaluation?.ListPicks.GetValueOrDefault(choice.Key)?.Count ?? 0;
+            var limit = Evaluation?.ListLimits.GetValueOrDefault(choice.Key);
+            items.Add((L["Actor.Sheet.LevelMore", choice.Added, choice.Label], limit is { } l && picked >= l, choice.Key));
+        }
+
+        return items;
+    }
+}

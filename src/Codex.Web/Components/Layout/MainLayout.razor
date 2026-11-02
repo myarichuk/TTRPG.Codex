@@ -3,11 +3,32 @@
 <a href="#main-content" class="skip-link">@L["Layout.SkipLink"]</a>
 <AppHeader />
 <main id="main-content" class="page" tabindex="-1">
-    @Body
+    @* An exception escaping a page would otherwise end the circuit and take the header with it (D8); the
+       boundary keeps the app shell and offers a way back. ErrorBoundary logs the exception itself. *@
+    <ErrorBoundary @ref="boundary">
+        <ChildContent>
+            @Body
+        </ChildContent>
+        <ErrorContent>
+            <div class="empty" role="alert" data-testid="page-error">
+                <div class="empty-icon"><LucideIcon IconName="triangle-alert" Size="28" /></div>
+                <h1 class="h4">@L["Layout.ErrorTitle"]</h1>
+                <p>@L["Layout.ErrorBody"]</p>
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => boundary?.Recover()">@L["Layout.ErrorRetry"]</CodexButton>
+            </div>
+        </ErrorContent>
+    </ErrorBoundary>
 </main>
 @* Rendered only by the interactive circuit, never by prerendering: end-to-end tests wait for it
    before typing, so keystrokes can't land on the static prerender and be lost. *@
 @if (RendererInfo.IsInteractive)
 {
     <span data-interactive hidden></span>
+}
+
+@code {
+    private ErrorBoundary? boundary;
+
+    // A new page gets a fresh start: the error belonged to the one the user left.
+    protected override void OnParametersSet() => boundary?.Recover();
 }

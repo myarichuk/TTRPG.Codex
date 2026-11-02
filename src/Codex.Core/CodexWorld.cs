@@ -52,7 +52,7 @@ public sealed class CodexWorld : IDisposable
     /// the actor named by <paramref name="anchorId"/>; a round count below one means the effect
     /// lasts until it is removed.
     /// </summary>
-    public void AddStatus(Entity entity, string effectId, string sourceId, int roundsRemaining, EffectExpiry expiry, string anchorId)
+    public void AddStatus(Entity entity, string effectId, string sourceId, int roundsRemaining, EffectExpiry expiry, string anchorId, string? heldBy = null)
     {
         if (!entity.Has<ActiveEffectsComponent>())
         {
@@ -60,7 +60,7 @@ public sealed class CodexWorld : IDisposable
         }
 
         var rounds = roundsRemaining < 1 ? ActiveEffect.Indefinite : roundsRemaining;
-        entity.Get<ActiveEffectsComponent>().Effects.Add(new ActiveEffect(effectId, sourceId, rounds, expiry, anchorId));
+        entity.Get<ActiveEffectsComponent>().Effects.Add(new ActiveEffect(effectId, sourceId, rounds, expiry, anchorId, string.IsNullOrEmpty(heldBy) ? null : heldBy));
     }
 
     /// <summary>Scripting convenience (kept for <see cref="Codex.Core.Scripting.ScriptApi"/>): a script
@@ -125,55 +125,46 @@ public sealed class CodexWorld : IDisposable
         return entity.Get<ActiveEffectsComponent>().Effects.RemoveAll(e => string.Equals(e.EffectId, effectId, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>Ends, on every entity, the timed effects whose clock is <paramref name="anchorId"/>'s turn: that creature
+    /// died or left the fight, so its turn will not come round to tick them (R4). Effects that last until removed stay.</summary>
+    public List<(Entity Entity, ActiveEffect Effect)> ExpireAnchoredTo(string anchorId) =>
+        RemoveEverywhere(effect => !effect.IsIndefinite && string.Equals(effect.AnchorId, anchorId, StringComparison.Ordinal));
+
+    /// <summary>Ends, on every entity, the effects <paramref name="actorId"/>'s concentration holds up (R4).</summary>
+    public List<(Entity Entity, ActiveEffect Effect)> EndHeldBy(string actorId) =>
+        RemoveEverywhere(effect => string.Equals(effect.HeldBy, actorId, StringComparison.Ordinal));
+
+    private List<(Entity Entity, ActiveEffect Effect)> RemoveEverywhere(Predicate<ActiveEffect> match)
+    {
+        var removed = new List<(Entity, ActiveEffect)>();
+        using var set = _world.GetEntities().With<ActiveEffectsComponent>().AsSet();
+        foreach (ref readonly var entity in set.GetEntities())
+        {
+            var effects = entity.Get<ActiveEffectsComponent>().Effects;
+            for (var i = effects.Count - 1; i >= 0; i--)
+            {
+                if (match(effects[i]))
+                {
+                    removed.Add((entity, effects[i]));
+                    effects.RemoveAt(i);
+                }
+            }
+        }
+
+        return removed;
+    }
+
     /// <summary>True while <paramref name="entity"/> is under <paramref name="effectId"/>.</summary>
     public static bool HasStatus(Entity entity, string effectId) =>
         entity.Has<ActiveEffectsComponent>() &&
         entity.Get<ActiveEffectsComponent>().Effects.Exists(e => string.Equals(e.EffectId, effectId, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>
-    /// Applies damage to a resource pool (typically "HP") immediately and clamps at zero (B7 fix -
-    /// the old <c>DamageEvent</c> component pattern let two hits in the same tick overwrite each
-    /// other, and never clamped: HP 2 taking 50 damage ended at -48). When damaging "HP" specifically,
-    /// a "TempHP" pool - if present - absorbs damage first. The result is clamped to the pool's
-    /// "{poolName}_Max" entry when one exists.
-    /// </summary>
-    public void ApplyDamage(Entity entity, string poolName, int amount)
-    {
-        if (amount <= 0 || !entity.Has<ResourcePoolComponent>())
-        {
-            return;
-        }
+    // The pool that holds a pool's maximum. The world does not know the system, so the table passes the
+    // system's rule (a resource's maxKey, R9); "{name}_Max" is that rule's own fallback.
+    private static string MaxKey(Func<string, string>? maxKeyOf, string poolName) => maxKeyOf?.Invoke(poolName) ?? poolName + "_Max";
 
-        var pool = entity.Get<ResourcePoolComponent>();
-        var remaining = amount;
-
-        if (poolName == "HP")
-        {
-            var tempHp = pool.Get("TempHP");
-            if (tempHp > 0)
-            {
-                var absorbed = Math.Min(tempHp, remaining);
-                pool.Set("TempHP", tempHp - absorbed);
-                remaining -= absorbed;
-            }
-        }
-
-        if (remaining <= 0)
-        {
-            return;
-        }
-
-        var next = pool.Get(poolName) - remaining;
-        if (pool.Pools.TryGetValue($"{poolName}_Max", out var max))
-        {
-            next = Math.Min(next, max);
-        }
-
-        pool.Set(poolName, Math.Max(next, 0));
-    }
-
-    /// <summary>Applies healing immediately, clamped to "{poolName}_Max" when present and never below zero.</summary>
-    public void ApplyHealing(Entity entity, string poolName, int amount)
+    /// <summary>Applies healing immediately, clamped to the pool's maximum when present and never below zero.</summary>
+    public void ApplyHealing(Entity entity, string poolName, int amount, Func<string, string>? maxKeyOf = null)
     {
         if (amount <= 0 || !entity.Has<ResourcePoolComponent>())
         {
@@ -182,7 +173,7 @@ public sealed class CodexWorld : IDisposable
 
         var pool = entity.Get<ResourcePoolComponent>();
         var next = pool.Get(poolName) + amount;
-        if (pool.Pools.TryGetValue($"{poolName}_Max", out var max))
+        if (pool.Pools.TryGetValue(MaxKey(maxKeyOf, poolName), out var max))
         {
             next = Math.Min(next, max);
         }
@@ -191,8 +182,8 @@ public sealed class CodexWorld : IDisposable
     }
 
     /// <summary>Spends (negative) or regains (positive) points of an expendable pool such as a spell
-    /// slot level, clamped to 0 and "{poolName}_Max". A pool the actor doesn't have is ignored.</summary>
-    public void AdjustResource(Entity entity, string poolName, int delta)
+    /// slot level, clamped to 0 and the pool's maximum. A pool the actor doesn't have is ignored.</summary>
+    public void AdjustResource(Entity entity, string poolName, int delta, Func<string, string>? maxKeyOf = null)
     {
         if (delta == 0 || !entity.Has<ResourcePoolComponent>())
         {
@@ -205,12 +196,12 @@ public sealed class CodexWorld : IDisposable
             return;
         }
 
-        var max = pool.Pools.TryGetValue($"{poolName}_Max", out var m) ? m : int.MaxValue;
+        var max = pool.Pools.TryGetValue(MaxKey(maxKeyOf, poolName), out var m) ? m : int.MaxValue;
         pool.Set(poolName, Math.Clamp(current + delta, 0, max));
     }
 
-    /// <summary>Refills each named pool to its "{name}_Max" (a rest).</summary>
-    public void RestoreResources(Entity entity, IEnumerable<string> poolNames)
+    /// <summary>Refills each named pool to its maximum (a rest).</summary>
+    public void RestoreResources(Entity entity, IEnumerable<string> poolNames, Func<string, string>? maxKeyOf = null)
     {
         if (!entity.Has<ResourcePoolComponent>())
         {
@@ -220,7 +211,7 @@ public sealed class CodexWorld : IDisposable
         var pool = entity.Get<ResourcePoolComponent>();
         foreach (var name in poolNames)
         {
-            if (pool.Pools.TryGetValue($"{name}_Max", out var max))
+            if (pool.Pools.TryGetValue(MaxKey(maxKeyOf, name), out var max))
             {
                 pool.Set(name, max);
             }

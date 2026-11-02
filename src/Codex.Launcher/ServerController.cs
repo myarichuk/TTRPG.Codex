@@ -13,6 +13,10 @@ internal enum ServerState { Stopped, Starting, Running, Stopping, Failed }
 internal sealed class ServerController : IDisposable
 {
     private const int LogLinesKept = 300;
+
+    /// <summary>How big the log grows before it rolls over to <c>server.log.1</c>, while the server runs as on each start:
+    /// a server left up for weeks keeps at most twice this on disk.</summary>
+    internal long MaxLogBytes { get; init; } = 10 * 1024 * 1024;
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(90);
     private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(20);
 
@@ -263,17 +267,23 @@ internal sealed class ServerController : IDisposable
         catch (InvalidOperationException) { return "code unknown"; }
     }
 
-    private void OpenLog()
+    internal void OpenLog()
     {
         lock (gate)
         {
-            logWriter?.Dispose();
-            var path = LogPath;
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            if (File.Exists(path)) File.Move(path, path + ".1", overwrite: true);
-            logWriter = new StreamWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true };
+            RollLog();
             while (recentLines.TryDequeue(out _)) { }
         }
+    }
+
+    // Under the gate: the current log becomes server.log.1 and a new one starts.
+    private void RollLog()
+    {
+        logWriter?.Dispose();
+        var path = LogPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        if (File.Exists(path)) File.Move(path, path + ".1", overwrite: true);
+        logWriter = new StreamWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true };
     }
 
     /// <summary>Adds a launcher line to the log beside the server's own output.</summary>
@@ -287,7 +297,11 @@ internal sealed class ServerController : IDisposable
         while (recentLines.Count > LogLinesKept && recentLines.TryDequeue(out _)) { }
         lock (gate)
         {
-            try { logWriter?.WriteLine(line); }
+            try
+            {
+                logWriter?.WriteLine(line);
+                if (logWriter?.BaseStream.Length > MaxLogBytes) RollLog();
+            }
             catch (IOException) { }
         }
     }

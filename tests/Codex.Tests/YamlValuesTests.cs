@@ -47,4 +47,15 @@ public class YamlValuesTests
         Assert.Equal(2.5, YamlValues.Normalize(2.5f));
         Assert.Equal("2d6 + 4", YamlValues.Normalize("2d6 + 4"));
     }
+
+    [Fact]
+    public void ChangedKeys_SeesAPickAddedOrRemoved_AndNotAnEqualCopy()
+    {
+        var before = new Dictionary<string, object> { ["spells"] = new List<object> { "bless", "guidance" }, ["level"] = 3L };
+
+        Assert.Equal(0, YamlValues.ChangedKeys(new Dictionary<string, object> { ["spells"] = new List<object> { "bless", "guidance" }, ["level"] = 3 }, before));
+        Assert.Equal(1, YamlValues.ChangedKeys(new Dictionary<string, object> { ["spells"] = new List<object> { "bless", "guidance", "shield" }, ["level"] = 3L }, before));
+        Assert.Equal(1, YamlValues.ChangedKeys(new Dictionary<string, object> { ["spells"] = new List<object> { "bless" }, ["level"] = 3L }, before));
+        Assert.Equal(2, YamlValues.ChangedKeys(new Dictionary<string, object> { ["level"] = 4L }, before));
+    }
 }

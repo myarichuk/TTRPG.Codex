@@ -1,7 +1,6 @@
 @page "/register"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
-@using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.AspNetCore.Identity
@@ -138,22 +137,10 @@
         {
             Id = Guid.NewGuid().ToString(),
             Username = Model.Username,
-            Roles = new List<string> { "Player" },
+            Roles = new List<string> { UserRoles.Player },
             // Whatever language the person has been reading the sign-up page in becomes their saved choice.
             Culture = SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name)
         };
-
-        // ServerAdmin goes to the configured Codex:AdminUsername, or to the very first account.
-        // Never while open to the internet: whoever arrives with an invite must not be able to claim it.
-        var configuredAdmin = Configuration["Codex:AdminUsername"];
-        var grantsServerAdmin = !Exposed && (!string.IsNullOrWhiteSpace(configuredAdmin)
-            ? string.Equals(Model.Username, configuredAdmin, StringComparison.OrdinalIgnoreCase)
-            : !await UserRepository.AnyUsersExistAsync());
-
-        if (grantsServerAdmin)
-        {
-            user.Roles.Add("ServerAdmin");
-        }
 
         var hasher = new PasswordHasher<UserDocument>();
         user.PasswordHash = hasher.HashPassword(user, Model.Password);
@@ -164,21 +151,22 @@
             return;
         }
 
-        await UserRepository.CreateUserAsync(user);
+        // ServerAdmin goes to the configured Codex:AdminUsername, or to the first account made on this computer while the
+        // server has no admin (claimed, so two sign-ups at once cannot both get it). Never while open to the internet:
+        // whoever arrives with an invite must not be able to claim it; nor a LAN player who signs up before the DM (R13).
+        var configuredAdmin = Configuration["Codex:AdminUsername"];
+        var grantsServerAdmin = !Exposed && (!string.IsNullOrWhiteSpace(configuredAdmin)
+            ? string.Equals(Model.Username, configuredAdmin, StringComparison.OrdinalIgnoreCase)
+            : Codex.Web.ExposurePolicy.MayClaimFirstAdmin(Exposed, HttpContext.Connection.RemoteIpAddress) && await UserRepository.TryClaimFirstAdminAsync(user.Id));
 
-        var claims = new List<Claim>
+        if (grantsServerAdmin)
         {
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.Id)
-        };
-
-        foreach (var role in user.Roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            user.Roles.Add(UserRoles.ServerAdmin);
         }
 
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+        await UserRepository.CreateUserAsync(user);
+
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, UserPrincipal.For(user));
 
         var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
         NavManager.NavigateTo(dest, forceLoad: true);

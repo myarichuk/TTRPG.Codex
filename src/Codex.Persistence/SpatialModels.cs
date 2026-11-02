@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 namespace Codex.Persistence;
 
-public class LocationConnection
-{
-    public string ToLocationId { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public int TravelTimeMinutes { get; set; }
-}
 
 /// <summary>How big a place is, from the widest down: a region (<see cref="RegionDocument"/>) holds areas, an area holds
 /// settlements, a settlement districts, and any of them sites (a tavern, a ruin, a room). Only a guide: a site may sit
@@ -31,7 +25,7 @@ public class LocationDocument
 
     /// <summary>The place in the same region this one is inside, or empty for a place straight in the region. See <see cref="PlaceTree"/>.</summary>
     public string? ParentId { get; set; }
-    public List<LocationConnection> Connections { get; set; } = new();
+
     public Dictionary<string, object> Metadata { get; set; } = new();
 
     /// <summary>Fog-of-war state (2.5): Hidden by default, revealed to the party via a DM action.</summary>
@@ -57,4 +51,8 @@ public class RegionDocument
     public string Name { get; set; } = string.Empty;
     public List<LocationDocument> Locations { get; set; } = new();
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Places deleted with their art still on this document, and when: the art stays while Undo can bring the
+    /// place back, and the next change to the region after that drops it.</summary>
+    public Dictionary<string, DateTime> RemovedArt { get; set; } = new();
 }

@@ -1,3 +1,5 @@
+using Codex.Core;
+
 namespace Codex.Persistence;
 
 /// <summary>
@@ -9,7 +11,7 @@ public static class SessionNotes
 {
     public static IReadOnlyList<NoteKind> Kinds { get; } = Enum.GetValues<NoteKind>();
 
-    /// <summary>The short name on chips and pills.</summary>
+    /// <summary>The kind in English, for the AI's session digest; the pages name it through NoteKindText.</summary>
     public static string KindLabel(NoteKind kind) => kind switch
     {
         NoteKind.Clue => "Clue",
@@ -19,15 +21,6 @@ public static class SessionNotes
         _ => "Note"
     };
 
-    /// <summary>The kind as a noun in a sentence ("a clue was added").</summary>
-    public static string KindNoun(NoteKind kind) => kind switch
-    {
-        NoteKind.Clue => "clue",
-        NoteKind.Loot => "loot entry",
-        NoteKind.Ruling => "ruling",
-        NoteKind.FollowUp => "follow-up",
-        _ => "note"
-    };
 
     /// <summary>"Round 3 · Grik's turn", "Round 3" when the viewer can't see who was acting, or null outside an encounter.</summary>
     /// <param name="visibleActors">The actors this viewer may see (a player's list already leaves Hidden ones out).</param>
@@ -55,4 +48,12 @@ public static class SessionNotes
     /// and only notes that have an id.</summary>
     public static bool CanEdit(SessionNote note, string userId, bool isDm) =>
         !string.IsNullOrEmpty(note.Id) && (isDm || note.AuthorId == userId);
+
+    /// <summary>A table note's words as <paramref name="access"/> reads them. Notes are typed in boxes that take <c>:::dm</c>
+    /// blocks, so a player reads someone else's note without the blocks they may not read (<paramref name="ownedActorIds"/>:
+    /// their characters), as they read a page; their own they wrote, and may correct, so it comes whole (F8).</summary>
+    public static string TextFor(SessionNote note, CampaignAccess access, IReadOnlySet<string> ownedActorIds) =>
+        access.IsDm || note.AuthorId == access.UserId || !SecretText.HasMarkers(note.Text)
+            ? note.Text
+            : SecretText.ForPlayers(note.Text, ownedActorIds);
 }

@@ -63,6 +63,12 @@ public class CampaignExportService(
             return null;
         }
 
+        // Whoever holds the file must not be able to join the table with it (D13).
+        campaign.InviteCode = string.Empty;
+        campaign.InviteExpiresAt = null;
+        campaign.InviteSingleUse = false;
+        campaign.InviteUsedBy = null;
+
         return new CampaignBundle
         {
             ExportedAt = DateTime.UtcNow,
@@ -79,6 +85,70 @@ public class CampaignExportService(
         };
     }
 
+    /// <summary>The bundle of any campaign, as its owner would export it: for the server's own backups (D11) only.</summary>
+    internal Task<CampaignBundle?> ExportForBackupAsync(CampaignDocument campaign) =>
+        ExportAsync(new CampaignAccess(campaign.Id, campaign.OwnerId, CampaignRole.DM));
+
+    /// <summary>
+    /// Restores the bundle as a campaign of its own (D13): every document gets a new id and every reference to one (ids in
+    /// other documents, mentions in text) follows, so it can never land on a campaign that exists, whatever the file holds.
+    /// The caller must be a DM in the file and becomes the new campaign's owner; the invite link is new. Returns the new
+    /// campaign's id, or null when refused.
+    /// </summary>
+    public async Task<string?> ImportAsNewAsync(CampaignBundle? bundle, string requestingUserId)
+    {
+        if (bundle?.Campaign == null || bundle.Format != CampaignBundle.CurrentFormat || !IsDm(bundle.Campaign, requestingUserId))
+        {
+            return null;
+        }
+
+        var copy = Deserialize(WithNewIds(Serialize(bundle), IdsIn(bundle)));
+        if (copy?.Campaign is not { } campaign)
+        {
+            return null;
+        }
+
+        campaign.OwnerId = requestingUserId;
+        campaign.Members.RemoveAll(m => m.UserId == requestingUserId);
+        campaign.InviteCode = string.Empty;
+        campaign.InviteExpiresAt = null;
+        campaign.InviteSingleUse = false;
+        campaign.InviteUsedBy = null;
+        return await ImportAsync(copy, requestingUserId) ? campaign.Id : null;
+    }
+
+    private static IEnumerable<string> IdsIn(CampaignBundle bundle) =>
+        new[] { bundle.Campaign!.Id }
+            .Concat(bundle.Actors.Select(d => d.Id))
+            .Concat(bundle.Sessions.Select(d => d.Id))
+            .Concat(bundle.Encounters.Select(d => d.Id))
+            .Concat(bundle.Facts.Select(d => d.Id))
+            .Concat(bundle.Notes.Select(d => d.Id))
+            .Concat(bundle.Regions.Select(d => d.Id))
+            .Concat(bundle.Homebrew.Select(d => d.Id))
+            .Concat(bundle.Wiki.Select(d => d.Id))
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct(StringComparer.Ordinal);
+
+    /// <summary>Replaces each id wherever it appears whole in <paramref name="json"/>: as a value, inside another id
+    /// (<c>CampaignTemplates/{campaignId}</c>), in a target (<c>session:{id}</c>) or a mention (<c>[[actor:{id}|Name]]</c>).
+    /// "Whole" means not inside a longer run of id characters, so <c>Notes/1-A</c> does not touch <c>Notes/11-A</c>.</summary>
+    internal static string WithNewIds(string json, IEnumerable<string> ids)
+    {
+        var map = ids.ToDictionary(id => id, _ => Guid.NewGuid().ToString(), StringComparer.Ordinal);
+        if (map.Count == 0)
+        {
+            return json;
+        }
+
+        var pattern = @"(?<![A-Za-z0-9_-])(?:" + string.Join("|", map.Keys.OrderByDescending(k => k.Length).Select(System.Text.RegularExpressions.Regex.Escape)) + @")(?![A-Za-z0-9_-])";
+        return System.Text.RegularExpressions.Regex.Replace(json, pattern, m => map[m.Value]);
+    }
+
+    /// <summary>
+    /// Merges the bundle into the campaign it came from (or, when that campaign no longer exists, restores it under its own
+    /// ids): every document in the file is written over the stored one, and documents the file does not have stay.
+    /// </summary>
     public async Task<bool> ImportAsync(CampaignBundle? bundle, string requestingUserId)
     {
         if (bundle?.Campaign == null || bundle.Format != CampaignBundle.CurrentFormat)
@@ -86,6 +156,7 @@ public class CampaignExportService(
             return false;
         }
 
+        NormalizeMaps(bundle);
         var campaign = bundle.Campaign;
 
         // Authorise against what is stored, never against what the file claims: otherwise a DM of
@@ -122,7 +193,6 @@ public class CampaignExportService(
         foreach (var actor in bundle.Actors.Where(a => a.CampaignId == campaign.Id))
         {
             actor.HasPortrait = false;
-            NormalizeState(actor);
             await actors.SaveAsync(actor);
         }
 
@@ -154,7 +224,6 @@ public class CampaignExportService(
 
         foreach (var entry in bundle.Homebrew.Where(h => h.CampaignId == campaign.Id))
         {
-            entry.Properties = NormalizeMap(entry.Properties);
             entry.HasArt = false;
             await homebrew.SaveAsync(entry);
         }
@@ -193,16 +262,7 @@ public class CampaignExportService(
                 return null;
             }
 
-            foreach (var actor in bundle.Actors)
-            {
-                NormalizeState(actor);
-            }
-
-            foreach (var entry in bundle.Homebrew)
-            {
-                entry.Properties = NormalizeMap(entry.Properties);
-            }
-
+            NormalizeMaps(bundle);
             return bundle;
         }
         catch (JsonException)
@@ -214,16 +274,47 @@ public class CampaignExportService(
     /// <summary>
     /// System.Text.Json deserializes <c>Dictionary&lt;string, object&gt;</c> values as
     /// <see cref="JsonElement"/>; RavenDB would persist those as garbage, so convert back to
-    /// plain CLR values (string, long, double, bool, lists, nested dictionaries) on the way in.
+    /// plain CLR values (string, long, double, bool, lists, nested dictionaries) on the way in. Every
+    /// such map in a bundle, not only the sheets (D13): a pack place's <c>Metadata["blueprintId"]</c>
+    /// stored as garbage never matched its blueprint again.
     /// </summary>
-    private static void NormalizeState(ActorDocument actor)
+    internal static void NormalizeMaps(CampaignBundle bundle)
     {
-        actor.State = NormalizeMap(actor.State);
-        actor.Sheet = NormalizeMap(actor.Sheet);
+        if (bundle.Campaign != null)
+        {
+            bundle.Campaign.WorldState = NormalizeMap(bundle.Campaign.WorldState);
+        }
+
+        foreach (var actor in bundle.Actors)
+        {
+            actor.State = NormalizeMap(actor.State);
+            actor.Sheet = NormalizeMap(actor.Sheet);
+        }
+
+        foreach (var encounter in bundle.Encounters)
+        {
+            encounter.ActiveEffects = NormalizeMap(encounter.ActiveEffects);
+        }
+
+        foreach (var fact in bundle.Facts)
+        {
+            fact.Metadata = NormalizeMap(fact.Metadata);
+        }
+
+        foreach (var location in bundle.Regions.SelectMany(r => r.Locations))
+        {
+            location.Metadata = NormalizeMap(location.Metadata);
+        }
+
+        foreach (var entry in bundle.Homebrew)
+        {
+            entry.Properties = NormalizeMap(entry.Properties);
+        }
     }
 
-    private static Dictionary<string, object> NormalizeMap(Dictionary<string, object> map)
+    private static Dictionary<string, object> NormalizeMap(Dictionary<string, object>? map)
     {
+        map ??= new Dictionary<string, object>();
         foreach (var key in map.Keys.ToList())
         {
             if (map[key] is JsonElement element)

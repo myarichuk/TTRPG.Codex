@@ -7,14 +7,16 @@ public sealed record MediaFile(byte[] Bytes, string ContentType);
 
 /// <summary>
 /// Campaign art (covers, portraits) stored as RavenDB attachments on the owning document, so
-/// they live, back up and delete with it. Authorisation is the caller's job: the endpoints that
-/// serve these resolve <see cref="CampaignAccess"/> first and only then ask for the bytes.
+/// they live, back up and delete with it. Reading is the caller's job: the endpoints that serve
+/// these resolve <see cref="CampaignAccess"/> first and only then ask for the bytes. Writing checks here (D15): the
+/// document must be in <see cref="CampaignAccess.CampaignId"/>, and the writer, by their role in the campaign as stored
+/// now, its DM (or the owning player, for their character's portrait). Otherwise <c>Campaign.AccessChanged</c>.
 /// </summary>
 public interface IMediaStore
 {
-    Task PutAsync(string documentId, string name, Stream content, string contentType);
+    Task PutAsync(CampaignAccess access, string documentId, string name, Stream content, string contentType);
     Task<MediaFile?> GetAsync(string documentId, string name);
-    Task DeleteAsync(string documentId, string name);
+    Task DeleteAsync(CampaignAccess access, string documentId, string name);
 }
 
 public class RavenMediaStore(RavenDbService dbService) : IMediaStore
@@ -43,7 +45,7 @@ public class RavenMediaStore(RavenDbService dbService) : IMediaStore
 
     public const long MaxBytes = 6 * 1024 * 1024;
 
-    public async Task PutAsync(string documentId, string name, Stream content, string contentType)
+    public async Task PutAsync(CampaignAccess access, string documentId, string name, Stream content, string contentType)
     {
         if (!AllowedContentTypes.Contains(contentType))
         {
@@ -51,6 +53,7 @@ public class RavenMediaStore(RavenDbService dbService) : IMediaStore
         }
 
         using var session = dbService.Store.OpenAsyncSession();
+        await EnsureMayWriteAsync(session, access, documentId);
         if (await session.Advanced.Attachments.ExistsAsync(documentId, name))
         {
             session.Advanced.Attachments.Delete(documentId, name);
@@ -78,13 +81,35 @@ public class RavenMediaStore(RavenDbService dbService) : IMediaStore
         return new MediaFile(buffer.ToArray(), attachment.Details.ContentType);
     }
 
-    public async Task DeleteAsync(string documentId, string name)
+    public async Task DeleteAsync(CampaignAccess access, string documentId, string name)
     {
         using var session = dbService.Store.OpenAsyncSession();
+        await EnsureMayWriteAsync(session, access, documentId);
         if (await session.Advanced.Attachments.ExistsAsync(documentId, name))
         {
             session.Advanced.Attachments.Delete(documentId, name);
             await session.SaveChangesAsync();
+        }
+    }
+
+    private static async Task EnsureMayWriteAsync(Raven.Client.Documents.Session.IAsyncDocumentSession session, CampaignAccess access, string documentId)
+    {
+        var campaign = await session.LoadAsync<CampaignDocument>(access.CampaignId);
+        var role = campaign == null ? null : CampaignAccessResolver.RoleOf(campaign, access.UserId);
+        var allowed = role != null && (documentId == access.CampaignId
+            ? role == CampaignRole.DM
+            : await session.LoadAsync<object>(documentId) switch
+            {
+                ActorDocument actor => actor.CampaignId == access.CampaignId && (role == CampaignRole.DM || actor.OwnerUserId == access.UserId),
+                HomebrewEntryDocument brew => brew.CampaignId == access.CampaignId && role == CampaignRole.DM,
+                RegionDocument region => region.CampaignId == access.CampaignId && role == CampaignRole.DM,
+                WikiPageDocument page => page.CampaignId == access.CampaignId && role == CampaignRole.DM,
+                _ => false
+            });
+
+        if (!allowed)
+        {
+            throw new Codex.Localization.LocalizedException("Campaign.AccessChanged");
         }
     }
 }

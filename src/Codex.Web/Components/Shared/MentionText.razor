@@ -1,27 +1,60 @@
+@using Codex.Core
 @using Codex.Persistence
 
-@* A table note's words with its mentions named for this viewer. A mention they can see links to its page
-   (a character's sheet, the place on the Places page, the library entry); one they can't reads "someone", "somewhere" or
-   "something" and links nowhere. *@
+@* A note's words with its mentions named for this viewer. A mention they can see links to its page (a character's sheet,
+   the place on the Places page, the library entry); one they can't reads "someone", "somewhere" or "something" and links
+   nowhere. Notes are plain text, but take secret blocks like every other text the DM writes: a player's copy comes without
+   them (the repositories see to that), and the DM (Dm set) reads each block marked with who may read it. *@
 
-@foreach (var segment in Mentions.Read(Text))
+@if (Dm != null && SecretText.HasMarkers(Text))
 {
-    if (segment.Kind is not { } kind)
+    foreach (var segment in SecretText.Parse(Text).Where(s => s.Text.Trim().Length > 0))
     {
-        @segment.Text
+        if (segment.Audience == SecretAudience.Everyone)
+        {
+            @Words(segment.Text)
+        }
+        else
+        {
+            var (css, label) = segment.Audience switch
+            {
+                SecretAudience.Party => ("secret-party", Dm.Party),
+                SecretAudience.Players => ("secret-players", Dm.Players),
+                SecretAudience.Some => ("secret-some", Dm.Some(segment.Knowers)),
+                _ => ("secret-dm", Dm.Dm)
+            };
+            <span class="secret-inline @css" data-testid="note-secret"><span class="secret-inline-label">@label</span> @Words(segment.Text.Trim())</span>
+        }
     }
-    else if (!segment.Known)
-    {
-        <span class="mention mention-unknown">@segment.Text</span>
-    }
-    else
-    {
-        <a class="mention mention-@kind.ToString().ToLowerInvariant()" href="@MentionLinks.Href(CampaignId, kind, segment.Id!)">@segment.Text</a>
-    }
+}
+else
+{
+    @Words(Text)
 }
 
 @code {
     [Parameter] public string Text { get; set; } = string.Empty;
     [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
     [Parameter] public string CampaignId { get; set; } = string.Empty;
+    /// <summary>The DM's labels for secret blocks; null for anyone else, whose copy has none.</summary>
+    [Parameter] public DmView? Dm { get; set; }
+
+    private RenderFragment Words(string text) => __builder =>
+    {
+        foreach (var segment in Mentions.Read(text))
+        {
+            if (segment.Kind is not { } kind)
+            {
+                @segment.Text
+            }
+            else if (!segment.Known)
+            {
+                <span class="mention mention-unknown">@segment.Text</span>
+            }
+            else
+            {
+                <a class="mention mention-@kind.ToString().ToLowerInvariant()" href="@MentionLinks.Href(CampaignId, kind, segment.Id!)">@segment.Text</a>
+            }
+        }
+    };
 }

@@ -12,6 +12,7 @@
 @inject IJSRuntime JS
 @inject MentionSources MentionSources
 @inject AiFeatures Ai
+@inject Codex.Core.PluginLoader Loader
 
 <div class="page-header mb-3">
     <div>
@@ -36,6 +37,15 @@
     }
 </div>
 
+@if (Ctx.IsDm && Loader.LoadWarnings.Count > 0)
+{
+    @* An entry that failed to load is simply missing below; say so, and where the reasons are (R13). *@
+    <p class="small-muted mb-3" role="status" data-testid="library-load-problems">
+        <LucideIcon IconName="alert-triangle" Size="14" /> @L["Campaign.Library.LoadProblems", Loader.LoadWarnings.Count]
+        <a href="/about#warnings-heading">@L["Campaign.Library.LoadProblemsLink"]</a>
+    </p>
+}
+
 <LibraryBrowser Campaign="Ctx.Campaign" Access="Ctx.Access" BasePath="@($"{Ctx.BasePath}/library")"
                 RouteType="@RouteType" RouteId="@RouteId" Version="version">
     <DetailArt Context="item">
@@ -54,7 +64,7 @@
         }
         @if (Ctx.IsDm && IsBlueprint(item))
         {
-            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(item)" data-testid="add-to-cast"><LucideIcon IconName="user-plus" Size="14" /> @L["Campaign.Library.AddToCast"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AddToCastAsync(item)" data-testid="add-to-cast" Busy="@addGate.IsBusy"><LucideIcon IconName="user-plus" Size="14" /> @L["Campaign.Library.AddToCast"]</CodexButton>
         }
     </DetailActions>
     <DetailFooter Context="item">
@@ -188,8 +198,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
-        noteActors = Ctx.Actors.ToDictionary(a => a.Id);
+        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.AllActors);
+        noteActors = Ctx.AllActors.ToDictionary(a => a.Id);
         aiReady = Ctx.IsDm && await Ai.IsConfiguredAsync(Ctx.UserId);
     }
 
@@ -265,7 +275,12 @@
 
     private bool IsBlueprint(LibraryItem item) => Cast.Blueprint(item, Ctx.Campaign, Ctx.System) != null;
 
-    private async Task AddToCastAsync(LibraryItem item)
+    // Two taps on Add to cast make one actor, not two (U6).
+    private readonly SaveGate addGate = new();
+
+    private Task AddToCastAsync(LibraryItem item) => addGate.RunAsync(() => AddToCastNowAsync(item));
+
+    private async Task AddToCastNowAsync(LibraryItem item)
     {
         var created = await Cast.AddToCastAsync(item, Ctx.Campaign, Ctx.System, Ctx.Access);
         if (created.Count == 0)

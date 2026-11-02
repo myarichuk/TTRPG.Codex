@@ -52,8 +52,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
     // The encounter the next persist writes: the live one when a command changed it, or the one
     // just ended (which is no longer active but still has to be saved with its end time).
     private EncounterDocument? _encounterToPersist;
-    private readonly Channel<QueuedCommand> _commands = Channel.CreateUnbounded<QueuedCommand>(
-        new UnboundedChannelOptions { SingleReader = true });
+    // Bounded: a page stuck in a loop, or a flood of clicks, fills this and is refused instead of growing the queue without
+    // end. A table at play never has more than a few commands waiting.
+    internal const int CommandQueueCapacity = 256;
+    private readonly Channel<QueuedCommand> _commands = Channel.CreateBounded<QueuedCommand>(
+        new BoundedChannelOptions(CommandQueueCapacity) { SingleReader = true, FullMode = BoundedChannelFullMode.Wait });
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _loop;
 
@@ -157,6 +160,75 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _actorEntities[actor.Id] = entity;
         _actorDocs[actor.Id] = actor;
         _hydratedIds[actor.Id] = 0;
+        RosterChanged();
+    }
+
+    // Bumped whenever who is at the table, or what players may know of them, changes; pages compare it to reload their list.
+    private int _rosterVersion;
+
+    internal void RosterChanged() => _rosterVersion++;
+
+    /// <summary>Takes a new copy of an actor's document (its visibility changed, say) without touching its live state.</summary>
+    internal void RefreshDocument(ActorDocument actor)
+    {
+        if (_actorDocs.ContainsKey(actor.Id))
+        {
+            _actorDocs[actor.Id] = actor;
+            RosterChanged();
+        }
+    }
+
+    // ---- Undo (R5) ----
+
+    // The last change each creature took from an undoable command: its pools and conditions just before and just after.
+    private readonly Dictionary<string, UndoPoint> _undo = new();
+
+    private sealed record UndoPoint(string Kind, ActorState Before, ActorState After);
+
+    private sealed record ActorState(Dictionary<string, int> Pools, List<ActiveEffect> Effects)
+    {
+        public static ActorState Of(Entity entity) => new(
+            entity.Has<ResourcePoolComponent>() ? new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools) : new Dictionary<string, int>(),
+            entity.Has<ActiveEffectsComponent>() ? entity.Get<ActiveEffectsComponent>().Effects.ToList() : new List<ActiveEffect>());
+
+        public bool SameAs(ActorState other) =>
+            Pools.Count == other.Pools.Count && Pools.All(p => other.Pools.TryGetValue(p.Key, out var v) && v == p.Value)
+            && Effects.SequenceEqual(other.Effects);
+
+        public void Restore(Entity entity)
+        {
+            if (!entity.Has<ResourcePoolComponent>()) entity.Set(new ResourcePoolComponent());
+            var pools = entity.Get<ResourcePoolComponent>().Pools;
+            pools.Clear();
+            foreach (var (key, value) in Pools) pools[key] = value;
+
+            if (!entity.Has<ActiveEffectsComponent>()) entity.Set(new ActiveEffectsComponent());
+            var effects = entity.Get<ActiveEffectsComponent>().Effects;
+            effects.Clear();
+            effects.AddRange(Effects);
+        }
+    }
+
+    /// <summary>What the creature's last change was (an event type: "Damage"), while it can still be taken back: nothing has
+    /// changed the creature since. Null otherwise.</summary>
+    private string? UndoableKind(string actorId, Entity entity) =>
+        _undo.TryGetValue(actorId, out var point) && point.After.SameAs(ActorState.Of(entity)) ? point.Kind : null;
+
+    /// <summary>Puts the creature's pools and conditions back as they were before its last change (R5). Returns the kind of
+    /// change undone, or null when there is none or something has changed the creature since (a turn ticked its conditions,
+    /// another hit landed): undoing then would wipe that out too. Effects the change ended on other creatures (a death ends
+    /// what the dead one concentrated on) do not come back.</summary>
+    internal string? Undo(string actorId)
+    {
+        if (!_actorEntities.TryGetValue(actorId, out var entity) || UndoableKind(actorId, entity) is not { } kind)
+        {
+            return null;
+        }
+
+        _undo[actorId].Before.Restore(entity);
+        _undo.Remove(actorId);
+        _dirtyActorIds.Add(actorId);
+        return kind;
     }
 
     /// <summary>Takes an actor out of the table: its entity goes, and so does its place in the
@@ -173,7 +245,19 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _hydratedIds.TryRemove(actorId, out _);
         _dirtyActorIds.Remove(actorId);
         _pendingSheetWrites.Remove(actorId);
-        RemoveParticipant(actorId);
+        _undo.Remove(actorId);
+        // What it held up by concentrating, and what was counted on its turns, end with it leaving the table (R4).
+        if (World.EndHeldBy(actorId).Count > 0)
+        {
+            MarkAllHydratedActorsDirty();
+        }
+
+        if (!RemoveParticipant(actorId))
+        {
+            TableRules.ExpireTurnsOf(this, actorId);
+        }
+
+        RosterChanged();
         return true;
     }
 
@@ -190,6 +274,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// description; falls back to the raw id for an actor the runtime never hydrated (e.g. a source
     /// id that names a trap or effect rather than a living actor).</summary>
     public string GetActorName(string actorId) => _actorDocs.TryGetValue(actorId, out var doc) ? doc.Name : actorId;
+
+    /// <summary>An actor as a log message names it: a term each reader sees by the name they know (F20), or, for an id the
+    /// table never hydrated (a source like "trap"), the text as it is.</summary>
+    public object ActorTerm(string actorId) =>
+        _actorDocs.TryGetValue(actorId, out var doc) ? EventTerm.Actor(actorId, doc.Name) : actorId;
 
     internal void MarkAllHydratedActorsDirty()
     {
@@ -240,8 +329,10 @@ public sealed class CampaignRuntime : IAsyncDisposable
         return ended;
     }
 
-    /// <summary>Drops a participant from the order, keeping the turn pointer on whoever is acting
-    /// now (or the next in line when it was their turn). Returns false when they were not in it.</summary>
+    /// <summary>Drops a participant from the order, keeping the turn pointer on whoever is acting now. When it was their own
+    /// turn in a fight under way, the turn passes as "Next turn" passes it (R2): the dead are skipped and the next one begins
+    /// their turn. Timed effects counted on their turns end, since those turns will not come (R4). Returns false when they
+    /// were not in the order.</summary>
     internal bool RemoveParticipant(string actorId)
     {
         var encounter = _activeEncounter;
@@ -256,6 +347,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
             return false;
         }
 
+        var removed = encounter.Participants[index];
+        var heldTheTurn = index == encounter.TurnIndex
+            && (encounter.Round > 1 || removed.TurnStarted || encounter.Participants.Any(p => p.HasActed));
         encounter.Participants.RemoveAt(index);
         if (index < encounter.TurnIndex)
         {
@@ -273,8 +367,44 @@ public sealed class CampaignRuntime : IAsyncDisposable
             StartNewRound(encounter);
         }
 
+        if (heldTheTurn && encounter.Participants.Count > 0)
+        {
+            MoveTurnOn(encounter, fromPointer: true);
+        }
+
+        TableRules.ExpireTurnsOf(this, actorId);
         MarkEncounterDirty();
         return true;
+    }
+
+    /// <summary>Moves the turn to the next participant still in the fight (R2, shared by "Next turn" and by removing whoever
+    /// is acting): past the end of the order is a new round, the dead are passed over and count as having acted, and the one
+    /// it lands on begins their turn. With <paramref name="fromPointer"/> the participant the pointer is on now is the first
+    /// candidate, for when the one who held the turn has just left the order.</summary>
+    internal void MoveTurnOn(EncounterDocument encounter, bool fromPointer)
+    {
+        for (var step = 0; step < encounter.Participants.Count; step++)
+        {
+            if (step > 0 || !fromPointer)
+            {
+                encounter.TurnIndex++;
+                if (encounter.TurnIndex >= encounter.Participants.Count)
+                {
+                    encounter.TurnIndex = 0;
+                    StartNewRound(encounter);
+                }
+            }
+
+            var next = encounter.Participants[encounter.TurnIndex];
+            if (GetEntity(next.ActorId) is { } e && TableRules.IsDead(this, e))
+            {
+                next.HasActed = true;
+                continue;
+            }
+
+            BeginTurn(next);
+            return;
+        }
     }
 
     /// <summary>Moves the encounter into its next round: nobody has acted or begun a turn in it yet.</summary>
@@ -420,6 +550,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// </summary>
     public event Action<IReadOnlyCollection<string>>? StateChanged;
 
+    /// <summary>Whether any page is subscribed to <see cref="StateChanged"/>: someone has the table (or the campaign) open.</summary>
+    internal bool IsWatched => StateChanged != null;
+
     /// <summary>Queues a command onto the single-writer loop and returns a task that completes once
     /// it has actually been applied and its dirty actors persisted - so a caller (the DM console)
     /// can await a definite result instead of firing and hoping.</summary>
@@ -429,7 +562,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         if (!_commands.Writer.TryWrite(new QueuedCommand(command, completion)))
         {
-            completion.TrySetException(new InvalidOperationException("Campaign runtime is no longer accepting commands."));
+            completion.TrySetException(new InvalidOperationException(_cts.IsCancellationRequested
+                ? "Campaign runtime is no longer accepting commands."
+                : $"Campaign runtime has {CommandQueueCapacity} commands waiting; this one was refused."));
         }
 
         return completion.Task;
@@ -443,7 +578,20 @@ public sealed class CampaignRuntime : IAsyncDisposable
             {
                 try
                 {
+                    // An undoable change keeps the creature's state from just before and just after it (R5).
+                    var undoable = queued.Command as IUndoableCommand;
+                    var target = undoable != null ? GetEntity(undoable.ActorId) : null;
+                    var before = target is { } t ? ActorState.Of(t) : null;
                     queued.Command.Apply(this);
+                    if (undoable != null && target is { IsAlive: true } changed && before != null)
+                    {
+                        var after = ActorState.Of(changed);
+                        if (!after.SameAs(before))
+                        {
+                            _undo[undoable.ActorId] = new UndoPoint(undoable.UndoKind, before, after);
+                        }
+                    }
+
                     foreach (var actorId in queued.Command.AffectedActorIds)
                     {
                         _dirtyActorIds.Add(actorId);
@@ -477,7 +625,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Command {Command} failed in campaign runtime {CampaignId}", queued.Command.GetType().Name, CampaignId);
+                    // A mistyped dice expression is the person's typo, which the page tells them; not a fault of the server.
+                    _logger.Log(ex is FormatException ? LogLevel.Information : LogLevel.Error, ex,
+                        "Command {Command} failed in campaign runtime {CampaignId}", queued.Command.GetType().Name, CampaignId);
                     queued.Completion.TrySetException(ex);
                 }
             }
@@ -574,6 +724,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     merged[key] = value;
                 }
             }
+
+            // Hit points, pools and slots move at the table too: the editor's change is added to the live value, not put over it.
+            SheetCounters.MergeByDelta(merged, edited.Sheet, baselineSheet, live.Sheet, system);
         }
 
         ActorRepository.CopyEditableFields(cached, edited, access.IsDm);
@@ -657,16 +810,17 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 ? new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools)
                 : null;
             IReadOnlyList<EffectSnapshot> effects = entity.Has<ActiveEffectsComponent>()
-                ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => new EffectSnapshot(e.EffectId, e.SourceId, e.RoundsRemaining, e.Expiry)).ToArray()
+                ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => new EffectSnapshot(e.EffectId, e.SourceId, e.RoundsRemaining, e.Expiry, e.HeldBy)).ToArray()
                 : Array.Empty<EffectSnapshot>();
-            actors[actorId] = new ActorStateSnapshot(pools, effects);
+            actors[actorId] = new ActorStateSnapshot(pools, effects, UndoableKind(actorId, entity), TableRules.IsDead(this, entity), TableRules.IsDown(this, entity));
         }
 
         _snapshot = new RuntimeSnapshot(
             encounter,
             _activeSession?.RollLog.ToArray() ?? Array.Empty<RollLogEntry>(),
             _activeSession?.Notes.ToArray() ?? Array.Empty<SessionNote>(),
-            actors);
+            actors,
+            _rosterVersion);
     }
 
     /// <summary>Write-through for the initiative tracker (3.5), mirroring
@@ -685,17 +839,39 @@ public sealed class CampaignRuntime : IAsyncDisposable
         await _encounterRepository.SaveAsync(encounter);
     }
 
+    /// <summary>How long ending the table waits for commands already queued before it gives up on them.</summary>
+    internal static TimeSpan DrainTimeout { get; set; } = TimeSpan.FromSeconds(10);
+
+    private int _disposed;
+
+    /// <summary>Stops taking commands and lets the loop finish those already queued: each has a caller awaiting it (a sheet
+    /// save's spinner, a roll) that must get an answer, and cancelling the loop left them waiting forever (R6). A loop still
+    /// busy after <see cref="DrainTimeout"/> is cancelled, and what is left fails as "no longer accepting commands".</summary>
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+        {
+            return;
+        }
+
         _commands.Writer.TryComplete();
-        _cts.Cancel();
+        if (await Task.WhenAny(_loop, Task.Delay(DrainTimeout)) != _loop)
+        {
+            _cts.Cancel();
+        }
+
         try
         {
             await _loop;
         }
         catch (OperationCanceledException)
         {
-            // Expected.
+            // Expected when the drain timed out.
+        }
+
+        while (_commands.Reader.TryRead(out var left))
+        {
+            left.Completion.TrySetException(new InvalidOperationException("Campaign runtime is no longer accepting commands."));
         }
 
         World.Dispose();

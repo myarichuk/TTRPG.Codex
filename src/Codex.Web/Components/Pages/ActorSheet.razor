@@ -1,4 +1,4 @@
-@page "/campaigns/{CampaignId}/actors/{ActorId}"
+@* Not a page of its own: CampaignPage opens it as a window for /campaigns/{CampaignId}/actors/{ActorId} (U2). *@
 @using System.Security.Claims
 @using Codex.Core
 @using Codex.Core.AI
@@ -21,15 +21,14 @@
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
 @inject MentionSources MentionSources
-@inject IMediaStore Media
 @inject AiFeatures Ai
-@inject ArtService Art
 @inject ILogger<ActorSheet> Logger
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IUserRepository UserRepo
 @inject IWikiRepository WikiRepo
 @inject ITemplateRepository TemplateRepo
+@inject IJSRuntime JS
 @implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
@@ -61,7 +60,7 @@ else if (IsStranger)
         </div>
         @if (!string.IsNullOrWhiteSpace(actor.PublicDescription))
         {
-            <div class="rules-text mb-0" data-testid="stranger-description">@((MarkupString)MentionLinks.ToHtml(actor.PublicDescription, noteMentions, CampaignId))</div>
+            <div class="rules-text mb-0" data-testid="stranger-description">@((MarkupString)SecretRender.Html(actor.PublicDescription, text => MentionLinks.ToHtml(text, noteMentions, CampaignId), null))</div>
         }
         else
         {
@@ -86,10 +85,7 @@ else
                     <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" Alt="@L["Actor.Avatar.Portrait", DisplayName]" />
                     @if (CanEdit)
                     {
-                        <label class="portrait-upload" title="@L["Actor.Sheet.UploadPortrait"]">
-                            <LucideIcon IconName="camera" Size="14" /><span class="visually-hidden">@L["Actor.Sheet.UploadPortraitHidden"]</span>
-                            <InputFile OnChange="UploadPortraitAsync" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="visually-hidden" />
-                        </label>
+                        <PortraitUpload Actor="actor" Access="access" OnMessage="message => flash = message" />
                     }
                 </div>
                 <div class="min-w-0">
@@ -115,18 +111,8 @@ else
                         }
                         @if (CanEdit)
                         {
-                            @if (busy == "portrait")
-                            {
-                                <AiWorking Compact="true" Text="@L["Actor.Art.Drawing"]" OnStop="aiCall.Stop" TestId="portrait-working" />
-                            }
-                            else
-                            {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="GeneratePortraitAsync" Disabled="@(busy != null)" data-testid="portrait-generate">@(actor.HasPortrait ? L["Actor.Sheet.PortraitNew"] : L["Actor.Sheet.PortraitAi"])</CodexButton>
-                            }
-                        }
-                        @if (CanEdit && actor.HasPortrait)
-                        {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="x" OnClick="RemovePortraitAsync" Disabled="@(busy != null)">@L["Actor.Sheet.RemovePortrait"]</CodexButton>
+                            <PortraitActions Actor="actor" Campaign="campaign" Access="access" CurrentUserId="@(currentUserId ?? "")" Definition="system" Draft="PortraitDraft" Confirm="leaveConfirm"
+                                             Busy="@(busy != null)" OnBusyChanged="SetDrawing" OnMessage="message => flash = message" />
                         }
                     </div>
                 </div>
@@ -136,7 +122,7 @@ else
                 {
                     <span class="dirty-note" role="status" data-testid="sheet-dirty">@L["Actor.Sheet.Dirty", DirtyCount]</span>
                 }
-                <a href="@CastPath" class="cx-btn cx-etched" data-testid="sheet-back"><LucideIcon IconName="arrow-left" Size="18" /> @L["Actor.Sheet.BackToCast"]</a>
+                <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="OnBack" data-testid="sheet-back">@BackLabel</CodexButton>
                 @if (CanEdit)
                 {
                     <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Actor.Sheet.SaveChanges"]</CodexButton>
@@ -163,8 +149,9 @@ else
             }
             @if (Rules?.ArmorClass is { } plateAc)
             {
+                var acField = system?.ActorFields.FirstOrDefault(f => f.Key == plateAc.Key);
                 <div class="stat-cell stat-ac" role="listitem">
-                    <span class="stat-label">@L["Actor.Sheet.AcShort"]</span>
+                    <span class="stat-label">@(acField?.Abbreviation ?? acField?.Label ?? plateAc.Key)</span>
                     <span class="stat-value" data-testid="plate-ac">@(evaluation?.ArmorClass is { Active: true } acSummary ? acSummary.Total : YamlValues.GetInt(editSheet, plateAc.Key) ?? 10)</span>
                 </div>
             }
@@ -179,11 +166,11 @@ else
         @if (lastRoll != null)
         {
             <div class="plate-roll" data-testid="plate-roll">
-                <DiceResult Compact="true" Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" Total="lastRoll.Total" Text="@lastRoll.Result" />
+                <DiceResult Compact="true" Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" />
             </div>
         }
         @* Inside the sticky plate so a result is seen wherever the page is scrolled to. *@
-        <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+        <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
     </div>
 
     @if (!string.IsNullOrEmpty(actor.BlueprintId) && ContentRegistry.GetActor(actor.BlueprintId) == null)
@@ -211,7 +198,12 @@ else
                     <ul class="mb-0 small">
                         @foreach (var violation in evaluation.Violations)
                         {
-                            <li>@Describe(violation)</li>
+                            var shown = violation;
+                            @* Each one is also said beside its field, on its tab; this list is the way there. *@
+                            <li class="d-flex align-items-baseline gap-2" data-testid="rule-violation">
+                                <span class="flex-grow-1">@Describe(violation)</span>
+                                <button type="button" class="link-btn" data-testid="rule-show" @onclick="() => ShowRule(RuleTarget(shown))">@L["Actor.Sheet.ShowRule"]</button>
+                            </li>
                         }
                     </ul>
                 </section>
@@ -249,7 +241,7 @@ else
                     <div aria-live="polite">
                         @if (lastRoll != null)
                         {
-                            <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" Total="lastRoll.Total" Text="@lastRoll.Result" />
+                            <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" />
                             <p class="field-hint mb-0" data-testid="roll-where">@(lastRollShared ? L["Actor.Sheet.RollShared"] : L["Actor.Sheet.RollPrivate"])</p>
                         }
                         else
@@ -263,8 +255,13 @@ else
             <nav class="sheet-tabs" aria-label="@L["Actor.Sheet.Sections"]" data-testid="sheet-tabs">
                 @foreach (var tab in Tabs)
                 {
+                    var problems = ProblemsOn(tab.Key);
                     <button type="button" class="sheet-tab" aria-current="@(ActiveTab == tab.Key ? "page" : null)" data-testid="@("tab-" + tab.Key)" @onclick="() => activeTab = tab.Key">
                         <LucideIcon IconName="@tab.Icon" Size="18" /> @tab.Label
+                        @if (problems > 0)
+                        {
+                            <span class="tab-problems" data-testid="@("tab-problems-" + tab.Key)"><span aria-hidden="true">@problems</span><span class="visually-hidden">@L["Actor.Sheet.TabProblems", problems]</span></span>
+                        }
                     </button>
                 }
             </nav>
@@ -273,180 +270,15 @@ else
             {
             @if (system != null && system.Attributes.Count > 0)
             {
-                var attributeRules = Rules?.Attributes;
-                var summary = evaluation?.Attributes;
-                <section class="panel attr-panel" aria-labelledby="attributes-heading">
-                    <div class="panel-title">
-                        <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="18" Class="title-icon" /> @L["Actor.Sheet.Attributes"]</h2>
-                        @if (attributeRules != null && CanEdit)
-                        {
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="attr-method" class="field-label">@L["Actor.Sheet.Method"]</label>
-                                <select id="attr-method" class="field-select field-sm" value="@AttrMethod" @onchange="e => SetMethod(e.Value?.ToString())" data-testid="attr-method">
-                                    @foreach (var method in AvailableMethods)
-                                    {
-                                        <option value="@method">@MethodLabel(method)</option>
-                                    }
-                                </select>
-                            </div>
-                        }
-                    </div>
-
-                    @if (attributeRules != null && summary != null && AttrMethod == "point-buy" && attributeRules.PointBuy != null)
-                    {
-                        <p class="small mb-2 @(summary.PointsSpent > summary.PointsBudget ? "text-danger fw-semibold" : "small-muted")" data-testid="point-buy-summary">
-                            @L["Actor.Sheet.PointBuyLead"]<strong>@summary.PointsSpent</strong>@L["Actor.Sheet.PointBuyTail", summary.PointsBudget, attributeRules.PointBuy.Min, attributeRules.PointBuy.Max]
-                        </p>
-                    }
-                    else if (attributeRules != null && AttrMethod == "standard-array" && attributeRules.StandardArray.Count > 0)
-                    {
-                        <p class="small small-muted mb-2">@L["Actor.Sheet.StdArrayLead"]<bdi>@string.Join(", ", attributeRules.StandardArray)</bdi>@L["Actor.Sheet.StdArrayTail"]</p>
-                    }
-
-                    <div class="attr-grid" style="@(system.Attributes.Count is > 0 and <= 8 ? $"--attr-count:{system.Attributes.Count}" : null)">
-                        @foreach (var attr in system.Attributes)
-                        {
-                            var total = summary?.Totals.GetValueOrDefault(attr.Key) ?? (YamlValues.GetInt(editSheet, attr.Key) ?? attr.Default);
-                            var baseScore = attributeRules != null ? (YamlValues.GetInt(editSheet, SheetRuleEngine.BasePrefix + attr.Key) ?? attr.Default) : total;
-                            var bonus = summary?.Bonuses.GetValueOrDefault(attr.Key) ?? 0;
-                            var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
-                            var modifier = Modifier(attr, total);
-                            var modifierText = modifier == null ? null : Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier);
-                            var checkLabel = L["Actor.Skills.Check", attr.Label];
-                            var inputId = "attr-input-" + attr.Key;
-                            var testId = "attr-" + attr.Key;
-                            var invalid = evaluation?.Violations.Any(v => v.FieldKey == attr.Key) == true;
-                            <div class="attr-box @(invalid ? "attr-invalid" : "")">
-                                <div class="attr-label" id="@("attr-" + attr.Key)">@(attr.Abbreviation ?? attr.Label)</div>
-                                @if (modifierText != null)
-                                {
-                                    <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]">@modifierText</div>
-                                    @if (ShowTray)
-                                    {
-                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@L["Actor.Skills.Roll", checkLabel]" data-testid="@("roll-" + attr.Key)"
-                                                     OnClick="() => RollAsync(new RollRequest(checkLabel, modifier ?? 0))" />
-                                    }
-                                }
-                                @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
-                                {
-                                    <div class="attr-medallion">
-                                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
-                                    <select id="@inputId" class="field-select field-sm" value="@baseScore" data-testid="@testId" @onchange="e => SetBase(attr, e.Value?.ToString())">
-                                        @foreach (var value in attributeRules.StandardArray.Distinct().OrderByDescending(v => v))
-                                        {
-                                            <option value="@value">@value</option>
-                                        }
-                                    </select>
-                                    </div>
-                                }
-                                else if (CanEdit)
-                                {
-                                    var min = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Min : attr.Min;
-                                    var max = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Max : attr.Max;
-                                    <div class="attr-medallion">
-                                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
-                                    <input id="@inputId" type="number" class="field-input field-sm" min="@min" max="@max"
-                                           value="@baseScore" data-testid="@testId"
-                                           @onchange="e => SetBase(attr, e.Value?.ToString())" />
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="attr-medallion attr-score">@total</div>
-                                }
-                                @if (attributeRules != null && (bonus != 0 || increase != 0 || CanEdit))
-                                {
-                                    <div class="attr-total small-muted" data-testid="@(testId + "-total")"><bdi>@TotalText(baseScore, bonus, increase, total)</bdi></div>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    @if (attributeRules?.Bonuses is { } bonusRules && summary != null)
-                    {
-                        <div class="mt-3" data-testid="attr-bonuses">
-                            <div class="field-label">@bonusRules.Label</div>
-                            @if (summary.EligibleBonusAttributes.Count == 0)
-                            {
-                                <p class="small-muted mb-0">@L["Actor.Sheet.ChooseUnderSheet", system.ActorFields.FirstOrDefault(f => f.Key == bonusRules.FromField)?.Label.ToLowerInvariant() ?? bonusRules.FromField]</p>
-                            }
-                            else
-                            {
-                                <p class="small-muted mb-2">@L["Actor.Sheet.SpreadLead"]<bdi>@string.Join(L["Actor.Sheet.Or"], bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v))))</bdi>@L["Actor.Sheet.SpreadMid"]@string.Join(", ", summary.EligibleBonusAttributes.Select(k => system.Attributes.First(a => a.Key == k).Label)).</p>
-                                <div class="d-flex flex-wrap gap-3">
-                                    @foreach (var key in summary.EligibleBonusAttributes)
-                                    {
-                                        var attr = system.Attributes.First(a => a.Key == key);
-                                        var bonusId = "bonus-" + key;
-                                        <div>
-                                            <label for="@bonusId" class="field-label">@attr.Label</label>
-                                            <select id="@bonusId" class="field-select field-sm" value="@(summary.Bonuses.GetValueOrDefault(key))" disabled="@(!CanEdit)" data-testid="@bonusId" @onchange="e => SetBonus(attr, e.Value?.ToString())">
-                                                <option value="0">—</option>
-                                                @foreach (var value in bonusRules.Allocations.SelectMany(a => a).Distinct().OrderBy(v => v))
-                                                {
-                                                    <option value="@value">+@value</option>
-                                                }
-                                            </select>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (attributeRules?.Increases is { } increaseRules && evaluation != null)
-                    {
-                        <div class="mt-3" data-testid="attr-increases">
-                            <div class="field-label">@increaseRules.Label</div>
-                            @if (evaluation.Increases.Count == 0)
-                            {
-                                <p class="small-muted mb-0">@L["Actor.Sheet.IncNone"]</p>
-                            }
-                            @foreach (var grant in evaluation.Increases)
-                            {
-                                var targets = PointTargets(grant);
-                                <div class="mb-2" data-testid="increase-@grant.Pick.Index">
-                                    <div class="small fw-semibold">@ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name) <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        @for (var point = 0; point < grant.Points; point++)
-                                        {
-                                            var pointIndex = point;
-                                            var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
-                                            <div>
-                                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name), pointIndex + 1, grant.Points]</span></label>
-                                                <select id="@selectId" class="field-select field-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
-                                                        @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
-                                                    <option value="">@L["Actor.Sheet.Choose"]</option>
-                                                    @foreach (var key in grant.Options)
-                                                    {
-                                                        <option value="@key">@system.Attributes.First(a => a.Key == key).Label</option>
-                                                    }
-                                                </select>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (evaluation != null && evaluation.Derived.Count > 0)
-                    {
-                        <dl class="prop-list mt-3 mb-0" data-testid="derived-fields">
-                            @foreach (var derived in Rules!.Derived)
-                            {
-                                if (!evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
-                                <dt>@derived.Label</dt>
-                                <dd data-testid="derived-@derived.Key"><bdi dir="ltr">@FormatSigned(value)</bdi></dd>
-                            }
-                        </dl>
-                    }
-                </section>
+                <AttributesPanel Definition="system" Evaluation="evaluation" Sheet="editSheet" CanEdit="CanEdit" IsDm="access?.IsDm == true" ShowTray="ShowTray" ShowSums="showSums"
+                                 Problems="@(Problems(v => !IsIncrease(v) && (system.Attributes.Any(a => a.Key == v.FieldKey) || v.FieldKey == SheetRuleEngine.MethodKey || v.FieldKey.StartsWith(SheetRuleEngine.BonusPrefix, StringComparison.Ordinal))))"
+                                 IncreaseProblems="@(Problems(IsIncrease))" Describe="Describe" Changed="OnRulesInputChanged" OnRoll="RollAsync" />
             }
 
             @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
             {
-                <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync" />
+                <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync"
+                             ShowSums="showSums" ShowSumsChanged="value => showSums = value" />
             }
 
             <section class="panel" aria-labelledby="sheet-heading">
@@ -457,7 +289,8 @@ else
                 </div>
                 @if (schema != null)
                 {
-                    <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="HiddenNow" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" />
+                    <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="HiddenNow" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" Secrets="@access.IsDm" Preview="PreviewMentions"
+                                Problems="FieldProblems" />
                 }
                 else if (editSheet.Count > 0)
                 {
@@ -477,85 +310,10 @@ else
 
             @if (Rules?.Multiclass is { } multiclass && evaluation != null)
             {
-                <section class="panel" aria-labelledby="classes-heading" data-testid="multiclass">
-                    <div class="panel-title">
-                        <h2 id="classes-heading" class="h5"><LucideIcon IconName="layers" Size="18" Class="title-icon" /> @L["Actor.Sheet.Classes"]</h2>
-                        <span class="pill">@L["Actor.Sheet.LevelInAll", CurrentLevel]</span>
-                    </div>
-                    @if (evaluation.Classes.Count == 0)
-                    {
-                        <p class="small-muted mb-0">@L["Actor.Sheet.ChooseClassFirst"]</p>
-                    }
-                    else
-                    {
-                        <ul class="list-unstyled mb-2">
-                            @foreach (var cls in evaluation.Classes)
-                            {
-                                var classId = cls.Id;
-                                var levelInputId = "class-level-" + classId;
-                                <li class="list-row py-1" data-testid="class-row">
-                                    <span>
-                                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(Nm(cls.Entry) ?? classId)</a>
-                                        @if (cls.IsFirst)
-                                        {
-                                            <span class="small-muted"> · @L["Actor.Sheet.FirstClass"]</span>
-                                        }
-                                        @if (cls.Subclass != null)
-                                        {
-                                            <span class="small-muted"> · @Nm(cls.Subclass)</span>
-                                        }
-                                    </span>
-                                    @if (cls.IsFirst || !CanEdit)
-                                    {
-                                        <span data-testid="class-level-@classId">@L["Actor.Sheet.Levels", cls.Level]</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="d-flex align-items-center gap-2">
-                                            <label for="@levelInputId" class="visually-hidden">@L["Actor.Sheet.ClassLevelsAria", Nm(cls.Entry) ?? classId]</label>
-                                            <input id="@levelInputId" type="number" min="1" max="@CurrentLevel" class="field-input field-sm" value="@cls.Level" data-testid="class-level-@classId"
-                                                   @onchange="e => SetClassLevel(multiclass, classId, e.Value?.ToString())" />
-                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.Remove", Nm(cls.Entry) ?? classId]" OnClick="() => RemoveClass(multiclass, classId)" />
-                                        </span>
-                                    }
-                                </li>
-                                @if (CanEdit && !cls.IsFirst && multiclass.SubclassField != null && cls.Level >= multiclass.SubclassLevel)
-                                {
-                                    var subclassId = "class-subclass-" + classId;
-                                    <li class="py-1">
-                                        <label for="@subclassId" class="field-label">@L["Actor.Sheet.Subclass", Nm(cls.Entry) ?? classId]</label>
-                                        <select id="@subclassId" class="field-select field-sm" value="@(cls.SubclassId ?? "")" data-testid="@subclassId"
-                                                @onchange="e => SetClassSubclass(multiclass, classId, e.Value?.ToString())">
-                                            <option value="">@L["Actor.Sheet.NoneYet"]</option>
-                                            @foreach (var option in SubclassOptions(classId))
-                                            {
-                                                <option value="@option.Id">@Nm(option)</option>
-                                            }
-                                        </select>
-                                    </li>
-                                }
-                            }
-                        </ul>
-                        @if (CanEdit)
-                        {
-                            var firstLevel = evaluation.Classes.FirstOrDefault(c => c.IsFirst)?.Level ?? 0;
-                            <div class="d-flex gap-2 align-items-end flex-wrap">
-                                <div>
-                                    <label for="add-class" class="field-label">@L["Actor.Sheet.AddClass"]</label>
-                                    <select id="add-class" class="field-select field-sm" @bind="newClassId" data-testid="add-class-select">
-                                        <option value="">@L["Actor.Sheet.Choose"]</option>
-                                        @foreach (var option in evaluation.MulticlassOptions)
-                                        {
-                                            <option value="@option.Id">@Nm(option)</option>
-                                        }
-                                    </select>
-                                </div>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(string.IsNullOrEmpty(newClassId) || firstLevel <= 1)" OnClick="() => AddClass(multiclass)" data-testid="add-class">@L["Actor.Sheet.Add"]</CodexButton>
-                            </div>
-                            <p class="field-hint">@(firstLevel <= 1 ? L["Actor.Sheet.NewClassHintRaise"] : L["Actor.Sheet.NewClassHint"])</p>
-                        }
-                    }
-                </section>
+                <ClassesPanel Multiclass="multiclass" Evaluation="evaluation" CampaignId="@CampaignId" CurrentLevel="CurrentLevel" CanEdit="CanEdit" EntryName="Nm" Describe="Describe"
+                              Problems="Problems(v => v.FieldKey == multiclass.Key)" SubclassOptions="SubclassOptions"
+                              OnSetLevel="change => SetClassLevel(multiclass, change.ClassId, change.Level)" OnRemove="classId => RemoveClass(multiclass, classId)"
+                              OnSetSubclass="change => SetClassSubclass(multiclass, change.ClassId, change.SubclassId)" OnAdd="classId => AddClass(multiclass, classId)" />
             }
 
 
@@ -583,9 +341,10 @@ else
                     <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> @L["Actor.Sheet.Picks"]</h2></div>
                     @foreach (var list in Rules.Lists)
                     {
-                        <div class="mb-3">
+                        <div class="mb-3" data-rule-key="@list.Key">
                             <EntryListPicker Rule="list"
                                              Picks="evaluation.ListPicks.GetValueOrDefault(list.Key) ?? Array.Empty<SheetPick>()"
+                                             Missing="evaluation.ListMissing.GetValueOrDefault(list.Key) ?? Array.Empty<MissingPick>()"
                                              Options="evaluation.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()"
                                              Limit="evaluation.ListLimits.GetValueOrDefault(list.Key)"
                                              ReadOnly="@(!CanEdit)"
@@ -594,6 +353,7 @@ else
                                              Added="id => AddPick(list, id)"
                                              Removed="index => RemovePick(list, index)"
                                              Note="PickNote" />
+                            <RuleProblemList Problems="@(Problems(v => v.FieldKey == list.Key && !IsIncrease(v)))" Describe="Describe" TestId="@("list-problems-" + list.Key)" />
                         </div>
                     }
                 </section>
@@ -605,8 +365,17 @@ else
             {
             @if (Rules?.Inventory is { } inventoryRules && evaluation != null)
             {
-                <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
-                                LibraryPath="@($"/campaigns/{CampaignId}/library")" Changed="OnRulesInputChanged" />
+                <div data-rule-key="@inventoryRules.Key">
+                    <RuleProblemList Problems="@(Problems(v => v.FieldKey == inventoryRules.Key))" Describe="Describe" TestId="inventory-problems" />
+                    @if (evaluation.Inventory.Count > 0)
+                    {
+                        <p class="small-muted mb-2" data-testid="inventory-weight">@(evaluation.CarryingCapacity is { } capacity
+                            ? L["Actor.Sheet.CarriedOf", Weight(evaluation.CarriedWeight, inventoryRules), Weight(capacity, inventoryRules)]
+                            : L["Actor.Sheet.Carried", Weight(evaluation.CarriedWeight, inventoryRules)])</p>
+                    }
+                    <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
+                                    LibraryPath="@($"/campaigns/{CampaignId}/library")" Changed="OnRulesInputChanged" />
+                </div>
             }
 
             }
@@ -678,7 +447,7 @@ else
                                 <q><MentionText Text="@line.Text" Mentions="noteMentions" CampaignId="@CampaignId" /></q>
                                 @if (line.IsSecret)
                                 {
-                                    <span class="pill ms-1">@L["Actor.Sheet.Secret"]</span>
+                                    <span class="pill ms-2">@L["Actor.Sheet.Secret"]</span>
                                 }
                             </li>
                         }
@@ -758,14 +527,14 @@ else
 
             @if (Rules?.ArmorClass is { } armorClassRules)
             {
-                <ArmorClassPanel Rules="armorClassRules" Summary="evaluation?.ArmorClass" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+                <ArmorClassPanel Rules="armorClassRules" Definition="system" Summary="evaluation?.ArmorClass" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
             }
 
             @if (Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))))
             {
                 <section class="panel" aria-labelledby="sheet-slots-heading" data-testid="sheet-slots">
-                    <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="18" Class="title-icon" /> @SlotTracker.Heading(Rules.SlotPools, editSheet.Keys)</h2></div>
-                    <SlotTracker Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
+                    <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="18" Class="title-icon" /> @SlotTracker.Heading(system, Rules.SlotPools, editSheet.Keys)</h2></div>
+                    <SlotTracker Definition="system" Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
                                  OnAdjust="AdjustSlot" OnRest="RestSlots" />
                     <p class="small-muted mt-2 mb-0">@L["Actor.Sheet.SlotsNote"]</p>
                 </section>
@@ -775,36 +544,36 @@ else
             {
                 <section class="panel panel-ai" aria-labelledby="levelup-heading">
                     <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="18" Class="title-icon" /> @L["Actor.Sheet.LevelUp"]</h2></div>
-                    <p class="small-muted">@L["Actor.Sheet.LevelUpIntro", CurrentLevel, CurrentLevel + 1]</p>
-                    @if (Rules?.Multiclass != null && evaluation is { Classes.Count: > 0 })
+                    @if (AtMaxLevel)
                     {
-                        <div class="mb-2">
-                            <label for="levelup-class" class="field-label">@L["Actor.Sheet.ClassGaining"]</label>
-                            <select id="levelup-class" class="field-select field-sm" @bind="levelUpClassId" data-testid="levelup-class">
-                                @foreach (var cls in evaluation.Classes)
-                                {
-                                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", Nm(cls.Entry) ?? cls.Id, cls.Level + 1]</option>
-                                }
-                                @foreach (var option in evaluation.MulticlassOptions)
-                                {
-                                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", Nm(option)]</option>
-                                }
-                            </select>
+                        <p class="small-muted mb-0" data-testid="levelup-max">@L["Actor.Sheet.LevelMax", CurrentLevel]</p>
+                    }
+                    else if (levelUpPlan is { } plan)
+                    {
+                        <LevelUpStepper Plan="plan" Evaluation="evaluation" Rules="Rules" ClassId="@levelUpClassId" Roll="levelUpRoll" EntryName="Nm" Describe="Describe"
+                                        OnClassChosen="ChooseLevelUpClass" OnRollTyped="SetLevelUpRoll" OnRollDie="RollLevelUpHitDie" OnApply="ApplyLevelUp" OnCancel="CloseLevelUp" />
+                    }
+                    else
+                    {
+                        <p class="small-muted">@L["Actor.Sheet.LevelUpIntro", CurrentLevel, CurrentLevel + 1]</p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="trending-up" OnClick="OpenLevelUp" data-testid="levelup-start">@L["Actor.Sheet.LevelUpTo", CurrentLevel + 1]</CodexButton>
+                            @if (busy == "level")
+                            {
+                                <AiWorking Text="@L["Actor.Sheet.Thinking"]" OnStop="aiCall.Stop" TestId="levelup-working" />
+                            }
+                            else
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
+                                    <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.SuggestLevel", CurrentLevel + 1]
+                                </CodexButton>
+                            }
                         </div>
                     }
-                    <div class="d-flex gap-2 flex-wrap">
-                        @if (busy == "level")
-                        {
-                            <AiWorking Text="@L["Actor.Sheet.Thinking"]" OnStop="aiCall.Stop" TestId="levelup-working" />
-                        }
-                        else
-                        {
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
-                                <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.SuggestLevel", CurrentLevel + 1]
-                            </CodexButton>
-                        }
-                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ApplyLevelUp">@L["Actor.Sheet.SetLevel", CurrentLevel + 1]</CodexButton>
-                    </div>
+                    @if (levelUpDone is { } done && levelUpPlan == null)
+                    {
+                        <LevelUpToDo Done="done" Evaluation="evaluation" Rules="Rules" Sheet="editSheet" OnGoThere="ShowRule" OnDismiss="() => levelUpDone = null" />
+                    }
                     @if (levelUpAdvice != null)
                     {
                         <div class="ai-output mt-3" data-testid="levelup-advice">
@@ -820,55 +589,7 @@ else
 
             @if (access.IsDm)
             {
-                <section class="panel" aria-labelledby="visibility-heading">
-                    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="18" Class="title-icon" /> @L["Actor.Sheet.Visibility"]</h2></div>
-                    <div class="mb-2">
-                        <label for="actor-visibility" class="field-label">@L["Actor.Sheet.WhoSees"]</label>
-                        <select id="actor-visibility" class="field-select" @bind="editVisibility">
-                            <option value="@ActorVisibility.Hidden">@L["Actor.Sheet.VisHidden"]</option>
-                            <option value="@ActorVisibility.Unknown">@L["Actor.Sheet.VisUnknown"]</option>
-                            <option value="@ActorVisibility.Known">@L["Actor.Sheet.VisKnown"]</option>
-                        </select>
-                    </div>
-                    @if (editVisibility == ActorVisibility.Known && actor.Visibility != ActorVisibility.Known && !string.IsNullOrWhiteSpace(actor.Biography))
-                    {
-                        <p class="field-hint text-warning" role="status" data-testid="actor-reveal-history">@L["Actor.Sheet.RevealHistory"]</p>
-                    }
-                    @if (editVisibility == ActorVisibility.Unknown)
-                    {
-                        <p class="field-hint" data-testid="actor-unknown-hint">@L["Actor.Sheet.UnknownHint"]</p>
-                        <div class="mb-2">
-                            <label for="actor-public-name" class="field-label">@L["Actor.Sheet.ShownAs"]</label>
-                            <input id="actor-public-name" class="field-input" @bind="editPublicName" @bind:event="oninput" placeholder="@L["Actor.Stranger"]" data-testid="actor-public-name" />
-                        </div>
-                        <div class="mb-2">
-                            <label for="actor-public-description" class="field-label">@L["Actor.Sheet.PublicDescription"]</label>
-                            <textarea id="actor-public-description" class="field-input" rows="4" @bind="editPublicDescription" @bind:event="oninput"
-                                      placeholder="@L["Actor.Sheet.PublicDescriptionPh"]" data-mentions="@mentionsJson" data-testid="actor-public-description"></textarea>
-                        </div>
-                    }
-                    <div class="mb-2">
-                        <label for="actor-kind" class="field-label">@L["Actor.Sheet.Kind"]</label>
-                        <select id="actor-kind" class="field-select" @bind="editKind">
-                            <option value="@ActorKind.PlayerCharacter">@L["Actor.Sheet.KindPc"]</option>
-                            <option value="@ActorKind.NonPlayerCharacter">@L["Actor.Sheet.KindNpc"]</option>
-                            <option value="@ActorKind.Monster">@L["Actor.Sheet.KindMonster"]</option>
-                        </select>
-                    </div>
-                    @if (editKind == ActorKind.PlayerCharacter)
-                    {
-                        <div class="mb-2">
-                            <label for="actor-owner" class="field-label">@L["Actor.Sheet.PlayedBy"]</label>
-                            <select id="actor-owner" class="field-select" @bind="editOwnerId">
-                                <option value="">@L["Actor.Sheet.Nobody"]</option>
-                                @foreach (var member in campaign.Members)
-                                {
-                                    <option value="@member.UserId">@memberNames.GetValueOrDefault(member.UserId, member.UserId)</option>
-                                }
-                            </select>
-                        </div>
-                    }
-                </section>
+                <ActorVisibilityPanel Edits="audience" Actor="actor" Members="campaign.Members" MemberNames="memberNames" MentionsJson="@mentionsJson" Preview="PreviewMentions" OnChanged="StateHasChanged" />
             }
         </div>
     </div>
@@ -881,6 +602,10 @@ else
 @code {
     [Parameter] public string CampaignId { get; set; } = string.Empty;
     [Parameter] public string ActorId { get; set; } = string.Empty;
+
+    /// <summary>Back to what the sheet was opened from (the Table, Cast, a wiki page), and what the button says.</summary>
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public string BackLabel { get; set; } = string.Empty;
 
     private bool loading = true;
     private CampaignDocument? campaign;
@@ -914,18 +639,15 @@ else
     /// <summary>The history or notes as a reader will see them: the typed @Names become mentions first.</summary>
     private string PreviewMentions(string text) =>
         SecretRender.Html(noteMentions.Encode(text), encoded => MentionLinks.ToHtml(encoded, noteMentions, CampaignId), access?.IsDm == true ? DmView.From(L, noteMentions) : null);
-    private ActorVisibility editVisibility;
-    private string editPublicName = "";
-    private string editPublicDescription = "";
-    private ActorKind editKind;
-    private string editOwnerId = "";
+    // Who sees it, as what, and who plays it: the DM's, edited in ActorVisibilityPanel.
+    private readonly ActorVisibilityPanel.Draft audience = new();
     private Dictionary<string, object> editSheet = new();
     private Dictionary<string, object> loadedSheet = new();
-    private string newClassId = "";
     private string levelUpClassId = "";
     private Flash? flash;
     private Dictionary<string, object> baselineSheet = new();
     private string rollMode = "1d20";
+    private bool showSums;
     private RollLogEntry? lastRoll;
     private bool lastRollShared;
 
@@ -959,8 +681,8 @@ else
         }
         if (lastRoll == null || !lastRollShared)
         {
-            var result = StandardDiceRoller.Instance.Roll(expression);
-            lastRoll = new RollLogEntry { ActorId = actor.Id, RollerUserId = currentUserId, Expression = expression, Result = result.ToString(), Total = result.Total, Label = request.Label, Kept = result.Kept.ToList(), Dropped = result.Dropped.ToList(), Modifier = result.Modifier };
+            var result = RuntimeManager.DiceRollerFor(campaign?.SystemId ?? string.Empty).Roll(expression);
+            lastRoll = new RollLogEntry { ActorId = actor.Id, RollerUserId = currentUserId, Expression = expression, Result = result.ToString(), Total = result.Total, Label = request.Label, Kept = result.Kept.ToList(), Dropped = result.Dropped.ToList(), Modifier = result.Modifier, CheckDieIndex = result.CheckDieIndex };
             lastRollShared = false;
         }
     }
@@ -998,19 +720,12 @@ else
             if (editDmNotes != noteMentions.ForEditing(actor.DmNotes ?? "")) count++;
             if (access?.IsDm == true)
             {
-                if (editVisibility != actor.Visibility) count++;
-                if (editPublicName != (actor.PublicName ?? "")) count++;
-                if (editPublicDescription != noteMentions.ForEditing(actor.PublicDescription ?? "")) count++;
+                if (audience.Visibility != actor.Visibility) count++;
+                if (audience.PublicName != (actor.PublicName ?? "")) count++;
+                if (audience.PublicDescription != noteMentions.ForEditing(actor.PublicDescription ?? "")) count++;
             }
 
-            foreach (var key in editSheet.Keys.Union(baselineSheet.Keys))
-            {
-                editSheet.TryGetValue(key, out var now);
-                baselineSheet.TryGetValue(key, out var before);
-                if (!Equals(now, before) && now?.ToString() != before?.ToString()) count++;
-            }
-
-            return count;
+            return count + YamlValues.ChangedKeys(editSheet, baselineSheet);
         }
     }
 
@@ -1038,9 +753,11 @@ else
             }
         }
 
-        if (system?.ActorFields.FirstOrDefault(f => f.Key == "speed") is { } speed && YamlValues.GetInt(editSheet, speed.Key) is { } feet)
+        if (system?.ActorFields.FirstOrDefault(f => f.Key == system.FieldRoles.Speed) is { } speed && YamlValues.GetInt(editSheet, speed.Key) is { } distance)
         {
-            yield return (speed.Label.Replace(" (feet)", ""), L["Actor.Sheet.Feet", feet]);
+            // The plate says the system's unit with the number, so the label's own "(feet)" goes, in any language.
+            var label = speed.Abbreviation ?? System.Text.RegularExpressions.Regex.Replace(speed.Label, @"\s*\([^)]*\)\s*$", "");
+            yield return (label, string.IsNullOrEmpty(speed.Unit) ? distance.ToString(System.Globalization.CultureInfo.CurrentCulture) : $"{distance} {speed.Unit}");
         }
     }
 
@@ -1066,28 +783,15 @@ else
     private bool CanEdit => access != null && actor != null && (access.IsDm || actor.OwnerUserId == currentUserId);
     private SheetRules? Rules => system?.SheetRules;
     private string Enforcement => SheetRuleEngine.EffectiveEnforcement(system, campaign?.RulesEnforcement);
-    private string AttrMethod => (YamlValues.GetString(editSheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? "manual").ToLowerInvariant();
-
-    /// <summary>Players pick from the system's methods; the DM may always set scores by hand.</summary>
-    private IEnumerable<string> AvailableMethods
-    {
-        get
-        {
-            var methods = Rules?.Attributes?.Methods ?? new List<string> { "manual" };
-            return access?.IsDm == true ? methods.Append("manual").Distinct() : methods;
-        }
-    }
-
-    private string MethodLabel(string method) => method switch
-    {
-        "point-buy" => L["Actor.Sheet.MethodPointBuy"],
-        "standard-array" => L["Actor.Sheet.MethodStandardArray"],
-        _ => L["Actor.Sheet.MethodManual"]
-    };
 
     private static string FormatSigned(object value) => Bidi.Ltr(value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty);
-    private bool HasLevel => schema?.Fields.Any(f => f.Key == "level") == true;
-    private int CurrentLevel => YamlValues.GetInt(editSheet, "level") ?? 1;
+    // The field the system says holds the character's level (FieldRoles); without one there is no level up.
+    private string? LevelField => system?.FieldRoles.Level;
+    private bool HasLevel => LevelField != null && schema?.Fields.Any(f => f.Key == LevelField) == true;
+    private int CurrentLevel => LevelField == null ? 1 : YamlValues.GetInt(editSheet, LevelField) ?? 1;
+
+    // The system's top level (the level field's max, 20 in the SRD): past it the tables have no row, so there is no level up (R7).
+    private bool AtMaxLevel => schema?.Fields.FirstOrDefault(f => f.Key == LevelField)?.Max is { } max && CurrentLevel >= max;
 
     private string DisplayName => actor == null ? string.Empty : actor.NameFor(access?.IsDm != false);
 
@@ -1151,10 +855,10 @@ else
                 wikiPage = string.IsNullOrEmpty(actor.WikiPageId) || access == null ? null
                     : (await WikiRepo.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == actor.WikiPageId);
                 editName = actor.Name;
-                editVisibility = actor.Visibility;
-                editPublicName = actor.PublicName ?? "";
-                editKind = actor.Kind;
-                editOwnerId = actor.OwnerUserId ?? "";
+                audience.Visibility = actor.Visibility;
+                audience.PublicName = actor.PublicName ?? "";
+                audience.Kind = actor.Kind;
+                audience.OwnerId = actor.OwnerUserId ?? "";
                 editSheet = new Dictionary<string, object>(actor.Sheet);
                 loadedSheet = new Dictionary<string, object>(actor.Sheet);
 
@@ -1183,7 +887,7 @@ else
                 templates = access.IsDm ? await TemplateRepo.GetAsync(access, L) : null;
                 editBiography = mentions.ForEditing(actor.Biography ?? "");
                 editDmNotes = mentions.ForEditing(actor.DmNotes ?? "");
-                editPublicDescription = mentions.ForEditing(actor.PublicDescription ?? "");
+                audience.PublicDescription = mentions.ForEditing(actor.PublicDescription ?? "");
             }
         }
 
@@ -1208,6 +912,55 @@ else
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, Nm(e)!)).ToList());
+        // An open level-up follows the sheet: a pick or a score changed under it changes what the next level brings.
+        if (levelUpPlan != null) PlanLevelUp();
+    }
+
+    // ---- Rule problems where they are fixed (U4): beside the field, a count on its tab, and the summary's way there. ----
+
+    // An increase's problem names its feat's list, but is fixed where its points are spent, on Attributes.
+    private static bool IsIncrease(RuleViolation violation) => violation.Key?.StartsWith("Actor.Rule.Inc", StringComparison.Ordinal) == true;
+
+    private IReadOnlyList<RuleViolation> Problems(Func<RuleViolation, bool> where) =>
+        CanEdit && evaluation != null ? evaluation.Violations.Where(where).ToList() : Array.Empty<RuleViolation>();
+
+    private string TabOf(RuleViolation violation) =>
+        !IsIncrease(violation) && Rules?.Lists.Any(l => l.Key == violation.FieldKey) == true ? "picks"
+        : violation.FieldKey == Rules?.Inventory?.Key ? "inventory"
+        : "attributes";
+
+    private int ProblemsOn(string tab) => Problems(v => TabOf(v) == tab).Count;
+
+    // The data-rule-key of the place that fixes it.
+    private string RuleTarget(RuleViolation violation) =>
+        IsIncrease(violation) ? "increases"
+        : violation.FieldKey == SheetRuleEngine.MethodKey || violation.FieldKey.StartsWith(SheetRuleEngine.BonusPrefix, StringComparison.Ordinal) ? "attributes"
+        : violation.FieldKey;
+
+    /// <summary>Each sheet field's problems, said under the field.</summary>
+    private IReadOnlyDictionary<string, string> FieldProblems =>
+        Problems(v => schema?.Fields.Any(f => f.Key == v.FieldKey) == true && system?.Attributes.Any(a => a.Key == v.FieldKey) != true)
+            .GroupBy(v => v.FieldKey)
+            .ToDictionary(g => g.Key, g => string.Join(" ", g.Select(Describe)));
+
+    private string? pendingRule;
+
+    /// <summary>Opens the tab that fixes it and brings the place into view.</summary>
+    private void ShowRule(string target)
+    {
+        activeTab = Rules?.Lists.Any(l => l.Key == target) == true ? "picks"
+            : target == Rules?.Inventory?.Key ? "inventory"
+            : "attributes";
+        pendingRule = target;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (pendingRule is { } target)
+        {
+            pendingRule = null;
+            await JS.InvokeVoidAsync("codex.showRule", target);
+        }
     }
 
     private Task OnRulesInputChanged()
@@ -1220,55 +973,6 @@ else
     {
         Reevaluate();
         return Task.CompletedTask;
-    }
-
-    private void SetMethod(string? method)
-    {
-        if (string.IsNullOrEmpty(method) || system == null) return;
-        editSheet[SheetRuleEngine.MethodKey] = method;
-        if (method == "point-buy" && Rules?.Attributes?.PointBuy is { } pointBuy)
-        {
-            foreach (var attr in system.Attributes)
-            {
-                var current = YamlValues.GetInt(editSheet, SheetRuleEngine.BasePrefix + attr.Key) ?? attr.Default;
-                editSheet[SheetRuleEngine.BasePrefix + attr.Key] = (long)Math.Clamp(current, pointBuy.Min, pointBuy.Max);
-            }
-        }
-        else if (method == "standard-array" && Rules?.Attributes?.StandardArray is { Count: > 0 } array)
-        {
-            var values = array.OrderByDescending(v => v).ToList();
-            for (var i = 0; i < system.Attributes.Count; i++)
-            {
-                editSheet[SheetRuleEngine.BasePrefix + system.Attributes[i].Key] = (long)values[Math.Min(i, values.Count - 1)];
-            }
-        }
-
-        Reevaluate();
-    }
-
-    private void SetBase(AttributeDefinition attribute, string? raw)
-    {
-        if (!int.TryParse(raw, out var value)) return;
-        if (Rules?.Attributes != null)
-        {
-            editSheet[SheetRuleEngine.BasePrefix + attribute.Key] = (long)value;
-        }
-        else
-        {
-            if (attribute.Min.HasValue) value = Math.Max(attribute.Min.Value, value);
-            if (attribute.Max.HasValue) value = Math.Min(attribute.Max.Value, value);
-            editSheet[attribute.Key] = (long)value;
-        }
-
-        Reevaluate();
-    }
-
-    private void SetBonus(AttributeDefinition attribute, string? raw)
-    {
-        if (!int.TryParse(raw, out var value)) return;
-        if (value == 0) editSheet.Remove(SheetRuleEngine.BonusPrefix + attribute.Key);
-        else editSheet[SheetRuleEngine.BonusPrefix + attribute.Key] = (long)value;
-        Reevaluate();
     }
 
     private void SetRawList(string key, List<string> raw)
@@ -1312,71 +1016,47 @@ else
         return L[violation.Key, args];
     }
 
+    /// <summary>A weight as the inventory shows it: the number, and the system's unit in the reader's language when it names one.</summary>
+    private string Weight(double weight, InventoryRules rules)
+    {
+        var number = weight.ToString("0.##", L.Culture);
+        return rules.WeightUnit is { } unit && system != null ? $"{number} {system.DisplayValue(unit)}" : number;
+    }
+
     private string? PickNote(SheetPick pick) =>
         pick.Choices.Count == 0 || system == null ? null
             : string.Join(", ", pick.Choices.Select(c => $"+{c.Value} {system.Attributes.FirstOrDefault(a => a.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? c.Key}"));
-
-    private string TotalText(int baseScore, int bonus, int increase, int total)
-    {
-        if (bonus == 0 && increase == 0) return L["Actor.Sheet.TotalOnly", total];
-        var parts = new List<string> { baseScore.ToString() };
-        if (bonus != 0) parts.Add(bonus.ToString());
-        if (increase != 0) parts.Add(increase.ToString());
-        return string.Join(" + ", parts) + " = " + total;
-    }
-
-    /// <summary>Which attribute each of a grant's points goes to, "" where not chosen yet.</summary>
-    private static List<string> PointTargets(IncreaseGrant grant)
-    {
-        var targets = grant.Pick.Choices.SelectMany(c => Enumerable.Repeat(c.Key, Math.Max(c.Value, 0))).ToList();
-        while (targets.Count < grant.Points) targets.Add("");
-        return targets;
-    }
-
-    private void SetIncreasePoint(IncreaseRules rules, IncreaseGrant grant, int point, string? attributeKey)
-    {
-        var targets = PointTargets(grant);
-        if (point >= targets.Count) return;
-        targets[point] = attributeKey ?? "";
-        var choices = targets.Where(t => t.Length > 0).GroupBy(t => t, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.Count());
-        var raw = SheetRuleEngine.RawList(editSheet, rules.FromList);
-        if (grant.Pick.Index >= raw.Count) return;
-        raw[grant.Pick.Index] = SheetRuleEngine.FormatPick(grant.Pick.Entry.Id, choices);
-        SetRawList(rules.FromList, raw);
-    }
 
     private void SetOtherClasses(MulticlassRules rules, List<OtherClass> classes) =>
         SetRawList(rules.Key, classes.Select(SheetRuleEngine.FormatClassLevel).ToList());
 
     private IEnumerable<ContentEntry> SubclassOptions(string classId) =>
         subclassCandidates
-            .Where(c => string.Equals(c.Properties.GetValueOrDefault("class")?.ToString(), classId, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.Equals(c.Properties.GetValueOrDefault(Rules?.Multiclass?.SubclassClassProperty ?? string.Empty)?.ToString(), classId, StringComparison.OrdinalIgnoreCase))
             .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase);
 
     private void SetClassSubclass(MulticlassRules rules, string classId, string? subclassId) =>
         SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Select(c => c.Id == classId ? c with { Subclass = string.IsNullOrEmpty(subclassId) ? null : subclassId } : c).ToList());
 
-    private void AddClass(MulticlassRules rules)
+    private void AddClass(MulticlassRules rules, string classId)
     {
-        if (string.IsNullOrEmpty(newClassId)) return;
+        if (string.IsNullOrEmpty(classId)) return;
         var classes = SheetRuleEngine.ParseClassLevels(editSheet, rules.Key);
-        classes.Add(new OtherClass(newClassId, 1));
-        newClassId = "";
+        classes.Add(new OtherClass(classId, 1));
         SetOtherClasses(rules, classes);
     }
 
     private void RemoveClass(MulticlassRules rules, string classId) =>
         SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Where(c => c.Id != classId).ToList());
 
-    private void SetClassLevel(MulticlassRules rules, string classId, string? raw)
+    private void SetClassLevel(MulticlassRules rules, string classId, int level)
     {
-        if (!int.TryParse(raw, out var level) || level < 1) return;
         SetOtherClasses(rules, SheetRuleEngine.ParseClassLevels(editSheet, rules.Key).Select(c => c.Id == classId ? c with { Level = level } : c).ToList());
     }
 
     private void AdjustSlot((string Key, int Delta, string Label) change)
     {
-        var maxKey = change.Key + "_Max";
+        var maxKey = SystemDefinition.PoolMaxKey(system, change.Key);
         var max = YamlValues.GetInt(editSheet, maxKey) ?? 0;
         var current = YamlValues.GetInt(editSheet, change.Key) ?? max;
         editSheet[change.Key] = (long)Math.Clamp(current + change.Delta, 0, max);
@@ -1386,10 +1066,10 @@ else
     {
         foreach (var key in rest.Keys)
         {
-            if (YamlValues.GetInt(editSheet, key + "_Max") is { } max) editSheet[key] = (long)max;
+            if (YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, key)) is { } max) editSheet[key] = (long)max;
         }
 
-        flash = Flash.Info(L["Actor.Sheet.SlotsRefilled", SlotTracker.RestName(L, rest.Name)]);
+        flash = Flash.Info(L["Actor.Sheet.SlotsRefilled", SlotTracker.RestName(system, rest.Name)]);
     }
 
     private async Task LoadReferenceOptionsAsync()
@@ -1415,8 +1095,6 @@ else
         }
     }
 
-    private static int? Modifier(AttributeDefinition attribute, int score) =>
-        attribute.Modifier == "half-minus-five" ? (int)Math.Floor((score - 10) / 2.0) : null;
 
     private ActorDocument ApplyEdits(ActorDocument target)
     {
@@ -1427,11 +1105,11 @@ else
         if (access!.IsDm)
         {
             target.DmNotes = string.IsNullOrWhiteSpace(editDmNotes) ? null : noteMentions.Encode(editDmNotes.Trim());
-            target.Visibility = editVisibility;
-            target.PublicName = string.IsNullOrWhiteSpace(editPublicName) ? null : editPublicName.Trim();
-            target.PublicDescription = string.IsNullOrWhiteSpace(editPublicDescription) ? null : noteMentions.Encode(editPublicDescription.Trim());
-            target.Kind = editKind;
-            target.OwnerUserId = editKind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(editOwnerId) ? editOwnerId : (editKind == ActorKind.PlayerCharacter ? target.OwnerUserId : null);
+            target.Visibility = audience.Visibility;
+            target.PublicName = string.IsNullOrWhiteSpace(audience.PublicName) ? null : audience.PublicName.Trim();
+            target.PublicDescription = string.IsNullOrWhiteSpace(audience.PublicDescription) ? null : noteMentions.Encode(audience.PublicDescription.Trim());
+            target.Kind = audience.Kind;
+            target.OwnerUserId = audience.Kind == ActorKind.PlayerCharacter && !string.IsNullOrEmpty(audience.OwnerId) ? audience.OwnerId : (audience.Kind == ActorKind.PlayerCharacter ? target.OwnerUserId : null);
         }
 
         ActorSheetSync.ApplySheetToState(target, system, Components);
@@ -1440,20 +1118,32 @@ else
 
     /// <summary>Saves through the live table when there is one (merging with whatever the table changed
     /// since this page loaded), and straight to the actor otherwise. <see cref="loadedSheet"/> is what
-    /// tells the merge which fields were edited here.</summary>
-    // Set when the last save was refused because the DM changed the history while the player was editing it.
-    private bool historyChanged;
+    /// tells the merge which fields were edited here. It is the sheet as stored, not <see cref="baselineSheet"/>
+    /// (the sheet after the rules ran on load, which only decides what counts as unsaved): what the rules
+    /// recomputed on load is written too, and a counter they moved (current hit points following a new
+    /// maximum) is merged by that move, added to the table's value rather than put over it.</summary>
+    // Set when the last save was refused with the edits left in the page: the DM changed the history while the player was
+    // editing it, or someone saved the sheet since this page loaded it.
+    private bool editsKept;
 
     private async Task<bool> TrySaveActorAsync()
     {
-        historyChanged = false;
+        editsKept = false;
         try
         {
             return await RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
         }
         catch (LocalizedException ex) when (ex.Key == "Actor.Sheet.HistoryChanged")
         {
-            historyChanged = true;
+            editsKept = true;
+            flash = Flash.Error(L[ex.Key]);
+            return false;
+        }
+        catch (LocalizedException ex) when (ex.Key == "Actor.Sheet.ChangedMeanwhile")
+        {
+            // The page now replaces the version stored since, so a second Save is made knowing it (D3).
+            if (await ActorRepo.GetVisibleAsync(actor!.Id, access!) is { } latest) DocumentVersions.Carry(actor, latest);
+            editsKept = true;
             flash = Flash.Error(L[ex.Key]);
             return false;
         }
@@ -1487,9 +1177,9 @@ else
 
         if (await TrySaveActorAsync())
         {
-            flash ??= Flash.Success(L["Actor.Sheet.Saved"]);
+            flash ??= Flash.Success(L["Common.Saved"]);
         }
-        else if (historyChanged)
+        else if (editsKept)
         {
             // Not reloaded: the player's text stays in the editor for them to copy.
             return;
@@ -1502,110 +1192,11 @@ else
         await ReloadAsync();
     }
 
-    private async Task UploadPortraitAsync(InputFileChangeEventArgs e)
-    {
-        if (actor == null || access == null || !CanEdit) return;
-        var file = e.File;
-        if (!RavenMediaStore.AllowedContentTypes.Contains(file.ContentType))
-        {
-            flash = Flash.Error(L["Actor.Sheet.PortraitTypeError"]);
-            return;
-        }
+    private void SetDrawing(bool drawing) => busy = drawing ? "portrait" : null;
 
-        if (file.Size > RavenMediaStore.MaxBytes)
-        {
-            flash = Flash.Error(L["Actor.Sheet.PortraitTooBig"]);
-            return;
-        }
-
-        try
-        {
-            using var stream = file.OpenReadStream(RavenMediaStore.MaxBytes);
-            await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, file.ContentType);
-            actor.HasPortrait = true;
-            actor.PortraitVersion++;
-            ApplyEdits(actor);
-            // A refused history keeps the player's text in the editor: no reload over it.
-            if (!await TrySaveActorAsync() && historyChanged) return;
-            flash = Flash.Success(L["Actor.Sheet.PortraitUpdated"]);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Portrait upload failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Art.UploadFailed", L.Describe(ex)]);
-        }
-
-        await ReloadAsync();
-    }
-
-    private async Task RemovePortraitAsync()
-    {
-        if (actor == null || access == null || !CanEdit) return;
-        await Media.DeleteAsync(actor.Id, RavenMediaStore.ActorPortrait);
-        actor.HasPortrait = false;
-        actor.PortraitVersion++;
-        ApplyEdits(actor);
-        // A refused history keeps the player's text in the editor: no reload over it.
-        if (!await TrySaveActorAsync() && historyChanged) return;
-        flash = Flash.Success(L["Actor.Sheet.PortraitRemoved"]);
-        await ReloadAsync();
-    }
-
-    /// <summary>Has the image model draw a square, face-first portrait from what players may know of the character
-    /// (sheet choices, public description, history; never the DM's notes), and stores it like an upload.</summary>
-    private async Task GeneratePortraitAsync()
-    {
-        if (actor == null || campaign == null || currentUserId == null || !CanEdit || busy != null) return;
-        if (actor.HasPortrait && !await leaveConfirm.ShowAsync(
-                L["Actor.Sheet.ReplacePortraitTitle"],
-                L["Actor.Sheet.ReplacePortraitBody"],
-                L["Actor.Sheet.DrawNew"], cancel: L["Actor.Sheet.KeepThis"]))
-        {
-            return;
-        }
-
-        busy = "portrait";
-        var ct = aiCall.Begin();
-        try
-        {
-            var snapshot = ApplyEdits(new ActorDocument { Id = actor.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, PublicDescription = actor.PublicDescription });
-            var image = await Art.GenerateAsync(currentUserId, snapshot.Name, AiFeatures.KindLabel(snapshot.Kind, system), Ai.PortraitVisual(ForAi(snapshot), campaign.SystemId, system), ArtShape.Square, ct);
-            // Stopped just as the picture arrived: nothing is stored. Once storing starts, it finishes.
-            ct.ThrowIfCancellationRequested();
-            aiCall.End(ct);
-            using var stream = new MemoryStream(image.Bytes);
-            await Media.PutAsync(actor.Id, RavenMediaStore.ActorPortrait, stream, image.ContentType);
-            actor.HasPortrait = true;
-            actor.PortraitVersion++;
-            ApplyEdits(actor);
-            // A refused history keeps the player's text in the editor: no reload over it.
-            if (!await TrySaveActorAsync() && historyChanged) return;
-            flash = Flash.Success(L["Actor.Sheet.PortraitDrawn"]);
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            flash = Flash.Info(L["Common.Ai.Stopped"]);
-            return;
-        }
-        catch (AiImageNotConfiguredException)
-        {
-            flash = Flash.Error(L["Actor.Sheet.NoImageModel"]);
-            return;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Portrait generation failed for actor {ActorId}", ActorId);
-            flash = Flash.Error(L["Actor.Art.DrawFailed", AiFailureText.For(L, ex)]);
-            return;
-        }
-        finally
-        {
-            aiCall.End(ct);
-            busy = null;
-        }
-
-        await ReloadAsync();
-    }
+    /// <summary>The character as the sheet now has it, for drawing its portrait.</summary>
+    private ActorDocument PortraitDraft() =>
+        ForAi(ApplyEdits(new ActorDocument { Id = actor!.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, PublicDescription = actor.PublicDescription }));
 
     /// <summary>The model reads names, not stored mention ids.</summary>
     private ActorDocument ForAi(ActorDocument snapshot)
@@ -1627,8 +1218,22 @@ else
                 audience == AiAudience.Dm ? editDmNotes : editBiography,
                 audience == AiAudience.Dm ? dmInstruction : bioInstruction,
                 audience, currentUserId, ct);
+            // The model's text replaces the box; what was there before can be had back from the toast (U3).
+            var previous = audience == AiAudience.Dm ? editDmNotes : editBiography;
+            var forActor = actor.Id;
             if (audience == AiAudience.Dm) editDmNotes = text; else editBiography = text;
-            flash = Flash.Info(L["Actor.Sheet.AiDraftReady"]);
+            flash = Flash.Undoable(L["Actor.Sheet.AiDraftReady"], () =>
+            {
+                if (actor?.Id != forActor)
+                {
+                    flash = Flash.Error(L["Common.UndoGone"]);
+                    return Task.CompletedTask;
+                }
+
+                if (audience == AiAudience.Dm) editDmNotes = previous; else editBiography = previous;
+                flash = Flash.Info(L["Common.Undone"]);
+                return Task.CompletedTask;
+            });
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -1682,24 +1287,118 @@ else
 
     public void Dispose() => aiCall.Dispose();
 
-    private void ApplyLevelUp()
+    // ---- Level up (U4): what the next level brings, from a copy of the sheet at that level, before it is taken. ----
+
+    private LevelUpPlan? levelUpPlan;
+    private LevelUpPlan? levelUpDone;
+    private int? levelUpRoll;
+
+    private void OpenLevelUp()
     {
-        editSheet["level"] = (long)(CurrentLevel + 1);
-        if (Rules?.Multiclass is { } multiclass && evaluation?.Classes.FirstOrDefault(c => c.IsFirst) is { } first
-            && !string.IsNullOrEmpty(levelUpClassId) && levelUpClassId != first.Id)
+        levelUpDone = null;
+        levelUpRoll = null;
+        levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
+        PlanLevelUp();
+    }
+
+    private void CloseLevelUp()
+    {
+        levelUpPlan = null;
+        levelUpRoll = null;
+    }
+
+    private void ChooseLevelUpClass(string? classId)
+    {
+        levelUpClassId = classId ?? "";
+        PlanLevelUp();
+    }
+
+    /// <summary>Works out the next level on a copy: the sheet itself changes only when the level is taken.</summary>
+    private void PlanLevelUp()
+    {
+        if (engine == null || evaluation == null || Rules == null || AtMaxLevel)
         {
-            // The first class gets whatever the others don't take, so only another class needs writing down.
-            var classes = SheetRuleEngine.ParseClassLevels(editSheet, multiclass.Key);
-            var index = classes.FindIndex(c => c.Id == levelUpClassId);
-            if (index >= 0) classes[index] = classes[index] with { Level = classes[index].Level + 1 };
-            else classes.Add(new OtherClass(levelUpClassId, 1));
-            SetOtherClasses(multiclass, classes);
+            levelUpPlan = null;
+            return;
+        }
+
+        var sheet = new Dictionary<string, object>(editSheet);
+        RaiseLevel(sheet);
+        engine.ApplyInherited(sheet);
+        engine.ApplyAttributeTotals(sheet);
+        var after = engine.Evaluate(sheet);
+        var level = YamlValues.GetInt(sheet, LevelField!) ?? CurrentLevel + 1;
+
+        ContentEntry? cls;
+        ContentEntry? subclass;
+        int classLevel;
+        if (after.Classes.Count > 0)
+        {
+            var gaining = after.Classes.FirstOrDefault(c => c.Id == levelUpClassId) ?? after.Classes.First(c => c.IsFirst);
+            (cls, subclass, classLevel) = (gaining.Entry, gaining.Subclass, gaining.Level);
         }
         else
         {
-            Reevaluate();
+            // Without class levels the character level is the class's.
+            var classField = Rules.Multiclass?.ClassField ?? system?.FieldRoles.Class;
+            var type = system?.ActorFields.FirstOrDefault(f => f.Key == classField)?.TargetEntityType ?? classField;
+            cls = classField != null && type != null && YamlValues.GetString(sheet, classField) is { Length: > 0 } classId ? ContentRegistry.GetEntry(campaign!.SystemId, type, classId) : null;
+            subclass = null;
+            classLevel = level;
         }
 
+        levelUpPlan = LevelUpPlan.Build(Rules, evaluation, after, level,
+            cls == null ? null : ContentRegistry.Localize(cls, L.Culture.Name), classLevel,
+            subclass == null ? null : ContentRegistry.Localize(subclass, L.Culture.Name),
+            Rules.Skills?.BonusKey ?? Rules.Spellcasting?.BonusKey);
+    }
+
+    /// <summary>The level on <paramref name="sheet"/> one higher: the character level, and the class gaining it when it is not the
+    /// first (the first class gets whatever the others don't take, so only another class is written down). A rolled hit die
+    /// goes with it.</summary>
+    private void RaiseLevel(Dictionary<string, object> sheet)
+    {
+        var level = (YamlValues.GetInt(sheet, LevelField!) ?? 1) + 1;
+        sheet[LevelField!] = (long)level;
+        if (Rules?.Multiclass is { } multiclass && evaluation?.Classes.FirstOrDefault(c => c.IsFirst) is { } first
+            && !string.IsNullOrEmpty(levelUpClassId) && levelUpClassId != first.Id)
+        {
+            var classes = SheetRuleEngine.ParseClassLevels(sheet, multiclass.Key);
+            var index = classes.FindIndex(c => c.Id == levelUpClassId);
+            if (index >= 0) classes[index] = classes[index] with { Level = classes[index].Level + 1 };
+            else classes.Add(new OtherClass(levelUpClassId, 1));
+            sheet[multiclass.Key] = classes.Select(SheetRuleEngine.FormatClassLevel).Cast<object>().ToList();
+        }
+
+        if (levelUpRoll is { } roll && Rules?.HitPoints is { } hp)
+        {
+            var rolls = SheetRuleEngine.RawList(sheet, hp.RollsKey);
+            while (rolls.Count < level - 1) rolls.Add("0");
+            rolls[level - 2] = roll.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            sheet[hp.RollsKey] = rolls.Cast<object>().ToList();
+        }
+    }
+
+    private void SetLevelUpRoll(int? roll)
+    {
+        levelUpRoll = roll;
+        PlanLevelUp();
+    }
+
+    private void RollLevelUpHitDie(int die)
+    {
+        levelUpRoll = RuntimeManager.DiceRollerFor(campaign?.SystemId ?? string.Empty).Roll($"1d{die}").Total;
+        PlanLevelUp();
+    }
+
+    private void ApplyLevelUp()
+    {
+        if (AtMaxLevel || levelUpPlan is not { } taken) return;
+        RaiseLevel(editSheet);
+        levelUpPlan = null;
+        Reevaluate();
+        levelUpDone = taken;
+        levelUpRoll = null;
         levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
         flash = Flash.Info(L["Actor.Sheet.LevelSet", CurrentLevel]);
     }

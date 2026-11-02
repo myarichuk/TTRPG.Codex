@@ -270,6 +270,18 @@ public class SheetRuleEngineTests
         Assert.Equal(3L, result.Derived["initiative"]);
     }
 
+    // R7: a spell whose Library entry is gone is still listed, by index, so a strict sheet can take it off and save.
+    [Fact]
+    public void APickTheLibraryNoLongerHas_IsListedSoItCanBeRemoved()
+    {
+        var result = Engine().Evaluate(Sheet(("level", 1L), ("class", "wizard"), ("attrMethod", "manual"),
+            ("spells", new List<object> { "magic-missile", "deleted-spell" })));
+
+        var missing = Assert.Single(result.ListMissing["spells"]);
+        Assert.Equal(new MissingPick(1, "deleted-spell"), missing);
+        Assert.Single(result.ListPicks["spells"]);
+    }
+
     [Fact]
     public void InitializeSheet_AndApplyTotals_RoundTrip()
     {

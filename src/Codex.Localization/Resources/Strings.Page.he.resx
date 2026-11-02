@@ -38,7 +38,9 @@
   <data name="Page.Join.Title" xml:space="preserve"><value>הצטרפות לקמפיין</value></data>
   <data name="Page.Join.Joining" xml:space="preserve"><value>מצטרפים…</value></data>
   <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>קישור ההזמנה אינו תקין</value></data>
-  <data name="Page.Join.InvalidText" xml:space="preserve"><value>ייתכן שנפלה טעות בהקלדה או שהקמפיין נמחק. בקשו משליט המבוך קישור חדש.</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>ייתכן שנפלה טעות בהקלדה, שהקישור פג תוקף, כבר נוצל או הוחלף בקישור חדש, או שהקמפיין נמחק. בקשו משליט המבוך קישור חדש.</value></data>
+  <data name="Page.Join.TooManyTitle" xml:space="preserve"><value>נוסו יותר מדי קישורי הזמנה</value></data>
+  <data name="Page.Join.TooManyText" xml:space="preserve"><value>פתחתם כמה קישורי הזמנה שלא עבדו. המתינו כמה דקות, ואז השתמשו בקישור ששלח לכם שליט המבוך.</value></data>
   <data name="Page.Join.InTitle" xml:space="preserve"><value>הצטרפתם!</value></data>
   <data name="Page.Join.InText" xml:space="preserve"><value>כעת אתם שחקנים בקמפיין הזה.</value></data>
   <data name="Page.Join.Go" xml:space="preserve"><value>מעבר לקמפיין</value></data>
@@ -53,7 +55,6 @@
   <data name="Page.Error.RequestId" xml:space="preserve"><value>מזהה בקשה </value></data>
   <data name="Page.NotFound.Title" xml:space="preserve"><value>הדף לא נמצא</value></data>
   <data name="Page.NotFound.Text" xml:space="preserve"><value>אין שום דבר בכתובת הזו. ייתכן שהדף הועבר או נמחק.</value></data>
-  <data name="Page.Loading.Text" xml:space="preserve"><value>טוענים מערכות משחק וחבילות תוכן…</value></data>
   <data name="Page.Auth.Username" xml:space="preserve"><value>שם משתמש</value></data>
   <data name="Page.Auth.Password" xml:space="preserve"><value>סיסמה</value></data>
   <data name="Page.Auth.SignIn" xml:space="preserve"><value>התחברות</value></data>
@@ -65,6 +66,11 @@
   <data name="Page.Login.CreateAccount" xml:space="preserve"><value>יצירת חשבון</value></data>
   <data name="Page.Login.Stale" xml:space="preserve"><value>יש לשלוח את טופס ההתחברות מדף שנטען זה עתה. טענו מחדש ונסו שוב.</value></data>
   <data name="Page.Login.Invalid" xml:space="preserve"><value>שם המשתמש או הסיסמה שגויים.</value></data>
+  <data name="Page.Login.Error.UnknownProvider" xml:space="preserve"><value>שיטת הכניסה הזו לא מוגדרת בשרת הזה.</value></data>
+  <data name="Page.Login.Error.ExternalFailed" xml:space="preserve"><value>הכניסה דרך הספק הזה לא הצליחה. נסו שוב.</value></data>
+  <data name="Page.Login.Error.ExternalInvalid" xml:space="preserve"><value>ספק הכניסה לא מסר מי אתם. נסו שוב, או היכנסו בדרך אחרת.</value></data>
+  <data name="Page.Login.Error.NoUsername" xml:space="preserve"><value>לא נמצא שם משתמש פנוי לחשבון שלכם. נסו שוב.</value></data>
+  <data name="Page.Login.TooMany" xml:space="preserve"><value>יותר מדי ניסיונות כניסה לחשבון הזה. המתינו כמה דקות ונסו שוב.</value></data>
   <data name="Page.Register.Title" xml:space="preserve"><value>יצירת חשבון</value></data>
   <data name="Page.Register.Heading" xml:space="preserve"><value>יצירת החשבון שלכם</value></data>
   <data name="Page.Register.PasswordHelp" xml:space="preserve"><value>לפחות 8 תווים, כולל אות גדולה, אות קטנה וספרה.</value></data>
@@ -93,6 +99,17 @@
   <data name="Page.About.By" xml:space="preserve"><value>מאת {0}</value></data>
   <data name="Page.About.Warnings" xml:space="preserve"><value>אזהרות תוכן</value></data>
   <data name="Page.About.WarningsIntro" xml:space="preserve"><value>בעיות שנמצאו בטעינת מערכות וחבילות. תקנו את הקובץ והפעילו מחדש.</value></data>
+  <data name="Page.About.Backups" xml:space="preserve"><value>גיבויים</value></data>
+  <data name="Page.About.BackupsOff" xml:space="preserve"><value>הגיבוי היומי כבוי (Codex:Backups:Enabled). ייצאו כל קמפיין מההגדרות שלו כדי לשמור עותק.</value></data>
+  <data name="Page.About.BackupsWhere" xml:space="preserve"><value>בכל יום השרת כותב כל קמפיין (כמו ייצוא, עם התמונות ויומני השחקנים) ואת החשבונות (בלי מפתחות AI) לתיקייה חדשה כאן, ושומר את {0} האחרונים:</value></data>
+  <data name="Page.About.BackupsLast" xml:space="preserve"><value>הגיבוי האחרון: {0}.</value></data>
+  <data name="Page.About.BackupsNone" xml:space="preserve"><value>עדיין אין גיבוי: הראשון נכתב דקה אחרי שהשרת עולה.</value></data>
+  <data name="Page.About.BackupsFailed" xml:space="preserve"><value>הגיבוי האחרון נכשל: {0}. ניסיון נוסף מתבצע כל שעה.</value></data>
+  <data name="Page.About.BackupsRestore" xml:space="preserve"><value>כדי להחזיר קמפיין, פתחו את ההגדרות של קמפיין כלשהו, סמנו "שחזור כקמפיין חדש" ומזגו את campaign.json שלו. תמונות וחשבונות נשמרים כקבצים להעתקה ידנית.</value></data>
+  <data name="Page.About.DatabaseBackupsOn" xml:space="preserve"><value>גם מסד הנתונים מבצע גיבוי יומי משלו באותה תיקייה.</value></data>
+  <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>הגיבויים של מסד הנתונים עצמו כבויים: הרישיון החינמי שלו לא מאפשר אותם. על הגיבוי היומי שלמעלה אפשר לסמוך.</value></data>
+  <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>לא ניתן היה להגדיר את הגיבויים של מסד הנתונים עצמו (ראו את יומן השרת). הגיבוי היומי שלמעלה ממשיך לפעול.</value></data>
+  <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>הגיבויים של מסד הנתונים עצמו עוד לא נבדקו.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>תוכנה</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>קמפיין</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>הקמפיין לא נמצא</value></data>
@@ -101,6 +118,7 @@
   <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>בקשו משליט המבוך קישור הזמנה.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>מדורי הקמפיין</value></data>
   <data name="Page.Campaign.More" xml:space="preserve"><value>עוד</value></data>
+  <data name="Page.Campaign.BackTo" xml:space="preserve"><value>חזרה אל {0}</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>פעיל</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>השולחן פעיל</value></data>
   <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>משחק</value></data>
@@ -178,6 +196,7 @@
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>בשימוש</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>אין מפתח</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>המפתח שמור</value></data>
+  <data name="Page.AiSettings.KeyUnreadable" xml:space="preserve"><value>יש להזין את המפתח מחדש</value></data>
   <data name="Page.AiSettings.Use" xml:space="preserve"><value>שימוש</value></data>
   <data name="Page.AiSettings.Test" xml:space="preserve"><value>בדיקה</value></data>
   <data name="Page.AiSettings.EditLabel" xml:space="preserve"><value>עריכת {0}</value></data>
@@ -190,6 +209,12 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>כפתורי הבינה המלאכותית משתמשים כעת ב-{0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>{0} הוסר.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
+  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>כל חשבון בשרת הזה משתמש במודלים האלה כשאין לו מודל משלו, על חשבון המפתח של השרת. כל חשבון רשאי לשלוח {0} בקשות ו־{1} תמונות ביום; למנהל השרת אין הגבלה.</value></data>
+  <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>היום השתמשת בהם ל־{0} בקשות ו־{1} תמונות.</value></data>
+  <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>איש לא השתמש בהם היום.</value></data>
+  <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>שימוש היום:</value></data>
+  <data name="Page.AiSettings.ServerUsedBy" xml:space="preserve"><value>{0}: {1} בקשות, {2} תמונות</value></data>
+  <data name="Page.AiSettings.NoLimit" xml:space="preserve"><value>ללא הגבלה</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>מפתח אחד, מאות מודלים. אפשר לקבל מפתח ב-openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>גישה ישירה ל-OpenAI עם מפתח משלכם.</value></data>
   <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude דרך ה-API של Anthropic עצמה. מפתח אפשר לקבל ב-console.anthropic.com.</value></data>

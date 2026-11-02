@@ -39,13 +39,16 @@
         </div>
     </main>
     <script>
-        /* A static page: no server culture here, so follow the browser's language (English by default). */
+        /* A static page: no server culture here. The app's own language, as the last page it served set it (app-startup.js),
+           else the browser's (English by default). */
         (function () {
             var T = {
                 ru: { page: "Нет соединения | TTRPG.Codex", title: "Вы не в сети", text: "TTRPG.Codex работает вживую на вашем сервере, поэтому для стола, листов и вики нужно соединение. Проверьте сеть и попробуйте снова.", retry: "Повторить" },
                 he: { page: "לא מקוון | TTRPG.Codex", title: "אין חיבור לרשת", text: "TTRPG.Codex פועל בזמן אמת מול השרת שלכם, ולכן השולחן, דפי הדמויות והוויקי דורשים חיבור. בדקו את הרשת ונסו שוב.", retry: "נסו שוב" }
             };
-            var lang = String(navigator.language || "en").toLowerCase().slice(0, 2);
+            var kept = null;
+            try { kept = localStorage.getItem("codex-lang"); } catch (e) { /* storage blocked */ }
+            var lang = String(kept || navigator.language || "en").toLowerCase().slice(0, 2);
             if (lang === "iw") lang = "he";
             var t = T[lang];
             if (!t) return;

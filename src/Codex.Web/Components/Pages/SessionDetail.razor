@@ -1,5 +1,6 @@
-@page "/campaigns/{CampaignId}/sessions/{SessionId}"
+@* Not a page of its own: CampaignPage opens it as a window for /campaigns/{CampaignId}/sessions/{SessionId} (U2). *@
 @using System.Security.Claims
+@using System.Globalization
 @using Codex.Core
 @using Codex.Core.AI
 @using Codex.Persistence
@@ -25,6 +26,7 @@
 
 <PageTitle>@(Title ?? L["Session.Title"]) | TTRPG.Codex</PageTitle>
 <UnsavedChangesGuard IsDirty="IsDirty" />
+<ConfirmDialog @ref="confirm" />
 
 @if (loading)
 {
@@ -51,15 +53,19 @@ else
                 <span class="pill"><LucideIcon IconName="zap" Size="14" /> @L["Session.Events", visibleEvents.Count]</span>
             </div>
         </div>
-        @if (access.IsDm)
-        {
-            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="run-session" OnClick="RunAtTableAsync">
-                <LucideIcon IconName="dices" Size="14" /> @(RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id ? L["Session.GoToTable"] : session.Status == SessionStatus.Completed ? L["Session.ReopenTable"] : L["Session.RunTable"])
-            </CodexButton>
-        }
+        <div class="d-flex flex-wrap gap-2 align-items-start">
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="arrow-left" OnClick="OnBack" data-testid="session-back">@BackLabel</CodexButton>
+            @if (access.IsDm)
+            {
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="session-run" OnClick="RunAtTableAsync">
+                    <LucideIcon IconName="dices" Size="14" /> @(RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id ? L["Session.GoToTable"] : session.Status == SessionStatus.Completed ? L["Session.ReopenTable"] : L["Session.RunTable"])
+                </CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="trash-2" Label="@L["Session.Delete.Label"]" OnClick="DeleteAsync" data-testid="session-delete" />
+            }
+        </div>
     </div>
 
-    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
 
     <div class="row g-3">
         <div class="col-lg-8">
@@ -80,8 +86,12 @@ else
                                 <option value="@SessionStatus.Completed">@L["Session.Status.Completed"]</option>
                             </select>
                         </div>
+                        <div>
+                            <label for="session-date" class="field-label">@L["Session.DateLabel"]</label>
+                            <input id="session-date" type="date" class="field-input" data-testid="session-date"
+                                   value="@ShownDate.ToString("yyyy-MM-dd")" @onchange="e => editDate = DateTime.TryParse(e.Value?.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out var day) ? day.Date : null" />
+                        </div>
                     </div>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-3" OnClick="SaveDetailsAsync">@L["Session.SaveDetails"]</CodexButton>
                 </section>
             }
 
@@ -97,10 +107,9 @@ else
                 {
                     <label for="recap" class="visually-hidden">@L["Session.Recap"]</label>
                     <MarkdownEditor Id="recap" Title="@L["Session.Recap"]" Rows="8" Placeholder="@L["Session.RecapPlaceholder"]" @bind-Value="editRecap" Mentions="@mentionsJson"
-                                    DescribedBy="mention-hint" Preview="PreviewMentions" TestId="session-recap"
+                                    DescribedBy="mention-hint" Preview="PreviewRecap" Secrets="true" TestId="session-recap"
                                     Busy="@(drafting == AiAudience.Players)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveRecapAsync" data-save-shortcut="">@L["Session.SaveRecap"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PreFillRecap">@L["Session.Prefill"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => DraftAsync(AiAudience.Players)" Disabled="@(drafting != null)" Busy="@(drafting == AiAudience.Players)" aria-describedby="ai-help">
                             @L["Session.DraftAi"]
@@ -111,7 +120,7 @@ else
                 }
                 else if (!string.IsNullOrWhiteSpace(session.Recap))
                 {
-                    <div class="rules-text mb-0">@((MarkupString)MentionLinks.ToHtml(session.Recap, mentions, CampaignId))</div>
+                    <div class="rules-text mb-0">@((MarkupString)SecretRender.Html(session.Recap, text => MentionLinks.ToHtml(text, mentions, CampaignId), null))</div>
                 }
                 else
                 {
@@ -131,7 +140,6 @@ else
                                     Preview="PreviewMentions" TestId="session-dm-summary" Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(drafting == AiAudience.Dm)" BusyText="@L["Session.Drafting"]" OnStop="aiCall.Stop" />
                     <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveDmSummaryAsync" data-save-shortcut="">@L["Session.SaveSummary"]</CodexButton>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => DraftAsync(AiAudience.Dm)" Disabled="@(drafting != null)" Busy="@(drafting == AiAudience.Dm)">
                             @L["Session.DraftAi"]
                         </CodexButton>
@@ -157,11 +165,11 @@ else
                                 · <span class="pill">@note.Label</span>
                                 @if (note.AtTable)
                                 {
-                                    <span class="pill ms-1">@L["Session.AtTable"]</span>
+                                    <span class="pill ms-2">@L["Session.AtTable"]</span>
                                 }
                                 @if (note.Kind != null)
                                 {
-                                    <span class="pill pill-kind ms-1">@note.Kind</span>
+                                    <span class="pill pill-kind ms-2">@note.Kind</span>
                                 }
                                 @if (note.Context != null)
                                 {
@@ -170,18 +178,22 @@ else
                             </div>
                             @if (note.Speaker != null)
                             {
-                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted">@(" " + L["Session.To", string.Join(", ", note.With)])</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></q></p>
+                                <p class="mb-0"><strong>@note.Speaker</strong>@if (note.With is { Count: > 0 }) { <span class="small-muted">@(" " + L["Session.To", string.Join(", ", note.With)])</span> }: <q><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></q></p>
                             }
                             else
                             {
-                                <p class="mb-0"><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" /></p>
+                                <p class="mb-0"><MentionText Text="@note.Text" Mentions="mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></p>
                             }
                         </div>
                     </div>
                 }
                 <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
                     <label for="new-note" class="field-label">@L["Session.AddNoteLabel"]</label>
-                    <textarea id="new-note" class="field-input mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="new-note"></textarea>
+                    <textarea id="new-note" class="field-input mb-2" rows="2" @bind="newNoteContent" @bind:event="oninput" data-mentions="@mentionsJson" data-md-secrets="@(access?.IsDm == true ? "" : null)" aria-describedby="@(access?.IsDm == true ? "new-note-hint" : null)" data-testid="new-note"></textarea>
+                    @if (access?.IsDm == true)
+                    {
+                        <p id="new-note-hint" class="field-hint">@L["Common.Note.SecretHint"]</p>
+                    }
                     <div class="d-flex gap-2 flex-wrap align-items-center">
                         <label for="note-visibility" class="visually-hidden">@L["Session.NoteVisibility"]</label>
                         <select id="note-visibility" class="field-select field-sm" @bind="newNoteVisibility" aria-label="@L["Session.NoteVisibility"]">
@@ -204,13 +216,10 @@ else
                 <label for="journal-body" class="visually-hidden">@L["Session.JournalEntry"]</label>
                 <MarkdownEditor Id="journal-body" Title="@L["Session.MyJournal"]" Rows="7" Placeholder="@L["Session.JournalPlaceholder"]" @bind-Value="journalBody" Mentions="@mentionsJson"
                                 Preview="PreviewMentions" TestId="session-journal" />
-                <div class="d-flex align-items-center gap-2">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SaveJournalAsync" data-testid="session-journal-save" data-save-shortcut="">@L["Session.SaveJournal"]</CodexButton>
-                    @if (journalSavedAt != null)
-                    {
-                        <span class="small-muted" role="status">@L["Session.Saved"] <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></span>
-                    }
-                </div>
+                @if (journalSavedAt != null)
+                {
+                    <p class="small-muted mb-0" role="status">@L["Session.Saved"] <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></p>
+                }
                 <a href="/campaigns/@CampaignId/journal" class="small d-inline-block mt-2">@L["Session.AllJournal"]</a>
             </section>
 
@@ -225,7 +234,7 @@ else
                     {
                         <div class="log-entry">
                             <span class="small-muted"><LocalTime Value="evt.Timestamp" Format="HH:mm" /></span>
-                            <span class="pill ms-1">@TypeLabel(evt.Type)</span>
+                            <span class="pill ms-2">@TypeLabel(evt.Type)</span>
                             <div>@evt.Text(L, terms)</div>
                         </div>
                     }
@@ -233,11 +242,20 @@ else
             </section>
         </div>
     </div>
+    @* One Save for the whole page (U6): the details, recap and summary the DM wrote and this person's journal, whichever
+       changed. Ctrl+S presses it from any of them. *@
+    <SaveBar Dirty="IsDirty(includeNote: false)" TestId="session-save-bar">
+        <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" Busy="@saveGate.IsBusy" data-testid="session-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Common.Save"]</CodexButton>
+    </SaveBar>
 }
 
 @code {
     [Parameter] public string CampaignId { get; set; } = string.Empty;
     [Parameter] public string SessionId { get; set; } = string.Empty;
+
+    /// <summary>Back to what the session was opened from (the list, the Table), and what the button says.</summary>
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public string BackLabel { get; set; } = string.Empty;
 
     private bool loading = true;
     private CampaignDocument? campaign;
@@ -250,6 +268,8 @@ else
     private IReadOnlyList<LocationDocument> places = Array.Empty<LocationDocument>();
     private IReadOnlyList<MentionItem> items = Array.Empty<MentionItem>();
     private MentionDirectory mentions = MentionDirectory.Empty;
+    // The DM reads a note's secret blocks marked; anyone else's copy has none.
+    private DmView? NoteDm => access?.IsDm == true ? DmView.From(L, mentions) : null;
     // What the recap, summary, note and journal boxes suggest after @, # or $.
     private IReadOnlyList<TextTemplate>? templates;
     private string mentionsJson = "[]";
@@ -262,21 +282,29 @@ else
     private string editDmSummary = "";
     private string editTitle = "";
     private SessionStatus editStatus;
+    // The day the DM picked, or null while unchanged. Kept as a day, not a time: the stored date is read in the viewer's
+    // zone, which may only be known after the first render (R10).
+    private DateTime? editDate;
+    private DateTime ShownDate => editDate ?? Clock.ToViewer(session!.Date).Date;
     private AiAudience? drafting;
     private JournalEntryDocument? journal;
     private string journalBody = "";
     private DateTime? journalSavedAt;
     private Flash? flash;
 
-    /// <summary>Whether any box on the page (details, recap, summary, journal, a note being written) differs from what is stored.</summary>
-    private bool IsDirty()
-    {
-        if (session == null || access == null) return false;
-        if (!string.IsNullOrWhiteSpace(newNoteContent)) return true;
-        if (journalBody != mentions.ForEditing(journal?.Body ?? "")) return true;
-        return access.IsDm && (editTitle.Trim() != (session.Title ?? "").Trim() || editStatus != session.Status
-            || editRecap != mentions.ForEditing(session.Recap ?? "") || editDmSummary != mentions.ForEditing(session.DmSummary ?? ""));
-    }
+    /// <summary>Whether any box on the page (details, recap, summary, journal, and unless left out a note being written)
+    /// differs from what is stored. A note has its own Add button, so the save bar leaves it out.</summary>
+    private bool IsDirty() => IsDirty(includeNote: true);
+
+    private bool IsDirty(bool includeNote) =>
+        session != null && access != null && !deleted
+        && ((includeNote && !string.IsNullOrWhiteSpace(newNoteContent)) || JournalChanged || SessionChanged);
+
+    private bool JournalChanged => journalBody != mentions.ForEditing(journal?.Body ?? "");
+
+    private bool SessionChanged => session != null && access is { IsDm: true }
+        && (editTitle.Trim() != (session.Title ?? "").Trim() || editStatus != session.Status
+            || (editDate != null && editDate != Clock.ToViewer(session.Date).Date) || editRecap != mentions.ForEditing(session.Recap ?? "") || editDmSummary != mentions.ForEditing(session.DmSummary ?? ""));
 
     /// <summary>One note on the page. <see cref="Speaker"/> is set for a line of dialogue, already named for this viewer.</summary>
     private sealed record NoteRow(string AuthorId, string Text, DateTime When, string Label, bool AtTable, string? Speaker = null,
@@ -298,15 +326,15 @@ else
 
         if (campaign != null && access != null)
         {
-            var loaded = await SessionRepo.GetAsync(SessionId);
-            session = loaded?.CampaignId == CampaignId ? loaded : null;
+            // A player's copy comes redacted from the repository (F6): no DM summary, secret notes or DM blocks.
+            session = await SessionRepo.GetVisibleAsync(SessionId, access);
             if (session != null)
             {
                 editTitle = session.Title;
                 editStatus = session.Status;
                 campaignActors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
                 (places, items) = await MentionSources.LoadAsync(campaign, access);
-                mentions = new MentionDirectory(campaignActors, places, items, access.IsDm);
+                mentions = new MentionDirectory(campaignActors, places, items, access.IsDm) { Words = MentionSources.Words(L) };
                 mentionsJson = MentionLinks.Json(mentions, campaignActors);
                 // The boxes hold the text as typed (@Name); the stored text holds ids.
                 editRecap = mentions.ForEditing(session.Recap ?? "");
@@ -353,14 +381,7 @@ else
         _ => L["Session.Status.Completed"]
     };
 
-    private string KindLabel(NoteKind kind) => kind switch
-    {
-        NoteKind.Clue => L["Session.Kind.Clue"],
-        NoteKind.Loot => L["Session.Kind.Loot"],
-        NoteKind.Ruling => L["Session.Kind.Ruling"],
-        NoteKind.FollowUp => L["Session.Kind.FollowUp"],
-        _ => L["Session.Label.Note"]
-    };
+    private string KindLabel(NoteKind kind) => NoteKindText.Label(L, kind);
 
     /// <summary>"Round 3 · Grik's turn", "Round 3" when the viewer can't see who was acting, or null outside an encounter.</summary>
     private string? RoundContext(SessionNote note, IReadOnlyDictionary<string, ActorDocument> visibleActors, bool isDm)
@@ -385,6 +406,35 @@ else
         flash = Flash.Info(L["Session.Flash.Prefilled"]);
     }
 
+    // ---- Deleting (U7): the DM's, never while the table runs it, with no undo (its encounters go with it). ----
+
+    private ConfirmDialog? confirm;
+    private bool deleted;
+
+    /// <summary>Told when the session is deleted, with what to say; the window closes.</summary>
+    [Parameter] public EventCallback<string> OnDeleted { get; set; }
+
+    private async Task DeleteAsync()
+    {
+        if (session == null || access is not { IsDm: true } || confirm == null) return;
+        if (RuntimeManager.TryGet(CampaignId)?.ActiveSession?.Id == session.Id)
+        {
+            flash = Flash.Error(L["Session.Delete.Running"]);
+            return;
+        }
+
+        var name = Title!;
+        if (!await confirm.ShowAsync(L["Session.Delete.Title", name], L["Session.Delete.Body"], L["Common.Delete"], isDestructive: true)) return;
+        if (!await SessionRepo.DeleteAsync(session.Id, access))
+        {
+            flash = Flash.Error(L["Session.Delete.Failed"]);
+            return;
+        }
+
+        deleted = true;
+        await OnDeleted.InvokeAsync(L["Session.Delete.Done", name]);
+    }
+
     /// <summary>Starts the table on this session (a planned one begins, a completed one reopens) and goes there.</summary>
     private async Task RunAtTableAsync()
     {
@@ -400,42 +450,42 @@ else
         }
     }
 
-    private async Task SaveDetailsAsync()
-    {
-        if (session == null || access == null || !access.IsDm) return;
-        var title = editTitle.Trim();
-        var status = editStatus;
-        session = await SessionRepo.UpdateAsync(session.Id, stored =>
-        {
-            stored.Title = title;
-            stored.Status = status;
-        }) ?? session;
-        flash = Flash.Success(L["Session.Flash.DetailsSaved"]);
-    }
-
     // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
     private readonly SaveGate saveGate = new();
 
-    private Task SaveRecapAsync() => saveGate.RunAsync(SaveRecapNowAsync);
+    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
 
-    private async Task SaveRecapNowAsync()
+    /// <summary>Stores whatever changed: the DM's details, recap and summary in one write, the journal in its own (U6).</summary>
+    private async Task SaveNowAsync()
     {
-        if (session == null || access == null || !access.IsDm) return;
-        var recap = mentions.Encode(editRecap);
-        session = await SessionRepo.UpdateAsync(session.Id, stored => stored.Recap = recap) ?? session;
-        editRecap = mentions.ForEditing(session.Recap ?? "");
-        flash = Flash.Success(L["Session.Flash.RecapSaved"]);
-    }
+        if (session == null || access == null) return;
+        if (SessionChanged)
+        {
+            var title = editTitle.Trim();
+            var status = editStatus;
+            DateTime? date = editDate == null ? null : Clock.DayToUtc(editDate.Value);
+            var recap = mentions.Encode(editRecap);
+            var summary = mentions.Encode(editDmSummary);
+            session = await SessionRepo.UpdateAsync(session.Id, stored =>
+            {
+                stored.Title = title;
+                stored.Status = status;
+                if (date != null) stored.Date = date.Value;
+                stored.Recap = recap;
+                stored.DmSummary = summary;
+            }) ?? session;
+            editDate = null;
+            editRecap = mentions.ForEditing(session.Recap ?? "");
+            editDmSummary = mentions.ForEditing(session.DmSummary ?? "");
+        }
 
-    private Task SaveDmSummaryAsync() => saveGate.RunAsync(SaveDmSummaryNowAsync);
+        if (JournalChanged && !await SaveJournalAsync())
+        {
+            flash = Flash.Error(L["Session.Flash.JournalFailed"]);
+            return;
+        }
 
-    private async Task SaveDmSummaryNowAsync()
-    {
-        if (session == null || access == null || !access.IsDm) return;
-        var summary = mentions.Encode(editDmSummary);
-        session = await SessionRepo.UpdateAsync(session.Id, stored => stored.DmSummary = summary) ?? session;
-        editDmSummary = mentions.ForEditing(session.DmSummary ?? "");
-        flash = Flash.Success(L["Session.Flash.SummarySaved"]);
+        flash = Flash.Success(L["Common.Saved"]);
     }
 
     private async Task DraftAsync(AiAudience audience)
@@ -479,24 +529,20 @@ else
     /// <summary>The text as a reader will see it: the typed @Names become mentions first.</summary>
     private string PreviewMentions(string text) => MentionLinks.ToHtml(mentions.Encode(text), mentions, CampaignId);
 
-    private Task SaveJournalAsync() => saveGate.RunAsync(SaveJournalNowAsync);
+    // The recap is the DM's prose that players read, so it takes secret blocks: the preview shows them as the DM reads them.
+    private string PreviewRecap(string text) =>
+        SecretRender.Html(mentions.Encode(text), encoded => MentionLinks.ToHtml(encoded, mentions, CampaignId), DmView.From(L, mentions));
 
-    private async Task SaveJournalNowAsync()
+    private async Task<bool> SaveJournalAsync()
     {
-        if (access == null) return;
+        if (access == null) return false;
         var entry = journal ?? new JournalEntryDocument { CampaignId = CampaignId, SessionId = SessionId, Title = Title ?? "Session" };
         entry.Body = mentions.Encode(journalBody);
         entry.Title = Title ?? entry.Title;
-        if (await JournalRepo.TrySaveAsync(entry, access))
-        {
-            journal = entry;
-            journalSavedAt = entry.UpdatedAt;
-            flash = Flash.Success(L["Session.Flash.JournalSaved"]);
-        }
-        else
-        {
-            flash = Flash.Error(L["Session.Flash.JournalFailed"]);
-        }
+        if (!await JournalRepo.TrySaveAsync(entry, access)) return false;
+        journal = entry;
+        journalSavedAt = entry.UpdatedAt;
+        return true;
     }
 
     private async Task AddNoteAsync()

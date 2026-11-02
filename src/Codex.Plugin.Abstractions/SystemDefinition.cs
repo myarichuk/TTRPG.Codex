@@ -49,6 +49,15 @@ public class AttributeDefinition
     /// family) or <c>"none"</c>. Systems that need anything else define a derived field instead.
     /// </summary>
     public string Modifier { get; set; } = "none";
+
+    public const string HalfMinusFiveRule = "half-minus-five";
+
+    /// <summary>The modifier <see cref="Modifier"/> gives <paramref name="score"/>, or null when the attribute has none.
+    /// The one place the rule is worked out: the sheet, the table and the formulas' <c>mod()</c> all come here.</summary>
+    public int? ModifierFor(int score) => Modifier == HalfMinusFiveRule ? HalfMinusFive(score) : null;
+
+    /// <summary>floor((score - 10) / 2): the d20 family's modifier.</summary>
+    public static int HalfMinusFive(int score) => (int)Math.Floor((score - 10) / 2.0);
 }
 
 /// <summary>A depletable pool (hit points, mana, strain, luck) on an actor.</summary>
@@ -165,6 +174,10 @@ public class VitalsRules
     public ExhaustionRules? Exhaustion { get; set; }
     public HitDiceRules? HitDice { get; set; }
 
+    /// <summary>Concentration: a condition a creature keeps while it holds an effect up, a save when it is hurt, and the
+    /// held effects ending with it. Null: the table has no concentration.</summary>
+    public ConcentrationRules? Concentration { get; set; }
+
     /// <summary>Rests the table offers, by name; a slot pool's <c>recoversOn</c> names one of these.</summary>
     public List<RestRule> Rests { get; set; } = new();
 
@@ -189,6 +202,22 @@ public class DownRules
 
     /// <summary>Non-player creatures die at zero instead of falling unconscious.</summary>
     public bool NonPlayersDieAtZero { get; set; } = true;
+}
+
+/// <summary>Holding an effect up by concentrating (most 5e spells with a duration).</summary>
+public class ConcentrationRules
+{
+    /// <summary>The condition a concentrating creature carries.</summary>
+    public string Condition { get; set; } = "Concentrating";
+
+    /// <summary>The attribute whose save keeps concentration when the creature takes damage.</summary>
+    public string SaveAttribute { get; set; } = "con";
+
+    /// <summary>The save's difficulty: half the damage taken, never below <see cref="MinimumDc"/> or above <see cref="MaximumDc"/>.</summary>
+    public int MinimumDc { get; set; } = 10;
+    public int MaximumDc { get; set; } = 30;
+
+    public int DcFor(int damage) => System.Math.Clamp(damage / 2, MinimumDc, MaximumDc);
 }
 
 public class DeathSaveRules
@@ -315,6 +344,9 @@ public class SystemDefinition
     /// <summary>Extra sheet fields beyond attributes and resources (level, class, alignment, speed...).</summary>
     public List<FieldDefinition> ActorFields { get; set; } = new();
 
+    /// <summary>Which of the <see cref="ActorFields"/> the app reads for what, outside the rules engine.</summary>
+    public FieldRoles FieldRoles { get; set; } = new();
+
     public List<ContentTypeDefinition> EntityTypes { get; set; } = new();
 
     /// <summary>Condition names the combat console offers in its picker.</summary>
@@ -432,6 +464,9 @@ public class SystemDefinition
             Category = x?.Category ?? (f.Category != null && t.Categories.TryGetValue(f.Category, out var group) ? group : f.Category),
             Min = f.Min,
             Max = f.Max,
+            // A translated label with no short form or unit of its own is shown whole and bare, not with the English "AC" or "ft".
+            Abbreviation = x?.Abbreviation ?? (x?.Label == null ? f.Abbreviation : null),
+            Unit = x?.Unit ?? (x?.Label == null ? f.Unit : null),
             OptionLabels = OptionLabelsFor(t, x)
         };
 
@@ -596,6 +631,23 @@ public class SystemDefinition
 
         return null;
     }
+
+    /// <summary>The pool that holds <paramref name="key"/>'s maximum: the resource's own <c>maxKey</c>, else "{key}_Max".
+    /// Every rule that clamps or refills a pool asks here, so a homebrew <c>{ key: Wounds, maxKey: WoundCap }</c> is capped
+    /// the same way by damage, healing, slots and rests (R9).</summary>
+    public string MaxKeyOf(string key) => Resources.Find(r => r.Key == key)?.MaxKey ?? key + "_Max";
+
+    // The table's keys when a system leaves them out, or when there is no system. The runtime's rules and the table's
+    // console both ask here, so the two never disagree about which pool is the creature's life.
+
+    /// <summary>The primary pool's key, "HP" when the system has no resources.</summary>
+    public static string PrimaryKeyOf(SystemDefinition? system) => system?.PrimaryResource?.Key ?? "HP";
+
+    /// <summary>The pool that soaks damage first, "TempHP" when the system does not name one.</summary>
+    public static string TemporaryKeyOf(SystemDefinition? system) => system?.Vitals?.TemporaryResource ?? "TempHP";
+
+    /// <summary><see cref="MaxKeyOf(string)"/>, with no system as well.</summary>
+    public static string PoolMaxKey(SystemDefinition? system, string key) => system?.MaxKeyOf(key) ?? key + "_Max";
 
     public ResourceDefinition? PrimaryResource
     {

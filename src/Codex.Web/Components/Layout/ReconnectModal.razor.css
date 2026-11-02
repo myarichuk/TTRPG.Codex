@@ -3,7 +3,30 @@
 .components-reconnect-repeated-attempt-visible,
 .components-reconnect-failed-visible,
 .components-pause-visible,
-.components-resume-failed-visible {
+.components-resume-failed-visible,
+.components-reconnect-rejected-visible {
+    display: none;
+}
+
+#components-reconnect-modal.components-reconnect-rejected .components-reconnect-rejected-visible {
+    display: block;
+}
+
+.draft-recovery {
+    position: fixed;
+    inset-inline: var(--space-8);
+    bottom: var(--space-8);
+    z-index: var(--z-recovery);
+    max-width: 36rem;
+    margin-inline: auto;
+    padding: var(--space-8);
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--frame), var(--shadow-2);
+}
+
+.draft-recovery[hidden] {
     display: none;
 }
 

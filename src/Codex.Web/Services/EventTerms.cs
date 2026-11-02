@@ -4,7 +4,7 @@ using Codex.Plugin.Abstractions;
 
 namespace Codex.Web.Services;
 
-/// <summary>The game terms inside session log messages (conditions, damage types, rests, pools, slots, users) in the reader's
+/// <summary>The game terms inside session log messages (conditions, damage types, rests, pools, slots, users, actors the reader cannot see) in the reader's
 /// language, from the campaign's system translation and its member names.</summary>
 public static class EventTerms
 {
@@ -16,6 +16,7 @@ public static class EventTerms
         return (kind, key) => kind switch
         {
             EventTerm.UserKind => userNames.TryGetValue(key, out var name) ? name : null,
+            EventTerm.UnseenKind => l["Event.Someone"],
             EventTerm.ConditionKind => system?.DisplayCondition(culture, key),
             EventTerm.DamageTypeKind or EventTerm.RestKind => system?.DisplayOption(culture, string.Empty, key),
             EventTerm.ResourceKind => shown?.Resources.FirstOrDefault(r => r.Key == key)?.Label,
@@ -24,18 +25,13 @@ public static class EventTerms
         };
     }
 
-    // "slots_3" -> "level 3 spell slot"; the bundled system's two pools have their own wording, any other pool uses its translated name.
+    // "slots_3" -> "level 3 spell slot", with the pool's slot named as the system's translation names it. English keeps the
+    // wording the table wrote, which already reads that way.
     private static string? Slot(SystemDefinition? system, SystemDefinition? shown, Localizer l, string key)
     {
         var rule = system?.SheetRules?.SlotPools.FirstOrDefault(p => p.Owns(key));
         if (rule == null || !int.TryParse(key[(rule.Key.Length + 1)..], out var level)) return null;
-        return rule.Label switch
-        {
-            "Spell slots" => l["Event.Slot.Spell", level],
-            "Pact slots" => l["Event.Slot.Pact", level],
-            // English keeps the wording the table wrote; it already reads "level 3 sorcery point".
-            _ when l.Culture.TwoLetterISOLanguageName == "en" => null,
-            _ => l["Event.Slot.Other", level, shown?.SheetRules?.SlotPools.FirstOrDefault(p => p.Key == rule.Key)?.Label ?? rule.Label]
-        };
+        if (l.Culture.TwoLetterISOLanguageName == "en") return null;
+        return l["Event.Slot.Other", level, shown?.DisplayValue(rule.UnitName) ?? rule.UnitName];
     }
 }

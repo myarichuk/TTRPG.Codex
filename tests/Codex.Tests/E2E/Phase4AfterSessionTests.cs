@@ -128,8 +128,8 @@ public class Phase4AfterSessionTests : IClassFixture<AppFixture>
         const string recap = "P4 Goblins attacked the bridge.";
         await dm.Locator("#recap").ClickAsync();
         await dm.Keyboard.TypeAsync(recap);
-        await dm.GetByRole(AriaRole.Button, new() { Name = "Save recap" }).ClickAsync();
-        await dm.GetByText("Recap saved.").WaitForAsync();
+        await dm.GetByTestId("session-save").ClickAsync();
+        await dm.GetByText("Saved.", new() { Exact = true }).WaitForAsync();
         // After a save the box shows what the server stored. If keystrokes were lost on the way (typed faster than the circuit
         // answers), the failure is here and says so, instead of 30 seconds later as a player who never sees the text.
         await Assertions.Expect(dm.Locator("#recap")).ToHaveValueAsync(recap);

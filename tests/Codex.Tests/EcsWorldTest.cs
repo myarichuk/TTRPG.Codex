@@ -7,59 +7,6 @@ namespace Codex.Tests;
 public class EcsWorldTest
 {
     [Fact]
-    public void ApplyDamage_ClampsAtZero_InsteadOfGoingNegative()
-    {
-        // B7: HP 2 taking 50 damage used to end at -48 because DamageEvent never clamped.
-        using var world = new CodexWorld();
-        var entity = world.CreateEntity();
-
-        var pool = new ResourcePoolComponent();
-        pool.Set("HP", 2);
-        entity.Set(pool);
-
-        world.ApplyDamage(entity, "HP", 50);
-
-        Assert.Equal(0, entity.Get<ResourcePoolComponent>().Get("HP"));
-    }
-
-    [Fact]
-    public void ApplyDamage_TwoHitsInSequence_BothLand()
-    {
-        // B7: two hits used to overwrite each other under the old DamageEvent-component pattern
-        // (HP 10 took 3 + 4 and ended at 6, not 3). Applying immediately means there is no shared
-        // slot for a second hit to clobber.
-        using var world = new CodexWorld();
-        var entity = world.CreateEntity();
-
-        var pool = new ResourcePoolComponent();
-        pool.Set("HP", 10);
-        entity.Set(pool);
-
-        world.ApplyDamage(entity, "HP", 3);
-        world.ApplyDamage(entity, "HP", 4);
-
-        Assert.Equal(3, entity.Get<ResourcePoolComponent>().Get("HP"));
-    }
-
-    [Fact]
-    public void ApplyDamage_DrainsTempHpFirst()
-    {
-        using var world = new CodexWorld();
-        var entity = world.CreateEntity();
-
-        var pool = new ResourcePoolComponent();
-        pool.Set("HP", 10);
-        pool.Set("TempHP", 5);
-        entity.Set(pool);
-
-        world.ApplyDamage(entity, "HP", 8);
-
-        var result = entity.Get<ResourcePoolComponent>();
-        Assert.Equal(0, result.Get("TempHP"));
-        Assert.Equal(7, result.Get("HP"));
-    }
-
-    [Fact]
     public void ApplyHealing_ClampsToMax()
     {
         using var world = new CodexWorld();

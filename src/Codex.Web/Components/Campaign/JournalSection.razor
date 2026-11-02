@@ -120,8 +120,8 @@ else
     private async Task LoadAsync()
     {
         entries = (await JournalRepo.GetMineAsync(Ctx.Access)).ToList();
-        mentions = await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors);
-        mentionsJson = MentionLinks.Json(mentions, Ctx.Actors);
+        mentions = await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.AllActors);
+        mentionsJson = MentionLinks.Json(mentions, Ctx.AllActors);
         sessionTitles.Clear();
         foreach (var session in (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date))
         {
@@ -179,7 +179,7 @@ else
         editing.Body = mentions.Encode(editing.Body);
         if (await JournalRepo.TrySaveAsync(editing, Ctx.Access))
         {
-            Ctx.Notify(Flash.Success(L["Campaign.Journal.Saved"]));
+            Ctx.Notify(Flash.Success(L["Common.Saved"]));
             editing = null;
             await LoadAsync();
         }

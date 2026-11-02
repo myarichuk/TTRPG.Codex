@@ -13,6 +13,10 @@ public sealed record DiceRollResult(
     int Modifier,
     int Total)
 {
+    /// <summary>Where in <see cref="Kept"/> the roll's one d20 check die is (<c>1d20+5</c>, <c>adv</c>), so a natural 20 or 1 is
+    /// read from that die only; null when the roll has none (<c>1d200</c>, <c>2d6</c>) or more than one (R8).</summary>
+    public int? CheckDieIndex { get; init; }
+
     public override string ToString()
     {
         var kept = string.Join(", ", Kept);

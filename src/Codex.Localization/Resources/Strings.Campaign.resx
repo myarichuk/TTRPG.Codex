@@ -73,7 +73,6 @@
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>Reveal {0} to players</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>Hide</value></data>
   <data name="Campaign.Cast.HideLabel" xml:space="preserve"><value>Hide {0} from players</value></data>
-  <data name="Campaign.Cast.DeleteLabel" xml:space="preserve"><value>Delete {0}</value></data>
   <data name="Campaign.Cast.EditSheet" xml:space="preserve"><value>Edit sheet</value></data>
   <data name="Campaign.Cast.RetireLabel" xml:space="preserve"><value>Retire {0}</value></data>
   <data name="Campaign.Cast.RetireTitle" xml:space="preserve"><value>Retire this character</value></data>
@@ -88,13 +87,17 @@
   <data name="Campaign.Cast.NowVisible" xml:space="preserve"><value>{0} is now visible to players.</value></data>
   <data name="Campaign.Cast.NowHidden" xml:space="preserve"><value>{0} is hidden from players.</value></data>
   <data name="Campaign.Cast.RetireQ" xml:space="preserve"><value>Retire {0}?</value></data>
-  <data name="Campaign.Cast.DeleteQ" xml:space="preserve"><value>Delete {0}?</value></data>
-  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>Your character and their sheet are removed from this campaign. This cannot be undone; the DM can't restore them either.</value></data>
-  <data name="Campaign.Cast.DeleteBody" xml:space="preserve"><value>Their sheet and state are removed from this campaign. This cannot be undone.</value></data>
+  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>Your character leaves the cast and the table. Notes and pages that mention them keep their name, and the DM can bring them back.</value></data>
+  <data name="Campaign.Cast.RetireBodyDm" xml:space="preserve"><value>They leave the cast, the pickers and the table. Notes, pages and reveals that mention them keep their name, and you can bring them back from the retired list.</value></data>
+  <data name="Campaign.Cast.MentionedIn" xml:space="preserve"><value>{0, plural, one{One piece of writing mentions them.} other{# pieces of writing mention them.}}</value></data>
+  <data name="Campaign.Cast.MentionedNowhere" xml:space="preserve"><value>Nothing written mentions them yet.</value></data>
+  <data name="Campaign.Cast.RetiredTitle" xml:space="preserve"><value>Retired ({0})</value></data>
+  <data name="Campaign.Cast.RetiredHint" xml:space="preserve"><value>Out of play: not in the cast, the pickers or the table. Everything that mentions them still names them.</value></data>
+  <data name="Campaign.Cast.Restore" xml:space="preserve"><value>Bring back</value></data>
+  <data name="Campaign.Cast.RestoreLabel" xml:space="preserve"><value>Bring {0} back into play</value></data>
+  <data name="Campaign.Cast.Restored" xml:space="preserve"><value>{0} is back in the cast.</value></data>
   <data name="Campaign.Cast.Retire" xml:space="preserve"><value>Retire</value></data>
-  <data name="Campaign.Cast.Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Campaign.Cast.HasRetired" xml:space="preserve"><value>{0} has retired.</value></data>
-  <data name="Campaign.Cast.Deleted" xml:space="preserve"><value>Deleted {0}.</value></data>
   <data name="Campaign.Cast.RetireOwnOnly" xml:space="preserve"><value>You can only retire a character you own.</value></data>
   <data name="Campaign.Journal.Title" xml:space="preserve"><value>My journal</value></data>
   <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>Your private notebook for this campaign. Only you can read it, not even the DM. One entry per session, plus anything else you want to keep.</value></data>
@@ -113,7 +116,6 @@
   <data name="Campaign.Journal.Save" xml:space="preserve"><value>Save</value></data>
   <data name="Campaign.Journal.Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>Journal entries are stored per player and never appear in the DM's view, exports or AI drafts.</value></data>
-  <data name="Campaign.Journal.Saved" xml:space="preserve"><value>Journal saved.</value></data>
   <data name="Campaign.Journal.SaveFailed" xml:space="preserve"><value>Could not save that entry.</value></data>
   <data name="Campaign.Journal.Delete.Title" xml:space="preserve"><value>Delete this entry?</value></data>
   <data name="Campaign.Journal.Delete.Body" xml:space="preserve"><value>The entry is removed from your journal and cannot be brought back.</value></data>
@@ -121,6 +123,8 @@
   <data name="Campaign.Library.Title" xml:space="preserve"><value>Library</value></data>
   <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>Reference content for this campaign's system, plus your homebrew: equipment, classes, subclasses, feats, spells, creatures and more.</value></data>
   <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>Reference content for this campaign's system, including the DM's homebrew.</value></data>
+  <data name="Campaign.Library.LoadProblems" xml:space="preserve"><value>{0} problems came up while loading systems and packs, so some entries may be missing here.</value></data>
+  <data name="Campaign.Library.LoadProblemsLink" xml:space="preserve"><value>See what went wrong</value></data>
   <data name="Campaign.Library.NewHomebrew" xml:space="preserve"><value>New homebrew</value></data>
   <data name="Campaign.Library.ImportFromCampaign" xml:space="preserve"><value>Import from another campaign</value></data>
   <data name="Campaign.Library.ExportLabel" xml:space="preserve"><value>Export this campaign's homebrew as a content pack</value></data>
@@ -216,7 +220,7 @@
   <data name="Campaign.Overview.Live" xml:space="preserve"><value>Live</value></data>
   <data name="Campaign.Overview.TableRunning" xml:space="preserve"><value>The table is running.</value></data>
   <data name="Campaign.Overview.JoinTable" xml:space="preserve"><value>Join the table</value></data>
-  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>No session is running right now.</value></data>
+  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>The table is not running right now.</value></data>
   <data name="Campaign.Overview.GoToTable" xml:space="preserve"><value>Go to the table</value></data>
   <data name="Campaign.Overview.WaitAtTable" xml:space="preserve"><value>Wait at the table</value></data>
   <data name="Campaign.Overview.LatestSession" xml:space="preserve"><value>Latest session</value></data>
@@ -291,18 +295,35 @@
   <data name="Campaign.Settings.InviteLinkNetwork" xml:space="preserve"><value>Invite link for players on your network</value></data>
   <data name="Campaign.Settings.InviteLinkTailscale" xml:space="preserve"><value>Invite link for players on Tailscale</value></data>
   <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>New link</value></data>
+  <data name="Campaign.Settings.NewLinkQ" xml:space="preserve"><value>Make a new invite link?</value></data>
+  <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>The current link stops working at once. Anyone who has it and has not joined yet will need the new one.</value></data>
+  <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>Make new link</value></data>
+  <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>Change {0}'s role to {1}?</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>A DM sees every secret in this campaign and can change or delete anything in it.</value></data>
+  <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>What they can see and do changes as soon as you confirm.</value></data>
+  <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>Change role</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>Making a new link stops the old one from working.</value></data>
+  <data name="Campaign.Settings.InviteValidity" xml:space="preserve"><value>New links work</value></data>
+  <data name="Campaign.Settings.InviteValidity.Forever" xml:space="preserve"><value>until replaced</value></data>
+  <data name="Campaign.Settings.InviteValidity.Week" xml:space="preserve"><value>for 7 days</value></data>
+  <data name="Campaign.Settings.InviteValidity.Day" xml:space="preserve"><value>for 24 hours</value></data>
+  <data name="Campaign.Settings.InviteValidity.Once" xml:space="preserve"><value>for one player</value></data>
+  <data name="Campaign.Settings.InviteOnce" xml:space="preserve"><value>This link lets one player in.</value></data>
+  <data name="Campaign.Settings.InviteUsed" xml:space="preserve"><value>{0} used this link. Make a new one to invite another player.</value></data>
+  <data name="Campaign.Settings.InviteExpired" xml:space="preserve"><value>This link has expired. Make a new one to invite players.</value></data>
+  <data name="Campaign.Settings.InviteExpiresDays" xml:space="preserve"><value>This link stops working in {0} days.</value></data>
+  <data name="Campaign.Settings.InviteExpiresHours" xml:space="preserve"><value>This link stops working in {0} hours.</value></data>
   <data name="Campaign.Settings.Backup" xml:space="preserve"><value>Backup</value></data>
-  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>Export downloads the whole campaign (characters, sessions, lore, notes, homebrew) as one JSON file. Import restores a file exported from here, including after the campaign was deleted.</value></data>
+  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>Export downloads the campaign (characters, sessions, lore, notes, homebrew) as one JSON file, without its images or invite link. Merging a file exported from this campaign puts back everything in it, including what was deleted since, over what is stored; anything added since the export stays.</value></data>
   <data name="Campaign.Settings.Export" xml:space="preserve"><value>Export campaign</value></data>
-  <data name="Campaign.Settings.Import" xml:space="preserve"><value>Import campaign</value></data>
-  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>The file is a backup of a different (for example deleted) campaign: restore that one</value></data>
+  <data name="Campaign.Settings.Import" xml:space="preserve"><value>Merge from a file</value></data>
+  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>The file is from another campaign (for example a deleted one): restore it as a new campaign</value></data>
   <data name="Campaign.Settings.Delete.Title" xml:space="preserve"><value>Delete campaign</value></data>
   <data name="Campaign.Settings.Delete.Hint" xml:space="preserve"><value>Removes the campaign and everything in it. Export first if you want to keep anything.</value></data>
   <data name="Campaign.Settings.Delete.Button" xml:space="preserve"><value>Delete this campaign</value></data>
   <data name="Campaign.Settings.Delete.OwnerOnlyHint" xml:space="preserve"><value>Only the campaign's owner can delete it.</value></data>
   <data name="Campaign.Settings.NameRequired" xml:space="preserve"><value>The campaign needs a name.</value></data>
-  <data name="Campaign.Settings.Saved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="Campaign.AccessChanged" xml:space="preserve"><value>Your role in this campaign has changed, so that was not saved.</value></data>
   <data name="Campaign.Settings.PacksSaved" xml:space="preserve"><value>Pack selection saved.</value></data>
   <data name="Campaign.Settings.RoleChanged" xml:space="preserve"><value>{0} is now a {1}.</value></data>
   <data name="Campaign.Settings.RemoveQ" xml:space="preserve"><value>Remove {0}?</value></data>
@@ -319,8 +340,9 @@
   <data name="Campaign.Settings.ExportFailed" xml:space="preserve"><value>Export failed.</value></data>
   <data name="Campaign.Settings.ExportDone" xml:space="preserve"><value>Export downloaded.</value></data>
   <data name="Campaign.Settings.NotExport" xml:space="preserve"><value>That file isn't a campaign export.</value></data>
-  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>That file is a backup of a different campaign. Tick “restore that one” if you meant to bring it back.</value></data>
-  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>Imported “{0}”.</value></data>
+  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>That file is from a different campaign. Tick “restore it as a new campaign” to bring it back as a campaign of its own.</value></data>
+  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>Merged “{0}” from the file.</value></data>
+  <data name="Campaign.Settings.RestoredAsNew" xml:space="preserve"><value>Restored “{0}” as a new campaign. Invite your players again: it has a new link.</value></data>
   <data name="Campaign.Settings.ImportRejected" xml:space="preserve"><value>Import rejected: unrecognised format or you are not a DM of that campaign.</value></data>
   <data name="Campaign.Settings.ImportFailed" xml:space="preserve"><value>Import failed: {0}</value></data>
   <data name="Campaign.Settings.DeleteQ" xml:space="preserve"><value>Delete “{0}”?</value></data>
@@ -393,6 +415,8 @@
   <data name="Campaign.Wiki.Saved" xml:space="preserve"><value>Saved “{0}”.</value></data>
   <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>Only the DM can edit the wiki.</value></data>
   <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>Shared with the party.</value></data>
+  <data name="Campaign.Wiki.ChangedMeanwhile" xml:space="preserve"><value>This page was changed since you opened it: an edit in another tab, or a block revealed or hidden. Your text is still here. Check it against the page, and save again to replace what is stored.</value></data>
+  <data name="Campaign.Wiki.ShareChanged" xml:space="preserve"><value>This page was changed since you opened it. Here is the latest version: share it again if you still want to.</value></data>
   <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>Deleted “{0}”.</value></data>
   <data name="Campaign.Wiki.Delete.Title" xml:space="preserve"><value>Delete “{0}”?</value></data>
   <data name="Campaign.Wiki.Delete.Body" xml:space="preserve"><value>The page is removed for everyone and cannot be brought back.</value></data>
@@ -402,7 +426,7 @@
   <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>No AI provider is set up. Add one under AI settings (top right).</value></data>
   <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>The AI draft failed: {0}</value></data>
   <data name="Campaign.Wiki.NoteAdded" xml:space="preserve"><value>Note added.</value></data>
-  <data name="Campaign.World.Title" xml:space="preserve"><value>World</value></data>
+  <data name="Campaign.World.Title" xml:space="preserve"><value>Places</value></data>
   <data name="Campaign.World.Subtitle.Dm" xml:space="preserve"><value>Regions and the places in them. Hidden places stay yours until you reveal them.</value></data>
   <data name="Campaign.World.Subtitle.Player" xml:space="preserve"><value>Places the party has discovered.</value></data>
   <data name="Campaign.World.Empty.Dm.Title" xml:space="preserve"><value>No regions yet</value></data>
@@ -443,6 +467,16 @@
   <data name="Campaign.World.Renamed" xml:space="preserve"><value>Renamed “{0}” to “{1}”.</value></data>
   <data name="Campaign.World.RenameFailed" xml:space="preserve"><value>Could not rename the region.</value></data>
   <data name="Campaign.World.RegionAdded" xml:space="preserve"><value>Added region “{0}”.</value></data>
+  <data name="Campaign.World.DeletePlaceLabel" xml:space="preserve"><value>Delete {0}</value></data>
+  <data name="Campaign.World.DeletePlaceTitle" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="Campaign.World.DeletePlaceBody" xml:space="preserve"><value>Mentions of it read “somewhere”, and a page about it stays. You can undo it for a moment.</value></data>
+  <data name="Campaign.World.DeletePlaceBodyInside" xml:space="preserve"><value>The {0} places inside it move up a level. Mentions of it read “somewhere”, and a page about it stays. You can undo it for a moment.</value></data>
+  <data name="Campaign.World.PlaceDeleted" xml:space="preserve"><value>Deleted “{0}”.</value></data>
+  <data name="Campaign.World.DeleteRegionLabel" xml:space="preserve"><value>Delete the region {0}</value></data>
+  <data name="Campaign.World.DeleteRegionTitle" xml:space="preserve"><value>Delete the region “{0}”?</value></data>
+  <data name="Campaign.World.DeleteRegionBody" xml:space="preserve"><value>It has no places. This can't be undone.</value></data>
+  <data name="Campaign.World.DeleteRegionBodyPlaces" xml:space="preserve"><value>Its {0} places and their pictures go with it, and mentions of them read “somewhere”. Pages about them stay. This can't be undone.</value></data>
+  <data name="Campaign.World.RegionDeleted" xml:space="preserve"><value>Deleted the region “{0}”.</value></data>
   <data name="Campaign.World.PlaceAdded" xml:space="preserve"><value>Added “{0}” (hidden from players until you reveal it).</value></data>
   <data name="Campaign.World.PackPlaceAdded" xml:space="preserve"><value>Added “{0}” from the pack.</value></data>
   <data name="Campaign.World.NameRequired" xml:space="preserve"><value>Give the place a name.</value></data>
@@ -450,16 +484,17 @@
   <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>Only the DM can edit places.</value></data>
   <data name="Campaign.World.ArtRemoved" xml:space="preserve"><value>Art removed.</value></data>
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>Art saved.</value></data>
+  <data name="Campaign.World.ArtStoredTextNot" xml:space="preserve"><value>The art change is stored. The other changes to this place still need Save.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>That place no longer exists, or you can't change it.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Revealed to the party.</value></data>
-  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>On the map</value></data>
+  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>In Places</value></data>
   <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>Saving puts this page on the Places list with its name and picture. Sharing the page reveals the place to the party; what you write here stays on the page.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Region</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Places</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Picture</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Picture of {0}</value></data>
-  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>On the map: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its picture or its place on the map could not be stored.</value></data>
+  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>In Places: {0}</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>The page was saved, but its picture or its entry in Places could not be stored.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Wiki page</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Open the wiki page for {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Create page</value></data>
@@ -500,7 +535,7 @@
   <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Settlement</value></data>
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>District</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Location</value></data>
-  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Put on the map</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Add to Places</value></data>
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Illustration</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Shown beside the page's text. Whoever can read the page sees it.</value></data>
   <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Illustration for {0}</value></data>
@@ -553,7 +588,6 @@
   <data name="Campaign.Templates.Delete" xml:space="preserve"><value>Delete template</value></data>
   <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>Delete “{0}”?</value></data>
   <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>Pages made from it keep their text.</value></data>
-  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>Template saved.</value></data>
   <data name="Campaign.Templates.Taken" xml:space="preserve"><value>Another template already uses the abbreviation “{0}”.</value></data>
   <data name="Campaign.Templates.Refused" xml:space="preserve"><value>The template could not be saved: give it a name, and an abbreviation of one word or none.</value></data>
   <data name="Campaign.Templates.Restored" xml:space="preserve"><value>Restored as it ships.</value></data>
@@ -569,7 +603,6 @@
   <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>Players see that someone is there, under the name you give on the sheet, but not who it is.</value></data>
   <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>{0} now shows to players as “{1}”.</value></data>
   <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>Save fact</value></data>
-  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>Fact saved.</value></data>
   <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>Mention @characters and #places, and link [[pages]]: the fact then shows on their pages and sheets.</value></data>
   <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>Known by:</value></data>
   <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} forgets this</value></data>
@@ -625,7 +658,7 @@
   <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Copy the invite link for your players</value></data>
   <data name="Campaign.Setup.Cast" xml:space="preserve"><value>Add a first character to the cast</value></data>
   <data name="Campaign.Setup.Page" xml:space="preserve"><value>Write a first wiki page</value></data>
-  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Put a first place on the map</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Add a first place</value></data>
   <data name="Campaign.Setup.Session" xml:space="preserve"><value>Plan the first session</value></data>
   <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>Done once a player joins.</value></data>
   <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>Someone of your world: players add their own characters.</value></data>

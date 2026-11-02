@@ -38,9 +38,10 @@ public static class RefCard
             ? items.OfType<IDictionary<string, object>>().Select(r => new Dictionary<string, object>(r)).ToList()
             : new List<Dictionary<string, object>>();
 
+    /// <summary>A stat block's modifier: the SRD's monsters are always the d20 rule.</summary>
     public static string Modifier(int score)
     {
-        var mod = (int)Math.Floor((score - 10) / 2.0);
+        var mod = AttributeDefinition.HalfMinusFive(score);
         return mod >= 0 ? "+" + mod : "−" + -mod;
     }
 

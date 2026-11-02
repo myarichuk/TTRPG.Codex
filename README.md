@@ -40,14 +40,50 @@ itself off whenever the launcher closes. Create your own account before turning 
 dotnet run --project src/Codex.Web
 ```
 
-Open http://localhost:5183, create an account (the first account becomes server admin), create a
-campaign, and share its invite link with players. Data lives in an embedded RavenDB under
-`src/Codex.Web/RavenData` (configurable via `Codex:DataDirectory`); the server also asks the database for a
-daily backup in `<data>/Backups`, which RavenDB's free licence does not allow, so rely on **Export campaign**
-(campaign Settings) instead. Nothing is fetched from the internet while the app runs.
+Open http://localhost:5183, create an account (the first account made on the server's own computer becomes
+server admin; set `Codex:AdminUsername` to name one from elsewhere), create a campaign, and share its invite
+link with players. Data lives in an embedded RavenDB under
+`src/Codex.Web/RavenData` (configurable via `Codex:DataDirectory`). Nothing is fetched from the internet while
+the app runs.
+
+**Backups.** Every day (and a minute after start, when the last one is older) the server writes a folder under
+`<data>/Backups/`: each campaign as the same JSON **Export campaign** makes, with its images and the players'
+journals beside it, and the accounts with their AI settings but no API keys. It keeps the newest 7
+(`Codex:Backups:Keep`; `Codex:Backups:Enabled` turns it off). To bring a campaign back, tick "restore it as a new
+campaign" in any campaign's Settings and merge its `campaign.json`; images and accounts are files to copy back by
+hand for now. `users.json` holds the accounts' password hashes, so keep the folder as private as the data folder.
+The About page shows the server admin when the last backup ran. The database's own backup is
+also requested, but RavenDB's free licence refuses it, and About says so.
 
 Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.json`), plus
-`content/` and `plugins/` next to a published executable.
+`content/` and `plugins/` next to a published executable. Problems with a pack (an entry that does not parse,
+a missing base it inherits from) are listed on the About page, and the campaign Library says when there are any.
+
+**Plugins are programs.** Packs (YAML, and `.zip`/`.cdx` archives of it) are data. A `.dll` in any content
+folder, including the DM's "My content" folder the launcher opens, is loaded into the server and runs with
+everything the server can reach: every campaign, every account, the AI keys. Put a DLL there only if you
+would run it as a program on that computer.
+
+**Settings.** Each goes in `appsettings.json`, or in an environment variable with `__` for `:`
+(`Codex__DataDirectory`). The tray launcher sets the ones marked *launcher* itself.
+
+| Setting | What it does |
+| --- | --- |
+| `Codex:DataDirectory` | Where the database, images and backups live. |
+| `Codex:ContentDirectories` | Folders of systems, packs and plugins to load (a list). `Codex:PluginsDirectory` is the older single folder. |
+| `Codex:AdminUsername` | The account that is server admin, by name. Without it, the first account made on the server's own computer is. |
+| `Authentication:EnableLocalLogin` | `false` hides the name-and-password sign-in, leaving only the external providers configured under `Authentication:`. |
+| `Codex:DefaultCulture` | The language for a visitor who has not picked one (`en`, `he`, `ru`); without it the browser's language decides. *Launcher.* |
+| `Codex:PublicUrl` | The address in the invite link a DM copies, when the host knows a better one than the browser's. *Launcher.* |
+| `Codex:RemoteUrl` | A second invite link, for players who reach the host another way (over Tailscale, say). *Launcher.* |
+| `Codex:PublicExposure` | `true` while the server is open to the internet: sign-up needs an invite, only the server admin may use the server's AI key, and nobody can claim server admin. *Launcher*, with Funnel on. |
+| `Codex:StopOnStdinClose` | Stop the server when its standard input closes: how the launcher stops it. *Launcher.* |
+| `Codex:Backups:Enabled`, `Codex:Backups:Keep` | The daily backup, above. |
+| `AI:DailyLimitPerUser`, `AIImage:DailyLimitPerUser` | How many requests (200) and pictures (20) each account may make a day on the server's own AI key, when it has no model of its own; 0 for no limit. The server admin has none. The counts are kept in memory, so a restart starts the day over. **AI settings** says the key is shared, and shows the admin who used it today. |
+| `Codex:EnableTestSeedEndpoint` | The end-to-end tests' seeding endpoints, which write accounts and campaigns straight into the database for anyone who calls them. Off by default; never on outside the tests. |
+
+The embedded RavenDB server listens on a random port on `127.0.0.1` with no authentication. Only programs on the
+same computer can reach it, which is fine for a desktop app, but anything running there can read every campaign.
 
 ## Layout
 
@@ -68,8 +104,10 @@ Every "Draft with AI" button talks to a chat model you choose under **AI setting
 name in the header). Providers are per user and OpenAI-compatible: OpenRouter is pre-selected
 (one key, most current models), with presets for OpenAI, Groq, Mistral, a local Ollama or LM
 Studio, or any custom `/v1/chat/completions` endpoint. API keys are stored encrypted with ASP.NET
-Data Protection under the server's data directory. The `AI` section of `appsettings.json` is an
-optional server-wide fallback for users who set nothing up. Nothing is sent to a model until
+Data Protection, each under its own user; the key ring is in `Keys/` inside the server's data
+directory, so keep that folder with the data when you move or back it up. The ring itself is not
+encrypted at rest, so anyone who can read the data directory can read the keys. The `AI` section of `appsettings.json` is an
+optional server-wide fallback for users who set nothing up. Every account on a LAN server shares it, each within a daily allowance (`AI:DailyLimitPerUser`, above). Nothing is sent to a model until
 someone clicks an AI button.
 
 What the AI does today:

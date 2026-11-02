@@ -86,7 +86,7 @@
   <data name="Combat.TempHp" xml:space="preserve"><value>Temp HP</value></data>
   <data name="Combat.TempHpTo" xml:space="preserve"><value>Give {0} temporary hit points</value></data>
   <data name="Combat.IsDead" xml:space="preserve"><value>{0} is {1}.</value></data>
-  <data name="Combat.Revive" xml:space="preserve"><value>Revive (clear {0})</value></data>
+  <data name="Combat.Revive" xml:space="preserve"><value>Revive</value></data>
   <data name="Combat.ReviveTo" xml:space="preserve"><value>Revive {0}</value></data>
   <data name="Combat.RemoveFromOrder" xml:space="preserve"><value>Remove from order</value></data>
   <data name="Combat.RemoveFromOrderTo" xml:space="preserve"><value>Remove {0} from the order</value></data>
@@ -96,9 +96,28 @@
   <data name="Combat.Stabilize" xml:space="preserve"><value>Stabilize</value></data>
   <data name="Combat.MarkDead" xml:space="preserve"><value>Mark dead</value></data>
   <data name="Combat.MarkDeadTo" xml:space="preserve"><value>Mark {0} dead</value></data>
+  <data name="Combat.MarkDeadTitle" xml:space="preserve"><value>Mark {0} dead?</value></data>
+  <data name="Combat.MarkDeadText" xml:space="preserve"><value>They die by the table's rules: no longer down, their death saves cleared, and what they concentrated on or counted on their turns ends. Reviving brings them back, not those effects.</value></data>
+  <data name="Combat.Undo" xml:space="preserve"><value>Undo {0}</value></data>
+  <data name="Combat.UndoTo" xml:space="preserve"><value>Undo the last change to {0} ({1})</value></data>
+  <data name="Combat.HeldBy" xml:space="preserve"><value>Held by</value></data>
+  <data name="Combat.HeldByTitle" xml:space="preserve"><value>Whose concentration keeps this up. It ends when they stop concentrating.</value></data>
+  <data name="Combat.HeldByNobody" xml:space="preserve"><value>Nobody</value></data>
+  <data name="Combat.EffectHeldBy" xml:space="preserve"><value>Held up by {0}'s concentration.</value></data>
+  <data name="Combat.ConcentrationSave" xml:space="preserve"><value>{0} is concentrating: a DC {1} save keeps it.</value></data>
+  <data name="Combat.Visibility.Label" xml:space="preserve"><value>What the players see of {0}</value></data>
+  <data name="Combat.Visibility.PlayersSee" xml:space="preserve"><value>Players see</value></data>
+  <data name="Combat.Visibility.Nothing" xml:space="preserve"><value>Nothing</value></data>
+  <data name="Combat.Visibility.Stranger" xml:space="preserve"><value>A stranger</value></data>
+  <data name="Combat.Visibility.Known" xml:space="preserve"><value>Who it is</value></data>
+  <data name="Combat.Visibility.HiddenBadge" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Combat.Visibility.StrangerBadge" xml:space="preserve"><value>Stranger</value></data>
   <data name="Combat.Condition" xml:space="preserve"><value>Condition</value></data>
   <data name="Combat.Rounds" xml:space="preserve"><value>Rounds</value></data>
   <data name="Combat.RoundsTitle" xml:space="preserve"><value>0 or blank: until removed</value></data>
+  <data name="Combat.AmountNeeded" xml:space="preserve"><value>Type an amount above 0 first.</value></data>
+  <data name="Combat.InitiativeNeeded" xml:space="preserve"><value>Type the initiative total first.</value></data>
+  <data name="Combat.ConditionNeeded" xml:space="preserve"><value>Pick a condition first.</value></data>
   <data name="Combat.EndsAt" xml:space="preserve"><value>Ends at</value></data>
   <data name="Combat.EndOfTurn" xml:space="preserve"><value>End of their turn</value></data>
   <data name="Combat.StartOfTurn" xml:space="preserve"><value>Start of their turn</value></data>
@@ -127,13 +146,16 @@
   <data name="Combat.Dm" xml:space="preserve"><value>DM</value></data>
   <data name="Combat.Player" xml:space="preserve"><value>Player</value></data>
   <data name="Combat.EndTableTitle" xml:space="preserve"><value>End the table?</value></data>
-  <data name="Combat.EndTableCombat" xml:space="preserve"><value>The session is marked complete. The initiative order is kept and comes back when this session's table is started again.</value></data>
+  <data name="Combat.EndTableCombat" xml:space="preserve"><value>The session stays open while the fight is on, so the initiative order comes back when the table is started again. Players' table pages go back to waiting.</value></data>
   <data name="Combat.EndTableIdle" xml:space="preserve"><value>The session is marked complete. Players' table pages go back to waiting.</value></data>
   <data name="Combat.TableEnded" xml:space="preserve"><value>The table has ended. The session is marked complete.</value></data>
+  <data name="Combat.TableEndedKept" xml:space="preserve"><value>The table has ended. The fight is kept for when it starts again.</value></data>
+  <data name="Combat.TableClosed" xml:space="preserve"><value>The table was closed. Start or join it again to carry on.</value></data>
+  <data name="Combat.CommandFailed" xml:space="preserve"><value>That didn't go through. Try again; if it keeps failing, reload the page.</value></data>
   <data name="Combat.EndEncounterTitle" xml:space="preserve"><value>End the encounter?</value></data>
   <data name="Combat.EndEncounterText" xml:space="preserve"><value>The initiative order is cleared and conditions with a round count expire. Conditions that last until removed stay.</value></data>
   <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>Only the DM can add creatures.</value></data>
-  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} added (hidden from players). Add them to initiative when ready.</value></data>
+  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} added; players see them as a stranger by that name. Add them to initiative when ready.</value></data>
   <data name="Combat.Notes.Tab" xml:space="preserve"><value>Notes</value></data>
   <data name="Combat.Notes.TabTitle" xml:space="preserve"><value>Session notes (access key N)</value></data>
   <data name="Combat.Notes.Count" xml:space="preserve"><value>{0} so far</value></data>
@@ -195,12 +217,12 @@
   <data name="Combat.RoundTurn" xml:space="preserve"><value>Round {0} · turn: {1}</value></data>
   <data name="Combat.Notes.SecretPill" xml:space="preserve"><value>secret</value></data>
   <data name="Combat.Notes.Correct" xml:space="preserve"><value>Correct this note</value></data>
-  <data name="Combat.Notes.Remove" xml:space="preserve"><value>Remove this note</value></data>
+  <data name="Combat.Notes.Remove" xml:space="preserve"><value>Delete this note</value></data>
   <data name="Combat.Notes.CorrectedWords" xml:space="preserve"><value>Corrected words</value></data>
   <data name="Combat.Notes.To" xml:space="preserve"><value>to {0}</value></data>
-  <data name="Combat.Notes.RemoveTitle" xml:space="preserve"><value>Remove this note?</value></data>
+  <data name="Combat.Notes.RemoveTitle" xml:space="preserve"><value>Delete this note?</value></data>
   <data name="Combat.Notes.RemoveText" xml:space="preserve"><value>It is taken out of the session and won't be in the recap.</value></data>
-  <data name="Combat.Notes.RemoveConfirm" xml:space="preserve"><value>Remove</value></data>
+  <data name="Combat.Notes.RemoveConfirm" xml:space="preserve"><value>Delete</value></data>
   <data name="Combat.Mention.Untitled" xml:space="preserve"><value>Untitled</value></data>
   <data name="Combat.Mention.Private" xml:space="preserve"><value>private</value></data>
   <data name="Combat.Mention.Home.Character" xml:space="preserve"><value>Character</value></data>

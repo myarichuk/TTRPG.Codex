@@ -2,7 +2,9 @@
 // never served from cache: this worker only (1) keeps the static shell (styles, scripts, icons)
 // fresh with a stale-while-revalidate strategy and (2) shows an offline page when the server
 // can't be reached. Anything private (/media, /_blazor, API calls) is never cached.
-const VERSION = 'codex-shell-v21';
+// The page links its own styles and scripts by fingerprinted URL (app.<hash>.css, F28), so a new build asks for new URLs
+// and is never drawn with a cached old copy. The bare names below are for the offline page and older pages still open.
+const VERSION = 'codex-shell-v28';
 const SHELL = [
     '/offline.html',
     '/app.css',

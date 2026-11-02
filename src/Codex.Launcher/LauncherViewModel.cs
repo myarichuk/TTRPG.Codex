@@ -413,11 +413,13 @@ internal sealed class LauncherViewModel
         Shell.Open(LauncherPaths.MyContent(dataHome));
     }
 
-    /// <summary>The daily backups the server writes beside the campaign data.</summary>
+    /// <summary>The daily backups the server writes beside the campaign data (one folder per day; the first a minute after the
+    /// server starts). Opened even while still empty, rather than the data folder in its place, which looked like a backup.</summary>
     public void OpenBackupsFolder()
     {
         var backups = Path.Combine(LauncherPaths.RavenData(dataHome), "Backups");
-        Shell.Open(Directory.Exists(backups) ? backups : dataHome);
+        Directory.CreateDirectory(backups);
+        Shell.Open(backups);
     }
 
     public void Quit()

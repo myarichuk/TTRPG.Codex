@@ -18,14 +18,19 @@
   <data name="Session.GoToTable" xml:space="preserve"><value>Перейти к столу</value></data>
   <data name="Session.ReopenTable" xml:space="preserve"><value>Открыть снова за столом</value></data>
   <data name="Session.RunTable" xml:space="preserve"><value>Провести за столом</value></data>
+  <data name="Session.Delete.Label" xml:space="preserve"><value>Удалить сессию</value></data>
+  <data name="Session.Delete.Title" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Session.Delete.Body" xml:space="preserve"><value>Её заметки, журнал, броски и сражения удалятся вместе с ней. Записи дневника о ней сохранят свой текст. Отменить это нельзя.</value></data>
+  <data name="Session.Delete.Running" xml:space="preserve"><value>Стол сейчас ведёт эту сессию. Сначала завершите стол.</value></data>
+  <data name="Session.Delete.Failed" xml:space="preserve"><value>Не удалось удалить сессию.</value></data>
+  <data name="Session.Delete.Done" xml:space="preserve"><value>«{0}» удалена.</value></data>
   <data name="Session.Details" xml:space="preserve"><value>Сведения</value></data>
   <data name="Session.TitleLabel" xml:space="preserve"><value>Название</value></data>
   <data name="Session.StatusLabel" xml:space="preserve"><value>Статус</value></data>
-  <data name="Session.SaveDetails" xml:space="preserve"><value>Сохранить сведения</value></data>
+  <data name="Session.DateLabel" xml:space="preserve"><value>Дата</value></data>
   <data name="Session.Recap" xml:space="preserve"><value>Краткий пересказ</value></data>
   <data name="Session.PlayersCanRead" xml:space="preserve"><value>Игроки могут это прочитать</value></data>
   <data name="Session.RecapPlaceholder" xml:space="preserve"><value>Что произошло на сессии — так, как это прочитают игроки…</value></data>
-  <data name="Session.SaveRecap" xml:space="preserve"><value>Сохранить пересказ</value></data>
   <data name="Session.Prefill" xml:space="preserve"><value>Заполнить по событиям</value></data>
   <data name="Session.Drafting" xml:space="preserve"><value>Составляется черновик…</value></data>
   <data name="Session.DraftAi" xml:space="preserve"><value>Черновик от ИИ</value></data>
@@ -35,7 +40,6 @@
   <data name="Session.DmSummary" xml:space="preserve"><value>Заметки мастера о сессии</value></data>
   <data name="Session.OnlyYou" xml:space="preserve"><value>Только вы</value></data>
   <data name="Session.DmSummaryPlaceholder" xml:space="preserve"><value>Тайны, оборванные нити, зацепки на следующий раз…</value></data>
-  <data name="Session.SaveSummary" xml:space="preserve"><value>Сохранить заметки</value></data>
   <data name="Session.DmDraftHint" xml:space="preserve"><value>Черновик для мастера видит всё: тайные броски, личные заметки и ваши прежние заметки.</value></data>
   <data name="Session.TableNotes" xml:space="preserve"><value>Заметки стола</value></data>
   <data name="Session.NoNotes" xml:space="preserve"><value>Заметок пока нет.</value></data>
@@ -43,10 +47,6 @@
   <data name="Session.Label.Private" xml:space="preserve"><value>Личная</value></data>
   <data name="Session.Label.Secret" xml:space="preserve"><value>Тайная</value></data>
   <data name="Session.AtTable" xml:space="preserve"><value>За столом</value></data>
-  <data name="Session.Kind.Clue" xml:space="preserve"><value>Улика</value></data>
-  <data name="Session.Kind.Loot" xml:space="preserve"><value>Добыча</value></data>
-  <data name="Session.Kind.Ruling" xml:space="preserve"><value>Решение</value></data>
-  <data name="Session.Kind.FollowUp" xml:space="preserve"><value>Задел</value></data>
   <data name="Session.Round" xml:space="preserve"><value>Раунд {0}</value></data>
   <data name="Session.RoundTurn" xml:space="preserve"><value>Раунд {0} · ход: {1}</value></data>
   <data name="Session.To" xml:space="preserve"><value>— {0}</value></data>
@@ -59,21 +59,15 @@
   <data name="Session.JournalHint" xml:space="preserve"><value>Ваш личный блокнот для этой сессии. Никто другой, даже мастер, не может его прочитать.</value></data>
   <data name="Session.JournalEntry" xml:space="preserve"><value>Запись журнала</value></data>
   <data name="Session.JournalPlaceholder" xml:space="preserve"><value>Имена, которые нужно запомнить, догадки, добыча, которая вам причитается…</value></data>
-  <data name="Session.SaveJournal" xml:space="preserve"><value>Сохранить журнал</value></data>
   <data name="Session.Saved" xml:space="preserve"><value>Сохранено</value></data>
   <data name="Session.AllJournal" xml:space="preserve"><value>Все мои записи журнала</value></data>
   <data name="Session.EventsHeading" xml:space="preserve"><value>События ({0})</value></data>
   <data name="Session.EventsEmpty" xml:space="preserve"><value>Пока ничего не записано. События записываются автоматически, пока идёт игра за столом.</value></data>
   <data name="Session.Flash.Prefilled" xml:space="preserve"><value>Краткий пересказ заполнен по журналу событий. Отредактируйте и сохраните.</value></data>
-  <data name="Session.Flash.DetailsSaved" xml:space="preserve"><value>Сведения сохранены.</value></data>
-  <data name="Session.Flash.RecapSaved" xml:space="preserve"><value>Краткий пересказ сохранён.</value></data>
-  <data name="Session.Flash.SummarySaved" xml:space="preserve"><value>Заметки мастера сохранены.</value></data>
   <data name="Session.Flash.DraftReady" xml:space="preserve"><value>Черновик от ИИ готов. Проверьте, отредактируйте и сохраните.</value></data>
   <data name="Session.Flash.NoAi" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ вашей учётной записи (справа вверху).</value></data>
   <data name="Session.Flash.DraftFailed" xml:space="preserve"><value>Не удалось создать черновик ИИ: {0}</value></data>
-  <data name="Session.Flash.JournalSaved" xml:space="preserve"><value>Журнал сохранён. Прочитать его можете только вы.</value></data>
   <data name="Session.Flash.JournalFailed" xml:space="preserve"><value>Не удалось сохранить запись журнала.</value></data>
   <data name="Session.Flash.NoteAdded" xml:space="preserve"><value>Заметка добавлена.</value></data>
-  <data name="Session.Label.Note" xml:space="preserve"><value>Заметка</value></data>
   <data name="Session.UnknownSpeaker" xml:space="preserve"><value>Кто-то</value></data>
 </root>
