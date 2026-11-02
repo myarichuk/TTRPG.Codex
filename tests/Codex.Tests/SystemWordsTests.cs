@@ -149,7 +149,7 @@ public class SystemWordsTests
         Assert.Equal("calling", roles.Class);
         Assert.Null(roles.Speed);
         Assert.Equal(new[] { "rank", "calling" }, roles.Summary);
-        Assert.Null(System(y => y.Replace("fieldRoles: { level: rank, class: calling, summary: [rank, calling] }\n", "")).FieldRoles.Level);
+        Assert.Null(System(y => y.Replace("fieldRoles: { level: rank, class: calling, summary: [rank, calling] }", "")).FieldRoles.Level);
     }
 
     [Fact]
