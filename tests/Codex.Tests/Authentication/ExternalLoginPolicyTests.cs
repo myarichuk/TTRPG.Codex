@@ -49,4 +49,22 @@ public class ExternalLoginPolicyTests
 
         Assert.Equal(expected, ExternalLoginPolicy.IsRegisteredScheme(provider, registered));
     }
+
+    [Fact]
+    public void ProviderOf_ReadsTheSchemeTheRemoteHandlerRecords()
+    {
+        var result = OAuthTestFixtures.CreateGoogleAuthResult();
+
+        Assert.False(result.Properties!.Items.ContainsKey("LoginProvider"));
+        Assert.Equal("Google", ExternalLoginPolicy.ProviderOf(result.Properties, result.Principal!));
+    }
+
+    [Fact]
+    public void ProviderOf_FallsBackToTheIdentitysAuthenticationType()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "1") }, "Apple"));
+
+        Assert.Equal("Apple", ExternalLoginPolicy.ProviderOf(new Microsoft.AspNetCore.Authentication.AuthenticationProperties(), principal));
+        Assert.Equal("Apple", ExternalLoginPolicy.ProviderOf(null, principal));
+    }
 }

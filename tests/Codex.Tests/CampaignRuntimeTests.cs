@@ -117,6 +117,97 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         await manager.EvictAsync(campaignId);
     }
 
+    /// <summary>R6: two "Start table" clicks at once used to open two sessions and patch the campaign twice before one runtime
+    /// lost the race to publish.</summary>
+    [Fact]
+    public async Task TwoStartsAtOnce_RunOneTable_OnOneSession_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Eager" };
+        await campaigns.SaveAsync(campaign);
+        await SeedActorAsync(campaignId, hp: 10);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+        var started = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Task.Run(() => manager.GetOrStartAsync(campaign, dm))));
+
+        Assert.All(started, r => Assert.Same(started[0], r));
+        Assert.Single(await _sessionRepository.GetAllForCampaignAsync(campaignId));
+        await manager.EvictAsync(campaignId);
+    }
+
+    /// <summary>R6: the runtime used to be published before it was hydrated, and stayed cached, half built, when hydrating
+    /// failed.</summary>
+    [Fact]
+    public async Task ATableThatFailsToLoadItsActors_IsNotLeftRunning_AndTheNextStartTriesAgain_Async()
+    {
+        var (_, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Broken" };
+        await campaigns.SaveAsync(campaign);
+        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+        var actors = Substitute.For<IActorRepository>();
+        var fail = true;
+        actors.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => fail
+            ? Task.FromException<IEnumerable<ActorDocument>>(new TimeoutException("database busy"))
+            : Task.FromResult<IEnumerable<ActorDocument>>(Array.Empty<ActorDocument>()));
+        var loader = new Codex.Core.PluginLoader(NullLogger<Codex.Core.PluginLoader>.Instance, _componentRegistry, Substitute.For<IContentPackLoader>());
+        var manager = new CampaignRuntimeManager(actors, _sessionRepository, campaigns, _encounterRepository, _componentRegistry, loader, NullLoggerFactory.Instance);
+        var changes = new List<string>();
+        manager.RuntimeChanged += changes.Add;
+
+        await Assert.ThrowsAsync<TimeoutException>(() => manager.GetOrStartAsync(campaign, dm));
+        Assert.Null(manager.TryGet(campaignId));
+        Assert.Empty(changes);
+
+        fail = false;
+        Assert.NotNull(await manager.GetOrStartAsync(campaign, dm));
+        Assert.Equal(new[] { campaignId }, changes);
+        await manager.EvictAsync(campaignId);
+    }
+
+    /// <summary>R6: ending the table cancelled its loop without running what was queued, so a sheet save or a roll queued just
+    /// before waited forever (the save spinner never stopped). Queued commands now finish first.</summary>
+    [Fact]
+    public async Task EndingTheTable_FinishesTheCommandsAlreadyQueued_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Last orders" };
+        await campaigns.SaveAsync(campaign);
+        var actor = await SeedActorAsync(campaignId, hp: 20);
+        var runtime = await manager.GetOrStartAsync(campaign, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+
+        var queued = Enumerable.Range(0, 5).Select(_ => runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 1, "parting shot"))).ToList();
+        await manager.EvictAsync(campaignId);
+
+        await Task.WhenAll(queued).WaitAsync(TimeSpan.FromSeconds(30));
+        var stored = await _actorRepository.GetVisibleAsync(actor.Id, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+        Assert.Equal(15, _componentRegistry.Hydrate(stored!.State).OfType<ResourcePoolComponent>().Single().Get("HP"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runtime.EnqueueAsync(new ApplyDamageCommand(actor.Id, "HP", 1, "too late")));
+    }
+
+    /// <summary>R6: idle eviction counted only commands, so two hours of roleplay with four pages open on the table took the
+    /// table away from under them. A table someone is watching is in use.</summary>
+    [Fact]
+    public async Task AQuietTableWithPagesOpenOnIt_IsNotEvicted_UntilTheyClose_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Roleplay" };
+        await campaigns.SaveAsync(campaign);
+        var runtime = await manager.GetOrStartAsync(campaign, new CampaignAccess(campaignId, "owner", CampaignRole.DM));
+        Action<IReadOnlyCollection<string>> page = _ => { };
+        runtime.StateChanged += page;
+
+        var later = runtime.LastActivityUtc.AddHours(3);
+        Assert.Empty(await manager.EvictIdleAsync(TimeSpan.FromHours(2), later));
+
+        runtime.StateChanged -= page;
+        Assert.Equal(new[] { campaignId }, await manager.EvictIdleAsync(TimeSpan.FromHours(2), later));
+    }
+
     [Fact]
     public async Task ARuntimeThatIsStillTakingCommands_IsNotIdle_Async()
     {
@@ -199,6 +290,20 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         var seen = SessionEventRedactor.ForViewer(new[] { legacy, note }, new CampaignAccess("c", "p", CampaignRole.Player), Array.Empty<ActorDocument>());
 
         Assert.Equal(new[] { "Note: the bridge is trapped" }, seen.Select(e => e.Description));
+    }
+
+    [Fact]
+    public void SessionLog_ANumberEventWithoutAPlayersVersion_ReachesOnlyTheOwner()
+    {
+        var hero = new ActorDocument { Id = "hero", Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Visibility = ActorVisibility.Known };
+        var hurt = new SessionEvent { Type = "Damage", Description = "Aria took 13 HP damage.", ActorIds = { "hero" } };
+        var rested = new SessionEvent { Type = "Rest", Description = "Aria rested.", ActorIds = { "hero" } };
+
+        var other = SessionEventRedactor.ForViewer(new[] { hurt, rested }, new CampaignAccess("c", "p2", CampaignRole.Player), new[] { hero });
+        var owner = SessionEventRedactor.ForViewer(new[] { hurt, rested }, new CampaignAccess("c", "p1", CampaignRole.Player), new[] { hero });
+
+        Assert.Equal(new[] { "Aria rested." }, other.Select(e => e.Description));
+        Assert.Equal(new[] { "Aria took 13 HP damage.", "Aria rested." }, owner.Select(e => e.Description));
     }
 
     [Fact]
@@ -413,6 +518,26 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.True(entry.Kept[0] >= entry.Dropped[0]);
         Assert.Equal(5, entry.Modifier);
         Assert.Equal(entry.Kept[0] + 5, entry.Total);
+    }
+
+    [Fact]
+    public async Task RollInitiativeCommand_RollsOnce_AndTheOrderShowsTheLoggedTotal_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = await SeedActorAsync(campaignId, hp: 10);
+        var session = await SeedSessionAsync(campaignId);
+
+        await using var runtime = new CampaignRuntime(campaignId, _actorRepository, _componentRegistry, NullLogger.Instance, _sessionRepository, session, _encounterRepository, new StandardDiceRoller(new Random(3)));
+        runtime.Hydrate(new[] { actor });
+
+        await runtime.EnqueueAsync(new RollInitiativeCommand(actor.Id, "1d20+2", "dm-user", TieBreak: 4));
+
+        var entry = Assert.Single(session.RollLog);
+        Assert.Equal(actor.Id, entry.ActorId);
+        Assert.Equal(2, entry.Modifier);
+        var participant = Assert.Single(runtime.ActiveEncounter!.Participants);
+        Assert.Equal(entry.Total, participant.InitiativeRoll);
+        Assert.Equal(4, participant.TieBreak);
     }
 
     [Fact]

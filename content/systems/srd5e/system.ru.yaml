@@ -41,13 +41,14 @@ actorFields:
     label: Черта происхождения
     category: Общее
     description: Ваша предыстория даёт определённую черту происхождения.
-  armorClass: { label: Класс Брони, category: Бой }
+  armorClass: { label: Класс Брони, abbreviation: КБ, category: Бой }
   armorClassMisc:
     label: Прочие бонусы к Классу Брони
     category: Бой
     description: Магические эффекты и заклинания, не связанные с предметом, который вы несёте.
   speed:
     label: Скорость (футы)
+    unit: фт
     category: Бой
     description: Копируется из вашего вида при выборе; меняйте здесь для умений, которые её изменяют.
   size:
@@ -427,8 +428,14 @@ values:
   pp: пм
   Short Rest: Короткий отдых
   Long Rest: Долгий отдых
+  Spell slots: Ячейки заклинаний
+  Pact slots: Ячейки договора
+  spell slot: ячейка заклинаний
+  pact slot: ячейка договора
+  lb: фнт.
   Dead: Мёртв
   Stable: Стабилен
+  Concentrating: Концентрация
   # Entry tags (shown translated; the tags themselves stay as the packs wrote them)
   "ability-score": "Характеристика"
   "alignment": "Мировоззрение"

@@ -1,7 +1,6 @@
 @page "/login"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
-@using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Microsoft.AspNetCore.Identity
@@ -13,6 +12,7 @@
 @inject IConfiguration Configuration
 @inject NavigationManager NavManager
 @inject IAuthenticationSchemeProvider SchemeProvider
+@inject LoginAttempts Attempts
 
 <PageTitle>@L["Page.Auth.SignIn"] | TTRPG.Codex</PageTitle>
 
@@ -105,7 +105,16 @@
 
         if (!string.IsNullOrEmpty(QueryError))
         {
-            ErrorMessage = QueryError == "invite-only" ? L["Page.Register.InviteOnly"] : QueryError;
+            // Only codes this server sends are shown, in the reader's language: text from the address bar is never put in the
+            // app's own alert, where a link someone else made could make it say anything (R13).
+            ErrorMessage = QueryError switch
+            {
+                "invite-only" => L["Page.Register.InviteOnly"],
+                "unknown-provider" => L["Page.Login.Error.UnknownProvider"],
+                "external-invalid" => L["Page.Login.Error.ExternalInvalid"],
+                "no-username" => L["Page.Login.Error.NoUsername"],
+                _ => L["Page.Login.Error.ExternalFailed"]
+            };
         }
         else if (!EnableLocalLogin && ExternalSchemes.Count() == 1)
         {
@@ -124,10 +133,18 @@
             return;
         }
 
+        var attempt = LoginAttempts.Key(Model.Username, Codex.Web.ExposurePolicy.ClientKey(HttpContext.Connection.RemoteIpAddress));
+        if (!Attempts.Allows(attempt))
+        {
+            ErrorMessage = L["Page.Login.TooMany"];
+            return;
+        }
+
         var user = await UserRepository.GetUserByUsernameAsync(Model.Username);
 
         if (user == null)
         {
+            Attempts.Failed(attempt);
             ErrorMessage = L["Page.Login.Invalid"];
             return;
         }
@@ -139,23 +156,11 @@
         {
             if (result == PasswordVerificationResult.SuccessRehashNeeded)
             {
-                user.PasswordHash = hasher.HashPassword(user, Model.Password);
-                await UserRepository.UpdateUserAsync(user);
+                var rehashed = hasher.HashPassword(user, Model.Password);
+                await UserRepository.UpdateUserAsync(user.Id, stored => stored.PasswordHash = rehashed);
             }
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
-            };
-
-            foreach (var role in user.Roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, UserPrincipal.For(user));
             if (user.Culture is not null)
                 CultureCookie.Write(HttpContext, user.Culture);
 
@@ -164,6 +169,7 @@
         }
         else
         {
+            Attempts.Failed(attempt);
             ErrorMessage = L["Page.Login.Invalid"];
         }
     }

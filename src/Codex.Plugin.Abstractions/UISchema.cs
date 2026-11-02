@@ -76,6 +76,12 @@ public class FieldDefinition
     /// <summary>Upper bound for <see cref="FieldType.Number"/>.</summary>
     public double? Max { get; set; }
 
+    /// <summary>A short name where space is tight (the sheet's plate): "AC" for Armor Class. The label when unset.</summary>
+    public string? Abbreviation { get; set; }
+
+    /// <summary>The unit a number is measured in ("ft"), written after it where it stands alone.</summary>
+    public string? Unit { get; set; }
+
     /// <summary>Set on a localized copy of a system: dropdown/tag value -> text to show. Values themselves never change,
     /// because the rules compare them; use <see cref="Display"/> wherever one is shown.</summary>
     public Dictionary<string, string>? OptionLabels { get; set; }

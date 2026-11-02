@@ -3,6 +3,7 @@
 @inject Codex.Web.Services.ViewerClock Clock
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager RuntimeManager
 @inject NavigationManager Nav
+@inject IJSRuntime Js
 
 <div class="page-header mb-3">
     <div>
@@ -71,9 +72,18 @@
 
     private List<SessionDocument>? sessions;
     private string newTitle = string.Empty;
-    private DateTime newDate = DateTime.Today;
+    private DateTime newDate = DateTime.UtcNow.Date;
 
     protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    // The date box starts on the DM's today, not the server's (R10).
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await Clock.EnsureAsync(Js);
+        newDate = Clock.Today;
+        StateHasChanged();
+    }
 
     private async Task LoadAsync() =>
         sessions = (await SessionRepo.GetAllForCampaignAsync(Ctx.Campaign.Id)).OrderByDescending(s => s.Date).ToList();
@@ -110,7 +120,7 @@
             Id = Guid.NewGuid().ToString(),
             CampaignId = Ctx.Campaign.Id,
             Title = newTitle.Trim(),
-            Date = DateTime.SpecifyKind(newDate, DateTimeKind.Local).ToUniversalTime(),
+            Date = Clock.DayToUtc(newDate),
             Status = SessionStatus.Planned
         };
         await SessionRepo.SaveAsync(session);

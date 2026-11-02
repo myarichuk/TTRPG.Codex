@@ -68,7 +68,7 @@
     private void RebuildMentions()
     {
         mentionActors = Actors;
-        mentions = new MentionDirectory(Actors, places, items, Access.IsDm);
+        mentions = new MentionDirectory(Actors, places, items, Access.IsDm) { Words = MentionSources.Words(L) };
     }
 
     private void OnRuntimeChanged(string campaignId)

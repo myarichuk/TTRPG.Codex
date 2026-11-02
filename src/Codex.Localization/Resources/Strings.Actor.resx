@@ -5,19 +5,11 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Actor.Slots.Title" xml:space="preserve"><value>Slots</value></data>
-  <data name="Actor.Slots.SpellSlots" xml:space="preserve"><value>Spell slots</value></data>
-  <data name="Actor.Slots.PactSlots" xml:space="preserve"><value>Pact slots</value></data>
-  <data name="Actor.Slots.LongRest" xml:space="preserve"><value>Long Rest</value></data>
-  <data name="Actor.Slots.ShortRest" xml:space="preserve"><value>Short Rest</value></data>
   <data name="Actor.Slots.Level" xml:space="preserve"><value>Level {0}</value></data>
   <data name="Actor.Slots.LevelHidden" xml:space="preserve"><value>{0} level {1}: </value></data>
   <data name="Actor.Slots.Count" xml:space="preserve"><value>{0} of {1}</value></data>
   <data name="Actor.Slots.Use" xml:space="preserve"><value>Use</value></data>
   <data name="Actor.Slots.Regain" xml:space="preserve"><value>Regain</value></data>
-  <data name="Actor.Slots.UseSpell" xml:space="preserve"><value>Use a level {0} spell slot</value></data>
-  <data name="Actor.Slots.RegainSpell" xml:space="preserve"><value>Regain a level {0} spell slot</value></data>
-  <data name="Actor.Slots.UsePact" xml:space="preserve"><value>Use a level {0} pact slot</value></data>
-  <data name="Actor.Slots.RegainPact" xml:space="preserve"><value>Regain a level {0} pact slot</value></data>
   <data name="Actor.Slots.UseOther" xml:space="preserve"><value>Use a level {0} {1}</value></data>
   <data name="Actor.Slots.RegainOther" xml:space="preserve"><value>Regain a level {0} {1}</value></data>
   <data name="Actor.Hp.Max" xml:space="preserve"><value>Maximum hit points</value></data>
@@ -65,6 +57,12 @@
   <data name="Actor.Skills.Heading" xml:space="preserve"><value>Skills</value></data>
   <data name="Actor.Skills.Background" xml:space="preserve"><value>background</value></data>
   <data name="Actor.Skills.Expertise" xml:space="preserve"><value>expertise</value></data>
+  <data name="Actor.Skills.ShowSums" xml:space="preserve"><value>Show the sums</value></data>
+  <data name="Actor.Skills.HideSums" xml:space="preserve"><value>Hide the sums</value></data>
+  <data name="Actor.Skills.SumProficiency" xml:space="preserve"><value>proficiency {0}</value></data>
+  <data name="Actor.Skills.SumExpertise" xml:space="preserve"><value>expertise {0}</value></data>
+  <data name="Actor.Skills.SumPassive" xml:space="preserve"><value>{0} + {1} {2}</value></data>
+  <data name="Actor.Skills.SumDc" xml:space="preserve"><value>{0}, proficiency {1}, {2} {3}</value></data>
   <data name="Actor.Skills.Roll" xml:space="preserve"><value>Roll {0}</value></data>
   <data name="Actor.Skills.Hint" xml:space="preserve"><value>Your background's skills are ticked for you. Tick the ones your class and other features give.</value></data>
   <data name="Actor.Inv.Empty" xml:space="preserve"><value>Nothing carried yet.</value></data>
@@ -152,9 +150,12 @@
   <data name="Actor.Form.RowDescription" xml:space="preserve"><value>{0} {1}: description</value></data>
   <data name="Actor.Form.RowNamePlaceholder" xml:space="preserve"><value>{0} name</value></data>
   <data name="Actor.Form.RowRemove" xml:space="preserve"><value>Remove {0} {1}</value></data>
+  <data name="Actor.Form.RowRemoveTitle" xml:space="preserve"><value>Remove this row?</value></data>
+  <data name="Actor.Form.RowRemoveBody" xml:space="preserve"><value>What is written in it is lost once the sheet is saved.</value></data>
   <data name="Actor.Form.RowDescribePlaceholder" xml:space="preserve"><value>What it does, e.g. Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Piercing damage.</value></data>
   <data name="Actor.Form.AddRow" xml:space="preserve"><value>Add {0}</value></data>
   <data name="Actor.Form.NotAllowed" xml:space="preserve"><value>{0} (not allowed)</value></data>
+  <data name="Actor.Form.Missing" xml:space="preserve"><value>{0} (not in the Library)</value></data>
   <data name="Actor.Sheet.TitleFallback" xml:space="preserve"><value>Character</value></data>
   <data name="Actor.Sheet.NotFound" xml:space="preserve"><value>Character not found</value></data>
   <data name="Actor.Sheet.NotFoundBody" xml:space="preserve"><value>It may not exist, or you may not have access to it.</value></data>
@@ -169,10 +170,8 @@
   <data name="Actor.Sheet.PortraitAi" xml:space="preserve"><value>Portrait with AI</value></data>
   <data name="Actor.Sheet.RemovePortrait" xml:space="preserve"><value>Remove portrait</value></data>
   <data name="Actor.Sheet.Dirty" xml:space="preserve"><value>{0, plural, one{# unsaved change} other{# unsaved changes}}</value></data>
-  <data name="Actor.Sheet.BackToCast" xml:space="preserve"><value>Back to cast</value></data>
   <data name="Actor.Sheet.SaveChanges" xml:space="preserve"><value>Save changes</value></data>
   <data name="Actor.Sheet.KeyNumbers" xml:space="preserve"><value>Key numbers</value></data>
-  <data name="Actor.Sheet.AcShort" xml:space="preserve"><value>AC</value></data>
   <data name="Actor.Sheet.Missing" xml:space="preserve"><value>Missing content: this character came from “{0}”, which isn't in a loaded pack. The sheet still works.</value></data>
   <data name="Actor.Sheet.ReadOnlyNote" xml:space="preserve"><value>Only the owner and the DM can edit this sheet.</value></data>
   <data name="Actor.Sheet.Rules" xml:space="preserve"><value>Rules</value></data>
@@ -188,12 +187,14 @@
   <data name="Actor.Sheet.RollDis" xml:space="preserve"><value>Disadvantage</value></data>
   <data name="Actor.Sheet.TrayHint" xml:space="preserve"><value>Use the dice buttons beside a check, save or attack.</value></data>
   <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>Shared with the table.</value></data>
-  <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>Only you see this: no session is running.</value></data>
+  <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>Only you see this: the table is not running.</value></data>
   <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>No rolls yet.</value></data>
   <data name="Actor.Sheet.Sections" xml:space="preserve"><value>Sheet sections</value></data>
   <data name="Actor.Sheet.Attributes" xml:space="preserve"><value>Attributes</value></data>
   <data name="Actor.Sheet.Picks" xml:space="preserve"><value>Picks</value></data>
   <data name="Actor.Sheet.Inventory" xml:space="preserve"><value>Inventory</value></data>
+  <data name="Actor.Sheet.Carried" xml:space="preserve"><value>Carrying {0}</value></data>
+  <data name="Actor.Sheet.CarriedOf" xml:space="preserve"><value>Carrying {0} of {1}</value></data>
   <data name="Actor.Sheet.History" xml:space="preserve"><value>History</value></data>
   <data name="Actor.Sheet.Said" xml:space="preserve"><value>Said</value></data>
   <data name="Actor.Sheet.InNotes" xml:space="preserve"><value>In notes</value></data>
@@ -258,11 +259,28 @@
   <data name="Actor.Sheet.HpLiveNote" xml:space="preserve"><value>Changes at the live table update this number.</value></data>
   <data name="Actor.Sheet.SlotsNote" xml:space="preserve"><value>During a session, use the Table tab: changes there reach everyone at once. Changes here need Save changes.</value></data>
   <data name="Actor.Sheet.LevelUp" xml:space="preserve"><value>Level up</value></data>
-  <data name="Actor.Sheet.LevelUpIntro" xml:space="preserve"><value>Level {0} now. Ask what level {1} brings and which picks fit this character, from the Library's class entry.</value></data>
+  <data name="Actor.Sheet.LevelUpIntro" xml:space="preserve"><value>Level {0} now. See what level {1} brings before you take it, or ask the AI which picks fit this character.</value></data>
+  <data name="Actor.Sheet.LevelMax" xml:space="preserve"><value>Level {0}: the highest level this system has.</value></data>
+  <data name="Actor.Sheet.LevelUpTo" xml:space="preserve"><value>Level up to {0}</value></data>
+  <data name="Actor.Sheet.LevelBrings" xml:space="preserve"><value>What {0} level {1} brings</value></data>
+  <data name="Actor.Sheet.LevelBringsPlain" xml:space="preserve"><value>What level {0} brings</value></data>
+  <data name="Actor.Sheet.LevelNoFeatures" xml:space="preserve"><value>No new class features at this level.</value></data>
+  <data name="Actor.Sheet.LevelHp" xml:space="preserve"><value>Hit points</value></data>
+  <data name="Actor.Sheet.LevelHpHow" xml:space="preserve"><value>(d{0}: {1}, modifier {2})</value></data>
+  <data name="Actor.Sheet.LevelHpAverage" xml:space="preserve"><value>{0} on average</value></data>
+  <data name="Actor.Sheet.LevelRollDie" xml:space="preserve"><value>Roll d{0}</value></data>
+  <data name="Actor.Sheet.LevelPb" xml:space="preserve"><value>Proficiency bonus</value></data>
+  <data name="Actor.Sheet.LevelChoose" xml:space="preserve"><value>To choose once you take it</value></data>
+  <data name="Actor.Sheet.LevelSubclass" xml:space="preserve"><value>A subclass for {0}</value></data>
+  <data name="Actor.Sheet.LevelMore" xml:space="preserve"><value>{0} more: {1}</value></data>
+  <data name="Actor.Sheet.LevelTake" xml:space="preserve"><value>Take level {0}</value></data>
+  <data name="Actor.Sheet.LevelToDo" xml:space="preserve"><value>Still to choose for level {0}</value></data>
+  <data name="Actor.Sheet.GoThere" xml:space="preserve"><value>Go there</value></data>
+  <data name="Actor.Sheet.ShowRule" xml:space="preserve"><value>Show</value></data>
+  <data name="Actor.Sheet.TabProblems" xml:space="preserve"><value>{0} rule problems here</value></data>
   <data name="Actor.Sheet.ClassGaining" xml:space="preserve"><value>Class gaining the level</value></data>
   <data name="Actor.Sheet.Thinking" xml:space="preserve"><value>Thinking…</value></data>
   <data name="Actor.Sheet.SuggestLevel" xml:space="preserve"><value>Suggest level {0}</value></data>
-  <data name="Actor.Sheet.SetLevel" xml:space="preserve"><value>Set level to {0}</value></data>
   <data name="Actor.Sheet.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
   <data name="Actor.Sheet.KeepInNotes" xml:space="preserve"><value>Keep in notes</value></data>
   <data name="Actor.Sheet.Visibility" xml:space="preserve"><value>Visibility to players</value></data>
@@ -281,7 +299,6 @@
   <data name="Actor.Sheet.VisLabelUnknown" xml:space="preserve"><value>Seen, not identified</value></data>
   <data name="Actor.Sheet.VisLabelHidden" xml:space="preserve"><value>Hidden from players</value></data>
   <data name="Actor.Sheet.Level" xml:space="preserve"><value>Level {0}</value></data>
-  <data name="Actor.Sheet.Feet" xml:space="preserve"><value>{0} ft</value></data>
   <data name="Actor.Sheet.ConfirmDiscardTitle" xml:space="preserve"><value>Discard {0, plural, one{# unsaved change} other{# unsaved changes}}?</value></data>
   <data name="Actor.Sheet.ConfirmDiscardBody" xml:space="preserve"><value>You changed this sheet without saving. Leave now and those changes are lost.</value></data>
   <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>Discard and leave</value></data>
@@ -289,9 +306,9 @@
   <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: slots refilled. Save changes to keep it.</value></data>
   <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>Not saved: {0, plural, one{# rule problem} other{# rule problems}} to fix first (see Rules above). The DM can relax this under Settings.</value></data>
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Saved with {0, plural, one{# rule warning} other{# rule warnings}}.</value></data>
-  <data name="Actor.Sheet.Saved" xml:space="preserve"><value>Saved.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>You don't have permission to edit this sheet.</value></data>
   <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>The DM changed this history while you were editing it, so your change was not saved. Your text is still in the box: copy it, reload the page, and add it again.</value></data>
+  <data name="Actor.Sheet.ChangedMeanwhile" xml:space="preserve"><value>Someone saved this sheet after you opened it, so your changes were not saved. They are still here: check them, and save again to replace that version.</value></data>
   <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>Use a PNG, JPEG, WebP, GIF or AVIF image.</value></data>
   <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>That image is over 6 MB. Resize it and try again.</value></data>
   <data name="Actor.Sheet.PortraitUpdated" xml:space="preserve"><value>Portrait updated.</value></data>
@@ -306,15 +323,22 @@
   <data name="Actor.Sheet.NoAiProvider" xml:space="preserve"><value>No AI provider is set up. Add one under AI settings (top right).</value></data>
   <data name="Actor.Sheet.AiDraftFailed" xml:space="preserve"><value>The AI draft failed: {0}</value></data>
   <data name="Actor.Sheet.AiSuggestFailed" xml:space="preserve"><value>The AI suggestion failed: {0}</value></data>
-  <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>Level set to {0}. Update hit points and features, then Save changes.</value></data>
+  <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>Level {0} taken. Choose what it opened, then Save changes.</value></data>
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>Level {0} plan:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Added to the notes field. Save changes to keep it.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Wiki: {0}</value></data>
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character’s history, except its DM blocks. Check the rest for secrets first.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
+  <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: the system's formula for this can't be worked out, so it is left out. The DM can check the system's rules.</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>
+  <data name="Actor.Rule.LimitForClass" xml:space="preserve"><value>{0}: {1} for {2}, but {2} allows only {3} at this level.</value></data>
+  <data name="Actor.Rule.NoHitDie" xml:space="preserve"><value>{0} has no hit die, so its levels add no hit points.</value></data>
+  <data name="Actor.Rule.NoSpellAbility" xml:space="preserve"><value>{0} has spell slots but names no spellcasting ability, so it has no spell save DC or attack.</value></data>
+  <data name="Actor.Rule.NoSpellTable" xml:space="preserve"><value>{0} names a spellcasting ability but has no spellcasting table, so it gets no spell slots or prepared spells.</value></data>
+  <data name="Actor.Rule.SkillChoices" xml:space="preserve"><value>{0}: {1} chosen beyond your background, but {2} gives {3}. A species or feat may give more.</value></data>
+  <data name="Actor.Rule.OverCapacity" xml:space="preserve"><value>{0}: carrying {1:0.##} of the {2} you can carry.</value></data>
   <data name="Actor.Rule.Limit" xml:space="preserve"><value>{0}: {1} picked, but only {2} allowed at this level.</value></data>
   <data name="Actor.Rule.PointBuyRange" xml:space="preserve"><value>{0}: point buy scores run from {1} to {2}.</value></data>
   <data name="Actor.Rule.PointBuySpent" xml:space="preserve"><value>Point buy: {0} of {1} points spent.</value></data>
@@ -333,8 +357,8 @@
   <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: needs Strength {1}, or your Speed drops by 10 feet.</value></data>
   <data name="Actor.Rule.ArmorStealth" xml:space="preserve"><value>{0}: gives disadvantage on Stealth checks.</value></data>
   <data name="Actor.Rule.WeaponUntrained" xml:space="preserve"><value>{0}: {1} isn't trained with it, so you don't add your proficiency bonus to its attacks.</value></data>
-  <data name="Actor.Ac.Dex" xml:space="preserve"><value>Dexterity: {0}</value></data>
-  <data name="Actor.Ac.DexCapped" xml:space="preserve"><value>Dexterity: {0} (limited to +{1})</value></data>
+  <data name="Actor.Ac.Dex" xml:space="preserve"><value>{1}: {0}</value></data>
+  <data name="Actor.Ac.DexCapped" xml:space="preserve"><value>{2}: {0} (limited to +{1})</value></data>
   <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>Unarmored</value></data>
   <data name="Actor.Ac.Defense" xml:space="preserve"><value>{0} defense</value></data>
   <data name="Actor.Ac.Other" xml:space="preserve"><value>Other bonuses</value></data>

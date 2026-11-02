@@ -73,7 +73,6 @@
   <data name="Campaign.Cast.RevealLabel" xml:space="preserve"><value>Раскрыть игрокам: {0}</value></data>
   <data name="Campaign.Cast.Hide" xml:space="preserve"><value>Скрыть</value></data>
   <data name="Campaign.Cast.HideLabel" xml:space="preserve"><value>Скрыть от игроков: {0}</value></data>
-  <data name="Campaign.Cast.DeleteLabel" xml:space="preserve"><value>Удалить: {0}</value></data>
   <data name="Campaign.Cast.EditSheet" xml:space="preserve"><value>Изменить лист</value></data>
   <data name="Campaign.Cast.RetireLabel" xml:space="preserve"><value>Отправить в отставку: {0}</value></data>
   <data name="Campaign.Cast.RetireTitle" xml:space="preserve"><value>Отправить этого персонажа в отставку</value></data>
@@ -88,13 +87,17 @@
   <data name="Campaign.Cast.NowVisible" xml:space="preserve"><value>{0} теперь виден игрокам.</value></data>
   <data name="Campaign.Cast.NowHidden" xml:space="preserve"><value>{0} скрыт от игроков.</value></data>
   <data name="Campaign.Cast.RetireQ" xml:space="preserve"><value>Отправить в отставку: {0}?</value></data>
-  <data name="Campaign.Cast.DeleteQ" xml:space="preserve"><value>Удалить: {0}?</value></data>
-  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>Ваш персонаж и его лист будут удалены из этой кампании. Это нельзя отменить; мастер тоже не сможет их восстановить.</value></data>
-  <data name="Campaign.Cast.DeleteBody" xml:space="preserve"><value>Лист и состояние будут удалены из этой кампании. Это нельзя отменить.</value></data>
+  <data name="Campaign.Cast.RetireBody" xml:space="preserve"><value>Ваш персонаж покинет состав и стол. Заметки и страницы, где он упомянут, сохранят его имя, а мастер сможет его вернуть.</value></data>
+  <data name="Campaign.Cast.RetireBodyDm" xml:space="preserve"><value>Персонаж покинет состав, списки выбора и стол. Заметки, страницы и раскрытия, где он упомянут, сохранят его имя, а вернуть его можно из списка ушедших.</value></data>
+  <data name="Campaign.Cast.MentionedIn" xml:space="preserve"><value>{0, plural, one{Его упоминает # текст.} few{Его упоминают # текста.} many{Его упоминают # текстов.} other{Его упоминают # текста.}}</value></data>
+  <data name="Campaign.Cast.MentionedNowhere" xml:space="preserve"><value>Пока ни один текст его не упоминает.</value></data>
+  <data name="Campaign.Cast.RetiredTitle" xml:space="preserve"><value>Ушедшие ({0})</value></data>
+  <data name="Campaign.Cast.RetiredHint" xml:space="preserve"><value>Вне игры: их нет в составе, в списках выбора и за столом. Всё, что их упоминает, по-прежнему называет их по имени.</value></data>
+  <data name="Campaign.Cast.Restore" xml:space="preserve"><value>Вернуть</value></data>
+  <data name="Campaign.Cast.RestoreLabel" xml:space="preserve"><value>Вернуть {0} в игру</value></data>
+  <data name="Campaign.Cast.Restored" xml:space="preserve"><value>{0} снова в составе.</value></data>
   <data name="Campaign.Cast.Retire" xml:space="preserve"><value>В отставку</value></data>
-  <data name="Campaign.Cast.Delete" xml:space="preserve"><value>Удалить</value></data>
   <data name="Campaign.Cast.HasRetired" xml:space="preserve"><value>{0} ушёл в отставку.</value></data>
-  <data name="Campaign.Cast.Deleted" xml:space="preserve"><value>Удалено: {0}.</value></data>
   <data name="Campaign.Cast.RetireOwnOnly" xml:space="preserve"><value>Вы можете отправить в отставку только своего персонажа.</value></data>
   <data name="Campaign.Journal.Title" xml:space="preserve"><value>Мой журнал</value></data>
   <data name="Campaign.Journal.Subtitle" xml:space="preserve"><value>Ваш личный блокнот для этой кампании. Его можете читать только вы, даже мастер не видит. Одна запись на сессию и всё остальное, что захотите сохранить.</value></data>
@@ -113,7 +116,6 @@
   <data name="Campaign.Journal.Save" xml:space="preserve"><value>Сохранить</value></data>
   <data name="Campaign.Journal.Cancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="Campaign.Journal.PrivacyNote" xml:space="preserve"><value>Записи журнала хранятся отдельно для каждого игрока и никогда не показываются мастеру, не попадают в экспорт и в черновики ИИ.</value></data>
-  <data name="Campaign.Journal.Saved" xml:space="preserve"><value>Журнал сохранён.</value></data>
   <data name="Campaign.Journal.SaveFailed" xml:space="preserve"><value>Не удалось сохранить запись.</value></data>
   <data name="Campaign.Journal.Delete.Title" xml:space="preserve"><value>Удалить эту запись?</value></data>
   <data name="Campaign.Journal.Delete.Body" xml:space="preserve"><value>Запись будет удалена из вашего журнала, и вернуть её будет нельзя.</value></data>
@@ -121,6 +123,8 @@
   <data name="Campaign.Library.Title" xml:space="preserve"><value>Библиотека</value></data>
   <data name="Campaign.Library.Subtitle.Dm" xml:space="preserve"><value>Справочные материалы для системы этой кампании и ваш собственный контент: снаряжение, классы, подклассы, черты, заклинания, существа и многое другое.</value></data>
   <data name="Campaign.Library.Subtitle.Player" xml:space="preserve"><value>Справочные материалы для системы этой кампании, включая собственный контент мастера.</value></data>
+  <data name="Campaign.Library.LoadProblems" xml:space="preserve"><value>При загрузке систем и пакетов возникли проблемы ({0}), поэтому некоторых записей здесь может не быть.</value></data>
+  <data name="Campaign.Library.LoadProblemsLink" xml:space="preserve"><value>Что пошло не так</value></data>
   <data name="Campaign.Library.NewHomebrew" xml:space="preserve"><value>Новый собственный материал</value></data>
   <data name="Campaign.Library.ImportFromCampaign" xml:space="preserve"><value>Импорт из другой кампании</value></data>
   <data name="Campaign.Library.ExportLabel" xml:space="preserve"><value>Экспортировать собственный контент этой кампании как набор материалов</value></data>
@@ -216,7 +220,7 @@
   <data name="Campaign.Overview.Live" xml:space="preserve"><value>Идёт</value></data>
   <data name="Campaign.Overview.TableRunning" xml:space="preserve"><value>Стол запущен.</value></data>
   <data name="Campaign.Overview.JoinTable" xml:space="preserve"><value>Присоединиться к столу</value></data>
-  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>Сейчас ни одна сессия не идёт.</value></data>
+  <data name="Campaign.Overview.NoSessionRunning" xml:space="preserve"><value>Сейчас стол не запущен.</value></data>
   <data name="Campaign.Overview.GoToTable" xml:space="preserve"><value>Перейти к столу</value></data>
   <data name="Campaign.Overview.WaitAtTable" xml:space="preserve"><value>Ждать за столом</value></data>
   <data name="Campaign.Overview.LatestSession" xml:space="preserve"><value>Последняя сессия</value></data>
@@ -291,18 +295,35 @@
   <data name="Campaign.Settings.InviteLinkNetwork" xml:space="preserve"><value>Ссылка-приглашение для игроков в вашей сети</value></data>
   <data name="Campaign.Settings.InviteLinkTailscale" xml:space="preserve"><value>Ссылка-приглашение для игроков в Tailscale</value></data>
   <data name="Campaign.Settings.NewLink" xml:space="preserve"><value>Новая ссылка</value></data>
+  <data name="Campaign.Settings.NewLinkQ" xml:space="preserve"><value>Создать новую ссылку-приглашение?</value></data>
+  <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>Текущая ссылка сразу перестанет работать. Тем, у кого она есть и кто ещё не присоединился, понадобится новая.</value></data>
+  <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>Создать ссылку</value></data>
+  <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>Сменить роль {0} на «{1}»?</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>Мастер видит все секреты этой кампании и может изменить или удалить в ней что угодно.</value></data>
+  <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>То, что участник может видеть и делать, изменится сразу после подтверждения.</value></data>
+  <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>Сменить роль</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>После создания новой ссылки старая перестанет работать.</value></data>
+  <data name="Campaign.Settings.InviteValidity" xml:space="preserve"><value>Новые ссылки действуют</value></data>
+  <data name="Campaign.Settings.InviteValidity.Forever" xml:space="preserve"><value>пока их не заменят</value></data>
+  <data name="Campaign.Settings.InviteValidity.Week" xml:space="preserve"><value>7 дней</value></data>
+  <data name="Campaign.Settings.InviteValidity.Day" xml:space="preserve"><value>24 часа</value></data>
+  <data name="Campaign.Settings.InviteValidity.Once" xml:space="preserve"><value>для одного игрока</value></data>
+  <data name="Campaign.Settings.InviteOnce" xml:space="preserve"><value>По этой ссылке может войти один игрок.</value></data>
+  <data name="Campaign.Settings.InviteUsed" xml:space="preserve"><value>Этой ссылкой уже воспользовался {0}. Создайте новую, чтобы пригласить ещё одного игрока.</value></data>
+  <data name="Campaign.Settings.InviteExpired" xml:space="preserve"><value>Срок действия ссылки истёк. Создайте новую, чтобы пригласить игроков.</value></data>
+  <data name="Campaign.Settings.InviteExpiresDays" xml:space="preserve"><value>Ссылка перестанет работать через {0} дн.</value></data>
+  <data name="Campaign.Settings.InviteExpiresHours" xml:space="preserve"><value>Ссылка перестанет работать через {0} ч.</value></data>
   <data name="Campaign.Settings.Backup" xml:space="preserve"><value>Резервная копия</value></data>
-  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>Экспорт скачивает всю кампанию (персонажей, сессии, предания, заметки, собственный контент) одним файлом JSON. Импорт восстанавливает файл, экспортированный отсюда, в том числе после удаления кампании.</value></data>
+  <data name="Campaign.Settings.BackupHint" xml:space="preserve"><value>Экспорт скачивает кампанию (персонажей, сессии, предания, заметки, собственный контент) одним файлом JSON, без изображений и ссылки-приглашения. Слияние с файлом, экспортированным из этой кампании, возвращает всё, что в нём есть, включая удалённое с тех пор, поверх сохранённого; добавленное после экспорта остаётся.</value></data>
   <data name="Campaign.Settings.Export" xml:space="preserve"><value>Экспорт кампании</value></data>
-  <data name="Campaign.Settings.Import" xml:space="preserve"><value>Импорт кампании</value></data>
-  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>Файл — резервная копия другой (например, удалённой) кампании: восстановить её</value></data>
+  <data name="Campaign.Settings.Import" xml:space="preserve"><value>Слить из файла</value></data>
+  <data name="Campaign.Settings.RestoreAsNew" xml:space="preserve"><value>Файл из другой кампании (например, удалённой): восстановить как новую кампанию</value></data>
   <data name="Campaign.Settings.Delete.Title" xml:space="preserve"><value>Удаление кампании</value></data>
   <data name="Campaign.Settings.Delete.Hint" xml:space="preserve"><value>Удаляет кампанию и всё, что в ней есть. Если хотите что-то сохранить, сначала сделайте экспорт.</value></data>
   <data name="Campaign.Settings.Delete.Button" xml:space="preserve"><value>Удалить эту кампанию</value></data>
   <data name="Campaign.Settings.Delete.OwnerOnlyHint" xml:space="preserve"><value>Удалить кампанию может только её владелец.</value></data>
   <data name="Campaign.Settings.NameRequired" xml:space="preserve"><value>У кампании должно быть название.</value></data>
-  <data name="Campaign.Settings.Saved" xml:space="preserve"><value>Сохранено.</value></data>
+  <data name="Campaign.AccessChanged" xml:space="preserve"><value>Ваша роль в этой кампании изменилась, поэтому изменения не сохранены.</value></data>
   <data name="Campaign.Settings.PacksSaved" xml:space="preserve"><value>Выбор наборов сохранён.</value></data>
   <data name="Campaign.Settings.RoleChanged" xml:space="preserve"><value>Роль пользователя {0}: {1}.</value></data>
   <data name="Campaign.Settings.RemoveQ" xml:space="preserve"><value>Убрать участника {0}?</value></data>
@@ -319,8 +340,9 @@
   <data name="Campaign.Settings.ExportFailed" xml:space="preserve"><value>Не удалось выполнить экспорт.</value></data>
   <data name="Campaign.Settings.ExportDone" xml:space="preserve"><value>Экспорт скачан.</value></data>
   <data name="Campaign.Settings.NotExport" xml:space="preserve"><value>Этот файл не является экспортом кампании.</value></data>
-  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>Этот файл — резервная копия другой кампании. Отметьте «восстановить её», если вы хотели вернуть именно её.</value></data>
-  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>Импортировано: «{0}».</value></data>
+  <data name="Campaign.Settings.OtherCampaign" xml:space="preserve"><value>Этот файл из другой кампании. Отметьте «восстановить как новую кампанию», чтобы вернуть её отдельной кампанией.</value></data>
+  <data name="Campaign.Settings.Imported" xml:space="preserve"><value>«{0}»: данные из файла слиты.</value></data>
+  <data name="Campaign.Settings.RestoredAsNew" xml:space="preserve"><value>«{0}» восстановлена как новая кампания. Пригласите игроков заново: у неё новая ссылка.</value></data>
   <data name="Campaign.Settings.ImportRejected" xml:space="preserve"><value>Импорт отклонён: формат не распознан, или вы не мастер этой кампании.</value></data>
   <data name="Campaign.Settings.ImportFailed" xml:space="preserve"><value>Не удалось выполнить импорт: {0}</value></data>
   <data name="Campaign.Settings.DeleteQ" xml:space="preserve"><value>Удалить «{0}»?</value></data>
@@ -393,6 +415,8 @@
   <data name="Campaign.Wiki.Saved" xml:space="preserve"><value>«{0}» сохранена.</value></data>
   <data name="Campaign.Wiki.OnlyDm" xml:space="preserve"><value>Только мастер может изменять вики.</value></data>
   <data name="Campaign.Wiki.SharedWithParty" xml:space="preserve"><value>Страница доступна группе.</value></data>
+  <data name="Campaign.Wiki.ChangedMeanwhile" xml:space="preserve"><value>Страница изменилась, пока была открыта: правка в другой вкладке или раскрытый либо скрытый блок. Ваш текст на месте. Сверьте его со страницей и сохраните ещё раз, чтобы заменить сохранённое.</value></data>
+  <data name="Campaign.Wiki.ShareChanged" xml:space="preserve"><value>Страница изменилась, пока была открыта. Вот последняя версия: откройте её группе ещё раз, если всё ещё хотите.</value></data>
   <data name="Campaign.Wiki.Deleted" xml:space="preserve"><value>«{0}» удалена.</value></data>
   <data name="Campaign.Wiki.Delete.Title" xml:space="preserve"><value>Удалить «{0}»?</value></data>
   <data name="Campaign.Wiki.Delete.Body" xml:space="preserve"><value>Страница будет удалена для всех, вернуть её нельзя.</value></data>
@@ -402,7 +426,7 @@
   <data name="Campaign.Wiki.NoAi" xml:space="preserve"><value>Поставщик ИИ не настроен. Добавьте его в настройках ИИ (вверху справа).</value></data>
   <data name="Campaign.Wiki.AiFailed" xml:space="preserve"><value>Не удалось создать черновик ИИ: {0}</value></data>
   <data name="Campaign.Wiki.NoteAdded" xml:space="preserve"><value>Заметка добавлена.</value></data>
-  <data name="Campaign.World.Title" xml:space="preserve"><value>Мир</value></data>
+  <data name="Campaign.World.Title" xml:space="preserve"><value>Места</value></data>
   <data name="Campaign.World.Subtitle.Dm" xml:space="preserve"><value>Регионы и места в них. Скрытые места остаются только вашими, пока вы их не раскроете.</value></data>
   <data name="Campaign.World.Subtitle.Player" xml:space="preserve"><value>Места, которые открыла группа.</value></data>
   <data name="Campaign.World.Empty.Dm.Title" xml:space="preserve"><value>Регионов пока нет</value></data>
@@ -443,6 +467,16 @@
   <data name="Campaign.World.Renamed" xml:space="preserve"><value>«{0}» переименовано в «{1}».</value></data>
   <data name="Campaign.World.RenameFailed" xml:space="preserve"><value>Не удалось переименовать регион.</value></data>
   <data name="Campaign.World.RegionAdded" xml:space="preserve"><value>Регион «{0}» добавлен.</value></data>
+  <data name="Campaign.World.DeletePlaceLabel" xml:space="preserve"><value>Удалить {0}</value></data>
+  <data name="Campaign.World.DeletePlaceTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Campaign.World.DeletePlaceBody" xml:space="preserve"><value>Упоминания о нём станут «где-то», а страница о нём останется. Удаление можно ненадолго отменить.</value></data>
+  <data name="Campaign.World.DeletePlaceBodyInside" xml:space="preserve"><value>Места внутри него ({0}) поднимутся на уровень выше. Упоминания о нём станут «где-то», а страница о нём останется. Удаление можно ненадолго отменить.</value></data>
+  <data name="Campaign.World.PlaceDeleted" xml:space="preserve"><value>«{0}» удалено.</value></data>
+  <data name="Campaign.World.DeleteRegionLabel" xml:space="preserve"><value>Удалить регион {0}</value></data>
+  <data name="Campaign.World.DeleteRegionTitle" xml:space="preserve"><value>Удалить регион «{0}»?</value></data>
+  <data name="Campaign.World.DeleteRegionBody" xml:space="preserve"><value>В нём нет мест. Отменить это нельзя.</value></data>
+  <data name="Campaign.World.DeleteRegionBodyPlaces" xml:space="preserve"><value>Его места ({0}) и их картинки удалятся вместе с ним, а упоминания о них станут «где-то». Страницы о них останутся. Отменить это нельзя.</value></data>
+  <data name="Campaign.World.RegionDeleted" xml:space="preserve"><value>Регион «{0}» удалён.</value></data>
   <data name="Campaign.World.PlaceAdded" xml:space="preserve"><value>«{0}» добавлено (скрыто от игроков, пока вы его не раскроете).</value></data>
   <data name="Campaign.World.PackPlaceAdded" xml:space="preserve"><value>«{0}» добавлено из набора.</value></data>
   <data name="Campaign.World.NameRequired" xml:space="preserve"><value>Дайте месту название.</value></data>
@@ -450,16 +484,17 @@
   <data name="Campaign.World.OnlyDm" xml:space="preserve"><value>Только мастер может изменять места.</value></data>
   <data name="Campaign.World.ArtRemoved" xml:space="preserve"><value>Иллюстрация удалена.</value></data>
   <data name="Campaign.World.ArtSaved" xml:space="preserve"><value>Иллюстрация сохранена.</value></data>
+  <data name="Campaign.World.ArtStoredTextNot" xml:space="preserve"><value>Изменение иллюстрации сохранено. Остальные изменения этого места ещё нужно сохранить.</value></data>
   <data name="Campaign.World.PlaceGone" xml:space="preserve"><value>Этого места больше нет, или вы не можете его изменить.</value></data>
   <data name="Campaign.World.RevealedToParty" xml:space="preserve"><value>Раскрыто группе.</value></data>
-  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>На карте</value></data>
+  <data name="Campaign.Wiki.OnMap" xml:space="preserve"><value>В местах</value></data>
   <data name="Campaign.Wiki.IsPlaceHint" xml:space="preserve"><value>При сохранении страница появится в списке мест с её названием и картинкой. Если открыть страницу группе, место тоже откроется; текст остаётся на странице.</value></data>
   <data name="Campaign.Wiki.PlaceRegion" xml:space="preserve"><value>Регион</value></data>
   <data name="Campaign.Wiki.DefaultRegion" xml:space="preserve"><value>Места</value></data>
   <data name="Campaign.Wiki.PlaceArt" xml:space="preserve"><value>Картинка</value></data>
   <data name="Campaign.Wiki.PlaceArtAlt" xml:space="preserve"><value>Картинка: {0}</value></data>
-  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>На карте: {0}</value></data>
-  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но её картинку или место на карте сохранить не удалось.</value></data>
+  <data name="Campaign.Wiki.OpenOnMap" xml:space="preserve"><value>В местах: {0}</value></data>
+  <data name="Campaign.Wiki.PlaceFailed" xml:space="preserve"><value>Страница сохранена, но её картинку или запись в местах сохранить не удалось.</value></data>
   <data name="Campaign.World.OpenPage" xml:space="preserve"><value>Страница вики</value></data>
   <data name="Campaign.World.OpenPageLabel" xml:space="preserve"><value>Открыть страницу вики: {0}</value></data>
   <data name="Campaign.World.CreatePage" xml:space="preserve"><value>Создать страницу</value></data>
@@ -500,7 +535,7 @@
   <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Поселение</value></data>
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>Район</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Место</value></data>
-  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Нанести на карту</value></data>
+  <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Добавить в места</value></data>
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Иллюстрация</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Показывается рядом с текстом страницы. Её видят все, кто может читать страницу.</value></data>
   <data name="Campaign.Wiki.ArtAlt" xml:space="preserve"><value>Иллюстрация: {0}</value></data>
@@ -553,7 +588,6 @@
   <data name="Campaign.Templates.Delete" xml:space="preserve"><value>Удалить шаблон</value></data>
   <data name="Campaign.Templates.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
   <data name="Campaign.Templates.DeleteBody" xml:space="preserve"><value>Страницы, созданные по нему, сохранят свой текст.</value></data>
-  <data name="Campaign.Templates.Saved" xml:space="preserve"><value>Шаблон сохранён.</value></data>
   <data name="Campaign.Templates.Taken" xml:space="preserve"><value>Сокращение «{0}» уже занято другим шаблоном.</value></data>
   <data name="Campaign.Templates.Refused" xml:space="preserve"><value>Не удалось сохранить шаблон: дайте ему название и сокращение из одного слова или без сокращения.</value></data>
   <data name="Campaign.Templates.Restored" xml:space="preserve"><value>Исходный шаблон восстановлен.</value></data>
@@ -569,7 +603,6 @@
   <data name="Campaign.Cast.StrangerTitle" xml:space="preserve"><value>Игроки увидят, что кто-то есть, под именем, которое вы зададите в листе, но не узнают, кто это.</value></data>
   <data name="Campaign.Cast.NowStranger" xml:space="preserve"><value>Теперь игроки видят {0} как «{1}».</value></data>
   <data name="Campaign.Lore.SaveFact" xml:space="preserve"><value>Сохранить факт</value></data>
-  <data name="Campaign.Lore.FactSaved" xml:space="preserve"><value>Факт сохранён.</value></data>
   <data name="Campaign.Lore.DetailsHint" xml:space="preserve"><value>Упоминайте @персонажей и #места и ссылайтесь на [[страницы]]: тогда факт появится на их страницах и в листах.</value></data>
   <data name="Campaign.Lore.KnownByLabel" xml:space="preserve"><value>Знают:</value></data>
   <data name="Campaign.Lore.Forget" xml:space="preserve"><value>{0} забывает это</value></data>
@@ -625,7 +658,7 @@
   <data name="Campaign.Setup.Invite" xml:space="preserve"><value>Скопируйте ссылку-приглашение для игроков</value></data>
   <data name="Campaign.Setup.Cast" xml:space="preserve"><value>Добавьте первого персонажа в состав</value></data>
   <data name="Campaign.Setup.Page" xml:space="preserve"><value>Напишите первую страницу вики</value></data>
-  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Отметьте первое место на карте</value></data>
+  <data name="Campaign.Setup.Place" xml:space="preserve"><value>Добавьте первое место</value></data>
   <data name="Campaign.Setup.Session" xml:space="preserve"><value>Запланируйте первую сессию</value></data>
   <data name="Campaign.Setup.InviteWhen" xml:space="preserve"><value>Отметится, когда присоединится игрок.</value></data>
   <data name="Campaign.Setup.CastWhen" xml:space="preserve"><value>Кто-то из вашего мира: игроки добавляют своих персонажей сами.</value></data>

@@ -20,6 +20,13 @@
         <p>@L["Page.Join.InvalidText"]</p>
         <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
     }
+    else if (result == CampaignJoinResult.TooManyAttempts)
+    {
+        <div class="empty-icon"><LucideIcon IconName="clock" Size="28" /></div>
+        <h1 class="h4">@L["Page.Join.TooManyTitle"]</h1>
+        <p>@L["Page.Join.TooManyText"]</p>
+        <a href="/" class="cx-btn cx-plaque">@L["Page.Common.BackToCampaigns"]</a>
+    }
     else
     {
         @* Joined vs. AlreadyMember isn't a reliable distinction here: prerendering runs

@@ -79,8 +79,38 @@ public class RavenDbService : IDisposable
                 "update { c.SystemId = c.System; delete c.System; }"))
                 .WaitForCompletion(TimeSpan.FromSeconds(30));
 
+            ReplaceShortInviteCodes(store);
             return store;
         });
+    }
+
+    /// <summary>
+    /// F16: invite codes made before D14 were 8 hex characters, guessable in principle. Each one left is replaced once with a
+    /// 128-bit code (its expiry and single-use rule kept), so a link handed out before then stops working and the DM shares
+    /// the new one.
+    /// </summary>
+    internal static int ReplaceShortInviteCodes(Raven.Client.Documents.IDocumentStore store)
+    {
+        using var session = store.OpenSession();
+        var replaced = 0;
+        using var stream = session.Advanced.Stream(session.Query<CampaignDocument>());
+        var stale = new List<string>();
+        while (stream.MoveNext())
+        {
+            if (stream.Current.Document.InviteCode is { Length: > 0 and < 26 })
+            {
+                stale.Add(stream.Current.Id);
+            }
+        }
+
+        foreach (var id in stale)
+        {
+            session.Load<CampaignDocument>(id).InviteCode = InviteCodes.New();
+            replaced++;
+        }
+
+        session.SaveChanges();
+        return replaced;
     }
 
     /// <summary>

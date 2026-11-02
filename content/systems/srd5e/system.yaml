@@ -47,9 +47,9 @@ actorFields:
     category: General
     options: [Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil, Unaligned]
   - { key: originFeat,       label: Origin Feat,        type: EntityReference, targetEntityType: feat,       category: General, description: "Your background grants a specific origin feat." }
-  - { key: armorClass,       label: Armor Class,        type: Number,  defaultValue: 10, category: Combat }
+  - { key: armorClass,       label: Armor Class,        abbreviation: AC, type: Number,  defaultValue: 10, category: Combat }
   - { key: armorClassMisc,   label: Other Armor Class Bonuses, type: Number, defaultValue: 0, category: Combat, description: "Magic or spell effects that are not an item you carry." }
-  - { key: speed,            label: Speed (feet),       type: Number,  defaultValue: 30, category: Combat, description: "Copied from your species when you choose it; change it here for features that alter it." }
+  - { key: speed,            label: Speed (feet),       unit: ft, type: Number,  defaultValue: 30, category: Combat, description: "Copied from your species when you choose it; change it here for features that alter it." }
   - { key: size,             label: Size,               type: Dropdown, category: Combat, options: [Tiny, Small, Medium, Large, Huge, Gargantuan] }
   - { key: darkvision,       label: Darkvision (feet),  type: Number,  defaultValue: 0, category: Combat, description: "Copied from your species when you choose it." }
   - { key: notes,            label: Notes,              type: LongText, category: Notes }
@@ -65,6 +65,15 @@ ai:
 conditions:
   [Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible,
    Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious]
+
+# The actor fields the app reads by what they mean: the level up and the AI's level-up suggestion read the level, class
+# and subclass; the sheet's plate shows the speed; Cast's one-line summary lists these fields.
+fieldRoles:
+  level: level
+  class: class
+  subclass: subclass
+  speed: speed
+  summary: [level, species, class]
 
 # Character-sheet rules. Every rule here is data: a homebrew system can drop, relax or replace any
 # of them, and a campaign can downgrade "strict" to "warn" or "off" under Settings > House rules.
@@ -167,6 +176,8 @@ sheetRules:
     currentKey: HP
     attribute: con
     dieProperty: hitDie
+    firstLevel: full-die            # the first level takes the whole die
+    average: half-plus-one          # later levels take half the die plus one (6 for a d10), unless rolled
     modes: [average, rolled, manual]
     default: average
     perLevelBonus: { field: species, property: hitPointsPerLevel }
@@ -213,6 +224,8 @@ sheetRules:
   # Warnings, not rules: a feat or feature may grant training the class lacks.
   proficiencies:
     armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
+    allArmor: All armor             # a Fighter's "All armor" covers every armor but shields
+    pluralSuffix: s                 # "Longswords" training covers a Longsword
 
   # Armor class: body armor's base plus Dexterity (to its cap), or the best unarmored formula (the class
   # may bring its own); then shields, magic items and fighting styles add their bonuses.
@@ -225,6 +238,8 @@ sheetRules:
     key: inventory
     label: Equipment
     types: [equipment, magic-item]
+    weightUnit: lb
+    capacity: "str * 15"     # 5.2.1 Carrying Capacity: Strength x 15 lb (Medium)
 
   # Multiclassing: "class" is the first class, the others are listed with their levels, and "level"
   # stays the character level (proficiency bonus, feat minimums). Lookups above read each class's
@@ -246,6 +261,7 @@ sheetRules:
   slotPools:
     - key: slots
       label: Spell slots
+      unit: spell slot
       field: class
       byField: classLevel
       table: spellcasting
@@ -261,6 +277,7 @@ sheetRules:
                 "4/3/3/3/2/1/1/1/1", "4/3/3/3/3/1/1/1/1", "4/3/3/3/3/2/1/1/1", "4/3/3/3/3/2/2/1/1"]
     - key: pact
       label: Pact slots
+      unit: pact slot
       field: class
       byField: classLevel
       table: spellcasting
@@ -294,6 +311,7 @@ vitals:
     vulnerabilitiesField: vulnerabilities
   exhaustion: { key: Exhaustion, maxLevel: 6, condition: Exhaustion }
   hitDice: { key: HitDice, levelField: level, classField: class, dieProperty: hitDie, creatureDiceProperty: hitDice, attribute: con }
+  concentration: { condition: Concentrating, saveAttribute: con, minimumDc: 10, maximumDc: 30 }
   rests:
     - { name: Short Rest, spendHitDice: true }
     - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half, exhaustionDelta: -1 }

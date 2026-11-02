@@ -10,11 +10,15 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Codex.Core.AI;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Localization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+// A page whose connection drops keeps its place on the server for half an hour, not the default three minutes: a phone
+// locked mid-entry comes back to the same page with what was typed, instead of a reload (D9).
+builder.Services.AddRazorComponents().AddInteractiveServerComponents(options =>
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(30));
 builder.Services.AddSingleton<Codex.Localization.Localizer>();
 builder.Services.AddCascadingAuthenticationState();
 
@@ -89,28 +93,37 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 builder.Services.AddHttpContextAccessor();
-if (Codex.Web.ExposurePolicy.IsExposed(builder.Configuration))
+// The pages that tell a visitor whether a password or an invite code is right get a ration per address. Always, not only
+// when open to the internet (R13): on a LAN server the sign-in form is plain HTTP, and anyone on the network can reach it.
+// This computer itself is not rationed; open to the internet, Funnel's visitors carry their own address (forwarded headers).
+builder.Services.AddSingleton<LoginAttempts>();
+builder.Services.AddRateLimiter(options =>
 {
-    // Open to the internet, the pages that tell a visitor whether a password or an invite code is right get a ration per address.
-    builder.Services.AddRateLimiter(options =>
-    {
-        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-        options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
-            Codex.Web.ExposurePolicy.IsGuessable(context.Request.Path)
-                ? System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
-                    Codex.Web.ExposurePolicy.ClientKey(context.Connection.RemoteIpAddress),
-                    _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = Codex.Web.ExposurePolicy.GuessesPerMinute,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0,
-                    })
-                : System.Threading.RateLimiting.RateLimitPartition.GetNoLimiter("open"));
-    });
-}
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        Codex.Web.ExposurePolicy.IsGuessable(context.Request.Path) && context.Connection.RemoteIpAddress is { } address && !System.Net.IPAddress.IsLoopback(address)
+            ? System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                Codex.Web.ExposurePolicy.ClientKey(address),
+                _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = Codex.Web.ExposurePolicy.GuessesPerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                })
+            : System.Threading.RateLimiting.RateLimitPartition.GetNoLimiter("open"));
+});
 
 // Persistence
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
+
+// The data folder is checked before anything writes to it (the Data Protection key folder below is made while services
+// are registered): a read-only folder then stops the server with its plain message for the launcher, not a stack trace.
+if (RavenDbService.CheckWritable(dataDir) is { } unwritable)
+{
+    // The launcher shows this line to the user (ServerController.StartupProblemPrefix).
+    Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + unwritable + " Shutting down.");
+    Environment.Exit(1);
+}
 
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
 builder.Services.AddSingleton<CampaignLifecycleHooks>();
@@ -145,6 +158,14 @@ builder.Services.AddScoped<MentionSources>();
 builder.Services.AddScoped<WorldChatSessions>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 builder.Services.AddHostedService<IdleRuntimeEvictionService>();
+builder.Services.AddSingleton<JsonBackups>();
+builder.Services.AddSingleton(new BackupStatus
+{
+    Folder = Path.GetFullPath(Path.Combine(dataDir, "Backups")),
+    Enabled = builder.Configuration.GetValue("Codex:Backups:Enabled", true),
+    Keep = Math.Max(1, builder.Configuration.GetValue("Codex:Backups:Keep", 7))
+});
+builder.Services.AddHostedService<BackupService>();
 
 // AI: the "AI" configuration section is the server-wide fallback provider; users set up their
 // own OpenAI-compatible providers (OpenRouter by default) under /settings/ai, keys protected by
@@ -155,7 +176,11 @@ builder.Services.AddSingleton(aiConfig);
 var aiImageConfig = new AIImageConfiguration();
 builder.Configuration.GetSection("AIImage").Bind(aiImageConfig);
 builder.Services.AddSingleton(aiImageConfig);
-builder.Services.AddDataProtection();
+// Keys under the data directory, so the folder carries what its cookies and stored AI keys need (D12).
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(Codex.Web.DataProtectionKeys.Directory(dataDir))
+    .SetApplicationName(Codex.Web.DataProtectionKeys.ApplicationName);
+builder.Services.AddSingleton<ServerAiUsage>();
 builder.Services.AddSingleton<AiProviderService>();
 builder.Services.AddSingleton<AiFeatures>();
 builder.Services.AddSingleton<WorldBuilderService>();
@@ -219,10 +244,7 @@ if (Codex.Web.ExposurePolicy.IsExposed(app.Configuration))
     });
 }
 
-if (Codex.Web.ExposurePolicy.IsExposed(app.Configuration))
-{
-    app.UseRateLimiter();
-}
+app.UseRateLimiter();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -231,7 +253,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
 // Language: the culture cookie (set by /set-culture) wins; then the install-wide default the launcher
 // passes as Codex:DefaultCulture; only without one does the browser's Accept-Language decide.
@@ -255,233 +276,16 @@ app.UseAntiforgery();
 // stray "Codex:EnableTestSeedEndpoint=true" can never leak into a real deployment's route table.
 if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
 {
-    app.MapPost("/test/seed/users", async (List<Codex.Web.TestSeedUser> users, IUserRepository userRepository) =>
-    {
-        foreach (var seed in users)
-        {
-            var user = new UserDocument { Id = seed.Id, Username = seed.Username, Roles = seed.Roles };
-            user.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().HashPassword(user, seed.Password);
-            await userRepository.TryReserveUsernameAsync(seed.Username, seed.Id);
-            await userRepository.CreateUserAsync(user);
-        }
-
-        return Results.Ok();
-    }).AllowAnonymous();
-
-    app.MapPost("/test/seed/actors", async (List<Codex.Web.TestSeedActor> actors, IActorRepository actorRepository, ICampaignRepository campaignRepository, ComponentRegistry componentRegistry, ISystemCatalog catalog) =>
-    {
-        foreach (var seed in actors)
-        {
-            var campaign = await campaignRepository.GetAsync(seed.CampaignId);
-            var system = campaign != null ? catalog.GetDefinition(campaign.SystemId) : null;
-            var actor = new ActorDocument
-            {
-                Id = seed.Id,
-                CampaignId = seed.CampaignId,
-                Kind = seed.Kind,
-                OwnerUserId = seed.OwnerUserId,
-                Name = seed.Name,
-                Visibility = seed.Visibility,
-                PublicName = seed.PublicName,
-                PublicDescription = seed.PublicDescription,
-                Biography = seed.Biography
-            };
-
-            foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())
-            {
-                actor.Sheet[key] = value is System.Text.Json.JsonElement element ? element.ValueKind switch
-                {
-                    System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
-                    System.Text.Json.JsonValueKind.True => true,
-                    System.Text.Json.JsonValueKind.False => false,
-                    _ => element.ToString()
-                } : value;
-            }
-
-            var primary = system?.PrimaryResource;
-            actor.Sheet[primary?.Key ?? "HP"] = (long)seed.Hp;
-            actor.Sheet[primary?.MaxKey ?? "HP_Max"] = (long)seed.HpMax;
-            ActorSheetSync.ApplySheetToState(actor, system, componentRegistry);
-            await actorRepository.SaveAsync(actor);
-        }
-
-        return Results.Ok();
-    }).AllowAnonymous();
-
-    // The session log isn't shown verbatim in any UI, so the e2e suite reads it back directly.
-    app.MapGet("/test/inspect/session-events/{campaignId}", async (string campaignId, ICampaignRepository campaignRepository, ISessionRepository sessionRepository) =>
-    {
-        var campaign = await campaignRepository.GetAsync(campaignId);
-        if (campaign?.CurrentSessionId == null)
-        {
-            return Results.Ok(Array.Empty<string>());
-        }
-
-        var session = await sessionRepository.GetAsync(campaign.CurrentSessionId);
-        return Results.Ok(session?.Events.Select(e => e.Type).ToList() ?? new List<string>());
-    }).AllowAnonymous();
+    Codex.Web.TestSeedEndpoints.MapTestSeeding(app);
 }
 
-// Sign-out is a POST with an antiforgery token so a cross-site <img> can't log a user out.
-app.MapPost("/logout", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery) =>
-{
-    try
-    {
-        await antiforgery.ValidateRequestAsync(ctx);
-    }
-    catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
-    {
-        return Results.BadRequest("Invalid antiforgery token.");
-    }
-
-    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Redirect("/login");
-});
-
-// Changing language is harmless, so a plain GET (a link in the header and on the sign-in pages) is enough.
-// It sets the cookie, remembers the choice on the signed-in user, then returns to a local page.
-app.MapGet("/set-culture", async (string culture, string? returnUrl, HttpContext ctx, IUserRepository users) =>
-{
-    var tag = Codex.Localization.SupportedCultures.Normalize(culture);
-    Codex.Web.CultureCookie.Write(ctx, tag);
-
-    var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    if (userId is not null && await users.GetUserByIdAsync(userId) is { } user && user.Culture != tag)
-    {
-        user.Culture = tag;
-        await users.UpdateUserAsync(user);
-    }
-
-    return Results.LocalRedirect(Codex.Web.UrlHelper.IsLocalUrl(returnUrl) ? returnUrl! : "/");
-}).AllowAnonymous();
-
-app.MapGet("/login/external", async (string provider, string? returnUrl, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider) =>
-{
-    var registeredSchemes = (await schemeProvider.GetAllSchemesAsync()).Select(s => s.Name);
-    if (!Codex.Web.ExternalLoginPolicy.IsRegisteredScheme(provider, registeredSchemes))
-    {
-        return Results.Redirect("/login?error=" + Uri.EscapeDataString("Unknown login provider."));
-    }
-
-    var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
-    {
-        RedirectUri = $"/login/external-callback?returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}"
-    };
-    return Results.Challenge(properties, new[] { provider });
-}).AllowAnonymous();
-
-app.MapGet("/login/external-callback", async (HttpContext context, IUserRepository userRepository, ICampaignRepository campaignRepository, IConfiguration config, string? returnUrl) =>
-{
-    var authenticateResult = await context.AuthenticateAsync("External");
-
-    if (!authenticateResult.Succeeded || authenticateResult.Principal == null)
-    {
-        return Results.Redirect("/login?error=" + Uri.EscapeDataString("External authentication failed."));
-    }
-
-    var principal = authenticateResult.Principal;
-    var provider = authenticateResult.Properties?.Items["LoginProvider"]
-                   ?? authenticateResult.Properties?.Items[".AuthScheme"]
-                   ?? principal.Identities.FirstOrDefault()?.AuthenticationType;
-    var providerKey = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                      ?? principal.FindFirst("sub")?.Value
-                      ?? principal.FindFirst("id")?.Value;
-    var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-    var name = principal.Identity?.Name ?? email;
-
-    if (string.IsNullOrEmpty(provider) || string.IsNullOrEmpty(providerKey))
-    {
-        return Results.Redirect("/login?error=" + Uri.EscapeDataString("Invalid external authentication response."));
-    }
-
-    var user = await userRepository.GetUserByExternalLoginAsync(provider, providerKey);
-
-    // Only auto-link to an existing local account by email if the provider vouches the email is verified.
-    if (user == null && !string.IsNullOrEmpty(email) && Codex.Web.ExternalLoginPolicy.IsEmailVerified(principal))
-    {
-        user = await userRepository.GetUserByEmailAsync(email);
-        if (user != null)
-        {
-            user.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderKey = providerKey });
-            await userRepository.UpdateUserAsync(user);
-        }
-    }
-
-    if (user == null)
-    {
-        // A server open to the internet makes new accounts only for people who arrive with a real invite.
-        if (!await Codex.Web.ExposurePolicy.MaySignUpAsync(Codex.Web.ExposurePolicy.IsExposed(config), returnUrl, campaignRepository))
-        {
-            await context.SignOutAsync("External");
-            return Results.Redirect("/login?error=" + "invite-only");
-        }
-
-        var baseUsername = !string.IsNullOrEmpty(name) ? name : ("User" + Guid.NewGuid().ToString().Substring(0, 8));
-        user = new UserDocument
-        {
-            Id = Guid.NewGuid().ToString(),
-            Username = baseUsername,
-            Email = email ?? "",
-            Roles = new List<string> { "Player" },
-            Culture = Codex.Localization.SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name),
-            ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
-        };
-
-        var attempt = 0;
-        while (!await userRepository.TryReserveUsernameAsync(user.Username, user.Id))
-        {
-            attempt++;
-            user.Username = $"{baseUsername}_{Guid.NewGuid().ToString().Substring(0, 4)}";
-            if (attempt > 5)
-            {
-                return Results.Redirect("/login?error=" + Uri.EscapeDataString("Could not allocate a username. Please try again."));
-            }
-        }
-
-        // The first account runs the server, but never on an open one. The name is the identity provider's display name,
-        // which the person signing in chooses, so unlike the sign-up form it is never matched against Codex:AdminUsername.
-        if (!Codex.Web.ExposurePolicy.IsExposed(config) && string.IsNullOrWhiteSpace(config["Codex:AdminUsername"]) && !await userRepository.AnyUsersExistAsync())
-        {
-            user.Roles.Add("ServerAdmin");
-        }
-
-        await userRepository.CreateUserAsync(user);
-    }
-
-    var claims = new List<System.Security.Claims.Claim>
-    {
-        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, user.Username),
-        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id)
-    };
-    if (!string.IsNullOrEmpty(user.Email))
-    {
-        claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, user.Email));
-    }
-
-    foreach (var role in user.Roles)
-    {
-        claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
-    }
-
-    var identity = new System.Security.Claims.ClaimsIdentity(claims, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
-    var newPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-    await context.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, newPrincipal);
-    await context.SignOutAsync("External");
-    if (user.Culture is not null)
-        Codex.Web.CultureCookie.Write(context, user.Culture);
-
-    if (!Codex.Web.UrlHelper.IsLocalUrl(returnUrl))
-    {
-        returnUrl = "/";
-    }
-
-    return Results.Redirect(returnUrl ?? "/");
-}).AllowAnonymous();
-
+Codex.Web.AccountEndpoints.MapAccounts(app);
 Codex.Web.MediaEndpoints.MapMedia(app);
 Codex.Web.PreviewEndpoints.MapPreviews(app);
 
+// wwwroot under fingerprinted URLs (app.<hash>.css, through @Assets[...]) that the browser keeps for good: a new build is a new URL,
+// so an update is never drawn with the previous styles or scripts (F28). Open to anyone: the sign-in page needs its styles.
+app.MapStaticAssets().AllowAnonymous();
 app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMode();
 
 // The database is the app: without it nothing works, and a half-alive server that answers every request
@@ -511,16 +315,24 @@ app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMod
     }
 }
 
-// Daily RavenDB backup into the data dir. Best-effort: a backup that can't be configured must never
-// keep the table from starting.
+// Daily RavenDB backup into the data dir, beside the server's own JSON backups (BackupService). Best-effort: a backup that
+// can't be configured must never keep the table from starting. The free RavenDB licence refuses it; that is expected, and
+// the About page says so (D11).
+var backupStatus = app.Services.GetRequiredService<BackupStatus>();
 try
 {
-    var backupDir = Path.GetFullPath(Path.Combine(dataDir, "Backups"));
     using var backupScope = app.Services.CreateScope();
-    await backupScope.ServiceProvider.GetRequiredService<RavenDbService>().EnsureScheduledBackupAsync(backupDir);
+    await backupScope.ServiceProvider.GetRequiredService<RavenDbService>().EnsureScheduledBackupAsync(backupStatus.Folder);
+    backupStatus.Database = DatabaseBackups.On;
+}
+catch (Exception ex) when (Codex.Web.Services.BackupFailures.IsLicenceRefusal(ex))
+{
+    backupStatus.Database = DatabaseBackups.NotLicensed;
+    app.Logger.LogInformation("The RavenDB licence does not allow database backups; the daily JSON backup in {Folder} covers them.", backupStatus.Folder);
 }
 catch (Exception ex)
 {
+    backupStatus.Database = DatabaseBackups.Failed;
     app.Logger.LogError(ex, "Scheduled backup configuration failed; continuing without it.");
 }
 

@@ -134,6 +134,21 @@ public static class YamlValues
         return string.Equals(Convert.ToString(left, CultureInfo.InvariantCulture), Convert.ToString(right, CultureInfo.InvariantCulture), StringComparison.Ordinal);
     }
 
+    /// <summary>How many keys differ between two sheets, compared with <see cref="SameValue"/> so two lists of the same
+    /// picks are equal and a list with one more pick is not (comparing <c>ToString()</c> missed every list, D4).</summary>
+    public static int ChangedKeys(IReadOnlyDictionary<string, object> now, IReadOnlyDictionary<string, object> before)
+    {
+        var count = 0;
+        foreach (var key in now.Keys.Union(before.Keys))
+        {
+            now.TryGetValue(key, out var a);
+            before.TryGetValue(key, out var b);
+            if (!SameValue(a, b)) count++;
+        }
+
+        return count;
+    }
+
     /// <summary>Best-effort integer read from a normalised property bag.</summary>
     public static int? GetInt(IReadOnlyDictionary<string, object> map, string key) =>
         map.TryGetValue(key, out var value) && ToNumber(value) is { } number ? (int)number : null;

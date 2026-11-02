@@ -20,7 +20,7 @@
         </span>
     </div>
 
-    @if (Picks.Count == 0)
+    @if (Picks.Count == 0 && Missing.Count == 0)
     {
         <p class="small-muted mb-2">@L["Layout.Picker.Nothing"]</p>
     }
@@ -46,6 +46,18 @@
                     </span>
                 </li>
             }
+            @foreach (var gone in Missing)
+            {
+                <li class="list-inline-item mb-1">
+                    <span class="pill pill-danger" title="@L["Layout.Picker.MissingTitle"]" data-testid="list-@Rule.Key-missing">
+                        <LucideIcon IconName="alert-triangle" Size="12" /> @gone.Id
+                        @if (!ReadOnly)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Layout.Picker.Remove", gone.Id]" OnClick="() => Removed.InvokeAsync(gone.Index)" />
+                        }
+                    </span>
+                </li>
+            }
         </ul>
     }
 
@@ -61,6 +73,8 @@
     [Parameter, EditorRequired] public ListRule Rule { get; set; } = null!;
     [Parameter, EditorRequired] public IReadOnlyList<SheetPick> Picks { get; set; } = Array.Empty<SheetPick>();
     [Parameter, EditorRequired] public IReadOnlyList<ContentEntry> Options { get; set; } = Array.Empty<ContentEntry>();
+    /// <summary>Picks the Library no longer has, shown by id so they can still be removed.</summary>
+    [Parameter] public IReadOnlyList<MissingPick> Missing { get; set; } = Array.Empty<MissingPick>();
     [Parameter] public int? Limit { get; set; }
     [Parameter] public bool ReadOnly { get; set; }
     [Parameter] public string LibraryPath { get; set; } = string.Empty;

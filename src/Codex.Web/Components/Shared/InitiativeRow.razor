@@ -1,0 +1,229 @@
+@using Codex.Core
+@using Codex.Core.Components
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@using Codex.Plugin.Abstractions
+@inject IContentRegistry ContentRegistry
+@inject CampaignLibrary Library
+
+@* One creature in the initiative order: its token, name, roll, turn state, hit points, death saves and conditions. What
+   this viewer may see of it is decided by the console (CanSeeExact); the DM's command panel comes in as ChildContent. *@
+<div class="participant @(IsCurrent ? "current" : "") @(IsSelected ? "selected" : "") @(Dead ? "dead" : Down ? "down" : "")" data-testid="participant-row" data-actor-id="@ActorId" aria-current="@(IsCurrent ? "true" : null)">
+    @if (Actor != null)
+    {
+        @* The token opens the character, and shows their card on the way (U1). *@
+        <a class="participant-token" href="@ActorHref" data-preview aria-label="@Name" data-testid="participant-link">
+            <ActorAvatar Actor="Actor" Size="lg" Class="@("token " + KindClass(Actor))" />
+        </a>
+    }
+    else
+    {
+        <div class="participant-token"><span class="avatar avatar-lg token" aria-hidden="true">?</span></div>
+    }
+    <div class="participant-head">
+        @if (IsDm)
+        {
+            <button type="button" class="participant-select" data-testid="select-participant" aria-pressed="@(IsSelected ? "true" : "false")" aria-label="@(IsSelected ? L["Combat.Deselect", Name] : L["Combat.Select", Name])" @onclick="() => OnToggleSelected.InvokeAsync()">
+                <span class="participant-name">@Name</span>
+            </button>
+        }
+        else
+        {
+            <span class="participant-name">@Name</span>
+        }
+        <span class="init-plaque" title="@(L["Combat.InitiativeTitle", Participant.InitiativeRoll])"><span class="visually-hidden">@L["Combat.Initiative"] </span>@Participant.InitiativeRoll</span>
+        @if (Participant.State != TurnState.Normal)
+        {
+            <span class="pill pill-warning">@TurnStateLabel(Participant.State)</span>
+        }
+        else if (Participant.HasActed && !IsCurrent)
+        {
+            <span class="pill" data-testid="acted-badge">@L["Combat.Acted"]</span>
+        }
+        @if (IsDm && Actor is { Visibility: not ActorVisibility.Known })
+        {
+            <span class="pill pill-warning" data-testid="visibility-badge">@(Actor.Visibility == ActorVisibility.Hidden ? L["Combat.Visibility.HiddenBadge"] : L["Combat.Visibility.StrangerBadge"])</span>
+        }
+        @if (Dead)
+        {
+            <span class="pill pill-danger" data-testid="dead-badge">@DownRules.DeadCondition</span>
+        }
+        else if (Down)
+        {
+            <span class="pill pill-danger" data-testid="down-badge">@(Stable ? DownRules.StableCondition : L["Combat.Down"])</span>
+        }
+        @if (Pool is { } pool)
+        {
+            <span class="@((pool.Max > 0 && pool.Current * 2 < pool.Max ? "pill pill-danger" : "pill") + " hp-text")" data-testid="hp-badge">@(CanSeeExact ? $"{pool.Current}/{pool.Max} {PrimaryKey}" : HpBand(pool.Current, pool.Max))</span>
+        }
+        @if (CanSeeExact && State?.Pool(SystemDefinition.TemporaryKeyOf(Definition)) is int temp && temp > 0)
+        {
+            <span class="pill pill-arcane hp-text" data-testid="temp-hp-badge" title="@L["Combat.TempHpTitle"]">@L["Combat.TempHpBadge", temp]</span>
+        }
+        @if (IsCurrent)
+        {
+            <span class="visually-hidden">@L["Combat.CurrentTurn"]</span>
+        }
+    </div>
+
+    @if (CanSeeExact && Pool is { Max: > 0 } bar)
+    {
+        var pct = Math.Clamp(100.0 * bar.Current / bar.Max, 0, 100);
+        <div class="hp-bar hp-numbered @(pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high")" role="progressbar" aria-label="@(Definition?.PrimaryResource?.Label ?? PrimaryKey)"
+             aria-valuemin="0" aria-valuemax="@bar.Max" aria-valuenow="@bar.Current">
+            <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+            <span class="hp-over" aria-hidden="true">@bar.Current / @bar.Max</span>
+        </div>
+    }
+
+    @* Death-save tally for a character that is down: filled pips for successes and failures, and a roll button for the
+       DM or the character's own player. *@
+    @if (Vitals?.DeathSaves is { } saves && Down && !Stable && Actor is { Kind: ActorKind.PlayerCharacter })
+    {
+        var successes = State?.Pool(saves.SuccessesKey) ?? 0;
+        var failures = State?.Pool(saves.FailuresKey) ?? 0;
+        <div class="death-saves" data-testid="death-saves" aria-label="@L["Combat.DeathSavesLabel", successes, failures]">
+            <span class="death-saves-label">@L["Combat.DeathSaves"]</span>
+            @foreach (var (count, needed, cls, label, title) in new[] {
+                (successes, saves.SuccessesToStabilize, "ok", "successes", L["Combat.DeathSavesSuccessTitle", successes, saves.SuccessesToStabilize]),
+                (failures, saves.FailuresToDie, "bad", "failures", L["Combat.DeathSavesFailureTitle", failures, saves.FailuresToDie]) })
+            {
+                <span class="death-save-pips @cls" data-testid="@("death-save-" + label)" title="@title">
+                    @for (var i = 0; i < needed; i++)
+                    {
+                        <span class="pip @(i < count ? "full" : "")"></span>
+                    }
+                </span>
+            }
+            @if (CanRollDeathSave)
+            {
+                <button type="button" class="cx-btn cx-etched cx-sm" data-testid="roll-death-save" @onclick="() => OnRollDeathSave.InvokeAsync()">@L["Combat.RollDeathSave"]</button>
+            }
+        </div>
+    }
+
+    @{
+        var effects = (State?.Effects ?? Array.Empty<EffectSnapshot>()).Where(e => !IsVitalsMarker(e.EffectId)).ToList();
+        var exhaustion = Vitals?.Exhaustion is { } exhaustionRules ? State?.Pool(exhaustionRules.Key) ?? 0 : 0;
+    }
+    @if (effects.Count > 0 || exhaustion > 0)
+    {
+        <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Name])">
+            @if (exhaustion > 0)
+            {
+                var condition = Vitals!.Exhaustion!.Condition;
+                <li class="cond-chip" data-testid="exhaustion-badge" title="@(L["Combat.ExhaustionTitle", condition ?? L["Combat.Exhaustion"], exhaustion])">
+                    <DomainIcon Domain="condition" Key="@(condition ?? "Exhaustion")" Size="DomainIconSize.Small" />
+                    @ConditionLabel(condition ?? "Exhaustion", $"{condition ?? L["Combat.Exhaustion"]} {exhaustion}")
+                </li>
+            }
+            @foreach (var effect in effects)
+            {
+                var effectId = effect.EffectId;
+                var tip = effect.IsIndefinite ? L["Combat.UntilRemoved"] : effect.Expiry == EffectExpiry.StartOfTurn ? L["Combat.EffectEndsStart", effect.RoundsRemaining] : L["Combat.EffectEndsEnd", effect.RoundsRemaining];
+                if (effect.HeldBy != null) tip += " " + L["Combat.EffectHeldBy", ActorsById.GetValueOrDefault(effect.HeldBy)?.Name ?? L["Combat.SomeoneUnseen"]];
+                <li class="cond-chip" data-testid="condition-badge" data-effect-id="@effectId" title="@tip">
+                    <DomainIcon Domain="condition" Key="@effectId" Size="DomainIconSize.Small" />
+                    @ConditionLabel(effectId, effect.IsIndefinite ? ConditionName(effectId) : $"{ConditionName(effectId)} ({effect.RoundsRemaining})")
+                    @if (IsDm)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@(L["Combat.RemoveCondition", effectId, Name])" OnClick="() => OnRemoveCondition.InvokeAsync(effectId)" />
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public ParticipantSnapshot Participant { get; set; } = null!;
+    /// <summary>Null for a creature the DM sees and the viewer's list does not hold; players never get such a row.</summary>
+    [Parameter] public ActorDocument? Actor { get; set; }
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+    /// <summary>The creature's live pools and conditions, or null before the runtime has them.</summary>
+    [Parameter] public ActorStateSnapshot? State { get; set; }
+    [Parameter] public SystemDefinition? Definition { get; set; }
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, ActorDocument> ActorsById { get; set; } = new Dictionary<string, ActorDocument>();
+    [Parameter] public bool IsCurrent { get; set; }
+    [Parameter] public bool IsSelected { get; set; }
+    [Parameter] public bool IsDm { get; set; }
+    [Parameter] public bool Dead { get; set; }
+    [Parameter] public bool Down { get; set; }
+    [Parameter] public bool Stable { get; set; }
+    /// <summary>Exact hit points and the bar; otherwise only a coarse band, so players never learn a hostile's numbers.</summary>
+    [Parameter] public bool CanSeeExact { get; set; }
+    [Parameter] public bool CanRollDeathSave { get; set; }
+    [Parameter] public EventCallback OnToggleSelected { get; set; }
+    [Parameter] public EventCallback OnRollDeathSave { get; set; }
+    [Parameter] public EventCallback<string> OnRemoveCondition { get; set; }
+    /// <summary>The DM's command panel, when this row is selected.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string ActorId => Participant.ActorId;
+    private string ActorHref => MentionLinks.Href(Campaign.Id, MentionKind.Actor, ActorId);
+    private VitalsRules? Vitals => Definition?.Vitals;
+    private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);
+    private static readonly DownRules NoDownRules = new();
+    private DownRules DownRules => Vitals?.Down ?? NoDownRules;
+
+    private (int Current, int Max)? Pool =>
+        State?.Pools is { } pools
+            ? (pools.GetValueOrDefault(PrimaryKey), pools.GetValueOrDefault(SystemDefinition.PoolMaxKey(Definition, PrimaryKey)))
+            : null;
+
+    /// <summary>A condition as the table reads it. The stored effect id stays the rules' own word.</summary>
+    private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
+
+    private string TurnStateLabel(TurnState state) => state switch
+    {
+        TurnState.Delayed => L["Combat.TurnState.Delayed"],
+        TurnState.Readied => L["Combat.TurnState.Readied"],
+        _ => state.ToString()
+    };
+
+    private static string KindClass(ActorDocument actor) => actor.Kind switch
+    {
+        ActorKind.PlayerCharacter => "token-pc",
+        ActorKind.Monster => "token-monster",
+        _ => "token-npc",
+    };
+
+    /// <summary>Dead, stable and down are shown as the row's state, not as conditions in the list.</summary>
+    private bool IsVitalsMarker(string effectId) =>
+        Vitals?.Down is { } down &&
+        (string.Equals(effectId, down.DeadCondition, StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(effectId, down.StableCondition, StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(effectId, down.Condition, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Players never learn a hostile's exact remaining hit points - only a coarse band.</summary>
+    private string HpBand(int current, int max)
+    {
+        if (max <= 0) return L["Combat.Hp.Unknown"];
+        var fraction = (double)current / max;
+        return fraction switch
+        {
+            <= 0 => L["Combat.Down"],
+            < 0.25 => L["Combat.Hp.Critical"],
+            < 0.5 => L["Combat.Hp.Bloodied"],
+            _ => L["Combat.Hp.Healthy"]
+        };
+    }
+
+    // A condition's name links to its rules in the library, when the campaign's packs have them ("blinded" for Blinded), so its
+    // card can say what it does (U1). Elsewhere it is just the name.
+    private RenderFragment ConditionLabel(string condition, string label) => __builder =>
+    {
+        var entry = ContentRegistry.GetEntry(Campaign.SystemId, "condition", condition.ToLowerInvariant()) ?? ContentRegistry.GetEntry(Campaign.SystemId, "condition", condition);
+        if (entry != null && (Library.ActivePacks(Campaign) is not { } packs || packs.Contains(entry.PackId)))
+        {
+            <a class="table-name" href="@MentionLinks.Href(Campaign.Id, MentionKind.Item, MentionSources.ItemKey(entry.Type, entry.Id))" data-preview>@label</a>
+        }
+        else
+        {
+            @label
+        }
+    };
+}

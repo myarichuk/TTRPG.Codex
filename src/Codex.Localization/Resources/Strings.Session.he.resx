@@ -18,14 +18,19 @@
   <data name="Session.GoToTable" xml:space="preserve"><value>מעבר לשולחן</value></data>
   <data name="Session.ReopenTable" xml:space="preserve"><value>פתיחה מחדש בשולחן</value></data>
   <data name="Session.RunTable" xml:space="preserve"><value>הרצה בשולחן</value></data>
+  <data name="Session.Delete.Label" xml:space="preserve"><value>מחיקת המפגש</value></data>
+  <data name="Session.Delete.Title" xml:space="preserve"><value>למחוק את „{0}”?</value></data>
+  <data name="Session.Delete.Body" xml:space="preserve"><value>ההערות, היומן, ההטלות והקרבות שלו יימחקו איתו. רשומות יומן אישי עליו ישמרו את הטקסט שלהן. אי אפשר לבטל.</value></data>
+  <data name="Session.Delete.Running" xml:space="preserve"><value>השולחן פועל על המפגש הזה. סיימו קודם את השולחן.</value></data>
+  <data name="Session.Delete.Failed" xml:space="preserve"><value>לא ניתן היה למחוק את המפגש.</value></data>
+  <data name="Session.Delete.Done" xml:space="preserve"><value>„{0}” נמחק.</value></data>
   <data name="Session.Details" xml:space="preserve"><value>פרטים</value></data>
   <data name="Session.TitleLabel" xml:space="preserve"><value>כותרת</value></data>
   <data name="Session.StatusLabel" xml:space="preserve"><value>סטטוס</value></data>
-  <data name="Session.SaveDetails" xml:space="preserve"><value>שמירת הפרטים</value></data>
+  <data name="Session.DateLabel" xml:space="preserve"><value>תאריך</value></data>
   <data name="Session.Recap" xml:space="preserve"><value>סיכום</value></data>
   <data name="Session.PlayersCanRead" xml:space="preserve"><value>השחקנים יכולים לקרוא את זה</value></data>
   <data name="Session.RecapPlaceholder" xml:space="preserve"><value>מה קרה במפגש, כפי שהשחקנים יקראו את זה…</value></data>
-  <data name="Session.SaveRecap" xml:space="preserve"><value>שמירת הסיכום</value></data>
   <data name="Session.Prefill" xml:space="preserve"><value>מילוי מראש מהאירועים</value></data>
   <data name="Session.Drafting" xml:space="preserve"><value>מנסח טיוטה…</value></data>
   <data name="Session.DraftAi" xml:space="preserve"><value>טיוטה עם בינה מלאכותית</value></data>
@@ -35,7 +40,6 @@
   <data name="Session.DmSummary" xml:space="preserve"><value>סיכום שליט המבוך</value></data>
   <data name="Session.OnlyYou" xml:space="preserve"><value>רק אתם</value></data>
   <data name="Session.DmSummaryPlaceholder" xml:space="preserve"><value>סודות, קצוות פתוחים, עוגנים למפגש הבא…</value></data>
-  <data name="Session.SaveSummary" xml:space="preserve"><value>שמירת הסיכום</value></data>
   <data name="Session.DmDraftHint" xml:space="preserve"><value>טיוטת שליט המבוך רואה הכול: הטלות סודיות, הערות פרטיות והסיכום הקודם שלכם.</value></data>
   <data name="Session.TableNotes" xml:space="preserve"><value>הערות שולחן</value></data>
   <data name="Session.NoNotes" xml:space="preserve"><value>עדיין אין הערות.</value></data>
@@ -43,10 +47,6 @@
   <data name="Session.Label.Private" xml:space="preserve"><value>פרטי</value></data>
   <data name="Session.Label.Secret" xml:space="preserve"><value>סודי</value></data>
   <data name="Session.AtTable" xml:space="preserve"><value>ליד השולחן</value></data>
-  <data name="Session.Kind.Clue" xml:space="preserve"><value>רמז</value></data>
-  <data name="Session.Kind.Loot" xml:space="preserve"><value>שלל</value></data>
-  <data name="Session.Kind.Ruling" xml:space="preserve"><value>הכרעה</value></data>
-  <data name="Session.Kind.FollowUp" xml:space="preserve"><value>המשך טיפול</value></data>
   <data name="Session.Round" xml:space="preserve"><value>סבב {0}</value></data>
   <data name="Session.RoundTurn" xml:space="preserve"><value>סבב {0} · התור של {1}</value></data>
   <data name="Session.To" xml:space="preserve"><value>אל {0}</value></data>
@@ -59,21 +59,15 @@
   <data name="Session.JournalHint" xml:space="preserve"><value>המחברת הפרטית שלכם למפגש הזה. אף אחד אחר, אפילו לא שליט המבוך, לא יכול לקרוא אותה.</value></data>
   <data name="Session.JournalEntry" xml:space="preserve"><value>רשומת יומן</value></data>
   <data name="Session.JournalPlaceholder" xml:space="preserve"><value>שמות לזכור, תיאוריות, שלל שמגיע לכם…</value></data>
-  <data name="Session.SaveJournal" xml:space="preserve"><value>שמירת היומן</value></data>
   <data name="Session.Saved" xml:space="preserve"><value>נשמר</value></data>
   <data name="Session.AllJournal" xml:space="preserve"><value>כל רשומות היומן שלי</value></data>
   <data name="Session.EventsHeading" xml:space="preserve"><value>אירועים ({0})</value></data>
   <data name="Session.EventsEmpty" xml:space="preserve"><value>עדיין לא נרשם דבר. אירועים נרשמים אוטומטית בזמן שהשולחן פועל.</value></data>
   <data name="Session.Flash.Prefilled" xml:space="preserve"><value>הסיכום מולא מיומן האירועים. ערכו ושמרו.</value></data>
-  <data name="Session.Flash.DetailsSaved" xml:space="preserve"><value>הפרטים נשמרו.</value></data>
-  <data name="Session.Flash.RecapSaved" xml:space="preserve"><value>הסיכום נשמר.</value></data>
-  <data name="Session.Flash.SummarySaved" xml:space="preserve"><value>סיכום שליט המבוך נשמר.</value></data>
   <data name="Session.Flash.DraftReady" xml:space="preserve"><value>הטיוטה מהבינה המלאכותית מוכנה. עיינו, ערכו ושמרו.</value></data>
   <data name="Session.Flash.NoAi" xml:space="preserve"><value>לא הוגדר ספק בינה מלאכותית. הוסיפו אחד בהגדרות הבינה המלאכותית של החשבון (למעלה בצד).</value></data>
   <data name="Session.Flash.DraftFailed" xml:space="preserve"><value>הטיוטה מהבינה המלאכותית נכשלה: {0}</value></data>
-  <data name="Session.Flash.JournalSaved" xml:space="preserve"><value>היומן נשמר. רק אתם יכולים לקרוא אותו.</value></data>
   <data name="Session.Flash.JournalFailed" xml:space="preserve"><value>לא ניתן היה לשמור את רשומת היומן.</value></data>
   <data name="Session.Flash.NoteAdded" xml:space="preserve"><value>ההערה נוספה.</value></data>
-  <data name="Session.Label.Note" xml:space="preserve"><value>הערה</value></data>
   <data name="Session.UnknownSpeaker" xml:space="preserve"><value>מישהו</value></data>
 </root>

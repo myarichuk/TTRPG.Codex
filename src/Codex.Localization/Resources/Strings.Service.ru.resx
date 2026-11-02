@@ -5,6 +5,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Service.Ai.NotConfigured" xml:space="preserve"><value>Поставщик ИИ не настроен.</value></data>
+  <data name="Service.Ai.ServerAllowanceSpent" xml:space="preserve"><value>Вы уже использовали сегодня {0} запросов к модели ИИ сервера. Добавьте свою модель в настройках ИИ или попробуйте завтра.</value></data>
   <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>Поставщик изображений не настроен.</value></data>
   <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>Краткие пересказы сессий составляет только мастер.</value></data>
   <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>Поставщику нужны адрес, модель и (для облачных сервисов) API-ключ.</value></data>

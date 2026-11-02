@@ -30,6 +30,7 @@ public class RavenEncounterRepository(RavenDbService dbService) : IEncounterRepo
     {
         using var session = dbService.Store.OpenAsyncSession();
         var toDelete = await session.Query<EncounterDocument, EncountersByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(x => x.CampaignId == campaignId)
             .ToListAsync();
 

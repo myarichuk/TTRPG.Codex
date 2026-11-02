@@ -11,6 +11,8 @@
 @inject IWikiRepository WikiRepo
 @inject PlaceWikiSync PlaceSync
 @inject ITemplateRepository TemplateRepo
+@inject NavigationManager Nav
+@implements IDisposable
 
 <div class="page-header mb-3">
     <div>
@@ -55,7 +57,10 @@ else
                             <h3 id="region-@region.Id">@region.Name</h3>
                             @if (Ctx.IsDm)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@L["Campaign.World.RenameLabel", region.Name]" data-testid="rename-region">@L["Campaign.World.Rename"]</CodexButton>
+                                <div class="d-flex gap-2">
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => StartRename(region)" aria-label="@L["Campaign.World.RenameLabel", region.Name]" data-testid="rename-region">@L["Campaign.World.Rename"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.World.DeleteRegionLabel", region.Name]" OnClick="() => DeleteRegionAsync(region)" data-testid="delete-region" />
+                                </div>
                             }
                         }
                     </div>
@@ -78,10 +83,10 @@ else
                                 }
                                 <div class="row-main">
                                     <div class="row-title">@location.Name
-                                        <span class="pill ms-1" data-testid="location-kind">@L[$"Campaign.Places.Kind.{location.Kind}"]</span>
+                                        <span class="pill ms-2" data-testid="location-kind">@L[$"Campaign.Places.Kind.{location.Kind}"]</span>
                                         @if (Ctx.IsDm && location.Visibility != ActorVisibility.Known)
                                         {
-                                            <span class="pill pill-warning ms-1">@L["Campaign.World.Hidden"]</span>
+                                            <span class="pill pill-warning ms-2">@L["Campaign.World.Hidden"]</span>
                                         }
                                     </div>
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
@@ -120,6 +125,7 @@ else
                                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@L["Campaign.World.RevealLabel", location.Name]"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.World.Reveal"]</CodexButton>
                                         }
                                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => EditLocationAsync(region, location)" aria-label="@L["Campaign.World.EditLabel", location.Name]" data-testid="edit-location">@L["Campaign.World.Edit"]</CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.World.DeletePlaceLabel", location.Name]" OnClick="() => DeletePlaceAsync(region, location)" data-testid="delete-location" />
                                     </div>
                                 }
                             </li>
@@ -194,6 +200,7 @@ else
 @if (Ctx.IsDm)
 {
     <UnsavedChangesGuard @ref="guard" IsDirty="LocationDirty" />
+    <ConfirmDialog @ref="confirm" />
     <dialog id="edit-location-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="edit-location-title" @oncancel="BackFromLocationAsync">
         @if (editingLocation != null && editingRegion != null)
         {
@@ -300,9 +307,9 @@ else
             packTargetRegionId = regions.FirstOrDefault()?.Id ?? string.Empty;
         }
 
-        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors, forWriting: Ctx.IsDm);
-        noteActors = Ctx.Actors.ToDictionary(a => a.Id);
-        mentionsJson = MentionLinks.Json(noteMentions, Ctx.Actors);
+        (noteSessions, noteWritings, noteMentions) = await MentionSources.NotesAsync(Ctx.Campaign, Ctx.Access, Ctx.AllActors, forWriting: Ctx.IsDm);
+        noteActors = Ctx.AllActors.ToDictionary(a => a.Id);
+        mentionsJson = MentionLinks.Json(noteMentions, Ctx.AllActors);
         wikiPages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
         templates = Ctx.IsDm ? await TemplateRepo.GetAsync(Ctx.Access, L) : null;
 
@@ -336,12 +343,30 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender) Nav.LocationChanged += OnLocationChanged;
+
         if (focusRename && renamingRegionId != null)
         {
             focusRename = false;
             await JS.InvokeVoidAsync("codex.focus", $"rename-{renamingRegionId}");
         }
+
+        // A link to a place (#place-ID) opens its row once the places are drawn, which is after the browser looked for the
+        // anchor (U2). A row the reader cannot see is left alone, and tried again on the next render.
+        var uri = Nav.Uri;
+        if (regions != null && uri != revealedFor && uri.Contains("#place-", StringComparison.Ordinal)
+            && await JS.InvokeAsync<bool>("codex.revealPlace", uri[(uri.IndexOf('#') + 1)..]))
+        {
+            revealedFor = uri;
+        }
     }
+
+    private string? revealedFor;
+
+    // Another place link followed while Places is open changes only the anchor: no new parameters, so render to reveal it.
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
 
     private void CancelRename() => renamingRegionId = null;
 
@@ -440,7 +465,7 @@ else
             WikiPageId = location.WikiPageId,
             ParentId = location.ParentId,
             Kind = location.Kind,
-            Connections = location.Connections,
+
             Metadata = location.Metadata,
             Visibility = location.Visibility,
             HasArt = location.HasArt,
@@ -522,7 +547,8 @@ else
                 listed.ArtVersion = editingLocation.ArtVersion;
             }
 
-            Ctx.Notify(Flash.Success(image == null ? L["Campaign.World.ArtRemoved"] : L["Campaign.World.ArtSaved"]));
+            // The art is stored already, whatever happens to the text: say so, so a later "discard changes" is not read as the art (U6).
+            Ctx.Notify(Flash.Success(LocationDirty() ? L["Campaign.World.ArtStoredTextNot"] : image == null ? L["Campaign.World.ArtRemoved"] : L["Campaign.World.ArtSaved"]));
         }
         else
         {
@@ -532,6 +558,44 @@ else
 
     private Task<ArtImage> GenerateLocationArtAsync(CancellationToken ct) =>
         Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
+
+    // ---- Deleting (U7): a place can be undone (its art stays on the region for an hour); a region, with its places and their art, cannot. ----
+
+    private ConfirmDialog? confirm;
+
+    private async Task DeletePlaceAsync(RegionDocument region, LocationDocument location)
+    {
+        var inside = region.Locations.Count(l => l.ParentId == location.Id);
+        var body = inside > 0 ? L["Campaign.World.DeletePlaceBodyInside", inside] : L["Campaign.World.DeletePlaceBody"];
+        if (confirm == null || !await confirm.ShowAsync(L["Campaign.World.DeletePlaceTitle", location.Name], body, L["Common.Delete"], isDestructive: true)) return;
+        if (await RegionRepo.RemoveLocationAsync(region.Id, location.Id, Ctx.Access) is not { } removed) return;
+        var regionId = region.Id;
+        Ctx.Notify(Flash.Undoable(L["Campaign.World.PlaceDeleted", location.Name], async () =>
+        {
+            if (await RegionRepo.RestoreLocationAsync(regionId, removed, Ctx.Access))
+            {
+                Ctx.Notify(Flash.Success(L["Common.Undone"]));
+                await LoadAsync();
+                StateHasChanged();
+            }
+            else
+            {
+                Ctx.Notify(Flash.Error(L["Common.UndoGone"]));
+            }
+        }));
+        await LoadAsync();
+    }
+
+    private async Task DeleteRegionAsync(RegionDocument region)
+    {
+        var body = region.Locations.Count > 0 ? L["Campaign.World.DeleteRegionBodyPlaces", region.Locations.Count] : L["Campaign.World.DeleteRegionBody"];
+        if (confirm == null || !await confirm.ShowAsync(L["Campaign.World.DeleteRegionTitle", region.Name], body, L["Common.Delete"], isDestructive: true)) return;
+        if (await RegionRepo.DeleteAsync(region.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Success(L["Campaign.World.RegionDeleted", region.Name]));
+            await LoadAsync();
+        }
+    }
 
     private async Task RevealAsync(string regionId, string locationId)
     {

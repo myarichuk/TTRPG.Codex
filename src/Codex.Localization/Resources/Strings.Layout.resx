@@ -20,6 +20,9 @@
   <data name="Layout.Menu" xml:space="preserve"><value>Menu</value></data>
   <data name="Layout.SignIn" xml:space="preserve"><value>Sign in</value></data>
   <data name="Layout.SkipLink" xml:space="preserve"><value>Skip to main content</value></data>
+  <data name="Layout.ErrorTitle" xml:space="preserve"><value>Something went wrong on this page.</value></data>
+  <data name="Layout.ErrorBody" xml:space="preserve"><value>Nothing you saved is lost. Try again, or go back and open the page anew.</value></data>
+  <data name="Layout.ErrorRetry" xml:space="preserve"><value>Try again</value></data>
   <data name="Layout.Reconnect.Title" xml:space="preserve"><value>Connection lost</value></data>
   <data name="Layout.Reconnect.First" xml:space="preserve"><value>Reconnecting to the server…</value></data>
   <data name="Layout.Reconnect.RetryBefore" xml:space="preserve"><value>Connection unstable. Retrying in </value></data>
@@ -27,6 +30,17 @@
   <data name="Layout.Reconnect.Failed" xml:space="preserve"><value>The connection to the server could not be restored.</value></data>
   <data name="Layout.Reconnect.Paused" xml:space="preserve"><value>Your session was paused while this tab was in the background.</value></data>
   <data name="Layout.Reconnect.ResumeFailed" xml:space="preserve"><value>The session could not be resumed. Reload the page to continue.</value></data>
+  <data name="Layout.Reconnect.Rejected" xml:space="preserve"><value>The server no longer has this page open, so it has to reload. Anything you typed and did not save is kept, and offered back after the reload.</value></data>
+  <data name="Layout.Drafts.FoundOne" xml:space="preserve"><value>The page reloaded after losing its connection. You had typed text in one box here that was not saved.</value></data>
+  <data name="Layout.Drafts.FoundMany" xml:space="preserve"><value>The page reloaded after losing its connection. You had typed text in {0} boxes here that was not saved.</value></data>
+  <data name="Layout.Drafts.Restore" xml:space="preserve"><value>Put it back</value></data>
+  <data name="Layout.Preview.Pin" xml:space="preserve"><value>Pin: keep this card open</value></data>
+  <data name="Layout.Preview.Unpin" xml:space="preserve"><value>Unpin</value></data>
+  <data name="Layout.Preview.Close" xml:space="preserve"><value>Close the card</value></data>
+  <data name="Layout.Preview.Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Layout.Preview.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Layout.Preview.Names" xml:space="preserve"><value>Mentions:</value></data>
+  <data name="Layout.Drafts.Discard" xml:space="preserve"><value>Discard it</value></data>
   <data name="Layout.Reconnect.TryAgain" xml:space="preserve"><value>Try again</value></data>
   <data name="Layout.Reconnect.Resume" xml:space="preserve"><value>Resume</value></data>
   <data name="Layout.Reconnect.Reload" xml:space="preserve"><value>Reload page</value></data>
@@ -35,6 +49,7 @@
   <data name="Layout.Picker.Nothing" xml:space="preserve"><value>Nothing picked yet.</value></data>
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>{0} picked</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>Not in the Library any more. Remove it, or ask the DM to bring the entry back.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Limit reached</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Nothing is allowed right now. Check your class, level and the rules above.</value></data>
 </root>

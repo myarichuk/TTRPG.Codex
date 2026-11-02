@@ -40,6 +40,10 @@ public sealed record AttributeSummary(
 /// player chose for it, such as where an Ability Score Improvement's points go.</summary>
 public sealed record SheetPick(int Index, string Raw, ContentEntry Entry, IReadOnlyDictionary<string, int> Choices);
 
+/// <summary>A pick whose Library entry is gone (removed, or its pack unloaded): still on the sheet at <see cref="Index"/>, so
+/// it can be shown and taken off.</summary>
+public sealed record MissingPick(int Index, string Id);
+
 /// <summary>A picked entry that grants score increases, and what the player did with them.</summary>
 public sealed record IncreaseGrant(SheetPick Pick, int Points, IReadOnlyList<string> Options, int? Cap);
 
@@ -65,6 +69,10 @@ public sealed record SlotPool(SlotPoolRule Rule, IReadOnlyDictionary<int, int> M
 public sealed class SheetEvaluation
 {
     public Dictionary<string, object> Derived { get; } = new();
+
+    /// <summary>For each derived value, the numbers its formula read (<c>level</c> 3, <c>dex</c> 14), so a page can show
+    /// the working (<see cref="FormulaWorking"/>).</summary>
+    public Dictionary<string, IReadOnlyDictionary<string, double>> DerivedInputs { get; } = new();
     public List<RuleViolation> Violations { get; } = new();
 
     /// <summary>For each constrained reference field, the entries the sheet may currently pick.</summary>
@@ -75,6 +83,10 @@ public sealed class SheetEvaluation
 
     /// <summary>For each list rule, the resolved picks in sheet order (unresolvable ids are reported as violations).</summary>
     public Dictionary<string, IReadOnlyList<SheetPick>> ListPicks { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>For each list rule, the picks the Library no longer has. A strict sheet can't be saved while there are any, so the
+    /// player must be able to remove them (R7).</summary>
+    public Dictionary<string, IReadOnlyList<MissingPick>> ListMissing { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Dictionary<string, int?> ListLimits { get; } = new(StringComparer.OrdinalIgnoreCase);
     public AttributeSummary? Attributes { get; set; }
@@ -98,6 +110,12 @@ public sealed class SheetEvaluation
 
     /// <summary>What the sheet carries, in sheet order (empty without inventory rules).</summary>
     public List<InventoryItem> Inventory { get; } = new();
+
+    /// <summary>What <see cref="Inventory"/> weighs, quantities counted.</summary>
+    public double CarriedWeight { get; set; }
+
+    /// <summary>How much the character can carry, when the system says (<see cref="InventoryRules.Capacity"/>).</summary>
+    public long? CarryingCapacity { get; set; }
 
     /// <summary>Things worth a look that never stop a save (armor the class isn't trained in).</summary>
     public List<RuleViolation> Warnings { get; } = new();
@@ -188,6 +206,8 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         {
             var picked = RawList(sheet, list.Key);
             var resolved = new List<SheetPick>();
+            var missing = new List<MissingPick>();
+            result.ListMissing[list.Key] = missing;
             for (var index = 0; index < picked.Count; index++)
             {
                 var (id, choices) = ParsePick(picked[index]);
@@ -195,6 +215,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 if (entry == null)
                 {
                     result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: \"{id}\" is not in the Library.", "Actor.Rule.NotInLibrary", new object?[] { list.Label, id }));
+                    missing.Add(new MissingPick(index, id));
                     continue;
                 }
 
@@ -232,6 +253,10 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             if (limit.HasValue && picked.Count > limit.Value)
             {
                 result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {picked.Count} picked, but only {limit.Value} allowed at this level.", "Actor.Rule.Limit", new object?[] { list.Label, picked.Count, limit.Value }));
+            }
+            else if (limit.HasValue && list.MaxCount is { Lookup: not null } countRule && views.Count > 1 && views.Count == result.Classes.Count)
+            {
+                CheckEachClassesShare(list, countRule, limit.Value, views, resolved, result);
             }
         }
 
@@ -483,9 +508,17 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             }
         }
 
+        // A sheet that keeps base scores, missing one the system gained after it was made: that attribute starts at its default,
+        // as on a new sheet, instead of never reaching the sheet (F24).
+        var keepsBases = system.Attributes.Any(a => sheet.ContainsKey(BasePrefix + a.Key));
         foreach (var attribute in system.Attributes)
         {
-            if (!sheet.ContainsKey(BasePrefix + attribute.Key)) continue;
+            if (!sheet.ContainsKey(BasePrefix + attribute.Key))
+            {
+                if (!keepsBases || sheet.ContainsKey(attribute.Key)) continue;
+                sheet[BasePrefix + attribute.Key] = (long)attribute.Default;
+            }
+
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? attribute.Default;
             var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
             sheet[attribute.Key] = (long)(baseScore + bonus + increases.GetValueOrDefault(attribute.Key));
@@ -791,54 +824,82 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     {
         if (Rules!.Derived.Count == 0) return;
 
-        var (interpreter, identifiers) = FormulaContext(sheet);
+        var values = FormulaContext(sheet);
         foreach (var derived in Rules.Derived)
         {
             try
             {
-                result.Derived[derived.Key] = EvaluateFormula(interpreter, identifiers, derived.Formula);
+                var value = EvaluateFormula(values, derived.Formula);
+                result.Derived[derived.Key] = value;
+                result.DerivedInputs[derived.Key] = CompiledFormulas[derived.Formula].Names.ToDictionary(n => n, n => values[n]);
+                // A later formula may use an earlier one ("pb" in "passive_perception").
+                if (IsIdentifier(derived.Key)) values.TryAdd(derived.Key, value);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                result.Violations.Add(new RuleViolation(derived.Key, $"{derived.Label}: formula error ({ex.Message})."));
+                // The player can't fix the system's formula, so it never blocks a save, and the parser's text stays out of it.
+                result.Warnings.Add(FormulaError(derived.Key, derived.Label));
             }
         }
     }
 
-    private static long EvaluateFormula(Interpreter interpreter, Parameter[] identifiers, string formula) =>
-        (long)Math.Floor(Convert.ToDouble(interpreter.Eval(formula, identifiers), CultureInfo.InvariantCulture));
+    private static RuleViolation FormulaError(string key, string label) =>
+        new(key, $"{label}: the system's formula for this can't be worked out, so it is left out. The DM can check the system's rules.",
+            "Actor.Rule.FormulaError", new object?[] { label });
 
-    /// <summary>A formula interpreter and the sheet's numbers as identifiers (attribute scores, numeric fields).</summary>
-    private (Interpreter Interpreter, Parameter[] Identifiers) FormulaContext(IReadOnlyDictionary<string, object> sheet)
+    /// <summary>A formula that names something the sheet doesn't have, or comes out as no number.</summary>
+    private sealed class FormulaException(string message) : Exception(message);
+
+    // Formulas come from content packs, which anyone can import. Each is parsed once (not on every render of every viewer)
+    // on an interpreter that knows no types, so `new string('a', 1000000000)` does not parse, with the five functions below
+    // as its whole surface (R7).
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (Lambda Lambda, string[] Names)> CompiledFormulas = new();
+
+    private static (Lambda Lambda, string[] Names) Compile(string formula)
     {
-        var interpreter = new Interpreter();
-        var identifiers = new List<Parameter>();
+        var interpreter = new Interpreter(InterpreterOptions.None)
+            .SetFunction("floor", (Func<double, double>)Math.Floor)
+            .SetFunction("ceil", (Func<double, double>)Math.Ceiling)
+            .SetFunction("max", (Func<double, double, double>)Math.Max)
+            .SetFunction("min", (Func<double, double, double>)Math.Min)
+            .SetFunction("mod", (Func<double, double>)(score => AttributeDefinition.HalfMinusFive((int)Math.Floor(score))));
+        var names = interpreter.DetectIdentifiers(formula).UnknownIdentifiers.ToArray();
+        return (interpreter.Parse(formula, names.Select(n => new Parameter(n, typeof(double))).ToArray()), names);
+    }
+
+    private static long EvaluateFormula(IReadOnlyDictionary<string, double> values, string formula)
+    {
+        var (lambda, names) = CompiledFormulas.GetOrAdd(formula, Compile);
+        var args = names.Select(name => values.TryGetValue(name, out var value) ? (object)value : throw new FormulaException($"no number called \"{name}\"")).ToArray();
+        var result = Convert.ToDouble(lambda.Invoke(args), CultureInfo.InvariantCulture);
+        // 10/(level-level) is infinity, and a cast would make it long.MinValue without a word.
+        if (!double.IsFinite(result) || Math.Abs(result) > 1e15) throw new FormulaException("not a number a sheet can hold");
+        return (long)Math.Floor(result);
+    }
+
+    /// <summary>The sheet's numbers by name, for formulas (attribute scores, numeric fields).</summary>
+    private Dictionary<string, double> FormulaContext(IReadOnlyDictionary<string, object> sheet)
+    {
+        var values = new Dictionary<string, double>(StringComparer.Ordinal);
         foreach (var (key, value) in sheet)
         {
             if (!IsIdentifier(key)) continue;
             var number = YamlValues.ToNumber(value);
-            if (number.HasValue) identifiers.Add(new Parameter(key, number.Value));
+            if (number.HasValue) values[key] = number.Value;
         }
 
         foreach (var attribute in system.Attributes)
         {
-            if (sheet.ContainsKey(attribute.Key)) continue;
-            identifiers.Add(new Parameter(attribute.Key, (double)attribute.Default));
+            values.TryAdd(attribute.Key, attribute.Default);
         }
 
         // A numeric field the sheet hasn't set yet counts as its declared default (level 1), or 0.
         foreach (var field in system.ActorFields.Where(f => f.Type == FieldType.Number && IsIdentifier(f.Key)))
         {
-            if (identifiers.Any(p => p.Name == field.Key)) continue;
-            identifiers.Add(new Parameter(field.Key, ToDouble(field.DefaultValue) ?? 0d));
+            values.TryAdd(field.Key, ToDouble(field.DefaultValue) ?? 0d);
         }
 
-        interpreter.SetFunction("floor", (Func<double, double>)Math.Floor);
-        interpreter.SetFunction("ceil", (Func<double, double>)Math.Ceiling);
-        interpreter.SetFunction("max", (Func<double, double, double>)Math.Max);
-        interpreter.SetFunction("min", (Func<double, double, double>)Math.Min);
-        interpreter.SetFunction("mod", (Func<double, double>)(score => Math.Floor((score - 10) / 2)));
-        return (interpreter, identifiers.ToArray());
+        return values;
     }
 
     private static bool IsIdentifier(string key) =>
@@ -965,6 +1026,65 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         }
 
         return best;
+    }
+
+    /// <summary>
+    /// A table limit is each class's own (F24): pooled, a cleric 1 / wizard 5 could prepare the cleric's share as wizard
+    /// spells. The picks are matched to the classes that allow them so that as many as possible fit a class's own share
+    /// (a spell two classes allow goes wherever it lets the others fit); the part of the limit no table gives (a constant, a
+    /// species' number) takes what is left. Only when no arrangement fits is a class reported by name, one the pick needs.
+    /// </summary>
+    private void CheckEachClassesShare(ListRule list, CountRule rule, int limit, IReadOnlyList<IReadOnlyDictionary<string, object>> views, List<SheetPick> picks, SheetEvaluation result)
+    {
+        var own = views.Select(v => ResolveCount(new CountRule { Lookup = rule.Lookup, Also = rule.Also }, new[] { v }) ?? 0).ToArray();
+        var eligible = picks.Select(p => Enumerable.Range(0, views.Count).Where(i => list.Where.All(w => Holds(w, p.Entry, views[i]))).ToList())
+            .Where(classes => classes.Count > 0) // a pick no class allows is reported already
+            .ToList();
+        var over = OverEachShare(eligible, own, Math.Max(0, limit - own.Sum()));
+
+        for (var i = 0; i < views.Count; i++)
+        {
+            if (over[i] == 0) continue;
+            var name = result.Classes[i].Entry?.Name ?? result.Classes[i].Id;
+            result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {own[i] + over[i]} for {name}, but {name} allows only {own[i]} at this level.",
+                "Actor.Rule.LimitForClass", new object?[] { list.Label, own[i] + over[i], (object?)result.Classes[i].Entry ?? name, own[i] }));
+        }
+    }
+
+    /// <summary>How many picks each class is over its <paramref name="own"/> share, given the classes each pick may count for
+    /// (<paramref name="eligible"/>) and a <paramref name="shared"/> part of the limit any pick may use. One seat per pick a
+    /// class's table allows; each pick takes a seat, moving earlier picks to other seats they may take when that frees one
+    /// (augmenting paths), so the greatest number of picks is seated. A pick left over uses the shared part, else counts
+    /// against the first class it may count for.</summary>
+    internal static int[] OverEachShare(IReadOnlyList<IReadOnlyList<int>> eligible, IReadOnlyList<int> own, int shared)
+    {
+        var over = new int[own.Count];
+        var seats = Enumerable.Range(0, own.Count).SelectMany(i => Enumerable.Repeat(i, Math.Max(0, own[i]))).ToArray();
+        var seatedPick = Enumerable.Repeat(-1, seats.Length).ToArray();
+        bool Seat(int pick, bool[] tried)
+        {
+            for (var s = 0; s < seats.Length; s++)
+            {
+                if (tried[s] || !eligible[pick].Contains(seats[s])) continue;
+                tried[s] = true;
+                if (seatedPick[s] < 0 || Seat(seatedPick[s], tried))
+                {
+                    seatedPick[s] = pick;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        for (var pick = 0; pick < eligible.Count; pick++)
+        {
+            if (Seat(pick, new bool[seats.Length])) continue;
+            if (shared > 0) shared--;
+            else over[eligible[pick][0]]++;
+        }
+
+        return over;
     }
 
     /// <summary>A list's limit across every class view: table lookups are added up per class (a

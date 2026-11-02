@@ -38,7 +38,9 @@
   <data name="Page.Join.Title" xml:space="preserve"><value>Join campaign</value></data>
   <data name="Page.Join.Joining" xml:space="preserve"><value>Joining…</value></data>
   <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>This invite link is not valid</value></data>
-  <data name="Page.Join.InvalidText" xml:space="preserve"><value>It may have been mistyped, or the campaign may have been deleted. Ask your DM for a fresh link.</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>It may have been mistyped, expired, already used, or replaced by a new link, or the campaign may have been deleted. Ask your DM for a fresh link.</value></data>
+  <data name="Page.Join.TooManyTitle" xml:space="preserve"><value>Too many invite links tried</value></data>
+  <data name="Page.Join.TooManyText" xml:space="preserve"><value>You have followed several invite links that did not work. Wait a few minutes, then use the link your DM sent.</value></data>
   <data name="Page.Join.InTitle" xml:space="preserve"><value>You're in!</value></data>
   <data name="Page.Join.InText" xml:space="preserve"><value>You are now a player in this campaign.</value></data>
   <data name="Page.Join.Go" xml:space="preserve"><value>Go to campaign</value></data>
@@ -53,7 +55,6 @@
   <data name="Page.Error.RequestId" xml:space="preserve"><value>Request ID </value></data>
   <data name="Page.NotFound.Title" xml:space="preserve"><value>Page not found</value></data>
   <data name="Page.NotFound.Text" xml:space="preserve"><value>There is nothing at this address. It may have been moved or deleted.</value></data>
-  <data name="Page.Loading.Text" xml:space="preserve"><value>Loading game systems and content packs…</value></data>
   <data name="Page.Auth.Username" xml:space="preserve"><value>Username</value></data>
   <data name="Page.Auth.Password" xml:space="preserve"><value>Password</value></data>
   <data name="Page.Auth.SignIn" xml:space="preserve"><value>Sign in</value></data>
@@ -65,6 +66,11 @@
   <data name="Page.Login.CreateAccount" xml:space="preserve"><value>Create an account</value></data>
   <data name="Page.Login.Stale" xml:space="preserve"><value>The sign-in form must be submitted from a freshly loaded page. Reload and try again.</value></data>
   <data name="Page.Login.Invalid" xml:space="preserve"><value>Invalid username or password.</value></data>
+  <data name="Page.Login.Error.UnknownProvider" xml:space="preserve"><value>That sign-in method is not set up on this server.</value></data>
+  <data name="Page.Login.Error.ExternalFailed" xml:space="preserve"><value>Signing in with that provider did not work. Try again.</value></data>
+  <data name="Page.Login.Error.ExternalInvalid" xml:space="preserve"><value>The sign-in provider did not say who you are. Try again, or use another way to sign in.</value></data>
+  <data name="Page.Login.Error.NoUsername" xml:space="preserve"><value>Could not find a free username for your account. Try again.</value></data>
+  <data name="Page.Login.TooMany" xml:space="preserve"><value>Too many sign-in attempts for this account. Wait a few minutes and try again.</value></data>
   <data name="Page.Register.Title" xml:space="preserve"><value>Create account</value></data>
   <data name="Page.Register.Heading" xml:space="preserve"><value>Create your account</value></data>
   <data name="Page.Register.PasswordHelp" xml:space="preserve"><value>At least 8 characters with an upper-case letter, a lower-case letter and a number.</value></data>
@@ -93,6 +99,17 @@
   <data name="Page.About.By" xml:space="preserve"><value>By {0}</value></data>
   <data name="Page.About.Warnings" xml:space="preserve"><value>Content warnings</value></data>
   <data name="Page.About.WarningsIntro" xml:space="preserve"><value>Problems found while loading systems and packs. Fix the file and restart.</value></data>
+  <data name="Page.About.Backups" xml:space="preserve"><value>Backups</value></data>
+  <data name="Page.About.BackupsOff" xml:space="preserve"><value>The daily backup is turned off (Codex:Backups:Enabled). Export each campaign from its Settings to keep a copy.</value></data>
+  <data name="Page.About.BackupsWhere" xml:space="preserve"><value>Every day the server writes each campaign (as Export does, with its images and players' journals) and the accounts (without AI keys) to a new folder here, and keeps the newest {0}:</value></data>
+  <data name="Page.About.BackupsLast" xml:space="preserve"><value>Last backup: {0}.</value></data>
+  <data name="Page.About.BackupsNone" xml:space="preserve"><value>No backup yet: the first is written a minute after the server starts.</value></data>
+  <data name="Page.About.BackupsFailed" xml:space="preserve"><value>The last backup failed: {0}. It is tried again every hour.</value></data>
+  <data name="Page.About.BackupsRestore" xml:space="preserve"><value>To bring a campaign back, open any campaign's Settings, tick “restore it as a new campaign” and merge its campaign.json. Images and accounts are kept as files to copy back by hand.</value></data>
+  <data name="Page.About.DatabaseBackupsOn" xml:space="preserve"><value>The database also makes its own daily backup in the same folder.</value></data>
+  <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>The database's own backups are off: its free licence does not allow them. The daily backup above is the one to rely on.</value></data>
+  <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>The database's own backups could not be set up (see the server log). The daily backup above still runs.</value></data>
+  <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>The database's own backups have not been checked yet.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>Software</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Campaign</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Campaign not found</value></data>
@@ -101,6 +118,7 @@
   <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Ask the DM for an invite link.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>Campaign sections</value></data>
   <data name="Page.Campaign.More" xml:space="preserve"><value>More</value></data>
+  <data name="Page.Campaign.BackTo" xml:space="preserve"><value>Back to {0}</value></data>
   <data name="Page.Campaign.Live" xml:space="preserve"><value>Live</value></data>
   <data name="Page.Campaign.TableRunning" xml:space="preserve"><value>The table is running</value></data>
   <data name="Page.Campaign.Group.Play" xml:space="preserve"><value>Play</value></data>
@@ -178,6 +196,7 @@
   <data name="Page.AiSettings.InUse" xml:space="preserve"><value>In use</value></data>
   <data name="Page.AiSettings.NoKey" xml:space="preserve"><value>no key</value></data>
   <data name="Page.AiSettings.KeyStored" xml:space="preserve"><value>key stored</value></data>
+  <data name="Page.AiSettings.KeyUnreadable" xml:space="preserve"><value>key needs entering again</value></data>
   <data name="Page.AiSettings.Use" xml:space="preserve"><value>Use</value></data>
   <data name="Page.AiSettings.Test" xml:space="preserve"><value>Test</value></data>
   <data name="Page.AiSettings.EditLabel" xml:space="preserve"><value>Edit {0}</value></data>
@@ -190,6 +209,12 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>AI buttons now use {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Removed {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
+  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>Every account on this server uses these models when it has none of its own, on the server's key. Each account may make {0} requests and {1} pictures a day; the server's admin has no limit.</value></data>
+  <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>You have used {0} requests and {1} pictures on them today.</value></data>
+  <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>No one has used them today.</value></data>
+  <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>Used today:</value></data>
+  <data name="Page.AiSettings.ServerUsedBy" xml:space="preserve"><value>{0}: {1} requests, {2} pictures</value></data>
+  <data name="Page.AiSettings.NoLimit" xml:space="preserve"><value>no limit</value></data>
   <data name="Page.AiSettings.Preset.Text.openrouter.Hint" xml:space="preserve"><value>One key, hundreds of models. Get a key at openrouter.ai/keys.</value></data>
   <data name="Page.AiSettings.Preset.Text.openai.Hint" xml:space="preserve"><value>Direct OpenAI access with your own key.</value></data>
   <data name="Page.AiSettings.Preset.Text.anthropic.Hint" xml:space="preserve"><value>Claude through Anthropic's own API. Get a key at console.anthropic.com.</value></data>

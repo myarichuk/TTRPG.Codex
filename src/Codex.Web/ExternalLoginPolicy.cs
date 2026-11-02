@@ -38,4 +38,20 @@ public static class ExternalLoginPolicy
 
         return registeredSchemeNames.Any(name => string.Equals(name, provider, StringComparison.Ordinal));
     }
+
+    /// <summary>
+    /// The scheme an external sign-in came through. <c>RemoteAuthenticationHandler</c> records it under
+    /// <c>.AuthScheme</c> before signing in to the external cookie; the identity's authentication type is the
+    /// fallback. (Identity's "LoginProvider" item is never written here: reading it with the indexer threw on every
+    /// real callback, D1.)
+    /// </summary>
+    public static string? ProviderOf(Microsoft.AspNetCore.Authentication.AuthenticationProperties? properties, ClaimsPrincipal principal)
+    {
+        if (properties != null && properties.Items.TryGetValue(".AuthScheme", out var scheme) && !string.IsNullOrEmpty(scheme))
+        {
+            return scheme;
+        }
+
+        return principal.Identities.FirstOrDefault()?.AuthenticationType;
+    }
 }

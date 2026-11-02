@@ -7,6 +7,28 @@ namespace Codex.Tests;
 public class LauncherTests
 {
     [Fact]
+    public void The_log_rolls_over_while_the_server_runs_once_it_grows_past_its_cap()
+    {
+        var home = Path.Combine(Path.GetTempPath(), "codex-log-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var controller = new ServerController(home, home) { MaxLogBytes = 1000 };
+            controller.OpenLog();
+            for (var i = 0; i < 30; i++) controller.Note($"line {i} " + new string('x', 60));
+
+            Assert.True(File.Exists(controller.LogPath + ".1"));
+            Assert.True(new FileInfo(controller.LogPath + ".1").Length > 1000);
+            Assert.True(new FileInfo(controller.LogPath).Length <= 1000);
+            using var reader = new StreamReader(new FileStream(controller.LogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            Assert.Contains("line 29", reader.ReadToEnd());
+        }
+        finally
+        {
+            try { Directory.Delete(home, recursive: true); } catch (IOException) { }
+        }
+    }
+
+    [Fact]
     public void Server_listens_on_loopback_until_the_dm_lets_the_network_in()
     {
         var settings = new LauncherSettings { Port = 5080 };

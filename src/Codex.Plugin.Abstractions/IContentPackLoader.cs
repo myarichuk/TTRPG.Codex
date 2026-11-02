@@ -13,4 +13,8 @@ public interface IContentPackLoader
     Task LoadPackAsync(string packPath, SystemDefinition? system = null);
 
     Task<PackManifest> ReadManifestAsync(string packPath);
+
+    /// <summary>What went wrong in the packs loaded since the last call (an entry that did not parse, a base it inherits
+    /// from that is missing), in English, for the DM to see; the list is emptied.</summary>
+    IReadOnlyList<string> TakeProblems() => Array.Empty<string>();
 }

@@ -14,8 +14,14 @@
 @inject ISystemCatalog Catalog
 @inject CampaignRuntimeManager RuntimeManager
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@inject NavigationManager Nav
 
-<PageTitle>@(campaign?.Name ?? L["Page.Campaign.Fallback"]) | TTRPG.Codex</PageTitle>
+@* A window (a sheet, a session) names the tab itself. *@
+@if (WindowKind == null)
+{
+    <PageTitle>@(campaign?.Name ?? L["Page.Campaign.Fallback"]) | TTRPG.Codex</PageTitle>
+}
 
 @if (loading)
 {
@@ -80,10 +86,10 @@ else
             }
         </nav>
 
-        @* On a phone the side rail is replaced by a tab bar at the bottom of the screen: the sections used at
+        @* On a phone the side rail is replaced by a tab bar at the bottom of the screen: the sections this role uses at
            the table, plus a More menu with every section. *@
         <nav class="ws-tabbar" aria-label="@L["Page.Campaign.Sections"]">
-            @foreach (var key in TabBarSections)
+            @foreach (var key in TabBar)
             {
                 var section = Sections.First(s => s.Key == key);
                 <a href="@(BasePath + "/" + key)" aria-current="@(CurrentSection == key ? "page" : null)" data-testid="@("tabbar-" + key)">
@@ -95,7 +101,7 @@ else
                 </a>
             }
             <details class="popover-menu tabbar-more">
-                <summary class="@(TabBarSections.Contains(CurrentSection) ? "" : "current")" data-testid="tabbar-more">
+                <summary class="@(TabBar.Contains(CurrentSection) ? "" : "current")" data-testid="tabbar-more">
                     <LucideIcon IconName="layout-grid" Size="20" /><span>@L["Page.Campaign.More"]</span>
                 </summary>
                 <div class="popover-panel">
@@ -114,52 +120,73 @@ else
         </nav>
 
         <div class="ws-main">
-            <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+            <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
 
-            <CascadingValue Value="context" IsFixed="false">
-                @switch (CurrentSection)
-                {
-                    case "cast":
-                        <CastSection />
-                        break;
-                    case "world":
-                        <WorldSection />
-                        break;
-                    case "lore":
-                        <LoreSection />
-                        break;
-                    case "build":
-                        <WorldChatSection Starter="@Arg1" />
-                        break;
-                    case "wiki":
-                        <WikiSection Slug="@Arg1" Action="@Arg2" />
-                        break;
-                    case "journal":
-                        <JournalSection />
-                        break;
-                    case "bestiary":
-                        <BestiarySection />
-                        break;
-                    case "sessions":
-                        <SessionsSection />
-                        break;
-                    case "table":
-                        <TableSection />
-                        break;
-                    case "library":
-                        <LibrarySection RouteType="@Arg1" RouteId="@Arg2" />
-                        break;
-                    case "settings":
-                        <SettingsSection />
-                        break;
-                    case "templates":
-                        <TemplatesSection />
-                        break;
-                    default:
-                        <OverviewSection />
-                        break;
-                }
-            </CascadingValue>
+            @* U2: a character sheet or a session is a window inside the campaign, not a page of its own: the rail, the tab bar
+               and the notes drawer stay, and the section it was opened from stays alive under it (hidden), so going back
+               finds it as it was, scrolled where it was, with no loading skeleton. *@
+            @if (WindowKind == "actor")
+            {
+                <div class="ws-window" data-testid="campaign-window">
+                    <ActorSheet @key="Arg1" CampaignId="@CampaignId" ActorId="@(Arg1!)" BackLabel="@BackLabel" OnBack="CloseWindowAsync" />
+                </div>
+            }
+            else if (WindowKind == "session")
+            {
+                <div class="ws-window" data-testid="campaign-window">
+                    <SessionDetail @key="Arg1" CampaignId="@CampaignId" SessionId="@(Arg1!)" BackLabel="@BackLabel" OnBack="CloseWindowAsync" OnDeleted="WindowDeletedAsync" />
+                </div>
+            }
+
+            @if (WindowKind == null || underSection != null)
+            {
+                <div class="ws-section" hidden="@(WindowKind != null)">
+                    <CascadingValue Value="context" IsFixed="false">
+                        @switch (CurrentSection)
+                        {
+                            case "cast":
+                                <CastSection />
+                                break;
+                            case "world":
+                                <WorldSection />
+                                break;
+                            case "lore":
+                                <LoreSection />
+                                break;
+                            case "build":
+                                <WorldChatSection Starter="@Arg1" />
+                                break;
+                            case "wiki":
+                                <WikiSection Slug="@Arg1" Action="@Arg2" />
+                                break;
+                            case "journal":
+                                <JournalSection />
+                                break;
+                            case "bestiary":
+                                <BestiarySection />
+                                break;
+                            case "sessions":
+                                <SessionsSection />
+                                break;
+                            case "table":
+                                <TableSection />
+                                break;
+                            case "library":
+                                <LibrarySection RouteType="@Arg1" RouteId="@Arg2" />
+                                break;
+                            case "settings":
+                                <SettingsSection />
+                                break;
+                            case "templates":
+                                <TemplatesSection />
+                                break;
+                            default:
+                                <OverviewSection />
+                                break;
+                        }
+                    </CascadingValue>
+                </div>
+            }
         </div>
 
         <TableNotesHost CampaignId="@CampaignId" Campaign="campaign" Actors="actors" Access="access" CurrentUserId="@(currentUserId ?? "")" @bind-Open="notesOpen" />
@@ -199,8 +226,12 @@ else
 
     private static readonly (string Key, string Label, string Icon)[] Sections = Groups.SelectMany(g => g.Sections).ToArray();
 
-    // The phone tab bar: what a player reaches for at the table; everything else is under More.
-    private static readonly string[] TabBarSections = { "table", "sessions", "journal", "world" };
+    // The phone tab bar (U7): what each role reaches for at the table; everything else is under More. A player reads their
+    // journal and the places the party knows; the DM runs the table with the cast and the wiki at hand.
+    private static readonly string[] PlayerTabBar = { "table", "sessions", "journal", "world" };
+    private static readonly string[] DmTabBar = { "table", "sessions", "cast", "wiki" };
+
+    private string[] TabBar => access?.IsDm == true ? DmTabBar : PlayerTabBar;
 
     private bool loading = true;
     private CampaignDocument? campaign;
@@ -245,7 +276,57 @@ else
     };
 
     private string BasePath => $"/campaigns/{CampaignId}";
-    private string CurrentSection => Sections.Any(s => s.Key == Section) || Section == "templates" ? Section! : "overview";
+    private string RouteSection => Sections.Any(s => s.Key == Section) || Section == "templates" ? Section! : "overview";
+
+    /// <summary>"actor" for <c>actors/{id}</c>, "session" for <c>sessions/{id}</c>: a window over a section (U2).</summary>
+    private string? WindowKind => string.IsNullOrEmpty(Arg1) ? null : Section switch
+    {
+        "actors" => "actor",
+        "sessions" => "session",
+        _ => null
+    };
+
+    // The section a window was opened over, kept alive under it. Null when the window was the first thing opened (a link
+    // from outside, a reload): then nothing is under it, and closing it goes to the section it belongs to.
+    private string? underSection;
+    private bool windowShown;
+    private string? openedOver;
+
+    private string CurrentSection => WindowKind == null ? RouteSection : underSection ?? (WindowKind == "actor" ? "cast" : "sessions");
+
+    private string BackLabel => L["Page.Campaign.BackTo", SectionLabel(CurrentSection)];
+
+    /// <summary>Back to what was open before: the browser's own Back when the window was opened from here (so Forward works
+    /// too), else the section the window belongs to.</summary>
+    private async Task CloseWindowAsync()
+    {
+        if (underSection != null) await JS.InvokeVoidAsync("history.back");
+        else Nav.NavigateTo(CurrentSection == "overview" ? BasePath : $"{BasePath}/{CurrentSection}");
+    }
+
+    // What the window showed is gone (a deleted session): say so here, where the section underneath shows it gone.
+    private async Task WindowDeletedAsync(string message)
+    {
+        flash = Flash.Success(message);
+        await CloseWindowAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // The window starts at the top; closing it puts the section back where it was scrolled.
+        var open = WindowKind != null;
+        if (open == windowShown) return;
+        windowShown = open;
+        if (open)
+        {
+            openedOver = underSection;
+            await JS.InvokeVoidAsync("codex.windowOpened");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("codex.windowClosed", openedOver != null && openedOver == RouteSection);
+        }
+    }
 
     // The section the side rail marks as the one open: the templates belong to the wiki.
     private string NavSection => CurrentSection == "templates" ? "wiki" : CurrentSection;
@@ -258,13 +339,37 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        if (WindowKind == null) underSection = RouteSection;
+        else if (loadedCampaignId != CampaignId) underSection = null;
+
+        // A message belongs to the section that said it: "Saved." from Settings is not news on the Table (U5).
+        if (shownSection != CurrentSection)
+        {
+            flash = null;
+            shownSection = CurrentSection;
+        }
+
+        var window = WindowKind == null ? null : $"{Section}/{Arg1}";
         if (loadedCampaignId != CampaignId)
         {
             flash = null;
             notesOpen = false;
             await ReloadAsync();
         }
+        else if (shownWindow != null && window != shownWindow)
+        {
+            // A window does its work without this page: a character made and opened from the cast, renamed, revealed or
+            // retired on its sheet. Leaving it reloads who is in the campaign, so the sections (Lore's "about", the mention
+            // lists, the cast) know what the window changed.
+            await ReloadAsync();
+        }
+
+        shownWindow = window;
     }
+
+    private string? shownWindow;
+
+    private string? shownSection;
 
     private void OnRuntimeChanged(string campaignId)
     {
@@ -292,9 +397,11 @@ else
                 Access = access,
                 UserId = currentUserId!,
                 System = Catalog.GetLocalizedDefinition(campaign.SystemId),
-                Actors = actors,
+                Actors = actors.Where(a => !a.Retired).ToList(),
+                AllActors = actors,
                 ReloadAsync = async () => { await ReloadAsync(); StateHasChanged(); },
-                Notify = message => { flash = message; StateHasChanged(); }
+                Notify = message => { flash = message; StateHasChanged(); },
+                AccessChangedAsync = async () => { await ReloadAsync(); flash = Flash.Error(L["Campaign.AccessChanged"]); StateHasChanged(); }
             };
         }
 

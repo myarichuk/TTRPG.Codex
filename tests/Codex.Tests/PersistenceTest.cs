@@ -76,6 +76,7 @@ public class RavenDbCollection;
 public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 {
     private readonly RavenDbService _dbService;
+    private CampaignAccess Access(string campaignId, string userId, CampaignRole role) => TestAccess.Member(_dbService, campaignId, userId, role);
     private readonly CampaignRepository _campaignRepository;
     private readonly ActorRepository _actorRepository;
     private readonly RavenUserRepository _userRepository;
@@ -91,10 +92,12 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenTemplateRepository _templateRepository;
     private readonly RavenMediaStore _mediaStore;
     private readonly CampaignExportService _exportService;
+    private readonly string _dataPath;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
         _dbService = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _dataPath = fixture.DbPath;
         _actorRepository = new ActorRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
@@ -139,7 +142,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         actor.Sheet["speed"] = 30L;
 
         await _actorRepository.SaveAsync(actor);
-        var loaded = await _actorRepository.GetVisibleAsync(actor.Id, new CampaignAccess(campaignId, "dm-user", CampaignRole.DM));
+        var loaded = await _actorRepository.GetVisibleAsync(actor.Id, Access(campaignId, "dm-user", CampaignRole.DM));
 
         Assert.NotNull(loaded);
         Assert.Equal(4, Codex.Core.YamlValues.GetInt(loaded.Sheet, "level"));
@@ -160,7 +163,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         actor.State["HP"] = 10;
 
         await _actorRepository.SaveAsync(actor);
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var loaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
 
         Assert.NotNull(loaded);
@@ -233,7 +236,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         using var session = _dbService.Store.OpenAsyncSession();
         await session.Query<ActorDocument, ActorsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var loaded = await _actorRepository.GetVisibleForCampaignAsync(dmAccess);
 
         Assert.NotNull(loaded);
@@ -259,7 +262,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         using var session = _dbService.Store.OpenAsyncSession();
         await session.Query<ActorDocument, ActorsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var loaded = (await _actorRepository.GetVisibleForCampaignAsync(playerAccess)).ToList();
 
         Assert.Equal(2, loaded.Count);
@@ -272,8 +275,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task Facts_ReachPlayersWithoutTheirDmBlocks_OrTheLinksInsideThem()
     {
         var campaignId = "camp-facts-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "player-1", CampaignRole.Player);
         var fact = new FactDocument
         {
             Summary = "The lighthouse is dark",
@@ -302,7 +305,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var hidden = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Secret Villain", Visibility = ActorVisibility.Hidden };
         await _actorRepository.SaveAsync(hidden);
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var loaded = await _actorRepository.GetVisibleAsync(hidden.Id, playerAccess);
 
         Assert.Null(loaded);
@@ -319,14 +322,14 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var mine = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "My PC", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1" };
         await _actorRepository.SaveAsync(mine);
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var deleted = await _actorRepository.TryDeleteAsync(actor.Id, playerAccess);
 
         Assert.False(deleted);
         Assert.False(await _actorRepository.TryDeleteAsync(npc.Id, playerAccess));
         Assert.True(await _actorRepository.TryDeleteAsync(mine.Id, playerAccess));
         Assert.Null(await _actorRepository.GetVisibleAsync(mine.Id, playerAccess));
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         Assert.NotNull(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
     }
 
@@ -337,7 +340,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Doomed NPC" };
         await _actorRepository.SaveAsync(actor);
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var deleted = await _actorRepository.TryDeleteAsync(actor.Id, dmAccess);
 
         Assert.True(deleted);
@@ -351,11 +354,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "My PC", OwnerUserId = "player-1", State = new Dictionary<string, object> { ["HP"] = 10 } };
         await _actorRepository.SaveAsync(actor);
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         actor.State["HP"] = 8;
         Assert.True(await _actorRepository.TrySaveAsync(actor, playerAccess));
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var reloaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
         Assert.Equal(8, Convert.ToInt32(reloaded!.State["HP"]?.ToString()));
     }
@@ -367,11 +370,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Someone's PC", OwnerUserId = "player-2", State = new Dictionary<string, object> { ["HP"] = 10 } };
         await _actorRepository.SaveAsync(actor);
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         actor.State["HP"] = 1;
         Assert.False(await _actorRepository.TrySaveAsync(actor, playerAccess));
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var reloaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
         Assert.Equal(10, Convert.ToInt32(reloaded!.State["HP"]?.ToString()));
     }
@@ -383,11 +386,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Victim PC", OwnerUserId = "player-2" };
         await _actorRepository.SaveAsync(actor);
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         actor.OwnerUserId = "player-1";
         Assert.False(await _actorRepository.TrySaveAsync(actor, playerAccess));
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var reloaded = await _actorRepository.GetVisibleAsync(actor.Id, dmAccess);
         Assert.Equal("player-2", reloaded!.OwnerUserId);
     }
@@ -396,7 +399,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task TrySaveAsync_AsPlayer_CanCreateOwnPc_ButNotOthers_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
 
         var own = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "New PC", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1" };
         Assert.True(await _actorRepository.TrySaveAsync(own, playerAccess));
@@ -404,7 +407,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var someoneElses = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Fake PC", OwnerUserId = "player-2" };
         Assert.False(await _actorRepository.TrySaveAsync(someoneElses, playerAccess));
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         Assert.NotNull(await _actorRepository.GetVisibleAsync(own.Id, dmAccess));
         Assert.Null(await _actorRepository.GetVisibleAsync(someoneElses.Id, dmAccess));
     }
@@ -416,11 +419,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "A PC", OwnerUserId = "player-1" };
         await _actorRepository.SaveAsync(actor);
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         actor.Name = "Renamed by DM";
         Assert.True(await _actorRepository.TrySaveAsync(actor, dmAccess));
 
-        var otherCampaignAccess = new CampaignAccess(Guid.NewGuid().ToString(), "dm-user", CampaignRole.DM);
+        var otherCampaignAccess = Access(Guid.NewGuid().ToString(), "dm-user", CampaignRole.DM);
         actor.Name = "Cross-campaign write";
         Assert.False(await _actorRepository.TrySaveAsync(actor, otherCampaignAccess));
     }
@@ -467,7 +470,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             await session.Query<NoteDocument, NotesByTargetIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
         }
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var visible = (await _noteRepository.GetNotesForTargetAsync(targetId, playerAccess)).ToList();
 
         Assert.Equal(2, visible.Count);
@@ -475,9 +478,72 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Contains(visible, n => n.Content == "Publicly known fact");
         Assert.DoesNotContain(visible, n => n.Content == "Player 2's secret theory");
 
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var dmVisible = (await _noteRepository.GetNotesForTargetAsync(targetId, dmAccess)).ToList();
         Assert.Equal(3, dmVisible.Count);
+    }
+
+    [Fact]
+    public async Task AComment_ReachesPlayersWithoutItsDmBlocks_ButItsAuthorReadsItWhole_Async()
+    {
+        var campaignId = "camp-comment-secrets-" + Guid.NewGuid();
+        var targetId = "wiki/" + Guid.NewGuid();
+        const string pasted = "The keep stands.\n:::dm\nIts lord is a vampire.\n:::";
+        await _noteRepository.CreateNoteAsync(new NoteDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, TargetId = targetId, AuthorId = "dm-user", Content = pasted, Visibility = CommentVisibility.Public });
+        await _noteRepository.CreateNoteAsync(new NoteDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, TargetId = targetId, AuthorId = "player-1", Content = ":::dm\nmine\n:::", Visibility = CommentVisibility.Private });
+
+        var player = Access(campaignId, "player-1", CampaignRole.Player);
+        var forPlayer = (await _noteRepository.GetNotesForTargetAsync(targetId, player)).ToList();
+        Assert.Contains(forPlayer, n => n.Content == "The keep stands.");
+        Assert.Contains(forPlayer, n => n.Content == ":::dm\nmine\n:::");
+        Assert.DoesNotContain(await _noteRepository.GetVisibleForCampaignAsync(player), n => n.Content.Contains("vampire"));
+
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        Assert.Contains(await _noteRepository.GetNotesForTargetAsync(targetId, dm), n => n.Content == pasted);
+    }
+
+    [Fact]
+    public async Task ASession_ReachesAPlayerRedacted_AndTheirCopyCannotBeSaved_Async()
+    {
+        var campaignId = "camp-session-redact-" + Guid.NewGuid();
+        var lurker = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Drowned One", Visibility = ActorVisibility.Hidden };
+        var hero = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Visibility = ActorVisibility.Known };
+        await _actorRepository.SaveAsync(lurker);
+        await _actorRepository.SaveAsync(hero);
+        var stored = new SessionDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Title = "The bell",
+            Recap = "We reached the tower.\n:::dm\nThe keeper lied.\n:::",
+            DmSummary = "Next time: the ambush.",
+            Notes =
+            {
+                new SessionNote { Id = "n1", Text = "Found a key.\n:::dm\nIt opens the crypt.\n:::" },
+                new SessionNote { Id = "n2", Text = "The keeper is a cultist.", IsSecret = true }
+            },
+            RollLog =
+            {
+                new RollLogEntry { ActorId = hero.Id, Expression = "1d20", Total = 12 },
+                new RollLogEntry { ActorId = lurker.Id, Expression = "1d20+4", Total = 21 },
+                new RollLogEntry { Expression = "1d100", Total = 3, IsSecret = true }
+            },
+            Events = { SessionEvent.From("DiceRoll", new[] { EventMessage.Of("Roll.Plain", "x", "1d20+4", 21) }, new[] { lurker.Id }) }
+        };
+        await _sessionRepository.SaveAsync(stored);
+
+        var player = Access(campaignId, "p1", CampaignRole.Player);
+        var seen = (await _sessionRepository.GetVisibleAsync(stored.Id, player))!;
+        Assert.Equal("We reached the tower.", seen.Recap);
+        Assert.Equal(string.Empty, seen.DmSummary);
+        Assert.Equal("Found a key.", Assert.Single(seen.Notes).Text);
+        Assert.Equal(hero.Id, Assert.Single(seen.RollLog).ActorId);
+        Assert.Empty(seen.Events);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _sessionRepository.SaveAsync(seen));
+
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        var whole = (await _sessionRepository.GetVisibleAsync(stored.Id, dm))!;
+        Assert.Equal(stored.Recap, whole.Recap);
+        Assert.Equal(3, whole.RollLog.Count);
+        Assert.Null(await _sessionRepository.GetVisibleAsync(stored.Id, Access("another-campaign", "dm-user", CampaignRole.DM)));
     }
 
     [Fact]
@@ -533,15 +599,51 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         await _userRepository.CreateUserAsync(user);
 
-        user.PasswordHash = "newhash";
-        user.Roles.Add("DM");
-        await _userRepository.UpdateUserAsync(user);
+        await _userRepository.UpdateUserAsync(user.Id, stored =>
+        {
+            stored.PasswordHash = "newhash";
+            stored.Roles.Add("DM");
+        });
 
         var loaded = await _userRepository.GetUserByIdAsync(user.Id);
 
         Assert.NotNull(loaded);
         Assert.Equal("newhash", loaded.PasswordHash);
         Assert.Contains("DM", loaded.Roles);
+    }
+
+    [Fact]
+    public async Task UpdateUser_FromTwoTabsAtOnce_KeepsBothChanges_Async()
+    {
+        var user = new UserDocument { Id = Guid.NewGuid().ToString(), Username = "twotabs-" + Guid.NewGuid().ToString("N")[..6] };
+        await _userRepository.CreateUserAsync(user);
+
+        // One tab saves an AI provider while the other switches language; each changes only its own field.
+        await Task.WhenAll(
+            _userRepository.UpdateUserAsync(user.Id, stored => stored.AiProviders.Add(new AiProviderConfig { Id = "p1", Name = "Local" })),
+            _userRepository.UpdateUserAsync(user.Id, stored => stored.Culture = "he"));
+
+        var loaded = (await _userRepository.GetUserByIdAsync(user.Id))!;
+        Assert.Equal("he", loaded.Culture);
+        Assert.Equal("p1", Assert.Single(loaded.AiProviders).Id);
+    }
+
+    /// <summary>R13: two sign-ups on a new server at once used to both see "no users yet" and both become ServerAdmin.</summary>
+    [Fact]
+    public async Task TheFirstAdminSeat_GoesToOneSignUp_EvenWhenTwoArriveTogether_AndNotOnceAnAdminExists_Async()
+    {
+        using var db = new RavenDbService(_dataPath, "first-admin-" + Guid.NewGuid().ToString("N")[..8], runInMemory: true);
+        var users = new RavenUserRepository(db);
+
+        // A player who signed up over the network first (and so got no seat) does not use it up.
+        await users.CreateUserAsync(new UserDocument { Id = "early-player", Username = "early", Roles = new List<string> { "Player" } });
+
+        var claims = await Task.WhenAll(users.TryClaimFirstAdminAsync("a"), users.TryClaimFirstAdminAsync("b"));
+        Assert.Single(claims, won => won);
+
+        var winner = claims[0] ? "a" : "b";
+        await users.CreateUserAsync(new UserDocument { Id = winner, Username = winner, Roles = new List<string> { "Player", "ServerAdmin" } });
+        Assert.False(await users.TryClaimFirstAdminAsync("c"));
     }
 
     [Fact]
@@ -587,7 +689,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.Equal(CampaignDeleteResult.Deleted, result);
         Assert.Null(await _campaignRepository.GetAsync(campaign.Id));
-        var dmAccess = new CampaignAccess(campaign.Id, "owner-2", CampaignRole.DM);
+        var dmAccess = Access(campaign.Id, "owner-2", CampaignRole.DM);
         Assert.Null(await _actorRepository.GetVisibleAsync(actor.Id, dmAccess));
         Assert.Null(await _sessionRepository.GetAsync(sessionDoc.Id));
     }
@@ -596,7 +698,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task RegionRepository_AsPlayer_HidesUnrevealedLocations_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
 
         var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Sword Coast" };
         Assert.True(await _regionRepository.SaveAsync(region, dmAccess));
@@ -611,7 +713,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             await session.Query<RegionDocument, RegionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
         }
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var forPlayer = (await _regionRepository.GetVisibleForCampaignAsync(playerAccess)).Single();
         Assert.Single(forPlayer.Locations);
         Assert.Equal("Waterdeep", forPlayer.Locations[0].Name);
@@ -624,7 +726,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task RegionRepository_AsPlayer_HidesRegionsWithNothingRevealed_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         // A region the world builder made for a quest: its name is a spoiler until one of its places is revealed.
         var planned = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Drowned Bell" };
         planned.Locations.Add(new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "The Sunken Belfry", Visibility = ActorVisibility.Hidden });
@@ -632,7 +734,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.True(await _regionRepository.SaveAsync(planned, dmAccess));
         Assert.True(await _regionRepository.SaveAsync(empty, dmAccess));
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         Assert.Empty(await _regionRepository.GetVisibleForCampaignAsync(playerAccess));
         Assert.Null(await _regionRepository.GetAsync(planned.Id, playerAccess));
         Assert.Equal(2, (await _regionRepository.GetVisibleForCampaignAsync(dmAccess)).Count());
@@ -642,15 +744,15 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task RegionRepository_RenameAsync_ChangesOnlyTheName_AndOnlyForTheDm_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Norht" };
         await _regionRepository.SaveAsync(region, dmAccess);
         // Added after the page loaded its copy of the region: renaming must not drop it.
         await _regionRepository.UpsertLocationAsync(region.Id, new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Icewind Dale" }, dmAccess);
 
-        Assert.False(await _regionRepository.RenameAsync(region.Id, "Player's pick", new CampaignAccess(campaignId, "player-1", CampaignRole.Player)));
+        Assert.False(await _regionRepository.RenameAsync(region.Id, "Player's pick", Access(campaignId, "player-1", CampaignRole.Player)));
         Assert.False(await _regionRepository.RenameAsync(region.Id, "   ", dmAccess));
-        Assert.False(await _regionRepository.RenameAsync(region.Id, "Elsewhere", new CampaignAccess(Guid.NewGuid().ToString(), "dm-user", CampaignRole.DM)));
+        Assert.False(await _regionRepository.RenameAsync(region.Id, "Elsewhere", Access(Guid.NewGuid().ToString(), "dm-user", CampaignRole.DM)));
         Assert.True(await _regionRepository.RenameAsync(region.Id, "  The North ", dmAccess));
 
         var stored = (await _regionRepository.GetAsync(region.Id, dmAccess))!;
@@ -662,13 +764,13 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task RegionRepository_SetLocationVisibilityAsync_AsPlayer_IsRejected_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The North" };
         await _regionRepository.SaveAsync(region, dmAccess);
         var location = new LocationDocument { Id = Guid.NewGuid().ToString(), Name = "Icewind Dale", Visibility = ActorVisibility.Hidden };
         await _regionRepository.UpsertLocationAsync(region.Id, location, dmAccess);
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var result = await _regionRepository.SetLocationVisibilityAsync(region.Id, location.Id, ActorVisibility.Known, playerAccess);
 
         Assert.False(result);
@@ -680,7 +782,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task FactRepository_AsPlayer_SeesPublicAndOwnKnowersOnlyFacts_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         const string myActorId = "actor-mine";
 
         var publicFact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The king is dead", Visibility = FactVisibility.Public };
@@ -706,7 +808,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
         }
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var visible = (await _factRepository.GetVisibleForCampaignAsync(playerAccess, new HashSet<string> { myActorId })).ToList();
 
         Assert.Equal(2, visible.Count);
@@ -720,7 +822,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task FactRepository_AddKnower_RevealsKnowersOnlyFactToThatActorsPlayer_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The bridge is trapped", Visibility = FactVisibility.KnowersOnly };
         Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
 
@@ -731,11 +833,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
         }
 
-        var scoutAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var scoutAccess = Access(campaignId, "player-1", CampaignRole.Player);
         var scoutSees = (await _factRepository.GetVisibleForCampaignAsync(scoutAccess, new HashSet<string> { "actor-scout" })).ToList();
         Assert.Contains(scoutSees, f => f.Summary == "The bridge is trapped");
 
-        var otherAccess = new CampaignAccess(campaignId, "player-2", CampaignRole.Player);
+        var otherAccess = Access(campaignId, "player-2", CampaignRole.Player);
         var otherSees = (await _factRepository.GetVisibleForCampaignAsync(otherAccess, new HashSet<string> { "actor-other" })).ToList();
         Assert.DoesNotContain(otherSees, f => f.Summary == "The bridge is trapped");
     }
@@ -744,11 +846,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task FactRepository_AddKnower_AsPlayer_IsRejected_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The vault code", Visibility = FactVisibility.KnowersOnly };
         Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         Assert.False(await _factRepository.AddKnowerAsync(fact.Id, new KnowerEntry("actor-sneaky", KnowledgeLevel.Full), playerAccess));
 
         using (var session = _dbService.Store.OpenAsyncSession())
@@ -764,7 +866,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task FactRepository_AddKnower_ReplacesExistingEntryForSameActor_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dmAccess = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
         var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "The duke's mood", Visibility = FactVisibility.KnowersOnly };
         Assert.True(await _factRepository.SaveAsync(fact, dmAccess));
 
@@ -805,13 +907,98 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public void InviteCodes_Are128RandomBits_InLowerCaseBase32()
+    {
+        var codes = Enumerable.Range(0, 200).Select(_ => InviteCodes.New()).ToList();
+        Assert.All(codes, c => Assert.Matches("^[a-z2-7]{26}$", c));
+        Assert.Equal(codes.Count, codes.Distinct().Count());
+        Assert.Equal("abc", InviteCodes.Clean("  ABC "));
+    }
+
+    /// <summary>F16: a code made before D14 (8 hex characters) is replaced once, keeping its rules; a 128-bit one is left.</summary>
+    [Fact]
+    public async Task AnInviteCodeFromBeforeD14_IsReplacedOnce_AndTheOldLinkStopsWorking_Async()
+    {
+        using var db = new RavenDbService(_dataPath, "short-codes-" + Guid.NewGuid().ToString("N")[..8], runInMemory: true);
+        var campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), null!, null!, null!, null!, null!, null!, null!);
+        var old = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "Old", InviteCode = "a1b2c3d4", InviteSingleUse = true };
+        var current = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "New", InviteCode = InviteCodes.New() };
+        await campaigns.SaveAsync(old);
+        await campaigns.SaveAsync(current);
+
+        Assert.Equal(1, RavenDbService.ReplaceShortInviteCodes(db.Store));
+        Assert.Equal(0, RavenDbService.ReplaceShortInviteCodes(db.Store));
+
+        var replaced = (await campaigns.GetAsync(old.Id))!;
+        Assert.Matches("^[a-z2-7]{26}$", replaced.InviteCode);
+        Assert.True(replaced.InviteSingleUse);
+        Assert.Equal(current.InviteCode, (await campaigns.GetAsync(current.Id))!.InviteCode);
+        Assert.Equal(CampaignJoinResult.InvalidCode, (await campaigns.JoinByInviteCodeAsync("a1b2c3d4", "guest")).Result);
+    }
+
+    /// <summary>D14: a link can stop working at a time, or after one player used it. The one who used it may follow it
+    /// again (the join page runs twice when it prerenders); a second player may not, even racing the first.</summary>
+    [Fact]
+    public async Task AnInvite_ThatExpired_OrWasUsedByAnotherPlayer_LetsNoOneIn_Async()
+    {
+        var expired = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "Old", InviteCode = InviteCodes.New(), InviteExpiresAt = DateTime.UtcNow.AddMinutes(-1) };
+        await _campaignRepository.SaveAsync(expired);
+        Assert.Equal(CampaignJoinResult.InvalidCode, (await _campaignRepository.JoinByInviteCodeAsync(expired.InviteCode, "late")).Result);
+        Assert.False(await _campaignRepository.InviteCodeExistsAsync(expired.InviteCode));
+
+        var once = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "Once", InviteCode = InviteCodes.New(), InviteSingleUse = true };
+        await _campaignRepository.SaveAsync(once);
+        Assert.True(await _campaignRepository.InviteCodeExistsAsync(once.InviteCode.ToUpperInvariant()));
+
+        var racing = await Task.WhenAll(
+            _campaignRepository.JoinByInviteCodeAsync(once.InviteCode, "first"),
+            _campaignRepository.JoinByInviteCodeAsync(once.InviteCode, "second"));
+        Assert.Single(racing, r => r.Result == CampaignJoinResult.Joined);
+        var winner = (await _campaignRepository.GetAsync(once.Id))!.InviteUsedBy!;
+
+        Assert.Equal(CampaignJoinResult.AlreadyMember, (await _campaignRepository.JoinByInviteCodeAsync(once.InviteCode, winner)).Result);
+        Assert.Equal(CampaignJoinResult.InvalidCode, (await _campaignRepository.JoinByInviteCodeAsync(once.InviteCode, "third")).Result);
+        Assert.False(await _campaignRepository.InviteCodeExistsAsync(once.InviteCode));
+        Assert.Equal(2, (await _campaignRepository.GetAsync(once.Id))!.Members.Count);
+    }
+
+    /// <summary>D14: the join page is reached over the open circuit, where the HTTP limiter counts nothing, so the join counts
+    /// wrong codes per user. Past the limit even a right code is refused, until the window passes.</summary>
+    [Fact]
+    public async Task TenWrongInviteCodes_StopThatUsersJoins_ForFifteenMinutes_Async()
+    {
+        var clock = new ManualClock(new DateTimeOffset(2026, 11, 1, 12, 0, 0, TimeSpan.Zero));
+        var campaigns = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository,
+            inviteAttempts: new InviteAttempts(clock));
+        var campaign = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "Guarded" };
+        await campaigns.SaveAsync(campaign);
+
+        for (var i = 0; i < InviteAttempts.MaxFailures; i++)
+        {
+            Assert.Equal(CampaignJoinResult.InvalidCode, (await campaigns.JoinByInviteCodeAsync(InviteCodes.New(), "guesser")).Result);
+        }
+
+        Assert.Equal(CampaignJoinResult.TooManyAttempts, (await campaigns.JoinByInviteCodeAsync(campaign.InviteCode, "guesser")).Result);
+        Assert.Equal(CampaignJoinResult.Joined, (await campaigns.JoinByInviteCodeAsync(campaign.InviteCode, "someone-else")).Result);
+
+        clock.Advance(InviteAttempts.Window);
+        Assert.Equal(CampaignJoinResult.Joined, (await campaigns.JoinByInviteCodeAsync(campaign.InviteCode, "guesser")).Result);
+    }
+
+    private sealed class ManualClock(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+        public void Advance(TimeSpan by) => now += by;
+    }
+
+    [Fact]
     public async Task CampaignExport_RoundTrip_RestoresEveryAggregate_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
         var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner-1", Name = "Export Me", SystemId = "srd5e" };
         await _campaignRepository.SaveAsync(campaign);
 
-        var dmAccess = new CampaignAccess(campaignId, "owner-1", CampaignRole.DM);
+        var dmAccess = Access(campaignId, "owner-1", CampaignRole.DM);
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Vex", Kind = ActorKind.PlayerCharacter, OwnerUserId = "player-1", State = new Dictionary<string, object> { ["HP"] = 10, ["Class"] = "Rogue" } };
         await _actorRepository.SaveAsync(actor);
         var sessionDoc = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Title = "First Night", Recap = "Goblins!", Events = new List<SessionEvent> { new() { Type = "Combat", Description = "Ambushed" } } };
@@ -875,7 +1062,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var campaignId = Guid.NewGuid().ToString();
         await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner-1", Name = "Secret" });
 
-        var playerAccess = new CampaignAccess(campaignId, "player-1", CampaignRole.Player);
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
         Assert.Null(await _exportService.ExportAsync(playerAccess));
     }
 
@@ -913,7 +1100,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var after = await _campaignRepository.GetAsync(victimId);
         Assert.Equal("victim", after!.OwnerId);
         Assert.Equal("Victim table", after.Name);
-        Assert.Empty(await _actorRepository.GetVisibleForCampaignAsync(new CampaignAccess(victimId, "victim", CampaignRole.DM)));
+        Assert.Empty(await _actorRepository.GetVisibleForCampaignAsync(Access(victimId, "victim", CampaignRole.DM)));
     }
 
     [Fact]
@@ -994,8 +1181,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task Homebrew_PlayersSeeOnlyPublished_AndOnlyDmCanWrite()
     {
         var campaignId = "camp-hb-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "player", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "player", CampaignRole.Player);
 
         var published = new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Thunderous Yawn", IsPublished = true };
         var draft = new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Secret Draft", IsPublished = false };
@@ -1021,7 +1208,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     {
         var campaignId = "camp-hb-del-" + Guid.NewGuid();
         await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Doomed", SystemId = "srd5e" });
-        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var dm = Access(campaignId, "owner", CampaignRole.DM);
         await _homebrewRepository.TrySaveAsync(new HomebrewEntryDocument { CampaignId = campaignId, SystemId = "srd5e", Type = "feat", Name = "Gone Soon" }, dm);
 
         Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner"));
@@ -1034,7 +1221,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     {
         var campaignId = "camp-hb-export-" + Guid.NewGuid();
         await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Brewery", SystemId = "srd5e" });
-        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var dm = Access(campaignId, "owner", CampaignRole.DM);
         await _homebrewRepository.TrySaveAsync(new HomebrewEntryDocument
         {
             CampaignId = campaignId, SystemId = "srd5e", Type = "spell", Name = "Thunderous Yawn",
@@ -1055,17 +1242,192 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(2L, Convert.ToInt64(restored.Properties["level"]));
     }
 
+    /// <summary>D13: "restore as new" used to write the file under its own ids, so a file whose campaign still existed was
+    /// merged into it. Now every document gets a new id and every reference follows; the file's campaign is untouched.</summary>
+    [Fact]
+    public async Task RestoreAsNew_GivesEveryDocumentANewId_FollowsEveryReference_AndLeavesTheOriginalAlone_Async()
+    {
+        var campaignId = "camp-clone-" + Guid.NewGuid();
+        var sessionId = Guid.NewGuid().ToString();
+        var encounterId = Guid.NewGuid().ToString();
+        var actorId = Guid.NewGuid().ToString();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Original", SystemId = "srd5e", CurrentSessionId = sessionId,
+            WorldState = new Dictionary<string, object> { ["weather"] = "rain", ["day"] = 3L },
+            Members = { new CampaignMember { UserId = "p1", Role = CampaignRole.Player } }
+        });
+        var dm = Access(campaignId, "owner", CampaignRole.DM);
+        await _actorRepository.SaveAsync(new ActorDocument { Id = actorId, CampaignId = campaignId, Name = "Vex", Biography = $"Sister of [[actor:{actorId}|Vex]]'s rival." });
+        await _sessionRepository.SaveAsync(new SessionDocument { Id = sessionId, CampaignId = campaignId, Title = "Night one", EncounterIds = { encounterId } });
+        await _encounterRepository.SaveAsync(new EncounterDocument { Id = encounterId, CampaignId = campaignId, SessionId = sessionId, Participants = { new EncounterParticipant { ActorId = actorId } } });
+        Assert.True(await _factRepository.SaveAsync(new FactDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = "Knows the way",
+            KnownBy = new List<KnowerEntry> { new(actorId, KnowledgeLevel.Full) }, Metadata = new Dictionary<string, object> { ["blueprintId"] = "bp-1" }
+        }, dm));
+        await _noteRepository.CreateNoteAsync(new NoteDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, TargetId = $"session:{sessionId}", AuthorId = "owner", Content = "Good night" });
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "North", Locations = { new LocationDocument { Id = "keep", Name = "Keep", Metadata = new Dictionary<string, object> { ["blueprintId"] = "castle" } } } };
+        Assert.True(await _regionRepository.SaveAsync(region, dm));
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<SessionDocument, SessionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<EncounterDocument, EncountersByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<RegionDocument, RegionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var bundle = await _exportService.ExportAsync(dm);
+        Assert.Equal(string.Empty, bundle!.Campaign!.InviteCode);
+        var file = CampaignExportService.Deserialize(CampaignExportService.Serialize(bundle));
+
+        var newId = await _exportService.ImportAsNewAsync(file, "owner");
+        Assert.NotNull(newId);
+        Assert.NotEqual(campaignId, newId);
+
+        var original = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("Original", original.Name);
+        Assert.Equal(campaignId, (await _actorRepository.GetVisibleAsync(actorId, dm))!.CampaignId);
+
+        var copy = (await _campaignRepository.GetAsync(newId!))!;
+        var newDm = Access(newId!, "owner", CampaignRole.DM);
+        Assert.Equal("owner", copy.OwnerId);
+        Assert.Matches("^[a-z2-7]{26}$", copy.InviteCode);
+        Assert.Equal("rain", copy.WorldState["weather"]);
+        Assert.Equal(3L, copy.WorldState["day"]);
+
+        var newActor = Assert.Single(await _actorRepository.GetVisibleForCampaignAsync(newDm));
+        Assert.NotEqual(actorId, newActor.Id);
+        Assert.Equal($"Sister of [[actor:{newActor.Id}|Vex]]'s rival.", newActor.Biography);
+
+        Assert.NotEqual(sessionId, copy.CurrentSessionId);
+        var newSession = (await _sessionRepository.GetAsync(copy.CurrentSessionId!))!;
+        Assert.Equal(newId, newSession.CampaignId);
+        var newEncounter = (await _encounterRepository.GetAsync(Assert.Single(newSession.EncounterIds)))!;
+        Assert.NotEqual(encounterId, newEncounter.Id);
+        Assert.Equal(newSession.Id, newEncounter.SessionId);
+        Assert.Equal(newActor.Id, Assert.Single(newEncounter.Participants).ActorId);
+
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            await session.Query<FactDocument, FactsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<NoteDocument, NotesByTargetIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+            await session.Query<RegionDocument, RegionsByCampaignIndex>().Customize(x => x.WaitForNonStaleResults()).ToListAsync();
+        }
+
+        var newFact = Assert.Single(await _factRepository.GetVisibleForCampaignAsync(newDm, new HashSet<string>()));
+        Assert.Equal(newActor.Id, Assert.Single(newFact.KnownBy).EntityId);
+        Assert.Equal("bp-1", newFact.Metadata["blueprintId"]);
+        Assert.Contains(await _noteRepository.GetNotesForTargetAsync($"session:{newSession.Id}", newDm), n => n.Content == "Good night");
+        var newPlace = Assert.Single(Assert.Single(await _regionRepository.GetVisibleForCampaignAsync(newDm)).Locations);
+        Assert.Equal("castle", newPlace.Metadata["blueprintId"]);
+    }
+
+    /// <summary>D11: the server's own backup, since RavenDB's free licence refuses the database's. Everything a restore needs
+    /// (the campaign bundle, its images, the players' journals, the accounts), and never an API key.</summary>
+    [Fact]
+    public async Task TheDailyBackup_WritesEachCampaignWithItsImagesAndJournals_AndTheAccountsWithoutKeys_Async()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "codex-backups-" + Guid.NewGuid().ToString("N")[..8]);
+        try
+        {
+            var campaignId = "camp-backup-" + Guid.NewGuid();
+            await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Kept", Members = { new CampaignMember { UserId = "p1", Role = CampaignRole.Player } } });
+            var dm = Access(campaignId, "owner", CampaignRole.DM);
+            var actor = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vex" };
+            await _actorRepository.SaveAsync(actor);
+            var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 9 };
+            await _mediaStore.PutAsync(dm, actor.Id, RavenMediaStore.ActorPortrait, new MemoryStream(png), "image/png");
+            Assert.True(await _journalRepository.TrySaveAsync(new JournalEntryDocument { Title = "Dear diary" }, Access(campaignId, "p1", CampaignRole.Player)));
+            var keyholder = "user-" + Guid.NewGuid();
+            await _userRepository.CreateUserAsync(new UserDocument
+            {
+                Id = keyholder, Username = "keyholder-" + Guid.NewGuid().ToString("N")[..6], PasswordHash = "hash",
+                AiProviders = { new AiProviderConfig { Name = "Mine", ProtectedApiKey = "PROTECTED-SECRET" } }
+            });
+
+            var backups = new JsonBackups(_dbService, _campaignRepository, _exportService);
+            var written = await backups.WriteAsync(root, new DateTime(2026, 11, 1, 3, 0, 0, DateTimeKind.Utc));
+
+            Assert.Equal(Path.Combine(root, "2026-11-01_030000"), written.Folder);
+            var folder = Path.Combine(written.Folder, "campaigns", campaignId.Replace(':', '_'));
+            var bundle = CampaignExportService.Deserialize(await File.ReadAllTextAsync(Path.Combine(folder, "campaign.json")));
+            Assert.Equal("Kept", bundle!.Campaign!.Name);
+            Assert.Contains(bundle.Actors, a => a.Id == actor.Id);
+            Assert.Equal(png, await File.ReadAllBytesAsync(Path.Combine(folder, "images", actor.Id, "portrait.png")));
+            Assert.Contains("Dear diary", await File.ReadAllTextAsync(Path.Combine(folder, "journals.json")));
+
+            var users = await File.ReadAllTextAsync(Path.Combine(written.Folder, "users.json"));
+            Assert.Contains("keyholder-", users);
+            Assert.DoesNotContain("PROTECTED-SECRET", users);
+            Assert.Equal("PROTECTED-SECRET", (await _userRepository.GetUserByIdAsync(keyholder))!.AiProviders.Single().ProtectedApiKey); // the stored account keeps it
+
+            Assert.Equal(new DateTime(2026, 11, 1, 3, 0, 0, DateTimeKind.Utc), JsonBackups.LastWrittenAt(root));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void OldBackups_ArePruned_ToTheNewestFew_AndHalfWrittenOnesGo()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "codex-prune-" + Guid.NewGuid().ToString("N")[..8]);
+        try
+        {
+            foreach (var day in Enumerable.Range(1, 5))
+            {
+                var folder = Directory.CreateDirectory(Path.Combine(root, $"2026-10-0{day}_030000")).FullName;
+                File.WriteAllText(Path.Combine(folder, "backup.json"), "{}");
+            }
+
+            Directory.CreateDirectory(Path.Combine(root, "2026-10-06_030000.partial"));
+            Directory.CreateDirectory(Path.Combine(root, "Campaigns")); // the database's own backup folder, not ours
+
+            JsonBackups.Prune(root, keep: 2);
+
+            Assert.Equal(new[] { "2026-10-04_030000", "2026-10-05_030000", "Campaigns" },
+                Directory.GetDirectories(root).Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void NewIds_ReplaceWholeIdsOnly()
+    {
+        var json = """{"a":"Notes/1-A","b":"Notes/11-A","c":"CampaignTemplates/c-1","d":"[[actor:x-9|X]]","e":"c-10"}""";
+        var replaced = CampaignExportService.WithNewIds(json, new[] { "Notes/1-A", "c-1", "x-9" });
+
+        Assert.DoesNotContain("\"Notes/1-A\"", replaced);
+        Assert.Contains("\"Notes/11-A\"", replaced);
+        Assert.DoesNotContain("CampaignTemplates/c-1\"", replaced);
+        Assert.DoesNotContain("actor:x-9|", replaced);
+        Assert.Contains("\"c-10\"", replaced);
+    }
+
+    [Fact]
+    public async Task RestoreAsNew_IsRefused_ToSomeoneWhoWasNotADmInTheFile_Async()
+    {
+        var bundle = new CampaignBundle { Campaign = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "Theirs", Members = { new CampaignMember { UserId = "p1", Role = CampaignRole.Player } } } };
+        Assert.Null(await _exportService.ImportAsNewAsync(bundle, "p1"));
+        Assert.Null(await _exportService.ImportAsNewAsync(new CampaignBundle { Format = "nope", Campaign = bundle.Campaign }, "owner"));
+    }
+
     [Fact]
     public async Task Wiki_PlayersOnlySeePartyPages_AndOnlyTheDmWrites()
     {
         var campaignId = "camp-wiki-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
 
-        Assert.False(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope", Body = "" }, player));
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Docks", Body = "See [[The Mayor]] and [[Greyharbour]].", Visibility = WikiVisibility.Party }, dm));
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Mayor", Body = "Secretly a cultist.", Visibility = WikiVisibility.DmOnly }, dm));
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Docks", Body = "Different page, same title." }, dm));
+        Assert.Equal(SaveOutcome.Refused, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope", Body = "" }, player));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Docks", Body = "See [[The Mayor]] and [[Greyharbour]].", Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Mayor", Body = "Secretly a cultist.", Visibility = WikiVisibility.DmOnly }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Docks", Body = "Different page, same title." }, dm));
 
         var dmPages = (await _wikiRepository.GetVisibleForCampaignAsync(dm)).ToList();
         Assert.Equal(3, dmPages.Count);
@@ -1079,20 +1441,50 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Null(await _wikiRepository.GetVisibleBySlugAsync("the-mayor", player));
         Assert.NotNull(await _wikiRepository.GetVisibleBySlugAsync("the-mayor", dm));
 
-        var other = new CampaignAccess("another-campaign", "dm", CampaignRole.DM);
+        var other = Access("another-campaign", "dm", CampaignRole.DM);
         Assert.False(await _wikiRepository.TryDeleteAsync(dmPages[0].Id, other));
+    }
+
+    // R11: "The Keep" is renamed "Castle Greyharbour"; its slug stays the-keep. Links to either name, and lore naming either,
+    // still reach it, for the DM and for a player.
+    [Fact]
+    public async Task Wiki_ARenamedPage_IsReachedByLinksToItsOldAndNewName()
+    {
+        var campaignId = "camp-wiki-rename-" + Guid.NewGuid();
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Keep", Body = "Stone.", Visibility = WikiVisibility.Party }, dm));
+        var keep = (await _wikiRepository.GetVisibleBySlugAsync("the-keep", dm))!;
+        keep.Title = "Castle Greyharbour";
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(keep, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Old Map", Body = "Marks [[The Keep]].", Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "New Map", Body = "Marks [[Castle Greyharbour]].", Visibility = WikiVisibility.Party }, dm));
+
+        foreach (var access in new[] { dm, player })
+        {
+            var pages = (await _wikiRepository.GetVisibleForCampaignAsync(access)).ToList();
+            var renamed = pages.Single(p => p.Slug == "the-keep");
+            Assert.Equal("Castle Greyharbour", renamed.Title);
+            var linkingHere = pages.Where(p => p.Links.Any(link => WikiLinks.Reaches(link, renamed))).Select(p => p.Title).OrderBy(t => t);
+            Assert.Equal(new[] { "New Map", "Old Map" }, linkingHere);
+            Assert.All(pages.Where(p => p.Title.EndsWith("Map")), p => Assert.Same(renamed, WikiLinks.Target(p.Links.Single(), pages)));
+        }
+
+        var dmPages = (await _wikiRepository.GetVisibleForCampaignAsync(dm)).ToList();
+        var lore = new FactDocument { Summary = "Built by giants.", Details = "See [[Castle Greyharbour]].", RelatedEntityIds = FactLinks.Of("Built by giants.", "See [[Castle Greyharbour]].").ToList() };
+        Assert.Single(FactLinks.About(new[] { lore }, WikiLinks.FactKeys(dmPages.Single(p => p.Slug == "the-keep")).ToArray()));
     }
 
     [Fact]
     public async Task Wiki_PlayersGetSharedPagesWithoutTheirDmBlocks_AndNoLinkToASecret()
     {
         var campaignId = "camp-wiki-secret-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
         var body = "A quiet village near [[The Cove]].\n\n:::dm\nThe lighthouse is the lair of [[The Drowned Cult]].\n:::\n\n:::party\nThe keeper drinks.\n:::";
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Saltmere", Body = body, Visibility = WikiVisibility.Party }, dm));
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Cove", Body = "Sand.", Visibility = WikiVisibility.Party }, dm));
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Drowned Cult", Body = "Dagon.", Visibility = WikiVisibility.DmOnly }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Saltmere", Body = body, Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Cove", Body = "Sand.", Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Drowned Cult", Body = "Dagon.", Visibility = WikiVisibility.DmOnly }, dm));
 
         var dmPage = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!;
         Assert.Equal(body, dmPage.Body);
@@ -1113,8 +1505,24 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         // A player's copy can never be written back over the DM's text, even with a DM's access.
         var copy = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!;
-        Assert.False(await _wikiRepository.TrySaveAsync(copy, dm));
+        Assert.Equal(SaveOutcome.Refused, await _wikiRepository.TrySaveAsync(copy, dm));
         Assert.Equal(body, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Body);
+    }
+
+    // F27: the single-page fetch keeps links only to pages the player may open, as the list fetch does.
+    [Fact]
+    public async Task Wiki_APlayersSinglePage_KeepsNoLinkToAPageTheyCannotOpen()
+    {
+        var campaignId = "camp-wiki-links-" + Guid.NewGuid();
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Saltmere", Body = "Near [[The Cove]] and [[The Lighthouse]].", Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Cove", Body = "Sand.", Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "The Lighthouse", Body = "A lair.", Visibility = WikiVisibility.DmOnly }, dm));
+
+        Assert.Equal(new[] { "the-cove" }, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!.Links);
+        Assert.Equal(new[] { "the-cove" }, (await _wikiRepository.GetVisibleForCampaignAsync(player)).Single(p => p.Slug == "saltmere").Links);
+        Assert.Equal(new[] { "the-cove", "the-lighthouse" }, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Links);
     }
 
     [Fact]
@@ -1124,8 +1532,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var campaign = new CampaignDocument { Id = "camp-templates-" + Guid.NewGuid(), Name = "Templates", OwnerId = "dm", SystemId = "srd5e" };
         campaign.Members.Add(new CampaignMember { UserId = "dm", Role = CampaignRole.DM });
         await _campaignRepository.SaveAsync(campaign);
-        var dm = new CampaignAccess(campaign.Id, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaign.Id, "p1", CampaignRole.Player);
+        var dm = Access(campaign.Id, "dm", CampaignRole.DM);
+        var player = Access(campaign.Id, "p1", CampaignRole.Player);
 
         // A campaign starts with the built-in ones; a player is given none, and saves none.
         var shipped = await _templateRepository.GetAsync(dm, l);
@@ -1175,15 +1583,15 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task Wiki_TheDmRevealsAndHidesABlock_OnlyAsTheySawIt_AndABlockForACharacterReachesOnlyTheirPlayer()
     {
         var campaignId = "camp-wiki-reveal-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var ariaPlayer = new CampaignAccess(campaignId, "p-aria", CampaignRole.Player);
-        var bramPlayer = new CampaignAccess(campaignId, "p-bram", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var ariaPlayer = Access(campaignId, "p-aria", CampaignRole.Player);
+        var bramPlayer = Access(campaignId, "p-bram", CampaignRole.Player);
         var aria = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", OwnerUserId = "p-aria", Visibility = ActorVisibility.Known };
         await _actorRepository.SaveAsync(aria);
         await _actorRepository.SaveAsync(new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Bram", OwnerUserId = "p-bram", Visibility = ActorVisibility.Known });
 
         var page = new WikiPageDocument { Title = "Saltmere", Body = "Village.\n:::dm\nThe keeper is a cultist.\n:::\n:::dm\nAria's mother lived here.\n:::", Visibility = WikiVisibility.Party };
-        Assert.True(await _wikiRepository.TrySaveAsync(page, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(page, dm));
 
         // A player cannot reveal anything, and the DM cannot reveal a block that is no longer what they saw.
         Assert.Equal(SecretChange.Refused, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "The keeper is a cultist.", SecretAudience.Party, null, ariaPlayer));
@@ -1206,28 +1614,55 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task Wiki_AnEditorOpenedBeforeAReveal_CannotUndoIt_UntilItTakesTheLatestVersion()
+    {
+        var campaignId = "camp-wiki-version-" + Guid.NewGuid();
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Saltmere", Body = "Village.\n:::dm\nThe keeper is a cultist.\n:::", Visibility = WikiVisibility.Party }, dm));
+
+        // The editor works on a copy of the page as it was loaded; the DM reveals the block from another tab meanwhile.
+        var opened = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!;
+        var draft = DocumentVersions.Carry(new WikiPageDocument { Id = opened.Id, Title = opened.Title, Body = opened.Body + "\nA harbour.", Visibility = opened.Visibility }, opened);
+        Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetSecretAsync(opened.Id, 0, "The keeper is a cultist.", SecretAudience.Party, null, dm));
+
+        Assert.Equal(SaveOutcome.Changed, await _wikiRepository.TrySaveAsync(draft, dm));
+        Assert.Contains("cultist", (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!.Body);
+
+        // Taking the stored page as the one it replaces makes the next save go through, and that save can be saved again.
+        DocumentVersions.Carry(draft, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!);
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(draft, dm));
+        draft.Body += "\nGulls.";
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(draft, dm));
+
+        // A page deleted since it was opened is not brought back by saving the copy.
+        Assert.True(await _wikiRepository.TryDeleteAsync(draft.Id, dm));
+        Assert.Equal(SaveOutcome.Changed, await _wikiRepository.TrySaveAsync(draft, dm));
+    }
+
+    [Fact]
     public async Task PartyPreview_ReadsExactlyAsAPlayerWhoOwnsNothing()
     {
         var campaignId = "camp-preview-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        Assert.Null(new CampaignAccess(campaignId, "p1", CampaignRole.Player).PartyPreview());
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        Assert.Null(Access(campaignId, "p1", CampaignRole.Player).PartyPreview());
         var preview = dm.PartyPreview()!;
         Assert.False(preview.IsDm);
         Assert.Equal(campaignId, preview.CampaignId);
 
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Open", Body = "Seen\n:::dm\nHidden\n:::", Visibility = WikiVisibility.Party }, dm));
-        Assert.True(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Shut", Body = "x", Visibility = WikiVisibility.DmOnly }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Open", Body = "Seen\n:::dm\nHidden\n:::", Visibility = WikiVisibility.Party }, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Shut", Body = "x", Visibility = WikiVisibility.DmOnly }, dm));
         var seen = Assert.Single(await _wikiRepository.GetVisibleForCampaignAsync(preview));
         Assert.Equal("Seen", seen.Body);
-        Assert.False(await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope" }, preview));
+        Assert.Equal(SaveOutcome.Refused, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope" }, preview));
     }
 
     [Fact]
     public async Task PlacesAndHistories_ReachPlayersWithoutTheirDmBlocks_AndAPlayersSaveKeepsThem()
     {
         var campaignId = "camp-secret-text-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
 
         var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Coast" };
         region.Locations.Add(new LocationDocument { Id = "loc-1", Name = "Lighthouse", Description = "Tall.\n:::dm\nCult lair.\n:::", Visibility = ActorVisibility.Known });
@@ -1254,11 +1689,44 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task SheetTextFields_ReachPlayersWithoutTheirDmBlocks_AndTheOwnersSaveKeepsThem()
+    {
+        var campaignId = "camp-sheet-secrets-" + Guid.NewGuid();
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var owner = Access(campaignId, "p1", CampaignRole.Player);
+        var other = Access(campaignId, "p2", CampaignRole.Player);
+        const string notes = "Sells charms.\n:::dm\nSecretly a doppelganger.\n:::";
+
+        // A Known NPC's Notes box (S1): no player reads the DM block.
+        var npc = new ActorDocument { CampaignId = campaignId, Name = "Mirela", Kind = ActorKind.NonPlayerCharacter, Visibility = ActorVisibility.Known, Sheet = { ["notes"] = notes, ["level"] = 3L } };
+        Assert.True(await _actorRepository.TrySaveAsync(npc, dm));
+        Assert.Equal("Sells charms.", (await _actorRepository.GetVisibleAsync(npc.Id, other))!.Sheet["notes"]);
+        Assert.Equal("Sells charms.", (await _actorRepository.GetVisibleForCampaignAsync(other)).Single(a => a.Id == npc.Id).Sheet["notes"]);
+        Assert.Equal(notes, (await _actorRepository.GetVisibleAsync(npc.Id, dm))!.Sheet["notes"]);
+
+        // The owner edits their own character's notes; the DM's block stays stored, and a save that leaves them alone keeps them exact.
+        var pc = new ActorDocument { CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Sheet = { ["notes"] = notes } };
+        Assert.True(await _actorRepository.TrySaveAsync(pc, dm));
+        var mine = (await _actorRepository.GetVisibleAsync(pc.Id, owner))!;
+        Assert.Equal("Sells charms.", mine.Sheet["notes"]);
+        mine.Name = "Aria Vell";
+        Assert.True(await _actorRepository.TrySaveAsync(mine, owner));
+        Assert.Equal(notes, (await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Sheet["notes"]);
+
+        mine = (await _actorRepository.GetVisibleAsync(pc.Id, owner))!;
+        mine.Sheet["notes"] = "Sells charms and curses.";
+        Assert.True(await _actorRepository.TrySaveAsync(mine, owner));
+        var stored = (string)(await _actorRepository.GetVisibleAsync(pc.Id, dm))!.Sheet["notes"];
+        Assert.StartsWith("Sells charms and curses.", stored);
+        Assert.Single(SecretText.SecretBlocks(stored), "Secretly a doppelganger.");
+    }
+
+    [Fact]
     public async Task APlayersSave_LeavesAnUntouchedHistoryAsStored_AndIsRefusedWhenTheDmChangedItMeanwhile()
     {
         var campaignId = "camp-history-race-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
         const string history = "Born at sea.\n:::party 2026-10-01T10:00:00Z\nShe saw the drowned bell.\n:::\n:::dm\nHer father leads the cult.\n:::";
         var pc = new ActorDocument { CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Biography = history };
         Assert.True(await _actorRepository.TrySaveAsync(pc, dm));
@@ -1293,7 +1761,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task AFactEdit_KeepsAKnowerAddedWhileItWasOpen()
     {
         var campaignId = "camp-fact-race-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
         var fact = new FactDocument { Summary = "The bell is cursed", Visibility = FactVisibility.DmOnly };
         Assert.True(await _factRepository.SaveAsync(fact, dm));
         var open = new FactDocument { Id = fact.Id, Summary = fact.Summary, Visibility = fact.Visibility }; // the edit form's copy
@@ -1311,9 +1779,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     [Fact]
     public async Task LinkingAPageToACastMember_KeepsARevealMadeMeanwhile_AndAnEarlierLink()
     {
-        var dm = new CampaignAccess("camp-promote-race-" + Guid.NewGuid(), "dm", CampaignRole.DM);
+        var dm = Access("camp-promote-race-" + Guid.NewGuid(), "dm", CampaignRole.DM);
         var page = new WikiPageDocument { Title = "Wendel", Body = "A fisher.\n:::dm\nA smuggler.\n:::", Visibility = WikiVisibility.Party };
-        Assert.True(await _wikiRepository.TrySaveAsync(page, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(page, dm));
         var dialogCopy = (await _wikiRepository.GetVisibleForCampaignAsync(dm)).Single(); // the promote dialog's copy
 
         Assert.Equal(SecretChange.Done, await _wikiRepository.TrySetSecretAsync(page.Id, 0, "A smuggler.", SecretAudience.Party, null, dm));
@@ -1330,8 +1798,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task AnUnknownActor_ReachesPlayersAsAStranger_WithNothingButTheirPublicFace()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
         var vizier = new ActorDocument
         {
             Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Vizier Mor", Kind = ActorKind.NonPlayerCharacter, Visibility = ActorVisibility.Unknown,
@@ -1371,6 +1839,11 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.Equal(SessionQuotes.StrangerName, listed.Single(a => a.Id == nameless.Id).Name);
         Assert.NotEqual("Sister Vel", SessionQuotes.StrangerName);
+
+        // A monster in a hood is a stranger like any other, not a "Monster" (S6).
+        var lurker = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Ghoul", Kind = ActorKind.Monster, Visibility = ActorVisibility.Unknown };
+        await _actorRepository.SaveAsync(lurker);
+        Assert.Equal(ActorKind.NonPlayerCharacter, (await _actorRepository.GetVisibleAsync(lurker.Id, player))!.Kind);
         var whole = (await _actorRepository.GetVisibleAsync(vizier.Id, dm))!;
         Assert.Equal("Vizier Mor", whole.Name);
         Assert.Equal("Mor poisoned the old king.", whole.Biography);
@@ -1380,9 +1853,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task ABlockForACharacter_InAHistory_ReachesOnlyTheirPlayer_AndNeverTheTextTheyEdit()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
-        var arias = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
-        var brams = new CampaignAccess(campaignId, "p2", CampaignRole.Player);
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        var arias = Access(campaignId, "p1", CampaignRole.Player);
+        var brams = Access(campaignId, "p2", CampaignRole.Player);
         var aria = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1" };
         var bram = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Bram", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p2" };
         aria.Biography = $"Born at sea.\n:::for [[actor:{aria.Id}]]\nYou were adopted.\n:::\n:::dm\nHer father leads the cult.\n:::";
@@ -1425,9 +1898,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task Facts_KnowWhatTheyMention_StayInTheirCampaign_AndARevealToACharacterShowsIt()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
-        var otherDm = new CampaignAccess(Guid.NewGuid().ToString(), "dm-2", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        var otherDm = Access(Guid.NewGuid().ToString(), "dm-2", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
         var owned = new HashSet<string> { "aria" };
         var fact = new FactDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Summary = " The keeper's daughter ", Details = "[[actor:mara]] hides her in [[Saltmere Light]]; ask #[[place:p1]]." };
         Assert.True(await _factRepository.SaveAsync(fact, dm));
@@ -1471,10 +1944,10 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task APlayersVersion_GoesBesideTheSecret_OnlyFromTheDm_AndNeverBesideAnEditedOne()
     {
         var campaignId = Guid.NewGuid().ToString();
-        var dm = new CampaignAccess(campaignId, "dm-user", CampaignRole.DM);
-        var player = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        var player = Access(campaignId, "p1", CampaignRole.Player);
         var page = new WikiPageDocument { Title = "Saltmere", Visibility = WikiVisibility.Party, Body = "A fishing village.\n:::dm\nThe keeper runs the smugglers.\n:::" };
-        Assert.True(await _wikiRepository.TrySaveAsync(page, dm));
+        Assert.Equal(SaveOutcome.Saved, await _wikiRepository.TrySaveAsync(page, dm));
         const string secret = "The keeper runs the smugglers.";
 
         Assert.Equal(SecretChange.Refused, await _wikiRepository.TrySetPlayersVersionAsync(page.Id, 0, secret, "Lights at night.", player));
@@ -1484,7 +1957,10 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
         var seen = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", player))!;
         Assert.Equal("A fishing village.\n\nBoats come by night, says [[Old Tom]].", seen.Body);
-        Assert.Equal(new[] { "old-tom" }, seen.Links);
+        // Old Tom has no page yet. A player's copy keeps links only to pages they can open (F27), so an unwritten page and a
+        // DM-only one look alike; the DM's copy keeps the link.
+        Assert.Empty(seen.Links);
+        Assert.Equal(new[] { "old-tom" }, (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Links);
         var whole = (await _wikiRepository.GetVisibleBySlugAsync("saltmere", dm))!.Body;
         Assert.Contains(secret, whole);
         Assert.Single(SecretText.Blocks(whole), b => b.Marked == SecretAudience.Players);
@@ -1496,9 +1972,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task Journal_IsPrivateToItsOwner_EvenFromTheDm()
     {
         var campaignId = "camp-journal-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var p1 = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
-        var p2 = new CampaignAccess(campaignId, "p2", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var p1 = Access(campaignId, "p1", CampaignRole.Player);
+        var p2 = Access(campaignId, "p2", CampaignRole.Player);
 
         var entry = new JournalEntryDocument { Title = "Session one", Body = "The mayor is lying.", SessionId = "s1" };
         Assert.True(await _journalRepository.TrySaveAsync(entry, p1));
@@ -1518,8 +1994,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task DmNotes_AreStrippedForPlayers_AndPlayersCannotOverwriteThem()
     {
         var campaignId = "camp-dmnotes-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var owner = new CampaignAccess(campaignId, "p1", CampaignRole.Player);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var owner = Access(campaignId, "p1", CampaignRole.Player);
         var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1", Biography = "Guard.", DmNotes = "Secretly cursed." };
         await _actorRepository.SaveAsync(actor);
 
@@ -1543,18 +2019,131 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     {
         var campaignId = "camp-media-" + Guid.NewGuid();
         await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Art", SystemId = "srd5e" });
+        var dm = Access(campaignId, "owner", CampaignRole.DM);
 
         var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 1, 2, 3 };
-        await _mediaStore.PutAsync(campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/png");
+        await _mediaStore.PutAsync(dm, campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/png");
         var stored = await _mediaStore.GetAsync(campaignId, RavenMediaStore.CampaignCover);
         Assert.NotNull(stored);
         Assert.Equal(png, stored!.Bytes);
         Assert.Equal("image/png", stored.ContentType);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _mediaStore.PutAsync(campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/svg+xml"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _mediaStore.PutAsync(dm, campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/svg+xml"));
 
-        await _mediaStore.DeleteAsync(campaignId, RavenMediaStore.CampaignCover);
+        await _mediaStore.DeleteAsync(dm, campaignId, RavenMediaStore.CampaignCover);
         Assert.Null(await _mediaStore.GetAsync(campaignId, RavenMediaStore.CampaignCover));
+    }
+
+    /// <summary>D15: a page resolves the caller's role once, when it opens. A co-DM demoted while their Settings page is open
+    /// must not keep a DM's powers on it: the writes read the role from the campaign as stored.</summary>
+    [Fact]
+    public async Task ACoDmDemotedWhileTheirPageIsOpen_CanNoLongerChangeTheCampaign_ItsArt_OrOthersNotes_Async()
+    {
+        var campaignId = "camp-demoted-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Before", SystemId = "srd5e",
+            Members = { new CampaignMember { UserId = "co", Role = CampaignRole.DM }, new CampaignMember { UserId = "p1", Role = CampaignRole.Player } }
+        });
+        var resolver = new CampaignAccessResolver(_campaignRepository);
+        var coPage = (await resolver.ResolveAsync(campaignId, "co"))!;
+        var player = (await resolver.ResolveAsync(campaignId, "p1"))!;
+        Assert.True(coPage.IsDm);
+
+        var note = new NoteDocument { Id = "note-" + Guid.NewGuid(), CampaignId = campaignId, TargetId = "wiki:x", AuthorId = "p1", Content = "Mine", Visibility = CommentVisibility.Public };
+        await _noteRepository.CreateNoteAsync(note);
+        var png = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
+
+        await _campaignRepository.UpdateAsync(campaignId, c => c.Members.Single(m => m.UserId == "co").Role = CampaignRole.Player);
+
+        var refused = await Assert.ThrowsAsync<LocalizedException>(() => _campaignRepository.UpdateAsDmAsync(coPage, c => c.Name = "Hijacked"));
+        Assert.Equal("Campaign.AccessChanged", refused.Key);
+        Assert.Equal("Before", (await _campaignRepository.GetAsync(campaignId))!.Name);
+
+        var art = await Assert.ThrowsAsync<LocalizedException>(() => _mediaStore.PutAsync(coPage, campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/png"));
+        Assert.Equal("Campaign.AccessChanged", art.Key);
+        Assert.Null(await _mediaStore.GetAsync(campaignId, RavenMediaStore.CampaignCover));
+
+        // Now a player who did not write it, so it stays; its author may still delete it.
+        Assert.False(await _noteRepository.DeleteNoteAsync(note.Id, coPage));
+        Assert.False(await _noteRepository.DeleteNoteAsync(note.Id, new CampaignAccess(campaignId, "stranger", CampaignRole.DM)));
+        Assert.True(await _noteRepository.DeleteNoteAsync(note.Id, player));
+
+        // The owner is a DM whatever the member list says, and their writes go through.
+        var owner = (await resolver.ResolveAsync(campaignId, "owner"))!;
+        Assert.Equal("After", (await _campaignRepository.UpdateAsDmAsync(owner, c => c.Name = "After"))!.Name);
+    }
+
+    /// <summary>F13: every other write reads the role from the stored campaign too. A co-DM demoted while their page is open
+    /// writes as the player they now are, and a player removed from the campaign writes nothing, not even their own things.</summary>
+    [Fact]
+    public async Task EveryWrite_UsesTheRoleTheCampaignStoresNow_NotTheOneThePageOpenedWith_Async()
+    {
+        var campaignId = "camp-f13-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Camp", SystemId = "srd5e",
+            Members = { new CampaignMember { UserId = "co", Role = CampaignRole.DM }, new CampaignMember { UserId = "p1", Role = CampaignRole.Player } }
+        });
+        var resolver = new CampaignAccessResolver(_campaignRepository);
+        var coPage = (await resolver.ResolveAsync(campaignId, "co"))!;
+        var playerPage = (await resolver.ResolveAsync(campaignId, "p1"))!;
+        var npc = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Mara", Kind = ActorKind.NonPlayerCharacter };
+        var pc = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Bram", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1" };
+        Assert.True(await _actorRepository.TrySaveAsync(npc, coPage));
+        Assert.True(await _actorRepository.TrySaveAsync(pc, playerPage));
+
+        var owner = (await resolver.ResolveAsync(campaignId, "owner"))!;
+        await _campaignRepository.UpdateAsync(campaignId, c =>
+        {
+            c.Members.Single(m => m.UserId == "co").Role = CampaignRole.Player;
+            c.Members.RemoveAll(m => m.UserId == "p1");
+        });
+
+        npc.Name = "Hijacked";
+        Assert.False(await _actorRepository.TrySaveAsync(npc, coPage));
+        Assert.Null(await _actorRepository.TrySetVisibilityAsync(npc.Id, ActorVisibility.Hidden, coPage));
+        Assert.Equal(SaveOutcome.Refused, await _wikiRepository.TrySaveAsync(new WikiPageDocument { CampaignId = campaignId, Title = "Planted" }, coPage));
+        Assert.False(await _regionRepository.SaveAsync(new RegionDocument { Id = "region-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Planted" }, coPage));
+        Assert.False(await _factRepository.SaveAsync(new FactDocument { CampaignId = campaignId, Summary = "Planted" }, coPage));
+        Assert.False(await _homebrewRepository.TrySaveAsync(new HomebrewEntryDocument { CampaignId = campaignId, Name = "Planted" }, coPage));
+        Assert.Equal("Mara", (await _actorRepository.GetVisibleAsync(npc.Id, owner))!.Name);
+
+        // The removed player can no longer write even their own character or journal.
+        pc.Name = "Renamed";
+        Assert.False(await _actorRepository.TrySaveAsync(pc, playerPage));
+        Assert.False(await _journalRepository.TrySaveAsync(new JournalEntryDocument { CampaignId = campaignId, Title = "Mine" }, playerPage));
+        Assert.Equal("Bram", (await _actorRepository.GetVisibleAsync(pc.Id, owner))!.Name);
+
+        // The owner's page writes as before.
+        Assert.True(await _actorRepository.TrySaveAsync(npc, owner));
+    }
+
+    /// <summary>D15: a player may store and remove their own character's portrait, and nothing else's.</summary>
+    [Fact]
+    public async Task APlayer_ChangesTheirOwnPortrait_ButNotAnotherActorsArt_Async()
+    {
+        var campaignId = "camp-portrait-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Art", SystemId = "srd5e",
+            Members = { new CampaignMember { UserId = "p1", Role = CampaignRole.Player } }
+        });
+        var mine = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Aria", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1" };
+        var npc = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Strahd", Kind = ActorKind.NonPlayerCharacter };
+        await _actorRepository.SaveAsync(mine);
+        await _actorRepository.SaveAsync(npc);
+        var player = (await new CampaignAccessResolver(_campaignRepository).ResolveAsync(campaignId, "p1"))!;
+        var png = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
+
+        await _mediaStore.PutAsync(player, mine.Id, RavenMediaStore.ActorPortrait, new MemoryStream(png), "image/png");
+        Assert.NotNull(await _mediaStore.GetAsync(mine.Id, RavenMediaStore.ActorPortrait));
+        await _mediaStore.DeleteAsync(player, mine.Id, RavenMediaStore.ActorPortrait);
+        Assert.Null(await _mediaStore.GetAsync(mine.Id, RavenMediaStore.ActorPortrait));
+
+        await Assert.ThrowsAsync<LocalizedException>(() => _mediaStore.PutAsync(player, npc.Id, RavenMediaStore.ActorPortrait, new MemoryStream(png), "image/png"));
+        await Assert.ThrowsAsync<LocalizedException>(() => _mediaStore.PutAsync(player, campaignId, RavenMediaStore.CampaignCover, new MemoryStream(png), "image/png"));
+        Assert.Null(await _mediaStore.GetAsync(npc.Id, RavenMediaStore.ActorPortrait));
     }
 
     [Fact]
@@ -1562,7 +2151,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     {
         var campaignId = "camp-cascade2-" + Guid.NewGuid();
         await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Gone", SystemId = "srd5e" });
-        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var dm = Access(campaignId, "owner", CampaignRole.DM);
         await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Page" }, dm);
         await _journalRepository.TrySaveAsync(new JournalEntryDocument { Title = "Mine" }, dm);
 
@@ -1575,8 +2164,8 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     public async Task WorldChats_ArePrivateToTheirOwner_AndComeBackWithTheirProposalTicksAndSteps()
     {
         var campaignId = "camp-worldchat-" + Guid.NewGuid();
-        var dm = new CampaignAccess(campaignId, "dm", CampaignRole.DM);
-        var coDm = new CampaignAccess(campaignId, "dm2", CampaignRole.DM);
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var coDm = Access(campaignId, "dm2", CampaignRole.DM);
         var proposal = new Codex.Core.WorldBuilder.WorldBundle { Summary = "A town.", Region = "The Coast" };
         proposal.Drafts.Add(new Codex.Core.WorldBuilder.WorldDraft
         {
@@ -1649,7 +2238,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     [Fact]
     public async Task WorldChat_TwoCopiesOfOneChat_TheSecondSaveIsRefused_AndADeletedChatStaysDeleted()
     {
-        var dm = new CampaignAccess("camp-chat-race-" + Guid.NewGuid(), "dm", CampaignRole.DM);
+        var dm = Access("camp-chat-race-" + Guid.NewGuid(), "dm", CampaignRole.DM);
         var chat = new WorldChatDocument { Title = "Salt" };
         Assert.Equal(ChatSave.Saved, await _worldChatRepository.TrySaveAsync(chat, dm));
         var tabA = (await _worldChatRepository.GetMineAsync(chat.Id, dm))!;
@@ -1673,10 +2262,108 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     {
         var campaignId = "camp-cascade3-" + Guid.NewGuid();
         await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Gone", SystemId = "srd5e" });
-        var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var dm = Access(campaignId, "owner", CampaignRole.DM);
         await _worldChatRepository.TrySaveAsync(new WorldChatDocument { Title = "Mine" }, dm);
 
         Assert.Equal(CampaignDeleteResult.Deleted, await _campaignRepository.DeleteAsync(campaignId, "owner"));
         Assert.Empty(await _worldChatRepository.ListMineAsync(dm));
+    }
+
+    // U7: a place can be deleted and put back; the places inside it move up a level meanwhile, and connections to it come back.
+    [Fact]
+    public async Task RemovingAPlace_MovesItsChildrenUp_AndRestoringPutsEverythingBack()
+    {
+        var campaignId = "campaigns/places-" + Guid.NewGuid().ToString("N");
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var region = new RegionDocument
+        {
+            Id = "regions/" + Guid.NewGuid().ToString("N"),
+            CampaignId = campaignId,
+            Name = "North",
+            Locations =
+            {
+                new LocationDocument { Id = "town", Name = "Town" },
+                new LocationDocument { Id = "inn", Name = "Inn", ParentId = "town" },
+                new LocationDocument { Id = "road", Name = "Road" }
+            }
+        };
+        Assert.True(await _regionRepository.SaveAsync(region, dm));
+
+        Assert.Null(await _regionRepository.RemoveLocationAsync(region.Id, "town", Access(campaignId, "p", CampaignRole.Player)));
+        var removed = await _regionRepository.RemoveLocationAsync(region.Id, "town", dm);
+        Assert.NotNull(removed);
+        var after = await _regionRepository.GetAsync(region.Id, dm);
+        Assert.DoesNotContain(after!.Locations, l => l.Id == "town");
+        Assert.Null(after.Locations.Single(l => l.Id == "inn").ParentId);
+
+        Assert.True(await _regionRepository.RestoreLocationAsync(region.Id, removed!, dm));
+        var restored = await _regionRepository.GetAsync(region.Id, dm);
+        Assert.Contains(restored!.Locations, l => l.Id == "town");
+        Assert.Equal("town", restored.Locations.Single(l => l.Id == "inn").ParentId);
+        // Once back it can't be restored twice.
+        Assert.False(await _regionRepository.RestoreLocationAsync(region.Id, removed!, dm));
+    }
+
+    // A deleted place's art stays while Undo can bring it back, and goes with the region's next change after that.
+    [Fact]
+    public async Task ADeletedPlacesArt_StaysForUndo_AndGoesLater()
+    {
+        var campaignId = "campaigns/place-art-" + Guid.NewGuid().ToString("N");
+        await _campaignRepository.SaveAsync(new CampaignDocument { Id = campaignId, OwnerId = "dm", Name = "Art" });
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var region = new RegionDocument
+        {
+            Id = "regions/" + Guid.NewGuid().ToString("N"),
+            CampaignId = campaignId,
+            Name = "North",
+            Locations = { new LocationDocument { Id = "tower", Name = "Tower", HasArt = true } }
+        };
+        Assert.True(await _regionRepository.SaveAsync(region, dm));
+        var art = RavenMediaStore.LocationArtName("tower");
+        await _mediaStore.PutAsync(dm, region.Id, art, new MemoryStream(new byte[] { 0x89, 0x50, 0x4E, 0x47, 9 }), "image/png");
+
+        var removed = await _regionRepository.RemoveLocationAsync(region.Id, "tower", dm);
+        Assert.NotNull(await _mediaStore.GetAsync(region.Id, art));
+        Assert.True(await _regionRepository.RestoreLocationAsync(region.Id, removed!, dm));
+        Assert.True((await _regionRepository.GetAsync(region.Id, dm))!.Locations.Single().HasArt);
+
+        // Deleted again, and left past the time Undo could reach.
+        await _regionRepository.RemoveLocationAsync(region.Id, "tower", dm);
+        using (var session = _dbService.Store.OpenAsyncSession())
+        {
+            var stored = await session.LoadAsync<RegionDocument>(region.Id);
+            stored.RemovedArt["tower"] = DateTime.UtcNow - RegionRepository.RemovedArtKept - TimeSpan.FromMinutes(1);
+            await session.SaveChangesAsync();
+        }
+
+        Assert.True(await _regionRepository.RenameAsync(region.Id, "Far North", dm));
+        Assert.Null(await _mediaStore.GetAsync(region.Id, art));
+        Assert.Empty((await _regionRepository.GetAsync(region.Id, dm))!.RemovedArt);
+    }
+
+    [Fact]
+    public async Task DeletingARegion_OrASession_IsTheDmsAndStaysInTheCampaign()
+    {
+        var campaignId = "campaigns/del-" + Guid.NewGuid().ToString("N");
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var player = Access(campaignId, "p", CampaignRole.Player);
+        var stranger = Access("campaigns/other", "dm", CampaignRole.DM);
+        var region = new RegionDocument { Id = "regions/" + Guid.NewGuid().ToString("N"), CampaignId = campaignId, Name = "South" };
+        Assert.True(await _regionRepository.SaveAsync(region, dm));
+        var encounter = new EncounterDocument { Id = "encounters/" + Guid.NewGuid().ToString("N"), CampaignId = campaignId };
+        await _encounterRepository.SaveAsync(encounter);
+        var session = new SessionDocument { Id = "sessions/" + Guid.NewGuid().ToString("N"), CampaignId = campaignId, Title = "One", EncounterIds = { encounter.Id } };
+        await _sessionRepository.SaveAsync(session);
+
+        Assert.False(await _regionRepository.DeleteAsync(region.Id, player));
+        Assert.False(await _regionRepository.DeleteAsync(region.Id, stranger));
+        Assert.True(await _regionRepository.DeleteAsync(region.Id, dm));
+        Assert.Null(await _regionRepository.GetAsync(region.Id, dm));
+
+        Assert.False(await _sessionRepository.DeleteAsync(session.Id, player));
+        Assert.False(await _sessionRepository.DeleteAsync(session.Id, stranger));
+        Assert.True(await _sessionRepository.DeleteAsync(session.Id, dm));
+        Assert.Null(await _sessionRepository.GetAsync(session.Id));
+        Assert.Null(await _encounterRepository.GetAsync(encounter.Id));
     }
 }

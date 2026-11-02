@@ -1,0 +1,90 @@
+@using Codex.Persistence
+
+@* The DM's say over a character or creature: who sees it and as what, what kind it is, and who plays it. It edits a Draft
+   the sheet saves with everything else; OnChanged tells the sheet, so its count of unsaved edits follows. *@
+<section class="panel" aria-labelledby="visibility-heading">
+    <div class="panel-title"><h2 id="visibility-heading" class="h5"><LucideIcon IconName="eye" Size="18" Class="title-icon" /> @L["Actor.Sheet.Visibility"]</h2></div>
+    <div class="mb-2">
+        <label for="actor-visibility" class="field-label">@L["Actor.Sheet.WhoSees"]</label>
+        <select id="actor-visibility" class="field-select" @bind="Edits.Visibility" @bind:after="Changed">
+            <option value="@ActorVisibility.Hidden">@L["Actor.Sheet.VisHidden"]</option>
+            <option value="@ActorVisibility.Unknown">@L["Actor.Sheet.VisUnknown"]</option>
+            <option value="@ActorVisibility.Known">@L["Actor.Sheet.VisKnown"]</option>
+        </select>
+    </div>
+    @if (Edits.Visibility == ActorVisibility.Known && Actor.Visibility != ActorVisibility.Known && !string.IsNullOrWhiteSpace(Actor.Biography))
+    {
+        <p class="field-hint text-warning" role="status" data-testid="actor-reveal-history">@L["Actor.Sheet.RevealHistory"]</p>
+    }
+    @if (Edits.Visibility == ActorVisibility.Unknown)
+    {
+        <p class="field-hint" data-testid="actor-unknown-hint">@L["Actor.Sheet.UnknownHint"]</p>
+        <div class="mb-2">
+            <label for="actor-public-name" class="field-label">@L["Actor.Sheet.ShownAs"]</label>
+            <input id="actor-public-name" class="field-input" @bind="Edits.PublicName" @bind:event="oninput" @bind:after="Changed" placeholder="@L["Actor.Stranger"]" data-testid="actor-public-name" />
+        </div>
+        <div class="mb-2">
+            <label for="actor-public-description" class="field-label">@L["Actor.Sheet.PublicDescription"]</label>
+            @* What players read of a stranger: the DM's prose, so it takes secret blocks like the history does. *@
+            <MarkdownEditor Id="actor-public-description" Title="@L["Actor.Sheet.PublicDescription"]" Rows="4" Value="@Edits.PublicDescription" ValueChanged="SetPublicDescription"
+                            Placeholder="@L["Actor.Sheet.PublicDescriptionPh"]" Mentions="@MentionsJson" Preview="Preview" Secrets="true" Class="mb-0" TestId="actor-public-description" />
+        </div>
+    }
+    <div class="mb-2">
+        <label for="actor-kind" class="field-label">@L["Actor.Sheet.Kind"]</label>
+        <select id="actor-kind" class="field-select" @bind="Edits.Kind" @bind:after="Changed">
+            <option value="@ActorKind.PlayerCharacter">@L["Actor.Sheet.KindPc"]</option>
+            <option value="@ActorKind.NonPlayerCharacter">@L["Actor.Sheet.KindNpc"]</option>
+            <option value="@ActorKind.Monster">@L["Actor.Sheet.KindMonster"]</option>
+        </select>
+    </div>
+    @if (Edits.Kind == ActorKind.PlayerCharacter)
+    {
+        <div class="mb-2">
+            <label for="actor-owner" class="field-label">@L["Actor.Sheet.PlayedBy"]</label>
+            <select id="actor-owner" class="field-select" @bind="Edits.OwnerId" @bind:after="Changed">
+                <option value="">@L["Actor.Sheet.Nobody"]</option>
+                @foreach (var member in Members)
+                {
+                    <option value="@member.UserId">@MemberNames.GetValueOrDefault(member.UserId, member.UserId)</option>
+                }
+            </select>
+        </div>
+    }
+</section>
+
+@code {
+    /// <summary>What the DM has chosen and not yet saved.</summary>
+    public sealed class Draft
+    {
+        public ActorVisibility Visibility { get; set; }
+        public string PublicName { get; set; } = string.Empty;
+
+        /// <summary>As typed: "@Name" mentions, which the sheet encodes on save.</summary>
+        public string PublicDescription { get; set; } = string.Empty;
+        public ActorKind Kind { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
+    }
+
+    [Parameter, EditorRequired] public Draft Edits { get; set; } = null!;
+
+    /// <summary>The actor as saved: says whether choosing Known would reveal a history the players haven't seen.</summary>
+    [Parameter, EditorRequired] public ActorDocument Actor { get; set; } = null!;
+    [Parameter] public IEnumerable<CampaignMember> Members { get; set; } = Array.Empty<CampaignMember>();
+    [Parameter] public IReadOnlyDictionary<string, string> MemberNames { get; set; } = new Dictionary<string, string>();
+
+    /// <summary>The mention candidates for the public description's @Name box.</summary>
+    [Parameter] public string MentionsJson { get; set; } = "[]";
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    /// <summary>The description as the reader will see it, for the editor's preview.</summary>
+    [Parameter] public Func<string, string>? Preview { get; set; }
+
+    private Task Changed() => OnChanged.InvokeAsync();
+
+    private Task SetPublicDescription(string? text)
+    {
+        Edits.PublicDescription = text ?? string.Empty;
+        return Changed();
+    }
+}

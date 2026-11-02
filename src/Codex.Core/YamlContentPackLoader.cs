@@ -52,6 +52,30 @@ public class YamlContentPackLoader : IContentPackLoader
             .Build();
     }
 
+    private readonly List<string> _problems = new();
+
+    public IReadOnlyList<string> TakeProblems()
+    {
+        lock (_problems)
+        {
+            var taken = _problems.ToList();
+            _problems.Clear();
+            return taken;
+        }
+    }
+
+    // An entry the DM wrote that did not load: logged, and kept for the About page, so it does not just vanish from the
+    // Library (R13).
+    private void Problem(string template, params object?[] args) => Problem(null, template, args);
+
+    private void Problem(Exception? ex, string template, params object?[] args)
+    {
+        _logger.LogError(ex, template, args);
+        var index = 0;
+        var message = System.Text.RegularExpressions.Regex.Replace(template, @"\{\w+\}", _ => index < args.Length ? $"{args[index++]}" : string.Empty);
+        lock (_problems) _problems.Add(message);
+    }
+
     public static bool IsArchive(string path) =>
         File.Exists(path) && (path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".cdx", StringComparison.OrdinalIgnoreCase));
 
@@ -158,7 +182,7 @@ public class YamlContentPackLoader : IContentPackLoader
     {
         if (IsArchive(packPath))
         {
-            _logger.LogWarning("Translation pack {PackId} is an archive; only folder translation packs are supported, so it was skipped.", manifest.Id);
+            Problem("Translation pack {PackId} is an archive; only folder translation packs are supported, so it was skipped.", manifest.Id);
             return;
         }
 
@@ -189,7 +213,7 @@ public class YamlContentPackLoader : IContentPackLoader
         }
         catch (YamlDotNet.Core.YamlException ex)
         {
-            _logger.LogError(ex, "Could not parse translation file {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
+            Problem(ex, "Could not parse translation file {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
             return;
         }
 
@@ -263,7 +287,7 @@ public class YamlContentPackLoader : IContentPackLoader
         }
         catch (YamlDotNet.Core.YamlException ex)
         {
-            _logger.LogError(ex, "Could not parse flavor file {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
+            Problem(ex, "Could not parse flavor file {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
             return;
         }
 
@@ -312,7 +336,7 @@ public class YamlContentPackLoader : IContentPackLoader
             }
             else
             {
-                _logger.LogError("Ability {AbilityId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                Problem("Ability {AbilityId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
                     item.Id, item.PackId, item.Inherits);
             }
         }
@@ -331,7 +355,7 @@ public class YamlContentPackLoader : IContentPackLoader
             }
             else
             {
-                _logger.LogError("Actor {ActorId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
+                Problem("Actor {ActorId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
                     item.Id, item.PackId, item.Inherits);
             }
         }
@@ -349,7 +373,7 @@ public class YamlContentPackLoader : IContentPackLoader
 
         if (string.IsNullOrWhiteSpace(entry.Id))
         {
-            _logger.LogError("An entry named '{Name}' of type {Type} in pack {PackId} has no id and was skipped.", entry.Name, entry.Type, entry.PackId);
+            Problem("An entry named '{Name}' of type {Type} in pack {PackId} has no id and was skipped.", entry.Name, entry.Type, entry.PackId);
             return;
         }
 
@@ -372,7 +396,7 @@ public class YamlContentPackLoader : IContentPackLoader
             }
             else
             {
-                _logger.LogError("Entry {Type}/{Id} in pack {PackId} inherits from {BaseId}, which was not found.", entry.Type, entry.Id, entry.PackId, entry.Inherits);
+                Problem("Entry {Type}/{Id} in pack {PackId} inherits from {BaseId}, which was not found.", entry.Type, entry.Id, entry.PackId, entry.Inherits);
             }
         }
 
@@ -505,7 +529,7 @@ public class YamlContentPackLoader : IContentPackLoader
         }
         catch (YamlDotNet.Core.YamlException ex)
         {
-            _logger.LogError(ex, "Could not parse {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
+            Problem(ex, "Could not parse {Source} in pack {PackId}: {Message}", source, manifest.Id, ex.Message);
         }
     }
 

@@ -37,10 +37,19 @@ public static class MentionLinks
         var kinds = actors.GroupBy(a => a.Id).ToDictionary(g => g.Key, g => g.First().Kind);
         var front = first?.ToHashSet() ?? new HashSet<string>();
         var ordered = mentions.Candidates
+            .Where(c => !mentions.IsRetired(c))
             .OrderBy(c => c.Kind)
             .ThenBy(c => c.Kind != MentionKind.Actor ? 0 : front.Contains(c.Id) ? 0 : kinds.TryGetValue(c.Id, out var kind) && kind == ActorKind.PlayerCharacter ? 1 : 2)
             .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase);
-        return JsonSerializer.Serialize(ordered.Select(c => new { t = c.Trigger.ToString(), n = c.Name, k = Label(c, kinds) }));
+        // A name two candidates share is written as the stored id ("w"), which the box keeps as it is; "@Bram" would be
+        // neither Bram once saved (S3).
+        return JsonSerializer.Serialize(ordered.Select(c => new
+        {
+            t = c.Trigger.ToString(),
+            n = c.Name,
+            k = mentions.HintFor(c) is { } hint ? $"{Label(c, kinds)} · {hint}" : Label(c, kinds),
+            w = mentions.IsAmbiguous(c) ? SessionMentions.Token(c.Kind, c.Id) : null
+        }), new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
     }
 
     private static string Label(MentionCandidate candidate, IReadOnlyDictionary<string, ActorKind> kinds) => candidate.Kind switch

@@ -1,5 +1,5 @@
 @* One resolved roll: what it was for, each die as a face (dropped dice struck through), the modifier,
-   and the total in display type. A natural 20 or 1 on a single d20 is marked in words as well as colour.
+   and the total in display type. A natural 20 or 1 on the roll's one d20 check die is marked in words as well as colour.
    Rolls without a die breakdown (older entries, death saves, hit dice) show their text instead. *@
 
 <div class="@Css" data-testid="dice-result">
@@ -18,9 +18,11 @@
         @if (Kept.Count > 0 || Dropped.Count > 0)
         {
             <ul class="dice-faces" aria-label="@L["Actor.Dice.Faces"]">
-                @foreach (var die in Kept)
+                @for (var i = 0; i < Kept.Count; i++)
                 {
-                    <li class="@FaceClass(die)">@die@if (IsCrit(die)) {<span class="visually-hidden"> @L["Actor.Dice.Nat20"]</span>} else if (IsFumble(die)) {<span class="visually-hidden"> @L["Actor.Dice.Nat1"]</span>}</li>
+                    var at = i;
+                    var die = Kept[at];
+                    <li class="@FaceClass(at)">@die@if (IsCrit(at)) {<span class="visually-hidden"> @L["Actor.Dice.Nat20"]</span>} else if (IsFumble(at)) {<span class="visually-hidden"> @L["Actor.Dice.Nat1"]</span>}</li>
                 }
                 @foreach (var die in Dropped)
                 {
@@ -55,10 +57,16 @@
 
     private string Css => Compact ? "dice-result dice-compact" : "dice-result";
 
-    // Only a lone d20 gets crit/fumble marking; other dice have no such meaning.
-    private bool SingleD20 => Kept.Count == 1 &&
-        (Expression.Contains("d20", StringComparison.OrdinalIgnoreCase) || Expression.StartsWith("adv", StringComparison.OrdinalIgnoreCase) || Expression.StartsWith("dis", StringComparison.OrdinalIgnoreCase));
-    private bool IsCrit(int die) => SingleD20 && die == 20;
-    private bool IsFumble(int die) => SingleD20 && die == 1;
-    private string FaceClass(int die) => IsCrit(die) ? "die die-crit" : IsFumble(die) ? "die die-fumble" : "die";
+    /// <summary>Where in <see cref="Kept"/> the roll's d20 check die is; null when it has none.</summary>
+    [Parameter] public int? CheckDieIndex { get; set; }
+
+    // Rolls logged before the check die was recorded: a lone kept die from a plain d20 roll ("1d20+5", "adv"), never a d200 (R8).
+    private static readonly System.Text.RegularExpressions.Regex PlainD20 = new(@"^\s*(?:1?d20(?!\d)|adv|dis)(?:\s*[+-]\s*\d+)*\s*$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    // Only the d20 a check is read from gets crit/fumble marking; other dice have no such meaning.
+    private int? CheckDie => CheckDieIndex ?? (Kept.Count == 1 && PlainD20.IsMatch(Expression) ? 0 : null);
+    private bool IsCrit(int index) => index == CheckDie && Kept[index] == 20;
+    private bool IsFumble(int index) => index == CheckDie && Kept[index] == 1;
+    private string FaceClass(int index) => IsCrit(index) ? "die die-crit" : IsFumble(index) ? "die die-fumble" : "die";
 }

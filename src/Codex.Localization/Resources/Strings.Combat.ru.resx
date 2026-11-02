@@ -86,7 +86,7 @@
   <data name="Combat.TempHp" xml:space="preserve"><value>Врем. ОЗ</value></data>
   <data name="Combat.TempHpTo" xml:space="preserve"><value>Дать временные очки здоровья: {0}</value></data>
   <data name="Combat.IsDead" xml:space="preserve"><value>{0}: {1}.</value></data>
-  <data name="Combat.Revive" xml:space="preserve"><value>Воскресить (снять «{0}»)</value></data>
+  <data name="Combat.Revive" xml:space="preserve"><value>Воскресить</value></data>
   <data name="Combat.ReviveTo" xml:space="preserve"><value>Воскресить: {0}</value></data>
   <data name="Combat.RemoveFromOrder" xml:space="preserve"><value>Убрать из порядка</value></data>
   <data name="Combat.RemoveFromOrderTo" xml:space="preserve"><value>Убрать из порядка: {0}</value></data>
@@ -96,9 +96,28 @@
   <data name="Combat.Stabilize" xml:space="preserve"><value>Стабилизировать</value></data>
   <data name="Combat.MarkDead" xml:space="preserve"><value>Отметить мёртвым</value></data>
   <data name="Combat.MarkDeadTo" xml:space="preserve"><value>Отметить мёртвым: {0}</value></data>
+  <data name="Combat.MarkDeadTitle" xml:space="preserve"><value>Отметить мёртвым: {0}?</value></data>
+  <data name="Combat.MarkDeadText" xml:space="preserve"><value>Смерть по правилам стола: персонаж больше не без сознания, спасброски от смерти сброшены, а то, что он держал концентрацией или что отсчитывалось по его ходам, заканчивается. Воскрешение вернёт его, но не эти эффекты.</value></data>
+  <data name="Combat.Undo" xml:space="preserve"><value>Отменить: {0}</value></data>
+  <data name="Combat.UndoTo" xml:space="preserve"><value>Отменить последнее изменение: {0} ({1})</value></data>
+  <data name="Combat.HeldBy" xml:space="preserve"><value>Держит</value></data>
+  <data name="Combat.HeldByTitle" xml:space="preserve"><value>Чья концентрация поддерживает эффект. Он закончится, когда концентрация прервётся.</value></data>
+  <data name="Combat.HeldByNobody" xml:space="preserve"><value>Никто</value></data>
+  <data name="Combat.EffectHeldBy" xml:space="preserve"><value>Держится на концентрации: {0}.</value></data>
+  <data name="Combat.ConcentrationSave" xml:space="preserve"><value>{0} концентрируется: спасбросок со СЛ {1} сохранит концентрацию.</value></data>
+  <data name="Combat.Visibility.Label" xml:space="preserve"><value>Что игроки видят: {0}</value></data>
+  <data name="Combat.Visibility.PlayersSee" xml:space="preserve"><value>Игроки видят</value></data>
+  <data name="Combat.Visibility.Nothing" xml:space="preserve"><value>Ничего</value></data>
+  <data name="Combat.Visibility.Stranger" xml:space="preserve"><value>Незнакомца</value></data>
+  <data name="Combat.Visibility.Known" xml:space="preserve"><value>Кто это</value></data>
+  <data name="Combat.Visibility.HiddenBadge" xml:space="preserve"><value>Скрыт</value></data>
+  <data name="Combat.Visibility.StrangerBadge" xml:space="preserve"><value>Незнакомец</value></data>
   <data name="Combat.Condition" xml:space="preserve"><value>Состояние</value></data>
   <data name="Combat.Rounds" xml:space="preserve"><value>Раунды</value></data>
   <data name="Combat.RoundsTitle" xml:space="preserve"><value>0 или пусто: пока не снято</value></data>
+  <data name="Combat.AmountNeeded" xml:space="preserve"><value>Сначала введите число больше 0.</value></data>
+  <data name="Combat.InitiativeNeeded" xml:space="preserve"><value>Сначала введите итог инициативы.</value></data>
+  <data name="Combat.ConditionNeeded" xml:space="preserve"><value>Сначала выберите состояние.</value></data>
   <data name="Combat.EndsAt" xml:space="preserve"><value>Заканчивается</value></data>
   <data name="Combat.EndOfTurn" xml:space="preserve"><value>В конце их хода</value></data>
   <data name="Combat.StartOfTurn" xml:space="preserve"><value>В начале их хода</value></data>
@@ -127,13 +146,16 @@
   <data name="Combat.Dm" xml:space="preserve"><value>Мастер</value></data>
   <data name="Combat.Player" xml:space="preserve"><value>Игрок</value></data>
   <data name="Combat.EndTableTitle" xml:space="preserve"><value>Завершить стол?</value></data>
-  <data name="Combat.EndTableCombat" xml:space="preserve"><value>Сессия будет отмечена как завершённая. Порядок инициативы сохранится и вернётся, когда стол этой сессии запустят снова.</value></data>
+  <data name="Combat.EndTableCombat" xml:space="preserve"><value>Сессия остаётся открытой, пока идёт бой, поэтому порядок инициативы вернётся, когда стол запустят снова. Страницы стола у игроков возвращаются к ожиданию.</value></data>
   <data name="Combat.EndTableIdle" xml:space="preserve"><value>Сессия будет отмечена как завершённая. Страницы стола у игроков вернутся в режим ожидания.</value></data>
   <data name="Combat.TableEnded" xml:space="preserve"><value>Стол завершён. Сессия отмечена как завершённая.</value></data>
+  <data name="Combat.TableEndedKept" xml:space="preserve"><value>Стол завершён. Бой сохранён до следующего запуска стола.</value></data>
+  <data name="Combat.TableClosed" xml:space="preserve"><value>Стол закрыт. Запустите его или присоединитесь снова, чтобы продолжить.</value></data>
+  <data name="Combat.CommandFailed" xml:space="preserve"><value>Не получилось. Попробуйте ещё раз; если не выходит, перезагрузите страницу.</value></data>
   <data name="Combat.EndEncounterTitle" xml:space="preserve"><value>Завершить столкновение?</value></data>
   <data name="Combat.EndEncounterText" xml:space="preserve"><value>Порядок инициативы очищается, а состояния с ограничением по раундам истекают. Состояния «пока не снято» остаются.</value></data>
   <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>Добавлять существ может только мастер.</value></data>
-  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} добавлен (скрыт от игроков). Добавьте в инициативу, когда будете готовы.</value></data>
+  <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} добавлен; игроки видят его как незнакомца под этим именем. Добавьте в инициативу, когда будете готовы.</value></data>
   <data name="Combat.Notes.Tab" xml:space="preserve"><value>Заметки</value></data>
   <data name="Combat.Notes.TabTitle" xml:space="preserve"><value>Заметки сессии (клавиша доступа N)</value></data>
   <data name="Combat.Notes.Count" xml:space="preserve"><value>Пока {0}</value></data>

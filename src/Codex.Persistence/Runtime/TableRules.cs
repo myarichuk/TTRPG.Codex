@@ -14,16 +14,19 @@ namespace Codex.Persistence.Runtime;
 /// </summary>
 internal static class TableRules
 {
-    public static string PrimaryKey(CampaignRuntime runtime) => runtime.System?.PrimaryResource?.Key ?? "HP";
-    public static string PrimaryMaxKey(CampaignRuntime runtime) => runtime.System?.PrimaryResource?.MaxKey ?? "HP_Max";
-    public static string TemporaryKey(CampaignRuntime runtime) => runtime.System?.Vitals?.TemporaryResource ?? "TempHP";
+    public static string PrimaryKey(CampaignRuntime runtime) => SystemDefinition.PrimaryKeyOf(runtime.System);
+    public static string PrimaryMaxKey(CampaignRuntime runtime) => MaxKeyOf(runtime, PrimaryKey(runtime));
+    public static string TemporaryKey(CampaignRuntime runtime) => SystemDefinition.TemporaryKeyOf(runtime.System);
 
-    private static string MaxKeyFor(CampaignRuntime runtime, string key) =>
-        runtime.System?.Resources.FirstOrDefault(r => r.Key == key)?.MaxKey ?? key + "_Max";
+    /// <summary>The one rule for where a pool's maximum lives (R9): <see cref="SystemDefinition.MaxKeyOf"/>.</summary>
+    public static string MaxKeyOf(CampaignRuntime runtime, string key) => SystemDefinition.PoolMaxKey(runtime.System, key);
 
     // ---- Damage ----
 
-    public sealed record DamageOutcome(int Amount, int Dealt, int Absorbed, string? Modifier, bool WentDown, bool Died, int FailuresAdded)
+    /// <param name="ConcentrationDc">The save a concentrating creature now makes to keep concentrating; null when it is not.</param>
+    /// <param name="ConcentrationLost">It was concentrating and went down or died, which ends it.</param>
+    public sealed record DamageOutcome(int Amount, int Dealt, int Absorbed, string? Modifier, bool WentDown, bool Died, int FailuresAdded,
+        int? ConcentrationDc = null, bool ConcentrationLost = false)
     {
         public static readonly DamageOutcome Nothing = new(0, 0, 0, null, false, false, 0);
     }
@@ -36,6 +39,25 @@ internal static class TableRules
     /// failed save (two for a critical hit).
     /// </summary>
     public static DamageOutcome ApplyDamage(CampaignRuntime runtime, string actorId, Entity entity, string poolName, int amount, string? damageType, bool isCritical)
+    {
+        var concentrating = IsConcentrating(runtime, entity);
+        var outcome = ApplyDamageCore(runtime, actorId, entity, poolName, amount, damageType, isCritical);
+        if (!concentrating || outcome.Dealt <= 0 || poolName != PrimaryKey(runtime))
+        {
+            return outcome;
+        }
+
+        // Going down or dying ends concentration (Kill has already ended it); otherwise the creature saves to keep it.
+        if (outcome.Died || outcome.WentDown || IsDown(runtime, entity))
+        {
+            EndConcentration(runtime, actorId, entity);
+            return outcome with { ConcentrationLost = true };
+        }
+
+        return outcome with { ConcentrationDc = runtime.System!.Vitals!.Concentration!.DcFor(outcome.Dealt) };
+    }
+
+    private static DamageOutcome ApplyDamageCore(CampaignRuntime runtime, string actorId, Entity entity, string poolName, int amount, string? damageType, bool isCritical)
     {
         if (amount <= 0 || !entity.Has<ResourcePoolComponent>())
         {
@@ -66,7 +88,7 @@ internal static class TableRules
 
         var current = pool.Get(poolName);
         var next = current - remaining;
-        var max = pool.Pools.TryGetValue(MaxKeyFor(runtime, poolName), out var m) ? m : (int?)null;
+        var max = pool.Pools.TryGetValue(MaxKeyOf(runtime, poolName), out var m) ? m : (int?)null;
         if (max.HasValue)
         {
             next = Math.Min(next, max.Value);
@@ -90,7 +112,7 @@ internal static class TableRules
 
         if ((down.InstantDeathAtMax && max is > 0 && overflow >= max.Value) || (!isPlayer && down.NonPlayersDieAtZero))
         {
-            Die(runtime, entity, actorId);
+            Kill(runtime, entity, actorId);
             return new DamageOutcome(amount, dealt, absorbed, modifier, true, true, 0);
         }
 
@@ -195,7 +217,7 @@ internal static class TableRules
 
         var pool = entity.Get<ResourcePoolComponent>();
         var before = pool.Get(poolName);
-        runtime.World.ApplyHealing(entity, poolName, amount);
+        runtime.World.ApplyHealing(entity, poolName, amount, key => MaxKeyOf(runtime, key));
         var after = pool.Get(poolName);
 
         var revived = poolName == PrimaryKey(runtime) && before <= 0 && after > 0 && GetUp(runtime, entity);
@@ -277,7 +299,7 @@ internal static class TableRules
 
         if (failures >= rules.FailuresToDie)
         {
-            Die(runtime, entity, actorId);
+            Kill(runtime, entity, actorId);
             return new DeathSaveOutcome(null, success, successes, failures, false, true, false, false);
         }
 
@@ -322,10 +344,10 @@ internal static class TableRules
         var pool = entity.Get<ResourcePoolComponent>();
         var level = Math.Clamp(pool.Get(rules.Key) + delta, 0, rules.MaxLevel);
         pool.Set(rules.Key, level);
-        pool.Set(rules.Key + "_Max", rules.MaxLevel);
+        pool.Set(MaxKeyOf(runtime, rules.Key), rules.MaxLevel);
         if (level >= rules.MaxLevel && runtime.System?.Vitals?.Down != null && !IsDead(runtime, entity))
         {
-            Die(runtime, entity, actorId);
+            Kill(runtime, entity, actorId);
             return (level, true);
         }
 
@@ -376,7 +398,7 @@ internal static class TableRules
     public static List<EventMessage> Rest(CampaignRuntime runtime, string actorId, Entity entity, string restName, IEnumerable<string> slotPools)
     {
         var happened = new List<EventMessage>();
-        runtime.World.RestoreResources(entity, slotPools);
+        runtime.World.RestoreResources(entity, slotPools, key => MaxKeyOf(runtime, key));
         if (slotPools.Any())
         {
             happened.Add(EventMessage.Of("Rest.Slots"));
@@ -390,7 +412,7 @@ internal static class TableRules
         var pool = entity.Get<ResourcePoolComponent>();
         foreach (var key in rule.Restores)
         {
-            if (pool.Pools.TryGetValue(MaxKeyFor(runtime, key), out var max))
+            if (pool.Pools.TryGetValue(MaxKeyOf(runtime, key), out var max))
             {
                 var before = pool.Get(key);
                 pool.Set(key, max);
@@ -461,30 +483,93 @@ internal static class TableRules
     public static int AttributeModifier(CampaignRuntime runtime, string actorId, Entity entity, string attributeKey)
     {
         var definition = runtime.System?.Attributes.FirstOrDefault(a => a.Key == attributeKey);
-        if (definition == null || definition.Modifier != "half-minus-five")
+        if (definition == null)
         {
             return 0;
         }
 
         int? score = entity.Has<AttributesComponent>() && entity.Get<AttributesComponent>().Values.TryGetValue(attributeKey, out var live) ? live : null;
         score ??= runtime.GetActorDocument(actorId) is { } doc ? YamlValues.GetInt(doc.Sheet, attributeKey) : null;
-        return (int)Math.Floor(((score ?? definition.Default) - 10) / 2.0);
+        return definition.ModifierFor(score ?? definition.Default) ?? 0;
     }
 
-    private static void Die(CampaignRuntime runtime, Entity entity, string actorId)
+    /// <summary>Death, by the rules or by the DM's hand (R3): the dead condition, no longer down or stable, the death-save
+    /// tally gone, and what hung on this creature ends with it (R4): its concentration, and the timed effects counted on its
+    /// turns, which will not come round again. Returns false when it was already dead or the system has no death.</summary>
+    public static bool Kill(CampaignRuntime runtime, Entity entity, string actorId)
     {
-        if (runtime.System?.Vitals?.Down is not { } down)
+        if (runtime.System?.Vitals?.Down is not { } down || IsDead(runtime, entity))
         {
-            return;
+            return false;
         }
 
         runtime.World.RemoveStatus(entity, down.Condition);
         runtime.World.RemoveStatus(entity, down.StableCondition);
         ResetDeathSaves(runtime, entity);
-        if (!CodexWorld.HasStatus(entity, down.DeadCondition))
+        EndConcentration(runtime, actorId, entity);
+        ExpireTurnsOf(runtime, actorId);
+        runtime.World.AddStatus(entity, down.DeadCondition, "died", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, actorId);
+        return true;
+    }
+
+    /// <summary>Back from the dead (a revival spell, or a death marked by mistake), R3: no longer dead, down or stable, the
+    /// death-save tally reset, and on at least one hit point, so the next hit does not finish a creature still carrying two
+    /// failed saves. Returns false when it was not dead.</summary>
+    public static bool Revive(CampaignRuntime runtime, Entity entity)
+    {
+        if (runtime.System?.Vitals?.Down is not { } down || !IsDead(runtime, entity))
         {
-            runtime.World.AddStatus(entity, down.DeadCondition, "died", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, actorId);
+            return false;
         }
+
+        runtime.World.RemoveStatus(entity, down.DeadCondition);
+        GetUp(runtime, entity);
+        if (entity.Has<ResourcePoolComponent>())
+        {
+            var pool = entity.Get<ResourcePoolComponent>();
+            pool.Set(PrimaryKey(runtime), Math.Max(1, pool.Get(PrimaryKey(runtime))));
+        }
+
+        return true;
+    }
+
+    /// <summary>Ends the timed effects counted on <paramref name="actorId"/>'s turns, on every creature: it died or left the
+    /// order, so those turns will not come (R4). Returns how many ended.</summary>
+    public static int ExpireTurnsOf(CampaignRuntime runtime, string actorId)
+    {
+        var ended = runtime.World.ExpireAnchoredTo(actorId).Count;
+        if (ended > 0)
+        {
+            runtime.MarkAllHydratedActorsDirty();
+        }
+
+        return ended;
+    }
+
+    // ---- Concentration ----
+
+    public static bool IsConcentrating(CampaignRuntime runtime, Entity entity) =>
+        runtime.System?.Vitals?.Concentration is { } rules && CodexWorld.HasStatus(entity, rules.Condition);
+
+    /// <summary>The condition a concentrating creature carries, or null when the system has no concentration.</summary>
+    public static string? ConcentrationCondition(CampaignRuntime runtime) => runtime.System?.Vitals?.Concentration?.Condition;
+
+    /// <summary>Ends <paramref name="actorId"/>'s concentration: the condition goes, and so does every effect it held up, on
+    /// whichever creature carries it (R4). Returns how many held effects ended.</summary>
+    public static int EndConcentration(CampaignRuntime runtime, string actorId, Entity entity)
+    {
+        if (ConcentrationCondition(runtime) is { } condition)
+        {
+            runtime.World.RemoveStatus(entity, condition);
+        }
+
+        var ended = runtime.World.EndHeldBy(actorId).Count;
+        if (ended > 0)
+        {
+            runtime.MarkAllHydratedActorsDirty();
+        }
+
+        return ended;
     }
 
     /// <summary>Back above zero: no longer down or stable, death saves reset. Returns whether anything changed.</summary>

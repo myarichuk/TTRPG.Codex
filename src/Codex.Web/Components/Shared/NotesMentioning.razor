@@ -31,11 +31,11 @@
                 </div>
                 @if (note.SpeakerActorId != null)
                 {
-                    <p class="mb-0"><strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, Actors, IsDm, L["Session.UnknownSpeaker"]):</strong> <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q></p>
+                    <p class="mb-0"><strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, Actors, IsDm, L["Session.UnknownSpeaker"]):</strong> <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></q></p>
                 }
                 else
                 {
-                    <p class="mb-0 notes-text"><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></p>
+                    <p class="mb-0 notes-text"><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></p>
                 }
             </li>
         }
@@ -72,6 +72,7 @@
     /// <summary>The actors this viewer may see, to name the speaker of a quote.</summary>
     [Parameter] public IReadOnlyDictionary<string, ActorDocument> Actors { get; set; } = new Dictionary<string, ActorDocument>();
     [Parameter] public bool IsDm { get; set; }
+    private DmView? NoteDm => IsDm ? DmView.From(L, Mentions) : null;
     [Parameter] public string CampaignId { get; set; } = string.Empty;
 
     private IReadOnlyList<(string Id, string Title, DateTime Date)> sessionGroups = Array.Empty<(string, string, DateTime)>();
@@ -104,7 +105,7 @@
                 }
                 @if (written.Private && written.Source is WrittenIn.Comment) { <span class="pill">@L["Combat.Mention.Private"]</span> }
             </div>
-            <p class="mb-0 notes-text"><MentionText Text="@written.Excerpt" Mentions="Mentions" CampaignId="@CampaignId" /></p>
+            <p class="mb-0 notes-text"><MentionText Text="@written.Excerpt" Mentions="Mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></p>
         </li>;
 
     private string HomeLabel(MentionHome home) => home switch
@@ -125,12 +126,5 @@
         _ => L["Combat.Mention.Source.DmNotes"]
     };
 
-    private string KindLabel(NoteKind kind) => kind switch
-    {
-        NoteKind.Clue => L["Combat.Notes.Kind.Clue"],
-        NoteKind.Loot => L["Combat.Notes.Kind.Loot"],
-        NoteKind.Ruling => L["Combat.Notes.Kind.Ruling"],
-        NoteKind.FollowUp => L["Combat.Notes.Kind.FollowUp"],
-        _ => L["Combat.Notes.Kind.Note"]
-    };
+    private string KindLabel(NoteKind kind) => NoteKindText.Label(L, kind);
 }

@@ -1,0 +1,47 @@
+@using Codex.Plugin.Abstractions
+@inject IContentRegistry ContentRegistry
+
+@* The DM's search through the system's creatures, to put one at the table. The console makes the creature (OnAdd);
+   the box clears once it is there. *@
+<section class="panel" aria-labelledby="quick-add-heading">
+    <div class="panel-title"><h3 id="quick-add-heading">@L["Combat.QuickAdd"]</h3></div>
+    <div class="search mb-2">
+        <LucideIcon IconName="search" Size="18" Class="search-icon" />
+        <label for="monster-search" class="visually-hidden">@L["Combat.SearchCreatures"]</label>
+        <input id="monster-search" type="search" class="field-input field-sm" placeholder="@L["Combat.SearchPlaceholder"]" @bind="search" @bind:event="oninput" />
+    </div>
+    @if (search.Length > 0)
+    {
+        <ul class="list-unstyled mb-0">
+            @foreach (var definition in Matches().Take(12))
+            {
+                <li class="list-row">
+                    <span>@definition.Name</span>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddAsync(definition)" aria-label="@(L["Combat.AddToEncounterFor", definition.Name])">@L["Combat.AddToEncounter"]</CodexButton>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="small-muted mb-0">@L["Combat.QuickAddHint"]</p>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string SystemId { get; set; } = string.Empty;
+
+    /// <summary>Puts the creature at the table; false when it could not (the console has said why).</summary>
+    [Parameter, EditorRequired] public Func<IActorDefinition, Task<bool>> OnAdd { get; set; } = null!;
+
+    private string search = string.Empty;
+
+    private IEnumerable<IActorDefinition> Matches() =>
+        ContentRegistry.GetActorsBySystem(SystemId).Where(a => a.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+            a.Tags.Any(t => t.Contains(search, StringComparison.OrdinalIgnoreCase)));
+
+    private async Task AddAsync(IActorDefinition definition)
+    {
+        if (await OnAdd(definition)) search = string.Empty;
+    }
+}

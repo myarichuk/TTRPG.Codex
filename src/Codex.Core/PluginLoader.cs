@@ -26,7 +26,7 @@ public class PluginLoader(
     public bool IsLoading { get; private set; }
     public Exception? LoadException { get; private set; }
     public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
-    public event Action? OnPluginsLoaded;
+
 
     /// <summary>Problems found while loading that a DM should see (bad manifest, invalid system.yaml...).</summary>
     public IReadOnlyList<string> LoadWarnings => _warnings;
@@ -100,13 +100,13 @@ public class PluginLoader(
             catch (Exception ex)
             {
                 LoadException = ex;
+                _warnings.Add($"Loading systems and content packs stopped part-way: {ex.Message}");
                 logger.LogError(ex, "Plugin loading failed");
             }
             finally
             {
                 IsLoaded = true;
                 IsLoading = false;
-                OnPluginsLoaded?.Invoke();
             }
         }
         finally
@@ -223,6 +223,9 @@ public class PluginLoader(
                 Warn($"Pack '{manifest.Id}' failed to load: {ex.Message}");
                 logger.LogError(ex, "Failed to load content pack from {Path}", packPath);
             }
+
+            // Entries the pack loader skipped or loaded without what they inherit: already logged there.
+            _warnings.AddRange(contentPackLoader.TakeProblems());
         }
     }
 

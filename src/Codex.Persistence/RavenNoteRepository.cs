@@ -1,3 +1,4 @@
+using Codex.Core;
 using Raven.Client.Documents;
 
 namespace Codex.Persistence;
@@ -11,11 +12,28 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
         await session.SaveChangesAsync();
     }
 
-    public async Task DeleteNoteAsync(string id)
+    public async Task<bool> DeleteNoteAsync(string id, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         using var session = dbService.Store.OpenAsyncSession();
-        session.Delete(id);
+        var note = await session.LoadAsync<NoteDocument>(id);
+        if (note == null || note.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        var campaign = await session.LoadAsync<CampaignDocument>(access.CampaignId);
+        var role = campaign == null ? null : CampaignAccessResolver.RoleOf(campaign, access.UserId);
+        if (role != CampaignRole.DM && (role == null || note.AuthorId != access.UserId))
+        {
+            return false;
+        }
+
+        session.Delete(note);
         await session.SaveChangesAsync();
+        return true;
     }
 
     public async Task<IEnumerable<NoteDocument>> GetNotesForTargetAsync(string targetId, CampaignAccess access)
@@ -33,7 +51,7 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
             query = query.Where(x => x.Visibility == CommentVisibility.Public || x.AuthorId == access.UserId);
         }
 
-        return await query.OrderByDescending(x => x.CreatedAt).ToListAsync();
+        return await ForReaderAsync(session, await query.OrderByDescending(x => x.CreatedAt).ToListAsync(), access);
     }
 
     public async Task<IEnumerable<NoteDocument>> GetVisibleForCampaignAsync(CampaignAccess access)
@@ -49,7 +67,26 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
             query = query.Where(x => x.Visibility == CommentVisibility.Public || x.AuthorId == access.UserId);
         }
 
-        return await query.ToListAsync();
+        return await ForReaderAsync(session, await query.ToListAsync(), access);
+    }
+
+    /// <summary>Comments are written in the same boxes as pages, and a DM who pastes a paragraph with a <c>:::dm</c> block
+    /// into one ships the block with it (S5). A player reads other people's comments as they read a page; their own come
+    /// whole, since they wrote them (and may edit them).</summary>
+    private static async Task<List<NoteDocument>> ForReaderAsync(Raven.Client.Documents.Session.IAsyncDocumentSession session, List<NoteDocument> notes, CampaignAccess access)
+    {
+        if (access.IsDm || !notes.Any(n => n.AuthorId != access.UserId && SecretText.HasMarkers(n.Content)))
+        {
+            return notes;
+        }
+
+        var owned = await OwnedActors.OfAsync(session, access);
+        foreach (var note in notes.Where(n => n.AuthorId != access.UserId && SecretText.HasMarkers(n.Content)))
+        {
+            note.Content = SecretText.ForPlayers(note.Content, owned);
+        }
+
+        return notes;
     }
 
     public async Task<IEnumerable<NoteDocument>> GetAllForCampaignAsync(string campaignId)
@@ -75,6 +112,7 @@ public class RavenNoteRepository(RavenDbService dbService) : INoteRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var toDelete = await session.Query<NoteDocument, NotesByTargetIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(x => x.CampaignId == campaignId)
             .ToListAsync();
 

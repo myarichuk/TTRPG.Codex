@@ -37,7 +37,7 @@ Until the campaign is set up, the Overview shows you a [[ui:Campaign.Setup.Title
 
 ![The Overview's Getting started list: the campaign described, the players invited and the cast begun; a page, a place and a session still to do.](shot:setup)
 
-When a player opens the link they sign in or create an account and land in the campaign as a player. A link works for anyone who has it, so if it spreads further than you wanted, press [[ui:Campaign.Settings.NewLink]] in Settings: the old link stops working.
+When a player opens the link they sign in or create an account and land in the campaign as a player. A link works for anyone who has it, so if it spreads further than you wanted, press [[ui:Campaign.Settings.NewLink]] in Settings: the old link stops working. Before making one, choose how long new links work: [[ui:Campaign.Settings.InviteValidity.Forever]], [[ui:Campaign.Settings.InviteValidity.Week]], [[ui:Campaign.Settings.InviteValidity.Day]], or [[ui:Campaign.Settings.InviteValidity.Once]] (the first player to use it gets in, and nobody after them).
 
 ![The Campaigns page, with a campaign card and a New campaign button.](shot:home)
 
@@ -48,7 +48,7 @@ When a player opens the link they sign in or create an account and land in the c
 
 Open [[ui:Page.Campaign.Section.Cast]].
 
-- **Players** press [[ui:Campaign.Cast.NewPlayer]] and build their own character. Each player can keep their own characters and retire them.
+- **Players** press [[ui:Campaign.Cast.NewPlayer]] and build their own character. Each player can keep their own characters and retire them with [[ui:Campaign.Cast.Retire]]. A retired character leaves the cast and the table, but notes and pages that mention it keep its name, and the DM can press [[ui:Campaign.Cast.Restore]] in the retired list at the foot of the cast to put it back.
 - **The DM** presses [[ui:Campaign.Cast.NewDm]] for an NPC or monster, or [[ui:Campaign.Cast.CreateWithAi]] to turn a one-line concept into a draft sheet that uses only classes, species and backgrounds in your Library.
 
 Every NPC and monster has a visibility, and this is how you keep secrets:
@@ -73,7 +73,9 @@ Click any character to open their sheet. It is drawn from the game system's defi
 
 Below it, tabs hold the attributes and skills, the picks (feats, spells and so on), the inventory, the history and, for the DM only, private notes about the character. Press [[ui:Actor.Sheet.SaveChanges]] when you are done; a counter next to it shows how many edits are unsaved. Ctrl+S (Cmd+S on a Mac) saves too, here and in every other editor; on a phone, Save stays at the bottom of the screen while you write.
 
-**Rule checks.** Point buy, class spell lists, subclass and feat limits come from the system. Under [[ui:Page.Campaign.Section.Settings]] you set **[[ui:Campaign.Settings.Rules.Label]]** to *Strict* (players cannot save a sheet that breaks a rule), *Warn only*, or *Off*. The DM can always enter scores by hand.
+**Rule checks.** Point buy, class spell lists, subclass and feat limits come from the system. Under [[ui:Page.Campaign.Section.Settings]] you set **[[ui:Campaign.Settings.Rules.Label]]** to *Strict* (players cannot save a sheet that breaks a rule), *Warn only*, or *Off*. The DM can always enter scores by hand. A character with several classes prepares spells against each class's own limit, so a wizard 5 / cleric 1 cannot spend the cleric's share on wizard spells. A homebrew class with no hit die, or with spell slots but no spellcasting ability, is named in a warning, and so are skills chosen beyond what the class offers.
+
+**Carried weight.** The inventory adds up what the character carries and shows it against what they can carry (for the SRD, Strength × 15 pounds). Carrying more is a warning, not a block.
 
 **Levelling up.** The [[ui:Actor.Sheet.LevelUp]] panel explains what the next level brings from the Library's class entries and which choices it forces. With an AI model set up, it can also suggest picks that fit the character and the story.
 
@@ -137,7 +139,7 @@ This is the part you use at the table.
 1. Open [[ui:Page.Campaign.Section.Table]] and press [[ui:Combat.Console.StartTable]]. Every player's page attaches to the running table; until then they see “[[ui:Combat.Console.WaitingDm]]”. Players press [[ui:Campaign.Overview.JoinTable]].
 2. Add combatants with [[ui:Combat.AddToInitiative]]: pick someone, then either roll a d20 for them or type their total and press [[ui:Combat.Set]]. Use [[ui:Combat.QuickAdd]] to search the Library and drop a monster straight in.
 3. Press [[ui:Combat.NextTurn]] to move through the order ([[ui:Combat.Previous]] steps back). The active turn is highlighted, and the round counter advances.
-4. Click a combatant to open their controls. Apply damage or healing, add temporary hit points, and add a condition with a round count: it counts down by itself and expires at the right moment. Death saves, hit dice, spell slots and exhaustion are tracked here as well.
+4. Click a combatant to open their controls. Apply damage or healing, add temporary hit points, and add a condition with a round count: it counts down by itself and expires at the right moment. Death saves, hit dice, spell slots and exhaustion are tracked here as well. Pressed the wrong button? The undo button in the same panel takes back the last change to that creature.
 5. The dice tray rolls any expression such as `1d20` or `2d6+3`. Tick **[[ui:Combat.SecretRoll]]** and only you see the result.
 6. The [[ui:Combat.Notes.Tab]] tab on the edge of the screen holds quick notes you can mention people and places in. They flow into the session log.
 7. When the fight is over, press [[ui:Combat.EndEncounter]]. When the evening is over, press [[ui:Combat.EndTable]].
@@ -146,7 +148,7 @@ This is the part you use at the table.
 
 ### What players see {#players-view}
 
-Players follow the same initiative order and see changes the moment you make them. They see exact numbers for their own characters, while creatures show only how they look ([[ui:Combat.Hp.Healthy]], [[ui:Combat.Hp.Bloodied]] and so on), and hidden NPCs do not appear in the order at all. On a phone the table is laid out for one hand.
+Players follow the same initiative order and see changes the moment you make them. They see exact numbers for their own characters, while creatures show only how they look ([[ui:Combat.Hp.Healthy]], [[ui:Combat.Hp.Bloodied]] and so on), and hidden NPCs do not appear in the order at all. While a hidden creature acts, the turn banner reads “[[ui:Combat.SomeoneUnseen]]”, as a DM pauses behind the screen; its name, rolls and place in the order stay hidden. On a phone the table is laid out for one hand.
 
 ![A player's phone: the initiative order and a character sheet.](shot:phone-table)
 ![A player's phone: the initiative order and a character sheet.](shot:phone-sheet)
@@ -155,10 +157,12 @@ Players follow the same initiative order and see changes the moment you make the
 
 Open [[ui:Page.Campaign.Section.Sessions]] and choose the session. Everything that happened at the table is in its event log: rolls, damage, conditions, turns.
 
-- **Recap.** Write what the party should remember, or press [[ui:Session.Prefill]] to start from the log. Press [[ui:Session.SaveRecap]] and the players can read it.
+- **Recap.** Write what the party should remember, or press [[ui:Session.Prefill]] to start from the log. Once it is saved, the players can read it.
 - **DM summary.** A separate, secret summary for you. It can include things the players never saw.
 - **Table notes** can be private to their author or shared with the party.
-- **My journal** is each person's private notebook, one entry per session or free-standing. Nobody else sees it, not even the DM. Save with [[ui:Session.SaveJournal]].
+- **My journal** is each person's private notebook, one entry per session or free-standing. Nobody else sees it, not even the DM.
+
+One [[ui:Common.Save]] at the bottom of the page saves everything you changed here, the recap, the summary and your journal alike; Ctrl+S does the same. The DM can remove a session with [[ui:Session.Delete.Label]], though not while the table is running it.
 
 ![A session page with the recap editor, the private journal and the event log.](shot:session)
 
@@ -169,10 +173,12 @@ With an AI model set up, [[ui:Session.DraftAi]] writes a first draft of the reca
 AI is off until you set it up, and it never runs by itself. Click your name in the header and choose [[ui:Layout.User.AiSettings]].
 
 1. Add a **text model**. OpenRouter is pre-selected (one key, most current models), and there are presets for OpenAI, Groq, Mistral, a local Ollama or LM Studio, and any custom `/v1/chat/completions` endpoint.
-2. Paste your key. Keys are stored encrypted on your server, and settings are per user.
+2. Paste your key. Keys are stored encrypted on your server and tied to your account, and settings are per user. If you set up AI in an older version, enter your keys once more: the page says which ones.
 3. Optionally add an **image model** to draw portraits and art.
 
 ![AI settings: text and image models, with OpenRouter pre-selected.](shot:ai-settings)
+
+The person running the server can also give the whole server a model and key in its settings file. Anyone without models of their own then uses those, within a daily allowance per account (200 requests and 20 pictures unless the server sets other numbers). AI settings says when this is so and how much you have used today; the server's admin sees everyone's use.
 
 What it can do: draft session recaps, write or rewrite a character's history or the DM's notes on an NPC, give level-up advice, build a character from a concept, expand rough wiki notes, and, in the [[ui:Page.Campaign.Section.Build]], hold named chats that read your campaign and Library and propose places, people, factions, quests, secrets, spells, items and creatures. Each proposal is reviewed entry by entry, and **nothing is saved until you apply it**; everything starts hidden. Every tool call the model makes can be opened, down to the raw JSON.
 
@@ -186,7 +192,7 @@ What it can do: draft session recaps, write or rewrite a character's history or 
 - **Details:** name, tagline, description, cover art and the sheet-check rule.
 - **[[ui:Campaign.Settings.Packs.Title]]:** untick a pack to keep it out of this campaign's Library.
 - **[[ui:Campaign.Settings.Members]]:** give each person a role of [[ui:Campaign.Settings.Role.DM]], [[ui:Campaign.Settings.Role.Player]] or [[ui:Campaign.Settings.Role.Observer]], or remove them. Removed players lose access; their characters stay in the cast.
-- **Invite link:** copy it, or make a new one.
+- **Invite link:** copy it, or make a new one that lasts until replaced, for a week, for a day, or for one player.
 - **Backup:** [[ui:Campaign.Settings.Export]] downloads the whole campaign as one file, and [[ui:Campaign.Settings.Import]] restores it, even as a new campaign. Export regularly.
 
 ![Campaign settings: details, content packs, members and backup.](shot:settings)

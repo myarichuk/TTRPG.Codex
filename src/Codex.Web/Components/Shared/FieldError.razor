@@ -1,0 +1,14 @@
+@using Codex.Web.Components.Layout
+
+@* What is wrong with one field, said under it (U5): the field names it in aria-describedby and sets aria-invalid. Renders
+   nothing while there is no error. *@
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div id="@Id" class="field-error" role="alert" data-testid="@TestId"><LucideIcon IconName="alert-triangle" Size="14" /> @Message</div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string? TestId { get; set; }
+}

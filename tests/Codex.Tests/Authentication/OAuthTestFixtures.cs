@@ -31,11 +31,11 @@ public static class OAuthTestFixtures
         var identity = new ClaimsIdentity(claims, provider);
         var principal = new ClaimsPrincipal(identity);
 
+        // As RemoteAuthenticationHandler leaves it: only the scheme, no Identity "LoginProvider" item.
         var properties = new AuthenticationProperties
         {
             Items =
             {
-                ["LoginProvider"] = provider,
                 [".AuthScheme"] = provider
             }
         };

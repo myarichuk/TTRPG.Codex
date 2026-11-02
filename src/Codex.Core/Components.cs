@@ -17,8 +17,9 @@ public enum EffectExpiry
 /// counts), matching how conditions actually work at a table. The anchor is an id, not a live
 /// entity, so the effect can be stored with the actor and survive the table being ended.
 /// A <see cref="RoundsRemaining"/> below zero means "until removed".
+/// <see cref="HeldBy"/> names the actor whose concentration keeps the effect up: it ends when they stop concentrating.
 /// </summary>
-public record ActiveEffect(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry, string AnchorId)
+public record ActiveEffect(string EffectId, string SourceId, int RoundsRemaining, EffectExpiry Expiry, string AnchorId, string? HeldBy = null)
 {
     public const int Indefinite = -1;
 

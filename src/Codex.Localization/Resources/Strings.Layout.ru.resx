@@ -20,6 +20,9 @@
   <data name="Layout.Menu" xml:space="preserve"><value>Меню</value></data>
   <data name="Layout.SignIn" xml:space="preserve"><value>Войти</value></data>
   <data name="Layout.SkipLink" xml:space="preserve"><value>Перейти к основному содержимому</value></data>
+  <data name="Layout.ErrorTitle" xml:space="preserve"><value>На этой странице что-то пошло не так.</value></data>
+  <data name="Layout.ErrorBody" xml:space="preserve"><value>Ничего сохранённого не потеряно. Попробуйте ещё раз или вернитесь и откройте страницу заново.</value></data>
+  <data name="Layout.ErrorRetry" xml:space="preserve"><value>Попробовать снова</value></data>
   <data name="Layout.Reconnect.Title" xml:space="preserve"><value>Соединение потеряно</value></data>
   <data name="Layout.Reconnect.First" xml:space="preserve"><value>Переподключение к серверу…</value></data>
   <data name="Layout.Reconnect.RetryBefore" xml:space="preserve"><value>Соединение нестабильно. Повтор через </value></data>
@@ -27,6 +30,17 @@
   <data name="Layout.Reconnect.Failed" xml:space="preserve"><value>Не удалось восстановить соединение с сервером.</value></data>
   <data name="Layout.Reconnect.Paused" xml:space="preserve"><value>Работа приостановлена, пока вкладка была в фоне.</value></data>
   <data name="Layout.Reconnect.ResumeFailed" xml:space="preserve"><value>Не удалось возобновить работу. Перезагрузите страницу, чтобы продолжить.</value></data>
+  <data name="Layout.Reconnect.Rejected" xml:space="preserve"><value>Сервер больше не держит эту страницу открытой, поэтому её нужно перезагрузить. Всё, что вы ввели и не сохранили, сохранено и будет предложено снова после перезагрузки.</value></data>
+  <data name="Layout.Drafts.FoundOne" xml:space="preserve"><value>Страница перезагрузилась после потери соединения. В одном поле здесь был введённый вами и не сохранённый текст.</value></data>
+  <data name="Layout.Drafts.FoundMany" xml:space="preserve"><value>Страница перезагрузилась после потери соединения. В полях здесь ({0}) был введённый вами и не сохранённый текст.</value></data>
+  <data name="Layout.Drafts.Restore" xml:space="preserve"><value>Вернуть текст</value></data>
+  <data name="Layout.Preview.Pin" xml:space="preserve"><value>Закрепить: карточка останется открытой</value></data>
+  <data name="Layout.Preview.Unpin" xml:space="preserve"><value>Открепить</value></data>
+  <data name="Layout.Preview.Close" xml:space="preserve"><value>Закрыть карточку</value></data>
+  <data name="Layout.Preview.Open" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Layout.Preview.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Layout.Preview.Names" xml:space="preserve"><value>Упомянуты:</value></data>
+  <data name="Layout.Drafts.Discard" xml:space="preserve"><value>Отбросить</value></data>
   <data name="Layout.Reconnect.TryAgain" xml:space="preserve"><value>Повторить</value></data>
   <data name="Layout.Reconnect.Resume" xml:space="preserve"><value>Продолжить</value></data>
   <data name="Layout.Reconnect.Reload" xml:space="preserve"><value>Перезагрузить страницу</value></data>
@@ -35,6 +49,7 @@
   <data name="Layout.Picker.Nothing" xml:space="preserve"><value>Пока ничего не выбрано.</value></data>
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>Выбрано: {0}</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>Убрать: {0}</value></data>
+  <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>Этого больше нет в Библиотеке. Уберите его или попросите мастера вернуть запись.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Достигнут предел</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Сейчас ничего не доступно. Проверьте класс, уровень и правила выше.</value></data>
 </root>

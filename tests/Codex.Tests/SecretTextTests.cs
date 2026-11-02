@@ -90,6 +90,60 @@ public class SecretTextTests
     }
 
     [Fact]
+    public void KeepSecrets_PutsARevealedBlockTheyLeftAloneBackInItsMarkers()
+    {
+        // The player fixes a typo in the first line; the revealed block keeps its stamp, so the DM can still hide it again (D16).
+        const string stored = "Born at sae.\n:::party 2026-10-01T10:00:00Z\nShe saw the drowned bell.\n:::\n:::dm\nHer father leads the cult.\n:::";
+        var given = SecretText.ForPlayers(stored);
+        Assert.Equal("Born at sae.\n\nShe saw the drowned bell.", given);
+
+        var saved = SecretText.KeepSecrets(stored, given.Replace("sae", "sea"));
+
+        Assert.Equal("Born at sea.\n\n:::party 2026-10-01T10:00:00Z\nShe saw the drowned bell.\n:::\n\n:::dm\nHer father leads the cult.\n:::", saved);
+        Assert.Equal(saved, SecretText.KeepSecrets(saved, SecretText.ForPlayers(saved)));
+
+        // A revealed block the player rewrote keeps its markers too, with their words in it.
+        Assert.Equal("Born at sea.\n\n:::party 2026-10-01T10:00:00Z\nShe heard the drowned bell.\n:::\n\n:::dm\nHer father leads the cult.\n:::",
+            SecretText.KeepSecrets(stored, "Born at sea.\n\nShe heard the drowned bell."));
+    }
+
+    [Fact]
+    public void KeepSecrets_KeepsAnEditedRevealedBlock_AndEveryHiddenBlockWhereItStood()
+    {
+        const string stored = "Born at sea.\n:::dm\nHer father leads the cult.\n:::\nRaised in Greyharbour.\n:::players\nShe has a fine voice.\nShe sings at the inn.\n:::\nLoves boats.";
+        var given = SecretText.ForPlayers(stored);
+        Assert.Equal("Born at sea.\n\nRaised in Greyharbour.\n\nShe has a fine voice.\nShe sings at the inn.\n\nLoves boats.", given);
+
+        var edited = given.Replace("fine voice", "lovely voice").Replace("Loves boats.", "Loves boats.\n\nHates gulls.");
+        var saved = SecretText.KeepSecrets(stored, edited);
+
+        // The DM block stays between the lines it was between, not at the end (D16), and the players' block keeps its opener.
+        Assert.Equal("Born at sea.\n\n:::dm\nHer father leads the cult.\n:::\n\nRaised in Greyharbour.\n\n:::players\nShe has a lovely voice.\nShe sings at the inn.\n:::\n\nLoves boats.\n\nHates gulls.", saved);
+        Assert.Equal(edited, SecretText.ForPlayers(saved));
+        Assert.Equal(saved, SecretText.KeepSecrets(saved, SecretText.ForPlayers(saved)));
+        Assert.Equal(saved, SecretText.KeepSecrets(stored, saved));
+    }
+
+    [Fact]
+    public void KeepSecrets_LeavesNewParagraphsOutOfARevealedBlock_AndDropsOneThePlayerDeleted()
+    {
+        const string stored = "Born at sea.\n:::party 2026-10-01T10:00:00Z\nShe saw the drowned bell.\n:::";
+
+        Assert.Equal("Born at sea.\n\nA new line.\n\n:::party 2026-10-01T10:00:00Z\nShe saw the drowned bell.\n:::",
+            SecretText.KeepSecrets(stored, "Born at sea.\n\nA new line.\n\nShe saw the drowned bell."));
+        Assert.Equal("Born at sea.", SecretText.KeepSecrets(stored, "Born at sea."));
+    }
+
+    [Fact]
+    public void KeepSecrets_KeepsANestedOrUnclosedDmBlockWhole()
+    {
+        const string stored = "Mine.\n:::dm\nOuter.\n:::party\nInner.\n:::\n:::\nEnd.\n:::dm\nNever closed.";
+
+        Assert.Equal("Mine!\n\n:::dm\nOuter.\n:::party\nInner.\n:::\n:::\n\nEnd.\n\n:::dm\nNever closed.\n:::",
+            SecretText.KeepSecrets(stored, "Mine!\n\nEnd."));
+    }
+
+    [Fact]
     public void Blocks_NumberEachOpeningLine_AndKnowWhatIsInsideADmBlock()
     {
         var blocks = SecretText.Blocks("a\n:::dm\nb\n:::party\nc\n:::\n:::\n:::for [[actor:x]] [[actor:y]]\nd\n:::\n:::dm\nnever closed\nstill");
@@ -193,6 +247,19 @@ public class SecretTextTests
 
         var twice = SecretText.SetPlayersVersion(once, 0, "The keeper runs the smugglers.", "Boats come and go\n:::\n:::dm\nby night.");
         Assert.Equal("Intro.\n:::dm\nThe keeper runs the smugglers.\n:::\n\n:::players\nBoats come and go\nby night.\n:::\n\nAfter.", twice);
+    }
+
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    [InlineData("\r")]
+    public void PlayersVersionOf_FindsTheVersionBesideTheSecret_WhateverTheLineEnds(string eol)
+    {
+        var text = string.Join(eol, "Intro.", ":::dm", "Secret.", ":::", "", ":::players", "Told.", ":::", "", ":::dm", "Another.", ":::");
+        var blocks = SecretText.Blocks(text);
+
+        Assert.Equal("Told.", SecretText.PlayersVersionOf(text, blocks.First(b => b.Inner == "Secret."))?.Inner);
+        Assert.Null(SecretText.PlayersVersionOf(text, blocks.First(b => b.Inner == "Another.")));
     }
 
     [Theory]

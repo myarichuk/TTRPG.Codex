@@ -5,6 +5,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Service.Ai.NotConfigured" xml:space="preserve"><value>No AI provider is set up.</value></data>
+  <data name="Service.Ai.ServerAllowanceSpent" xml:space="preserve"><value>You have used today's {0} requests on the server's AI model. Add a model of your own under AI settings, or try again tomorrow.</value></data>
   <data name="Service.Ai.ImageNotConfigured" xml:space="preserve"><value>No image provider is set up.</value></data>
   <data name="Service.Ai.DmOnlySummary" xml:space="preserve"><value>Only the DM drafts session summaries.</value></data>
   <data name="Service.Ai.NeedsSetup" xml:space="preserve"><value>The provider needs an endpoint, a model and (for hosted services) an API key.</value></data>

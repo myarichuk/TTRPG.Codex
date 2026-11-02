@@ -1,5 +1,8 @@
 namespace Codex.Persistence;
 
+/// <summary>A place taken off the map, and the places inside it that moved up to its parent.</summary>
+public sealed record RemovedLocation(LocationDocument Location, IReadOnlyList<string> MovedIds);
+
 public interface IRegionRepository
 {
     /// <summary>
@@ -24,6 +27,18 @@ public interface IRegionRepository
 
     /// <summary>Sets a location's visibility - the "Reveal to party" action (2.5). DM only.</summary>
     Task<bool> SetLocationVisibilityAsync(string regionId, string locationId, ActorVisibility visibility, CampaignAccess access);
+
+    /// <summary>Takes a place off the map (U7). The places inside it move up to its parent. Returns what
+    /// was removed and the places that moved, for <see cref="RestoreLocationAsync"/>; null when there is no such place or the
+    /// caller is not the DM. Its art stays on the region, so an undo gets it back. DM only.</summary>
+    Task<RemovedLocation?> RemoveLocationAsync(string regionId, string locationId, CampaignAccess access);
+
+    /// <summary>Puts a removed place back, and the places that moved out of it back inside it (those still where the removal put
+    /// them). DM only.</summary>
+    Task<bool> RestoreLocationAsync(string regionId, RemovedLocation removed, CampaignAccess access);
+
+    /// <summary>Deletes a region with every place in it and their art (U7). DM only; false for a region outside the campaign.</summary>
+    Task<bool> DeleteAsync(string regionId, CampaignAccess access);
 
     /// <summary>Deletes every region belonging to a campaign (cascade delete).</summary>
     Task DeleteAllForCampaignAsync(string campaignId);

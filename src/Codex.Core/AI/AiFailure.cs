@@ -94,6 +94,9 @@ public sealed record AiFailure(AiFailureKind Kind, string Detail)
         }
     }
 
+    /// <summary>The HTTP status the provider answered with, wherever it sits in the exception chain; 0 when none says.</summary>
+    public static int StatusOf(Exception ex) => Flatten(ex).Select(Status).FirstOrDefault(s => s != 0);
+
     private static int Status(Exception ex) => ex switch
     {
         ClientResultException c => c.Status,

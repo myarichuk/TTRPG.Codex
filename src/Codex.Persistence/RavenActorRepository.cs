@@ -16,6 +16,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
             return null;
         }
 
+        DocumentVersions.Track(session, actor);
         return CanSee(actor, access) ? Redact(actor, access, access.IsDm ? null : await OwnedActors.OfAsync(session, access)) : null;
     }
 
@@ -48,6 +49,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         owned ??= new HashSet<string>();
         if (actor.OwnerUserId == access.UserId)
         {
+            RedactSheet(actor, null);
             actor.DmNotes = null;
             actor.RevealedToReader = SecretText.RevealedOnlyTo(actor.Biography, owned) is { Length: > 0 } mine ? mine : null;
             actor.Biography = actor.Biography == null ? null : SecretText.ForPlayers(actor.Biography);
@@ -62,15 +64,64 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
             return mask;
         }
 
+        RedactSheet(actor, owned);
         actor.DmNotes = null;
         actor.Biography = actor.Biography == null ? null : SecretText.ForPlayers(actor.Biography, owned);
         ReadOnly.AddOrUpdate(actor, actor);
         return actor;
     }
 
+    /// <summary>The sheet's own text fields (a Notes box, a backstory) take the same <c>:::dm</c> blocks as the history and are
+    /// read the same way (S1). Which keys are long text is the system's business, not this repository's, so every text value
+    /// with markers is treated as one. The owner's own character gets <paramref name="owned"/> null, as for its history: they
+    /// edit those fields, and a block revealed to one character must not become everyone's on save.</summary>
+    private static void RedactSheet(ActorDocument actor, IReadOnlySet<string>? owned)
+    {
+        if (!actor.Sheet.Values.Any(value => value is string text && SecretText.HasMarkers(text)))
+        {
+            return;
+        }
+
+        var sheet = new Dictionary<string, object>(actor.Sheet);
+        foreach (var (key, value) in actor.Sheet)
+        {
+            if (value is string text && SecretText.HasMarkers(text))
+            {
+                sheet[key] = SecretText.ForPlayers(text, owned);
+            }
+        }
+
+        actor.Sheet = sheet;
+    }
+
+    /// <summary>The sheet a player's save leaves: theirs, except that a text field with markers in the <paramref name="stored"/>
+    /// sheet keeps its stored text when the player left it as given, and its hidden blocks when they changed it, as
+    /// <see cref="MergedHistory"/> does for the history.</summary>
+    internal static Dictionary<string, object> PlayerSheet(IReadOnlyDictionary<string, object> stored, Dictionary<string, object> fromPlayer)
+    {
+        var sheet = fromPlayer;
+        foreach (var (key, value) in stored)
+        {
+            if (value is not string text || !SecretText.HasMarkers(text))
+            {
+                continue;
+            }
+
+            if (ReferenceEquals(sheet, fromPlayer))
+            {
+                sheet = new Dictionary<string, object>(fromPlayer);
+            }
+
+            sheet[key] = MergedHistory(text, fromPlayer.GetValueOrDefault(key) as string) ?? text;
+        }
+
+        return sheet;
+    }
+
     /// <summary>
     /// What players are given of an actor the DM keeps <see cref="ActorVisibility.Unknown"/>: someone the party has met but
-    /// not identified. Only the id (so mentions, quotes and the table can point at them), the kind, the name they go by
+    /// not identified. Only the id (so mentions, quotes and the table can point at them), whether they are a player character,
+    /// the name they go by
     /// (<see cref="ActorDocument.PublicName"/>, or a plain "stranger") and what the party can see of them
     /// (<see cref="ActorDocument.PublicDescription"/>, its own DM blocks taken out). Built new rather than cleared field by
     /// field, so a field added to the document later stays out of it until someone decides it belongs.
@@ -79,7 +130,9 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     {
         Id = actor.Id,
         CampaignId = actor.CampaignId,
-        Kind = actor.Kind,
+        // A hooded stranger labelled "Monster" on the hover card is half identified (S6): every stranger who isn't a player's
+        // character reads as an NPC.
+        Kind = actor.Kind == ActorKind.PlayerCharacter ? ActorKind.PlayerCharacter : ActorKind.NonPlayerCharacter,
         Visibility = ActorVisibility.Unknown,
         Name = actor.NameFor(isDm: false),
         PublicName = actor.NameFor(isDm: false),
@@ -103,6 +156,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         }
 
         var actors = await query.ToListAsync();
+        actors.ForEach(a => DocumentVersions.Track(session, a));
         var owned = access.IsDm ? null : actors.Where(a => a.OwnerUserId == access.UserId).Select(a => a.Id).ToHashSet();
         return actors.Select(a => Redact(a, access, owned)).ToList();
     }
@@ -126,6 +180,9 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
     public async Task<bool> TrySaveAsync(ActorDocument actor, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (ReadOnly.TryGetValue(actor, out _))
         {
             return false;
@@ -136,6 +193,12 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
         if (existing == null)
         {
+            // Handed out and deleted since: saving the copy would bring it back.
+            if (DocumentVersions.Of(actor) != null)
+            {
+                return false;
+            }
+
             if (access.IsDm)
             {
                 actor.CampaignId = access.CampaignId;
@@ -165,7 +228,52 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         // Copy onto the tracked instance (the passed object is detached): CampaignId never
         // moves, and only the DM can change ownership - a player's OwnerUserId is ignored.
         CopyEditableFields(existing, actor, access.IsDm);
-        await session.SaveChangesAsync();
+        // The sheet is written whole, so only over the version the copy was handed out at (D3): the DM fixing notes and a
+        // player adding feats between sessions no longer overwrite each other. The editor keeps its text and says so.
+        if (await DocumentVersions.SaveIfUnchangedAsync(session, existing, actor) == SaveOutcome.Changed)
+        {
+            throw new LocalizedException("Actor.Sheet.ChangedMeanwhile");
+        }
+
+        return true;
+    }
+
+    public async Task<bool> TrySetPortraitAsync(ActorDocument actor, bool hasPortrait, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
+        if (ReadOnly.TryGetValue(actor, out _))
+        {
+            return false;
+        }
+
+        var allowed = false;
+        var known = DocumentVersions.Of(actor);
+        var wasCurrent = false;
+        var stored = await RavenUpdate.RunVersionedAsync<ActorDocument>(dbService, actor.Id, (doc, version) =>
+        {
+            allowed = doc.CampaignId == access.CampaignId && (access.IsDm || doc.OwnerUserId == access.UserId);
+            if (!allowed) return false;
+            wasCurrent = known != null && known == version;
+            doc.HasPortrait = hasPortrait;
+            doc.PortraitVersion++;
+            doc.UpdatedAt = DateTime.UtcNow;
+            return true;
+        });
+        if (stored is not { } saved || !allowed)
+        {
+            return false;
+        }
+
+        actor.HasPortrait = saved.Document.HasPortrait;
+        actor.PortraitVersion = saved.Document.PortraitVersion;
+        // Only the portrait moved, so a copy that was the latest before stays the latest: its other edits can still be saved.
+        if (wasCurrent && saved.Version != null)
+        {
+            DocumentVersions.Set(actor, saved.Version);
+        }
+
         return true;
     }
 
@@ -186,11 +294,9 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         target.PublicName = source.PublicName;
         target.PublicDescription = source.PublicDescription;
         target.BlueprintId = source.BlueprintId;
-        target.Sheet = source.Sheet;
+        target.Sheet = isDm ? source.Sheet : PlayerSheet(target.Sheet, source.Sheet);
         target.State = source.State;
         target.Biography = biography;
-        target.HasPortrait = source.HasPortrait;
-        target.PortraitVersion = source.PortraitVersion;
         if (isDm)
         {
             target.OwnerUserId = source.OwnerUserId;
@@ -251,6 +357,9 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
     public async Task<bool> TryDeleteAsync(string actorId, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         using var session = dbService.Store.OpenAsyncSession();
         var actor = await session.LoadAsync<ActorDocument>(actorId);
         if (actor == null || actor.CampaignId != access.CampaignId)
@@ -270,10 +379,67 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         return true;
     }
 
+    public async Task<ActorDocument?> TryRetireAsync(string actorId, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return null;
+        access = current;
+
+        var allowed = await LoadInCampaignAsync(actorId, access);
+        if (allowed == null || (!access.IsDm && !(allowed.Kind == ActorKind.PlayerCharacter && allowed.OwnerUserId == access.UserId)))
+        {
+            return null;
+        }
+
+        var now = DateTime.UtcNow;
+        return await UpdateAsync(actorId, stored =>
+        {
+            stored.Retired = true;
+            stored.RetiredAt ??= now;
+        });
+    }
+
+    public async Task<ActorDocument?> TryRestoreAsync(string actorId, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return null;
+        access = current;
+
+        if (!access.IsDm || await LoadInCampaignAsync(actorId, access) == null)
+        {
+            return null;
+        }
+
+        return await UpdateAsync(actorId, stored =>
+        {
+            stored.Retired = false;
+            stored.RetiredAt = null;
+        });
+    }
+
+    public async Task<ActorDocument?> TrySetVisibilityAsync(string actorId, ActorVisibility visibility, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return null;
+        access = current;
+
+        if (!access.IsDm || await LoadInCampaignAsync(actorId, access) == null)
+        {
+            return null;
+        }
+
+        return await UpdateAsync(actorId, stored => stored.Visibility = visibility);
+    }
+
+    private async Task<ActorDocument?> LoadInCampaignAsync(string actorId, CampaignAccess access)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var actor = await session.LoadAsync<ActorDocument>(actorId);
+        return actor != null && actor.CampaignId == access.CampaignId ? actor : null;
+    }
+
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
         using var session = dbService.Store.OpenAsyncSession();
         var toDelete = await session.Query<ActorDocument, ActorsByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(a => a.CampaignId == campaignId)
             .ToListAsync();
 

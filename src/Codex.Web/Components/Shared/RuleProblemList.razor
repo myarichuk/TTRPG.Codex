@@ -1,0 +1,18 @@
+@using Codex.Core.Rules
+
+@* The rules a sheet breaks, said under the place that fixes them (U4). Renders nothing when there are none. *@
+@if (Problems.Count > 0)
+{
+    <ul class="field-problems list-unstyled" role="list" data-testid="@TestId">
+        @foreach (var problem in Problems)
+        {
+            <li class="field-error"><LucideIcon IconName="alert-triangle" Size="14" /> @Describe(problem)</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<RuleViolation> Problems { get; set; } = Array.Empty<RuleViolation>();
+    [Parameter, EditorRequired] public Func<RuleViolation, string> Describe { get; set; } = null!;
+    [Parameter] public string? TestId { get; set; }
+}

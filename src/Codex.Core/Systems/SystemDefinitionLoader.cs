@@ -106,7 +106,7 @@ public static class SystemDefinitionLoader
         foreach (var attribute in definition.Attributes)
         {
             if (string.IsNullOrWhiteSpace(attribute.Key)) yield return "every attribute needs a key.";
-            if (attribute.Modifier is not ("none" or "half-minus-five"))
+            if (attribute.Modifier is not ("none" or AttributeDefinition.HalfMinusFiveRule))
             {
                 yield return $"attribute '{attribute.Key}' has unknown modifier rule '{attribute.Modifier}' (use 'none' or 'half-minus-five').";
             }
@@ -164,6 +164,12 @@ public static class SystemDefinitionLoader
             {
                 yield return $"field '{field.Key}' on '{type.Type}' is an EntityReference without a targetEntityType.";
             }
+        }
+
+        var actorFieldKeys = definition.ActorFields.Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var role in definition.FieldRoles.Named.Where(r => !actorFieldKeys.Contains(r)).Distinct())
+        {
+            yield return $"fieldRoles: '{role}' is not an actor field.";
         }
 
         foreach (var error in ValidateSheetRules(definition))
@@ -385,6 +391,16 @@ public static class SystemDefinitionLoader
 
         if (rules.HitPoints is { } hitPoints)
         {
+            if (hitPoints.FirstLevel is not (HitPointRules.FullDie or "average"))
+            {
+                yield return $"sheetRules.hitPoints.firstLevel '{hitPoints.FirstLevel}' must be {HitPointRules.FullDie} or average.";
+            }
+
+            if (hitPoints.Average is not (HitPointRules.HalfPlusOne or HitPointRules.Half))
+            {
+                yield return $"sheetRules.hitPoints.average '{hitPoints.Average}' must be {HitPointRules.HalfPlusOne} or {HitPointRules.Half}.";
+            }
+
             if (!referenceFields.Contains(hitPoints.ClassField))
             {
                 yield return $"sheetRules.hitPoints.classField '{hitPoints.ClassField}' is not an EntityReference actor field.";

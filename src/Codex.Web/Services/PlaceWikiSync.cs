@@ -17,10 +17,22 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
     /// The page starts with the place's description, visible to the party only when the place is. Null when the caller is not the DM.</summary>
     public async Task<WikiPageDocument?> CreatePageAsync(string regionId, LocationDocument location, string tag, CampaignAccess access)
     {
+        if (!access.IsDm) return null;
+
+        // A stale list can offer "Create page" for a page another tab made or restored meanwhile: that page is kept, not
+        // overwritten or made twice (F9). The stored place says which page it has; the caller's copy may predate it.
+        var pageId = (await regions.GetAsync(regionId, access))?.Locations.FirstOrDefault(l => l.Id == location.Id)?.WikiPageId ?? location.WikiPageId;
+        if (!string.IsNullOrEmpty(pageId)
+            && (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == pageId) is { } existing)
+        {
+            location.WikiPageId = existing.Id;
+            return existing;
+        }
+
         var known = location.Visibility == ActorVisibility.Known;
         var page = new WikiPageDocument
         {
-            Id = string.IsNullOrEmpty(location.WikiPageId) ? Guid.NewGuid().ToString() : location.WikiPageId,
+            Id = string.IsNullOrEmpty(pageId) ? Guid.NewGuid().ToString() : pageId,
             Title = location.Name,
             Body = location.Description ?? string.Empty,
             Visibility = known ? WikiVisibility.Party : WikiVisibility.DmOnly,
@@ -29,7 +41,7 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
             PlaceId = location.Id,
             AuthorUserId = access.UserId
         };
-        if (!await wiki.TrySaveAsync(page, access))
+        if (await wiki.TrySaveAsync(page, access) != SaveOutcome.Saved)
         {
             return null;
         }
@@ -78,7 +90,7 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
         }
 
         page.PlaceId = place.Id;
-        if (!await wiki.TrySaveAsync(page, access)) return null;
+        if (await wiki.TrySaveAsync(page, access) != SaveOutcome.Saved) return null;
 
         if (image != null)
         {

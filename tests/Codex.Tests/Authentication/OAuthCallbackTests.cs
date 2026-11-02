@@ -34,8 +34,7 @@ public class OAuthCallbackTests
             user = await _userRepository.GetUserByEmailAsync(email);
             if (user != null)
             {
-                user.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderKey = providerKey! });
-                await _userRepository.UpdateUserAsync(user);
+                await _userRepository.UpdateUserAsync(user.Id, stored => stored.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderKey = providerKey! }));
             }
         }
 
@@ -98,8 +97,7 @@ public class OAuthCallbackTests
             user = await _userRepository.GetUserByEmailAsync(email);
             if (user != null)
             {
-                user.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderKey = providerKey! });
-                await _userRepository.UpdateUserAsync(user);
+                await _userRepository.UpdateUserAsync(user.Id, stored => stored.ExternalLogins.Add(new ExternalLogin { Provider = provider, ProviderKey = providerKey! }));
             }
         }
 
@@ -209,8 +207,7 @@ public class OAuthCallbackTests
         await _userRepository.CreateUserAsync(user);
 
         // Link Apple login to same user
-        user.ExternalLogins.Add(new ExternalLogin { Provider = "Apple", ProviderKey = "apple456" });
-        await _userRepository.UpdateUserAsync(user);
+        await _userRepository.UpdateUserAsync(user.Id, stored => stored.ExternalLogins.Add(new ExternalLogin { Provider = "Apple", ProviderKey = "apple456" }));
 
         // Verify both logins work
         var byGoogle = await _userRepository.GetUserByExternalLoginAsync("Google", "google123");

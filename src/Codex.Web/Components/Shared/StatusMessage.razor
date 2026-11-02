@@ -1,15 +1,23 @@
 @using Codex.Web.Services
 @using Codex.Web.Components.Layout
+@implements IDisposable
 
 @* A live region for the page's one-line status ("Saved.", "Only the DM can do that."). Always
-   rendered (even when empty) so screen readers have a region to watch before the first message. *@
-<div role="status" aria-live="polite" aria-atomic="true" data-testid="status-message">
+   rendered (even when empty) so screen readers have a region to watch before the first message.
+   As a Toast it floats over the top of the screen, so the message is seen wherever the page is scrolled to (a
+   phone's Lore form sits below the list), and a success or note goes by itself after a few seconds (one with Undo after
+   a few more, U3); an error, or a message with something else to do about it, stays until dismissed (U5). *@
+<div role="status" aria-live="polite" aria-atomic="true" data-testid="status-message" class="@(Toast ? "status-toast-region" : null)">
     @if (Message != null)
     {
-        <div class="status @ToneClass">
+        <div class="status @ToneClass @(Toast ? "status-toast" : null)" @key="Message">
             <LucideIcon IconName="@Icon" Size="18" />
             <span>@Message.Text</span>
             @Actions
+            @if (Message.Undo != null)
+            {
+                <button type="button" class="cx-btn cx-etched cx-sm" data-testid="status-undo" disabled="@undoing" @onclick="UndoAsync">@L["Common.Undo"]</button>
+            }
             @if (OnDismiss.HasDelegate)
             {
                 <button type="button" class="icon-btn" aria-label="@L["Common.Dismiss"]" @onclick="OnDismiss">
@@ -26,6 +34,58 @@
 
     /// <summary>What the person can do about it, shown after the text ("Try again").</summary>
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    /// <summary>Floats over the top of the screen and lets a success or note go by itself.</summary>
+    [Parameter] public bool Toast { get; set; }
+
+    /// <summary>How long a success or note stays as a toast.</summary>
+    public static readonly TimeSpan ToastTime = TimeSpan.FromSeconds(6);
+
+    /// <summary>How long a toast with Undo stays: long enough to notice the mistake and reach the button (U3).</summary>
+    public static readonly TimeSpan UndoTime = TimeSpan.FromSeconds(12);
+
+    private bool undoing;
+
+    // The undo usually reports itself ("Put back."), which replaces this message; if it says nothing, this one goes.
+    private async Task UndoAsync()
+    {
+        if (Message?.Undo is not { } undo || undoing) return;
+        var shown = Message;
+        undoing = true;
+        try
+        {
+            await undo();
+        }
+        finally
+        {
+            undoing = false;
+        }
+
+        if (ReferenceEquals(Message, shown) && OnDismiss.HasDelegate) await OnDismiss.InvokeAsync();
+    }
+
+    private Flash? timed;
+    private CancellationTokenSource? timer;
+
+    protected override void OnParametersSet()
+    {
+        // Each message is its own record, so the same text said twice starts the clock again.
+        if (ReferenceEquals(Message, timed)) return;
+        timed = Message;
+        timer?.Cancel();
+        timer = null;
+        if (!Toast || Message == null || Message.Tone == FlashTone.Error || Actions != null || !OnDismiss.HasDelegate) return;
+
+        var cts = timer = new CancellationTokenSource();
+        var shown = Message;
+        _ = Task.Delay(Message.Undo != null ? UndoTime : ToastTime, cts.Token).ContinueWith(async t =>
+        {
+            if (t.IsCanceled || !ReferenceEquals(Message, shown)) return;
+            await InvokeAsync(() => OnDismiss.InvokeAsync());
+        }, TaskScheduler.Default);
+    }
+
+    public void Dispose() => timer?.Cancel();
 
     private string ToneClass => Message?.Tone switch
     {

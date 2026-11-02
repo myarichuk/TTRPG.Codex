@@ -46,6 +46,11 @@ public class DiceExpressionTests
     [InlineData("0d6")]
     [InlineData("d1")]
     [InlineData("101d6")]
+    [InlineData("1d20+99999999999")]
+    [InlineData("99999999999d6")]
+    [InlineData("1d99999999999")]
+    [InlineData("4d6kh99999999999")]
+    [InlineData("1d20+10001")]
     public void Parse_RejectsInvalidOrOutOfRangeExpressions(string expression)
     {
         Assert.Throws<FormatException>(() => DiceExpressionParser.Parse(expression));
@@ -86,5 +91,54 @@ public class DiceExpressionTests
         Assert.Single(result.Dropped);
         Assert.True(result.Kept[0] >= result.Dropped[0]);
         Assert.Equal(result.Kept[0] + 2, result.Total);
+    }
+
+    // ---- Several terms (R8) ----
+
+    [Theory]
+    [InlineData("1d8+1d6", 2, 0)]
+    [InlineData("2d6+3+2", 1, 5)]
+    [InlineData("1d20+5-2", 1, 3)]
+    [InlineData("1d20 + 5 - 1d4", 2, 5)]
+    [InlineData("adv+1d4+2", 2, 2)]
+    public void Parse_TakesSeveralTerms(string expression, int diceTerms, int modifier)
+    {
+        var parsed = DiceExpressionParser.Parse(expression);
+
+        Assert.Equal(diceTerms, parsed.Dice.Count);
+        Assert.Equal(modifier, parsed.Modifier);
+    }
+
+    [Theory]
+    [InlineData("2d6 3")]
+    [InlineData("5")]
+    [InlineData("1d20++2")]
+    [InlineData("60d6+50d6")]
+    [InlineData("1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6+1d6")]
+    public void Parse_RejectsMalformedOrTooLargeMultiTermExpressions(string expression)
+    {
+        Assert.Throws<FormatException>(() => DiceExpressionParser.Parse(expression));
+    }
+
+    [Fact]
+    public void Roll_SubtractsAPenaltyDie_AndTheKeptDiceStillAddUpToTheTotal()
+    {
+        var result = new StandardDiceRoller(new Random(3)).Roll("1d20+5-1d4");
+
+        Assert.Equal(2, result.Kept.Count);
+        Assert.InRange(result.Kept[1], -4, -1);
+        Assert.Equal(result.Kept.Sum() + 5, result.Total);
+    }
+
+    [Theory]
+    [InlineData("1d20+5", 0)]
+    [InlineData("1d6+1d20", 1)]
+    [InlineData("adv+2", 0)]
+    [InlineData("1d200", null)]
+    [InlineData("2d20", null)]
+    [InlineData("1d20+1d20", null)]
+    public void Roll_MarksTheCheckDie_OnlyForASingleKeptD20(string expression, int? checkIndex)
+    {
+        Assert.Equal(checkIndex, new StandardDiceRoller(new Random(5)).Roll(expression).CheckDieIndex);
     }
 }

@@ -19,8 +19,7 @@ public static class WikiRender
         return SecretRender.Html(text, run => WikiText.ToHtml(run,
             title =>
             {
-                var slug = WikiText.Slugify(title);
-                var page = pages.FirstOrDefault(p => p.Slug == slug || string.Equals(p.Title, title, StringComparison.OrdinalIgnoreCase));
+                var page = WikiLinks.TargetOfTitle(title, pages);
                 return page == null ? null : $"{basePath}/wiki/{page.Slug}";
             },
             canCreate && dm != null ? title => $"{basePath}/wiki/new?title={Uri.EscapeDataString(title)}" : null,

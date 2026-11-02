@@ -43,6 +43,15 @@ public class SessionMentionsTests
     }
 
     [Fact]
+    public void Read_SaysWhatIsHidden_InTheWordsThePageGives()
+    {
+        const string note = "[[actor:lurker]] took [[item:magic-item/tide-ring]] to [[place:vault]]";
+        var russian = new MentionDirectory(new[] { Lurker }, new[] { Vault }, new[] { DraftRing }, isDm: false) { Words = new("кто-то", "где-то", "что-то") };
+
+        Assert.Equal("кто-то took что-то to где-то", russian.Plain(note));
+    }
+
+    [Fact]
     public void ForEditing_GivesBackTypedNames_ButKeepsTheIdsTheEditorCantSee()
     {
         const string note = "[[actor:mara]] hid it in [[place:vault]]";
@@ -51,6 +60,35 @@ public class SessionMentionsTests
 
         Assert.Equal("@Mara hid it in [[place:vault]]", forPlayer);
         Assert.Equal(note, Directory(isDm: false).Encode(forPlayer));
+    }
+
+    [Fact]
+    public void ARoundTrip_KeepsEachMentionOnItsOwnCharacter_WhenTwoShareAName()
+    {
+        // Two PCs called Bram; a reveal to the second one, then the DM fixes a typo and saves (S3).
+        var bramA = new ActorDocument { Id = "bram-a", Name = "Bram", Visibility = ActorVisibility.Known };
+        var bramB = new ActorDocument { Id = "bram-b", Name = "Bram", Visibility = ActorVisibility.Known };
+        var dm = new MentionDirectory(new[] { bramA, bramB, Mara }, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: true);
+        const string stored = "Teh tower.\n:::for [[actor:bram-b]]\n[[actor:bram-b]] hears [[actor:mara]].\n:::";
+
+        var editing = dm.ForEditing(stored);
+        Assert.Equal("Teh tower.\n:::for [[actor:bram-b]]\n[[actor:bram-b]] hears @Mara.\n:::", editing);
+        Assert.Equal(stored.Replace("Teh", "The"), dm.Encode(editing.Replace("Teh", "The")));
+
+        // Typed fresh, the shared name is not guessed to be either of them.
+        Assert.Equal("@Bram waves", dm.Encode("@Bram waves"));
+    }
+
+    [Fact]
+    public void ARoundTrip_KeepsMarkerLinesAsStored_AndAMentionGluedToAWord()
+    {
+        var dm = Directory(isDm: true);
+        const string stored = ":::for [[actor:mara]]\nthe[[actor:mara]] knows.\n:::";
+
+        var editing = dm.ForEditing(stored);
+
+        Assert.Equal(stored, editing);
+        Assert.Equal(stored, dm.Encode(editing));
     }
 
     [Fact]
@@ -89,6 +127,42 @@ public class SessionMentionsTests
 
         Assert.Equal("dm: someone waits at Greyharbour Docks with Sunblade", Assert.Single(players.Notes));
         Assert.Equal("dm: The Drowned One waits at Greyharbour Docks with Sunblade", Assert.Single(dm.Notes));
+    }
+
+    [Fact]
+    public void ARetiredActor_IsStillNamedAndRoundTrips_ButIsNotOffered()
+    {
+        // D17: deleting an actor turned every mention of them into "someone", for the DM too.
+        var old = new ActorDocument { Id = "old", Name = "Old Tom", Visibility = ActorVisibility.Known, Retired = true };
+        var dm = new MentionDirectory(new[] { old, Mara }, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: true);
+        var stored = "Ask [[actor:old]] about the bridge.";
+
+        Assert.Equal("Old Tom", dm.Read(stored)[1].Text);
+        Assert.Equal(stored, dm.Encode(dm.ForEditing(stored)));
+        Assert.True(dm.IsRetired(dm.Candidates.Single(c => c.Id == "old")));
+        Assert.DoesNotContain("Old Tom", Codex.Web.Services.MentionLinks.Json(dm, new[] { old, Mara }));
+        Assert.Contains("Mara", Codex.Web.Services.MentionLinks.Json(dm, new[] { old, Mara }));
+    }
+
+    [Fact]
+    public void TwoCharactersWithOneName_AreToldApartByTheirDescription_AsTheViewerMayReadIt()
+    {
+        // F7: two "@Bram · PC" suggestions could not say which was which.
+        var smith = new ActorDocument { Id = "bram-a", Name = "Bram", Kind = ActorKind.PlayerCharacter, Visibility = ActorVisibility.Known, Biography = ":::dm\nA spy.\n:::\n\n# The smith's son" };
+        var sailor = new ActorDocument { Id = "bram-b", Name = "Bram", Kind = ActorKind.PlayerCharacter, Visibility = ActorVisibility.Known, Biography = "A sailor from Saltmere." };
+        var actors = new[] { smith, sailor, Mara };
+        var dm = new MentionDirectory(actors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: true);
+        var player = new MentionDirectory(actors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: false);
+
+        Assert.Equal("A spy.", dm.HintFor(dm.Candidates.Single(c => c.Id == "bram-a")));
+        Assert.Equal("The smith's son", player.HintFor(player.Candidates.Single(c => c.Id == "bram-a")));
+        Assert.Null(player.HintFor(player.Candidates.Single(c => c.Id == "mara")));
+
+        var labels = System.Text.Json.JsonDocument.Parse(Codex.Web.Services.MentionLinks.Json(player, actors)).RootElement
+            .EnumerateArray().Select(c => c.GetProperty("k").GetString()).ToList();
+        Assert.Contains("PC · The smith's son", labels);
+        Assert.Contains("PC · A sailor from Saltmere.", labels);
+        Assert.DoesNotContain(labels, l => l!.Contains("spy"));
     }
 
     [Fact]

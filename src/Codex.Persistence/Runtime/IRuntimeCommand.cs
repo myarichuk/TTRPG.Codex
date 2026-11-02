@@ -21,3 +21,13 @@ public interface IRuntimeCommand
     /// </summary>
     SessionEvent Describe(CampaignRuntime runtime);
 }
+
+/// <summary>A change to one creature's pools or conditions (damage, healing, a condition, a death save) that the DM can take
+/// back with <see cref="UndoLastChangeCommand"/> while nothing else has changed the creature since (R5).</summary>
+public interface IUndoableCommand : IRuntimeCommand
+{
+    string ActorId { get; }
+
+    /// <summary>The event type the change is logged as ("Damage"), which names it on the undo button.</summary>
+    string UndoKind { get; }
+}

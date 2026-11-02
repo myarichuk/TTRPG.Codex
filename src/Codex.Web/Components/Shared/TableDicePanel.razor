@@ -1,0 +1,62 @@
+@using Codex.Persistence
+
+@* The table's dice box and roll log. The console hands it the rolls this viewer may see and how each roller is named;
+   a roll goes back through OnRoll, onto the runtime's loop. *@
+<section class="panel" aria-labelledby="dice-heading">
+    <div class="panel-title"><h3 id="dice-heading">@L["Combat.Dice"]</h3></div>
+    <form class="input-group input-group-sm mb-2" @onsubmit="RollAsync" @onsubmit:preventDefault="true">
+        <label for="dice-expression" class="visually-hidden">@L["Combat.DiceExpression"]</label>
+        <input id="dice-expression" class="field-input" placeholder="2d6+3, 4d6kh3, adv+5…" @bind="expression" data-testid="dice-input" />
+        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="dice-roll">@L["Combat.Roll"]</CodexButton>
+    </form>
+    @if (IsDm)
+    {
+        <div class="field-check mb-2">
+            <input type="checkbox" class="field-box" id="diceSecret" @bind="secret" />
+            <label class="small" for="diceSecret">@L["Combat.SecretRoll"]</label>
+        </div>
+    }
+    <div class="log" aria-live="polite" aria-label="@L["Combat.RollLog"]">
+        @foreach (var entry in Rolls)
+        {
+            <div class="log-entry" data-testid="roll-log-entry">
+                @if (entry.ActorId is { } actorId && ActorHref(actorId) is { } href)
+                {
+                    <strong><a class="table-name" href="@href" data-preview>@RollerName(entry)</a></strong>
+                }
+                else
+                {
+                    <strong>@RollerName(entry)</strong>
+                }
+                <DiceResult Compact="true" Label="@entry.Label" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
+                            Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret" />
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    /// <summary>The rolls this viewer may see, newest last.</summary>
+    [Parameter] public IEnumerable<RollLogEntry> Rolls { get; set; } = Array.Empty<RollLogEntry>();
+
+    /// <summary>Who rolled, as this viewer may know them.</summary>
+    [Parameter, EditorRequired] public Func<RollLogEntry, string> RollerName { get; set; } = null!;
+
+    /// <summary>The link to a roller this viewer can see; null for one they can't.</summary>
+    [Parameter, EditorRequired] public Func<string, string?> ActorHref { get; set; } = null!;
+
+    /// <summary>Whether the viewer is the DM, who may roll in secret.</summary>
+    [Parameter] public bool IsDm { get; set; }
+
+    /// <summary>A roll: the expression, and whether it is secret.</summary>
+    [Parameter] public EventCallback<(string Expression, bool Secret)> OnRoll { get; set; }
+
+    private string expression = "1d20";
+    private bool secret;
+
+    private async Task RollAsync()
+    {
+        if (string.IsNullOrWhiteSpace(expression)) return;
+        await OnRoll.InvokeAsync((expression, secret && IsDm));
+    }
+}

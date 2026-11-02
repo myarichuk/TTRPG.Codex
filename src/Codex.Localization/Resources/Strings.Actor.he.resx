@@ -5,21 +5,13 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Actor.Slots.Title" xml:space="preserve"><value>תאים</value></data>
-  <data name="Actor.Slots.SpellSlots" xml:space="preserve"><value>תאי לחשים</value></data>
-  <data name="Actor.Slots.PactSlots" xml:space="preserve"><value>תאי ברית</value></data>
-  <data name="Actor.Slots.LongRest" xml:space="preserve"><value>מנוחה ארוכה</value></data>
-  <data name="Actor.Slots.ShortRest" xml:space="preserve"><value>מנוחה קצרה</value></data>
   <data name="Actor.Slots.Level" xml:space="preserve"><value>דרגה {0}</value></data>
   <data name="Actor.Slots.LevelHidden" xml:space="preserve"><value>{0}, דרגה {1}: </value></data>
   <data name="Actor.Slots.Count" xml:space="preserve"><value>{0} מתוך {1}</value></data>
   <data name="Actor.Slots.Use" xml:space="preserve"><value>שימוש</value></data>
   <data name="Actor.Slots.Regain" xml:space="preserve"><value>החזרה</value></data>
-  <data name="Actor.Slots.UseSpell" xml:space="preserve"><value>שימוש בתא לחשים בדרגה {0}</value></data>
-  <data name="Actor.Slots.RegainSpell" xml:space="preserve"><value>החזרת תא לחשים בדרגה {0}</value></data>
-  <data name="Actor.Slots.UsePact" xml:space="preserve"><value>שימוש בתא ברית בדרגה {0}</value></data>
-  <data name="Actor.Slots.RegainPact" xml:space="preserve"><value>החזרת תא ברית בדרגה {0}</value></data>
-  <data name="Actor.Slots.UseOther" xml:space="preserve"><value>שימוש: {1}, דרגה {0}</value></data>
-  <data name="Actor.Slots.RegainOther" xml:space="preserve"><value>החזרה: {1}, דרגה {0}</value></data>
+  <data name="Actor.Slots.UseOther" xml:space="preserve"><value>שימוש ב{1} בדרגה {0}</value></data>
+  <data name="Actor.Slots.RegainOther" xml:space="preserve"><value>החזרת {1} בדרגה {0}</value></data>
   <data name="Actor.Hp.Max" xml:space="preserve"><value>מקסימום נקודות חיים</value></data>
   <data name="Actor.Hp.ModeAverage" xml:space="preserve"><value>מחושב: ממוצע לכל דרגה</value></data>
   <data name="Actor.Hp.ModeRolled" xml:space="preserve"><value>מחושב: ההטלות שלי</value></data>
@@ -65,6 +57,12 @@
   <data name="Actor.Skills.Heading" xml:space="preserve"><value>מיומנויות</value></data>
   <data name="Actor.Skills.Background" xml:space="preserve"><value>רקע</value></data>
   <data name="Actor.Skills.Expertise" xml:space="preserve"><value>מומחיות</value></data>
+  <data name="Actor.Skills.ShowSums" xml:space="preserve"><value>הצגת החישוב</value></data>
+  <data name="Actor.Skills.HideSums" xml:space="preserve"><value>הסתרת החישוב</value></data>
+  <data name="Actor.Skills.SumProficiency" xml:space="preserve"><value>שליטה {0}</value></data>
+  <data name="Actor.Skills.SumExpertise" xml:space="preserve"><value>מומחיות {0}</value></data>
+  <data name="Actor.Skills.SumPassive" xml:space="preserve"><value>{0} + {1} {2}</value></data>
+  <data name="Actor.Skills.SumDc" xml:space="preserve"><value>{0}, שליטה {1}, {2} {3}</value></data>
   <data name="Actor.Skills.Roll" xml:space="preserve"><value>הטלה: {0}</value></data>
   <data name="Actor.Skills.Hint" xml:space="preserve"><value>מיומנויות הרקע שלכם מסומנות עבורכם. סמנו את אלה שהמקצוע והיכולות האחרות מעניקים.</value></data>
   <data name="Actor.Inv.Empty" xml:space="preserve"><value>עדיין לא נושאים דבר.</value></data>
@@ -152,9 +150,12 @@
   <data name="Actor.Form.RowDescription" xml:space="preserve"><value>{0} {1}: תיאור</value></data>
   <data name="Actor.Form.RowNamePlaceholder" xml:space="preserve"><value>שם: {0}</value></data>
   <data name="Actor.Form.RowRemove" xml:space="preserve"><value>הסרת {0} {1}</value></data>
+  <data name="Actor.Form.RowRemoveTitle" xml:space="preserve"><value>להסיר את השורה?</value></data>
+  <data name="Actor.Form.RowRemoveBody" xml:space="preserve"><value>מה שכתוב בה יאבד ברגע שהדף יישמר.</value></data>
   <data name="Actor.Form.RowDescribePlaceholder" xml:space="preserve"><value>מה זה עושה, למשל: התקפת קרב מגע +5, טווח 5 רגל. פגיעה: 8 (1d10 + 3) נזק דוקר.</value></data>
   <data name="Actor.Form.AddRow" xml:space="preserve"><value>הוספת {0}</value></data>
   <data name="Actor.Form.NotAllowed" xml:space="preserve"><value>{0} (לא מותר)</value></data>
+  <data name="Actor.Form.Missing" xml:space="preserve"><value>{0} (לא בספרייה)</value></data>
   <data name="Actor.Sheet.TitleFallback" xml:space="preserve"><value>דמות</value></data>
   <data name="Actor.Sheet.NotFound" xml:space="preserve"><value>הדמות לא נמצאה</value></data>
   <data name="Actor.Sheet.NotFoundBody" xml:space="preserve"><value>ייתכן שהיא אינה קיימת או שאין לכם גישה אליה.</value></data>
@@ -169,10 +170,8 @@
   <data name="Actor.Sheet.PortraitAi" xml:space="preserve"><value>דיוקן באמצעות בינה מלאכותית</value></data>
   <data name="Actor.Sheet.RemovePortrait" xml:space="preserve"><value>הסרת הדיוקן</value></data>
   <data name="Actor.Sheet.Dirty" xml:space="preserve"><value>{0, plural, one{שינוי אחד שלא נשמר} two{# שינויים שלא נשמרו} other{# שינויים שלא נשמרו}}</value></data>
-  <data name="Actor.Sheet.BackToCast" xml:space="preserve"><value>חזרה לצוות</value></data>
   <data name="Actor.Sheet.SaveChanges" xml:space="preserve"><value>שמירת שינויים</value></data>
   <data name="Actor.Sheet.KeyNumbers" xml:space="preserve"><value>מספרים עיקריים</value></data>
-  <data name="Actor.Sheet.AcShort" xml:space="preserve"><value>AC</value></data>
   <data name="Actor.Sheet.Missing" xml:space="preserve"><value>תוכן חסר: הדמות הזו נוצרה מ"{0}", שאינו בחבילה טעונה. הדף ממשיך לעבוד.</value></data>
   <data name="Actor.Sheet.ReadOnlyNote" xml:space="preserve"><value>רק הבעלים ושליט המבוך יכולים לערוך דף זה.</value></data>
   <data name="Actor.Sheet.Rules" xml:space="preserve"><value>כללים</value></data>
@@ -188,12 +187,14 @@
   <data name="Actor.Sheet.RollDis" xml:space="preserve"><value>חיסרון</value></data>
   <data name="Actor.Sheet.TrayHint" xml:space="preserve"><value>השתמשו בכפתורי הקוביות ליד בדיקה, הצלה או התקפה.</value></data>
   <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>משותף עם השולחן.</value></data>
-  <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>רק אתם רואים זאת: אין מפגש פעיל.</value></data>
+  <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>רק אתם רואים זאת: השולחן לא פעיל.</value></data>
   <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>עדיין אין הטלות.</value></data>
   <data name="Actor.Sheet.Sections" xml:space="preserve"><value>מדורי הדף</value></data>
   <data name="Actor.Sheet.Attributes" xml:space="preserve"><value>תכונות</value></data>
   <data name="Actor.Sheet.Picks" xml:space="preserve"><value>בחירות</value></data>
   <data name="Actor.Sheet.Inventory" xml:space="preserve"><value>ציוד</value></data>
+  <data name="Actor.Sheet.Carried" xml:space="preserve"><value>משא: {0}</value></data>
+  <data name="Actor.Sheet.CarriedOf" xml:space="preserve"><value>משא: {0} מתוך {1}</value></data>
   <data name="Actor.Sheet.History" xml:space="preserve"><value>היסטוריה</value></data>
   <data name="Actor.Sheet.Said" xml:space="preserve"><value>דברים שנאמרו</value></data>
   <data name="Actor.Sheet.InNotes" xml:space="preserve"><value>בהערות</value></data>
@@ -258,11 +259,28 @@
   <data name="Actor.Sheet.HpLiveNote" xml:space="preserve"><value>שינויים בשולחן החי מעדכנים את המספר הזה.</value></data>
   <data name="Actor.Sheet.SlotsNote" xml:space="preserve"><value>במהלך מפגש השתמשו בלשונית "שולחן": שינויים שם מגיעים לכולם מיד. שינויים כאן דורשים "שמירת שינויים".</value></data>
   <data name="Actor.Sheet.LevelUp" xml:space="preserve"><value>עלייה בדרגה</value></data>
-  <data name="Actor.Sheet.LevelUpIntro" xml:space="preserve"><value>כרגע דרגה {0}. שאלו מה דרגה {1} מביאה ואילו בחירות מתאימות לדמות, לפי ערך המקצוע בספרייה.</value></data>
+  <data name="Actor.Sheet.LevelUpIntro" xml:space="preserve"><value>כרגע דרגה {0}. ראו מה דרגה {1} מביאה לפני שעולים, או שאלו את הבינה המלאכותית אילו בחירות מתאימות לדמות.</value></data>
+  <data name="Actor.Sheet.LevelMax" xml:space="preserve"><value>דרגה {0}: הדרגה הגבוהה ביותר בשיטה הזו.</value></data>
+  <data name="Actor.Sheet.LevelUpTo" xml:space="preserve"><value>עלייה לדרגה {0}</value></data>
+  <data name="Actor.Sheet.LevelBrings" xml:space="preserve"><value>מה מביאה דרגה {1} של {0}</value></data>
+  <data name="Actor.Sheet.LevelBringsPlain" xml:space="preserve"><value>מה מביאה דרגה {0}</value></data>
+  <data name="Actor.Sheet.LevelNoFeatures" xml:space="preserve"><value>אין יכולות מקצוע חדשות בדרגה הזאת.</value></data>
+  <data name="Actor.Sheet.LevelHp" xml:space="preserve"><value>נקודות חיים</value></data>
+  <data name="Actor.Sheet.LevelHpHow" xml:space="preserve"><value>(d{0}: {1}, מתאם {2})</value></data>
+  <data name="Actor.Sheet.LevelHpAverage" xml:space="preserve"><value>{0} בממוצע</value></data>
+  <data name="Actor.Sheet.LevelRollDie" xml:space="preserve"><value>הטלת d{0}</value></data>
+  <data name="Actor.Sheet.LevelPb" xml:space="preserve"><value>תוסף שליטה</value></data>
+  <data name="Actor.Sheet.LevelChoose" xml:space="preserve"><value>לבחור אחרי העלייה</value></data>
+  <data name="Actor.Sheet.LevelSubclass" xml:space="preserve"><value>תת-מקצוע ל{0}</value></data>
+  <data name="Actor.Sheet.LevelMore" xml:space="preserve"><value>עוד {0}: {1}</value></data>
+  <data name="Actor.Sheet.LevelTake" xml:space="preserve"><value>עלייה לדרגה {0}</value></data>
+  <data name="Actor.Sheet.LevelToDo" xml:space="preserve"><value>עוד לבחור לדרגה {0}</value></data>
+  <data name="Actor.Sheet.GoThere" xml:space="preserve"><value>לשם</value></data>
+  <data name="Actor.Sheet.ShowRule" xml:space="preserve"><value>הצגה</value></data>
+  <data name="Actor.Sheet.TabProblems" xml:space="preserve"><value>{0} בעיות בכללים כאן</value></data>
   <data name="Actor.Sheet.ClassGaining" xml:space="preserve"><value>המקצוע שעולה בדרגה</value></data>
   <data name="Actor.Sheet.Thinking" xml:space="preserve"><value>חושב…</value></data>
   <data name="Actor.Sheet.SuggestLevel" xml:space="preserve"><value>הצעה לדרגה {0}</value></data>
-  <data name="Actor.Sheet.SetLevel" xml:space="preserve"><value>קביעת דרגה {0}</value></data>
   <data name="Actor.Sheet.Dismiss" xml:space="preserve"><value>סגירה</value></data>
   <data name="Actor.Sheet.KeepInNotes" xml:space="preserve"><value>שמירה בהערות</value></data>
   <data name="Actor.Sheet.Visibility" xml:space="preserve"><value>נראות לשחקנים</value></data>
@@ -281,7 +299,6 @@
   <data name="Actor.Sheet.VisLabelUnknown" xml:space="preserve"><value>נראה, לא מזוהה</value></data>
   <data name="Actor.Sheet.VisLabelHidden" xml:space="preserve"><value>מוסתר מהשחקנים</value></data>
   <data name="Actor.Sheet.Level" xml:space="preserve"><value>דרגה {0}</value></data>
-  <data name="Actor.Sheet.Feet" xml:space="preserve"><value>{0} רגל</value></data>
   <data name="Actor.Sheet.ConfirmDiscardTitle" xml:space="preserve"><value>לבטל {0, plural, one{שינוי אחד שלא נשמר} two{# שינויים שלא נשמרו} other{# שינויים שלא נשמרו}}?</value></data>
   <data name="Actor.Sheet.ConfirmDiscardBody" xml:space="preserve"><value>שיניתם את הדף בלי לשמור. אם תעזבו עכשיו, השינויים יאבדו.</value></data>
   <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>ביטול ויציאה</value></data>
@@ -289,9 +306,9 @@
   <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: התאים מולאו מחדש. שמרו שינויים כדי לשמור זאת.</value></data>
   <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>לא נשמר: יש לתקן קודם {0, plural, one{בעיית כללים אחת} two{# בעיות כללים} other{# בעיות כללים}} (ראו "כללים" למעלה). שליט המבוך יכול להקל על כך בהגדרות.</value></data>
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>נשמר עם {0, plural, one{אזהרת כללים אחת} two{# אזהרות כללים} other{# אזהרות כללים}}.</value></data>
-  <data name="Actor.Sheet.Saved" xml:space="preserve"><value>נשמר.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>אין לכם הרשאה לערוך את הדף הזה.</value></data>
   <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>מנחה המשחק שינה את ההיסטוריה הזו בזמן שערכתם אותה, ולכן השינוי שלכם לא נשמר. הטקסט שלכם עדיין בתיבה: העתיקו אותו, טענו את הדף מחדש והוסיפו אותו שוב.</value></data>
+  <data name="Actor.Sheet.ChangedMeanwhile" xml:space="preserve"><value>מישהו שמר את הדף הזה אחרי שפתחתם אותו, ולכן השינויים שלכם לא נשמרו. הם עדיין כאן: בדקו אותם, ושמרו שוב כדי להחליף את הגרסה ההיא.</value></data>
   <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>השתמשו בתמונה מסוג PNG, JPEG, WebP, GIF או AVIF.</value></data>
   <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>התמונה גדולה מ-6 MB. הקטינו אותה ונסו שוב.</value></data>
   <data name="Actor.Sheet.PortraitUpdated" xml:space="preserve"><value>הדיוקן עודכן.</value></data>
@@ -306,15 +323,22 @@
   <data name="Actor.Sheet.NoAiProvider" xml:space="preserve"><value>לא הוגדר ספק בינה מלאכותית. הוסיפו אחד בהגדרות הבינה המלאכותית (למעלה).</value></data>
   <data name="Actor.Sheet.AiDraftFailed" xml:space="preserve"><value>טיוטת הבינה המלאכותית נכשלה: {0}</value></data>
   <data name="Actor.Sheet.AiSuggestFailed" xml:space="preserve"><value>הצעת הבינה המלאכותית נכשלה: {0}</value></data>
-  <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>הדרגה נקבעה ל-{0}. עדכנו נקודות חיים ויכולות ואז שמרו שינויים.</value></data>
+  <data name="Actor.Sheet.LevelSet" xml:space="preserve"><value>עליתם לדרגה {0}. בחרו את מה שנפתח ואז שמרו שינויים.</value></data>
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>תוכנית לדרגה {0}:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>נוסף לשדה ההערות. שמרו שינויים כדי לשמור זאת.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>ויקי: {0}</value></data>
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>אחרי השמירה השחקנים יוכלו לקרוא את ההיסטוריה של הדמות, מלבד הבלוקים של שליט המבוך. כדאי לבדוק קודם שאין סודות בשאר.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" אינו בספרייה.</value></data>
+  <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: אי אפשר לחשב את הנוסחה של השיטה לערך הזה, ולכן הוא מושמט. מנהל המשחק יכול לבדוק את חוקי השיטה.</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} – {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: אפשר לקחת את {1} פעם אחת בלבד.</value></data>
+  <data name="Actor.Rule.LimitForClass" xml:space="preserve"><value>{0}: {1} עבור {2}, אבל {2} מתיר בדרגה הזו רק {3}.</value></data>
+  <data name="Actor.Rule.NoHitDie" xml:space="preserve"><value>ל־{0} אין קוביית פגיעה, ולכן הדרגות שלו לא מוסיפות נקודות פגיעה.</value></data>
+  <data name="Actor.Rule.NoSpellAbility" xml:space="preserve"><value>ל־{0} יש תאי לחשים אבל אין לו תכונת הטלת לחשים, ולכן אין לו דרגת קושי להצלה או התקפת לחש.</value></data>
+  <data name="Actor.Rule.NoSpellTable" xml:space="preserve"><value>{0} מציין תכונת הטלת לחשים אבל אין לו טבלת הטלת לחשים, ולכן אין לו תאי לחשים או לחשים מוכנים.</value></data>
+  <data name="Actor.Rule.SkillChoices" xml:space="preserve"><value>{0}: נבחרו {1} מעבר לרקע, אבל {2} נותן {3}. זן או הישג עשויים לתת עוד.</value></data>
+  <data name="Actor.Rule.OverCapacity" xml:space="preserve"><value>{0}: נשאים {1:0.##} מתוך {2} שאפשר לשאת.</value></data>
   <data name="Actor.Rule.Limit" xml:space="preserve"><value>{0}: נבחרו {1}, אבל בדרגה הזו מותרים רק {2}.</value></data>
   <data name="Actor.Rule.PointBuyRange" xml:space="preserve"><value>{0}: בקניית נקודות הציונים נעים בין {1} ל-{2}.</value></data>
   <data name="Actor.Rule.PointBuySpent" xml:space="preserve"><value>קניית נקודות: נוצלו {0} מתוך {1} נקודות.</value></data>
@@ -333,8 +357,8 @@
   <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: דורש כוח {1}, אחרת המהירות יורדת ב-10 רגל.</value></data>
   <data name="Actor.Rule.ArmorStealth" xml:space="preserve"><value>{0}: נותן חיסרון בבדיקות התגנבות.</value></data>
   <data name="Actor.Rule.WeaponUntrained" xml:space="preserve"><value>{0}: {1} אינו מאומן בו, ולכן לא מוסיפים את תוסף השליטה להתקפות שלו.</value></data>
-  <data name="Actor.Ac.Dex" xml:space="preserve"><value>זריזות: {0}</value></data>
-  <data name="Actor.Ac.DexCapped" xml:space="preserve"><value>זריזות: {0} (מוגבל ל-+{1})</value></data>
+  <data name="Actor.Ac.Dex" xml:space="preserve"><value>{1}: {0}</value></data>
+  <data name="Actor.Ac.DexCapped" xml:space="preserve"><value>{2}: {0} (מוגבל ל-+{1})</value></data>
   <data name="Actor.Ac.Unarmored" xml:space="preserve"><value>ללא שריון</value></data>
   <data name="Actor.Ac.Defense" xml:space="preserve"><value>הגנת {0}</value></data>
   <data name="Actor.Ac.Other" xml:space="preserve"><value>בונוסים אחרים</value></data>

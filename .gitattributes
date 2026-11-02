@@ -1,0 +1,3 @@
+# Keep line endings identical on every OS (matches .editorconfig end_of_line = lf).
+# Without this, a Windows checkout turns raw string literals in tests into CRLF.
+* text=auto eol=lf

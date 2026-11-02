@@ -1,0 +1,297 @@
+@using Codex.Core.Components
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@using Codex.Plugin.Abstractions
+
+@* The DM's commands for one creature at the table, under its row: damage, healing, conditions, death saves, what the
+   players see of it, its turn, rests and hit dice. Every change goes through Send, the console's one way to the runtime;
+   the console keeps what touches the whole order (removing, the confirm before a death). *@
+<div class="command-panel" data-testid="command-panel" data-actor-id="@ActorId" aria-label="@(L["Combat.CommandsFor", Name])">
+    @* On a phone the panel is a sheet at the bottom of the screen, away from its row: it says whose it is. *@
+    <div class="command-head">
+        <span class="command-name">@Name</span>
+        <CodexButton Variant="CodexButtonVariant.Rune" Icon="x" Label="@L["Combat.Deselect", Name]" OnClick="() => OnClose.InvokeAsync()" />
+    </div>
+    <div class="console-row mt-0">
+        <div>
+            <label for="dmg-@ActorId" class="field-label">@L["Combat.Amount"]</label>
+            <input id="dmg-@ActorId" type="number" min="0" inputmode="numeric" class="field-input field-sm" data-testid="damage-input"
+                   value="@damage"
+                   @oninput="e => damage = int.TryParse(e.Value?.ToString(), out var typed) ? typed : 0" />
+        </div>
+        @* Tapping +5 twice is quicker than the number keyboard when the dice are already on the table. *@
+        <div class="chips quick-amounts" role="group" aria-label="@L["Combat.AddToAmount"]">
+            @foreach (var step in QuickAmounts)
+            {
+                <button type="button" class="chip" data-testid="@($"quick-amount-{step}")" @onclick="() => damage += step"><bdi>+@step</bdi></button>
+            }
+        </div>
+        @if (DamageTypes.Count > 0)
+        {
+            <div>
+                <label for="dmg-type-@ActorId" class="field-label">@L["Combat.Type"]</label>
+                <select id="dmg-type-@ActorId" class="field-select field-sm" data-testid="damage-type-select"
+                        value="@damageType"
+                        @onchange="e => damageType = e.Value?.ToString() ?? string.Empty">
+                    <option value="">@L["Combat.Untyped"]</option>
+                    @foreach (var type in DamageTypes)
+                    {
+                        <option value="@type">@Capitalize(type)</option>
+                    }
+                </select>
+            </div>
+        }
+        <div class="field-check pb-1">
+            <input type="checkbox" class="field-box" id="crit-@ActorId" data-testid="critical-input"
+                   checked="@critical"
+                   @onchange="e => critical = e.Value is true" />
+            <label class="small" for="crit-@ActorId">@L["Combat.CriticalHit"]</label>
+        </div>
+        <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="damage-btn" OnClick="ApplyDamageAsync" aria-label="@(L["Combat.DamageTo", Name])">@L["Combat.Damage"]</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="heal-btn" OnClick="ApplyHealingAsync" aria-label="@(L["Combat.HealTo", Name])">@L["Combat.Heal"]</CodexButton>
+        @if (Vitals?.TemporaryResource != null)
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="temp-hp-btn" OnClick="GrantTempHpAsync" aria-label="@(L["Combat.TempHpTo", Name])">@L["Combat.TempHp"]</CodexButton>
+        }
+    </div>
+
+    @if (Dead)
+    {
+        <div class="console-row">
+            <span class="small-muted pb-1">@L["Combat.IsDead", Name, DeadCondition.ToLowerInvariant()]</span>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="revive-btn" OnClick="() => Send(new ReviveCommand(ActorId))" aria-label="@(L["Combat.ReviveTo", Name])">@L["Combat.Revive", DeadCondition]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="remove-participant-btn" OnClick="() => OnRemoveFromOrder.InvokeAsync()" aria-label="@(L["Combat.RemoveFromOrderTo", Name])">@L["Combat.RemoveFromOrder"]</CodexButton>
+        </div>
+    }
+    else if (Down && Vitals?.DeathSaves != null)
+    {
+        <div class="console-row">
+            <span class="small-muted pb-1">@L["Combat.IsAtZero", Name, PrimaryKey]</span>
+            @if (!Stable)
+            {
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-success" OnClick="() => Send(new RecordDeathSaveCommand(ActorId, true))">@L["Combat.Success"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="death-save-failure" OnClick="() => Send(new RecordDeathSaveCommand(ActorId, false))">@L["Combat.Failure"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="stabilize-btn" OnClick="() => Send(new StabilizeCommand(ActorId, NoSource))">@L["Combat.Stabilize"]</CodexButton>
+            }
+            else
+            {
+                <span class="pill pill-success">@StableCondition</span>
+            }
+            <CodexButton Variant="CodexButtonVariant.Blood" Small="true" data-testid="kill-btn" OnClick="() => OnMarkDead.InvokeAsync()" aria-label="@(L["Combat.MarkDeadTo", Name])">@L["Combat.MarkDead"]</CodexButton>
+        </div>
+    }
+
+    @if (Snapshot.Actor(ActorId)?.UndoKind is { } undoKind)
+    {
+        <div class="console-row">
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="undo-btn" OnClick="() => Send(new UndoLastChangeCommand(ActorId))" aria-label="@(L["Combat.UndoTo", Name, L["Event.Type." + undoKind]])"><LucideIcon IconName="undo-2" Size="14" /> @L["Combat.Undo", L["Event.Type." + undoKind]]</CodexButton>
+        </div>
+    }
+
+    @if (IsDm && ActorsById.GetValueOrDefault(ActorId) is { Kind: not ActorKind.PlayerCharacter } shown)
+    {
+        <div class="console-row" role="group" aria-label="@(L["Combat.Visibility.Label", Name])">
+            <span class="small-muted pb-1">@L["Combat.Visibility.PlayersSee"]</span>
+            @foreach (var (visibility, label) in new[] { (ActorVisibility.Hidden, L["Combat.Visibility.Nothing"]), (ActorVisibility.Unknown, L["Combat.Visibility.Stranger"]), (ActorVisibility.Known, L["Combat.Visibility.Known"]) })
+            {
+                <button type="button" class="chip" data-testid="@($"visibility-{visibility.ToString().ToLowerInvariant()}")" aria-pressed="@(shown.Visibility == visibility ? "true" : "false")"
+                        @onclick="() => OnSetVisibility.InvokeAsync(visibility)">@label</button>
+            }
+        </div>
+    }
+
+    <div class="console-row">
+        <div>
+            <label for="cond-@ActorId" class="field-label">@L["Combat.Condition"]</label>
+            <input id="cond-@ActorId" class="field-input field-sm w-8" list="conditions-list" data-testid="condition-input"
+                   value="@condition"
+                   @oninput="e => condition = e.Value?.ToString() ?? string.Empty" />
+        </div>
+        <div>
+            <label for="rounds-@ActorId" class="field-label">@L["Combat.Rounds"]</label>
+            <input id="rounds-@ActorId" type="number" min="0" inputmode="numeric" class="field-input field-sm" data-testid="condition-rounds-input" placeholder="∞"
+                   value="@rounds" title="@L["Combat.RoundsTitle"]" aria-describedby="rounds-hint-@ActorId"
+                   @oninput="e => rounds = int.TryParse(e.Value?.ToString(), out var r) && r > 0 ? r : 0" />
+            @* Said on screen, not only in title=, which a phone never shows (U5). *@
+            <div id="rounds-hint-@ActorId" class="field-hint">@L["Combat.RoundsTitle"]</div>
+        </div>
+        <div>
+            <label for="expiry-@ActorId" class="field-label">@L["Combat.EndsAt"]</label>
+            <select id="expiry-@ActorId" class="field-select field-sm" data-testid="condition-expiry-select"
+                    value="@expiry.ToString()"
+                    @onchange="e => expiry = Enum.TryParse<EffectExpiry>(e.Value?.ToString(), out var x) ? x : EffectExpiry.EndOfTurn">
+                <option value="@EffectExpiry.EndOfTurn">@L["Combat.EndOfTurn"]</option>
+                <option value="@EffectExpiry.StartOfTurn">@L["Combat.StartOfTurn"]</option>
+            </select>
+        </div>
+        @if (Vitals?.Concentration != null && Snapshot.Encounter is { } fight)
+        {
+            <div>
+                <label for="held-@ActorId" class="field-label">@L["Combat.HeldBy"]</label>
+                <select id="held-@ActorId" class="field-select field-sm" data-testid="condition-held-by-select" title="@L["Combat.HeldByTitle"]"
+                        value="@heldBy"
+                        @onchange="e => heldBy = e.Value?.ToString() ?? string.Empty">
+                    <option value="">@L["Combat.HeldByNobody"]</option>
+                    @foreach (var holder in fight.Participants)
+                    {
+                        <option value="@holder.ActorId">@(ActorsById.GetValueOrDefault(holder.ActorId)?.Name ?? holder.ActorId)</option>
+                    }
+                </select>
+            </div>
+        }
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="condition-add-btn" OnClick="AddConditionAsync" aria-label="@(L["Combat.AddConditionTo", Name])">@L["Combat.AddCondition"]</CodexButton>
+        @if (Vitals?.Exhaustion is { } exhaustion)
+        {
+            var level = Snapshot.Actor(ActorId)?.Pool(exhaustion.Key) ?? 0;
+            <div class="d-flex align-items-end gap-1">
+                <span class="small pb-1">@(exhaustion.Condition ?? L["Combat.Exhaustion"]) @level</span>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" OnClick="() => Send(new AdjustExhaustionCommand(ActorId, 1))" aria-label="@(L["Combat.RaiseExhaustion", Name])">+</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => Send(new AdjustExhaustionCommand(ActorId, -1))" aria-label="@(L["Combat.LowerExhaustion", Name])">−</CodexButton>
+            </div>
+        }
+    </div>
+
+    <div class="console-row">
+        <span class="small-muted pb-1">@L["Combat.TurnLabel"]</span>
+        @if (Participant.State != TurnState.Normal)
+        {
+            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" data-testid="act-now-btn" OnClick="() => Send(new ActNowCommand(ActorId))" aria-label="@(L["Combat.ActsNow", Name])">@L["Combat.ActNow"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => Send(new SetTurnStateCommand(ActorId, TurnState.Normal))" aria-label="@(L["Combat.ClearTo", Name])">@L["Combat.Clear"]</CodexButton>
+        }
+        else
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => Send(new SetTurnStateCommand(ActorId, TurnState.Delayed))" aria-label="@(L["Combat.DelayTo", Name])">@L["Combat.Delay"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => Send(new SetTurnStateCommand(ActorId, TurnState.Readied))" aria-label="@(L["Combat.ReadyTo", Name])">@L["Combat.Ready"]</CodexButton>
+        }
+        @if (!Dead)
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="remove-participant-btn" OnClick="() => OnRemoveFromOrder.InvokeAsync()" aria-label="@(L["Combat.RemoveFromOrderTo", Name])">@L["Combat.RemoveFromOrder"]</CodexButton>
+        }
+    </div>
+
+    @if (Rests.Count > 0)
+    {
+        var hitDice = HitDice;
+        <div class="console-row">
+            <span class="small-muted pb-1">@L["Combat.Rest"]</span>
+            @foreach (var rest in Rests)
+            {
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{Slug(rest)}")" OnClick="() => OnRest.InvokeAsync(rest)">@RestLabel(rest)</CodexButton>
+            }
+            @if (hitDice is { Max: > 0 } dice)
+            {
+                <span class="small pb-1" data-testid="hit-dice">@L["Combat.HitDice", dice.Current, dice.Max]@if (dice.Sides is { } s) { <bdi>@($" (d{s})")</bdi> }</span>
+                @if (dice.Sides != null)
+                {
+                    <input type="number" min="1" max="@dice.Current" class="field-input field-sm" data-testid="hit-dice-input" aria-label="@L["Combat.HitDiceToSpend"]"
+                           value="@diceToSpend"
+                           @oninput="e => diceToSpend = int.TryParse(e.Value?.ToString(), out var n) && n > 0 ? n : 1" />
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="spend-hit-dice-btn" Disabled="@(dice.Current <= 0)" OnClick="() => Send(new SpendHitDiceCommand(ActorId, diceToSpend, dice.Sides.Value))">@L["Combat.Spend"]</CodexButton>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string ActorId { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public ParticipantSnapshot Participant { get; set; } = null!;
+    [Parameter] public bool Dead { get; set; }
+    [Parameter] public bool Down { get; set; }
+    [Parameter] public bool Stable { get; set; }
+    [Parameter] public bool IsDm { get; set; }
+    [Parameter] public SystemDefinition? Definition { get; set; }
+    [Parameter, EditorRequired] public RuntimeSnapshot Snapshot { get; set; } = RuntimeSnapshot.Empty;
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, ActorDocument> ActorsById { get; set; } = new Dictionary<string, ActorDocument>();
+
+    /// <summary>The rests the table offers, as named to the system, and how the table reads each.</summary>
+    [Parameter] public IReadOnlyList<string> Rests { get; set; } = Array.Empty<string>();
+    [Parameter] public Func<string, string> RestLabel { get; set; } = rest => rest;
+
+    /// <summary>The creature's hit dice: left, most, and the die to spend (null when the table can't tell).</summary>
+    [Parameter] public (int Current, int Max, int? Sides)? HitDice { get; set; }
+
+    /// <summary>The console's way to the runtime, which turns a failure into a message.</summary>
+    [Parameter, EditorRequired] public Func<IRuntimeCommand, Task> Send { get; set; } = null!;
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnRemoveFromOrder { get; set; }
+    [Parameter] public EventCallback OnMarkDead { get; set; }
+    [Parameter] public EventCallback<ActorVisibility> OnSetVisibility { get; set; }
+    [Parameter] public EventCallback<string> OnRest { get; set; }
+
+    private static readonly int[] QuickAmounts = { 1, 5, 10 };
+
+    // What is typed in the panel. It belongs to this creature's panel and goes when the panel closes.
+    private int damage;
+    private string damageType = string.Empty;
+    private bool critical;
+    private string condition = string.Empty;
+    private int rounds = 1;
+    private EffectExpiry expiry = EffectExpiry.EndOfTurn;
+    private string heldBy = string.Empty;
+    private int diceToSpend = 1;
+
+    // The table's buttons name no source: the person who pressed one is not where the damage, healing or condition came from.
+    private const string NoSource = "";
+
+    private VitalsRules? Vitals => Definition?.Vitals;
+    private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);
+    private static readonly DownRules NoDownRules = new();
+    private string DeadCondition => (Vitals?.Down ?? NoDownRules).DeadCondition;
+    private string StableCondition => (Vitals?.Down ?? NoDownRules).StableCondition;
+    private IReadOnlyList<string> DamageTypes => Vitals?.Damage?.Types ?? (IReadOnlyList<string>)Array.Empty<string>();
+
+    private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
+    private static string Slug(string text) => text.Replace(' ', '-').ToLowerInvariant();
+
+    /// <summary>The amount typed, or null after saying one is needed: a blank or negative amount used to do nothing at all (U5).</summary>
+    private async Task<int?> AmountAsync()
+    {
+        if (damage > 0) return damage;
+        await OnMessage.InvokeAsync(Flash.Error(L["Combat.AmountNeeded"]));
+        return null;
+    }
+
+    private async Task ApplyDamageAsync()
+    {
+        if (await AmountAsync() is not { } amount) return;
+        var wasCritical = critical;
+        critical = false;
+        var hit = new ApplyDamageCommand(ActorId, PrimaryKey, amount, NoSource, string.IsNullOrEmpty(damageType) ? null : damageType, wasCritical);
+        await Send(hit);
+        if (hit.ConcentrationDc is { } dc)
+        {
+            // The save is the table's to roll; the DM needs to know it is owed (R4).
+            await OnMessage.InvokeAsync(Flash.Info(L["Combat.ConcentrationSave", Name, dc]));
+        }
+    }
+
+    private async Task ApplyHealingAsync()
+    {
+        if (await AmountAsync() is not { } amount) return;
+        await Send(new ApplyHealingCommand(ActorId, PrimaryKey, amount, NoSource));
+    }
+
+    private async Task GrantTempHpAsync()
+    {
+        if (await AmountAsync() is not { } amount) return;
+        await Send(new GrantTemporaryHitPointsCommand(ActorId, amount, NoSource));
+    }
+
+    private async Task AddConditionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(condition))
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.ConditionNeeded"]));
+            return;
+        }
+
+        var effectId = condition.Trim();
+        var holder = heldBy;
+        condition = string.Empty;
+        heldBy = string.Empty;
+        await Send(new AddStatusEffectCommand(ActorId, effectId, NoSource, rounds, expiry, ActorId, string.IsNullOrEmpty(holder) ? null : holder));
+    }
+}

@@ -107,6 +107,11 @@ public class SkillRules
     public string SavingThrowsProperty { get; set; } = "savingThrows";
     public string BackgroundField { get; set; } = "background";
     public string BackgroundProperty { get; set; } = "skillProficiencies";
+
+    /// <summary>The first class's property saying how many skills it lets a character choose: a number, or text whose first
+    /// number is it ("Choose 2: Acrobatics, …"). More chosen than that (beyond the background's) is a warning, since a
+    /// species or feat may grant more.</summary>
+    public string ClassChoicesProperty { get; set; } = "skillChoices";
     public List<SkillDefinition> List { get; set; } = new();
     public List<PassiveRule> Passives { get; set; } = new();
 }
@@ -144,12 +149,20 @@ public class ProficiencyRules
 
     /// <summary>Equipment tags that mark a weapon.</summary>
     public string WeaponTag { get; set; } = "weapons";
+
+    /// <summary>A class's armor training that covers every armor but shields ("All armor"), matched at the start of the
+    /// training's name; null when the system has none.</summary>
+    public string? AllArmor { get; set; }
+
+    /// <summary>The plural ending dropped when a weapon is matched to a class's weapon training by name, so "Longswords"
+    /// covers a Longsword ("s" in English); null to match names as they are.</summary>
+    public string? PluralSuffix { get; set; }
 }
 
 /// <summary>
 /// Maximum hit points from the sheet's classes. Levels are taken first class first, then the other
-/// classes in order. The very first level gives the full hit die, every later level the die's average
-/// (or the player's roll in "rolled" mode), plus the <see cref="Attribute"/> modifier, never less than
+/// classes in order. The very first level gives what <see cref="FirstLevel"/> says (the full hit die by default), every
+/// later level the die's <see cref="Average"/> (or the player's roll in "rolled" mode), plus the <see cref="Attribute"/> modifier, never less than
 /// <see cref="MinimumPerLevel"/>. Because the modifier is read from the final score, raising
 /// Constitution raises maximum hit points for every level at once. The result is written to
 /// <see cref="Key"/> only while the sheet's <see cref="ModeKey"/> is not "manual" (a sheet without the
@@ -173,6 +186,23 @@ public class HitPointRules
     public string Attribute { get; set; } = "con";
 
     public int MinimumPerLevel { get; set; } = 1;
+
+    public const string FullDie = "full-die";
+    public const string HalfPlusOne = "half-plus-one";
+    public const string Half = "half";
+
+    /// <summary>What the character's very first level gives: <see cref="FullDie"/>, or "average" for the die's average.</summary>
+    public string FirstLevel { get; set; } = FullDie;
+
+    /// <summary>The gain a level takes in place of a roll: <see cref="HalfPlusOne"/> (a d10 gives 6) or <see cref="Half"/> (a d10
+    /// gives 5).</summary>
+    public string Average { get; set; } = HalfPlusOne;
+
+    /// <summary>The die's average by <see cref="Average"/>.</summary>
+    public int AverageOf(int die) => Average == Half ? die / 2 : die / 2 + 1;
+
+    /// <summary>What the character's first level gives for a die.</summary>
+    public int FirstLevelGain(int die) => FirstLevel == FullDie ? die : AverageOf(die);
 
     /// <summary>"average", "rolled" or "manual".</summary>
     public List<string> Modes { get; set; } = new() { "average", "rolled", "manual" };
@@ -238,6 +268,15 @@ public class InventoryRules
     public List<string> Types { get; set; } = new() { "equipment" };
     public string QuantityChoice { get; set; } = "qty";
     public string EquippedChoice { get; set; } = "equipped";
+
+    /// <summary>The item property holding one item's weight; the sheet adds them up, times their quantities.</summary>
+    public string WeightProperty { get; set; } = "weight";
+
+    /// <summary>The word the total is shown with ("lb"), translated like the system's other words. None shows the number alone.</summary>
+    public string? WeightUnit { get; set; }
+
+    /// <summary>A formula for how much a character can carry ("str * 15"); carrying more is a warning. None: no limit.</summary>
+    public string? Capacity { get; set; }
 }
 
 /// <summary>How ability scores are generated and adjusted.</summary>
@@ -313,6 +352,9 @@ public class MulticlassRules
     /// after its levels: <c>"class-id:levels:subclass-id"</c>. Null: subclasses are not tracked per class.</summary>
     public string? SubclassField { get; set; }
 
+    /// <summary>The subclass entry's property naming the class it belongs to; the sheet offers a class only its own subclasses.</summary>
+    public string SubclassClassProperty { get; set; } = "class";
+
     /// <summary>The class level at which a subclass can be chosen; a subclass before it is a violation.</summary>
     public int SubclassLevel { get; set; } = 1;
 }
@@ -331,6 +373,12 @@ public class SlotPoolRule
 {
     public string Key { get; set; } = "slots";
     public string Label { get; set; } = "Spell slots";
+
+    /// <summary>One slot, as a button's label and the table log name it ("spell slot": "Use a level 3 spell slot"). The
+    /// pool's label when not set. Translated through the system's values, like the label.</summary>
+    public string? Unit { get; set; }
+
+    public string UnitName => Unit ?? Label;
 
     /// <summary>The sheet field naming the class entry, and the sheet value whose row is read
     /// (with multiclass rules, use their <see cref="MulticlassRules.ClassLevelKey"/>).</summary>

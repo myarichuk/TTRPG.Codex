@@ -1,0 +1,312 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Core.Systems
+@using Codex.Plugin.Abstractions
+@inject IContentRegistry ContentRegistry
+
+@* The scores: how they are set (point buy, standard array, by hand), each score with its modifier, the bonuses its
+   origin spreads, the points its feats add, and what the system derives from them. It writes the sheet the page edits
+   and says so through Changed; the page re-evaluates and saves. *@
+@{
+    var attributeRules = Rules?.Attributes;
+    var summary = Evaluation?.Attributes;
+}
+<section class="panel attr-panel" aria-labelledby="attributes-heading" data-rule-key="attributes">
+    <div class="panel-title">
+        <h2 id="attributes-heading" class="h5"><LucideIcon IconName="zap" Size="18" Class="title-icon" /> @L["Actor.Sheet.Attributes"]</h2>
+        @if (attributeRules != null && CanEdit)
+        {
+            <div class="d-flex align-items-center gap-2">
+                <label for="attr-method" class="field-label">@L["Actor.Sheet.Method"]</label>
+                <select id="attr-method" class="field-select field-sm" value="@AttrMethod" @onchange="e => SetMethod(e.Value?.ToString())" data-testid="attr-method">
+                    @foreach (var method in AvailableMethods)
+                    {
+                        <option value="@method">@MethodLabel(method)</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+
+    @if (attributeRules != null && summary != null && AttrMethod == "point-buy" && attributeRules.PointBuy != null)
+    {
+        <p class="small mb-2 @(summary.PointsSpent > summary.PointsBudget ? "text-danger fw-semibold" : "small-muted")" data-testid="point-buy-summary">
+            @L["Actor.Sheet.PointBuyLead"]<strong>@summary.PointsSpent</strong>@L["Actor.Sheet.PointBuyTail", summary.PointsBudget, attributeRules.PointBuy.Min, attributeRules.PointBuy.Max]
+        </p>
+    }
+    else if (attributeRules != null && AttrMethod == "standard-array" && attributeRules.StandardArray.Count > 0)
+    {
+        <p class="small small-muted mb-2">@L["Actor.Sheet.StdArrayLead"]<bdi>@string.Join(", ", attributeRules.StandardArray)</bdi>@L["Actor.Sheet.StdArrayTail"]</p>
+    }
+
+    <div class="attr-grid" style="@(Definition.Attributes.Count is > 0 and <= 8 ? $"--attr-count:{Definition.Attributes.Count}" : null)">
+        @foreach (var attr in Definition.Attributes)
+        {
+            var total = summary?.Totals.GetValueOrDefault(attr.Key) ?? (YamlValues.GetInt(Sheet, attr.Key) ?? attr.Default);
+            var baseScore = attributeRules != null ? (YamlValues.GetInt(Sheet, SheetRuleEngine.BasePrefix + attr.Key) ?? attr.Default) : total;
+            var bonus = summary?.Bonuses.GetValueOrDefault(attr.Key) ?? 0;
+            var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
+            var modifier = attr.ModifierFor(total);
+            var modifierText = modifier == null ? null : Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier);
+            var checkLabel = L["Actor.Skills.Check", attr.Label];
+            var inputId = "attr-input-" + attr.Key;
+            var testId = "attr-" + attr.Key;
+            var invalid = Evaluation?.Violations.Any(v => v.FieldKey == attr.Key) == true;
+            <div class="attr-box @(invalid ? "attr-invalid" : "")" data-rule-key="@attr.Key">
+                <div class="attr-label" id="@("attr-" + attr.Key)">@(attr.Abbreviation ?? attr.Label)</div>
+                @if (modifierText != null)
+                {
+                    <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]">@modifierText</div>
+                    @if (ShowTray)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@L["Actor.Skills.Roll", checkLabel]" data-testid="@("roll-" + attr.Key)"
+                                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, modifier ?? 0))" />
+                    }
+                }
+                @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
+                {
+                    <div class="attr-medallion">
+                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
+                    <select id="@inputId" class="field-select field-sm" value="@baseScore" data-testid="@testId" @onchange="e => SetBase(attr, e.Value?.ToString())">
+                        @foreach (var value in attributeRules.StandardArray.Distinct().OrderByDescending(v => v))
+                        {
+                            <option value="@value">@value</option>
+                        }
+                    </select>
+                    </div>
+                }
+                else if (CanEdit)
+                {
+                    var min = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Min : attr.Min;
+                    var max = attributeRules != null && AttrMethod == "point-buy" ? attributeRules.PointBuy?.Max : attr.Max;
+                    <div class="attr-medallion">
+                    <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
+                    <input id="@inputId" type="number" class="field-input field-sm" min="@min" max="@max"
+                           value="@baseScore" data-testid="@testId"
+                           @onchange="e => SetBase(attr, e.Value?.ToString())" />
+                    </div>
+                }
+                else
+                {
+                    <div class="attr-medallion attr-score">@total</div>
+                }
+                @if (attributeRules != null && (bonus != 0 || increase != 0 || CanEdit))
+                {
+                    <div class="attr-total small-muted" data-testid="@(testId + "-total")"><bdi>@TotalText(baseScore, bonus, increase, total)</bdi></div>
+                }
+            </div>
+        }
+    </div>
+    <RuleProblemList Problems="Problems" Describe="Describe" TestId="attr-problems" />
+
+    @if (attributeRules?.Bonuses is { } bonusRules && summary != null)
+    {
+        <div class="mt-3" data-testid="attr-bonuses">
+            <div class="field-label">@bonusRules.Label</div>
+            @if (summary.EligibleBonusAttributes.Count == 0)
+            {
+                <p class="small-muted mb-0">@L["Actor.Sheet.ChooseUnderSheet", Definition.ActorFields.FirstOrDefault(f => f.Key == bonusRules.FromField)?.Label.ToLowerInvariant() ?? bonusRules.FromField]</p>
+            }
+            else
+            {
+                <p class="small-muted mb-2">@L["Actor.Sheet.SpreadLead"]<bdi>@string.Join(L["Actor.Sheet.Or"], bonusRules.Allocations.Select(a => string.Join("/", a.Select(v => "+" + v))))</bdi>@L["Actor.Sheet.SpreadMid"]@string.Join(", ", summary.EligibleBonusAttributes.Select(k => Definition.Attributes.First(a => a.Key == k).Label)).</p>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var key in summary.EligibleBonusAttributes)
+                    {
+                        var attr = Definition.Attributes.First(a => a.Key == key);
+                        var bonusId = "bonus-" + key;
+                        <div>
+                            <label for="@bonusId" class="field-label">@attr.Label</label>
+                            <select id="@bonusId" class="field-select field-sm" value="@(summary.Bonuses.GetValueOrDefault(key))" disabled="@(!CanEdit)" data-testid="@bonusId" @onchange="e => SetBonus(attr, e.Value?.ToString())">
+                                <option value="0">—</option>
+                                @foreach (var value in bonusRules.Allocations.SelectMany(a => a).Distinct().OrderBy(v => v))
+                                {
+                                    <option value="@value">+@value</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (attributeRules?.Increases is { } increaseRules && Evaluation != null)
+    {
+        <div class="mt-3" data-testid="attr-increases" data-rule-key="increases">
+            <div class="field-label">@increaseRules.Label</div>
+            <RuleProblemList Problems="IncreaseProblems" Describe="Describe" TestId="increase-problems" />
+            @if (Evaluation.Increases.Count == 0)
+            {
+                <p class="small-muted mb-0">@L["Actor.Sheet.IncNone"]</p>
+            }
+            @foreach (var grant in Evaluation.Increases)
+            {
+                var targets = PointTargets(grant);
+                <div class="mb-2" data-testid="increase-@grant.Pick.Index">
+                    <div class="small fw-semibold">@ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name) <span class="small-muted fw-normal">· @L["Actor.Sheet.Points", grant.Points]@(grant.Cap.HasValue ? L["Actor.Sheet.UpTo", grant.Cap] : "")</span></div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @for (var point = 0; point < grant.Points; point++)
+                        {
+                            var pointIndex = point;
+                            var selectId = $"inc-{grant.Pick.Index}-{pointIndex}";
+                            <div>
+                                <label for="@selectId" class="field-label">@L["Actor.Sheet.PlusOneTo"]<span class="visually-hidden">@L["Actor.Sheet.PointOf", ContentRegistry.Name(grant.Pick.Entry, L.Culture.Name), pointIndex + 1, grant.Points]</span></label>
+                                <select id="@selectId" class="field-select field-sm" value="@targets[pointIndex]" disabled="@(!CanEdit)" data-testid="@selectId"
+                                        @onchange="e => SetIncreasePoint(increaseRules, grant, pointIndex, e.Value?.ToString())">
+                                    <option value="">@L["Actor.Sheet.Choose"]</option>
+                                    @foreach (var key in grant.Options)
+                                    {
+                                        <option value="@key">@Definition.Attributes.First(a => a.Key == key).Label</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Evaluation != null && Evaluation.Derived.Count > 0)
+    {
+        <dl class="prop-list mt-3 mb-0" data-testid="derived-fields">
+            @foreach (var derived in Rules!.Derived)
+            {
+                if (!Evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
+                <dt>@derived.Label</dt>
+                <dd><bdi dir="ltr" data-testid="derived-@derived.Key">@FormatSigned(value)</bdi>
+                    @if (ShowSums && !string.IsNullOrWhiteSpace(derived.Formula))
+                    {
+                        @* The system's formula with this sheet's numbers in it. *@
+                        <span class="sum-why" data-testid="sum-derived-@derived.Key"><bdi dir="ltr">@Working(derived)</bdi></span>
+                    }
+                </dd>
+            }
+        </dl>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public SystemDefinition Definition { get; set; } = null!;
+    [Parameter] public SheetEvaluation? Evaluation { get; set; }
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
+    [Parameter] public bool CanEdit { get; set; }
+    /// <summary>The DM may always set scores by hand, whatever methods the system offers players.</summary>
+    [Parameter] public bool IsDm { get; set; }
+    /// <summary>Whether each score has a roll button (the sheet's dice tray is there).</summary>
+    [Parameter] public bool ShowTray { get; set; }
+    [Parameter] public bool ShowSums { get; set; }
+    /// <summary>The problems with the scores, their method and bonuses; and those with the feats' points.</summary>
+    [Parameter] public IReadOnlyList<RuleViolation> Problems { get; set; } = Array.Empty<RuleViolation>();
+    [Parameter] public IReadOnlyList<RuleViolation> IncreaseProblems { get; set; } = Array.Empty<RuleViolation>();
+    [Parameter, EditorRequired] public Func<RuleViolation, string> Describe { get; set; } = null!;
+    [Parameter] public EventCallback Changed { get; set; }
+    [Parameter] public EventCallback<RollRequest> OnRoll { get; set; }
+
+    private SheetRules? Rules => Definition.SheetRules;
+    private string AttrMethod => (YamlValues.GetString(Sheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? "manual").ToLowerInvariant();
+
+    /// <summary>Players pick from the system's methods; the DM may always set scores by hand.</summary>
+    private IEnumerable<string> AvailableMethods
+    {
+        get
+        {
+            var methods = Rules?.Attributes?.Methods ?? new List<string> { "manual" };
+            return IsDm ? methods.Append("manual").Distinct() : methods;
+        }
+    }
+
+    private string MethodLabel(string method) => method switch
+    {
+        "point-buy" => L["Actor.Sheet.MethodPointBuy"],
+        "standard-array" => L["Actor.Sheet.MethodStandardArray"],
+        _ => L["Actor.Sheet.MethodManual"]
+    };
+
+    private string Working(DerivedField derived) =>
+        Evaluation!.DerivedInputs.TryGetValue(derived.Key, out var inputs)
+            ? FormulaWorking.Write(derived.Formula, inputs, key => Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Abbreviation)
+            : derived.Formula;
+
+    private static string FormatSigned(object value) => Bidi.Ltr(value is long l && l >= 0 ? "+" + l : value.ToString() ?? string.Empty);
+
+    private string TotalText(int baseScore, int bonus, int increase, int total)
+    {
+        if (bonus == 0 && increase == 0) return L["Actor.Sheet.TotalOnly", total];
+        var parts = new List<string> { baseScore.ToString() };
+        if (bonus != 0) parts.Add(bonus.ToString());
+        if (increase != 0) parts.Add(increase.ToString());
+        return string.Join(" + ", parts) + " = " + total;
+    }
+
+    private Task SetMethod(string? method)
+    {
+        if (string.IsNullOrEmpty(method)) return Task.CompletedTask;
+        Sheet[SheetRuleEngine.MethodKey] = method;
+        if (method == "point-buy" && Rules?.Attributes?.PointBuy is { } pointBuy)
+        {
+            foreach (var attr in Definition.Attributes)
+            {
+                var current = YamlValues.GetInt(Sheet, SheetRuleEngine.BasePrefix + attr.Key) ?? attr.Default;
+                Sheet[SheetRuleEngine.BasePrefix + attr.Key] = (long)Math.Clamp(current, pointBuy.Min, pointBuy.Max);
+            }
+        }
+        else if (method == "standard-array" && Rules?.Attributes?.StandardArray is { Count: > 0 } array)
+        {
+            var values = array.OrderByDescending(v => v).ToList();
+            for (var i = 0; i < Definition.Attributes.Count; i++)
+            {
+                Sheet[SheetRuleEngine.BasePrefix + Definition.Attributes[i].Key] = (long)values[Math.Min(i, values.Count - 1)];
+            }
+        }
+
+        return Changed.InvokeAsync();
+    }
+
+    private Task SetBase(AttributeDefinition attribute, string? raw)
+    {
+        if (!int.TryParse(raw, out var value)) return Task.CompletedTask;
+        if (Rules?.Attributes != null)
+        {
+            Sheet[SheetRuleEngine.BasePrefix + attribute.Key] = (long)value;
+        }
+        else
+        {
+            if (attribute.Min.HasValue) value = Math.Max(attribute.Min.Value, value);
+            if (attribute.Max.HasValue) value = Math.Min(attribute.Max.Value, value);
+            Sheet[attribute.Key] = (long)value;
+        }
+
+        return Changed.InvokeAsync();
+    }
+
+    private Task SetBonus(AttributeDefinition attribute, string? raw)
+    {
+        if (!int.TryParse(raw, out var value)) return Task.CompletedTask;
+        if (value == 0) Sheet.Remove(SheetRuleEngine.BonusPrefix + attribute.Key);
+        else Sheet[SheetRuleEngine.BonusPrefix + attribute.Key] = (long)value;
+        return Changed.InvokeAsync();
+    }
+
+    /// <summary>Which attribute each of a grant's points goes to, "" where not chosen yet.</summary>
+    private static List<string> PointTargets(IncreaseGrant grant)
+    {
+        var targets = grant.Pick.Choices.SelectMany(c => Enumerable.Repeat(c.Key, Math.Max(c.Value, 0))).ToList();
+        while (targets.Count < grant.Points) targets.Add("");
+        return targets;
+    }
+
+    private Task SetIncreasePoint(IncreaseRules rules, IncreaseGrant grant, int point, string? attributeKey)
+    {
+        var targets = PointTargets(grant);
+        if (point >= targets.Count) return Task.CompletedTask;
+        targets[point] = attributeKey ?? "";
+        var choices = targets.Where(t => t.Length > 0).GroupBy(t => t, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.Count());
+        var raw = SheetRuleEngine.RawList(Sheet, rules.FromList);
+        if (grant.Pick.Index >= raw.Count) return Task.CompletedTask;
+        raw[grant.Pick.Index] = SheetRuleEngine.FormatPick(grant.Pick.Entry.Id, choices);
+        Sheet[rules.FromList] = raw.Cast<object>().ToList();
+        return Changed.InvokeAsync();
+    }
+}

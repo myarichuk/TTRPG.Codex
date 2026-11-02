@@ -46,6 +46,23 @@
   <data name="Event.Status.Gained" xml:space="preserve"><value>{0} получает состояние «{1}».</value></data>
   <data name="Event.Status.Indefinite" xml:space="preserve"><value>Длится, пока не будет снято.</value></data>
   <data name="Event.Status.Lost" xml:space="preserve"><value>{0} теряет состояние «{1}».</value></data>
+  <data name="Event.Concentration.Save" xml:space="preserve"><value>{0} концентрируется: спасбросок со СЛ {1} сохранит концентрацию.</value></data>
+  <data name="Event.Concentration.Lost" xml:space="preserve"><value>{0} теряет концентрацию.</value></data>
+  <data name="Event.Concentration.Holds" xml:space="preserve"><value>Держится на концентрации: {0}.</value></data>
+  <data name="Event.Concentration.Released" xml:space="preserve"><value>{0, plural, one{Закончился # эффект, который держала концентрация.} few{Закончились # эффекта, которые держала концентрация.} many{Закончились # эффектов, которые держала концентрация.} other{Закончились # эффекта, которые держала концентрация.}}</value></data>
+  <data name="Event.Killed.Done" xml:space="preserve"><value>{0}: мёртв.</value></data>
+  <data name="Event.Killed.Already" xml:space="preserve"><value>{0}: уже мёртв.</value></data>
+  <data name="Event.Revived.Done" xml:space="preserve"><value>{0}: возвращается из мёртвых, хотя бы с 1 хитом.</value></data>
+  <data name="Event.Revived.NotDead" xml:space="preserve"><value>{0}: не был мёртв.</value></data>
+  <data name="Event.Undo.Done" xml:space="preserve"><value>{0}: последнее изменение отменено.</value></data>
+  <data name="Event.Undo.Nothing" xml:space="preserve"><value>{0}: отменять нечего, с тех пор что-то изменилось.</value></data>
+  <data name="Event.Visibility.Known" xml:space="preserve"><value>{0}: теперь известен игрокам.</value></data>
+  <data name="Event.Visibility.Unknown" xml:space="preserve"><value>{0}: теперь виден игрокам как незнакомец.</value></data>
+  <data name="Event.Visibility.Hidden" xml:space="preserve"><value>{0}: теперь скрыт от игроков.</value></data>
+  <data name="Event.Visibility.Player" xml:space="preserve"><value>{0}: здесь.</value></data>
+  <data name="Event.Someone" xml:space="preserve"><value>кто-то</value></data>
+  <data name="Event.Somewhere" xml:space="preserve"><value>где-то</value></data>
+  <data name="Event.Something" xml:space="preserve"><value>что-то</value></data>
   <data name="Event.Turn.Ended" xml:space="preserve"><value>Ход {0} закончился.</value></data>
   <data name="Event.Turn.Passed" xml:space="preserve"><value>Ход переходит к {0} (раунд {1}).</value></data>
   <data name="Event.Turn.PassedNobody" xml:space="preserve"><value>Ход не перешёл ни к кому (раунд {0}).</value></data>
@@ -105,9 +122,7 @@
   <data name="Event.Status.GainedFrom" xml:space="preserve"><value>{0} получает состояние «{1}» от {2}.</value></data>
   <data name="Event.Status.UntilStart" xml:space="preserve"><value>Длится раундов: {0}, до начала хода: {1}.</value></data>
   <data name="Event.Status.UntilEnd" xml:space="preserve"><value>Длится раундов: {0}, до конца хода: {1}.</value></data>
-  <data name="Event.Slot.Spell" xml:space="preserve"><value>ячейка заклинаний {0} уровня</value></data>
-  <data name="Event.Slot.Pact" xml:space="preserve"><value>ячейка договора {0} уровня</value></data>
-  <data name="Event.Slot.Other" xml:space="preserve"><value>{1} ({0} уровень)</value></data>
+  <data name="Event.Slot.Other" xml:space="preserve"><value>{1} {0} уровня</value></data>
   <data name="Event.Type.ActorJoined" xml:space="preserve"><value>Вход</value></data>
   <data name="Event.Type.ActorLeft" xml:space="preserve"><value>Выход</value></data>
   <data name="Event.Type.Damage" xml:space="preserve"><value>Урон</value></data>
@@ -131,4 +146,8 @@
   <data name="Event.Type.TemporaryHitPoints" xml:space="preserve"><value>Временные хиты</value></data>
   <data name="Event.Type.TurnAdvance" xml:space="preserve"><value>Ход</value></data>
   <data name="Event.Type.TurnState" xml:space="preserve"><value>Состояние хода</value></data>
+  <data name="Event.Type.Killed" xml:space="preserve"><value>Смерть</value></data>
+  <data name="Event.Type.Revived" xml:space="preserve"><value>Возвращение</value></data>
+  <data name="Event.Type.Undo" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Event.Type.ActorVisibility" xml:space="preserve"><value>Видимость</value></data>
 </root>

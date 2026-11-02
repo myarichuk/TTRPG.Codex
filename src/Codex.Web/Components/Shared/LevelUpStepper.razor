@@ -1,0 +1,131 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* What the next level brings (U4), before it is taken: the class gaining it, its features, hit points, the proficiency
+   bonus, what becomes choosable and any rule it breaks. The sheet works the plan out (LevelUpPlan) and takes the level. *@
+@{
+    var hp = Plan.HitPoints;
+    var rolledMode = Evaluation?.HitPoints?.Mode == "rolled";
+}
+<div class="levelup-plan" data-testid="levelup-plan">
+    @if (Rules?.Multiclass != null && Evaluation is { Classes.Count: > 0 })
+    {
+        <div class="mb-3">
+            <label for="levelup-class" class="field-label">@L["Actor.Sheet.ClassGaining"]</label>
+            <select id="levelup-class" class="field-select field-sm" value="@ClassId" @onchange="e => OnClassChosen.InvokeAsync(e.Value?.ToString())" data-testid="levelup-class">
+                @foreach (var cls in Evaluation.Classes)
+                {
+                    <option value="@cls.Id">@L["Actor.Sheet.ClassLevelOption", EntryName(cls.Entry) ?? cls.Id, cls.Level + 1]</option>
+                }
+                @foreach (var option in Evaluation.MulticlassOptions)
+                {
+                    <option value="@option.Id">@L["Actor.Sheet.ClassNewOption", EntryName(option)]</option>
+                }
+            </select>
+        </div>
+    }
+
+    <h3 class="label-caps mb-1">@(Plan.Class != null ? L["Actor.Sheet.LevelBrings", Plan.Class.Name, Plan.ClassLevel] : L["Actor.Sheet.LevelBringsPlain", Plan.Level])</h3>
+    @if (Plan.Features.Count == 0)
+    {
+        <p class="small-muted" data-testid="levelup-no-features">@L["Actor.Sheet.LevelNoFeatures"]</p>
+    }
+    else
+    {
+        <ul class="list-unstyled levelup-features" data-testid="levelup-features">
+            @foreach (var feature in Plan.Features)
+            {
+                <li>
+                    <details>
+                        <summary><strong>@feature.Name</strong> @if (Plan.Class != null && feature.Source != Plan.Class.Name) { <span class="small-muted">· @feature.Source</span> }</summary>
+                        <div class="rules-text small">@((MarkupString)TextFormatting.ToHtml(feature.Description))</div>
+                    </details>
+                </li>
+            }
+        </ul>
+    }
+
+    <dl class="prop-list levelup-numbers">
+        @if (hp != null)
+        {
+            <dt>@L["Actor.Sheet.LevelHp"]</dt>
+            <dd data-testid="levelup-hp">
+                <bdi dir="ltr">+@(hp.Gain + hp.Extra)</bdi>
+                <span class="small-muted">@L["Actor.Sheet.LevelHpHow", hp.Die, hp.IsRolled ? hp.Base.ToString() : L["Actor.Sheet.LevelHpAverage", hp.Base], Bidi.Ltr((hp.Modifier >= 0 ? "+" : "") + hp.Modifier)]@(hp.Extra != 0 ? $" {Bidi.Ltr((hp.Extra > 0 ? "+" : "") + hp.Extra)}" : "")</span>
+                @if (Plan.HitPointsBefore is { } hpBefore && Plan.HitPointsAfter is { } hpAfter)
+                {
+                    <span class="small-muted"> · <bdi dir="ltr">@hpBefore → @hpAfter</bdi></span>
+                }
+                @if (rolledMode)
+                {
+                    <span class="d-inline-flex align-items-center gap-2 ms-2">
+                        <label for="levelup-roll" class="visually-hidden">@L["Actor.Hp.RollAria", Plan.Level]</label>
+                        <input id="levelup-roll" type="number" class="field-input field-sm" style="width:5rem" min="1" max="@hp.Die" value="@Roll"
+                               placeholder="@(hp.IsRolled ? null : hp.Base)" @onchange="e => SetRoll(e.Value?.ToString(), hp.Die)" data-testid="levelup-roll" />
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="dices" OnClick="() => OnRollDie.InvokeAsync(hp.Die)" data-testid="levelup-roll-die">@L["Actor.Sheet.LevelRollDie", hp.Die]</CodexButton>
+                    </span>
+                }
+            </dd>
+        }
+        @if (Plan.ProficiencyAfter is { } pbAfter && Plan.ProficiencyBefore is { } pbBefore && pbAfter != pbBefore)
+        {
+            <dt>@(Rules?.Derived.FirstOrDefault(d => d.Key == (Rules.Skills?.BonusKey ?? Rules.Spellcasting?.BonusKey))?.Label ?? L["Actor.Sheet.LevelPb"])</dt>
+            <dd data-testid="levelup-pb"><bdi dir="ltr">+@pbBefore → +@pbAfter</bdi></dd>
+        }
+    </dl>
+
+    @if (Plan.Choices.Count > 0 || Plan.NeedsSubclass)
+    {
+        <h3 class="label-caps mb-1">@L["Actor.Sheet.LevelChoose"]</h3>
+        <ul class="mb-2 small" data-testid="levelup-choices">
+            @if (Plan.NeedsSubclass)
+            {
+                <li>@L["Actor.Sheet.LevelSubclass", Plan.Class?.Name ?? ""]</li>
+            }
+            @foreach (var choice in Plan.Choices)
+            {
+                <li>@L["Actor.Sheet.LevelMore", choice.Added, choice.Label]</li>
+            }
+        </ul>
+    }
+    @if (Plan.NewViolations.Count > 0)
+    {
+        <ul class="field-problems list-unstyled" data-testid="levelup-problems">
+            @foreach (var violation in Plan.NewViolations)
+            {
+                <li class="field-error"><LucideIcon IconName="alert-triangle" Size="14" /> @Describe(violation)</li>
+            }
+        </ul>
+    }
+
+    <div class="d-flex gap-2 flex-wrap mt-2">
+        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="OnApply" data-testid="levelup-apply">@L["Actor.Sheet.LevelTake", Plan.Level]</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="OnCancel" data-testid="levelup-cancel">@L["Common.Cancel"]</CodexButton>
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired] public LevelUpPlan Plan { get; set; } = null!;
+    [Parameter] public SheetEvaluation? Evaluation { get; set; }
+    [Parameter] public SheetRules? Rules { get; set; }
+
+    /// <summary>The class gaining the level.</summary>
+    [Parameter] public string ClassId { get; set; } = string.Empty;
+
+    /// <summary>The hit die typed or rolled for the level, in rolled mode.</summary>
+    [Parameter] public int? Roll { get; set; }
+    [Parameter, EditorRequired] public Func<ContentEntry?, string?> EntryName { get; set; } = null!;
+    [Parameter, EditorRequired] public Func<RuleViolation, string> Describe { get; set; } = null!;
+    [Parameter] public EventCallback<string?> OnClassChosen { get; set; }
+
+    /// <summary>A hit die typed: the value, or null when it isn't one the die can show.</summary>
+    [Parameter] public EventCallback<int?> OnRollTyped { get; set; }
+
+    /// <summary>Roll the die (its sides).</summary>
+    [Parameter] public EventCallback<int> OnRollDie { get; set; }
+    [Parameter] public EventCallback OnApply { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private Task SetRoll(string? raw, int die) =>
+        OnRollTyped.InvokeAsync(int.TryParse(raw, out var value) && value >= 1 && value <= die ? value : null);
+}

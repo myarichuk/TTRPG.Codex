@@ -1,4 +1,5 @@
 using Codex.Plugin.Abstractions;
+using Codex.Localization;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
 
@@ -18,7 +19,8 @@ public class CampaignRepository(
     IJournalRepository? journalRepository = null,
     IWorldChatRepository? worldChatRepository = null,
     CampaignLifecycleHooks? lifecycle = null,
-    ITemplateRepository? templateRepository = null) : ICampaignRepository
+    ITemplateRepository? templateRepository = null,
+    InviteAttempts? inviteAttempts = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -72,6 +74,17 @@ public class CampaignRepository(
             Normalize(campaign);
         });
 
+    public Task<CampaignDocument?> UpdateAsDmAsync(CampaignAccess access, Action<CampaignDocument> mutate) =>
+        UpdateAsync(access.CampaignId, campaign =>
+        {
+            if (CampaignAccessResolver.RoleOf(campaign, access.UserId) != CampaignRole.DM)
+            {
+                throw new LocalizedException("Campaign.AccessChanged");
+            }
+
+            mutate(campaign);
+        });
+
     /// <summary>1.1: reject a SystemId nothing implements. Skipped until the catalog has actually run
     /// once - refusing every save during the plugin-loading window at startup would be worse
     /// than the gap it closes.</summary>
@@ -98,7 +111,7 @@ public class CampaignRepository(
 
         if (string.IsNullOrEmpty(campaign.InviteCode))
         {
-            campaign.InviteCode = Guid.NewGuid().ToString("N")[..8];
+            campaign.InviteCode = InviteCodes.New();
         }
     }
 
@@ -144,48 +157,67 @@ public class CampaignRepository(
 
     public async Task<bool> InviteCodeExistsAsync(string inviteCode)
     {
-        if (string.IsNullOrWhiteSpace(inviteCode)) return false;
+        var code = InviteCodes.Clean(inviteCode);
+        if (code.Length == 0) return false;
+        var campaign = await FindByInviteCodeAsync(code);
+        return campaign != null && InviteCodes.Admits(campaign, code, null, Attempts.Now);
+    }
+
+    private InviteAttempts Attempts { get; } = inviteAttempts ?? new InviteAttempts();
+
+    private async Task<CampaignDocument?> FindByInviteCodeAsync(string code)
+    {
         using var lookup = dbService.Store.OpenAsyncSession();
         return await lookup.Query<CampaignDocument>()
             .Customize(x => x.WaitForNonStaleResults())
-            .AnyAsync(c => c.InviteCode == inviteCode);
+            .FirstOrDefaultAsync(c => c.InviteCode == code);
     }
 
     public async Task<(CampaignJoinResult Result, string? CampaignId)> JoinByInviteCodeAsync(string inviteCode, string userId)
     {
-        string? campaignId;
-        using (IAsyncDocumentSession lookup = dbService.Store.OpenAsyncSession())
+        if (!Attempts.Allows(userId))
         {
-            campaignId = (await lookup.Query<CampaignDocument>()
-                .Customize(x => x.WaitForNonStaleResults())
-                .FirstOrDefaultAsync(c => c.InviteCode == inviteCode))?.Id;
+            return (CampaignJoinResult.TooManyAttempts, null);
         }
 
+        var code = InviteCodes.Clean(inviteCode);
+        var campaignId = code.Length == 0 ? null : (await FindByInviteCodeAsync(code))?.Id;
         if (campaignId == null)
         {
+            Attempts.Failed(userId);
             return (CampaignJoinResult.InvalidCode, null);
         }
 
         // Reload-then-mutate: a settings save or the live table writing the same document at the
-        // same moment must neither lose this member nor be reverted by the join.
+        // same moment must neither lose this member nor be reverted by the join. The code is checked
+        // again on the stored copy, so two players racing for a one-use link cannot both get in.
         var result = CampaignJoinResult.InvalidCode;
-        var updated = await RavenUpdate.RunAsync<CampaignDocument>(dbService, campaignId, campaign =>
+        var updated = await RavenUpdate.RunVersionedAsync<CampaignDocument>(dbService, campaignId, (campaign, _) =>
         {
-            if (!string.Equals(campaign.InviteCode, inviteCode, StringComparison.Ordinal))
+            if (!InviteCodes.Admits(campaign, code, userId, Attempts.Now))
             {
                 result = CampaignJoinResult.InvalidCode;
+                return false;
             }
-            else if (campaign.Members.Any(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)))
+
+            if (campaign.Members.Any(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)))
             {
                 result = CampaignJoinResult.AlreadyMember;
+                return false;
             }
-            else
-            {
-                campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
-                result = CampaignJoinResult.Joined;
-            }
+
+            campaign.Members.Add(new CampaignMember { UserId = userId, Role = CampaignRole.Player });
+            if (campaign.InviteSingleUse) campaign.InviteUsedBy = userId;
+            result = CampaignJoinResult.Joined;
+            return true;
         });
 
-        return updated == null || result == CampaignJoinResult.InvalidCode ? (CampaignJoinResult.InvalidCode, null) : (result, campaignId);
+        if (updated == null || result == CampaignJoinResult.InvalidCode)
+        {
+            Attempts.Failed(userId);
+            return (CampaignJoinResult.InvalidCode, null);
+        }
+
+        return (result, campaignId);
     }
 }

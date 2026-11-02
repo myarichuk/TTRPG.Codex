@@ -35,7 +35,7 @@
                             <td>
                                 @if (Mode == "rolled" && level.Level > 1 && CanEdit)
                                 {
-                                    <input type="number" class="field-input field-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.Die / 2 + 1)"
+                                    <input type="number" class="field-input field-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.IsRolled ? null : level.Base)"
                                            aria-label="@L["Actor.Hp.RollAria", level.Level]" @onchange="e => SetRollAsync(level.Level, e.Value?.ToString())" data-testid="hp-roll-@level.Level" />
                                 }
                                 else

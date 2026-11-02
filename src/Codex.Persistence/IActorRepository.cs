@@ -29,7 +29,15 @@ public interface IActorRepository
     /// false without saving anything otherwise. The unguarded <see cref="SaveAsync"/> stays for
     /// trusted server-side callers (runtime write-through, seeding).
     /// </summary>
+    /// <remarks>An actor this repository handed out is saved only over the version it was handed out at: when someone saved
+    /// it since, nothing is written and a <see cref="Codex.Localization.LocalizedException"/> ("Actor.Sheet.ChangedMeanwhile")
+    /// is thrown, so the editor can keep its text. A copy handed out and deleted since returns false.</remarks>
     Task<bool> TrySaveAsync(ActorDocument actor, CampaignAccess access);
+
+    /// <summary>Records that <paramref name="actor"/>'s portrait was stored (or removed) and bumps its version, and nothing else
+    /// (D5): the sheet's unsaved edits are not written, and its rules are not bypassed. The DM or the owning player only.
+    /// <paramref name="actor"/> takes the new portrait fields, and stays saveable when it was the latest before.</summary>
+    Task<bool> TrySetPortraitAsync(ActorDocument actor, bool hasPortrait, CampaignAccess access);
 
     /// <summary>
     /// Actors in <paramref name="access"/>'s campaign that <paramref name="access"/> is allowed to
@@ -49,6 +57,19 @@ public interface IActorRepository
     /// false without deleting anything for anyone else or a cross-campaign id.
     /// </summary>
     Task<bool> TryDeleteAsync(string actorId, CampaignAccess access);
+
+    /// <summary>
+    /// Takes an actor out of play without deleting it (D17): <see cref="ActorDocument.Retired"/> is set, so lists and pickers
+    /// leave it out while mentions, reveals and links still name it. The same people may as for <see cref="TryDeleteAsync"/>.
+    /// Returns the stored actor, or null when <paramref name="access"/> may not.
+    /// </summary>
+    Task<ActorDocument?> TryRetireAsync(string actorId, CampaignAccess access);
+
+    /// <summary>Brings a retired actor back into play. The DM only; returns the stored actor, or null.</summary>
+    Task<ActorDocument?> TryRestoreAsync(string actorId, CampaignAccess access);
+
+    /// <summary>Changes who among the players may see an actor (R1). The DM only; returns the stored actor, or null.</summary>
+    Task<ActorDocument?> TrySetVisibilityAsync(string actorId, ActorVisibility visibility, CampaignAccess access);
 
     /// <summary>
     /// The dashboard's "recent archives" list: a user's own actors across every campaign they're

@@ -54,8 +54,8 @@
                 </div>
                 <label for="quick-note" class="visually-hidden">@KindLabel(noteKind)</label>
                 <textarea id="quick-note" class="field-input field-sm mb-1" rows="3" @ref="noteInput" @oninput="e => noteText = e.Value as string ?? string.Empty"
-                          placeholder="@KindPrompt(noteKind)" aria-describedby="quick-note-hint" data-mentions="@mentionsJson" data-clear-on-submit-field data-submit-on-mod-enter data-testid="quick-note"></textarea>
-                <p id="quick-note-hint" class="field-hint mb-2">@MentionHint @L["Combat.Notes.SubmitHint"]</p>
+                          placeholder="@KindPrompt(noteKind)" aria-describedby="quick-note-hint" data-mentions="@mentionsJson" data-clear-on-submit-field data-submit-on-mod-enter data-md-secrets="@(Access.IsDm ? "" : null)" data-testid="quick-note"></textarea>
+                <p id="quick-note-hint" class="field-hint mb-2">@MentionHint @L["Combat.Notes.SubmitHint"]@(Access.IsDm ? " " + L["Common.Note.SecretHint"] : "")</p>
                 <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                     @if (Access.IsDm)
                     {
@@ -194,7 +194,7 @@
                         {
                             <form @onsubmit="SaveEditAsync" @onsubmit:preventDefault="true">
                                 <label for="note-edit-text" class="visually-hidden">@L["Combat.Notes.CorrectedWords"]</label>
-                                <textarea id="note-edit-text" class="field-input field-sm mb-2" rows="2" @bind="editText" @bind:event="oninput" data-mentions="@mentionsJson" data-testid="note-edit-text"></textarea>
+                                <textarea id="note-edit-text" class="field-input field-sm mb-2" rows="2" @bind="editText" @bind:event="oninput" data-mentions="@mentionsJson" data-md-secrets="@(Access.IsDm ? "" : null)" data-testid="note-edit-text"></textarea>
                                 <div class="d-flex gap-2">
                                     <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Small="true" data-testid="note-edit-save">@L["Common.Save"]</CodexButton>
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => editingId = null">@L["Common.Cancel"]</CodexButton>
@@ -206,12 +206,12 @@
                             var others = SessionNotes.WithNames(note, ActorsById, Access.IsDm);
                             <p class="mb-0">
                                 <strong>@SessionQuotes.SpeakerName(note.SpeakerActorId, ActorsById, Access.IsDm, L["Session.UnknownSpeaker"])</strong>@if (others.Count > 0) { <span class="small-muted">@(" " + L["Combat.Notes.To", string.Join(", ", others)])</span> }:
-                                <q><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></q>
+                                <q><MentionText Text="@SessionNotes.TextFor(note, Access, ownedActorIds)" Mentions="Mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></q>
                             </p>
                         }
                         else
                         {
-                            <p class="mb-0 notes-text"><MentionText Text="@note.Text" Mentions="Mentions" CampaignId="@CampaignId" /></p>
+                            <p class="mb-0 notes-text"><MentionText Text="@SessionNotes.TextFor(note, Access, ownedActorIds)" Mentions="Mentions" CampaignId="@CampaignId" Dm="@NoteDm" /></p>
                         }
                     </article>
                 }
@@ -232,6 +232,7 @@
 
     /// <summary>The characters, places and items this viewer can mention and read.</summary>
     [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+    private DmView? NoteDm => Access.IsDm ? DmView.From(L, Mentions) : null;
 
     /// <summary>Puts a note command on the campaign's single-writer loop.</summary>
     [Parameter] public Func<IRuntimeCommand, Task> Send { get; set; } = _ => Task.CompletedTask;
@@ -265,6 +266,7 @@
     private MentionDirectory? mentionsFor;
     private string mentionsJson = "[]";
     private IReadOnlyList<SessionNote> visibleNotes = Array.Empty<SessionNote>();
+    private IReadOnlySet<string> ownedActorIds = new HashSet<string>();
 
     private Dictionary<string, ActorDocument> ActorsById => actorsById;
     private IReadOnlyList<SessionNote> VisibleNotes => visibleNotes;
@@ -273,6 +275,7 @@
     protected override void OnParametersSet()
     {
         actorsById = Actors.ToDictionary(a => a.Id);
+        ownedActorIds = Actors.Where(a => a.OwnerUserId == CurrentUserId).Select(a => a.Id).ToHashSet();
         if (!ReferenceEquals(mentionsFor, Mentions))
         {
             mentionsFor = Mentions;
@@ -381,14 +384,7 @@
         _ => L["Combat.Notes.KindPlural.Note"]
     };
 
-    private string KindLabel(NoteKind kind) => kind switch
-    {
-        NoteKind.Clue => L["Combat.Notes.Kind.Clue"],
-        NoteKind.Loot => L["Combat.Notes.Kind.Loot"],
-        NoteKind.Ruling => L["Combat.Notes.Kind.Ruling"],
-        NoteKind.FollowUp => L["Combat.Notes.Kind.FollowUp"],
-        _ => L["Combat.Notes.Kind.Note"]
-    };
+    private string KindLabel(NoteKind kind) => NoteKindText.Label(L, kind);
 
     private string AddKindLabel(NoteKind kind) => kind switch
     {
@@ -456,7 +452,7 @@
     private List<(string Label, List<ActorDocument> Actors)> CastCandidates()
     {
         var inCast = cast.Select(a => a.Id).ToHashSet();
-        var visible = actorsById.Values.Where(a => !inCast.Contains(a.Id) && (Access.IsDm || a.Visibility != ActorVisibility.Hidden)).ToList();
+        var visible = actorsById.Values.Where(a => !inCast.Contains(a.Id) && !a.Retired && (Access.IsDm || a.Visibility != ActorVisibility.Hidden)).ToList();
         var fightIds = Encounter?.Participants.Select(p => p.ActorId).ToList() ?? new List<string>();
         var fight = fightIds.Select(id => visible.FirstOrDefault(a => a.Id == id)).Where(a => a != null).Select(a => a!).ToList();
         var rest = visible.Except(fight).OrderBy(a => a.NameFor(Access.IsDm), StringComparer.OrdinalIgnoreCase).ToList();

@@ -194,3 +194,52 @@ public class AiAssistantTests
         Assert.Contains("- chain-mail: Chain Mail", user);
     }
 }
+
+public class AiAssistantJsonFallbackTests
+{
+    /// <summary>R13: a server that does not take response_format says so with a 400, and gets the question again without it.
+    /// A wrong key or a rate limit fails the same way twice, so it is not asked twice (and not paid for twice).</summary>
+    [Theory]
+    [InlineData(400, 2)]
+    [InlineData(422, 2)]
+    [InlineData(401, 1)]
+    [InlineData(429, 1)]
+    [InlineData(500, 1)]
+    public async Task AJsonReply_IsAskedAgainWithoutJsonMode_OnlyWhenTheServerRejectedTheRequest(int status, int calls)
+    {
+        var chat = new RefusesJsonMode((System.Net.HttpStatusCode)status);
+        var assistant = new AiAssistant(chat);
+
+        try
+        {
+            await assistant.EquipAsync(new EquipRequest("Brakka", "SRD", new[] { new EquipmentOption("rope", "Rope") }, false));
+        }
+        catch (HttpRequestException)
+        {
+        }
+
+        Assert.Equal(calls, chat.Calls);
+    }
+
+    private sealed class RefusesJsonMode(System.Net.HttpStatusCode status) : IChatClient
+    {
+        public int Calls { get; private set; }
+
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            if (options?.ResponseFormat != null || status != System.Net.HttpStatusCode.BadRequest && (int)status != 422)
+            {
+                throw new HttpRequestException("refused", null, status);
+            }
+
+            return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, """{"equipment":[]}""")));
+        }
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+    }
+}

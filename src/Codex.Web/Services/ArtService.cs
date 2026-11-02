@@ -37,9 +37,25 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
     public static string? Url(RegionDocument region, LocationDocument location) =>
         location.HasArt ? $"/media/regions/{region.Id}/locations/{Uri.EscapeDataString(location.Id)}/art?v={location.ArtVersion}" : null;
 
+    /// <summary>The store checks the caller's role as the campaign has it now (D15). One taken away since the page loaded
+    /// is refused there, and here it is a false like any other refusal.</summary>
+    private static async Task<bool> FalseWhenRefused(Func<Task<bool>> store)
+    {
+        try
+        {
+            return await store();
+        }
+        catch (LocalizedException ex) when (ex.Key == "Campaign.AccessChanged")
+        {
+            return false;
+        }
+    }
+
     /// <summary>Stores art for a Library entry; false when the caller isn't the DM or the image can't be stored.
     /// For pack art, <paramref name="campaign"/>'s <see cref="CampaignDocument.PackArt"/> is refreshed so the new URL shows at once.</summary>
-    public async Task<bool> PutAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item, ArtImage image)
+    public Task<bool> PutAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item, ArtImage image) => FalseWhenRefused(() => PutCoreAsync(campaign, access, item, image));
+
+    private async Task<bool> PutCoreAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item, ArtImage image)
     {
         if (!access.IsDm || access.CampaignId != campaign.Id || Problem(image.ContentType, image.Bytes.Length) != null)
         {
@@ -53,11 +69,11 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
         using (var stream = new MemoryStream(image.Bytes))
         {
-            await media.PutAsync(campaign.Id, RavenMediaStore.PackArtName(item.Entry.Type, item.Entry.Id), stream, image.ContentType);
+            await media.PutAsync(access, campaign.Id, RavenMediaStore.PackArtName(item.Entry.Type, item.Entry.Id), stream, image.ContentType);
         }
 
         var key = RavenMediaStore.PackArtKey(item.Entry.Type, item.Entry.Id);
-        var updated = await campaigns.UpdateAsync(campaign.Id, c => c.PackArt[key] = c.PackArt.GetValueOrDefault(key) + 1);
+        var updated = await campaigns.UpdateAsDmAsync(access, c => c.PackArt[key] = c.PackArt.GetValueOrDefault(key) + 1);
         if (updated != null)
         {
             campaign.PackArt = updated.PackArt;
@@ -66,7 +82,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
         return true;
     }
 
-    public async Task<bool> PutHomebrewAsync(HomebrewEntryDocument brew, CampaignAccess access, ArtImage image)
+    public Task<bool> PutHomebrewAsync(HomebrewEntryDocument brew, CampaignAccess access, ArtImage image) => FalseWhenRefused(() => PutHomebrewCoreAsync(brew, access, image));
+
+    private async Task<bool> PutHomebrewCoreAsync(HomebrewEntryDocument brew, CampaignAccess access, ArtImage image)
     {
         if (!access.IsDm || string.IsNullOrEmpty(brew.Id) || brew.CampaignId != access.CampaignId || Problem(image.ContentType, image.Bytes.Length) != null)
         {
@@ -75,7 +93,7 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
         using (var stream = new MemoryStream(image.Bytes))
         {
-            await media.PutAsync(brew.Id, RavenMediaStore.EntryArt, stream, image.ContentType);
+            await media.PutAsync(access, brew.Id, RavenMediaStore.EntryArt, stream, image.ContentType);
         }
 
         if (!await homebrew.SetArtAsync(brew.Id, true, access))
@@ -88,7 +106,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
         return true;
     }
 
-    public async Task<bool> RemoveAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item)
+    public Task<bool> RemoveAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item) => FalseWhenRefused(() => RemoveCoreAsync(campaign, access, item));
+
+    private async Task<bool> RemoveCoreAsync(CampaignDocument campaign, CampaignAccess access, LibraryItem item)
     {
         if (!access.IsDm || access.CampaignId != campaign.Id)
         {
@@ -97,16 +117,16 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
         if (item.Homebrew is { } brew)
         {
-            await media.DeleteAsync(brew.Id, RavenMediaStore.EntryArt);
+            await media.DeleteAsync(access, brew.Id, RavenMediaStore.EntryArt);
             if (!await homebrew.SetArtAsync(brew.Id, false, access)) return false;
             brew.HasArt = false;
             brew.ArtVersion++;
             return true;
         }
 
-        await media.DeleteAsync(campaign.Id, RavenMediaStore.PackArtName(item.Entry.Type, item.Entry.Id));
+        await media.DeleteAsync(access, campaign.Id, RavenMediaStore.PackArtName(item.Entry.Type, item.Entry.Id));
         var key = RavenMediaStore.PackArtKey(item.Entry.Type, item.Entry.Id);
-        var updated = await campaigns.UpdateAsync(campaign.Id, c => c.PackArt.Remove(key));
+        var updated = await campaigns.UpdateAsDmAsync(access, c => c.PackArt.Remove(key));
         if (updated != null)
         {
             campaign.PackArt = updated.PackArt;
@@ -116,7 +136,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
     }
 
     /// <summary>Stores or removes (<paramref name="image"/> null) a place's art and records it on the location.</summary>
-    public async Task<bool> SetLocationAsync(string regionId, LocationDocument location, CampaignAccess access, ArtImage? image)
+    public Task<bool> SetLocationAsync(string regionId, LocationDocument location, CampaignAccess access, ArtImage? image) => FalseWhenRefused(() => SetLocationCoreAsync(regionId, location, access, image));
+
+    private async Task<bool> SetLocationCoreAsync(string regionId, LocationDocument location, CampaignAccess access, ArtImage? image)
     {
         if (!access.IsDm || (image != null && Problem(image.ContentType, image.Bytes.Length) != null))
         {
@@ -132,12 +154,12 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
         if (image == null)
         {
-            await media.DeleteAsync(regionId, RavenMediaStore.LocationArtName(location.Id));
+            await media.DeleteAsync(access, regionId, RavenMediaStore.LocationArtName(location.Id));
         }
         else
         {
             using var stream = new MemoryStream(image.Bytes);
-            await media.PutAsync(regionId, RavenMediaStore.LocationArtName(location.Id), stream, image.ContentType);
+            await media.PutAsync(access, regionId, RavenMediaStore.LocationArtName(location.Id), stream, image.ContentType);
         }
 
         stored.HasArt = image != null;
@@ -157,7 +179,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
     /// <summary>Stores <paramref name="image"/> as the page's illustration, or removes it when null; false when the caller isn't
     /// the DM, the page is gone, or the image can't be stored. <paramref name="page"/> takes the new version.</summary>
-    public async Task<bool> SetWikiPageAsync(WikiPageDocument page, CampaignAccess access, ArtImage? image)
+    public Task<bool> SetWikiPageAsync(WikiPageDocument page, CampaignAccess access, ArtImage? image) => FalseWhenRefused(() => SetWikiPageCoreAsync(page, access, image));
+
+    private async Task<bool> SetWikiPageCoreAsync(WikiPageDocument page, CampaignAccess access, ArtImage? image)
     {
         if (!access.IsDm || string.IsNullOrEmpty(page.Id) || (image != null && Problem(image.ContentType, image.Bytes.Length) != null))
         {
@@ -166,12 +190,12 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
 
         if (image == null)
         {
-            await media.DeleteAsync(page.Id, RavenMediaStore.EntryArt);
+            await media.DeleteAsync(access, page.Id, RavenMediaStore.EntryArt);
         }
         else
         {
             using var stream = new MemoryStream(image.Bytes);
-            await media.PutAsync(page.Id, RavenMediaStore.EntryArt, stream, image.ContentType);
+            await media.PutAsync(access, page.Id, RavenMediaStore.EntryArt, stream, image.ContentType);
         }
 
         if (!await wiki.SetArtAsync(page.Id, image != null, access))

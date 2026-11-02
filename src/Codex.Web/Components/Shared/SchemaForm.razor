@@ -23,7 +23,8 @@ else
                 {
                     var controlId = ControlId(field);
                     var wide = field.Type is FieldType.LongText or FieldType.Collection;
-                    <div class="@(wide ? "field-wide" : null)">
+                    var problem = Problems?.GetValueOrDefault(field.Key);
+                    <div class="@(wide ? "field-wide" : null) @(problem != null ? "field-invalid" : null)" data-rule-key="@field.Key">
                         <label for="@controlId" class="field-label">
                             @field.Label
                             @if (field.IsRequired)
@@ -33,6 +34,7 @@ else
                             }
                         </label>
                         @RenderField(field, controlId)
+                        <FieldError Id="@(controlId + "-error")" Message="@problem" TestId="@("field-problem-" + field.Key)" />
                         @if (!string.IsNullOrWhiteSpace(field.Description))
                         {
                             <div id="@(controlId)-help" class="field-hint">@field.Description</div>
@@ -43,8 +45,11 @@ else
         </fieldset>
     }
 }
+<ConfirmDialog @ref="confirm" />
 
 @code {
+    private ConfirmDialog confirm = null!;
+
     [Parameter, EditorRequired]
     public UISchema Schema { get; set; } = null!;
 
@@ -71,8 +76,21 @@ else
     [Parameter]
     public bool ShowGroupHeadings { get; set; } = true;
 
+    /// <summary>What the rules say is wrong with a field, by field key, said under it (U4).</summary>
+    [Parameter]
+    public IReadOnlyDictionary<string, string>? Problems { get; set; }
+
     [Parameter]
     public bool ReadOnly { get; set; }
+
+    /// <summary>Long text boxes take secret blocks: the DM's sheet, whose text fields players get with the blocks taken out
+    /// (the actor repository does that). Off where nothing strips them, such as homebrew.</summary>
+    [Parameter]
+    public bool Secrets { get; set; }
+
+    /// <summary>How a long text box previews its text; plain formatting when null.</summary>
+    [Parameter]
+    public Func<string, string>? Preview { get; set; }
 
     private readonly string prefix = "f" + Guid.NewGuid().ToString("N")[..6];
 
@@ -104,7 +122,7 @@ else
                                      min="@field.Min" max="@field.Max" step="1" disabled="@ReadOnly"
                                      aria-describedby="@Describe(field, controlId)"
                                      value="@FormatNumber(GetValue(field))"
-                                     @onchange="@(e => SetValueAsync(field, ParseNumber(e.Value?.ToString(), field)))" />,
+                                     @onchange="@(e => SetNumberAsync(field, e.Value?.ToString()))" />,
 
         FieldType.Boolean => @<div class="field-check">
             <input id="@controlId" type="checkbox" class="field-box" disabled="@ReadOnly"
@@ -136,10 +154,9 @@ else
             }
         </select>,
 
-        FieldType.LongText => @<textarea id="@controlId" class="field-input" rows="4" disabled="@ReadOnly"
-                                          aria-describedby="@Describe(field, controlId)"
-                                          value="@(GetValue(field)?.ToString() ?? string.Empty)"
-                                          @onchange="@(e => SetValueAsync(field, e.Value?.ToString()))"></textarea>,
+        FieldType.LongText => @<MarkdownEditor Id="@controlId" Rows="4" ReadOnly="ReadOnly" DescribedBy="@Describe(field, controlId)"
+                                               Value="@(GetValue(field)?.ToString() ?? string.Empty)" Secrets="Secrets" Preview="Preview" Class="mb-0"
+                                               ValueChanged="@(EventCallback.Factory.Create<string?>(this, v => SetValueAsync(field, v)))" />,
 
         FieldType.TagList => @<input id="@controlId" type="text" class="field-input" disabled="@ReadOnly"
                                       placeholder="@L["Actor.Form.CommaSeparated"]"
@@ -231,6 +248,13 @@ else
     private async Task RemoveRowAsync(FieldDefinition field, int index)
     {
         var rows = GetRows(field);
+        // A row with something written in it asks first; an empty one just goes (U3).
+        if (index >= 0 && index < rows.Count && rows[index].Values.Any(v => !string.IsNullOrWhiteSpace(Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture)))
+            && !await confirm.ShowAsync(L["Actor.Form.RowRemoveTitle"], L["Actor.Form.RowRemoveBody"], L["Common.Remove"], isDestructive: true))
+        {
+            return;
+        }
+
         if (index >= 0 && index < rows.Count)
         {
             rows.RemoveAt(index);
@@ -280,12 +304,23 @@ else
                 return narrowed.Append((stale.Id, L["Actor.Form.NotAllowed", stale.Name])).ToList();
             }
 
+            if (!string.IsNullOrEmpty(current) && narrowed.All(o => o.Id != current))
+            {
+                return narrowed.Append((current, L["Actor.Form.Missing", current].ToString())).ToList();
+            }
+
             return narrowed;
         }
 
-        return field.TargetEntityType != null && ReferenceOptions != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var options)
+        // An entry the Library no longer has stays on the sheet: list it by its id, or the select would read "None" while the
+        // sheet still holds it (R7).
+        var known = field.TargetEntityType != null && ReferenceOptions != null && ReferenceOptions.TryGetValue(field.TargetEntityType, out var options)
             ? options
-            : Array.Empty<(string, string)>();
+            : Array.Empty<(string Id, string Name)>();
+        var held = GetValue(field)?.ToString();
+        return string.IsNullOrEmpty(held) || known.Any(o => o.Id == held) || field.TargetEntityType == null
+            ? known
+            : known.Append((held, L["Actor.Form.Missing", held].ToString())).ToList();
     }
 
     private static string FormatNumber(object? value) => value switch
@@ -295,14 +330,32 @@ else
         _ => value.ToString() ?? string.Empty
     };
 
-    private static object? ParseNumber(string? raw, FieldDefinition field)
+    // An emptied box clears the field (back to its default); text that is no number leaves the value as it was (R7).
+    private async Task SetNumberAsync(FieldDefinition field, string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            await SetValueAsync(field, null);
+        }
+        else if (ParseNumber(raw, field) is { } number)
+        {
+            await SetValueAsync(field, number);
+        }
+    }
+
+    /// <summary>A number typed into a field, kept within its min and max and within what a sheet holds (so 1e20 is not cast to
+    /// long.MinValue); null when the text is no number.</summary>
+    public static object? ParseNumber(string? raw, FieldDefinition field)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
-        if (!double.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed)) return null;
+        if (!double.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed) || !double.IsFinite(parsed)) return null;
         if (field.Min.HasValue) parsed = Math.Max(field.Min.Value, parsed);
         if (field.Max.HasValue) parsed = Math.Min(field.Max.Value, parsed);
-        return parsed % 1 == 0 ? (long)parsed : parsed;
+        parsed = Math.Clamp(parsed, -LargestNumber, LargestNumber);
+        return parsed % 1 == 0 ? (object)(long)parsed : parsed;
     }
+
+    private const double LargestNumber = 1_000_000_000;
 
     private static bool IsTrue(object? value) => value switch
     {

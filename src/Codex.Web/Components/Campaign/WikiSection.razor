@@ -1,9 +1,7 @@
 @using Codex.Core
 @using Codex.Core.AI
 @using Codex.Persistence
-@using Microsoft.AspNetCore.WebUtilities
 @inject IWikiRepository WikiRepo
-@inject ITemplateRepository TemplateRepo
 @inject IActorRepository ActorRepo
 @inject INoteRepository NoteRepo
 @inject IUserRepository UserRepo
@@ -11,8 +9,6 @@
 @inject MentionSources MentionSources
 @inject IRegionRepository RegionRepo
 @inject PlaceWikiSync PlaceSync
-@inject ArtService Art
-@inject NavigationManager Nav
 @inject ILogger<WikiSection> Logger
 @inject Codex.Persistence.Runtime.CampaignRuntimeManager Runtimes
 @inject IJSRuntime JS
@@ -27,7 +23,6 @@
     <RevealSecretDialog @ref="revealDialog" />
     <PlayersVersionDialog @ref="playersDialog" Mentions="@mentionsJson" />
 }
-<UnsavedChangesGuard IsDirty="IsDirty" />
 @if (Ctx.IsDm)
 {
     <PromoteToCastDialog @ref="promote" OnPromoted="OnPromotedAsync" />
@@ -37,159 +32,9 @@
 {
     <LoadingSkeleton />
 }
-else if (Mode == "edit")
+else if (Editing)
 {
-    <div class="page-header mb-3">
-        <div>
-            <nav aria-label="@L["Campaign.Wiki.Breadcrumb"]" class="breadcrumb-nav mb-1"><a href="@Ctx.BasePath/wiki">@L["Campaign.Wiki.Title"]</a>@if (current != null) { <span class="crumb-sep" aria-hidden="true">/</span><a href="@Ctx.BasePath/wiki/@current.Slug">@current.Title</a> }</nav>
-            <h2 class="mb-0">@(current == null ? L["Campaign.Wiki.NewPage"] : L["Campaign.Wiki.EditPage", current.Title])</h2>
-        </div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-lg-8">
-            <section class="panel">
-                <form @onsubmit="SaveAsync" @onsubmit:preventDefault="true" data-testid="wiki-editor">
-                    <div class="field-grid mb-3">
-                        <div class="field-wide">
-                            <label for="wiki-title" class="field-label">@L["Campaign.Wiki.Field.Title"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Campaign.Wiki.Required"]</span></label>
-                            <input id="wiki-title" class="field-input field-lg" @bind="draft.Title" @bind:event="oninput" required maxlength="160" data-testid="wiki-title" />
-                        </div>
-                        <div>
-                            <label for="wiki-kind" class="field-label">@L["Campaign.Wiki.Field.Kind"]</label>
-                            <select id="wiki-kind" class="field-select" @bind="draft.Kind" data-testid="wiki-kind-select">
-                                @foreach (var kind in Enum.GetValues<WikiPageKind>())
-                                {
-                                    <option value="@kind">@KindLabel(kind)</option>
-                                }
-                            </select>
-                        </div>
-                        <div>
-                            <label for="wiki-visibility" class="field-label">@L["Campaign.Wiki.Field.WhoCanRead"]</label>
-                            <select id="wiki-visibility" class="field-select" @bind="draft.Visibility" data-testid="wiki-visibility">
-                                <option value="@WikiVisibility.DmOnly">@L["Campaign.Wiki.Vis.DmOnly"]</option>
-                                <option value="@WikiVisibility.Party">@L["Campaign.Wiki.Vis.Party"]</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="wiki-tags" class="field-label">@L["Campaign.Wiki.Field.Tags"]</label>
-                            <input id="wiki-tags" class="field-input" placeholder="@L["Campaign.Wiki.TagsPlaceholder"]" value="@string.Join(", ", draft.Tags)"
-                                   @onchange="e => draft.Tags = (e.Value?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()" />
-                        </div>
-                    </div>
-                    <label for="wiki-body" class="field-label">@L["Campaign.Wiki.Field.Text"]</label>
-                    @if (templates != null && !expanding && string.IsNullOrWhiteSpace(draft.Body) && PageTemplates.Any())
-                    {
-                        <div class="template-start" data-testid="wiki-start-from">
-                            <span class="small-muted">@L["Campaign.Wiki.StartFrom"]</span>
-                            @foreach (var template in PageTemplates)
-                            {
-                                <button type="button" class="chip" @onclick="() => StartFromAsync(template)" data-testid="@($"wiki-start-{template.Id}")"><LucideIcon IconName="@KindIcon(template.PageKind!.Value)" Size="14" /> @template.Name</button>
-                            }
-                        </div>
-                    }
-                    else if (!expanding && MissingSections() is { } withSections)
-                    {
-                        <div class="template-start">
-                            <button type="button" class="chip" @onclick="() => AddSections(withSections)" data-testid="wiki-add-sections"><LucideIcon IconName="list-plus" Size="14" /> @L["Campaign.Wiki.AddSections", KindTemplate!.Name]</button>
-                        </div>
-                    }
-                    <MarkdownEditor Id="wiki-body" Title="@(string.IsNullOrWhiteSpace(draft.Title) ? L["Campaign.Wiki.Field.Text"] : draft.Title)" Rows="18" Class="wiki-editor"
-                                    Templates="templates" Pages="linkTargets" TemplatesHref="@($"{Ctx.BasePath}/templates")"
-                                    @bind-Value="draft.Body" Mentions="@mentionsJson" DescribedBy="wiki-body-hint" TestId="wiki-body" Placeholder="@L["Campaign.Wiki.BodyPlaceholder"]"
-                                    Preview="@(text => WikiRender.ToHtml(mentions.Encode(text), pages ?? new(), mentions, Ctx.Campaign.Id, false, DmView.From(L, mentions)))" Secrets="true"
-                                    Busy="expanding" BusyText="@L["Campaign.Wiki.Writing"]" OnStop="aiCall.Stop">
-                        <div id="wiki-body-hint" class="field-hint mb-3">@Rich(L["Campaign.Wiki.SyntaxHint"]) @L["Campaign.Wiki.MentionHint"] @Rich(L["Campaign.Wiki.SecretHint"]) @Rich(L["Campaign.Wiki.TemplateHint"])</div>
-                    </MarkdownEditor>
-                    <SaveBar Dirty="IsDirty()" TestId="wiki-save-bar">
-                        <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" data-testid="wiki-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]"><LucideIcon IconName="check" Size="18" /> @L["Campaign.Wiki.SavePage"]</CodexButton>
-                        <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" Icon="sparkles" OnClick="ExpandAsync" Busy="@expanding" data-testid="wiki-expand">@L["Campaign.Wiki.ExpandWithAi"]</CodexButton>
-                        <a href="@(current == null ? $"{Ctx.BasePath}/wiki" : $"{Ctx.BasePath}/wiki/{current.Slug}")" class="cx-btn cx-etched">@L["Campaign.Wiki.Cancel"]</a>
-                        @if (current != null)
-                        {
-                            <CodexButton Variant="CodexButtonVariant.Blood" Class="ms-auto" OnClick="DeleteAsync">@L["Campaign.Wiki.DeletePage"]</CodexButton>
-                        }
-                    </SaveBar>
-                </form>
-            </section>
-        </div>
-        <div class="col-lg-4">
-            <section class="panel">
-                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinkToPage"]</h3></div>
-                <p class="small-muted">@L["Campaign.Wiki.ClickToAppend"]</p>
-                <div class="chips">
-                    @foreach (var wp in pages.Where(p => current == null || p.Id != current.Id).Take(40))
-                    {
-                        <button type="button" class="chip" @onclick="() => InsertLinkAsync(wp)" data-testid="wiki-link-chip">@wp.Title</button>
-                    }
-                </div>
-                @if (pages.Count == 0)
-                {
-                    <p class="small-muted mb-0">@Rich(L["Campaign.Wiki.NoOtherPages"])</p>
-                }
-            </section>
-            @if (!IsPlace)
-            {
-                <section class="panel" aria-labelledby="wiki-art-heading">
-                    <div class="panel-title"><h3 id="wiki-art-heading" class="h6"><LucideIcon IconName="image" Size="14" Class="title-icon" /> @L["Campaign.Wiki.Illustration"]</h3></div>
-                    <ArtSlot ImageUrl="@(removeArt || current == null ? null : ArtService.Url(current))" Pending="pendingArt" CanEdit="true" Landscape="@(draft.Kind != WikiPageKind.Person)"
-                             Label="@L["Campaign.Wiki.Illustration"]" Class="art-compact" Alt="@L["Campaign.Wiki.ArtAlt", draft.Title]" TestId="wiki-art"
-                             OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = current?.HasArt == true; }"
-                             Generate="GeneratePageArtAsync" />
-                    <p class="field-hint mb-0">@L["Campaign.Wiki.IllustrationHint"]</p>
-                </section>
-            }
-            @if (IsPlace)
-            {
-            <section class="panel" aria-labelledby="wiki-place-heading" data-testid="wiki-place-panel">
-                <div class="panel-title"><h3 id="wiki-place-heading" class="h6"><LucideIcon IconName="map-pin" Size="14" Class="title-icon" /> @L["Campaign.Wiki.OnMap"]</h3></div>
-                <p class="field-hint">@L["Campaign.Wiki.IsPlaceHint"]</p>
-                @if (linked == null)
-                {
-                    <label for="wiki-place-region" class="field-label">@L["Campaign.Wiki.PlaceRegion"]</label>
-                    <select id="wiki-place-region" class="field-select field-sm mb-2" @bind="placeRegionId" @bind:after="() => placeParentId = string.Empty">
-                        @foreach (var region in regions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase))
-                        {
-                            <option value="@region.Id">@region.Name</option>
-                        }
-                        @if (regions.Count == 0)
-                        {
-                            <option value="">@L["Campaign.Wiki.DefaultRegion"]</option>
-                        }
-                    </select>
-                }
-                <label for="wiki-place-parent" class="field-label">@L["Campaign.Places.Inside"]</label>
-                <select id="wiki-place-parent" class="field-select field-sm mb-2" @bind="placeParentId" @bind:after="() => placeKind = PlaceTree.ChildKind(PlaceRegion?.Locations.FirstOrDefault(l => l.Id == placeParentId))" data-testid="wiki-place-parent">
-                    <option value="">@L["Campaign.Places.InRegion", PlaceRegion?.Name ?? L["Campaign.Wiki.DefaultRegion"]]</option>
-                    @foreach (var (spot, depth) in PlaceTree.Ordered(PlaceRegion?.Locations ?? new List<LocationDocument>()))
-                    {
-                        @if (linked == null || PlaceTree.CanParent(PlaceRegion!.Locations, linked.Value.Place.Id, spot.Id))
-                        {
-                            <option value="@spot.Id">@(new string(' ', depth))@spot.Name</option>
-                        }
-                    }
-                </select>
-                <label for="wiki-place-kind" class="field-label">@L["Campaign.Places.Kind"]</label>
-                <select id="wiki-place-kind" class="field-select field-sm mb-2" @bind="placeKind" data-testid="wiki-place-kind">
-                    @foreach (var kind in Enum.GetValues<PlaceKind>())
-                    {
-                        <option value="@kind">@L[$"Campaign.Places.Kind.{kind}"]</option>
-                    }
-                </select>
-                    <ArtSlot ImageUrl="@(removeArt || linked == null ? null : ArtService.Url(linked.Value.Region, linked.Value.Place))" Pending="pendingArt" CanEdit="true" Landscape="true"
-                             Label="@L["Campaign.Wiki.PlaceArt"]" Class="art-compact" Alt="@L["Campaign.Wiki.PlaceArtAlt", draft.Title]" TestId="wiki-place-art"
-                             OnPicked="img => { pendingArt = img; removeArt = false; }" OnRemove="() => { pendingArt = null; removeArt = linked != null; }"
-                             Generate="GenerateArtAsync" />
-            </section>
-            }
-            <section class="panel">
-                <div class="panel-title"><h3 class="h6"><LucideIcon IconName="sparkles" Size="14" Class="title-icon" /> @L["Campaign.Wiki.AiInstruction"]</h3></div>
-                <label for="wiki-ai-instruction" class="visually-hidden">@L["Campaign.Wiki.AiInstructionLabel"]</label>
-                <textarea id="wiki-ai-instruction" class="field-input" rows="3" @bind="aiInstruction" placeholder="@L["Campaign.Wiki.AiInstructionPlaceholder"]"></textarea>
-                <p class="field-hint">@L["Campaign.Wiki.AiSees"]</p>
-            </section>
-        </div>
-    </div>
+    <WikiEditor @key="loadedKey" Page="current" Pages="pages" Regions="regions" Linked="linked" Mentions="mentions" MentionsJson="@mentionsJson" />
 }
 else if (Slug != null)
 {
@@ -235,7 +80,7 @@ else if (Slug != null)
                     }
                     @if (linked != null)
                     {
-                        <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", PlacePath(linked.Value)]</a>
+                        <a class="pill" href="@Ctx.BasePath/world#place-@linked.Value.Place.Id" data-testid="wiki-on-map"><LucideIcon IconName="map-pin" Size="14" /> @L["Campaign.Wiki.OpenOnMap", WikiPageText.PlacePath(linked.Value)]</a>
                     }
                     <span class="pill"><LucideIcon IconName="clock" Size="14" /> <LocalTime Value="current.UpdatedAt" Format="d MMM yyyy" /></span>
                 </div>
@@ -322,7 +167,7 @@ else if (Slug != null)
                             }
                             else
                             {
-                                <div class="rules-text wiki-body" data-testid="wiki-body">@((MarkupString)WikiRender.ToHtml(seen.Body, party.Pages, party.Mentions, Ctx.Campaign.Id, false))</div>
+                                <div class="rules-text wiki-body" data-testid="wiki-body" data-view-as="players">@((MarkupString)WikiRender.ToHtml(seen.Body, party.Pages, party.Mentions, Ctx.Campaign.Id, false))</div>
                             }
                         }
                     }
@@ -348,7 +193,7 @@ else if (Slug != null)
                             <span class="avatar avatar-sm" aria-hidden="true">@Initial(usernames.GetValueOrDefault(note.AuthorId, "?"))</span>
                             <div class="row-main">
                                 <div class="row-sub"><strong>@usernames.GetValueOrDefault(note.AuthorId, note.AuthorId)</strong> · <LocalTime Value="note.CreatedAt" Format="d MMM, HH:mm" /> · <span class="pill">@(note.Visibility == CommentVisibility.Public ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.Private"])</span></div>
-                                <p class="mb-0 notes-text"><MentionText Text="@note.Content" Mentions="@mentions" CampaignId="@Ctx.Campaign.Id" /></p>
+                                <p class="mb-0 notes-text"><MentionText Text="@note.Content" Mentions="@mentions" CampaignId="@Ctx.Campaign.Id" Dm="@(Ctx.IsDm ? DmView.From(L, mentions) : null)" /></p>
                             </div>
                             @if (note.AuthorId == Ctx.UserId || Ctx.IsDm)
                             {
@@ -358,8 +203,8 @@ else if (Slug != null)
                     }
                     <form class="mt-3" @onsubmit="AddNoteAsync" @onsubmit:preventDefault="true">
                         <label for="wiki-note" class="field-label">@L["Campaign.Wiki.AddNoteLabel"]</label>
-                        <textarea id="wiki-note" class="field-input mb-2" rows="2" @bind="newNote" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="wiki-note-hint" data-testid="wiki-note"></textarea>
-                        <p id="wiki-note-hint" class="field-hint">@L["Campaign.Wiki.MentionHint"]</p>
+                        <textarea id="wiki-note" class="field-input mb-2" rows="2" @bind="newNote" @bind:event="oninput" data-mentions="@mentionsJson" aria-describedby="wiki-note-hint" data-md-secrets="@(Ctx.IsDm ? "" : null)" data-testid="wiki-note"></textarea>
+                        <p id="wiki-note-hint" class="field-hint">@L["Campaign.Wiki.MentionHint"]@(Ctx.IsDm ? " " + L["Common.Note.SecretHint"] : "")</p>
                         <div class="d-flex gap-2 flex-wrap align-items-center">
                             <label for="wiki-note-visibility" class="visually-hidden">@L["Campaign.Wiki.NoteVisibility"]</label>
                             <select id="wiki-note-visibility" class="field-select field-sm" @bind="newNoteVisibility">
@@ -375,207 +220,29 @@ else if (Slug != null)
                 @{
                     // In "view as players" the links are the ones a player's copy of the page, and of every other page, holds.
                     var (linksOf, among) = asParty ? (party.Page?.Links ?? new List<string>(), party.Pages) : (current.Links, pages);
-                    var outgoing = linksOf.Select(slug => among.FirstOrDefault(p => p.Slug == slug)).Where(p => p != null).Cast<WikiPageDocument>().ToList();
-                    var incoming = asParty && party.Page == null ? new List<WikiPageDocument>() : among.Where(p => p.Links.Contains(current.Slug) && p.Id != current.Id).ToList();
+                    var outgoing = linksOf.Select(slug => WikiLinks.Target(slug, among)).Where(p => p != null && p.Id != current.Id).Cast<WikiPageDocument>().DistinctBy(p => p.Id).ToList();
+                    var incoming = asParty && party.Page == null ? new List<WikiPageDocument>() : among.Where(p => p.Id != current.Id && p.Links.Any(link => WikiLinks.Reaches(link, current))).ToList();
                 }
                 @if (Ctx.IsDm && !asParty && Revealable(current) is { Count: > 0 } secrets)
                 {
-                    <section class="panel" aria-labelledby="wiki-secrets-heading" data-testid="wiki-secrets">
-                        <div class="panel-title"><h3 id="wiki-secrets-heading" class="h6"><LucideIcon IconName="eye-off" Size="14" Class="title-icon" /> @L["Campaign.Wiki.Secrets"]</h3></div>
-                        @if (current.Visibility == WikiVisibility.DmOnly)
-                        {
-                            <p class="field-hint">@L["Campaign.Wiki.Secrets.PageHidden"]</p>
-                        }
-                        <ul class="secret-list">
-                            @foreach (var block in secrets)
-                            {
-                                var status = block.Marked switch
-                                {
-                                    SecretAudience.Party => ("pill-success", L["Common.Secret.Party"].ToString()),
-                                    SecretAudience.Some => ("pill-accent", L["Common.Secret.Some", KnowerNames(block.Knowers)].ToString()),
-                                    _ => ("pill-warning", L["Common.Secret.Dm"].ToString())
-                                };
-                                <li class="secret-item secret-item-@block.Marked.ToString().ToLowerInvariant()" data-testid="wiki-secret-@block.Block">
-                                    <button type="button" class="secret-item-text" @onclick="@(() => JS.InvokeVoidAsync("codex.scrollToId", $"secret-{block.Block}"))">@SecretPreview(block)</button>
-                                    <div class="secret-item-meta">
-                                        <span class="pill @status.Item1">@status.Item2</span>
-                                        @if (block.RevealedAt is { } at && block.Marked != SecretAudience.Dm)
-                                        {
-                                            <span><LocalTime Value="at" Format="d MMM, HH:mm" /></span>
-                                        }
-                                    </div>
-                                    @if (block.Marked == SecretAudience.Dm && PlayersVersionOf(current, block) is { } told)
-                                    {
-                                        <div class="secret-told" data-testid="@($"wiki-secret-told-{block.Block}")"><LucideIcon IconName="users" Size="12" /><span>@L["Campaign.Wiki.Secrets.Told", SecretPreview(told)]</span></div>
-                                    }
-                                    <div class="secret-item-actions">
-                                        @if (block.Marked != SecretAudience.Party)
-                                        {
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(block, block.Marked == SecretAudience.Some)" data-testid="@($"wiki-secret-reveal-{block.Block}")"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Wiki.Secrets.RevealEllipsis"]</CodexButton>
-                                        }
-                                        @if (block.Marked != SecretAudience.Dm)
-                                        {
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => SetSecretAsync(block.Block, SecretAudience.Dm, null)" data-testid="@($"wiki-secret-hide-{block.Block}")"><LucideIcon IconName="eye-off" Size="14" /> @L["Common.Secret.Hide"]</CodexButton>
-                                        }
-                                        @if (CanHavePlayersVersion(block))
-                                        {
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="@(aiReady ? "cx-arcane" : null)" OnClick="() => WritePlayersVersionAsync(block)"
-                                                         title="@L["Campaign.Wiki.Secrets.PlayersVersionTitle"]" data-testid="@($"wiki-secret-players-{block.Block}")">
-                                                <LucideIcon IconName="@(aiReady ? "sparkles" : "users")" Size="14" /> @(PlayersVersionOf(current, block) == null ? L["Campaign.Wiki.Secrets.PlayersVersion"] : L["Campaign.Wiki.Secrets.EditPlayersVersion"])
-                                            </CodexButton>
-                                        }
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    </section>
+                    <WikiSecretsPanel Page="current" Secrets="secrets" KnowerNames="KnowerNames" Preview="SecretPreview" AiReady="aiReady"
+                                      OnReveal="reveal => RevealAsync(reveal.Block, reveal.ToSome)" OnHide="block => SetSecretAsync(block.Block, SecretAudience.Dm, null)" OnWritePlayersVersion="WritePlayersVersionAsync" />
                 }
                 @if (!asParty)
                 {
                     <LoreAbout Access="Ctx.Access" OwnedActorIds="Ctx.OwnedActorIds" BasePath="@Ctx.BasePath" TestId="wiki-lore"
-                               Keys="@(new[] { FactLinks.Page(current.Slug), string.IsNullOrEmpty(current.ActorId) ? null : FactLinks.Actor(current.ActorId), string.IsNullOrEmpty(current.PlaceId) ? null : FactLinks.Place(current.PlaceId) })"
+                               Keys="@(WikiLinks.FactKeys(current).Append(string.IsNullOrEmpty(current.ActorId) ? null : FactLinks.Actor(current.ActorId)).Append(string.IsNullOrEmpty(current.PlaceId) ? null : FactLinks.Place(current.PlaceId)).ToArray())"
                                AboutKey="@FactLinks.Page(current.Slug)" />
                 }
-                <section class="panel">
-                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="link" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksFrom"]</h3></div>
-                    @if (outgoing.Count == 0)
-                    {
-                        <p class="small-muted mb-0">@L["Campaign.Wiki.None"]</p>
-                    }
-                    <ul class="link-list mb-0">
-                        @foreach (var wp in outgoing)
-                        {
-                            <li><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></li>
-                        }
-                    </ul>
-                </section>
-                <section class="panel">
-                    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="arrow-left" Size="14" Class="title-icon" /> @L["Campaign.Wiki.LinksHere"]</h3></div>
-                    @if (incoming.Count == 0)
-                    {
-                        <p class="small-muted mb-0">@L["Campaign.Wiki.NothingLinksHere"]</p>
-                    }
-                    <ul class="link-list mb-0">
-                        @foreach (var wp in incoming)
-                        {
-                            <li><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></li>
-                        }
-                    </ul>
-                </section>
+                <WikiLinksPanel Title="@L["Campaign.Wiki.LinksFrom"]" Icon="link" Empty="@L["Campaign.Wiki.None"]" Pages="outgoing" BasePath="@Ctx.BasePath" />
+                <WikiLinksPanel Title="@L["Campaign.Wiki.LinksHere"]" Icon="arrow-left" Empty="@L["Campaign.Wiki.NothingLinksHere"]" Pages="incoming" BasePath="@Ctx.BasePath" />
             </div>
         </div>
     }
 }
 else
 {
-    <div class="page-header mb-3">
-        <div>
-            <h2 class="mb-0">@L["Campaign.Wiki.Title"]</h2>
-            <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.Wiki.Subtitle.Dm"] : L["Campaign.Wiki.Subtitle.Player"])</p>
-        </div>
-        @if (Ctx.IsDm)
-        {
-            <div class="d-flex gap-2 flex-wrap">
-                @if (aiReady)
-                {
-                    <details class="popover-menu" data-testid="wiki-build-ai">
-                        <summary class="cx-btn cx-etched cx-arcane"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Menu"] <LucideIcon IconName="chevron-down" Size="16" /></summary>
-                        <div class="popover-panel menu-panel">
-                            <a class="menu-item" href="@Ctx.BasePath/build/faction" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></a>
-                            <a class="menu-item" href="@Ctx.BasePath/build/settlement" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></a>
-                            <a class="menu-item" href="@Ctx.BasePath/build/quest" data-testid="build-quest-ai"><LucideIcon IconName="scroll" Size="18" /><span>@L["WorldBuilder.Open.Quest"]</span></a>
-                            <a class="menu-item" href="@Ctx.BasePath/build" data-testid="build-chat-ai"><LucideIcon IconName="message-square" Size="18" /><span>@L["WorldBuilder.Open.Chat"]</span></a>
-                        </div>
-                    </details>
-                }
-                <a href="@Ctx.BasePath/templates" class="cx-btn cx-etched" data-testid="wiki-templates"><LucideIcon IconName="braces" Size="18" /> @L["Campaign.Templates.Title"]</a>
-                <a href="@Ctx.BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
-            </div>
-        }
-    </div>
-
-    <div class="toolbar">
-        <div class="search">
-            <LucideIcon IconName="search" Size="18" Class="search-icon" />
-            <label for="wiki-search" class="visually-hidden">@L["Campaign.Wiki.Search"]</label>
-            <input id="wiki-search" type="search" class="field-input" placeholder="@L["Campaign.Wiki.SearchPlaceholder"]" @bind="search" @bind:event="oninput" />
-        </div>
-        <div class="wiki-sort">
-            <label for="wiki-sort" class="visually-hidden">@L["Campaign.Wiki.SortBy"]</label>
-            <select id="wiki-sort" class="field-select" @bind="sort" data-testid="wiki-sort">
-                <option value="title">@L["Campaign.Wiki.Sort.Title"]</option>
-                <option value="updated">@L["Campaign.Wiki.Sort.Updated"]</option>
-            </select>
-        </div>
-        @if (Kinds.Count > 1)
-        {
-            <div class="chips wiki-kinds" role="group" aria-label="@L["Campaign.Wiki.FilterByKind"]" data-testid="wiki-kind-filter">
-                <button type="button" class="chip" aria-pressed="@((activeKind == null) ? "true" : "false")" @onclick="() => activeKind = null">@L["Campaign.Wiki.AllKinds"]</button>
-                @foreach (var (kind, count) in Kinds)
-                {
-                    <button type="button" class="chip" aria-pressed="@((activeKind == kind) ? "true" : "false")" @onclick="() => activeKind = kind" data-testid="@($"wiki-kind-{kind.ToString().ToLowerInvariant()}")"><LucideIcon IconName="@KindIcon(kind)" Size="14" /> @KindLabel(kind) <span class="chip-count">@count</span></button>
-                }
-            </div>
-        }
-        @if (AllTags.Count > 0)
-        {
-            <div class="chips" role="group" aria-label="@L["Campaign.Wiki.FilterByTag"]">
-                <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">@L["Campaign.Wiki.AllTags"]</button>
-                @foreach (var tag in AllTags)
-                {
-                    <button type="button" class="chip" aria-pressed="@((activeTag == tag) ? "true" : "false")" @onclick="() => activeTag = tag">@tag</button>
-                }
-            </div>
-        }
-    </div>
-
-    @if (!Filtered.Any())
-    {
-        <div class="empty">
-            <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
-            <h3>@(pages.Count == 0 ? L["Campaign.Wiki.Empty.None"] : L["Campaign.Wiki.Empty.NoMatch"])</h3>
-            <p>@(Ctx.IsDm ? L["Campaign.Wiki.Empty.Dm"] : L["Campaign.Wiki.Empty.Player"])</p>
-        </div>
-    }
-    else
-    {
-        <div class="card-grid" data-testid="wiki-list">
-            @foreach (var wp in Filtered)
-            {
-                <article class="campaign-card wiki-card" aria-labelledby="wiki-@wp.Id">
-                    <div class="card-head">
-                        <h3 id="wiki-@wp.Id" class="h6"><a href="@Ctx.BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
-                        @if (Ctx.IsDm)
-                        {
-                            <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
-                        }
-                    </div>
-                    @if (!Ctx.IsDm && LatestReveal(wp) is { } revealedAt && seenPages.TryGetValue(wp.Id, out var seen) && revealedAt > seen)
-                    {
-                        <span class="small-muted" data-testid="wiki-card-new"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Wiki.NewReveal"]</span>
-                    }
-                    @if (Ctx.IsDm && wp.Visibility == WikiVisibility.Party && SecretText.SecretBlocks(wp.Body).Count is > 0 and var secrets)
-                    {
-                        <span class="small-muted" data-testid="wiki-card-secrets"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Wiki.SecretCount", secrets]</span>
-                    }
-                    @if (IllustrationOf(wp) is { } thumb)
-                    {
-                        <img class="place-thumb" src="@thumb" alt="" loading="lazy" />
-                    }
-                    <p class="mb-0 small">@WikiRender.Summary(wp.Body, mentions, 150, Ctx.IsDm)</p>
-                    <div class="card-foot">
-                        <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
-                        <div class="chips">
-                            @foreach (var tag in ShownTags(wp).Take(3))
-                            {
-                                <span class="pill">@tag</span>
-                            }
-                        </div>
-                    </div>
-                </article>
-            }
-        </div>
-    }
+    <WikiList Pages="pages" Mentions="mentions" IsDm="Ctx.IsDm" BasePath="@Ctx.BasePath" AiReady="aiReady" SeenPages="seenPages" IllustrationOf="IllustrationOf" />
 }
 
 @code {
@@ -589,7 +256,6 @@ else
 
     private List<WikiPageDocument>? pages;
     private WikiPageDocument? current;
-    private WikiPageDocument draft = new();
     private List<NoteDocument> notes = new();
     // Names the mentions in the pages and notes and feeds the suggestions of the text boxes; loaded with the pages.
     private MentionDirectory mentions = MentionDirectory.Empty;
@@ -597,27 +263,9 @@ else
     private List<RegionDocument> regions = new();
     // The place the open page is about, if it has one the viewer can see.
     private (RegionDocument Region, LocationDocument Place)? linked;
-    // Where the page's place goes (or is): its region, the place it is inside, and its kind. A page about a place gets one on Save.
-    private bool IsPlace => draft.Kind == WikiPageKind.Place || linked != null;
-    private string placeRegionId = string.Empty;
-    private string placeParentId = string.Empty;
-    private PlaceKind placeKind = PlaceKind.Site;
-    private RegionDocument? PlaceRegion => linked?.Region ?? regions.FirstOrDefault(r => r.Id == placeRegionId);
-    // The picture picked in the editor, held until Save; removeArt drops the place's picture on Save.
-    private ArtImage? pendingArt;
-    private bool removeArt;
     private readonly Dictionary<string, string> usernames = new();
-    private string search = string.Empty;
-    private string? activeTag;
-    private WikiPageKind? activeKind;
-    private string sort = "title";
-    // The pages the editor offers after "[[": every other page.
-    private List<WikiPageDocument> linkTargets = new();
     private string newNote = string.Empty;
     private CommentVisibility newNoteVisibility = CommentVisibility.Private;
-    private string aiInstruction = string.Empty;
-    private bool expanding;
-    private readonly AiCall aiCall = new();
     private string? loadedKey;
     private ConfirmDialog confirm = null!;
     private bool aiReady;
@@ -639,44 +287,7 @@ else
         party = (visible.FirstOrDefault(p => p.Id == current!.Id), visible, await MentionSources.DirectoryAsync(Ctx.Campaign, preview, cast));
     }
 
-    // The editor's content as loaded or last saved, to tell whether leaving would lose anything.
-    private string savedDraft = string.Empty;
-
-    private bool IsDirty() => Mode == "edit" && DraftSnapshot() != savedDraft;
-
-    private string DraftSnapshot() => string.Join('\u0001', draft.Title, draft.Body, draft.Visibility, draft.Kind, string.Join(",", draft.Tags), placeParentId, placeKind, pendingArt != null, removeArt);
-
-    private string Mode => (Slug == "new" && Ctx.IsDm) || (Action == "edit" && Ctx.IsDm) ? "edit" : "view";
-    private List<string> AllTags => (pages ?? new()).SelectMany(ShownTags).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
-
-    // A page's tags less the one that only repeats its kind: place pages and the world builder's pages are tagged "place",
-    // "faction" and so on, which the kind already says (and the kind filter already filters by).
-    private IEnumerable<string> ShownTags(WikiPageDocument page)
-    {
-        if (page.Kind == WikiPageKind.General) return page.Tags;
-        var echoes = new[] { KindLabel(page.Kind), L[$"WorldBuilder.Tag.{KindTagKey(page.Kind)}"] };
-        return page.Tags.Where(t => !echoes.Contains(t.Trim(), StringComparer.OrdinalIgnoreCase));
-    }
-
-    private static string KindTagKey(WikiPageKind kind) => kind == WikiPageKind.Person ? "npc" : kind.ToString().ToLowerInvariant();
-
-    // The kinds of page there are, with how many of each, in the kinds' own order.
-    private List<(WikiPageKind Kind, int Count)> Kinds => (pages ?? new()).GroupBy(p => p.Kind).OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
-
-    private IEnumerable<WikiPageDocument> Filtered
-    {
-        get
-        {
-            var shown = (pages ?? new())
-                .Where(p => activeKind == null || p.Kind == activeKind)
-                .Where(p => activeTag == null || p.Tags.Contains(activeTag, StringComparer.OrdinalIgnoreCase))
-                .Where(p => string.IsNullOrWhiteSpace(search) || p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || p.Body.Contains(search, StringComparison.OrdinalIgnoreCase));
-            return sort == "updated"
-                ? shown.OrderByDescending(p => p.UpdatedAt)
-                : shown.OrderBy(p => p.Title, StringComparer.Create(L.Culture, ignoreCase: true));
-        }
-    }
-
+    private bool Editing => Ctx.IsDm && (Slug == "new" || Action == "edit");
     protected override async Task OnInitializedAsync()
     {
         aiReady = Ctx.IsDm && await Ai.IsConfiguredAsync(Ctx.UserId);
@@ -701,51 +312,19 @@ else
         linked = null;
         asParty = false;
         notes = new List<NoteDocument>();
-        pendingArt = null;
-        removeArt = false;
-        placeRegionId = regions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault()?.Id ?? string.Empty;
-        placeParentId = string.Empty;
-        placeKind = PlaceKind.Site;
-        // "?kind=place" opens the editor ready to put the page on the map.
-        var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
-        var asPlace = query.TryGetValue("kind", out var askedKind) && string.Equals(askedKind, "place", StringComparison.OrdinalIgnoreCase);
 
         // A list of cards only needs the names when a page mentions something.
         mentions = Slug != null || pages.Any(p => WikiText.HasMentions(p.Body))
-            ? await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.Actors)
+            ? await MentionSources.DirectoryAsync(Ctx.Campaign, Ctx.Access, Ctx.AllActors)
             : MentionDirectory.Empty;
-        mentionsJson = MentionLinks.Json(mentions, Ctx.Actors);
-        templates = Mode == "edit" ? await TemplateRepo.GetAsync(Ctx.Access, L) : null;
-        linkTargets = pages;
+        mentionsJson = MentionLinks.Json(mentions, Ctx.AllActors);
 
-        if (Slug == "new")
-        {
-            draft = new WikiPageDocument { CampaignId = Ctx.Campaign.Id, Title = query.TryGetValue("title", out var t) ? t.ToString() : string.Empty, Kind = asPlace ? WikiPageKind.Place : WikiPageKind.General };
-            savedDraft = DraftSnapshot();
-            return;
-        }
-
-        if (Slug != null)
+        if (Slug != null && Slug != "new")
         {
             current = pages.FirstOrDefault(p => string.Equals(p.Slug, Slug, StringComparison.OrdinalIgnoreCase));
             if (current != null)
             {
-                draft = new WikiPageDocument
-                {
-                    Id = current.Id, CampaignId = current.CampaignId, Slug = current.Slug, Title = current.Title,
-                    Body = mentions.ForEditing(current.Body), Visibility = current.Visibility, Tags = new List<string>(current.Tags), AuthorUserId = current.AuthorUserId,
-                    PlaceId = current.PlaceId, Kind = current.Kind, ActorId = current.ActorId
-                };
-                linkTargets = pages.Where(p => p.Id != current.Id).ToList();
                 linked = PlaceOf(current);
-                if (linked is { } on)
-                {
-                    placeParentId = on.Place.ParentId ?? string.Empty;
-                    placeKind = on.Place.Kind;
-                }
-
-                savedDraft = DraftSnapshot();
-                if (asPlace && linked == null) draft.Kind = WikiPageKind.Place; // after the snapshot: Leave asks before dropping it
                 notes = (await NoteRepo.GetNotesForTargetAsync(NotesTarget(current), Ctx.Access)).ToList();
                 foreach (var authorId in notes.Select(n => n.AuthorId).Distinct())
                 {
@@ -760,7 +339,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (pages == null || Mode != "view") return;
+        if (pages == null || Editing) return;
         if (Ctx.IsDm)
         {
             if (current != null && !asParty)
@@ -801,10 +380,6 @@ else
     private static DateTime? ParseSeen(string? iso) =>
         DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at : null;
 
-    /// <summary>When the newest of the blocks the reader may read on a page was revealed, if any says.</summary>
-    private static DateTime? LatestReveal(WikiPageDocument page) =>
-        SecretText.Parse(page.Body).Where(s => s.Audience is SecretAudience.Party or SecretAudience.Some).Max(s => s.RevealedAt);
-
     /// <summary>The blocks of a page the DM can reveal or hide: not inside a DM block (revealing those would show nothing),
     /// and not the players' versions, which are already the players'.</summary>
     private static List<SecretBlock> Revealable(WikiPageDocument page) =>
@@ -814,7 +389,7 @@ else
     private List<ActorDocument> Characters => Ctx.Actors.Where(a => !string.IsNullOrEmpty(a.OwnerUserId)).OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
     private string KnowerNames(IReadOnlyList<string> ids) =>
-        ids.Count == 0 ? "?" : string.Join(", ", ids.Select(id => Ctx.Actors.FirstOrDefault(a => a.Id == id)?.Name ?? "?"));
+        ids.Count == 0 ? "?" : string.Join(", ", ids.Select(id => Ctx.AllActors.FirstOrDefault(a => a.Id == id)?.Name ?? "?"));
 
     private string SecretPreview(SecretBlock block)
     {
@@ -822,19 +397,7 @@ else
         return string.IsNullOrWhiteSpace(text) ? L["Campaign.Wiki.Secrets.Empty"] : text;
     }
 
-    /// <summary>A DM block that can be given a players' version: one at the top level of the page (a version inside another
-    /// block would be that block's), and closed (a block that runs to the end of the page has no "after").</summary>
-    private static bool CanHavePlayersVersion(SecretBlock block) => block is { Marked: SecretAudience.Dm, Depth: 0, ClosingLine: not null };
-
-    /// <summary>The players' version already beside a DM block: a <c>:::players</c> block right after it, only blank lines between.</summary>
-    private static SecretBlock? PlayersVersionOf(WikiPageDocument page, SecretBlock block)
-    {
-        if (block.ClosingLine is not { } closing) return null;
-        var lines = page.Body.Replace("\r\n", "\n").Split('\n');
-        var next = closing + 1;
-        while (next < lines.Length && lines[next].Trim().Length == 0) next++;
-        return SecretText.Blocks(page.Body).FirstOrDefault(b => b.Line == next && b is { Marked: SecretAudience.Players, Depth: 0 });
-    }
+    private static SecretBlock? PlayersVersionOf(WikiPageDocument page, SecretBlock block) => SecretText.PlayersVersionOf(page.Body, block);
 
     private RevealSecretDialog? revealDialog;
     private PlayersVersionDialog? playersDialog;
@@ -957,7 +520,7 @@ else
 
     /// <summary>The character the page was promoted to, when the reader can see them.</summary>
     private ActorDocument? CastMember(WikiPageDocument page) =>
-        string.IsNullOrEmpty(page.ActorId) ? null : Ctx.Actors.FirstOrDefault(a => a.Id == page.ActorId);
+        string.IsNullOrEmpty(page.ActorId) ? null : Ctx.AllActors.FirstOrDefault(a => a.Id == page.ActorId);
 
     private async Task OnPromotedAsync(ActorDocument actor)
     {
@@ -967,20 +530,10 @@ else
         await LoadAsync();
     }
 
-    /// <summary>"Region › Area › Town": where the page's place sits, the place itself left out.</summary>
-    private static string PlacePath((RegionDocument Region, LocationDocument Place) on) =>
-        string.Join(" › ", PlaceTree.Ancestors(on.Region.Locations, on.Place).Select(p => p.Name).Prepend(on.Region.Name));
-
-    private string KindLabel(WikiPageKind kind) => L[$"Campaign.Wiki.Kind.{kind}"];
-
-    private static string KindIcon(WikiPageKind kind) => kind switch
-    {
-        WikiPageKind.Person => "user",
-        WikiPageKind.Place => "map-pin",
-        WikiPageKind.Faction => "shield",
-        WikiPageKind.Quest => "scroll",
-        _ => "book-open"
-    };
+    private string KindLabel(WikiPageKind kind) => WikiPageText.KindLabel(L, kind);
+    private static string KindIcon(WikiPageKind kind) => WikiPageText.KindIcon(kind);
+    private IEnumerable<string> ShownTags(WikiPageDocument page) => WikiPageText.ShownTags(L, page);
+    private static DateTime? LatestReveal(WikiPageDocument page) => WikiPageText.LatestReveal(page);
     private static string Initial(string name) => string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
 
     private (RegionDocument Region, LocationDocument Place)? PlaceOf(WikiPageDocument page)
@@ -998,216 +551,32 @@ else
     private string? IllustrationOf(WikiPageDocument page) =>
         PlaceOf(page) is { } on ? ArtService.Url(on.Region, on.Place) : ArtService.Url(page);
 
-    private Task<ArtImage> GeneratePageArtAsync(CancellationToken ct)
-    {
-        var (subjectKind, shape) = draft.Kind switch
-        {
-            WikiPageKind.Person => ("person", ArtShape.Tall),
-            WikiPageKind.Faction => ("faction: its people, colours and emblem", ArtShape.Wide),
-            WikiPageKind.Quest => ("scene from an adventure", ArtShape.Wide),
-            _ => ("scene, object or idea from a fantasy world", ArtShape.Wide)
-        };
-        return Art.GenerateAsync(Ctx.UserId, draft.Title, subjectKind, TextFormatting.Summary(mentions.Plain(draft.Body), 300), shape, ct);
-    }
-
-    private Task<ArtImage> GenerateArtAsync(CancellationToken ct) =>
-        Art.GenerateAsync(Ctx.UserId, draft.Title, "place", TextFormatting.Summary(mentions.Plain(draft.Body), 300), ArtShape.Wide, ct);
-
-    // At the caret the box last had (a textarea keeps its selection when the chip takes focus), as typing it would; the
-    // box's input event brings the text back here.
-    private async Task InsertLinkAsync(WikiPageDocument target) =>
-        await JS.InvokeVoidAsync("codex.mdInsert", "wiki-body", $"[[{target.Title}]]");
-
-    // A second Save (a double click, Ctrl+S twice) while one is still being written does nothing.
-    private readonly SaveGate saveGate = new();
-
-    private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
-
-    private async Task SaveNowAsync()
-    {
-        if (string.IsNullOrWhiteSpace(draft.Title))
-        {
-            Ctx.Notify(Flash.Error(L["Campaign.Wiki.TitleNeeded"]));
-            return;
-        }
-
-        // The box holds "@Name"; the page stores the mention as an id, so a rename or a hidden character stays right.
-        var typed = draft.Body;
-        draft.Body = mentions.Encode(typed);
-        if (!await WikiRepo.TrySaveAsync(draft, Ctx.Access))
-        {
-            draft.Body = typed;
-            Ctx.Notify(Flash.Error(L["Campaign.Wiki.OnlyDm"]));
-            return;
-        }
-
-        var placeOk = await SavePlaceAsync();
-        Ctx.Notify(Flash.Success(L["Campaign.Wiki.Saved", draft.Title]));
-        if (!placeOk) Ctx.Notify(Flash.Error(L["Campaign.Wiki.PlaceFailed"]));
-        pendingArt = null;
-        removeArt = false;
-        savedDraft = DraftSnapshot();
-        loadedKey = null;
-        Nav.NavigateTo($"{Ctx.BasePath}/wiki/{draft.Slug}");
-    }
-
-    /// <summary>After the page is stored: puts it on the map when asked, or carries its name, sharing and picture to its place.</summary>
-    private async Task<bool> SavePlaceAsync()
-    {
-        try
-        {
-            if (linked is { } on)
-            {
-                await PlaceSync.UpdatePlaceAsync(draft, Ctx.Access, new PlacePlacement(placeParentId, placeKind));
-                if (pendingArt != null || removeArt)
-                {
-                    return await Art.SetLocationAsync(on.Region.Id, on.Place, Ctx.Access, removeArt ? null : pendingArt);
-                }
-
-                return true;
-            }
-
-            if (draft.Kind == WikiPageKind.Place)
-            {
-                // The page's own picture moves to the place, which then is the one picture both show.
-                var own = current?.HasArt == true ? current : null;
-                var image = pendingArt ?? (own == null ? null : await Art.WikiPageArtAsync(own));
-                var made = await PlaceSync.CreatePlaceAsync(draft, placeRegionId, L["Campaign.Wiki.DefaultRegion"], image, Ctx.Access, new PlacePlacement(placeParentId, placeKind));
-                if (made != null && own != null) await Art.SetWikiPageAsync(own, Ctx.Access, null);
-                return made != null;
-            }
-
-            if (pendingArt != null || removeArt)
-            {
-                return await Art.SetWikiPageAsync(draft, Ctx.Access, removeArt ? null : pendingArt);
-            }
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Linking a wiki page and its place failed");
-            return false;
-        }
-    }
-
     private async Task RevealAsync()
     {
         if (current == null) return;
         // Saves the stored page, not the editor's copy, whose text is in the form typed.
         current.Visibility = WikiVisibility.Party;
-        if (await WikiRepo.TrySaveAsync(current, Ctx.Access))
+        var saved = await WikiRepo.TrySaveAsync(current, Ctx.Access);
+        if (saved == SaveOutcome.Saved)
         {
             await PlaceSync.UpdatePlaceAsync(current, Ctx.Access);
             Ctx.Notify(Flash.Success(L["Campaign.Wiki.SharedWithParty"]));
-            loadedKey = null;
-            await LoadAsync();
         }
+        else if (saved == SaveOutcome.Changed)
+        {
+            // Shown from a copy that is no longer the latest: show the latest, and let the DM share that.
+            Ctx.Notify(Flash.Error(L["Campaign.Wiki.ShareChanged"]));
+        }
+        else
+        {
+            return;
+        }
+
+        loadedKey = null;
+        await LoadAsync();
     }
 
-    private async Task DeleteAsync()
-    {
-        if (current == null) return;
-        if (!await confirm.ShowAsync(L["Campaign.Wiki.Delete.Title", current.Title], L["Campaign.Wiki.Delete.Body"], L["Campaign.Wiki.DeletePage"], isDestructive: true)) return;
-        if (await WikiRepo.TryDeleteAsync(current.Id, Ctx.Access))
-        {
-            Ctx.Notify(Flash.Success(L["Campaign.Wiki.Deleted", current.Title]));
-            // the page is gone: nothing left to lose by leaving the editor
-            savedDraft = DraftSnapshot();
-            loadedKey = null;
-            Nav.NavigateTo($"{Ctx.BasePath}/wiki");
-        }
-    }
-
-    // ---- Templates ----
-
-    /// <summary>The DM's templates (see LiveTemplate) while editing; null otherwise.</summary>
-    private IReadOnlyList<TextTemplate>? templates;
-
-    /// <summary>The outlines a new page can start from.</summary>
-    private IEnumerable<TextTemplate> PageTemplates => TemplateSet.InUse(templates ?? Array.Empty<TextTemplate>()).Where(t => t.PageKind != null);
-
-    /// <summary>The outline of pages of this page's kind (a page on the map is a place's).</summary>
-    private TextTemplate? KindTemplate => templates == null ? null : TemplateSet.ForKind(templates, linked != null ? WikiPageKind.Place : draft.Kind);
-
-    // The page with the sections of its kind's outline it lacks, or null when it lacks none (or is still empty: then it starts
-    // from a template instead).
-    private string? MissingSections() =>
-        string.IsNullOrWhiteSpace(draft.Body) || KindTemplate is not { } template ? null : LiveTemplate.AddMissingSections(draft.Body, template.Body);
-
-    // Puts the outline in the box as a template being filled (the script steps through its fields), and makes the page that kind.
-    private async Task StartFromAsync(TextTemplate template)
-    {
-        if (linked == null) draft.Kind = template.PageKind!.Value;
-        var index = TemplateSet.InUse(templates!).ToList().FindIndex(t => t.Id == template.Id);
-        await JS.InvokeVoidAsync("codex.mdTemplate", "wiki-body", index);
-    }
-
-    private void AddSections(string body)
-    {
-        draft.Body = body;
-        Ctx.Notify(Flash.Info(L["Campaign.Wiki.SectionsAdded"]));
-    }
-
-    private async Task ExpandAsync()
-    {
-        if (expanding) return;
-        expanding = true;
-        var ct = aiCall.Begin();
-        try
-        {
-            var related = WikiText.ExtractLinks(draft.Body).Concat((pages ?? new()).Select(p => p.Title)).Distinct(StringComparer.OrdinalIgnoreCase);
-            draft.Body = await Ai.ExpandWikiAsync(Ctx.Campaign, draft.Title, linked != null ? WikiPageKind.Place : draft.Kind, draft.Body, related, SubjectContext(), aiInstruction, Ctx.UserId, ct,
-                KindTemplate?.Body);
-            Ctx.Notify(Flash.Info(L["Campaign.Wiki.AiDraftReady"]));
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            Ctx.Notify(Flash.Info(L["Common.Ai.Stopped"]));
-        }
-        catch (AiNotConfiguredException)
-        {
-            Ctx.Notify(Flash.Error(L["Campaign.Wiki.NoAi"]));
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Wiki AI expansion failed");
-            Ctx.Notify(Flash.Error(L["Campaign.Wiki.AiFailed", AiFailureText.For(L, ex)]));
-        }
-        finally
-        {
-            aiCall.End(ct);
-            expanding = false;
-        }
-    }
-
-    /// <summary>What the campaign says about the page's subject outside the page: the history of the character it is about and
-    /// the DM's notes on them, and the description of its place and where that is. The AI writes the page to agree with it.</summary>
-    private List<string> SubjectContext()
-    {
-        var context = new List<string>();
-        if (!string.IsNullOrEmpty(draft.ActorId) && Ctx.Actors.FirstOrDefault(a => a.Id == draft.ActorId) is { } member)
-        {
-            if (!string.IsNullOrWhiteSpace(member.Biography)) context.Add($"History of {member.Name} (their character in the cast): {TextFormatting.Summary(mentions.Plain(member.Biography), 1200)}");
-            if (!string.IsNullOrWhiteSpace(member.DmNotes)) context.Add($"The DM's notes on {member.Name}: {TextFormatting.Summary(mentions.Plain(member.DmNotes), 800)}");
-        }
-
-        if (linked is { } on)
-        {
-            context.Add($"Where it is: {PlacePath(on)}");
-            if (!string.IsNullOrWhiteSpace(on.Place.Description)) context.Add($"Description of the place on the map: {TextFormatting.Summary(mentions.Plain(on.Place.Description), 1200)}");
-            var inside = on.Region.Locations.Where(l => l.ParentId == on.Place.Id).Select(l => l.Name).ToList();
-            if (inside.Count > 0) context.Add($"Places inside it: {string.Join(", ", inside)}");
-        }
-
-        return context;
-    }
-
-    public void Dispose()
-    {
-        aiCall.Dispose();
-        selfRef?.Dispose();
-    }
+    public void Dispose() => selfRef?.Dispose();
 
     private async Task AddNoteAsync()
     {
@@ -1231,7 +600,9 @@ else
     {
         if (note.AuthorId != Ctx.UserId && !Ctx.IsDm) return;
         if (!await confirm.ShowAsync(L["Campaign.Wiki.DeleteNote.Title"], L["Campaign.Wiki.DeleteNote.Body"], L["Campaign.Wiki.DeleteNote"], isDestructive: true)) return;
-        await NoteRepo.DeleteNoteAsync(note.Id);
+        // Refused when the note is already gone or the caller's role changed since the page loaded (D15): the page then
+        // reloads too, which resolves the role again.
+        if (!await NoteRepo.DeleteNoteAsync(note.Id, Ctx.Access)) await Ctx.ReloadAsync();
         loadedKey = null;
         await LoadAsync();
     }

@@ -64,9 +64,11 @@ public sealed class AiAssistant(IChatClient chat)
             var response = await chat.GetResponseAsync(messages, new ChatOptions { ResponseFormat = ChatResponseFormat.Json, Temperature = temperature }, ct);
             return response.Text;
         }
-        catch (Exception) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!ct.IsCancellationRequested && (AiFailure.StatusOf(ex) is 400 or 422 || ex is NotSupportedException))
         {
-            // Not every OpenAI-compatible server accepts response_format; ask again without it.
+            // Not every OpenAI-compatible server accepts response_format, and one that does not says so with a 400 or 422 (or
+            // the client library refuses it); ask again without it. Anything else (a wrong key, a rate limit, a server down)
+            // would only fail again, at twice the cost (R13).
             var response = await chat.GetResponseAsync(messages, new ChatOptions { Temperature = temperature }, ct);
             return response.Text;
         }

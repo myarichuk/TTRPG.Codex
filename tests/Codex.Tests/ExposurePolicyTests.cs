@@ -7,6 +7,30 @@ namespace Codex.Tests;
 
 public class ExposurePolicyTests
 {
+    /// <summary>R13: the launcher's "Host" opens the server to the network before the DM has an account; only an account
+    /// made on this computer may take the first ServerAdmin seat, and none while the server is open to the internet.</summary>
+    [Theory]
+    [InlineData("127.0.0.1", false, true)]
+    [InlineData("::1", false, true)]
+    [InlineData("192.168.1.20", false, false)]
+    [InlineData("100.101.1.2", false, false)]
+    [InlineData("127.0.0.1", true, false)]
+    public void TheFirstAdminSeat_IsTakenOnlyFromThisComputer(string client, bool exposed, bool may) =>
+        Assert.Equal(may, ExposurePolicy.MayClaimFirstAdmin(exposed, System.Net.IPAddress.Parse(client)));
+
+    [Fact]
+    public void WrongPasswords_AreCountedPerAccountAndAddress_SoAStrangerCannotLockTheDmOut()
+    {
+        var attempts = new LoginAttempts();
+        var stranger = LoginAttempts.Key("DM", "192.168.1.66");
+        for (var i = 0; i < LoginAttempts.MaxFailures; i++) attempts.Failed(stranger);
+
+        Assert.False(attempts.Allows(stranger));
+        Assert.False(attempts.Allows(LoginAttempts.Key(" dm ", "192.168.1.66")));
+        Assert.True(attempts.Allows(LoginAttempts.Key("dm", "127.0.0.1")));
+        Assert.True(attempts.Allows(LoginAttempts.Key("player", "192.168.1.66")));
+    }
+
     [Theory]
     [InlineData("/campaigns/join/abc123", "abc123")]
     [InlineData("/campaigns/join/abc123/", "abc123")]

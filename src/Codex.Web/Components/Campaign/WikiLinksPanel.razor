@@ -1,0 +1,26 @@
+@using Codex.Persistence
+
+@* One list of pages beside a wiki page: the pages it links to, or the pages that link to it. *@
+<section class="panel">
+    <div class="panel-title"><h3 class="h6"><LucideIcon IconName="@Icon" Size="14" Class="title-icon" /> @Title</h3></div>
+    @if (Pages.Count == 0)
+    {
+        <p class="small-muted mb-0">@Empty</p>
+    }
+    <ul class="link-list mb-0">
+        @foreach (var wp in Pages)
+        {
+            <li><a href="@BasePath/wiki/@wp.Slug">@wp.Title</a></li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = "link";
+
+    /// <summary>What is said when there are none.</summary>
+    [Parameter] public string Empty { get; set; } = string.Empty;
+    [Parameter] public IReadOnlyList<WikiPageDocument> Pages { get; set; } = Array.Empty<WikiPageDocument>();
+    [Parameter] public string BasePath { get; set; } = string.Empty;
+}

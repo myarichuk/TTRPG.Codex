@@ -94,6 +94,8 @@ entityTypes:                  # what packs for this system may contain
 
 Field types: `Text`, `LongText`, `Number` (honours `min`/`max`), `Boolean`, `Dropdown` (`options`),
 `TagList` (comma-separated), `EntityReference` (`targetEntityType`), `Collection` (rows), `ImagePicker`.
+Any field may set `abbreviation` (its short name where space is tight, such as the sheet's plate: `AC`) and a number may
+set `unit` (written after it there: `ft`). A translation can set both for its language.
 
 ### AI vocabulary (`ai`)
 
@@ -112,6 +114,21 @@ ai:
 
 A creature's starting points go to the system's primary resource (`resources`, `isPrimary`), so a "Wounds" system
 shows `Wounds 5/5` on a cast member made from a creature, not a stray `HP`.
+
+### Field roles (`fieldRoles`)
+
+The actor fields the app reads by what they mean, so a system can call them what it likes. A role left out turns off
+what reads it: without `level` there is no level up, without `speed` the sheet's plate shows no speed. Each names an
+actor field; the loader says when one does not.
+
+```yaml
+fieldRoles:
+  level: level                    # the level up, the AI's level-up suggestion
+  class: class                    # with subclass: the AI's level-up suggestion; the fallback class for the rules
+  subclass: subclass
+  speed: speed                    # shown on the sheet's plate
+  summary: [level, species, class]   # Cast's one-line summary of a character, in order
+```
 
 ### Sheet rules (`sheetRules`)
 
@@ -187,9 +204,11 @@ sheetRules:
     prerequisitesProperty: multiclassPrerequisites   # class property: ["STR 13+", "DEX 13+, WIS 13+"], any one option
     subclassField: subclass                   # the first class's subclass; the others store "class-id:levels:subclass-id"
     subclassLevel: 3                          # a subclass before this class level is a violation, and none is offered
+    subclassClassProperty: class              # the subclass entry's property naming its class
   slotPools:                                  # expendable slots, tracked during play
     - key: slots                              # resources slots_1, slots_1_Max, slots_2 ...
       label: Spell slots
+      unit: spell slot                        # one slot: "Use a level 3 spell slot", and the table log
       field: class
       byField: classLevel
       table: spellcasting
@@ -212,6 +231,8 @@ sheetRules:
     currentKey: HP                            # follows the maximum: a larger one arrives as health
     attribute: con                            # modifier added per level
     dieProperty: hitDie                       # class property: "d10"
+    firstLevel: full-die                      # the first level: full-die (the default) or average
+    average: half-plus-one                    # a level's average: half-plus-one (6 for a d10, the default) or half (5)
     modes: [average, rolled, manual]          # what a player may choose; default: average
     default: average
     perLevelBonus: { field: species, property: hitPointsPerLevel }   # added to every level (Dwarven Toughness)
@@ -223,11 +244,15 @@ sheetRules:
     bonusKey: proficiencyBonus                # a derived field
     list: [{ key: perception, label: Perception, attribute: wis }]
     passives: [{ key: passivePerception, label: Passive Perception, skill: perception }]
+    classChoicesProperty: skillChoices        # the first class's count ("Choose 2: ..."); more chosen beyond the background is a warning
   spellcasting:                               # save DC and attack per class with a spellcastingAbility property
+                                              # a class with a slot table and no ability, or the reverse, is a warning
     bonusKey: proficiencyBonus
     saveBase: 8
   proficiencies:                              # warnings for equipped armor and weapons the first class isn't trained in
     armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
+    allArmor: All armor                       # a training that covers every armor but shields (none if left out)
+    pluralSuffix: s                           # dropped when matching a weapon to a training by name ("Longswords")
   armorClass:                                 # armor class from equipment, class features and bonuses
     key: armorClass
     unarmored: "10 + mod(dex)"                # formula used with no body armor (best of this and class formulas)
@@ -236,10 +261,14 @@ sheetRules:
     key: inventory
     label: Equipment
     types: [equipment, magic-item]
+    weightProperty: weight                    # summed with quantities; shown under the list
+    weightUnit: lb                            # a system word, translated through values:
+    capacity: "str * 15"                      # formula; carrying more is a warning (none: no limit)
 ```
 
 **Hit points.** Levels are counted first class first, then the others in order. The first level takes the
-full hit die; every later level takes the die's average (`die / 2 + 1`) or, in `rolled` mode, the roll the
+full hit die (or its average, with `firstLevel: average`); every later level takes the die's average
+(`average`: half the die plus one, or half) or, in `rolled` mode, the roll the
 player entered (clamped to the die; levels without a roll use the average). Each level adds the
 `attribute` modifier, never dropping below 1. Because the modifier comes from the final score, raising
 Constitution raises every level's gain. The maximum is written to `key` while the sheet's `hpMode` is
@@ -282,10 +311,13 @@ Conditions compare a property of the candidate entry (`level`, `classes`, `categ
 `equalsPropertyOfField`) or a value looked up in that entry's row table (`lteLookup`). A lookup
 takes the row whose `level` (or `rowKey`) is the highest not above the sheet's `byField`. A
 `maxCount` that looks up a table the chosen entry doesn't have is zero (a fighter's spells); with
-nothing chosen yet it is unlimited.
+nothing chosen yet it is unlimited. With several classes the looked-up limits add up, but each class may hold only its own share: a
+pick counts for a class whose conditions it meets, and a class left with more than its table gives is named in a
+violation (the constant and `fromField` parts are shared).
 
 Base scores live in the sheet as `base_<key>` and bonuses as `bonus_<key>`; the engine writes the
-total (base + bonus + increases) into `<key>`, which is what the live table and the ECS use. List
+total (base + bonus + increases) into `<key>`, which is what the live table and the ECS use. An attribute added to
+the system later is given its default on sheets that keep base scores. List
 picks are stored as lists of entry ids under the list's key; a pick that raises scores carries the
 player's choice after a bar: `ability-score-improvement|str:1,dex:1`.
 

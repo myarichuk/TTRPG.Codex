@@ -16,7 +16,7 @@
             <div class="mb-2" data-testid="slot-pool-@rule.Key">
                 @if (pools.Count > 1)
                 {
-                    <div class="field-label">@PoolName(rule.Label)</div>
+                    <div class="field-label">@PoolName(Definition, rule.Label)</div>
                 }
                 <ul class="list-unstyled mb-0">
                     @foreach (var level in levels)
@@ -24,7 +24,7 @@
                         var key = rule.KeyFor(level);
                         var max = Value(rule.MaxKeyFor(level)) ?? 0;
                         var current = Math.Clamp(Value(key) ?? max, 0, max);
-                        var label = $"level {level} {Singular(rule.Label)}";
+                        var label = $"level {level} {rule.UnitName}";
                         <li class="slot-row" data-testid="slot-row-@key">
                             <span class="slot-level">@L["Actor.Slots.Level", level]</span>
                             <span class="slot-pips" aria-hidden="true">
@@ -33,14 +33,14 @@
                                     <span class="slot-pip @(i < current ? "slot-pip-full" : "")"></span>
                                 }
                             </span>
-                            <span class="small" data-testid="slot-count-@key"><span class="visually-hidden">@L["Actor.Slots.LevelHidden", PoolName(rule.Label), level]</span>@L["Actor.Slots.Count", current, max]</span>
+                            <span class="small" data-testid="slot-count-@key"><span class="visually-hidden">@L["Actor.Slots.LevelHidden", PoolName(Definition, rule.Label), level]</span>@L["Actor.Slots.Count", current, max]</span>
                             @if (!ReadOnly)
                             {
                                 <span class="ms-auto d-flex gap-1">
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"slot-use-{key}")"
-                                            aria-label="@UseAria(rule.Label, level)" OnClick="() => OnAdjust.InvokeAsync((key, -1, label))">@L["Actor.Slots.Use"]</CodexButton>
+                                            aria-label="@L["Actor.Slots.UseOther", level, Unit(rule)]" OnClick="() => OnAdjust.InvokeAsync((key, -1, label))">@L["Actor.Slots.Use"]</CodexButton>
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"slot-regain-{key}")"
-                                            aria-label="@RegainAria(rule.Label, level)" @onclick="() => OnAdjust.InvokeAsync((key, 1, label))">@L["Actor.Slots.Regain"]</CodexButton>
+                                            aria-label="@L["Actor.Slots.RegainOther", level, Unit(rule)]" @onclick="() => OnAdjust.InvokeAsync((key, 1, label))">@L["Actor.Slots.Regain"]</CodexButton>
                                 </span>
                             }
                         </li>
@@ -58,7 +58,7 @@
                     @foreach (var rest in rests)
                     {
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"rest-{rest.Replace(' ', '-').ToLowerInvariant()}")"
-                                OnClick="() => OnRest.InvokeAsync((rest, RestoredBy(pools.Select(p => p.Rule), rest)))">@RestName(rest)</CodexButton>
+                                OnClick="() => OnRest.InvokeAsync((rest, RestoredBy(pools.Select(p => p.Rule), rest)))">@RestName(Definition, rest)</CodexButton>
                     }
                 </div>
             }
@@ -74,6 +74,9 @@
 
     /// <summary>All keys present, to find which slot levels exist.</summary>
     [Parameter, EditorRequired] public IEnumerable<string> Keys { get; set; } = Array.Empty<string>();
+
+    /// <summary>The system as the reader reads it: the pools', slots' and rests' names come from its translation.</summary>
+    [Parameter] public SystemDefinition? Definition { get; set; }
 
     [Parameter] public bool ReadOnly { get; set; }
     [Parameter] public string? Title { get; set; }
@@ -98,52 +101,19 @@
             .ToList();
 
     /// <summary>A panel heading: the pool's own name ("Spell slots") when only one pool applies.</summary>
-    public static string Heading(IEnumerable<SlotPoolRule> pools, IEnumerable<string> keys)
+    public static string Heading(SystemDefinition? definition, IEnumerable<SlotPoolRule> pools, IEnumerable<string> keys)
     {
         // Static, so it reads the ambient UI culture rather than the injected localizer.
-        var text = new Localizer();
         var present = pools.Where(p => keys.Any(p.Owns)).ToList();
-        return present.Count == 1 ? PoolName(text, present[0].Label) : text["Actor.Slots.Title"];
+        return present.Count == 1 ? PoolName(definition, present[0].Label) : new Localizer()["Actor.Slots.Title"];
     }
 
-    /// <summary>The pool's own name, translated for the two pools the bundled system declares; any other name is the system's own wording.</summary>
-    private static string PoolName(Localizer text, string label) => label switch
-    {
-        "Spell slots" => text["Actor.Slots.SpellSlots"],
-        "Pact slots" => text["Actor.Slots.PactSlots"],
-        _ => label
-    };
+    /// <summary>A pool's name in the reader's language, from the system's translation; the system's own wording without one.</summary>
+    public static string PoolName(SystemDefinition? definition, string label) => definition?.DisplayValue(label) ?? label;
 
-    private string PoolName(string label) => PoolName(L, label);
+    /// <summary>A rest's name in the reader's language, from the system's translation.</summary>
+    public static string RestName(SystemDefinition? definition, string rest) => definition?.DisplayValue(rest) ?? rest;
 
-    /// <summary>The rest's name, translated for the two rests the bundled system declares.</summary>
-    public static string RestName(Localizer text, string rest) => rest switch
-    {
-        "Long Rest" => text["Actor.Slots.LongRest"],
-        "Short Rest" => text["Actor.Slots.ShortRest"],
-        _ => rest
-    };
-
-    private string RestName(string rest) => RestName(L, rest);
-
-    private string UseAria(string poolLabel, int level) => poolLabel switch
-    {
-        "Spell slots" => L["Actor.Slots.UseSpell", level],
-        "Pact slots" => L["Actor.Slots.UsePact", level],
-        _ => L["Actor.Slots.UseOther", level, Singular(poolLabel)]
-    };
-
-    private string RegainAria(string poolLabel, int level) => poolLabel switch
-    {
-        "Spell slots" => L["Actor.Slots.RegainSpell", level],
-        "Pact slots" => L["Actor.Slots.RegainPact", level],
-        _ => L["Actor.Slots.RegainOther", level, Singular(poolLabel)]
-    };
-
-    /// <summary>"Spell slots" → "spell slot": the canonical English label sent with Use/Regain (it is stored in the table log).</summary>
-    private static string Singular(string label)
-    {
-        var lower = label.ToLowerInvariant();
-        return lower.EndsWith('s') ? lower[..^1] : lower;
-    }
+    /// <summary>One slot of the pool ("spell slot") in the reader's language.</summary>
+    private string Unit(SlotPoolRule rule) => Definition?.DisplayValue(rule.UnitName) ?? rule.UnitName;
 }

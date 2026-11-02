@@ -57,6 +57,8 @@
     [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
     [Parameter] public bool CanEdit { get; set; }
     [Parameter] public EventCallback Changed { get; set; }
+    /// <summary>The system as the reader reads it, for the name of the attribute armor adds.</summary>
+    [Parameter] public SystemDefinition? Definition { get; set; }
 
     private readonly string id = "ac-" + Guid.NewGuid().ToString("N")[..6];
 
@@ -66,8 +68,8 @@
         var signed = Bidi.Ltr((line.Value >= 0 ? "+" : "") + line.Value);
         return line.Kind switch
         {
-            "dex" when line.DexCap.HasValue => L["Actor.Ac.DexCapped", signed, line.DexCap],
-            "dex" => L["Actor.Ac.Dex", signed],
+            "dex" when line.DexCap.HasValue => L["Actor.Ac.DexCapped", signed, line.DexCap, DexName(line)],
+            "dex" => L["Actor.Ac.Dex", signed, DexName(line)],
             "misc" => $"{L["Actor.Ac.Other"]}: {signed}",
             "bonus" => $"{name}: {signed}",
             "unarmored" => $"{L["Actor.Ac.Unarmored"]}: {Bidi.Ltr(line.Value.ToString())}",
@@ -75,6 +77,9 @@
             _ => $"{name}: {Bidi.Ltr(line.Value.ToString())}"
         };
     }
+
+    private string DexName(ArmorClassLine line) =>
+        Definition?.Attributes.FirstOrDefault(a => a.Key.Equals(Rules.DexAttribute, StringComparison.OrdinalIgnoreCase))?.Label ?? line.Label;
 
     private bool Auto => Summary?.Active == true;
     private int Value => Auto ? Summary!.Total : YamlValues.GetInt(Sheet, Rules.Key) ?? 10;
@@ -87,7 +92,9 @@
 
     private async Task SetNumberAsync(string key, string? raw)
     {
-        Sheet[key] = (long)(int.TryParse(raw, out var number) ? number : 0);
+        // Text that is no whole number (or an emptied box) leaves the value as it was, not 0 (R7).
+        if (!int.TryParse(raw, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var number)) return;
+        Sheet[key] = (long)number;
         await Changed.InvokeAsync();
     }
 }

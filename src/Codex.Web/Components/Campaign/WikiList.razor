@@ -1,0 +1,151 @@
+@using Codex.Core
+@using Codex.Persistence
+
+@* The wiki as a list of cards: search, sort, the kind and tag filters, and for a player which pages have something newly
+   revealed. The section loads the pages and works out what this browser has seen. *@
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">@L["Campaign.Wiki.Title"]</h2>
+        <p class="page-subtitle">@(IsDm ? L["Campaign.Wiki.Subtitle.Dm"] : L["Campaign.Wiki.Subtitle.Player"])</p>
+    </div>
+    @if (IsDm)
+    {
+        <div class="d-flex gap-2 flex-wrap">
+            @if (AiReady)
+            {
+                <details class="popover-menu" data-testid="wiki-build-ai">
+                    <summary class="cx-btn cx-etched cx-arcane"><LucideIcon IconName="sparkles" Size="18" /> @L["WorldBuilder.Open.Menu"] <LucideIcon IconName="chevron-down" Size="16" /></summary>
+                    <div class="popover-panel menu-panel">
+                        <a class="menu-item" href="@BasePath/build/faction" data-testid="build-faction-ai"><LucideIcon IconName="shield" Size="18" /><span>@L["WorldBuilder.Open.Faction"]</span></a>
+                        <a class="menu-item" href="@BasePath/build/settlement" data-testid="build-settlement-ai"><LucideIcon IconName="map-pin" Size="18" /><span>@L["WorldBuilder.Open.Settlement"]</span></a>
+                        <a class="menu-item" href="@BasePath/build/quest" data-testid="build-quest-ai"><LucideIcon IconName="scroll" Size="18" /><span>@L["WorldBuilder.Open.Quest"]</span></a>
+                        <a class="menu-item" href="@BasePath/build" data-testid="build-chat-ai"><LucideIcon IconName="message-square" Size="18" /><span>@L["WorldBuilder.Open.Chat"]</span></a>
+                    </div>
+                </details>
+            }
+            <a href="@BasePath/templates" class="cx-btn cx-etched" data-testid="wiki-templates"><LucideIcon IconName="braces" Size="18" /> @L["Campaign.Templates.Title"]</a>
+            <a href="@BasePath/wiki/new" class="cx-btn cx-plaque" data-testid="wiki-new"><LucideIcon IconName="plus" Size="18" /> @L["Campaign.Wiki.NewPageBtn"]</a>
+        </div>
+    }
+</div>
+
+<div class="toolbar">
+    <div class="search">
+        <LucideIcon IconName="search" Size="18" Class="search-icon" />
+        <label for="wiki-search" class="visually-hidden">@L["Campaign.Wiki.Search"]</label>
+        <input id="wiki-search" type="search" class="field-input" placeholder="@L["Campaign.Wiki.SearchPlaceholder"]" @bind="search" @bind:event="oninput" />
+    </div>
+    <div class="wiki-sort">
+        <label for="wiki-sort" class="visually-hidden">@L["Campaign.Wiki.SortBy"]</label>
+        <select id="wiki-sort" class="field-select" @bind="sort" data-testid="wiki-sort">
+            <option value="title">@L["Campaign.Wiki.Sort.Title"]</option>
+            <option value="updated">@L["Campaign.Wiki.Sort.Updated"]</option>
+        </select>
+    </div>
+    @if (Kinds.Count > 1)
+    {
+        <div class="chips wiki-kinds" role="group" aria-label="@L["Campaign.Wiki.FilterByKind"]" data-testid="wiki-kind-filter">
+            <button type="button" class="chip" aria-pressed="@((activeKind == null) ? "true" : "false")" @onclick="() => activeKind = null">@L["Campaign.Wiki.AllKinds"]</button>
+            @foreach (var (kind, count) in Kinds)
+            {
+                <button type="button" class="chip" aria-pressed="@((activeKind == kind) ? "true" : "false")" @onclick="() => activeKind = kind" data-testid="@($"wiki-kind-{kind.ToString().ToLowerInvariant()}")"><LucideIcon IconName="@WikiPageText.KindIcon(kind)" Size="14" /> @WikiPageText.KindLabel(L, kind) <span class="chip-count">@count</span></button>
+            }
+        </div>
+    }
+    @if (AllTags.Count > 0)
+    {
+        <div class="chips" role="group" aria-label="@L["Campaign.Wiki.FilterByTag"]">
+            <button type="button" class="chip" aria-pressed="@((activeTag == null) ? "true" : "false")" @onclick="() => activeTag = null">@L["Campaign.Wiki.AllTags"]</button>
+            @foreach (var tag in AllTags)
+            {
+                <button type="button" class="chip" aria-pressed="@((activeTag == tag) ? "true" : "false")" @onclick="() => activeTag = tag">@tag</button>
+            }
+        </div>
+    }
+</div>
+
+@if (!Filtered.Any())
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="globe" Size="28" /></div>
+        <h3>@(Pages.Count == 0 ? L["Campaign.Wiki.Empty.None"] : L["Campaign.Wiki.Empty.NoMatch"])</h3>
+        <p>@(IsDm ? L["Campaign.Wiki.Empty.Dm"] : L["Campaign.Wiki.Empty.Player"])</p>
+    </div>
+}
+else
+{
+    <div class="card-grid" data-testid="wiki-list">
+        @foreach (var wp in Filtered)
+        {
+            <article class="campaign-card wiki-card" aria-labelledby="wiki-@wp.Id">
+                <div class="card-head">
+                    <h3 id="wiki-@wp.Id" class="h6"><a href="@BasePath/wiki/@wp.Slug">@wp.Title</a></h3>
+                    @if (IsDm)
+                    {
+                        <span class="pill @(wp.Visibility == WikiVisibility.Party ? "pill-success" : "pill-warning")">@(wp.Visibility == WikiVisibility.Party ? L["Campaign.Wiki.Party"] : L["Campaign.Wiki.DmOnly"])</span>
+                    }
+                </div>
+                @if (!IsDm && WikiPageText.LatestReveal(wp) is { } revealedAt && SeenPages.TryGetValue(wp.Id, out var seen) && revealedAt > seen)
+                {
+                    <span class="small-muted" data-testid="wiki-card-new"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Wiki.NewReveal"]</span>
+                }
+                @if (IsDm && wp.Visibility == WikiVisibility.Party && SecretText.SecretBlocks(wp.Body).Count is > 0 and var secrets)
+                {
+                    <span class="small-muted" data-testid="wiki-card-secrets"><LucideIcon IconName="eye-off" Size="14" /> @L["Campaign.Wiki.SecretCount", secrets]</span>
+                }
+                @if (IllustrationOf(wp) is { } thumb)
+                {
+                    <img class="place-thumb" src="@thumb" alt="" loading="lazy" />
+                }
+                <p class="mb-0 small">@WikiRender.Summary(wp.Body, Mentions, 150, IsDm)</p>
+                <div class="card-foot">
+                    <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
+                    <div class="chips">
+                        @foreach (var tag in WikiPageText.ShownTags(L, wp).Take(3))
+                        {
+                            <span class="pill">@tag</span>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public List<WikiPageDocument> Pages { get; set; } = new();
+    [Parameter] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+    [Parameter] public bool IsDm { get; set; }
+    [Parameter] public string BasePath { get; set; } = string.Empty;
+    [Parameter] public bool AiReady { get; set; }
+
+    /// <summary>For a player: when this browser last opened each page, by id.</summary>
+    [Parameter] public IReadOnlyDictionary<string, DateTime> SeenPages { get; set; } = new Dictionary<string, DateTime>();
+
+    /// <summary>The picture a card shows, if the page has one.</summary>
+    [Parameter, EditorRequired] public Func<WikiPageDocument, string?> IllustrationOf { get; set; } = null!;
+
+    private string search = string.Empty;
+    private string? activeTag;
+    private WikiPageKind? activeKind;
+    private string sort = "title";
+
+    private List<string> AllTags => Pages.SelectMany(p => WikiPageText.ShownTags(L, p)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToList();
+
+    // The kinds of page there are, with how many of each, in the kinds' own order.
+    private List<(WikiPageKind Kind, int Count)> Kinds => Pages.GroupBy(p => p.Kind).OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
+
+    private IEnumerable<WikiPageDocument> Filtered
+    {
+        get
+        {
+            var shown = Pages
+                .Where(p => activeKind == null || p.Kind == activeKind)
+                .Where(p => activeTag == null || p.Tags.Contains(activeTag, StringComparer.OrdinalIgnoreCase))
+                .Where(p => string.IsNullOrWhiteSpace(search) || p.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || SecretText.WithoutMarkers(p.Body).Contains(search, StringComparison.OrdinalIgnoreCase)); // not the marker lines' words or stamps (S6)
+            return sort == "updated"
+                ? shown.OrderByDescending(p => p.UpdatedAt)
+                : shown.OrderBy(p => p.Title, StringComparer.Create(L.Culture, ignoreCase: true));
+        }
+    }
+}

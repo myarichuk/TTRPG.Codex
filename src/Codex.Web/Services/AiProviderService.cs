@@ -28,7 +28,8 @@ public sealed class AiProviderService(
     AIImageConfiguration serverImageConfig,
     IHttpClientFactory httpClients,
     ILogger<AiProviderService> logger,
-    IConfiguration configuration)
+    IConfiguration configuration,
+    ServerAiUsage usage)
 {
     // While the server is open to the internet only its admin may use the key in the server's own configuration.
     private bool ServerKeyAllowedFor(UserDocument? user) => ExposurePolicy.MayUseServerAi(ExposurePolicy.IsExposed(configuration), user);
@@ -40,6 +41,8 @@ public sealed class AiProviderService(
 
     private bool Blocked(AiProviderConfig provider, UserDocument? user) =>
         Confined(user) && ExposurePolicy.IsInternalEndpoint(provider.BaseUrl);
+
+    private static bool IsAdmin(UserDocument? user) => user?.Roles.Contains(ExposurePolicy.ServerAdminRole) == true;
 
     private readonly IDataProtector _protector = dataProtection.CreateProtector("Codex.AiProviderKeys.v1");
     private readonly Lazy<IChatClient?> _serverClient = new(() => AIClientFactory.CreateClient(serverConfig));
@@ -80,34 +83,62 @@ public sealed class AiProviderService(
         ? $"{AIClientFactory.Preset(serverConfig.Provider)?.Label ?? serverConfig.Provider} · {serverConfig.ModelId}"
         : "not configured";
 
-    public string Protect(string apiKey) => string.IsNullOrEmpty(apiKey) ? string.Empty : _protector.Protect(apiKey);
+    // Each user's keys are protected under a purpose of their own, so a blob copied onto another account
+    // (an export, a hand-edited document) does not decrypt there. Keys stored before this was so need entering again.
+    private IDataProtector ProtectorFor(string userId) => _protector.CreateProtector(userId);
 
-    public string Unprotect(string protectedKey)
+    public string Protect(string userId, string apiKey) => string.IsNullOrEmpty(apiKey) ? string.Empty : ProtectorFor(userId).Protect(apiKey);
+
+    public string Unprotect(string userId, string protectedKey)
     {
+        if (TryUnprotect(userId, protectedKey, out var plain, out var error))
+        {
+            return plain;
+        }
+
+        if (error != null)
+        {
+            // A key from another keyring (data restored elsewhere), another account, or from before keys were bound to
+            // their user can't be read; treat it as missing.
+            logger.LogWarning(error, "Could not unprotect a stored AI key; the provider needs its key entered again.");
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>True when <paramref name="protectedKey"/> is stored but cannot be read for this user any more, so the
+    /// settings page can ask for it again instead of saying "key stored".</summary>
+    public bool NeedsReentry(string userId, string protectedKey) =>
+        !string.IsNullOrEmpty(protectedKey) && !TryUnprotect(userId, protectedKey, out _, out _);
+
+    private bool TryUnprotect(string userId, string protectedKey, out string plain, out Exception? error)
+    {
+        plain = string.Empty;
+        error = null;
         if (string.IsNullOrEmpty(protectedKey))
         {
-            return string.Empty;
+            return false;
         }
 
         try
         {
-            return _protector.Unprotect(protectedKey);
+            plain = ProtectorFor(userId).Unprotect(protectedKey);
+            return true;
         }
         catch (Exception ex)
         {
-            // A key protected under another machine's keyring (restored data dir) can't be read; treat as missing.
-            logger.LogWarning(ex, "Could not unprotect a stored AI key; the provider needs its key entered again.");
-            return string.Empty;
+            error = ex;
+            return false;
         }
     }
 
-    public AIConfiguration ToConfiguration(AiProviderConfig provider, string? plainKey = null, bool confined = false) => new()
+    public AIConfiguration ToConfiguration(AiProviderConfig provider, UserDocument? user, string? plainKey = null, bool confined = false) => new()
     {
         Http = confined ? ExposurePolicy.PublicOnlyClient : null,
         Provider = provider.Kind,
         Endpoint = provider.BaseUrl,
         ModelId = provider.ModelId,
-        ApiKey = plainKey ?? Unprotect(provider.ProtectedApiKey)
+        ApiKey = plainKey ?? (user == null ? string.Empty : Unprotect(user.Id, provider.ProtectedApiKey))
     };
 
     /// <summary>The provider a user's AI actions run on, or null when neither they nor the server have one.</summary>
@@ -123,19 +154,31 @@ public sealed class AiProviderService(
 
     public IChatClient? ClientFor(UserDocument? user)
     {
+        // The server's key is counted per account, so it is never handed to a session whose account is gone.
+        if (user == null) return null;
+
         var provider = DefaultProvider(user);
         if (provider != null && !Blocked(provider, user))
         {
-            var client = CachedClient(ToConfiguration(provider, null, Confined(user)), Confined(user));
+            var setup = ToConfiguration(provider, user, null, Confined(user));
+            var client = CachedClient(setup, Confined(user));
             if (client != null)
             {
                 return client;
             }
 
-            logger.LogWarning("User {UserId}'s default AI provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);
+            // A key stored but no longer readable (from before keys were bound to their user, or another keyring) is the
+            // user's to enter again, as AI settings says; spending the server's shared allowance meanwhile would hide that.
+            if (!string.IsNullOrEmpty(provider.ProtectedApiKey) && string.IsNullOrEmpty(setup.ApiKey))
+            {
+                logger.LogWarning("User {UserId}'s AI key for {Provider} can no longer be read; they need to enter it again.", user.Id, provider.Name);
+                return null;
+            }
+
+            logger.LogWarning("User {UserId}'s default AI provider {Provider} is incomplete; falling back to the server configuration.", user.Id, provider.Name);
         }
 
-        return ServerKeyAllowedFor(user) ? _serverClient.Value : null;
+        return ServerKeyAllowedFor(user) && _serverClient.Value is { } server ? new MeteredClient(server, usage, user.Id, IsAdmin(user)) : null;
     }
 
     public string? Describe(UserDocument? user)
@@ -181,12 +224,21 @@ public sealed class AiProviderService(
 
     private AIConfiguration? ImageConfigFor(UserDocument? user)
     {
+        // As for text (ClientFor): no server key for an account that is gone, nor in place of a key that can't be read.
+        if (user == null) return null;
+
         if (DefaultImageProvider(user) is { } provider && !Blocked(provider, user))
         {
-            var config = ToConfiguration(provider, null, Confined(user));
+            var config = ToConfiguration(provider, user, null, Confined(user));
             if (AiImageGenerator.Problem(config) == null)
             {
                 return config;
+            }
+
+            if (!string.IsNullOrEmpty(provider.ProtectedApiKey) && string.IsNullOrEmpty(config.ApiKey))
+            {
+                logger.LogWarning("User {UserId}'s image key for {Provider} can no longer be read; they need to enter it again.", user.Id, provider.Name);
+                return null;
             }
 
             logger.LogWarning("User {UserId}'s image provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);
@@ -199,7 +251,13 @@ public sealed class AiProviderService(
 
     public async Task<GeneratedImage> GenerateImageAsync(string userId, string prompt, ArtShape shape, CancellationToken ct = default)
     {
-        var config = ImageConfigFor(await users.GetUserByIdAsync(userId)) ?? throw new AiImageNotConfiguredException();
+        var user = await users.GetUserByIdAsync(userId);
+        var config = ImageConfigFor(user) ?? throw new AiImageNotConfiguredException();
+        if (ReferenceEquals(config, serverImageConfig))
+        {
+            usage.Take(userId, ServerAiUsage.Kind.Image, IsAdmin(user));
+        }
+
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromMinutes(2));
         var http = config.Http ?? httpClients.CreateClient("ai-images");
@@ -212,7 +270,7 @@ public sealed class AiProviderService(
     public async Task<(bool Ok, LocalizedException Message)> TestAsync(AiProviderConfig provider, string? plainKey, UserDocument? user = null, CancellationToken ct = default)
     {
         if (Blocked(provider, user)) return (false, new LocalizedException("Service.Ai.PrivateBlocked"));
-        var client = AIClientFactory.CreateClient(ToConfiguration(provider, plainKey, Confined(user)));
+        var client = AIClientFactory.CreateClient(ToConfiguration(provider, user, plainKey, Confined(user)));
         if (client == null)
         {
             return (false, new LocalizedException("Service.Ai.NeedsSetup"));
@@ -234,6 +292,27 @@ public sealed class AiProviderService(
         catch (Exception ex)
         {
             return (false, new LocalizedException("Service.Ai.Unreachable", ex.Message));
+        }
+    }
+
+    /// <summary>The server's own chat client, as one account uses it: each request is counted against their daily allowance
+    /// first (F14). The client underneath is shared, so this one never disposes it.</summary>
+    private sealed class MeteredClient(IChatClient inner, ServerAiUsage usage, string userId, bool unlimited) : DelegatingChatClient(inner)
+    {
+        public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            usage.Take(userId, ServerAiUsage.Kind.Text, unlimited);
+            return base.GetResponseAsync(messages, options, cancellationToken);
+        }
+
+        public override IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            usage.Take(userId, ServerAiUsage.Kind.Text, unlimited);
+            return base.GetStreamingResponseAsync(messages, options, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
         }
     }
 }

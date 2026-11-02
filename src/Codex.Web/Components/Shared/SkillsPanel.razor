@@ -6,7 +6,13 @@
    engine; this only records which skills the character is proficient in and has expertise in. *@
 
 <section class="panel" aria-labelledby="@(id)-heading" data-testid="skills-panel">
-    <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="target" Size="18" Class="title-icon" /> @Rules.Label</h2></div>
+    <div class="panel-title">
+        <h2 id="@(id)-heading" class="h5"><LucideIcon IconName="target" Size="18" Class="title-icon" /> @Rules.Label</h2>
+        @* Each number with what makes it up (U4): the score's modifier and the proficiency bonus the engine added. *@
+        <button type="button" class="link-btn small" aria-pressed="@(ShowSums ? "true" : "false")" data-testid="skills-sums" @onclick="() => ShowSumsChanged.InvokeAsync(!ShowSums)">
+            @(ShowSums ? L["Actor.Skills.HideSums"] : L["Actor.Skills.ShowSums"])
+        </button>
+    </div>
 
     @if (Evaluation.Passives.Count > 0 || Evaluation.Spellcasting.Count > 0)
     {
@@ -14,13 +20,13 @@
             @foreach (var passive in Evaluation.Passives)
             {
                 <dt>@passive.Label</dt>
-                <dd data-testid="@("passive-" + passive.Key)">@passive.Value</dd>
+                <dd><span data-testid="@("passive-" + passive.Key)">@passive.Value</span>@Sum(PassiveSum(passive), "sum-passive-" + passive.Key)</dd>
             }
             @foreach (var casting in Evaluation.Spellcasting)
             {
                 var multi = Evaluation.Spellcasting.Count > 1;
                 <dt>@(multi ? L["Actor.Skills.SpellSaveDcFor", casting.ClassName] : L["Actor.Skills.SpellSaveDc"])</dt>
-                <dd data-testid="spell-save-dc">@casting.SaveDc</dd>
+                <dd><span data-testid="spell-save-dc">@casting.SaveDc</span>@Sum(L["Actor.Skills.SumDc", casting.SaveDc - casting.AttackBonus, Signed(Pb), Abbreviation(casting.Attribute), Signed(casting.AttackBonus - Pb)], "sum-spell-dc")</dd>
                 <dt>@(multi ? L["Actor.Skills.SpellAttackBonusFor", casting.ClassName] : L["Actor.Skills.SpellAttackBonus"])</dt>
                 <dd><span data-testid="spell-attack">@Signed(casting.AttackBonus)</span>@RollButton(multi ? L["Actor.Skills.SpellAttackFor", casting.ClassName] : L["Actor.Skills.SpellAttack"], casting.AttackBonus, "roll-spell-attack")</dd>
             }
@@ -35,7 +41,7 @@
             {
                 <li class="list-row py-1">
                     <span>@save.Label @if (save.Proficient) { <span class="pill pill-success">@L["Actor.Skills.Proficient"]</span> }</span>
-                    <span class="roll-end"><span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(L["Actor.Skills.Save", save.Label], save.Bonus, "roll-save-" + save.Key)</span>
+                    <span class="roll-end">@Sum(ScoreSum(save), "sum-save-" + save.Key)<span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(L["Actor.Skills.Save", save.Label], save.Bonus, "roll-save-" + save.Key)</span>
                 </li>
             }
         </ul>
@@ -63,7 +69,7 @@
                         <label for="@(id)-exp-@key" class="mb-0 small-muted">@L["Actor.Skills.Expertise"]</label>
                     }
                 </span>
-                <span class="roll-end"><span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(L["Actor.Skills.Check", skill.Label], skill.Bonus, "roll-skill-" + key)</span>
+                <span class="roll-end">@Sum(ScoreSum(skill), "sum-skill-" + key)<span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(L["Actor.Skills.Check", skill.Label], skill.Bonus, "roll-skill-" + key)</span>
             </li>
         }
     </ul>
@@ -82,6 +88,32 @@
     [Parameter] public IReadOnlyList<AttributeDefinition> Attributes { get; set; } = Array.Empty<AttributeDefinition>();
     [Parameter] public bool CanEdit { get; set; }
     [Parameter] public EventCallback Changed { get; set; }
+
+    /// <summary>Whether each number shows its parts; the sheet keeps it, so it holds across tabs.</summary>
+    [Parameter] public bool ShowSums { get; set; }
+    [Parameter] public EventCallback<bool> ShowSumsChanged { get; set; }
+
+    private int Pb => Evaluation.Derived.TryGetValue(Rules.BonusKey, out var value) ? Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+
+    // The engine's sum taken apart: proficiency (twice with expertise) and the rest, the attribute's modifier.
+    private string ScoreSum(SkillScore score)
+    {
+        var proficiency = score.Expert ? Pb * 2 : score.Proficient ? Pb : 0;
+        var parts = $"{Abbreviation(score.Attribute)} {Signed(score.Bonus - proficiency)}";
+        return proficiency == 0 ? parts : parts + " " + L[score.Expert ? "Actor.Skills.SumExpertise" : "Actor.Skills.SumProficiency", Signed(proficiency)];
+    }
+
+    private string PassiveSum(PassiveScore passive)
+    {
+        var skill = Evaluation.Skills.FirstOrDefault(s => Rules.Passives.FirstOrDefault(p => p.Key == passive.Key)?.Skill.Equals(s.Key, StringComparison.OrdinalIgnoreCase) == true);
+        return skill == null ? "" : L["Actor.Skills.SumPassive", passive.Value - skill.Bonus, skill.Label, Signed(skill.Bonus)];
+    }
+
+    private RenderFragment Sum(string text, string testId) => __builder =>
+    {
+        if (!ShowSums || string.IsNullOrEmpty(text)) return;
+        <span class="sum-why" data-testid="@testId">@text</span>
+    };
 
     private readonly string id = "skills-" + Guid.NewGuid().ToString("N")[..6];
 

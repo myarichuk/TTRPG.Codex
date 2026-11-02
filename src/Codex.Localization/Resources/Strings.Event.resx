@@ -46,6 +46,23 @@
   <data name="Event.Status.Gained" xml:space="preserve"><value>{0} gained {1}.</value></data>
   <data name="Event.Status.Indefinite" xml:space="preserve"><value>It lasts until removed.</value></data>
   <data name="Event.Status.Lost" xml:space="preserve"><value>{0} lost {1}.</value></data>
+  <data name="Event.Concentration.Save" xml:space="preserve"><value>{0} is concentrating: a DC {1} save keeps it.</value></data>
+  <data name="Event.Concentration.Lost" xml:space="preserve"><value>{0} lost concentration.</value></data>
+  <data name="Event.Concentration.Holds" xml:space="preserve"><value>Held up by {0}'s concentration.</value></data>
+  <data name="Event.Concentration.Released" xml:space="preserve"><value>{0, plural, one{One effect it held up ended.} other{# effects it held up ended.}}</value></data>
+  <data name="Event.Killed.Done" xml:space="preserve"><value>{0} is dead.</value></data>
+  <data name="Event.Killed.Already" xml:space="preserve"><value>{0} was already dead.</value></data>
+  <data name="Event.Revived.Done" xml:space="preserve"><value>{0} is back from the dead, on at least 1 hit point.</value></data>
+  <data name="Event.Revived.NotDead" xml:space="preserve"><value>{0} was not dead.</value></data>
+  <data name="Event.Undo.Done" xml:space="preserve"><value>{0}: the last change was undone.</value></data>
+  <data name="Event.Undo.Nothing" xml:space="preserve"><value>{0}: nothing to undo; something changed them since.</value></data>
+  <data name="Event.Visibility.Known" xml:space="preserve"><value>{0} is now known to the players.</value></data>
+  <data name="Event.Visibility.Unknown" xml:space="preserve"><value>{0} now shows to the players as a stranger.</value></data>
+  <data name="Event.Visibility.Hidden" xml:space="preserve"><value>{0} is now hidden from the players.</value></data>
+  <data name="Event.Visibility.Player" xml:space="preserve"><value>{0} is here.</value></data>
+  <data name="Event.Someone" xml:space="preserve"><value>someone</value></data>
+  <data name="Event.Somewhere" xml:space="preserve"><value>somewhere</value></data>
+  <data name="Event.Something" xml:space="preserve"><value>something</value></data>
   <data name="Event.Turn.Ended" xml:space="preserve"><value>{0}'s turn ended.</value></data>
   <data name="Event.Turn.Passed" xml:space="preserve"><value>Turn passed to {0} (round {1}).</value></data>
   <data name="Event.Turn.PassedNobody" xml:space="preserve"><value>Turn passed to nobody (round {0}).</value></data>
@@ -105,8 +122,6 @@
   <data name="Event.Status.GainedFrom" xml:space="preserve"><value>{0} gained {1} from {2}.</value></data>
   <data name="Event.Status.UntilStart" xml:space="preserve"><value>It lasts {0, plural, one{# round} other{# rounds}}, ending at the start of {1}'s turn.</value></data>
   <data name="Event.Status.UntilEnd" xml:space="preserve"><value>It lasts {0, plural, one{# round} other{# rounds}}, ending at the end of {1}'s turn.</value></data>
-  <data name="Event.Slot.Spell" xml:space="preserve"><value>level {0} spell slot</value></data>
-  <data name="Event.Slot.Pact" xml:space="preserve"><value>level {0} pact slot</value></data>
   <data name="Event.Slot.Other" xml:space="preserve"><value>level {0} {1}</value></data>
   <data name="Event.Type.ActorJoined" xml:space="preserve"><value>Joined</value></data>
   <data name="Event.Type.ActorLeft" xml:space="preserve"><value>Left</value></data>
@@ -131,4 +146,8 @@
   <data name="Event.Type.TemporaryHitPoints" xml:space="preserve"><value>Temporary HP</value></data>
   <data name="Event.Type.TurnAdvance" xml:space="preserve"><value>Turn</value></data>
   <data name="Event.Type.TurnState" xml:space="preserve"><value>Turn state</value></data>
+  <data name="Event.Type.Killed" xml:space="preserve"><value>Death</value></data>
+  <data name="Event.Type.Revived" xml:space="preserve"><value>Revival</value></data>
+  <data name="Event.Type.Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Event.Type.ActorVisibility" xml:space="preserve"><value>Visibility</value></data>
 </root>

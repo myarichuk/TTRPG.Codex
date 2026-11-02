@@ -48,6 +48,9 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
 
     public async Task<bool> SaveAsync(FactDocument fact, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm || Redacted.TryGetValue(fact, out _))
         {
             return false;
@@ -97,6 +100,9 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
 
     public async Task<bool> DeleteAsync(string factId, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -116,6 +122,9 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
 
     public async Task<bool> RemoveKnowerAsync(string factId, string entityId, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -134,6 +143,9 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
 
     public async Task<bool> SetVisibilityAsync(string factId, FactVisibility visibility, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -153,6 +165,9 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
 
     public async Task<bool> AddKnowerAsync(string factId, KnowerEntry knower, CampaignAccess access)
     {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
         if (!access.IsDm)
         {
             return false;
@@ -180,6 +195,7 @@ public class FactRepository(RavenDbService dbService) : IFactRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var toDelete = await session.Query<FactDocument, FactsByCampaignIndex>()
+            .Customize(x => x.WaitForNonStaleResults())
             .Where(f => f.CampaignId == campaignId)
             .ToListAsync();
 

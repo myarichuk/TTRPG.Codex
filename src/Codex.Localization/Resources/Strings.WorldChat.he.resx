@@ -38,6 +38,7 @@
   <data name="WorldChat.Error.NoTools" xml:space="preserve"><value>המודל הזה לא יודע לקרוא לכלים, ובונה העולם צריך זאת. בחרו בהגדרות מודל שתומך בקריאה לכלים.</value></data>
   <data name="WorldChat.Error.NoProposal" xml:space="preserve"><value>אין הצעה להחיל.</value></data>
   <data name="WorldChat.Error.ChangedElsewhere" xml:space="preserve"><value>השיחה הזו שונתה בכרטיסייה אחרת, ולכן נטענה מחדש כאן. שום דבר מהכרטיסייה הזו לא נשמר; שלחו או החילו שוב אם עדיין צריך.</value></data>
+  <data name="WorldChat.Error.ApplyingElsewhere" xml:space="preserve"><value>ההצעה הזו מוחלת עכשיו בכרטיסייה אחרת. חכו שזה יסתיים, ואז פתחו את השיחה שוב כדי לראות מה נוצר.</value></data>
   <data name="WorldChat.Error.Gone" xml:space="preserve"><value>השיחה הזו נמחקה בכרטיסייה אחרת.</value></data>
   <data name="WorldChat.Error.TooLong" xml:space="preserve"><value>השיחה הזו ארוכה מדי בשביל המודל. המשיכו בשיחה חדשה: היא תיפתח בסיכום של השיחה הזו, שאפשר לערוך לפני השליחה.</value></data>
   <data name="WorldChat.CarryOn" xml:space="preserve"><value>להמשיך בשיחה חדשה</value></data>

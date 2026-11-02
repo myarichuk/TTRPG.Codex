@@ -39,4 +39,37 @@ internal static class RavenUpdate
             }
         }
     }
+
+    /// <summary>As <see cref="RunAsync{T}"/>, with the version (change vector) the document was loaded at passed to
+    /// <paramref name="mutate"/>, which returns false to leave it unsaved. Returns the document with the version it was saved
+    /// (or, unsaved, loaded) at, or null when it does not exist.</summary>
+    public static async Task<(T Document, string? Version)?> RunVersionedAsync<T>(RavenDbService dbService, string id, Func<T, string?, bool> mutate) where T : class
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            using var session = dbService.Store.OpenAsyncSession();
+            session.Advanced.UseOptimisticConcurrency = true;
+
+            var document = await session.LoadAsync<T>(id);
+            if (document == null)
+            {
+                return null;
+            }
+
+            if (!mutate(document, session.Advanced.GetChangeVectorFor(document)))
+            {
+                return (document, session.Advanced.GetChangeVectorFor(document));
+            }
+
+            try
+            {
+                await session.SaveChangesAsync();
+                return (document, session.Advanced.GetChangeVectorFor(document));
+            }
+            catch (ConcurrencyException) when (attempt < MaxAttempts)
+            {
+                // Someone else saved this document between our load and our save: go again.
+            }
+        }
+    }
 }

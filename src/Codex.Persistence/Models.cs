@@ -4,6 +4,7 @@ public enum CampaignRole
 {
     DM,
     Player,
+    /// <summary>Kept for members who already have it; no longer offered. Nothing checks it, so it reads as <see cref="Player"/>.</summary>
     Observer
 }
 
@@ -66,6 +67,14 @@ public class CampaignDocument
 
     /// <summary>Shareable code a player redeems to join as a Member. Empty means invites are closed.</summary>
     public string InviteCode { get; set; } = string.Empty;
+
+    /// <summary>When <see cref="InviteCode"/> stops working (UTC); null when it works until it is replaced (D14).</summary>
+    public DateTime? InviteExpiresAt { get; set; }
+
+    /// <summary>True when <see cref="InviteCode"/> lets one player in; <see cref="InviteUsedBy"/> is who used it (D14).</summary>
+    public bool InviteSingleUse { get; set; }
+
+    public string? InviteUsedBy { get; set; }
 
     public string? CurrentSessionId { get; set; }
 
@@ -133,6 +142,12 @@ public class ActorDocument
     public string Name { get; set; } = string.Empty;
     public ActorVisibility Visibility { get; set; } = ActorVisibility.Known;
 
+    /// <summary>Taken out of play (D17): gone from the cast, pickers and the table, but still the actor every mention,
+    /// <c>:::for</c> block, knower and linked page names. The DM can bring it back from Cast.</summary>
+    public bool Retired { get; set; }
+
+    public DateTime? RetiredAt { get; set; }
+
     /// <summary>What an Unknown actor shows players instead of the real name ("the hooded stranger").</summary>
     public string? PublicName { get; set; }
 
@@ -186,6 +201,13 @@ public class BestiaryEntry
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 
     public string Key => $"{(IsHomebrew ? "homebrew" : "pack")}:{EntryType}:{EntryId}";
+}
+
+/// <summary>The server-wide roles a <see cref="UserDocument"/> holds (not a campaign's <see cref="CampaignRole"/>).</summary>
+public static class UserRoles
+{
+    public const string Player = "Player";
+    public const string ServerAdmin = "ServerAdmin";
 }
 
 public class UserDocument
@@ -378,6 +400,11 @@ public class RollLogEntry
 
     public List<int> Dropped { get; set; } = new();
     public int Modifier { get; set; }
+
+    /// <summary>Where in <see cref="Kept"/> the d20 a natural 20 or 1 is read from; null when the roll has no single check die
+    /// (or predates this, R8).</summary>
+    public int? CheckDieIndex { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
