@@ -34,13 +34,26 @@ public sealed partial class WorldBuilderService
         var castIds = (await actorRepository.GetVisibleForCampaignAsync(access)).Where(a => a.Kind != ActorKind.PlayerCharacter).Select(a => a.Id).ToList();
         var brews = (await homebrew.GetVisibleForCampaignAsync(access)).ToList();
         var brewKeys = brews.GroupBy(h => $"{h.Type}/{h.EntryId}", StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+        var regionNames = (await regions.GetVisibleForCampaignAsync(access)).GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.First().Name);
+        var factNames = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).GroupBy(f => f.Id).ToDictionary(g => g.Key, g => g.First().Summary);
         var culture = Lang;
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
-            system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys);
+            system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
+            regionNames, factNames);
         var check = WorldBundleParser.ParseProposal(json, rules);
 
         await FindStatsAsync(campaign, access, check.Bundle);
         var editErrors = await FillEditsAsync(check.Bundle, access);
+        foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Edit, SuggestedStats: not null }))
+        {
+            draft.Stats = null;
+            await FindStatsAsync(campaign, access, check.Bundle, draft);
+            if (draft.Stats is not { } creature || system?.FindType(creature.Type)?.ActorBlueprint != true)
+            {
+                editErrors.Add($"{draft.Ref} (edit '{draft.Name}'): stats '{draft.SuggestedStats}' are not a creature in the Library; use type/id as search_library lists it.");
+            }
+        }
+
         editErrors.AddRange(await VariantsAsync(campaign, access, check.Bundle));
         editErrors.AddRange(await PicksAsync(campaign, access, check.Bundle));
         FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
@@ -65,7 +78,33 @@ public sealed partial class WorldBuilderService
         var allRegions = (await regions.GetVisibleForCampaignAsync(access)).ToList();
         var actors = (await actorRepository.GetVisibleForCampaignAsync(access)).ToList();
         var brews = edits.Any(d => WorldBundle.ParseTarget(d.Target!, out _) == EditTarget.Homebrew) ? (await homebrew.GetVisibleForCampaignAsync(access)).ToList() : new List<HomebrewEntryDocument>();
+        var factList = edits.Any(d => WorldBundle.ParseTarget(d.Target!, out _) == EditTarget.Fact)
+            ? (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).ToList()
+            : new List<FactDocument>();
         var names = Names(actors, allRegions);
+        // A region deleted takes every place in it. Nothing else in the proposal may add to it, change a place in it or move into it:
+        // that work would be made and then wiped.
+        var first = allRegions.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
+        foreach (var gone in edits.Where(d => d.Remove && WorldBundle.ParseTarget(d.Target!, out _) == EditTarget.Region))
+        {
+            WorldBundle.ParseTarget(gone.Target!, out var regionId);
+            var doomed = allRegions.FirstOrDefault(r => r.Id == regionId);
+            if (doomed == null) continue;
+            bool Inside(string? key) => key != null && key.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix, StringComparison.OrdinalIgnoreCase)
+                && doomed.Locations.Any(p => p.Id == key[(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix).Length..]);
+            foreach (var other in bundle.Drafts.Where(d => d != gone))
+            {
+                var addsToIt = other.Kind == DraftKinds.Place && other.Parent == null
+                    && (string.IsNullOrWhiteSpace(bundle.Region) ? first == doomed : string.Equals(bundle.Region.Trim(), doomed.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+                var touchesIt = Inside(other.Parent) || (other.Kind == DraftKinds.Edit && other.Target != null && Inside(other.Target));
+                if (addsToIt || touchesIt)
+                {
+                    errors.Add($"{other.Ref} ({other.Kind} '{other.Name}'): the region '{doomed.Name}' is deleted by {gone.Ref}, which would wipe this too; " +
+                               "delete the region in a proposal of its own, or keep it.");
+                }
+            }
+        }
+
         foreach (var draft in edits)
         {
             switch (WorldBundle.ParseTarget(draft.Target!, out var id))
@@ -92,8 +131,36 @@ public sealed partial class WorldBuilderService
                         draft.Before = Plain(place.Description, names);
                         draft.BeforeStamp = Stamp(place.Description);
                         draft.SharedWithPlayers = place.Visibility == ActorVisibility.Known;
-                        TooLong(draft, place.Description);
-                        KeepsSecrets(draft, place.Description, keepLinks: false);
+                        if (draft.Body != null)
+                        {
+                            TooLong(draft, place.Description);
+                            KeepsSecrets(draft, place.Description, keepLinks: false);
+                        }
+
+                        if (draft.MoveTo) CheckMove(draft, place, allRegions);
+                    }
+
+                    break;
+                case EditTarget.Region:
+                    if (allRegions.FirstOrDefault(r => r.Id == id) is { } region)
+                    {
+                        draft.Name = region.Name;
+                        draft.SharedWithPlayers = false;
+                        if (draft.Remove && region.Locations.Count > 0)
+                        {
+                            draft.Before = $"{region.Locations.Count} place(s) go with it: {string.Join(", ", region.Locations.Take(8).Select(l => l.Name))}{(region.Locations.Count > 8 ? ", …" : string.Empty)}";
+                        }
+                    }
+
+                    break;
+                case EditTarget.Fact:
+                    if (factList.FirstOrDefault(f => f.Id == id) is { } fact)
+                    {
+                        draft.Name = fact.Summary;
+                        draft.Before = Plain(fact.Details, names);
+                        draft.BeforeStamp = Stamp(fact.Details);
+                        draft.SharedWithPlayers = fact.Visibility != FactVisibility.DmOnly;
+                        if (draft.Body != null) TooLong(draft, fact.Details);
                     }
 
                     break;
@@ -104,8 +171,11 @@ public sealed partial class WorldBuilderService
                         draft.Before = Plain(actor.Biography, names);
                         draft.BeforeStamp = Stamp(actor.Biography);
                         draft.SharedWithPlayers = actor.Visibility == ActorVisibility.Known;
-                        TooLong(draft, actor.Biography);
-                        KeepsSecrets(draft, actor.Biography, keepLinks: false);
+                        if (draft.Body != null)
+                        {
+                            TooLong(draft, actor.Biography);
+                            KeepsSecrets(draft, actor.Biography, keepLinks: false);
+                        }
                     }
 
                     break;
@@ -116,8 +186,11 @@ public sealed partial class WorldBuilderService
                         draft.Before = Plain(page.Body, names);
                         draft.BeforeStamp = Stamp(page.Body);
                         draft.SharedWithPlayers = page.Visibility == WikiVisibility.Party;
-                        TooLong(draft, page.Body);
-                        KeepsSecrets(draft, page.Body, keepLinks: true);
+                        if (draft.Body != null)
+                        {
+                            TooLong(draft, page.Body);
+                            KeepsSecrets(draft, page.Body, keepLinks: true);
+                        }
                     }
 
                     break;
@@ -125,6 +198,65 @@ public sealed partial class WorldBuilderService
         }
 
         return errors;
+
+        // A place moves inside its new parent, and never inside itself or what it holds (a loop with no top). Every move of the
+        // proposal is taken together, so two moves that would each be fine alone but chase each other round are caught here, not half
+        // way through the save. A parent made by this proposal is followed up to the place it hangs from.
+        void CheckMove(WorldDraft draft, LocationDocument place, List<RegionDocument> all)
+        {
+            var region = all.First(r => r.Locations.Any(p => p.Id == place.Id));
+            var existing = WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var parent = draft.Parent;
+            var viaNew = false;
+            while (parent != null && !parent.StartsWith(existing, StringComparison.OrdinalIgnoreCase) && bundle.Find(parent) is { } up && seen.Add(up.Ref))
+            {
+                viaNew = true;
+                parent = up.Parent;
+            }
+
+            if (parent == null || !parent.StartsWith(existing, StringComparison.OrdinalIgnoreCase))
+            {
+                // Under a new top-level place, which lands in the proposal's region (or the first): art does not travel, so be sure it stays.
+                if (viaNew && parent == null && PlaceTree.Subtree(region.Locations, place.Id).Any(p => p.HasArt))
+                {
+                    errors.Add($"{draft.Ref} (edit '{draft.Name}'): it, or a place inside it, has art, which cannot move to another region; put the new place it goes into inside '{region.Name}'.");
+                }
+
+                return;
+            }
+
+            // Climb from the new parent through the tree as this proposal leaves it: a place that is itself moved goes by its new parent.
+            var at = parent[existing.Length..];
+            for (var climbed = new HashSet<string>(); at != null && climbed.Add(at); at = ParentAfterMoves(at))
+            {
+                if (at == place.Id)
+                {
+                    errors.Add($"{draft.Ref} (edit '{draft.Name}'): it cannot go inside itself or a place it holds (counting the other moves in this proposal).");
+                    return;
+                }
+            }
+
+            var parentRegion = all.FirstOrDefault(r => r.Locations.Any(p => p.Id == parent[existing.Length..]));
+            if (parentRegion != null && parentRegion != region && PlaceTree.Subtree(region.Locations, place.Id).Any(p => p.HasArt))
+            {
+                // Art is stored on its region and does not travel, so a place with art stays where it is.
+                errors.Add($"{draft.Ref} (edit '{draft.Name}'): it, or a place inside it, has art, which cannot move to another region; make a new place there instead.");
+            }
+
+            string? ParentAfterMoves(string id)
+            {
+                if (bundle.Drafts.FirstOrDefault(d => d is { Kind: DraftKinds.Edit, MoveTo: true } && string.Equals(d.Target, existing + id, StringComparison.OrdinalIgnoreCase)) is { } moved)
+                {
+                    // Moved under a new place: that place's own parent, as proposed.
+                    var next = moved.Parent;
+                    for (var hops = 0; next != null && !next.StartsWith(existing, StringComparison.OrdinalIgnoreCase) && bundle.Find(next) is { } up && hops < WorldBundleParser.MaxDrafts; hops++) next = up.Parent;
+                    return next != null && next.StartsWith(existing, StringComparison.OrdinalIgnoreCase) ? next[existing.Length..] : null;
+                }
+
+                return all.SelectMany(r => r.Locations).FirstOrDefault(p => p.Id == id)?.ParentId;
+            }
+        }
 
         // get_page shows only the first MaxPageText characters, so a longer text was never fully read, and "the complete new text"
         // written from it would cut the rest off. Measured as get_page shows it (Cap(Editable(...))), mentions written out as

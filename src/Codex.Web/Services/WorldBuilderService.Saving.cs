@@ -176,9 +176,10 @@ public sealed partial class WorldBuilderService
         await LinkPagesToPlacesAsync(places.Select(p => p.Place), access);
 
         var edited = new List<WorldEdit>();
-        foreach (var draft in Pending("edit").Where(d => d.Kind == DraftKinds.Edit && d.Target != null))
+        // A region goes last: whatever else the proposal changed in it is then done with before it is gone.
+        foreach (var draft in Pending("edit").Where(d => d.Kind == DraftKinds.Edit && d.Target != null).OrderBy(d => d.Remove && WorldBundle.ParseTarget(d.Target!, out _) == EditTarget.Region ? 1 : 0))
         {
-            edited.Add(await ApplyEditAsync(draft, bundle, access));
+            edited.Add(await ApplyEditAsync(draft, bundle, campaign, access));
             await Saved(draft, "edit", draft.Target!);
         }
 
@@ -295,6 +296,7 @@ public sealed partial class WorldBuilderService
                         break;
                     case "edit":
                         var change = EditOf(draft);
+                        if (change.Removed) break; // nothing left to open
                         links.Add(new WorldChatLink { Kind = "change-" + change.Target.ToString().ToLowerInvariant(), Id = change.Id, Name = change.Name });
                         break;
                     case "fact":
@@ -318,12 +320,12 @@ public sealed partial class WorldBuilderService
     private static WorldEdit EditOf(WorldDraft draft)
     {
         var target = WorldBundle.ParseTarget(draft.Target ?? string.Empty, out var id);
-        return new WorldEdit(target, id, draft.Name, draft.SharedWithPlayers);
+        return new WorldEdit(target, id, draft.Name, draft.SharedWithPlayers, draft.Remove, draft.Body != null);
     }
 
     /// <summary>Replaces the text an edit targets with its complete new text. The text is the DM's to review beforehand, so a target
     /// that has gone since is an error rather than something to skip quietly.</summary>
-    private async Task<WorldEdit> ApplyEditAsync(WorldDraft draft, WorldBundle bundle, CampaignAccess access)
+    private async Task<WorldEdit> ApplyEditAsync(WorldDraft draft, WorldBundle bundle, CampaignDocument campaign, CampaignAccess access)
     {
         var target = WorldBundle.ParseTarget(draft.Target!, out var id);
         var gone = new LocalizedException("WorldBuilder.Error.EditTargetGone", draft.Name);
@@ -333,6 +335,8 @@ public sealed partial class WorldBuilderService
         // Nor may it lose or expose a hidden block. The check refused such an edit already; this holds even if that was skipped.
         void Unchanged(string? stored, bool keepLinks)
         {
+            // A rename, a move or a delete leaves the text alone, so a text edited since does not matter to it.
+            if (draft.Body == null) return;
             if (draft.BeforeStamp != null && draft.BeforeStamp != Stamp(stored)) throw changed;
             if (LostSecrets(draft, bundle, stored, keepLinks).Count > 0) throw new LocalizedException("WorldBuilder.Error.EditLosesSecret", draft.Name);
         }
@@ -342,6 +346,12 @@ public sealed partial class WorldBuilderService
             case EditTarget.Homebrew:
                 {
                     var entry = (await homebrew.GetVisibleForCampaignAsync(access)).FirstOrDefault(h => string.Equals($"{h.Type}/{h.EntryId}", id, StringComparison.OrdinalIgnoreCase)) ?? throw gone;
+                    if (draft.Remove)
+                    {
+                        if (!await homebrew.TryDeleteAsync(entry.Id, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, $"{entry.Type}/{entry.EntryId}", entry.Name, entry.IsPublished, Removed: true, Text: false);
+                    }
+
                     if (draft.BeforeStamp != null && draft.BeforeStamp != HomebrewStamp(entry)) throw changed;
                     if (draft.Rename is { Length: > 0 } rename) entry.Name = rename.Trim();
                     // Rules text, not wiki text: links become plain names.
@@ -357,14 +367,39 @@ public sealed partial class WorldBuilderService
                 }
             case EditTarget.Place:
                 {
-                    foreach (var region in (await regions.GetVisibleForCampaignAsync(access)).ToList())
+                    var allRegions = (await regions.GetVisibleForCampaignAsync(access)).ToList();
+                    foreach (var region in allRegions)
                     {
                         if (region.Locations.FirstOrDefault(p => p.Id == id) is not { } place) continue;
+                        var shared = place.Visibility == ActorVisibility.Known;
+                        if (draft.Remove)
+                        {
+                            // The places inside it move up to its parent (the repository's rule), so nothing is lost with it.
+                            if (await regions.RemoveLocationAsync(region.Id, id, access) == null) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                            return new WorldEdit(target, id, place.Name, shared, Removed: true, Text: false);
+                        }
+
                         Unchanged(place.Description, keepLinks: false);
                         // What players read once the place is revealed: plain text, no wiki links (mentions stay).
-                        place.Description = ResolveEditText(body, bundle, keepLinks: false).Trim();
-                        if (!await regions.UpsertLocationAsync(region.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-                        return new WorldEdit(target, id, place.Name, place.Visibility == ActorVisibility.Known);
+                        if (draft.Body != null) place.Description = ResolveEditText(body, bundle, keepLinks: false).Trim();
+                        if (draft.Rename is { Length: > 0 } rename) place.Name = rename.Trim();
+                        if (Enum.TryParse<PlaceKind>(draft.PlaceKind, ignoreCase: true, out var kind)) place.Kind = kind;
+                        var (parentId, into) = draft.MoveTo ? MoveParent(draft, bundle, allRegions, region, id) : (null, region);
+                        var target0 = region;
+                        if (draft.MoveTo)
+                        {
+                            place.ParentId = parentId;
+                            if (into != region)
+                            {
+                                // Into another region: the place and what it holds go over together, in one stored change, before the
+                                // rest is written, so a move that fails leaves the place and its text exactly as they were.
+                                if (!await regions.MoveLocationAsync(region.Id, into.Id, id, parentId, access)) throw new LocalizedException("WorldBuilder.Error.MoveFailed", draft.Name);
+                                target0 = into;
+                            }
+                        }
+
+                        if (!await regions.UpsertLocationAsync(target0.Id, place, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, id, place.Name, shared, Text: draft.Body != null);
                     }
 
                     throw gone;
@@ -372,25 +407,96 @@ public sealed partial class WorldBuilderService
             case EditTarget.Actor:
                 {
                     var actor = await actorRepository.GetVisibleAsync(id, access) ?? throw gone;
+                    if (draft.Remove)
+                    {
+                        // Retired, as the cast list does it: out of play and off the live table, the document kept so mentions and facts still name them.
+                        if (!await cast.RetireAsync(actor.Id, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known, Removed: true, Text: false);
+                    }
+
                     Unchanged(actor.Biography, keepLinks: false);
-                    actor.Biography = ResolveEditText(body, bundle, keepLinks: false).Trim();
+                    if (draft.Body != null) actor.Biography = ResolveEditText(body, bundle, keepLinks: false).Trim();
+                    if (draft.Rename is { Length: > 0 } rename) actor.Name = rename.Trim();
+                    if (draft.Stats is { } creature)
+                    {
+                        // The creature's stat block is laid over the sheet: what it prints replaces the same entries, and the rest of the sheet stays.
+                        var system = catalog.GetDefinition(campaign.SystemId);
+                        var item = await library.GetAsync(campaign, access, creature.Type, creature.Id, creature.Homebrew) ?? throw new LocalizedException("WorldBuilder.Error.StatsGone", draft.Name);
+                        if (!cast.Restat(actor, item, campaign, system)) throw new LocalizedException("WorldBuilder.Error.StatsGone", draft.Name);
+                    }
+
                     if (!await actorRepository.TrySaveAsync(actor, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
-                    return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known);
+                    return new WorldEdit(target, id, actor.Name, actor.Visibility == ActorVisibility.Known, Text: draft.Body != null);
+                }
+            case EditTarget.Region:
+                {
+                    var region = (await regions.GetVisibleForCampaignAsync(access)).FirstOrDefault(r => r.Id == id) ?? throw gone;
+                    if (draft.Remove)
+                    {
+                        // Every place in it goes too; the review card said so.
+                        if (!await regions.DeleteAsync(region.Id, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, id, region.Name, false, Removed: true, Text: false);
+                    }
+
+                    if (draft.Rename is { Length: > 0 } regionName && !await regions.RenameAsync(region.Id, regionName.Trim(), access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                    if (Enum.TryParse<RegionKind>(draft.RegionKind, ignoreCase: true, out var regionKind) && !await regions.SetKindAsync(region.Id, regionKind, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                    return new WorldEdit(target, id, draft.Rename ?? region.Name, false, Text: false);
+                }
+            case EditTarget.Fact:
+                {
+                    var fact = (await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).FirstOrDefault(f => f.Id == id) ?? throw gone;
+                    if (draft.Remove)
+                    {
+                        if (!await facts.DeleteAsync(fact.Id, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, id, fact.Summary, fact.Visibility != FactVisibility.DmOnly, Removed: true, Text: false);
+                    }
+
+                    if (draft.BeforeStamp != null && draft.Body != null && draft.BeforeStamp != Stamp(fact.Details)) throw changed;
+                    if (draft.Body != null) fact.Details = ResolveEditText(body, bundle, keepLinks: false).Trim();
+                    if (draft.Rename is { Length: > 0 } summary) fact.Summary = summary.Trim();
+                    if (!await facts.SaveAsync(fact, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                    return new WorldEdit(target, id, fact.Summary, fact.Visibility != FactVisibility.DmOnly, Text: draft.Body != null);
                 }
             default:
                 {
                     var page = (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => string.Equals(p.Slug, id, StringComparison.OrdinalIgnoreCase)) ?? throw gone;
+                    if (draft.Remove)
+                    {
+                        if (!await wiki.TryDeleteAsync(page.Id, access)) throw new LocalizedException("WorldBuilder.Error.OnlyDm");
+                        return new WorldEdit(target, page.Slug, page.Title, page.Visibility == WikiVisibility.Party, Removed: true, Text: false);
+                    }
+
                     Unchanged(page.Body, keepLinks: true);
-                    page.Body = ResolveEditText(body, bundle, keepLinks: true).Trim();
+                    if (draft.Body != null) page.Body = ResolveEditText(body, bundle, keepLinks: true).Trim();
+                    if (draft.Rename is { Length: > 0 } rename) page.Title = rename.Trim();
                     switch (await wiki.TrySaveAsync(page, access))
                     {
                         case SaveOutcome.Changed: throw changed;
                         case SaveOutcome.Refused: throw new LocalizedException("WorldBuilder.Error.OnlyDm");
                     }
 
-                    return new WorldEdit(target, page.Slug, page.Title, page.Visibility == WikiVisibility.Party);
+                    return new WorldEdit(target, page.Slug, page.Title, page.Visibility == WikiVisibility.Party, Text: draft.Body != null);
                 }
         }
+    }
+
+    // Where an edit moves a place: inside its new parent, in whatever region that is (the top of its own region when there is none),
+    // and not inside itself or what it holds.
+    private static (string? ParentId, RegionDocument Region) MoveParent(WorldDraft draft, WorldBundle bundle, List<RegionDocument> all, RegionDocument region, string id)
+    {
+        if (draft.Parent == null) return (null, region);
+        var existing = WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix;
+        var parentId = draft.Parent.StartsWith(existing, StringComparison.OrdinalIgnoreCase)
+            ? draft.Parent[existing.Length..]
+            : bundle.Find(draft.Parent)?.SavedAs.GetValueOrDefault("place");
+        if (parentId == null || all.FirstOrDefault(r => r.Locations.Any(p => p.Id == parentId)) is not { } into)
+        {
+            throw new LocalizedException("WorldBuilder.Error.MoveParentMissing", draft.Name);
+        }
+
+        if (into == region && !PlaceTree.CanParent(region.Locations, id, parentId)) throw new LocalizedException("WorldBuilder.Error.MoveLoop", draft.Name);
+        if (into != region && PlaceTree.Subtree(region.Locations, id).Any(p => p.HasArt)) throw new LocalizedException("WorldBuilder.Error.MoveHasArt", draft.Name);
+        return (parentId, into);
     }
 
     /// <summary>Adds and takes off a tags entry's tags on each page and homebrew entry it names. Returns how many changed; one

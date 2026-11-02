@@ -214,6 +214,54 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         return new RemovedLocation(location, moved);
     }
 
+    public async Task<bool> MoveLocationAsync(string fromRegionId, string toRegionId, string locationId, string? newParentId, CampaignAccess access)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;
+        access = current;
+
+        if (!access.IsDm || fromRegionId == toRegionId)
+        {
+            return false;
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        var from = await session.LoadAsync<RegionDocument>(fromRegionId);
+        var to = await session.LoadAsync<RegionDocument>(toRegionId);
+        var place = from?.Locations.FirstOrDefault(l => l.Id == locationId);
+        if (from == null || to == null || place == null || from.CampaignId != access.CampaignId || to.CampaignId != access.CampaignId)
+        {
+            return false;
+        }
+
+        if (newParentId != null && to.Locations.All(l => l.Id != newParentId))
+        {
+            return false;
+        }
+
+        // The place and everything inside it, parents first.
+        var moving = new List<LocationDocument> { place };
+        for (var i = 0; i < moving.Count; i++)
+        {
+            moving.AddRange(from.Locations.Where(l => l.ParentId == moving[i].Id && moving.All(m => m.Id != l.Id)));
+        }
+
+        if (moving.Any(l => l.HasArt))
+        {
+            return false;
+        }
+
+        place.ParentId = newParentId;
+        foreach (var l in moving)
+        {
+            from.Locations.Remove(l);
+            to.Locations.Add(l);
+        }
+
+        from.UpdatedAt = to.UpdatedAt = DateTime.UtcNow;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
     /// <summary>How long a deleted place's art is kept for Undo: well past the toast's twelve seconds.</summary>
     public static readonly TimeSpan RemovedArtKept = TimeSpan.FromHours(1);
 

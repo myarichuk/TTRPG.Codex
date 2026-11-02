@@ -32,6 +32,10 @@
   <data name="WorldChat.Edit.Page" xml:space="preserve"><value>заменяет текст страницы</value></data>
   <data name="WorldChat.Edit.Place" xml:space="preserve"><value>заменяет описание места</value></data>
   <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>заменяет историю персонажа</value></data>
+  <data name="WorldChat.Edit.Region" xml:space="preserve"><value>изменяет регион</value></data>
+  <data name="WorldChat.Edit.Fact" xml:space="preserve"><value>изменяет тайну</value></data>
+  <data name="WorldChat.Proposal.DeletesRegion" xml:space="preserve"><value>Удаляет регион «{0}» и все места в нём.</value></data>
+  <data name="WorldChat.Proposal.Restat" xml:space="preserve"><value>Накладывает характеристики «{0}» на лист персонажа; остальное в листе остаётся.</value></data>
   <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>Текущий текст</value></data>
   <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>Игроки уже могут это читать, поэтому изменение сразу изменит то, что они видят.</value></data>
   <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{# шаг} few{# шага} many{# шагов} other{# шага}}</value></data>
@@ -147,6 +151,12 @@
   <data name="WorldChat.Proposal.TagsLabel" xml:space="preserve"><value>Метки</value></data>
   <data name="WorldChat.Proposal.NoTags" xml:space="preserve"><value>без меток</value></data>
   <data name="WorldChat.Proposal.Renamed" xml:space="preserve"><value>Новое название: «{0}»</value></data>
+  <data name="WorldChat.Proposal.Deletes" xml:space="preserve"><value>Удаляет «{0}». Отсюда это не вернуть.</value></data>
+  <data name="WorldChat.Proposal.Retires" xml:space="preserve"><value>Выводит «{0}» из игры: убирает со стола, но страница и упоминания остаются.</value></data>
+  <data name="WorldChat.Proposal.DeletesPlace" xml:space="preserve"><value>Удаляет место «{0}». Места внутри него поднимаются к его родителю.</value></data>
+  <data name="WorldChat.Proposal.MovesTo" xml:space="preserve"><value>Переносится внутрь: {0}</value></data>
+  <data name="WorldChat.Proposal.MovesToTop" xml:space="preserve"><value>Выносится на верхний уровень региона</value></data>
+  <data name="WorldChat.Proposal.BecomesKind" xml:space="preserve"><value>Становится: {0}</value></data>
   <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{Метки для # страницы или записи} few{Метки для # страниц и записей} many{Метки для # страниц и записей} other{Метки для # страницы или записи}}</value></data>
   <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>Это существо уже в Бестиарии.</value></data>
   <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>Добавляет «{0}» в Бестиарий кампании.</value></data>

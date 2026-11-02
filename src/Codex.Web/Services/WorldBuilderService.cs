@@ -32,7 +32,7 @@ public sealed record WorldBuildResult(
 /// <summary>An existing entry a proposal changed: what kind of text, its id (a page's slug), and its name.</summary>
 /// <param name="Shared">The changed thing is one players can see (a party page, a known place or cast member, a published entry),
 /// so they read the change too, all but its hidden blocks.</param>
-public sealed record WorldEdit(EditTarget Target, string Id, string Name, bool Shared = false);
+public sealed record WorldEdit(EditTarget Target, string Id, string Name, bool Shared = false, bool Removed = false, bool Text = true);
 
 /// <summary>
 /// The world builder (docs/WORLD_BUILDER.md): what the world-building chat's tools read about the campaign, the check of a

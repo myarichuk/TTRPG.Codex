@@ -108,6 +108,7 @@ public static class WorldChatView
         "page" or "change-page" => $"{basePath}/wiki/{link.Id}",
         "actor" or "change-actor" => $"{basePath}/actors/{link.Id}",
         "place" or "change-place" => $"{basePath}/world#place-{link.Id}",
+        "change-region" => $"{basePath}/world",
         "homebrew" or "change-homebrew" => $"{basePath}/library/{link.Id}",
         "bestiary" => $"{basePath}/bestiary",
         "tags" => $"{basePath}/library",

@@ -113,6 +113,24 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         }
     }
 
+    /// <summary>Takes a character out of play and off the live table; their document stays, so mentions still name them. False when not the DM.</summary>
+    public Task<bool> RetireAsync(string actorId, CampaignAccess access) => runtimes.TryRetireActorAsync(actorId, access);
+
+    /// <summary>Lays a creature's stat block over an existing character's sheet: what the block prints replaces the same entries and
+    /// the rest of the sheet (notes, gear, anything the block does not print) stays. False, changing nothing, when the item is not a
+    /// creature. The caller saves the actor.</summary>
+    public bool Restat(ActorDocument actor, LibraryItem creature, CampaignDocument campaign, SystemDefinition? system)
+    {
+        if (Blueprint(creature, campaign, system) is not { } blueprint)
+        {
+            return false;
+        }
+
+        ActorSheetSync.SeedFromBlueprint(actor, blueprint, system, components);
+        actor.BlueprintId = creature.IsHomebrew ? null : $"{blueprint.SystemId}:{blueprint.Id}";
+        return true;
+    }
+
     /// <summary>Adds a non-player character, hidden from players until revealed. The sheet comes from <see cref="NewNpc.Creature"/>'s
     /// stat block (a Library creature that plays like them), else <see cref="NewNpc.Draft"/>, else a blank sheet (the system's
     /// defaults and starting attributes); the character keeps their own name either way. Returns null when

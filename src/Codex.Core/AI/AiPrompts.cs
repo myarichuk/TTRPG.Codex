@@ -469,6 +469,14 @@ public static class AiPrompts
             "People, places and items mentioned in a text appear as [[actor:ID|Name]], [[place:ID|Name]] or [[item:ID|Name]]: copy each one exactly as written, or the link is lost. " +
             "Players read a place's description and a character's history once they are revealed, and a page once it is shared. " + SecretBlocks +
             "An edit is reviewed like any other entry, next to the current text; nothing changes until the game master applies it. " +
+            "An edit can also restructure what exists, in the same kind of entry (the \"text\" is then optional): \"rename\" renames a place, region, cast member, page, secret (its text is the fact itself) or homebrew entry; " +
+            "for a place, \"parent\" moves it, with everything inside it, inside another place (existing:place:<id>, even in another region, or a new place's ref; \"none\" moves it out to the top of its own region; a place with art cannot change region) and \"placeKind\" changes what it is " +
+            "(rooms filed as sites become \"room\"); a region (existing:region:<id> from list_places) takes \"rename\" and \"regionKind\"; a secret (existing:fact:<id> from search_world) takes \"text\" for its details; " +
+            "a cast member takes \"stats\" (a Library creature, type/id) to lay a new stat block over their sheet, keeping the rest of it; " +
+            "and \"delete\": true deletes a place, region (with every place in it), page, secret or homebrew entry, or retires a cast member (out of play; their page stays); the places inside a deleted place move up one level. " +
+            "Deletes arrive unticked, for the game master to tick. Do not delete a region in the same proposal that adds to it or moves things into it. " +
+            "A delete stands alone in its entry. " +
+            "Use these instead of making a copy of something and asking the game master to remove the original; never offer a delete the game master did not ask for. " +
             "Entries: \"place\" (placeKind area, settlement, district, site for a building, ship or dungeon, section for a floor, deck or wing (one floor of a dungeon), room, or feature for a chest, safe, altar or secret door; " +
             "\"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places, so a tavern's cellar is a room inside the tavern and its strongbox a feature inside the cellar; " +
             "a feature also takes \"feature\": the game master's notes on its lock, trap, concealment, contents and the creature it really is, such as a mimic, which players never see), " +

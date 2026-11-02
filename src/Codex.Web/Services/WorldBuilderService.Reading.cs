@@ -65,6 +65,10 @@ public sealed partial class WorldBuilderService
         var lines = new List<string>();
         lines.AddRange(pages.Where(p => Hit(p.Title) || Hit(p.Body)).Take(ContextCap)
             .Select(p => $"page existing:{p.Slug} - {p.Title} ({p.Kind.ToString().ToLowerInvariant()}): {TextFormatting.Summary(Plain(p.Body, names), 140)}"));
+        lines.AddRange(allRegions.Where(r => Hit(r.Name)).Take(ContextCap)
+            .Select(r => $"region existing:{WorldBundle.RegionPrefix}{r.Id} - {r.Name} ({r.Kind.ToString().ToLowerInvariant()}, {r.Locations.Count} places)"));
+        lines.AddRange((await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).Where(f => Hit(f.Summary) || Hit(f.Details)).Take(ContextCap)
+            .Select(f => $"secret existing:{WorldBundle.FactPrefix}{f.Id} - {f.Summary}"));
         foreach (var region in allRegions)
         {
             lines.AddRange(region.Locations.Where(l => Hit(l.Name)).Take(ContextCap)
@@ -114,6 +118,8 @@ public sealed partial class WorldBuilderService
             {
                 case EditTarget.Place: return await PlaceTextAsync(targetId, access);
                 case EditTarget.Actor: return await ActorTextAsync(targetId, access);
+                case EditTarget.Fact: return await FactTextAsync(targetId, access);
+                case EditTarget.Region: return await RegionTextAsync(targetId, access);
             }
 
             key = key[WorldBundle.ExistingPrefix.Length..];
@@ -146,6 +152,21 @@ public sealed partial class WorldBuilderService
         return null;
     }
 
+    private async Task<string?> FactTextAsync(string id, CampaignAccess access)
+    {
+        if ((await facts.GetVisibleForCampaignAsync(access, new HashSet<string>())).FirstOrDefault(f => f.Id == id) is not { } fact) return null;
+        var names = Names((await actorRepository.GetVisibleForCampaignAsync(access)).ToList(), (await regions.GetVisibleForCampaignAsync(access)).ToList());
+        return $"# {fact.Summary}\nkey: existing:{WorldBundle.FactPrefix}{fact.Id}; a secret or rumour in Lore, {(fact.Visibility == FactVisibility.DmOnly ? "known only to the game master" : "already known to players")}; " +
+               $"the title above is the fact itself and the text below is its details\n\n{Cap(Editable(fact.Details, names))}";
+    }
+
+    private async Task<string?> RegionTextAsync(string id, CampaignAccess access)
+    {
+        if ((await regions.GetVisibleForCampaignAsync(access)).FirstOrDefault(r => r.Id == id) is not { } region) return null;
+        return $"# {region.Name}\nkey: existing:{WorldBundle.RegionPrefix}{region.Id}; a region ({region.Kind.ToString().ToLowerInvariant()}) holding {region.Locations.Count} place(s); " +
+               "it has no text: it can be renamed, changed to another regionKind, or deleted with every place in it. list_places shows its places.";
+    }
+
     private async Task<string?> ActorTextAsync(string id, CampaignAccess access)
     {
         if (await actorRepository.GetVisibleAsync(id, access) is not { } actor) return null;
@@ -165,7 +186,7 @@ public sealed partial class WorldBuilderService
         var sb = new StringBuilder();
         foreach (var region in (await regions.GetVisibleForCampaignAsync(access)).OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase))
         {
-            sb.AppendLine(region.Kind == RegionKind.General ? $"Region: {region.Name}" : $"Region: {region.Name} ({region.Kind.ToString().ToLowerInvariant()})");
+            sb.AppendLine((region.Kind == RegionKind.General ? $"Region: {region.Name}" : $"Region: {region.Name} ({region.Kind.ToString().ToLowerInvariant()})") + $" key: existing:{WorldBundle.RegionPrefix}{region.Id}");
             foreach (var (place, depth) in PlaceTree.Ordered(region.Locations))
             {
                 sb.AppendLine($"{new string(' ', 2 + depth * 2)}- {place.Name} ({KindName(place.Kind)}{FeatureNotes(place.Feature)}) key: existing:{WorldBundle.PlacePrefix}{place.Id}");

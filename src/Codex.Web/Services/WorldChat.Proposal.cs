@@ -78,8 +78,27 @@ public sealed partial class WorldChat
         if (made.Count > 0) note.Append(" New, and hidden from the players until the game master reveals them: " + string.Join("; ", made) + ".");
         foreach (var change in result.Changes)
         {
-            var what = change.Target switch { EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry", _ => "text of the page" };
-            note.Append($" Changed: the {what} \"{change.Name}\" now reads as you wrote it; " +
+            var what = change.Target switch
+            {
+                EditTarget.Place => "description of the place", EditTarget.Actor => "history of the cast member", EditTarget.Homebrew => "homebrew entry",
+                EditTarget.Region => "region", EditTarget.Fact => "secret in Lore", _ => "text of the page"
+            };
+            if (change.Removed)
+            {
+                var gone = change.Target switch
+                {
+                    EditTarget.Place => "place \"{0}\" is gone; the places inside it moved up to its parent.",
+                    EditTarget.Region => "region \"{0}\" is gone, with every place in it.",
+                    EditTarget.Actor => "cast member \"{0}\" was retired: out of play, but their page and mentions remain.",
+                    EditTarget.Homebrew => "homebrew entry \"{0}\" is gone.",
+                    EditTarget.Fact => "secret \"{0}\" is gone from Lore.",
+                    _ => "page \"{0}\" is gone."
+                };
+                note.Append(" Deleted: the " + string.Format(System.Globalization.CultureInfo.InvariantCulture, gone, change.Name));
+                continue;
+            }
+
+            note.Append($" Changed: the {what} \"{change.Name}\" " + (change.Text ? "now reads as you wrote it" : "was renamed, moved or retyped as you asked") + "; " +
                         (change.Shared ? "the players can see it, so they read the change, all but its hidden blocks." : "it is hidden from the players."));
         }
 
@@ -113,7 +132,7 @@ public sealed partial class WorldChat
         // A new place's page is linked already, and the page leads to the place.
         links.AddRange(result.Places.Where(p => result.Pages.All(page => page.Id != p.WikiPageId)).Select(p => new WorldChatLink { Kind = "place", Id = p.Id, Name = p.Name }));
         links.AddRange(result.Entries.Select(e => new WorldChatLink { Kind = "homebrew", Id = $"{e.Type}/{e.EntryId}", Name = e.Name }));
-        links.AddRange(result.Changes.Select(c => new WorldChatLink { Kind = "change-" + c.Target.ToString().ToLowerInvariant(), Id = c.Id, Name = c.Name }));
+        links.AddRange(result.Changes.Where(c => !c.Removed).Select(c => new WorldChatLink { Kind = "change-" + c.Target.ToString().ToLowerInvariant(), Id = c.Id, Name = c.Name }));
         links.AddRange(result.Shortlisted.Select(b => new WorldChatLink { Kind = "bestiary", Id = $"{b.EntryType}/{b.EntryId}", Name = b.Name }));
         if (result.Retagged > 0) links.Add(new WorldChatLink { Kind = "tags", Name = result.Retagged.ToString(System.Globalization.CultureInfo.InvariantCulture) });
         if (result.Facts.Count > 0) links.Add(new WorldChatLink { Kind = "lore", Name = result.Facts.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) });

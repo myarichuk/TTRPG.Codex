@@ -85,6 +85,8 @@ Read tools return short text, capped; they never write.
   {"ref": "v", "kind": "homebrew", "type": "spell", "name": "Rimeburst", "basedOn": "spell/fireball", "properties": {"damageType": "Cold"}},
   {"ref": "e", "kind": "edit", "target": "existing:saltmere", "text": "the COMPLETE new text"},
   {"ref": "b", "kind": "edit", "target": "existing:homebrew:spell/brine-ward", "rename": "...", "properties": {"level": 3}, "tags": ["salt"]},
+  {"ref": "m", "kind": "edit", "target": "existing:place:<id>", "parent": "existing:place:<id> | new ref | none", "placeKind": "room", "rename": "..."},
+  {"ref": "d", "kind": "edit", "target": "existing:place:<id> | existing:<slug> | existing:actor:<id> | existing:homebrew:<type>/<id>", "delete": true},
   {"ref": "g", "kind": "tags", "targets": ["existing:saltmere", "existing:homebrew:spell/brine-ward"], "add": ["shareable"], "remove": ["town"]},
   {"ref": "p", "kind": "bestiary", "entry": "monster/goblin-warrior"}
 ]}

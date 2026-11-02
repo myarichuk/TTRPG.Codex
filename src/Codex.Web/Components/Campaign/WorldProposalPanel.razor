@@ -134,6 +134,10 @@
                     {
                         <p class="wb-reader-pitch">@Resolved(proposal, current.Pitch)</p>
                     }
+                    @if (current is { Kind: DraftKinds.Edit })
+                    {
+                        @StructureChange(proposal, current)
+                    }
                     @switch (current.Kind)
                     {
                         case DraftKinds.Tags:
@@ -168,10 +172,16 @@
                             {
                                 @TagDiff(current.BeforeTags ?? new List<string>(), current.Tags)
                             }
-                            @TextChange(current, wiki: false)
+                            @if (!current.Remove)
+                            {
+                                @TextChange(current, wiki: false)
+                            }
                             break;
                         case DraftKinds.Edit:
-                            @TextChange(current, wiki: true)
+                            @if (!current.Remove && current.Body != null)
+                            {
+                                @TextChange(current, wiki: true)
+                            }
                             break;
                         case DraftKinds.Homebrew:
                             @if (current.BasedOnName != null)
@@ -497,6 +507,56 @@
             {
                 @("\n")
             }
+        }
+    };
+
+    // What an edit does besides (or instead of) changing a text: delete, rename, move or retype.
+    private RenderFragment StructureChange(WorldBundle proposal, WorldDraft d) => __builder =>
+    {
+        if (d.Remove)
+        {
+            var deleteKey = WorldBundle.ParseTarget(d.Target ?? string.Empty, out _) switch
+            {
+                EditTarget.Place => "WorldChat.Proposal.DeletesPlace",
+                EditTarget.Region => "WorldChat.Proposal.DeletesRegion",
+                EditTarget.Actor => "WorldChat.Proposal.Retires",
+                _ => "WorldChat.Proposal.Deletes"
+            };
+            <p class="wb-callout wb-callout-warning" data-testid="world-proposal-delete"><LucideIcon IconName="trash-2" Size="14" /> @L[deleteKey, d.Name]</p>
+            @if (d.Before is { Length: > 0 } goesWith && WorldBundle.ParseTarget(d.Target ?? string.Empty, out _) == EditTarget.Region)
+            {
+                <p class="small-muted">@goesWith</p>
+            }
+
+            return;
+        }
+
+        if (d.Stats is { } stats)
+        {
+            <p data-testid="world-proposal-restat"><LucideIcon IconName="swords" Size="14" /> @L["WorldChat.Proposal.Restat", stats.Shown]</p>
+        }
+
+        if (d.RegionKind != null)
+        {
+            <p><LucideIcon IconName="tag" Size="14" /> @L["WorldChat.Proposal.BecomesKind", char.ToUpperInvariant(d.RegionKind[0]) + d.RegionKind[1..]]</p>
+        }
+
+        if (d.Rename != null && WorldBundle.ParseTarget(d.Target ?? string.Empty, out _) != EditTarget.Homebrew)
+        {
+            <p><strong>@L["WorldChat.Proposal.Renamed", d.Rename]</strong></p>
+        }
+
+        if (d.MoveTo)
+        {
+            var parent = d.Parent == null ? null
+                : d.Parent.StartsWith(WorldBundle.ExistingPrefix, StringComparison.Ordinal) ? PlaceNames.GetValueOrDefault(d.Parent[(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix).Length..]) ?? L["WorldChat.Proposal.ExistingPlace"]
+                : proposal.Find(d.Parent)?.Name;
+            <p data-testid="world-proposal-move"><LucideIcon IconName="move" Size="14" /> @(parent == null ? L["WorldChat.Proposal.MovesToTop"] : L["WorldChat.Proposal.MovesTo", parent])</p>
+        }
+
+        if (d.PlaceKind != null)
+        {
+            <p><LucideIcon IconName="tag" Size="14" /> @L["WorldChat.Proposal.BecomesKind", L[$"Campaign.Places.Kind.{char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..]}"]]</p>
         }
     };
 

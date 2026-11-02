@@ -17,6 +17,11 @@
   <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Строить мир может только мастер.</value></data>
   <data name="WorldBuilder.Error.EditTargetGone" xml:space="preserve"><value>«{0}» больше нет в кампании, поэтому изменение применить нельзя. Снимите с него отметку и примените остальное.</value></data>
   <data name="WorldBuilder.Error.EditChanged" xml:space="preserve"><value>«{0}» изменили после составления предложения, и применение затёрло бы эти правки. Попросите изменение заново, исходя из текущего текста.</value></data>
+  <data name="WorldBuilder.Error.MoveFailed" xml:space="preserve"><value>«{0}» не удалось перенести в другой регион. Для него ничего не изменилось.</value></data>
+  <data name="WorldBuilder.Error.MoveHasArt" xml:space="preserve"><value>У «{0}» или у места внутри него есть иллюстрация, а она не переносится в другой регион. Создайте вместо этого новое место там.</value></data>
+  <data name="WorldBuilder.Error.StatsGone" xml:space="preserve"><value>Существа, выбранного для «{0}», больше нет в Библиотеке, поэтому его характеристики применить нельзя. Снимите отметку и примените остальное.</value></data>
+  <data name="WorldBuilder.Error.MoveParentMissing" xml:space="preserve"><value>«{0}» нельзя перенести: место, внутрь которого его нужно поместить, не создано. Примените и его или снимите отметку с переноса.</value></data>
+  <data name="WorldBuilder.Error.MoveLoop" xml:space="preserve"><value>«{0}» нельзя поместить внутрь себя или внутрь места, которое оно содержит.</value></data>
   <data name="WorldBuilder.Error.EditLosesSecret" xml:space="preserve"><value>«{0}» не изменено: новый текст удалил бы или раскрыл один из его скрытых блоков. Попросите изменение заново, оставив части только для ведущего как есть.</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>Создать с ИИ</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Существа</value></data>
