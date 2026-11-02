@@ -116,6 +116,15 @@ builder.Services.AddRateLimiter(options =>
 // Persistence
 var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
 
+// The data folder is checked before anything writes to it (the Data Protection key folder below is made while services
+// are registered): a read-only folder then stops the server with its plain message for the launcher, not a stack trace.
+if (RavenDbService.CheckWritable(dataDir) is { } unwritable)
+{
+    // The launcher shows this line to the user (ServerController.StartupProblemPrefix).
+    Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + unwritable + " Shutting down.");
+    Environment.Exit(1);
+}
+
 builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRequiredService<ILogger<RavenDbService>>()));
 builder.Services.AddSingleton<CampaignLifecycleHooks>();
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();

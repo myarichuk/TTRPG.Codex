@@ -1038,6 +1038,11 @@ shows its blocks marked.
     reloads its context when a window is left, and `LoreSection` loads again when the context is a new one, writing the
     "about" text again while the DM has not touched it.
   - The Website workflow failed on the guide's two removed keys (above). All 1180 tests, E2E included, passed after.
+  - On Ubuntu one test more failed: `LauncherStartupProblemTests`, which runs only there (it needs a folder it can make
+    read-only). D12's key folder (`Keys` under the data folder) is made while services are registered, before the
+    writability check, so a read-only folder crashed the server with a stack trace instead of the launcher's "cannot
+    write" line. `Program.cs` now checks the folder first. Checked on Windows with a data folder inside a file: the
+    server prints `CODEX_STARTUP_ERROR: TTRPG.Codex cannot write to …` and exits 1.
 - **Review (a second model, read-only), and what came of it:**
   - **Per-class prepared spells.** Each pick went to the class with most room at the time and stayed there, so with
     three casting classes a legal set could be reported over. `SheetRuleEngine.OverEachShare` matches picks to class
