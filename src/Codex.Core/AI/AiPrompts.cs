@@ -469,7 +469,9 @@ public static class AiPrompts
             "People, places and items mentioned in a text appear as [[actor:ID|Name]], [[place:ID|Name]] or [[item:ID|Name]]: copy each one exactly as written, or the link is lost. " +
             "Players read a place's description and a character's history once they are revealed, and a page once it is shared. " + SecretBlocks +
             "An edit is reviewed like any other entry, next to the current text; nothing changes until the game master applies it. " +
-            "Entries: \"place\" (placeKind area, settlement, district or site; \"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places), " +
+            "Entries: \"place\" (placeKind area, settlement, district, site for a building, ship or dungeon, section for a floor, deck or wing (one floor of a dungeon), room, or feature for a chest, safe, altar or secret door; " +
+            "\"parent\" is the place it is inside: another entry's ref or existing:place:<id> from list_places, so a tavern's cellar is a room inside the tavern and its strongbox a feature inside the cellar; " +
+            "a feature also takes \"feature\": the game master's notes on its lock, trap, concealment, contents and the creature it really is, such as a mimic, which players never see), " +
             "\"npc\" (a person; \"cast\": true for anyone the party will talk to or fight, which also adds them to the cast with their page as their history), " +
             "\"wiki\" (pageKind lore, faction or quest), \"fact\" (a secret or rumour the party can uncover: its name is the fact in one sentence, its text who knows it and how it is learned), " +
             "\"homebrew\" (a Library entry of one of the homebrew types, such as a spell, a magic item, a piece of equipment or a creature; get its fields with homebrew_fields and fill \"properties\" with them; " +

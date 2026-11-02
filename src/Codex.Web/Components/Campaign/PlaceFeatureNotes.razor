@@ -1,0 +1,67 @@
+@using Codex.Persistence
+
+@* A feature's DM notes on its Places row: a pill for each thing it has, and the notes themselves on opening. *@
+<details class="place-details mt-1" data-testid="place-feature">
+    <summary class="row-sub">
+        <span class="me-1">@L["Campaign.Places.Feature.Title"]</span>
+        @if (Feature.Container)
+        {
+            <span class="pill me-1" data-testid="feature-container"><LucideIcon IconName="package" Size="12" /> @L["Campaign.Places.Feature.Container"]</span>
+        }
+        @if (Has(Feature.Lock))
+        {
+            <span class="pill me-1" data-testid="feature-lock"><LucideIcon IconName="lock" Size="12" /> @L["Campaign.Places.Feature.Locked"]</span>
+        }
+        @if (Has(Feature.Trap))
+        {
+            <span class="pill pill-warning me-1" data-testid="feature-trap"><LucideIcon IconName="alert-triangle" Size="12" /> @L["Campaign.Places.Feature.Trapped"]</span>
+        }
+        @if (Has(Feature.Concealment))
+        {
+            <span class="pill me-1" data-testid="feature-concealed"><LucideIcon IconName="eye-off" Size="12" /> @L["Campaign.Places.Feature.Concealed"]</span>
+        }
+        @if (Has(Feature.Creature) || Creature != null)
+        {
+            <span class="pill pill-warning me-1" data-testid="feature-creature"><LucideIcon IconName="skull" Size="12" /> @L["Campaign.Places.Feature.HasCreature"]</span>
+        }
+    </summary>
+    <dl class="feature-notes mt-2 mb-0">
+        @Note(L["Campaign.Places.Feature.Lock"], Feature.Lock)
+        @Note(L["Campaign.Places.Feature.Trap"], Feature.Trap)
+        @Note(L["Campaign.Places.Feature.Concealment"], Feature.Concealment)
+        @Note(L["Campaign.Places.Feature.Contents"], Feature.Contents)
+        @if (Has(Feature.Creature) || Creature != null)
+        {
+            <dt>@L["Campaign.Places.Feature.Creature"]</dt>
+            <dd>
+                @Feature.Creature
+                @if (Creature != null && CreatureHref != null)
+                {
+                    @(Has(Feature.Creature) ? " · " : null)<a href="@CreatureHref" data-testid="feature-creature-link">@Creature.Name</a>
+                }
+            </dd>
+        }
+    </dl>
+</details>
+
+@code {
+    [Parameter, EditorRequired] public PlaceFeature Feature { get; set; } = null!;
+
+    /// <summary>The cast member the feature really is or holds, when it is on the cast.</summary>
+    [Parameter] public ActorDocument? Creature { get; set; }
+
+    [Parameter] public string? CreatureHref { get; set; }
+
+    private static bool Has(string? note) => !string.IsNullOrWhiteSpace(note);
+
+    private static RenderFragment Note(string label, string? text) => builder =>
+    {
+        if (!Has(text)) return;
+        builder.OpenElement(0, "dt");
+        builder.AddContent(1, label);
+        builder.CloseElement();
+        builder.OpenElement(2, "dd");
+        builder.AddContent(3, text);
+        builder.CloseElement();
+    };
+}

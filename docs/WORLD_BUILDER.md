@@ -71,9 +71,13 @@ Read tools return short text, capped; they never write.
 ## 4. The proposal
 
 ```json
-{"summary": "...", "region": "The Grey Coast", "entries": [
+{"summary": "...", "region": "The Grey Coast", "regionKind": "realm", "entries": [
   {"ref": "t", "kind": "place", "placeKind": "settlement", "name": "Saltmere", "tags": ["grey-coast"], "text": "markdown, [[n]], [[existing:slug]]"},
   {"ref": "m", "kind": "place", "placeKind": "district", "parent": "t", "name": "The Gutting Rows", "text": "..."},
+  {"ref": "i", "kind": "place", "placeKind": "site", "parent": "m", "name": "The Salt Lantern", "text": "..."},
+  {"ref": "c", "kind": "place", "placeKind": "room", "parent": "i", "name": "Cellar", "text": "..."},
+  {"ref": "x", "kind": "place", "placeKind": "feature", "parent": "c", "name": "Strongbox", "text": "...",
+   "feature": {"container": true, "lock": "DC 15; Maud has the key", "trap": "...", "concealment": "behind a false wall", "contents": "40 gp, a letter", "creature": "a mimic"}},
   {"ref": "n", "kind": "npc", "name": "Wendel Tarr", "cast": true, "stats": "Bandit", "text": "..."},
   {"ref": "w", "kind": "wiki", "pageKind": "faction", "name": "...", "text": "..."},
   {"ref": "s", "kind": "fact", "name": "The secret in one sentence", "links": ["t"], "text": "who knows, how it is learned"},
@@ -85,6 +89,11 @@ Read tools return short text, capped; they never write.
   {"ref": "p", "kind": "bestiary", "entry": "monster/goblin-warrior"}
 ]}
 ```
+
+A place's `placeKind` is one of area, settlement, district, site (a building, ship or dungeon), section (a floor, deck or
+dungeon level), room and feature; left out, it follows the parent (or, at the top, the new region's `regionKind`: a dungeon's
+or vessel's top places are sections). A feature's `feature` notes are saved on the place for the DM and never sent to
+players; what is inside stays text, and the DM hands the items over from Items when the party takes them.
 
 `WorldBundleParser.ParseProposal` (pure, unit-tested) turns it into a `WorldBundle` of `WorldDraft`s: it resolves links to
 other entries and existing pages, checks parents (another place entry or an existing place; no loops), coerces homebrew

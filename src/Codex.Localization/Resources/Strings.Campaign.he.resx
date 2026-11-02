@@ -535,6 +535,58 @@
   <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>יישוב</value></data>
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>רובע</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>מקום</value></data>
+  <data name="Campaign.Places.Kind.Section" xml:space="preserve"><value>אגף</value></data>
+  <data name="Campaign.Places.Kind.Room" xml:space="preserve"><value>חדר</value></data>
+  <data name="Campaign.Places.Kind.Feature" xml:space="preserve"><value>מתקן</value></data>
+  <data name="Campaign.Regions.Kind" xml:space="preserve"><value>סוג אזור</value></data>
+  <data name="Campaign.Regions.KindOf" xml:space="preserve"><value>הסוג של {0}</value></data>
+  <data name="Campaign.Regions.Kind.General" xml:space="preserve"><value>כללי</value></data>
+  <data name="Campaign.Regions.Kind.Realm" xml:space="preserve"><value>ממלכה</value></data>
+  <data name="Campaign.Regions.Kind.Wilderness" xml:space="preserve"><value>שממה</value></data>
+  <data name="Campaign.Regions.Kind.City" xml:space="preserve"><value>עיר</value></data>
+  <data name="Campaign.Regions.Kind.Dungeon" xml:space="preserve"><value>מבוך</value></data>
+  <data name="Campaign.Regions.Kind.Vessel" xml:space="preserve"><value>כלי שיט</value></data>
+  <data name="Campaign.Regions.Kind.Plane" xml:space="preserve"><value>מישור</value></data>
+  <data name="Campaign.Places.Feature.Title" xml:space="preserve"><value>הערות על המתקן</value></data>
+  <data name="Campaign.Places.Feature.Hint" xml:space="preserve"><value>רק שליט המבוך רואה את אלה. השחקנים קוראים את התיאור אחרי שהמקום נחשף.</value></data>
+  <data name="Campaign.Places.Feature.IsContainer" xml:space="preserve"><value>מכיל חפצים (תיבה, כספת)</value></data>
+  <data name="Campaign.Places.Feature.Container" xml:space="preserve"><value>מכל</value></data>
+  <data name="Campaign.Places.Feature.Locked" xml:space="preserve"><value>נעול</value></data>
+  <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>ממולכד</value></data>
+  <data name="Campaign.Places.Feature.Concealed" xml:space="preserve"><value>מוסתר</value></data>
+  <data name="Campaign.Places.Feature.HasCreature" xml:space="preserve"><value>יצור</value></data>
+  <data name="Campaign.Places.Feature.Lock" xml:space="preserve"><value>מנעול</value></data>
+  <data name="Campaign.Places.Feature.LockPlaceholder" xml:space="preserve"><value>דרגת קושי 15 לפריצה; למוד יש מפתח</value></data>
+  <data name="Campaign.Places.Feature.Trap" xml:space="preserve"><value>מלכודת</value></data>
+  <data name="Campaign.Places.Feature.TrapPlaceholder" xml:space="preserve"><value>מחט מורעלת, דרגת קושי 13 לגילוי</value></data>
+  <data name="Campaign.Places.Feature.Concealment" xml:space="preserve"><value>מוסתר על ידי</value></data>
+  <data name="Campaign.Places.Feature.ConcealmentPlaceholder" xml:space="preserve"><value>קיר מזויף, מתגלה בחיפוש קפדני</value></data>
+  <data name="Campaign.Places.Feature.Creature" xml:space="preserve"><value>בעצם יצור</value></data>
+  <data name="Campaign.Places.Feature.CreaturePlaceholder" xml:space="preserve"><value>מחקה שנושך את מי שפותח אותו</value></data>
+  <data name="Campaign.Places.Feature.CreatureOnCast" xml:space="preserve"><value>היצור הזה בדמויות</value></data>
+  <data name="Campaign.Places.Feature.NoCreatureOnCast" xml:space="preserve"><value>לא בדמויות</value></data>
+  <data name="Campaign.Places.Feature.Contents" xml:space="preserve"><value>תכולה</value></data>
+  <data name="Campaign.Places.Feature.ContentsPlaceholder" xml:space="preserve"><value>מה יש בפנים. כשהחבורה לוקחת אותם, מסרו את החפצים לדמויות ממסך החפצים.</value></data>
+  <data name="Campaign.Items.Title" xml:space="preserve"><value>חפצים</value></data>
+  <data name="Campaign.Items.Subtitle.Dm" xml:space="preserve"><value>מסרו שלל מהספרייה, או העבירו חפצים בין דמויות. הדמויות מקבלות אותם לא מצוידים.</value></data>
+  <data name="Campaign.Items.Subtitle.Player" xml:space="preserve"><value>מסרו את מה שהדמות שלכם נושאת לדמות של שחקן אחר.</value></data>
+  <data name="Campaign.Items.NoInventory.Title" xml:space="preserve"><value>לשיטת המשחק הזו אין ציוד</value></data>
+  <data name="Campaign.Items.NoInventory.Body" xml:space="preserve"><value>גיליונות הדמות שלה לא נושאים חפצים, כך שאין מה למסור.</value></data>
+  <data name="Campaign.Items.Empty.Dm" xml:space="preserve"><value>אף דמות עוד לא נושאת דבר</value></data>
+  <data name="Campaign.Items.Empty.Player" xml:space="preserve"><value>עדיין אין לכם דמות במערכה הזו</value></data>
+  <data name="Campaign.Items.CarriesNothing" xml:space="preserve"><value>לא נושא/ת דבר.</value></data>
+  <data name="Campaign.Items.HowMany" xml:space="preserve"><value>כמה {0}</value></data>
+  <data name="Campaign.Items.HandTo" xml:space="preserve"><value>למסור את {0} ל</value></data>
+  <data name="Campaign.Items.Hand" xml:space="preserve"><value>מסירה</value></data>
+  <data name="Campaign.Items.Give" xml:space="preserve"><value>מסירה מהספרייה</value></data>
+  <data name="Campaign.Items.NoOneToGive" xml:space="preserve"><value>הוסיפו דמות לדמויות או המתינו שהשחקנים ייצרו את שלהם, ואז מסרו להם חפצים.</value></data>
+  <data name="Campaign.Items.GiveTo" xml:space="preserve"><value>למי</value></data>
+  <data name="Campaign.Items.Quantity" xml:space="preserve"><value>כמה</value></data>
+  <data name="Campaign.Items.GiveButton" xml:space="preserve"><value>מסירה</value></data>
+  <data name="Campaign.Items.Handed" xml:space="preserve"><value>{1} × {0} נמסר ל{2}.</value></data>
+  <data name="Campaign.Items.NotEnough" xml:space="preserve"><value>כבר אין מספיק {0} למסירה.</value></data>
+  <data name="Campaign.Items.Gone" xml:space="preserve"><value>הדמות הזו כבר לא במשחק.</value></data>
+  <data name="Campaign.Items.NotAllowed" xml:space="preserve"><value>אי אפשר למסור את זה.</value></data>
   <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>הוספה למקומות</value></data>
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>איור</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>מוצג לצד טקסט הדף. כל מי שיכול לקרוא את הדף רואה אותו.</value></data>

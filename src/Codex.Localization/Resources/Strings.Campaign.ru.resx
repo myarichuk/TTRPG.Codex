@@ -535,6 +535,58 @@
   <data name="Campaign.Places.Kind.Settlement" xml:space="preserve"><value>Поселение</value></data>
   <data name="Campaign.Places.Kind.District" xml:space="preserve"><value>Район</value></data>
   <data name="Campaign.Places.Kind.Site" xml:space="preserve"><value>Место</value></data>
+  <data name="Campaign.Places.Kind.Section" xml:space="preserve"><value>Часть</value></data>
+  <data name="Campaign.Places.Kind.Room" xml:space="preserve"><value>Комната</value></data>
+  <data name="Campaign.Places.Kind.Feature" xml:space="preserve"><value>Объект</value></data>
+  <data name="Campaign.Regions.Kind" xml:space="preserve"><value>Тип региона</value></data>
+  <data name="Campaign.Regions.KindOf" xml:space="preserve"><value>Тип: {0}</value></data>
+  <data name="Campaign.Regions.Kind.General" xml:space="preserve"><value>Общий</value></data>
+  <data name="Campaign.Regions.Kind.Realm" xml:space="preserve"><value>Королевство</value></data>
+  <data name="Campaign.Regions.Kind.Wilderness" xml:space="preserve"><value>Дикие земли</value></data>
+  <data name="Campaign.Regions.Kind.City" xml:space="preserve"><value>Город</value></data>
+  <data name="Campaign.Regions.Kind.Dungeon" xml:space="preserve"><value>Подземелье</value></data>
+  <data name="Campaign.Regions.Kind.Vessel" xml:space="preserve"><value>Судно</value></data>
+  <data name="Campaign.Regions.Kind.Plane" xml:space="preserve"><value>План</value></data>
+  <data name="Campaign.Places.Feature.Title" xml:space="preserve"><value>Заметки об объекте</value></data>
+  <data name="Campaign.Places.Feature.Hint" xml:space="preserve"><value>Их видит только мастер. Игроки читают описание, когда место открыто.</value></data>
+  <data name="Campaign.Places.Feature.IsContainer" xml:space="preserve"><value>Хранит вещи (сундук, сейф)</value></data>
+  <data name="Campaign.Places.Feature.Container" xml:space="preserve"><value>Хранилище</value></data>
+  <data name="Campaign.Places.Feature.Locked" xml:space="preserve"><value>Заперто</value></data>
+  <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>С ловушкой</value></data>
+  <data name="Campaign.Places.Feature.Concealed" xml:space="preserve"><value>Скрыто</value></data>
+  <data name="Campaign.Places.Feature.HasCreature" xml:space="preserve"><value>Существо</value></data>
+  <data name="Campaign.Places.Feature.Lock" xml:space="preserve"><value>Замок</value></data>
+  <data name="Campaign.Places.Feature.LockPlaceholder" xml:space="preserve"><value>Сл 15 чтобы вскрыть; ключ у Мод</value></data>
+  <data name="Campaign.Places.Feature.Trap" xml:space="preserve"><value>Ловушка</value></data>
+  <data name="Campaign.Places.Feature.TrapPlaceholder" xml:space="preserve"><value>Отравленная игла, Сл 13 чтобы заметить</value></data>
+  <data name="Campaign.Places.Feature.Concealment" xml:space="preserve"><value>Чем скрыто</value></data>
+  <data name="Campaign.Places.Feature.ConcealmentPlaceholder" xml:space="preserve"><value>Ложная стена, находится при тщательном обыске</value></data>
+  <data name="Campaign.Places.Feature.Creature" xml:space="preserve"><value>На самом деле существо</value></data>
+  <data name="Campaign.Places.Feature.CreaturePlaceholder" xml:space="preserve"><value>Мимик, кусающий того, кто его откроет</value></data>
+  <data name="Campaign.Places.Feature.CreatureOnCast" xml:space="preserve"><value>Это существо в составе</value></data>
+  <data name="Campaign.Places.Feature.NoCreatureOnCast" xml:space="preserve"><value>Не в составе</value></data>
+  <data name="Campaign.Places.Feature.Contents" xml:space="preserve"><value>Содержимое</value></data>
+  <data name="Campaign.Places.Feature.ContentsPlaceholder" xml:space="preserve"><value>Что внутри. Выдавайте предметы персонажам на экране «Предметы», когда отряд их забирает.</value></data>
+  <data name="Campaign.Items.Title" xml:space="preserve"><value>Предметы</value></data>
+  <data name="Campaign.Items.Subtitle.Dm" xml:space="preserve"><value>Выдавайте добычу из Библиотеки или перемещайте предметы между любыми персонажами. Персонажи получают их неэкипированными.</value></data>
+  <data name="Campaign.Items.Subtitle.Player" xml:space="preserve"><value>Передайте то, что несёт ваш персонаж, персонажу другого игрока.</value></data>
+  <data name="Campaign.Items.NoInventory.Title" xml:space="preserve"><value>В этой системе нет снаряжения</value></data>
+  <data name="Campaign.Items.NoInventory.Body" xml:space="preserve"><value>Листы персонажей этой системы не хранят предметы, так что передавать нечего.</value></data>
+  <data name="Campaign.Items.Empty.Dm" xml:space="preserve"><value>Пока ни у кого нет предметов</value></data>
+  <data name="Campaign.Items.Empty.Player" xml:space="preserve"><value>У вас пока нет персонажа в этой кампании</value></data>
+  <data name="Campaign.Items.CarriesNothing" xml:space="preserve"><value>Ничего не несёт.</value></data>
+  <data name="Campaign.Items.HowMany" xml:space="preserve"><value>Сколько: {0}</value></data>
+  <data name="Campaign.Items.HandTo" xml:space="preserve"><value>Кому передать {0}</value></data>
+  <data name="Campaign.Items.Hand" xml:space="preserve"><value>Передать</value></data>
+  <data name="Campaign.Items.Give" xml:space="preserve"><value>Выдать из Библиотеки</value></data>
+  <data name="Campaign.Items.NoOneToGive" xml:space="preserve"><value>Добавьте персонажа в состав или дождитесь, пока игроки создадут своих, затем выдавайте им предметы.</value></data>
+  <data name="Campaign.Items.GiveTo" xml:space="preserve"><value>Кому</value></data>
+  <data name="Campaign.Items.Quantity" xml:space="preserve"><value>Сколько</value></data>
+  <data name="Campaign.Items.GiveButton" xml:space="preserve"><value>Выдать</value></data>
+  <data name="Campaign.Items.Handed" xml:space="preserve"><value>{1} × {0} передано: {2}.</value></data>
+  <data name="Campaign.Items.NotEnough" xml:space="preserve"><value>Столько «{0}» для передачи уже нет.</value></data>
+  <data name="Campaign.Items.Gone" xml:space="preserve"><value>Этого персонажа больше нет в игре.</value></data>
+  <data name="Campaign.Items.NotAllowed" xml:space="preserve"><value>Это нельзя передать.</value></data>
   <data name="Campaign.Wiki.PutOnMap" xml:space="preserve"><value>Добавить в места</value></data>
   <data name="Campaign.Wiki.Illustration" xml:space="preserve"><value>Иллюстрация</value></data>
   <data name="Campaign.Wiki.IllustrationHint" xml:space="preserve"><value>Показывается рядом с текстом страницы. Её видят все, кто может читать страницу.</value></data>

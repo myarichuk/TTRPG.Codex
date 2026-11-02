@@ -22,6 +22,9 @@ public interface IRegionRepository
     /// false for a blank name or a region outside the campaign.</summary>
     Task<bool> RenameAsync(string regionId, string name, CampaignAccess access);
 
+    /// <summary>Says what a region is (a dungeon, a ship), changing nothing else. DM only; false for a region outside the campaign.</summary>
+    Task<bool> SetKindAsync(string regionId, RegionKind kind, CampaignAccess access);
+
     /// <summary>Adds or replaces (by <see cref="LocationDocument.Id"/>) a location within a region. DM only.</summary>
     Task<bool> UpsertLocationAsync(string regionId, LocationDocument location, CampaignAccess access);
 

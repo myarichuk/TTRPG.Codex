@@ -366,6 +366,12 @@
         transition-duration: 0.001ms !important;
         scroll-behavior: auto !important;
     }
+    /* A spinner is the one motion that carries meaning: stopped, a long AI wait looks like a hang. It keeps
+       turning, slower; the pulses and sweeps around it stay still. */
+    .spinner-border, .cx-spinner {
+        animation-duration: 1.5s !important;
+        animation-iteration-count: infinite !important;
+    }
 }
 
 /* ---------------------------------------------------------------------------
@@ -1858,6 +1864,9 @@ html:has(.md-full) { overflow: hidden; }
 .place-details summary::-webkit-details-marker { display: none; }
 .place-details summary::after { content: " ▾"; color: var(--text-3); }
 .place-details[open] summary::after { content: " ▴"; }
+.feature-notes { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-6); font-size: var(--fs-sm); }
+.feature-notes dt { color: var(--text-3); font-weight: 600; }
+.feature-notes dd { margin: 0; white-space: pre-line; }
 .segmented { display: flex; gap: var(--space-3); }
 .art-compact { max-width: 22rem; margin-bottom: 0; }
 

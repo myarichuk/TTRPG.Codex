@@ -723,6 +723,67 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task RegionRepository_AsPlayer_NeverGetsAFeaturesNotes_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Hollow Wreck" };
+        Assert.True(await _regionRepository.SaveAsync(region, dmAccess));
+        Assert.True(await _regionRepository.SetKindAsync(region.Id, RegionKind.Vessel, dmAccess));
+        // A chest the party can see, which is really a mimic.
+        var chest = new LocationDocument
+        {
+            Id = Guid.NewGuid().ToString(), Name = "Iron-bound chest", Kind = PlaceKind.Feature, Visibility = ActorVisibility.Known,
+            Feature = new PlaceFeature { Container = true, Lock = "DC 15", Creature = "a mimic" }
+        };
+        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, chest, dmAccess));
+
+        var playerAccess = Access(campaignId, "player-1", CampaignRole.Player);
+        Assert.False(await _regionRepository.SetKindAsync(region.Id, RegionKind.Dungeon, playerAccess));
+        var forPlayer = (await _regionRepository.GetAsync(region.Id, playerAccess))!;
+        Assert.Equal("Iron-bound chest", forPlayer.Locations.Single().Name);
+        Assert.Null(forPlayer.Locations.Single().Feature);
+
+        var forDm = (await _regionRepository.GetAsync(region.Id, dmAccess))!;
+        Assert.Equal(RegionKind.Vessel, forDm.Kind);
+        Assert.Equal("a mimic", forDm.Locations.Single().Feature!.Creature);
+    }
+
+    [Fact]
+    public async Task ActorRepository_MovesItems_TheDmAnywhere_APlayerOnlyTheirOwnToAnotherPlayer_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dm = Access(campaignId, "dm-user", CampaignRole.DM);
+        var p1 = Access(campaignId, "p1", CampaignRole.Player);
+        var rules = new Codex.Plugin.Abstractions.InventoryRules();
+        var bram = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Bram", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p1" };
+        var wren = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Wren", Kind = ActorKind.PlayerCharacter, OwnerUserId = "p2" };
+        var maud = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Maud", Kind = ActorKind.NonPlayerCharacter };
+        foreach (var actor in new[] { bram, wren, maud }) await _actorRepository.SaveAsync(actor);
+
+        // The DM gives loot from the chest, from the Library.
+        Assert.Equal(ItemMoveResult.Moved, await _actorRepository.TryMoveItemAsync(new ItemMove(null, bram.Id, "potion-of-healing", 3), rules, dm));
+        // Bram's player hands one to Wren.
+        Assert.Equal(ItemMoveResult.Moved, await _actorRepository.TryMoveItemAsync(new ItemMove(bram.Id, wren.Id, "potion-of-healing", 1), rules, p1));
+
+        // A player cannot give from Library, from someone else's character, to an NPC, or more than they carry.
+        Assert.Equal(ItemMoveResult.NotAllowed, await _actorRepository.TryMoveItemAsync(new ItemMove(null, wren.Id, "potion-of-healing", 1), rules, p1));
+        Assert.Equal(ItemMoveResult.NotAllowed, await _actorRepository.TryMoveItemAsync(new ItemMove(wren.Id, bram.Id, "potion-of-healing", 1), rules, p1));
+        Assert.Equal(ItemMoveResult.NotAllowed, await _actorRepository.TryMoveItemAsync(new ItemMove(bram.Id, maud.Id, "potion-of-healing", 1), rules, p1));
+        Assert.Equal(ItemMoveResult.NotEnough, await _actorRepository.TryMoveItemAsync(new ItemMove(bram.Id, wren.Id, "potion-of-healing", 5), rules, p1));
+
+        // The DM may also take from a player's character, say for the NPC who was promised it.
+        Assert.Equal(ItemMoveResult.Moved, await _actorRepository.TryMoveItemAsync(new ItemMove(wren.Id, maud.Id, "potion-of-healing", 1), rules, dm));
+
+        using var session = _dbService.Store.OpenAsyncSession();
+        int CountOf(ActorDocument a) => Codex.Core.Rules.InventoryMoves.Count(Codex.Core.Rules.SheetRuleEngine.RawList(a.Sheet, rules.Key), rules, "potion-of-healing");
+        Assert.Equal(2, CountOf((await session.LoadAsync<ActorDocument>(bram.Id))!));
+        Assert.Equal(0, CountOf((await session.LoadAsync<ActorDocument>(wren.Id))!));
+        Assert.False((await session.LoadAsync<ActorDocument>(wren.Id))!.Sheet.ContainsKey(rules.Key));
+        Assert.Equal(1, CountOf((await session.LoadAsync<ActorDocument>(maud.Id))!));
+    }
+
+    [Fact]
     public async Task RegionRepository_AsPlayer_HidesRegionsWithNothingRevealed_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

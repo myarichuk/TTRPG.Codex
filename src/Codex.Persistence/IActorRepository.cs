@@ -1,4 +1,20 @@
+using Codex.Plugin.Abstractions;
+
 namespace Codex.Persistence;
+
+/// <summary>Some of one item handed from one character to another; no giver means the DM gives it from the Library.</summary>
+public sealed record ItemMove(string? FromActorId, string ToActorId, string ItemId, int Quantity);
+
+public enum ItemMoveResult
+{
+    Moved,
+    /// <summary>The caller may not make this move (a player giving what is not theirs, or to someone who is not a player's character).</summary>
+    NotAllowed,
+    /// <summary>The giver carries fewer than that, perhaps since the screen was drawn.</summary>
+    NotEnough,
+    /// <summary>A character is not in the campaign any more, or was taken out of play.</summary>
+    Gone
+}
 
 public interface IActorRepository
 {
@@ -70,6 +86,14 @@ public interface IActorRepository
 
     /// <summary>Changes who among the players may see an actor (R1). The DM only; returns the stored actor, or null.</summary>
     Task<ActorDocument?> TrySetVisibilityAsync(string actorId, ActorVisibility visibility, CampaignAccess access);
+
+    /// <summary>
+    /// Moves items between two sheets' inventories (<paramref name="rules"/> says where a sheet keeps them) in one save, so an item
+    /// is never on both or on neither. The DM may give from the Library (no giver) or move between any of the campaign's characters;
+    /// a player may only hand what their own character carries to another player's character the party knows of. The receiver gets
+    /// it unequipped. A sheet open in an editor meanwhile is told it changed when it is saved, as for any other change.
+    /// </summary>
+    Task<ItemMoveResult> TryMoveItemAsync(ItemMove move, InventoryRules rules, CampaignAccess access);
 
     /// <summary>
     /// The dashboard's "recent archives" list: a user's own actors across every campaign they're

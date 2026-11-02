@@ -1,0 +1,241 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject IActorRepository ActorRepo
+@inject CampaignLibrary Library
+@inject IContentRegistry Registry
+
+@* Handing items over: the DM gives loot from the Library or moves it between any characters; a player passes what their own
+   character carries to another player's character. Only sheets change; an item has no place of its own. *@
+
+<div class="page-header mb-3">
+    <div>
+        <h2 class="mb-0">@L["Campaign.Items.Title"]</h2>
+        <p class="page-subtitle">@(Ctx.IsDm ? L["Campaign.Items.Subtitle.Dm"] : L["Campaign.Items.Subtitle.Player"])</p>
+    </div>
+</div>
+
+@if (Rules == null)
+{
+    <div class="empty">
+        <div class="empty-icon"><LucideIcon IconName="package" Size="28" /></div>
+        <h3>@L["Campaign.Items.NoInventory.Title"]</h3>
+        <p>@L["Campaign.Items.NoInventory.Body"]</p>
+    </div>
+}
+else if (resolver == null)
+{
+    <LoadingSkeleton />
+}
+else
+{
+    <div class="row g-3">
+        <div class="@(Ctx.IsDm ? "col-lg-7" : "col-12")">
+            @if (Givers.Count == 0)
+            {
+                <div class="empty">
+                    <div class="empty-icon"><LucideIcon IconName="package" Size="28" /></div>
+                    <h3>@(Ctx.IsDm ? L["Campaign.Items.Empty.Dm"] : L["Campaign.Items.Empty.Player"])</h3>
+                </div>
+            }
+            @foreach (var giver in Givers)
+            {
+                var carried = Carried(giver);
+                <section class="panel" aria-labelledby="carried-@giver.Id" data-testid="items-carrier">
+                    <div class="panel-title"><h3 id="carried-@giver.Id">@giver.Name</h3></div>
+                    @if (carried.Count == 0)
+                    {
+                        <p class="small-muted mb-0">@L["Campaign.Items.CarriesNothing"]</p>
+                    }
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var item in carried)
+                        {
+                            var key = $"{giver.Id}/{item.Id}";
+                            var recipients = Recipients(giver);
+                            <li class="list-row align-items-center flex-wrap gap-2" data-testid="items-row">
+                                <span class="row-main">
+                                    <span class="row-title">@item.Name</span>
+                                    <span class="small-muted">× @item.Quantity</span>
+                                </span>
+                                @if (recipients.Count > 0)
+                                {
+                                    <form class="d-flex flex-wrap gap-2 align-items-center" @onsubmit="() => PassAsync(giver, item)" @onsubmit:preventDefault="true">
+                                        @if (item.Quantity > 1)
+                                        {
+                                            <label for="qty-@key" class="visually-hidden">@L["Campaign.Items.HowMany", item.Name]</label>
+                                            <input id="qty-@key" type="number" min="1" max="@item.Quantity" class="field-input field-sm" style="width:4.5rem"
+                                                   value="@PassQuantity(key)" @onchange="e => passQuantities[key] = ParseQuantity(e.Value?.ToString())" data-testid="items-qty" />
+                                        }
+                                        <label for="to-@key" class="visually-hidden">@L["Campaign.Items.HandTo", item.Name]</label>
+                                        <select id="to-@key" class="field-select field-sm" value="@PassTo(key, recipients)" @onchange="e => passTargets[key] = e.Value?.ToString() ?? string.Empty" data-testid="items-to">
+                                            @foreach (var recipient in recipients)
+                                            {
+                                                <option value="@recipient.Id">@recipient.Name</option>
+                                            }
+                                        </select>
+                                        <CodexButton Type="submit" Variant="CodexButtonVariant.Etched" Small="true" Icon="send" disabled="@busy" data-testid="items-pass">@L["Campaign.Items.Hand"]</CodexButton>
+                                    </form>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        </div>
+        @if (Ctx.IsDm)
+        {
+            <div class="col-lg-5">
+                <section class="panel" aria-labelledby="give-heading">
+                    <div class="panel-title"><h3 id="give-heading"><LucideIcon IconName="package" Size="18" Class="title-icon" /> @L["Campaign.Items.Give"]</h3></div>
+                    @if (Ctx.Actors.Count == 0)
+                    {
+                        <p class="small-muted mb-0">@L["Campaign.Items.NoOneToGive"]</p>
+                    }
+                    else
+                    {
+                        <div class="field-grid mb-2">
+                            <div>
+                                <label for="give-to" class="field-label">@L["Campaign.Items.GiveTo"]</label>
+                                <select id="give-to" class="field-select field-sm" @bind="giveTo" data-testid="give-to">
+                                    @foreach (var actor in Recipients(null))
+                                    {
+                                        <option value="@actor.Id">@actor.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label for="give-qty" class="field-label">@L["Campaign.Items.Quantity"]</label>
+                                <input id="give-qty" type="number" min="1" class="field-input field-sm" style="width:6rem" @bind="giveQuantity" data-testid="give-qty" />
+                            </div>
+                        </div>
+                        @if (Rules.Types.Count > 1)
+                        {
+                            <label for="give-type" class="field-label">@L["Actor.Inv.Browse"]</label>
+                            <select id="give-type" class="field-select field-sm mb-2" style="max-width:14rem" @bind="browseType" data-testid="give-type">
+                                @foreach (var type in Rules.Types)
+                                {
+                                    <option value="@type">@(Ctx.System?.FindType(type)?.PluralLabel ?? type)</option>
+                                }
+                            </select>
+                        }
+                        <EntryBrowser @key="browseType" Options="@Options(browseType)" Type="@(browseType == null ? null : Ctx.System?.FindType(browseType))"
+                                      Label="@(browseType == null ? L["Actor.Inv.Items"] : Ctx.System?.FindType(browseType)?.PluralLabel ?? L["Actor.Inv.Items"])"
+                                      TestId="give" EmptyText="@L["Actor.Inv.NoneInLibrary"]" AddLabel="@L["Campaign.Items.GiveButton"]" Disabled="busy" OnAdd="GiveAsync" />
+                    }
+                </section>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private sealed record CarriedItem(string Id, string Name, int Quantity);
+
+    private InventoryRules? Rules => Ctx.System?.SheetRules?.Inventory;
+    private CachedEntryResolver? resolver;
+    private string? loadedFor;
+    private bool busy;
+
+    // Each row's pending choice, by "giver/item".
+    private readonly Dictionary<string, int> passQuantities = new();
+    private readonly Dictionary<string, string> passTargets = new();
+
+    private string giveTo = string.Empty;
+    private int giveQuantity = 1;
+    private string? browseType;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Rules == null || Ctx.System == null || loadedFor == Ctx.Campaign.Id) return;
+        loadedFor = Ctx.Campaign.Id;
+        resolver = await CachedEntryResolver.LoadAsync(Library, Ctx.Campaign, Ctx.Access, Ctx.System);
+        browseType ??= Rules.Types.FirstOrDefault();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Recipients(null).All(a => a.Id != giveTo)) giveTo = Recipients(null).FirstOrDefault()?.Id ?? string.Empty;
+    }
+
+    /// <summary>Whose items this reader can hand over: every character for the DM (players' first), their own for a player.</summary>
+    private IReadOnlyList<ActorDocument> Givers =>
+        Ctx.Actors.Where(a => Ctx.IsDm ? Carried(a).Count > 0 || a.Kind == ActorKind.PlayerCharacter : a.OwnerUserId == Ctx.UserId)
+            .OrderBy(a => a.Kind != ActorKind.PlayerCharacter).ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+    /// <summary>Who may receive from <paramref name="giver"/>: anyone for the DM; for a player, the other players' characters.</summary>
+    private IReadOnlyList<ActorDocument> Recipients(ActorDocument? giver) =>
+        Ctx.Actors.Where(a => a.Id != giver?.Id && (Ctx.IsDm || (a.Kind == ActorKind.PlayerCharacter && a.Visibility != ActorVisibility.Hidden)))
+            .OrderBy(a => a.Kind != ActorKind.PlayerCharacter).ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+    /// <summary>What a sheet carries, one row per item however many lines hold it.</summary>
+    private IReadOnlyList<CarriedItem> Carried(ActorDocument actor)
+    {
+        if (Rules == null) return Array.Empty<CarriedItem>();
+        var raw = SheetRuleEngine.RawList(actor.Sheet, Rules.Key);
+        return raw.Select(line => SheetRuleEngine.ParsePick(line).Id)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(id => new CarriedItem(id, NameOf(id), InventoryMoves.Count(raw, Rules, id)))
+            .OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private string NameOf(string id)
+    {
+        var entry = Rules!.Types.Select(type => resolver?.Resolve(type, id)).FirstOrDefault(e => e != null);
+        return entry == null ? id : Registry.Show(entry, L.Culture.Name).Name;
+    }
+
+    private IReadOnlyList<ContentEntry> Options(string? type) =>
+        type == null || resolver == null ? Array.Empty<ContentEntry>() : resolver.Candidates(type).Select(e => Registry.Show(e, L.Culture.Name)).OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+    private int PassQuantity(string key) => passQuantities.GetValueOrDefault(key, 1);
+
+    private string PassTo(string key, IReadOnlyList<ActorDocument> recipients) =>
+        passTargets.TryGetValue(key, out var id) && recipients.Any(r => r.Id == id) ? id : recipients[0].Id;
+
+    private static int ParseQuantity(string? raw) => int.TryParse(raw, out var n) && n > 0 ? n : 1;
+
+    private Task PassAsync(ActorDocument giver, CarriedItem item)
+    {
+        var key = $"{giver.Id}/{item.Id}";
+        var recipients = Recipients(giver);
+        if (recipients.Count == 0) return Task.CompletedTask;
+        var to = recipients.First(r => r.Id == PassTo(key, recipients));
+        var quantity = Math.Min(PassQuantity(key), item.Quantity);
+        return MoveAsync(new ItemMove(giver.Id, to.Id, item.Id, quantity), item.Name, to.Name, () => passQuantities.Remove(key));
+    }
+
+    private Task GiveAsync(string itemId)
+    {
+        var to = Ctx.Actors.FirstOrDefault(a => a.Id == giveTo);
+        if (to == null) return Task.CompletedTask;
+        return MoveAsync(new ItemMove(null, to.Id, itemId, Math.Max(giveQuantity, 1)), NameOf(itemId), to.Name, () => giveQuantity = 1);
+    }
+
+    private async Task MoveAsync(ItemMove move, string itemName, string toName, Action done)
+    {
+        if (busy || Rules == null) return;
+        busy = true;
+        try
+        {
+            var result = await ActorRepo.TryMoveItemAsync(move, Rules, Ctx.Access);
+            Ctx.Notify(result switch
+            {
+                ItemMoveResult.Moved => Flash.Success(L["Campaign.Items.Handed", move.Quantity, itemName, toName]),
+                ItemMoveResult.NotEnough => Flash.Error(L["Campaign.Items.NotEnough", itemName]),
+                ItemMoveResult.Gone => Flash.Error(L["Campaign.Items.Gone"]),
+                _ => Flash.Error(L["Campaign.Items.NotAllowed"])
+            });
+            if (result == ItemMoveResult.Moved) done();
+            // Fresh sheets either way: a failure usually means someone else changed them.
+            await Ctx.ReloadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
