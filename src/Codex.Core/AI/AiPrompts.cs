@@ -473,7 +473,7 @@ public static class AiPrompts
             "for a place, \"parent\" moves it, with everything inside it, inside another place (existing:place:<id>, even in another region, or a new place's ref; \"none\" moves it out to the top of its own region; a place with art cannot change region) and \"placeKind\" changes what it is " +
             "(rooms filed as sites become \"room\"); a region (existing:region:<id> from list_places) takes \"rename\" and \"regionKind\"; a secret (existing:fact:<id> from search_world) takes \"text\" for its details; " +
             "a cast member takes \"stats\" (a Library creature, type/id) to lay a new stat block over their sheet, keeping the rest of it; " +
-            "and \"delete\": true deletes a place, region (with every place in it), page, secret or homebrew entry, or retires a cast member (out of play; their page stays); the places inside a deleted place move up one level. " +
+            "and \"delete\": true deletes a place, region (with every place in it), page, secret or homebrew entry, or retires a cast member (out of play; their page stays); the places inside a deleted place move into the place above it. " +
             "Deletes arrive unticked, for the game master to tick. Do not delete a region in the same proposal that adds to it or moves things into it. " +
             "A delete stands alone in its entry. " +
             "Use these instead of making a copy of something and asking the game master to remove the original; never offer a delete the game master did not ask for. " +
