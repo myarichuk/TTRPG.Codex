@@ -75,8 +75,13 @@ public static class E2EHelpers
     public static async Task SaveSheetAsync(IPage page)
     {
         await page.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(page.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+        await ExpectStatusAsync(page, "Saved.");
     }
+
+    /// <summary>Waits for a status toast saying <paramref name="text"/>. A sheet opens inside the campaign page (U2) and each
+    /// keeps its own toast region, so the page holds two; this reads the one that says it.</summary>
+    public static Task ExpectStatusAsync(IPage page, string text) =>
+        Assertions.Expect(page.GetByTestId("status-message").Filter(new() { HasText = text }).First).ToContainTextAsync(text);
 
     public static Task WaitForInteractiveAsync(IPage page) =>
         page.Locator("[data-interactive]").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });

@@ -158,6 +158,15 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             return await actorRepository.TrySaveAsync(edited, access);
         }
 
+        // The table writes what it is given without asking the store, so the role is read here, as every repository write
+        // reads it (F13): a co-DM demoted with the sheet open saves as a player, someone removed saves nothing.
+        var campaign = await campaignRepository.GetAsync(access.CampaignId);
+        if (campaign == null || CampaignAccessResolver.RoleOf(campaign, access.UserId) is not { } role)
+        {
+            return false;
+        }
+
+        access = role == access.Role ? access : new CampaignAccess(access.CampaignId, access.UserId, role);
         try
         {
             await runtime.EnqueueAsync(new ReplaceActorCommand(edited, baselineSheet, access, system));

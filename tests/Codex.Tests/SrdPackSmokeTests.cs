@@ -564,6 +564,21 @@ public class SrdSheetScenarioTests : IAsyncLifetime
         Assert.DoesNotContain(fair.Violations, v => v.Key is "Actor.Rule.LimitForClass" or "Actor.Rule.Limit");
     }
 
+    // A spell two classes allow goes wherever the others still fit. Wizard, cleric and warlock with room for 2, 1 and none:
+    // two wizard-or-cleric spells, then one wizard-or-warlock spell fit as wizard, cleric, wizard. Putting each pick where
+    // there was most room at the time sent both of the first to the wizard and reported the third as over.
+    [Fact]
+    public void ClassSharesAreMatchedAsAWhole_NotPickByPick()
+    {
+        int[][] eligible = { new[] { 0, 1 }, new[] { 0, 1 }, new[] { 0, 2 } };
+        Assert.Equal(new[] { 0, 0, 0 }, Codex.Core.Rules.SheetRuleEngine.OverEachShare(eligible, new[] { 2, 1, 0 }, shared: 0));
+
+        // One too many is still one too many, and the shared part takes one.
+        int[][] four = { new[] { 0, 1 }, new[] { 0, 1 }, new[] { 0, 2 }, new[] { 2 } };
+        Assert.Equal(new[] { 0, 0, 1 }, Codex.Core.Rules.SheetRuleEngine.OverEachShare(four, new[] { 2, 1, 0 }, shared: 0));
+        Assert.Equal(new[] { 0, 0, 0 }, Codex.Core.Rules.SheetRuleEngine.OverEachShare(four, new[] { 2, 1, 0 }, shared: 1));
+    }
+
     private sealed class WithHomebrew(Codex.Core.Rules.IEntryResolver inner, params ContentEntry[] extra) : Codex.Core.Rules.IEntryResolver
     {
         public ContentEntry? Resolve(string type, string id) => extra.FirstOrDefault(e => e.Type == type && e.Id == id) ?? inner.Resolve(type, id);
@@ -612,6 +627,10 @@ public class SrdSheetScenarioTests : IAsyncLifetime
 
         var fair = Engine().Evaluate(NewSheet("fighter", 1, ("background", "soldier"), ("skillProficiencies", Items("Acrobatics", "History", "Athletics"))));
         Assert.DoesNotContain(fair.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+
+        // A rogue level taken later gives a skill of its own, which the class entry does not say: no warning with two classes.
+        var multiclass = Engine().Evaluate(NewSheet("fighter", 6, ("multiclass", Items("rogue:1")), ("background", "soldier"), ("skillProficiencies", Items("Acrobatics", "History", "Insight"))));
+        Assert.DoesNotContain(multiclass.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
     }
 
     [Fact]

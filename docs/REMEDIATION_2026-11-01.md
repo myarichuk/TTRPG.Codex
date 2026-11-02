@@ -1020,6 +1020,64 @@ shows its blocks marked.
   DM shares the new one from the campaign page.
 - **F17** was already done (the file is deleted and staged).
 - **F11** is confirmed, not fixed (see the finding).
+- **The website.** Its guide still quoted the session page's "Save recap" and "Save journal", which U6 removed, so the
+  site's build failed. The guide now describes the one Save bar, and catches up with the rest of this branch: invite
+  link lifetimes, retiring and bringing back characters, per-class spell limits and carried weight, undo at the table,
+  "Someone you can't see", deleting a session, AI keys tied to the account and the server's shared allowance. The
+  install page described backups as unavailable; it now describes the daily backup. All in English, Russian and Hebrew.
+  `SiteUiKeysTests` runs the site build's key check with the app's tests, so removing a key the site quotes fails there.
+
+**Part 10: CI on the PR, and a second review (2026-11-02, uncommitted).**
+- **CI.** The Test step runs the E2E suite too, which this branch had not run. Four failed locally as well:
+  - Two read `status-message` and met two of them: since U2 a sheet opens inside the campaign page and each keeps its
+    own toast region. `E2EHelpers.ExpectStatusAsync` reads the one that says the text.
+  - One waited for a Library URL ending in the entry's path; the search now stays in the link (`?q=`), so it compares
+    the path.
+  - One was an app bug U2 brought in: a character made from Cast opens in a window without the campaign page reloading,
+    so Lore's "Add lore" link, the mention lists and the cast did not know of them until a full reload. `CampaignPage`
+    reloads its context when a window is left, and `LoreSection` loads again when the context is a new one, writing the
+    "about" text again while the DM has not touched it.
+  - The Website workflow failed on the guide's two removed keys (above). All 1180 tests, E2E included, passed after.
+- **Review (a second model, read-only), and what came of it:**
+  - **Per-class prepared spells.** Each pick went to the class with most room at the time and stayed there, so with
+    three casting classes a legal set could be reported over. `SheetRuleEngine.OverEachShare` matches picks to class
+    seats (augmenting paths); a class is named only when no arrangement fits.
+  - **Skill choices.** With a second class the check is off: a class taken later gives skills its entry does not
+    list (a rogue, one). A count in text is read from ASCII digits only; `\d` took other scripts' digits, which
+    `int.Parse` refuses.
+  - **Level-up "what this level breaks"** compared messages, so a list already over its limit was new at every level
+    (its number moves). It compares the rule's key and what it names other than numbers.
+  - **F9, again.** The guard read the caller's copy of the place, so two tabs loaded before any page existed still
+    made two. It reads the stored place's page first.
+  - **F10, again.** A copy refused before any save was never dropped, so the reload handed back the same one.
+    `WorldChatSessions.Forget` drops it first.
+  - **F14 edges.** The server's key is never handed out for a session whose account is gone (it counted under ""), nor
+    in place of the user's own key that can no longer be read (every key from before decision 4 would have spent the
+    shared allowance silently, instead of sending the user to enter it again). Text and pictures alike.
+  - **F13 at the live table.** A sheet saved while the table runs went to the runtime with the page's role. The role is
+    read from the stored campaign first, so someone removed saves nothing and a demoted co-DM saves as a player.
+- **Found by the review, not fixed:**
+  - **F30 (P2, lost write).** At a live table a sheet's save copies its name, visibility, public name and description,
+    DM notes and owner over the table's copy whole, with no version check (the table writes the actor on every hit
+    point, so a plain version check would refuse every save in play). A DM's reveal, or the AI's edit to a history,
+    made after the sheet was opened is undone by its save. The sheet needs to send what it loaded for those fields, as
+    it does for the sheet (`baselineSheet`), so only what it changed is copied.
+  - **F31 (P2, access).** Writes that take no `CampaignAccess` at all still trust the page's role: `CreateNoteAsync`
+    (wiki and session notes) and `ISessionRepository.UpdateAsync` (recap, DM summary). Give them one, and `NowAsync`.
+  - **F32 (P3, homebrew).** Part 5 dropped the `class` and `level` field names the engine fell back to. A homebrew
+    system with spellcasting rules and neither `multiclass.classField` nor `fieldRoles.class` gets no spell DC and no
+    class armour formula, without a word. `CONTENT_PACKS.md` says a role left out turns off what reads it; the loader
+    could warn.
+  - **F33 (P3, table).** Undo restores only its target: concentration a condition put on its holder stays.
+  - **F34 (P3).** `KeepSecrets`: two adjacent revealed blocks both rewritten whole give the first every line, and the
+    second loses its opener. Party text stays party text; no leak.
+  - **F35 (P3).** Backup file names are flattened with `Safe()`, so "a/b" and "a_b" can collide in one backup.
+  - **F36 (P3).** `WorldChatSessions` keeps its chats in a plain `Dictionary` that a turn's save can touch off the
+    circuit's thread.
+- **Tests:** class seats matched as a whole; no skill warning with two classes; a limit over before and after the level
+  is not new; a stale list's second "Create page"; the server key refused for a missing account and for an unreadable
+  key; a sheet saved at a live table by someone removed. 1167 unit tests and all 16 E2E tests pass (one E2E run lost a test to
+  its server not starting in time; it passed alone).
 - **Left:** F1, F5 (bUnit), F11, F15 (a restore page), F19, F21–F23 (undo and table UX), F25 (its own branch).
 - **Tests:** a whole number stored as a long; a player's single page and list agree on links; a stale "Create page" keeps
   the page; applying-elsewhere is stale; same-named suggestions told apart without a DM line; a short invite code

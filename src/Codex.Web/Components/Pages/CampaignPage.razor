@@ -349,13 +349,25 @@ else
             shownSection = CurrentSection;
         }
 
+        var window = WindowKind == null ? null : $"{Section}/{Arg1}";
         if (loadedCampaignId != CampaignId)
         {
             flash = null;
             notesOpen = false;
             await ReloadAsync();
         }
+        else if (shownWindow != null && window != shownWindow)
+        {
+            // A window does its work without this page: a character made and opened from the cast, renamed, revealed or
+            // retired on its sheet. Leaving it reloads who is in the campaign, so the sections (Lore's "about", the mention
+            // lists, the cast) know what the window changed.
+            await ReloadAsync();
+        }
+
+        shownWindow = window;
     }
+
+    private string? shownWindow;
 
     private string? shownSection;
 

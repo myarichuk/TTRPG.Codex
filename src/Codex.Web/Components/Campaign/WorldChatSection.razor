@@ -744,6 +744,7 @@ else if (chat != null)
     // chat is shown as stored, with a note saying why.
     private async Task ReloadStaleAsync(WorldChat stale, Exception why)
     {
+        if (!string.IsNullOrEmpty(stale.Id)) Sessions.Forget(stale.Id);
         var fresh = string.IsNullOrEmpty(stale.Id) ? null : await Sessions.OpenAsync(Ctx.Campaign, Ctx.Access, stale.Id);
         chats = await Sessions.ListAsync(Ctx.Access);
         if (!ReferenceEquals(stale, chat)) return;

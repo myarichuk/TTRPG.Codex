@@ -113,8 +113,10 @@ Campaigns live in a database in your user folder, never inside the program folde
 
 The launcher menu opens these folders for you: [[ui:Launcher.Tray.Data]], [[ui:Launcher.Tray.ContentFolder]] and [[ui:Launcher.Tray.BackupsFolder]]. Your own game systems and content packs go in the `content` folder inside the data folder.
 
-> [!WARNING]
-> The embedded database's free licence does not allow its built-in scheduled backups, so do not rely on the Backups folder. Use [[ui:Campaign.Settings.Export]] in each campaign's Settings: it downloads the whole campaign (characters, sessions, lore, notes and homebrew) as one file, and [[ui:Campaign.Settings.Import]] restores it.
+Once a day, the server writes a backup into the Backups folder by itself, and keeps the last seven. Each one holds every campaign, with its pictures and the players' journals, and the accounts with their AI settings (never an API key). To bring a campaign back from one, use [[ui:Campaign.Settings.Import]] in any campaign's Settings and pick that campaign's `campaign.json`: it is restored as a new campaign. Pictures and accounts are copied back by hand. The [[ui:Page.About.Title]] page says when the last backup was written.
+
+> [!TIP]
+> Before a big change, also press [[ui:Campaign.Settings.Export]] in the campaign's Settings. It downloads the whole campaign (characters, sessions, lore, notes and homebrew) as one file you can keep anywhere.
 
 To update, install the newer package over the old one. To uninstall, use *Apps & features* on Windows, delete the app from Applications on macOS, or run `sudo apt remove ttrpg-codex` on Linux. Your campaigns stay in the data folder until you delete it.
 

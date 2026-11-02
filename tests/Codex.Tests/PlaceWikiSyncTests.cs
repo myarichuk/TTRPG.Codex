@@ -81,6 +81,11 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.Equal(made.Id, again!.Id);
         Assert.Equal("Written since.", (await _wiki.GetVisibleBySlugAsync(made.Slug, Dm))!.Body);
+
+        // A list loaded before any page existed knows of none, but the stored place does: no second page.
+        var older = new LocationDocument { Id = place.Id, Name = place.Name, Description = place.Description, Visibility = place.Visibility };
+        Assert.Equal(made.Id, (await _sync.CreatePageAsync(region.Id, older, "place", Dm))!.Id);
+        Assert.Single(await _wiki.GetAllForCampaignAsync(Dm.CampaignId));
     }
 
     [Fact]

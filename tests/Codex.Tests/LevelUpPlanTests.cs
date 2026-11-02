@@ -49,6 +49,8 @@ public class LevelUpPlanTests
         before.ListLimits["spells"] = null;
         before.Derived["proficiencyBonus"] = 2L;
         before.Violations.Add(new RuleViolation("name", "Already wrong."));
+        // Over a limit before and after: the limit's number moves with the level, but the level did not break it.
+        before.Violations.Add(new RuleViolation("spells", "Spells: 10, only 8 allowed.", "Actor.Rule.Limit", new object?[] { "Spells", 10, 8 }));
 
         var after = new SheetEvaluation
         {
@@ -58,6 +60,7 @@ public class LevelUpPlanTests
         after.ListLimits["spells"] = null;
         after.Derived["proficiencyBonus"] = 2L;
         after.Violations.Add(new RuleViolation("name", "Already wrong."));
+        after.Violations.Add(new RuleViolation("spells", "Spells: 10, only 9 allowed.", "Actor.Rule.Limit", new object?[] { "Spells", 10, 9 }));
         after.Violations.Add(new RuleViolation("multiclass", "The level broke this."));
 
         var plan = LevelUpPlan.Build(Rules(), before, after, 4, Fighter(), 4, null, "proficiencyBonus");

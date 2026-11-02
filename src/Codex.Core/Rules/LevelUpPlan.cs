@@ -48,8 +48,16 @@ public sealed record LevelUpPlan(
             && classLevel >= multiclass.SubclassLevel && subclass == null;
 
         // What the level itself breaks: a rule the sheet met before and does not after. A limit that grew is a choice, not one.
-        var known = before.Violations.Select(v => (v.FieldKey, v.Message)).ToHashSet();
-        var broken = after.Violations.Where(v => !known.Contains((v.FieldKey, v.Message))).ToList();
+        var known = before.Violations.Select(Identity).ToHashSet();
+        var broken = after.Violations.Where(v => !known.Contains(Identity(v))).ToList();
+
+        // A rule broken before and after is the same one even when its numbers moved: "10 spells, only 8 allowed" at this
+        // level is "10 spells, only 9 allowed" at the next, and the level did not break it. So the rule, and what it names
+        // other than numbers (the class over its share), say which one it is; a message without a key is compared whole.
+        static string Identity(RuleViolation v) => v.Key == null ? $"{v.FieldKey}|{v.Message}"
+            : $"{v.FieldKey}|{v.Key}|" + string.Join("|", (v.Args ?? Array.Empty<object?>())
+                .Where(a => a is not (int or long or double or decimal))
+                .Select(a => a is ContentEntry e ? e.Id : a?.ToString()));
 
         return new LevelUpPlan(level, cls, classLevel, features,
             after.HitPoints is { Active: true } hp ? hp.Levels.LastOrDefault(l => l.Level == level) : null,

@@ -154,19 +154,31 @@ public sealed class AiProviderService(
 
     public IChatClient? ClientFor(UserDocument? user)
     {
+        // The server's key is counted per account, so it is never handed to a session whose account is gone.
+        if (user == null) return null;
+
         var provider = DefaultProvider(user);
         if (provider != null && !Blocked(provider, user))
         {
-            var client = CachedClient(ToConfiguration(provider, user, null, Confined(user)), Confined(user));
+            var setup = ToConfiguration(provider, user, null, Confined(user));
+            var client = CachedClient(setup, Confined(user));
             if (client != null)
             {
                 return client;
             }
 
-            logger.LogWarning("User {UserId}'s default AI provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);
+            // A key stored but no longer readable (from before keys were bound to their user, or another keyring) is the
+            // user's to enter again, as AI settings says; spending the server's shared allowance meanwhile would hide that.
+            if (!string.IsNullOrEmpty(provider.ProtectedApiKey) && string.IsNullOrEmpty(setup.ApiKey))
+            {
+                logger.LogWarning("User {UserId}'s AI key for {Provider} can no longer be read; they need to enter it again.", user.Id, provider.Name);
+                return null;
+            }
+
+            logger.LogWarning("User {UserId}'s default AI provider {Provider} is incomplete; falling back to the server configuration.", user.Id, provider.Name);
         }
 
-        return ServerKeyAllowedFor(user) && _serverClient.Value is { } server ? new MeteredClient(server, usage, user?.Id ?? string.Empty, IsAdmin(user)) : null;
+        return ServerKeyAllowedFor(user) && _serverClient.Value is { } server ? new MeteredClient(server, usage, user.Id, IsAdmin(user)) : null;
     }
 
     public string? Describe(UserDocument? user)
@@ -212,12 +224,21 @@ public sealed class AiProviderService(
 
     private AIConfiguration? ImageConfigFor(UserDocument? user)
     {
+        // As for text (ClientFor): no server key for an account that is gone, nor in place of a key that can't be read.
+        if (user == null) return null;
+
         if (DefaultImageProvider(user) is { } provider && !Blocked(provider, user))
         {
             var config = ToConfiguration(provider, user, null, Confined(user));
             if (AiImageGenerator.Problem(config) == null)
             {
                 return config;
+            }
+
+            if (!string.IsNullOrEmpty(provider.ProtectedApiKey) && string.IsNullOrEmpty(config.ApiKey))
+            {
+                logger.LogWarning("User {UserId}'s image key for {Provider} can no longer be read; they need to enter it again.", user.Id, provider.Name);
+                return null;
             }
 
             logger.LogWarning("User {UserId}'s image provider {Provider} is incomplete; falling back to the server configuration.", user!.Id, provider.Name);

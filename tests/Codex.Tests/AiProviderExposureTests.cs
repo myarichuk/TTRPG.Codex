@@ -42,6 +42,25 @@ public class AiProviderExposureTests
     }
 
     [Fact]
+    public void The_servers_key_is_not_handed_out_for_a_missing_account_or_in_place_of_a_key_that_cannot_be_read()
+    {
+        // No account behind the session (deleted, or gone in a restore): nobody to count the requests against.
+        Assert.Null(Service(false).ClientFor(null));
+
+        // A key stored before keys were bound to their user no longer decrypts. The user enters it again; until then the
+        // shared allowance is not spent in its place.
+        var stale = User(admin: false);
+        stale.Id = "users/stale";
+        stale.AiProviders.Add(new AiProviderConfig { Id = "p", Name = "mine", Kind = "openrouter", ModelId = "m", ProtectedApiKey = "not-a-key-this-server-wrote" });
+        Assert.Null(Service(false).ClientFor(stale));
+
+        // One with no key stored at all (a provider set up but not finished) still falls back, as before.
+        var unfinished = User(admin: false);
+        unfinished.AiProviders.Add(new AiProviderConfig { Id = "p", Name = "mine", Kind = "openrouter", ModelId = "m" });
+        Assert.NotNull(Service(false).ClientFor(unfinished));
+    }
+
+    [Fact]
     public void A_players_own_provider_may_not_point_inside_the_hosts_network_when_open()
     {
         var local = User(admin: false, "http://127.0.0.1:11434/v1");

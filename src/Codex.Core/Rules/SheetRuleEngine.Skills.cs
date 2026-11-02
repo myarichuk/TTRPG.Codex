@@ -26,8 +26,9 @@ public sealed partial class SheetRuleEngine
         (listed is not string and IEnumerable<object> list ? list.Select(o => o?.ToString() ?? "") : new[] { listed?.ToString() ?? "" })
         .Where(n => n.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    // How many skills a class's choices allow: a number, or the first number in text such as "Choose 2: Acrobatics, …".
-    private static readonly System.Text.RegularExpressions.Regex FirstNumber = new(@"\d+", System.Text.RegularExpressions.RegexOptions.Compiled);
+    // How many skills a class's choices allow: a number, or the first number in text such as "Choose 2: Acrobatics, …". ASCII digits only:
+    // \d also matches other scripts' digits, which int.Parse refuses.
+    private static readonly System.Text.RegularExpressions.Regex FirstNumber = new(@"[0-9]+", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static int? ChoiceCount(object? value) =>
         ToDouble(value) is { } number ? (int)number
@@ -65,8 +66,9 @@ public sealed partial class SheetRuleEngine
         }
 
         // The first class's skill choices (F24): more chosen than it gives, beyond the background's, is worth a look, not a
-        // refusal, since a species or a feat may give more.
-        if (FirstClass(sheet, result, rules.ClassField) is { } firstClass && ChoiceCount(firstClass.Properties.GetValueOrDefault(rules.ClassChoicesProperty)) is { } allowed)
+        // refusal, since a species or a feat may give more. With a second class it is left alone: a class taken later gives skills
+        // of its own (a rogue, one), which its entry does not say.
+        if (result.Classes.Count <= 1 && FirstClass(sheet, result, rules.ClassField) is { } firstClass && ChoiceCount(firstClass.Properties.GetValueOrDefault(rules.ClassChoicesProperty)) is { } allowed)
         {
             var chosen = rules.List.Count(s => Has(picked, s) && !Has(granted, s));
             if (chosen > allowed)

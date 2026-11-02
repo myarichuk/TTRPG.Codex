@@ -19,17 +19,20 @@ public sealed class PlaceWikiSync(IRegionRepository regions, IWikiRepository wik
     {
         if (!access.IsDm) return null;
 
-        // A stale list can offer "Create page" for a page another tab made or restored meanwhile: that page is kept, not overwritten (F9).
-        if (!string.IsNullOrEmpty(location.WikiPageId)
-            && (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == location.WikiPageId) is { } existing)
+        // A stale list can offer "Create page" for a page another tab made or restored meanwhile: that page is kept, not
+        // overwritten or made twice (F9). The stored place says which page it has; the caller's copy may predate it.
+        var pageId = (await regions.GetAsync(regionId, access))?.Locations.FirstOrDefault(l => l.Id == location.Id)?.WikiPageId ?? location.WikiPageId;
+        if (!string.IsNullOrEmpty(pageId)
+            && (await wiki.GetVisibleForCampaignAsync(access)).FirstOrDefault(p => p.Id == pageId) is { } existing)
         {
+            location.WikiPageId = existing.Id;
             return existing;
         }
 
         var known = location.Visibility == ActorVisibility.Known;
         var page = new WikiPageDocument
         {
-            Id = string.IsNullOrEmpty(location.WikiPageId) ? Guid.NewGuid().ToString() : location.WikiPageId,
+            Id = string.IsNullOrEmpty(pageId) ? Guid.NewGuid().ToString() : pageId,
             Title = location.Name,
             Body = location.Description ?? string.Empty,
             Visibility = known ? WikiVisibility.Party : WikiVisibility.DmOnly,

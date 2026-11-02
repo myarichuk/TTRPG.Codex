@@ -241,7 +241,7 @@
     private string editSummary = string.Empty;
     private string editDetails = string.Empty;
     private FactVisibility editVisibility;
-    private string? loadedFor;
+    private CampaignContext? loadedFor;
 
     private sealed record WikiSecret(WikiPageDocument Page, SecretBlock Block);
 
@@ -249,11 +249,14 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (loadedFor == Ctx.Campaign.Id) return;
-        loadedFor = Ctx.Campaign.Id;
+        // A new context is a reload (the page left a window where a character was made, say): the mentions and the list of
+        // who is in the campaign come from it, so the section loads again rather than keep the first one it saw.
+        if (ReferenceEquals(loadedFor, Ctx)) return;
+        loadedFor = Ctx;
         await LoadAsync();
-        // "?about=actor:ID" or "?about=wiki:slug" (a page's or a sheet's "Add lore" link) starts a new fact about it.
-        if (Ctx.IsDm && QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("about", out var about) && newDetails.Length == 0)
+        // "?about=actor:ID" or "?about=wiki:slug" (a page's or a sheet's "Add lore" link) starts a new fact about it, written
+        // again on a reload as long as the DM has not touched it.
+        if (Ctx.IsDm && QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query).TryGetValue("about", out var about) && newDetails == newDetailsStart)
         {
             var key = about.ToString();
             newDetails = key.StartsWith("wiki:", StringComparison.Ordinal)

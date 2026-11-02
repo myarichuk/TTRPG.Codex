@@ -1030,26 +1030,17 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     /// <summary>
     /// A table limit is each class's own (F24): pooled, a cleric 1 / wizard 5 could prepare the cleric's share as wizard
-    /// spells. Each pick counts for a class that allows it, those only one class allows first, then for whichever class has
-    /// the most room left; the part of the limit no table gives (a constant, a species' number) is shared. A class left with
-    /// more picks than its table gives is reported by name.
+    /// spells. The picks are matched to the classes that allow them so that as many as possible fit a class's own share
+    /// (a spell two classes allow goes wherever it lets the others fit); the part of the limit no table gives (a constant, a
+    /// species' number) takes what is left. Only when no arrangement fits is a class reported by name, one the pick needs.
     /// </summary>
     private void CheckEachClassesShare(ListRule list, CountRule rule, int limit, IReadOnlyList<IReadOnlyDictionary<string, object>> views, List<SheetPick> picks, SheetEvaluation result)
     {
         var own = views.Select(v => ResolveCount(new CountRule { Lookup = rule.Lookup, Also = rule.Also }, new[] { v }) ?? 0).ToArray();
-        var left = own.ToArray();
-        var shared = Math.Max(0, limit - own.Sum());
-        var over = new int[views.Count];
         var eligible = picks.Select(p => Enumerable.Range(0, views.Count).Where(i => list.Where.All(w => Holds(w, p.Entry, views[i]))).ToList())
             .Where(classes => classes.Count > 0) // a pick no class allows is reported already
-            .OrderBy(classes => classes.Count);
-        foreach (var classes in eligible)
-        {
-            var roomiest = classes.OrderByDescending(i => left[i]).First();
-            if (left[roomiest] > 0) left[roomiest]--;
-            else if (shared > 0) shared--;
-            else over[roomiest]++;
-        }
+            .ToList();
+        var over = OverEachShare(eligible, own, Math.Max(0, limit - own.Sum()));
 
         for (var i = 0; i < views.Count; i++)
         {
@@ -1058,6 +1049,42 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: {own[i] + over[i]} for {name}, but {name} allows only {own[i]} at this level.",
                 "Actor.Rule.LimitForClass", new object?[] { list.Label, own[i] + over[i], (object?)result.Classes[i].Entry ?? name, own[i] }));
         }
+    }
+
+    /// <summary>How many picks each class is over its <paramref name="own"/> share, given the classes each pick may count for
+    /// (<paramref name="eligible"/>) and a <paramref name="shared"/> part of the limit any pick may use. One seat per pick a
+    /// class's table allows; each pick takes a seat, moving earlier picks to other seats they may take when that frees one
+    /// (augmenting paths), so the greatest number of picks is seated. A pick left over uses the shared part, else counts
+    /// against the first class it may count for.</summary>
+    internal static int[] OverEachShare(IReadOnlyList<IReadOnlyList<int>> eligible, IReadOnlyList<int> own, int shared)
+    {
+        var over = new int[own.Count];
+        var seats = Enumerable.Range(0, own.Count).SelectMany(i => Enumerable.Repeat(i, Math.Max(0, own[i]))).ToArray();
+        var seatedPick = Enumerable.Repeat(-1, seats.Length).ToArray();
+        bool Seat(int pick, bool[] tried)
+        {
+            for (var s = 0; s < seats.Length; s++)
+            {
+                if (tried[s] || !eligible[pick].Contains(seats[s])) continue;
+                tried[s] = true;
+                if (seatedPick[s] < 0 || Seat(seatedPick[s], tried))
+                {
+                    seatedPick[s] = pick;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        for (var pick = 0; pick < eligible.Count; pick++)
+        {
+            if (Seat(pick, new bool[seats.Length])) continue;
+            if (shared > 0) shared--;
+            else over[eligible[pick][0]]++;
+        }
+
+        return over;
     }
 
     /// <summary>A list's limit across every class view: table lookups are added up per class (a

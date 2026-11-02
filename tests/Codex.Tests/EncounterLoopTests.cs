@@ -768,6 +768,28 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         await manager.EvictAsync(campaignId);
     }
 
+    // F13 at the live table: the table writes what it is given, so the role is read from the stored campaign before it is.
+    [Fact]
+    public async Task SheetSave_AtALiveTable_IsRefusedForSomeoneRemovedFromTheCampaign_Async()
+    {
+        var (manager, campaigns) = BuildManager();
+        var campaignId = Guid.NewGuid().ToString();
+        var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Demoted", Members = { new CampaignMember { UserId = "co-dm", Role = CampaignRole.DM } } };
+        await campaigns.SaveAsync(campaign);
+        var owner = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+        var coDm = new CampaignAccess(campaignId, "co-dm", CampaignRole.DM);
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter);
+        await manager.GetOrStartAsync(campaign, owner);
+
+        campaign.Members.RemoveAll(m => m.UserId == "co-dm");
+        await campaigns.SaveAsync(campaign);
+        var edited = new ActorDocument { Id = hero.Id, CampaignId = campaignId, Name = "Renamed by a stranger", Kind = ActorKind.PlayerCharacter, OwnerUserId = hero.OwnerUserId, Sheet = new Dictionary<string, object>(hero.Sheet) };
+
+        Assert.False(await manager.TrySaveActorAsync(edited, hero.Sheet, coDm, Srd));
+        await manager.EvictAsync(campaignId);
+        Assert.Equal("Aria", (await StoredAsync(campaignId, hero.Id))!.Name);
+    }
+
     [Fact]
     public async Task SheetSave_ForAnActorDeletedWhileItWasQueued_FailsCleanly_AndDoesNotBringItBack_Async()
     {

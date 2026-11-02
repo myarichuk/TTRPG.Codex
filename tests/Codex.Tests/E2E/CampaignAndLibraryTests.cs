@@ -57,7 +57,8 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         var fireball = dm.GetByRole(AriaRole.Link, new() { Name = "Fireball", Exact = true });
         await fireball.WaitForAsync();
         await fireball.ClickAsync();
-        await dm.WaitForURLAsync(url => url.EndsWith("/library/spell/fireball"));
+        // The search stays in the link (?q=Fireball), so only the path is compared.
+        await dm.WaitForURLAsync(url => new Uri(url).AbsolutePath.EndsWith("/library/spell/fireball"));
         var detail = dm.GetByTestId("library-detail");
         await Assertions.Expect(detail.GetByRole(AriaRole.Heading, new() { Name = "Fireball" })).ToBeVisibleAsync();
         await Assertions.Expect(detail).ToContainTextAsync("8d6");
@@ -132,7 +133,7 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await player.GetByTestId("attr-str").CommitAsync("18");
         await Assertions.Expect(player.GetByTestId("rule-violations")).ToContainTextAsync("8 to 15");
         await player.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Not saved");
+        await E2EHelpers.ExpectStatusAsync(player, "Not saved");
 
         // A legal spread: 15/14/13/12/10/8 is exactly 27 points.
         await player.GetByTestId("attr-str").CommitAsync("15");
@@ -159,7 +160,7 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
 
         Assert.Empty(await player.GetByTestId("rule-violations").AllInnerTextsAsync());
         await player.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+        await E2EHelpers.ExpectStatusAsync(player, "Saved.");
         await Assertions.Expect(player.GetByLabel("From the Library").GetByRole(AriaRole.Link, new() { Name = "Fighter" })).ToBeVisibleAsync();
         await Assertions.Expect(player.GetByTestId("class-level-fighter")).ToHaveTextAsync("1 level"); // the Classes panel
         await Assertions.Expect(player.GetByTestId("attr-int-total")).ToHaveTextAsync("12 + 2 = 14"); // persisted and reloaded
@@ -201,7 +202,7 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await dm.GetByTestId("tab-attributes").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("derived-proficiencyBonus")).ToHaveTextAsync("+3");
         await dm.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+        await E2EHelpers.ExpectStatusAsync(dm, "Saved.");
         await dm.GetByTestId("tab-picks").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("list-spells-pick")).ToHaveCountAsync(2);
 
@@ -209,14 +210,14 @@ public class CampaignAndLibraryTests : IClassFixture<AppFixture>
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
         await dm.GetByTestId("settings-rules").SelectOptionAsync("warn");
         await dm.GetByTestId("settings-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("status-message")).ToContainTextAsync("Saved.");
+        await E2EHelpers.ExpectStatusAsync(dm, "Saved.");
 
         await player.ReloadAsync();
         await E2EHelpers.WaitForInteractiveAsync(player);
         await player.GetByTestId("attr-str").CommitAsync("18");
         await Assertions.Expect(player.GetByTestId("rule-violations")).ToContainTextAsync("Warnings only");
         await player.GetByTestId("sheet-save").ClickAsync();
-        await Assertions.Expect(player.GetByTestId("status-message")).ToContainTextAsync("Saved with 1 rule warning");
+        await E2EHelpers.ExpectStatusAsync(player, "Saved with 1 rule warning");
 
         // ---- 5. Accessibility smoke across the main pages. ----
         foreach (var path in new[] { "/", $"/campaigns/{campaignId}", $"/campaigns/{campaignId}/cast", $"/campaigns/{campaignId}/world", $"/campaigns/{campaignId}/lore", $"/campaigns/{campaignId}/sessions", $"/campaigns/{campaignId}/table", $"/campaigns/{campaignId}/library/spell/fireball", $"/campaigns/{campaignId}/settings", "/about", "/library" })

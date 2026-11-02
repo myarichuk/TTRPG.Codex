@@ -36,6 +36,10 @@ public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderSer
         return Make(campaign, access, null);
     }
 
+    /// <summary>Drops this connection's copy of the chat <paramref name="id"/>, so opening it again loads what is stored. For a
+    /// copy refused before it was saved (another tab is applying its proposal, F10), which a failed save would have dropped.</summary>
+    public void Forget(string id) => open.Remove(id);
+
     /// <summary>True while a turn of the chat <paramref name="id"/> is under way, for the chats list.</summary>
     public bool IsBusy(string id) => open.TryGetValue(id, out var chat) && chat.IsBusy;
 
