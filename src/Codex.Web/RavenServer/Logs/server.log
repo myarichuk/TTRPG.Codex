@@ -1,0 +1,67 @@
+Date|Level|ThreadID|Resource|Component|Logger|Message|Data
+2026-11-03 07:55:04.8563|INFO|2|Server||Sparrow.Logging.RavenLogManager|Logging to 'C:\Users\user\sources\TTRPG.Codex\src\Codex.Web\RavenServer\Logs' set to [Info, Fatal] level.|
+2026-11-03 07:55:04.8963|INFO|2|Server||Raven.Server.Program| Build 72005, Version 7.2, SemVer 7.2.1, Commit e90680f
+ PID 5540, 64 bits, 11 Cores, Arch: X64
+ 11.413 GBytes Physical Memory, 3.709 GBytes Available Memory, 3.749 GBytes Calculated Available Memory, 0 Bytes Scratch Dirty Memory
+ Using GC in server concurrent mode retaining memory from the OS. DATAS disabled.
+librvnpal Expected Version: 62000, librvnpal Current Version: 62000|
+2026-11-03 07:55:05.0499|INFO|2|Sparrow||Sparrow.Server.Utils.DiskUtils|Errno: 3='The system cannot find the path specified.
+' (rc=0) - 'Failed to get file system statistics for path: C:\Users\user\sources\TTRPG.Codex\src\Codex.Web\bin\Debug\net10.0\RavenDBServer\RavenData. FailCode=FailStatFile'|
+2026-11-03 07:55:06.6411|INFO|2|Sparrow||Sparrow.Server.LowMemory.CheckPageFileOnHdd|DeviceIoControl failed. The operation completed successfully.
+|
+2026-11-03 07:55:06.6411|INFO|2|Sparrow||Sparrow.Server.LowMemory.CheckPageFileOnHdd|CreateFile failed. Access is denied.
+|
+2026-11-03 07:55:06.6411|WARN|2|Sparrow||Sparrow.Server.LowMemory.CheckPageFileOnHdd|Failed to determine if drive C is SSD or HDD|
+2026-11-03 07:55:06.9747|INFO|2|Server||Raven.Server.RavenServer|HTTP/2: Profile=Balanced, ConnWindow=16384.0KB, StreamWindow=2048.0KB, MaxFrame=256.0KB, MaxStreams=2147483647|
+2026-11-03 07:55:07.1716|INFO|2|Server||Raven.Server.RavenServer|Initialized Server... http://127.0.0.1:64056|
+2026-11-03 07:55:08.0911|INFO|13|Server||Raven.Server.ServerWide.ClusterCommandsVersionManager|Cluster version was changed from 0 to 72000|
+2026-11-03 07:55:09.2010|INFO|26|Server||Raven.Server.Documents.DatabasesLandlord|[Load Database] 11/03/2026 07:55:09 :: Database 'Campaigns' : Starting database initialization|
+2026-11-03 07:55:09.3911|INFO|26|Server||Raven.Server.Documents.DatabasesLandlord|[Load Database] 11/03/2026 07:55:09 :: Database 'Campaigns' : Finish database initialization|
+2026-11-03 07:55:09.3911|INFO|26|Server||Raven.Server.Documents.DatabasesLandlord|Started database Campaigns in 191ms|
+2026-11-03 07:55:12.7381|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:12.7381|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 3ms|
+2026-11-03 07:55:12.8697|INFO|15|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:12.8697|INFO|15|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:12.9982|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:12.9982|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.1187|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.1187|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.2260|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.2260|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 1ms|
+2026-11-03 07:55:13.3438|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.3438|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.5151|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.5151|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.6535|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.6535|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.7665|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.7665|INFO|25|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.8786|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.8786|INFO|7|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:13.9988|INFO|33|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:13.9988|INFO|33|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 0ms|
+2026-11-03 07:55:14.1881|INFO|15|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:55:14.1881|INFO|15|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 1ms|
+2026-11-03 07:55:15.2150|INFO|25|Campaigns||Raven.Server.Documents.PeriodicBackup.PeriodicBackupRunner|Next full backup is in 1024.7466254766666 minutes.|
+2026-11-03 07:56:14.5836|INFO|46|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Starting 1 new index|
+2026-11-03 07:56:14.5836|INFO|46|Campaigns||Raven.Server.Documents.Indexes.IndexStore|Started 1 new index, took: 3ms|
+2026-11-03 08:45:43.6924|INFO|93|Campaigns|Auto/CampaignDocuments/BySystemAndSystemIdAndUpdatedAt|Raven.Server.Documents.Indexes.Auto.AutoMapIndex|Changing state for 'Auto/CampaignDocuments/BySystemAndSystemIdAndUpdatedAt' from 'Normal' to 'Idle'.|
+2026-11-03 10:39:08.2281|INFO|2|Server||Raven.Server.Program|Server is shutting down|
+2026-11-03 10:39:08.2281|INFO|71|Server||Raven.Server.Utils.Pipes|Error connecting to log stream pipe|System.IO.IOException: The pipe has been ended.
+   at System.IO.Pipes.PipeStream.PipeValueTaskSource.GetResult(Int16 token)
+   at System.IO.Pipes.PipeStream.PipeValueTaskSource.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Threading.Tasks.ValueTask.ValueTaskSourceAsTask.<>c.<.cctor>b__4_0(Object state)
+--- End of stack trace from previous location ---
+   at Raven.Server.Utils.Pipes.ListenToLogStreamPipe(RavenServer ravenServer, NamedPipeServerStream logstreamPipe) in /_/72005/src/Raven.Server/Utils/Pipes.cs:line 180|
+2026-11-03 10:39:08.2053|INFO|69|Campaigns||Raven.Server.Documents.Handlers.ChangesHandler|Error encountered in changes handler|System.Net.WebSockets.WebSocketException (0x80004005): The remote party closed the WebSocket connection without completing the close handshake.
+   at System.Net.WebSockets.ManagedWebSocket.ThrowEOFUnexpected()
+   at System.Net.WebSockets.ManagedWebSocket.EnsureBufferContainsAsync(Int32 minimumRequiredBytes, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.WebSockets.ManagedWebSocket.ReceiveAsyncPrivate[TResult](Memory`1 payloadBuffer, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Raven.Server.Documents.Handlers.Processors.Changes.AbstractChangesHandlerProcessorForGetChanges`3.HandleConnectionAsync(WebSocket webSocket, TChangesClientConnection connection, JsonOperationContext context, OperationCancelToken token) in /_/72005/src/Raven.Server/Documents/Handlers/Processors/Changes/AbstractChangesHandlerProcessorForGetChanges.cs:line 138
+   at Raven.Server.Documents.Handlers.Processors.Changes.AbstractChangesHandlerProcessorForGetChanges`3.HandleConnectionAsync(WebSocket webSocket, TChangesClientConnection connection, JsonOperationContext context, OperationCancelToken token) in /_/72005/src/Raven.Server/Documents/Handlers/Processors/Changes/AbstractChangesHandlerProcessorForGetChanges.cs:line 197
+   at Raven.Server.Documents.Handlers.Processors.Changes.AbstractChangesHandlerProcessorForGetChanges`3.ExecuteAsync() in /_/72005/src/Raven.Server/Documents/Handlers/Processors/Changes/AbstractChangesHandlerProcessorForGetChanges.cs:line 45|
+2026-11-03 10:39:08.3164|INFO|2|Cluster|?|Raven.Server.Rachis.RachisConsensus|Start disposing leader A of term 1.|
+2026-11-03 10:39:08.4006|INFO|2|Server||Raven.Server.Program|Server has shut down|
+2026-11-03 10:39:11.4198|INFO|1|Server||Raven.Server.Program|Server is about to shut down (interactive mode)|

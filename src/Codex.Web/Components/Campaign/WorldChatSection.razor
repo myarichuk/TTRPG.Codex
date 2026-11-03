@@ -34,9 +34,11 @@ else if (chat != null)
 {
     var live = chat.Live;
     var proposal = chat.Proposal;
+    SyncLedger(proposal);
+    var ledgerOpen = LedgerOpen(proposal);
     <h2 class="visually-hidden">@L["WorldChat.Title"]</h2>
     <div class="wb-host">
-        <div class="wb" data-pane="@pane" data-drawer="@(drawer ? "open" : null)" data-testid="world-builder">
+        <div class="wb" data-pane="@pane" data-drawer="@(drawer ? "open" : null)" data-ledger="@(ledgerOpen ? "open" : "closed")" data-testid="world-builder">
             <div class="wb-tabs" role="tablist" aria-label="@L["WorldChat.Title"]">
                 <button type="button" role="tab" class="wb-tab" aria-selected="@(pane == "chats" ? "true" : "false")" @onclick='() => pane = "chats"' data-testid="world-tab-chats"><LucideIcon IconName="message-square" Size="16" /> @L["WorldChat.Chats"]</button>
                 <button type="button" role="tab" class="wb-tab" aria-selected="@(pane == "talk" ? "true" : "false")" @onclick='() => pane = "talk"' data-testid="world-tab-talk"><LucideIcon IconName="sparkles" Size="16" /> @L["WorldChat.Conversation"]</button>
@@ -266,9 +268,19 @@ else if (chat != null)
             @* ---- The proposal ---- *@
             <aside class="wb-ledger panel" id="world-proposal" aria-labelledby="world-proposal-heading">
                 <WorldProposalPanel @ref="panel" Proposal="proposal" Warnings="chat.ProposalWarnings" Decided="chat.Decided" Missing="missing" PlaceNames="placeNames"
-                                    LastApplied="lastApplied" Locked="@(chat.IsBusy || applying)" Applying="applying" ApplyError="@applyError"
-                                    OnApply="ApplyAsync" OnDiscard="DiscardAsync" OnFill="FillAsync" OnDecided="DecidedAsync" />
+                                    Locked="@(chat.IsBusy || applying)" Applying="applying" ApplyError="@applyError" Pinned="pinned"
+                                    OnApply="ApplyAsync" OnDiscard="DiscardAsync" OnFill="FillAsync" OnDecided="DecidedAsync"
+                                    OnPin="TogglePinAsync" OnClose="CloseLedgerAsync" />
             </aside>
+            @* Folded away, the proposal leaves a rail at the edge: it shows how many entries wait, and opens the panel. *@
+            <button type="button" class="wb-rail" @onclick="OpenLedger" aria-expanded="false" aria-controls="world-proposal"
+                    title="@L["WorldChat.Ledger.Show"]" aria-label="@L["WorldChat.Ledger.Show"]" data-testid="world-ledger-rail">
+                <LucideIcon IconName="panel-right-open" Size="18" />
+                @if (proposal != null)
+                {
+                    <span class="wb-badge">@proposal.Drafts.Count(d => d.Selected)</span>
+                }
+            </button>
         </div>
     </div>
 
@@ -334,9 +346,48 @@ else if (chat != null)
     private DateTime lastPaint;
     private CancellationTokenSource? ticking;
 
-    // The reply that brought the waiting proposal, which carries the card that opens it; the last applied proposal's note.
+    // The reply that brought the waiting proposal, which carries the card that opens it.
     private WorldChatLine? proposalLine;
-    private WorldChatLine? lastApplied;
+
+    // The proposal panel is shown while there is something to review, unless the DM folded it away; pinned, it stays whatever there
+    // is; opened by hand from the rail, it stays until it is closed or the proposal is finished. The pin is remembered by the browser.
+    private const string PinKey = "codex-wb-ledger-pinned";
+    private bool pinned;
+    private bool peek;
+    private bool folded;
+    private bool hadProposal;
+
+    private void SyncLedger(WorldBundle? proposal)
+    {
+        // A new proposal opens the panel again; a finished one (applied or discarded) folds it away.
+        if (proposal != null && !hadProposal) folded = false;
+        if (proposal == null && hadProposal) peek = false;
+        hadProposal = proposal != null;
+    }
+
+    private bool LedgerOpen(WorldBundle? proposal) => pinned || peek || (proposal != null && !folded);
+
+    private void OpenLedger()
+    {
+        peek = true;
+        folded = false;
+    }
+
+    private async Task CloseLedgerAsync()
+    {
+        peek = false;
+        folded = true;
+        if (pinned) await SetPinnedAsync(false);
+    }
+
+    private Task TogglePinAsync() => SetPinnedAsync(!pinned);
+
+    private async Task SetPinnedAsync(bool value)
+    {
+        pinned = value;
+        try { await JS.InvokeVoidAsync("localStorage.setItem", PinKey, value ? "1" : "0"); }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException) { /* storage blocked: not remembered */ }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -515,6 +566,19 @@ else if (chat != null)
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            try
+            {
+                if (await JS.InvokeAsync<string?>("localStorage.getItem", PinKey) == "1")
+                {
+                    pinned = true;
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException) { /* storage blocked: unpinned */ }
+        }
+
         if (chat == null) return;
         var force = forceFollow;
         var follow = followLog || force;
@@ -610,7 +674,6 @@ else if (chat != null)
         proposalLine = chat.Proposal == null ? null
             : chat.Lines.LastOrDefault(l => l.Speaker == WorldChatSpeaker.Model && l.Steps?.Any(s => s.Tool is "propose_changes" or "add_entries" && s is { Status: WorldChatStepStatus.Done, Rejected: false }) == true)
               ?? chat.Lines.LastOrDefault(l => l.Speaker == WorldChatSpeaker.Model);
-        lastApplied = chat.Lines.LastOrDefault(l => l.Speaker == WorldChatSpeaker.Tool) is { Links.Count: > 0 } note && chat.Lines[^1] == note ? note : null;
         if (chat.Proposal != null)
         {
             placeNames = (await RegionRepo.GetVisibleForCampaignAsync(Ctx.Access)).SelectMany(r => r.Locations).GroupBy(l => l.Id).ToDictionary(g => g.Key, g => g.First().Name);

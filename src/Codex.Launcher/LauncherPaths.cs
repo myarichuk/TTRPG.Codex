@@ -53,6 +53,7 @@ internal static class LauncherPaths
     public static string MyContent(string dataHome) => Path.Combine(dataHome, "content");
 
     public static string RavenData(string dataHome) => Path.Combine(dataHome, "RavenData");
+    public static string CertificateFile(string dataHome) => Path.Combine(dataHome, "certs", "codex-local.pfx");
     public static string SettingsFile(string dataHome) => Path.Combine(dataHome, "launcher.json");
     public static string LogFile(string dataHome) => Path.Combine(dataHome, "logs", "server.log");
 }

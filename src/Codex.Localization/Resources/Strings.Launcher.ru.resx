@@ -115,6 +115,8 @@
   <data name="Launcher.Join.NoAddress.Detail" xml:space="preserve"><value>Похоже, он не подключён ни к Wi-Fi, ни к кабелю. Подключитесь к сети и проверьте снова.</value></data>
   <data name="Launcher.Join.UseLink.Title" xml:space="preserve"><value>Игроки используют эту ссылку</value></data>
   <data name="Launcher.Join.Odd.Title" xml:space="preserve"><value>Этот адрес не похож на домашнюю сеть</value></data>
+  <data name="Launcher.Join.Cert.Title" xml:space="preserve"><value>Игроки один раз увидят предупреждение о сертификате</value></data>
+  <data name="Launcher.Join.Cert.Detail" xml:space="preserve"><value>Стол работает по HTTPS с сертификатом, который этот компьютер создал сам для себя. Браузеры не могут его подтвердить, поэтому при первом посещении игрок увидит предупреждение: нужно выбрать «Дополнительно», затем «Продолжить». Соединение при этом зашифровано.</value></data>
   <data name="Launcher.Join.Odd.Detail" xml:space="preserve"><value>Домашние и офисные сети обычно начинаются с 192.168 или 10. Возможно, включён VPN или вы в общедоступной сети. Игрокам в вашей сети Wi-Fi может понадобиться другой адрес.</value></data>
   <data name="Launcher.Join.Multi.Title" xml:space="preserve"><value>У этого компьютера несколько адресов</value></data>
   <data name="Launcher.Join.Multi.Detail" xml:space="preserve"><value>Если первая ссылка не работает, попробуйте одну из этих: {0}.</value></data>

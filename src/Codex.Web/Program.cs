@@ -252,7 +252,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// The launcher serves the DM on plain loopback HTTP beside the players' HTTPS address, so it turns the redirect off.
+if (app.Configuration.GetValue("Codex:HttpsRedirect", true)) app.UseHttpsRedirection();
 
 // Language: the culture cookie (set by /set-culture) wins; then the install-wide default the launcher
 // passes as Codex:DefaultCulture; only without one does the browser's Accept-Language decide.
