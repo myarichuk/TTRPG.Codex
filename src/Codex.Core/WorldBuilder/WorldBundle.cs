@@ -53,7 +53,11 @@ public enum EditTarget
     /// <summary>A cast member's history, which players read once the character is revealed.</summary>
     Actor,
     /// <summary>A homebrew Library entry: its name, rules text, fields and tags (<c>existing:homebrew:&lt;type&gt;/&lt;entryId&gt;</c>).</summary>
-    Homebrew
+    Homebrew,
+    /// <summary>A region: its name, what kind it is, or deleting it with every place in it (<c>existing:region:&lt;id&gt;</c>).</summary>
+    Region,
+    /// <summary>A secret or rumour in Lore: its name (the fact itself) and details (<c>existing:fact:&lt;id&gt;</c>).</summary>
+    Fact
 }
 
 /// <summary>A proposed feature's notes for the DM (see <c>PlaceFeature</c>): free text in the campaign's own terms, empty for none.</summary>
@@ -172,8 +176,17 @@ public sealed class WorldDraft
     /// <summary>For a variant: where the entry it starts from comes from (a pack's name), kept as the homebrew's attribution.</summary>
     public string? ImportedFrom { get; set; }
 
-    /// <summary>For an edit of a homebrew entry: its new name, when it gets one.</summary>
+    /// <summary>For an edit: its new name, when it gets one (a place, a cast member, a page's title, a homebrew entry).</summary>
     public string? Rename { get; set; }
+
+    /// <summary>For an edit: the thing is deleted, and nothing else about the entry applies. A place's own places move up to its parent.</summary>
+    public bool Remove { get; set; }
+
+    /// <summary>For an edit of a region: what kind of region it becomes ("dungeon", "vessel"...).</summary>
+    public string? RegionKind { get; set; }
+
+    /// <summary>For an edit of a place: it moves to <see cref="Parent"/> (null: out to the top of its region). Without it the place stays where it is.</summary>
+    public bool MoveTo { get; set; }
 
     /// <summary>For an edit of a homebrew entry: <see cref="Tags"/> are its complete new tags. Otherwise its tags stay.</summary>
     public bool Retag { get; set; }
@@ -220,6 +233,12 @@ public sealed class WorldBundle
     /// <summary>The prefix of an existing homebrew entry, after <see cref="ExistingPrefix"/>: <c>existing:homebrew:&lt;type&gt;/&lt;entryId&gt;</c>.</summary>
     public const string HomebrewPrefix = "homebrew:";
 
+    /// <summary>The prefix of an existing region, after <see cref="ExistingPrefix"/>: <c>existing:region:&lt;id&gt;</c>.</summary>
+    public const string RegionPrefix = "region:";
+
+    /// <summary>The prefix of an existing secret in Lore, after <see cref="ExistingPrefix"/>: <c>existing:fact:&lt;id&gt;</c>.</summary>
+    public const string FactPrefix = "fact:";
+
     /// <summary>What an <c>existing:</c> key points at: a place (<c>existing:place:id</c>), a cast member (<c>existing:actor:id</c>)
     /// or, otherwise, a wiki page by slug. <paramref name="id"/> is the key without its prefixes.</summary>
     public static EditTarget ParseTarget(string key, out string id)
@@ -242,6 +261,18 @@ public sealed class WorldBundle
         {
             id = rest[HomebrewPrefix.Length..];
             return EditTarget.Homebrew;
+        }
+
+        if (rest.StartsWith(RegionPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[RegionPrefix.Length..];
+            return EditTarget.Region;
+        }
+
+        if (rest.StartsWith(FactPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            id = rest[FactPrefix.Length..];
+            return EditTarget.Fact;
         }
 
         id = rest;
@@ -274,7 +305,7 @@ public sealed class WorldBundle
         while (pending.Count > 0)
         {
             var parent = pending.Dequeue();
-            foreach (var child in Drafts.Where(d => d.Selected && d.Kind == DraftKinds.Place && !gone.Contains(d)
+            foreach (var child in Drafts.Where(d => d.Selected && (d.Kind == DraftKinds.Place || d is { Kind: DraftKinds.Edit, MoveTo: true }) && !gone.Contains(d)
                          && string.Equals(d.Parent, parent.Ref, StringComparison.OrdinalIgnoreCase)))
             {
                 gone.Add(child);
@@ -309,7 +340,7 @@ public sealed class WorldBundle
         draft.Selected = true;
         var also = new List<WorldDraft>();
         var at = draft;
-        while (at.Kind == DraftKinds.Place && at.Parent is { Length: > 0 } parent && Find(parent) is { } up && !also.Contains(up) && up != draft)
+        while ((at.Kind == DraftKinds.Place || at is { Kind: DraftKinds.Edit, MoveTo: true }) && at.Parent is { Length: > 0 } parent && Find(parent) is { } up && !also.Contains(up) && up != draft)
         {
             if (!up.Selected)
             {
@@ -339,7 +370,9 @@ public sealed record ProposalRules(
     Func<string, IReadOnlyList<FieldSpec>> HomebrewFields,
     Func<string, string, string>? Canonical = null,
     IReadOnlyCollection<string>? ExistingActors = null,
-    IReadOnlyDictionary<string, string>? ExistingHomebrew = null);
+    IReadOnlyDictionary<string, string>? ExistingHomebrew = null,
+    IReadOnlyDictionary<string, string>? ExistingRegions = null,
+    IReadOnlyDictionary<string, string>? ExistingFacts = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -533,7 +566,7 @@ public static class WorldBundleParser
                 // A page's own tags, besides the one saying what kind of page it is.
                 if (DraftKinds.IsPage(kind)) draft.Tags = ReadTagList(element, "tags");
 
-                if (kind != DraftKinds.Place && FieldCoercion.String(element, "parent") is { Length: > 0 })
+                if (kind is not (DraftKinds.Place or DraftKinds.Edit) && FieldCoercion.String(element, "parent") is { Length: > 0 })
                 {
                     warnings.Add($"{label}: only a place has a parent; it was ignored.");
                 }
@@ -579,12 +612,33 @@ public static class WorldBundleParser
                     if (resolved != null && !draft.Links.Contains(resolved)) draft.Links.Add(resolved);
                 }
 
-                if (draft.Kind != DraftKinds.Place || draft.Parent == null) continue;
+                if (draft is { Kind: DraftKinds.Edit, Remove: true, Target: { } deleted })
+                {
+                    // A place deleted while another entry goes inside it would leave that entry nowhere.
+                    foreach (var inside in bundle.Drafts.Where(d => d != draft && string.Equals(d.Parent, deleted, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        errors.Add($"{inside.Ref} ({inside.Kind} '{inside.Name}'): its parent '{inside.Parent}' is deleted by {draft.Ref}; choose another parent.");
+                    }
+                }
+
+                if (!(draft.Kind == DraftKinds.Place || draft is { Kind: DraftKinds.Edit, MoveTo: true }) || draft.Parent == null) continue;
+                if (draft.Kind == DraftKinds.Edit && string.Equals(draft.Parent, draft.Target, StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"{label}: a place cannot be moved inside itself.");
+                    continue;
+                }
+
                 if (draft.Parent.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!places.Contains(draft.Parent[(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix).Length..]))
+                    var wanted = draft.Parent[(WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix).Length..];
+                    if (rules.ExistingPlaces.FirstOrDefault(p => string.Equals(p, wanted, StringComparison.OrdinalIgnoreCase)) is not { } storedPlace)
                     {
                         errors.Add($"{label}: parent '{draft.Parent}' is not a place the campaign has; use an id from list_places.");
+                    }
+                    else
+                    {
+                        // The id as stored, whatever its case in the key: the check and the save compare it exactly.
+                        draft.Parent = WorldBundle.ExistingPrefix + WorldBundle.PlacePrefix + storedPlace;
                     }
 
                     continue;
@@ -637,6 +691,8 @@ public static class WorldBundleParser
             EditTarget.Place => rules.ExistingPlaces.FirstOrDefault(p => string.Equals(p, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Actor => rules.ExistingActors?.FirstOrDefault(a => string.Equals(a, id, StringComparison.OrdinalIgnoreCase)),
             EditTarget.Homebrew => rules.ExistingHomebrew?.Keys.FirstOrDefault(h => string.Equals(h, id, StringComparison.OrdinalIgnoreCase)),
+            EditTarget.Region => rules.ExistingRegions?.Keys.FirstOrDefault(r => string.Equals(r, id, StringComparison.OrdinalIgnoreCase)),
+            EditTarget.Fact => rules.ExistingFacts?.Keys.FirstOrDefault(f => string.Equals(f, id, StringComparison.OrdinalIgnoreCase)),
             _ => pages.Keys.FirstOrDefault(slug => string.Equals(slug, id, StringComparison.OrdinalIgnoreCase))
         };
         if (stored == null)
@@ -653,6 +709,8 @@ public static class WorldBundleParser
             EditTarget.Place => WorldBundle.PlacePrefix + id,
             EditTarget.Actor => WorldBundle.ActorPrefix + id,
             EditTarget.Homebrew => WorldBundle.HomebrewPrefix + id,
+            EditTarget.Region => WorldBundle.RegionPrefix + id,
+            EditTarget.Fact => WorldBundle.FactPrefix + id,
             _ => id
         };
         if (bundle.Drafts.Any(d => d.Kind == DraftKinds.Edit && string.Equals(d.Target, canonical, StringComparison.OrdinalIgnoreCase)))
@@ -668,17 +726,80 @@ public static class WorldBundleParser
             return false;
         }
 
+        draft.Remove = element.TryGetProperty("delete", out var delete) && delete.ValueKind == JsonValueKind.True;
+        draft.Rename = Cut(FieldCoercion.String(element, "rename"), MaxName) is { Length: > 0 } rename ? rename : null;
+        var moves = false;
+        if (kind == EditTarget.Place)
+        {
+            // "parent" present, even empty, says where the place goes; empty or "none" is out to the top of its region.
+            // A "parent" says where the place goes; "none" or "top" is out to the top of its region. An empty one (a model that
+            // fills every optional field) says nothing, so the place stays where it is.
+            if (FieldCoercion.String(element, "parent")?.Trim() is { Length: > 0 } parent)
+            {
+                moves = true;
+                draft.MoveTo = true;
+                draft.Parent = parent.Equals("none", StringComparison.OrdinalIgnoreCase) || parent.Equals("top", StringComparison.OrdinalIgnoreCase) ? null : parent;
+            }
+
+            draft.PlaceKind = OneOf(FieldCoercion.String(element, "placeKind"), PlaceKinds);
+            if (draft.PlaceKind == null && FieldCoercion.String(element, "placeKind") is { Length: > 0 } badKind)
+            {
+                errors.Add($"{label}: placeKind '{badKind}' is not one of {string.Join(", ", PlaceKinds)}.");
+                return false;
+            }
+        }
+
+        if (kind == EditTarget.Region)
+        {
+            draft.RegionKind = OneOf(FieldCoercion.String(element, "regionKind"), RegionKinds);
+            if (draft.RegionKind == null && FieldCoercion.String(element, "regionKind") is { Length: > 0 } badRegionKind)
+            {
+                errors.Add($"{label}: regionKind '{badRegionKind}' is not one of {string.Join(", ", RegionKinds)}.");
+                return false;
+            }
+
+            if (draft.Body != null)
+            {
+                errors.Add($"{label}: a region has no text; change its \"rename\", its \"regionKind\", or \"delete\" it.");
+                return false;
+            }
+        }
+
+        // A cast member's stat block is laid over from another Library creature; their other sheet entries stay.
+        if (kind == EditTarget.Actor && Cut(FieldCoercion.String(element, "stats"), MaxStats) is { Length: > 0 } restat) draft.SuggestedStats = restat;
+
+        if (draft.Remove)
+        {
+            if (draft.Body != null || draft.Rename != null || moves || draft.PlaceKind != null || draft.RegionKind != null || draft.SuggestedStats != null || draft.Properties.Count > 0)
+            {
+                errors.Add($"{label}: a \"delete\" stands alone; make the other changes in a separate entry, or none.");
+                return false;
+            }
+
+            draft.Target = canonical;
+            // A delete is the game master's to tick: it arrives unticked, so applying everything never deletes anything unlooked-at.
+            draft.Selected = false;
+            draft.Name = kind switch
+            {
+                EditTarget.Homebrew => rules.ExistingHomebrew![id],
+                EditTarget.Region => rules.ExistingRegions![id],
+                EditTarget.Fact => rules.ExistingFacts![id],
+                _ => draft.Name.Length > 0 ? draft.Name : canonical
+            };
+            draft.OutlineName = draft.Name;
+            return true;
+        }
+
         if (kind == EditTarget.Homebrew)
         {
             var type = id.Split('/')[0];
             ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical);
             draft.Type = type;
-            draft.Rename = Cut(FieldCoercion.String(element, "rename"), MaxName) is { Length: > 0 } rename ? rename : null;
             // Tags only change when the model names them: an edit of the text alone keeps the entry's tags.
             draft.Retag = element.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array;
             if (draft.Body == null && draft.Properties.Count == 0 && draft.Rename == null && !draft.Retag)
             {
-                errors.Add($"{label}: the edit changes nothing; give a new \"text\" (the complete rules text), the \"properties\" that change, a \"rename\" or the complete new \"tags\".");
+                errors.Add($"{label}: the edit changes nothing; give a new \"text\" (the complete rules text), the \"properties\" that change, a \"rename\" or the complete new \"tags\", or \"delete\": true.");
                 return false;
             }
 
@@ -688,14 +809,26 @@ public static class WorldBundleParser
             return true;
         }
 
-        if (draft.Body == null)
+        if (draft.Body == null && draft.Rename == null && !moves && draft.PlaceKind == null && draft.RegionKind == null && draft.SuggestedStats == null)
         {
-            errors.Add($"{label}: an edit needs its \"text\": the COMPLETE new text, which replaces the old one.");
+            errors.Add($"{label}: an edit needs something to change: its \"text\" (the COMPLETE new text, which replaces the old one), a \"rename\"" +
+                       (kind == EditTarget.Place ? ", a new \"parent\", a \"placeKind\"" : kind == EditTarget.Region ? ", a \"regionKind\"" : kind == EditTarget.Actor ? ", new \"stats\"" : string.Empty) +
+                       ", or \"delete\": true.");
             return false;
         }
 
         draft.Target = canonical;
-        if (draft.Name.Length == 0) draft.Name = kind == EditTarget.Page && pages.TryGetValue(id, out var title) ? title : canonical;
+        if (draft.Name.Length == 0)
+        {
+            draft.Name = kind switch
+            {
+                EditTarget.Page when pages.TryGetValue(id, out var title) => title,
+                EditTarget.Region => rules.ExistingRegions![id],
+                EditTarget.Fact => rules.ExistingFacts![id],
+                _ => canonical
+            };
+        }
+
         draft.OutlineName = draft.Name;
         return true;
     }

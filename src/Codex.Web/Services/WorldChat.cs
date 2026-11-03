@@ -207,6 +207,7 @@ public sealed partial class WorldChat
                 Reasoning = thought.Length == 0 ? null : thought.Length <= MaxReasoning ? thought : "…" + thought[^MaxReasoning..],
                 Usage = usage
             });
+            StripReasoning();
             await SaveAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException && !(ex is LocalizedException) && !ct.IsCancellationRequested && SaysNoTools(ex))
@@ -251,6 +252,20 @@ public sealed partial class WorldChat
     }
 
     private void Raise() => Changed?.Invoke();
+
+    /// <summary>Drops the model's reasoning from the history once the turn is over. Anthropic wants the thinking blocks of a tool
+    /// loop sent back while the turn runs (the nudge retry resends them), signed against the conversation before them; the next
+    /// message rebuilds the system prompt and cuts old tool results, so blocks kept past the turn are refused ("bound to a different
+    /// conversation"). Messages left with nothing in them go too, as blank ones are not part of a conversation.</summary>
+    private void StripReasoning()
+    {
+        foreach (var message in history)
+        {
+            if (message.Contents.Any(c => c is TextReasoningContent)) message.Contents = message.Contents.Where(c => c is not TextReasoningContent).ToList();
+        }
+
+        history.RemoveAll(m => m.Contents.Count == 0);
+    }
 
     /// <summary>The name a chat gets from its first message: its first line, cut at a word near 60 characters.</summary>
     public static string TitleFrom(string message)

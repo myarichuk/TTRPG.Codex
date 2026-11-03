@@ -32,6 +32,10 @@
   <data name="WorldChat.Edit.Page" xml:space="preserve"><value>מחליף את הטקסט של הדף</value></data>
   <data name="WorldChat.Edit.Place" xml:space="preserve"><value>מחליף את תיאור המקום</value></data>
   <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>מחליף את הרקע של הדמות</value></data>
+  <data name="WorldChat.Edit.Region" xml:space="preserve"><value>משנה את האזור</value></data>
+  <data name="WorldChat.Edit.Fact" xml:space="preserve"><value>משנה את הסוד</value></data>
+  <data name="WorldChat.Proposal.DeletesRegion" xml:space="preserve"><value>מוחק את האזור „{0}” ואת כל המקומות שבו.</value></data>
+  <data name="WorldChat.Proposal.Restat" xml:space="preserve"><value>מניח את גיליון הנתונים של {0} על הדמות; שאר הגיליון נשאר.</value></data>
   <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>הטקסט הנוכחי</value></data>
   <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>השחקנים כבר יכולים לקרוא את זה, ולכן החלה תשנה את מה שהם רואים.</value></data>
   <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{צעד אחד} two{# צעדים} other{# צעדים}}</value></data>
@@ -147,6 +151,12 @@
   <data name="WorldChat.Proposal.TagsLabel" xml:space="preserve"><value>תגיות</value></data>
   <data name="WorldChat.Proposal.NoTags" xml:space="preserve"><value>ללא תגיות</value></data>
   <data name="WorldChat.Proposal.Renamed" xml:space="preserve"><value>שם חדש: „{0}”</value></data>
+  <data name="WorldChat.Proposal.Deletes" xml:space="preserve"><value>מוחק את „{0}”. אי אפשר להחזיר אותו מכאן.</value></data>
+  <data name="WorldChat.Proposal.Retires" xml:space="preserve"><value>מוציא את „{0}” מהמשחק: מחוץ לשולחן, אבל הדף וההזכרות שלו נשארים.</value></data>
+  <data name="WorldChat.Proposal.DeletesPlace" xml:space="preserve"><value>מוחק את המקום „{0}”. המקומות שבתוכו עולים לרמה של האב שלו.</value></data>
+  <data name="WorldChat.Proposal.MovesTo" xml:space="preserve"><value>עובר אל תוך {0}</value></data>
+  <data name="WorldChat.Proposal.MovesToTop" xml:space="preserve"><value>יוצא אל ראש האזור שלו</value></data>
+  <data name="WorldChat.Proposal.BecomesKind" xml:space="preserve"><value>הופך ל: {0}</value></data>
   <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{תגיות לדף או רשומה אחת} two{תגיות ל-# דפים ורשומות} other{תגיות ל-# דפים ורשומות}}</value></data>
   <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>היצור הזה כבר בספר המפלצות.</value></data>
   <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>מוסיף את „{0}” לספר המפלצות של המערכה.</value></data>

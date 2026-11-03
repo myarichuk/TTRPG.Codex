@@ -46,28 +46,34 @@ public sealed class ProposalEntry
     [JsonPropertyName("pitch"), Description("One or two plain sentences, at most 300 characters, saying what the entry is: shown in lists and on the review card, and as a place's short description.")]
     public string? Pitch { get; set; }
 
-    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page, list_places or search_library show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description), existing:actor:<id> (a cast member's history) or existing:homebrew:<type>/<id> (a homebrew entry). For a page, place or cast member the \"text\" is then the COMPLETE new text, replacing the old.")]
+    [JsonPropertyName("target"), Description("For an edit: the key of what to change, as search_world, get_page, list_places or search_library show it: existing:<slug> (a page's text), existing:place:<id> (a place's short description), existing:actor:<id> (a cast member's history) or existing:homebrew:<type>/<id> (a homebrew entry), existing:region:<id> (a region) or existing:fact:<id> (a secret in Lore). When the edit changes the text of a page, place or cast member, the \"text\" is the COMPLETE new text, replacing the old; an edit may instead (or also) rename, move or retype a place, or delete.")]
     public string? Target { get; set; }
 
-    [JsonPropertyName("rename"), Description("For an edit of a homebrew entry: its new name, when it should get one.")]
+    [JsonPropertyName("rename"), Description("For an edit: its new name, when it should get one (a place, a cast member, a page's title or a homebrew entry).")]
     public string? Rename { get; set; }
+
+    [JsonPropertyName("regionKind"), Description("For an edit of a region: what it becomes: general, realm, wilderness, city, dungeon, vessel or plane.")]
+    public string? RegionKind { get; set; }
+
+    [JsonPropertyName("delete"), Description("For an edit: true to delete what the target names (a place, page, cast member or homebrew entry). It stands alone, with no other change in the entry. The places inside a deleted place move up to its parent. The game master reviews and ticks it like any change; nothing is deleted until they apply it.")]
+    public bool? Delete { get; set; }
 
     [JsonPropertyName("links"), Description("Refs and existing:slug keys this entry is about (a fact's subjects).")]
     public List<string>? Links { get; set; }
 
-    [JsonPropertyName("placeKind"), Description("For a place: area, settlement, district, site (a building, ship or dungeon), section (a floor, deck or wing; one floor of a dungeon), room, or feature (a chest, safe, altar or secret door in a room).")]
+    [JsonPropertyName("placeKind"), Description("For a place, or an edit of one (to change its kind): area, settlement, district, site (a building, ship or dungeon), section (a floor, deck or wing; one floor of a dungeon), room, or feature (a chest, safe, altar or secret door in a room).")]
     public string? PlaceKind { get; set; }
 
     [JsonPropertyName("feature"), Description("For a feature: the game master's notes on what the party can open, find or be attacked by. Players never see them.")]
     public ProposalFeature? Feature { get; set; }
 
-    [JsonPropertyName("parent"), Description("For a place: the ref of the place entry it is inside, or existing:place:<id>.")]
+    [JsonPropertyName("parent"), Description("For a place: the ref of the place entry it is inside, or existing:place:<id>. For an edit of a place: where it moves to (the same region only); empty or \"none\" moves it out to the top of its region; leave it out to keep it where it is.")]
     public string? Parent { get; set; }
 
     [JsonPropertyName("cast"), Description("For an npc: true to add them to the cast too.")]
     public bool? Cast { get; set; }
 
-    [JsonPropertyName("stats"), Description("For an npc who fights: the Library creature whose statistics suit them, as search_library names it.")]
+    [JsonPropertyName("stats"), Description("For an npc who fights: the Library creature whose statistics suit them, as search_library names it. For an edit of a cast member: the Library creature (type/id) whose stat block is laid over their sheet.")]
     public string? Stats { get; set; }
 
     [JsonPropertyName("pageKind"), Description("For a wiki page: lore, faction or quest.")]

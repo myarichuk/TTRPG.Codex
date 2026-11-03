@@ -32,6 +32,10 @@
   <data name="WorldChat.Edit.Page" xml:space="preserve"><value>replaces the page's text</value></data>
   <data name="WorldChat.Edit.Place" xml:space="preserve"><value>replaces the place's description</value></data>
   <data name="WorldChat.Edit.Actor" xml:space="preserve"><value>replaces the character's history</value></data>
+  <data name="WorldChat.Edit.Region" xml:space="preserve"><value>changes the region</value></data>
+  <data name="WorldChat.Edit.Fact" xml:space="preserve"><value>changes the secret</value></data>
+  <data name="WorldChat.Proposal.DeletesRegion" xml:space="preserve"><value>Deletes the region “{0}” and every place in it.</value></data>
+  <data name="WorldChat.Proposal.Restat" xml:space="preserve"><value>Lays the stat block of {0} over their sheet; the rest of the sheet stays.</value></data>
   <data name="WorldChat.Proposal.Current" xml:space="preserve"><value>Current text</value></data>
   <data name="WorldChat.Proposal.Shared" xml:space="preserve"><value>Players can already read this, so applying it changes what they see.</value></data>
   <data name="WorldChat.Steps" xml:space="preserve"><value>{0, plural, one{# step} other{# steps}}</value></data>
@@ -147,6 +151,12 @@
   <data name="WorldChat.Proposal.TagsLabel" xml:space="preserve"><value>Tags</value></data>
   <data name="WorldChat.Proposal.NoTags" xml:space="preserve"><value>no tags</value></data>
   <data name="WorldChat.Proposal.Renamed" xml:space="preserve"><value>Renamed to “{0}”</value></data>
+  <data name="WorldChat.Proposal.Deletes" xml:space="preserve"><value>Deletes “{0}”. It cannot be brought back from here.</value></data>
+  <data name="WorldChat.Proposal.Retires" xml:space="preserve"><value>Retires “{0}”: out of play and off the table, but their page and mentions stay.</value></data>
+  <data name="WorldChat.Proposal.DeletesPlace" xml:space="preserve"><value>Deletes the place “{0}”. The places inside it move up to its parent.</value></data>
+  <data name="WorldChat.Proposal.MovesTo" xml:space="preserve"><value>Moves inside {0}</value></data>
+  <data name="WorldChat.Proposal.MovesToTop" xml:space="preserve"><value>Moves out to the top of its region</value></data>
+  <data name="WorldChat.Proposal.BecomesKind" xml:space="preserve"><value>Becomes: {0}</value></data>
   <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{Tags # page or entry} other{Tags # pages and entries}}</value></data>
   <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>This creature is already on the Bestiary.</value></data>
   <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>Puts {0} on the campaign's Bestiary.</value></data>

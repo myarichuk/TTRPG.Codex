@@ -32,6 +32,18 @@ public static class PlaceTree
         return ordered;
     }
 
+    /// <summary>The place with this id and every place inside it, at any depth.</summary>
+    public static IReadOnlyList<LocationDocument> Subtree(IReadOnlyCollection<LocationDocument> places, string placeId)
+    {
+        var found = places.Where(p => p.Id == placeId).Take(1).ToList();
+        for (var i = 0; i < found.Count; i++)
+        {
+            found.AddRange(places.Where(p => p.ParentId == found[i].Id && found.All(f => f.Id != p.Id)));
+        }
+
+        return found;
+    }
+
     /// <summary>The places <paramref name="place"/> is inside, outermost first.</summary>
     public static IReadOnlyList<LocationDocument> Ancestors(IReadOnlyCollection<LocationDocument> places, LocationDocument place)
     {

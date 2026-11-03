@@ -39,6 +39,134 @@ public class WorldBuilderTests
         actors);
 
     [Fact]
+    public void PlaceEdit_CanRenameMoveAndRetypeWithoutNewText()
+    {
+        var json = """
+            {"entries": [
+              {"ref": "n", "kind": "place", "name": "Deck", "placeKind": "section"},
+              {"ref": "e1", "kind": "edit", "target": "existing:place:old-town", "rename": "Old Quarter", "parent": "n", "placeKind": "room"}
+            ]}
+            """;
+        var check = WorldBundleParser.ParseProposal(json, Rules());
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        var edit = check.Bundle.Drafts[1];
+        Assert.True(edit.MoveTo);
+        Assert.Equal("n", edit.Parent);
+        Assert.Equal("room", edit.PlaceKind);
+        Assert.Equal("Old Quarter", edit.Rename);
+        Assert.Null(edit.Body);
+    }
+
+    [Fact]
+    public void PlaceEdit_EmptyParentMovesToTheTop_AndNoParentLeavesItBe()
+    {
+        var top = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "parent": "none"}]}""", Rules());
+        Assert.True(top.Ok);
+        Assert.True(top.Bundle.Drafts[0] is { MoveTo: true, Parent: null });
+        var stay = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "text": "New."}]}""", Rules());
+        Assert.False(stay.Bundle.Drafts[0].MoveTo);
+    }
+
+    [Fact]
+    public void Edit_Delete_StandsAloneAndNeedsNoText()
+    {
+        var ok = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "delete": true}]}""", Rules());
+        Assert.True(ok.Ok, string.Join("; ", ok.Errors));
+        Assert.True(ok.Bundle.Drafts[0].Remove);
+
+        var mixed = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "delete": true, "rename": "X"}]}""", Rules());
+        Assert.Contains(mixed.Errors, e => e.Contains("delete") && e.Contains("alone"));
+    }
+
+    [Fact]
+    public void Edit_WithNothingToChange_IsRefused()
+    {
+        var check = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town"}]}""", Rules());
+        Assert.Contains(check.Errors, e => e.Contains("something to change"));
+    }
+
+    [Fact]
+    public void PlaceEdit_CannotMoveInsideItself_OrIntoADeletedPlace()
+    {
+        var itself = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "parent": "existing:place:old-town"}]}""", Rules());
+        Assert.Contains(itself.Errors, e => e.Contains("inside itself"));
+
+        var deleted = WorldBundleParser.ParseProposal("""
+            {"entries": [
+              {"ref": "n", "kind": "place", "name": "Hall", "parent": "existing:place:old-town"},
+              {"kind": "edit", "target": "existing:place:old-town", "delete": true}
+            ]}
+            """, Rules());
+        Assert.Contains(deleted.Errors, e => e.Contains("is deleted by"));
+    }
+
+    private static ProposalRules RulesWithRegionsAndFacts() => Rules() with
+    {
+        ExistingRegions = new Dictionary<string, string> { ["r1"] = "Greymist Shore" },
+        ExistingFacts = new Dictionary<string, string> { ["f1"] = "The captain is a smuggler" },
+        ExistingActors = new[] { "a1" }
+    };
+
+    [Fact]
+    public void RegionEdit_RenamesAndRetypes_AndHasNoText()
+    {
+        var ok = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:region:r1", "rename": "Greymist Coast", "regionKind": "vessel"}]}""", RulesWithRegionsAndFacts());
+        Assert.True(ok.Ok, string.Join("; ", ok.Errors));
+        Assert.True(ok.Bundle.Drafts[0] is { RegionKind: "vessel", Rename: "Greymist Coast" });
+
+        var text = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:region:r1", "text": "x"}]}""", RulesWithRegionsAndFacts());
+        Assert.Contains(text.Errors, e => e.Contains("no text"));
+
+        var badKind = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:region:r1", "regionKind": "swamp"}]}""", RulesWithRegionsAndFacts());
+        Assert.Contains(badKind.Errors, e => e.Contains("regionKind"));
+
+        var gone = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:region:nope", "delete": true}]}""", RulesWithRegionsAndFacts());
+        Assert.False(gone.Ok);
+    }
+
+    [Fact]
+    public void FactEdit_ChangesDetailsAndSummary_OrDeletes()
+    {
+        var edit = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:fact:f1", "text": "Now with details.", "rename": "The captain smuggles"}]}""", RulesWithRegionsAndFacts());
+        Assert.True(edit.Ok, string.Join("; ", edit.Errors));
+        Assert.Equal("Now with details.", edit.Bundle.Drafts[0].Body);
+
+        var delete = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:fact:f1", "delete": true}]}""", RulesWithRegionsAndFacts());
+        Assert.True(delete.Ok);
+        Assert.Equal("The captain is a smuggler", delete.Bundle.Drafts[0].Name);
+    }
+
+    [Fact]
+    public void ActorEdit_CanReStatWithoutNewHistory()
+    {
+        var check = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:actor:a1", "stats": "monster/veteran"}]}""", RulesWithRegionsAndFacts());
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Equal("monster/veteran", check.Bundle.Drafts[0].SuggestedStats);
+        Assert.Null(check.Bundle.Drafts[0].Body);
+    }
+
+    [Fact]
+    public void PlaceEdit_EmptyParentIsNotAMove_AndAnExistingParentTakesTheStoredCase()
+    {
+        var empty = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "parent": "", "text": "New."}]}""", Rules());
+        Assert.True(empty.Ok);
+        Assert.False(empty.Bundle.Drafts[0].MoveTo);
+
+        var cased = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:OLD-TOWN", "parent": "Existing:place:OLD-town"}]}""", Rules());
+        Assert.Contains(cased.Errors, e => e.Contains("inside itself"));
+        var other = WorldBundleParser.ParseProposal("""{"entries": [{"ref": "n", "kind": "place", "name": "Hall"}, {"kind": "edit", "target": "existing:place:old-town", "parent": "n"}]}""", Rules());
+        Assert.True(other.Ok);
+    }
+
+    [Fact]
+    public void Delete_ArrivesUnticked()
+    {
+        var check = WorldBundleParser.ParseProposal("""{"entries": [{"kind": "edit", "target": "existing:place:old-town", "delete": true}]}""", Rules());
+        var deleted = check.Bundle.Drafts[0];
+        Assert.False(deleted.Selected);
+    }
+
+    [Fact]
     public void Place_WithoutAPitch_GetsOneWhoseRefsResolveToTheNamesTheEntriesWereSavedUnder()
     {
         // The model gives refs ([[p1]], [[n5]]) in the text and no pitch of its own, so the pitch is derived from the text.
