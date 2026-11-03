@@ -66,6 +66,10 @@
   <data name="WorldChat.Tool.Fields" xml:space="preserve"><value>נבדקו השדות של {0}</value></data>
   <data name="WorldChat.Tool.Propose" xml:space="preserve"><value>הוצעו {0} רשומות</value></data>
   <data name="WorldChat.Proposal.Title" xml:space="preserve"><value>הצעה</value></data>
+  <data name="WorldChat.Ledger.Show" xml:space="preserve"><value>הצגת ההצעה</value></data>
+  <data name="WorldChat.Ledger.Hide" xml:space="preserve"><value>הסתרת ההצעה</value></data>
+  <data name="WorldChat.Ledger.Pin" xml:space="preserve"><value>השארת ההצעה פתוחה</value></data>
+  <data name="WorldChat.Ledger.Unpin" xml:space="preserve"><value>הסתרת ההצעה כשאין בה דבר</value></data>
   <data name="WorldChat.Proposal.Hint" xml:space="preserve"><value>פתחו רשומה כדי לקרוא אותה. בטלו את הסימון ממה שלא תרצו; הכול נשמר מוסתר מהשחקנים.</value></data>
   <data name="WorldChat.Proposal.Warnings" xml:space="preserve"><value>{0, plural, one{דבר אחד ששווה לבדוק} two{# דברים ששווה לבדוק} other{# דברים ששווה לבדוק}}</value></data>
   <data name="WorldChat.Proposal.Cast" xml:space="preserve"><value>להוסיף גם לדמויות</value></data>

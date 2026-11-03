@@ -63,16 +63,21 @@ internal static class JoinCheck
         }
         else
         {
-            var best = $"http://{addresses[0]}:{settings.Port}";
+            var best = settings.NetworkUrl(addresses[0]);
             results.Add(new(CheckStatus.Ok, L["Launcher.Join.UseLink.Title"], Isolate(best)));
             if (!LanAddress.IsPrivate(IPAddress.Parse(addresses[0])))
             {
                 results.Add(new(CheckStatus.Warn, L["Launcher.Join.Odd.Title"], L["Launcher.Join.Odd.Detail"]));
             }
 
+            if (settings.TlsActive)
+            {
+                results.Add(new(CheckStatus.Info, L["Launcher.Join.Cert.Title"], L["Launcher.Join.Cert.Detail"]));
+            }
+
             if (addresses.Count > 1)
             {
-                var others = string.Join(", ", addresses.Skip(1).Select(a => Isolate($"http://{a}:{settings.Port}")));
+                var others = string.Join(", ", addresses.Skip(1).Select(a => Isolate(settings.NetworkUrl(a))));
                 results.Add(new(CheckStatus.Info, L["Launcher.Join.Multi.Title"], L["Launcher.Join.Multi.Detail", others]));
             }
 
@@ -91,7 +96,7 @@ internal static class JoinCheck
 
         if (tailnet != null)
         {
-            results.Add(new(CheckStatus.Info, L["Launcher.Join.Tailscale.Title"], L["Launcher.Join.Tailscale.Detail", Isolate($"http://{tailnet}:{settings.Port}")]));
+            results.Add(new(CheckStatus.Info, L["Launcher.Join.Tailscale.Title"], L["Launcher.Join.Tailscale.Detail", Isolate(settings.NetworkUrl(tailnet))]));
         }
 
         results.Add(new(CheckStatus.Info, L["Launcher.Join.Unknown.Title"], L["Launcher.Join.Unknown.Detail"]));
@@ -118,7 +123,9 @@ internal static class JoinCheck
     {
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(4) };
+            // This computer's own certificate is self-signed; here only whether the server answers matters.
+            using var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true };
+            using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(4) };
             using var response = await http.GetAsync(url + "/login");
             return response.IsSuccessStatusCode;
         }

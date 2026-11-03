@@ -107,6 +107,21 @@ internal sealed class ServerController : IDisposable
             if (host != "dotnet") info.Environment["DOTNET_ROOT"] = Path.GetDirectoryName(host)!;
             info.Environment["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1";
             info.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
+            // Players on the network get HTTPS with a certificate made here; without one (or with HTTPS turned off in
+            // launcher.json) the server serves plain HTTP as it always did.
+            settings.TlsActive = false;
+            if (settings.AllowLan && settings.Https)
+            {
+                var names = LocalCertificate.Names(LanAddress.All().Concat(LanAddress.Tailnet() is { } tn ? new[] { tn } : Array.Empty<string>()));
+                if (LocalCertificate.Ensure(LauncherPaths.CertificateFile(dataHome), names, note: Note) is { } pfx)
+                {
+                    settings.TlsActive = true;
+                    info.Environment["Kestrel__Certificates__Default__Path"] = pfx;
+                    // Loopback stays plain HTTP, so the DM's browser never meets the redirect or a warning.
+                    info.Environment["Codex__HttpsRedirect"] = "false";
+                }
+            }
+
             info.Environment["ASPNETCORE_URLS"] = settings.BindUrl;
             info.Environment["Codex__DataDirectory"] = LauncherPaths.RavenData(dataHome);
             info.Environment["Codex__StopOnStdinClose"] = "true";

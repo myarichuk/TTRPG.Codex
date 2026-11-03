@@ -115,6 +115,8 @@
   <data name="Launcher.Join.NoAddress.Detail" xml:space="preserve"><value>נראה שהוא לא מחובר ל-Wi-Fi או לכבל. התחברו לרשת ואז בדקו שוב.</value></data>
   <data name="Launcher.Join.UseLink.Title" xml:space="preserve"><value>השחקנים משתמשים בקישור הזה</value></data>
   <data name="Launcher.Join.Odd.Title" xml:space="preserve"><value>הכתובת הזו לא נראית כמו רשת ביתית</value></data>
+  <data name="Launcher.Join.Cert.Title" xml:space="preserve"><value>שחקנים יראו אזהרת אישור פעם אחת</value></data>
+  <data name="Launcher.Join.Cert.Detail" xml:space="preserve"><value>השולחן פועל ב-HTTPS עם אישור שהמחשב הזה יצר לעצמו. דפדפנים לא יכולים לאמת אותו, ולכן בביקור הראשון יוצגת לכל שחקן אזהרה: יש לבחור "מתקדם" ואז "המשך". החיבור עדיין מוצפן.</value></data>
   <data name="Launcher.Join.Odd.Detail" xml:space="preserve"><value>רשתות ביתיות ומשרדיות מתחילות בדרך כלל ב-192.168 או ב-10. ייתכן ש-VPN פעיל, או שאתם ברשת ציבורית. שחקנים ב-Wi-Fi שלכם אולי יצטרכו להשתמש בכתובת אחרת.</value></data>
   <data name="Launcher.Join.Multi.Title" xml:space="preserve"><value>למחשב הזה יש יותר מכתובת אחת</value></data>
   <data name="Launcher.Join.Multi.Detail" xml:space="preserve"><value>אם הקישור הראשון לא עובד, נסו אחד מאלה: {0}.</value></data>

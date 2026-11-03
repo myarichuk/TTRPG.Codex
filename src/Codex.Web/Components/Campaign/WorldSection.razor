@@ -134,13 +134,13 @@ else
                                     <div class="row-actions">
                                         @if (PageOf(location) == null)
                                         {
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => CreatePageAsync(region, location)" aria-label="@L["Campaign.World.CreatePageLabel", location.Name]" data-testid="create-place-page"><LucideIcon IconName="plus" Size="14" /> @L["Campaign.World.CreatePage"]</CodexButton>
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="plus" Label="@L["Campaign.World.CreatePageLabel", location.Name]" title="@L["Campaign.World.CreatePage"]" OnClick="() => CreatePageAsync(region, location)" data-testid="create-place-page" />
                                         }
                                         @if (location.Visibility != ActorVisibility.Known)
                                         {
-                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RevealAsync(region.Id, location.Id)" aria-label="@L["Campaign.World.RevealLabel", location.Name]"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.World.Reveal"]</CodexButton>
+                                            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="eye" Label="@L["Campaign.World.RevealLabel", location.Name]" title="@L["Campaign.World.Reveal"]" OnClick="() => RevealAsync(region.Id, location.Id)" />
                                         }
-                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="edit-3" OnClick="() => EditLocationAsync(region, location)" aria-label="@L["Campaign.World.EditLabel", location.Name]" data-testid="edit-location">@L["Campaign.World.Edit"]</CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="edit-3" Label="@L["Campaign.World.EditLabel", location.Name]" title="@L["Campaign.World.Edit"]" OnClick="() => EditLocationAsync(region, location)" data-testid="edit-location" />
                                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="cx-blood" Icon="trash-2" Label="@L["Campaign.World.DeletePlaceLabel", location.Name]" OnClick="() => DeletePlaceAsync(region, location)" data-testid="delete-location" />
                                     </div>
                                 }

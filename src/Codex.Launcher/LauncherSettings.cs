@@ -21,21 +21,41 @@ internal sealed class LauncherSettings
     /// <summary>The launcher's (and the server's default) language tag; <c>null</c> follows the operating system.</summary>
     public string? Language { get; set; }
 
-    /// <summary>What Kestrel binds to: loopback only, unless players on the network are allowed in.</summary>
+    public const int DefaultHttpsPort = 5443;
+
+    /// <summary>Serve players on the network over HTTPS, with a certificate the launcher makes itself. The DM's own
+    /// browser keeps the plain loopback address, which browsers treat as secure and which never warns.</summary>
+    public bool Https { get; set; } = true;
+
+    public int HttpsPort { get; set; } = DefaultHttpsPort;
+
+    /// <summary>Whether the server was started with its HTTPS address. Not saved: it depends on whether the launcher
+    /// could make a certificate this time, and the links and invites follow what the server really serves.</summary>
     [JsonIgnore]
-    public string BindUrl => $"http://{(AllowLan ? "0.0.0.0" : "localhost")}:{ValidPort}";
+    public bool TlsActive { get; set; }
+
+    /// <summary>What Kestrel binds to: loopback only, unless players on the network are allowed in; then the network
+    /// gets HTTPS when there is a certificate for it, and loopback keeps its plain address.</summary>
+    [JsonIgnore]
+    public string BindUrl => AllowLan && TlsActive
+        ? $"http://localhost:{ValidPort};https://0.0.0.0:{ValidHttpsPort}"
+        : $"http://{(AllowLan ? "0.0.0.0" : "localhost")}:{ValidPort}";
 
     /// <summary>The address the DM opens in their own browser.</summary>
     [JsonIgnore]
     public string LocalUrl => $"http://localhost:{ValidPort}";
+
+    /// <summary>How players reach this computer at <paramref name="address"/>: HTTPS on its own port while the server
+    /// serves it, plain HTTP otherwise.</summary>
+    public string NetworkUrl(string address) => TlsActive ? $"https://{address}:{ValidHttpsPort}" : $"http://{address}:{ValidPort}";
 
     /// <summary>The addresses worth copying: this computer always, the network and Tailscale only while the
     /// server is open to the network.</summary>
     public IReadOnlyList<LauncherLink> Links(string? lanAddress, string? tailnetAddress, string? internetUrl = null)
     {
         var links = new List<LauncherLink> { new(LinkKind.This, LocalUrl) };
-        if (AllowLan && lanAddress != null) links.Add(new(LinkKind.Network, $"http://{lanAddress}:{ValidPort}"));
-        if (AllowLan && tailnetAddress != null) links.Add(new(LinkKind.Tailscale, $"http://{tailnetAddress}:{ValidPort}"));
+        if (AllowLan && lanAddress != null) links.Add(new(LinkKind.Network, NetworkUrl(lanAddress)));
+        if (AllowLan && tailnetAddress != null) links.Add(new(LinkKind.Tailscale, NetworkUrl(tailnetAddress)));
         if (internetUrl != null) links.Add(new(LinkKind.Internet, internetUrl));
         return links;
     }
@@ -52,9 +72,12 @@ internal sealed class LauncherSettings
     /// <summary>The Tailscale address, only when <see cref="PlayerUrl"/> already leads with the network one, so
     /// the invite screen can offer both: a player away from the home network cannot use the first.</summary>
     public string? RemoteUrl(string? lanAddress, string? tailnetAddress) =>
-        AllowLan && lanAddress != null && tailnetAddress != null ? $"http://{tailnetAddress}:{ValidPort}" : null;
+        AllowLan && lanAddress != null && tailnetAddress != null ? NetworkUrl(tailnetAddress) : null;
 
     private int ValidPort => Port is > 0 and < 65536 ? Port : DefaultPort;
+
+    // The same port as the plain one would make the server fail to start.
+    private int ValidHttpsPort => HttpsPort is > 0 and < 65536 && HttpsPort != ValidPort ? HttpsPort : (ValidPort == DefaultHttpsPort ? DefaultHttpsPort + 1 : DefaultHttpsPort);
 
     /// <summary>The port the server really listens on (a bad saved value falls back to the default).</summary>
     [JsonIgnore]

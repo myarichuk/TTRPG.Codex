@@ -19,6 +19,7 @@
             }
             <h3 id="world-proposal-heading" class="wb-title"><LucideIcon IconName="clipboard-check" Size="16" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3>
             <span class="wb-count" title="@L["WorldChat.Proposal.Apply", proposal.Drafts.Count(d => d.Selected)]">@proposal.Drafts.Count(d => d.Selected)/@proposal.Drafts.Count</span>
+            @Controls
         </header>
 
         <div class="wb-scroll wb-ledger-body" id="world-proposal-body">
@@ -250,17 +251,11 @@
     else
     {
         <header class="wb-head">
-            <h3 class="wb-title"><LucideIcon IconName="clipboard-check" Size="16" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3>
+            <h3 id="world-proposal-heading" class="wb-title"><LucideIcon IconName="clipboard-check" Size="16" Class="title-icon" /> @L["WorldChat.Proposal.Title"]</h3>
+            @Controls
         </header>
         <div class="wb-scroll wb-ledger-body">
-            @if (LastApplied is { Links.Count: > 0 } applied)
-            {
-                <section class="wb-result" data-testid="world-result">
-                    <h4 class="wb-result-title"><LucideIcon IconName="circle-check" Size="16" /> @applied.Text</h4>
-                    <p class="field-hint">@L["WorldChat.Result.Hint"]</p>
-                    <WorldChatLinks Links="applied.Links" />
-                </section>
-            }
+            @* What an applied proposal made is told once, in the conversation; the panel is for what is waiting. *@
             <div class="wb-empty">
                 <p class="wb-empty-title">@L["WorldChat.Proposal.Empty.Title"]</p>
                 <p class="small-muted">@L["WorldChat.Proposal.Empty.Body"]</p>
@@ -282,7 +277,10 @@
     [Parameter] public IReadOnlyCollection<string> Decided { get; set; } = Array.Empty<string>();
     [Parameter] public IReadOnlyList<MissingMention> Missing { get; set; } = Array.Empty<MissingMention>();
     [Parameter] public IReadOnlyDictionary<string, string> PlaceNames { get; set; } = new Dictionary<string, string>();
-    [Parameter] public WorldChatLine? LastApplied { get; set; }
+    /// <summary>The DM keeps the panel open even when nothing waits in it.</summary>
+    [Parameter] public bool Pinned { get; set; }
+    [Parameter] public EventCallback OnPin { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public bool Locked { get; set; }
     [Parameter] public bool Applying { get; set; }
     [Parameter] public string? ApplyError { get; set; }
@@ -291,6 +289,13 @@
     [Parameter] public EventCallback<IReadOnlyList<MissingMention>> OnFill { get; set; }
     /// <summary>The DM ticked or unticked something or decided on an entry: the chat stores it and the missing mentions change.</summary>
     [Parameter] public EventCallback<string?> OnDecided { get; set; }
+
+    // Pin and fold away, in the header; they only show where the panel sits beside the conversation.
+    private RenderFragment Controls => @<span class="wb-ledger-ctl">
+        <button type="button" class="wb-icon-btn" aria-pressed="@(Pinned ? "true" : "false")" @onclick="OnPin" title="@(Pinned ? L["WorldChat.Ledger.Unpin"] : L["WorldChat.Ledger.Pin"])"
+                aria-label="@(Pinned ? L["WorldChat.Ledger.Unpin"] : L["WorldChat.Ledger.Pin"])" data-testid="world-ledger-pin"><LucideIcon IconName="pin" Size="16" /></button>
+        <button type="button" class="wb-icon-btn" @onclick="OnClose" title="@L["WorldChat.Ledger.Hide"]" aria-label="@L["WorldChat.Ledger.Hide"]" data-testid="world-ledger-hide"><LucideIcon IconName="panel-right-close" Size="16" /></button>
+    </span>;
 
     // The entry the reader shows; null shows the list.
     private string? reading;
