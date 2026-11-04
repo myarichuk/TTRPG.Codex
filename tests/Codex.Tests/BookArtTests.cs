@@ -169,6 +169,33 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         _ = id;
     }
 
+    [Fact]
+    public async Task WithTheScaler_ABigPictureIsSmallerInTheBook_AndTheMasksAreUnchanged()
+    {
+        var (dm, _) = await SeedAsync();
+        var random = new Random(3);
+        using var bitmap = new SkiaSharp.SKBitmap(new SkiaSharp.SKImageInfo(2400, 3000, SkiaSharp.SKColorType.Rgba8888, SkiaSharp.SKAlphaType.Opaque));
+        var pixels = bitmap.GetPixelSpan();
+        for (var i = 0; i < pixels.Length; i += 4) { var p = i / 4; pixels[i] = (byte)(p % 2400 / 10 + random.Next(16)); pixels[i + 1] = (byte)(p / 2400 / 12 + random.Next(16)); pixels[i + 2] = (byte)random.Next(40); pixels[i + 3] = 255; }
+        var big = SkiaSharp.SKImage.FromBitmap(bitmap).Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 92).ToArray();
+        Assert.InRange(big.Length, 100_000, (int)RavenMediaStore.MaxBytes);
+        await _media.PutAsync(dm, "a-known", RavenMediaStore.ActorPortrait, new MemoryStream(big), "image/jpeg");
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+
+        var plain = await new BookArtReader(_media).ReadAsync(source);
+        var scaled = await new BookArtReader(_media, new BookImageScaler()).ReadAsync(source, BookArtQuality.Print);
+        var preview = await new BookArtReader(_media, new BookImageScaler()).ReadAsync(source, BookArtQuality.Preview);
+
+        var bytes = (BookArt a) => a.AllImages().Sum(i => (long)i.Bytes.Length);
+        Assert.True(bytes(scaled) < bytes(plain), $"{bytes(scaled)} vs {bytes(plain)}");
+        Assert.True(bytes(preview) < bytes(scaled));
+        Assert.True(scaled.Image(scaled.Portrait("a-known")!)!.Width < 2400);
+        // Same pictures, same masks: only their size changed.
+        Assert.Equal(plain.Count, scaled.Count);
+        Assert.Null(scaled.Portrait("a-hidden"));
+        Assert.Null(scaled.Wiki("w-dm"));
+    }
+
     private static (string Html, int Placed) Page(BookSource source, BookArt art, bool pictures = true)
     {
         var document = BookComposer.Compose(source, "en");

@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <PackageReference Include="RavenDB.Embedded" Version="7.2.1" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.12" />
   </ItemGroup>
 

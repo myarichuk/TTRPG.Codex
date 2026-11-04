@@ -843,3 +843,32 @@ What is built (§28.3 order step 1, minus the slot object model, which waits for
 Not done, in addition to §27's list: chapter-header and spot art (nothing to place yet), re-encoding and downscaling (a 64 MB book in a preview iframe is
 heavy, only `pics=0` mitigates it), an Image resolver for the DM's secret boxes, the art slot tray and everything AI about art (§28.3 steps 2-7), pictures
 in a hand-written chapter that is not one of the compiler's, and a look at RTL or Letter with pictures.
+
+## 31. Art step 2: re-encoding and downscaling (done)
+
+`BookImageScaler` (Codex.Persistence, SkiaSharp 3.119.4, MIT; `SkiaSharp.NativeAssets.Linux.NoDependencies` so a Linux host needs no fontconfig; Windows and macOS
+natives come with SkiaSharp itself) sits between `BookImageSanitizer` and the book. A picture is scaled down, never up, to its box at 300 dpi for the PDF
+and 120 dpi for the preview (`BookArtQuality`; the route chooses by `forPrint`). Boxes: cover 140x165 mm (contained), portrait and homebrew 62x52 mm,
+place, wiki and location 88x48 mm (filled, so both sides must be covered). Opaque pictures are written as JPEG q85, pictures with any transparency as PNG;
+a result that is not smaller than the source is discarded. `BookArtReader.MaxTotalBytes` now counts what is placed, not what was uploaded.
+
+**The security posture, because this is the first decoder in the book path.** Until now no picture was ever decoded by our code (the browser was the only
+decoder, with its network closed). Now a native decoder (libjpeg-turbo, libpng, libwebp inside Skia) reads user uploads. What limits that:
+- only bytes that passed the structural sanitizer arrive (known container, pixels at most 50 million, metadata gone);
+- a picture already small enough (within 15% of its target) is **not decoded at all**;
+- whole decodes are limited to 30 megapixels; a larger JPEG is decoded reduced, straight from its blocks; a larger PNG or WebP is kept as it is;
+- decoding runs two at a time, off the request thread; any decode failure or exception returns the sanitizer's bytes (a refusal costs bytes, never a picture);
+- results are remembered by a hash of the bytes and the target size, in memory, up to 96 MB, then dropped whole.
+This does not make a decoder CVE harmless: Skia's decoders are in-process native code, and the sanitizer is not a decoder-level defence. A DM can upload only into
+their own campaign, but the upload endpoints already exist. If that is not acceptable, the alternative is decoding in the printing browser (a canvas), which keeps
+the old guarantee at the cost of needing a browser for the preview and a round trip per picture; I did not build that.
+
+Colours are converted to sRGB while decoding, because the re-encoded file carries no profile (a mutant that skipped this is caught by a Display P3 test). Other mutants
+killed: scaling pictures that are small enough, writing transparency as JPEG.
+
+Measured (synthetic 2048 x 2048 PNGs of drawn circles, which compress better than real art, so real savings are probably larger): 30 pictures, 22.7 MB sanitized,
+3.4 MB after; one went 787 KB to 195 KB at 1654 x 1654. I did **not** measure Chromium's memory or time with many pictures, only the byte sizes.
+
+Known and not fixed: the sanitizer drops a JPEG's EXIF, including its orientation, so a phone photo taken sideways prints sideways (it did before this step too);
+a picture with a wide-gamut profile is converted, one with a CMYK profile is whatever Skia makes of it; animated WebP and APNG are **untested**: Skia will most likely write only the first frame
+when one is big enough to be scaled (otherwise it is kept whole); the print/preview split means the preview is softer than the PDF by design.

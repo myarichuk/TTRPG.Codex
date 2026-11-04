@@ -57,15 +57,16 @@ public sealed class BookArt
 /// which was read through the access-scoped repositories: the source's actors are the ones this audience may see (a stranger's mask
 /// has no portrait flag, a hidden actor is not there at all), its wiki pages, regions' places and homebrew entries likewise. Nothing
 /// is fetched by an id that came from anywhere else, so a picture the audience may not see is never read, not read and then dropped.
-/// Bytes pass through <see cref="BookImageSanitizer"/> (metadata out, type from the bytes, size checked), and the whole is capped.
+/// Bytes pass through <see cref="BookImageSanitizer"/> (metadata out, type from the bytes, size checked), then <see cref="BookImageScaler"/>
+/// (no bigger than the page can show), and the whole is capped.
 /// </summary>
-public sealed class BookArtReader(IMediaStore media)
+public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = null)
 {
     public const int MaxImages = 120;
 
     public const long MaxTotalBytes = 64L * 1024 * 1024;
 
-    public async Task<BookArt> ReadAsync(BookSource source)
+    public async Task<BookArt> ReadAsync(BookSource source, BookArtQuality quality = BookArtQuality.Print)
     {
         var art = new BookArt();
         long total = 0;
@@ -96,6 +97,12 @@ public sealed class BookArtReader(IMediaStore media)
             {
                 art.Skip(subject, problem.ToString().ToLowerInvariant());
                 return;
+            }
+
+            // Scaled to what its box prints at: the book's size cap counts what is placed, not what was uploaded.
+            if (scaler != null)
+            {
+                image = await scaler.ScaleAsync(image, kind, quality);
             }
 
             if (total + image.Bytes.Length > MaxTotalBytes)

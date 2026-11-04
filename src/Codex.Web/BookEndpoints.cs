@@ -159,7 +159,7 @@ public static class BookEndpoints
 
         // The pictures the book already has, read for this edition only (the art reader asks the media store for nothing the source does not
         // hold), placed after the chapters are final. "pics=0" leaves them out: a book with many pictures is a heavy page to preview.
-        var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source);
+        var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source, forPrint ? BookArtQuality.Print : BookArtQuality.Preview);
         document = BookComposer.PlaceArt(document, source, art, out _);
 
         BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, chosen, new BookHtmlOptions
