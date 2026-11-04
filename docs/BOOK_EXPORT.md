@@ -552,3 +552,20 @@ prices live on `AiProviderConfig` (and optionally in the server's `AI` section) 
   from the reservation first, then falls back to `Take`. Nothing uses it yet: step 2 and the section workers do.
 - Not done: a price shown in the book panel's pre-flight (there is no pre-flight until the budget exists); the settings form has no
   browser test yet; RU/HE strings are not native-reviewed.
+
+## 22. AI layer, step 2: the budget and the estimator: built
+
+`Codex.Core/Book/BookBudget.cs`, `BookTokens.cs`. Nothing calls them yet (step 4's workers do).
+
+- `BookBudget(cap, transportRetries = 2)`: every call reserves its worst case first (input once per transport attempt the SDK may make,
+  plus the longest reply) under a lock, and is refused when it does not fit, so parallel workers cannot overshoot together. Compared
+  without overflow (huge estimates are refused, not wrapped into "fits"). `Settle(reportedIn, reportedOut, replyTokens?)` swaps the
+  reservation for real usage; a missing figure is settled at our estimate (the reply's own length, else a quarter of the maximum, never
+  above the maximum) and the snapshot says `Estimated`. `Failed()` charges the input estimate (a provider bills a request it received);
+  only `NotSent()` is free; a reservation disposed without either counts as sent. Usage above the reservation is recorded, not clamped.
+- `BookBudgetSnapshot`: spent, reserved, remaining, calls, failed, refused, `Estimated`, `Cost(price)` (null without prices).
+- `BookTokens.Estimate`: per-script weights (Latin 0.28, Cyrillic 0.55, Hebrew 0.6, CJK 1.1 tokens per char; bidi marks free), on the high
+  side on purpose. `Range` brackets it 0.7x..1.4x. `BookPreflight.Estimate(sections, stylePromptTokens, price)` returns ranges, requests
+  (min = sections, max = 2x for one retry each) and a cost range only when both prices exist.
+- Mutation-checked: cap check removed (6 fail), failed-is-free (1 fails), reservation never released (3 fail).
+- The weights are not measured against any real tokenizer. Calibrate against a provider's reported usage in step 4 before trusting the range.
