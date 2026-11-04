@@ -114,6 +114,11 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("book-edition").SelectOptionAsync("party");
         await Assertions.Expect(dm.FrameLocator("[data-testid=book-preview]").Locator("h1").First).ToHaveTextAsync("Saltmere Chronicle");
 
+        // The torn-edge look: the preview is the page of that theme, and what the frame loads says so.
+        await dm.GetByTestId("book-theme").SelectOptionAsync("parchment");
+        await Assertions.Expect(dm.GetByTestId("book-preview")).ToHaveAttributeAsync("src", new System.Text.RegularExpressions.Regex("theme=parchment"));
+        await Assertions.Expect(dm.FrameLocator("[data-testid=book-preview]").Locator("h1").First).ToHaveTextAsync("Saltmere Chronicle");
+
         // Download: a real PDF named after the campaign.
         var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-download").ClickAsync());
         Assert.EndsWith(".pdf", download.SuggestedFilename);

@@ -751,4 +751,5 @@
   <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>Предания</value></data>
   <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>Страницы</value></data>
   <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>Собственные материалы</value></data>
+  <data name="Campaign.Book.Look" xml:space="preserve"><value>Оформление страниц</value></data>
 </root>

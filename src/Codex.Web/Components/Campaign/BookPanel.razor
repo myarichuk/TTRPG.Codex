@@ -16,6 +16,15 @@
             </select>
             <div class="field-hint">@(edition == "dm" ? L["Campaign.Book.Edition.DmHint"] : L["Campaign.Book.Edition.PartyHint"])</div>
         </div>
+        <div class="col-12">
+            <label for="book-theme" class="field-label">@L["Campaign.Book.Look"]</label>
+            <select id="book-theme" class="field-input" @bind="themeId" @bind:after="ThemeChanged" data-testid="book-theme">
+                @foreach (var theme in BookThemes.All)
+                {
+                    <option value="@theme.Id">@theme.Name</option>
+                }
+            </select>
+        </div>
         <div class="col-6">
             <label for="book-language" class="field-label">@L["Campaign.Book.Language"]</label>
             <select id="book-language" class="field-input" @bind="language" @bind:after="Changed" data-testid="book-language">
@@ -76,7 +85,9 @@
     private string? error;
     private string? errorDetail;
 
-    private static BookTheme Theme => BookThemes.Plain;
+    private string themeId = BookThemes.Plain.Id;
+
+    private BookTheme Theme => BookThemes.Find(themeId) ?? BookThemes.Plain;
 
     protected override void OnInitialized()
     {
@@ -90,6 +101,13 @@
         $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&theme={Theme.Id}&_={previewStamp}";
 
     private int previewStamp;
+
+    // A look that cannot print the chosen language moves the language to one it can, as OnInitialized does: asking for it would be refused.
+    private void ThemeChanged()
+    {
+        if (!Theme.Supports(language)) language = SupportedCultures.Tags.First(Theme.Supports);
+        Changed();
+    }
 
     private void Changed()
     {

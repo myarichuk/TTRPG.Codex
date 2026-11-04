@@ -594,3 +594,22 @@ prices live on `AiProviderConfig` (and optionally in the server's `AI` section) 
 - Not done: nothing puts a picture in a chapter yet (portraits in the cast, art under a wiki page, the cover): that is a compiler change and a
   design choice about layout. A multi-scan progressive JPEG whose later scans are preceded by APP segments would keep them (the copy stops at the first
   scan); no re-encode or downscale to print resolution, so a 6 MB photo goes in as is; images are inlined as base64 (memory with 120 art-heavy pages is unmeasured).
+
+## 24. Visual masks, first pass: torn page edges (the "Parchment" theme): built
+
+What the user means by masks (ragged page corners and edges, later torn picture frames, ink wash, vignette), as opposed to the audience masking of 23.
+
+- `BookMasks.PageEdge(seed, widthMm, heightMm, outside, line, style)` (Core): a page-sized SVG, two plain `<path>`s (an even-odd frame and a
+  thin stroke), no filter, mask, href, style or script, colours accepted only as hex. Corners are single explicit vertices with their own bite;
+  the sides run between them with midpoint-displacement tear (rough at every scale); the tear never moves a corner. A seeded SplitMix64, so the
+  same seed prints the same edge in every .NET version. Insets are clamped to 0.35 mm .. 12 mm whatever the style says, so it can never reach the text
+  (the margins are 19-22 mm).
+- `BookThemes.Parchment` (`?theme=parchment`, and a "Look" select in the Settings panel): the plain theme's type and fonts on `#f2e8cf` paper, with the
+  edge as the `@page` background, a different seed on `:left` and `:right`. Same language gate as Plain (English only).
+- **Measured, and it cost a wrong first attempt:** Chromium paints an `@page` background image from the corner of the page's *content box*, not of
+  the page, so `background-size: 100% 100%` squeezed the shape into the content area (the first render showed white strips and a diagonal). It needs
+  `background-size: <page in mm>` and `background-position: -<margin-left> -<margin-top>`. A test ties those numbers to the plain theme's `@page` margin.
+- Printed: vector (no page holds an image), a 30-chapter book is 88 KB and within 60 KB of the plain one; screenshots checked by eye.
+- Not done: the stroke is one flat colour (no paper fibre, no shadow under the edge); no picture-frame masks (torn photo, ink wash, vignette) yet; no
+  variation between pages of the same side (every left page has the same edge); the edge's look in Letter, RTL and with real content has not been looked at;
+  the panel's theme names are English only.

@@ -751,4 +751,5 @@
   <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>אגדות עולם</value></data>
   <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>דפים</value></data>
   <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>יצירות ביתיות</value></data>
+  <data name="Campaign.Book.Look" xml:space="preserve"><value>מראה</value></data>
 </root>

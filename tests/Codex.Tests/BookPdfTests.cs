@@ -372,4 +372,21 @@ public class BookPdfTests
 
         return found;
     }
+
+    [ChromiumFact]
+    public async Task TheParchmentEdge_IsVectorOnEveryPage_AndCostsAlmostNothing()
+    {
+        var chapters = string.Join("\n\n", Enumerable.Range(1, 30).Select(i => $"## Place {i}\n\nThe gulls of place {i} are loud and the tide is late.\n"));
+        BookHtmlResult Build(BookTheme theme) => BookHtml.Build(new BookDocument("Saltmere", "A coast", "en", [new BookSection("a", "# Coast\n\n" + chapters)], new BookLabels()), theme, new BookHtmlOptions { Font = Font });
+        var plain = await Print(Printer(), Build(BookThemes.Plain).Html!);
+        var parchment = await Print(Printer(), Build(BookThemes.Parchment).Html!);
+
+        using var document = PdfDocument.Open(parchment.Pdf);
+        Assert.True(document.NumberOfPages >= 3);
+        // The edge is a path, not a picture: no page holds an image, and the file is barely larger than the plain book's.
+        Assert.All(document.GetPages(), page => Assert.Empty(page.GetImages()));
+        Assert.True(parchment.Pdf.Length < plain.Pdf.Length + 60_000, $"{parchment.Pdf.Length} vs {plain.Pdf.Length}");
+        Assert.Equal(0, parchment.BlockedRequests);
+        if (Environment.GetEnvironmentVariable("CODEX_DUMP_PDF") is { Length: > 0 } dump) await File.WriteAllBytesAsync(dump, parchment.Pdf);
+    }
 }

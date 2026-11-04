@@ -68,7 +68,47 @@ public static class BookThemes
         ],
         PlainCss);
 
-    public static IReadOnlyList<BookTheme> All { get; } = [Plain];
+    /// <summary>
+    /// The plain theme's type on a warm paper with torn page edges. The edge is a vector shape drawn on the page background (see
+    /// <see cref="BookMasks"/>), a different one on left and right pages, so it costs a few kilobytes and no raster. English only,
+    /// for the same reason as <see cref="Plain"/>.
+    /// </summary>
+    public static BookTheme Parchment { get; } = new(
+        "parchment",
+        "Parchment",
+        Plain.Languages,
+        Plain.Fonts,
+        layout => PlainCss(layout) + ParchmentCss(layout));
+
+    public static IReadOnlyList<BookTheme> All { get; } = [Plain, Parchment];
+
+    /// <summary>The page in millimetres, for shapes drawn to scale.</summary>
+    internal static (double Width, double Height) PageMm(BookLayout layout) =>
+        string.Equals(layout.PageSize, "Letter", StringComparison.OrdinalIgnoreCase) ? (215.9, 279.4) : (210.0, 297.0);
+
+    private const string Paper = "#f2e8cf";
+
+    // Chromium places an @page background image from the corner of the page's content box, not of the page, so a page-sized
+    // shape is pulled back by the margins (the numbers of PlainCss's @page margin: 2cm 1.9cm 2.2cm). Measured, not assumed.
+    private const int MarginTopMm = 20;
+    private const int MarginLeftMm = 19;
+
+    private static string Mm(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static string ParchmentCss(BookLayout layout)
+    {
+        var (w, h) = PageMm(layout);
+        string Edge(ulong seed) => BookMasks.DataUri(BookMasks.PageEdge(seed, w, h, "#ffffff", "#b8a77c", new BookMasks.EdgeStyle(Depth: 3.4, Roughness: 2.6, CornerChip: 9)));
+        // Left and right pages get their own edge; the ids are fixed, so a book prints the same every time.
+        return $$"""
+            @page { background-color: {{Paper}}; background-size: {{Mm(w)}}mm {{Mm(h)}}mm; background-position: -{{MarginLeftMm}}mm -{{MarginTopMm}}mm; background-repeat: no-repeat; }
+            @page :left { background-image: {{Edge(0x1EF7)}}; }
+            @page :right { background-image: {{Edge(0x7A11)}}; }
+            body { background: transparent; }
+            .note, .descriptive { background: rgba(255, 255, 255, .35); }
+            .secret { background: rgba(138, 28, 28, .08); }
+            """;
+    }
 
     public static BookTheme? Find(string? id) => All.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase));
 
