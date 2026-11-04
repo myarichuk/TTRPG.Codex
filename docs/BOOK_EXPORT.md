@@ -306,3 +306,28 @@ Known limits, none verified against Homebrewery's own output:
 - A `}}` line inside a code fence inside a block still closes the block.
 - Mentions resolve only through a caller-supplied function; the resolver that applies the audience (so a party book never names a
   hidden actor) is not written yet. That is the "name mentions" item under "Not covered yet" in section 10.
+
+## 13. Candidate default theme "Ashen Vellum" (a Homebrewery Style-tab sheet supplied by the user): assessment
+
+Measured in the phase-0 harness (Chromium 153, 816x1056 `.page` boxes, `printBackground`, print media):
+- The full-page **stains** texture (inline SVG, `feTurbulence` with 5 octaves, 816x1056) is rasterised into every page: 10 pages
+  46 MB, 45 pages 209 MB and 67 s, 808 MB peak. Without it, 10 pages are 7 MB. Grain alone (420 px tile) is about 0.5 MB/page
+  (45 pages 23 MB, 11 s). The torn `mask-image` with a displacement filter, the `filter:` colour grade on art, and the art itself
+  cost nothing measurable. So filter-generated backgrounds are fine as small tiles and fatal as full-page images.
+- Screenshot shows the vellum, foxing and burn render as intended in the preview engine.
+- The sheet's own `@media print` rule (grain only) means the PDF (print media) would not match a screen preview unless one of the
+  two is forced; the preview must show what the PDF prints.
+
+Needed before it can ship as a theme (none done yet):
+1. No `@import` of Google Fonts (closed network, CSP). Bundle IM Fell, Pirata One, UnifrakturMaguntia and Special Elite (all open
+   licences, to verify per file) with `unicode-range`; none covers Hebrew and Cyrillic coverage must be checked, so a fallback stack
+   and the glyph preflight are required.
+2. Replace the stains with a pre-rasterised tile (small, repeated or a compressed WebP) or a CSS-only approximation.
+3. Our pagination is automatic flow, not fixed `.page` boxes: `.page::after` footer, `.pageNumber`/`counter(page-numbers)`,
+   `.page:nth-child(even)` mirroring and absolutely positioned images become `@page` margin boxes and `:left/:right`.
+4. `strong` is mapped to small-caps (the face has no bold), which does nothing in Hebrew and is synthetic in Cyrillic: add
+   `:lang(he)`/`:lang(ru)` overrides that restore bold.
+5. Drop caps use `float:left`; RTL needs `float:inline-start` (unverified in Chromium 153).
+6. The art colour grade should default to off for user-supplied art, with the sheet's knob kept.
+7. `.page` needs `isolation:isolate` or negative `z-index` art falls behind the page background.
+8. Chapter art offsets are pixel values for a Letter page; A4 and other sizes need the geometry as variables.
