@@ -442,3 +442,26 @@ inset escapes the margins. Never a filter-generated image as a full-page backgro
   may not be able to read a temp profile or run unsandboxed (not tried); Chromium crash dumps and a stuck GPU process are handled
   only by the timeout; printing an art-heavy book may need more than the default memory (unmeasured); no consent-gated Chromium
   download (a deliberate choice for now, the error says what to do); TOC page numbers still need the two-pass outline lookup.
+
+## 17. The book panel: built (Settings, DM only)
+
+- **`BookPanel.razor`** inside Settings' DM column: edition (DM / party, each with a one-line statement of what it holds), language,
+  paper (A4 / Letter), theme note, **Preview** and **Download PDF**. The language list shows every app language and disables those
+  the theme cannot print, labelled "(not in this theme yet)", so the gate is visible before it is hit; the default is the UI
+  language when the theme supports it, else the theme's.
+- **Preview** is an `<iframe sandbox="">` (no script, no same-origin, no forms, nothing) on the same route the PDF is printed from.
+  The page carries its own CSP, so what a campaign's text holds cannot reach the app around it. Changing edition/size/language
+  reloads it.
+- **Download** goes through `codex.downloadFrom` (fetch, blob, save under the server's `Content-Disposition` name), not a link, so a
+  refusal is shown in the panel in the user's language (422 language, 429 busy, 503 no browser with the server's setup sentence,
+  504 timeout, anything else generic) and never replaces the page with an error document. The button shows "Printing..." and is
+  disabled meanwhile (a book takes seconds; the server queue is one deep anyway).
+- Strings: `Campaign.Book.*` in EN, RU, HE (RU/HE written by me, not reviewed by a native speaker).
+- **Tests** (Playwright, real app): panel visible to the DM; ru/he options disabled, en enabled; preview frame has an empty
+  `sandbox` attribute and shows the campaign title, also after switching to the party edition; download yields a `.pdf` named after
+  the campaign starting `%PDF-`; "downloaded" shown, button re-enabled, no page errors; a joined player sees no panel; for 429/503/
+  504/500 (server answers stood in via route interception) the matching sentence shows on the page, the URL did not change, the
+  button is enabled again and no "downloaded" message appears.
+- **Not done / not verified**: no visual review (RTL, phone width, dark/light) of the panel; the custom CSS editor (needs a POST or
+  a stored setting: the GET routes take no CSS); the preview does not show the unsaved state of anything (it reads the stored
+  campaign); a stuck print has no cancel button (the server timeout is the only stop).

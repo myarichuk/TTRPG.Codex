@@ -2491,3 +2491,6 @@ a.hover-card-title:hover { text-decoration: underline; }
 .setup-steps .link-button { font-weight: inherit; color: var(--accent); text-align: start; }
 .setup-step { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--space-4); min-width: 0; }
 .setup-why { font-size: var(--fs-xs); color: var(--text-3); }
+
+/* The campaign book preview: a page of paper in a frame. */
+.book-preview { display: block; width: 100%; height: min(70vh, 640px); margin-top: .75rem; border: 1px solid var(--border-strong); border-radius: 4px; background: #fff; }

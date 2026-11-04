@@ -719,4 +719,26 @@
   <data name="Campaign.Setup.BuilderNoAi" xml:space="preserve"><value>Once AI is set up, the world builder can draft pages, places and cast members for you.</value></data>
   <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Recently updated pages</value></data>
   <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Open the wiki</value></data>
+  <data name="Campaign.Book.Title" xml:space="preserve"><value>Campaign book</value></data>
+  <data name="Campaign.Book.Hint" xml:space="preserve"><value>Lay the campaign out as a printable book. The book is built on this machine from what the campaign holds; nothing is sent anywhere.</value></data>
+  <data name="Campaign.Book.Edition" xml:space="preserve"><value>Edition</value></data>
+  <data name="Campaign.Book.Edition.Dm" xml:space="preserve"><value>DM edition</value></data>
+  <data name="Campaign.Book.Edition.Party" xml:space="preserve"><value>Party edition</value></data>
+  <data name="Campaign.Book.Edition.DmHint" xml:space="preserve"><value>Everything you can see, with your secrets in boxes. Keep this one behind the screen.</value></data>
+  <data name="Campaign.Book.Edition.PartyHint" xml:space="preserve"><value>Only what a player may read: hidden characters and secrets are left out, not blacked out.</value></data>
+  <data name="Campaign.Book.Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Campaign.Book.LanguageUnsupported" xml:space="preserve"><value>{0} (not in this theme yet)</value></data>
+  <data name="Campaign.Book.Paper" xml:space="preserve"><value>Paper</value></data>
+  <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Theme: {0}. The preview is the page the PDF is printed from.</value></data>
+  <data name="Campaign.Book.Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Hide preview</value></data>
+  <data name="Campaign.Book.PreviewTitle" xml:space="preserve"><value>Book preview</value></data>
+  <data name="Campaign.Book.Download" xml:space="preserve"><value>Download PDF</value></data>
+  <data name="Campaign.Book.Printing" xml:space="preserve"><value>Printing…</value></data>
+  <data name="Campaign.Book.Done" xml:space="preserve"><value>The book was downloaded.</value></data>
+  <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>This theme cannot print that language yet.</value></data>
+  <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>Another book is being printed. Try again in a moment.</value></data>
+  <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>There is no browser to print with on this machine.</value></data>
+  <data name="Campaign.Book.Failed.Timeout" xml:space="preserve"><value>Printing took too long and was stopped.</value></data>
+  <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>The book could not be printed.</value></data>
 </root>

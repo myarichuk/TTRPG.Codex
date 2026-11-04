@@ -719,4 +719,26 @@
   <data name="Campaign.Setup.BuilderNoAi" xml:space="preserve"><value>Когда ИИ будет настроен, строитель мира сможет набросать для вас страницы, места и персонажей.</value></data>
   <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Недавно изменённые страницы</value></data>
   <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Открыть вики</value></data>
+  <data name="Campaign.Book.Title" xml:space="preserve"><value>Книга кампании</value></data>
+  <data name="Campaign.Book.Hint" xml:space="preserve"><value>Сверстайте кампанию как печатную книгу. Книга собирается на этом компьютере из того, что есть в кампании; ничего никуда не отправляется.</value></data>
+  <data name="Campaign.Book.Edition" xml:space="preserve"><value>Издание</value></data>
+  <data name="Campaign.Book.Edition.Dm" xml:space="preserve"><value>Издание мастера</value></data>
+  <data name="Campaign.Book.Edition.Party" xml:space="preserve"><value>Издание для группы</value></data>
+  <data name="Campaign.Book.Edition.DmHint" xml:space="preserve"><value>Всё, что видите вы, а ваши тайны — в рамках. Держите это издание за ширмой.</value></data>
+  <data name="Campaign.Book.Edition.PartyHint" xml:space="preserve"><value>Только то, что может прочесть игрок: скрытые персонажи и тайны не замазаны, а убраны.</value></data>
+  <data name="Campaign.Book.Language" xml:space="preserve"><value>Язык</value></data>
+  <data name="Campaign.Book.LanguageUnsupported" xml:space="preserve"><value>{0} (в этой теме пока нет)</value></data>
+  <data name="Campaign.Book.Paper" xml:space="preserve"><value>Бумага</value></data>
+  <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Тема: {0}. Предпросмотр — та самая страница, из которой печатается PDF.</value></data>
+  <data name="Campaign.Book.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Скрыть предпросмотр</value></data>
+  <data name="Campaign.Book.PreviewTitle" xml:space="preserve"><value>Предпросмотр книги</value></data>
+  <data name="Campaign.Book.Download" xml:space="preserve"><value>Скачать PDF</value></data>
+  <data name="Campaign.Book.Printing" xml:space="preserve"><value>Печать…</value></data>
+  <data name="Campaign.Book.Done" xml:space="preserve"><value>Книга скачана.</value></data>
+  <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>Эта тема пока не умеет печатать на этом языке.</value></data>
+  <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>Сейчас печатается другая книга. Повторите через минуту.</value></data>
+  <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>На этом компьютере нет браузера для печати.</value></data>
+  <data name="Campaign.Book.Failed.Timeout" xml:space="preserve"><value>Печать заняла слишком много времени и была остановлена.</value></data>
+  <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>Не удалось напечатать книгу.</value></data>
 </root>

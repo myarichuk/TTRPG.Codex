@@ -557,6 +557,32 @@ window.codex = {
         a.remove();
     },
 
+    // Fetches a file the server builds (a printed book can take seconds and can be refused) and saves it, so a refusal is
+    // reported on the page instead of replacing it with an error document. Returns the status and the server's reason.
+    downloadFrom: async function (url) {
+        let response;
+        try {
+            response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+        } catch (e) {
+            return { status: 0, detail: null };
+        }
+        if (!response.ok) {
+            let detail = null;
+            try { detail = (await response.json()).detail || null; } catch (e) { /* not JSON */ }
+            return { status: response.status, detail: detail };
+        }
+        const blob = await response.blob();
+        const disposition = response.headers.get('content-disposition') || '';
+        let name = 'book.pdf';
+        const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+        const plain = /filename="?([^";]+)"?/i.exec(disposition);
+        try { if (star) name = decodeURIComponent(star[1]); else if (plain) name = plain[1]; } catch (e) { /* keep the default */ }
+        const href = URL.createObjectURL(blob);
+        window.codex.download(href, name);
+        setTimeout(() => URL.revokeObjectURL(href), 60000);
+        return { status: 200, detail: null };
+    },
+
     copyText: async function (text) {
         // navigator.clipboard only exists on secure origins; a player on http://192.168.x.x has to
         // take the older execCommand route.

@@ -1,0 +1,138 @@
+@using System.Globalization
+@using Codex.Core.Book
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<section class="panel book-panel" aria-labelledby="book-heading" data-testid="book-panel">
+    <div class="panel-title"><h3 id="book-heading">@L["Campaign.Book.Title"]</h3></div>
+    <p class="small-muted">@L["Campaign.Book.Hint"]</p>
+
+    <div class="row g-2">
+        <div class="col-12">
+            <label for="book-edition" class="field-label">@L["Campaign.Book.Edition"]</label>
+            <select id="book-edition" class="field-input" @bind="edition" data-testid="book-edition">
+                <option value="dm">@L["Campaign.Book.Edition.Dm"]</option>
+                <option value="party">@L["Campaign.Book.Edition.Party"]</option>
+            </select>
+            <div class="field-hint">@(edition == "dm" ? L["Campaign.Book.Edition.DmHint"] : L["Campaign.Book.Edition.PartyHint"])</div>
+        </div>
+        <div class="col-6">
+            <label for="book-language" class="field-label">@L["Campaign.Book.Language"]</label>
+            <select id="book-language" class="field-input" @bind="language" data-testid="book-language">
+                @foreach (var (tag, native) in SupportedCultures.All)
+                {
+                    var ok = Theme.Supports(tag);
+                    <option value="@tag" disabled="@(!ok)">@(ok ? native : L["Campaign.Book.LanguageUnsupported", native])</option>
+                }
+            </select>
+        </div>
+        <div class="col-6">
+            <label for="book-size" class="field-label">@L["Campaign.Book.Paper"]</label>
+            <select id="book-size" class="field-input" @bind="size" data-testid="book-size">
+                <option value="A4">A4</option>
+                <option value="Letter">Letter</option>
+            </select>
+        </div>
+    </div>
+    <div class="field-hint">@L["Campaign.Book.ThemeNote", Theme.Name]</div>
+
+    <div class="d-flex gap-2 flex-wrap mt-2">
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="TogglePreview" aria-expanded="@(showPreview ? "true" : "false")" data-testid="book-preview-toggle">
+            <LucideIcon IconName="@(showPreview ? "eye-off" : "eye")" Size="14" /> @(showPreview ? L["Campaign.Book.HidePreview"] : L["Campaign.Book.Preview"])
+        </CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@busy" data-testid="book-download">
+            <LucideIcon IconName="download" Size="14" /> @(busy ? L["Campaign.Book.Printing"] : L["Campaign.Book.Download"])
+        </CodexButton>
+    </div>
+
+    <div role="status" aria-live="polite" class="mt-2" data-testid="book-status">
+        @if (error != null)
+        {
+            <div class="field-error" data-testid="book-error">@error</div>
+        }
+        else if (done)
+        {
+            <div class="small-muted" data-testid="book-done">@L["Campaign.Book.Done"]</div>
+        }
+    </div>
+
+    @if (showPreview)
+    {
+        @* The page is the one the PDF is printed from. It is sandboxed with no permissions at all (no script, no same-origin) and
+           the page's own policy allows no fetch, so what a campaign's text holds cannot reach the app around it. *@
+        <iframe class="book-preview" sandbox="" title="@L["Campaign.Book.PreviewTitle"]" src="@PageUrl()" loading="lazy" data-testid="book-preview"></iframe>
+    }
+</section>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private string edition = "dm";
+    private string size = "A4";
+    private string language = "en";
+    private bool showPreview;
+    private bool busy;
+    private bool done;
+    private string? error;
+
+    private static BookTheme Theme => BookThemes.Plain;
+
+    protected override void OnInitialized()
+    {
+        // The book follows the reader's language when the theme can print it, and otherwise the theme's own: asking for the
+        // other would only be refused.
+        var current = SupportedCultures.Normalize(CultureInfo.CurrentUICulture.Name);
+        language = Theme.Supports(current) ? current : SupportedCultures.Tags.First(Theme.Supports);
+    }
+
+    private string PageUrl(bool pdf = false) =>
+        $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&theme={Theme.Id}&_={previewStamp}";
+
+    private int previewStamp;
+
+    private void TogglePreview()
+    {
+        showPreview = !showPreview;
+        previewStamp++;
+    }
+
+    private async Task DownloadAsync()
+    {
+        busy = true;
+        done = false;
+        error = null;
+        try
+        {
+            var result = await JS.InvokeAsync<BookDownload>("codex.downloadFrom", Nav.ToAbsoluteUri(PageUrl(pdf: true)).ToString());
+            if (result.Status == 200)
+            {
+                done = true;
+            }
+            else
+            {
+                error = result.Status switch
+                {
+                    422 => L["Campaign.Book.Failed.Language"],
+                    429 => L["Campaign.Book.Failed.Busy"],
+                    503 => L["Campaign.Book.Failed.NoBrowser"] + (string.IsNullOrWhiteSpace(result.Detail) ? "" : " " + result.Detail),
+                    504 => L["Campaign.Book.Failed.Timeout"],
+                    _ => L["Campaign.Book.Failed.Other"]
+                };
+            }
+        }
+        catch (JSException)
+        {
+            error = L["Campaign.Book.Failed.Other"];
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    public sealed class BookDownload
+    {
+        public int Status { get; set; }
+        public string? Detail { get; set; }
+    }
+}
