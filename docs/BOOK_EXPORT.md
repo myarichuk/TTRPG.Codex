@@ -399,12 +399,46 @@ inset escapes the margins. Never a filter-generated image as a full-page backgro
   data URIs (no font request at all), a CSP meta and header of `default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src
   data:`, chapters rendered with one shared heading-id namespace, a table of contents. The user's CSS goes through `BookCss.Clean`:
   no `@import`, `@font-face`, `url()` other than `data:image/`, `expression`, `behavior`, `image-set`, no `<`, 20 KB cap.
-- **Route**: `GET /campaigns/{id}/book/{dm|party}?lang=&theme=&size=` (`BookEndpoints`, DM only, `no-store`, `nosniff`). Not covered
-  by an HTTP-level test yet; the pieces under it are.
+- **Route**: `GET /campaigns/{id}/book/{dm|party}?lang=&theme=&size=` (`BookEndpoints`, DM only, `no-store`, `nosniff`). The HTTP-level
+  test arrived with section 16.
 - **Measured in Chromium 153 on a real book from this builder (23 A4 pages, three chapters, tables, lists, quotes)**: 0.14 s, 466 KB,
   tagged, zero blocked requests with the network closed, only the four allowed fonts embedded (no system-font leak), page numbers in
   the margin box, none on the first page. An `@page` background (colour plus a tiled data-URI image) paints full bleed under the
   margin-box page number on every page, so the parchment strategy of section 14 is confirmed for this Chromium.
-- Not done: the PuppeteerSharp print step with browser discovery, TOC page numbers (the two-pass outline lookup), the preview UI,
+- Not done (section 16 did the PuppeteerSharp print step): TOC page numbers (the two-pass outline lookup), the preview UI,
   localized labels (chapter titles are English `BookLabels` defaults; they need `Book.*` keys in the three resource files), art
   through masked paths, stat-block `{{block:N}}` templates, `.md` export, and the cost layer.
+
+## 16. The PDF step: built (PuppeteerSharp, browser already on the machine)
+
+- **Engine**: `Codex.Web/Book/BookPdf.cs`, PuppeteerSharp 25.15 (MIT). It drives a browser that is already installed; it never downloads
+  one. A fresh browser per job: nothing idle holds memory and nothing survives a stuck page. Per job: JavaScript off, request
+  interception that refuses everything except `data:`, `--host-resolver-rules="MAP * ~NOTFOUND"` as a second lock, `PreferCSSPageSize`
+  (the theme's `@page size` rules), `PrintBackground`, tagged output, an outline, wait for fonts. One job at a time; `MaxWaiting`
+  (default 2) others may queue, a further one gets 429 with `Retry-After`. A hard timeout (`TimeoutSeconds`, default 90, browser
+  start included) kills the browser process tree and answers 504. `--no-sandbox` is added only when the process is privileged (a
+  root container cannot use the sandbox) or when `Codex:Book:Pdf:NoSandbox` says so.
+- **Browser discovery** (`BookBrowser`): a path in `Codex:Book:Pdf:Browser` or `CODEX_BOOK_BROWSER` is the *only* candidate when set
+  (a typo is reported, not papered over). Otherwise Windows Program Files/LocalAppData (Chrome, Edge, Chromium), the macOS app
+  bundles, and on Linux a Playwright cache (`PLAYWRIGHT_BROWSERS_PATH`, `/opt/pw-browsers`, `~/.cache/ms-playwright`) then `PATH`
+  names. After launch the product version must be 131 or newer, else a message names the browser and the floor. None found: 503 with
+  the sentence a self-hoster needs ("set CODEX_BOOK_BROWSER ...").
+- **Route**: `GET /campaigns/{id}/book/{dm|party}/pdf?lang=&theme=&size=` shares the build with the HTML route (same checks, same
+  gate), answers `application/pdf` as a download named after the campaign (control characters, path characters, quotes and
+  semicolons removed, 80 characters), `no-store`.
+- **Tests** (all pass): locator order and the "configured path is the only candidate" rule; version parsing; a 40-section book prints
+  to A4 with its text, with zero blocked requests and only the theme's faces (Cinzel is a variable font and Chromium embeds those as
+  Type 3, so `Type3` is accepted as Cinzel; any other name would be a fallback); a page that reaches for `https://` and `http://`
+  is refused and still prints; a `<script>` never runs; a job that cannot finish in 5 s throws the timeout and the next job still
+  prints; the line is one running plus `MaxWaiting`. `BookRouteE2ETests` drives the real app: DM gets HTML (CSP, `no-store`) and a
+  real `%PDF-` for both editions, `lang=ru` is 422, unknown theme 400, unknown edition 404, a non-DM gets 404 on all four routes
+  and for a campaign that does not exist. The browser tests skip (visibly) when no browser exists, and fail on CI where one must.
+- **Mutation checks**: removing `SetJavaScriptEnabledAsync(false)` fails the script test; removing request interception fails the
+  refusal test only after the counter was moved to *after* the browser accepted the abort (before, a request that was merely seen was
+  counted, and the test could not tell blocked from observed).
+- **A bug the first run found**: the launcher joins arguments into one string, so `--host-resolver-rules=MAP * ~NOTFOUND` became
+  three arguments and Chrome refused with "Multiple targets are not supported in headless mode". The value is quoted now.
+- **Honest limits**: Windows and macOS discovery is tested only as paths, not run; a browser the user installs from a snap or flatpak
+  may not be able to read a temp profile or run unsandboxed (not tried); Chromium crash dumps and a stuck GPU process are handled
+  only by the timeout; printing an art-heavy book may need more than the default memory (unmeasured); no consent-gated Chromium
+  download (a deliberate choice for now, the error says what to do); TOC page numbers still need the two-pass outline lookup.

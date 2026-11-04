@@ -14,6 +14,9 @@ Bundled third-party software:
 - Avalonia 12 (the tray launcher, `src/Codex.Launcher`) and its SkiaSharp and HarfBuzzSharp
   dependencies - MIT License - https://github.com/AvaloniaUI/Avalonia
 - QRCoder (QR codes in the launcher) - MIT License - https://github.com/codebude/QRCoder
+- PuppeteerSharp (prints campaign books to PDF with a browser already on the machine; it downloads none) - MIT License -
+  https://github.com/hardkoded/puppeteer-sharp
+- PdfPig (tests only: reads the PDFs the book export prints) - Apache License 2.0 - https://github.com/UglyToad/PdfPig
 
 ### RavenDB
 

@@ -143,6 +143,8 @@ builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddSingleton<BookSourceReader>();
+builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
+builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 
