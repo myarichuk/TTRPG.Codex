@@ -822,3 +822,24 @@ the last page balances, the table stays inside its column. The drop cap first sp
 Not looked at: Letter, RTL (the theme is English only, so an RTL book cannot reach it yet), a chapter whose first block is not a paragraph (no drop cap
 then, by design), a very long table (it cannot be split by a column and is kept whole), narrow-column hyphenation (`hyphens: manual`, so ragged lines
 show on long names), a `.secret` box taller than a column, and the per-page footer band with the chapter name (still not built).
+
+## 30. Art step 1: the pictures the campaign already has, placed (done)
+
+What is built (§28.3 order step 1, minus the slot object model, which waits for the pictures that are not there yet):
+- `BookCompiler.ArtAnchors(source, art)` lists, beside `Compile` and in its order, where each existing picture goes: after the heading of its cast
+  entry (portrait), place (location art), wiki page or homebrew entry, as `(section, heading line, which repeat of that line)`. The repeat index keeps two
+  characters called "Twin" apart; a mutant that ignored it survived the first version of the test (it counted pictures instead of checking whose) and is now caught.
+- `BookComposer.PlaceArt` runs on the finished chapters, so it works on a rewritten chapter too and **a model never sees a picture**: the stored-build key
+  does not change when art does, and a rewrite cannot move or drop one. A rewritten chapter whose heading no longer reads as the entry's name gets no
+  picture (silently; a count is returned and unused so far).
+- The cover goes on the title page (`BookDocument.CoverAsset`; only a `data:image/` URI without quotes, brackets or spaces is ever written into the page).
+- `BookArtReader` (existing, already audience-scoped and sanitising) is registered and used by the preview and the PDF; `pics=0` and a panel checkbox
+  leave pictures out. The party canary (`BookArtTests`): a hidden, unknown, retired or masked subject has no picture, no heading and no name in the page,
+  and the media store is never asked for it.
+- Look: Chromium rendered, looked at. A portrait first floated beside the text; a float that does not fit the end of a column moved to the next column
+  **without its heading**, and Chromium ignored `break-after: avoid` before a float. So a portrait is a block (34% wide) that keeps with its heading, and a
+  place picture is full column width. The text no longer wraps around a portrait; that is the price of not separating a name from its face.
+
+Not done, in addition to §27's list: chapter-header and spot art (nothing to place yet), re-encoding and downscaling (a 64 MB book in a preview iframe is
+heavy, only `pics=0` mitigates it), an Image resolver for the DM's secret boxes, the art slot tray and everything AI about art (§28.3 steps 2-7), pictures
+in a hand-written chapter that is not one of the compiler's, and a look at RTL or Letter with pictures.

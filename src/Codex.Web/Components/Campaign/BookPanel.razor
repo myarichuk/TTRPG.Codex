@@ -55,6 +55,8 @@
             </select>
         </div>
     </div>
+    <label class="form-check mt-2"><input type="checkbox" class="form-check-input" @bind="pictures" @bind:after="Changed" data-testid="book-pictures" /> @L["Campaign.Book.Pictures"]</label>
+    <div class="field-hint">@L["Campaign.Book.Pictures.Hint"]</div>
     <div class="field-hint">@L["Campaign.Book.ThemeNote", Theme.Name]</div>
 
     <div class="d-flex gap-2 flex-wrap mt-2">
@@ -248,6 +250,7 @@
     private string edition = "dm";
     private string size = "A4";
     private string columns = "2";
+    private bool pictures = true;
     private string language = "en";
     private bool showPreview;
     private bool busy;
@@ -270,7 +273,7 @@
     }
 
     private string PageUrl(bool pdf = false) =>
-        $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&cols={columns}&theme={Theme.Id}{(useAi ? "&ai=1" : string.Empty)}&_={previewStamp}";
+        $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&cols={columns}&pics={(pictures ? "1" : "0")}&theme={Theme.Id}{(useAi ? "&ai=1" : string.Empty)}&_={previewStamp}";
 
     private int previewStamp;
 

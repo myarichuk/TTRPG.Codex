@@ -27,6 +27,42 @@ public static class BookComposer
 
     public static BookDocument Compose(BookSource source, string language) => BookCompiler.Compile(source, language, Labels(language));
 
+    /// <summary>
+    /// The document with the audience's existing pictures placed: the cover on the title page and each entry's picture after its heading.
+    /// This runs on the finished chapters (deterministic or rewritten) and never before a model: a model is not shown a picture, cannot
+    /// move or drop one, and the stored-build key does not see them. A rewritten chapter whose heading no longer reads as the entry's
+    /// name simply gets no picture, and <paramref name="placed"/> counts what was placed so a panel can say so.
+    /// </summary>
+    public static BookDocument PlaceArt(BookDocument document, BookSource source, BookArt art, out int placed)
+    {
+        var anchors = BookCompiler.ArtAnchors(source, art);
+        var count = 0;
+        var sections = document.Sections.Select(section =>
+        {
+            var mine = anchors.Where(a => a.Section == section.Id).ToList();
+            if (mine.Count == 0) return section;
+            var seen = new Dictionary<string, int>(StringComparer.Ordinal);
+            var lines = new List<string>();
+            foreach (var line in section.Markdown.Split('\n'))
+            {
+                lines.Add(line);
+                var repeat = seen.GetValueOrDefault(line);
+                seen[line] = repeat + 1;
+                var anchor = mine.FirstOrDefault(a => a.Heading == line.TrimEnd() && a.Repeat == repeat);
+                if (anchor == null) continue;
+                count++;
+                lines.Add(string.Empty);
+                lines.Add("{{" + anchor.Placement);
+                lines.Add("![" + BookCompiler.Escape(anchor.Alt) + "](asset:" + anchor.Asset + ")");
+                lines.Add("}}");
+            }
+
+            return section with { Markdown = string.Join('\n', lines) };
+        }).ToList();
+        placed = count + (art.Cover() != null ? 1 : 0);
+        return document with { Sections = sections, CoverAsset = art.Cover() };
+    }
+
     /// <summary>Each chapter prepared for a model, by id. The language is the primary subtag, so "en" and "en-US" are one key.</summary>
     public static Dictionary<string, BookWorkItem> Items(BookDocument document, BookSource source, string style)
     {

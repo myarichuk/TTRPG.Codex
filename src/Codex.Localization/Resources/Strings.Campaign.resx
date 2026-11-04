@@ -732,6 +732,8 @@
   <data name="Campaign.Book.Columns" xml:space="preserve"><value>Columns</value></data>
   <data name="Campaign.Book.Columns.One" xml:space="preserve"><value>One column</value></data>
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>Two columns</value></data>
+  <data name="Campaign.Book.Pictures" xml:space="preserve"><value>Include the pictures the campaign already has</value></data>
+  <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>Cover, portraits and the art of places and pages, as each edition may see them. Off makes the preview lighter.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Theme: {0}. The preview is the page the PDF is printed from.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Hide preview</value></data>

@@ -18,8 +18,9 @@ public sealed record BookLabels(
     string Pages = "Pages",
     string Homebrew = "Homebrew");
 
-/// <summary>A compiled book: what to print, in order, before any theme.</summary>
-public sealed record BookDocument(string Title, string Tagline, string Language, IReadOnlyList<BookSection> Sections, BookLabels Labels);
+/// <summary>A compiled book: what to print, in order, before any theme. <paramref name="CoverAsset"/> names the cover picture (an asset id the
+/// <see cref="BookHtmlOptions.Image"/> delegate resolves), or null for a title page of type alone.</summary>
+public sealed record BookDocument(string Title, string Tagline, string Language, IReadOnlyList<BookSection> Sections, BookLabels Labels, string? CoverAsset = null);
 
 public sealed class BookHtmlOptions
 {
@@ -111,7 +112,15 @@ public static class BookHtml
         html.Append("<!doctype html>\n<html lang=\"").Append(Enc(book.Language)).Append("\" dir=\"").Append(layout.Rtl ? "rtl" : "ltr").Append("\">\n<head>\n<meta charset=\"utf-8\">\n")
             .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"").Append(ContentSecurityPolicy).Append("\">\n")
             .Append("<title>").Append(Enc(book.Title)).Append("</title>\n<style>").Append(css).Append("</style>\n</head>\n<body class=\"book theme-").Append(Enc(theme.Id)).Append("\">\n");
-        html.Append("<header class=\"title-page\"><h1>").Append(Enc(book.Title)).Append("</h1>");
+        var cover = book.CoverAsset == null ? null : options.Image?.Invoke(book.CoverAsset);
+        // The same test the renderer applies to every picture: a data image and nothing else is ever written into an attribute.
+        if (cover != null && (!cover.StartsWith("data:image/", StringComparison.Ordinal) || cover.Any(ch => ch is '"' or '<' or '>' or '\'' || char.IsWhiteSpace(ch))))
+        {
+            cover = null;
+        }
+
+        html.Append(cover == null ? "<header class=\"title-page\">" : "<header class=\"title-page has-cover\"><img class=\"cover-art\" src=\"" + cover + "\" alt=\"\">")
+            .Append("<h1>").Append(Enc(book.Title)).Append("</h1>");
         if (!string.IsNullOrWhiteSpace(book.Tagline))
         {
             html.Append("<p class=\"tagline\">").Append(Enc(book.Tagline)).Append("</p>");

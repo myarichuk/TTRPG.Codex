@@ -102,6 +102,56 @@ public static class BookCompiler
     }
 
     /// <summary>
+    /// Where this audience's existing pictures go: after the heading of the entry they belong to, as <c>(section, heading line, which
+    /// repeat of that line)</c>. Only pictures in <paramref name="art"/> are listed, and <paramref name="art"/> was read from the same
+    /// source, so an entry the audience may not see has neither a heading nor an anchor. The anchors are computed beside
+    /// <see cref="Compile"/>, in its order, so the two cannot disagree about which "Vera" a picture is for, and a picture is placed
+    /// after the chapter is written (or rewritten) and never goes through a model.
+    /// </summary>
+    public static IReadOnlyList<BookArtAnchor> ArtAnchors(BookSource source, BookArt art)
+    {
+        var anchors = new List<BookArtAnchor>();
+        var seen = new Dictionary<(string Section, string Heading), int>();
+
+        void Entry(string section, string prefix, string name, string? asset, string placement)
+        {
+            var heading = prefix + Escape(name);
+            var repeat = seen.GetValueOrDefault((section, heading));
+            seen[(section, heading)] = repeat + 1;
+            if (asset != null)
+            {
+                anchors.Add(new BookArtAnchor(section, heading, repeat, asset, name, placement));
+            }
+        }
+
+        foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            Entry("cast", "## ", actor.Name, art.Portrait(actor.Id), BookArtPlacement.Portrait);
+        }
+
+        foreach (var region in source.Regions.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            Entry("gazetteer", "## ", region.Name, null, BookArtPlacement.Place);
+            foreach (var place in region.Locations)
+            {
+                Entry("gazetteer", "### ", place.Name, art.Location(region.Id, place.Id), BookArtPlacement.Place);
+            }
+        }
+
+        foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
+        {
+            Entry("pages", "## ", page.Title, art.Wiki(page.Id), BookArtPlacement.Place);
+        }
+
+        foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            Entry("homebrew", "## ", entry.Name, art.Homebrew(entry.Id), BookArtPlacement.Portrait);
+        }
+
+        return anchors;
+    }
+
+    /// <summary>
     /// The names a reader of this book may be given for a stored mention. They come from the source, which was read for the same
     /// audience, so a stranger's mention of a hidden character resolves to nothing and a masked one to its mask. Items resolve to nothing.
     /// </summary>
@@ -136,7 +186,7 @@ public static class BookCompiler
 
     /// <summary>A name or title as literal text: every character the dialect treats as markup is escaped, ":" too, so no title can
     /// open a secret block.</summary>
-    internal static string Escape(string text)
+    public static string Escape(string text)
     {
         var sb = new StringBuilder(text.Length + 4);
         foreach (var c in text.ReplaceLineEndings(" "))
@@ -152,3 +202,17 @@ public static class BookCompiler
         return sb.ToString().Trim();
     }
 }
+
+/// <summary>The block class a picture is laid out with (see the theme's <c>.art-portrait</c> and <c>.art-place</c>).</summary>
+public static class BookArtPlacement
+{
+    /// <summary>Narrow, beside the entry's first lines.</summary>
+    public const string Portrait = "art-portrait";
+
+    /// <summary>Full width of the column, under the heading.</summary>
+    public const string Place = "art-place";
+}
+
+/// <summary>One existing picture and the heading it follows. <paramref name="Repeat"/> is 0 for the first entry with that heading line, 1 for the
+/// second, so two characters with one name each get their own picture.</summary>
+public sealed record BookArtAnchor(string Section, string Heading, int Repeat, string Asset, string Alt, string Placement);

@@ -132,6 +132,8 @@ public static class BookThemes
         table { font-size: 9pt; }
         """;
 
+    // A portrait is a block and not a float: a float that does not fit the rest of a column moves on without its heading, and Chromium does
+    // not keep a heading with a float (seen in a render). A block keeps with its heading (break-after: avoid on the heading) and is never split.
     private static string PlainCss(BookLayout layout)
     {
         var inline = layout.Rtl ? "right" : "left";
@@ -182,6 +184,16 @@ public static class BookThemes
             .secret { margin: .7em 0; padding: .5em .7em; border-inline-start: 3pt solid #8a1c1c; background: #f6eeee; break-inside: avoid; }
             .slot { display: block; margin: .6em 0; padding: 1.2em .8em; border: 1pt dashed #999; color: #666; text-align: center; font-size: 9pt; break-inside: avoid; }
             .art { display: block; max-width: 100%; margin: .6em auto; break-inside: avoid; }
+            .title-page.has-cover { padding-top: 6%; }
+            .cover-art { display: block; max-width: 78%; max-height: 165mm; margin: 0 auto 1.2em; object-fit: contain; }
+            .art-portrait { width: 34%; margin: .2em 0 .5em; break-inside: avoid; }
+            h2:has(+ .art-portrait), h3:has(+ .art-portrait), h2:has(+ .art-place), h3:has(+ .art-place) { break-after: avoid; }
+            .art-portrait, .art-place { break-before: avoid; }
+            .art-portrait p { margin: 0; }
+            .art-portrait .art { width: 100%; max-height: 52mm; margin: 0; object-fit: cover; }
+            .art-place { margin: .4em 0 .6em; break-inside: avoid; }
+            .art-place p { margin: 0; }
+            .art-place .art { width: 100%; max-height: 48mm; margin: 0; object-fit: cover; }
             .mention, .wikilink { font-weight: 700; }
             """);
         return css.ToString();

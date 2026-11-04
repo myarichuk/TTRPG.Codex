@@ -77,6 +77,25 @@ public class BookHtmlTests
     }
 
     [Fact]
+    public void ACoverIsOnlyEverADataImage_AndAnEntryPictureIsABlockThatKeepsWithItsHeading()
+    {
+        BookHtmlResult Page(string? uri) => BookHtml.Build(Book() with { CoverAsset = "c" }, BookThemes.Plain, new BookHtmlOptions { Image = _ => uri, Font = Font });
+
+        Assert.Contains("<img class=\"cover-art\" src=\"data:image/png;base64,AAAA\"", Page("data:image/png;base64,AAAA").Html, StringComparison.Ordinal);
+        foreach (var bad in new[] { "https://evil.test/x.png", "data:image/png;base64,AA\"onerror=\"x", "javascript:alert(1)", "data:image/png;base64,AA AA" })
+        {
+            var html = Page(bad).Html!;
+            Assert.DoesNotContain("cover-art\" src", html, StringComparison.Ordinal);
+            Assert.DoesNotContain("evil.test", html, StringComparison.Ordinal);
+            Assert.DoesNotContain("has-cover\"", html.Substring(html.IndexOf("<body", StringComparison.Ordinal)), StringComparison.Ordinal);
+        }
+
+        var css = BookThemes.Plain.Css(new BookLayout("A4", false));
+        Assert.DoesNotContain("float", css.Substring(css.IndexOf(".art-portrait {", StringComparison.Ordinal), 120), StringComparison.Ordinal);
+        Assert.Contains("h2:has(+ .art-portrait)", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void EveryFontAThemeNamesIsShipped()
     {
         Assert.NotNull(FontsDirectory());

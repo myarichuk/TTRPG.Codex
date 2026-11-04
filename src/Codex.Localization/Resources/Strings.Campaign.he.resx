@@ -732,6 +732,8 @@
   <data name="Campaign.Book.Columns" xml:space="preserve"><value>עמודות</value></data>
   <data name="Campaign.Book.Columns.One" xml:space="preserve"><value>עמודה אחת</value></data>
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>שתי עמודות</value></data>
+  <data name="Campaign.Book.Pictures" xml:space="preserve"><value>לכלול את התמונות של הקמפיין</value></data>
+  <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>כריכה, דיוקנאות ואיורים של מקומות ודפים — רק מה שהמהדורה הנבחרת רשאית להציג. בלעדיהן התצוגה המקדימה קלה יותר.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>ערכת עיצוב: {0}. התצוגה המקדימה היא הדף שממנו מודפס ה-PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>הסתרת התצוגה המקדימה</value></data>

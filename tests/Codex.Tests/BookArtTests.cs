@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Codex.Core.Book;
+using Codex.Web.Book;
 using Codex.Persistence;
 
 namespace Codex.Tests;
@@ -166,6 +167,114 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         Assert.Contains(art.Skipped, s => s.Subject == "portrait:a-known" && s.Reason == "malformed");
         Assert.NotNull(art.Cover());
         _ = id;
+    }
+
+    private static (string Html, int Placed) Page(BookSource source, BookArt art, bool pictures = true)
+    {
+        var document = BookComposer.Compose(source, "en");
+        var chosen = pictures ? art : BookArt.None;
+        document = BookComposer.PlaceArt(document, source, chosen, out var placed);
+        var html = BookHtml.Build(document, BookThemes.Plain, new BookHtmlOptions { BoxSecrets = source.Audience == BookAudience.Dm, Mention = BookCompiler.Mentions(source), Image = chosen.DataUri }).Html!;
+        return (html, placed);
+    }
+
+    private static int Count(string html, string needle) => System.Text.RegularExpressions.Regex.Matches(html, needle).Count;
+
+    [Fact]
+    public async Task PartyBook_PlacesOnlyThePicturesThePartyMaySee_AndTheCoverGoesOnTheTitlePage()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var art = await new BookArtReader(_media).ReadAsync(source);
+
+        var (html, placed) = Page(source, art);
+
+        // Known actor, the party page, the known place and the published entry, each after its own heading; plus the cover.
+        Assert.Equal(5, placed);
+        Assert.Equal(4, Count(html, "<img class=\"art\""));
+        Assert.Equal(1, Count(html, "<img class=\"cover-art\""));
+        Assert.Contains("class=\"title-page has-cover\"", html, StringComparison.Ordinal);
+        Assert.Equal(2, Count(html, "class=\"art-portrait\""));
+        Assert.Equal(2, Count(html, "class=\"art-place\""));
+        // The picture follows its heading, not some other entry's.
+        Assert.Matches(@"(?s)>a-known</h2>.{0,80}class=""art-portrait""", html);
+        Assert.Matches(@"(?s)>Saltmere</h3>.{0,80}class=""art-place""", html);
+        // Nothing of the hidden ones: not their names, not their pictures.
+        foreach (var hidden in new[] { "a-hidden", "a-unknown", "a-emptyowner", "a-retired", "Hidden" })
+        {
+            Assert.DoesNotContain(hidden, html, StringComparison.Ordinal);
+        }
+
+        Assert.DoesNotContain(art.AllImages().First(i => i.Width == 202).DataUri(), html.Replace(art.DataUri(art.Portrait("a-known")!)!, "", StringComparison.Ordinal), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DmBook_PlacesEveryPicture_EachAfterItsOwnHeading()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+        var art = await new BookArtReader(_media).ReadAsync(source);
+
+        var (html, placed) = Page(source, art);
+
+        Assert.Equal(11, placed);
+        Assert.Equal(10, Count(html, "<img class=\"art\""));
+        Assert.Matches(@"(?s)>a-hidden</h2>.{0,80}class=""art-portrait""", html);
+        Assert.Matches(@"(?s)>Hidden</h3>.{0,80}class=""art-place""", html);
+    }
+
+    [Fact]
+    public async Task APictureIsPlacedAfterARewrite_AndAChapterWhoseHeadingChangedGetsNone()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var art = await new BookArtReader(_media).ReadAsync(source);
+        var document = BookComposer.Compose(source, "en");
+
+        // A rewrite that kept the headings keeps its picture; one that renamed the entry's heading loses it, rather than misplacing it.
+        var kept = document with { Sections = document.Sections.Select(s => s.Id == "cast" ? s with { Markdown = s.Markdown.Replace("known", "known") } : s).ToList() };
+        var renamed = document with { Sections = document.Sections.Select(s => s.Id == "cast" ? s with { Markdown = s.Markdown.Replace("## a\\-known", "## Somebody else") } : s).ToList() };
+
+        Assert.Contains("asset:", BookComposer.PlaceArt(kept, source, art, out _).Sections.First(s => s.Id == "cast").Markdown, StringComparison.Ordinal);
+        Assert.DoesNotContain("asset:", BookComposer.PlaceArt(renamed, source, art, out _).Sections.First(s => s.Id == "cast").Markdown, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PicturesOff_PlacesNothing_AndTheTitlePageIsTypeAlone()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+        var art = await new BookArtReader(_media).ReadAsync(source);
+
+        var (html, placed) = Page(source, art, pictures: false);
+
+        Assert.Equal(0, placed);
+        Assert.DoesNotContain("<img", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("has-cover", html.Substring(html.IndexOf("<body", StringComparison.Ordinal)), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TwoEntriesWithOneName_EachGetTheirOwnPicture()
+    {
+        var (dm, id) = await SeedAsync();
+        foreach (var (actorId, width) in new[] { ("twin-1", 211), ("twin-2", 212) })
+        {
+            await _actors.SaveAsync(new ActorDocument { Id = actorId, CampaignId = id, Name = "Twin", Visibility = ActorVisibility.Known, HasPortrait = true, PortraitVersion = 1 });
+            await PutAsync(dm, actorId, RavenMediaStore.ActorPortrait, width);
+        }
+
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var art = await new BookArtReader(_media).ReadAsync(source);
+        var anchors = BookCompiler.ArtAnchors(source, art).Where(a => a.Alt == "Twin").ToList();
+
+        Assert.Equal([0, 1], anchors.Select(a => a.Repeat).ToArray());
+        Assert.NotEqual(anchors[0].Asset, anchors[1].Asset);
+        var html = Page(source, art).Html;
+        Assert.Equal(2, Count(html, ">Twin</h2>.{0,120}?class=\"art-portrait\""));
+        // Not just "a picture each": the first Twin's own picture after the first heading, the second's after the second.
+        var shown = System.Text.RegularExpressions.Regex.Matches(html, @"(?s)>Twin</h2>.{0,120}?<img class=""art"" src=""(?<src>data:[^""]+)""")
+            .Select(m => m.Groups["src"].Value).ToList();
+        Assert.Equal(anchors.Select(a => art.DataUri(a.Asset)).ToList(), shown);
     }
 
     private async Task<(CampaignAccess Dm, string CampaignId)> SeedAsync()
