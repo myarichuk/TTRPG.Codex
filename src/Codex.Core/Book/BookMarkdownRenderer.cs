@@ -10,6 +10,8 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
     private const int MaxDepth = 8;
     private const int MaxParagraph = 50_000;
     private const int MaxWarnings = 50;
+    private const int MaxHeading = 2_000;
+    private const int MaxCell = 2_000;
     private const char LineSeparator = (char)0x2028;
     private const char ParagraphSeparator = (char)0x2029;
 
@@ -21,7 +23,9 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
     private static readonly Regex Quote = new(@"^ {0,3}>[ ]?", Flags, Timeout);
     private static readonly Regex Fence = new(@"^ {0,3}`{3,}", Flags, Timeout);
     private static readonly Regex ListMarker = new(@"^(?<indent> *)(?<m>[-*+]|\d{1,3}[.)])[ ]+(?<rest>.*)$", Flags, Timeout);
-    private static readonly Regex BlockOpen = new(@"^\{\{(?=\S)(?<attrs>(?:[:=](?:""[\w,\-()#%. +*/]*""|[\w\-()#%.]*)|[^""=':{}\s]*)+)$", Flags, Timeout);
+    private static readonly Regex Mentions = new(@"\[\[\s*(?<kind>actor|place|item)\s*:(?<rest>.{0,400}?)\]\]", Flags | RegexOptions.IgnoreCase | RegexOptions.Singleline, Timeout);
+    private static readonly Regex OpenMention = new(@"\[\[\s*(?:actor|place|item)\s*:[^\n]*", Flags | RegexOptions.IgnoreCase, Timeout);
+    private static readonly Regex Sentinel = new("\u0001(\\d{1,6})\u0002", Flags, Timeout);
     private static readonly Regex Placeholder = new(@"^\{\{block:(?<n>\d{1,4})\}\}$", Flags, Timeout);
     private static readonly Regex TableSeparator = new(@"^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$", Flags, Timeout);
     private static readonly Regex FirstParagraph = new(@"^<p dir=""auto"">((?:(?!</p>).)*)</p>", Flags | RegexOptions.Singleline, Timeout);
@@ -35,7 +39,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
     // below, so none of them can fetch a file.
     private static readonly HashSet<string> Properties = new(StringComparer.Ordinal)
     {
-        "color", "background-color", "background", "width", "height", "min-width", "max-width", "min-height", "max-height",
+        "color", "background-color", "background", "width", "min-width", "max-width",
         "margin", "margin-top", "margin-right", "margin-bottom", "margin-left",
         "padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
         "font-size", "font-weight", "font-style", "font-variant", "text-align", "text-indent", "text-transform", "text-decoration",
@@ -46,11 +50,12 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
 
     private static readonly HashSet<string> Functions = new(StringComparer.OrdinalIgnoreCase)
     {
-        "rgb", "rgba", "hsl", "hsla", "calc", "var", "min", "max", "clamp"
+        "rgb", "rgba", "hsl", "hsla", "calc", "min", "max", "clamp"
     };
 
     private readonly List<BookHeading> headings = [];
-    private readonly HashSet<string> usedIds = new(StringComparer.Ordinal);
+    private readonly ISet<string> usedIds = options.HeadingIds ?? new HashSet<string>(StringComparer.Ordinal);
+    private readonly List<string> mentionNames = [];
     private readonly List<string> warnings = [];
 
     public IReadOnlyList<BookHeading> Headings => headings;
@@ -64,8 +69,158 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
             text = text[..options.MaxLength];
         }
 
-        return Blocks(Secrets(Normalize(text)).Split('\n'), 0);
+        var sb = new StringBuilder();
+        var plain = new StringBuilder();
+        void Flush()
+        {
+            if (plain.Length > 0)
+            {
+                sb.Append(Blocks(DropMarkerLines(Mentions_(plain.ToString())).Split('\n'), 0));
+                plain.Clear();
+            }
+        }
+
+        text = Normalize(text);
+        if (!SecretText.HasMarkers(text))
+        {
+            plain.Append(text);
+        }
+        else
+        {
+            // Each segment is rendered on its own: a secret's lines cannot close their own box (a stray "}}"), and what follows a
+            // box cannot end up inside it. Without BoxSecrets what a stranger may not read is dropped even if the source kept it.
+            foreach (var segment in SecretText.Parse(text))
+            {
+                if (segment.Audience is SecretAudience.Dm or SecretAudience.Some)
+                {
+                    if (!options.BoxSecrets)
+                    {
+                        Warn("secret-dropped");
+                        continue;
+                    }
+
+                    Flush();
+                    sb.Append("<div class=\"secret ").Append(segment.Audience == SecretAudience.Dm ? "secret-dm" : "secret-for").Append("\">")
+                        .Append(Blocks(DropMarkerLines(Mentions_(segment.Text)).Split('\n'), 0)).Append("</div>");
+                    continue;
+                }
+
+                plain.Append(segment.Text).Append('\n');
+            }
+        }
+
+        Flush();
+        return Resolve(sb.ToString(), asHtml: true);
     }
+
+    /// <summary>The text shown as it is, escaped, when the renderer gave up on it.</summary>
+    public string Fallback(string text)
+    {
+        Warn("render-failed");
+        return "<p dir=\"auto\">" + Resolve(Enc(DropMarkerLines(Mentions_(Normalize(text)))).Replace("\n", "<br>"), asHtml: false) + "</p>";
+    }
+
+    // Every stored mention is settled here, once, over the whole text, before any parser sees it: the name the reader may have, or
+    // nothing. Whatever path a text then takes (an image's alt, a code span, a paragraph too long to parse, a nesting cap), the
+    // typed |label of a mention cannot be in it. A resolved name travels as a sentinel and is put back as markup at the end.
+    private string Mentions_(string text)
+    {
+        text = Mentions.Replace(text, m =>
+        {
+            var kind = m.Groups["kind"].Value.ToLowerInvariant();
+            var rest = m.Groups["rest"].Value;
+            var pipe = rest.IndexOf('|');
+            var id = (pipe < 0 ? rest : rest[..pipe]).Trim();
+            var name = id.Length == 0 || id.Any(char.IsWhiteSpace) ? null : options.Mention?.Invoke(kind, id);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Warn("mention-hidden");
+                return string.Empty;
+            }
+
+            mentionNames.Add(kind + "\u0000" + name.Trim());
+            return $"\u0001{mentionNames.Count - 1}\u0002";
+        });
+
+        // A mention that never closes is cut to the end of its line, which is more than it needs and cannot leak.
+        return OpenMention.Replace(text, _ =>
+        {
+            Warn("mention-hidden");
+            return string.Empty;
+        });
+    }
+
+    // Sentinels back to the name: as a span in markup, as plain escaped text where markup cannot go (an attribute, a heading's id).
+    private string Resolve(string html, bool asHtml) => Sentinel.Replace(html, m =>
+    {
+        var entry = mentionNames[int.Parse(m.Groups[1].Value)];
+        var split = entry.IndexOf('\u0000');
+        var name = Enc(entry[(split + 1)..]);
+        return asHtml ? $"<span class=\"mention mention-{entry[..split]}\"><bdi>{name}</bdi></span>" : name;
+    });
+
+    // A line that is a secret-block marker after a quote mark or an invisible character is not one the shared grammar knows, so it
+    // would print as text; it is cut instead, which is what the reader's own check does to a marker it finds.
+    private string DropMarkerLines(string text)
+    {
+        if (!text.Contains(":::", StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        var lines = text.Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (SecretText.IsMarkerLine(lines[i].TrimStart(' ', '>')))
+            {
+                lines[i] = string.Empty;
+                Warn("marker-dropped");
+            }
+        }
+
+        return string.Join('\n', lines);
+    }
+
+    // {{wide,monster : attributes only, no whitespace outside a quoted value, and no braces. A scanner, not a regex: a nested
+    // quantifier here backtracked exponentially on "{{aaaa…a'" and one player's note took the whole build down.
+    private static bool IsBlockOpen(string t, out string attrs)
+    {
+        attrs = string.Empty;
+        if (t.Length < 3 || t[0] != '{' || t[1] != '{')
+        {
+            return false;
+        }
+
+        for (var i = 2; i < t.Length; i++)
+        {
+            var c = t[i];
+            if (c == '"')
+            {
+                if (t[i - 1] is not (':' or '='))
+                {
+                    return false;
+                }
+
+                var close = t.IndexOf('"', i + 1);
+                if (close < 0 || t.AsSpan(i + 1, close - i - 1).ContainsAnyExcept(QuotedValue))
+                {
+                    return false;
+                }
+
+                i = close;
+            }
+            else if (char.IsWhiteSpace(c) || c is '\'' or '{' or '}')
+            {
+                return false;
+            }
+        }
+
+        attrs = t[2..];
+        return true;
+    }
+
+    private static readonly System.Buffers.SearchValues<char> QuotedValue =
+        System.Buffers.SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_,-()#%. +*/");
 
     private void Warn(string code)
     {
@@ -99,6 +254,14 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
                 case '\t':
                     sb.Append("    ");
                     break;
+                // Bidi overrides and embeddings reorder what a reader sees; marks (LRM, RLM, ALM) and isolates are kept for
+                // mixed text. Zero-width space and the BOM would hide a marker from the check that looks for one.
+                case >= '\u202A' and <= '\u202E':
+                case >= '\u2066' and <= '\u2069':
+                case '\u200B':
+                case '\u2060':
+                case '\uFEFF':
+                    break;
                 default:
                     if (c == '\n' || !char.IsControl(c))
                     {
@@ -107,39 +270,6 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
 
                     break;
             }
-        }
-
-        return sb.ToString();
-    }
-
-    // Secret blocks are settled before anything is parsed, from the one grammar the rest of the app uses, so a marker never reaches
-    // the Markdown parser as text. Without BoxSecrets what a stranger may not read is dropped here even if the source already did it.
-    private string Secrets(string text)
-    {
-        if (!SecretText.HasMarkers(text))
-        {
-            return text;
-        }
-
-        var sb = new StringBuilder();
-        foreach (var segment in SecretText.Parse(text))
-        {
-            if (segment.Audience is SecretAudience.Dm or SecretAudience.Some)
-            {
-                if (options.BoxSecrets)
-                {
-                    sb.Append("\n\n{{secret,").Append(segment.Audience == SecretAudience.Dm ? "secret-dm" : "secret-for").Append('\n')
-                        .Append(segment.Text).Append("\n}}\n\n");
-                }
-                else
-                {
-                    Warn("secret-dropped");
-                }
-
-                continue;
-            }
-
-            sb.Append(segment.Text).Append('\n');
         }
 
         return sb.ToString();
@@ -214,9 +344,9 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
 
                 i++;
             }
-            else if (BlockOpen.Match(trimmed) is { Success: true } open)
+            else if (IsBlockOpen(trimmed, out var openAttrs))
             {
-                i = BlockDiv(lines, i, open.Groups["attrs"].Value, depth, sb);
+                i = BlockDiv(lines, i, openAttrs, depth, sb);
             }
             else if (IsTableStart(lines, i))
             {
@@ -240,7 +370,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
         var line = lines[i];
         var trimmed = line.Trim();
         if (trimmed.Length == 0 || Heading.IsMatch(line) || Rule.IsMatch(line) || Quote.IsMatch(line) || Fence.IsMatch(line)
-            || trimmed is "\\page" or "\\column" || BlockOpen.IsMatch(trimmed) || Placeholder.IsMatch(trimmed) || IsTableStart(lines, i))
+            || trimmed is "\\page" or "\\column" || IsBlockOpen(trimmed, out _) || Placeholder.IsMatch(trimmed) || IsTableStart(lines, i))
         {
             return true;
         }
@@ -284,8 +414,8 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
 
     private string HeadingElement(int level, string raw)
     {
-        var html = Inline(raw.Trim());
-        var plain = WebUtility.HtmlDecode(Tags.Replace(html, string.Empty)).Trim();
+        var html = raw.Length > MaxHeading ? Enc(raw.Trim()) : Inline(raw.Trim());
+        var plain = WebUtility.HtmlDecode(Tags.Replace(Resolve(html, asHtml: false), string.Empty)).Trim();
         var id = WikiText.Slugify(plain);
         var unique = id;
         for (var k = 2; !usedIds.Add(unique); k++)
@@ -319,7 +449,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
         while (i < lines.Count)
         {
             var t = lines[i].Trim();
-            if (BlockOpen.IsMatch(t))
+            if (IsBlockOpen(t, out _))
             {
                 level++;
             }
@@ -342,7 +472,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
     }
 
     private static bool IsTableStart(IReadOnlyList<string> lines, int i) =>
-        i + 1 < lines.Count && lines[i].Contains('|') && lines[i + 1].Contains('-') && TableSeparator.IsMatch(lines[i + 1])
+        i + 1 < lines.Count && lines[i].Contains('|') && lines[i + 1].Contains('-') && lines[i + 1].Contains('|') && TableSeparator.IsMatch(lines[i + 1])
         && Cells(lines[i]).Count == Cells(lines[i + 1]).Count;
 
     private static List<string> Cells(string line)
@@ -382,6 +512,8 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
         return cells;
     }
 
+    private string Cell(string text) => text.Length > MaxCell ? Enc(text) : Inline(text);
+
     private int Table(IReadOnlyList<string> lines, int start, StringBuilder sb)
     {
         var head = Cells(lines[start]);
@@ -396,7 +528,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
         sb.Append("<table><thead><tr>");
         for (var c = 0; c < head.Count; c++)
         {
-            sb.Append("<th dir=\"auto\"").Append(align[c]).Append('>').Append(Inline(head[c])).Append("</th>");
+            sb.Append("<th dir=\"auto\"").Append(align[c]).Append('>').Append(Cell(head[c])).Append("</th>");
         }
 
         sb.Append("</tr></thead><tbody>");
@@ -407,7 +539,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
             sb.Append("<tr>");
             for (var c = 0; c < head.Count; c++)
             {
-                sb.Append("<td dir=\"auto\"").Append(align[c]).Append('>').Append(c < row.Count ? Inline(row[c]) : string.Empty).Append("</td>");
+                sb.Append("<td dir=\"auto\"").Append(align[c]).Append('>').Append(c < row.Count ? Cell(row[c]) : string.Empty).Append("</td>");
             }
 
             sb.Append("</tr>");
@@ -462,9 +594,9 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
 
                     if (k < lines.Count && Width(lines[k]) > baseIndent)
                     {
-                        content.Add(string.Empty);
+                        content.AddRange(Enumerable.Repeat(string.Empty, k - i));
                         loose = true;
-                        i++;
+                        i = k;
                         continue;
                     }
 
@@ -543,7 +675,7 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
             {
                 if (id == null && ClassName.IsMatch(token[1..]))
                 {
-                    id = token[1..];
+                    id = "u-" + token[1..];
                     continue;
                 }
             }
@@ -552,13 +684,13 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
                 var colon = token.IndexOf(':');
                 var property = token[..colon].Trim().ToLowerInvariant();
                 var value = token[(colon + 1)..].Trim().Trim('"').Trim();
-                if (Properties.Contains(property) && IsSafeValue(value))
+                if (Properties.Contains(property) && IsSafeValue(property, value))
                 {
                     styles.Add(property + ":" + value);
                     continue;
                 }
             }
-            else if (ClassName.IsMatch(token))
+            else if (ClassName.IsMatch(token) && !token.StartsWith("secret", StringComparison.OrdinalIgnoreCase))
             {
                 classes.Add(token);
                 continue;
@@ -586,9 +718,13 @@ internal sealed partial class BookMarkdownRenderer(BookMarkdownOptions options)
         return sb.ToString();
     }
 
-    private static bool IsSafeValue(string value)
+    private static bool IsSafeValue(string property, string value)
     {
-        if (!SafeValue.IsMatch(value))
+        // No comment (it would swallow the declarations after it), no arithmetic outside calc(), no four-digit number (a 9999999px
+        // block is thousands of pages), and no negative margin (text laid over other text).
+        if (!SafeValue.IsMatch(value) || value.Contains("/*") || value.Contains("*/") || Regex.IsMatch(value, @"\d{4,}")
+            || (value.IndexOfAny(['+', '*', '/']) >= 0 && !value.Contains("calc(", StringComparison.OrdinalIgnoreCase))
+            || (property.StartsWith("margin", StringComparison.Ordinal) && Regex.IsMatch(value, @"(^|[\s(,])-\d")))
         {
             return false;
         }

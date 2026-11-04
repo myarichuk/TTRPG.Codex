@@ -38,6 +38,10 @@ public sealed class BookMarkdownOptions
     /// everything a player who owns no character may not read, whatever the source already did.</summary>
     public bool BoxSecrets { get; init; }
 
+    /// <summary>Heading ids already used elsewhere in the book. Share one set across the calls that make a book, so two sections
+    /// never produce the same anchor (a table of contents and the PDF outline look headings up by id).</summary>
+    public ISet<string>? HeadingIds { get; init; }
+
     /// <summary>The longest text rendered; the rest is cut and a warning says so.</summary>
     public int MaxLength { get; init; } = 500_000;
 }
@@ -58,7 +62,17 @@ public static class BookMarkdown
     public static BookMarkdownResult Render(string? text, BookMarkdownOptions? options = null)
     {
         var renderer = new BookMarkdownRenderer(options ?? new BookMarkdownOptions());
-        var html = renderer.Document(text ?? string.Empty);
+        string html;
+        try
+        {
+            html = renderer.Document(text ?? string.Empty);
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+        {
+            // Hostile input must cost one section, not the book: the text is shown as it is, escaped, with a warning.
+            html = renderer.Fallback(text ?? string.Empty);
+        }
+
         return new BookMarkdownResult(html, renderer.Headings, renderer.Warnings);
     }
 }

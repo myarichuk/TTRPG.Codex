@@ -331,3 +331,50 @@ Needed before it can ship as a theme (none done yet):
 6. The art colour grade should default to off for user-supplied art, with the sheet's knob kept.
 7. `.page` needs `isolation:isolate` or negative `z-index` art falls behind the page background.
 8. Chapter art offsets are pixel values for a Letter page; A4 and other sizes need the geometry as variables.
+
+## 14. Opus review of the renderer and the theme (fixes and decisions)
+
+An independent review (Opus, with throwaway probes) found no way to get raw HTML, an attribute or a URL through, and these
+problems, all now fixed and covered by tests in `BookMarkdownTests` (78 tests):
+- **High: a mention's typed `|label` leaked through every path around the mention handler** (image alt, the nesting and
+  paragraph caps, code spans, a mention split over a line, malformed or differently-cased mentions). Mentions are now settled
+  once, over the whole text, before any parser runs: the name the reader may have, or nothing; an unclosed one is cut to the end of
+  its line. A resolved name travels as a sentinel and is put back as a `<bdi>` span, or as plain text inside an attribute or a
+  heading id. Disabling the pre-pass fails 14 tests.
+- **High: one crafted line (`{{aaaa…'`) made `BlockOpen` backtrack exponentially and threw, killing the build.** Now a linear
+  scanner; `Render` also catches a regex timeout and shows that text escaped with a `render-failed` warning, so hostile input
+  costs one section. The scanner itself was not mutation-checked.
+- **Medium**: openers without a closer rescanned the whole text (a bounded window of 2,000 characters now); blank lines inside a
+  list item were quadratic; headings and table cells have a length cap; CSS values: no `var()`, no `/*`, arithmetic only in
+  `calc()`, no four-digit numbers, no negative margins, no `height` properties.
+- **Medium: the DM secret box was rebuilt as Markdown text**, so a stray `}}` closed it early and an unclosed `{{` swallowed the
+  text after it. Each secret segment is now rendered on its own inside a div; author classes starting with `secret` are refused.
+- **Low**: heading ids can be shared across calls (`BookMarkdownOptions.HeadingIds`) and author ids are prefixed `u-`; bidi
+  overrides and embeddings, zero-width space, word joiner and BOM are stripped (LRM/RLM/ALM kept); a marker behind a quote mark
+  or an invisible character is cut; `x|` over `---` is no longer a table; wikilinks and mentions sit in `<bdi>`.
+
+Still open from the review: `dir="auto"` follows the first strong character, so a Hebrew paragraph that starts with "HP" or a Latin
+NPC name lays out left to right; it needs an explicit `dir` per block from the book language, which the section builder will pass.
+`BookHeading.Text` is plain decoded text and the TOC and outline code must escape it (to be covered by a test there).
+
+### Theme decision (same review)
+Ship a **plain default**; "Ashen Vellum" is a **selectable** theme. Reasons: its fonts are Latin only so a Russian or Hebrew book
+would lose its look, dark pages cost ink and need contrast checked against the texture's worst spot, and the preview and the PDF
+both render as print, so the sheet's `@media print` ink-saver must become an explicit export toggle. Additions to the list in
+section 13:
+1. No `var()` inside `@page size`: the server writes page size and margins into the CSS and derives `--page-w/h` from them.
+2. `filter` or `mix-blend-mode` on an element that holds text can make Chromium rasterise it, losing search, extraction and
+   tags: filters only on images and background layers; decorative `content:` glyphs need an empty alt (`content: "x" / ""`);
+   a test compares the PDF's extracted text with the source.
+3. RTL beyond drop caps: logical properties everywhere, mirrored asymmetric masks, swapped `@page :left/:right` contents.
+4. Hebrew has no italic and some faces no bold: per-language `em`/`strong` and deliberate `font-synthesis`.
+5. `box-decoration-break: clone` on framed blocks, `break-inside: avoid` on stat blocks, a test for frames split across pages.
+6. The custom-CSS layer must refuse `@import`, remote `@font-face` and any `url()` that is not a data URI or asset.
+7. WCAG AA contrast checked in CI for body text, notes and zebra rows on the dark palette.
+
+**Per-page backgrounds under automatic flow**: no fixed `.page` boxes (they bring back clipping and hand pagination). Use a
+pre-rasterised parchment image (WebP or JPEG, about 200 KB, a few variants) as `@page { background-image }` from a closed-network
+asset, with `:left/:right` and named pages for variety, ornaments in margin boxes; a shared image is embedded once per book, so
+its cost does not grow with the page count. Phase-0 check still to do: that Chromium 153 paints an `@page` background full bleed
+next to margin boxes. Fallback: a `position: fixed; z-index: -1` element, which needs `@page { margin: 0 }` unless a negative
+inset escapes the margins. Never a filter-generated image as a full-page background.

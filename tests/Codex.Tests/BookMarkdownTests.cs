@@ -75,7 +75,7 @@ public class BookMarkdownTests
         Assert.Contains("mention-hidden", closed.Warnings);
 
         var open = Html(text, new BookMarkdownOptions { Mention = (kind, id) => kind == "actor" && id == "a1" ? "Aria" : null });
-        Assert.Contains("<span class=\"mention mention-actor\">Aria</span>", open);
+        Assert.Contains("<span class=\"mention mention-actor\"><bdi>Aria</bdi></span>", open);
         Assert.DoesNotContain("CANARY", open);
         Assert.DoesNotContain("p9", open);
     }
@@ -125,7 +125,7 @@ public class BookMarkdownTests
         Assert.DoesNotContain("expression", result.Html);
         Assert.DoesNotContain("position", result.Html);
         Assert.Contains("class=\"note\"", result.Html);
-        Assert.Contains("id=\"box\"", result.Html);
+        Assert.Contains("id=\"u-box\"", result.Html);
         Assert.Contains("color:red", result.Html);
         Assert.Contains("width:50%", result.Html);
         Assert.Contains("font-size:calc(1em + 2px)", result.Html);
@@ -251,7 +251,7 @@ public class BookMarkdownTests
     [Fact]
     public void WikiLinksKeepTheirWordsAndNothingElse()
     {
-        Assert.Equal("<p dir=\"auto\"><span class=\"wikilink\">Lighthouse</span> and <span class=\"wikilink\">the keeper</span></p>", Html("[[Lighthouse]] and [[Light|the keeper]]"));
+        Assert.Equal("<p dir=\"auto\"><span class=\"wikilink\"><bdi>Lighthouse</bdi></span> and <span class=\"wikilink\"><bdi>the keeper</bdi></span></p>", Html("[[Lighthouse]] and [[Light|the keeper]]"));
     }
 
     // ---- robustness ------------------------------------------------------------------------------------------------------
@@ -304,5 +304,184 @@ public class BookMarkdownTests
         Assert.Contains("dir=\"auto\"", html);
         Assert.Contains("<strong>контрабандист</strong>", html);
         Assert.Contains("<li dir=\"auto\">שומר המגדלור</li>", html);
+    }
+
+    // ---- found by an independent review of the renderer -------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("![[[actor:x|CANARY_Kael]]](slot:a)")]
+    [InlineData("> > > > > > > > > > > [[actor:x|CANARY_Kael]]")]
+    [InlineData("[a [a [a [a [a [a [a [a [a [a [a [a [a [a [a [[actor:x|CANARY_Kael]]](x)](x)](x)](x)](x)](x)](x)](x)](x)](x)](x)](x)](x)](x)")]
+    [InlineData("[[actor:x|CANARY_Kael\nthe Traitor]]")]
+    [InlineData("[[actor:x|CANARY_Kael")]
+    [InlineData("`[[actor:x|CANARY_Kael]]`")]
+    [InlineData("```\n[[actor:x|CANARY_Kael]]\n```")]
+    [InlineData("[[actor: x|CANARY_Kael]]")]
+    [InlineData("[[Actor:x|CANARY_Kael]]")]
+    [InlineData("[[actor:|CANARY_Kael]]")]
+    [InlineData("[[ actor : x |CANARY_Kael]]")]
+    [InlineData("| h |\n|---|\n| [[actor:x|CANARY_Kael]] |")]
+    [InlineData("# [[place:x|CANARY_Kael]]")]
+    [InlineData("{{note [[item:t/x|CANARY_Kael]]}}")]
+    public void ATypedMentionLabelIsInNoOutputPath(string text)
+    {
+        var html = BookMarkdown.Render(text).Html;
+
+        Assert.DoesNotContain("CANARY", html);
+    }
+
+    [Fact]
+    public void ALongParagraphDoesNotCarryAMentionLabelEither()
+    {
+        var html = BookMarkdown.Render(new string('a', 60_000) + " [[actor:x|CANARY_Kael]]").Html;
+
+        Assert.DoesNotContain("CANARY", html);
+    }
+
+    [Fact]
+    public void AResolvedMentionIsNamedEverywhereIncludingAnAltAndAHeadingId()
+    {
+        var options = new BookMarkdownOptions { Mention = (_, _) => "Aria" };
+
+        var alt = BookMarkdown.Render("![Portrait of [[actor:x|CANARY]]](slot:a)", options).Html;
+        Assert.Contains("Portrait of Aria", alt);
+        Assert.DoesNotContain("<span class=\"mention", alt.Split("slot-caption")[0]);
+
+        var heading = BookMarkdown.Render("# Meet [[actor:x]]", options);
+        Assert.Equal("meet-aria", heading.Headings[0].Id);
+        Assert.Contains("<bdi>Aria</bdi>", heading.Html);
+    }
+
+    [Theory]
+    [InlineData("{{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'")]
+    [InlineData("text\n{{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\nmore")]
+    [InlineData("{{a:\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")]
+    public void ACraftedBlockOpenerCannotStallTheBuild(string text)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        var result = BookMarkdown.Render("keep this\n\n" + text);
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromMilliseconds(500), $"took {stopwatch.Elapsed}");
+        Assert.Contains("keep this", result.Html);
+    }
+
+    [Theory]
+    [InlineData("# ", "{{", 60_000)]
+    [InlineData("| a |\n|---|\n| ", "[a", 60_000)]
+    [InlineData("", "[[", 60_000)]
+    [InlineData("", "[a](", 40_000)]
+    public void OpenersWithNoCloserCostAWindowEach_NotTheWholeText(string prefix, string opener, int count)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        _ = BookMarkdown.Render(prefix + string.Concat(Enumerable.Repeat(opener, count)));
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(2), $"took {stopwatch.Elapsed}");
+    }
+
+    [Fact]
+    public void ManyBlankLinesInAListItemAreLinear()
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        var html = BookMarkdown.Render("- a\n" + new string('\n', 60_000) + "  b").Html;
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(1), $"took {stopwatch.Elapsed}");
+        Assert.Contains("b", html);
+    }
+
+    [Theory]
+    [InlineData("height:9999999px")]
+    [InlineData("width:99999px")]
+    [InlineData("margin-top:-5cm")]
+    [InlineData("color:red/*")]
+    [InlineData("background:var(--stains)")]
+    [InlineData("width:10+5px")]
+    public void ALayoutBreakingValueIsDropped(string declaration)
+    {
+        var result = BookMarkdown.Render("{{note," + declaration + " text}}");
+
+        Assert.DoesNotContain("style=", result.Html);
+        Assert.Contains("attribute-dropped", result.Warnings);
+    }
+
+    [Fact]
+    public void CalcMayDoArithmetic()
+    {
+        Assert.Contains("width:calc(50% - 2cm)", BookMarkdown.Render("{{note,width:\"calc(50% - 2cm)\"\ntext\n}}").Html);
+    }
+
+    [Fact]
+    public void ASecretBoxCannotBeClosedFromInsideOrSwallowWhatFollows()
+    {
+        var box = new BookMarkdownOptions { BoxSecrets = true };
+
+        var closed = BookMarkdown.Render(":::dm\nline\n}}\nSECRET_AFTER_BRACES\n:::\n\nPublic after.", box).Html;
+        Assert.Matches(@"(?s)<div class=""secret secret-dm"">.*SECRET_AFTER_BRACES.*</div><p dir=""auto"">Public after\.</p>", closed);
+
+        var open = BookMarkdown.Render(":::dm\n{{note\nsecret\n:::\n\nPublic after.", box).Html;
+        Assert.Matches(@"</div><p dir=""auto"">Public after\.</p>$", open);
+    }
+
+    [Fact]
+    public void AnAuthorCannotFakeASecretBoxOrClaimAHeadingId()
+    {
+        var result = BookMarkdown.Render("{{secret,secret-dm,#intro\nforged\n}}\n\n# Intro");
+
+        Assert.DoesNotContain("secret", result.Html.Replace("secret-dm", "X").Length > 0 ? result.Html : string.Empty);
+        Assert.Equal("intro", result.Headings[0].Id);
+        Assert.DoesNotContain("id=\"intro\"", result.Html.Split("<h1")[0]);
+    }
+
+    [Fact]
+    public void HeadingIdsAreUniqueAcrossTheCallsOfOneBook()
+    {
+        var ids = new HashSet<string>();
+        var options = new BookMarkdownOptions { HeadingIds = ids };
+
+        var a = BookMarkdown.Render("# Coast", options);
+        var b = BookMarkdown.Render("# Coast", options);
+
+        Assert.Equal(["coast"], a.Headings.Select(h => h.Id));
+        Assert.Equal(["coast-2"], b.Headings.Select(h => h.Id));
+    }
+
+    [Fact]
+    public void BidiOverridesAndInvisibleCharactersAreRemoved_MarksAreKept()
+    {
+        var html = BookMarkdown.Render("שלום \u202Eevil\u202C \u2066x\u2069 a\u200Bb \u200Fmark").Html;
+
+        Assert.False(html.Contains('\u202E'));
+        Assert.False(html.Contains('\u2066'));
+        Assert.False(html.Contains('\u200B'));
+        Assert.True(html.Contains('\u200F'));
+    }
+
+    [Theory]
+    [InlineData("> :::dm\n> CANARY\n> :::")]
+    [InlineData("\u200B:::dm\nCANARY\n:::")]
+    [InlineData("   > :::for [[actor:x]]\n> CANARY\n> :::")]
+    public void AMarkerOutsideTheSharedGrammarIsNeverPrinted(string text)
+    {
+        var result = BookMarkdown.Render(text);
+
+        Assert.DoesNotContain(":::", result.Html);
+    }
+
+    [Fact]
+    public void ALineEndingInAPipeBeforeARuleIsNotATable()
+    {
+        Assert.DoesNotContain("<table", BookMarkdown.Render("x|\n---").Html);
+    }
+
+    [Fact]
+    public void AHeadingOrCellOverTheCapIsEscapedNotParsed()
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        _ = BookMarkdown.Render("# " + string.Concat(Enumerable.Repeat("*a ", 20_000)));
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(1));
     }
 }

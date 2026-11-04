@@ -7,6 +7,9 @@ internal sealed partial class BookMarkdownRenderer
 {
     private const int MaxInlineDepth = 12;
 
+    // How far an opener looks for its closer. Bounded, so a text of nothing but openers costs a window each, not the whole text.
+    private const int ScanWindow = 2_000;
+
     private static readonly Regex MentionTarget = new(@"^(?<kind>actor|place|item):(?<id>\S+)$", Flags, Timeout);
     private static readonly Regex ImageTarget = new(@"^(?:slot|asset):[A-Za-z0-9_-]{1,64}$", Flags, Timeout);
 
@@ -214,7 +217,7 @@ internal sealed partial class BookMarkdownRenderer
         end = open;
         var depth = 0;
         var close = -1;
-        for (var j = open; j < s.Length; j++)
+        for (var j = open; j < Math.Min(s.Length, open + ScanWindow); j++)
         {
             if (s[j] == '\\')
             {
@@ -237,7 +240,7 @@ internal sealed partial class BookMarkdownRenderer
         }
 
         var parens = 0;
-        for (var j = close + 1; j < s.Length && s[j] != '\n'; j++)
+        for (var j = close + 1; j < Math.Min(s.Length, close + ScanWindow) && s[j] != '\n'; j++)
         {
             if (s[j] == '(')
             {
@@ -262,7 +265,7 @@ internal sealed partial class BookMarkdownRenderer
         if (!ImageTarget.IsMatch(target))
         {
             Warn("image-dropped");
-            sb.Append(Enc(alt));
+            sb.Append(Resolve(Enc(alt), asHtml: false));
             return;
         }
 
@@ -270,18 +273,18 @@ internal sealed partial class BookMarkdownRenderer
         var src = options.Image?.Invoke(id);
         if (src != null && src.StartsWith("data:image/", StringComparison.Ordinal) && !src.Any(ch => ch is '"' or '<' or '>' or '\'' || char.IsWhiteSpace(ch)))
         {
-            sb.Append("<img class=\"art\" src=\"").Append(src).Append("\" alt=\"").Append(Enc(alt)).Append("\">");
+            sb.Append("<img class=\"art\" src=\"").Append(src).Append("\" alt=\"").Append(Resolve(Enc(alt), asHtml: false)).Append("\">");
             return;
         }
 
-        sb.Append("<span class=\"slot\" data-slot=\"").Append(Enc(id)).Append("\"><span class=\"slot-caption\">").Append(Enc(alt)).Append("</span></span>");
+        sb.Append("<span class=\"slot\" data-slot=\"").Append(Enc(id)).Append("\"><span class=\"slot-caption\">").Append(Resolve(Enc(alt), asHtml: false)).Append("</span></span>");
     }
 
     private int Bracket(string s, int at, int depth, StringBuilder sb)
     {
         if (at + 1 < s.Length && s[at + 1] == '[')
         {
-            var close = s.IndexOf("]]", at + 2, StringComparison.Ordinal);
+            var close = s.IndexOf("]]", at + 2, Math.Max(0, Math.Min(s.Length - at - 2, 220)), StringComparison.Ordinal);
             if (close > at + 2 && close - at < 220)
             {
                 var inner = s[(at + 2)..close];
@@ -328,7 +331,7 @@ internal sealed partial class BookMarkdownRenderer
         var shown = string.IsNullOrEmpty(label) ? target : label;
         if (shown.Length > 0)
         {
-            sb.Append("<span class=\"wikilink\">").Append(Enc(shown)).Append("</span>");
+            sb.Append("<span class=\"wikilink\"><bdi>").Append(Enc(shown)).Append("</bdi></span>");
         }
     }
 
@@ -337,7 +340,7 @@ internal sealed partial class BookMarkdownRenderer
     {
         var level = 1;
         var close = -1;
-        for (var j = at + 2; j < s.Length - 1; j++)
+        for (var j = at + 2; j < Math.Min(s.Length - 1, at + ScanWindow); j++)
         {
             if (s[j] == '{' && s[j + 1] == '{')
             {
