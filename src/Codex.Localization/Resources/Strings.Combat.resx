@@ -12,8 +12,8 @@
   <data name="Combat.Console.NewSession" xml:space="preserve"><value>New session</value></data>
   <data name="Combat.Console.SessionOption" xml:space="preserve"><value>{0} ({1})</value></data>
   <data name="Combat.Console.StartTable" xml:space="preserve"><value>Start the table</value></data>
-  <data name="Combat.Console.WaitingDm" xml:space="preserve"><value>Waiting for the DM</value></data>
-  <data name="Combat.Console.WaitingDmHint" xml:space="preserve"><value>This page updates by itself when the DM starts the table.</value></data>
+  <data name="Combat.Console.WaitingDm" xml:space="preserve"><value>Waiting for the GM</value></data>
+  <data name="Combat.Console.WaitingDmHint" xml:space="preserve"><value>This page updates by itself when the GM starts the table.</value></data>
   <data name="Combat.Status.Planned" xml:space="preserve"><value>Planned</value></data>
   <data name="Combat.Status.Live" xml:space="preserve"><value>Live</value></data>
   <data name="Combat.Status.Completed" xml:space="preserve"><value>Completed</value></data>
@@ -140,10 +140,10 @@
   <data name="Combat.Spend" xml:space="preserve"><value>Spend</value></data>
   <data name="Combat.Dice" xml:space="preserve"><value>Dice</value></data>
   <data name="Combat.DiceExpression" xml:space="preserve"><value>Dice expression</value></data>
-  <data name="Combat.SecretRoll" xml:space="preserve"><value>Secret roll (DM only)</value></data>
+  <data name="Combat.SecretRoll" xml:space="preserve"><value>Secret roll (GM only)</value></data>
   <data name="Combat.RollLog" xml:space="preserve"><value>Roll log</value></data>
   <data name="Combat.You" xml:space="preserve"><value>You</value></data>
-  <data name="Combat.Dm" xml:space="preserve"><value>DM</value></data>
+  <data name="Combat.Dm" xml:space="preserve"><value>GM</value></data>
   <data name="Combat.Player" xml:space="preserve"><value>Player</value></data>
   <data name="Combat.EndTableTitle" xml:space="preserve"><value>End the table?</value></data>
   <data name="Combat.EndTableCombat" xml:space="preserve"><value>The session stays open while the fight is on, so the initiative order comes back when the table is started again. Players' table pages go back to waiting.</value></data>
@@ -154,7 +154,7 @@
   <data name="Combat.CommandFailed" xml:space="preserve"><value>That didn't go through. Try again; if it keeps failing, reload the page.</value></data>
   <data name="Combat.EndEncounterTitle" xml:space="preserve"><value>End the encounter?</value></data>
   <data name="Combat.EndEncounterText" xml:space="preserve"><value>The initiative order is cleared and conditions with a round count expire. Conditions that last until removed stay.</value></data>
-  <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>Only the DM can add creatures.</value></data>
+  <data name="Combat.DmOnlyCreatures" xml:space="preserve"><value>Only the GM can add creatures.</value></data>
   <data name="Combat.CreatureAdded" xml:space="preserve"><value>{0} added; players see them as a stranger by that name. Add them to initiative when ready.</value></data>
   <data name="Combat.Notes.Tab" xml:space="preserve"><value>Notes</value></data>
   <data name="Combat.Notes.TabTitle" xml:space="preserve"><value>Session notes (access key N)</value></data>
@@ -187,7 +187,7 @@
   <data name="Combat.Notes.Prompt.FollowUp" xml:space="preserve"><value>What should be picked up later?</value></data>
   <data name="Combat.Notes.MentionHint" xml:space="preserve"><value>Type @ for a character, # for a place, $ for an item.</value></data>
   <data name="Combat.Notes.SubmitHint" xml:space="preserve"><value>Ctrl+Enter (⌘+Enter on a Mac) adds it.</value></data>
-  <data name="Combat.Notes.SecretDm" xml:space="preserve"><value>Secret (DM only)</value></data>
+  <data name="Combat.Notes.SecretDm" xml:space="preserve"><value>Secret (GM only)</value></data>
   <data name="Combat.Notes.InConversation" xml:space="preserve"><value>In this conversation</value></data>
   <data name="Combat.Notes.AddWhosTalking" xml:space="preserve"><value>Add who's talking. After that, each line only needs its speaker.</value></data>
   <data name="Combat.Notes.TakeOut" xml:space="preserve"><value>Take {0} out of the conversation</value></data>
@@ -229,8 +229,8 @@
   <data name="Combat.Mention.Home.Wiki" xml:space="preserve"><value>Wiki</value></data>
   <data name="Combat.Mention.Home.Journal" xml:space="preserve"><value>Journal</value></data>
   <data name="Combat.Mention.Source.Recap" xml:space="preserve"><value>Recap</value></data>
-  <data name="Combat.Mention.Source.DmSummary" xml:space="preserve"><value>DM summary</value></data>
+  <data name="Combat.Mention.Source.DmSummary" xml:space="preserve"><value>GM summary</value></data>
   <data name="Combat.Mention.Source.Comment" xml:space="preserve"><value>Comment</value></data>
   <data name="Combat.Mention.Source.Biography" xml:space="preserve"><value>Biography</value></data>
-  <data name="Combat.Mention.Source.DmNotes" xml:space="preserve"><value>DM notes</value></data>
+  <data name="Combat.Mention.Source.DmNotes" xml:space="preserve"><value>GM notes</value></data>
 </root>

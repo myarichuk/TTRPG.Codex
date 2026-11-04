@@ -95,7 +95,7 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         // ---- Criterion 7: players open the Table before the DM starts it. ----
         await E2EHelpers.GoToSectionAsync(player1, campaignId, "table");
         await E2EHelpers.GoToSectionAsync(player2, campaignId, "table");
-        await Assertions.Expect(player1.GetByText("Waiting for the DM")).ToBeVisibleAsync();
+        await Assertions.Expect(player1.GetByText("Waiting for the GM")).ToBeVisibleAsync();
 
         // ---- Criterion 2 (part 1): the DM starts the table. ----
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "table");
@@ -195,7 +195,7 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         // The DM ends the table; players' pages return to the waiting state without a reload.
         await dm.GetByTestId("end-table").ClickAsync();
         await dm.GetByTestId("confirm-accept").ClickAsync();
-        await Assertions.Expect(player1.GetByText("Waiting for the DM")).ToBeVisibleAsync(new() { Timeout = 15_000 });
+        await Assertions.Expect(player1.GetByText("Waiting for the GM")).ToBeVisibleAsync(new() { Timeout = 15_000 });
     }
 
     private static async Task SetInitiativeAsync(IPage dm, string actorName, string actorId, int roll)

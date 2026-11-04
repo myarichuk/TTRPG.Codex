@@ -48,7 +48,7 @@
   <data name="Library.Detail.Source" xml:space="preserve"><value>Source:</value></data>
   <data name="Library.Detail.Licence" xml:space="preserve"><value>Licence:</value></data>
   <data name="Library.Detail.Modified" xml:space="preserve"><value>modified from the original</value></data>
-  <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>Created at this table. The DM decides who may reuse it.</value></data>
+  <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>Created at this table. The GM decides who may reuse it.</value></data>
   <data name="Library.Detail.LoreText" xml:space="preserve"><value>Lore text:</value></data>
   <data name="Library.Detail.Translation" xml:space="preserve"><value>Translation:</value></data>
   <data name="Library.Detail.LicenceName" xml:space="preserve"><value>licence {0}</value></data>

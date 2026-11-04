@@ -1,6 +1,6 @@
 # World builder
 
-Status: built. The **World builder** section (`/campaigns/{id}/build`, DM only) holds the DM's conversations with their own
+Status: built. The **World builder** section (`/campaigns/{id}/build`, GM only) holds the GM's conversations with their own
 text model, which reads the campaign and the Library through tools and proposes related pages, places, people, secrets and
 homebrew in one go, changes to what the campaign has, Bestiary picks and tags. The wiki's *Build with AI* menu and the Library's *Homebrew with AI* button open it with a starter message. The
 guided recipe wizards it replaced are gone. Phase 2, the same tools over MCP (§6), is design only.
@@ -11,31 +11,31 @@ place on save, nested in a region's tree). See `CastService.PromotePageAsync` an
 
 ## 1. Principles
 
-1. **The model proposes, the DM applies.** The model reads with tools and proposes with `propose_changes`, which checks
-   the proposal and holds it; it never writes. Saving happens only when the DM clicks *Apply* on the review card, through
+1. **The model proposes, the GM applies.** The model reads with tools and proposes with `propose_changes`, which checks
+   the proposal and holds it; it never writes. Saving happens only when the GM clicks *Apply* on the review card, through
    `WorldBuilderService.SaveAsync`, the one write path.
 2. **Saved material starts hidden.** Wiki pages `DmOnly`, homebrew unpublished, facts `DmOnly`, places and cast members
-   `Hidden`. Revealing a cast member whose history came from a page warns the DM first.
+   `Hidden`. Revealing a cast member whose history came from a page warns the GM first.
 3. **Reuse what exists.** Every entry becomes a document the app already has: a page (`WikiPageDocument`, with a kind),
    a place (`LocationDocument` in a region, with a parent and a kind), a cast member (`ActorDocument`, linked to its page),
    a homebrew entry, a fact, a Bestiary shortlist line. Pack entries are never changed; a variant is a homebrew copy.
-4. **Stored data stays canonical.** Names and prose are in the DM's language; option values (spell school, damage type)
+4. **Stored data stays canonical.** Names and prose are in the GM's language; option values (spell school, damage type)
    are mapped back to the system's values (`SystemDefinition.CanonicalOption`).
 5. **Original names only**, as the shipped content.
 
 ## 2. The conversations
 
-A DM keeps as many conversations per campaign as they like (`WorldChatDocument`, `worldchats/<guid>`). Each is named after
-its first message until the DM renames it, is private to the DM who started it (a co-DM sees their own), is stored after
+A GM keeps as many conversations per campaign as they like (`WorldChatDocument`, `worldchats/<guid>`). Each is named after
+its first message until the GM renames it, is private to the GM who started it (a co-GM sees their own), is stored after
 every turn and every decision on its proposal, is deleted with the campaign, and stays out of the campaign export, like the
-journal: they are working notes. `WorldChatSessions` (scoped to the DM's connection) keeps the chats opened so far, so a turn
-keeps running while the DM looks at another chat; `/build?chat=<guid>` opens one.
+journal: they are working notes. `WorldChatSessions` (scoped to the GM's connection) keeps the chats opened so far, so a turn
+keeps running while the GM looks at another chat; `/build?chat=<guid>` opens one.
 
 A chat stores the history as the model reads it (`WorldChatMessage`: text, tool calls, tool results; reasoning is not kept,
 and the system prompt is made afresh for each message from the campaign as it is then), the log as the page shows it
-(`WorldChatLine`), and the waiting proposal with the DM's ticks and decisions.
+(`WorldChatLine`), and the waiting proposal with the GM's ticks and decisions.
 
-Each DM message runs the model through `Microsoft.Extensions.AI`'s function invocation, at most `WorldChat.MaxToolRounds` round
+Each GM message runs the model through `Microsoft.Extensions.AI`'s function invocation, at most `WorldChat.MaxToolRounds` round
 trips. Every tool call is recorded as a `WorldChatStep`: the tool, its arguments as JSON, what it returned (cut at 20,000
 characters), the error it hit, whether it refused what it was given (a proposal with errors), and how long it took. A reply
 keeps its steps, the model's reasoning (for models that share it) and a `WorldChatUsage`: the model, the number of model
@@ -64,7 +64,7 @@ Models that cannot call tools get a clear message (`WorldChat.Error.NoTools`).
 | `homebrew_fields(type)` | The fields a homebrew entry of a type fills |
 | `list_tags()` | The tags the campaign's pages and homebrew use, with counts |
 | `propose_changes(proposal)` | Checks the proposal: errors per entry for the model to fix, or "ready for review" |
-| `add_entries(entries)` | Puts more entries beside the waiting proposal, keeping the DM's ticks |
+| `add_entries(entries)` | Puts more entries beside the waiting proposal, keeping the GM's ticks |
 
 Read tools return short text, capped; they never write.
 
@@ -94,8 +94,8 @@ Read tools return short text, capped; they never write.
 
 A place's `placeKind` is one of area, settlement, district, site (a building, ship or dungeon), section (a floor, deck or
 dungeon level), room and feature; left out, it follows the parent (or, at the top, the new region's `regionKind`: a dungeon's
-or vessel's top places are sections). A feature's `feature` notes are saved on the place for the DM and never sent to
-players; what is inside stays text, and the DM hands the items over from Items when the party takes them.
+or vessel's top places are sections). A feature's `feature` notes are saved on the place for the GM and never sent to
+players; what is inside stays text, and the GM hands the items over from Items when the party takes them.
 
 `WorldBundleParser.ParseProposal` (pure, unit-tested) turns it into a `WorldBundle` of `WorldDraft`s: it resolves links to
 other entries and existing pages, checks parents (another place entry or an existing place; no loops), coerces homebrew
@@ -123,7 +123,7 @@ the workbench (the side rail and the notes dock change its width at a given scre
 - **760 to 1279px**: the conversation and the proposal; the chats open as a drawer over them.
 - **Under 760px**: one pane at a time, picked from tabs (*Chats*, *Conversation*, *Proposal* with a count).
 
-The conversation sets the AI's words like a book's page and the DM's at the end side. Before the first message it offers
+The conversation sets the AI's words like a book's page and the GM's at the end side. Before the first message it offers
 numbered starters (a settlement, a faction, a quest, people, homebrew, a variant, revising a page, tagging for sharing). Under
 each reply the steps fold into one line (*7 steps · 0.4 s · 1 needed another try*); opened, each step is a line with what it
 did, how it came out and how long it took, and opens to its arguments and result, and from there to the raw JSON
@@ -161,9 +161,9 @@ cascade delete).
 
 The tools above are plain methods on `WorldBuilderService`, and a proposal is plain data (`WorldBundle`), so an MCP server
 (`ModelContextProtocol.AspNetCore`) can expose the same tools to an external assistant (Claude Desktop, an IDE).
-`propose_changes` there puts the proposal in a chat of the campaign, where the DM applies it in the app as in §2; the MCP side
-never writes. Because the app is often reached over the LAN, the endpoint needs a per-user token the DM creates in settings,
-scoped to one campaign, DM-only, revocable and off by default.
+`propose_changes` there puts the proposal in a chat of the campaign, where the GM applies it in the app as in §2; the MCP side
+never writes. Because the app is often reached over the LAN, the endpoint needs a per-user token the GM creates in settings,
+scoped to one campaign, GM-only, revocable and off by default.
 
 ## 8. Not done yet
 

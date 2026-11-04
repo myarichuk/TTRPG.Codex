@@ -84,20 +84,20 @@ rings and the HP bar's fill against its track need 3:1.
 |---|---|
 | `/` | The campaigns you own or play in, as cards with cover art. New campaign dialog (name, system, description). |
 | `/campaigns/{id}` | Overview: description, your characters (or the cast), table status, members, invite link. |
-| `/campaigns/{id}/cast` | Player characters, NPCs and monsters with portraits. Players create (by hand or from an AI concept), edit and retire their own character; the DM reveals/hides and deletes anything. |
-| `/campaigns/{id}/bestiary` | DM: a shortlist of Library creatures for upcoming encounters (note, count, "to cast"), plus monsters in play. Players: the creatures they have met. |
-| `/campaigns/{id}/world` | Regions (each with a type: realm, wilderness, city, dungeon, vessel, plane) and the places inside them, nested to any depth: area › settlement › district › site › section › room › feature. A feature (a chest, a safe behind a false wall, a mimic) carries DM-only notes on its lock, trap, hiding place, contents and creature. Reveal to party, add places from setting packs. |
-| `/campaigns/{id}/items` | Handing items over. DM: give from the Library to any character, or move items between any characters. Player: hand what their own character carries to another player's character. Only sheets change; the receiver gets the item unequipped. |
-| `/campaigns/{id}/wiki[/{slug}[/edit]]` | The world wiki: DM-written pages linked with `[[Page title]]`, each DM-only or shared with the party; backlinks; player notes per page; "Expand with AI". |
-| `/campaigns/{id}/build[?chat={id}]` | DM: the world builder (docs/WORLD_BUILDER.md). A workbench filling the screen under the header: the DM's named chats, the conversation (each tool call the AI made, with its arguments, result and timing, and raw JSON on request), and the proposal to review entry by entry and apply. The chats fold into a drawer when the workbench is narrower than 1280px; under 760px one pane shows at a time, picked from tabs. Laid out by container queries on the workbench, not the viewport. |
-| `/campaigns/{id}/lore` | Facts with visibility: DM only, revealed to a character, or the whole party. |
+| `/campaigns/{id}/cast` | Player characters, NPCs and monsters with portraits. Players create (by hand or from an AI concept), edit and retire their own character; the GM reveals/hides and deletes anything. |
+| `/campaigns/{id}/bestiary` | GM: a shortlist of Library creatures for upcoming encounters (note, count, "to cast"), plus monsters in play. Players: the creatures they have met. |
+| `/campaigns/{id}/world` | Regions (each with a type: realm, wilderness, city, dungeon, vessel, plane) and the places inside them, nested to any depth: area › settlement › district › site › section › room › feature. A feature (a chest, a safe behind a false wall, a mimic) carries GM-only notes on its lock, trap, hiding place, contents and creature. Reveal to party, add places from setting packs. |
+| `/campaigns/{id}/items` | Handing items over. GM: give from the Library to any character, or move items between any characters. Player: hand what their own character carries to another player's character. Only sheets change; the receiver gets the item unequipped. |
+| `/campaigns/{id}/wiki[/{slug}[/edit]]` | The world wiki: GM-written pages linked with `[[Page title]]`, each GM-only or shared with the party; backlinks; player notes per page; "Expand with AI". |
+| `/campaigns/{id}/build[?chat={id}]` | GM: the world builder (docs/WORLD_BUILDER.md). A workbench filling the screen under the header: the GM's named chats, the conversation (each tool call the AI made, with its arguments, result and timing, and raw JSON on request), and the proposal to review entry by entry and apply. The chats fold into a drawer when the workbench is narrower than 1280px; under 760px one pane shows at a time, picked from tabs. Laid out by container queries on the workbench, not the viewport. |
+| `/campaigns/{id}/lore` | Facts with visibility: GM only, revealed to a character, or the whole party. |
 | `/campaigns/{id}/sessions` | Planned, live and completed sessions. |
-| `/campaigns/{id}/sessions/{sid}` | Player recap and DM-only summary (both with AI drafts), table notes (private or party), the reader's private journal for the session, event log. |
-| `/campaigns/{id}/journal` | The reader's private notebook for the campaign: one entry per session plus free entries. Never visible to anyone else, the DM included. |
+| `/campaigns/{id}/sessions/{sid}` | Player recap and GM-only summary (both with AI drafts), table notes (private or party), the reader's private journal for the session, event log. |
+| `/campaigns/{id}/journal` | The reader's private notebook for the campaign: one entry per session plus free entries. Never visible to anyone else, the GM included. |
 | `/campaigns/{id}/table` | The live table: initiative, hit points, conditions, dice, quick notes, quick-add creatures. |
-| `/campaigns/{id}/library[/{type}[/{entry}]]` | Reference content for the system plus homebrew; the DM authors homebrew, clones a pack entry as a variant, imports homebrew from other campaigns they run, and exports it as a pack, all of it or only what carries chosen tags. |
+| `/campaigns/{id}/library[/{type}[/{entry}]]` | Reference content for the system plus homebrew; the GM authors homebrew, clones a pack entry as a variant, imports homebrew from other campaigns they run, and exports it as a pack, all of it or only what carries chosen tags. |
 | `/campaigns/{id}/settings` | Name, system, cover art, active packs, members and roles, invite link, backup, delete. |
-| `/campaigns/{id}/actors/{aid}` | The character sheet, rendered from the system's `system.yaml`; portrait, history (AI rewrite), DM notes (DM only, AI draft), level-up advice. |
+| `/campaigns/{id}/actors/{aid}` | The character sheet, rendered from the system's `system.yaml`; portrait, history (AI rewrite), GM notes (GM only, AI draft), level-up advice. |
 | `/settings/ai` | The reader's AI providers: presets (OpenRouter first), key, model; test connection; which one is the default. |
 | `/library[/{system}[/{type}[/{entry}]]]` | Read-only browser across loaded systems. |
 | `/about` | Loaded systems and packs with their licence attribution; content load warnings. |
@@ -117,13 +117,13 @@ Frames: every `.panel`, `.campaign-card`, `.participant`, `.list-picker` and dia
 
 ## The sheet
 
-A sticky plate sits under the header: portrait, name, kind, class-and-level and species plaques, then a stat strip (hit points with bar, AC on a shield, then each derived number such as proficiency bonus and initiative, and speed). The plate also holds Save, with a count of unsaved changes next to it. Below it, rule violations and warnings, then tabs: Attributes (attributes, skills, sheet fields, classes, linked Library entries), Picks, Inventory, History, and DM notes (the DM only). The "From the Library" list sits at the foot of Attributes. A tab appears only when the system or the viewer has something to put in it. The tabs are a navigation of buttons (`aria-current="page"`), not an ARIA tablist, so they are reached with Tab and activated with Enter or Space. Hit points, armor class, slots, level-up and visibility stay in the right column on every tab.
+A sticky plate sits under the header: portrait, name, kind, class-and-level and species plaques, then a stat strip (hit points with bar, AC on a shield, then each derived number such as proficiency bonus and initiative, and speed). The plate also holds Save, with a count of unsaved changes next to it. Below it, rule violations and warnings, then tabs: Attributes (attributes, skills, sheet fields, classes, linked Library entries), Picks, Inventory, History, and GM notes (the GM only). The "From the Library" list sits at the foot of Attributes. A tab appears only when the system or the viewer has something to put in it. The tabs are a navigation of buttons (`aria-current="page"`), not an ARIA tablist, so they are reached with Tab and activated with Enter or Space. Hit points, armor class, slots, level-up and visibility stay in the right column on every tab.
 
 Ability plates show the modifier large and the score in a medallion; with the point-buy or standard-array method the medallion is the input.
 
 ## The table
 
-Above the order, a sticky banner names whose turn it is (and "Turn n of m"). Each row is a token (portrait or initials, ringed in the colour of the kind: brass for characters, verdigris for NPCs, blood for monsters), the name, an initiative plaque, state badges, an HP bar with the numbers on it, and a strip of condition chips (icon, name, rounds left, and a remove button for the DM). Players see the bar only for characters they can see exactly; hostiles keep the coarse band text.
+Above the order, a sticky banner names whose turn it is (and "Turn n of m"). Each row is a token (portrait or initials, ringed in the colour of the kind: brass for characters, verdigris for NPCs, blood for monsters), the name, an initiative plaque, state badges, an HP bar with the numbers on it, and a strip of condition chips (icon, name, rounds left, and a remove button for the GM). Players see the bar only for characters they can see exactly; hostiles keep the coarse band text.
 
 ## Dice
 
@@ -179,14 +179,14 @@ The initiative heading's text (`Initiative - Round N`) is asserted verbatim.
 
 ## Visibility rules the UI relies on
 
-- **DM notes** on an actor are stripped by the repository before a non-DM receives the document;
+- **GM notes** on an actor are stripped by the repository before a non-GM receives the document;
   a player's save never writes them.
-- **DM summary** on a session is only bound into the DM's editor; players get the recap.
-- **Wiki** pages are DM-only until shared; a `[[link]]` to a page the reader can't see renders as
-  plain text (or a "create it" link for the DM).
+- **GM summary** on a session is only bound into the GM's editor; players get the recap.
+- **Wiki** pages are GM-only until shared; a `[[link]]` to a page the reader can't see renders as
+  plain text (or a "create it" link for the GM).
 - **Journals** are filtered by owner inside the query; they are absent from exports and AI digests.
 - **Player AI drafts** (recap, history) are built from `SessionDigest`/sheet facts that exclude
-  secret rolls, private notes and DM notes.
+  secret rolls, private notes and GM notes.
 - **Art** is served through `/media/...` endpoints that resolve `CampaignAccess` first, so a hidden
   NPC's portrait is not reachable by URL.
 

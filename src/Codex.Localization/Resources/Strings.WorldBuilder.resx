@@ -14,7 +14,7 @@
   <data name="WorldBuilder.Tag.faction" xml:space="preserve"><value>faction</value></data>
   <data name="WorldBuilder.Tag.npc" xml:space="preserve"><value>person</value></data>
   <data name="WorldBuilder.Open.Faction" xml:space="preserve"><value>Design a faction with AI</value></data>
-  <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Only the DM can build the world.</value></data>
+  <data name="WorldBuilder.Error.OnlyDm" xml:space="preserve"><value>Only the GM can build the world.</value></data>
   <data name="WorldBuilder.Error.EditTargetGone" xml:space="preserve"><value>“{0}” is no longer in the campaign, so its change can't be applied. Untick it and apply the rest.</value></data>
   <data name="WorldBuilder.Error.EditChanged" xml:space="preserve"><value>“{0}” was changed after this proposal was made, so applying it would overwrite that. Ask for the change again from the current text.</value></data>
   <data name="WorldBuilder.Error.MoveFailed" xml:space="preserve"><value>“{0}” could not be moved to the other region. Nothing was changed for it.</value></data>
@@ -22,7 +22,7 @@
   <data name="WorldBuilder.Error.StatsGone" xml:space="preserve"><value>The creature chosen for “{0}” is no longer in the Library, so its stat block can’t be applied. Untick it and apply the rest.</value></data>
   <data name="WorldBuilder.Error.MoveParentMissing" xml:space="preserve"><value>“{0}” cannot be moved: the place it should go inside was not made. Apply that place too, or untick this move.</value></data>
   <data name="WorldBuilder.Error.MoveLoop" xml:space="preserve"><value>“{0}” cannot go inside itself or a place it holds.</value></data>
-  <data name="WorldBuilder.Error.EditLosesSecret" xml:space="preserve"><value>“{0}” was not changed: the new text would drop or reveal one of its hidden blocks. Ask for the change again and keep the DM-only parts as they are.</value></data>
+  <data name="WorldBuilder.Error.EditLosesSecret" xml:space="preserve"><value>“{0}” was not changed: the new text would drop or reveal one of its hidden blocks. Ask for the change again and keep the GM-only parts as they are.</value></data>
   <data name="WorldBuilder.Open.Homebrew" xml:space="preserve"><value>Build with AI</value></data>
   <data name="WorldBuilder.Drafts.Stats.Creatures" xml:space="preserve"><value>Creatures</value></data>
   <data name="WorldBuilder.Drafts.Stats.Use" xml:space="preserve"><value>Use</value></data>

@@ -2,7 +2,7 @@
   "locale": "en_US",
   "meta": {
     "title": "TTRPG.Codex — a self-hosted companion for tabletop campaigns",
-    "description": "One DM, any number of players, one browser tab each: a live table with initiative and hit points, campaign prep, a rules Library with homebrew, and optional AI on your own key. Free for personal and noncommercial use. English, Russian and Hebrew."
+    "description": "One GM, any number of players, one browser tab each: a live table with initiative and hit points, campaign prep, a rules Library with homebrew, and optional AI on your own key. Free for personal and noncommercial use. English, Russian and Hebrew."
   },
   "nav": {
     "home": "Home", "install": "Install", "guide": "Guide", "github": "GitHub",
@@ -20,11 +20,11 @@
   "hero": {
     "eyebrow": "Self-hosted · Free for personal and noncommercial use",
     "title": "Run your whole table from one browser tab",
-    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One DM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew. It ships with the Fifth Edition SRD 5.2.1, and other systems can be added as data.",
+    "lead": "TTRPG.Codex is a companion for running tabletop role-playing campaigns. One GM, any number of players: a live table with initiative, hit points and conditions; campaign prep and a world wiki; and a rules Library you can extend with homebrew. It ships with the Fifth Edition SRD 5.2.1, and other systems can be added as data.",
     "primary": "Download",
     "secondary": "Read the guide",
     "note": "Windows, macOS and Linux · English, Русский, עברית",
-    "shotAlt": "The live table in TTRPG.Codex: initiative order with hit-point bars and conditions, the DM's controls and a dice tray."
+    "shotAlt": "The live table in TTRPG.Codex: initiative order with hit-point bars and conditions, the GM's controls and a dice tray."
   },
   "strip": [
     { "icon": "lock", "text": "Your data stays on your computer" },
@@ -37,11 +37,11 @@
     "title": "Everything between sessions and at the table",
     "lead": "Built for the way a game actually runs: prepare quietly, then keep the table moving without a stack of tabs and paper.",
     "items": [
-      { "icon": "dices", "title": "A live table", "text": "Initiative, hit points, conditions with round counters, a dice tray and quick notes. Everyone sees changes the moment the DM makes them." },
+      { "icon": "dices", "title": "A live table", "text": "Initiative, hit points, conditions with round counters, a dice tray and quick notes. Everyone sees changes the moment the GM makes them." },
       { "icon": "scroll", "title": "Character sheets from data", "text": "Sheets are drawn from the game system's own definition, with rule checks you can set to strict, warn or off, and level-up guidance from the Library." },
       { "icon": "map", "title": "Prep and a world wiki", "text": "Cast with portraits, a bestiary shortlist, regions and places, linked wiki pages with templates for what you write often, and lore you can reveal to one character or the whole party." },
       { "icon": "book-open", "title": "A Library you can extend", "text": "Ships with the Fifth Edition SRD 5.2.1. Write homebrew, clone an entry as a variant, and carry sets of it between campaigns as packs." },
-      { "icon": "notebook-pen", "title": "Sessions, recaps and journals", "text": "A player-facing recap and a separate DM summary, table notes (private or shared) and a private journal that not even the DM can read." },
+      { "icon": "notebook-pen", "title": "Sessions, recaps and journals", "text": "A player-facing recap and a separate GM summary, table notes (private or shared) and a private journal that not even the GM can read." },
       { "icon": "eye-off", "title": "Secrets stay secret", "text": "NPCs can be hidden, met as strangers under a name you choose, or revealed. A shared page keeps its secrets, with what the players are told instead. Players only ever receive what they are allowed to see." },
       { "icon": "sparkles", "title": "Optional AI, on your own key", "text": "Draft recaps, histories and characters, or build the world in a chat. Nothing is sent to a model until you click, and nothing is saved until you apply it." },
       { "icon": "library", "title": "Systems are data", "text": "A system is a YAML file plus packs of YAML content: attributes, resources, sheet fields, content types and conditions. Define your own without touching the program." }
@@ -62,10 +62,10 @@
         "shot": "sheet", "alt": "A character sheet showing hit points, armor class, attributes and level-up help.",
         "title": "Sheets that know the rules",
         "text": "The sheet is rendered from the system definition: attributes, skills, picks, inventory and history, with the numbers worked out for you.",
-        "bullets": ["Point buy and standard array, enforced or just flagged", "Level-up help drawn from the Library's class entries", "A DM-only notes tab for secrets about the character"]
+        "bullets": ["Point buy and standard array, enforced or just flagged", "Level-up help drawn from the Library's class entries", "A GM-only notes tab for secrets about the character"]
       },
       {
-        "shot": "wiki-page", "alt": "A wiki page about a harbour town, with a secret only the DM sees and a preview card on a link.",
+        "shot": "wiki-page", "alt": "A wiki page about a harbour town, with a secret only the GM sees and a preview card on a link.",
         "title": "A wiki that links itself",
         "text": "Write pages in plain text and link them with double brackets: typing [[ offers the pages you have. Hover a link for a preview, and backlinks show what mentions what.",
         "bullets": ["Secrets inside a shared page, revealed to the party or to one character", "Templates and outlines for encounters, people and places", "Mention characters, places and items with @, # and $"]
@@ -80,7 +80,7 @@
         "shot": "session", "alt": "A session page with a recap editor, a private journal and the event log.",
         "title": "Recaps with a head start",
         "text": "Every roll, hit and condition lands in the session log. Pre-fill the recap from it, polish it, and publish it to the party.",
-        "bullets": ["A player-facing recap and a separate, secret DM summary", "Table notes that are private or shared", "Each player's journal, private even from the DM"]
+        "bullets": ["A player-facing recap and a separate, secret GM summary", "Table notes that are private or shared", "Each player's journal, private even from the GM"]
       },
       {
         "shot": "table-light", "alt": "The live table in the light parchment theme.",
@@ -93,7 +93,7 @@
   "phone": {
     "title": "In every player's pocket",
     "text": "The app is installable on a phone. Players open the link, add it to the home screen, and follow the table full-screen.",
-    "bullets": ["Layouts rebuilt for narrow screens, not just shrunk", "The DM's phone is a control panel too", "Needs a connection to the table; offline you get a plain notice, never stale data"],
+    "bullets": ["Layouts rebuilt for narrow screens, not just shrunk", "The GM's phone is a control panel too", "Needs a connection to the table; offline you get a plain notice, never stale data"],
     "altTable": "A player's phone showing the initiative order.",
     "altSheet": "A character sheet on a phone."
   },
@@ -172,6 +172,6 @@
     "license": "Source-available under the PolyForm Noncommercial License 1.0.0.",
     "project": "Project", "source": "Source code", "releases": "Releases", "issues": "Report an issue", "legal": "Legal notices", "docs": "Design documents",
     "site": "This site",
-    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License. TTRPG.Codex is an independent project, not affiliated with or endorsed by Wizards of the Coast."
+    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode. TTRPG.Codex is an independent project, not affiliated with or endorsed by Wizards of the Coast."
   }
 }

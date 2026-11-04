@@ -88,7 +88,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
     private PackManifest BuildManifest()
     {
         var is2024 = edition == "2024";
-        return new PackManifest
+        var manifest = new PackManifest
         {
             Id = is2024 ? "srd-5.2.1" : "srd-5.1",
             Name = is2024 ? "System Reference Document 5.2.1" : "System Reference Document 5.1",
@@ -99,7 +99,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             Description = is2024
                 ? "The complete SRD 5.2.1 (2024 rules): classes, subclasses, species, backgrounds, feats, spells, creatures, conditions, equipment, magic items and the rules glossary."
                 : "The SRD 5.1 (2014 rules).",
-            Authors = { "Wizards of the Coast LLC (rules text)", "5e-bits contributors (JSON transcription)", "TTRPG.Codex content importer (conversion)" },
+            Authors = { "5e-bits contributors (JSON transcription)", "TTRPG.Codex content importer (conversion)" },
             License = new LicenseInfo
             {
                 Name = "CC-BY-4.0",
@@ -111,12 +111,21 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                     : "This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.",
                 Notices =
                 {
-                    "Modified from the original: restructured into YAML entries, layout artefacts removed, structured fields added. No rules were changed. One creature, the Mule, is omitted because the source transcription gives it another creature's stat block.",
+                    "Modified from the original: restructured into YAML entries, layout artefacts removed, structured fields added. No rules were intentionally changed. One creature, the Mule, is omitted because the source transcription gives it another creature's stat block.",
                     $"The text was read from the JSON transcription in https://github.com/5e-bits/5e-srd-api (commit {SrdDownloader.Commit}), packages/5e-database, MIT License, Copyright (c) 2018-2020 Adrian Padua, Christopher Ward.",
                     "This pack is “5E compatible”. It is not affiliated with or endorsed by Wizards of the Coast."
                 }
             }
         };
+
+        if (is2024)
+        {
+            // Where the text the transcription got wrong, and the class-table numbers, came from.
+            manifest.License!.Notices.Insert(2, "Eleven spell descriptions that the transcription ran together or spliced (augury, confusion, control water, control weather, creation, divine word, prismatic spray, prismatic wall, reincarnate, scrying, teleport) were replaced with the wording of the SRD 5.2.1 itself (tools/Codex.ContentImport/SpellTextFixes.cs).");
+            manifest.License.Notices.Insert(3, "The class feature tables' numbers were read from the Markdown transcription at https://github.com/downfallx/dnd-5e-srd-markdown (CC-BY-4.0): numbers only, no rules text.");
+        }
+
+        return manifest;
     }
 
     private string LegalText()

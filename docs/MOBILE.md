@@ -40,17 +40,17 @@ home server). Document that in the README when this lands.
 
 ### 2. A thin read API
 Minimal-API endpoints under `/api`, returning DTOs rather than RavenDB documents, every one resolved
-through `ICampaignAccessResolver` so visibility rules (hidden NPCs, DM-only lore, HP bands for
+through `ICampaignAccessResolver` so visibility rules (hidden NPCs, GM-only lore, HP bands for
 hostiles) are applied once, server-side, exactly as the Razor pages do today:
 
-- `GET /api/campaigns`, `GET /api/campaigns/{id}` (members, role, invite link for the DM)
+- `GET /api/campaigns`, `GET /api/campaigns/{id}` (members, role, invite link for the GM)
 - `GET /api/campaigns/{id}/actors`, `GET|PUT .../actors/{aid}` (the sheet; PUT goes through `ActorSheetSync`)
 - `GET /api/campaigns/{id}/sessions`, `.../sessions/{sid}` (recap, notes, events)
 - `GET /api/campaigns/{id}/library?type=&q=` and `.../library/{type}/{entry}` (packs plus homebrew)
 - `GET /api/campaigns/{id}/world`, `.../lore` (already visibility-filtered by the repositories)
 - `POST /api/campaigns/join/{code}`
 
-Writes other than the sheet and session notes can wait; the DM's prep work stays on the desktop web
+Writes other than the sheet and session notes can wait; the GM's prep work stays on the desktop web
 UI for the first release.
 
 ### 3. The live table over a SignalR hub
@@ -59,13 +59,13 @@ Add `TableHub` with one group per campaign. It is a thin adapter over what exist
 - **Client to server:** one hub method per existing command record, with the same arguments:
   `ApplyDamage`, `ApplyHealing`, `AddStatusEffect`, `RemoveStatusEffect`, `SetInitiative`,
   `NextTurn`, `PreviousTurn`, `SetTurnState`, `RollDice`, `AddSessionNote`. Each handler resolves
-  `CampaignAccess` for the caller, checks the DM-only ones, and calls `runtime.EnqueueAsync`. The
+  `CampaignAccess` for the caller, checks the GM-only ones, and calls `runtime.EnqueueAsync`. The
   single-writer loop is untouched.
 - **Server to client:** `TableSnapshot(snapshot)` on every `CampaignRuntime.StateChanged`, where the
   snapshot is a DTO (round, turn index, participants with initiative and turn state, HP exact or
   banded, active effects, the roll log and notes the caller may see). Snapshots are built **per
   role**, so a player connection never receives a hidden actor or an exact hostile HP, the same rule
-  `CombatConsole` enforces in Razor today. Two snapshot shapes (DM, player) cached per state change
+  `CombatConsole` enforces in Razor today. Two snapshot shapes (GM, player) cached per state change
   are enough.
 - **Join and resume:** `JoinTable(campaignId)` adds the connection to the group and replies with the
   current snapshot, so a phone coming back from the background re-syncs with one call. `RuntimeChanged`
@@ -103,7 +103,7 @@ New projects, in order:
    changes for the desktop.
 4. `Codex.Mobile`: the MAUI Blazor Hybrid shell: sign in, campaign list, table, sheet, library.
    Native touches that matter at a table: keep-screen-on while the table is live, haptics on your
-   turn, a push notification when the DM starts the table.
+   turn, a push notification when the GM starts the table.
 
 ## Rough order of work
 

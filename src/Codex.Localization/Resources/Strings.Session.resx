@@ -36,11 +36,11 @@
   <data name="Session.DraftAi" xml:space="preserve"><value>Draft with AI</value></data>
   <data name="Session.MentionHint" xml:space="preserve"><value>Mention someone with @, a place with # or an item with $; players read only the names they know.</value></data>
   <data name="Session.AiHelp" xml:space="preserve"><value>The player draft is built from the event log, party notes and open rolls only. Secret rolls, private notes and secret table notes never reach it.</value></data>
-  <data name="Session.NoRecap" xml:space="preserve"><value>The DM hasn't written a recap yet.</value></data>
-  <data name="Session.DmSummary" xml:space="preserve"><value>DM summary</value></data>
+  <data name="Session.NoRecap" xml:space="preserve"><value>The GM hasn't written a recap yet.</value></data>
+  <data name="Session.DmSummary" xml:space="preserve"><value>GM summary</value></data>
   <data name="Session.OnlyYou" xml:space="preserve"><value>Only you</value></data>
   <data name="Session.DmSummaryPlaceholder" xml:space="preserve"><value>Secrets, loose threads, hooks for next time…</value></data>
-  <data name="Session.DmDraftHint" xml:space="preserve"><value>The DM draft sees everything: secret rolls, private notes and your previous summary.</value></data>
+  <data name="Session.DmDraftHint" xml:space="preserve"><value>The GM draft sees everything: secret rolls, private notes and your previous summary.</value></data>
   <data name="Session.TableNotes" xml:space="preserve"><value>Table notes</value></data>
   <data name="Session.NoNotes" xml:space="preserve"><value>No notes yet.</value></data>
   <data name="Session.Label.Party" xml:space="preserve"><value>Party</value></data>
@@ -52,11 +52,11 @@
   <data name="Session.To" xml:space="preserve"><value>to {0}</value></data>
   <data name="Session.AddNoteLabel" xml:space="preserve"><value>Add a note</value></data>
   <data name="Session.NoteVisibility" xml:space="preserve"><value>Note visibility</value></data>
-  <data name="Session.VisPrivate" xml:space="preserve"><value>Private (you and the DM)</value></data>
+  <data name="Session.VisPrivate" xml:space="preserve"><value>Private (you and the GM)</value></data>
   <data name="Session.VisParty" xml:space="preserve"><value>Party (everyone in the campaign)</value></data>
   <data name="Session.AddNote" xml:space="preserve"><value>Add note</value></data>
   <data name="Session.MyJournal" xml:space="preserve"><value>My journal</value></data>
-  <data name="Session.JournalHint" xml:space="preserve"><value>Your private notebook for this session. Nobody else, not even the DM, can read it.</value></data>
+  <data name="Session.JournalHint" xml:space="preserve"><value>Your private notebook for this session. Nobody else, not even the GM, can read it.</value></data>
   <data name="Session.JournalEntry" xml:space="preserve"><value>Journal entry</value></data>
   <data name="Session.JournalPlaceholder" xml:space="preserve"><value>Names to remember, theories, loot you're owed…</value></data>
   <data name="Session.Saved" xml:space="preserve"><value>Saved</value></data>

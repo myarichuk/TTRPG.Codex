@@ -59,7 +59,7 @@
   <data name="Wizard.Placeholder.Other" xml:space="preserve"><value>What it does, in the words players will read.</value></data>
   <data name="Wizard.Error.TypeNameFirst" xml:space="preserve"><value>Choose a type and give it a name first.</value></data>
   <data name="Wizard.Error.TypeNameRequired" xml:space="preserve"><value>A type and a name are required.</value></data>
-  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>Only the DM can edit homebrew.</value></data>
+  <data name="Wizard.Error.OnlyDm" xml:space="preserve"><value>Only the GM can edit homebrew.</value></data>
   <data name="Wizard.Error.ArtFailed" xml:space="preserve"><value>Saved, but the art could not be stored. Try adding it again from the Library.</value></data>
   <data name="Wizard.Error.DeleteFailed" xml:space="preserve"><value>Could not delete that entry.</value></data>
   <data name="Wizard.DiscardTitle" xml:space="preserve"><value>Discard your changes?</value></data>

@@ -67,7 +67,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
 
         if (!dmAccess.IsDm)
         {
-            throw new InvalidOperationException("Only the campaign's DM can start its runtime.");
+            throw new InvalidOperationException("Only the campaign's GM can start its runtime.");
         }
 
         // One start (or end) per campaign at a time (R6): two "Start table" clicks used to both open a session and both

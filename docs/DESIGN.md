@@ -90,7 +90,7 @@ We use RavenDB for its superior handling of complex, nested data and its ability
 
 ## Interaction Model
 
-1. **Player/DM Action**: Triggered via UI (e.g., clicking "Use Fireball").
+1. **Player/GM Action**: Triggered via UI (e.g., clicking "Use Fireball").
 2. **Registry Lookup**: Engine finds the `IAbilityDefinition` in the `AbilityRegistry`.
 3. **Script Execution**: `ScriptEvaluator` runs the associated script within the `AbilityContext`.
 4. **ECS Update**: Components are modified (e.g., `AddStatus` or `DealDamage`).

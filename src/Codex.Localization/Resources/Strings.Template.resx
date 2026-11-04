@@ -108,7 +108,7 @@ $ignored$
 **How it goes:** $tactics$
 **Outcome:** $outcome$
 $END$</value></data>
-  <data name="Template.Secret.Name" xml:space="preserve"><value>DM-only block</value></data>
+  <data name="Template.Secret.Name" xml:space="preserve"><value>GM-only block</value></data>
   <data name="Template.Secret.Body" xml:space="preserve"><value>:::dm
 $secret$
 :::

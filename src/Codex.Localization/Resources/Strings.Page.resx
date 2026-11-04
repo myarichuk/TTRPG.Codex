@@ -6,14 +6,14 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="Page.Common.BackToCampaigns" xml:space="preserve"><value>Back to campaigns</value></data>
   <data name="Page.Common.Breadcrumb" xml:space="preserve"><value>Breadcrumb</value></data>
-  <data name="Page.Role.DM" xml:space="preserve"><value>DM</value></data>
+  <data name="Page.Role.DM" xml:space="preserve"><value>GM</value></data>
   <data name="Page.Role.Player" xml:space="preserve"><value>Player</value></data>
   <data name="Page.Role.Observer" xml:space="preserve"><value>Observer</value></data>
   <data name="Page.Home.Title" xml:space="preserve"><value>Campaigns</value></data>
-  <data name="Page.Home.Subtitle" xml:space="preserve"><value>Every campaign you run or play in. Players join with an invite link from their DM.</value></data>
+  <data name="Page.Home.Subtitle" xml:space="preserve"><value>Every campaign you run or play in. Players join with an invite link from their GM.</value></data>
   <data name="Page.Home.New" xml:space="preserve"><value>New campaign</value></data>
   <data name="Page.Home.EmptyTitle" xml:space="preserve"><value>No campaigns yet</value></data>
-  <data name="Page.Home.EmptyText" xml:space="preserve"><value>Create one to run a table, or ask your DM for an invite link to join theirs.</value></data>
+  <data name="Page.Home.EmptyText" xml:space="preserve"><value>Create one to run a table, or ask your GM for an invite link to join theirs.</value></data>
   <data name="Page.Home.CreateFirst" xml:space="preserve"><value>Create your first campaign</value></data>
   <data name="Page.Home.NoDescription" xml:space="preserve"><value>No description yet.</value></data>
   <data name="Page.Home.Members" xml:space="preserve"><value>{0, plural, one{# member} other{# members}}</value></data>
@@ -38,9 +38,9 @@
   <data name="Page.Join.Title" xml:space="preserve"><value>Join campaign</value></data>
   <data name="Page.Join.Joining" xml:space="preserve"><value>Joining…</value></data>
   <data name="Page.Join.InvalidTitle" xml:space="preserve"><value>This invite link is not valid</value></data>
-  <data name="Page.Join.InvalidText" xml:space="preserve"><value>It may have been mistyped, expired, already used, or replaced by a new link, or the campaign may have been deleted. Ask your DM for a fresh link.</value></data>
+  <data name="Page.Join.InvalidText" xml:space="preserve"><value>It may have been mistyped, expired, already used, or replaced by a new link, or the campaign may have been deleted. Ask your GM for a fresh link.</value></data>
   <data name="Page.Join.TooManyTitle" xml:space="preserve"><value>Too many invite links tried</value></data>
-  <data name="Page.Join.TooManyText" xml:space="preserve"><value>You have followed several invite links that did not work. Wait a few minutes, then use the link your DM sent.</value></data>
+  <data name="Page.Join.TooManyText" xml:space="preserve"><value>You have followed several invite links that did not work. Wait a few minutes, then use the link your GM sent.</value></data>
   <data name="Page.Join.InTitle" xml:space="preserve"><value>You're in!</value></data>
   <data name="Page.Join.InText" xml:space="preserve"><value>You are now a player in this campaign.</value></data>
   <data name="Page.Join.Go" xml:space="preserve"><value>Go to campaign</value></data>
@@ -82,7 +82,7 @@
   <data name="Page.Register.TooShort" xml:space="preserve"><value>The password must be at least 8 characters long.</value></data>
   <data name="Page.Register.Weak" xml:space="preserve"><value>The password needs an upper-case letter, a lower-case letter and a number.</value></data>
   <data name="Page.Register.Taken" xml:space="preserve"><value>That username is already taken.</value></data>
-  <data name="Page.Register.InviteOnly" xml:space="preserve"><value>Sign-up on this server is by invitation. Open the invite link from your DM, then create your account.</value></data>
+  <data name="Page.Register.InviteOnly" xml:space="preserve"><value>Sign-up on this server is by invitation. Open the invite link from your GM, then create your account.</value></data>
   <data name="Page.Register.NoAccountYet" xml:space="preserve"><value>Nobody has an account on this server yet. Turn the internet link off, create your own account, then turn it on again.</value></data>
   <data name="Page.About.Title" xml:space="preserve"><value>About &amp; licences</value></data>
   <data name="Page.About.Heading" xml:space="preserve"><value>About TTRPG.Codex</value></data>
@@ -115,7 +115,7 @@
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Campaign not found</value></data>
   <data name="Page.Campaign.NotFoundText" xml:space="preserve"><value>It may have been deleted, or the link may be wrong.</value></data>
   <data name="Page.Campaign.NotMemberTitle" xml:space="preserve"><value>You're not a member of this campaign</value></data>
-  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Ask the DM for an invite link.</value></data>
+  <data name="Page.Campaign.NotMemberText" xml:space="preserve"><value>Ask the GM for an invite link.</value></data>
   <data name="Page.Campaign.Sections" xml:space="preserve"><value>Campaign sections</value></data>
   <data name="Page.Campaign.More" xml:space="preserve"><value>More</value></data>
   <data name="Page.Campaign.BackTo" xml:space="preserve"><value>Back to {0}</value></data>
@@ -151,7 +151,7 @@
   <data name="Page.AiSettings.ServerImageAfter" xml:space="preserve"><value> section):</value></data>
   <data name="Page.AiSettings.WhatHeading" xml:space="preserve"><value>What the AI can do</value></data>
   <data name="Page.AiSettings.FeatRecapsTitle" xml:space="preserve"><value>Session recaps</value></data>
-  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>A player-facing recap from the log and party notes, and a private DM summary that also sees secrets.</value></data>
+  <data name="Page.AiSettings.FeatRecapsText" xml:space="preserve"><value>A player-facing recap from the log and party notes, and a private GM summary that also sees secrets.</value></data>
   <data name="Page.AiSettings.FeatHistoriesTitle" xml:space="preserve"><value>Histories and descriptions</value></data>
   <data name="Page.AiSettings.FeatHistoriesText" xml:space="preserve"><value>Polish a backstory, an NPC's private notes, a homebrew creature or a place, without contradicting the stats.</value></data>
   <data name="Page.AiSettings.FeatLevelTitle" xml:space="preserve"><value>Level-up advice</value></data>

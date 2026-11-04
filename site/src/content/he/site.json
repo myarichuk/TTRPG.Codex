@@ -172,6 +172,6 @@
     "license": "קוד זמין ברישיון PolyForm Noncommercial 1.0.0.",
     "project": "הפרויקט", "source": "קוד המקור", "releases": "גרסאות", "issues": "דיווח על בעיה", "legal": "הודעות משפטיות", "docs": "מסמכי תכנון",
     "site": "האתר",
-    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License. TTRPG.Codex הוא פרויקט עצמאי, שאינו קשור ל-Wizards of the Coast ואינו מאושר על ידה."
+    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode. TTRPG.Codex הוא פרויקט עצמאי, שאינו קשור ל-Wizards of the Coast ואינו מאושר על ידה."
   }
 }

@@ -173,7 +173,7 @@
   <data name="Actor.Sheet.SaveChanges" xml:space="preserve"><value>Save changes</value></data>
   <data name="Actor.Sheet.KeyNumbers" xml:space="preserve"><value>Key numbers</value></data>
   <data name="Actor.Sheet.Missing" xml:space="preserve"><value>Missing content: this character came from “{0}”, which isn't in a loaded pack. The sheet still works.</value></data>
-  <data name="Actor.Sheet.ReadOnlyNote" xml:space="preserve"><value>Only the owner and the DM can edit this sheet.</value></data>
+  <data name="Actor.Sheet.ReadOnlyNote" xml:space="preserve"><value>Only the owner and the GM can edit this sheet.</value></data>
   <data name="Actor.Sheet.Rules" xml:space="preserve"><value>Rules</value></data>
   <data name="Actor.Sheet.StrictOverride" xml:space="preserve"><value>Strict (you can override)</value></data>
   <data name="Actor.Sheet.StrictFix" xml:space="preserve"><value>Strict: fix before saving</value></data>
@@ -198,7 +198,7 @@
   <data name="Actor.Sheet.History" xml:space="preserve"><value>History</value></data>
   <data name="Actor.Sheet.Said" xml:space="preserve"><value>Said</value></data>
   <data name="Actor.Sheet.InNotes" xml:space="preserve"><value>In notes</value></data>
-  <data name="Actor.Sheet.DmNotes" xml:space="preserve"><value>DM notes</value></data>
+  <data name="Actor.Sheet.DmNotes" xml:space="preserve"><value>GM notes</value></data>
   <data name="Actor.Sheet.Method" xml:space="preserve"><value>Method</value></data>
   <data name="Actor.Sheet.MethodPointBuy" xml:space="preserve"><value>Point buy</value></data>
   <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>Standard array</value></data>
@@ -304,10 +304,10 @@
   <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>Discard and leave</value></data>
   <data name="Actor.Sheet.KeepEditing" xml:space="preserve"><value>Keep editing</value></data>
   <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: slots refilled. Save changes to keep it.</value></data>
-  <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>Not saved: {0, plural, one{# rule problem} other{# rule problems}} to fix first (see Rules above). The DM can relax this under Settings.</value></data>
+  <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>Not saved: {0, plural, one{# rule problem} other{# rule problems}} to fix first (see Rules above). The GM can relax this under Settings.</value></data>
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Saved with {0, plural, one{# rule warning} other{# rule warnings}}.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>You don't have permission to edit this sheet.</value></data>
-  <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>The DM changed this history while you were editing it, so your change was not saved. Your text is still in the box: copy it, reload the page, and add it again.</value></data>
+  <data name="Actor.Sheet.HistoryChanged" xml:space="preserve"><value>The GM changed this history while you were editing it, so your change was not saved. Your text is still in the box: copy it, reload the page, and add it again.</value></data>
   <data name="Actor.Sheet.ChangedMeanwhile" xml:space="preserve"><value>Someone saved this sheet after you opened it, so your changes were not saved. They are still here: check them, and save again to replace that version.</value></data>
   <data name="Actor.Sheet.PortraitTypeError" xml:space="preserve"><value>Use a PNG, JPEG, WebP, GIF or AVIF image.</value></data>
   <data name="Actor.Sheet.PortraitTooBig" xml:space="preserve"><value>That image is over 6 MB. Resize it and try again.</value></data>
@@ -327,9 +327,9 @@
   <data name="Actor.Sheet.LevelPlan" xml:space="preserve"><value>Level {0} plan:</value></data>
   <data name="Actor.Sheet.AddedNotes" xml:space="preserve"><value>Added to the notes field. Save changes to keep it.</value></data>
   <data name="Actor.Sheet.WikiPage" xml:space="preserve"><value>Wiki: {0}</value></data>
-  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character’s history, except its DM blocks. Check the rest for secrets first.</value></data>
+  <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character’s history, except its GM blocks. Check the rest for secrets first.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
-  <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: the system's formula for this can't be worked out, so it is left out. The DM can check the system's rules.</value></data>
+  <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>

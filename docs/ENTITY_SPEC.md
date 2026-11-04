@@ -35,7 +35,7 @@ Abilities are defined by their logic and resource requirements. This is a **Comp
 - **Reasoning**: a compositional shape that data packs can describe and that the engine can execute without a system-specific class per ability.
 
 ## 4. Lore & Facts (Knowledge Graph)
-Knowledge is tracked via `FactDocument` entries. This allows the DM to track the spread of information across the campaign.
+Knowledge is tracked via `FactDocument` entries. This allows the GM to track the spread of information across the campaign.
 
 - **FactDocument**:
   - `Id`: `facts/{fact-id}`
