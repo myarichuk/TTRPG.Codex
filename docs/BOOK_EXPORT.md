@@ -98,7 +98,7 @@ invisibly (transport retries, temperature fallback, `response_format` fallback, 
   automatic pagination. Chromium lacks `target-counter()`, `string-set` and footnotes, so a TOC with page numbers needs a
   measure-then-render pass or paged.js (MIT). Paginate in **one engine** and preview what that engine produced; a Firefox or
   Safari iframe will paginate differently from the Chromium PDF. Pass `Outline` and `Tagged` for the PDF.
-- **PDF engine: undecided, see 8.** Playwright's driver bundles a Node runtime per platform (tens of MB each, so
+- **PDF engine: PuppeteerSharp (decided).** All Chromium paths share `Page.printToPDF`, so fidelity is equal; PuppeteerSharp wins on friction (MIT per its repo, no Node driver, no download unless code calls the fetcher, `ExecutablePath` to an installed Chrome/Edge). We write browser discovery ourselves (Edge/Chrome standard paths per OS, PATH on Linux), check the browser version at launch (page-number margin boxes need Chrome 131+), and with no browser found offer the print-stylesheet page or a consent-gated, size-labelled Chromium download. CI passes the Chromium Playwright already installs for e2e as `ExecutablePath`. Rejected: Playwright (per-platform Node driver in the NuGet needs pruning in `package.sh`, same output), WebView2 (Windows only; macOS `WKWebView` is not paged), WeasyPrint/Prince/QuestPDF (Python+GTK, commercial, code layout). Raw `--print-to-pdf` is an emergency fallback only. Original reasoning kept below for the process notes: Playwright's driver bundles a Node runtime per platform (tens of MB each, so
   `package.sh` would need pruning as it does for RavenDB), installed Chrome/Edge auto-update past the pinned driver, and
   Linux needs system libraries and `--no-sandbox` as root. Candidates: PuppeteerSharp (pure .NET over DevTools to an
   installed browser), WebView2 `PrintToPdfAsync` on Windows, Playwright anyway. Whichever: one lazily started browser, closed
@@ -198,11 +198,12 @@ extracted text, embedded fonts, an empty external-request log. No cross-OS pixel
 
 ## 8. Open questions
 
-- Markdown engine: vendor `marked-hbfm` (MIT, exact dialect, JS in page) or write our own .NET subset renderer? Note the
-  closed-network rule (JS off in the print browser) favours a server-side .NET renderer or running marked-hbfm in a
-  server-side JS step, not in the print page.
-- PDF engine: Playwright vs PuppeteerSharp vs WebView2 (see 3). Playwright is attractive only because e2e already uses it; the
-  review found its shipped-product costs larger than assumed.
+- DECIDED: our own .NET renderer for the Markdown subset (no JS in the print page, no marked-hbfm version coupling, one parser
+  for preview and PDF). The headless browser is still needed for pagination and PDF; this only makes its input static HTML.
+- DECIDED: PuppeteerSharp (see 3).
+- UNVERIFIED, test in phase 0 on the real Chromium: does CSS `mask-image` stay vector in the PDF (else use SVG clip-path or
+  inline SVG); is `target-counter()` unsupported (then two-pass TOC or paged.js); PDF size and memory ceiling for large books;
+  Tagged/Outline behaviour.
 - Prices: the Anthropic client exists (`AIClientFactory`), so "OpenAI-compatible" is not the whole story for usage reporting.
 - Installer impact and signing if we ever bundle Chromium instead of using an installed browser.
 - Headless launch under root/containers (`--no-sandbox`), Windows/macOS channel discovery.
