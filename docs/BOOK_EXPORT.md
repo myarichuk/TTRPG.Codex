@@ -60,7 +60,8 @@ the deterministic Markdown for that section and says so in the UI.
   required; the app otherwise fetches nothing). Print via `page.PdfAsync` with `PreferCSSPageSize`.
 - **Fonts**: the app already bundles Cinzel, Alegreya Sans, Forum, Frank Ruhl Libre and Assistant (all OFL; see LEGAL.md),
   which cover Latin, Cyrillic and Hebrew. The book uses those so it works in all three UI languages including RTL.
-- **Masks/ornaments**: see §6 (licence-driven; to be decided after the licence review).
+- **Masks/ornaments**: our own SVG masks applied with CSS `mask-image` (torn edge, ink wash, vignette), so slots can be
+  shaped without any third-party asset. See §6.
 
 ## 4. Illustration slots
 
@@ -92,10 +93,28 @@ always an explicit click, never automatic, because it costs money and takes time
 
 ## 6. Licensing (to confirm)
 
-TTRPG.Codex is PolyForm Noncommercial 1.0.0. Anything vendored from Homebrewery (CSS, masks, images, fonts) needs a licence
-compatible with redistribution inside that and an entry in LEGAL.md. Pending: Homebrewery's repository licence and the
-per-asset licences of its backgrounds, frames and fonts. Fallback: our own CSS and our own SVG masks, which removes the
-question.
+TTRPG.Codex is PolyForm Noncommercial 1.0.0. Anything vendored needs a licence compatible with redistribution inside that
+and an entry in LEGAL.md. Findings from reading naturalcrit/homebrewery (a research pass, partly unverified):
+
+- **Code is MIT** (`license`, "Copyright (c) 2016 Scott Tolksdorf"; `package.json` says MIT). Vendorable with notice.
+- **The V3 Markdown dialect is not in that repo.** It is the separate MIT npm package `marked-hbfm`
+  (github.com/naturalcrit/marked-hbfm). It defines `{{class,k:v ...}}` spans/divs, `{width:..}` attribute injection on
+  images, hard breaks. `\page` and `\column` are string-split in `brewRenderer.jsx`, not Markdown tokens.
+- **Assets and fonts have no stated licence.** No per-directory LICENSE/README/NOTICE exists. The 5e theme ships Bookinsanity,
+  Scaly Sans and Mr Eaves "Remakes" (WotC-lookalikes, probably derived from Solbera's fonts, which are CC-BY-SA-4.0 by
+  upstream, unconfirmed for these files), plus PHB/DMG-named backgrounds and frames (`PHB_footerAccent`, `DMG_background`,
+  `partCoverHeader*`, `monsterBorder*`, parchment) with no provenance. The README only says the MIT covers the project and
+  that sellers need rights to images they use. The watercolor masks (`watercolor1..12.png`, `waterColorMasks/edge/*.webp`)
+  have no provenance either.
+- **Decision: vendor no Homebrewery image, mask or font.** Bundled OFL fonts only (see §3). Ornaments, frames, parchment and
+  masks are our own SVG/CSS, drawn for this project, so there is nothing to attribute or to be wrong about. WotC-styled
+  assets are specifically avoided.
+- **Optional: vendor `marked-hbfm`** (MIT) as the Markdown engine in the preview/print page. That would make the `.md`
+  download genuinely Homebrewery-compatible by construction, at the price of a JS dependency in the page (bundled, no network).
+  Alternative is our own small .NET renderer for the subset in §3. Needs a decision; see §8.
+- **Homebrewery's HTTP API** (`POST /api`) is undocumented, needs a login, and rejects writes unless a `Homebrewery-Version`
+  header equals its exact `package.json` version (HTTP 412). Do not build on it. Download or clipboard only.
+- The name "Homebrewery" is NaturalCrit's. Say "compatible with Homebrewery markup", never imply affiliation.
 
 SRD content in a book needs the CC-BY-4.0 attribution (`LEGAL.md`), added automatically as a final page.
 
@@ -107,6 +126,7 @@ SRD content in a book needs the CC-BY-4.0 attribution (`LEGAL.md`), added automa
 
 ## 8. Open questions
 
+- Markdown engine: vendor `marked-hbfm` (MIT, exact dialect, JS in page) or write our own .NET subset renderer?
 - Installer impact and signing if we ever bundle Chromium instead of using an installed browser.
 - Headless launch under root/containers (`--no-sandbox`), Windows/macOS channel discovery.
 - Parallelism of section calls vs provider rate limits and the server allowance.
