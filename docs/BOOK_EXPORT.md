@@ -488,3 +488,49 @@ Findings that held up, with the fix:
 - **Tests**: a 30-section book prints in at least two passes, and for four entries (first, middle, last, and one early) the number in the contents text equals the page of the heading's own outline entry and is at least 3; mutation (the second page ignores the numbers) fails it. A single-page document prints once. HTML tests for the three states of the column.
 - **Chapter titles** are localized: `Campaign.Book.Label.*` (contents, overview, cast, gazetteer, chronicle, lore, pages, homebrew) in EN, RU, HE, taken from the book's language (`?lang=`) rather than the viewer's; RU/HE reuse the app's own section names where one exists (Предания, אגדות עולם). A test holds every title to existing and being different from English in RU/HE. They are only reachable through the route once a theme supports those languages (the plain theme is still English only, so nothing in the RU/HE path is exercised end to end yet).
 - **Not verified**: the look of the leader dots and the column (no image review), RTL numbers, a book whose contents run to several pages (the reserved column should hold, not measured), a stat that oscillates between prints (the cap is three, and the last print is kept even if its numbers still moved; there is no log line for that case), and print time for large books (two or three prints instead of one).
+
+## 20. The AI layer: plan (proposal, nothing built; checked against the code as of 36b4070)
+
+### 20.1 What exists and what it means for us
+
+| Existing piece | Fact | Consequence |
+|---|---|---|
+| `AIClientFactory.CreateClient` | One `IChatClient` for OpenAI-compatible endpoints and Anthropic (Messages API, `AnthropicMaxOutputTokens = 8192`). Transport retries via `PatientRetryPolicy`; 5 min request timeout. | Section workers use `IChatClient` directly. Transport retries are invisible to us, so the budget must reserve for them (2.4). |
+| `AiProviderService.ClientFor` | Picks the user's default provider, else the server key wrapped in `MeteredClient`, which counts **one request per call** against `ServerAiUsage` (default 200/day) and throws `Service.Ai.ServerAllowanceSpent` mid-call. | A build must reserve N requests up front (new `ServerAiUsage.TryReserve(user, kind, n)`), and refuse to start if short. Today a 40-section book would die at section 31 with half the money spent. |
+| `AiAssistant` | One prompt in, one text out; `JsonAsync` retries once on `FormatException`; `JsonReplyAsync` retries without `response_format` on 400/422. | Reuse the pattern, not the class: section workers need system prompt + closed block list + usage capture, and the fallback ladder must be counted. |
+| `WorldChat` | Accumulates `response.Usage` per streamed round; tool loop with nudges; **no per-token price anywhere**. | Reuse `WorldChatUsage`'s shape for the meter; the planner is a short `WorldChat`-style conversation, but with no tools that touch the repository (the planner sees only the already-masked `BookSource` outline). |
+| `AiImageGenerator` | Separate provider list (`DefaultImageProvider`), `ArtShape` Tall/Wide/Square, `ServerAiUsage.Kind.Image` allowance. | Slot generation calls this as is; explicit click only. |
+| `AiProviderConfig` | `Id, Name, Kind, BaseUrl, ModelId, ProtectedApiKey, CreatedAt`. No prices, no context size, no max output. | Add `InputPricePerMTok`, `OutputPricePerMTok` (`decimal?`), `PriceLabel` (free text like "USD", never interpreted). Optional, additive, no migration needed in Raven. |
+
+### 20.2 Components (all in `Codex.Core/Book/Ai` unless noted; Raven only in Persistence)
+
+1. **`BookBudget`**: reservation ledger. `TryReserve(estIn, maxOut)` before every call, `Settle(actualUsage | null)` after. When the provider reports no usage, settle at the estimate and mark the total "estimated" (the UI says so). Estimation is per script (Latin ~4 chars/token, Cyrillic ~2, Hebrew ~2), as 2.4 says. Hard cap per build; at the cap, stop and keep what exists. Thread-safe, because section workers run in parallel.
+2. **`BookSectionWorker`**: input is *one section of the masked `BookSource`* plus a style sheet plus a **closed block list** (`{{block:1..n}}`). Output is Markdown for our renderer. Fresh context per call. Concurrency 1 for local endpoints (Ollama), 2 for remote, back-off on 429.
+3. **Template blocks**: stat blocks, tables, every number are rendered by `BookCompiler` deterministically; the model may only *place* them. Substitution happens after the checks, so numbers never pass through prose.
+4. **`BookChecks`** (deterministic, per 2.2): every number in the output appears in the section's input; every name-like span fuzzy-matches a name the audience may see; only `{{block:n}}` for n in the list, each used at most once; no `:::` marker lines, no URLs, no raw HTML (our renderer escapes anyway, the check is for the honest UI message). A failure retries once with the error shown, then falls back to the deterministic Markdown and says so per section.
+5. **`BookPlanner`**: short conversation, no tools, input is the masked outline (titles, kinds, sizes). Output is a typed plan: ordered sections, each with source ids *from the outline only* and a style note. The DM edits the plan in the UI; the model never invents an id (ids are resolved through the section's own map, never a global lookup).
+6. **Cache key** per 2.4 (audience, language, source change vectors, template/dialect/prompt version, model, temperature, style, slots). DM and Party caches are stored apart; filtered inputs are recomputed at print time.
+7. **Build state**: `BookBuildDocument` (Raven, DM-private, per DM, **excluded from the campaign export and backups**, deleted with the campaign; prompts never logged). Sections are marked stale when source change vectors move; a source hidden or deleted mid-build drops its section.
+8. **Slots**: declared by the worker as `{{slot:purpose|aspect}}` (closed grammar, parsed by the check), resolved existing art → DM upload → AI image → placeholder, all reads through masked paths (this is the open "images through masked paths" item and must land first). Generation is an explicit click.
+
+### 20.3 UI (honest cost)
+
+- Pre-flight: tokens as a **range**, labelled estimate, plus "uses ~N of your M requests today" when on the server key.
+- Meter: running totals, "not reported" where the provider says nothing; per-section re-run cost; money only when both prices are set, shown with `PriceLabel`. The app ships **no** price table.
+- Budget cap field; at the cap the build stops and says what was kept.
+
+### 20.4 Order of work (each step ends with tests, a commit and a report)
+
+1. Price fields on `AiProviderConfig` + the AI settings form (EN/RU/HE) + `ServerAiUsage.TryReserve`. Small, independently useful.
+2. `BookBudget` + estimator, with tests for parallel overshoot, no-usage settle, cap, retries counted.
+3. Masked art/portraits through `BookSourceReader` (prerequisite for slots; the canary extends to images).
+4. `BookSectionWorker` + template blocks + `BookChecks`, with a scripted `IChatClient` (retry, cap, 429 storm, injected `![](url)`, Russian and Hebrew adversarial cases), and the canary: unique strings in every DM-only field must not appear in any captured model request.
+5. Build document, cache and staleness, then the panel's guided flow with live preview.
+6. Planner, slot tray, per-slot image generation, `.md` export with the DM-edition warning.
+
+### 20.5 Decisions needed
+
+- (a) Section workers on the user's default text provider only, or a separate "book model" picker (cheap model for prose, strong one for the planner)? Recommendation: default provider first; picker later.
+- (b) Parallelism default (1 local / 2 remote) as above?
+- (c) Prices on `AiProviderConfig` only (per user), with the server `AI` section getting the same two optional keys; agreed?
+- (d) Start at step 1 (prices + allowance reservation) or step 3 (masked art)?
