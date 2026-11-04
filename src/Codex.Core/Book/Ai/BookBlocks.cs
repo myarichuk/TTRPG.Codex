@@ -12,7 +12,12 @@ public sealed record BookWorkText(string Text, IReadOnlyList<BookBlock> Blocks);
 
 public static class BookWork
 {
-    private static readonly Regex Mention = new(@"\[\[(?<kind>actor|place|item):(?<id>[^\]\s|]+)(?:\|[^\]]*)?\]\]", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
+    // The same reading the renderer gives a mention (BookMarkdownRenderer.Mentions: any case, spaces around, anything up to the closing
+    // brackets), so a spelling the renderer would resolve to nothing is never left raw for the model. Whatever does not parse as a plain
+    // id is removed, and so is an unclosed one: this path fails closed.
+    private static readonly Regex Mention = new(@"\[\[\s*(?<kind>actor|place|item)\s*:(?<rest>.{0,400}?)\]\]", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Singleline, TimeSpan.FromSeconds(2));
+    private static readonly Regex OpenMention = new(@"\[\[\s*(?:actor|place|item)\s*:[^\n]*", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(2));
+    private static readonly Regex PlainId = new(@"^\S+$", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
 
     /// <summary>
     /// Prepares a chapter's Markdown for a model. A stored mention becomes the name its audience may be told (or nothing), so the
@@ -46,7 +51,13 @@ public static class BookWork
             if (!segment.Text.EndsWith('\n')) text.Append('\n');
         }
 
-        var named = Mention.Replace(text.ToString(), m => mention?.Invoke(m.Groups["kind"].Value, m.Groups["id"].Value) is { Length: > 0 } name ? EscapeName(name) : string.Empty);
+        var named = Mention.Replace(text.ToString(), m =>
+        {
+            var rest = m.Groups["rest"].Value;
+            var id = (rest.Contains('|') ? rest[..rest.IndexOf('|')] : rest).Trim();
+            return PlainId.IsMatch(id) && mention?.Invoke(m.Groups["kind"].Value.ToLowerInvariant(), id) is { Length: > 0 } name ? EscapeName(name) : string.Empty;
+        });
+        named = OpenMention.Replace(named, string.Empty);
         return new BookWorkText(named.Trim(), blocks);
     }
 

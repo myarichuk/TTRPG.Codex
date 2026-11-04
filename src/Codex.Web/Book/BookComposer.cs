@@ -35,6 +35,11 @@ public static class BookComposer
         return document.Sections.ToDictionary(s => s.Id, s => BookBuildRunner.Item(s, language, style, render.Mention, render), StringComparer.Ordinal);
     }
 
+    /// <summary>A stored rewrite as a chapter. The boxes come from the chapter as it is read now, never from the store: the key says they are
+    /// the same, and the DM's secret words then stay out of the stored build altogether.</summary>
+    public static BookSection Stored(BookBuildSection kept, BookWorkItem now) =>
+        new(kept.Id, kept.Markdown, now.Work.Blocks.Count == 0 ? null : now.Work.Blocks.ToDictionary(b => b.Number, b => b.Html));
+
     public static bool TooShort(BookWorkItem item) => item.Work.Text.Length < MinCharsToPolish;
 
     /// <summary>The document with every chapter that has a stored rewrite built from what it is made from now replaced by that rewrite.
@@ -50,7 +55,7 @@ public static class BookComposer
         {
             var kept = stored.Sections.FirstOrDefault(b => b.Id == s.Id);
             return kept is { Refined: true } && items.TryGetValue(s.Id, out var item) && kept.Key == BookBuildKey.For(item, edition)
-                ? new BookSection(s.Id, kept.Markdown, kept.Blocks.Count == 0 ? null : kept.Blocks)
+                ? Stored(kept, item)
                 : s;
         }).ToList();
         return document with { Sections = sections };

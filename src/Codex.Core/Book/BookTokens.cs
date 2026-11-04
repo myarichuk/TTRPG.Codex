@@ -61,7 +61,7 @@ public sealed record BookSectionLoad(string Title, long InputTokens, long MaxOut
 public sealed record BookPreflight(long InputLow, long InputHigh, long OutputLow, long OutputHigh, int RequestsMin, int RequestsMax, decimal? CostLow, decimal? CostHigh)
 {
     /// <summary>The most tokens the build can use if every section is retried once: what the cap must cover to finish.</summary>
-    public long WorstCaseTokens => InputHigh * 2 + OutputHigh * 2;
+    public long WorstCaseTokens => InputHigh * 2 + OutputHigh * 3;
 
     /// <summary>The estimate before a build: the sections, a style sheet resent with each call, and the prices if there are any.</summary>
     public static BookPreflight Estimate(IReadOnlyList<BookSectionLoad> sections, long stylePromptTokens, AiPriceQuote? price)
@@ -86,7 +86,8 @@ public sealed record BookPreflight(long InputLow, long InputHigh, long OutputLow
         if (price != null)
         {
             costLow = AiPrice.Cost(price.InputPerMTok, price.OutputPerMTok, inLow, outLow);
-            costHigh = AiPrice.Cost(price.InputPerMTok, price.OutputPerMTok, inHigh * 2, outHigh * 2);
+            // The upper figure: every chapter tried twice, the second try carrying the first reply back as well.
+            costHigh = AiPrice.Cost(price.InputPerMTok, price.OutputPerMTok, inHigh * 2 + outHigh, outHigh * 2);
         }
 
         return new BookPreflight(inLow, inHigh, outLow, outHigh, min, maxRequests, costLow, costHigh);

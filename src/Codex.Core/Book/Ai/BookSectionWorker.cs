@@ -97,15 +97,17 @@ public sealed class BookSectionWorker(IChatClient chat, BookBudget budget, float
             }
 
             string text;
+            var cutOff = false;
             try
             {
                 var response = await chat.GetResponseAsync(
                     [new ChatMessage(ChatRole.System, system), new ChatMessage(ChatRole.User, user)],
                     new ChatOptions { Temperature = temperature, MaxOutputTokens = maxOutput }, ct);
                 text = Clean(response.Text);
+                cutOff = response.FinishReason == ChatFinishReason.Length;
                 reservation.Settle(response.Usage?.InputTokenCount, response.Usage?.OutputTokenCount, BookTokens.Estimate(text));
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 // Cancelled while the call was out: it may have been billed, so it is charged like a failure.
                 reservation.Failed();
@@ -127,7 +129,17 @@ public sealed class BookSectionWorker(IChatClient chat, BookBudget budget, float
                 continue;
             }
 
-            problems = BookChecks.Validate(item.Work.Text, text, item.Work.Blocks.Count, item.Language);
+            try
+            {
+                problems = BookChecks.Validate(item.Work.Text, text, item.Work.Blocks.Count, item.Language).ToList();
+            }
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+            {
+                problems = ["The checks could not finish on this reply."];
+            }
+
+            // A reply the length limit cut short is a chapter with its end missing, however well the rest reads.
+            if (cutOff) problems = [.. problems, "The reply was cut off by the length limit. Write a shorter chapter that ends properly."];
             if (problems.Count == 0)
             {
                 var markdown = "# " + item.Title + "\n\n" + text;

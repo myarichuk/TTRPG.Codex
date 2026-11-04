@@ -143,7 +143,7 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
         _resolver = new CampaignAccessResolver(_campaigns);
     }
 
-    private sealed class FakeModels(ScriptedChat chat, AiPriceQuote? price = null, Exception? refuse = null) : IBookModels
+    private sealed class FakeModels(ScriptedChat chat, AiPriceQuote? price = null, Exception? refuse = null, IChatClient? chatOverride = null) : IBookModels
     {
         public int Opened { get; private set; }
         public int RequestsAsked { get; private set; }
@@ -155,7 +155,7 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
             if (refuse != null) throw refuse;
             Opened++;
             RequestsAsked = requests;
-            return Task.FromResult(new BookModelHandle(chat, "Test · model-x", 2, price, null));
+            return Task.FromResult(new BookModelHandle(chatOverride ?? chat, "Test · model-x", 2, price, null));
         }
     }
 
@@ -280,9 +280,12 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
         Assert.Contains("PUBLIC_", requests); // a positive control
         Assert.DoesNotContain("CANARY_", requests);
         var stored = (await _store.GetAsync(dm, "dm"))!;
-        var blocks = string.Concat(stored.Sections.SelectMany(s => s.Blocks.Values));
-        Assert.Contains("CANARY_VERA_SECRET", blocks); // the box is built by code and printed by code
-        Assert.DoesNotContain("CANARY_", string.Concat(stored.Sections.Select(s => s.Markdown)));
+        // The store holds the model's words and nothing of the secret: the box is rendered from the campaign when the book is printed.
+        Assert.NotEmpty(stored.Sections);
+        Assert.DoesNotContain("CANARY_", Newtonsoft.Json.JsonConvert.SerializeObject(stored.Sections));
+        var source = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+        var printed = BookComposer.Overlay(BookComposer.Compose(source, "en"), source, stored).Sections.Single(s => s.Id == "cast");
+        Assert.Contains("CANARY_VERA_SECRET", string.Concat(printed.Blocks!.Values));
     }
 
     [Fact]
@@ -541,15 +544,16 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
     public async Task ABuild_IsInNeitherTheCampaignExportNorTheBackup()
     {
         var (dm, id) = await SeedAsync();
-        await Finish((await Service(new FakeModels(new ScriptedChat(Echo))).StartAsync(dm, Request()))!);
-        Assert.Contains("CANARY_VERA_SECRET", string.Concat((await _store.GetAsync(dm, "dm"))!.Sections.SelectMany(s => s.Blocks.Values))); // a positive control
+        // "strolls" exists only in what the model wrote, so it marks the build.
+        await Finish((await Service(new FakeModels(new ScriptedChat((m, i) => Echo(m, i).Replace("walks", "strolls")))).StartAsync(dm, Request()))!);
+        Assert.Contains("strolls", string.Concat((await _store.GetAsync(dm, "dm"))!.Sections.Select(s => s.Markdown))); // a positive control
 
         // The export holds the DM's own secrets in their source documents (that is its job), so the marker is the build itself: its
         // box HTML and its keys appear nowhere in what the export or the backup writes.
         var export = new CampaignExportService(_campaigns, _actors, new RavenSessionRepository(_db), new RavenEncounterRepository(_db), new FactRepository(_db), new RavenNoteRepository(_db), new RegionRepository(_db), new RavenHomebrewRepository(_db), _wiki);
         var bundle = (await export.ExportAsync(dm))!;
         var json = CampaignExportService.Serialize(bundle);
-        Assert.DoesNotContain("secret secret-dm", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("strolls", json, StringComparison.Ordinal);
         Assert.DoesNotContain("bookbuilds", json, StringComparison.Ordinal);
         Assert.DoesNotContain("BookBuild", json, StringComparison.Ordinal);
 
@@ -560,7 +564,7 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
             await backups.WriteAsync(root, DateTime.UtcNow);
             var everything = string.Concat(Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).Where(f => f.Contains(id.Replace('/', '_'))).Select(File.ReadAllText));
             Assert.NotEmpty(everything);
-            Assert.DoesNotContain("secret secret-dm", everything, StringComparison.Ordinal);
+            Assert.DoesNotContain("strolls", everything, StringComparison.Ordinal);
             Assert.DoesNotContain("bookbuilds", everything, StringComparison.Ordinal);
         }
         finally
@@ -626,6 +630,153 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
         var chat = new ScriptedChat(Echo, usage: _ => new UsageDetails { InputTokenCount = 900, OutputTokenCount = 300 });
         var run = await Finish((await Service(new FakeModels(chat)).StartAsync(dm, Request(cap: preview.SuggestedCap)))!);
         Assert.Equal(3, run.Rows.Count(r => r.Status == BookRowStatus.Refined));
+    }
+
+    [Fact]
+    public async Task TwoStartsAtOnce_OnlyOneRuns_AndOnlyOneIsPaidFor()
+    {
+        var (dm, _) = await SeedAsync();
+        var chat = new ScriptedChat(Echo, delay: TimeSpan.FromMilliseconds(300));
+        var models = new FakeModels(chat);
+        var service = Service(models);
+
+        var starts = await Task.WhenAll(Enumerable.Range(0, 6).Select(async _ =>
+        {
+            try { return await service.StartAsync(dm, Request()); }
+            catch (BookBuildBusyException) { return null; }
+        }));
+
+        var runs = starts.Where(r => r != null).ToList();
+        Assert.Single(runs);
+        Assert.Equal(1, models.Opened);
+        await Finish(runs[0]!);
+        Assert.Equal(3, chat.Calls);
+        // The slot is free again once it ended.
+        Assert.NotNull(await service.StartAsync(dm, Request("party")));
+    }
+
+    [Fact]
+    public async Task ARedoThatIsStopped_KeepsTheRewriteThatWasAlreadyPaidFor()
+    {
+        var (dm, _) = await SeedAsync();
+        var chat = new ScriptedChat(Echo);
+        var service = Service(new FakeModels(chat));
+        await Finish((await service.StartAsync(dm, Request()))!);
+
+        // A cap that lets nothing through: the redo of a current chapter fails with "budget".
+        await Finish((await service.StartAsync(dm, Request(cap: 10, redo: "cast")))!);
+
+        var stored = (await _store.GetAsync(dm, "dm"))!.Sections.Single(s => s.Id == "cast");
+        Assert.True(stored.Refined);
+        Assert.Contains("PUBLIC_The keeper", stored.Markdown);
+        Assert.Equal(BookSectionState.Current, (await service.PreviewAsync(dm, Request()))!.Chapters.Single(c => c.Id == "cast").State);
+    }
+
+    [Fact]
+    public async Task AReplyTheLengthLimitCutOff_IsNotAccepted()
+    {
+        var (dm, _) = await SeedAsync();
+        var chat = new CutOffChat(Echo);
+
+        var run = await Finish((await Service(new FakeModels(null!, chatOverride: chat)).StartAsync(dm, Request()))!);
+
+        Assert.DoesNotContain(run.Rows, r => r.Status == BookRowStatus.Refined);
+        Assert.All(run.Rows, r => Assert.Equal("checks", r.Reason));
+    }
+
+    private sealed class CutOffChat(Func<IList<ChatMessage>, int, string> reply) : IChatClient
+    {
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, reply(messages.ToList(), 0))) { FinishReason = ChatFinishReason.Length });
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+    }
+
+    [Fact]
+    public async Task AProviderTimeout_IsAnErrorToRetry_NotACancellation()
+    {
+        var (dm, _) = await SeedAsync();
+        var chat = new ScriptedChat((_, call) => call <= 3 ? throw new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout") : Echo(null!, 0));
+
+        var run = await Finish((await Service(new FakeModels(chat)).StartAsync(dm, Request()))!);
+
+        Assert.DoesNotContain(run.Rows, r => r.Reason == "cancelled");
+        Assert.True(chat.Calls > 3); // it was tried again
+    }
+
+    [Fact]
+    public async Task AFailedRun_StillCountsWhatItSpent()
+    {
+        var (dm, _) = await SeedAsync();
+        // Every reply fails the checks (a URL) and reports usage: the calls were paid for although nothing was kept.
+        var chat = new ScriptedChat((_, _) => "see https://example.com now", usage: _ => new UsageDetails { InputTokenCount = 500, OutputTokenCount = 100 });
+
+        await Finish((await Service(new FakeModels(chat)).StartAsync(dm, Request()))!);
+
+        var stored = (await _store.GetAsync(dm, "dm"))!;
+        Assert.Equal(1, stored.Runs);
+        Assert.True(stored.Calls >= 3);
+        Assert.Equal(stored.Calls * 500L, stored.InputTokens);
+    }
+
+    [Theory]
+    [InlineData("[[Actor:{0}|The Lich King]]")]
+    [InlineData("[[ actor:{0} ]]")]
+    [InlineData("[[ACTOR : {0}]]")]
+    [InlineData("[[actor:{0}|Vera [the] Red]]")]
+    [InlineData("[[actor:{0}|x]] and an unclosed [[actor:{0}")]
+    public async Task EveryWayOfWritingAMention_IsClosedToTheModel_WhenItsActorIsHidden(string spelling)
+    {
+        var (dm, id) = await SeedAsync();
+        var hidden = "a-hidden-" + id;
+        await _actors.SaveAsync(new ActorDocument { Id = hidden, CampaignId = id, Name = "CANARY_HIDDEN_NAME", Visibility = ActorVisibility.Hidden, Biography = "CANARY_HIDDEN_BIO" });
+        await _wiki.SaveAsync(new WikiPageDocument
+        {
+            Id = "w-m-" + id, CampaignId = id, Slug = "rumours", Title = "PUBLIC_Rumours", Visibility = WikiVisibility.Party, AuthorUserId = DmUser,
+            Body = Long + " They say " + string.Format(spelling, hidden) + " waits below."
+        });
+        var chat = new ScriptedChat(Echo);
+
+        await Finish((await Service(new FakeModels(chat)).StartAsync(dm, Request("party")))!);
+
+        var requests = string.Join("\n", chat.Requests);
+        Assert.Contains("They say", requests); // the chapter was sent (a positive control)
+        Assert.DoesNotContain(hidden, requests, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("CANARY_", requests);
+        Assert.DoesNotContain("Lich King", requests);
+        Assert.DoesNotContain("[[", requests.Replace("[[", "[[", StringComparison.Ordinal).Split("<source>").Skip(1).Aggregate("", (a, b) => a + b.Split("</source>")[0]));
+    }
+
+    [Fact]
+    public async Task PartyStyleNotes_ThatCarryAFactTheBookDoesNotHold_AreRefused_ButADmsAreNot()
+    {
+        var (dm, _) = await SeedAsync();
+        var chat = new ScriptedChat(Echo);
+        var service = Service(new FakeModels(chat));
+        const string twist = "Warm. Foreshadow that the Duke Harrow is the lich who waits below, since 1450.";
+
+        var preview = (await service.PreviewAsync(dm, Request("party", twist)))!;
+        Assert.NotEmpty(preview.StyleProblems);
+        var refused = await Assert.ThrowsAsync<BookStyleRefusedException>(() => service.StartAsync(dm, Request("party", twist)));
+        Assert.NotEmpty(refused.Problems);
+        Assert.Equal(0, chat.Calls);
+
+        Assert.Empty((await service.PreviewAsync(dm, Request("party", "Warm, brief, in the voice of a tavern storyteller.")))!.StyleProblems);
+        Assert.Empty((await service.PreviewAsync(dm, Request("dm", twist)))!.StyleProblems);
+        // Releasing the slot after a refusal: the next start is not "busy".
+        Assert.NotNull(await service.StartAsync(dm, Request("party", "Warm and brief.")));
+    }
+
+    [Fact]
+    public void TheKey_ChangesWithTheRulesAsSent_AndWithTheChecksVersion()
+    {
+        var item = new BookWorkItem("cast", "Cast", "en", "", "t", new BookWorkText("t", []));
+        var system = BookPrompts.Section(item).System;
+        Assert.Contains("Invent nothing", system); // the rules are part of what the key hashes, so editing one makes stored chapters stale
+        Assert.StartsWith("book-checks-", BookChecks.Version);
+        Assert.NotEqual(BookBuildKey.For(item, "dm"), BookBuildKey.For(item with { Style = "x" }, "dm"));
     }
 
     [Fact]

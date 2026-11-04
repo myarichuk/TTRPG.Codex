@@ -728,3 +728,83 @@ ignoring the edition, cached lookup ignoring the key. The last two are redundant
 - The money shown uses the prices as the user has them now; a run's cost is stored at the prices of that day, not re-priced.
 - Concurrent edits by two DMs of the same book each have their own build (per DM), so they do not collide, but a co-DM's build is not shared.
 - A crash in the middle of a run loses the totals of that run (chapters are stored one by one; the totals are added at the end).
+
+## 28. Opus review of the AI layer (steps 1-5): findings, what was fixed, what was not, and the art proposal
+
+An independent read-only review of `99e1a97..7390a29`. I checked the claims against the code before acting; the ones below marked "fixed"
+were reproduced by a failing test first (or a mutant the tests now kill).
+
+### 28.1 Defects
+
+| # | Finding | Status |
+|---|---|---|
+| A1 | `BookWork.Prepare` found mentions with a strict regex; the renderer reads them case-insensitively with spaces. `[[Actor:hid\|The Lich King]]`, `[[ actor:hid ]]`, a `]` in the label were cleaned in the deterministic book but reached the model raw (and the stored party rewrite). | **Fixed**: same reading as the renderer, anything that does not parse as a plain id is removed, an unclosed one removes the rest of its line (fails closed). Five spellings are canary tests on the model path. |
+| A2 | "One build per DM" was check-then-act across awaits: a double click or two tabs ran two builds (double spend, last writer wins, lost totals); `Discard` could race a start. | **Fixed**: the slot is taken atomically before the first await and released when the run ends or a start is refused; `Discard` takes the same slot. 6 parallel starts: one runs, one is paid for. |
+| A3 | Any non-refined result (cancel, budget, auth, failed checks) replaced a stored rewrite that had already been paid for, even one the DM was only re-running. | **Fixed**: a failure never replaces a stored rewrite. |
+| A4 | A reply cut off by the length limit (`FinishReason.Length`) could pass the checks (floor 0.12x). | **Fixed**: a cut-off reply is a failed check. **Not fixed**: no coverage check (every source name and number appears in the output); the 0.12x floor still licenses dropping most of a chapter. Raising it untested would break real runs; see 28.2. |
+| A5 | The style notes (one field for both editions) go into every request verbatim: "foreshadow that the Duke is the lich" shaped the party book, and the name check passes if "Duke" is in the chapter. | **Fixed (narrowly)**: for the party edition the notes may carry no number and no capitalised name the party's chapters do not hold; the panel shows why and refuses to start. The DM edition is unchecked. A fact written in lowercase prose ("the duke is the lich") is **not** caught. |
+| A6 | The key had no checks version, and the prompt text only through a hand-bumped version; stored blocks held the DM's secret HTML although the key guarantees they equal the current ones. | **Fixed**: the key hashes the system prompt as sent and a checks version; blocks are no longer stored, they are rendered from the campaign when printing. The store now holds none of a DM's secret words (test). |
+| A7 | `Cached` read `build.Sections` on runner threads while the writer changed it. | **Fixed**: looked up in a snapshot taken before the run. |
+| A8 | An exception escaping a worker failed the run and lost the run's totals; a regex timeout in the checks escaped. | **Fixed**: the checks' timeout is a failed check; the totals are added once, in every exit path. Still lost on a process crash. |
+| A9 | A provider's HTTP timeout (`TaskCanceledException`) was reported as "cancelled" and not retried. | **Fixed**: only a requested cancellation is "cancelled". |
+| A10 | The money upper bound ignored that the retry carries the first reply back; the tokens line said "at most N out" for one attempt. | **Fixed**: the upper figure counts the carried reply; the line shows two attempts' output. Transport retries are reserved by the budget but not in the money range (stated, not hidden). |
+| A11 | (a) a refund after UTC midnight is taken from the new day; (b) a DM demoted mid-run keeps paying; (c) an image inside a secret box has no `Image` resolver in the AI path; (d) `![` is forbidden in rewrites, so an image in a chapter is lost once it is rewritten. | (b) **fixed** (the first refused save cancels the run); (a), (c) open and small; (d) is the reason images must be placed by code (28.3). |
+
+What the reviewer tried that held: a DM build served to the party (audience is in the key, the id and the overlay guard); hiding an actor or editing
+a secret after a build; injection through `{{`, `:::`, HTML from a model; role re-read in the store; backups listing; guessing an `asset:` id;
+budget overflow. **Not checked by it, and still open**: a wiki link `[[Some Page]]` to a DM-only page is passed to the model (and printed by the
+deterministic book) as the link text.
+
+### 28.2 Structure (recommendations, not built)
+
+- **The unit should be the `##` entry, not the chapter.** Today one NPC edit makes all of Cast stale and re-buys it; a long chapter is one reply
+  capped at the client's maximum output (the cut-off check now makes this safe, not good). Key per entry, headings written by code and not sent,
+  short entries batched with delimiters. This is the next structural change and it touches the compiler (it should emit `{Id, Title, Body,
+  Entries[]}`; `BookBuildRunner.Item` re-parses the compiler's escaping with a regex).
+- **Licence flavour, pin facts.** Split the rules into facts (proper nouns and numbers: closed set, as now) and texture (common nouns, sensory
+  detail, transitions: open); add the coverage check first, because without it a freer prompt can drop facts; then raise the length ceiling in a
+  "flavour" mode. Code-owned read-aloud boxes or epigraphs as a separately checked output. Decision for the DM: do they want prose or tidied notes.
+- `BookBuilds` as a singleton is acceptable for a single-instance app now that it is atomic. Open: replace the `ContinueWith` chain with a
+  single-consumer channel; cancel runs and flush totals on `ApplicationStopping`.
+- Layering: `BookCompiler` is pure and belongs in Core; key and overlay policy live in Web and are called by the route too.
+
+### 28.3 Art: the proposal (nothing built; for the DM to confirm)
+
+1. **A slot is code-made.** `BookSlot(Key, Section, Anchor, Placement, Subject, Audience)`; the key is (placement, subject kind, subject *as the
+   audience sees it*), the page gets opaque `s1..` ids. Placement is relative to a heading the checks already pin and sits **outside** the
+   rewritten prose, so a rewrite can never drop or move art. Placements with fixed aspects: `cover`, `frontispiece` (page), `chapter-header`
+   (~3:1, spanning columns), `full-page`, `half-page`, `entry-portrait` (3:4, floated beside a `##`), `location` (3:2), `inline-left/right`,
+   `spot` (1:1 at an entry's end). Deterministic slots: cover, a header per chapter, one per Cast, Gazetteer or Pages entry (existing `BookArt`
+   fills them). AI-suggested slots: only `spot` and Chronicle scenes.
+2. **An art-director call per chapter**, input the masked outline only (blocks cut out, same edition), output JSON per slot: `depicts`, `visual`,
+   `mood`. Checks: names and numbers from the source only; **no capitalised words in `visual`** (invented proper nouns mean nothing to an image
+   model); a deny-list of real artists and "in the style of"; a length cap. **The image prompt is assembled by code**, never written by the model:
+   placement framing + `visual` + the book's style sheet. The style sheet is chosen once per book from a code-owned vocabulary (medium: ink
+   linework, woodcut, engraving, watercolour wash, painterly oil, parchment sketch; palette; line weight; lighting) plus a fixed negative suffix
+   (no text, lettering, signature, watermark, frame, border, photorealism, modern objects, real people). The existing hard-coded "Painterly…"
+   in `AiPrompts.Image` becomes one entry.
+3. **DM control**: a slot tray per chapter (existing / uploaded / proposed / drawn / none), editable prompt, Draw, Regenerate (keep 3), Accept,
+   Upload, "No art here". Cost per image shown only when an image price is set (a price field beside the token prices), otherwise the server
+   picture allowance, reserved all-or-nothing for "Draw selected (N)". The director call goes through `BookBudget` with its own pre-flight.
+   Nothing is drawn without a click.
+4. **Audience masking for art**: every image carries `BuiltFrom: party|dm`, the audience of the inputs its prompt came from. The party edition
+   places only party-built images, in slots its own masked source produces (a hidden NPC's slot does not exist there). A masked actor is keyed by
+   the mask's content, never the actor id (otherwise the DM's portrait of the real actor and the party's of the mask collide). Accepted images
+   live in campaign media as a separate `bookart` kind with the tag; in backups (they cost money), in the export only as the DM's own, never in a
+   player-facing read, and never promoted to an actor's portrait except by a separate explicit action.
+5. **Size and staleness**: an image is not keyed to chapter text (store a hash of its inputs and say "description changed since drawn", do not
+   invalidate it), but the audience gate is hard and checked at render time. **Re-encoding is required**: generated PNGs are 2-3 MB, thirty break
+   the 64 MB cap. Downscale only, to 300 DPI x the placement's mm, JPEG about q85; a 120-DPI variant for the live preview; measure Chromium's
+   memory at 120 images first. SkiaSharp is already in the test output tree; check its licence and the app's dependency before choosing.
+6. **Build order**: (1) slots from the compiler, placement CSS, existing `BookArt` placed, with the party canary (no slot for a hidden subject);
+   (2) re-encode and downscale; (3) DM upload into a slot through the sanitizer with the tag; (4) style vocabulary and the code prompt assembler
+   (golden tests: no proper nouns, negatives present); (5) the art-director call; (6) per-slot generation with allowance and price;
+   (7) suggested spot and scene slots. **Not to build**: model-chosen placement inside prose, batch generation without a click, text inside
+   images, generated maps (upload only), identity-consistent characters through reference images, per-player `:::for` art.
+
+### 28.4 What stands between this and a real Homebrewery page, other than art
+
+The theme is a single column (no `column-count`; two balanced columns with spanning headers is the main thing); drop caps; the typographic
+palette (deep red serif headers with a gold rule, tan note boxes, green-grey read-aloud boxes, zebra tables); a running footer band with the
+chapter name; part and title pages; front and back matter; keep-with-next across column breaks. On content: code-owned sidebars, read-aloud and
+stat blocks. Without them even good chapters read as a tidied wiki in a nicer font.

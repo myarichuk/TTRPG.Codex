@@ -4,10 +4,10 @@ namespace Codex.Persistence;
 
 /// <summary>
 /// What an AI polish of a campaign book has produced so far, for one DM and one edition (docs/BOOK_EXPORT.md, step 5). The DM's own
-/// working copy, like a world chat: only its owner reads it, <b>it is not part of the campaign export or the backups</b> (the DM
-/// edition's chapters hold the DM's secrets as the boxes they print in), and it is deleted with the campaign. The model's prompts are
-/// never stored here, only its replies; the secret words in a DM chapter live in <see cref="BookBuildSection.Blocks"/> (code-rendered
-/// boxes) and were never sent to the model.
+/// working copy, like a world chat: only its owner reads it, <b>it is not part of the campaign export or the backups</b> (it is the DM's
+/// working copy), and it is deleted with the campaign. The model's prompts are
+/// never stored here, only its replies. The DM's secret words are in neither: they were never sent to the model, and the boxes that print them
+/// are rendered from the campaign at print time.
 /// </summary>
 public class BookBuildDocument
 {
@@ -64,9 +64,6 @@ public class BookBuildSection
 
     /// <summary>The chapter with its blocks as <c>{{block:N}}</c> markers; empty unless <see cref="Refined"/>.</summary>
     public string Markdown { get; set; } = string.Empty;
-
-    /// <summary>The boxes those markers stand for, as the renderer made them.</summary>
-    public Dictionary<int, string> Blocks { get; set; } = new();
 
     /// <summary>The model that wrote it, shown beside the chapter; it is not part of the key.</summary>
     public string Model { get; set; } = string.Empty;

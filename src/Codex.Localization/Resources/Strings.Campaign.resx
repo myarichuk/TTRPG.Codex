@@ -804,4 +804,5 @@
   <data name="Campaign.Book.Ai.Row.Kept" xml:space="preserve"><value>kept as written</value></data>
   <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>too short</value></data>
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>This cap is too low to send even one request: the biggest chapter needs at least {0} tokens set aside (its worst case, retries included).</value></data>
+  <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>The style notes carry facts the party's book does not hold ({0}). Keep them to voice and tone for this edition: no names, no numbers, no plot.</value></data>
 </root>

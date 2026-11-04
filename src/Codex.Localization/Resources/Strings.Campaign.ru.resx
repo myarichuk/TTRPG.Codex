@@ -804,4 +804,5 @@
   <data name="Campaign.Book.Ai.Row.Kept" xml:space="preserve"><value>оставлена как есть</value></data>
   <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>слишком короткая</value></data>
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>Этот лимит слишком мал, чтобы отправить хотя бы один запрос: для самой большой главы нужно зарезервировать не менее {0} токенов (худший случай, с повторами).</value></data>
+  <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>В пожеланиях к стилю есть сведения, которых нет в книге для партии ({0}). Для этого издания оставьте только манеру и тон: без имён, чисел и сюжета.</value></data>
 </root>

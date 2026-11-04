@@ -33,6 +33,9 @@ public static class BookBuildKey
 
         Field(Recipe);
         Field(BookPrompts.Version);
+        Field(BookChecks.Version);
+        // The rules as they are sent (the style sheet is in them): editing a rule without bumping its version still changes the key.
+        Field(BookPrompts.Section(item).System);
         Field(audience);
         Field(item.Language);
         Field(item.Style.Trim());

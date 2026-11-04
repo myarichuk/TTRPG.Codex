@@ -91,6 +91,11 @@
             <input id="book-ai-style" class="field-input" maxlength="@BookBuildRequest.MaxStyleChars" @bind="style" @bind:after="PreviewAsync" disabled="@Running" data-testid="book-ai-style" />
             <div class="field-hint">@L["Campaign.Book.Ai.StyleHint"]</div>
 
+            @if (preview is { StyleProblems.Count: > 0 })
+            {
+                <div class="field-error" role="alert" data-testid="book-ai-style-refused">@L["Campaign.Book.Ai.StyleRefused", string.Join("; ", preview.StyleProblems)]</div>
+            }
+
             @if (preview != null)
             {
                 <div class="mt-2 field-label">@L["Campaign.Book.Ai.Chapters"]</div>
@@ -120,7 +125,7 @@
                     else
                     {
                         <div class="small">@L["Campaign.Book.Ai.Preflight.Summary", preview.ToBuild, flight.RequestsMin, flight.RequestsMax]</div>
-                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh * 2)]</div>
                         @if (flight.CostLow is { } low && flight.CostHigh is { } high)
                         {
                             <div class="small-muted">@L["Campaign.Book.Ai.Preflight.Cost", Money(low), Money(high)]</div>
@@ -149,7 +154,7 @@
                 }
 
                 <div class="d-flex gap-2 flex-wrap mt-2">
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StartAsync" Disabled="@(Running || preview.Model == null || preview.Preflight == null || Cap < preview.MinimumCap)" data-testid="book-ai-start">
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StartAsync" Disabled="@(Running || preview.Model == null || preview.Preflight == null || Cap < preview.MinimumCap || preview.StyleProblems.Count > 0)" data-testid="book-ai-start">
                         <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Ai.Start"]
                     </CodexButton>
                     @if (Running)
@@ -397,6 +402,10 @@
             var started = await Builds.StartAsync(Ctx.Access, Request(Cap));
             Attach(started);
             if (started == null) aiError = L["Campaign.Book.Failed.Other"];
+        }
+        catch (BookStyleRefusedException refused)
+        {
+            aiError = L["Campaign.Book.Ai.StyleRefused", string.Join("; ", refused.Problems)];
         }
         catch (BookBuildBusyException)
         {

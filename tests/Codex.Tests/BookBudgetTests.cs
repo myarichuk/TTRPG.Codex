@@ -191,7 +191,7 @@ public class BookTokensTests
         Assert.True(plain.InputLow < plain.InputHigh && plain.OutputLow < plain.OutputHigh);
         Assert.Equal((2, 4), (plain.RequestsMin, plain.RequestsMax));
         Assert.Null(plain.CostLow);
-        Assert.Equal(plain.InputHigh * 2 + plain.OutputHigh * 2, plain.WorstCaseTokens);
+        Assert.Equal(plain.InputHigh * 2 + plain.OutputHigh * 3, plain.WorstCaseTokens);
 
         var priced = BookPreflight.Estimate(sections, 500, new AiPriceQuote(1m, 2m, "USD"));
         Assert.True(priced.CostLow > 0 && priced.CostHigh > priced.CostLow);

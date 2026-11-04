@@ -10,6 +10,9 @@ namespace Codex.Core.Book;
 /// </summary>
 public static class BookChecks
 {
+    /// <summary>Bumped when a check is tightened: stored rewrites were accepted by the older checks and must be made again.</summary>
+    public const string Version = "book-checks-1";
+
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(2);
     private const RegexOptions Flags = RegexOptions.CultureInvariant | RegexOptions.Compiled;
 
@@ -105,6 +108,18 @@ public static class BookChecks
 
     /// <summary>The figures in a text as ASCII digits, so a number written in Arabic-Indic digits is the same number. List markers
     /// ("1.", "2)") and block markers are not figures.</summary>
+    /// <summary>The style notes of the party edition may carry no fact the party does not have: no number and no name that the chapters
+    /// the party reads do not hold. The notes are the DM's own words and go into every request, so a plot twist typed there would be
+    /// written into a book the players hold.</summary>
+    public static IReadOnlyList<string> StyleProblems(string style, string visibleText)
+    {
+        var problems = new List<string>();
+        var names = NewNames(visibleText, style).Take(5).ToList();
+        if (names.Count > 0) problems.Add("names the book does not hold: " + string.Join(", ", names));
+        if (Numbers(style).Except(Numbers(visibleText)).Any()) problems.Add("numbers the book does not hold");
+        return problems;
+    }
+
     internal static HashSet<string> Numbers(string text)
     {
         var plain = Marker.Replace(ListMarker.Replace(text, string.Empty), string.Empty);
