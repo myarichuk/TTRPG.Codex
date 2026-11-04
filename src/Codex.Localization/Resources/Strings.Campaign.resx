@@ -722,7 +722,7 @@
   <data name="Campaign.Book.Title" xml:space="preserve"><value>Campaign book</value></data>
   <data name="Campaign.Book.Hint" xml:space="preserve"><value>Lay the campaign out as a printable book. The book is built on this machine from what the campaign holds; nothing is sent anywhere.</value></data>
   <data name="Campaign.Book.Edition" xml:space="preserve"><value>Edition</value></data>
-  <data name="Campaign.Book.Edition.Dm" xml:space="preserve"><value>DM edition</value></data>
+  <data name="Campaign.Book.Edition.Dm" xml:space="preserve"><value>GM edition</value></data>
   <data name="Campaign.Book.Edition.Party" xml:space="preserve"><value>Party edition</value></data>
   <data name="Campaign.Book.Edition.DmHint" xml:space="preserve"><value>Everything you can see, with your secrets in boxes. Keep this one behind the screen.</value></data>
   <data name="Campaign.Book.Edition.PartyHint" xml:space="preserve"><value>Only what a player may read: hidden characters and secrets are left out, not blacked out.</value></data>

@@ -132,7 +132,7 @@ public sealed partial class WorldBuilderService
 
         var names = Names((await actorRepository.GetVisibleForCampaignAsync(access)).ToList(), (await regions.GetVisibleForCampaignAsync(access)).ToList());
         var text = Cap(Editable(page.Body, names));
-        return $"# {page.Title}\nkey: existing:{page.Slug}; kind: {page.Kind.ToString().ToLowerInvariant()}; {(page.Visibility == WikiVisibility.Party ? "shared with the party" : "DM only")}\n\n{text}";
+        return $"# {page.Title}\nkey: existing:{page.Slug}; kind: {page.Kind.ToString().ToLowerInvariant()}; {(page.Visibility == WikiVisibility.Party ? "shared with the party" : "GM only")}\n\n{text}";
     }
 
     private async Task<string?> PlaceTextAsync(string id, CampaignAccess access)

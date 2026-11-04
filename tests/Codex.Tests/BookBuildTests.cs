@@ -35,7 +35,7 @@ public class BookBuildKeyTests
     [InlineData("audience")]
     public void EveryThingAChapterIsMadeFrom_ChangesItsKey(string what)
     {
-        var block = new BookBlock(1, "DM secret", "<div>box</div>");
+        var block = new BookBlock(1, "GM secret", "<div>box</div>");
         var baseline = Key(Item(blocks: block));
         var changed = what switch
         {
@@ -56,8 +56,8 @@ public class BookBuildKeyTests
     public void ASecretThatWasEdited_NoLongerComesBackFromTheStore()
     {
         // The stored chapter holds the box as it was; an edited secret changes the block's HTML and so the key.
-        var before = Key(Item(blocks: new BookBlock(1, "DM secret", "<div>the vault is under the chapel</div>")));
-        var after = Key(Item(blocks: new BookBlock(1, "DM secret", "<div>the vault was moved</div>")));
+        var before = Key(Item(blocks: new BookBlock(1, "GM secret", "<div>the vault is under the chapel</div>")));
+        var after = Key(Item(blocks: new BookBlock(1, "GM secret", "<div>the vault was moved</div>")));
         Assert.NotEqual(before, after);
     }
 

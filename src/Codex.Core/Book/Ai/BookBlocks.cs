@@ -37,7 +37,7 @@ public static class BookWork
                     BoxSecrets = true, Mention = render.Mention, Image = render.Image
                 });
                 var number = blocks.Count + 1;
-                blocks.Add(new BookBlock(number, segment.Audience == SecretAudience.Dm ? "DM secret" : "secret for some players", box.Html));
+                blocks.Add(new BookBlock(number, segment.Audience == SecretAudience.Dm ? "GM secret" : "secret for some players", box.Html));
                 text.Append("\n{{block:").Append(number).Append("}}\n\n");
                 continue;
             }
