@@ -210,3 +210,26 @@ extracted text, embedded fonts, an empty external-request log. No cross-OS pixel
 - Parallelism of section calls vs provider rate limits and the server allowance.
 - Where a build's state lives (a `BookBuildDocument` like `WorldChatDocument`?) and whether it is part of the campaign
   export (the world chats are not).
+
+## 9. Phase 0 results (measured, Chromium 153.0.8010.12, Linux)
+
+Harness: `tools/book-spike/` (synthetic book with the app's real fonts, closed network, JS off). One browser, one machine:
+re-verify on Windows and macOS Edge/Chrome before relying on any of it.
+
+| Question | Result | Consequence |
+|---|---|---|
+| Closed network works? | Yes. JS disabled, 8 fonts served from a route, every other request aborted, none attempted. | Keep the rule from section 3. |
+| `mask-image` stays vector? | **Yes.** CSS `mask-image` (SVG mask) and SVG `clip-path` both render; no raster image is added to the PDF. | Masks are viable as CSS. |
+| Masked illustration? | A JPEG under a mask is embedded once at source resolution (shared across uses, mask as soft mask), not re-rasterised. | Downscale uploads ourselves (section 4); no quality loss from masking. |
+| `@page` margin boxes with `counter(page)` / `counter(pages)`? | **Yes**, including separate `:left` / `:right` boxes and `:first`. | Page numbers and running footers need no header/footer template. |
+| `target-counter()`? | **No.** The declaration is dropped; the TOC lines get no page numbers. | Two-pass TOC: render, read each heading's page from the PDF outline (`outline: true` gives a page per heading, verified), render again with the numbers. Leader width fixed so pass two paginates like pass one. |
+| RTL page progression | Follows `html dir`: in RTL the first page is `:left`, in LTR `:right`. | Hebrew books need their own mirrored `@page` rules and `dir` on the root. |
+| Tagged PDF | `tagged: true` yields a tagged PDF. | Cheap accessibility win; keep on. |
+| Font embedding | All embedded and subset. Static fonts (Alegreya Sans) become CID TrueType; **variable fonts (Cinzel, Assistant, Frank Ruhl Libre, Forum) become Type 3** (vector, searchable, but unhinted). | Acceptable for print. If it matters later, build static instances (OFL allows it, mind reserved font names). |
+| Missing glyphs | **System fonts leak in** (Liberation Serif, WenQuanYi, DejaVu appeared for CJK, Arabic, dingbats, symbols, and for Hebrew when the stack lacked a Hebrew face). | Campaign text will contain emoji and symbols. Required: full `font-family` stacks, a test that every embedded font is in an allow-list, and a preflight that lists glyphs we cannot cover so the DM sees them before printing. Not reproducible across OSes otherwise. |
+| Scale | 45 pages: 0.9 s, 1.3 MB, ~510 MB peak Chromium RSS. 114 pages: 5.0 s, 3.2 MB, ~830 MB. Text only, no large images. | Time grows faster than page count. Budget about 1 GB; keep the single render queue and timeout from section 3. Images will add to both: re-measure with a real art-heavy book. |
+
+Not measured: Windows/macOS Chrome and Edge; fonts under a different Chromium; art-heavy books; nested multicol with page
+breaks (reported historically fragile); copy/search behaviour of extracted Hebrew text.
+
+Not yet built: the in-app print-stylesheet route over real campaign data (it needs the audience-masked reads of 2.3 first).
