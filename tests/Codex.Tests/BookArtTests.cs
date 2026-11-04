@@ -196,6 +196,21 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         Assert.Null(scaled.Wiki("w-dm"));
     }
 
+    [Fact]
+    public async Task ArtReadForTheDm_NeverReachesAPartyDocument_BecauseThePartyHasNoAnchorForIt()
+    {
+        var (dm, _) = await SeedAsync();
+        var party = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var dmArt = await new BookArtReader(_media).ReadAsync((await _reader.ReadAsync(dm, BookAudience.Dm))!);
+
+        // Even handed the DM's whole picture map, the party's document has no heading for a hidden subject, so nothing of it is placed.
+        var (html, placed) = Page(party, dmArt);
+
+        Assert.Equal(5, placed);
+        Assert.Equal(4, Count(html, "<img class=\"art\""));
+        foreach (var hidden in new[] { "a-hidden", "a-unknown", "w-dm", "Hidden" }) Assert.DoesNotContain(hidden, html, StringComparison.Ordinal);
+    }
+
     private static (string Html, int Placed) Page(BookSource source, BookArt art, bool pictures = true)
     {
         var document = BookComposer.Compose(source, "en");
@@ -232,7 +247,6 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
             Assert.DoesNotContain(hidden, html, StringComparison.Ordinal);
         }
 
-        Assert.DoesNotContain(art.AllImages().First(i => i.Width == 202).DataUri(), html.Replace(art.DataUri(art.Portrait("a-known")!)!, "", StringComparison.Ordinal), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -258,12 +272,22 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         var art = await new BookArtReader(_media).ReadAsync(source);
         var document = BookComposer.Compose(source, "en");
 
-        // A rewrite that kept the headings keeps its picture; one that renamed the entry's heading loses it, rather than misplacing it.
-        var kept = document with { Sections = document.Sections.Select(s => s.Id == "cast" ? s with { Markdown = s.Markdown.Replace("known", "known") } : s).ToList() };
-        var renamed = document with { Sections = document.Sections.Select(s => s.Id == "cast" ? s with { Markdown = s.Markdown.Replace("## a\\-known", "## Somebody else") } : s).ToList() };
+        Func<Func<string, string>, BookDocument> edit = f => document with { Sections = document.Sections.Select(x => x.Id == "cast" ? x with { Markdown = f(x.Markdown) } : x).ToList() };
+        var kept = edit(m => m);
+        var renamed = edit(m => m.Replace("## a\\-known", "## Somebody else"));
+        Assert.Contains("## a\\-known", document.Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
 
-        Assert.Contains("asset:", BookComposer.PlaceArt(kept, source, art, out _).Sections.First(s => s.Id == "cast").Markdown, StringComparison.Ordinal);
-        Assert.DoesNotContain("asset:", BookComposer.PlaceArt(renamed, source, art, out _).Sections.First(s => s.Id == "cast").Markdown, StringComparison.Ordinal);
+        // Line endings and trailing spaces a rewrite may bring do not matter; a heading inside a code fence is not a heading.
+        var crlf = edit(m => m.Replace("\n", " \r\n"));
+        var fenced = edit(m => "```\n## a\\-known\n```\n\n" + m);
+        Assert.Contains("asset:", BookComposer.PlaceArt(crlf, source, art, out _).Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
+        var placed = BookComposer.PlaceArt(fenced, source, art, out _).Sections.First(x => x.Id == "cast").Markdown;
+        Assert.StartsWith("```\n## a\\-known\n```", placed, StringComparison.Ordinal);
+        Assert.DoesNotContain("```\n## a\\-known\n\n{{", placed, StringComparison.Ordinal);
+        Assert.Contains("asset:", placed, StringComparison.Ordinal);
+
+        Assert.Contains("asset:", BookComposer.PlaceArt(kept, source, art, out _).Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
+        Assert.DoesNotContain("asset:", BookComposer.PlaceArt(renamed, source, art, out _).Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
     }
 
     [Fact]

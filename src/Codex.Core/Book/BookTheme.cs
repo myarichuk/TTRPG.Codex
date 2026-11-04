@@ -128,7 +128,6 @@ public static class BookThemes
     private static string Columns(BookLayout layout) => layout.Columns != 2 ? string.Empty : """
         .chapter { column-count: 2; column-gap: 9mm; column-fill: balance; }
         .chapter > h1 { column-span: all; }
-        .chapter > .art, .chapter > .slot { column-span: none; }
         table { font-size: 9pt; }
         """;
 
@@ -183,11 +182,10 @@ public static class BookThemes
             {{Columns(layout)}}
             .secret { margin: .7em 0; padding: .5em .7em; border-inline-start: 3pt solid #8a1c1c; background: #f6eeee; break-inside: avoid; }
             .slot { display: block; margin: .6em 0; padding: 1.2em .8em; border: 1pt dashed #999; color: #666; text-align: center; font-size: 9pt; break-inside: avoid; }
-            .art { display: block; max-width: 100%; margin: .6em auto; break-inside: avoid; }
-            .title-page.has-cover { padding-top: 6%; }
-            .cover-art { display: block; max-width: 78%; max-height: 165mm; margin: 0 auto 1.2em; object-fit: contain; }
+            .art { display: block; max-width: 100%; max-height: 120mm; margin: .6em auto; break-inside: avoid; }
+            .title-page.has-cover { padding-top: 6%; break-inside: avoid; }
+            .cover-art { display: block; max-width: 78%; max-height: {{(layout.PageSize == "Letter" ? 115 : 150)}}mm; margin: 0 auto 1.2em; object-fit: contain; }
             .art-portrait { width: 34%; margin: .2em 0 .5em; break-inside: avoid; }
-            h2:has(+ .art-portrait), h3:has(+ .art-portrait), h2:has(+ .art-place), h3:has(+ .art-place) { break-after: avoid; }
             .art-portrait, .art-place { break-before: avoid; }
             .art-portrait p { margin: 0; }
             .art-portrait .art { width: 100%; max-height: 52mm; margin: 0; object-fit: cover; }

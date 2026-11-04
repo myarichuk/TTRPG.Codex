@@ -18,9 +18,9 @@ public static class BookEndpoints
     public static void MapBooks(this WebApplication app)
     {
         app.MapGet("/campaigns/{campaignId}/book/{audience}", async (string campaignId, string audience, string? lang, string? theme, string? size, string? cols, string? pics, string? ai,
-            ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, BookArtReader artReader, IWebHostEnvironment env) =>
+            ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, BookArtReader artReader, IWebHostEnvironment env, CancellationToken cancel) =>
         {
-            var made = await BuildAsync(campaignId, audience, lang, theme, size, cols, pics, ai, user, resolver, reader, builds, artReader, env);
+            var made = await BuildAsync(campaignId, audience, lang, theme, size, cols, pics, ai, user, resolver, reader, builds, artReader, env, cancel: cancel);
             if (made.Failure != null)
             {
                 return made.Failure;
@@ -39,7 +39,7 @@ public static class BookEndpoints
             BookPdfSlot? slot = null;
             try
             {
-                var made = await BuildAsync(campaignId, audience, lang, theme, size, cols, pics, ai, user, resolver, reader, builds, artReader, env, forPrint: true, admit: userId =>
+                var made = await BuildAsync(campaignId, audience, lang, theme, size, cols, pics, ai, user, resolver, reader, builds, artReader, env, cancel: cancel, forPrint: true, admit: userId =>
                 {
                     slot = pdf.TryReserve(userId);
                     return slot == null ? Busy(response, new BookPdfBusyException()) : null;
@@ -119,7 +119,7 @@ public static class BookEndpoints
     private sealed record Made(string? Html, string Title, IResult? Failure, BookPrintJob? Job = null);
 
     private static async Task<Made> BuildAsync(string campaignId, string audience, string? lang, string? theme, string? size, string? cols, string? pics, string? ai, ClaimsPrincipal user,
-        ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, BookArtReader artReader, IWebHostEnvironment env, bool forPrint = false, Func<string, IResult?>? admit = null)
+        ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, BookArtReader artReader, IWebHostEnvironment env, bool forPrint = false, Func<string, IResult?>? admit = null, CancellationToken cancel = default)
     {
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var access = userId == null ? null : await resolver.ResolveAsync(campaignId, userId);
@@ -159,7 +159,7 @@ public static class BookEndpoints
 
         // The pictures the book already has, read for this edition only (the art reader asks the media store for nothing the source does not
         // hold), placed after the chapters are final. "pics=0" leaves them out: a book with many pictures is a heavy page to preview.
-        var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source, forPrint ? BookArtQuality.Print : BookArtQuality.Preview);
+        var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source, forPrint ? BookArtQuality.Print : BookArtQuality.Preview, cols == "2" ? 2 : 1, cancel);
         document = BookComposer.PlaceArt(document, source, art, out _);
 
         BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, chosen, new BookHtmlOptions

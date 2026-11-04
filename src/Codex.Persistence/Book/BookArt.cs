@@ -66,7 +66,7 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
 
     public const long MaxTotalBytes = 64L * 1024 * 1024;
 
-    public async Task<BookArt> ReadAsync(BookSource source, BookArtQuality quality = BookArtQuality.Print)
+    public async Task<BookArt> ReadAsync(BookSource source, BookArtQuality quality = BookArtQuality.Print, int columns = 2, CancellationToken ct = default)
     {
         var art = new BookArt();
         long total = 0;
@@ -102,7 +102,7 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
             // Scaled to what its box prints at: the book's size cap counts what is placed, not what was uploaded.
             if (scaler != null)
             {
-                image = await scaler.ScaleAsync(image, kind, quality);
+                image = await scaler.ScaleAsync(image, kind, quality, ct, columns);
             }
 
             if (total + image.Bytes.Length > MaxTotalBytes)

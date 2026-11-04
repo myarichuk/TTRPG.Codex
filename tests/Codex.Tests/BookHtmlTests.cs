@@ -92,7 +92,10 @@ public class BookHtmlTests
 
         var css = BookThemes.Plain.Css(new BookLayout("A4", false));
         Assert.DoesNotContain("float", css.Substring(css.IndexOf(".art-portrait {", StringComparison.Ordinal), 120), StringComparison.Ordinal);
-        Assert.Contains("h2:has(+ .art-portrait)", css, StringComparison.Ordinal);
+        var letter = BookHtml.Build(Book() with { CoverAsset = "c" }, BookThemes.Plain, new BookHtmlOptions { PageSize = "Letter", Image = _ => "data:image/png;base64,AAAA", Font = Font }).Html!;
+        var a4 = BookHtml.Build(Book() with { CoverAsset = "c" }, BookThemes.Plain, new BookHtmlOptions { Image = _ => "data:image/png;base64,AAAA", Font = Font }).Html!;
+        Assert.Contains("max-height: 115mm", letter, StringComparison.Ordinal);
+        Assert.Contains("max-height: 150mm", a4, StringComparison.Ordinal);
     }
 
     [Fact]

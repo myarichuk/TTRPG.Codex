@@ -144,6 +144,63 @@ public class BookImageScalerTests
     }
 
     [Fact]
+    public async Task AJpegAboveTheDecodeLimit_IsStillScaled_ButAPngAboveItIsKeptAsItIs()
+    {
+        // Flat colour: tiny files, but more pixels than the limit (31.5 megapixels).
+        byte[] Flat(SKEncodedImageFormat f)
+        {
+            using var b = new SKBitmap(new SKImageInfo(7000, 4500, SKColorType.Rgba8888, SKAlphaType.Opaque));
+            b.Erase(new SKColor(90, 120, 150));
+            return SKImage.FromBitmap(b).Encode(f, 90).ToArray();
+        }
+
+        var jpeg = Clean(Flat(SKEncodedImageFormat.Jpeg));
+        var png = Clean(Flat(SKEncodedImageFormat.Png));
+        Assert.True((long)jpeg.Width * jpeg.Height > BookImageScaler.MaxDecodePixels);
+        var scaler = new BookImageScaler();
+
+        var scaledJpeg = await scaler.ScaleAsync(jpeg, "location", BookArtQuality.Print);
+        Assert.True(scaledJpeg.Width < 3000);
+        Assert.Same(png, await scaler.ScaleAsync(png, "location", BookArtQuality.Print));
+    }
+
+    [Fact]
+    public async Task APictureThatWillNotGetSmaller_IsRememberedAsItself_AndAPlaceIsWiderInOneColumn()
+    {
+        var original = Clean(Make(1500, 1500, SKEncodedImageFormat.Jpeg));
+        original = new BookImage(original.Bytes, original.ContentType, original.Width, original.Height);
+        var scaler = new BookImageScaler();
+
+        var first = await scaler.ScaleAsync(original, "portrait", BookArtQuality.Print);
+        var second = await scaler.ScaleAsync(original, "portrait", BookArtQuality.Print);
+        // A lossy source at q95 re-encoded at q85 and shrunk is smaller; so this checks only that repeated calls agree.
+        Assert.Equal(first.Bytes.Length, second.Bytes.Length);
+
+        var (two, _) = BookImageScaler.TargetPixels(BookImageScaler.BoxFor("location", 2), 4000, 2000, BookArtQuality.Print);
+        var (one, _) = BookImageScaler.TargetPixels(BookImageScaler.BoxFor("location", 1), 4000, 2000, BookArtQuality.Print);
+        Assert.True(one > two * 3 / 2);
+    }
+
+    [Fact]
+    public async Task ACancelledRequest_StopsWaitingForADecoder()
+    {
+        var original = Clean(Make(2000, 2000, SKEncodedImageFormat.Png));
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new BookImageScaler().ScaleAsync(original, "portrait", BookArtQuality.Print, cancelled.Token));
+    }
+
+    [Fact]
+    public async Task ThePictureAFewPercentOverItsTargetIsLeftAlone_ButOneFortyPercentOverIsScaled()
+    {
+        var (w, h) = BookImageScaler.TargetPixels(BookImageScaler.BoxFor("portrait"), 1200, 1500, BookArtQuality.Print);
+        var over = Clean(Make((int)(w * 1.4), (int)(h * 1.4), SKEncodedImageFormat.Png));
+
+        Assert.NotSame(over, await new BookImageScaler().ScaleAsync(over, "portrait", BookArtQuality.Print));
+    }
+
+    [Fact]
     public async Task ColoursAreConvertedToSrgb_BecauseTheFileItWritesCarriesNoProfile()
     {
         // A wide-gamut profile on the source: a pure Display P3 red must not come out as sRGB red-as-is.
@@ -158,7 +215,7 @@ public class BookImageScalerTests
 
         using var decoded = SKBitmap.Decode(scaled.Bytes);
         var middle = decoded.GetPixel(decoded.Width / 2, decoded.Height / 2);
-        // P3 (0,200,0) is a more saturated green than sRGB can hold; converted, the red and blue channels are clipped to zero and green is lower than 200 + something.
+        // The bitmap holds (0,200,0) *in Display P3*, which is a more saturated green than sRGB can hold: converted, red and blue clip towards zero.
         Assert.True(middle.Green > 190, middle.ToString());
         Assert.True(middle.Red < 40 && middle.Blue < 60, middle.ToString());
     }

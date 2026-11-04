@@ -43,12 +43,23 @@ public static class BookComposer
             if (mine.Count == 0) return section;
             var seen = new Dictionary<string, int>(StringComparer.Ordinal);
             var lines = new List<string>();
-            foreach (var line in section.Markdown.Split('\n'))
+            var fence = false;
+            foreach (var raw in section.Markdown.Split('\n'))
             {
+                var line = raw.TrimEnd('\r', ' ', '\t');
                 lines.Add(line);
+                // A fenced code block is text, not structure: a line in it that looks like a heading is not one, and a picture block
+                // placed there would print as literal braces.
+                if (line.TrimStart().StartsWith("```", StringComparison.Ordinal) || line.TrimStart().StartsWith("~~~", StringComparison.Ordinal))
+                {
+                    fence = !fence;
+                    continue;
+                }
+
+                if (fence) continue;
                 var repeat = seen.GetValueOrDefault(line);
                 seen[line] = repeat + 1;
-                var anchor = mine.FirstOrDefault(a => a.Heading == line.TrimEnd() && a.Repeat == repeat);
+                var anchor = mine.FirstOrDefault(a => a.Heading == line && a.Repeat == repeat);
                 if (anchor == null) continue;
                 count++;
                 lines.Add(string.Empty);

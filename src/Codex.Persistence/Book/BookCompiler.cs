@@ -126,7 +126,8 @@ public static class BookCompiler
 
         foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
         {
-            Entry("cast", "## ", actor.Name, art.Portrait(actor.Id), BookArtPlacement.Portrait);
+            // The flag as the audience's source holds it (a stranger's mask has none): placement does not rely on whoever built the map.
+            Entry("cast", "## ", actor.Name, actor.HasPortrait ? art.Portrait(actor.Id) : null, BookArtPlacement.Portrait);
         }
 
         foreach (var region in source.Regions.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
@@ -134,18 +135,18 @@ public static class BookCompiler
             Entry("gazetteer", "## ", region.Name, null, BookArtPlacement.Place);
             foreach (var place in region.Locations)
             {
-                Entry("gazetteer", "### ", place.Name, art.Location(region.Id, place.Id), BookArtPlacement.Place);
+                Entry("gazetteer", "### ", place.Name, place.HasArt ? art.Location(region.Id, place.Id) : null, BookArtPlacement.Place);
             }
         }
 
         foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
         {
-            Entry("pages", "## ", page.Title, art.Wiki(page.Id), BookArtPlacement.Place);
+            Entry("pages", "## ", page.Title, page.HasArt ? art.Wiki(page.Id) : null, BookArtPlacement.Place);
         }
 
         foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
         {
-            Entry("homebrew", "## ", entry.Name, art.Homebrew(entry.Id), BookArtPlacement.Portrait);
+            Entry("homebrew", "## ", entry.Name, entry.HasArt ? art.Homebrew(entry.Id) : null, BookArtPlacement.Portrait);
         }
 
         return anchors;

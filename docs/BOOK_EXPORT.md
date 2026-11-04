@@ -859,8 +859,9 @@ decoder, with its network closed). Now a native decoder (libjpeg-turbo, libpng, 
 - whole decodes are limited to 30 megapixels; a larger JPEG is decoded reduced, straight from its blocks; a larger PNG or WebP is kept as it is;
 - decoding runs two at a time, off the request thread; any decode failure or exception returns the sanitizer's bytes (a refusal costs bytes, never a picture);
 - results are remembered by a hash of the bytes and the target size, in memory, up to 96 MB, then dropped whole.
-This does not make a decoder CVE harmless: Skia's decoders are in-process native code, and the sanitizer is not a decoder-level defence. A DM can upload only into
-their own campaign, but the upload endpoints already exist. If that is not acceptable, the alternative is decoding in the printing browser (a canvas), which keeps
+This does not make a decoder CVE harmless: Skia's decoders are in-process native code, and the sanitizer is not a decoder-level defence. **Correction of an earlier draft of this paragraph, found by review:** it is not only the DM. A player may upload the portrait of their own character
+(`MediaStore`: `role == DM || actor.OwnerUserId == userId`), and that file reaches the decoder when the DM builds either edition. A crafted file that crashes the native
+decoder takes the whole process down (RavenDB embedded included); the managed `catch` cannot stop a native fault. If that is not acceptable, the alternative is decoding in the printing browser (a canvas), which keeps
 the old guarantee at the cost of needing a browser for the preview and a round trip per picture; I did not build that.
 
 Colours are converted to sRGB while decoding, because the re-encoded file carries no profile (a mutant that skipped this is caught by a Display P3 test). Other mutants
@@ -872,3 +873,26 @@ Measured (synthetic 2048 x 2048 PNGs of drawn circles, which compress better tha
 Known and not fixed: the sanitizer drops a JPEG's EXIF, including its orientation, so a phone photo taken sideways prints sideways (it did before this step too);
 a picture with a wide-gamut profile is converted, one with a CMYK profile is whatever Skia makes of it; animated WebP and APNG are **untested**: Skia will most likely write only the first frame
 when one is big enough to be scaled (otherwise it is kept whole); the print/preview split means the preview is softer than the PDF by design.
+
+### 31.1 Opus review of §29-31: fixed, and left open
+
+No way was found for a picture, name or heading the party may not see to reach the party book (the party's art comes from the party's masked source; the `asset:` delegate
+only reaches its own edition's map; the block class is a constant, the asset id `a<digits>`, the alt text escaped). The review's other findings:
+
+Fixed: placement now ignores fenced code, trailing spaces and `\r`, and takes the picture flag from the audience's own source as well as from the art map (a test hands
+the party document the DM's whole map; the first version of that test showed seven pictures where five were right, which is why the flag check exists). A JPEG over the
+decode limit was kept unscaled whenever its needed reduction fell between 1/8 and 1/4 (my bug, found by writing the test the reviewer asked for): the reduction is now chosen by asking
+for 1/8, 1/4, 1/2 in turn. The decoder wait honours the request's cancellation, the cache is checked again after waiting for a place, and a picture that will not shrink is
+remembered as itself. The place box is 172 mm in one column (it printed at half the intended resolution). The cover's height depends on the paper (Letter spilled the title
+page onto a second page). `.art` has a 120 mm height limit. Two dead CSS rules are gone. Vacuous test assertions replaced; mutants (fence, trim, flag, the 15% shortcut) now die.
+
+Open, in the order I would take them:
+1. **Anchoring is still by heading text.** A body line `## Vera` inside an earlier entry (a wiki page "History" with a `## Vera` subsection) still takes Vera's picture,
+   and the real heading gets none. Always a picture the party may see, so a misplacement, not a leak. A proper fix needs a per-entry marker emitted by `Compile`.
+2. **The decoder runs on player-uploaded portraits**, in-process (see the correction above). Options: decode out of process, scale only DM-uploaded media, or decode in the printing browser.
+3. **One global decoder queue of two**, shared by all users: one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
+   Needs a per-user limit or a time budget that falls back to unscaled bytes.
+4. **Preview and print can differ**: the 64 MB cap counts scaled bytes and preview files are about six times smaller, so a book of roughly 11-64 MB of print-size art
+   shows every picture in the preview and drops some from the PDF ("limit"). The skips are not shown in the panel.
+5. Animated WebP/APNG that need scaling lose all but one frame (untested which); the cache's byte count can drift by one entry under a race; the column and drop-cap tests are
+   string checks on the CSS, not on a render.

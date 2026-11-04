@@ -41,11 +41,12 @@ public sealed class BookImageScaler
     private long _cached;
 
     /// <summary>The printed size of each kind of picture (see the theme's <c>.cover-art</c>, <c>.art-portrait</c>, <c>.art-place</c>).</summary>
-    public static BookArtBox BoxFor(string kind) => kind switch
+    public static BookArtBox BoxFor(string kind, int columns = 2) => kind switch
     {
         "cover" => new(140, 165, false),
         "portrait" or "homebrew" => new(62, 52, true),
-        _ => new(88, 48, true)
+        // A place picture is as wide as its column: 88 mm in two columns, the text width (172 mm) in one.
+        _ => new(columns == 2 ? 88 : 172, 48, true)
     };
 
     public static (int Width, int Height) TargetPixels(BookArtBox box, int width, int height, BookArtQuality quality)
@@ -58,9 +59,9 @@ public sealed class BookImageScaler
         return (Math.Max(1, (int)Math.Round(width * scale)), Math.Max(1, (int)Math.Round(height * scale)));
     }
 
-    public async Task<BookImage> ScaleAsync(BookImage image, string kind, BookArtQuality quality, CancellationToken ct = default)
+    public async Task<BookImage> ScaleAsync(BookImage image, string kind, BookArtQuality quality, CancellationToken ct = default, int columns = 2)
     {
-        var (w, h) = TargetPixels(BoxFor(kind), image.Width, image.Height, quality);
+        var (w, h) = TargetPixels(BoxFor(kind, columns), image.Width, image.Height, quality);
         // Already as small as it needs to be (a sixth to spare, so a few pixels over does not cost a re-encode): untouched, undecoded.
         if (w * 1.15 >= image.Width && h * 1.15 >= image.Height) return image;
 
@@ -70,8 +71,11 @@ public sealed class BookImageScaler
         await _decoding.WaitAsync(ct);
         try
         {
+            // Another request may have made it while this one waited for a place.
+            if (_cache.TryGetValue(key, out hit)) return hit;
             var made = await Task.Run(() => Scale(image, w, h), ct);
-            if (made.Bytes.Length >= image.Bytes.Length) return image;
+            // A picture that would not get smaller is remembered as itself, so it is not decoded again on every preview.
+            if (made.Bytes.Length >= image.Bytes.Length) made = image;
             if (Interlocked.Add(ref _cached, made.Bytes.Length) > CacheBytes)
             {
                 _cache.Clear();
@@ -103,16 +107,21 @@ public sealed class BookImageScaler
             var decodeInfo = new SKImageInfo(info.Width, info.Height, SKColorType.Rgba8888, SKAlphaType.Unpremul, SKColorSpace.CreateSrgb());
             if (isJpeg)
             {
-                var wanted = Math.Max((double)width / info.Width, (double)height / info.Height);
-                var scaled = codec.GetScaledDimensions((float)Math.Min(1, wanted));
-                if (scaled.Width >= width && scaled.Height >= height && (long)scaled.Width * scaled.Height <= MaxDecodePixels)
+                // The codec reduces by 1/2, 1/4 or 1/8 straight from the blocks. Take the biggest reduction that still covers the target,
+                // asking for each in turn (GetScaledDimensions rounds to the nearest, which can be too small).
+                var chosen = false;
+                foreach (var denominator in new[] { 8, 4, 2 })
                 {
-                    decodeInfo = decodeInfo.WithSize(scaled.Width, scaled.Height);
+                    var scaled = codec.GetScaledDimensions(1f / denominator);
+                    if (scaled.Width >= width && scaled.Height >= height && (long)scaled.Width * scaled.Height <= MaxDecodePixels)
+                    {
+                        decodeInfo = decodeInfo.WithSize(scaled.Width, scaled.Height);
+                        chosen = true;
+                        break;
+                    }
                 }
-                else if (wholePixels > MaxDecodePixels)
-                {
-                    return image;
-                }
+
+                if (!chosen && wholePixels > MaxDecodePixels) return image;
             }
 
             using var source = new SKBitmap(decodeInfo);
