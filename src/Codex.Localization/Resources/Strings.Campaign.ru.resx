@@ -743,4 +743,12 @@
   <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>Не удалось напечатать книгу.</value></data>
   <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>Браузер на этом компьютере слишком старый для печати книги. Обновите Chrome, Edge или Chromium.</value></data>
   <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>Браузер не запустился. Причина — в журнале сервера.</value></data>
+  <data name="Campaign.Book.Label.Contents" xml:space="preserve"><value>Содержание</value></data>
+  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>Обзор</value></data>
+  <data name="Campaign.Book.Label.Cast" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Campaign.Book.Label.Gazetteer" xml:space="preserve"><value>Атлас</value></data>
+  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>Хроника</value></data>
+  <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>Предания</value></data>
+  <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>Страницы</value></data>
+  <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>Собственные материалы</value></data>
 </root>

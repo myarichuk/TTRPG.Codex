@@ -184,4 +184,45 @@ public class BookHtmlTests
         Assert.DoesNotContain("Secret plan.", party);
         Assert.Contains("Public recap.", party);
     }
+
+    [Fact]
+    public void TheContentsHaveNoNumbersForAPreview_AReservedColumnForTheFirstPrint_AndNumbersOnlyWhereKnown()
+    {
+        var book = new BookDocument("Saltmere", "", "en", [new BookSection("a", "# Coast\n\n## Harbour\n\n## Cliffs")], new BookLabels());
+        var ids = BookHtml.Build(book, BookThemes.Plain, new BookHtmlOptions { Font = Font }).Headings;
+        var harbour = ids.Single(h => h.Text == "Harbour").Id;
+
+        var preview = BookHtml.Build(book, BookThemes.Plain, new BookHtmlOptions { Font = Font }).Html!;
+        Assert.False(preview.Contains("<span class=\"toc-page\"", StringComparison.Ordinal));
+
+        var reserved = BookHtml.Build(book, BookThemes.Plain, new BookHtmlOptions { Font = Font, PageNumbers = new Dictionary<string, int>() }).Html!;
+        Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(reserved, "<span class=\"toc-page\"></span>").Count);
+
+        var filled = BookHtml.Build(book, BookThemes.Plain, new BookHtmlOptions { Font = Font, PageNumbers = new Dictionary<string, int> { [harbour] = 7 } }).Html!;
+        Assert.Contains("<span class=\"toc-page\">7</span>", filled, StringComparison.Ordinal);
+        // The heading with no known page shows none, not a guess.
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(filled, "<span class=\"toc-page\"></span>").Count);
+    }
+
+    [Theory]
+    [InlineData("Contents")]
+    [InlineData("Overview")]
+    [InlineData("Cast")]
+    [InlineData("Gazetteer")]
+    [InlineData("Chronicle")]
+    [InlineData("Lore")]
+    [InlineData("Pages")]
+    [InlineData("Homebrew")]
+    public void EveryChapterTitleIsTranslated(string label)
+    {
+        var key = "Campaign.Book.Label." + label;
+        var english = Codex.Localization.Localizer.For("en")[key];
+        Assert.Equal(label, english);
+        foreach (var language in new[] { "ru", "he" })
+        {
+            var text = Codex.Localization.Localizer.For(language)[key];
+            Assert.NotEmpty(text);
+            Assert.NotEqual(english, text);
+        }
+    }
 }

@@ -17,6 +17,7 @@
 
     <PackageReference Include="AspNet.Security.OAuth.Apple" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.7" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
     <PackageReference Include="PuppeteerSharp" Version="25.15.0" />
 
   </ItemGroup>

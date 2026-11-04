@@ -743,4 +743,12 @@
   <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>לא ניתן היה להדפיס את הספר.</value></data>
   <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>הדפדפן במחשב הזה ישן מדי להדפסת ספר. עדכנו את Chrome, Edge או Chromium.</value></data>
   <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>הדפדפן לא עלה. הסיבה ביומן השרת.</value></data>
+  <data name="Campaign.Book.Label.Contents" xml:space="preserve"><value>תוכן העניינים</value></data>
+  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>סקירה</value></data>
+  <data name="Campaign.Book.Label.Cast" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Campaign.Book.Label.Gazetteer" xml:space="preserve"><value>אטלס</value></data>
+  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>קורות הימים</value></data>
+  <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>אגדות עולם</value></data>
+  <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>דפים</value></data>
+  <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>יצירות ביתיות</value></data>
 </root>

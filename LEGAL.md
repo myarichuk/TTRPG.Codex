@@ -16,7 +16,7 @@ Bundled third-party software:
 - QRCoder (QR codes in the launcher) - MIT License - https://github.com/codebude/QRCoder
 - PuppeteerSharp (prints campaign books to PDF with a browser already on the machine; it downloads none) - MIT License -
   https://github.com/hardkoded/puppeteer-sharp
-- PdfPig (tests only: reads the PDFs the book export prints) - Apache License 2.0 - https://github.com/UglyToad/PdfPig
+- PdfPig (reads the outline of a printed book to number its table of contents; also used by tests) - Apache License 2.0 - https://github.com/UglyToad/PdfPig
 
 ### RavenDB
 

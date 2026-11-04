@@ -37,6 +37,11 @@ public sealed class BookHtmlOptions
     public string? CustomCss { get; init; }
 
     public string PageSize { get; init; } = "A4";
+
+    /// <summary>Page numbers for the table of contents, by heading id. Null leaves the numbers out (the preview has no pages); an empty
+    /// set reserves their column without filling it, which is how the first print of a book is laid out; a heading with no entry
+    /// shows no number rather than a wrong one.</summary>
+    public IReadOnlyDictionary<string, int>? PageNumbers { get; init; }
 }
 
 /// <summary>What a book rendered to. <paramref name="Html"/> is null when the theme does not support the language
@@ -107,11 +112,11 @@ public static class BookHtml
         }
 
         html.Append("</header>\n");
-        html.Append(Contents(book.Labels.Contents, headings)).Append(body).Append("</body>\n</html>\n");
+        html.Append(Contents(book.Labels.Contents, headings, options.PageNumbers)).Append(body).Append("</body>\n</html>\n");
         return new BookHtmlResult(html.ToString(), null, headings, warnings, missing);
     }
 
-    private static string Contents(string title, IReadOnlyList<BookHeading> headings)
+    private static string Contents(string title, IReadOnlyList<BookHeading> headings, IReadOnlyDictionary<string, int>? numbers)
     {
         var entries = headings.Where(h => h.Level <= 2).ToList();
         if (entries.Count == 0)
@@ -122,7 +127,13 @@ public static class BookHtml
         var sb = new StringBuilder("<nav class=\"toc\"><h1>").Append(Enc(title)).Append("</h1><ol>");
         foreach (var heading in entries)
         {
-            sb.Append("<li class=\"toc-").Append(heading.Level).Append("\"><a href=\"#").Append(Enc(heading.Id)).Append("\">").Append(Enc(heading.Text)).Append("</a></li>");
+            sb.Append("<li class=\"toc-").Append(heading.Level).Append("\"><a href=\"#").Append(Enc(heading.Id)).Append("\"><span class=\"toc-text\">").Append(Enc(heading.Text)).Append("</span>");
+            if (numbers != null)
+            {
+                sb.Append("<span class=\"toc-leader\" aria-hidden=\"true\"></span><span class=\"toc-page\">").Append(numbers.TryGetValue(heading.Id, out var page) ? page.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty).Append("</span>");
+            }
+
+            sb.Append("</a></li>");
         }
 
         return sb.Append("</ol></nav>\n").ToString();

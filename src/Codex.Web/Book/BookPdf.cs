@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
+using Codex.Core.Book;
 using PuppeteerSharp;
 
 namespace Codex.Web.Book;
@@ -27,7 +28,15 @@ public sealed class BookPdfOptions
 
 /// <summary>What printing a book produced. <paramref name="BlockedRequests"/> counts what the page tried to fetch and was refused: a
 /// self-contained page asks for nothing, so anything above zero is worth a look.</summary>
-public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedRequests, TimeSpan Elapsed);
+public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedRequests, TimeSpan Elapsed, int Passes = 1);
+
+/// <summary>A book to print. When <paramref name="Headings"/> is not empty the page is printed, the pages the headings landed on are
+/// read back from the PDF, and <paramref name="WithPageNumbers"/> builds the page again with them in its table of contents; that
+/// repeats until the numbers stop moving (three prints at most).</summary>
+public sealed record BookPrintJob(string Html, IReadOnlyList<BookHeading> Headings, Func<IReadOnlyDictionary<string, int>, string> WithPageNumbers)
+{
+    public static BookPrintJob Single(string html) => new(html, [], _ => html);
+}
 
 /// <summary>Why a book could not be printed, as a code the page can answer in the reader's language. Details (paths, browser output)
 /// go to the log, not to the person who asked.</summary>
@@ -118,7 +127,9 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
         });
     }
 
-    public async Task<BookPdfResult> PrintAsync(BookPdfSlot slot, string html, CancellationToken cancel)
+    public Task<BookPdfResult> PrintAsync(BookPdfSlot slot, string html, CancellationToken cancel) => PrintAsync(slot, BookPrintJob.Single(html), cancel);
+
+    public async Task<BookPdfResult> PrintAsync(BookPdfSlot slot, BookPrintJob job, CancellationToken cancel)
     {
         ArgumentNullException.ThrowIfNull(slot);
         await _one.WaitAsync(cancel);
@@ -132,7 +143,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
 
             try
             {
-                return await PrintOneAsync(html, cancel);
+                return await PrintOneAsync(job, cancel);
             }
             finally
             {
@@ -145,7 +156,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
         }
     }
 
-    private async Task<BookPdfResult> PrintOneAsync(string html, CancellationToken cancel)
+    private async Task<BookPdfResult> PrintOneAsync(BookPrintJob job, CancellationToken cancel)
     {
         var candidates = BookBrowser.Existing(_options.Browser, out var looked);
         if (candidates.Count == 0)
@@ -164,7 +175,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
         {
             foreach (var path in candidates)
             {
-                var result = await TryPrintAsync(path, html, limit, deadline.Token, clock);
+                var result = await TryPrintAsync(path, job, limit, deadline.Token, clock);
                 if (result.Pdf != null)
                 {
                     return result.Pdf;
@@ -182,7 +193,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
         }
     }
 
-    private async Task<(BookPdfResult? Pdf, string? TooOld)> TryPrintAsync(string path, string html, TimeSpan limit, CancellationToken token, Stopwatch clock)
+    private async Task<(BookPdfResult? Pdf, string? TooOld)> TryPrintAsync(string path, BookPrintJob job, TimeSpan limit, CancellationToken token, Stopwatch clock)
     {
         var profile = Path.Combine(string.IsNullOrWhiteSpace(_options.ProfileRoot) ? Path.GetTempPath() : _options.ProfileRoot, "codex-book-" + Guid.NewGuid().ToString("N"));
         IBrowser? browser = null;
@@ -242,24 +253,53 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
                 }
             };
 
-            await page.SetContentAsync(html, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = (int)limit.TotalMilliseconds }).WaitAsync(token);
-            var pdf = await page.PdfDataAsync(new PdfOptions
+            async Task<byte[]> Pass(string html)
             {
-                PreferCSSPageSize = true,
-                PrintBackground = true,
-                Tagged = true,
-                Outline = true,
-                WaitForFonts = true,
-                DisplayHeaderFooter = false,
-                Timeout = (int)limit.TotalMilliseconds
-            }).WaitAsync(token);
+                await page.SetContentAsync(html, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = (int)limit.TotalMilliseconds }).WaitAsync(token);
+                return await page.PdfDataAsync(new PdfOptions
+                {
+                    PreferCSSPageSize = true,
+                    PrintBackground = true,
+                    Tagged = true,
+                    Outline = true,
+                    WaitForFonts = true,
+                    DisplayHeaderFooter = false,
+                    Timeout = (int)limit.TotalMilliseconds
+                }).WaitAsync(token);
+            }
+
+            var pdf = await Pass(job.Html);
+            var passes = 1;
+            if (job.Headings.Count > 0)
+            {
+                // The first print reserved the numbers' column and left it empty. Read where the headings landed and print again with
+                // them in; the column has a fixed width, so the numbers rarely move the pages, and a second look proves it.
+                var numbers = BookPages.Map(pdf, job.Headings);
+                while (numbers.Count > 0 && passes < 3)
+                {
+                    pdf = await Pass(job.WithPageNumbers(numbers));
+                    passes++;
+                    var landed = BookPages.Map(pdf, job.Headings);
+                    var stable = landed.Count == numbers.Count && landed.All(kv => numbers.TryGetValue(kv.Key, out var n) && n == kv.Value);
+                    numbers = landed;
+                    if (stable)
+                    {
+                        break;
+                    }
+                }
+
+                if (numbers.Count == 0)
+                {
+                    log.LogWarning("The printed book's outline could not be read, so its contents carry no page numbers");
+                }
+            }
 
             if (blocked > 0)
             {
                 log.LogWarning("The book page tried to fetch {Count} resources and was refused", blocked);
             }
 
-            return (new BookPdfResult(pdf, product, blocked, clock.Elapsed), null);
+            return (new BookPdfResult(pdf, product, blocked, clock.Elapsed, passes), null);
         }
         catch (BookPdfUnavailableException)
         {

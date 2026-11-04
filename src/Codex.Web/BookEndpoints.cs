@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using Codex.Core.Book;
+using Codex.Localization;
 using Codex.Persistence;
 using Codex.Web.Book;
 
@@ -38,7 +39,7 @@ public static class BookEndpoints
             BookPdfSlot? slot = null;
             try
             {
-                var made = await BuildAsync(campaignId, audience, lang, theme, size, user, resolver, reader, env, userId =>
+                var made = await BuildAsync(campaignId, audience, lang, theme, size, user, resolver, reader, env, forPrint: true, admit: userId =>
                 {
                     slot = pdf.TryReserve(userId);
                     return slot == null ? Busy(response, new BookPdfBusyException()) : null;
@@ -48,7 +49,7 @@ public static class BookEndpoints
                     return made.Failure;
                 }
 
-                var printed = await pdf.PrintAsync(slot!, made.Html!, cancel);
+                var printed = await pdf.PrintAsync(slot!, made.Job!, cancel);
                 Protect(response);
                 return Results.File(printed.Pdf, "application/pdf", FileName(made.Title, audience));
             }
@@ -115,10 +116,10 @@ public static class BookEndpoints
         return (clean.Length == 0 ? "campaign" : clean) + " (" + edition + ").pdf";
     }
 
-    private sealed record Made(string? Html, string Title, IResult? Failure);
+    private sealed record Made(string? Html, string Title, IResult? Failure, BookPrintJob? Job = null);
 
     private static async Task<Made> BuildAsync(string campaignId, string audience, string? lang, string? theme, string? size, ClaimsPrincipal user,
-        ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env, Func<string, IResult?>? admit = null)
+        ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env, bool forPrint = false, Func<string, IResult?>? admit = null)
     {
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var access = userId == null ? null : await resolver.ResolveAsync(campaignId, userId);
@@ -148,11 +149,18 @@ public static class BookEndpoints
 
         var language = string.IsNullOrWhiteSpace(lang) ? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName : lang;
         var fonts = Path.GetFullPath(Path.Combine(env.WebRootPath, "fonts"));
-        var built = BookHtml.Build(BookCompiler.Compile(source, language), chosen, new BookHtmlOptions
+        var words = Localizer.For(language);
+        var document = BookCompiler.Compile(source, language, new BookLabels(
+            Contents: words["Campaign.Book.Label.Contents"], Overview: words["Campaign.Book.Label.Overview"], Cast: words["Campaign.Book.Label.Cast"],
+            Gazetteer: words["Campaign.Book.Label.Gazetteer"], Chronicle: words["Campaign.Book.Label.Chronicle"], Lore: words["Campaign.Book.Label.Lore"],
+            Pages: words["Campaign.Book.Label.Pages"], Homebrew: words["Campaign.Book.Label.Homebrew"]));
+
+        BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, chosen, new BookHtmlOptions
         {
             BoxSecrets = edition == BookAudience.Dm,
             Mention = BookCompiler.Mentions(source),
             PageSize = size ?? "A4",
+            PageNumbers = numbers,
             Font = file =>
             {
                 var path = Path.GetFullPath(Path.Combine(fonts, file));
@@ -160,9 +168,13 @@ public static class BookEndpoints
             }
         });
 
+        // The page for a reader has no page numbers (it has no pages); the one that is printed reserves their column, is printed, and
+        // is built again with the pages its headings landed on.
+        var built = Build(forPrint ? new Dictionary<string, int>() : null);
+
         // The language gate: a theme that cannot print this language says so, instead of printing it in the wrong fonts.
         return built.Html == null
             ? new Made(null, "", Results.Problem(built.Refused, statusCode: StatusCodes.Status422UnprocessableEntity))
-            : new Made(built.Html, source.Campaign.Name, null);
+            : new Made(built.Html, source.Campaign.Name, null, forPrint ? new BookPrintJob(built.Html, built.Headings, numbers => Build(numbers).Html!) : null);
     }
 }

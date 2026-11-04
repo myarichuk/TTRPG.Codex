@@ -120,7 +120,10 @@ public static class BookThemes
             .toc { break-after: page; }
             .toc ol { list-style: none; padding: 0; }
             .toc .toc-2 { padding-inline-start: 1.2em; font-size: 10pt; }
-            .toc a { color: inherit; text-decoration: none; }
+            .toc a { color: inherit; text-decoration: none; display: flex; align-items: baseline; gap: .4em; }
+            .toc-text { min-width: 0; }
+            .toc-leader { flex: 1; min-width: 1em; border-bottom: .75pt dotted #888; }
+            .toc-page { min-width: 2.5ch; text-align: end; font-variant-numeric: tabular-nums; }
             .note, .descriptive { margin: .7em 0; padding: .5em .7em; border: .75pt solid #888; background: #f4f4f4; break-inside: avoid; }
             .descriptive { font-style: italic; }
             .wide { column-span: all; }

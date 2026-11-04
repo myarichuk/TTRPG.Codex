@@ -105,6 +105,20 @@ public class BookPdfTests
     private static BookPdf Printer(int timeoutSeconds = 90, int maxWaiting = 2, string? profileRoot = null) =>
         new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot }), NullLogger<BookPdf>.Instance);
 
+    private static Task<BookPdfResult> Print(BookPdf printer, BookPrintJob job, CancellationToken cancel = default, string owner = "dm")
+    {
+        var slot = printer.TryReserve(owner) ?? throw new InvalidOperationException("no place in the line");
+        return Run(printer, slot, job, cancel);
+    }
+
+    private static async Task<BookPdfResult> Run(BookPdf printer, BookPdfSlot slot, BookPrintJob job, CancellationToken cancel)
+    {
+        using (slot)
+        {
+            return await printer.PrintAsync(slot, job, cancel);
+        }
+    }
+
     private static Task<BookPdfResult> Print(BookPdf printer, string html, CancellationToken cancel = default, string owner = "dm")
     {
         var slot = printer.TryReserve(owner) ?? throw new InvalidOperationException("no place in the line");
@@ -169,6 +183,53 @@ public class BookPdfTests
         // The page size is the one the theme asked for (A4), not the browser's default.
         Assert.InRange(pdf.GetPage(1).Width, 594, 596);
         Assert.InRange(pdf.GetPage(1).Height, 841, 843);
+    }
+
+    /// <summary>The way the route prints: a page with the numbers' column reserved, then the same page with the numbers the headings landed on.</summary>
+    private static BookPrintJob Job(string markdown, string language = "en")
+    {
+        var document = new BookDocument("Saltmere", "A coast", language, [new BookSection("a", markdown)], new BookLabels());
+        BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, BookThemes.Plain, new BookHtmlOptions { Font = Font, PageNumbers = numbers });
+        var first = Build(new Dictionary<string, int>());
+        Assert.NotNull(first.Html);
+        return new BookPrintJob(first.Html!, first.Headings, n => Build(n).Html!);
+    }
+
+    [ChromiumFact]
+    public async Task TheContentsCarryThePagesTheHeadingsLandedOn()
+    {
+        var sections = string.Join("\n\n", Enumerable.Range(1, 30).Select(i => $"## Place {i}\n\n" + string.Join("\n\n", Enumerable.Repeat("The gulls are loud and the tide is late, as it always is on this coast.", 6))));
+        var result = await Print(Printer(), BookPrintJobOf("# Coast\n\n" + sections));
+
+        Assert.True(result.Passes >= 2, $"passes: {result.Passes}");
+        using var pdf = PdfDocument.Open(result.Pdf);
+        var contents = pdf.GetPage(2).Text;
+        Assert.Contains("Contents", contents);
+
+        // For every entry the number printed in the contents is the page its heading is really on.
+        Assert.True(pdf.TryGetBookmarks(out var outline));
+        var bookmarks = outline!.GetNodes().OfType<UglyToad.PdfPig.Outline.DocumentBookmarkNode>().ToList();
+        var checkedEntries = 0;
+        foreach (var i in new[] { 1, 7, 15, 30 })
+        {
+            var place = bookmarks.Last(b => b.Title == $"Place {i}");
+            var line = System.Text.RegularExpressions.Regex.Match(contents, $@"Place {i}\s*(\d+)");
+            Assert.True(line.Success, $"no number for Place {i} in: {contents}");
+            Assert.Equal(place.PageNumber, int.Parse(line.Groups[1].Value));
+            Assert.True(place.PageNumber >= 3);
+            checkedEntries++;
+        }
+
+        Assert.Equal(4, checkedEntries);
+    }
+
+    private static BookPrintJob BookPrintJobOf(string markdown) => Job(markdown);
+
+    [ChromiumFact]
+    public async Task ABookWithNoHeadingsPrintsOnce()
+    {
+        var result = await Print(Printer(), BookPrintJob.Single("<!doctype html><p>plain</p>"));
+        Assert.Equal(1, result.Passes);
     }
 
     [ChromiumFact]

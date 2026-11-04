@@ -743,4 +743,12 @@
   <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>The book could not be printed.</value></data>
   <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>The browser on this machine is too old to print a book. Update Chrome, Edge or Chromium.</value></data>
   <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>The browser would not start. The server log says why.</value></data>
+  <data name="Campaign.Book.Label.Contents" xml:space="preserve"><value>Contents</value></data>
+  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>Overview</value></data>
+  <data name="Campaign.Book.Label.Cast" xml:space="preserve"><value>Cast</value></data>
+  <data name="Campaign.Book.Label.Gazetteer" xml:space="preserve"><value>Gazetteer</value></data>
+  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>Chronicle</value></data>
+  <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>Lore</value></data>
+  <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>Pages</value></data>
+  <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
 </root>
