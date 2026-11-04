@@ -274,3 +274,35 @@ either).
 - **Homebrewery-compatible class names** where cheap (`.page`, `.monster`, `.note`, `.wide`, `.toc`), so CSS written for
   Homebrewery mostly works when pasted. Its `url()` assets will not load; the user supplies their own through slots.
 - **Optional later**: vendor Homebrewery's MIT structural CSS (no assets, no fonts) as a selectable theme, after a per-file review.
+
+## 12. The Markdown renderer: built
+
+`src/Codex.Core/Book/` (`BookMarkdown.Render(text, options)` returns HTML, the headings for a TOC and the PDF outline, and warning
+codes). Pure: no repository, no I/O, so it cannot reopen the masking question of section 10. 38 tests in `BookMarkdownTests`.
+
+- **Dialect**: headings, paragraphs (hard breaks), bold/italic/strike/code, nested lists, quotes, pipe tables with alignment,
+  fences, rules, `\page`, `\column`, `{{class,#id,prop:value}}` as block (opening line holds only the attributes, `}}` closes) and
+  as inline span, `{{block:N}}`, image slots, `[[wiki]]` and stored mentions. Every block and cell carries `dir="auto"`, so a
+  Russian paragraph beside a Hebrew one each take their own direction.
+- **Refused on purpose, each reported as a warning code**: raw HTML (everything is escaped, every tag is written by the
+  renderer); any URL (a link keeps its words, an image must be `slot:id` or `asset:id`, and art arrives only as a `data:image/`
+  URI from the caller); CSS beyond a property allow-list with values that cannot hold a function other than colour or
+  arithmetic (`url(`, `image-set(`, `expression(` all fail); class and id names that are not plain identifiers.
+- **Mentions fail closed**: the name comes only from the caller's resolver, and a mention's own `|label` is never used as a
+  fallback, since that is where a typed hidden name would ride along. No resolver means no name.
+- **Secrets, a second time**: the renderer settles `:::` blocks itself from `SecretText.Parse` before any Markdown is read. The
+  party edition drops what a stranger may not read even if the source was not cleaned; the DM edition boxes it
+  (`.secret.secret-dm`, `.secret.secret-for`). A marker never reaches the output. This is defence in depth under section 10, not
+  a substitute for it.
+- **Bounded**: text length cap, paragraph cap, block and inline nesting caps, regex timeouts, and an unmatched-delimiter memo so
+  200,000 stars cost one scan. A hostile-input test (stars, brackets, braces, quotes, backticks) runs under a time bound.
+- **Mutation checked**: secrets always boxed (2 tests fail) and mention label fallback (1 test fails); both reverted.
+
+Known limits, none verified against Homebrewery's own output:
+- "Compatible" is by intent, not by test. There is no conformance suite against `marked-hbfm` yet; it needs real Homebrewery
+  documents run through both. No setext headings, reference links, footnotes, HTML, `{{pageNumber}}`/`{{footnote}}`-style
+  special spans, or `{{ }}` blocks whose values contain a space unless quoted (`font-size:"calc(1em + 2px)"`).
+- Loose/tight list detection and lazy continuation follow the common cases, not the full CommonMark algorithm.
+- A `}}` line inside a code fence inside a block still closes the block.
+- Mentions resolve only through a caller-supplied function; the resolver that applies the audience (so a party book never names a
+  hidden actor) is not written yet. That is the "name mentions" item under "Not covered yet" in section 10.
