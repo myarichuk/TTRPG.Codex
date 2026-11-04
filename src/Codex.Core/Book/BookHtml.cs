@@ -38,6 +38,9 @@ public sealed class BookHtmlOptions
 
     public string PageSize { get; init; } = "A4";
 
+    /// <summary>The text columns of a chapter: 2, or anything else for one.</summary>
+    public int Columns { get; init; } = 1;
+
     /// <summary>Page numbers for the table of contents, by heading id. Null leaves the numbers out (the preview has no pages); an empty
     /// set reserves their column without filling it, which is how the first print of a book is laid out; a heading with no entry
     /// shows no number rather than a wrong one.</summary>
@@ -63,7 +66,7 @@ public static class BookHtml
             return new BookHtmlResult(null, $"The theme \"{theme.Name}\" does not support the language \"{BookThemes.Primary(book.Language)}\".", [], [], []);
         }
 
-        var layout = BookLayout.For(book.Language, options.PageSize);
+        var layout = BookLayout.For(book.Language, options.PageSize, options.Columns);
         var warnings = new List<string>();
         var headings = new List<BookHeading>();
         var ids = new HashSet<string>(StringComparer.Ordinal);

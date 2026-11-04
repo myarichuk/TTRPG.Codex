@@ -47,6 +47,13 @@
                 <option value="Letter">Letter</option>
             </select>
         </div>
+        <div class="col-6">
+            <label for="book-cols" class="field-label">@L["Campaign.Book.Columns"]</label>
+            <select id="book-cols" class="field-input" @bind="columns" @bind:after="Changed" data-testid="book-cols">
+                <option value="1">@L["Campaign.Book.Columns.One"]</option>
+                <option value="2">@L["Campaign.Book.Columns.Two"]</option>
+            </select>
+        </div>
     </div>
     <div class="field-hint">@L["Campaign.Book.ThemeNote", Theme.Name]</div>
 
@@ -240,6 +247,7 @@
 
     private string edition = "dm";
     private string size = "A4";
+    private string columns = "2";
     private string language = "en";
     private bool showPreview;
     private bool busy;
@@ -262,7 +270,7 @@
     }
 
     private string PageUrl(bool pdf = false) =>
-        $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&theme={Theme.Id}{(useAi ? "&ai=1" : string.Empty)}&_={previewStamp}";
+        $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&cols={columns}&theme={Theme.Id}{(useAi ? "&ai=1" : string.Empty)}&_={previewStamp}";
 
     private int previewStamp;
 

@@ -6,11 +6,12 @@ namespace Codex.Core.Book;
 /// <summary>One bundled font file a theme draws with. <paramref name="File"/> is relative to <c>wwwroot/fonts</c>.</summary>
 public sealed record BookFontFace(string Family, int Weight, string Style, string File, string UnicodeRange);
 
-/// <summary>Paper and writing direction, which the server writes into the CSS: <c>@page size</c> cannot read a custom property.</summary>
-public sealed record BookLayout(string PageSize, bool Rtl)
+/// <summary>Paper, writing direction and the number of text columns (1 or 2), which the server writes into the CSS: <c>@page size</c> cannot read a custom property.</summary>
+public sealed record BookLayout(string PageSize, bool Rtl, int Columns = 1)
 {
-    public static BookLayout For(string language, string pageSize = "A4") =>
-        new(string.Equals(pageSize, "Letter", StringComparison.OrdinalIgnoreCase) ? "Letter" : "A4", BookThemes.IsRtl(language));
+    /// <summary>Anything but two columns is one: a book has no use for a third.</summary>
+    public static BookLayout For(string language, string pageSize = "A4", int columns = 1) =>
+        new(string.Equals(pageSize, "Letter", StringComparison.OrdinalIgnoreCase) ? "Letter" : "A4", BookThemes.IsRtl(language), columns == 2 ? 2 : 1);
 }
 
 /// <summary>
@@ -107,6 +108,7 @@ public static class BookThemes
             body { background: transparent; }
             .note, .descriptive { background: rgba(255, 255, 255, .35); }
             .secret { background: rgba(138, 28, 28, .08); }
+            .chapter > h1 + p::first-letter { font-family: "Cinzel", serif; float: {{(layout.Rtl ? "right" : "left")}}; font-size: 4.1em; line-height: .72; padding-inline-end: .06em; padding-top: .04em; }
             """;
     }
 
@@ -120,6 +122,15 @@ public static class BookThemes
     }
 
     public static bool IsRtl(string language) => Primary(language) is "he" or "ar" or "fa" or "ur";
+
+    // A chapter's text runs in two balanced columns; its title, the wide blocks and anything the writer marked ".wide" span both. The
+    // title page and the contents stay one column. Boxes and pictures are never split between columns (their break-inside: avoid).
+    private static string Columns(BookLayout layout) => layout.Columns != 2 ? string.Empty : """
+        .chapter { column-count: 2; column-gap: 9mm; column-fill: balance; }
+        .chapter > h1 { column-span: all; }
+        .chapter > .art, .chapter > .slot { column-span: none; }
+        table { font-size: 9pt; }
+        """;
 
     private static string PlainCss(BookLayout layout)
     {
@@ -167,6 +178,7 @@ public static class BookThemes
             .note, .descriptive { margin: .7em 0; padding: .5em .7em; border: .75pt solid #888; background: #f4f4f4; break-inside: avoid; }
             .descriptive { font-style: italic; }
             .wide { column-span: all; }
+            {{Columns(layout)}}
             .secret { margin: .7em 0; padding: .5em .7em; border-inline-start: 3pt solid #8a1c1c; background: #f6eeee; break-inside: avoid; }
             .slot { display: block; margin: .6em 0; padding: 1.2em .8em; border: 1pt dashed #999; color: #666; text-align: center; font-size: 9pt; break-inside: avoid; }
             .art { display: block; max-width: 100%; margin: .6em auto; break-inside: avoid; }

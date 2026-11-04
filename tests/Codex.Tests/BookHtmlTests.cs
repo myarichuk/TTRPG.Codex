@@ -48,6 +48,34 @@ public class BookHtmlTests
         }
     }
 
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(2, true)]
+    [InlineData(3, false)]
+    [InlineData(0, false)]
+    public void TwoColumnsAreOnlyEverTwo_AndTheChapterTitleSpansBoth(int columns, bool two)
+    {
+        foreach (var theme in BookThemes.All)
+        {
+            var html = BookHtml.Build(Book(), theme, new BookHtmlOptions { Columns = columns, Font = Font }).Html!;
+
+            Assert.Equal(two, html.Contains("column-count: 2", StringComparison.Ordinal));
+            Assert.Equal(two, html.Contains(".chapter > h1 { column-span: all; }", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void TheDropCapBelongsToParchmentAndFollowsTheWritingDirection()
+    {
+        var plain = BookHtml.Build(Book(), BookThemes.Plain, new BookHtmlOptions { Font = Font }).Html!;
+        var parchment = BookHtml.Build(Book(), BookThemes.Parchment, new BookHtmlOptions { Font = Font }).Html!;
+
+        Assert.DoesNotContain("::first-letter", plain, StringComparison.Ordinal);
+        Assert.Contains("::first-letter", parchment, StringComparison.Ordinal);
+        Assert.Contains("float: left", parchment, StringComparison.Ordinal);
+        Assert.Contains("float: right", BookThemes.Parchment.Css(new BookLayout("A4", true)), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void EveryFontAThemeNamesIsShipped()
     {

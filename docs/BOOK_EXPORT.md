@@ -808,3 +808,17 @@ The theme is a single column (no `column-count`; two balanced columns with spann
 palette (deep red serif headers with a gold rule, tan note boxes, green-grey read-aloud boxes, zebra tables); a running footer band with the
 chapter name; part and title pages; front and back matter; keep-with-next across column breaks. On content: code-owned sidebars, read-aloud and
 stat blocks. Without them even good chapters read as a tidied wiki in a nicer font.
+
+## 29. Two columns (done) and what rendering it showed
+
+A chapter's text now runs in two balanced columns (`BookLayout.Columns`, `BookHtmlOptions.Columns`, `?cols=2`, a "Columns" select in the panel, default two).
+The chapter title (`.chapter > h1`) and anything marked `.wide` span both; the title page and the contents stay one column. Anything other than `2` is one,
+so a hand-typed `cols=7` cannot produce a third. Boxes, tables and pictures keep `break-inside: avoid`. Parchment gains a three-line drop cap on the first
+paragraph after a chapter title (`::first-letter`, floated to the start side, so it follows the writing direction); Plain stays plain.
+
+Rendered in the real Chromium (two chapters, a table, a quote, headings) and looked at: the title spans, text flows in two columns across the page break,
+the last page balances, the table stays inside its column. The drop cap first spanned two lines and sat badly; it was tuned until it spans three.
+
+Not looked at: Letter, RTL (the theme is English only, so an RTL book cannot reach it yet), a chapter whose first block is not a paragraph (no drop cap
+then, by design), a very long table (it cannot be split by a column and is kept whole), narrow-column hyphenation (`hyphens: manual`, so ragged lines
+show on long names), a `.secret` box taller than a column, and the per-page footer band with the chapter name (still not built).
