@@ -78,7 +78,8 @@ public static class BookChecks
 
         // Numbers: any figure in the rewrite is one the chapter already had (so the model cannot state a level, a date or a count).
         var allowed = Numbers(source);
-        var invented = Numbers(output).Where(n => !allowed.Contains(n)).Distinct().Take(5).ToList();
+        foreach (var spelled in SpelledNumbers(source)) allowed.Add(spelled.ToString(CultureInfo.InvariantCulture));
+        var invented = Numbers(output).Where(n => !allowed.Contains(n)).Concat(SpelledNumbers(output).Select(n => n.ToString(CultureInfo.InvariantCulture)).Where(n => !allowed.Contains(n))).Distinct().Take(5).ToList();
         if (invented.Count > 0) problems.Add("It states numbers that are not in the source: " + string.Join(", ", invented) + ". Use only figures the source gives.");
 
         // Names: a capitalised word in the middle of a sentence that the source never uses is a name the model made up.
@@ -118,6 +119,49 @@ public static class BookChecks
         }
 
         return set;
+    }
+
+    private static readonly Dictionary<string, int> Small = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6, ["seven"] = 7, ["eight"] = 8, ["nine"] = 9,
+        ["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12, ["thirteen"] = 13, ["fourteen"] = 14, ["fifteen"] = 15, ["sixteen"] = 16,
+        ["seventeen"] = 17, ["eighteen"] = 18, ["nineteen"] = 19, ["twenty"] = 20, ["thirty"] = 30, ["forty"] = 40, ["fifty"] = 50,
+        ["sixty"] = 60, ["seventy"] = 70, ["eighty"] = 80, ["ninety"] = 90
+    };
+
+    /// <summary>
+    /// English figures written as words ("twelve", "thirty-one", "two hundred"), as numbers, so a model cannot state a level or a count
+    /// by spelling it out past the digit check. One to nine alone are left alone: "one of them", "two-handed" and "no one" are not figures.
+    /// Numbers in Russian or Hebrew words are not read (the digit check still covers their digits).
+    /// </summary>
+    internal static IEnumerable<long> SpelledNumbers(string text)
+    {
+        long total = 0, current = 0;
+        var any = false;
+        var compound = false;
+        foreach (Match m in Word.Matches(text))
+        {
+            var w = m.Value.Trim('-', '\'', '’').ToLowerInvariant();
+            // A compound like "thirty-one" arrives as one word with a hyphen.
+            var parts = w.Split('-');
+            var consumed = false;
+            foreach (var part in parts)
+            {
+                if (Small.TryGetValue(part, out var value)) { current += value; any = true; consumed = true; compound |= value >= 10; }
+                else if (part == "hundred") { current = (current == 0 ? 1 : current) * 100; any = true; consumed = true; compound = true; }
+                else if (part == "thousand") { total += (current == 0 ? 1 : current) * 1000; current = 0; any = true; consumed = true; compound = true; }
+                else if (part == "and" && any) { consumed = true; }
+                else { consumed = false; break; }
+            }
+
+            if (consumed) continue;
+            if (any && (compound || total + current >= 10)) yield return total + current;
+            total = current = 0;
+            any = false;
+            compound = false;
+        }
+
+        if (any && (compound || total + current >= 10)) yield return total + current;
     }
 
     internal static IEnumerable<string> NewNames(string source, string output)

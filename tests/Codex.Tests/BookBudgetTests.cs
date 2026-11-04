@@ -140,14 +140,29 @@ public class BookBudgetTests
 
 public class BookTokensTests
 {
-    [Fact]
-    public void CyrillicAndHebrew_CountFarMoreThanEnglishOfTheSameLength()
+    private const string English = "Vera Holt keeps the lighthouse of Saltmere and has kept the light for many winters. The cliffs below are called the Teeth, and the fishermen will not sail past midnight. A merchant ship broke on the rocks during the storm, and the party carried the survivors up the stairs. The harbourmaster of Greywater pays well for letters that arrive sealed and unread. Nobody in the village talks about the old chapel on the sandbar, except when the tide is out.";
+    private const string Russian = "Вера Холт хранит маяк Солтмира и поддерживает свет уже много зим. Скалы под маяком называют Зубами, и рыбаки не выходят в море после полуночи. Торговый корабль разбился о скалы во время шторма, и отряд поднял выживших по лестнице. Начальник порта Грейуотера хорошо платит за письма, которые приходят запечатанными. В деревне никто не говорит о старой часовне на отмели, кроме часов отлива.";
+    private const string Hebrew = "ורה הולט שומרת על המגדלור של סולטמיר ושומרת על האור כבר חורפים רבים. הצוקים שמתחת למגדלור נקראים השיניים, והדייגים לא יוצאים לים אחרי חצות. ספינת סוחר התרסקה על הסלעים בזמן הסערה, והחבורה נשאה את הניצולים במדרגות. ראש הנמל של גרייווטר משלם היטב על מכתבים שמגיעים חתומים וחסומים. אף אחד בכפר לא מדבר על הקפלה העתיקה על החוף, חוץ מכשהגאות נמוכה.";
+    private const string Markup = "## Vera Holt\n\n**Vera** keeps *the light*; see [[actor:a1]]: 41 years, 12 winters, 30 silver.\n\n1. Light the lamp.\n2. Ring the bell.\n\n| Name | Level |\n|---|---|\n| Tom | 3 |\n{{block:1}}";
+
+    // Measured with claude-haiku-5-5 on each text repeated 6 times (12 for the markup), joined by newlines, minus the 8 tokens of an empty message:
+    // the usage the provider reported. The estimator must stay close to them: it is what the budget and the pre-flight are made of.
+    [Theory]
+    [InlineData(English, 6, 923)]
+    [InlineData(Russian, 6, 983)]
+    [InlineData(Hebrew, 6, 1367)]
+    [InlineData(Markup, 12, 1223)]
+    public void TheEstimate_StaysWithinTenPercentOfWhatAProviderReported(string text, int repeats, long reported)
     {
-        var english = BookTokens.Estimate(new string('a', 1_000));
-        var russian = BookTokens.Estimate(new string('я', 1_000));
-        var hebrew = BookTokens.Estimate(new string('א', 1_000));
-        Assert.True(russian * 10 >= english * 18, $"{russian} vs {english}");
-        Assert.True(hebrew * 10 >= english * 18, $"{hebrew} vs {english}");
+        var estimate = BookTokens.Estimate(string.Join("\n", Enumerable.Repeat(text, repeats)));
+        Assert.InRange(estimate, reported * 0.9, reported * 1.1);
+    }
+
+    [Fact]
+    public void HebrewCostsMoreThanEnglishPerLetter_AndMarkupMoreThanProse()
+    {
+        Assert.True(BookTokens.Estimate(new string('א', 1_000)) > BookTokens.Estimate(new string('a', 1_000)) * 15 / 10);
+        Assert.True(BookTokens.Estimate(new string('.', 1_000)) > BookTokens.Estimate(new string('a', 1_000)) * 2);
     }
 
     [Fact]

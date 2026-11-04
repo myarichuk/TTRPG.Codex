@@ -55,6 +55,26 @@ public class BookChecksTests
         Assert.Empty(BookChecks.Validate("Aged 41.", "Aged ٤١.", 0, "en")); // the same number in Arabic-Indic digits
     }
 
+    [Theory]
+    [InlineData("She has kept it for thirty-one winters.", true)]
+    [InlineData("There were two hundred and twelve steps.", true)]
+    [InlineData("A thousand lanterns burn.", true)]
+    [InlineData("She kept it for twelve winters.", false)] // the source says 12
+    [InlineData("One of them left, and two stayed.", false)] // idiom, not a figure
+    [InlineData("It is a two-handed sword and no one carries it.", false)]
+    public void ANumberSpelledOut_IsReadLikeADigit(string reply, bool refused)
+    {
+        var problems = BookChecks.Validate("## Vera\n\nVera keeps the lighthouse of Saltmere for 12 winters.", "## Vera\n\nVera keeps the lighthouse of Saltmere. " + reply, 0, "en");
+        Assert.Equal(refused, problems.Any(p => p.Contains("numbers")));
+    }
+
+    [Fact]
+    public void ANumberSpelledInTheSource_MayBeSpelledOrWrittenInTheReply()
+    {
+        var problems = BookChecks.Validate("## Vera\n\nShe kept it for twelve winters.", "## Vera\n\nShe kept it for 12 winters.", 0, "en");
+        Assert.DoesNotContain(problems, p => p.Contains("numbers"));
+    }
+
     [Fact]
     public void ANameTheSourceNeverUses_IsRefused_ButInflectionAndSentenceStartsAreNot()
     {

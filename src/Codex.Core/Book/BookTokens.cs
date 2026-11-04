@@ -5,14 +5,18 @@ namespace Codex.Core.Book;
 
 /// <summary>
 /// A guess at how many tokens a text is, for the budget and the pre-flight. Only ever a guess: providers tokenise differently and
-/// some report nothing, so everything built on it is labelled an estimate. The factor depends on the script, because "four
-/// characters a token" holds for English and under-counts Cyrillic and Hebrew by two to three times, which is exactly the books
-/// this app is for.
+/// some report nothing, so everything built on it is labelled an estimate.
+/// <para>The weights were measured, not assumed, against the reported usage of claude-haiku-5-5 (Anthropic's tokenizer) on single-script
+/// prose and on Markdown-heavy text (2,000-2,700 characters each; the numbers are pinned in <c>BookTokensTests</c>). They corrected two
+/// guesses of mine: Cyrillic costs only about a fifth more per letter than Latin there, not two to three times; and punctuation, digits and
+/// markup cost about one token or more <i>each</i>, which a letters-only count missed by 2x on a stat-block-like text. Hebrew costs about
+/// twice a Latin letter. Another provider's tokenizer will differ (OpenAI's count Cyrillic and Hebrew higher): not measured, so a budget
+/// on such a provider is a rougher estimate than the range says.</para>
 /// </summary>
 public static class BookTokens
 {
-    /// <summary>Tokens per character, by script. Deliberately on the high side: an estimate that is too low is a budget that is overspent.</summary>
-    private const double Latin = 0.28, Cyrillic = 0.55, Hebrew = 0.6, Cjk = 1.1, Other = 0.6, Space = 0.12;
+    /// <summary>Tokens per character, by class. A space costs little because it merges into the word after it.</summary>
+    private const double Latin = 0.39, Cyrillic = 0.47, Hebrew = 0.78, Cjk = 1.1, OtherLetter = 0.7, Mark = 1.2, Space = 0.05;
 
     /// <summary>The range the real count is expected to fall in, as multiples of <see cref="Estimate"/>.</summary>
     public const double LowFactor = 0.7, HighFactor = 1.4;
@@ -35,16 +39,14 @@ public static class BookTokens
 
     private static double Weight(char c)
     {
-        if (c < 0x80)
-        {
-            return char.IsWhiteSpace(c) ? Space : Latin;
-        }
-
-        if (c is >= 'Ѐ' and <= 'ԯ') return Cyrillic;
-        if (c is >= '֐' and <= '׿') return Hebrew;
-        if (c is >= '぀' and <= '鿿' or >= '가' and <= '힯') return Cjk;
-        if (c is >= '̀' and <= 'ͯ' or >= '​' and <= '‏' or >= '‪' and <= '‮') return 0;
-        return char.GetUnicodeCategory(c) == UnicodeCategory.SpaceSeparator ? Space : Other;
+        if (char.IsWhiteSpace(c)) return Space;
+        if (c is >= '\u0300' and <= '\u036F' or >= '\u200B' and <= '\u200F' or >= '\u202A' and <= '\u202E') return 0;
+        if (c is >= '\u0590' and <= '\u05FF') return c is >= '\u05B0' and <= '\u05C7' ? 0.3 : Hebrew; // niqqud marks are cheap
+        if (!char.IsLetter(c)) return Mark;
+        if (c < 0x250) return Latin;
+        if (c is >= '\u0400' and <= '\u052F') return Cyrillic;
+        if (c is >= '\u3040' and <= '\u9FFF' or >= '\uAC00' and <= '\uD7AF') return Cjk;
+        return OtherLetter;
     }
 
     /// <summary>The estimate as a range, never below 1 for a non-empty text.</summary>
