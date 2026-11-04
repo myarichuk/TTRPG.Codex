@@ -233,3 +233,44 @@ Not measured: Windows/macOS Chrome and Edge; fonts under a different Chromium; a
 breaks (reported historically fragile); copy/search behaviour of extracted Hebrew text.
 
 Not yet built: the in-app print-stylesheet route over real campaign data (it needs the audience-masked reads of 2.3 first).
+
+## 10. Audience-masked reads: built (2.3)
+
+`src/Codex.Persistence/Book/` (`BookSource`, `BookSourceReader`) and `tests/Codex.Tests/BookSourceTests.cs`.
+
+- `BookSource` has an internal constructor: nothing but the reader can make one, so the builder cannot be handed a
+  `CampaignBundle`. It holds a projected `BookCampaign` (no owner, members, invite code or world state).
+- Only a DM can read, for either edition. The party edition reads every collection through the repositories' own access-scoped
+  calls as a stranger whose id is made up per read (not `PartyPreview()`: see below). The one unscoped read is the session-id
+  list, which never leaves a private method. Encounters are DM edition only. Journals and world chats are never read.
+- Party edition: completed sessions only; no retired actors; public table notes only (both editions); secret-block markers
+  stripped from every text, and the read **throws** if a marker line survives.
+- **Canary test**: every DM-only field of a seeded campaign holds a `CANARY_*` string, including every account id; the party
+  source is serialised whole and none may appear, with `PUBLIC_*` positive controls so an empty source cannot pass. Verified
+  to fail under two sabotages (DM access for the party read: 26 canaries leak; empty user id: the empty-owner actor leaks).
+
+What the canary found beyond the repositories' redaction (which held for everything else seeded):
+
+1. `FactDocument.Metadata` is handed to players as stored. The reader clears it for the party edition.
+2. Account ids ride along on wiki and homebrew `AuthorUserId`, session note and note authors, roll log and actor owners. The
+   party edition clears them all, so it holds no account id. (Crediting players later needs an explicit projection.)
+3. `PartyPreview()` uses an empty user id, which matches an actor stored with `OwnerUserId == ""`, skipping its Unknown mask.
+   Nothing in app code stores that today, and it only affects the DM's preview, so it is queued as a separate fix; the book
+   reader avoids it with a synthetic id.
+
+Not covered yet: images (portraits and art are read through masked paths in a later step), `:::for` per-player editions, name
+mentions (`[[actor:id|Name]]` resolving to a hidden actor's name), and re-checking the DM's role at read time (export does not
+either).
+
+## 11. Theming and custom CSS (proposal)
+
+- **Do not link Homebrewery's CSS at runtime.** It would break the closed-network rule and the preview CSP, tie output to a moving
+  upstream, and its 5e theme depends on assets and fonts with no stated licence (section 6).
+- **Ship our own default theme** built on CSS variables (palette, fonts, page size, margins, columns, frame and ornament slots).
+- **A custom-CSS layer** applied after the default, scoped to the book, size-capped, shown in the live preview (a sandboxed
+  iframe, no scripts, CSP `default-src 'none'`; `url()` allowed only for `data:` and slot assets). The print browser still has JS
+  off and every non-asset route aborted, so CSS cannot exfiltrate. A "reset to default" button; a theme is data (CSS plus assets)
+  stored with the campaign or the user and exportable.
+- **Homebrewery-compatible class names** where cheap (`.page`, `.monster`, `.note`, `.wide`, `.toc`), so CSS written for
+  Homebrewery mostly works when pasted. Its `url()` assets will not load; the user supplies their own through slots.
+- **Optional later**: vendor Homebrewery's MIT structural CSS (no assets, no fonts) as a selectable theme, after a per-file review.
