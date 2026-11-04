@@ -569,3 +569,28 @@ prices live on `AiProviderConfig` (and optionally in the server's `AI` section) 
   (min = sections, max = 2x for one retry each) and a cost range only when both prices exist.
 - Mutation-checked: cap check removed (6 fail), failed-is-free (1 fails), reservation never released (3 fail).
 - The weights are not measured against any real tokenizer. Calibrate against a provider's reported usage in step 4 before trusting the range.
+
+## 23. AI layer, step 3: pictures through the audience masks: built (reading layer only)
+
+(Here "masked" is audience masking. The shaped frames of 4 are a separate, later art task.)
+
+- `BookArtReader(IMediaStore).ReadAsync(BookSource)`: asks the media store **only** for documents already in the source, which was read through
+  the access-scoped repositories. A stranger's mask has no portrait flag (`RavenActorRepository.Mask` builds a new document), a Hidden actor,
+  a DM-only wiki page, a Hidden location and an unpublished homebrew entry are not in the party source, so their pictures are never *read*, not
+  read and dropped. Sources: campaign cover (any member sees it), actor portraits, wiki art, location art, homebrew art. Pack-library art
+  is not included (the book does not list pack entries yet).
+- `BookArt`: opaque asset ids (`a1`, `a2`…) assigned in reading order; `Portrait(actorId)`, `Wiki(id)`, `Location(region, loc)`, `Homebrew(id)`,
+  `Cover()` give the id, `DataUri(id)` is the delegate for `BookMarkdownOptions.Image` (`![alt](asset:a1)`). An id that is not in the map, a Raven
+  id, or an id written by a model resolves to nothing, and renders as a placeholder. Caps: 120 images, 64 MB after sanitising, 6 MB each.
+  `Skipped` lists what was left out and why (`missing`, `unsupported`, `malformed`, `toolarge`, `limit`).
+- `BookImageSanitizer` (Core, no imaging library): uploads are stored exactly as they came, so a photo still carries EXIF (GPS, owner, a
+  thumbnail of what was cropped away). JPEG: only JFIF, ICC and Adobe segments are kept; PNG: allow-list of chunks (text, EXIF, time out);
+  WebP: EXIF and XMP chunks out, their VP8X flags cleared, RIFF size rewritten. Pixel data is copied byte for byte (nothing is decoded here). The
+  type and size come from the bytes, not the declared type; more than 16,000 px a side or 50 MP is refused. GIF and AVIF are not supported and take a
+  placeholder. A real browser still decodes the output (test), and truncation and random damage never throw (tests).
+- Tests: `BookArtTests` (canary by width: party edition holds none of the 1xx and all of the 2xx; the recording media store is never asked for a
+  hidden subject; DM edition has all; ids are opaque), `BookImageSanitizerTests`, `BookImageDecodeTests`. Mutation-checked: five sanitizer mutations,
+  and the reader without the portrait flag filter fails the canary.
+- Not done: nothing puts a picture in a chapter yet (portraits in the cast, art under a wiki page, the cover): that is a compiler change and a
+  design choice about layout. A multi-scan progressive JPEG whose later scans are preceded by APP segments would keep them (the copy stops at the first
+  scan); no re-encode or downscale to print resolution, so a 6 MB photo goes in as is; images are inlined as base64 (memory with 120 art-heavy pages is unmeasured).

@@ -10,7 +10,7 @@ public enum BookAudience
 
 /// <summary>The campaign as a book may know it: what the overview shows, and nothing about who is in it. No owner, members,
 /// invite code or world state, so a book cannot carry them by accident.</summary>
-public sealed record BookCampaign(string Id, string Name, string SystemId, string Tagline, string Description, IReadOnlyList<string> ActivePacks);
+public sealed record BookCampaign(string Id, string Name, string SystemId, string Tagline, string Description, IReadOnlyList<string> ActivePacks, bool HasCover = false);
 
 /// <summary>
 /// Everything a book may be built from, read for one <see cref="BookAudience"/> through the repositories' own access-scoped

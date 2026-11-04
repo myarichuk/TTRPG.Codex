@@ -152,7 +152,7 @@ public sealed class BookSourceReader(
         return new BookSource(
             audience,
             new BookCampaign(campaign.Id, campaign.Name, campaign.SystemId, clean(campaign.Tagline) ?? string.Empty,
-                clean(campaign.Description) ?? string.Empty, campaign.ActivePacks.ToList()),
+                clean(campaign.Description) ?? string.Empty, campaign.ActivePacks.ToList(), campaign.HasCover),
             cast,
             readSessions.OrderBy(s => s.Date).ToList(),
             lore,
