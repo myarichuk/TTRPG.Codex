@@ -178,4 +178,7 @@
   <data name="WorldChat.Starter.tags.Text" xml:space="preserve"><value>Look at the campaign's homebrew and wiki pages and propose tags that group them (by region, faction or theme), so I can export a set to share. Reuse the tags that already exist.</value></data>
   <data name="WorldChat.Step.Request" xml:space="preserve"><value>Request</value></data>
   <data name="WorldChat.Steps.Trouble" xml:space="preserve"><value>{0, plural, one{# needed another try} other{# needed another try}}</value></data>
+  <data name="WorldChat.Usage.Cost" xml:space="preserve"><value>cost {0}</value></data>
+  <data name="WorldChat.Usage.Total" xml:space="preserve"><value>Whole chat: {0} in / {1} out tokens</value></data>
+  <data name="WorldChat.Usage.CostPartial" xml:space="preserve"><value>cost {0} (only {1} of {2} turns have a price)</value></data>
 </root>

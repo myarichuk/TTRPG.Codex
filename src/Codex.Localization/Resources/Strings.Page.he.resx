@@ -237,4 +237,11 @@
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>מוצג בכרטיס הקמפיין ומתחת לשמו.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>התיאור המלא, מוצג בדף הסקירה של הקמפיין. אפשר להשתמש ב-Markdown ולהרחיב אחר כך בהגדרות.</value></data>
   <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>בונה העולם</value></data>
+  <data name="Page.AiSettings.Price" xml:space="preserve"><value>מחיר (אופציונלי)</value></data>
+  <data name="Page.AiSettings.PriceIn" xml:space="preserve"><value>קלט, לכל מיליון אסימונים</value></data>
+  <data name="Page.AiSettings.PriceOut" xml:space="preserve"><value>פלט, לכל מיליון אסימונים</value></data>
+  <data name="Page.AiSettings.PriceLabel" xml:space="preserve"><value>תווית מטבע</value></data>
+  <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>העתיקו אותם ממחירון הספק. היישום אינו מגיע עם מחירים, ולכן בלעדיהם הוא מציג רק אסימונים ולא עלות מנוחשת.</value></data>
+  <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>מחיר חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
+  <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>קלט {0} / פלט {1} לכל מיליון אסימונים</value></data>
 </root>

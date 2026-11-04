@@ -1,3 +1,4 @@
+using Codex.Core.AI;
 using System.Globalization;
 using Codex.Core.WorldBuilder;
 using Codex.Localization;
@@ -71,6 +72,27 @@ public static class WorldChatView
         {
             yield return l["WorldChat.Usage.Tokens", (usage.InputTokens ?? 0).ToString("N0", CultureInfo.CurrentCulture), (usage.OutputTokens ?? 0).ToString("N0", CultureInfo.CurrentCulture)];
         }
+
+        if (Cost(usage) is { } cost) yield return l["WorldChat.Usage.Cost", AiPrice.Format(cost, usage.PriceLabel, CultureInfo.CurrentCulture)];
+    }
+
+    /// <summary>What one turn cost by the prices it ran under, or null when it had none or the server reported no tokens
+    /// (we do not guess a cost from a guessed count).</summary>
+    public static decimal? Cost(WorldChatUsage usage) =>
+        AiPrice.Cost(usage.InputPricePerMTok, usage.OutputPricePerMTok, usage.InputTokens, usage.OutputTokens);
+
+    /// <summary>The whole chat so far: tokens, and the cost of the turns that had a price. A chat with some unpriced turns says
+    /// so instead of presenting a partial sum as the total. Null when no turn reported tokens.</summary>
+    public static string? Total(Localizer l, IEnumerable<WorldChatLine> lines)
+    {
+        var turns = lines.Select(x => x.Usage).Where(u => u is { InputTokens: > 0 } or { OutputTokens: > 0 }).Cast<WorldChatUsage>().ToList();
+        if (turns.Count == 0) return null;
+        var text = l["WorldChat.Usage.Total", turns.Sum(t => t.InputTokens ?? 0).ToString("N0", CultureInfo.CurrentCulture), turns.Sum(t => t.OutputTokens ?? 0).ToString("N0", CultureInfo.CurrentCulture)];
+        var priced = turns.Select(Cost).Where(c => c != null).Select(c => c!.Value).ToList();
+        if (priced.Count == 0) return text;
+        var label = turns.Last(t => Cost(t) != null).PriceLabel;
+        var money = AiPrice.Format(priced.Sum(), label, CultureInfo.CurrentCulture);
+        return text + " · " + (priced.Count == turns.Count ? l["WorldChat.Usage.Cost", money] : l["WorldChat.Usage.CostPartial", money, priced.Count, turns.Count]);
     }
 
     /// <summary>A step as raw JSON: everything that went over the wire and what the app knows about the call, for the DM who wants

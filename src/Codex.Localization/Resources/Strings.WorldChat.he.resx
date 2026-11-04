@@ -178,4 +178,7 @@
   <data name="WorldChat.Starter.tags.Text" xml:space="preserve"><value>עבור על התוכן הביתי ודפי הוויקי של המערכה והצע תגיות שיקבצו אותם (לפי אזור, פלג או נושא), כדי שאוכל לייצא אוסף ולשתף אותו. השתמש בתגיות שכבר קיימות.</value></data>
   <data name="WorldChat.Step.Request" xml:space="preserve"><value>בקשה</value></data>
   <data name="WorldChat.Steps.Trouble" xml:space="preserve"><value>{0, plural, one{אחד דרש ניסיון נוסף} two{# דרשו ניסיון נוסף} other{# דרשו ניסיון נוסף}}</value></data>
+  <data name="WorldChat.Usage.Cost" xml:space="preserve"><value>עלות {0}</value></data>
+  <data name="WorldChat.Usage.Total" xml:space="preserve"><value>כל השיחה: {0} אסימונים נכנסו / {1} יצאו</value></data>
+  <data name="WorldChat.Usage.CostPartial" xml:space="preserve"><value>עלות {0} (רק ל-{1} מתוך {2} תורות יש מחיר)</value></data>
 </root>

@@ -237,4 +237,11 @@
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Shown on the campaign card and under its title.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>The full write-up, shown on the campaign’s overview. Markdown works; you can expand it later in Settings.</value></data>
   <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>World builder</value></data>
+  <data name="Page.AiSettings.Price" xml:space="preserve"><value>Price (optional)</value></data>
+  <data name="Page.AiSettings.PriceIn" xml:space="preserve"><value>Input, per 1M tokens</value></data>
+  <data name="Page.AiSettings.PriceOut" xml:space="preserve"><value>Output, per 1M tokens</value></data>
+  <data name="Page.AiSettings.PriceLabel" xml:space="preserve"><value>Currency label</value></data>
+  <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Copy these from your provider's price list. The app ships no prices, so without them it shows tokens only, never a guessed cost.</value></data>
+  <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>A price must be a number from 0 to {0}, or empty.</value></data>
+  <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>in {0} / out {1} per 1M tokens</value></data>
 </root>

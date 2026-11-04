@@ -534,3 +534,21 @@ Findings that held up, with the fix:
 - (b) Parallelism default (1 local / 2 remote) as above?
 - (c) Prices on `AiProviderConfig` only (per user), with the server `AI` section getting the same two optional keys; agreed?
 - (d) Start at step 1 (prices + allowance reservation) or step 3 (masked art)?
+
+## 21. AI layer, step 1: prices and request reservation: built
+
+Decisions (from the user): section workers run on the user's default text provider (no separate picker); concurrency 1 local / 2 remote;
+prices live on `AiProviderConfig` (and optionally in the server's `AI` section) and are used to show the price **and the accumulated cost**.
+
+- `AiProviderConfig.InputPricePerMTok`, `OutputPricePerMTok` (`decimal?`) and `PriceLabel`; entered in AI settings for text models only
+  (an image model is not priced per token). `AiPrice` (Core): `Clean` (0..100,000 or nothing), `Cost` (null, never 0, when a price or a
+  token count is missing; 0 only when the user typed 0), `CleanLabel` (strips control/format/bidi characters, cut to 12 text elements), `Format`.
+- A turn of the World builder chat keeps the prices it ran under (`WorldChatUsage.InputPricePerMTok/OutputPricePerMTok/PriceLabel`), so a
+  later price change cannot rewrite history. Each reply shows "cost X"; the chat shows a total, and says "only k of n turns have a price"
+  rather than passing a partial sum off as the total. Server key: `AI:InputPricePerMTok`, `AI:OutputPricePerMTok`, `AI:PriceLabel`.
+- `ServerAiUsage.Reserve(user, kind, n, unlimited)`: all-or-nothing against the daily allowance (compared in `long`, so a huge `n` cannot
+  wrap), returns a `Reservation` whose `TryUse()` is lock-free and whose `Dispose()` refunds the unused part once.
+  `AiProviderService.ReserveRequestsAsync` returns null when the user's calls go to their own provider; `ClientFor(user, prepaid)` draws
+  from the reservation first, then falls back to `Take`. Nothing uses it yet: step 2 and the section workers do.
+- Not done: a price shown in the book panel's pre-flight (there is no pre-flight until the budget exists); the settings form has no
+  browser test yet; RU/HE strings are not native-reviewed.

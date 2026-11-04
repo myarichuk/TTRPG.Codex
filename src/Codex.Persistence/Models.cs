@@ -252,6 +252,16 @@ public class AiProviderConfig
     /// <summary>The API key, protected with Data Protection. Empty for local servers that need none.</summary>
     public string ProtectedApiKey { get; set; } = string.Empty;
 
+    /// <summary>What the user pays per million input tokens, as they entered it. Null when they did not say: the app then shows
+    /// tokens only and never guesses a price (providers are arbitrary, prices change). Text models only.</summary>
+    public decimal? InputPricePerMTok { get; set; }
+
+    /// <summary>What the user pays per million output tokens. See <see cref="InputPricePerMTok"/>.</summary>
+    public decimal? OutputPricePerMTok { get; set; }
+
+    /// <summary>A short label for the currency the prices are in ("USD", "$", "credits"). Shown, never interpreted.</summary>
+    public string PriceLabel { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

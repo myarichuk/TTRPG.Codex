@@ -51,6 +51,7 @@ public sealed partial class WorldChat
     // Set before a turn's or an apply's first await, so a second one can't slip in while the first is still getting started.
     private bool claimed;
     private readonly Func<Task<bool>>? stillDm;
+    private readonly Func<Task<AiPriceQuote?>>? price;
 
     /// <param name="model">The DM's own text model (<see cref="AiProviderService.ChatClientForAsync"/>), asked for at each message so a
     /// change in their AI settings counts at once.</param>
@@ -59,8 +60,9 @@ public sealed partial class WorldChat
     /// <param name="stillDm">Asks again, before each turn and each apply, whether the user still runs the campaign: a chat stays
     /// open for as long as the connection lasts, and the DM may hand the campaign over meanwhile. Not asked when null (tests).</param>
     public WorldChat(WorldBuilderService builder, Func<Task<IChatClient>> model, CampaignDocument campaign, CampaignAccess access,
-        WorldChatDocument? document = null, Func<WorldChatDocument, Task>? store = null, Func<Task<bool>>? stillDm = null)
+        WorldChatDocument? document = null, Func<WorldChatDocument, Task>? store = null, Func<Task<bool>>? stillDm = null, Func<Task<AiPriceQuote?>>? price = null)
     {
+        this.price = price;
         this.stillDm = stillDm;
         this.builder = builder;
         this.model = model;
@@ -144,6 +146,12 @@ public sealed partial class WorldChat
         var live = Live = new WorldChatLive();
         var watch = Stopwatch.StartNew();
         var usage = new WorldChatUsage();
+        if (price != null && await price() is { } quote)
+        {
+            usage.InputPricePerMTok = AiPrice.Clean(quote.InputPerMTok);
+            usage.OutputPricePerMTok = AiPrice.Clean(quote.OutputPerMTok);
+            usage.PriceLabel = string.IsNullOrEmpty(quote.Label) ? null : quote.Label;
+        }
         ct = stop.Token;
 
         // Not disposed: disposing the pipeline disposes the model client under it, which the provider service keeps for every call.

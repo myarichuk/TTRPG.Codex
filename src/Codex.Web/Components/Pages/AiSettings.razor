@@ -118,6 +118,27 @@ else
                                 : L["Page.AiSettings.HintOpenRouterText"])</div>
                         }
                     </div>
+                    @if (purpose == Purpose.Text)
+                    {
+                        <div class="mb-3">
+                            <div class="field-label">@L["Page.AiSettings.Price"]</div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <div>
+                                    <label for="ai-price-in" class="field-hint">@L["Page.AiSettings.PriceIn"]</label>
+                                    <input id="ai-price-in" type="number" min="0" step="any" class="field-input" @bind="editing.InputPricePerMTok" data-testid="ai-price-in" aria-invalid="@Invalid("price")" />
+                                </div>
+                                <div>
+                                    <label for="ai-price-out" class="field-hint">@L["Page.AiSettings.PriceOut"]</label>
+                                    <input id="ai-price-out" type="number" min="0" step="any" class="field-input" @bind="editing.OutputPricePerMTok" data-testid="ai-price-out" aria-invalid="@Invalid("price")" />
+                                </div>
+                                <div>
+                                    <label for="ai-price-label" class="field-hint">@L["Page.AiSettings.PriceLabel"]</label>
+                                    <input id="ai-price-label" class="field-input" maxlength="@AiPrice.MaxLabelLength" @bind="editing.PriceLabel" placeholder="USD" data-testid="ai-price-label" />
+                                </div>
+                            </div>
+                            <div class="field-hint">@L["Page.AiSettings.PriceHint"]</div>
+                        </div>
+                    }
                     <div class="mb-3">
                         <label for="ai-key" class="field-label">@L["Page.AiSettings.ApiKey"] @(editingOriginalId != null && !string.IsNullOrEmpty(editing.ProtectedApiKey) ? L["Page.AiSettings.ApiKeyKeep"] : "")</label>
                         <input id="ai-key" type="password" class="field-input" @bind="plainKey" autocomplete="off" placeholder="@(PresetFor(purpose, editing.Kind)?.RequiresKey == false ? L["Page.AiSettings.KeyPhLocal"] : "sk-…")" data-testid="ai-key" aria-invalid="@Invalid("key")" />
@@ -217,7 +238,7 @@ else
                                         <span class="pill pill-accent ms-2">@L["Page.AiSettings.InUse"]</span>
                                     }
                                 </div>
-                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @(string.IsNullOrEmpty(provider.ProtectedApiKey) ? L["Page.AiSettings.NoKey"] : Providers.NeedsReentry(user!.Id, provider.ProtectedApiKey) ? L["Page.AiSettings.KeyUnreadable"] : L["Page.AiSettings.KeyStored"])</div>
+                                <div class="row-sub">@provider.ModelId · @provider.BaseUrl · @PriceNote(provider)@(string.IsNullOrEmpty(provider.ProtectedApiKey) ? L["Page.AiSettings.NoKey"] : Providers.NeedsReentry(user!.Id, provider.ProtectedApiKey) ? L["Page.AiSettings.KeyUnreadable"] : L["Page.AiSettings.KeyStored"])</div>
                             </div>
                             <div class="row-actions">
                                 @if (!isDefault)
@@ -312,6 +333,9 @@ else
             BaseUrl = provider.BaseUrl,
             ModelId = provider.ModelId,
             ProtectedApiKey = provider.ProtectedApiKey,
+            InputPricePerMTok = provider.InputPricePerMTok,
+            OutputPricePerMTok = provider.OutputPricePerMTok,
+            PriceLabel = provider.PriceLabel,
             CreatedAt = provider.CreatedAt
         };
     }
@@ -336,6 +360,14 @@ else
         if (Replaceable(editing.ModelId, previous?.DefaultModel)) editing.ModelId = preset.DefaultModel;
     }
 
+    /// <summary>"in 0.15 / out 0.6 USD per 1M tokens · " for a provider with prices, nothing for one without.</summary>
+    private string PriceNote(AiProviderConfig provider)
+    {
+        if (AiPrice.Clean(provider.InputPricePerMTok) is not { } input || AiPrice.Clean(provider.OutputPricePerMTok) is not { } output) return string.Empty;
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        return L["Page.AiSettings.PriceNote", AiPrice.Format(input, null, culture), AiPrice.Format(output, provider.PriceLabel, culture)] + " · ";
+    }
+
     private Task SaveAsync() => saveGate.RunAsync(SaveNowAsync);
 
     private async Task SaveNowAsync()
@@ -352,6 +384,24 @@ else
         {
             Refuse(L["Page.AiSettings.BadUrl"], "url");
             return;
+        }
+
+        // A price is either a usable number or nothing: a typo must not silently become "free" or an absurd bill.
+        if (purpose == Purpose.Text)
+        {
+            if ((editing.InputPricePerMTok != null && AiPrice.Clean(editing.InputPricePerMTok) == null)
+                || (editing.OutputPricePerMTok != null && AiPrice.Clean(editing.OutputPricePerMTok) == null))
+            {
+                Refuse(L["Page.AiSettings.PriceBad", AiPrice.MaxPerMTok.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)], "price");
+                return;
+            }
+
+            editing.PriceLabel = AiPrice.CleanLabel(editing.PriceLabel);
+        }
+        else
+        {
+            editing.InputPricePerMTok = editing.OutputPricePerMTok = null;
+            editing.PriceLabel = string.Empty;
         }
 
         if (!string.IsNullOrWhiteSpace(plainKey))
