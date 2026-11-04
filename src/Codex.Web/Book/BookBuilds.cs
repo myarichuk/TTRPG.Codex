@@ -20,7 +20,7 @@ public sealed record BookChapterInfo(string Id, string Title, BookSectionState S
 
 /// <summary>What a build would do and cost, before anything is sent. Every figure is an estimate and the page says so.</summary>
 public sealed record BookBuildPreview(
-    IReadOnlyList<BookChapterInfo> Chapters, int ToBuild, int Current, int TooShort, BookPreflight? Preflight, long SuggestedCap,
+    IReadOnlyList<BookChapterInfo> Chapters, int ToBuild, int Current, int TooShort, BookPreflight? Preflight, long SuggestedCap, long MinimumCap,
     BookModelInfo? Model, BookBuildTotals? Totals);
 
 /// <summary>What the stored build has used over all its runs.</summary>
@@ -129,7 +129,7 @@ public sealed class BookRun
 /// cost is counted against the cap before it is made (<see cref="BookBudget"/>), and the run stops at the cap, at the first refusal that
 /// every later call would meet, or when the DM cancels, keeping what exists.
 /// </summary>
-public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository store, IBookModels models, ICampaignAccessResolver resolver, TimeProvider? clock = null)
+public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, TimeProvider? clock = null)
 {
     private readonly ConcurrentDictionary<string, BookRun> _runs = new();
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
@@ -144,7 +144,7 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
     private async Task<Prepared?> PrepareAsync(CampaignAccess asked, string audience, string language, string style)
     {
         // The role is read again here: a DM demoted after their page loaded gets nothing.
-        if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return null;
+        if (await resolve(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return null;
         BookAudience? edition = audience switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
         if (edition is not { } which || await reader.ReadAsync(dm, which) is not { } source) return null;
         style = Clip(style);
@@ -185,10 +185,15 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
         var todo = chapters.Where(c => c.State != BookSectionState.Current && !c.TooShort).ToList();
         var loads = todo.Select(c => BookSectionWorker.LoadFor(p.Items[c.Id])).ToList();
         var preflight = loads.Count == 0 ? null : BookPreflight.Estimate(loads, 0, model?.Price);
-        var suggested = preflight == null ? 0 : Math.Max(1000, (preflight.InputHigh + preflight.OutputHigh + 999) / 1000 * 1000);
+        // A call reserves its worst case before it goes out (BookBudget.WorstCase), so a cap under the biggest chapter's own worst case sends
+        // nothing at all. The suggestion covers every chapter once at the high estimate and room for two calls in flight at the biggest.
+        var biggest = loads.Count == 0 ? 0 : loads.Max(l => BookBudget.WorstCase(l.InputTokens, l.MaxOutputTokens));
+        var suggested = preflight == null ? 0 : RoundUp(Math.Max(preflight.InputHigh + preflight.OutputHigh, biggest * 2));
         var totals = p.Stored is { } b ? new BookBuildTotals(b.InputTokens, b.OutputTokens, b.Calls, b.Runs, b.Estimated, b.Cost, b.UnpricedRuns, b.PriceLabel, b.UpdatedAt) : null;
-        return new BookBuildPreview(chapters, todo.Count, chapters.Count(c => c.State == BookSectionState.Current), chapters.Count(c => c.TooShort), preflight, suggested, model, totals);
+        return new BookBuildPreview(chapters, todo.Count, chapters.Count(c => c.State == BookSectionState.Current), chapters.Count(c => c.TooShort), preflight, suggested, biggest, model, totals);
     }
+
+    private static long RoundUp(long tokens) => Math.Max(1000, (tokens + 999) / 1000 * 1000);
 
     /// <summary>Starts the run in the background. Everything that can refuse it refuses it here, before a request leaves: no model, the
     /// server allowance not covering the calls, another run under way. Null when the book is not the caller's to read.</summary>
@@ -341,7 +346,7 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
     /// <summary>Forgets the DM's stored build of an edition (the chapters and the totals). The next build starts from nothing.</summary>
     public async Task<bool> DiscardAsync(CampaignAccess asked, string audience)
     {
-        if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return false;
+        if (await resolve(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return false;
         if (Find(dm, audience) is { Running: true }) return false;
         return await store.DeleteAsync(dm, audience);
     }

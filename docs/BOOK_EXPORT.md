@@ -668,3 +668,63 @@ hand-written chapters in English, Russian and Hebrew, then ablated the prompt to
   Pinned by four measured fixtures that must stay within 10%. **One provider's tokenizer.** OpenAI-compatible endpoints were not measured and will differ.
 - Still not done: the prompt and thresholds were tried on 9 good replies and 8 ablated ones from one small model; no large model, no long chapters (> 4,000 characters), no retry
   path exercised against a real refusal; a non-English style sheet is untested.
+
+## 27. AI layer, step 5: stored build, staleness, pre-flight, live progress: built
+
+### 27.1 What exists
+
+- **`BookBuildDocument`** (Persistence, `bookbuilds/{campaign}/{user}/{edition}`): one per DM per edition, found by its name and never by a
+  query. Holds, per chapter, the key it was built from, whether the rewrite passed the checks, why not if it did not, the rewrite (with
+  `{{block:N}}` markers), the boxes those markers stand for, and the model's name; plus totals over all runs (tokens, calls, money where
+  prices were known, a count of runs that had none, an "estimated" flag). The repository re-reads the caller's role at every call, serves
+  only the DM's own, and is **not** read by the campaign export or the backup (a test greps both for the box HTML and the id). It is deleted
+  with the campaign (`CampaignRepository` cascade, by the name's prefix, no index to wait for).
+- **`BookBuildKey`**: SHA-256 (length-prefixed fields) of recipe version, prompt version, edition, language, style sheet, chapter id and
+  title, the prepared chapter text, and every block's number, label and HTML. A rewrite is used **only** while the key recomputed from the
+  campaign as read now (same masks) equals the stored one. Hidden, edited, re-styled or re-languaged chapters print from the campaign.
+  Deviation from the plan (20.2, item 6): the **model and temperature are not in the key**. Switching providers must neither throw a book
+  away nor silently buy it again; the model is stored beside each chapter and shown, and a re-run is an explicit click ("Rebuild").
+- **`BookBuilds`** (Web, singleton): `PreviewAsync` (chapters with state, pre-flight, suggested and minimum cap, model, totals), `StartAsync`
+  (everything that can refuse refuses here: no model, server allowance not covering, another build of the same DM), the detached run, `Find`
+  (the page re-attaches to a run when reopened), `DiscardAsync`. The run does not belong to the page: closing the tab does not throw away
+  what the calls cost. Results are stored after **each** chapter, in order by one writer; cancelling keeps what finished and charges the calls
+  that were in flight. One running build per DM.
+- **Cached chapters cost nothing**: `BookBuildRunner.RunAsync(cached: ...)` returns a stored chapter before any budget or call.
+  A chapter that fell back (checks, budget, error) is not "built": the next run tries it again, and the page says why it last failed.
+  Chapters under 200 characters are not sent (`BookComposer.MinCharsToPolish`) and are counted in the pre-flight.
+- **Route**: `?ai=1` on the page and the PDF applies `BookComposer.Overlay` (the DM's stored build of that edition, chapter by chapter, key
+  checked). Without it nothing changes. The panel's checkbox adds it to the preview and download.
+- **Panel**: model (or a link to AI settings), style notes (clipped to 800 chars), the chapter list with state, the pre-flight (requests,
+  tokens as a range, money as a range only when prices are set, the server allowance used today), a cap field with a minimum, Start / Stop,
+  live progress (bar, per-chapter rows, running tokens and money, "estimated" when the provider reported no usage), totals over all runs,
+  Discard. EN/RU/HE (the RU and HE strings are mine and need a native read).
+- `AiBookModels` is the seam to the AI settings (`IBookModels`), so the service is tested with a scripted model; it reserves the server's
+  requests all-or-nothing up front, returns the unused ones when the run ends, and picks concurrency by endpoint.
+
+### 27.2 Found by testing, not by reading
+
+- **The default cap could not start a small book.** The suggestion (sum of the high estimates) was below the worst case one call must
+  reserve (input x 3 for transport retries + the longest reply). The e2e run, which pressed Start with the suggestion, saw every chapter fail
+  with "cap reached". Fixed: `BookBudget.WorstCase` is shared, the preview computes `MinimumCap`, the suggestion is at least twice the biggest
+  chapter's worst case, and the panel refuses a lower cap with the number.
+- **A singleton cannot take the scoped access resolver.** Unit tests build the service by hand; only booting the app showed it. It now takes a
+  delegate that opens a scope of its own.
+- Three tests were mine and wrong (an escaped name, an owner id in a canary check, `Work` being internal); two mutants survived until a
+  test for an *edited* chapter at print time and for a build planted under a non-DM's name were added.
+
+### 27.3 Mutation checks (all caught now)
+
+Key without block HTML; overlay ignoring the key; store serving a non-DM; and (defence in depth, caught by the layer behind) overlay
+ignoring the edition, cached lookup ignoring the key. The last two are redundant by design: the key contains the edition and the run's
+`todo` set is computed from keys.
+
+### 27.4 Not covered
+
+- A chapter is one call. A long "Cast" or "Pages" chapter (dozens of entries) is one reply, capped at the client's maximum output; whether a
+  real model returns a faithful rewrite of 20,000 characters is unmeasured (the checks would make it fall back, which is safe but wasteful).
+  Splitting by `##` entry is the obvious structure change and is the first thing for review.
+- The panel has been driven only in English, on desktop, in Chromium; RTL and phone layouts of the new section are unreviewed.
+- The temperature is fixed (0.4) and not in the key; the prompt is `book-section-1`; no style presets.
+- The money shown uses the prices as the user has them now; a run's cost is stored at the prices of that day, not re-priced.
+- Concurrent edits by two DMs of the same book each have their own build (per DM), so they do not collide, but a co-DM's build is not shared.
+- A crash in the middle of a run loses the totals of that run (chapters are stored one by one; the totals are added at the end).

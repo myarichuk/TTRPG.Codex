@@ -147,7 +147,14 @@ builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();
-builder.Services.AddSingleton<Codex.Web.Book.BookBuilds>();
+// A singleton that must read a campaign's roles afresh for each request: it asks the (scoped) resolver through a scope of its own.
+builder.Services.AddSingleton(sp => new Codex.Web.Book.BookBuilds(
+    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookBuildRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
+    async (campaignId, userId) =>
+    {
+        using var scope = sp.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
+    }));
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 

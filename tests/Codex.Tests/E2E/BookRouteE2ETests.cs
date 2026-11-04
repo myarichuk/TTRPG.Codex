@@ -190,3 +190,164 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         Assert.Equal(0, await dm.GetByTestId("book-done").CountAsync());
     }
 }
+
+/// <summary>
+/// The AI polish in the book panel, end to end: a DM adds an OpenAI-compatible model through AI settings (a fake server in this
+/// process stands in for it, and writes its own request log), sees what the build would cost before anything is sent, runs it, watches
+/// the progress, and prints from the stored result. The model is sent no secret, and the page says what was spent.
+/// </summary>
+[Collection("RavenDb")]
+public class BookAiPanelE2ETests : IClassFixture<AppFixture>
+{
+    private readonly AppFixture _app;
+
+    public BookAiPanelE2ETests(AppFixture app) => _app = app;
+
+    private sealed class FakeModelServer : IAsyncDisposable
+    {
+        private readonly System.Net.HttpListener _listener = new();
+        private readonly Task _loop;
+        public string Url { get; }
+        public List<string> Requests { get; } = [];
+
+        public FakeModelServer()
+        {
+            var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+            listener.Start();
+            var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            Url = $"http://127.0.0.1:{port}/v1";
+            _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            _listener.Start();
+            _loop = Task.Run(Serve);
+        }
+
+        private async Task Serve()
+        {
+            while (_listener.IsListening)
+            {
+                System.Net.HttpListenerContext context;
+                try { context = await _listener.GetContextAsync(); } catch { return; }
+                try
+                {
+                    using var reader = new StreamReader(context.Request.InputStream);
+                    var body = await reader.ReadToEndAsync();
+                    lock (Requests) Requests.Add(body);
+                    var last = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? string.Empty;
+                    var from = last.IndexOf("<source>", StringComparison.Ordinal) + "<source>".Length;
+                    var source = last[from..last.IndexOf("</source>", StringComparison.Ordinal)].Trim();
+                    var reply = source.Replace("walks", "strolls");
+                    var json = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        id = "x", @object = "chat.completion", created = 0, model = "fake-model",
+                        choices = new[] { new { index = 0, message = new { role = "assistant", content = reply }, finish_reason = "stop" } },
+                        usage = new { prompt_tokens = 1000, completion_tokens = 400, total_tokens = 1400 }
+                    });
+                    var bytes = Encoding.UTF8.GetBytes(json);
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentLength64 = bytes.Length;
+                    await context.Response.OutputStream.WriteAsync(bytes);
+                    context.Response.Close();
+                }
+                catch
+                {
+                    try { context.Response.Abort(); } catch { }
+                }
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            _listener.Close();
+            await _loop;
+        }
+    }
+
+    [Fact]
+    public async Task TheDmSeesTheCostFirst_RunsTheBuild_AndPrintsFromTheStoredChapters()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "ba-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var model = new FakeModelServer();
+
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        var story = string.Join(' ', Enumerable.Repeat("The keeper of the light walks the cliff path at dusk and trims the lamp.", 6));
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor
+        {
+            Id = "ba-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = story + "\n\n:::dm\nCANARY_E2E_SECRET\n:::"
+        }]);
+
+        // No model yet: the panel says so, and offers the way to set one up instead of a button that fails.
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await Assertions.Expect(dm.GetByTestId("book-ai-nomodel")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync();
+
+        // A model, with prices.
+        await dm.GotoAsync("/settings/ai");
+        await dm.GetByTestId("ai-add-provider").ClickAsync();
+        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await dm.GetByTestId("ai-name").FillAsync("Fake model");
+        await dm.GetByTestId("ai-url").FillAsync(model.Url);
+        await dm.GetByTestId("ai-model").FillAsync("fake-model");
+        await dm.GetByTestId("ai-price-in").FillAsync("1");
+        await dm.GetByTestId("ai-price-out").FillAsync("2");
+        await dm.GetByTestId("ai-price-label").FillAsync("USD");
+        await dm.GetByTestId("ai-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
+
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await Assertions.Expect(dm.GetByTestId("book-ai-model")).ToContainTextAsync("fake-model");
+
+        // The estimate comes first: the chapters, the requests, tokens as a range, and money from the prices set. Nothing was sent.
+        await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("requests");
+        await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("USD");
+        await Assertions.Expect(dm.GetByTestId("book-ai-chapters")).ToContainTextAsync("not built yet");
+        Assert.Empty(model.Requests);
+
+        await dm.GetByTestId("book-ai-start").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-ai-progress")).ToContainTextAsync("Build finished");
+        await Assertions.Expect(dm.GetByTestId("book-ai-progress")).ToContainTextAsync("tokens in");
+        await Assertions.Expect(dm.GetByTestId("book-ai-progress")).ToContainTextAsync("USD");
+        await Assertions.Expect(dm.GetByTestId("book-ai-chapters")).ToContainTextAsync("up to date");
+        await Assertions.Expect(dm.GetByTestId("book-ai-totals")).ToBeVisibleAsync();
+
+        // What the model was sent: the chapter, never the DM's secret.
+        string requests;
+        lock (model.Requests) requests = string.Join("\n", model.Requests);
+        Assert.Contains("keeper of the light", requests);
+        Assert.DoesNotContain("CANARY_E2E_SECRET", requests);
+
+        // The preview and the PDF print from the stored rewrite when asked; the secret is still boxed, by code.
+        var plain = await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm");
+        var plainText = await plain.TextAsync();
+        Assert.Contains("walks the cliff path", plainText);
+        var polished = await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm?ai=1");
+        var polishedText = await polished.TextAsync();
+        Assert.Contains("strolls the cliff path", polishedText);
+        Assert.Contains("CANARY_E2E_SECRET", polishedText);
+        Assert.Contains("class=\"secret secret-dm\"", polishedText);
+        // The party edition was never built: asking for it gets the book as written, and no secret.
+        var party = await (await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/party?ai=1")).TextAsync();
+        Assert.DoesNotContain("CANARY_E2E_SECRET", party);
+        Assert.DoesNotContain("strolls", party);
+
+        // The checkbox points the preview at it.
+        await dm.GetByTestId("book-preview-toggle").ClickAsync();
+        await dm.GetByTestId("book-ai-use").CheckAsync();
+        await Assertions.Expect(dm.GetByTestId("book-preview")).ToHaveAttributeAsync("src", new System.Text.RegularExpressions.Regex("ai=1"));
+
+        // A second build sends nothing: every chapter is current.
+        int before;
+        lock (model.Requests) before = model.Requests.Count;
+        await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync(); // "nothing to build"
+        await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("Nothing to build");
+        lock (model.Requests) Assert.Equal(before, model.Requests.Count);
+        Assert.Empty(pageErrors);
+    }
+}

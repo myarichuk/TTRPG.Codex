@@ -188,7 +188,7 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
         return (new CampaignAccess(id, DmUser, CampaignRole.DM), id);
     }
 
-    private BookBuilds Service(FakeModels models) => new(_reader, _store, models, _resolver);
+    private BookBuilds Service(FakeModels models) => new(_reader, _store, models, _resolver.ResolveAsync);
 
     private static BookBuildRequest Request(string audience = "dm", string style = "Warm and brief.", long cap = 10_000_000, params string[] redo) =>
         new(audience, "en", style, cap, redo.Length == 0 ? null : redo.ToHashSet());
@@ -609,6 +609,23 @@ public class BookBuildsTests : IClassFixture<RavenDbFixture>
         Assert.True(priced.Preflight.CostHigh > priced.Preflight.CostLow);
         Assert.True(unpriced.SuggestedCap >= unpriced.Preflight.InputHigh + unpriced.Preflight.OutputHigh);
         Assert.Equal(0, unpriced.SuggestedCap % 1000);
+    }
+
+    [Fact]
+    public async Task TheSuggestedCap_LetsTheBuildRun_AndAnyCapBelowTheMinimumSendsNothing()
+    {
+        var (dm, _) = await SeedAsync();
+        var preview = (await Service(new FakeModels(new ScriptedChat(Echo))).PreviewAsync(dm, Request()))!;
+        Assert.True(preview.SuggestedCap >= preview.MinimumCap * 2);
+
+        var tooLow = new ScriptedChat(Echo);
+        await Finish((await Service(new FakeModels(tooLow)).StartAsync(dm, Request(cap: preview.MinimumCap - 1)))!);
+        Assert.Equal(0, tooLow.Calls);
+
+        // Real usage runs above the estimate for a short prompt (the rules alone are most of it): the suggestion still finishes the book.
+        var chat = new ScriptedChat(Echo, usage: _ => new UsageDetails { InputTokenCount = 900, OutputTokenCount = 300 });
+        var run = await Finish((await Service(new FakeModels(chat)).StartAsync(dm, Request(cap: preview.SuggestedCap)))!);
+        Assert.Equal(3, run.Rows.Count(r => r.Status == BookRowStatus.Refined));
     }
 
     [Fact]

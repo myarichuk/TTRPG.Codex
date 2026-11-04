@@ -752,4 +752,56 @@
   <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>Страницы</value></data>
   <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>Собственные материалы</value></data>
   <data name="Campaign.Book.Look" xml:space="preserve"><value>Оформление страниц</value></data>
+  <data name="Campaign.Book.Ai.Title" xml:space="preserve"><value>Доработать с помощью ИИ</value></data>
+  <data name="Campaign.Book.Ai.Hint" xml:space="preserve"><value>Ваша модель переписывает каждую главу один раз. Секреты ей не отправляются, а всё, что она добавит от себя, отбрасывается. Пока вы не нажмёте «Начать сборку», ничего не отправляется.</value></data>
+  <data name="Campaign.Book.Ai.NoModel" xml:space="preserve"><value>Модель ИИ не настроена.</value></data>
+  <data name="Campaign.Book.Ai.SetUp" xml:space="preserve"><value>Открыть настройки ИИ</value></data>
+  <data name="Campaign.Book.Ai.Model" xml:space="preserve"><value>Модель: {0}</value></data>
+  <data name="Campaign.Book.Ai.Style" xml:space="preserve"><value>Пожелания к стилю (необязательно)</value></data>
+  <data name="Campaign.Book.Ai.StyleHint" xml:space="preserve"><value>Коротко, например: тепло, лаконично, голосом трактирного рассказчика. Если изменить, все главы устареют.</value></data>
+  <data name="Campaign.Book.Ai.Chapters" xml:space="preserve"><value>Главы</value></data>
+  <data name="Campaign.Book.Ai.State.Current" xml:space="preserve"><value>актуальна</value></data>
+  <data name="Campaign.Book.Ai.State.Stale" xml:space="preserve"><value>изменилась с прошлой сборки</value></data>
+  <data name="Campaign.Book.Ai.State.New" xml:space="preserve"><value>ещё не собрана</value></data>
+  <data name="Campaign.Book.Ai.State.TooShort" xml:space="preserve"><value>слишком короткая, печатается как есть</value></data>
+  <data name="Campaign.Book.Ai.LastReason" xml:space="preserve"><value>последняя попытка: {0}</value></data>
+  <data name="Campaign.Book.Ai.Reason.budget" xml:space="preserve"><value>достигнут лимит</value></data>
+  <data name="Campaign.Book.Ai.Reason.checks" xml:space="preserve"><value>переписанный текст не прошёл проверки</value></data>
+  <data name="Campaign.Book.Ai.Reason.error" xml:space="preserve"><value>сбой модели</value></data>
+  <data name="Campaign.Book.Ai.Reason.auth" xml:space="preserve"><value>ключ или модель отклонены</value></data>
+  <data name="Campaign.Book.Ai.Reason.ratelimit" xml:space="preserve"><value>лимит запросов или кончились средства</value></data>
+  <data name="Campaign.Book.Ai.Reason.allowance" xml:space="preserve"><value>исчерпан дневной лимит сервера</value></data>
+  <data name="Campaign.Book.Ai.Reason.cancelled" xml:space="preserve"><value>остановлено</value></data>
+  <data name="Campaign.Book.Ai.Preflight.None" xml:space="preserve"><value>Собирать нечего: все главы актуальны или слишком коротки, чтобы тратить на них запрос.</value></data>
+  <data name="Campaign.Book.Ai.Preflight.Summary" xml:space="preserve"><value>Глав к сборке: {0}; запросов: от {1} до {2}.</value></data>
+  <data name="Campaign.Book.Ai.Preflight.Tokens" xml:space="preserve"><value>Примерно от {0} до {1} токенов на входе и не более {2} на выходе. Это оценка: у вашего провайдера счёт будет другим.</value></data>
+  <data name="Campaign.Book.Ai.Preflight.Cost" xml:space="preserve"><value>Примерно от {0} до {1} по вашим ценам; верхняя оценка — если каждой главе понадобится вторая попытка.</value></data>
+  <data name="Campaign.Book.Ai.Preflight.NoPrice" xml:space="preserve"><value>Укажите цены этой модели в настройках ИИ, чтобы увидеть стоимость.</value></data>
+  <data name="Campaign.Book.Ai.Preflight.Allowance" xml:space="preserve"><value>По ключу сервера: сегодня использовано {0} из {1} запросов; эта сборка резервирует до {2}.</value></data>
+  <data name="Campaign.Book.Ai.Cap" xml:space="preserve"><value>Лимит токенов</value></data>
+  <data name="Campaign.Book.Ai.CapHint" xml:space="preserve"><value>Сборка останавливается, когда следующий запрос может превысить лимит. Предложенное значение покрывает каждую главу один раз по верхней оценке; повторным попыткам может понадобиться больше.</value></data>
+  <data name="Campaign.Book.Ai.Start" xml:space="preserve"><value>Начать сборку</value></data>
+  <data name="Campaign.Book.Ai.Stop" xml:space="preserve"><value>Остановить</value></data>
+  <data name="Campaign.Book.Ai.Redo" xml:space="preserve"><value>Пересобрать</value></data>
+  <data name="Campaign.Book.Ai.Discard" xml:space="preserve"><value>Удалить сохранённую сборку</value></data>
+  <data name="Campaign.Book.Ai.Use" xml:space="preserve"><value>Использовать доработанный текст в предпросмотре и PDF (только для актуальных глав)</value></data>
+  <data name="Campaign.Book.Ai.Progress" xml:space="preserve"><value>Глав: {0} из {1}</value></data>
+  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>Запросов: {0}; токенов на входе: {1}, на выходе: {2}</value></data>
+  <data name="Campaign.Book.Ai.Estimated" xml:space="preserve"><value>Оценка: провайдер не сообщил расход по некоторым запросам.</value></data>
+  <data name="Campaign.Book.Ai.Money" xml:space="preserve"><value>{0} на данный момент</value></data>
+  <data name="Campaign.Book.Ai.Totals" xml:space="preserve"><value>Все сборки: запросов {0}, токенов на входе {1}, на выходе {2}.</value></data>
+  <data name="Campaign.Book.Ai.TotalsCost" xml:space="preserve"><value>Стоимость всех сборок: {0}.</value></data>
+  <data name="Campaign.Book.Ai.TotalsCostPartial" xml:space="preserve"><value>Стоимость сборок, для которых были цены: {0}. На деле больше: для части сборок цен не было.</value></data>
+  <data name="Campaign.Book.Ai.Status.Running" xml:space="preserve"><value>Идёт сборка…</value></data>
+  <data name="Campaign.Book.Ai.Status.Done" xml:space="preserve"><value>Сборка завершена: переписано глав — {0} из {1}.</value></data>
+  <data name="Campaign.Book.Ai.Status.Stopped" xml:space="preserve"><value>Сборка остановлена: переписано глав — {0} из {1}; остальные печатаются как есть.</value></data>
+  <data name="Campaign.Book.Ai.Status.Failed" xml:space="preserve"><value>Сборка не удалась: {0}</value></data>
+  <data name="Campaign.Book.Ai.SaveFailed" xml:space="preserve"><value>Часть результатов не удалось сохранить.</value></data>
+  <data name="Campaign.Book.Ai.Busy" xml:space="preserve"><value>Другая ваша сборка уже идёт.</value></data>
+  <data name="Campaign.Book.Ai.Row.Queued" xml:space="preserve"><value>в очереди</value></data>
+  <data name="Campaign.Book.Ai.Row.Cached" xml:space="preserve"><value>сохранена, актуальна</value></data>
+  <data name="Campaign.Book.Ai.Row.Refined" xml:space="preserve"><value>переписана</value></data>
+  <data name="Campaign.Book.Ai.Row.Kept" xml:space="preserve"><value>оставлена как есть</value></data>
+  <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>слишком короткая</value></data>
+  <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>Этот лимит слишком мал, чтобы отправить хотя бы один запрос: для самой большой главы нужно зарезервировать не менее {0} токенов (худший случай, с повторами).</value></data>
 </root>

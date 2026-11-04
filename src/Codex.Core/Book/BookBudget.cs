@@ -28,8 +28,15 @@ public sealed record BookBudgetSnapshot(long Cap, long InputTokens, long OutputT
 /// counted as the separate spending they are.</item>
 /// </list>
 /// </summary>
-public sealed class BookBudget(long cap, int transportRetries = 2)
+public sealed class BookBudget(long cap, int transportRetries = BookBudget.DefaultTransportRetries)
 {
+    public const int DefaultTransportRetries = 2;
+
+    /// <summary>What one call reserves before it is made: its input once per transport attempt the client may make, and its longest reply.
+    /// A cap below this refuses the call, so it is also the least a cap can be and still send anything.</summary>
+    public static long WorstCase(long estimatedInput, long maxOutput, int transportRetries = DefaultTransportRetries) =>
+        SaturatingAdd(SaturatingMultiply(Math.Max(0, estimatedInput), 1 + Math.Max(0, transportRetries)), Math.Max(0, maxOutput));
+
     private readonly Lock _gate = new();
     private long _input, _output, _reserved;
     private int _calls, _failed, _refused;
@@ -66,7 +73,7 @@ public sealed class BookBudget(long cap, int transportRetries = 2)
     {
         var input = Math.Max(0, estimatedInput);
         var output = Math.Max(0, maxOutput);
-        var worst = SaturatingAdd(SaturatingMultiply(input, 1 + Math.Max(0, transportRetries)), output);
+        var worst = WorstCase(input, output, transportRetries);
         lock (_gate)
         {
             // Compared without overflow: a huge estimate must be refused, not wrap around into "fits".
