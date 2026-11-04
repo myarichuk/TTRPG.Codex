@@ -613,3 +613,36 @@ What the user means by masks (ragged page corners and edges, later torn picture 
 - Not done: the stroke is one flat colour (no paper fibre, no shadow under the edge); no picture-frame masks (torn photo, ink wash, vignette) yet; no
   variation between pages of the same side (every left page has the same edge); the edge's look in Letter, RTL and with real content has not been looked at;
   the panel's theme names are English only.
+
+## 25. AI layer, step 4: section workers, template blocks, deterministic checks: built (not wired to the UI or a stored build yet)
+
+`Codex.Core/Book/Ai/`: `BookBlocks.cs`, `BookChecks.cs`, `BookSectionWorker.cs`, `BookBuildRunner.cs`. Written against `IChatClient`, so it runs on the user's
+default provider (OpenAI-compatible or Anthropic) as decided; nothing calls it from a route or the panel yet.
+
+- **What the model is sent** (`BookWork.Prepare`): the chapter text with every stored mention written as the name its audience may be told (a
+  hidden one as nothing, never an id or the `|label`), and **every secret block (`:::dm`, `:::for`) cut out and replaced by `{{block:N}}`** on a line of
+  its own. The secret's words are not sent at all, in either edition; they come back as the same box the deterministic book prints (`BookSection.Blocks`,
+  trusted HTML the renderer inserts at `{{block:N}}`). So in the DM edition a model never sees a DM secret, and in the party edition there is none to see.
+  Text is delimited as `<source>` and the system prompt says it is material, never instructions.
+- **One call per chapter**, fresh context (its own text plus the style sheet), `BookSectionWorker`: reserves the worst case in the `BookBudget`, settles on
+  reported usage, and charges a failure. A reply that fails `BookChecks` gets **one** retry with the problems quoted; a second failure, a spent budget, or a
+  provider error leaves the chapter as the **deterministic text** with a reason (`checks`, `budget`, `error`, `auth`, `ratelimit`, `allowance`, `cancelled`).
+  A refused key, an unknown model, a 429/402, or the server's allowance stop every later chapter (`BookBuildRunner`), instead of failing N more times.
+- **Checks** (`BookChecks.Validate`, no model involved): no URL or link scheme, no HTML tag, no `![`, no `:::` line, no `[[`, no `{{` except `{{block:N}}`;
+  every block marker exactly once, on its own line, none that does not exist; headings kept verbatim (they are the TOC and the anchors); **every number
+  already in the source** (digits normalised, list markers and thousands separators tolerated); **no new capitalised mid-sentence name** (stem match, so Russian
+  case endings pass); the book's script (Latin 85%, Cyrillic or Hebrew 60% of letters); not empty, not 0.12x-2.5x the source's length.
+- **Concurrency** `BookBuildRunner.ConcurrencyFor(endpoint)`: 1 for localhost, a private/link-local/CGNAT address or a bare hostname, otherwise 2.
+- **Verified:** 41 unit tests with a scripted client (retry shows the problems, fallback, cap, budget refusal, failed call charged, auth not retried, injected
+  `![]()`/URL/HTML/`:::` refused, prompt injection is only material, concurrency honoured, shared failure stops the run). **Canary through the model
+  path** (`BookSourceTests`): across every request the party edition sends, no `CANARY_*`; the DM edition sends none of its secret-block words and no `:::` in any chapter text,
+  yet its HTML carries them in the box. Mutation-checked: secrets not cut out, checks skipped, no concurrency limit, number check off, each caught.
+- **Not done / not verified:**
+  - Nothing in a route, the panel or a stored build (`BookBuildDocument`, cache key, staleness) uses it: step 5. There is no cost pre-flight in the UI yet.
+  - **Run against no real model.** The prompts and the checks' thresholds (name heuristic, length ratio, language share) are untuned; expect false refusals and
+    some tuning. The name check is a heuristic, and a Hebrew text has no capitals, so it checks nothing there; the number check still does.
+  - The token estimator's weights are still uncalibrated against real reported usage (22).
+  - No template blocks other than secrets exist yet: the compiler emits no stat blocks or tables (they need the system's sheet schema), so numbers in prose are guarded
+    by the checks, not yet by construction.
+  - A secret is never rewritten by the model; a DM who wants the secrets polished will not get that.
+  - A model that returns text a check accepts but that reads badly is not detected.

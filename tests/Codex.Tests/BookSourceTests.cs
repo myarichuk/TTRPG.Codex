@@ -159,6 +159,66 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         Assert.Empty(typeof(BookSource).GetConstructors());
     }
 
+    // What the model is sent is a second place a secret can leak, and a stored build or a log would keep it (docs/BOOK_EXPORT.md 2.3).
+    private static async Task<(string Requests, string Html, int Refined)> ThroughAModelAsync(BookSource source)
+    {
+        string Echo(IList<Microsoft.Extensions.AI.ChatMessage> messages, int _)
+        {
+            var user = messages.Last().Text;
+            var from = user.IndexOf("<source>", StringComparison.Ordinal) + "<source>".Length;
+            return user[from..user.IndexOf("</source>", StringComparison.Ordinal)].Trim();
+        }
+
+        var chat = new ScriptedChat(Echo);
+        var mention = BookCompiler.Mentions(source);
+        var render = new Codex.Core.Book.BookMarkdownOptions { BoxSecrets = source.Audience == BookAudience.Dm, Mention = mention };
+        var document = BookCompiler.Compile(source, "en");
+        var report = await new Codex.Core.Book.BookBuildRunner(chat, new Codex.Core.Book.BookBudget(10_000_000), 1)
+            .RunAsync(document, s => Codex.Core.Book.BookBuildRunner.Item(s, "en", "Warm and brief.", mention, render));
+        var html = Codex.Core.Book.BookHtml.Build(report.Document, Codex.Core.Book.BookThemes.Plain,
+            new Codex.Core.Book.BookHtmlOptions { BoxSecrets = source.Audience == BookAudience.Dm, Mention = mention }).Html!;
+        return (string.Join("\n=====\n", chat.Requests), html, report.Refined);
+    }
+
+    [Fact]
+    public async Task PartyEdition_SendsNoDmOnlyDataToTheModel_AndTheBookItMakesCarriesNone()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+
+        var (requests, html, refined) = await ThroughAModelAsync(source);
+
+        Assert.True(refined > 0, "the model path ran");
+        Assert.Contains("PUBLIC_", requests, StringComparison.Ordinal); // a positive control: the requests are not empty
+        var leaked = Regex.Matches(requests + html, @"CANARY_\w+").Select(m => m.Value).Distinct().Order().ToList();
+        Assert.True(leaked.Count == 0, "A model request or the book carries DM-only data: " + string.Join(", ", leaked));
+        Assert.DoesNotContain(":::", SourcesIn(requests), StringComparison.Ordinal);
+    }
+
+    // The chapter text a request carries; the system prompt's own rules say ":::" and are not the campaign's.
+    private static string SourcesIn(string requests) =>
+        string.Concat(Regex.Matches(requests, @"<source>(.*?)</source>", RegexOptions.Singleline).Select(m => m.Groups[1].Value));
+
+    [Fact]
+    public async Task DmEdition_KeepsItsSecretsOutOfTheModel_AndStillPrintsThemInTheirBox()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+
+        var (requests, html, refined) = await ThroughAModelAsync(source);
+
+        Assert.True(refined > 0);
+        // The DM's own secret blocks are placed by the program: their words never go to the model, and come out in the box.
+        foreach (var secret in new[] { "CANARY_BIO_DM_VERA", "CANARY_RECAP_DM", "CANARY_DMSUMMARY", "CANARY_LOC_BLOCK", "CANARY_FACT_BLOCK", "CANARY_PUBDESC_DM" })
+        {
+            Assert.DoesNotContain(secret, requests, StringComparison.Ordinal);
+        }
+
+        Assert.DoesNotContain(":::", SourcesIn(requests), StringComparison.Ordinal);
+        Assert.Contains("CANARY_BIO_DM_VERA", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"secret secret-dm\"", html, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheReaderIsAStrangerWhoseIdMatchesNoOwner()
     {

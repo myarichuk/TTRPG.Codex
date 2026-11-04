@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace Codex.Core.Book;
 
 /// <summary>One chapter of a book: Markdown in the book's dialect. Its heading is part of the Markdown.</summary>
-public sealed record BookSection(string Id, string Markdown);
+public sealed record BookSection(string Id, string Markdown, IReadOnlyDictionary<int, string>? Blocks = null);
 
 /// <summary>The words a book prints that are not the campaign's own. Defaults are English; the app passes the reader's language.</summary>
 public sealed record BookLabels(
@@ -72,7 +72,10 @@ public static class BookHtml
         var body = new StringBuilder();
         foreach (var section in book.Sections)
         {
-            var rendered = BookMarkdown.Render(section.Markdown, markdown);
+            // A section rewritten by a model carries its template blocks (trusted HTML the code built); the others have none.
+            var rendered = BookMarkdown.Render(section.Markdown, section.Blocks is { Count: > 0 } blocks
+                ? new BookMarkdownOptions { BoxSecrets = markdown.BoxSecrets, Mention = markdown.Mention, Image = markdown.Image, HeadingIds = ids, Blocks = blocks }
+                : markdown);
             headings.AddRange(rendered.Headings);
             warnings.AddRange(rendered.Warnings.Where(w => !warnings.Contains(w)));
             body.Append("<section class=\"chapter\" id=\"sec-").Append(Enc(section.Id)).Append("\">").Append(rendered.Html).Append("</section>\n");
