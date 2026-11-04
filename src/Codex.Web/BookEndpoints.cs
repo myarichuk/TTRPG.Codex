@@ -33,33 +33,47 @@ public static class BookEndpoints
         app.MapGet("/campaigns/{campaignId}/book/{audience}/pdf", async (string campaignId, string audience, string? lang, string? theme, string? size,
             ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env, BookPdf pdf, CancellationToken cancel) =>
         {
-            var made = await BuildAsync(campaignId, audience, lang, theme, size, user, resolver, reader, env);
-            if (made.Failure != null)
-            {
-                return made.Failure;
-            }
-
+            // A place in the printing line is taken before the campaign is read and the page built, so a request that would be
+            // turned away costs nothing, and nobody holds more than one place.
+            BookPdfSlot? slot = null;
             try
             {
-                var printed = await pdf.PrintAsync(made.Html!, cancel);
+                var made = await BuildAsync(campaignId, audience, lang, theme, size, user, resolver, reader, env, userId =>
+                {
+                    slot = pdf.TryReserve(userId);
+                    return slot == null ? Busy(response, new BookPdfBusyException()) : null;
+                });
+                if (made.Failure != null)
+                {
+                    return made.Failure;
+                }
+
+                var printed = await pdf.PrintAsync(slot!, made.Html!, cancel);
                 Protect(response);
                 return Results.File(printed.Pdf, "application/pdf", FileName(made.Title, audience));
             }
-            catch (BookPdfBusyException busy)
-            {
-                response.Headers.RetryAfter = "15";
-                return Results.Problem(busy.Message, statusCode: StatusCodes.Status429TooManyRequests);
-            }
             catch (BookPdfTimeoutException timeout)
             {
-                return Results.Problem(timeout.Message, statusCode: StatusCodes.Status504GatewayTimeout);
+                return Results.Problem(timeout.Message, statusCode: StatusCodes.Status504GatewayTimeout, extensions: Code("timeout"));
             }
             catch (BookPdfUnavailableException unavailable)
             {
-                return Results.Problem(unavailable.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+                return Results.Problem(unavailable.Message, statusCode: StatusCodes.Status503ServiceUnavailable, extensions: Code(unavailable.Code));
+            }
+            finally
+            {
+                slot?.Dispose();
             }
         });
     }
+
+    private static IResult Busy(HttpResponse response, BookPdfBusyException busy)
+    {
+        response.Headers.RetryAfter = "15";
+        return Results.Problem(busy.Message, statusCode: StatusCodes.Status429TooManyRequests, extensions: Code("busy"));
+    }
+
+    private static Dictionary<string, object?> Code(string code) => new() { ["code"] = code };
 
     private static void Protect(HttpResponse response)
     {
@@ -69,26 +83,48 @@ public static class BookEndpoints
         response.Headers["X-Frame-Options"] = "SAMEORIGIN";
     }
 
-    /// <summary>"Campaign name (dm).pdf" with nothing in it a file system or a header would object to; the framework encodes the rest.</summary>
-    internal static string FileName(string title, string audience)
+    /// <summary>"Campaign name (dm).pdf" with nothing in it a file system, a header or a reader's eye would be fooled by: a fixed
+    /// set of characters Windows and Unix both refuse, no control, format (bidi override, zero width) or separator characters, and a cut
+    /// on a whole character, not in the middle of a surrogate pair. The framework encodes what remains.</summary>
+    public static string FileName(string title, string audience)
     {
-        var clean = new string(title.Where(c => !char.IsControl(c) && !Path.GetInvalidFileNameChars().Contains(c) && c is not ('"' or '\\' or ';')).ToArray()).Trim();
-        if (clean.Length > 80)
+        var kept = new System.Text.StringBuilder();
+        foreach (var c in title)
         {
-            clean = clean[..80].Trim();
+            var category = char.GetUnicodeCategory(c);
+            if (c is '/' or '\\' or ':' or '*' or '?' or '"' or '<' or '>' or '|' or ';' or '%'
+                || category is System.Globalization.UnicodeCategory.Control or System.Globalization.UnicodeCategory.Format
+                    or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator)
+            {
+                continue;
+            }
+
+            kept.Append(c);
         }
 
-        return (clean.Length == 0 ? "campaign" : clean) + " (" + audience.ToLowerInvariant() + ").pdf";
+        var clean = kept.ToString().Trim();
+        var elements = System.Globalization.StringInfo.GetTextElementEnumerator(clean);
+        var cut = new System.Text.StringBuilder();
+        for (var count = 0; count < 80 && elements.MoveNext(); count++)
+        {
+            cut.Append(elements.GetTextElement());
+        }
+
+        clean = cut.ToString().Trim();
+        var edition = audience.Equals("party", StringComparison.OrdinalIgnoreCase) ? "party" : "dm";
+        return (clean.Length == 0 ? "campaign" : clean) + " (" + edition + ").pdf";
     }
 
     private sealed record Made(string? Html, string Title, IResult? Failure);
 
     private static async Task<Made> BuildAsync(string campaignId, string audience, string? lang, string? theme, string? size, ClaimsPrincipal user,
-        ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env)
+        ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env, Func<string, IResult?>? admit = null)
     {
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var access = userId == null ? null : await resolver.ResolveAsync(campaignId, userId);
-        if (access is not { IsDm: true } || !Enum.TryParse<BookAudience>(audience, ignoreCase: true, out var edition))
+        // Exactly "dm" or "party": Enum.TryParse would take "2" as an undefined edition that reads as a stranger but is not cleaned.
+        BookAudience? asked = audience.ToLowerInvariant() switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
+        if (access is not { IsDm: true } || asked is not { } edition)
         {
             return new Made(null, "", Results.NotFound());
         }
@@ -97,6 +133,11 @@ public static class BookEndpoints
         if (chosen == null)
         {
             return new Made(null, "", Results.BadRequest("Unknown theme."));
+        }
+
+        if (admit?.Invoke(userId!) is { } refused)
+        {
+            return new Made(null, "", refused);
         }
 
         var source = await reader.ReadAsync(access, edition);

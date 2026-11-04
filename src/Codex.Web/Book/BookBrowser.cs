@@ -50,7 +50,7 @@ public static class BookBrowser
             {
                 if (!string.IsNullOrEmpty(root) && root != "0")
                 {
-                    found.AddRange(expand(Path.Combine(root, "chromium-*", "chrome-linux*", "chrome")).OrderDescending(StringComparer.Ordinal));
+                    found.AddRange(expand(Path.Combine(root, "chromium-*", "chrome-linux*", "chrome")).OrderByDescending(Build).ThenBy(p => p, StringComparer.Ordinal));
                 }
             }
 
@@ -66,11 +66,27 @@ public static class BookBrowser
         return found;
     }
 
-    /// <summary>The first candidate that exists, or null with what was looked at.</summary>
-    public static string? Find(string? configured, out IReadOnlyList<string> looked)
+    /// <summary>Every candidate that exists, best first, with what was looked at. The printer tries them in turn: an old one does not hide a new one.</summary>
+    public static IReadOnlyList<string> Existing(string? configured, out IReadOnlyList<string> looked)
     {
         looked = Candidates(configured, Environment.GetEnvironmentVariable, Expand, OperatingSystem.IsWindows(), OperatingSystem.IsMacOS());
-        return looked.FirstOrDefault(File.Exists);
+        return looked.Where(File.Exists).Distinct(StringComparer.Ordinal).ToList();
+    }
+
+    public static string? Find(string? configured, out IReadOnlyList<string> looked) => Existing(configured, out looked).FirstOrDefault();
+
+    /// <summary>The build number in a Playwright folder name (<c>.../chromium-1243/...</c>), so 1243 sorts above 999.</summary>
+    internal static int Build(string path)
+    {
+        foreach (var part in path.Split('/', '\\'))
+        {
+            if (part.StartsWith("chromium-", StringComparison.Ordinal) && int.TryParse(part["chromium-".Length..], out var build))
+            {
+                return build;
+            }
+        }
+
+        return 0;
     }
 
     /// <summary>"HeadlessChrome/131.0.6778.33" and "Chrome/153.0.1.2" to 131 and 153; 0 when it cannot be read.</summary>
@@ -84,6 +100,19 @@ public static class BookBrowser
 
         var digits = new string(product!.Skip(slash + 1).TakeWhile(char.IsAsciiDigit).ToArray());
         return int.TryParse(digits, out var major) ? major : 0;
+    }
+
+    /// <summary>Directories matching a pattern; one that cannot be read is a place with no browser, not an error.</summary>
+    private static List<string> Enumerate(string directory, string pattern)
+    {
+        try
+        {
+            return Directory.EnumerateDirectories(directory, pattern).ToList();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
     }
 
     private static IEnumerable<string> Expand(string pattern)
@@ -104,12 +133,12 @@ public static class BookBrowser
             return results;
         }
 
-        foreach (var first in Directory.EnumerateDirectories(root, parts[star]))
+        foreach (var first in Enumerate(root, parts[star]))
         {
             var rest = parts.Skip(star + 1).ToArray();
             if (rest.Length == 2 && rest[0].Contains('*'))
             {
-                foreach (var second in Directory.EnumerateDirectories(first, rest[0]))
+                foreach (var second in Enumerate(first, rest[0]))
                 {
                     results.Add(Path.Combine(second, rest[1]));
                 }

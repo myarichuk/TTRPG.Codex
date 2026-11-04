@@ -564,12 +564,12 @@ window.codex = {
         try {
             response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
         } catch (e) {
-            return { status: 0, detail: null };
+            return { status: 0, detail: null, code: null };
         }
         if (!response.ok) {
-            let detail = null;
-            try { detail = (await response.json()).detail || null; } catch (e) { /* not JSON */ }
-            return { status: response.status, detail: detail };
+            let detail = null, code = null;
+            try { const problem = await response.json(); detail = problem.detail || null; code = problem.code || null; } catch (e) { /* not JSON */ }
+            return { status: response.status, detail: detail, code: code };
         }
         const blob = await response.blob();
         const disposition = response.headers.get('content-disposition') || '';
@@ -580,7 +580,7 @@ window.codex = {
         const href = URL.createObjectURL(blob);
         window.codex.download(href, name);
         setTimeout(() => URL.revokeObjectURL(href), 60000);
-        return { status: 200, detail: null };
+        return { status: 200, detail: null, code: null };
     },
 
     copyText: async function (text) {

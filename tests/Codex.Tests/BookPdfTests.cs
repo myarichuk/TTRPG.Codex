@@ -52,6 +52,32 @@ public class BookBrowserTests
         Assert.Contains("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", mac);
     }
 
+    [Fact]
+    public void ThePlaywrightBuildsAreOrderedByNumber_SoANewOneBeatsAnOldOne()
+    {
+        var found = BookBrowser.Candidates(null, k => k == "PLAYWRIGHT_BROWSERS_PATH" ? "/cache" : null,
+            _ => ["/cache/chromium-999/chrome-linux/chrome", "/cache/chromium-1243/chrome-linux64/chrome", "/cache/chromium-80/chrome-linux/chrome"],
+            windows: false, mac: false);
+        Assert.Equal(["/cache/chromium-1243/chrome-linux64/chrome", "/cache/chromium-999/chrome-linux/chrome", "/cache/chromium-80/chrome-linux/chrome"], found.Take(3));
+    }
+
+    [Theory]
+    [InlineData("a b: c*?.pdf", "a b c.pdf")]
+    [InlineData("../../etc/passwd", "....etcpasswd")]
+    [InlineData("ev\u202Eil\u200Bname", "evilname")]
+    [InlineData("line\r\nbreak\";x%", "linebreakx")]
+    public void TheDownloadNameHoldsNothingAFileSystemOrAnEyeWouldBeFooledBy(string campaign, string expected) =>
+        Assert.Equal(expected + " (dm).pdf", Codex.Web.BookEndpoints.FileName(campaign, "dm"));
+
+    [Fact]
+    public void ALongDownloadNameIsCutBetweenCharactersNeverInsideOne()
+    {
+        var name = Codex.Web.BookEndpoints.FileName(new string('a', 79) + "\U0001F409\U0001F409", "party");
+        Assert.DoesNotContain('\uFFFD', name);
+        Assert.Equal(new string('a', 79) + "\U0001F409 (party).pdf", name);
+        Assert.Equal("campaign (dm).pdf", Codex.Web.BookEndpoints.FileName("???", "dm"));
+    }
+
     [Theory]
     [InlineData("HeadlessChrome/131.0.6778.33", 131)]
     [InlineData("Chrome/153.0.1.2", 153)]
@@ -66,15 +92,32 @@ public class BookBrowserTests
     public async Task ABrowserThatDoesNotExistIsReportedWithItsPath()
     {
         var pdf = new BookPdf(Options.Create(new BookPdfOptions { Browser = "/nonexistent/chrome" }), NullLogger<BookPdf>.Instance);
-        var ex = await Assert.ThrowsAsync<BookPdfUnavailableException>(() => pdf.PrintAsync("<p>x</p>", CancellationToken.None));
-        Assert.Contains("/nonexistent/chrome", ex.Message);
+        using var slot = pdf.TryReserve("dm")!;
+        var ex = await Assert.ThrowsAsync<BookPdfUnavailableException>(() => pdf.PrintAsync(slot, "<p>x</p>", CancellationToken.None));
+        Assert.Equal(BookPdfFailure.NoBrowser, ex.Failure);
+        // The reason is safe to show: it names how to fix it, not where the server looked.
+        Assert.DoesNotContain("/nonexistent", ex.Message, StringComparison.Ordinal);
     }
 }
 
 public class BookPdfTests
 {
-    private static BookPdf Printer(int timeoutSeconds = 90, int maxWaiting = 2) =>
-        new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting }), NullLogger<BookPdf>.Instance);
+    private static BookPdf Printer(int timeoutSeconds = 90, int maxWaiting = 2, string? profileRoot = null) =>
+        new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot }), NullLogger<BookPdf>.Instance);
+
+    private static Task<BookPdfResult> Print(BookPdf printer, string html, CancellationToken cancel = default, string owner = "dm")
+    {
+        var slot = printer.TryReserve(owner) ?? throw new InvalidOperationException("no place in the line");
+        return Run(printer, slot, html, cancel);
+    }
+
+    private static async Task<BookPdfResult> Run(BookPdf printer, BookPdfSlot slot, string html, CancellationToken cancel)
+    {
+        using (slot)
+        {
+            return await printer.PrintAsync(slot, html, cancel);
+        }
+    }
 
     private static byte[]? Font(string file)
     {
@@ -101,7 +144,7 @@ public class BookPdfTests
     public async Task APlainBookPrintsToAPdfWithItsTextItsOutlineAndNoRequests()
     {
         var chapters = string.Join("\n\n", Enumerable.Range(1, 40).Select(i => $"## Place {i}\n\nThe gulls of place {i} are loud and the tide is late.\n"));
-        var result = await Printer().PrintAsync(Page("# Coast\n\n" + chapters), CancellationToken.None);
+        var result = await Print(Printer(), Page("# Coast\n\n" + chapters));
 
         Assert.StartsWith("%PDF-", System.Text.Encoding.ASCII.GetString(result.Pdf, 0, 5));
         Assert.Equal(0, result.BlockedRequests);
@@ -114,8 +157,14 @@ public class BookPdfTests
 
         // Only the theme's own faces are embedded: nothing fell back to a system font. Cinzel is a variable font and Chromium
         // embeds those as Type 3 (§15 of docs/BOOK_EXPORT.md), so "Type3" is Cinzel here; any other name would be a fallback.
-        var fonts = pdf.GetPages().SelectMany(p => p.Letters).Select(l => l.FontName ?? "").Where(n => n.Length > 0).Select(n => n[(n.IndexOf('+') + 1)..]).Distinct().ToList();
+        var letters = pdf.GetPages().SelectMany(p => p.Letters).ToList();
+        var fonts = letters.Select(l => l.FontName ?? "").Where(n => n.Length > 0).Select(n => n[(n.IndexOf('+') + 1)..]).Distinct().ToList();
+        Assert.NotEmpty(fonts);
+        Assert.Contains(fonts, f => f.Replace(" ", "").StartsWith("AlegreyaSans", StringComparison.Ordinal));
         Assert.All(fonts, f => Assert.Matches("^(AlegreyaSans|Cinzel|Type3)", f.Replace(" ", "")));
+        // Type 3 may only be the headings' face: its letters are all ones the headings spell, never a body paragraph's.
+        var headingLetters = "SaltmereAcoastContentsCoastPlace0123456789 ".ToHashSet();
+        Assert.All(letters.Where(l => l.FontName == "Type3" || (l.FontName ?? "").EndsWith("Type3", StringComparison.Ordinal)), l => Assert.Contains(l.Value[0], headingLetters));
 
         // The page size is the one the theme asked for (A4), not the browser's default.
         Assert.InRange(pdf.GetPage(1).Width, 594, 596);
@@ -127,7 +176,7 @@ public class BookPdfTests
     {
         // Not something the builder can produce; it proves the guard holds even if one day a hole lets a URL through.
         var html = "<!doctype html><html><body><p>Hello</p><img src=\"https://example.invalid/x.png\"><link rel=\"stylesheet\" href=\"http://example.invalid/a.css\"></body></html>";
-        var result = await Printer().PrintAsync(html, CancellationToken.None);
+        var result = await Print(Printer(), html);
 
         Assert.True(result.BlockedRequests >= 1, $"blocked: {result.BlockedRequests}");
         using var pdf = PdfDocument.Open(result.Pdf);
@@ -138,7 +187,7 @@ public class BookPdfTests
     public async Task ScriptInThePageNeverRuns()
     {
         var html = "<!doctype html><html><body><p id=\"p\">before</p><script>document.getElementById('p').textContent='RAN'</script></body></html>";
-        var result = await Printer().PrintAsync(html, CancellationToken.None);
+        var result = await Print(Printer(), html);
 
         using var pdf = PdfDocument.Open(result.Pdf);
         var text = pdf.GetPage(1).Text;
@@ -147,27 +196,119 @@ public class BookPdfTests
     }
 
     [ChromiumFact]
-    public async Task ATenSecondLimitStopsAJobThatCannotFinish_AndTheNextOneStillPrints()
+    public async Task AJobThatCannotFinishInTimeIsStopped_AndTheSamePrinterPrintsTheNext()
     {
-        // A page that is far too big to lay out in the time allowed.
+        // A page far too big to lay out in the time allowed (the minimum limit is five seconds).
         var huge = "<!doctype html><html><body>" + string.Concat(Enumerable.Repeat("<table><tr><td>" + string.Concat(Enumerable.Repeat("<div>word </div>", 200)) + "</td></tr></table>", 4000)) + "</body></html>";
         var printer = Printer(timeoutSeconds: 5);
-        await Assert.ThrowsAsync<BookPdfTimeoutException>(() => printer.PrintAsync(huge, CancellationToken.None));
+        await Assert.ThrowsAsync<BookPdfTimeoutException>(() => Print(printer, huge));
 
-        var after = await Printer().PrintAsync("<!doctype html><p>still fine</p>", CancellationToken.None);
+        // The same instance: the line was let go, so the next job runs.
+        var after = await Print(printer, "<!doctype html><p>still fine</p>");
         using var pdf = PdfDocument.Open(after.Pdf);
         Assert.Contains("still fine", pdf.GetPage(1).Text);
     }
 
+    [Fact]
+    public void TheLineIsOneRunningPlusMaxWaiting_AndOnePlacePerPerson_AndAPlaceIsGivenBackOnDispose()
+    {
+        var printer = Printer(maxWaiting: 1);
+        var first = printer.TryReserve("a");
+        var second = printer.TryReserve("b");
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Null(printer.TryReserve("c"));
+
+        first!.Dispose();
+        first.Dispose();
+        Assert.Null(printer.TryReserve("b"));
+        var third = printer.TryReserve("c");
+        Assert.NotNull(third);
+        Assert.Null(printer.TryReserve("d"));
+
+        second!.Dispose();
+        third!.Dispose();
+        Assert.NotNull(printer.TryReserve("a"));
+    }
+
+    [Fact]
+    public void ANegativeMaxWaitingStillAllowsOneJob()
+    {
+        var printer = Printer(maxWaiting: -5);
+        using var one = printer.TryReserve("a");
+        Assert.NotNull(one);
+        Assert.Null(printer.TryReserve("b"));
+    }
+
     [ChromiumFact]
-    public async Task OnlyOneBookPrintsAtATime_AndTheLineBehindItIsShort()
+    public async Task TwoBooksInTheLinePrintOneAfterTheOther()
     {
         var printer = Printer(maxWaiting: 1);
         var html = Page("# One\n\ntext");
-        var first = printer.PrintAsync(html, CancellationToken.None);
-        var second = printer.PrintAsync(html, CancellationToken.None);
-        // The line is one running + one waiting: a third is turned away at once.
-        await Assert.ThrowsAsync<BookPdfBusyException>(() => printer.PrintAsync(html, CancellationToken.None));
-        await Task.WhenAll(first, second);
+        await Task.WhenAll(Print(printer, html, owner: "a"), Print(printer, html, owner: "b"));
+        Assert.Equal(1, printer.PeakRunning);
+    }
+
+    [ChromiumFact]
+    public async Task ARequestThatGivesUpWhileTheBrowserIsStarting_LeavesNoBrowserAndNoProfile()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        var root = Path.Combine(Path.GetTempPath(), "codex-book-leak-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            var printer = Printer(profileRoot: root);
+            for (var i = 0; i < 3; i++)
+            {
+                using var cancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(30));
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Print(printer, "<p>x</p>", cancel.Token, owner: "a" + i));
+            }
+
+            // Nothing of ours is left running (the profile directory is on every one of its command lines) and nothing is left on disk.
+            Assert.Empty(ProcessesUsing(root));
+            Assert.Empty(Directory.GetFileSystemEntries(root));
+        }
+        finally
+        {
+            foreach (var pid in ProcessesUsing(root))
+            {
+                try { System.Diagnostics.Process.GetProcessById(pid).Kill(true); } catch { /* gone */ }
+            }
+
+            try { Directory.Delete(root, true); } catch { /* best effort */ }
+        }
+    }
+
+    private static List<int> ProcessesUsing(string marker)
+    {
+        var found = new List<int>();
+        foreach (var dir in Directory.EnumerateDirectories("/proc"))
+        {
+            if (!int.TryParse(Path.GetFileName(dir), out var pid))
+            {
+                continue;
+            }
+
+            try
+            {
+                if (File.ReadAllText(Path.Combine(dir, "cmdline")).Contains(marker, StringComparison.Ordinal))
+                {
+                    found.Add(pid);
+                }
+            }
+            catch (IOException)
+            {
+                // Exited while we looked.
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return found;
     }
 }

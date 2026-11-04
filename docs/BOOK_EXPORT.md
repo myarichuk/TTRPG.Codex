@@ -413,7 +413,7 @@ inset escapes the margins. Never a filter-generated image as a full-page backgro
 
 - **Engine**: `Codex.Web/Book/BookPdf.cs`, PuppeteerSharp 25.15 (MIT). It drives a browser that is already installed; it never downloads
   one. A fresh browser per job: nothing idle holds memory and nothing survives a stuck page. Per job: JavaScript off, request
-  interception that refuses everything except `data:`, `--host-resolver-rules="MAP * ~NOTFOUND"` as a second lock, `PreferCSSPageSize`
+  interception that refuses everything except `data:`, `--host-resolver-rules="MAP * ~NOTFOUND"` as a second lock for host *names* (an IP literal is stopped by the interception alone), `PreferCSSPageSize`
   (the theme's `@page size` rules), `PrintBackground`, tagged output, an outline, wait for fonts. One job at a time; `MaxWaiting`
   (default 2) others may queue, a further one gets 429 with `Retry-After`. A hard timeout (`TimeoutSeconds`, default 90, browser
   start included) kills the browser process tree and answers 504. `--no-sandbox` is added only when the process is privileged (a
@@ -465,3 +465,17 @@ inset escapes the margins. Never a filter-generated image as a full-page backgro
 - **Not done / not verified**: no visual review (RTL, phone width, dark/light) of the panel; the custom CSS editor (needs a POST or
   a stored setting: the GET routes take no CSS); the preview does not show the unsaved state of anything (it reads the stored
   campaign); a stuck print has no cancel button (the server timeout is the only stop).
+
+## 18. Independent review (Opus) of sections 16-17, and what changed
+
+Findings that held up, with the fix:
+
+- **High, confirmed: a Chromium leaked whenever a request gave up while the browser was starting** (`WaitAsync` stopped waiting, the launch finished later, nobody closed it; three cancelled calls left three browsers and their profiles for good, and a signed-in player can create a campaign and loop `curl --max-time 0.5`). Now the launch task is kept and awaited in `finally` (bounded by the job limit), the browser it yields is closed, the line is held until then, and each job has its own profile directory (`ProfileRoot`) that is removed afterwards. Test: three calls cancelled after 30 ms leave no process whose command line holds the profile root and nothing on disk; mutation (cleanup removed) fails it.
+- **Medium: the oldest Playwright Chromium was chosen** (`chromium-999` sorted above `chromium-1243`, and a too-old browser ended the search). Sorted by build number; every existing candidate is tried in turn.
+- **Medium: the queue was checked after the expensive part**, and was global. A place is now reserved (`TryReserve`) after the access check and before the campaign is read and the page built, one place per person, released on dispose; a request that would be turned away costs nothing. `MaxWaiting < 0` is clamped.
+- **Medium: every 503 said "no browser", and internals leaked** (absolute path, browser stderr). Failures carry a code (`no-browser`, `browser-too-old`, `launch-failed`, `print-failed`, `busy`, `timeout`); the panel says what each means; details go to the log; only "no browser" shows the setup sentence (an environment variable name), in a `<bdi>` so a right-to-left sentence cannot reorder it.
+- **Low, confirmed: `Enum.TryParse("2")` made an "edition" that reads as a stranger but is not cleaned** (inline secrets unboxed). The route accepts exactly `dm` and `party`, and `BookSourceReader.ReadAsync` refuses an undefined value. E2E covers `0`, `1`, `2`, `-1` on both routes.
+- **Low, confirmed: the download name** kept `: * ? < > |` on Linux, could cut a surrogate pair and kept bidi overrides. Fixed set of refused characters, no control/format/separator characters, cut on whole text elements; tests.
+- **Low:** an unreadable cache folder no longer turns into a 500 (`UnauthorizedAccessException` is caught per directory); the async request handler catches everything; the sandbox is decided on Linux only; `PeakRunning` proves the line is one wide (mutation: semaphore removed fails it); the font test now requires fonts to be found, Alegreya present, and the Type 3 letters to be ones the headings spell; the timeout test reuses the same printer; Hebrew strings corrected ("הורד", "בהדפסה…", "מאחורי מסך המנחה"); Russian "Тема" is "Оформление"; the panel clears its "downloaded" message when an option changes and the toggle has `aria-controls`.
+- **Not taken:** a per-user rate limit beyond the one-place rule, a cap on the size of the page built, a "host only" gate for the setup sentence (it holds no path any more), preferring system Chrome over Playwright caches on Ubuntu 23.10+ (the error now says to set `NoSandbox` or a browser; not reproduced), `CodexButton Busy` instead of `Disabled`.
+- **Test infrastructure note:** a full non-e2e run writes about 12-16 GB of RavenDB data under `/tmp` before it is swept. On this machine's disk allowance that made the suite fail with "no space left" (the failures were fixture-backed tests, not these changes); run in two halves it passes: 631 + 704 = 1335.

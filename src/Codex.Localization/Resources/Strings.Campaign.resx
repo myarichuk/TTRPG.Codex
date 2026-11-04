@@ -741,4 +741,6 @@
   <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>There is no browser to print with on this machine.</value></data>
   <data name="Campaign.Book.Failed.Timeout" xml:space="preserve"><value>Printing took too long and was stopped.</value></data>
   <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>The book could not be printed.</value></data>
+  <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>The browser on this machine is too old to print a book. Update Chrome, Edge or Chromium.</value></data>
+  <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>The browser would not start. The server log says why.</value></data>
 </root>

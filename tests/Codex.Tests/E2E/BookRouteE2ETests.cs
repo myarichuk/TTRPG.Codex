@@ -48,6 +48,12 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         Assert.Equal(422, russian.Status);
         Assert.Equal(400, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm?theme=nope")).Status);
         Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/everyone")).Status);
+        // An enum number is not an edition: "2" must not read as a party book that was never cleaned.
+        foreach (var number in new[] { "0", "1", "2", "-1" })
+        {
+            Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/{number}")).Status);
+            Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/{number}/pdf")).Status);
+        }
 
         // Somebody who is not this campaign's DM gets nothing, and cannot tell a campaign from no campaign.
         await using var otherContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
@@ -135,11 +141,13 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
     }
 
     [Theory]
-    [InlineData(429, "Another book is being printed")]
-    [InlineData(503, "There is no browser to print with")]
-    [InlineData(504, "took too long")]
-    [InlineData(500, "could not be printed")]
-    public async Task ARefusedPrintIsSaidOnThePage_NotShownAsAnErrorDocument(int status, string expected)
+    [InlineData(429, "Another book is being printed", "busy")]
+    [InlineData(503, "There is no browser to print with", "no-browser")]
+    [InlineData(503, "too old to print a book", "browser-too-old")]
+    [InlineData(503, "would not start", "launch-failed")]
+    [InlineData(504, "took too long", "timeout")]
+    [InlineData(500, "could not be printed", "print-failed")]
+    public async Task ARefusedPrintIsSaidOnThePage_NotShownAsAnErrorDocument(int status, string expected, string code)
     {
         const string password = "Correct-Horse-1";
         var dmId = "bpe-dm-" + Guid.NewGuid();
@@ -155,16 +163,21 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         {
             Status = status,
             ContentType = "application/problem+json",
-            Body = "{\"detail\":\"set CODEX_BOOK_BROWSER to its executable\"}"
+            Body = "{\"detail\":\"set CODEX_BOOK_BROWSER to its executable\",\"code\":\"" + code + "\"}"
         }));
         var url = dm.Url;
         await dm.GetByTestId("book-download").ClickAsync();
 
         var error = dm.GetByTestId("book-error");
         await Assertions.Expect(error).ToContainTextAsync(expected);
-        if (status == 503)
+        // The setup sentence is for "no browser" only; the other causes keep their details in the server log.
+        if (code == "no-browser")
         {
             await Assertions.Expect(error).ToContainTextAsync("CODEX_BOOK_BROWSER");
+        }
+        else
+        {
+            Assert.DoesNotContain("CODEX_BOOK_BROWSER", await error.InnerTextAsync(), StringComparison.Ordinal);
         }
 
         Assert.Equal(url, dm.Url);

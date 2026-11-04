@@ -724,7 +724,7 @@
   <data name="Campaign.Book.Edition" xml:space="preserve"><value>מהדורה</value></data>
   <data name="Campaign.Book.Edition.Dm" xml:space="preserve"><value>מהדורת המנחה</value></data>
   <data name="Campaign.Book.Edition.Party" xml:space="preserve"><value>מהדורת הקבוצה</value></data>
-  <data name="Campaign.Book.Edition.DmHint" xml:space="preserve"><value>כל מה שאתם רואים, והסודות שלכם בתיבות. שמרו את המהדורה הזאת מאחורי המסך.</value></data>
+  <data name="Campaign.Book.Edition.DmHint" xml:space="preserve"><value>כל מה שאתם רואים, והסודות שלכם בתיבות. שמרו את המהדורה הזאת מאחורי מסך המנחה.</value></data>
   <data name="Campaign.Book.Edition.PartyHint" xml:space="preserve"><value>רק מה ששחקן רשאי לקרוא: דמויות נסתרות וסודות מושמטים, לא מושחרים.</value></data>
   <data name="Campaign.Book.Language" xml:space="preserve"><value>שפה</value></data>
   <data name="Campaign.Book.LanguageUnsupported" xml:space="preserve"><value>{0} (עדיין לא בערכת העיצוב הזאת)</value></data>
@@ -734,11 +734,13 @@
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>הסתרת התצוגה המקדימה</value></data>
   <data name="Campaign.Book.PreviewTitle" xml:space="preserve"><value>תצוגה מקדימה של הספר</value></data>
   <data name="Campaign.Book.Download" xml:space="preserve"><value>הורדת PDF</value></data>
-  <data name="Campaign.Book.Printing" xml:space="preserve"><value>מדפיס…</value></data>
-  <data name="Campaign.Book.Done" xml:space="preserve"><value>הספר ירד.</value></data>
+  <data name="Campaign.Book.Printing" xml:space="preserve"><value>בהדפסה…</value></data>
+  <data name="Campaign.Book.Done" xml:space="preserve"><value>הספר הורד.</value></data>
   <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>ערכת העיצוב הזאת עדיין לא יודעת להדפיס בשפה הזאת.</value></data>
   <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>ספר אחר מודפס כרגע. נסו שוב בעוד רגע.</value></data>
   <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>אין במחשב הזה דפדפן להדפסה.</value></data>
   <data name="Campaign.Book.Failed.Timeout" xml:space="preserve"><value>ההדפסה לקחה יותר מדי זמן ונעצרה.</value></data>
   <data name="Campaign.Book.Failed.Other" xml:space="preserve"><value>לא ניתן היה להדפיס את הספר.</value></data>
+  <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>הדפדפן במחשב הזה ישן מדי להדפסת ספר. עדכנו את Chrome, Edge או Chromium.</value></data>
+  <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>הדפדפן לא עלה. הסיבה ביומן השרת.</value></data>
 </root>

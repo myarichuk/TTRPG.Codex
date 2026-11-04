@@ -33,6 +33,12 @@ public sealed class BookSourceReader(
     /// (a player has nothing to print that they cannot already open) or the campaign is gone.</summary>
     public async Task<BookSource?> ReadAsync(CampaignAccess dm, BookAudience audience)
     {
+        // A number cast to the enum is neither edition, and it would read as a stranger without being cleaned like one.
+        if (!Enum.IsDefined(audience))
+        {
+            throw new ArgumentOutOfRangeException(nameof(audience));
+        }
+
         if (!dm.IsDm)
         {
             return null;

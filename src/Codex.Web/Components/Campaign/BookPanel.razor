@@ -10,7 +10,7 @@
     <div class="row g-2">
         <div class="col-12">
             <label for="book-edition" class="field-label">@L["Campaign.Book.Edition"]</label>
-            <select id="book-edition" class="field-input" @bind="edition" data-testid="book-edition">
+            <select id="book-edition" class="field-input" @bind="edition" @bind:after="Changed" data-testid="book-edition">
                 <option value="dm">@L["Campaign.Book.Edition.Dm"]</option>
                 <option value="party">@L["Campaign.Book.Edition.Party"]</option>
             </select>
@@ -18,7 +18,7 @@
         </div>
         <div class="col-6">
             <label for="book-language" class="field-label">@L["Campaign.Book.Language"]</label>
-            <select id="book-language" class="field-input" @bind="language" data-testid="book-language">
+            <select id="book-language" class="field-input" @bind="language" @bind:after="Changed" data-testid="book-language">
                 @foreach (var (tag, native) in SupportedCultures.All)
                 {
                     var ok = Theme.Supports(tag);
@@ -28,7 +28,7 @@
         </div>
         <div class="col-6">
             <label for="book-size" class="field-label">@L["Campaign.Book.Paper"]</label>
-            <select id="book-size" class="field-input" @bind="size" data-testid="book-size">
+            <select id="book-size" class="field-input" @bind="size" @bind:after="Changed" data-testid="book-size">
                 <option value="A4">A4</option>
                 <option value="Letter">Letter</option>
             </select>
@@ -37,7 +37,7 @@
     <div class="field-hint">@L["Campaign.Book.ThemeNote", Theme.Name]</div>
 
     <div class="d-flex gap-2 flex-wrap mt-2">
-        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="TogglePreview" aria-expanded="@(showPreview ? "true" : "false")" data-testid="book-preview-toggle">
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="TogglePreview" aria-expanded="@(showPreview ? "true" : "false")" aria-controls="book-preview-frame" data-testid="book-preview-toggle">
             <LucideIcon IconName="@(showPreview ? "eye-off" : "eye")" Size="14" /> @(showPreview ? L["Campaign.Book.HidePreview"] : L["Campaign.Book.Preview"])
         </CodexButton>
         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@busy" data-testid="book-download">
@@ -48,7 +48,7 @@
     <div role="status" aria-live="polite" class="mt-2" data-testid="book-status">
         @if (error != null)
         {
-            <div class="field-error" data-testid="book-error">@error</div>
+            <div class="field-error" data-testid="book-error">@error@if (errorDetail != null) { <text> </text><bdi dir="auto">@errorDetail</bdi> }</div>
         }
         else if (done)
         {
@@ -60,7 +60,7 @@
     {
         @* The page is the one the PDF is printed from. It is sandboxed with no permissions at all (no script, no same-origin) and
            the page's own policy allows no fetch, so what a campaign's text holds cannot reach the app around it. *@
-        <iframe class="book-preview" sandbox="" title="@L["Campaign.Book.PreviewTitle"]" src="@PageUrl()" loading="lazy" data-testid="book-preview"></iframe>
+        <iframe id="book-preview-frame" class="book-preview" sandbox="" title="@L["Campaign.Book.PreviewTitle"]" src="@PageUrl()" loading="lazy" data-testid="book-preview"></iframe>
     }
 </section>
 
@@ -74,6 +74,7 @@
     private bool busy;
     private bool done;
     private string? error;
+    private string? errorDetail;
 
     private static BookTheme Theme => BookThemes.Plain;
 
@@ -90,6 +91,12 @@
 
     private int previewStamp;
 
+    private void Changed()
+    {
+        done = false;
+        error = errorDetail = null;
+    }
+
     private void TogglePreview()
     {
         showPreview = !showPreview;
@@ -100,7 +107,7 @@
     {
         busy = true;
         done = false;
-        error = null;
+        error = errorDetail = null;
         try
         {
             var result = await JS.InvokeAsync<BookDownload>("codex.downloadFrom", Nav.ToAbsoluteUri(PageUrl(pdf: true)).ToString());
@@ -110,14 +117,19 @@
             }
             else
             {
-                error = result.Status switch
+                error = (result.Status, result.Code) switch
                 {
-                    422 => L["Campaign.Book.Failed.Language"],
-                    429 => L["Campaign.Book.Failed.Busy"],
-                    503 => L["Campaign.Book.Failed.NoBrowser"] + (string.IsNullOrWhiteSpace(result.Detail) ? "" : " " + result.Detail),
-                    504 => L["Campaign.Book.Failed.Timeout"],
+                    (422, _) => L["Campaign.Book.Failed.Language"],
+                    (429, _) => L["Campaign.Book.Failed.Busy"],
+                    (503, "no-browser") => L["Campaign.Book.Failed.NoBrowser"],
+                    (503, "browser-too-old") => L["Campaign.Book.Failed.TooOld"],
+                    (503, "launch-failed") => L["Campaign.Book.Failed.Launch"],
+                    (504, _) => L["Campaign.Book.Failed.Timeout"],
                     _ => L["Campaign.Book.Failed.Other"]
                 };
+                // The setup sentence names an environment variable, which the person who runs the app needs; it is in English and
+                // is shown as its own run so a right-to-left sentence around it does not reorder it.
+                errorDetail = result is { Status: 503, Code: "no-browser" } ? result.Detail : null;
             }
         }
         catch (JSException)
@@ -134,5 +146,6 @@
     {
         public int Status { get; set; }
         public string? Detail { get; set; }
+        public string? Code { get; set; }
     }
 }
