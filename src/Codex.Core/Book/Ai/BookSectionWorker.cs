@@ -67,6 +67,17 @@ public sealed class BookSectionWorker(IChatClient chat, BookBudget budget, float
 {
     public const int MaxAttempts = 2;
 
+    /// <summary>The longest reply a chapter may get: a rewrite of the chapter is about its size, with room, and never past the client's own ceiling.</summary>
+    public static int MaxOutputFor(BookWorkItem item) =>
+        (int)Math.Clamp(BookTokens.Estimate(item.Work.Text) * 3 / 2 + 300, 600, AIClientFactory.AnthropicMaxOutputTokens);
+
+    /// <summary>What one attempt at this chapter puts in and may take out, for the pre-flight: the whole prompt (rules, style sheet, chapter), as sent.</summary>
+    public static BookSectionLoad LoadFor(BookWorkItem item)
+    {
+        var (system, user) = BookPrompts.Section(item);
+        return new BookSectionLoad(item.Title, BookTokens.Estimate(system) + BookTokens.Estimate(user), MaxOutputFor(item));
+    }
+
     public async Task<BookSectionResult> RunAsync(BookWorkItem item, CancellationToken ct = default)
     {
         BookSectionResult Fallback(string reason, int attempts, IReadOnlyList<string>? problems = null) =>
@@ -79,8 +90,7 @@ public sealed class BookSectionWorker(IChatClient chat, BookBudget budget, float
             if (ct.IsCancellationRequested) return Fallback("cancelled", attempt - 1, problems);
             var (system, user) = BookPrompts.Section(item, problems, previous);
             var input = BookTokens.Estimate(system) + BookTokens.Estimate(user);
-            // The reply is a rewrite of the chapter: about its size, with room, and never past the client's own ceiling.
-            var maxOutput = (int)Math.Clamp(BookTokens.Estimate(item.Work.Text) * 3 / 2 + 300, 600, AIClientFactory.AnthropicMaxOutputTokens);
+            var maxOutput = MaxOutputFor(item);
             if (budget.TryReserve(input, maxOutput) is not { } reservation)
             {
                 return Fallback("budget", attempt - 1, problems);

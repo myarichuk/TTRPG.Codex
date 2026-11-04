@@ -47,7 +47,8 @@ public sealed class BookBuildRunner(IChatClient chat, BookBudget budget, int con
         return new BookWorkItem(section.Id, title, language, style, section.Markdown, BookWork.Prepare(body, mention, render));
     }
 
-    public async Task<BookBuildReport> RunAsync(BookDocument deterministic, Func<BookSection, BookWorkItem?> prepare, IProgress<BookSectionResult>? progress = null, CancellationToken ct = default)
+    public async Task<BookBuildReport> RunAsync(BookDocument deterministic, Func<BookSection, BookWorkItem?> prepare, IProgress<BookSectionResult>? progress = null, CancellationToken ct = default,
+        Func<BookSection, BookSectionResult?>? cached = null)
     {
         var worker = new BookSectionWorker(chat, budget, temperature, refusedBeforeSending);
         using var gate = new SemaphoreSlim(Math.Max(1, concurrency));
@@ -61,7 +62,12 @@ public sealed class BookBuildRunner(IChatClient chat, BookBudget budget, int con
             try
             {
                 BookSectionResult result;
-                if (prepare(section) is not { } item)
+                // A chapter already built from exactly what it is made from now costs nothing: no budget, no call.
+                if (cached?.Invoke(section) is { } kept)
+                {
+                    result = kept;
+                }
+                else if (prepare(section) is not { } item)
                 {
                     result = new BookSectionResult(section.Id, section, false, "skipped", 0, []);
                 }

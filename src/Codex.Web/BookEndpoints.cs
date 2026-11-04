@@ -17,10 +17,10 @@ public static class BookEndpoints
 {
     public static void MapBooks(this WebApplication app)
     {
-        app.MapGet("/campaigns/{campaignId}/book/{audience}", async (string campaignId, string audience, string? lang, string? theme, string? size,
-            ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env) =>
+        app.MapGet("/campaigns/{campaignId}/book/{audience}", async (string campaignId, string audience, string? lang, string? theme, string? size, string? ai,
+            ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, IWebHostEnvironment env) =>
         {
-            var made = await BuildAsync(campaignId, audience, lang, theme, size, user, resolver, reader, env);
+            var made = await BuildAsync(campaignId, audience, lang, theme, size, ai, user, resolver, reader, builds, env);
             if (made.Failure != null)
             {
                 return made.Failure;
@@ -31,15 +31,15 @@ public static class BookEndpoints
         });
 
         // The same page, printed: what the live preview shows is what comes out.
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/pdf", async (string campaignId, string audience, string? lang, string? theme, string? size,
-            ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env, BookPdf pdf, CancellationToken cancel) =>
+        app.MapGet("/campaigns/{campaignId}/book/{audience}/pdf", async (string campaignId, string audience, string? lang, string? theme, string? size, string? ai,
+            ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, IWebHostEnvironment env, BookPdf pdf, CancellationToken cancel) =>
         {
             // A place in the printing line is taken before the campaign is read and the page built, so a request that would be
             // turned away costs nothing, and nobody holds more than one place.
             BookPdfSlot? slot = null;
             try
             {
-                var made = await BuildAsync(campaignId, audience, lang, theme, size, user, resolver, reader, env, forPrint: true, admit: userId =>
+                var made = await BuildAsync(campaignId, audience, lang, theme, size, ai, user, resolver, reader, builds, env, forPrint: true, admit: userId =>
                 {
                     slot = pdf.TryReserve(userId);
                     return slot == null ? Busy(response, new BookPdfBusyException()) : null;
@@ -118,8 +118,8 @@ public static class BookEndpoints
 
     private sealed record Made(string? Html, string Title, IResult? Failure, BookPrintJob? Job = null);
 
-    private static async Task<Made> BuildAsync(string campaignId, string audience, string? lang, string? theme, string? size, ClaimsPrincipal user,
-        ICampaignAccessResolver resolver, BookSourceReader reader, IWebHostEnvironment env, bool forPrint = false, Func<string, IResult?>? admit = null)
+    private static async Task<Made> BuildAsync(string campaignId, string audience, string? lang, string? theme, string? size, string? ai, ClaimsPrincipal user,
+        ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, IWebHostEnvironment env, bool forPrint = false, Func<string, IResult?>? admit = null)
     {
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var access = userId == null ? null : await resolver.ResolveAsync(campaignId, userId);
@@ -149,11 +149,13 @@ public static class BookEndpoints
 
         var language = string.IsNullOrWhiteSpace(lang) ? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName : lang;
         var fonts = Path.GetFullPath(Path.Combine(env.WebRootPath, "fonts"));
-        var words = Localizer.For(language);
-        var document = BookCompiler.Compile(source, language, new BookLabels(
-            Contents: words["Campaign.Book.Label.Contents"], Overview: words["Campaign.Book.Label.Overview"], Cast: words["Campaign.Book.Label.Cast"],
-            Gazetteer: words["Campaign.Book.Label.Gazetteer"], Chronicle: words["Campaign.Book.Label.Chronicle"], Lore: words["Campaign.Book.Label.Lore"],
-            Pages: words["Campaign.Book.Label.Pages"], Homebrew: words["Campaign.Book.Label.Homebrew"]));
+        var document = BookComposer.Compose(source, language);
+        // The DM's stored AI rewrite stands in for a chapter only when asked for ("ai=1") and only for a chapter built from exactly what
+        // it is made from now: a chapter that changed, or was hidden from this edition since, prints from the campaign as it is.
+        if (ai == "1")
+        {
+            document = BookComposer.Overlay(document, source, await builds.GetAsync(access, BookComposer.Edition(edition)));
+        }
 
         BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, chosen, new BookHtmlOptions
         {

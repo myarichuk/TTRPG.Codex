@@ -181,6 +181,9 @@ public sealed class AiProviderService(
         return ServerKeyAllowedFor(user) && _serverClient.Value is { } server ? new MeteredClient(server, usage, user.Id, IsAdmin(user), prepaid) : null;
     }
 
+    /// <summary>True when this user's AI calls go to the server's own key (and so count against their daily allowance).</summary>
+    public bool UsesServerKey(UserDocument? user) => ClientFor(user) is MeteredClient;
+
     public string? Describe(UserDocument? user)
     {
         var provider = DefaultProvider(user);

@@ -1,0 +1,58 @@
+using Codex.Core.Book;
+using Codex.Localization;
+using Codex.Persistence;
+
+namespace Codex.Web.Book;
+
+/// <summary>
+/// The one place a book is composed from a source, so the page, the PDF and the AI build all see the same chapters: the labels in the
+/// reader's language, the deterministic chapters, the prepared chapter a model is given, and the stored rewrite that may stand in for
+/// a chapter (only while it was made from exactly what the chapter is made from now).
+/// </summary>
+public static class BookComposer
+{
+    /// <summary>A chapter with less text than this is not worth a model call: it prints as written.</summary>
+    public const int MinCharsToPolish = 200;
+
+    public static string Edition(BookAudience audience) => audience == BookAudience.Dm ? "dm" : "party";
+
+    public static BookLabels Labels(string language)
+    {
+        var words = Localizer.For(language);
+        return new BookLabels(
+            Contents: words["Campaign.Book.Label.Contents"], Overview: words["Campaign.Book.Label.Overview"], Cast: words["Campaign.Book.Label.Cast"],
+            Gazetteer: words["Campaign.Book.Label.Gazetteer"], Chronicle: words["Campaign.Book.Label.Chronicle"], Lore: words["Campaign.Book.Label.Lore"],
+            Pages: words["Campaign.Book.Label.Pages"], Homebrew: words["Campaign.Book.Label.Homebrew"]);
+    }
+
+    public static BookDocument Compose(BookSource source, string language) => BookCompiler.Compile(source, language, Labels(language));
+
+    /// <summary>Each chapter prepared for a model, by id. The language is the primary subtag, so "en" and "en-US" are one key.</summary>
+    public static Dictionary<string, BookWorkItem> Items(BookDocument document, BookSource source, string style)
+    {
+        var language = BookThemes.Primary(document.Language);
+        var render = new BookMarkdownOptions { Mention = BookCompiler.Mentions(source) };
+        return document.Sections.ToDictionary(s => s.Id, s => BookBuildRunner.Item(s, language, style, render.Mention, render), StringComparer.Ordinal);
+    }
+
+    public static bool TooShort(BookWorkItem item) => item.Work.Text.Length < MinCharsToPolish;
+
+    /// <summary>The document with every chapter that has a stored rewrite built from what it is made from now replaced by that rewrite.
+    /// Any other chapter keeps its deterministic text: a chapter that changed, was hidden from this edition, or was built for another
+    /// language, edition, style or prompt version never comes back from the store.</summary>
+    public static BookDocument Overlay(BookDocument document, BookSource source, BookBuildDocument? stored)
+    {
+        if (stored == null) return document;
+        var edition = Edition(source.Audience);
+        if (stored.Audience != edition) return document;
+        var items = Items(document, source, stored.Style);
+        var sections = document.Sections.Select(s =>
+        {
+            var kept = stored.Sections.FirstOrDefault(b => b.Id == s.Id);
+            return kept is { Refined: true } && items.TryGetValue(s.Id, out var item) && kept.Key == BookBuildKey.For(item, edition)
+                ? new BookSection(s.Id, kept.Markdown, kept.Blocks.Count == 0 ? null : kept.Blocks)
+                : s;
+        }).ToList();
+        return document with { Sections = sections };
+    }
+}
