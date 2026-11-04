@@ -378,3 +378,33 @@ asset, with `:left/:right` and named pages for variety, ornaments in margin boxe
 its cost does not grow with the page count. Phase-0 check still to do: that Chromium 153 paints an `@page` background full bleed
 next to margin boxes. Fallback: a `position: fixed; z-index: -1` element, which needs `@page { margin: 0 }` unless a negative
 inset escapes the margins. Never a filter-generated image as a full-page background.
+
+## 15. The print route: built (plain theme, language gate)
+
+- **`BookTheme` and the language gate** (`Codex.Core/Book/BookTheme.cs`): a theme declares the languages its fonts cover and the font
+  files it draws with. `BookHtml.Build` refuses a book in a language the theme does not support (the route answers 422) instead of
+  printing it in whatever system font has the glyph. **The plain theme declares English only**, as asked. Its faces (Alegreya Sans
+  400/400i/700, Cinzel) are the ones with proven coverage. `BookThemeTests`-style checks hold a theme to its fonts: every file it
+  names ships, and a theme that declares `ru` or `he` must name a Cyrillic or Hebrew face. Adding a language to a theme is a decision
+  with a test, not a string. My view: English only is right for *this* theme today, but not a place to stop: the app is EN/RU/HE, so
+  the plain theme should grow `ru` and `he` once the bundled faces (Forum, Assistant, Frank Ruhl Libre: one weight, no bold, no
+  italic) are proven by the glyph preflight, or get faces that have them. Until then RU/HE books have no theme, which the gate makes
+  explicit.
+- **`BookCompiler`** (`Codex.Persistence/Book`): `BookSource` to chapters (overview, cast, gazetteer, chronicle, lore, pages,
+  homebrew), deterministic, names escaped as literal text, the DM summary only in the DM edition and inside a `:::dm` block.
+  `BookCompiler.Mentions(source)` resolves `[[actor:id]]` and `[[place:id]]` only from the audience-masked source, so a party book
+  never names a hidden actor (closes the "name mentions" item of section 10 for the compiler path; items resolve to nothing).
+  A canary-test bug it caught: flattening a fact's lines turned its `:::dm` markers into printed text; facts are paragraphs now.
+- **`BookHtml`**: one self-contained document: theme CSS with page size and direction written in (no `var()` in `@page`), fonts as
+  data URIs (no font request at all), a CSP meta and header of `default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src
+  data:`, chapters rendered with one shared heading-id namespace, a table of contents. The user's CSS goes through `BookCss.Clean`:
+  no `@import`, `@font-face`, `url()` other than `data:image/`, `expression`, `behavior`, `image-set`, no `<`, 20 KB cap.
+- **Route**: `GET /campaigns/{id}/book/{dm|party}?lang=&theme=&size=` (`BookEndpoints`, DM only, `no-store`, `nosniff`). Not covered
+  by an HTTP-level test yet; the pieces under it are.
+- **Measured in Chromium 153 on a real book from this builder (23 A4 pages, three chapters, tables, lists, quotes)**: 0.14 s, 466 KB,
+  tagged, zero blocked requests with the network closed, only the four allowed fonts embedded (no system-font leak), page numbers in
+  the margin box, none on the first page. An `@page` background (colour plus a tiled data-URI image) paints full bleed under the
+  margin-box page number on every page, so the parchment strategy of section 14 is confirmed for this Chromium.
+- Not done: the PuppeteerSharp print step with browser discovery, TOC page numbers (the two-pass outline lookup), the preview UI,
+  localized labels (chapter titles are English `BookLabels` defaults; they need `Book.*` keys in the three resource files), art
+  through masked paths, stat-block `{{block:N}}` templates, `.md` export, and the cost layer.

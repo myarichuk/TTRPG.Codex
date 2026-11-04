@@ -56,6 +56,43 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
     }
 
     [Fact]
+    public async Task PartyBook_AsHtml_CarriesNoDmOnlyData_AndStillHasThePublicText()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = await _reader.ReadAsync(dm, BookAudience.Party);
+        Assert.NotNull(source);
+
+        var built = Codex.Core.Book.BookHtml.Build(BookCompiler.Compile(source, "en"), Codex.Core.Book.BookThemes.Plain,
+            new Codex.Core.Book.BookHtmlOptions { Mention = BookCompiler.Mentions(source) });
+
+        Assert.NotNull(built.Html);
+        var leaked = Regex.Matches(built.Html, @"CANARY_\w+").Select(m => m.Value).Distinct().Order().ToList();
+        Assert.True(leaked.Count == 0, "The party book carries DM-only data: " + string.Join(", ", leaked));
+        Assert.DoesNotContain(":::", built.Html);
+        foreach (var text in new[] { "PUBLIC_DESCRIPTION", "PUBLIC_Vera", "PUBLIC_Saltmere", "PUBLIC_Session One", "PUBLIC_RECAP", "PUBLIC_FACT" })
+        {
+            Assert.Contains(text, built.Html);
+        }
+    }
+
+    [Fact]
+    public async Task DmBook_AsHtml_BoxesTheDmsSecrets_AndStillHasNoAccountId()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = await _reader.ReadAsync(dm, BookAudience.Dm);
+        Assert.NotNull(source);
+
+        var built = Codex.Core.Book.BookHtml.Build(BookCompiler.Compile(source, "en"), Codex.Core.Book.BookThemes.Plain,
+            new Codex.Core.Book.BookHtmlOptions { BoxSecrets = true, Mention = BookCompiler.Mentions(source) });
+
+        Assert.NotNull(built.Html);
+        Assert.Contains("class=\"secret secret-dm\"", built.Html);
+        Assert.DoesNotContain(":::", built.Html);
+        Assert.DoesNotContain(DmUser, built.Html);
+        Assert.DoesNotContain(PlayerUser, built.Html);
+    }
+
+    [Fact]
     public async Task PartyEdition_StillHasWhatThePartyMayRead()
     {
         var (dm, _) = await SeedAsync();

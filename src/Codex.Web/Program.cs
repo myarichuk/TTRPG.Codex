@@ -142,6 +142,7 @@ builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
+builder.Services.AddSingleton<BookSourceReader>();
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 
@@ -283,6 +284,7 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
 Codex.Web.AccountEndpoints.MapAccounts(app);
 Codex.Web.MediaEndpoints.MapMedia(app);
 Codex.Web.PreviewEndpoints.MapPreviews(app);
+Codex.Web.BookEndpoints.MapBooks(app);
 
 // wwwroot under fingerprinted URLs (app.<hash>.css, through @Assets[...]) that the browser keeps for good: a new build is a new URL,
 // so an update is never drawn with the previous styles or scripts (F28). Open to anyone: the sign-in page needs its styles.
