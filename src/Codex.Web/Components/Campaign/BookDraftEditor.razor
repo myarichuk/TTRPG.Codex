@@ -1,0 +1,497 @@
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject BookDrafts Drafts
+@inject NavigationManager Nav
+@inject IWebHostEnvironment Env
+@inject ILogger<BookDraftEditor> Logger
+
+@* The editable book (docs/BOOK_EXPORT.md 41): a chapter's Markdown on the left, the whole book on the right, drawn by the same script the PDF is
+   printed with. The preview frame is sandboxed with no script; it allows same-origin only so this page can draw into it and measure what it
+   drew, and its own policy fetches nothing. The draft is saved as the GM types; a save from an older copy (another tab) is refused, not merged. *@
+
+<dialog id="book-draft-dialog" class="codex-dialog book-draft-dialog" aria-labelledby="book-draft-title" @oncancel="CloseAsync" data-testid="book-draft-dialog">
+    @if (view != null)
+    {
+        <div class="book-draft" data-book-editor>
+            <header class="book-draft-bar">
+                <h2 id="book-draft-title" class="h5 mb-0"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Campaign.Book.Draft.Title", EditionName]</h2>
+                <span class="small-muted" role="status" aria-live="polite" data-testid="book-draft-save-state">@SaveText</span>
+                <span class="flex-grow-1"></span>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
+                    <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
+                </CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StartOverAsync" data-testid="book-draft-start-over">
+                    <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
+                </CodexButton>
+                <CodexButton Small="true" OnClick="CloseAsync" data-testid="book-draft-close">@L["Common.Close"]</CodexButton>
+            </header>
+            @if (message != null)
+            {
+                <div class="field-error px-3" role="alert" data-testid="book-draft-error">@message</div>
+            }
+            @if (confirmStartOver)
+            {
+                <div class="book-draft-notice" role="alertdialog" aria-labelledby="book-draft-start-over-q">
+                    <span id="book-draft-start-over-q">@L["Campaign.Book.Draft.StartOverAsk"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="StartOverConfirmedAsync" data-testid="book-draft-start-over-yes">@L["Campaign.Book.Draft.StartOverYes"]</CodexButton>
+                    <CodexButton Small="true" OnClick="() => confirmStartOver = false">@L["Common.Cancel"]</CodexButton>
+                </div>
+            }
+            <div class="book-draft-main">
+                <nav class="book-draft-chapters" aria-label="@L["Campaign.Book.Draft.Chapters"]" data-testid="book-draft-chapters">
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var chapter in view.Chapters)
+                        {
+                            <li>
+                                <button type="button" class="book-draft-chapter @(current == chapter.Section ? "active" : null)" aria-current="@(current == chapter.Section ? "true" : null)"
+                                        @onclick="() => ShowAsync(chapter.Section)" data-testid="book-draft-chapter" data-section="@chapter.Section">
+                                    <bdi dir="auto">@Title(chapter)</bdi>
+                                    @if (chapter.Stale || chapter.Gone)
+                                    {
+                                        <span class="badge book-draft-badge-stale" title="@L["Campaign.Book.Draft.Stale"]">@L["Campaign.Book.Draft.Badge.Stale"]</span>
+                                    }
+                                    else if (chapter.Edited)
+                                    {
+                                        <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
+                                    }
+                                </button>
+                            </li>
+                        }
+                        <li>
+                            <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" data-testid="book-draft-css">
+                                <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Draft.Stylesheet"]
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="book-draft-edit">
+                    @if (Current is { } shown)
+                    {
+                        @if (shown.Stale)
+                        {
+                            <div class="book-draft-notice" role="status" data-testid="book-draft-stale">
+                                <div>
+                                    <strong>@L["Campaign.Book.Draft.Stale"]</strong>
+                                    @if (shown.Changed.Count > 0)
+                                    {
+                                        <span class="small-muted"> @L["Campaign.Book.Draft.StaleEntries", string.Join(", ", shown.Changed)]</span>
+                                    }
+                                    <div class="small-muted">@L["Campaign.Book.Draft.StaleHint"]</div>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@working" data-testid="book-draft-regenerate">
+                                        <LucideIcon IconName="refresh-cw" Size="14" /> @L["Campaign.Book.Draft.Regenerate"]
+                                    </CodexButton>
+                                    <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@working" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
+                                </div>
+                            </div>
+                        }
+                        else if (shown.Gone)
+                        {
+                            <div class="book-draft-notice" role="status" data-testid="book-draft-gone">@L["Campaign.Book.Draft.Gone"]</div>
+                        }
+                        @if (shown.CanUndo)
+                        {
+                            <div class="small px-1 pb-1">
+                                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UndoAsync(shown.Section)" disabled="@working" data-testid="book-draft-undo">@L["Campaign.Book.Draft.Undo"]</button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
+                    }
+                    <div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div>
+                    <details class="small mt-1">
+                        <summary>@L["Campaign.Book.Draft.Blocks"]</summary>
+                        <p class="small-muted mb-0">@L["Campaign.Book.Draft.BlocksHint"]</p>
+                    </details>
+                </div>
+                <div class="book-draft-preview">
+                    <div class="field-error small px-1" data-overflow hidden data-testid="book-draft-overflow"></div>
+                    <iframe class="book-draft-frame" @ref="frame" sandbox="allow-same-origin" title="@L["Campaign.Book.PreviewTitle"]" data-testid="book-draft-preview"></iframe>
+                </div>
+            </div>
+        </div>
+    }
+</dialog>
+
+@code {
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter, EditorRequired] public string BasePath { get; set; } = string.Empty;
+
+    private DotNetObjectReference<BookDraftEditor>? self;
+    private IJSObjectReference? module;
+    private ElementReference host;
+    private ElementReference frame;
+    private string? editorId;
+    private BookDraftView? view;
+    private string edition = "party";
+    private string language = "en";
+    private string pageSize = "Letter";
+    private string? current = BookDraftWriter.Front;
+    private bool openRequested;
+    private bool printing;
+    private bool working;
+    private bool confirmStartOver;
+    private string? message;
+    private SaveState state = SaveState.Saved;
+    private readonly SemaphoreSlim saving = new(1, 1);
+    private readonly HashSet<string> dirty = new(StringComparer.Ordinal);
+    private bool cssDirty;
+
+    private enum SaveState { Saved, Saving, Conflict, Failed }
+
+    private BookDraftChapterView? Current => current == null ? null : view?.Chapters.FirstOrDefault(c => c.Section == current);
+
+    private string EditionName => edition == "dm" ? L["Campaign.Book.Edition.Dm"] : L["Campaign.Book.Edition.Party"];
+
+    private string SaveText => state switch
+    {
+        SaveState.Saving => L["Campaign.Book.Draft.Saving"],
+        SaveState.Conflict => L["Campaign.Book.Draft.Conflict"],
+        SaveState.Failed => L["Campaign.Book.Draft.SaveFailed"],
+        _ => dirty.Count > 0 || cssDirty ? L["Campaign.Book.Draft.Unsaved"] : L["Campaign.Book.Draft.Saved"]
+    };
+
+    private string Title(BookDraftChapterView chapter) => chapter.Section == BookDraftWriter.Front ? L["Campaign.Book.Draft.Front"] : chapter.Title;
+
+    /// <summary>Opens the editor on the GM's draft of an edition in a language, making the draft first if there is none.</summary>
+    public async Task OpenAsync(string edition, string language, string pageSize)
+    {
+        this.edition = edition;
+        this.language = language;
+        this.pageSize = pageSize;
+        message = null;
+        confirmStartOver = false;
+        view = await Drafts.OpenAsync(Access, edition, language, pageSize);
+        if (view == null)
+        {
+            message = L["Campaign.Book.Draft.NotAllowed"];
+            return;
+        }
+
+        current = view.Chapters.FirstOrDefault(c => c.Stale)?.Section ?? view.Chapters.FirstOrDefault()?.Section;
+        state = SaveState.Saved;
+        dirty.Clear();
+        cssDirty = false;
+        openRequested = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!openRequested || view == null) return;
+        openRequested = false;
+        await JS.InvokeVoidAsync("codex.guardModal", "book-draft-dialog");
+        await JS.InvokeVoidAsync("codex.showModal", "book-draft-dialog");
+        try
+        {
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/book/book-editor.js"]);
+            self ??= DotNetObjectReference.Create(this);
+            if (editorId != null) await module.InvokeVoidAsync("close", editorId);
+            var shell = await ShellAsync();
+            if (shell.Html == null)
+            {
+                message = shell.Refused;
+                StateHasChanged();
+                return;
+            }
+
+            editorId = await module.InvokeAsync<string>("open", host, frame, new
+            {
+                chapters = view.Chapters.Select(c => new { section = c.Section, markdown = c.Markdown }),
+                css = view.Css,
+                shell = shell.Html,
+                artUrl = $"{BasePath}/book/{edition}/draft/{language}/art",
+                current,
+                rtl = BookThemes.IsRtl(language)
+            }, self, new { overflow = L["Campaign.Book.Draft.Overflow"].ToString() });
+            if (current == null) await module.InvokeVoidAsync("show", editorId, null);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "The book editor could not start");
+            message = L["Campaign.Book.Draft.EditorFailed"];
+            StateHasChanged();
+        }
+    }
+
+    private Task<BookHtmlResult> ShellAsync()
+    {
+        var fonts = Path.GetFullPath(Path.Combine(Env.WebRootPath, "fonts"));
+        byte[]? Font(string file)
+        {
+            var path = Path.GetFullPath(Path.Combine(fonts, file));
+            return path.StartsWith(fonts, StringComparison.Ordinal) && File.Exists(path) ? File.ReadAllBytes(path) : null;
+        }
+
+        var theme = BookDraftThemes.Find(view!.Theme) ?? BookDraftThemes.Plain;
+        return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, Font));
+    }
+
+    private async Task ShowAsync(string? section)
+    {
+        if (module == null || editorId == null) return;
+        await FlushAsync();
+        await module.InvokeVoidAsync("show", editorId, section);
+        current = section;
+    }
+
+    /// <summary>The editor says a chapter changed (typing stopped): its text is read as a stream and saved.</summary>
+    [JSInvokable]
+    public async Task Changed(string section)
+    {
+        dirty.Add(section);
+        await SaveAsync(section);
+    }
+
+    [JSInvokable]
+    public async Task CssChanged()
+    {
+        cssDirty = true;
+        await SaveCssAsync();
+    }
+
+    private async Task<string?> ReadAsync(string? section)
+    {
+        if (module == null || editorId == null) return null;
+        var stream = await module.InvokeAsync<IJSStreamReference>("read", editorId, section);
+        await using var read = await stream.OpenReadStreamAsync(BookDraftDocument.MaxChapterChars * 4L + 16);
+        using var reader = new StreamReader(read, System.Text.Encoding.UTF8);
+        return await reader.ReadToEndAsync();
+    }
+
+    private async Task SaveAsync(string section)
+    {
+        if (view == null || state == SaveState.Conflict) return;
+        await saving.WaitAsync();
+        try
+        {
+            if (!dirty.Contains(section) || view.Chapters.FirstOrDefault(c => c.Section == section) is not { } chapter) return;
+            state = SaveState.Saving;
+            await InvokeAsync(StateHasChanged);
+            var text = await ReadAsync(section);
+            if (text == null) return;
+            var (result, version) = await Drafts.SaveChapterAsync(Access, edition, language, section, text, chapter.Version);
+            switch (result)
+            {
+                case BookDraftSave.Saved:
+                    dirty.Remove(section);
+                    state = SaveState.Saved;
+                    await RefreshAsync(push: false);
+                    break;
+                case BookDraftSave.Conflict:
+                    // Another tab saved this chapter: nothing is overwritten, and nothing more is saved from this copy.
+                    state = SaveState.Conflict;
+                    break;
+                case BookDraftSave.TooLarge:
+                    state = SaveState.Failed;
+                    message = L["Campaign.Book.Draft.TooLarge"];
+                    break;
+                default:
+                    state = SaveState.Failed;
+                    break;
+            }
+        }
+        catch (Exception ex) when (ex is JSException or IOException or InvalidOperationException)
+        {
+            Logger.LogWarning(ex, "Saving a book chapter failed");
+            state = SaveState.Failed;
+        }
+        finally
+        {
+            saving.Release();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SaveCssAsync()
+    {
+        if (view == null || state == SaveState.Conflict) return;
+        await saving.WaitAsync();
+        try
+        {
+            if (!cssDirty) return;
+            var css = await ReadAsync(null);
+            if (css == null) return;
+            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, css, view.PageSize, view.Version);
+            if (result == BookDraftSave.Saved)
+            {
+                cssDirty = false;
+                state = SaveState.Saved;
+                await RefreshAsync(push: false);
+                if (module != null && editorId != null) await module.InvokeVoidAsync("style", editorId, BookCss.Clean(css, out _));
+            }
+            else
+            {
+                state = result == BookDraftSave.Conflict ? SaveState.Conflict : SaveState.Failed;
+                if (result == BookDraftSave.TooLarge) message = L["Campaign.Book.Draft.TooLarge"];
+            }
+        }
+        catch (Exception ex) when (ex is JSException or IOException or InvalidOperationException)
+        {
+            Logger.LogWarning(ex, "Saving the book's stylesheet failed");
+            state = SaveState.Failed;
+        }
+        finally
+        {
+            saving.Release();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <summary>The draft read again (versions, notices). With <paramref name="push"/>, chapters whose text the server changed go to the editor.</summary>
+    private async Task RefreshAsync(bool push, string? section = null)
+    {
+        var fresh = await Drafts.GetAsync(Access, edition, language);
+        if (fresh == null) return;
+        var before = view;
+        view = fresh;
+        if (!push || module == null || editorId == null) return;
+        if (before == null || before.Chapters.Select(c => c.Section).SequenceEqual(fresh.Chapters.Select(c => c.Section)) == false)
+        {
+            await module.InvokeVoidAsync("chapters", editorId, fresh.Chapters.Select(c => new { section = c.Section, markdown = c.Markdown }));
+        }
+
+        foreach (var chapter in fresh.Chapters.Where(c => section == null || c.Section == section))
+        {
+            await module.InvokeVoidAsync("replace", editorId, chapter.Section, chapter.Markdown);
+        }
+    }
+
+    private sealed record Pending(string[] Sections, bool Css);
+
+    /// <summary>Saves what was typed and not yet saved, and returns when it is saved (or refused).</summary>
+    private async Task FlushAsync()
+    {
+        if (module == null || editorId == null) return;
+        Pending? pending;
+        try
+        {
+            pending = await module.InvokeAsync<Pending>("flush", editorId);
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
+        }
+
+        foreach (var section in pending?.Sections ?? [])
+        {
+            dirty.Add(section);
+            await SaveAsync(section);
+        }
+
+        if (pending?.Css == true)
+        {
+            cssDirty = true;
+            await SaveCssAsync();
+        }
+
+        // A save the editor had already sent may still be running.
+        await saving.WaitAsync();
+        saving.Release();
+    }
+
+    private async Task Act(string section, Func<int, Task<(BookDraftSave Result, int Version)>> action)
+    {
+        if (working) return;
+        working = true;
+        message = null;
+        try
+        {
+            await FlushAsync();
+            if (view?.Chapters.FirstOrDefault(c => c.Section == section) is not { } chapter) return;
+            var (result, _) = await action(chapter.Version);
+            if (result == BookDraftSave.Conflict) state = SaveState.Conflict;
+            else if (result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
+            await RefreshAsync(push: result == BookDraftSave.Saved, section);
+        }
+        finally
+        {
+            working = false;
+        }
+    }
+
+    private Task RegenerateAsync(string section) => Act(section, version => Drafts.RegenerateAsync(Access, edition, language, section, version));
+
+    private Task UndoAsync(string section) => Act(section, version => Drafts.UndoAsync(Access, edition, language, section, version));
+
+    private Task KeepAsync(string section) => Act(section, version => Drafts.KeepAsync(Access, edition, language, section, version));
+
+    private async Task StartOverAsync()
+    {
+        await FlushAsync();
+        confirmStartOver = true;
+    }
+
+    private async Task StartOverConfirmedAsync()
+    {
+        confirmStartOver = false;
+        await Drafts.StartOverAsync(Access, edition, language);
+        await OpenAsync(edition, language, pageSize);
+    }
+
+    private async Task DownloadAsync()
+    {
+        printing = true;
+        message = null;
+        try
+        {
+            await FlushAsync();
+            var url = Nav.ToAbsoluteUri($"{BasePath}/book/{edition}/draft/{language}/pdf").ToString();
+            var result = await JS.InvokeAsync<BookPanel.BookDownload>("codex.downloadFrom", url);
+            if (result.Status != 200)
+            {
+                message = result.Status switch
+                {
+                    422 => L["Campaign.Book.Failed.Language"],
+                    429 => L["Campaign.Book.Failed.Busy"],
+                    504 => L["Campaign.Book.Failed.Timeout"],
+                    503 => L["Campaign.Book.Failed.NoBrowser"],
+                    _ => L["Campaign.Book.Failed.Other"]
+                };
+            }
+        }
+        finally
+        {
+            printing = false;
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        await FlushAsync();
+        await JS.InvokeVoidAsync("codex.closeModal", "book-draft-dialog");
+        if (module != null && editorId != null)
+        {
+            await module.InvokeVoidAsync("close", editorId);
+            editorId = null;
+        }
+
+        view = null;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (module != null)
+            {
+                if (editorId != null) await module.InvokeVoidAsync("close", editorId);
+                await module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        self?.Dispose();
+    }
+}

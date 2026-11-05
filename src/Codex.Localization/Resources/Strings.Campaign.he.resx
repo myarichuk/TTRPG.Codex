@@ -838,6 +838,39 @@
   <data name="Campaign.Book.Download" xml:space="preserve"><value>הורדת PDF</value></data>
   <data name="Campaign.Book.Printing" xml:space="preserve"><value>בהדפסה…</value></data>
   <data name="Campaign.Book.Done" xml:space="preserve"><value>הספר הורד.</value></data>
+  <data name="Campaign.Book.Draft.PanelTitle" xml:space="preserve"><value>עריכת הספר</value></data>
+  <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>עותק לעריכה של המהדורה הזו: Markdown שאפשר לשנות בחופשיות, ליד תצוגה של העמודים כפי שיודפסו. כל פרק יודיע אם המערכה השתנתה מאז שערכתם אותו.</value></data>
+  <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>פתיחת העורך: {0}</value></data>
+  <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>עורך הספר: {0}</value></data>
+  <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>הורדת PDF</value></data>
+  <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>להתחיל מחדש</value></data>
+  <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>למחוק את כל העריכות בטיוטה הזו וליצור אותה מחדש מהמערכה?</value></data>
+  <data name="Campaign.Book.Draft.StartOverYes" xml:space="preserve"><value>למחוק את העריכות שלי</value></data>
+  <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>פרקים</value></data>
+  <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>כריכה ותוכן העניינים</value></data>
+  <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>גיליון סגנונות</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>CSS משלכם, שחל אחרי ערכת העיצוב. ייבוא, גופנים וכתובות מוסרים.</value></data>
+  <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>השתנה</value></data>
+  <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>נערך</value></data>
+  <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>המערכה השתנתה מאז שערכתם את הפרק הזה.</value></data>
+  <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>השתנה: {0}.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>"ליצור מחדש" מחליף את הטקסט שלכם בטקסט של המערכה כפי שהוא עכשיו; אפשר לבטל. "להשאיר את שלי" מסתיר את ההודעה עד שהמערכה תשתנה שוב.</value></data>
+  <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>ליצור מחדש</value></data>
+  <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>להשאיר את שלי</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>ביטול היצירה מחדש האחרונה</value></data>
+  <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>למערכה כבר אין את הפרק הזה. מחקו את הטקסט שלו אם אין להדפיס אותו.</value></data>
+  <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>בלוקים לשימוש</value></data>
+  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (להקראה), {{{{secret}}}} (מהדורת המנחה), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} ו-{{{{wide}}}}; כל אחד נסגר בשורה }}}}. שורה \page פותחת עמוד ו-\column טור. תמונה: ![כיתוב](art:…), רק של המהדורה הזו.</value></data>
+  <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>שומר…</value></data>
+  <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>נשמר</value></data>
+  <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>עוד לא נשמר</value></data>
+  <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>הטיוטה שונתה בלשונית אחרת, ולכן לא נשמר מכאן יותר דבר. סגרו ופתחו שוב את העורך.</value></data>
+  <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>השמירה נכשלה. הטקסט שלכם עדיין כאן.</value></data>
+  <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>ארוך מכדי לשמור.</value></data>
+  <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>רק המנחה של המערכה יכול לערוך את הספר.</value></data>
+  <data name="Campaign.Book.Draft.EditorFailed" xml:space="preserve"><value>העורך לא נפתח. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Campaign.Book.Draft.ActionFailed" xml:space="preserve"><value>הפעולה לא הצליחה. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Overflow" xml:space="preserve"><value>גבוה מדי אפילו לעמוד משלו, ולכן יודפס חתוך: עמוד {0}.</value></data>
   <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>ערכת העיצוב הזאת עדיין לא יודעת להדפיס בשפה הזאת.</value></data>
   <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>ספר אחר מודפס כרגע. נסו שוב בעוד רגע.</value></data>
   <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>אין במחשב הזה דפדפן להדפסה.</value></data>

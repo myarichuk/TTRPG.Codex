@@ -66,7 +66,66 @@ public static class BookEndpoints
                 slot?.Dispose();
             }
         });
+
+        // The editable book (docs/BOOK_EXPORT.md 41). Its preview draws in the GM's browser; these give it the edition's pictures and print it.
+        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/art", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
+            ICampaignAccessResolver resolver, BookDrafts drafts, CancellationToken cancel) =>
+        {
+            if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
+            response.Headers.CacheControl = "no-store";
+            response.Headers["X-Content-Type-Options"] = "nosniff";
+            return Results.Json(await drafts.ArtAsync(access, audience, BookArtQuality.Preview, cancel));
+        });
+
+        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/pdf", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
+            ICampaignAccessResolver resolver, BookDrafts drafts, IWebHostEnvironment env, BookPdf pdf, ILoggerFactory logs, CancellationToken cancel) =>
+        {
+            if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
+            // The place in the line first, as for the book: a request that would be turned away costs nothing.
+            using var slot = pdf.TryReserve(access.UserId);
+            if (slot == null) return Busy(response, new BookPdfBusyException());
+            try
+            {
+                var fonts = Path.GetFullPath(Path.Combine(env.WebRootPath, "fonts"));
+                var (page, refused) = await drafts.PageAsync(access, audience, lang, BookArtQuality.Print, file => Font(fonts, file), cancel);
+                if (refused != null) return Results.Problem(refused, statusCode: StatusCodes.Status422UnprocessableEntity);
+                if (page == null) return Results.NotFound();
+                var printed = await pdf.PrintAsync(slot, new BookPrintJob(page.Shell, [], _ => page.Shell) { Layout = new BookPrintLayout(RenderScript(env), page.Markdown, page.Art) }, cancel);
+                if (printed.Overflow.Count > 0)
+                {
+                    // The preview marks these too; the GM sees them there before printing (a report in the panel is phase 3).
+                    logs.CreateLogger("Codex.Book").LogWarning("A printed book draft has {Count} pages whose content does not fit", printed.Overflow.Count);
+                    response.Headers["X-Book-Overflow"] = string.Join(",", printed.Overflow);
+                }
+
+                Protect(response);
+                return Results.File(printed.Pdf, "application/pdf", FileName(page.Title, audience));
+            }
+            catch (BookPdfTimeoutException timeout)
+            {
+                return Results.Problem(timeout.Message, statusCode: StatusCodes.Status504GatewayTimeout, extensions: Code("timeout"));
+            }
+            catch (BookPdfUnavailableException unavailable)
+            {
+                return Results.Problem(unavailable.Message, statusCode: StatusCodes.Status503ServiceUnavailable, extensions: Code(unavailable.Code));
+            }
+        });
     }
+
+    private static async Task<CampaignAccess?> GmAsync(string campaignId, ClaimsPrincipal user, ICampaignAccessResolver resolver) =>
+        user.FindFirst(ClaimTypes.NameIdentifier)?.Value is { } userId && await resolver.ResolveAsync(campaignId, userId) is { IsDm: true } access ? access : null;
+
+    private static byte[]? Font(string fonts, string file)
+    {
+        var path = Path.GetFullPath(Path.Combine(fonts, file));
+        return path.StartsWith(fonts, StringComparison.Ordinal) && File.Exists(path) ? File.ReadAllBytes(path) : null;
+    }
+
+    private static string? _renderScript;
+
+    /// <summary>The bundled renderer (<c>wwwroot/lib/book/book-render.js</c>), the only script the print browser ever runs.</summary>
+    public static string RenderScript(IWebHostEnvironment env) =>
+        _renderScript ??= File.ReadAllText(Path.Combine(env.WebRootPath, "lib", "book", "book-render.js"));
 
     private static IResult Busy(HttpResponse response, BookPdfBusyException busy)
     {

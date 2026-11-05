@@ -87,6 +87,16 @@
     @if (Ctx.Access.IsDm)
     {
         <hr class="my-3" />
+        <div data-testid="book-draft-panel">
+            <h4 class="h6">@L["Campaign.Book.Draft.PanelTitle"]</h4>
+            <p class="small-muted">@L["Campaign.Book.Draft.PanelHint"]</p>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="EditDraftAsync" data-testid="book-draft-open">
+                <LucideIcon IconName="pencil" Size="14" /> @L["Campaign.Book.Draft.Open", edition == "dm" ? L["Campaign.Book.Edition.Dm"] : L["Campaign.Book.Edition.Party"]]
+            </CodexButton>
+        </div>
+        <BookDraftEditor @ref="draftEditor" Access="Ctx.Access" BasePath="@Ctx.BasePath" />
+
+        <hr class="my-3" />
         <div data-testid="book-ai">
             <h4 class="h6">@L["Campaign.Book.Ai.Title"]</h4>
             <p class="small-muted">@L["Campaign.Book.Ai.Hint"]</p>
@@ -263,6 +273,10 @@
     private string? errorDetail;
 
     private string themeId = BookThemes.Plain.Id;
+    private BookDraftEditor? draftEditor;
+
+    // The editable book of the edition and language chosen above; it is made from the campaign the first time.
+    private Task EditDraftAsync() => draftEditor?.OpenAsync(edition, language, size == "Letter" ? "Letter" : "A4") ?? Task.CompletedTask;
 
     private BookTheme Theme => BookThemes.Find(themeId) ?? BookThemes.Plain;
 

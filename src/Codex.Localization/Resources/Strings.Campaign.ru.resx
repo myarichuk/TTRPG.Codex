@@ -838,6 +838,39 @@
   <data name="Campaign.Book.Download" xml:space="preserve"><value>Скачать PDF</value></data>
   <data name="Campaign.Book.Printing" xml:space="preserve"><value>Печать…</value></data>
   <data name="Campaign.Book.Done" xml:space="preserve"><value>Книга скачана.</value></data>
+  <data name="Campaign.Book.Draft.PanelTitle" xml:space="preserve"><value>Редактирование книги</value></data>
+  <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>Редактируемая копия этого издания: Markdown, который можно свободно менять, рядом с предпросмотром страниц в том виде, в каком они печатаются. Каждая глава подскажет, если кампания изменилась после вашей правки.</value></data>
+  <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>Открыть редактор: {0}</value></data>
+  <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>Редактор книги: {0}</value></data>
+  <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>
+  <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Начать заново</value></data>
+  <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>Удалить все правки в этом черновике и собрать его заново из кампании?</value></data>
+  <data name="Campaign.Book.Draft.StartOverYes" xml:space="preserve"><value>Удалить мои правки</value></data>
+  <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>Главы</value></data>
+  <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>Обложка и оглавление</value></data>
+  <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>Стили</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>Ваш собственный CSS, применяется поверх темы. Импорты, шрифты и адреса удаляются.</value></data>
+  <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>изменилась</value></data>
+  <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>правки</value></data>
+  <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>Кампания изменилась после того, как вы правили эту главу.</value></data>
+  <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>Изменилось: {0}.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>«Собрать заново» заменит ваш текст текущим текстом кампании; это можно отменить. «Оставить мой» скроет это сообщение, пока кампания снова не изменится.</value></data>
+  <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>Собрать заново</value></data>
+  <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>Оставить мой</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Отменить последнюю пересборку</value></data>
+  <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>В кампании больше нет этой главы. Удалите её текст, если он не должен печататься.</value></data>
+  <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>Доступные блоки</value></data>
+  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (для зачитывания), {{{{secret}}}} (издание мастера), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} и {{{{wide}}}}; каждый закрывается строкой }}}}. Строка \page начинает страницу, \column — колонку. Картинка: ![подпись](art:…), только из этого издания.</value></data>
+  <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>Сохранение…</value></data>
+  <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>Сохранено</value></data>
+  <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>Ещё не сохранено</value></data>
+  <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>Черновик изменён в другой вкладке, поэтому отсюда больше ничего не сохраняется. Закройте и снова откройте редактор.</value></data>
+  <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>Не удалось сохранить. Ваш текст остался здесь.</value></data>
+  <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>Слишком длинно, чтобы сохранить.</value></data>
+  <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>Редактировать книгу может только мастер кампании.</value></data>
+  <data name="Campaign.Book.Draft.EditorFailed" xml:space="preserve"><value>Редактор не запустился. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Campaign.Book.Draft.ActionFailed" xml:space="preserve"><value>Не получилось. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Campaign.Book.Draft.Overflow" xml:space="preserve"><value>Не помещается даже на отдельную страницу и будет обрезано при печати: страница {0}.</value></data>
   <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>Это оформление пока не умеет печатать на этом языке.</value></data>
   <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>Сейчас печатается другая книга. Повторите через минуту.</value></data>
   <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>На этом компьютере нет браузера для печати.</value></data>

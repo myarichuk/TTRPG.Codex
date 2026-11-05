@@ -1400,6 +1400,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 9 };
             await _mediaStore.PutAsync(dm, actor.Id, RavenMediaStore.ActorPortrait, new MemoryStream(png), "image/png");
             Assert.True(await _journalRepository.TrySaveAsync(new JournalEntryDocument { Title = "Dear diary" }, Access(campaignId, "p1", CampaignRole.Player)));
+            // The GM's edited book is hand-written work: the backup keeps it, though an export leaves it out.
+            var drafts = new RavenBookDraftRepository(_dbService);
+            Assert.NotNull(await drafts.CreateAsync(dm, "party", "en", [new BookDraftGenerated("cast", "Cast", "# Cast\n\nHAND_WRITTEN_DRAFT", "k1")]));
             var keyholder = "user-" + Guid.NewGuid();
             await _userRepository.CreateUserAsync(new UserDocument
             {
@@ -1417,6 +1420,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             Assert.Contains(bundle.Actors, a => a.Id == actor.Id);
             Assert.Equal(png, await File.ReadAllBytesAsync(Path.Combine(folder, "images", actor.Id, "portrait.png")));
             Assert.Contains("Dear diary", await File.ReadAllTextAsync(Path.Combine(folder, "journals.json")));
+            Assert.Contains("HAND_WRITTEN_DRAFT", await File.ReadAllTextAsync(Path.Combine(folder, "book-drafts.json")));
 
             var users = await File.ReadAllTextAsync(Path.Combine(written.Folder, "users.json"));
             Assert.Contains("keyholder-", users);

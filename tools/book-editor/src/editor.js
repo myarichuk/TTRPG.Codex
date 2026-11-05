@@ -33,11 +33,20 @@ export async function open(host, frame, book, dotnet, labels) {
 
   const language = new Compartment();
   const direction = book.rtl ? EditorView.contentAttributes.of({ dir: 'rtl' }) : [];
+  // What was typed and not yet handed to the server: chapters by section, and the stylesheet.
+  state.pending = new Set();
+  state.cssPending = false;
   const changed = debounce(() => {
-    if (state.mode === 'css') dotnet.invokeMethodAsync('CssChanged');
-    else dotnet.invokeMethodAsync('Changed', state.current);
+    const sections = [...state.pending];
+    const sheet = state.cssPending;
+    state.pending.clear();
+    state.cssPending = false;
+    for (const section of sections) dotnet.invokeMethodAsync('Changed', section);
+    if (sheet) dotnet.invokeMethodAsync('CssChanged');
   }, 900);
   const repaint = debounce(() => preview(id), 350);
+  // A wider or narrower frame (the window resized) scales the pages again; nothing is drawn again.
+  new ResizeObserver(() => { const r = frame.contentDocument?.getElementById('brew'); if (r) fitWidth(frame, r); }).observe(frame);
   state.changed = changed;
   state.view = new EditorView({
     parent: host,
@@ -47,7 +56,7 @@ export async function open(host, frame, book, dotnet, labels) {
         EditorView.updateListener.of(u => {
           if (!u.docChanged) return;
           const value = u.state.doc.toString();
-          if (state.mode === 'css') state.css = value; else chapter(state).markdown = value;
+          if (state.mode === 'css') { state.css = value; state.cssPending = true; } else { chapter(state).markdown = value; state.pending.add(state.current); }
           changed();
           repaint();
         })]
@@ -81,17 +90,22 @@ function load(state, value) {
   state.view.dispatch({ changes: { from: 0, to: state.view.state.doc.length, insert: value } });
 }
 
-/** Saves whatever is waiting at once (before the dialog closes or another chapter is shown). */
+/** What is waiting to be saved, taken out of the queue: the server saves it itself, and knows when it is done (before closing, printing,
+ * or acting on a chapter). */
 export function flush(id) {
   const state = editors.get(id);
-  if (state) state.changed.now();
+  if (!state) return { sections: [], css: false };
+  state.changed.cancel();
+  const result = { sections: [...state.pending], css: state.cssPending };
+  state.pending.clear();
+  state.cssPending = false;
+  return result;
 }
 
 /** Shows another chapter, or the stylesheet (`section` null). */
 export function show(id, section) {
   const state = editors.get(id);
   if (!state) return;
-  state.changed.now();
   state.mode = section == null ? 'css' : 'md';
   if (section != null) state.current = section;
   // Swapping the text must not count as typing it.
@@ -160,6 +174,7 @@ async function preview(id) {
     const scroller = doc.scrollingElement;
     const top = scroller ? scroller.scrollTop : 0;
     const result = await layout(doc, root, brew(state.chapters), state.art);
+    fitWidth(state.frame, root);
     if (scroller) scroller.scrollTop = top;
     const status = state.host.closest('[data-book-editor]')?.querySelector('[data-overflow]');
     if (status) {
@@ -170,6 +185,17 @@ async function preview(id) {
     state.rendering = false;
     if (state.again) { state.again = false; preview(id); }
   }
+}
+
+// The pages scaled to the frame's width. A transform moves nothing on the page (the fit above measured the same lines); the space the
+// unscaled pages would take below is given back.
+function fitWidth(frame, root) {
+  const page = root.querySelector('.page');
+  if (!page) return;
+  const scale = Math.min(1, (frame.clientWidth - 24) / page.offsetWidth);
+  root.style.transformOrigin = 'top center';
+  root.style.transform = scale < 1 ? `scale(${scale})` : '';
+  root.style.marginBottom = scale < 1 ? `${-(1 - scale) * root.offsetHeight}px` : '';
 }
 
 function scrollTo(state, section) {

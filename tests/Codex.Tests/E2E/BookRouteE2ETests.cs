@@ -514,3 +514,78 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         Assert.Empty(pageErrors);
     }
 }
+
+/// <summary>The editable book in the real app (docs/BOOK_EXPORT.md 41): the editor opens on a draft made from the campaign, saves what the GM
+/// types, shows it in the preview, tells the GM when the campaign changed under an edited chapter, regenerates it, and prints the draft.</summary>
+[Collection("RavenDb")]
+public class BookDraftE2ETests : IClassFixture<AppFixture>
+{
+    private readonly AppFixture _app;
+
+    public BookDraftE2ETests(AppFixture app) => _app = app;
+
+    [Fact]
+    public async Task TheGmEditsAChapter_IsToldWhenTheCampaignChanges_RegeneratesIt_AndPrintsTheDraft()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bdr-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl, AcceptDownloads = true });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        var veraId = "bdr-vera-" + Guid.NewGuid();
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = veraId, CampaignId = campaignId, Name = "Vera", Biography = "Keeps the lighthouse.", Visibility = Codex.Persistence.ActorVisibility.Known }]);
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        var dialog = dm.GetByTestId("book-draft-dialog");
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+        // The preview frame runs no script; same-origin only, so the editor can draw into it.
+        Assert.Equal("allow-same-origin", await dm.GetByTestId("book-draft-preview").GetAttributeAsync("sandbox"));
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await Assertions.Expect(preview.Locator(".page h1").First).ToHaveTextAsync("Saltmere Chronicle");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Keeps the lighthouse." })).ToHaveCountAsync(1);
+
+        // The GM writes into the Cast chapter: it is saved, marked edited, and drawn.
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\nPUBLIC_GM_LINE\n");
+        await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast] .book-draft-badge-edited")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_GM_LINE" })).ToHaveCountAsync(1);
+
+        // The campaign changes under the edited chapter: on opening again the chapter says so, naming the entry.
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = veraId, CampaignId = campaignId, Name = "Vera", Biography = "Rings the bell at dusk.", Visibility = Codex.Persistence.ActorVisibility.Known }]);
+        await dm.GetByTestId("book-draft-close").ClickAsync();
+        await Assertions.Expect(dialog).Not.ToBeVisibleAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        var stale = dm.GetByTestId("book-draft-stale");
+        await Assertions.Expect(stale).ToBeVisibleAsync();
+        await Assertions.Expect(stale).ToContainTextAsync("Vera");
+
+        // Regenerate takes the campaign's text, and the GM's line goes (undo is offered).
+        await dm.GetByTestId("book-draft-regenerate").ClickAsync();
+        await Assertions.Expect(stale).Not.ToBeVisibleAsync();
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Rings the bell at dusk.");
+        await Assertions.Expect(dm.Locator(".cm-content")).Not.ToContainTextAsync("PUBLIC_GM_LINE");
+        await Assertions.Expect(dm.GetByTestId("book-draft-undo")).ToBeVisibleAsync();
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Rings the bell at dusk." })).ToHaveCountAsync(1);
+
+        // The draft prints.
+        var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download").ClickAsync());
+        Assert.EndsWith(".pdf", download.SuggestedFilename);
+        await using (var stream = await download.CreateReadStreamAsync())
+        {
+            var head = new byte[5];
+            await stream.ReadExactlyAsync(head);
+            Assert.Equal("%PDF-", Encoding.ASCII.GetString(head));
+        }
+
+        Assert.Empty(pageErrors);
+    }
+}

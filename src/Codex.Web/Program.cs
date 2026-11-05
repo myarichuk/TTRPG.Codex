@@ -170,6 +170,7 @@ builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
 builder.Services.AddSingleton<IBookArtRepository, RavenBookArtRepository>();
 builder.Services.AddSingleton<IBookDraftRepository, RavenBookDraftRepository>();
 builder.Services.AddScoped<Codex.Web.Book.BookArtService>();
+builder.Services.AddScoped<Codex.Web.Book.BookDrafts>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();

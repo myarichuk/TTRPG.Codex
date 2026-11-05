@@ -1311,7 +1311,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; nothing built)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phase 1 built, see 41.9)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1387,3 +1387,70 @@ so that two book paths do not drift apart.
 4. **AI edits** on a selection, with the review overlay.
 5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay.
 6. **The party leak check** before export.
+
+### 41.9 Phase 1: built
+
+The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was offered as the safer option). What exists:
+
+- **Store** (`Persistence/Book/BookDraftStore.cs`):
+  - One `BookDraftDocument` per campaign, edition and language: `bookdrafts/{campaign}/{edition}/{language}`, holding theme, paper, GM CSS and
+    chapter order. Each chapter is its own `BookDraftChapter` (`.../chapters/{section}`) with the GM's Markdown, the base, the base's key, the
+    previous version (Markdown, base and key, so an undo brings the notice back), "keep mine", and a version number.
+  - A save names the version it was made from; any other is refused (`Conflict`), and optimistic concurrency covers the gap between load and save.
+  - Edition, language (`en`, `ru`, `he`) and section are checked before they reach an id. Caps: 400,000 characters a chapter, 20,000 of CSS,
+    40 chapters.
+  - `FollowAsync`: a chapter whose text is still its base takes the new generated text silently; a new chapter is added in place; a chapter the
+    campaign no longer has is removed if never edited. `\page`/`\column` lines are not edits (`BookDraftText.Content`).
+  - Deleted with the campaign; written to the daily backup (`book-drafts.json`); left out of the export, like the book art.
+- **Generator** (`Web/Book/BookDraftWriter.cs`): from `BookComposer.Compose` of the edition's masked source.
+  - Blocks: `{{cover`, `{{toc`, `{{chapter,#ch-ID}}`, `{{chapter-art`, `{{entry,#e-SLOT}}`, `{{portrait`, `{{place`, `{{secret` (GM draft only).
+  - **Entry ids are slot keys**: a stranger in the party draft is `mask:`-keyed, so not even the hidden actor's id is in the party's text.
+  - **Secrets are `{{secret` blocks, never `:::dm`**: `marked-hbfm` reads `:::` as a definition list and would print the secret as text.
+  - The campaign's free text: mentions become the edition's names (never the typed label); wiki links become their words; pictures in free text
+    become their captions (a loss against the current book, which resolves `asset:` pictures in wiki bodies); `<` and `&` are escaped.
+  - Key: a hash of the generator version and the generated text. Bumping `BookDraftWriter.Version` makes every chapter "moved on"; unedited
+    ones follow silently.
+- **Renderer** (`tools/book-editor/src/render.js`, built into `wwwroot/lib/book/book-render.js` and `book-editor.js`, output committed,
+  licences in `THIRD-PARTY-NOTICES.txt`):
+  - `marked-hbfm` 1.0.3 pages (`\page` splits, Homebrewery's filler column).
+  - The **cleaner**: parsed inert in a `<template>`, then a tag and attribute allowlist. Links only to `#ids`. No style with `url(`, image
+    functions or escapes. A picture only as `art:<slot key>`, resolved to a plain data image from the edition's map; any other picture is removed.
+  - **Fitting at draw time**: blocks that spill go onto a continuation page; each fragment of a split block is measured. A block too tall even
+    for a page of its own is reported (preview line, `X-Book-Overflow` header on the PDF, a log line), not silently lost.
+  - **Contents page numbers** read from the laid-out pages.
+  - This replaces phase 3's "Fit pages" command for now: what prints is a pure function of the stored Markdown, but it is not the stored
+    Markdown. Phase 3 can still write the breaks into the text.
+- **Printing** (`BookPdf`, `BookPrintLayout`):
+  - The print browser opens the shell in a page with script on and every request refused, evaluates the bundled renderer (the shell's CSP
+    forbids every script element; DevTools evaluation is not governed by it), and lays the book out.
+  - The resulting page is then printed in a page with script off, as every book is.
+  - Tests (`BookDraftPdfTests`, real Chrome): nothing fetched; hostile markup neither runs nor fetches; long text flows and the contents line
+    says where; a too-tall block is reported; a picture resolves only to its slot.
+- **Plain theme** (`Core/Book/BookDraftHtml.cs`, `BookDraftThemes.Plain`): our own CSS for Homebrewery's page structure and every block of the
+  contract, with the plain book's faces. It has the same language gate: **English only**. Nothing is copied from Homebrewery's stylesheets.
+- **Editor** (`Components/Campaign/BookDraftEditor.razor`, opened from the book panel):
+  - Chapter list, CodeMirror (Markdown and a stylesheet tab), and the whole book drawn in a frame. The frame is `sandbox="allow-same-origin"`
+    (no script; same-origin only so the editor can draw into it and measure), shell CSP `default-src 'none'`, and is scaled to fit by a transform.
+  - Autosave about a second after typing stops. The text goes to the server as a stream (no message-size limit).
+  - A conflict stops saving from that tab and says so.
+  - The stale notice names the changed entries; it offers Regenerate, Keep mine, and Undo after a Regenerate.
+  - Start over (with a confirmation) and Download PDF.
+- **Routes**: `GET /campaigns/{id}/book/{edition}/draft/{lang}/art` (the edition's preview pictures by slot, GM only, no-store) and `/pdf`.
+
+**Tests:** `BookDraftTests` (10: party canaries including the masked id, GM secrets, the text conversion, version conflicts, follow and stale
+naming the entry, Regenerate and Undo, keep mine, breaks are not edits, access and posted values, two editions and deletion);
+`BookDraftPdfTests` (5); `tools/book-editor/test.mjs` (the cleaner against hostile drafts, under jsdom); `BookDraftE2ETests` (the dialog: type,
+autosave, preview, stale notice, Regenerate, PDF); the backup test. Mutants caught: entry id written raw; secrets kept in the party draft;
+version check removed; breaks counted as edits.
+
+**Not done, or not verified:**
+- The overflow report reaches the GM only in the preview. The PDF route sets a header, which the panel does not read yet (phase 3).
+- **The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).
+- The editor was not looked at on a phone, in RTL, or with a screen reader.
+- Russian and Hebrew drafts are made and edited but cannot be printed (the language gate).
+- There is no per-chapter preview: the whole book is drawn again on each pause in typing. Fine for the test campaign (3 pages); not measured
+  on a large one.
+- Pictures in free text (`asset:`) are dropped to their captions (see Generator above).
+- Chapter order cannot be changed, and the GM cannot add a chapter of their own; they can write anything inside one.
+- The old book route still exists beside the draft (41.7). "Polish with AI" output is not yet an input to the generator.
+

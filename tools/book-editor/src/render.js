@@ -131,8 +131,10 @@ function counts(win, el) {
 function spills(win, page) {
   const box = page.getBoundingClientRect();
   const cs = win.getComputedStyle(page);
+  // The preview shows the pages scaled down to fit (a transform, which changes no line); boxes are measured scaled, paddings are not.
+  const scale = page.offsetWidth ? box.width / page.offsetWidth : 1;
   // The content box: a block that starts past its right edge sits in a column that does not exist (the page clips it).
-  const left = box.left + parseFloat(cs.paddingLeft), right = box.right - parseFloat(cs.paddingRight), bottom = box.bottom - parseFloat(cs.paddingBottom);
+  const left = box.left + parseFloat(cs.paddingLeft) * scale, right = box.right - parseFloat(cs.paddingRight) * scale, bottom = box.bottom - parseFloat(cs.paddingBottom) * scale;
   const rtl = cs.direction === 'rtl';
   // Each fragment on its own: a block split across columns has one box per column, and its overall box can sit inside the page while its
   // last fragment is in a column past the page's edge.
