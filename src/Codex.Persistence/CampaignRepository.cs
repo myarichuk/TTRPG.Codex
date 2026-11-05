@@ -151,7 +151,8 @@ public class CampaignRepository(
         if (bookBuildRepository != null) await bookBuildRepository.DeleteAllForCampaignAsync(campaignId);
         if (templateRepository != null) await templateRepository.DeleteAllForCampaignAsync(campaignId);
 
-        // Attachments (cover art) are deleted with the document.
+        // Attachments (cover art) are deleted with the document; the GM's book pictures are attachments of the book art document.
+        session.Delete(BookArtDocument.IdFor(campaignId));
         session.Delete(campaign);
         await session.SaveChangesAsync();
         return CampaignDeleteResult.Deleted;

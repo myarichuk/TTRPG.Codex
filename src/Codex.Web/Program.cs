@@ -167,6 +167,8 @@ builder.Services.AddSingleton<IBookImageDecoder>(_ => new BookImageWorkerPool(Bo
 builder.Services.AddSingleton(sp => new BookImageScaler(sp.GetRequiredService<IBookImageDecoder>()));
 builder.Services.AddSingleton<BookArtReader>();
 builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
+builder.Services.AddSingleton<IBookArtRepository, RavenBookArtRepository>();
+builder.Services.AddScoped<Codex.Web.Book.BookArtService>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();

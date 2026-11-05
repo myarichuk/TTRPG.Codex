@@ -44,11 +44,13 @@ public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
     private readonly ConcurrentDictionary<string, BookImage> _cache = new(StringComparer.Ordinal);
     private long _cached;
 
-    /// <summary>The printed size of each kind of picture (see the theme's <c>.cover-art</c>, <c>.art-portrait</c>, <c>.art-place</c>).</summary>
+    /// <summary>The printed size of each kind of picture (see the theme's <c>.cover-art</c>, <c>.art-portrait</c>, <c>.art-place</c>, <c>.art-header</c>).</summary>
     public static BookArtBox BoxFor(string kind, int columns = 2) => kind switch
     {
         "cover" => new(140, 165, false),
         "portrait" or "homebrew" => new(62, 52, true),
+        // A chapter header spans both columns (the text width) whatever the column count.
+        "header" => new(172, 62, true),
         // A place picture is as wide as its column: 88 mm in two columns, the text width (172 mm) in one.
         _ => new(columns == 2 ? 88 : 172, 48, true)
     };

@@ -57,7 +57,9 @@ public sealed class JsonBackups(RavenDbService db, ICampaignRepository campaigns
                 .Concat(bundle.Actors.Select(a => a.Id))
                 .Concat(bundle.Homebrew.Select(h => h.Id))
                 .Concat(bundle.Regions.Select(r => r.Id))
-                .Concat(bundle.Wiki.Select(p => p.Id));
+                .Concat(bundle.Wiki.Select(p => p.Id))
+                // The GM's book pictures cost money to draw; the export leaves them out, the backup keeps them.
+                .Append(BookArtDocument.IdFor(campaign.Id));
             foreach (var owner in owners.Where(id => !string.IsNullOrEmpty(id)))
             {
                 imageCount += await WriteImagesAsync(owner, Path.Combine(folder, "images", Safe(owner)), ct);

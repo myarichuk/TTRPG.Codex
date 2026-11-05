@@ -734,6 +734,27 @@
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>שתי עמודות</value></data>
   <data name="Campaign.Book.Pictures" xml:space="preserve"><value>לכלול את התמונות של הקמפיין</value></data>
   <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>כריכה, דיוקנאות ואיורים של מקומות ודפים — רק מה שהמהדורה הנבחרת רשאית להציג. בלעדיהן התצוגה המקדימה קלה יותר.</value></data>
+  <data name="Campaign.Book.Art.Title" xml:space="preserve"><value>תמונות לספר הזה</value></data>
+  <data name="Campaign.Book.Art.HintDm" xml:space="preserve"><value>הוסיפו תמונה לכריכה, מעל פרק או ליד רשומה. מה שמוסיפים כאן מודפס רק במהדורת המנחה. כדי שתמונה תופיע בשני הספרים, הוסיפו אותה במהדורת החבורה.</value></data>
+  <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>הוסיפו תמונה לכריכה, מעל פרק או ליד רשומה. מה שמוסיפים כאן מודפס גם במהדורת החבורה וגם במהדורת המנחה. לדמויות נסתרות אין כאן מקום, וזרים מוצגים כפי שהחבורה מכירה אותם.</value></data>
+  <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>כריכה</value></data>
+  <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>מעל הפרק</value></data>
+  <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>הוספת תמונה</value></data>
+  <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>החלפה</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>טוענים את המקומות לתמונות…</value></data>
+  <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>מוסיפים את התמונה…</value></data>
+  <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>התמונה נוספה.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>התמונה הוסרה.</value></data>
+  <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>אי אפשר להשתמש בקובץ הזה. השתמשו בתמונת PNG, JPEG, WebP, GIF או AVIF עד 6 MB.</value></data>
+  <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>המקום הזה כבר לא קיים במהדורה. ייתכן שהוסתר או ששמו שונה.</value></data>
+  <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>בספר של הקמפיין הזה כבר יש מספר התמונות המרבי. הסירו אחת קודם.</value></data>
+  <data name="Campaign.Book.Art.NotAllowed" xml:space="preserve"><value>רק המנחה של הקמפיין יכול לשנות את תמונות הספר.</value></data>
+  <data name="Campaign.Book.Art.Failed" xml:space="preserve"><value>התמונה לא נוספה: {0}</value></data>
+  <data name="Campaign.Book.Art.State.Mine" xml:space="preserve"><value>התמונה שלכם</value></data>
+  <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>התמונה של מהדורת החבורה</value></data>
+  <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>התמונה שלו עצמו</value></data>
+  <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>אין תמונה</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>ערכת עיצוב: {0}. התצוגה המקדימה היא הדף שממנו מודפס ה-PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>הסתרת התצוגה המקדימה</value></data>

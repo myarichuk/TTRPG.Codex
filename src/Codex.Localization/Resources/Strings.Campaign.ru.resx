@@ -734,6 +734,27 @@
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>Две колонки</value></data>
   <data name="Campaign.Book.Pictures" xml:space="preserve"><value>Включить картинки кампании</value></data>
   <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>Обложка, портреты и иллюстрации мест и страниц — только то, что видно выбранному изданию. Без них предпросмотр легче.</value></data>
+  <data name="Campaign.Book.Art.Title" xml:space="preserve"><value>Иллюстрации книги</value></data>
+  <data name="Campaign.Book.Art.HintDm" xml:space="preserve"><value>Добавьте картинку на обложку, над главой или рядом с записью. Добавленное здесь печатается только в издании мастера. Чтобы картинка была в обеих книгах, добавьте её в издании для группы.</value></data>
+  <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>Добавьте картинку на обложку, над главой или рядом с записью. Добавленное здесь печатается и в издании для группы, и в издании мастера. Скрытых персонажей здесь нет, а незнакомцы показаны такими, какими их знает группа.</value></data>
+  <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>Обложка</value></data>
+  <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>Над главой</value></data>
+  <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>Добавить картинку</value></data>
+  <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>Заменить</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>Загружаем места для картинок…</value></data>
+  <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>Добавляем картинку…</value></data>
+  <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>Картинка добавлена.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>Картинка убрана.</value></data>
+  <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>Этот файл не подходит. Нужна картинка PNG, JPEG, WebP, GIF или AVIF до 6 МБ.</value></data>
+  <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>Этого места в издании больше нет: возможно, его скрыли или переименовали.</value></data>
+  <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>В книге этой кампании уже предельное число картинок. Сначала уберите одну.</value></data>
+  <data name="Campaign.Book.Art.NotAllowed" xml:space="preserve"><value>Менять картинки книги может только мастер кампании.</value></data>
+  <data name="Campaign.Book.Art.Failed" xml:space="preserve"><value>Картинка не добавлена: {0}</value></data>
+  <data name="Campaign.Book.Art.State.Mine" xml:space="preserve"><value>ваша картинка</value></data>
+  <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>картинка издания для группы</value></data>
+  <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>своя картинка</value></data>
+  <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>без картинки</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Оформление: {0}. Предпросмотр — та самая страница, из которой печатается PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Скрыть предпросмотр</value></data>

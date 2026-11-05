@@ -108,7 +108,7 @@ public static class BookThemes
             body { background: transparent; }
             .note, .descriptive { background: rgba(255, 255, 255, .35); }
             .secret { background: rgba(138, 28, 28, .08); }
-            .chapter > h1 + p:not(:has(> em:only-child))::first-letter { font-family: "Cinzel", serif; float: {{(layout.Rtl ? "right" : "left")}}; font-size: 4.1em; line-height: .72; padding-inline-end: .06em; padding-top: .04em; }
+            .chapter > h1 + p:not(:has(> em:only-child))::first-letter, .chapter > h1 + .art-header + p:not(:has(> em:only-child))::first-letter { font-family: "Cinzel", serif; float: {{(layout.Rtl ? "right" : "left")}}; font-size: 4.1em; line-height: .72; padding-inline-end: .06em; padding-top: .04em; }
             """;
     }
 
@@ -194,6 +194,9 @@ public static class BookThemes
             .art-place { margin: .4em 0 .6em; break-inside: avoid; }
             .art-place p { margin: 0; }
             .art-place .art { width: 100%; max-height: 48mm; margin: 0; object-fit: cover; }
+            .art-header { column-span: all; margin: 0 0 .8em; break-inside: avoid; break-before: avoid; }
+            .art-header p { margin: 0; }
+            .art-header .art { width: 100%; max-height: 62mm; margin: 0; object-fit: cover; }
             .mention, .wikilink { font-weight: 700; }
             """);
         return css.ToString();

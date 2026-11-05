@@ -734,6 +734,27 @@
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>Two columns</value></data>
   <data name="Campaign.Book.Pictures" xml:space="preserve"><value>Include the pictures the campaign already has</value></data>
   <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>Cover, portraits and the art of places and pages, as each edition may see them. Off makes the preview lighter.</value></data>
+  <data name="Campaign.Book.Art.Title" xml:space="preserve"><value>Pictures for this book</value></data>
+  <data name="Campaign.Book.Art.HintDm" xml:space="preserve"><value>Put a picture in the cover, above a chapter, or beside an entry. Pictures you add here print only in the GM edition. To use one in both books, add it in the party edition.</value></data>
+  <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>Put a picture in the cover, above a chapter, or beside an entry. Pictures you add here print in the party edition and in the GM edition. Hidden characters have no place here, and strangers appear as the party knows them.</value></data>
+  <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>Cover</value></data>
+  <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>Above the chapter</value></data>
+  <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>Add picture</value></data>
+  <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>Replace</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>Loading the places for pictures…</value></data>
+  <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>Adding the picture…</value></data>
+  <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>Picture added.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>Picture removed.</value></data>
+  <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>That file can't be used. Use a PNG, JPEG, WebP, GIF or AVIF image under 6 MB.</value></data>
+  <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>That place is no longer in this edition. It may have been hidden or renamed.</value></data>
+  <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>This campaign's book has as many pictures as it can hold. Remove one first.</value></data>
+  <data name="Campaign.Book.Art.NotAllowed" xml:space="preserve"><value>Only the campaign's GM can change the book's pictures.</value></data>
+  <data name="Campaign.Book.Art.Failed" xml:space="preserve"><value>The picture wasn't added: {0}</value></data>
+  <data name="Campaign.Book.Art.State.Mine" xml:space="preserve"><value>your picture</value></data>
+  <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>party edition's picture</value></data>
+  <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>its own picture</value></data>
+  <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>no picture</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Theme: {0}. The preview is the page the PDF is printed from.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Hide preview</value></data>

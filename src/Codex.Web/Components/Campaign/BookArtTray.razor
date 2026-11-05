@@ -1,0 +1,166 @@
+@using Codex.Persistence
+@using Codex.Web.Book
+@using Codex.Web.Services
+@inject BookArtService Art
+@inject ILogger<BookArtTray> Logger
+
+@* The book's own pictures (docs/BOOK_EXPORT.md 28.3, step 3): a slot per chapter header, per entry and the cover, as this edition's source makes
+   them. A picture put here is for this edition only; one put in the party edition's tray also prints in the GM's book, never the other way. *@
+<div class="mt-2" data-testid="book-art">
+    <button type="button" class="btn btn-link btn-sm p-0" @onclick="ToggledAsync" aria-expanded="@(open ? "true" : "false")" aria-controls="book-art-region" data-testid="book-art-toggle">
+        <LucideIcon IconName="@(open ? "chevron-down" : "chevron-right")" Size="14" /> @L["Campaign.Book.Art.Title"]
+    </button>
+    @if (open)
+    {
+    <div id="book-art-region">
+    <p class="field-hint">@(Edition == "dm" ? L["Campaign.Book.Art.HintDm"] : L["Campaign.Book.Art.HintParty"])</p>
+
+    <div role="status" aria-live="polite" class="small" data-testid="book-art-status">
+        @if (status != null)
+        {
+            <div class="@(failed ? "field-error" : "small-muted")">@status</div>
+        }
+    </div>
+
+    @if (tray != null)
+    {
+        <ul class="list-unstyled small mb-2" data-testid="book-art-slots">
+            @Row(tray.Cover, L["Campaign.Book.Art.Cover"])
+            @foreach (var chapter in tray.Chapters)
+            {
+                <li class="mt-2 fw-semibold"><bdi dir="auto">@chapter.Title</bdi></li>
+                @foreach (var slot in chapter.Slots)
+                {
+                    @Row(slot, slot.Kind == BookSlots.Header ? L["Campaign.Book.Art.Header"] : slot.Label)
+                }
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="small-muted">@L["Campaign.Book.Art.Loading"]</div>
+    }
+    </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter, EditorRequired] public string Edition { get; set; } = "dm";
+    [Parameter, EditorRequired] public string Language { get; set; } = "en";
+
+    /// <summary>Raised after a picture is put in or taken out, so the preview can be drawn again.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private BookTray? tray;
+    private bool open;
+    private string? status;
+    private bool failed;
+    private string? working;
+    private string shownFor = string.Empty;
+
+    private RenderFragment Row(BookTraySlot slot, string name) => __builder =>
+    {
+        var id = "book-art-" + slot.Key;
+        <li class="d-flex gap-2 align-items-baseline flex-wrap @(slot.Kind == BookSlots.Header ? "ps-2" : slot.Kind == BookSlots.Entry ? "ps-3" : string.Empty)" data-testid="@id">
+            <bdi dir="auto" id="@(id + "-name")">@name</bdi>
+            <span class="small-muted" data-testid="@(id + "-state")">@State(slot)</span>
+            <label class="btn btn-link btn-sm p-0">
+                @(slot.Mine ? L["Campaign.Book.Art.Replace"] : L["Campaign.Book.Art.Upload"])<span class="visually-hidden"> @name</span>
+                <InputFile OnChange="e => UploadAsync(slot, e)" accept="@ArtService.Accept" class="visually-hidden" disabled="@(working != null)" data-testid="@(id + "-file")" />
+            </label>
+            @if (slot.Mine)
+            {
+                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => RemoveAsync(slot)" disabled="@(working != null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-remove")">@L["Campaign.Book.Art.Remove"]</button>
+            }
+        </li>
+    };
+
+    private string State(BookTraySlot slot) =>
+        slot.Placed == BookSlots.Tag(Edition == "dm" ? BookAudience.Dm : BookAudience.Party) ? L["Campaign.Book.Art.State.Mine"]
+        : slot.Placed == BookArtDocument.Party ? L["Campaign.Book.Art.State.Party"]
+        : slot.Own ? L["Campaign.Book.Art.State.Own"]
+        : L["Campaign.Book.Art.State.None"];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // The slots are the edition's and named in the book's language: a change of either reads them again, but only once the tray is open.
+        if (open && shownFor != Edition + "|" + Language) await LoadAsync();
+    }
+
+    private async Task ToggledAsync()
+    {
+        open = !open;
+        if (open && shownFor != Edition + "|" + Language) await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        shownFor = Edition + "|" + Language;
+        tray = await Art.TrayAsync(Access, Edition, Language);
+    }
+
+    private async Task UploadAsync(BookTraySlot slot, InputFileChangeEventArgs e)
+    {
+        if (working != null) return;
+        failed = false;
+        var file = e.File;
+        if (ArtService.Problem(file.ContentType, file.Size) is { } problem)
+        {
+            (status, failed) = (problem, true);
+            return;
+        }
+
+        working = slot.Key;
+        status = L["Campaign.Book.Art.Uploading"];
+        try
+        {
+            using var buffer = new MemoryStream();
+            await using (var stream = file.OpenReadStream(RavenMediaStore.MaxBytes))
+            {
+                await stream.CopyToAsync(buffer);
+            }
+
+            var result = await Art.UploadAsync(Access, Edition, slot.Key, buffer.ToArray(), file.ContentType, Language);
+            (status, failed) = result switch
+            {
+                BookArtUpload.Stored => (L["Campaign.Book.Art.Stored"], false),
+                BookArtUpload.BadImage => (L["Campaign.Book.Art.BadImage"], true),
+                BookArtUpload.NoSuchSlot => (L["Campaign.Book.Art.NoSlot"], true),
+                BookArtUpload.Full => (L["Campaign.Book.Art.Full"], true),
+                _ => (L["Campaign.Book.Art.NotAllowed"], true)
+            };
+            if (result == BookArtUpload.Stored)
+            {
+                await LoadAsync();
+                await Changed.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Book picture upload failed");
+            (status, failed) = (L["Campaign.Book.Art.Failed", L.Describe(ex)], true);
+        }
+        finally
+        {
+            working = null;
+        }
+    }
+
+    private async Task RemoveAsync(BookTraySlot slot)
+    {
+        if (working != null) return;
+        working = slot.Key;
+        try
+        {
+            var removed = await Art.RemoveAsync(Access, Edition, slot.Key);
+            (status, failed) = removed ? (L["Campaign.Book.Art.Removed"], false) : (L["Campaign.Book.Art.NotAllowed"], true);
+            await LoadAsync();
+            if (removed) await Changed.InvokeAsync();
+        }
+        finally
+        {
+            working = null;
+        }
+    }
+}

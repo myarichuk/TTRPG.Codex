@@ -57,6 +57,10 @@
     </div>
     <label class="form-check mt-2"><input type="checkbox" class="form-check-input" @bind="pictures" @bind:after="Changed" data-testid="book-pictures" /> @L["Campaign.Book.Pictures"]</label>
     <div class="field-hint">@L["Campaign.Book.Pictures.Hint"]</div>
+    @if (Ctx.Access.IsDm)
+    {
+        <BookArtTray Access="Ctx.Access" Edition="@edition" Language="@language" Changed="ArtChanged" />
+    }
     <div class="field-hint">@L["Campaign.Book.ThemeNote", Theme.Name]</div>
 
     <div class="d-flex gap-2 flex-wrap mt-2">
@@ -291,6 +295,13 @@
         // The stored build belongs to one edition and one language: what is current changes with them.
         Attach(Builds.Find(Ctx.Access, edition));
         _ = PreviewAsync();
+    }
+
+    // A picture put in or taken out of a slot shows in the preview at once.
+    private void ArtChanged()
+    {
+        done = false;
+        previewStamp++;
     }
 
     private void TogglePreview()

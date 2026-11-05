@@ -41,6 +41,15 @@ public sealed class BookArt
 
     public string? Homebrew(string entryId) => _ids.GetValueOrDefault(("homebrew", entryId, string.Empty));
 
+    /// <summary>The picture the GM put in a slot for the book, as <paramref name="audience"/> may have it: the party only one made for the
+    /// party, the GM their own or else the party's. The tag is checked here as well as when the pictures were chosen, so a map read for
+    /// the GM still gives a party entry nothing that was made for the GM.</summary>
+    public string? Slot(string key, BookAudience audience)
+    {
+        var party = _ids.GetValueOrDefault(("slot", key, BookArtDocument.Party));
+        return audience == BookAudience.Party ? party : _ids.GetValueOrDefault(("slot", key, BookArtDocument.Dm)) ?? party;
+    }
+
     internal string Add(string kind, string owner, string sub, BookImage image)
     {
         var id = "a" + (_byAsset.Count + 1);
@@ -66,12 +75,15 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
 
     public const long MaxTotalBytes = 64L * 1024 * 1024;
 
-    public async Task<BookArt> ReadAsync(BookSource source, BookArtQuality quality = BookArtQuality.Print, int columns = 2, CancellationToken ct = default)
+    /// <param name="book">The GM's book pictures chosen for this edition's slots (<see cref="BookSlots.Choose"/>); they come first, and an entry or
+    /// cover that has one is not read from its own media.</param>
+    public async Task<BookArt> ReadAsync(BookSource source, BookArtQuality quality = BookArtQuality.Print, int columns = 2, CancellationToken ct = default,
+        IReadOnlyList<BookSlotPicture>? book = null)
     {
         var art = new BookArt();
         long total = 0;
 
-        async Task TryAddAsync(string kind, string owner, string sub, string subject, string documentId, string name)
+        async Task TryAddAsync(string kind, string owner, string sub, string subject, string documentId, string name, string? scaleKind = null)
         {
             if (art.Count >= MaxImages)
             {
@@ -102,7 +114,7 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
             // Scaled to what its box prints at: the book's size cap counts what is placed, not what was uploaded.
             if (scaler != null)
             {
-                image = await scaler.ScaleAsync(image, kind, quality, ct, columns);
+                image = await scaler.ScaleAsync(image, scaleKind ?? kind, quality, ct, columns);
             }
 
             if (total + image.Bytes.Length > MaxTotalBytes)
@@ -115,31 +127,46 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
             art.Add(kind, owner, sub, image);
         }
 
+        // Only pictures for this source's own audience and slots: the tag and the slot's audience are checked again, whoever chose them.
+        var covered = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var chosen in book ?? [])
+        {
+            var picture = chosen.Picture;
+            if (chosen.Slot.Audience != source.Audience || picture.Slot != chosen.Slot.Key
+                || !(picture.BuiltFrom == BookArtDocument.Party || picture.BuiltFrom == BookArtDocument.Dm && source.Audience == BookAudience.Dm))
+            {
+                continue;
+            }
+
+            covered.Add(chosen.Slot.Key);
+            await TryAddAsync("slot", chosen.Slot.Key, picture.BuiltFrom, "slot:" + chosen.Slot.Key, BookArtDocument.IdFor(source.Campaign.Id), picture.Attachment, chosen.Slot.ScaleKind);
+        }
+
         // The cover is what any member of the campaign sees on the overview, so both editions may carry it.
-        if (source.Campaign.HasCover)
+        if (source.Campaign.HasCover && !covered.Contains(BookSlots.KeyFor(BookSlots.CoverSubject)))
         {
             await TryAddAsync("cover", string.Empty, string.Empty, "cover", source.Campaign.Id, RavenMediaStore.CampaignCover);
         }
 
-        foreach (var actor in source.Actors.Where(a => a.HasPortrait))
+        foreach (var actor in source.Actors.Where(a => a.HasPortrait && !covered.Contains(BookSlots.KeyFor(BookSlots.ActorSubject(source.Audience, a)))))
         {
             await TryAddAsync("portrait", actor.Id, string.Empty, "portrait:" + actor.Id, actor.Id, RavenMediaStore.ActorPortrait);
         }
 
-        foreach (var page in source.Wiki.Where(p => p.HasArt))
+        foreach (var page in source.Wiki.Where(p => p.HasArt && !covered.Contains(BookSlots.KeyFor(BookSlots.WikiSubject(p.Id)))))
         {
             await TryAddAsync("wiki", page.Id, string.Empty, "wiki:" + page.Id, page.Id, RavenMediaStore.EntryArt);
         }
 
         foreach (var region in source.Regions)
         {
-            foreach (var location in region.Locations.Where(l => l.HasArt))
+            foreach (var location in region.Locations.Where(l => l.HasArt && !covered.Contains(BookSlots.KeyFor(BookSlots.LocationSubject(region.Id, l.Id)))))
             {
                 await TryAddAsync("location", region.Id, location.Id, "location:" + location.Id, region.Id, RavenMediaStore.LocationArtName(location.Id));
             }
         }
 
-        foreach (var entry in source.Homebrew.Where(h => h.HasArt))
+        foreach (var entry in source.Homebrew.Where(h => h.HasArt && !covered.Contains(BookSlots.KeyFor(BookSlots.HomebrewSubject(h.Id)))))
         {
             await TryAddAsync("homebrew", entry.Id, string.Empty, "homebrew:" + entry.Id, entry.Id, RavenMediaStore.EntryArt);
         }

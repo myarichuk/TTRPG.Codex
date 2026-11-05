@@ -11,7 +11,7 @@ namespace Codex.Tests;
 /// 1xx and all of the 2xx, and the media store must never even be asked for a picture the audience may not see.
 /// </summary>
 [Collection("RavenDb")]
-public class BookArtTests : IClassFixture<RavenDbFixture>
+public partial class BookArtTests : IClassFixture<RavenDbFixture>
 {
     private const string DmUser = "art_dm_user";
     private const string PlayerUser = "art_player_user";
@@ -27,6 +27,8 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
     private readonly RavenWikiRepository _wiki;
     private readonly BookSourceReader _reader;
     private readonly RecordingMedia _media;
+    private readonly RavenDbService _db;
+    private readonly RavenBookArtRepository _bookArt;
 
     public BookArtTests(RavenDbFixture fixture)
     {
@@ -42,6 +44,8 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), _actors, _sessions, _notes, _regions, _facts, _homebrew, _encounters, _wiki);
         _reader = new BookSourceReader(_campaigns, _actors, _sessions, _encounters, _facts, _notes, _regions, _homebrew, _wiki);
         _media = new RecordingMedia(new RavenMediaStore(db));
+        _db = db;
+        _bookArt = new RavenBookArtRepository(db);
     }
 
     private sealed class RecordingMedia(IMediaStore inner) : IMediaStore

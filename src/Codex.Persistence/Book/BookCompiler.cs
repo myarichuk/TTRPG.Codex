@@ -26,13 +26,13 @@ public static class BookCompiler
         var current = string.Empty;
 
         // The heading of an entry, and its position. The chapter is "# title", a blank line, then this builder's text: two lines in.
-        void Head(StringBuilder sb, string prefix, string name, string? kind = null, string owner = "", string sub = "", bool hasArt = false, string placement = "")
+        void Head(StringBuilder sb, string prefix, string name, string? kind = null, string owner = "", string sub = "", bool hasArt = false, string placement = "", string subject = "")
         {
             var line = 2;
             foreach (var c in sb.ToString().AsSpan()) if (c == '\n') line++;
             var heading = prefix + Escape(name);
             sb.Append(heading).Append("\n\n");
-            if (kind != null) positions.Add(new BookEntryPosition(current, heading, line, kind, owner, sub, name, placement, hasArt));
+            if (kind != null) positions.Add(new BookEntryPosition(current, heading, line, kind, owner, sub, name, placement, hasArt, subject, source.Audience));
         }
 
         void Add(string id, string title, Action<StringBuilder> body)
@@ -56,7 +56,7 @@ public static class BookCompiler
         {
             foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
             {
-                Head(sb, "## ", actor.Name, "portrait", actor.Id, hasArt: actor.HasPortrait, placement: BookArtPlacement.Portrait);
+                Head(sb, "## ", actor.Name, "portrait", actor.Id, hasArt: actor.HasPortrait, placement: BookArtPlacement.Portrait, subject: BookSlots.ActorSubject(source.Audience, actor));
                 Paragraph(sb, actor.PublicDescription);
                 Paragraph(sb, actor.Biography);
             }
@@ -69,7 +69,7 @@ public static class BookCompiler
                 Head(sb, "## ", region.Name);
                 foreach (var place in region.Locations)
                 {
-                    Head(sb, "### ", place.Name, "location", region.Id, place.Id, place.HasArt, BookArtPlacement.Place);
+                    Head(sb, "### ", place.Name, "location", region.Id, place.Id, place.HasArt, BookArtPlacement.Place, BookSlots.LocationSubject(region.Id, place.Id));
                     Paragraph(sb, place.Description);
                 }
             }
@@ -103,7 +103,7 @@ public static class BookCompiler
         {
             foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
             {
-                Head(sb, "## ", page.Title, "wiki", page.Id, hasArt: page.HasArt, placement: BookArtPlacement.Place);
+                Head(sb, "## ", page.Title, "wiki", page.Id, hasArt: page.HasArt, placement: BookArtPlacement.Place, subject: BookSlots.WikiSubject(page.Id));
                 Paragraph(sb, page.Body);
             }
         });
@@ -112,7 +112,7 @@ public static class BookCompiler
         {
             foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
             {
-                Head(sb, "## ", entry.Name, "homebrew", entry.Id, hasArt: entry.HasArt, placement: BookArtPlacement.Portrait);
+                Head(sb, "## ", entry.Name, "homebrew", entry.Id, hasArt: entry.HasArt, placement: BookArtPlacement.Portrait, subject: BookSlots.HomebrewSubject(entry.Id));
                 Paragraph(sb, entry.Description);
             }
         });
@@ -129,16 +129,18 @@ public static class BookCompiler
     public static IReadOnlyList<BookArtAnchor> ArtAnchors(IReadOnlyList<BookEntryPosition> entries, BookArt art)
     {
         var anchors = new List<BookArtAnchor>();
-        foreach (var entry in entries.Where(e => e.HasArt))
+        foreach (var entry in entries)
         {
-            var asset = entry.Kind switch
+            // A picture the GM put in this entry's slot for the book comes first; it is looked up for the audience the entry was
+            // compiled for, so a GM-edition picture cannot come back for a party entry even from the GM's map.
+            var asset = art.Slot(entry.SlotKey, entry.Audience) ?? (!entry.HasArt ? null : entry.Kind switch
             {
                 "portrait" => art.Portrait(entry.Owner),
                 "location" => art.Location(entry.Owner, entry.Sub),
                 "wiki" => art.Wiki(entry.Owner),
                 "homebrew" => art.Homebrew(entry.Owner),
                 _ => null
-            };
+            });
             if (asset != null) anchors.Add(new BookArtAnchor(entry, asset));
         }
 
@@ -205,11 +207,18 @@ public static class BookArtPlacement
 
     /// <summary>Full width of the column, under the heading.</summary>
     public const string Place = "art-place";
+
+    /// <summary>Across both columns, under the chapter title.</summary>
+    public const string Header = "art-header";
 }
 
 /// <summary>An entry of the compiled book that has a heading of its own, and where that heading is: <paramref name="Line"/> counts lines of the
-/// chapter's Markdown from zero. <paramref name="HasArt"/> is the picture flag the audience's source holds for it.</summary>
-public sealed record BookEntryPosition(string Section, string Heading, int Line, string Kind, string Owner, string Sub, string Alt, string Placement, bool HasArt);
+/// chapter's Markdown from zero. <paramref name="HasArt"/> is the picture flag the audience's source holds for it. <paramref name="Subject"/> is
+/// what its picture slot is about as <paramref name="Audience"/> sees it (<see cref="BookSlots"/>).</summary>
+public sealed record BookEntryPosition(string Section, string Heading, int Line, string Kind, string Owner, string Sub, string Alt, string Placement, bool HasArt, string Subject, BookAudience Audience)
+{
+    public string SlotKey => BookSlots.KeyFor(Subject);
+}
 
 /// <summary>One existing picture and the entry whose heading it follows.</summary>
 public sealed record BookArtAnchor(BookEntryPosition Entry, string Asset);
