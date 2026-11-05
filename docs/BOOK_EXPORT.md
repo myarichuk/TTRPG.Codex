@@ -889,7 +889,7 @@ page onto a second page). `.art` has a 120 mm height limit. Two dead CSS rules a
 Open, in the order I would take them:
 1. **(Fixed in section 32.)** ~~Anchoring is still by heading text.~~ A body line `## Vera` inside an earlier entry (a wiki page "History" with a `## Vera` subsection) still takes Vera's picture,
    and the real heading gets none. Always a picture the party may see, so a misplacement, not a leak. A proper fix needs a per-entry marker emitted by `Compile`.
-2. **The decoder runs on player-uploaded portraits**, in-process (see the correction above). Options: decode out of process, scale only DM-uploaded media, or decode in the printing browser.
+2. **(Fixed in section 33.)** ~~The decoder runs on player-uploaded portraits, in-process (see the correction above).~~ Options: decode out of process, scale only DM-uploaded media, or decode in the printing browser.
 3. **One global decoder queue of two**, shared by all users: one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
    Needs a per-user limit or a time budget that falls back to unscaled bytes.
 4. **Preview and print can differ**: the 64 MB cap counts scaled bytes and preview files are about six times smaller, so a book of roughly 11-64 MB of print-size art
@@ -918,3 +918,30 @@ PDF outline. Mutants killed: placing by first text match, accepting ambiguous he
 
 Not done: a rewrite that keeps its headings but moves entries around is placed by heading text and is therefore right only in that each picture follows *its own* heading; a
 `## Name` line in the **body** of a rewritten entry that equals an entry heading makes that heading ambiguous, and its picture is left out.
+
+## 33. The decoder runs in its own process (done)
+
+`src/Codex.ImageWorker` is a small executable (references `Codex.Persistence` for SkiaSharp; built and copied beside the server because `Codex.Web` references it; a
+`dotnet publish` of the server was checked to contain it, its runtimeconfig and `libSkiaSharp.so`, and a worker run from that publish directory scaled a picture).
+`BookImageEngine` (the former private `Scale`) is the only code that calls the native decoder, and it is called only there. The server's `BookImageWorkerPool` starts at most two
+workers on first use with the same dotnet host the server runs in (the launcher starts the server with the bundled one), talks to them over stdin/stdout in a length-prefixed
+format (`BookImageWire`; sizes validated on both ends), and:
+- kills and replaces a worker that exits, does not answer within 30 s, or whose request is cancelled mid-flight (the pipe is mid-message); a hung worker does not outlive its timeout;
+- answers "keep the picture as it is" for any failure (it cannot start, died, timed out, spoke nonsense), counted in `Failures`; the scaler remembers that answer, so a file that kills
+  a worker costs one worker per server run and not one per request;
+- keeps pictures as they are when the worker file is missing (a host that lacks it loses the saving, nothing else);
+- is told nothing but bytes and a size, and gets no secrets, ids or network: it has no database and no access to the campaign.
+
+The engine also refuses to scale up on its own account now (a request at or above the picture's own size returns the picture).
+
+What this does and does not buy: a crash, a stack overflow, an out-of-memory kill or a hang in libjpeg/libpng/libwebp/Skia now ends a child process; the server, RavenDB embedded and the
+other users' requests continue. It is **not a sandbox**: the worker runs with the server's user and file access, so an attacker who gets code execution in the decoder (not
+merely a crash) has what the server's user has. Real isolation would be a container, seccomp or an unprivileged user for the worker; none of that is done. The worker's memory is
+not capped either (a decompression bomb inside the 30-megapixel limit can use a few hundred megabytes, twice at a time); the timeout and the kill are the only bounds.
+
+Tests (`BookImageWorkerTests`, with the real worker process and `sh` stand-ins): the real worker scales like the in-process engine and is reused; the engine's "keep" comes back as nothing;
+a worker that dies at once, one that never answers, and one that dies on its first start but not later; a cancelled request leaves nothing running; no worker file; a poison picture is not
+resent. Mutants killed: failures thrown instead of absorbed, the failure answer not remembered, a hung or cancelled worker not killed (found by the first run: a leak that no assertion
+could see, so the pool now reports `Alive`). Not tested: a real native crash on a real malformed file (the stand-ins exit with a crash code but never touch libjpeg), Windows and macOS hosts.
+
+Still open from section 31.1: the shared two-worker queue is per server, not per user, and the PDF slot is still held while art is read; preview and print can differ near the size cap.

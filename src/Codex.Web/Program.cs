@@ -143,7 +143,10 @@ builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddSingleton<BookSourceReader>();
-builder.Services.AddSingleton<BookImageScaler>();
+// Pictures are decoded in a separate process (Codex.ImageWorker, built beside the server): a file that crashes the native decoder ends that
+// process, not this one. Without the worker file the book keeps pictures as they are.
+builder.Services.AddSingleton<IBookImageDecoder>(_ => new BookImageWorkerPool(BookImageWorkerLaunch.Beside(AppContext.BaseDirectory)));
+builder.Services.AddSingleton(sp => new BookImageScaler(sp.GetRequiredService<IBookImageDecoder>()));
 builder.Services.AddSingleton<BookArtReader>();
 builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
