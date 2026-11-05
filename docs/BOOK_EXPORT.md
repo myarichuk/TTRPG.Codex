@@ -1310,3 +1310,80 @@ small renderer, an editor page and a print page, run on the test campaign of sec
 6. **Security:** the print path has JavaScript off today. This needs either JS on in the print browser, limited by CSP to our own bundled script,
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
+
+## 41. The editable book: design (chosen by the GM 2026-11-05; nothing built)
+
+The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
+when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
+
+### 41.1 What is stored
+- **A draft** per campaign, edition (party or GM) and language: the theme, the GM's CSS, and an ordered list of chapters. Changing language
+  means a new draft, because chapter titles are translated. Size-capped like the art store; saved with RavenDB optimistic concurrency, so a second
+  tab cannot silently overwrite the first.
+- **A chapter** is its own record and is edited one at a time; the preview shows the whole book. It holds:
+  - the GM's Markdown;
+  - **the base**: the generated Markdown the GM's edits started from (the text, not only a hash: a three-way merge needs it);
+  - the base's inputs key (as `BookBuildKey` does for rewrites), to tell whether the campaign changed;
+  - the previous version, so a Regenerate or an accepted merge can be undone.
+- **Entries carry stable ids.** The generator puts the entry's id on each `##` entry (a Cast member, a place, a page), so the stale notice and
+  merges work per entry, not per chapter. Handoff §7 item 2 already found chapter units too coarse.
+
+### 41.2 The generator and the theme contract
+- The generator writes Homebrewery-flavoured Markdown from the same masked source the book reads today (`BookSourceReader`, `BookComposer`),
+  with polished text from "Polish with AI" as an optional input, and the picture tray's pictures.
+- It uses only a fixed set of blocks, and **every theme must style each one**: chapter opening (title, chapter art), entry, portrait, place
+  picture, note, read-aloud, secret (GM draft only), stat block, table, cover, contents. Section 40 showed why: the same Markdown under another
+  theme's rules was a mess, and grimdark's rule for every picture put a portrait over the text. A theme that styles only some blocks is not a theme.
+- **Pictures go in only as `art:` references** (`![](art:<slot>)`), resolved when the page is drawn, and only to pictures tagged for the draft's
+  edition. No outside links or `data:` pictures in a draft. The GM can still pick any of the edition's slots or upload into one.
+- Themes: Plain first (on Blank's layout CSS, without its 5e fonts and pictures), then Ashen Vellum (the grimdark sheet, fonts bundled, stains as
+  a small tile, positions as variables), then Parchment. No theme copies a published book's look.
+
+### 41.3 When the campaign changes
+For each chapter (and inside it, each entry), the base's key is compared with the key recomputed now.
+- **A chapter the GM never edited** (its Markdown equals its base) is simply regenerated: one click, or automatically, with no AI.
+- **An edited chapter** shows "The campaign changed since you edited this", with:
+  - **Regenerate**: replaces it with the new generated text; the old one is kept as the previous version.
+  - **Bring up to date**: a three-way merge of base, GM's text and new generated text, **block by block, by the code first**:
+    - a block the GM did not touch takes the new generated text;
+    - a block the GM edited, whose source did not change, keeps the GM's text;
+    - only a block where both changed goes to the model, with the base, the GM's text and the new text, and returns one merged block.
+    The pre-flight shows the cost before anything is sent; with no conflicts there is no AI call at all.
+  - **Keep mine**: dismisses the notice until the campaign changes again.
+- **Page breaks are layout, not edits.** `\page` and `\column` lines (from "Fit pages" or typed) are left out of edit detection and out of the
+  merge, and pages are fitted again after a merge. Otherwise every fitted chapter would look edited.
+
+### 41.4 The review overlay (for merges and for AI edits)
+- Shown on the Markdown, one change at a time: inside prose, word-level red strikethrough for what goes and green for what comes; for a table or
+  stat block, the whole block replaced (word diffs on table syntax are unreadable). Accept or reject each change, or accept all. The preview shows
+  the result as accepted so far.
+- **AI edits** use the same overlay: the GM selects a passage (or a block, or a chapter) and asks ("make this a read-aloud box", "shorter",
+  "in the voice of a ship's log"). The model returns a replacement for that range only; nothing changes until it is accepted.
+- **Secrets:** in the GM draft every `:::dm` block is swapped for a placeholder before sending and put back after; the model never sees a secret
+  and cannot change one. In the party draft the model sees only the party draft and the party-masked source.
+
+### 41.5 What changes for the party guarantee
+Once the GM can type freely, "the party book never shows a secret" is no longer something the code can guarantee: the GM can paste one in. What
+the code still guarantees: the party draft is generated from the party source only; its pictures resolve only to party-tagged pictures; its AI calls
+see only party text. What it adds: **before export, the party draft is checked for GM-only text** (secret blocks' text, hidden characters' names,
+titles of GM-only pages) and the GM is warned, with each hit shown. A warning, not a refusal: it is the GM's book.
+
+### 41.6 Printing
+- The renderer (`marked-hbfm`, bundled) runs in the GM's browser for the preview, in a sandboxed iframe with `default-src 'none'` and only bundled
+  fonts; and in the print browser for the PDF, with only that script allowed by CSP and the network still closed. Its HTML is cleaned in both.
+- **The fit check runs at print time too**, because the preview and the PDF come from different browsers (the GM's may be Safari or Firefox). A
+  block that does not fit, even on its own page, is reported before the PDF is given out, never silently clipped. "Fit pages" in the editor
+  writes `\page`/`\column` into the Markdown, so what is stored is what prints.
+
+### 41.7 What happens to the current book
+The HTML route, "Polish with AI" and the picture tray become inputs to the generator. The current route stays only until the draft reaches parity,
+so that two book paths do not drift apart.
+
+### 41.8 Phases
+1. **The draft and the editor:** draft store, generator with the block contract, editor dialog (CodeMirror with Markdown and CSS, sandboxed live
+   preview), the Plain theme, export through the print browser, the per-chapter stale notice with Regenerate (and silent update of unedited chapters).
+2. **Ashen Vellum:** the grimdark port; fonts bundled after a licence check of each file; theme picker.
+3. **Fit pages** and the print-time overflow report.
+4. **AI edits** on a selection, with the review overlay.
+5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay.
+6. **The party leak check** before export.

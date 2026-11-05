@@ -89,6 +89,11 @@ worker run from that directory, and one run against a real model (a small Anthro
    must be the edition's own, with the edition's own current suggestion, and the description must pass the checks. The picture is sanitised,
    stored under the edition's tag, and counted once against pictures set aside up front (`IBookImages`).
 
+12. **The editable book (section 41, not built) changes invariant 1 for hand-edited drafts.** The party draft is generated from the party source
+   only, its pictures are `art:` references resolved only to party-tagged pictures, and its AI calls see only party text. Beyond that the GM can
+   type anything, so the guarantee becomes a warning: the party draft is checked for GM-only text before export. Invariants 2 and 3 still hold for
+   drafts: `:::dm` blocks are placeholders in anything sent to a model, and a draft holds no URL.
+
 ## 5. What to distrust
 
 - `docs/BOOK_EXPORT.md` sections 1-26 predate several decisions (for example the plan's phasing, the "no image library on purpose" claim in
@@ -154,6 +159,10 @@ Anything that survives is a missing test; add it.
 - No model identifier appears in any committed artifact (code, docs, commit messages, PR text); this is an explicit rule.
 
 ## 7. Open work, in the order I would take it (the user decides)
+
+0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). Phase 1 first: draft store, generator with the block contract,
+   editor dialog with live preview, Plain theme, export, per-chapter stale notice with Regenerate. Items 1 (art step 7, keep-three) and 5 (layout)
+   now land inside it rather than in the current HTML route.
 
 1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38); 7 remains, and step 6's
    Regenerate/Accept (keep 3).** The first real run is done (section 39). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
