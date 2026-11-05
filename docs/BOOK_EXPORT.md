@@ -955,3 +955,73 @@ The capture uploads a cover and three portraits through the app's own upload con
 browser both ran), and `site/tools/book-pages.py` lays cover, Cast and a content page side by side. The pictures are **stand-ins drawn by `site/tools/demo-art.py`** (flat shapes made
 with Pillow, not art); the screenshots show how pictures are placed, not what good art looks like. A render of that capture found the drop cap landing on the italic tagline paragraph;
 the theme now skips a paragraph that is all italic. Not shown on the site: the AI build (no model is configured in the capture), the one-column layout, Letter paper, the GM edition.
+
+## 34. Art step 3: slots, and the GM's own pictures in them (done)
+
+The slot model that section 30 put off. `BookSlots.For(source, compiled, entries)` (Persistence) lists an edition's slots: the cover, a header per chapter,
+and one per entry the compiler recorded. All of them come from that edition's own compile, so a hidden subject has no slot in the party book. A slot's
+key is `s` + 24 hex digits of SHA-256 over the subject *as this audience sees it*. The compiler now stamps every `BookEntryPosition` with its `Subject`
+and `Audience`. For an actor, the subject is `actor:<id>`, except in the party edition when the party knows the actor only as a stranger: then it is
+`mask:<id>`.
+
+**Deviation from 28.3, item 4:** the mask is keyed by the actor's id with a `mask:` prefix, not by the mask's content.
+- The prefix is enough to keep the GM's picture of the real character apart from the party's picture of the stranger.
+- Keying by id also keeps two strangers with the same public name apart.
+- When the GM reveals the character, the key changes, so the stranger's picture does not follow it onto the real character's entry. That is correct.
+
+**Storage.** `bookart/{campaign}` (`BookArtDocument`, `RavenBookArtRepository`) holds one document per campaign, not per GM, because pictures are part of
+the campaign. Each picture is an attachment named `book-<edition>-<key>` and tagged `BuiltFrom: party|dm` with the edition whose tray it was put in.
+- Reads and writes re-check the caller's GM role.
+- Writes use optimistic concurrency.
+- There are at most 600 pictures.
+- Deleting the campaign deletes the document.
+- The backup copies the pictures; the campaign export leaves them out.
+- No media route serves the document: the routes ask for fixed names (`cover`, `portrait`, `art`), and a test checks this.
+
+**The gate has three layers, and a mutation test showed each one is caught alone:**
+- `BookSlots.Choose` gives the party edition only party pictures. The GM edition gets its own picture, or the party's where it has none.
+- `BookArtReader` refuses a GM picture handed to it for a party source.
+- `BookArt.Slot(key, audience)` gives a party entry nothing made for the GM, even from a map read for the GM.
+
+On upload, `BookArtService` rebuilds the slots from the edition's source and refuses a key that is not among them. It does not trust a key posted from
+the page. A picture in a slot replaces the subject's own picture in the book only; that picture is then not read at all. A chapter header is placed
+after the title line, which a rewrite also has because code writes it. A chapter that does not start with its title gets no header. The scaler's
+header box is 172 x 62 mm. The Parchment drop cap also finds `h1 + .art-header + p`. A Chromium render showed the header spanning both columns and the
+drop cap in place.
+
+**The tray.** `BookArtTray.razor`, under "Pictures for this book" in the panel, lists the cover, each chapter's header and its entries. Each row shows
+its state: your picture, the party edition's, its own picture, or none. Each row has upload and remove buttons and a status line read out to screen
+readers.
+
+Mutants caught: GM pictures accepted for a party slot in `Choose`, in the reader and in the lookup; the mask key replaced by the actor key; the
+service's slot check skipped; the header placed without the title check.
+
+**Not done:**
+- No thumbnails in the tray; it shows each slot's state only.
+- There is no picture for a slot that no longer exists (it stays stored and the tray does not show it).
+- The upload path has no end-to-end browser test.
+- The Russian and Hebrew strings are written by the model.
+- Restoring a backup does not bring book pictures back. No backup image comes back automatically; a backup only copies them.
+
+## 35. Art step 4: the style vocabulary and the code-built prompt (done)
+
+`Codex.Core/Book/BookArtStyle.cs`:
+- `BookArtStyles` holds the vocabulary: seven media, six palettes, three line weights and five lights, plus framing per slot kind and a fixed negative
+  suffix.
+  - The media are painterly (the existing house phrase), oil, watercolour, ink linework, woodcut, engraving and parchment sketch.
+  - The framing covers cover, header, portrait, homebrew, location, wiki, spot and scene.
+  - The negative suffix says: no text, letters or numbers, no signature, watermark, frame or border, not a photograph, no modern objects, no real
+    people.
+- `BookImagePrompt.Assemble(slotKind, visual, style, names)` builds the prompt from framing, visual, the four style phrases and the negative suffix.
+  - It takes no subject name, and a test pins its signature.
+  - The visual is the only free text. It is refused, not repaired, when it has any of: a capitalised word that does not start a sentence (an all-caps
+    word counts), one of the campaign's names in any case, a real artist from a deny-list, "in the style of" and similar phrases, a link, empty text,
+    or more than 400 characters.
+  - An unknown style id falls back to the default, so a style saved from an older vocabulary still draws.
+
+The style is not stored or chosen anywhere yet; it arrives with drawing (step 6). `AiPrompts.Image`, the entity art path, is unchanged.
+
+**Limits:**
+- The capital check works for Latin and Cyrillic scripts. Hebrew has no capitals, so a Hebrew visual is checked only against the names list.
+- A German visual is refused, because German capitalises nouns.
+- The art director (step 5) therefore has to write visuals in English, whatever the book's language.

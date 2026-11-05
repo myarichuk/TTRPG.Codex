@@ -130,7 +130,7 @@ Anything that survives is a missing test; add it.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7): DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
+1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3 and 4 are done (sections 34-35); 5-7 remain.** DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.
